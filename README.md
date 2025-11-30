@@ -222,24 +222,24 @@ docker-compose -f docker-compose.prod.yml logs -f
 
 ```mermaid
 gantt
-    title TaskNebula Development Roadmap 2025
+    title TaskNebula Development Roadmap 2026
     dateFormat  YYYY-MM
     section Foundation
-    Infrastructure & Setup     :done, 2024-11, 2024-12
-    Database Schema           :done, 2024-12, 2025-01
-    Auth & Core UI            :done, 2025-01, 2025-02
+    Infrastructure & Setup     :done, 2025-11, 2025-12
+    Database Schema           :done, 2025-12, 2026-01
+    Auth & Core UI            :done, 2026-01, 2026-02
     section Phase 2
-    Permission Schemes        :done, 2025-02, 2025-03
-    Workflow Engine           :done, 2025-02, 2025-03
-    Automation Rules          :done, 2025-03, 2025-03
+    Permission Schemes        :done, 2026-02, 2026-03
+    Workflow Engine           :done, 2026-02, 2026-03
+    Automation Rules          :done, 2026-03, 2026-03
     section Phase 3 (Current)
-    AI Agents                 :active, 2025-03, 2025-05
-    Project Templates         :active, 2025-04, 2025-05
-    Semantic Search           :2025-05, 2025-06
+    AI Agents                 :active, 2026-03, 2026-05
+    Project Templates         :active, 2026-04, 2026-05
+    Semantic Search           :2026-05, 2026-06
     section Phase 4
-    GitHub Integration        :2025-05, 2025-06
-    Slack Integration         :2025-06, 2025-07
-    Resource Management       :2025-06, 2025-08
+    GitHub Integration        :2026-05, 2026-06
+    Slack Integration         :2026-06, 2026-07
+    Resource Management       :2026-06, 2026-08
 ```
 
 </div>
@@ -264,18 +264,18 @@ gantt
 
 | Feature | ETA | Description |
 |---------|-----|-------------|
-| **AI Agents** | Q2 2025 | Autonomous AI task execution |
-| **Project Templates** | Q2 2025 | Reusable project configurations |
-| **Semantic Search** | Q2 2025 | AI-powered natural language search |
+| **AI Agents** | Q2 2026 | Autonomous AI task execution |
+| **Project Templates** | Q2 2026 | Reusable project configurations |
+| **Semantic Search** | Q2 2026 | AI-powered natural language search |
 
 ### ⏳ Planned
 
 | Feature | ETA | Description |
 |---------|-----|-------------|
-| **GitHub Integration** | Q2 2025 | PR/commit linking, auto-transitions |
-| **Slack Integration** | Q3 2025 | Bi-directional sync, notifications |
-| **Resource Management** | Q3 2025 | Workload balancing, capacity planning |
-| **Mobile Apps** | Q4 2025 | React Native iOS/Android apps |
+| **GitHub Integration** | Q2 2026 | PR/commit linking, auto-transitions |
+| **Slack Integration** | Q3 2026 | Bi-directional sync, notifications |
+| **Resource Management** | Q3 2026 | Workload balancing, capacity planning |
+| **Mobile Apps** | Q4 2026 | React Native iOS/Android apps |
 
 ---
 
