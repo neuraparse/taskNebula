@@ -1,0 +1,146 @@
+# ============================================
+# TaskNebula - Public Repository .gitignore
+# Kaynak kod gizli, sadece Docker dağıtımı
+# ============================================
+
+# ===========================================
+# KAYNAK KOD (GİZLİ - GitHub'a gönderilmez)
+# ===========================================
+
+# Tüm uygulama kaynak kodları
+apps/
+
+# Tüm paketler (db, llm, config, types, ui)
+packages/
+
+# Monorepo yapılandırması
+turbo.json
+pnpm-workspace.yaml
+pnpm-lock.yaml
+package.json
+
+# Scripts
+scripts/
+
+# DevContainer (development için)
+.devcontainer/
+
+# Development docs (internal) - exclude from public repo
+docs/ARCHITECTURE.md
+docs/DATABASE_SETUP.md
+docs/PHASE_*.md
+docs/NEXT_STEPS.md
+docs/STATUS.md
+docs/FEATURES.md
+docs/QUICK_START.md
+docs/DEPLOYMENT.md
+docs/COMPETITIVE_ANALYSIS_2025.md
+docs/DETAILED_FEATURE_COMPARISON_2025.md
+docs/GAPS_AND_ISSUES_SUMMARY.md
+docs/IMPLEMENTATION_ROADMAP_2025.md
+DOCS/
+
+# Keep only public docs
+!docs/INSTALLATION.md
+
+# Rekabet analizi (internal)
+COMPETITIVE_ANALYSIS_2025.md
+DETAILED_FEATURE_COMPARISON_2025.md
+GAPS_AND_ISSUES_SUMMARY.md
+IMPLEMENTATION_ROADMAP_2025.md
+
+# Contributing (kaynak kod yok)
+CONTRIBUTING.md
+
+# ===========================================
+# DEVELOPMENT DOSYALARI
+# ===========================================
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+.next/
+out/
+build/
+dist/
+.turbo/
+
+# Testing
+coverage/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__/
+
+# Claude
+.claude
+
+# ===========================================
+# ENVIRONMENT & SECRETS
+# ===========================================
+
+.env
+.env.local
+.env*.local
+.env.development
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Secrets
+*.pem
+*.key
+*.crt
+*.p12
+
+# ===========================================
+# IDE & OS
+# ===========================================
+
+# VS Code
+.vscode/
+
+# JetBrains
+.idea/
+
+# Vim/Neovim
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# ===========================================
+# LOGS & DEBUG
+# ===========================================
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# ===========================================
+# MISC
+# ===========================================
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Vercel
+.vercel
+
+# Temporary files
+tmp/
+temp/
+*.tmp

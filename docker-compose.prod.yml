@@ -1,0 +1,101 @@
+# ============================================
+# TaskNebula - Production Docker Compose
+# Derlenmiş image ile çalıştırma
+# ============================================
+
+version: "3.8"
+
+services:
+  # ===========================================
+  # TaskNebula Web Application
+  # ===========================================
+  web:
+    image: neuraparse/tasknebula:latest
+    container_name: tasknebula-web
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      # Database
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-tasknebula}:${POSTGRES_PASSWORD:-tasknebula}@postgres:5432/${POSTGRES_DB:-tasknebula}
+      
+      # Auth.js
+      - AUTH_SECRET=${AUTH_SECRET}
+      - AUTH_TRUST_HOST=true
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      
+      # OAuth Providers (Opsiyonel)
+      - AUTH_GITHUB_ID=${AUTH_GITHUB_ID:-}
+      - AUTH_GITHUB_SECRET=${AUTH_GITHUB_SECRET:-}
+      - AUTH_GOOGLE_ID=${AUTH_GOOGLE_ID:-}
+      - AUTH_GOOGLE_SECRET=${AUTH_GOOGLE_SECRET:-}
+      
+      # AI/LLM (Opsiyonel)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      
+      # Redis (Opsiyonel - caching için)
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - tasknebula-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ===========================================
+  # PostgreSQL Database
+  # ===========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: tasknebula-postgres
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-tasknebula}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-tasknebula}
+      - POSTGRES_DB=${POSTGRES_DB:-tasknebula}
+    networks:
+      - tasknebula-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tasknebula}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================
+  # Redis Cache (Opsiyonel)
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    container_name: tasknebula-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - tasknebula-network
+    command: redis-server --appendonly yes
+
+# ===========================================
+# Volumes
+# ===========================================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# ===========================================
+# Networks
+# ===========================================
+networks:
+  tasknebula-network:
+    driver: bridge
+
