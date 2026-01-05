@@ -1,0 +1,61 @@
+{
+  "name": "tasknebula",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-native, real-time, keyboard-first project management platform",
+  "author": "Neura Parse <hello@neuraparse.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neuraparse/tasknebula.git"
+  },
+  "homepage": "https://tasknebula.io",
+  "bugs": {
+    "url": "https://github.com/neuraparse/tasknebula/issues"
+  },
+  "keywords": [
+    "project-management",
+    "jira-alternative",
+    "linear-alternative",
+    "ai-powered",
+    "nextjs",
+    "react",
+    "typescript",
+    "kanban",
+    "agile",
+    "scrum"
+  ],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\"",
+    "db:generate": "turbo run db:generate",
+    "db:migrate": "turbo run db:migrate",
+    "db:studio": "turbo run db:studio",
+    "db:reset": "bash scripts/reset-db.sh",
+    "setup": "bash scripts/setup.sh",
+    "test": "turbo run test",
+    "test:watch": "turbo run test:watch"
+  },
+  "devDependencies": {
+    "@turbo/gen": "^2.3.3",
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.6.9",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}
+

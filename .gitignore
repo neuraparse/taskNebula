@@ -1,0 +1,99 @@
+# ============================================
+# TaskNebula - Private Repository .gitignore
+# ============================================
+
+# ===========================================
+# DEPENDENCIES
+# ===========================================
+node_modules/
+.pnp
+.pnp.js
+
+# ===========================================
+# BUILD OUTPUTS
+# ===========================================
+.next/
+out/
+build/
+dist/
+.turbo/
+
+# ===========================================
+# ENVIRONMENT & SECRETS
+# ===========================================
+.env
+.env.local
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# SSL Certificates
+*.pem
+*.key
+*.crt
+*.p12
+
+# ===========================================
+# TESTING
+# ===========================================
+coverage/
+.nyc_output
+
+# ===========================================
+# IDE & OS
+# ===========================================
+
+# VS Code
+.vscode/
+
+# JetBrains
+.idea/
+
+# Vim/Neovim
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# ===========================================
+# LOGS & DEBUG
+# ===========================================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# ===========================================
+# MISC
+# ===========================================
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Vercel
+.vercel
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Claude
+.claude
+
+# Docker volumes
+postgres_data/
+redis_data/
+uploads_data/
+
+# Backup files
+*.backup*
