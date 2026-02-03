@@ -23,6 +23,7 @@ export * from './system';
 
 // 2025 New Features
 export * from './ai-agents';
+export * from './agent-workspaces';
 export * from './project-templates';
 export * from './semantic-search';
 export * from './github-integration';

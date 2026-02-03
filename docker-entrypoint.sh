@@ -40,6 +40,19 @@ pnpm db:seed:prod || {
 
 echo "✅ Database initialization complete!"
 
+# Start the Agent Worker in background
+echo "🤖 Starting Agent Worker..."
+cd /app
+if [ "$(id -u)" = "0" ]; then
+  su-exec nextjs npx tsx apps/web/src/workers/agent-worker.ts &
+  WORKER_PID=$!
+  echo "✅ Agent Worker started (PID: $WORKER_PID)"
+else
+  npx tsx apps/web/src/workers/agent-worker.ts &
+  WORKER_PID=$!
+  echo "✅ Agent Worker started (PID: $WORKER_PID)"
+fi
+
 # Start the Next.js application
 echo "🚀 Starting Next.js server..."
 cd /app
