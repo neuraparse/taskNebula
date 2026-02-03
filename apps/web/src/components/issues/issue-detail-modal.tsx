@@ -13,7 +13,7 @@ interface IssueDetailModalProps {
 export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl w-full h-[85vh] p-0 overflow-hidden gap-0">
+      <DialogContent className="!left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2 !transform max-w-5xl w-[90vw] h-[85vh] max-h-[850px] p-0 overflow-hidden gap-0 flex flex-col rounded-xl border-border/50 shadow-2xl">
         <VisuallyHidden>
           <DialogTitle>Issue Details</DialogTitle>
         </VisuallyHidden>
@@ -22,4 +22,3 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
     </Dialog>
   );
 }
-
