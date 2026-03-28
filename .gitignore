@@ -102,3 +102,4 @@ uploads_data/
 # Upload files
 apps/web/uploads/*
 !apps/web/uploads/.gitkeep
+docker-compose.override.yml

@@ -32,9 +32,14 @@ const envSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url(),
   NEXT_PUBLIC_APP_NAME: z.string().default('TaskNebula'),
   
-  // Email
+  // Email / SMTP
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.string().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASSWORD: z.string().optional(),
+  SMTP_SECURE: z.string().optional(),
+  EMAIL_FROM: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
-  EMAIL_FROM: z.string().email().optional(),
   
   // Cache
   CACHE_ENABLED: z.string().transform(val => val === 'true').default('true'),

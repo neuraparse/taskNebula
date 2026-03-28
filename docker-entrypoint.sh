@@ -40,6 +40,16 @@ else
   }
 fi
 
+# Check SMTP connectivity (optional)
+if [ -n "${SMTP_HOST:-}" ]; then
+  echo "[*] Checking SMTP ($SMTP_HOST:${SMTP_PORT:-25})..."
+  if nc -z "$SMTP_HOST" "${SMTP_PORT:-25}" 2>/dev/null; then
+    echo "  SMTP is reachable!"
+  else
+    echo "  SMTP not reachable (email notifications will be disabled)"
+  fi
+fi
+
 echo "========================================="
 echo "  Database ready!"
 echo "  Starting web server on port 3000..."

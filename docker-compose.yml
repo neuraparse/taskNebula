@@ -66,6 +66,14 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       SKIP_SEED: ${SKIP_SEED:-false}
       NODE_ENV: production
+      # Email / SMTP (optional)
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-25}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      FEATURE_EMAIL_ENABLED: ${FEATURE_EMAIL_ENABLED:-false}
     ports:
       - '${PORT:-3000}:3000'
     volumes:

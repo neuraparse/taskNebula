@@ -1,14 +1,19 @@
 import { db } from '../index';
 import { emailTemplates, notificationPreferences } from '../schema';
 import { eq, and } from 'drizzle-orm';
+import nodemailer from 'nodemailer';
 
 /**
  * Email Service
- * 
+ *
  * Handles email sending with template rendering and user preferences.
- * Uses Resend for email delivery (can be swapped with Nodemailer).
- * 
+ * Uses SMTP (Nodemailer) for email delivery.
+ *
+ * Configure via environment variables:
+ *   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_SECURE, EMAIL_FROM
+ *
  * Features:
+ * - SMTP transport with connection pooling
  * - Template variable replacement
  * - User preference checking
  * - Do not disturb mode
@@ -141,14 +146,53 @@ async function getTemplate(organizationId: string, templateType: string) {
   }
 }
 
+// Lazy-initialized SMTP transporter (created on first use)
+let transporter: nodemailer.Transporter | null = null;
+
+function getTransporter(): nodemailer.Transporter | null {
+  if (transporter) return transporter;
+
+  const host = process.env.SMTP_HOST;
+  if (!host) return null; // Email disabled if no SMTP_HOST
+
+  const port = parseInt(process.env.SMTP_PORT || '25', 10);
+  const secure = process.env.SMTP_SECURE === 'true';
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASSWORD;
+
+  transporter = nodemailer.createTransport({
+    host,
+    port,
+    secure,
+    ...(user && pass ? { auth: { user, pass } } : {}),
+    // Connection pooling for performance
+    pool: true,
+    maxConnections: 3,
+    maxMessages: 100,
+    // Timeouts
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 30000,
+    // Don't fail on invalid certs (internal mail servers)
+    tls: { rejectUnauthorized: false },
+  });
+
+  return transporter;
+}
+
 /**
- * Send email using template
- *
- * This is a placeholder implementation.
- * In production, integrate with Resend, SendGrid, or Nodemailer.
+ * Send email using template and SMTP transport.
+ * Respects user notification preferences and do-not-disturb mode.
+ * No-op if SMTP_HOST is not configured.
  */
 export async function sendEmail(params: EmailParams): Promise<SendEmailResult> {
   try {
+    const smtp = getTransporter();
+    if (!smtp) {
+      // SMTP not configured - silently skip
+      return { success: true, messageId: 'email-disabled' };
+    }
+
     // Check user preferences if userId provided
     if (params.userId) {
       const shouldSend = await shouldSendEmail(
@@ -166,6 +210,8 @@ export async function sendEmail(params: EmailParams): Promise<SendEmailResult> {
     const template = await getTemplate(params.organizationId, params.templateType);
 
     if (!template) {
+      // No template - use a simple fallback
+      console.warn(`No email template found for type: ${params.templateType}`);
       return { success: false, error: 'Template not found' };
     }
 
@@ -174,16 +220,19 @@ export async function sendEmail(params: EmailParams): Promise<SendEmailResult> {
     const htmlBody = replaceVariables(template.htmlBody, params.variables);
     const textBody = replaceVariables(template.textBody, params.variables);
 
-    // TODO: Integrate with actual email service (Resend, SendGrid, etc.)
-    // For now, just log the email
-    console.log('📧 Email would be sent:', {
+    const from = process.env.EMAIL_FROM || 'TaskNebula <noreply@localhost>';
+
+    const info = await smtp.sendMail({
+      from,
       to: params.to,
       subject,
-      preview: textBody.substring(0, 100),
+      html: htmlBody,
+      text: textBody,
     });
 
-    // Placeholder: Return success
-    return { success: true, messageId: `mock-${Date.now()}` };
+    console.log('📧 Email sent:', { to: params.to, subject, messageId: info.messageId });
+
+    return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('Error sending email:', error);
     return { success: false, error: String(error) };
