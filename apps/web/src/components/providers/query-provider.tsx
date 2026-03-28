@@ -2,6 +2,12 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode, useState } from 'react';
+import { useRealtimeSync } from '@/lib/hooks/use-realtime-sync';
+
+function RealtimeSyncProvider({ children }: { children: ReactNode }) {
+  useRealtimeSync();
+  return <>{children}</>;
+}
 
 export function QueryProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -9,14 +15,19 @@ export function QueryProvider({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 30 * 1000, // 30 seconds
-            refetchOnWindowFocus: true, // Refetch when window gains focus
-            refetchInterval: 30 * 1000, // Poll every 30 seconds for real-time feel
+            staleTime: 10 * 1000, // 10 seconds - data is fresh for 10s
+            refetchOnWindowFocus: true,
+            // No global polling - SSE handles cross-client sync
+            // Individual hooks can add refetchInterval where needed
           },
         },
       })
   );
 
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <RealtimeSyncProvider>{children}</RealtimeSyncProvider>
+    </QueryClientProvider>
+  );
 }
 

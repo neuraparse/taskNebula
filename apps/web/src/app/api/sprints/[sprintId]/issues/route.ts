@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, issues, workflowStatuses } from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
+import { publishEvent } from '@/lib/realtime/events';
 
 // GET /api/sprints/[sprintId]/issues
 export async function GET(
@@ -88,6 +89,8 @@ export async function POST(
       return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
     }
 
+    publishEvent('sprint.issues.changed', session.user.id, { sprintId });
+
     return NextResponse.json(updatedIssue);
   } catch (error) {
     console.error('Error assigning issue to sprint:', error);
@@ -128,6 +131,8 @@ export async function DELETE(
     if (!updatedIssue) {
       return NextResponse.json({ error: 'Issue not found in sprint' }, { status: 404 });
     }
+
+    publishEvent('sprint.issues.changed', session.user.id, { sprintId });
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, projects, sprints, issues } from '@tasknebula/db';
 import { eq, and, count } from 'drizzle-orm';
+import { publishEvent } from '@/lib/realtime/events';
 
 // GET /api/projects/[projectId] - Get single project
 export async function GET(
@@ -104,6 +105,8 @@ export async function PATCH(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
+    publishEvent('project.updated', session.user.id, { projectId });
+
     return NextResponse.json(updatedProject);
   } catch (error) {
     console.error('Error updating project:', error);
@@ -145,6 +148,8 @@ export async function DELETE(
     if (!deletedProject) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
+
+    publishEvent('project.deleted', session.user.id, { projectId });
 
     return NextResponse.json({ success: true });
   } catch (error) {

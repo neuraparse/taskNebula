@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db, sprints, issues, projects, projectMembers, organizationMembers, users } from '@tasknebula/db';
 import { eq, and, desc, count } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { publishEvent } from '@/lib/realtime/events';
 
 // Permission check helper
 async function checkSprintPermission(
@@ -246,6 +247,11 @@ export async function POST(request: NextRequest) {
         updatedBy: session.user.id,
       })
       .returning();
+
+    publishEvent('sprint.created', session.user.id, {
+      projectId: newSprint[0].projectId,
+      sprintId: newSprint[0].id,
+    });
 
     return NextResponse.json(newSprint[0], { status: 201 });
   } catch (error) {

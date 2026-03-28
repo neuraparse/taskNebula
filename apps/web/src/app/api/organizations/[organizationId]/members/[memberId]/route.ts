@@ -5,6 +5,7 @@ import { db, users, organizationMembers, auditLogs } from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
 import { hasPermission } from '@/lib/auth/permissions';
 import { createId } from '@paralleldrive/cuid2';
+import { publishEvent } from '@/lib/realtime/events';
 
 // PATCH /api/organizations/[organizationId]/members/[memberId] - Update member role
 const updateMemberSchema = z.object({
@@ -89,6 +90,8 @@ export async function PATCH(
       .from(users)
       .where(eq(users.id, memberId))
       .limit(1);
+
+    publishEvent('member.updated', session.user.id, { organizationId });
 
     return NextResponse.json({
       member: {
@@ -186,6 +189,8 @@ export async function DELETE(
         role: member.role,
       },
     });
+
+    publishEvent('member.removed', session.user.id, { organizationId });
 
     return NextResponse.json({ success: true });
   } catch (error) {

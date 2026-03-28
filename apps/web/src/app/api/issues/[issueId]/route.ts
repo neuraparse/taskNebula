@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getIssueById, updateIssue, deleteIssue, createActivity, createAuditLog, db, issues, workflowStatuses, workflows, projects, projectMembers, organizationMembers, users, ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from '@tasknebula/db';
 import { auth } from '@/auth';
 import { eq, and } from 'drizzle-orm';
+import { publishEvent } from '@/lib/realtime/events';
 
 type IssueAction = 'view' | 'edit' | 'delete' | 'assign' | 'transition' | 'schedule' | 'close' | 'reopen';
 
@@ -397,6 +398,13 @@ export async function PATCH(
       });
     }
 
+    publishEvent('issue.updated', session.user.id!, {
+      projectId: currentIssue.projectId,
+      issueId,
+      sprintId: currentIssue.sprintId || undefined,
+      organizationId: currentIssue.organizationId,
+    });
+
     return NextResponse.json(updatedIssueData);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -444,6 +452,13 @@ export async function DELETE(
     }
 
     await deleteIssue(issueId);
+
+    publishEvent('issue.deleted', session.user.id!, {
+      projectId: issue.projectId,
+      issueId,
+      sprintId: issue.sprintId || undefined,
+      organizationId: issue.organizationId,
+    });
 
     return NextResponse.json({ success: true, id: issueId });
   } catch (error) {

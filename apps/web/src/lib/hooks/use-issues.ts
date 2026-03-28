@@ -128,6 +128,8 @@ export function useUpdateIssue() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['issues'] });
       queryClient.invalidateQueries({ queryKey: ['issue', variables.issueId] });
+      queryClient.invalidateQueries({ queryKey: ['sprint-issues'] });
+      queryClient.invalidateQueries({ queryKey: ['sprints'] });
     },
   });
 }
@@ -148,6 +150,9 @@ export function useDeleteIssue() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['issues'] });
+      queryClient.invalidateQueries({ queryKey: ['sprint-issues'] });
+      queryClient.invalidateQueries({ queryKey: ['sprints'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
   });
 }

@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db, projects, organizationMembers, projectMembers, users, workflows, ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from '@tasknebula/db';
 import { eq, and, inArray, or } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { publishEvent } from '@/lib/realtime/events';
 
 // GET /api/projects - List all projects for the current user
 export async function GET(_request: NextRequest) {
@@ -173,6 +174,11 @@ export async function POST(request: NextRequest) {
       role,
       ...permissionValues,
       invitedBy: session.user.id,
+    });
+
+    publishEvent('project.created', session.user.id, {
+      projectId: newProject[0].id,
+      organizationId: orgId,
     });
 
     return NextResponse.json(newProject[0], { status: 201 });

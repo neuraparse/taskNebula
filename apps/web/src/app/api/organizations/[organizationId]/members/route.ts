@@ -5,6 +5,7 @@ import { db, users, organizationMembers, auditLogs } from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { hasPermission, getUserRole } from '@/lib/auth/permissions';
+import { publishEvent } from '@/lib/realtime/events';
 
 // GET /api/organizations/[organizationId]/members - List members
 export async function GET(
@@ -146,6 +147,8 @@ export async function POST(
         role: data.role,
       },
     });
+
+    publishEvent('member.added', session.user.id, { organizationId });
 
     return NextResponse.json({
       member: {

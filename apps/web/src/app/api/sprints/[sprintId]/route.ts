@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, sprints, issues, workflowStatuses, projects, projectMembers, organizationMembers, users, ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from '@tasknebula/db';
 import { eq, count, and, ne } from 'drizzle-orm';
+import { publishEvent } from '@/lib/realtime/events';
 
 // Granular permission check helper
 async function checkSprintPermission(
@@ -301,6 +302,11 @@ export async function PATCH(
       response.movedToBacklogCount = movedToBacklogCount;
     }
 
+    publishEvent('sprint.updated', session.user.id, {
+      projectId: currentSprint.projectId,
+      sprintId,
+    });
+
     return NextResponse.json(response);
   } catch (error) {
     console.error('Error updating sprint:', error);
@@ -362,6 +368,11 @@ export async function DELETE(
     if (!deletedSprint) {
       return NextResponse.json({ error: 'Sprint not found' }, { status: 404 });
     }
+
+    publishEvent('sprint.deleted', session.user.id, {
+      projectId: sprint.projectId,
+      sprintId,
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

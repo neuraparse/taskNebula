@@ -144,6 +144,8 @@ export function useUpdateSprint() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['sprint', data.id] });
       queryClient.invalidateQueries({ queryKey: ['sprints', data.projectId] });
+      queryClient.invalidateQueries({ queryKey: ['sprint-issues'] });
+      queryClient.invalidateQueries({ queryKey: ['issues'] });
     },
   });
 }
@@ -162,6 +164,7 @@ export function useDeleteSprint() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sprints'] });
+      queryClient.invalidateQueries({ queryKey: ['issues'] });
     },
   });
 }

@@ -4,6 +4,7 @@ import { getIssues, createIssue, createActivity, createAuditLog, db, projects, i
 import { auth } from '@/auth';
 import { createId } from '@paralleldrive/cuid2';
 import { eq, and, desc, asc, sql } from 'drizzle-orm';
+import { publishEvent } from '@/lib/realtime/events';
 
 // Permission check helper for issues
 async function checkIssuePermission(
@@ -376,6 +377,12 @@ export async function POST(request: NextRequest) {
         projectId: newIssue.projectId,
         issueId: newIssue.id,
         metadata: { issueKey: newIssue.key, title: newIssue.title },
+      });
+      publishEvent('issue.created', session.user.id!, {
+        projectId: newIssue.projectId,
+        issueId: newIssue.id,
+        sprintId: newIssue.sprintId || undefined,
+        organizationId: newIssue.organizationId,
       });
     } catch (insertError) {
       console.error('Insert error details:', insertError);
