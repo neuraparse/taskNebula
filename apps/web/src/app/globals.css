@@ -121,6 +121,43 @@
   }
 }
 
+/* Landing Page Dark Theme */
+.landing-dark {
+  --landing-bg: #0a0a0a;
+  --landing-bg-elevated: #1a1a1a;
+  --landing-bg-card: #141414;
+  --landing-bg-surface: #111111;
+  --landing-border: #252525;
+  --landing-border-light: #e5e5e5;
+  --landing-text: #f5f5f5;
+  --landing-text-muted: rgba(245, 245, 245, 0.45);
+  --landing-text-subtle: rgba(245, 245, 245, 0.55);
+  --landing-accent-blue: #3b82f6;
+  --landing-accent-green: #22c55e;
+  --landing-accent-amber: #f59e0b;
+  --landing-accent-violet: #8b5cf6;
+  color-scheme: dark;
+}
+
+@keyframes landing-marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.landing-marquee-track {
+  animation: landing-marquee 40s linear infinite;
+}
+
+.landing-marquee:hover .landing-marquee-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-marquee-track {
+    animation: none;
+  }
+}
+
 /* Typography */
 @layer utilities {
   .text-balance {

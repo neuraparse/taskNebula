@@ -3,7 +3,7 @@
 # SSL Certificate Generation Script for TaskNebula
 # This script generates a self-signed SSL certificate for development/testing
 
-DOMAIN="tasknebula.nowflow.io"
+DOMAIN="${SSL_DOMAIN:-localhost}"
 SSL_DIR="./nginx/ssl"
 CERT_FILE="$SSL_DIR/$DOMAIN.crt"
 KEY_FILE="$SSL_DIR/$DOMAIN.key"
