@@ -27,6 +27,7 @@ export interface SprintIssue {
   title: string;
   description: string | null;
   statusId: string;
+  status: string;
   priority: string;
   assigneeId: string | null;
   reporterId: string;

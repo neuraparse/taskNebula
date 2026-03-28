@@ -14,8 +14,8 @@ interface SprintStatsProps {
 export function SprintStats({ sprint, issues }: SprintStatsProps) {
   // Calculate stats
   const totalIssues = issues.length;
-  const completedIssues = issues.filter((issue) => issue.statusName === 'Done').length;
-  const inProgressIssues = issues.filter((issue) => issue.statusName === 'In Progress').length;
+  const completedIssues = issues.filter((issue) => issue.status === 'done' || issue.statusName === 'Done').length;
+  const inProgressIssues = issues.filter((issue) => issue.status === 'in_progress' || issue.statusName === 'In Progress').length;
   const todoIssues = totalIssues - completedIssues - inProgressIssues;
 
   const completionPercentage = totalIssues > 0 ? (completedIssues / totalIssues) * 100 : 0;
@@ -35,7 +35,7 @@ export function SprintStats({ sprint, issues }: SprintStatsProps) {
   // Calculate story points (if available)
   const totalPoints = issues.reduce((sum, issue) => sum + (issue.estimate || 0), 0);
   const completedPoints = issues
-    .filter((issue) => issue.statusName === 'Done')
+    .filter((issue) => issue.status === 'done' || issue.statusName === 'Done')
     .reduce((sum, issue) => sum + (issue.estimate || 0), 0);
   const pointsPercentage = totalPoints > 0 ? (completedPoints / totalPoints) * 100 : 0;
 

@@ -41,14 +41,14 @@ export function CommandPalette() {
         
         <CommandGroup heading="Quick Actions">
           <CommandItem
-            onSelect={() => runCommand(() => router.push('/issues/new'))}
+            onSelect={() => runCommand(() => router.push('/projects'))}
           >
             <Plus className="mr-2 h-4 w-4" />
             <span>Create Issue</span>
             <kbd className="ml-auto text-xs">C</kbd>
           </CommandItem>
           <CommandItem
-            onSelect={() => runCommand(() => router.push('/projects/new'))}
+            onSelect={() => runCommand(() => router.push('/projects'))}
           >
             <FolderKanban className="mr-2 h-4 w-4" />
             <span>Create Project</span>

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, projects, sprints, issues } from '@tasknebula/db';
-import { eq, count } from 'drizzle-orm';
+import { eq, and, count } from 'drizzle-orm';
 
 // GET /api/projects/[projectId] - Get single project
 export async function GET(
@@ -52,7 +52,7 @@ export async function GET(
     const [activeSprint] = await db
       .select()
       .from(sprints)
-      .where(eq(sprints.projectId, project.id))
+      .where(and(eq(sprints.projectId, project.id), eq(sprints.status, 'active')))
       .limit(1);
 
     return NextResponse.json({

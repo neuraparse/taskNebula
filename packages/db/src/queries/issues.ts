@@ -16,14 +16,18 @@ export type CommentWithAuthor = typeof issueComments.$inferSelect & {
 export async function getIssues(filters?: {
   projectId?: string;
   assigneeId?: string;
-  status?: string;
+  statusId?: string;
   sprintId?: string;
 }) {
   let query = db
     .select({
       issue: issues,
-      assignee: users,
-      reporter: users,
+      assignee: {
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        image: users.image,
+      },
     })
     .from(issues)
     .leftJoin(users, eq(issues.assigneeId, users.id))
@@ -37,8 +41,8 @@ export async function getIssues(filters?: {
   if (filters?.assigneeId) {
     conditions.push(eq(issues.assigneeId, filters.assigneeId));
   }
-  if (filters?.status) {
-    conditions.push(eq(issues.status, filters.status));
+  if (filters?.statusId) {
+    conditions.push(eq(issues.statusId, filters.statusId));
   }
   if (filters?.sprintId) {
     conditions.push(eq(issues.sprintId, filters.sprintId));
@@ -61,8 +65,12 @@ export async function getIssueById(issueId: string) {
   const result = await db
     .select({
       issue: issues,
-      assignee: users,
-      reporter: users,
+      assignee: {
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        image: users.image,
+      },
     })
     .from(issues)
     .leftJoin(users, eq(issues.assigneeId, users.id))
@@ -81,7 +89,6 @@ export async function getIssueById(issueId: string) {
   return {
     ...row.issue,
     assignee: row.assignee,
-    reporter: row.reporter,
   };
 }
 
@@ -112,7 +119,12 @@ export async function getIssueComments(issueId: string) {
   const results = await db
     .select({
       comment: issueComments,
-      author: users,
+      author: {
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        image: users.image,
+      },
     })
     .from(issueComments)
     .innerJoin(users, eq(issueComments.createdBy, users.id))
@@ -136,7 +148,12 @@ export async function getIssueActivities(issueId: string) {
   const results = await db
     .select({
       activity: issueActivities,
-      user: users,
+      user: {
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        image: users.image,
+      },
     })
     .from(issueActivities)
     .leftJoin(users, eq(issueActivities.userId, users.id))

@@ -38,6 +38,7 @@ export async function GET(
         dueDate: issues.dueDate,
         createdAt: issues.createdAt,
         updatedAt: issues.updatedAt,
+        status: workflowStatuses.category,
         statusName: workflowStatuses.name,
         statusColor: workflowStatuses.color,
       })
@@ -78,6 +79,7 @@ export async function POST(
       .set({
         sprintId,
         updatedAt: new Date(),
+        updatedBy: session.user.id,
       })
       .where(eq(issues.id, issueId))
       .returning();
@@ -118,6 +120,7 @@ export async function DELETE(
       .set({
         sprintId: null,
         updatedAt: new Date(),
+        updatedBy: session.user.id,
       })
       .where(and(eq(issues.id, issueId), eq(issues.sprintId, sprintId)))
       .returning();

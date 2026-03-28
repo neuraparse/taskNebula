@@ -138,7 +138,7 @@ export async function POST(
       id: createId(),
       organizationId,
       userId: session.user.id,
-      action: 'member.invited',
+      action: 'organization.member_added',
       resourceType: 'organization_member',
       resourceId: newMember.id,
       metadata: {

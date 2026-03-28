@@ -114,8 +114,8 @@ export async function PATCH(
     const body = await request.json();
     const { role, permissions } = body;
 
-    const updateData: Record<string, string> = {};
-    updateData.updatedAt = new Date().toISOString();
+    const updateData: Record<string, any> = {};
+    updateData.updatedAt = new Date();
 
     // Update role if provided
     if (role) {
@@ -149,7 +149,7 @@ export async function PATCH(
     const [updated] = await db
       .update(schema.projectMembers)
       .set(updateData)
-      .where(eq(schema.projectMembers.id, memberId))
+      .where(and(eq(schema.projectMembers.id, memberId), eq(schema.projectMembers.projectId, projectId)))
       .returning();
 
     if (!updated) {
@@ -183,7 +183,7 @@ export async function DELETE(
 
     // Get the member to be deleted
     const memberToDelete = await db.query.projectMembers.findFirst({
-      where: eq(schema.projectMembers.id, memberId),
+      where: and(eq(schema.projectMembers.id, memberId), eq(schema.projectMembers.projectId, projectId)),
     });
 
     if (!memberToDelete) {
@@ -213,7 +213,7 @@ export async function DELETE(
 
     const [deleted] = await db
       .delete(schema.projectMembers)
-      .where(eq(schema.projectMembers.id, memberId))
+      .where(and(eq(schema.projectMembers.id, memberId), eq(schema.projectMembers.projectId, projectId)))
       .returning();
 
     return NextResponse.json({ success: true, deleted });

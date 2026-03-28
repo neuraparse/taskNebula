@@ -75,7 +75,9 @@ export default async function TeamPage() {
               {membersWithUsers.length} team member{membersWithUsers.length !== 1 ? 's' : ''}
             </p>
           </div>
-          <Button>Invite Member</Button>
+          <a href="/settings/members">
+            <Button>Invite Member</Button>
+          </a>
         </div>
       </div>
 
@@ -86,7 +88,9 @@ export default async function TeamPage() {
             <p className="mt-2 text-sm text-muted-foreground">
               Invite team members to collaborate on projects
             </p>
-            <Button className="mt-4">Invite Member</Button>
+            <a href="/settings/members">
+              <Button className="mt-4">Invite Member</Button>
+            </a>
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

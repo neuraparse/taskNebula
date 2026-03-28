@@ -4,6 +4,7 @@ import { auth } from '@/auth';
 import { db, users, organizationMembers, auditLogs } from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
 import { hasPermission } from '@/lib/auth/permissions';
+import { createId } from '@paralleldrive/cuid2';
 
 // PATCH /api/organizations/[organizationId]/members/[memberId] - Update member role
 const updateMemberSchema = z.object({
@@ -23,7 +24,7 @@ export async function PATCH(
     const { organizationId, memberId } = await params;
 
     // Check permission
-    const canUpdate = await hasPermission(organizationId, 'member.update_role');
+    const canUpdate = await hasPermission(organizationId, 'member:manage');
     if (!canUpdate) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
@@ -69,10 +70,10 @@ export async function PATCH(
 
     // Create audit log
     await db.insert(auditLogs).values({
-      id: crypto.randomUUID(),
+      id: createId(),
       organizationId,
       userId: session.user.id,
-      action: 'member.role_changed',
+      action: 'organization.role_changed',
       resourceType: 'organization_member',
       resourceId: updatedMember.id,
       metadata: {
@@ -131,7 +132,7 @@ export async function DELETE(
     const { organizationId, memberId } = await params;
 
     // Check permission
-    const canRemove = await hasPermission(organizationId, 'member.remove');
+    const canRemove = await hasPermission(organizationId, 'member:remove');
     if (!canRemove) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
@@ -174,10 +175,10 @@ export async function DELETE(
 
     // Create audit log
     await db.insert(auditLogs).values({
-      id: crypto.randomUUID(),
+      id: createId(),
       organizationId,
       userId: session.user.id,
-      action: 'member.removed',
+      action: 'organization.member_removed',
       resourceType: 'organization_member',
       resourceId: member.id,
       metadata: {

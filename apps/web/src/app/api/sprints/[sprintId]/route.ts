@@ -250,6 +250,7 @@ export async function PATCH(
     if (status !== undefined) updateData.status = status;
 
     // If completing sprint, move incomplete issues to backlog
+    let movedToBacklogCount = 0;
     if (status === 'completed' && currentSprint.status === 'active') {
       // Get incomplete issues (not in 'done' category)
       const sprintIssues = await db
@@ -264,6 +265,8 @@ export async function PATCH(
       const incompleteIssueIds = sprintIssues
         .filter((i) => i.statusCategory !== 'done')
         .map((i) => i.issueId);
+
+      movedToBacklogCount = incompleteIssueIds.length;
 
       // Move incomplete issues to backlog (remove from sprint)
       if (incompleteIssueIds.length > 0) {
@@ -285,7 +288,7 @@ export async function PATCH(
     // Include stats about moved issues if sprint was completed
     const response: Record<string, unknown> = { ...updatedSprint };
     if (status === 'completed' && currentSprint.status === 'active') {
-      const sprintIssues = await db
+      const remainingIssues = await db
         .select({
           issueId: issues.id,
           statusCategory: workflowStatuses.category,
@@ -294,8 +297,8 @@ export async function PATCH(
         .leftJoin(workflowStatuses, eq(issues.statusId, workflowStatuses.id))
         .where(eq(issues.sprintId, sprintId));
 
-      response.completedIssuesCount = sprintIssues.filter((i) => i.statusCategory === 'done').length;
-      response.movedToBacklogCount = 0; // Already moved, so this is informational
+      response.completedIssuesCount = remainingIssues.filter((i) => i.statusCategory === 'done').length;
+      response.movedToBacklogCount = movedToBacklogCount;
     }
 
     return NextResponse.json(response);

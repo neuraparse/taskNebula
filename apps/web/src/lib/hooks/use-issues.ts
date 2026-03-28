@@ -15,7 +15,7 @@ interface Issue {
   organizationId: string;
   projectId: string;
   sprintId: string | null;
-  estimate: string | null;
+  estimate: number | null;
   createdAt: Date;
   updatedAt: Date;
   assignee?: {

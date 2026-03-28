@@ -9,10 +9,10 @@ export const dynamic = 'force-dynamic';
 const bulkUpdateSchema = z.object({
   issueIds: z.array(z.string()).min(1),
   updates: z.object({
-    status: z.string().optional(),
-    priority: z.string().optional(),
+    statusId: z.string().optional(),
+    priority: z.enum(['critical', 'high', 'medium', 'low', 'none']).optional(),
     assigneeId: z.string().optional(),
-    labels: z.string().optional(),
+    labels: z.array(z.string()).optional(),
     sprintId: z.string().optional(),
   }),
 });
@@ -178,7 +178,7 @@ async function handleBulkDelete(body: any, userId: string) {
         resourceType: 'issue',
         resourceId: issue.id,
         changes: {
-          status: { from: issue.status, to: 'deleted' },
+          statusId: { from: issue.statusId, to: 'deleted' },
         },
         metadata: { bulkOperation: true },
       });

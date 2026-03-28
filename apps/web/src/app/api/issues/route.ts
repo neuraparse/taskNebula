@@ -174,7 +174,12 @@ export async function GET(request: NextRequest) {
         status: workflowStatuses.category,
         statusName: workflowStatuses.name,
         statusColor: workflowStatuses.color,
-        assignee: users,
+        assignee: {
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          image: users.image,
+        },
       })
       .from(issues)
       .leftJoin(workflowStatuses, eq(issues.statusId, workflowStatuses.id))
@@ -337,7 +342,7 @@ export async function POST(request: NextRequest) {
       estimate: validatedData.estimate || null,
       labels: validatedData.labels || [],
       customFields: validatedData.customFields || {},
-      metadata: validatedData.customFields || {},
+      metadata: {},
       createdBy: session.user.id,
       updatedBy: session.user.id,
     };

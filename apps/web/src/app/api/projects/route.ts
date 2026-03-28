@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, projects, organizationMembers, projectMembers, users } from '@tasknebula/db';
+import { db, projects, organizationMembers, projectMembers, users, ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from '@tasknebula/db';
 import { eq, and, inArray, or } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
@@ -145,21 +145,25 @@ export async function POST(request: NextRequest) {
         description: description || null,
         status: 'active',
         settings: {},
-        metadata: {},
         createdBy: session.user.id,
         updatedBy: session.user.id,
       })
       .returning();
 
-    // Add creator as product_owner of the project
+    // Add creator as product_owner with full permissions from role defaults
+    const role: ProjectRole = 'product_owner';
+    const defaults = ROLE_DEFAULT_PERMISSIONS[role];
+    const permissionValues: Record<string, string> = {};
+    for (const [key, val] of Object.entries(defaults)) {
+      permissionValues[key] = val ? 'true' : 'false';
+    }
+
     await db.insert(projectMembers).values({
       id: createId(),
       projectId: projectId,
       userId: session.user.id,
-      role: 'product_owner',
-      canManageSprints: true,
-      canManageMembers: true,
-      canDeleteIssues: true,
+      role,
+      ...permissionValues,
       invitedBy: session.user.id,
     });
 

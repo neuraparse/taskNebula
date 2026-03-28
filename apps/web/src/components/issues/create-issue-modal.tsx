@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useCreateIssue } from '@/lib/hooks/use-issues';
-import { useOrganization } from '@/lib/hooks/use-organization';
 import {
   Dialog,
   DialogContent,

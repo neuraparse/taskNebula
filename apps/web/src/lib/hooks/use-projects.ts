@@ -10,7 +10,6 @@ interface Project {
   description: string | null;
   status: string;
   settings: Record<string, unknown>;
-  metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
