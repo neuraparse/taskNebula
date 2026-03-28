@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, projects, organizationMembers, projectMembers, users, ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from '@tasknebula/db';
+import { db, projects, organizationMembers, projectMembers, users, workflows, ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from '@tasknebula/db';
 import { eq, and, inArray, or } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
@@ -135,6 +135,13 @@ export async function POST(request: NextRequest) {
 
     const projectId = createId();
 
+    // Get organization's default workflow
+    const [defaultWorkflow] = await db
+      .select({ id: workflows.id })
+      .from(workflows)
+      .where(and(eq(workflows.organizationId, orgId), eq(workflows.isDefault, true)))
+      .limit(1);
+
     const newProject = await db
       .insert(projects)
       .values({
@@ -145,6 +152,7 @@ export async function POST(request: NextRequest) {
         description: description || null,
         status: 'active',
         settings: {},
+        defaultWorkflowId: defaultWorkflow?.id || null,
         createdBy: session.user.id,
         updatedBy: session.user.id,
       })

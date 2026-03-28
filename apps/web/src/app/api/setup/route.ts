@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, users, organizations, organizationMembers } from '@tasknebula/db';
+import { db, users, organizations, organizationMembers, workflows, workflowStatuses, workflowTransitions } from '@tasknebula/db';
 import { eq, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { createId } from '@paralleldrive/cuid2';
@@ -94,6 +94,37 @@ export async function POST(request: NextRequest) {
       role: 'owner',
       status: 'active',
     });
+
+    // Create default workflow with statuses and transitions
+    const workflowId = createId();
+    await db.insert(workflows).values({
+      id: workflowId,
+      organizationId: orgId,
+      name: 'Default Workflow',
+      description: 'Default workflow for all projects',
+      isDefault: true,
+      createdBy: userId,
+      updatedBy: userId,
+    });
+
+    const todoId = createId();
+    const inProgressId = createId();
+    const inReviewId = createId();
+    const doneId = createId();
+
+    await db.insert(workflowStatuses).values([
+      { id: todoId, workflowId, name: 'To Do', category: 'backlog', color: '#94a3b8', position: 0 },
+      { id: inProgressId, workflowId, name: 'In Progress', category: 'in_progress', color: '#3b82f6', position: 1 },
+      { id: inReviewId, workflowId, name: 'In Review', category: 'in_progress', color: '#f59e0b', position: 2 },
+      { id: doneId, workflowId, name: 'Done', category: 'done', color: '#10b981', position: 3 },
+    ]);
+
+    await db.insert(workflowTransitions).values([
+      { id: createId(), workflowId, name: 'Start Progress', fromStatusId: todoId, toStatusId: inProgressId },
+      { id: createId(), workflowId, name: 'Submit for Review', fromStatusId: inProgressId, toStatusId: inReviewId },
+      { id: createId(), workflowId, name: 'Complete', fromStatusId: inReviewId, toStatusId: doneId },
+      { id: createId(), workflowId, name: 'Reopen', fromStatusId: doneId, toStatusId: todoId },
+    ]);
 
     return NextResponse.json({
       success: true,
