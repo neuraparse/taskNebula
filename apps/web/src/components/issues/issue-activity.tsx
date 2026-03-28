@@ -4,23 +4,20 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageSquare, History, Loader2, Sparkles } from 'lucide-react';
+import { MessageSquare, History, Loader2 } from 'lucide-react';
 import { useComments, useCreateComment } from '@/lib/hooks/use-comments';
 import { useActivities } from '@/lib/hooks/use-activities';
-import { useSummarizeThread } from '@/lib/hooks/use-ai';
 import { useIssue } from '@/lib/hooks/use-issues';
 import { MentionTextarea } from './mention-textarea';
 import { formatDistanceToNow } from 'date-fns';
 
 export function IssueActivity({ issueId }: { issueId: string }) {
   const [newComment, setNewComment] = useState('');
-  const [summary, setSummary] = useState<string | null>(null);
   const [mentionedUsers, setMentionedUsers] = useState<string[]>([]);
   const { data: issue } = useIssue(issueId);
   const { data: comments, isLoading: commentsLoading } = useComments(issueId);
   const { data: activities, isLoading: activitiesLoading } = useActivities(issueId);
   const createComment = useCreateComment(issueId);
-  const summarizeThread = useSummarizeThread();
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
@@ -30,15 +27,6 @@ export function IssueActivity({ issueId }: { issueId: string }) {
       setNewComment('');
     } catch (error) {
       console.error('Error adding comment:', error);
-    }
-  };
-
-  const handleSummarize = async () => {
-    try {
-      const result = await summarizeThread.mutateAsync({ issueId });
-      setSummary(result.summary);
-    } catch (error) {
-      console.error('Error summarizing thread:', error);
     }
   };
 
@@ -57,41 +45,10 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                 History
               </TabsTrigger>
             </TabsList>
-
-            {comments && comments.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSummarize}
-                disabled={summarizeThread.isPending}
-              >
-                {summarizeThread.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Summarizing...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    AI Summary
-                  </>
-                )}
-              </Button>
-            )}
           </div>
         </div>
 
         <TabsContent value="comments" className="p-3 space-y-3">
-          {summary && (
-            <div className="rounded-lg border bg-primary/5 p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span className="font-semibold text-sm">AI Summary</span>
-              </div>
-              <p className="text-sm text-muted-foreground">{summary}</p>
-            </div>
-          )}
-
           {commentsLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -205,4 +162,3 @@ export function IssueActivity({ issueId }: { issueId: string }) {
     </div>
   );
 }
-

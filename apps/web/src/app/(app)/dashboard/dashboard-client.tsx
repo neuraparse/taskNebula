@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
 import { ActivityFeed } from '@/components/activity/activity-feed';
-import { AgentMonitorPanel } from '@/components/agents/agent-monitor-panel';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import {
   ArrowUpRight,
@@ -171,9 +170,6 @@ export function DashboardClient() {
                 trendUp={true}
               />
             </div>
-
-            {/* AI Agent Monitor */}
-            <AgentMonitorPanel />
 
             {/* Main Content Grid */}
             <div className="grid gap-6 lg:grid-cols-3">

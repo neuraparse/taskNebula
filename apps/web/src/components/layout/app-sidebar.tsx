@@ -9,16 +9,13 @@ import {
   FolderKanban,
   Users,
   Settings,
-  Sparkles,
   ChevronDown,
   Plus,
   Shield,
   Loader2,
-  Lock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
 import { useProjects } from '@/lib/hooks/use-projects';
@@ -28,10 +25,6 @@ const navigation = [
   { name: 'My Issues', href: '/my-issues', icon: Inbox },
   { name: 'Projects', href: '/projects', icon: FolderKanban },
   { name: 'Team', href: '/team', icon: Users },
-];
-
-const aiFeatures = [
-  { name: 'AI Assistant', href: '/ai', icon: Sparkles },
 ];
 
 export function AppSidebar() {
@@ -87,27 +80,6 @@ export function AppSidebar() {
             </Link>
           );
         })}
-
-        {/* AI Section */}
-        <div className="pt-4">
-          <div className="mb-1 px-2">
-            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-              AI Features
-            </span>
-          </div>
-          {aiFeatures.map((item) => (
-            <div
-              key={item.name}
-              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-muted-foreground/60 cursor-not-allowed"
-            >
-              <Lock className="h-4 w-4" />
-              <span>{item.name}</span>
-              <Badge variant="outline" className="ml-auto text-[9px] px-1.5 py-0 h-4 font-semibold border-amber-500/50 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30">
-                Enterprise
-              </Badge>
-            </div>
-          ))}
-        </div>
 
         {/* Projects Section */}
         <div className="pt-4">

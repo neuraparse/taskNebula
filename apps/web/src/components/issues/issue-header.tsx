@@ -3,7 +3,6 @@
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Share, Star, Bell, BookOpen, CheckSquare, Bug, Zap, FileText, ExternalLink, Copy } from 'lucide-react';
 import { PresenceAvatars } from '@/components/presence/presence-avatars';
-import { StartAgentDialog } from '@/components/agents/start-agent-dialog';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
@@ -92,8 +91,6 @@ export function IssueHeader({ issue }: IssueHeaderProps) {
       {/* Right side: Presence + Actions */}
       <div className="flex items-center gap-3 shrink-0">
         <PresenceAvatars issueId={issue.id} />
-
-        <StartAgentDialog issueId={issue.id} />
 
         <div className="h-6 w-px bg-border" />
 

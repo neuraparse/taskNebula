@@ -25,6 +25,9 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
+  // Setup page is always public (first-time installation)
+  const isSetupRoute = pathname === '/setup';
+
   // Public routes that don't require authentication
   const publicRoutes = ['/auth/signin', '/auth/signup', '/auth/error', '/auth/verify-request'];
   const isPublicRoute = publicRoutes.includes(pathname);
@@ -34,6 +37,11 @@ export default auth((req) => {
 
   // API routes are handled separately
   const isApiRoute = pathname.startsWith('/api');
+
+  // Setup route is always accessible
+  if (isSetupRoute) {
+    return NextResponse.next();
+  }
 
   // Redirect to signin if not logged in and trying to access protected route
   if (!isLoggedIn && !isPublicRoute && !isLandingPage && !isApiRoute) {

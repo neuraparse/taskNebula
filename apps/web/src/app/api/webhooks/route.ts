@@ -4,7 +4,6 @@ import { db, webhooks } from '@tasknebula/db';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import crypto from 'crypto';
-import { canCreateWebhook } from '@/lib/plan-limits-checker';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,21 +76,6 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const validatedData = createWebhookSchema.parse(body);
-
-    // Check webhook limit
-    const webhookLimitCheck = await canCreateWebhook(validatedData.organizationId);
-    if (!webhookLimitCheck.allowed) {
-      return NextResponse.json(
-        {
-          error: 'Webhook limit reached',
-          message: webhookLimitCheck.reason,
-          current: webhookLimitCheck.current,
-          limit: webhookLimitCheck.limit,
-          upgradeRequired: true,
-        },
-        { status: 403 }
-      );
-    }
 
     // Generate webhook secret
     const secret = generateWebhookSecret();

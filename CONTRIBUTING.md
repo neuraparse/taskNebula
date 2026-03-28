@@ -55,8 +55,7 @@ taskNebula/
 ├── packages/
 │   ├── config/           # Shared configurations
 │   ├── types/            # TypeScript types
-│   ├── db/               # Database schema (Drizzle)
-│   └── llm/              # LLM client abstraction
+│   └── db/               # Database schema (Drizzle)
 ├── turbo.json            # Turborepo configuration
 └── pnpm-workspace.yaml   # pnpm workspace configuration
 ```

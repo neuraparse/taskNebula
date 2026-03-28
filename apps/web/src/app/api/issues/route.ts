@@ -4,7 +4,6 @@ import { getIssues, createIssue, createActivity, createAuditLog, db, projects, i
 import { auth } from '@/auth';
 import { createId } from '@paralleldrive/cuid2';
 import { eq, and, desc, asc, sql } from 'drizzle-orm';
-import { canCreateIssue } from '@/lib/plan-limits-checker';
 
 // Permission check helper for issues
 async function checkIssuePermission(
@@ -265,21 +264,6 @@ export async function POST(request: NextRequest) {
     if (!permission.allowed) {
       return NextResponse.json(
         { error: permission.reason || 'Permission denied' },
-        { status: 403 }
-      );
-    }
-
-    // Check issue limit for this project
-    const issueLimitCheck = await canCreateIssue(actualProjectId);
-    if (!issueLimitCheck.allowed) {
-      return NextResponse.json(
-        {
-          error: 'Issue limit reached',
-          message: issueLimitCheck.reason,
-          current: issueLimitCheck.current,
-          limit: issueLimitCheck.limit,
-          upgradeRequired: true,
-        },
         { status: 403 }
       );
     }

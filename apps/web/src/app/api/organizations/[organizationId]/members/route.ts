@@ -5,7 +5,6 @@ import { db, users, organizationMembers, auditLogs } from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { hasPermission, getUserRole } from '@/lib/auth/permissions';
-import { canAddMember } from '@/lib/plan-limits-checker';
 
 // GET /api/organizations/[organizationId]/members - List members
 export async function GET(
@@ -81,21 +80,6 @@ export async function POST(
     const canInvite = await hasPermission(organizationId, 'member:invite');
     if (!canInvite) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
-    }
-
-    // Check member limit
-    const memberLimitCheck = await canAddMember(organizationId);
-    if (!memberLimitCheck.allowed) {
-      return NextResponse.json(
-        {
-          error: 'Member limit reached',
-          message: memberLimitCheck.reason,
-          current: memberLimitCheck.current,
-          limit: memberLimitCheck.limit,
-          upgradeRequired: true,
-        },
-        { status: 403 }
-      );
     }
 
     const body = await request.json();

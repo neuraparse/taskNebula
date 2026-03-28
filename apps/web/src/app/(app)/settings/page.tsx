@@ -8,9 +8,8 @@ import { NotificationPreferences } from '@/components/settings/notification-pref
 import { AppearanceSettings } from '@/components/settings/appearance-settings';
 import { MembersPageClient } from './members/members-page-client';
 import { OrganizationSettingsClient } from './organization/organization-settings-client';
-import { BillingSettings } from '@/components/billing/billing-settings';
 import { useOrganization } from '@/lib/hooks/use-organization';
-import { Palette, Building2, Users, CreditCard, Bell, Key, Webhook, ScrollText } from 'lucide-react';
+import { Palette, Building2, Users, Bell, Key, Webhook, ScrollText } from 'lucide-react';
 
 export default function SettingsPage() {
   const { currentOrganizationId } = useOrganization();
@@ -46,10 +45,6 @@ export default function SettingsPage() {
             <Users className="h-4 w-4" />
             Members
           </TabsTrigger>
-          <TabsTrigger value="billing" className="gap-2">
-            <CreditCard className="h-4 w-4" />
-            Billing
-          </TabsTrigger>
           <TabsTrigger value="notifications" className="gap-2">
             <Bell className="h-4 w-4" />
             Notifications
@@ -78,10 +73,6 @@ export default function SettingsPage() {
 
         <TabsContent value="members" className="space-y-4 animate-in fade-in">
           <MembersPageClient />
-        </TabsContent>
-
-        <TabsContent value="billing" className="space-y-4 animate-in fade-in">
-          <BillingSettings />
         </TabsContent>
 
         <TabsContent value="notifications" className="space-y-4 animate-in fade-in">

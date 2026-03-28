@@ -3,7 +3,6 @@ import { auth } from '@/auth';
 import { db, customFields } from '@tasknebula/db';
 import { eq, and, desc } from 'drizzle-orm';
 import { z } from 'zod';
-import { canCreateCustomField } from '@/lib/plan-limits-checker';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,21 +66,6 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const validatedData = createCustomFieldSchema.parse(body);
-
-    // Check custom field limit
-    const customFieldLimitCheck = await canCreateCustomField(validatedData.organizationId);
-    if (!customFieldLimitCheck.allowed) {
-      return NextResponse.json(
-        {
-          error: 'Custom field limit reached',
-          message: customFieldLimitCheck.reason,
-          current: customFieldLimitCheck.current,
-          limit: customFieldLimitCheck.limit,
-          upgradeRequired: true,
-        },
-        { status: 403 }
-      );
-    }
 
     const [newField] = await db
       .insert(customFields)

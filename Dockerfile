@@ -27,7 +27,6 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/db/package.json ./packages/db/
 COPY packages/types/package.json ./packages/types/
-COPY packages/llm/package.json ./packages/llm/
 COPY packages/config/package.json ./packages/config/
 
 # Install dependencies (lockfile will be updated if needed)
@@ -43,7 +42,6 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY --from=deps /app/packages/db/node_modules ./packages/db/node_modules
 COPY --from=deps /app/packages/types/node_modules ./packages/types/node_modules
-COPY --from=deps /app/packages/llm/node_modules ./packages/llm/node_modules
 COPY --from=deps /app/packages/config/node_modules ./packages/config/node_modules
 
 # Copy source code
@@ -113,13 +111,11 @@ COPY --from=builder /app/packages/db/drizzle.config.ts ./packages/db/drizzle.con
 
 # Copy dependencies for db package
 COPY --from=builder /app/packages/types ./packages/types
-COPY --from=builder /app/packages/llm ./packages/llm
 COPY --from=builder /app/packages/config ./packages/config
 
 # Copy node_modules for packages (needed for tsx and dependencies)
 COPY --from=builder /app/packages/db/node_modules ./packages/db/node_modules
 COPY --from=builder /app/packages/types/node_modules ./packages/types/node_modules
-COPY --from=builder /app/packages/llm/node_modules ./packages/llm/node_modules
 COPY --from=builder /app/packages/config/node_modules ./packages/config/node_modules
 COPY --from=builder /app/node_modules ./node_modules
 

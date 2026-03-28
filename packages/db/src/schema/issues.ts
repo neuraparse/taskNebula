@@ -65,7 +65,6 @@ export const issues: any = pgTable('issues', {
   sprintIdx: index('issue_sprint_idx').on(table.sprintId),
   reporterIdx: index('issue_reporter_idx').on(table.reporterId),
   priorityIdx: index('issue_priority_idx').on(table.priority),
-  securityLevelIdx: index('issue_security_level_idx').on(table.securityLevelId),
   typeIdx: index('issue_type_idx').on(table.type),
   createdAtIdx: index('issue_created_at_idx').on(table.createdAt),
   updatedAtIdx: index('issue_updated_at_idx').on(table.updatedAt),

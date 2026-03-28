@@ -20,11 +20,6 @@ export * from './saved-filters';
 export * from './search-history';
 export * from './push-subscriptions';
 export * from './system';
-
-// 2025 New Features
-export * from './ai-agents';
-export * from './agent-workspaces';
 export * from './project-templates';
 export * from './semantic-search';
-export * from './github-integration';
 export * from './resource-management';

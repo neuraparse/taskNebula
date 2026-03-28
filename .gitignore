@@ -1,5 +1,5 @@
 # ============================================
-# TaskNebula - Private Repository .gitignore
+# TaskNebula - Open Source .gitignore
 # ============================================
 
 # ===========================================
@@ -29,6 +29,7 @@ dist/
 .env.production.local
 
 # SSL Certificates
+nginx/ssl/
 *.pem
 *.key
 *.crt
@@ -97,3 +98,7 @@ uploads_data/
 
 # Backup files
 *.backup*
+
+# Upload files
+apps/web/uploads/*
+!apps/web/uploads/.gitkeep
