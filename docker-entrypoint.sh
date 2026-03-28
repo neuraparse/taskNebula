@@ -31,10 +31,14 @@ pnpm drizzle-kit push --force 2>&1 || {
 }
 
 # Seed database (demo data + default workflows)
-echo "[3/3] Seeding database..."
-pnpm db:seed:prod 2>&1 || {
-  echo "  Seed skipped (database already seeded)"
-}
+if [ "${SKIP_SEED:-}" = "true" ]; then
+  echo "[3/3] Skipping seed (SKIP_SEED=true) — use /setup for first-time setup"
+else
+  echo "[3/3] Seeding database..."
+  pnpm db:seed:prod 2>&1 || {
+    echo "  Seed skipped (database already seeded)"
+  }
+fi
 
 echo "========================================="
 echo "  Database ready!"

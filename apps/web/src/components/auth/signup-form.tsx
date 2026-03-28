@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,20 @@ export function SignUpForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [checkingSetup, setCheckingSetup] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/setup')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.setupRequired) {
+          router.replace('/setup');
+        } else {
+          setCheckingSetup(false);
+        }
+      })
+      .catch(() => setCheckingSetup(false));
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +84,14 @@ export function SignUpForm() {
   const handleGoogleSignIn = async () => {
     await signIn('google', { callbackUrl: '/dashboard' });
   };
+
+  if (checkingSetup) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

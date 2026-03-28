@@ -2,10 +2,6 @@ import NextAuth from 'next-auth';
 import { NextResponse } from 'next/server';
 import { authConfig } from './auth.config';
 
-/**
- * Edge-compatible middleware using auth.config.ts
- * This runs in Edge Runtime without database or bcrypt dependencies
- */
 const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
@@ -16,7 +12,7 @@ export default auth((req) => {
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/icons') ||
-    pathname.includes('.') || // files with extensions
+    pathname.includes('.') ||
     pathname === '/favicon.ico' ||
     pathname === '/manifest.json' ||
     pathname === '/sw.js' ||
@@ -25,32 +21,33 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
-  // Setup page is always public (first-time installation)
-  const isSetupRoute = pathname === '/setup';
-
-  // Public routes that don't require authentication
-  const publicRoutes = ['/auth/signin', '/auth/signup', '/auth/error', '/auth/verify-request'];
-  const isPublicRoute = publicRoutes.includes(pathname);
-
-  // Landing page is public
-  const isLandingPage = pathname === '/';
-
-  // API routes are handled separately
-  const isApiRoute = pathname.startsWith('/api');
-
-  // Setup route is always accessible
-  if (isSetupRoute) {
+  // Setup page and setup API are always accessible
+  if (pathname === '/setup' || pathname === '/api/setup') {
     return NextResponse.next();
   }
 
+  // Landing page is public
+  if (pathname === '/') {
+    return NextResponse.next();
+  }
+
+  // API routes are handled separately
+  if (pathname.startsWith('/api')) {
+    return NextResponse.next();
+  }
+
+  // Public auth routes
+  const publicRoutes = ['/auth/signin', '/auth/signup', '/auth/error', '/auth/verify-request'];
+  const isPublicRoute = publicRoutes.includes(pathname);
+
   // Redirect to signin if not logged in and trying to access protected route
-  if (!isLoggedIn && !isPublicRoute && !isLandingPage && !isApiRoute) {
+  if (!isLoggedIn && !isPublicRoute) {
     const signInUrl = new URL('/auth/signin', req.url);
     signInUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(signInUrl);
   }
 
-  // Redirect to dashboard if logged in and trying to access auth pages (not landing)
+  // Redirect to dashboard if logged in and trying to access auth pages
   if (isLoggedIn && isPublicRoute) {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
@@ -60,14 +57,6 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder files
-     */
     '/((?!_next/static|_next/image|favicon.ico|icons|manifest.json|sw.js|.*\\.png$|.*\\.jpg$|.*\\.svg$).*)',
   ],
 };
-

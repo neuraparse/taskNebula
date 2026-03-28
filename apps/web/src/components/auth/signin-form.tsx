@@ -1,25 +1,13 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Github, Crown, Briefcase, Users, Shield, Code, Bug, Palette, Eye } from 'lucide-react';
+import { Github } from 'lucide-react';
 import Link from 'next/link';
-
-// Demo users
-const DEMO_USERS = [
-  { email: 'admin@tasknebula.io', role: 'Admin', icon: Crown },
-  { email: 'po@tasknebula.io', role: 'Product Owner', icon: Briefcase },
-  { email: 'sm@tasknebula.io', role: 'Scrum Master', icon: Users },
-  { email: 'lead@tasknebula.io', role: 'Tech Lead', icon: Shield },
-  { email: 'dev1@tasknebula.io', role: 'Developer', icon: Code },
-  { email: 'qa@tasknebula.io', role: 'QA Engineer', icon: Bug },
-  { email: 'design@tasknebula.io', role: 'Designer', icon: Palette },
-  { email: 'viewer@tasknebula.io', role: 'Viewer', icon: Eye },
-];
 
 export function SignInForm() {
   const router = useRouter();
@@ -27,7 +15,21 @@ export function SignInForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [loadingDemo, setLoadingDemo] = useState<string | null>(null);
+  const [checkingSetup, setCheckingSetup] = useState(true);
+
+  // Check if setup is needed — redirect before showing login
+  useEffect(() => {
+    fetch('/api/setup')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.setupRequired) {
+          router.replace('/setup');
+        } else {
+          setCheckingSetup(false);
+        }
+      })
+      .catch(() => setCheckingSetup(false));
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +49,7 @@ export function SignInForm() {
         router.push('/dashboard');
         router.refresh();
       }
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -62,29 +64,13 @@ export function SignInForm() {
     await signIn('google', { callbackUrl: '/dashboard' });
   };
 
-  const handleDemoLogin = async (userEmail: string) => {
-    setError('');
-    setLoadingDemo(userEmail);
-
-    try {
-      const result = await signIn('credentials', {
-        email: userEmail,
-        password: 'demo123',
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError('Demo login failed. Please ensure seed data is loaded.');
-      } else {
-        router.push('/dashboard');
-        router.refresh();
-      }
-    } catch (err) {
-      setError('An error occurred. Please try again.');
-    } finally {
-      setLoadingDemo(null);
-    }
-  };
+  if (checkingSetup) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -179,7 +165,7 @@ export function SignInForm() {
             <Input
               id="password"
               type="password"
-              placeholder="••••••••"
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -198,45 +184,9 @@ export function SignInForm() {
           </Button>
         </form>
 
-        {/* Demo Accounts */}
-        <div className="space-y-3">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="bg-background px-2.5 text-muted-foreground">Demo accounts</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            {DEMO_USERS.map((user) => {
-              const Icon = user.icon;
-              const isLoading = loadingDemo === user.email;
-              return (
-                <button
-                  key={user.email}
-                  onClick={() => handleDemoLogin(user.email)}
-                  disabled={loadingDemo !== null}
-                  className="flex items-center gap-2.5 rounded-lg border bg-background p-3 text-left transition-colors hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[13px] font-medium">{user.role}</div>
-                    <div className="truncate text-[11px] text-muted-foreground">{user.email}</div>
-                  </div>
-                  {isLoading && (
-                    <div className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
         {/* Sign Up Link */}
         <div className="text-center">
-          <span className="text-[14px] text-muted-foreground">Don't have an account? </span>
+          <span className="text-[14px] text-muted-foreground">Don&apos;t have an account? </span>
           <Link href="/auth/signup" className="text-[14px] font-medium hover:underline">
             Sign up
           </Link>

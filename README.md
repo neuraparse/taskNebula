@@ -43,9 +43,74 @@ docker compose up -d
 
 ### 4. Open & Setup
 
-Go to **http://localhost:3000/setup** and create your admin account.
+Go to **http://localhost:3000** — you'll be redirected to `/setup` to create your admin account.
 
 That's it. You're running TaskNebula.
+
+### Docker Hub (no clone needed)
+
+```bash
+docker pull neuraparse/tasknebula:latest
+```
+
+Or use this minimal `docker-compose.yml`:
+
+```yaml
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tasknebula
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    image: neuraparse/tasknebula:latest
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/tasknebula
+      AUTH_SECRET: ${AUTH_SECRET} # generate: openssl rand -base64 32
+      AUTH_URL: ${APP_URL:-http://localhost:3000}
+      NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost:3000}
+      REDIS_URL: redis://redis:6379
+      SKIP_SEED: true
+    ports:
+      - '3000:3000'
+    volumes:
+      - uploads_data:/app/uploads
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads_data:
+```
+
+```bash
+# Generate secret and start
+echo "AUTH_SECRET=$(openssl rand -base64 32)" > .env
+docker compose up -d
+# Open http://localhost:3000 → /setup wizard
+```
 
 ---
 
@@ -197,6 +262,7 @@ tasknebula/
 | `GITHUB_CLIENT_SECRET` | No | - | GitHub OAuth secret |
 | `GOOGLE_CLIENT_ID` | No | - | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | No | - | Google OAuth secret |
+| `SKIP_SEED` | No | `false` | Skip demo data, use `/setup` for first admin |
 
 ### Docker Commands
 
