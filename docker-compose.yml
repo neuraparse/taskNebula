@@ -40,7 +40,6 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-tasknebula}
         AUTH_SECRET: ${AUTH_SECRET:-change-me-generate-with-openssl-rand-base64-32}
         AUTH_URL: ${APP_URL:-http://localhost:3000}
         NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost:3000}

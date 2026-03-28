@@ -5,7 +5,8 @@ const nextConfig: NextConfig = {
   // Enable standalone output for optimized Docker deployment
   // This creates a minimal production build with only necessary files
   output: 'standalone',
-  transpilePackages: ['@tasknebula/db', '@tasknebula/types'],
+  transpilePackages: ['@tasknebula/types'],
+  serverExternalPackages: ['@tasknebula/db', 'postgres', 'drizzle-orm'],
   eslint: {
     // Allow production builds to complete with ESLint warnings
     ignoreDuringBuilds: true,

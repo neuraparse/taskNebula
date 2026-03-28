@@ -48,23 +48,19 @@ COPY --from=deps /app/packages/config/node_modules ./packages/config/node_module
 COPY . .
 
 # Build arguments for environment variables needed at build time
-ARG DATABASE_URL
 ARG AUTH_SECRET
 ARG AUTH_URL
 ARG NEXT_PUBLIC_APP_URL
 
 # Set environment variables for build
-ENV DATABASE_URL=$DATABASE_URL
+# Dummy DATABASE_URL for build-time module evaluation only (no actual DB queries during build)
+# Real value is injected at runtime via docker-compose environment
+ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 ENV AUTH_SECRET=$AUTH_SECRET
 ENV AUTH_URL=$AUTH_URL
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-
-# Write .env so Next.js and Drizzle use build args, not stale fallbacks
-RUN echo "DATABASE_URL=$DATABASE_URL" > .env && \
-    echo "DATABASE_URL=$DATABASE_URL" > apps/web/.env && \
-    echo "DATABASE_URL=$DATABASE_URL" > packages/db/.env
 
 # Build the application
 RUN pnpm build
