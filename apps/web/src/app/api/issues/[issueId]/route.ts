@@ -4,6 +4,7 @@ import { getIssueById, updateIssue, deleteIssue, createActivity, createAuditLog,
 import { auth } from '@/auth';
 import { eq, and } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
+import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 
 type IssueAction = 'view' | 'edit' | 'delete' | 'assign' | 'transition' | 'schedule' | 'close' | 'reopen';
 
@@ -404,6 +405,33 @@ export async function PATCH(
       sprintId: currentIssue.sprintId || undefined,
       organizationId: currentIssue.organizationId,
     });
+
+    // Email notifications (fire-and-forget)
+    const projectName = currentIssue.key?.split('-')[0] || '';
+
+    if (updateData.assigneeId && updateData.assigneeId !== currentIssue.assigneeId) {
+      notifyIssueEvent({
+        eventType: 'issue_assigned',
+        recipientUserId: updateData.assigneeId,
+        actorUserId: session.user.id!,
+        organizationId: currentIssue.organizationId,
+        issueKey: currentIssue.key,
+        issueTitle: currentIssue.title,
+        projectName,
+      });
+    }
+
+    if (updateData.statusId && updateData.statusId !== currentIssue.statusId && currentIssue.assigneeId) {
+      notifyIssueEvent({
+        eventType: 'issue_status_changed',
+        recipientUserId: currentIssue.assigneeId,
+        actorUserId: session.user.id!,
+        organizationId: currentIssue.organizationId,
+        issueKey: currentIssue.key,
+        issueTitle: currentIssue.title,
+        projectName,
+      });
+    }
 
     return NextResponse.json(updatedIssueData);
   } catch (error) {

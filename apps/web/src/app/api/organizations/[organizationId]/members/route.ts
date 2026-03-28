@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/auth';
-import { db, users, organizationMembers, auditLogs } from '@tasknebula/db';
+import { db, users, organizationMembers, organizations, auditLogs, sendEmail } from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { hasPermission, getUserRole } from '@/lib/auth/permissions';
@@ -149,6 +149,33 @@ export async function POST(
     });
 
     publishEvent('member.added', session.user.id, { organizationId });
+
+    // Send invite email (fire-and-forget)
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+    const [org] = await db.select({ name: organizations.name }).from(organizations).where(eq(organizations.id, organizationId)).limit(1);
+    const [inviter] = await db.select({ name: users.name }).from(users).where(eq(users.id, session.user.id)).limit(1);
+
+    import('nodemailer').then(async (nodemailer) => {
+      const host = process.env.SMTP_HOST;
+      if (!host) return;
+      const transport = nodemailer.default.createTransport({
+        host,
+        port: parseInt(process.env.SMTP_PORT || '25'),
+        secure: process.env.SMTP_SECURE === 'true',
+        tls: { rejectUnauthorized: false },
+      });
+      await transport.sendMail({
+        from: process.env.EMAIL_FROM || 'TaskNebula <noreply@localhost>',
+        to: data.email,
+        subject: `You've been invited to ${org?.name || 'an organization'} on TaskNebula`,
+        html: `<h2>You're invited!</h2>
+<p><strong>${inviter?.name || 'A team member'}</strong> has invited you to join <strong>${org?.name || 'their organization'}</strong> on TaskNebula.</p>
+<p><a href="${appUrl}/auth/signin" style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">Accept Invitation</a></p>
+<p style="color:#666;font-size:13px;">Sign in with <strong>${data.email}</strong> to get started.</p>`,
+        text: `${inviter?.name || 'A team member'} invited you to ${org?.name || 'their organization'} on TaskNebula. Sign in at ${appUrl}/auth/signin`,
+      });
+      console.log('📧 Invite email sent to:', data.email);
+    }).catch(err => console.error('Invite email error:', err.message));
 
     return NextResponse.json({
       member: {

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getIssueComments, createComment, createActivity, createAuditLog, getIssueById } from '@tasknebula/db';
 import { auth } from '@/auth';
 import { createId } from '@paralleldrive/cuid2';
+import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 
 // Validation schema for creating a comment
 const createCommentSchema = z.object({
@@ -71,7 +72,7 @@ export async function POST(
       metadata: { commentId: newComment.id },
     });
 
-    // Get issue details for audit log
+    // Get issue details for audit log and notifications
     const issue = await getIssueById(issueId);
     if (issue) {
       await createAuditLog({
@@ -84,6 +85,34 @@ export async function POST(
         issueId,
         metadata: { commentId: newComment.id },
       });
+
+      // Notify assignee about new comment
+      if (issue.assigneeId) {
+        notifyIssueEvent({
+          eventType: 'issue_commented',
+          recipientUserId: issue.assigneeId,
+          actorUserId: session.user.id!,
+          organizationId: issue.organizationId,
+          issueKey: issue.key,
+          issueTitle: issue.title,
+          projectName: issue.key?.split('-')[0] || '',
+          extra: { commentBody: validatedData.content.substring(0, 200) },
+        });
+      }
+
+      // Notify reporter about new comment (if different from assignee)
+      if (issue.reporterId && issue.reporterId !== issue.assigneeId) {
+        notifyIssueEvent({
+          eventType: 'issue_commented',
+          recipientUserId: issue.reporterId,
+          actorUserId: session.user.id!,
+          organizationId: issue.organizationId,
+          issueKey: issue.key,
+          issueTitle: issue.title,
+          projectName: issue.key?.split('-')[0] || '',
+          extra: { commentBody: validatedData.content.substring(0, 200) },
+        });
+      }
     }
 
     return NextResponse.json(newComment, { status: 201 });

@@ -5,6 +5,7 @@ import { auth } from '@/auth';
 import { createId } from '@paralleldrive/cuid2';
 import { eq, and, desc, asc, sql } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
+import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 
 // Permission check helper for issues
 async function checkIssuePermission(
@@ -384,6 +385,19 @@ export async function POST(request: NextRequest) {
         sprintId: newIssue.sprintId || undefined,
         organizationId: newIssue.organizationId,
       });
+
+      // Notify assignee if issue was assigned on creation
+      if (newIssue.assigneeId) {
+        notifyIssueEvent({
+          eventType: 'issue_assigned',
+          recipientUserId: newIssue.assigneeId,
+          actorUserId: session.user.id!,
+          organizationId: newIssue.organizationId,
+          issueKey: newIssue.key,
+          issueTitle: newIssue.title,
+          projectName: project.key,
+        });
+      }
     } catch (insertError) {
       console.error('Insert error details:', insertError);
       throw insertError;
