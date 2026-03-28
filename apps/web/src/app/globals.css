@@ -121,31 +121,59 @@
   }
 }
 
-/* Landing Page Dark Theme */
+/* Landing Page Dark Theme — sim.ai-inspired design system */
 .landing-dark {
-  --landing-bg: #0a0a0a;
-  --landing-bg-elevated: #1a1a1a;
-  --landing-bg-card: #141414;
-  --landing-bg-surface: #111111;
-  --landing-border: #252525;
+  /* Backgrounds */
+  --landing-bg: #0c0c0c;
+  --landing-bg-elevated: #1c1c1c;
+  --landing-bg-card: #161616;
+  --landing-bg-surface: #121212;
+  --landing-bg-hover: #212121;
+  --landing-bg-section: #0c0c0c;
+
+  /* Borders */
+  --landing-border: #2a2a2a;
+  --landing-border-strong: #3d3d3d;
   --landing-border-light: #e5e5e5;
-  --landing-text: #f5f5f5;
-  --landing-text-muted: rgba(245, 245, 245, 0.45);
-  --landing-text-subtle: rgba(245, 245, 245, 0.55);
-  --landing-accent-blue: #3b82f6;
-  --landing-accent-green: #22c55e;
-  --landing-accent-amber: #f59e0b;
-  --landing-accent-violet: #8b5cf6;
+
+  /* Text */
+  --landing-text: #e6e6e6;
+  --landing-text-dark: #f6f6f6;
+  --landing-text-body: #cdcdcd;
+  --landing-text-muted: rgba(246, 246, 240, 0.40);
+  --landing-text-subtle: rgba(246, 246, 240, 0.55);
+  --landing-text-icon: #939393;
+
+  /* Brand accents */
+  --landing-accent-blue: #2ABBF8;
+  --landing-accent-green: #33c482;
+  --landing-accent-amber: #FFCC02;
+  --landing-accent-violet: #701FFC;
+  --landing-accent-pink: #FA4EDF;
+
+  /* Divider */
+  --divider: #2a2a2a;
+  --white: #ffffff;
+
   color-scheme: dark;
 }
 
+/* Font weight utilities matching sim.ai's Season Sans weight scale */
+@layer utilities {
+  .font-\[420\] { font-weight: 420; }
+  .font-\[430\] { font-weight: 430; }
+  .font-\[440\] { font-weight: 440; }
+  .font-\[450\] { font-weight: 450; }
+}
+
+/* Marquee animation */
 @keyframes landing-marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
 
 .landing-marquee-track {
-  animation: landing-marquee 40s linear infinite;
+  animation: landing-marquee 30s linear infinite;
 }
 
 .landing-marquee:hover .landing-marquee-track {
@@ -156,6 +184,20 @@
   .landing-marquee-track {
     animation: none;
   }
+}
+
+/* Dot grid separator pattern */
+.dot-grid-separator {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8px, 1fr));
+  gap: 6px;
+  place-items: center;
+}
+
+/* Subtle dot background pattern */
+.dot-bg {
+  background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
 /* Typography */
