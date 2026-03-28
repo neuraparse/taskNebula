@@ -59,8 +59,12 @@ ENV AUTH_SECRET=$AUTH_SECRET
 ENV AUTH_URL=$AUTH_URL
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV NODE_ENV=production
-# Disable telemetry during build
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Write .env so Next.js and Drizzle use build args, not stale fallbacks
+RUN echo "DATABASE_URL=$DATABASE_URL" > .env && \
+    echo "DATABASE_URL=$DATABASE_URL" > apps/web/.env && \
+    echo "DATABASE_URL=$DATABASE_URL" > packages/db/.env
 
 # Build the application
 RUN pnpm build
