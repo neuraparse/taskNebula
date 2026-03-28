@@ -170,9 +170,9 @@ export async function POST(
         subject: `You've been invited to ${org?.name || 'an organization'} on TaskNebula`,
         html: `<h2>You're invited!</h2>
 <p><strong>${inviter?.name || 'A team member'}</strong> has invited you to join <strong>${org?.name || 'their organization'}</strong> on TaskNebula.</p>
-<p><a href="${appUrl}/auth/signin" style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">Accept Invitation</a></p>
-<p style="color:#666;font-size:13px;">Sign in with <strong>${data.email}</strong> to get started.</p>`,
-        text: `${inviter?.name || 'A team member'} invited you to ${org?.name || 'their organization'} on TaskNebula. Sign in at ${appUrl}/auth/signin`,
+<p><a href="${appUrl}/auth/signup" style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">Accept Invitation</a></p>
+<p style="color:#666;font-size:13px;">Create your account with <strong>${data.email}</strong> to get started.</p>`,
+        text: `${inviter?.name || 'A team member'} invited you to ${org?.name || 'their organization'} on TaskNebula. Create your account at ${appUrl}/auth/signup`,
       });
       console.log('📧 Invite email sent to:', data.email);
     }).catch(err => console.error('Invite email error:', err.message));

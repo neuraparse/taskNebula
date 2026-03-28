@@ -36,8 +36,67 @@ export interface SendEmailResult {
 }
 
 /**
+ * Built-in fallback templates used when no DB templates exist.
+ * These ensure emails work out of the box without seeding.
+ */
+const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; text: string }> = {
+  issue_assigned: {
+    subject: '[{{projectName}}] {{issueKey}} assigned to you — {{issueTitle}}',
+    html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto">
+<p><strong>{{actorName}}</strong> assigned <strong>{{issueKey}}</strong> to you.</p>
+<h3 style="margin:8px 0">{{issueTitle}}</h3>
+<p>Project: {{projectName}}</p>
+<p><a href="{{issueUrl}}" style="display:inline-block;padding:10px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px">View Issue</a></p>
+<p style="color:#888;font-size:12px"><a href="{{unsubscribeUrl}}">Notification settings</a></p></div>`,
+    text: '{{actorName}} assigned {{issueKey}} to you: {{issueTitle}}\n\nProject: {{projectName}}\nView: {{issueUrl}}',
+  },
+  issue_status_changed: {
+    subject: '[{{projectName}}] {{issueKey}} status changed — {{issueTitle}}',
+    html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto">
+<p><strong>{{actorName}}</strong> changed the status of <strong>{{issueKey}}</strong>.</p>
+<h3 style="margin:8px 0">{{issueTitle}}</h3>
+<p>New status: <strong>{{newStatus}}</strong></p>
+<p>Project: {{projectName}}</p>
+<p><a href="{{issueUrl}}" style="display:inline-block;padding:10px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px">View Issue</a></p>
+<p style="color:#888;font-size:12px"><a href="{{unsubscribeUrl}}">Notification settings</a></p></div>`,
+    text: '{{actorName}} changed status of {{issueKey}}: {{issueTitle}}\nNew status: {{newStatus}}\n\nProject: {{projectName}}\nView: {{issueUrl}}',
+  },
+  issue_commented: {
+    subject: '[{{projectName}}] New comment on {{issueKey}} — {{issueTitle}}',
+    html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto">
+<p><strong>{{actorName}}</strong> commented on <strong>{{issueKey}}</strong>.</p>
+<h3 style="margin:8px 0">{{issueTitle}}</h3>
+<blockquote style="border-left:3px solid #ddd;padding-left:12px;color:#555;margin:12px 0">{{commentBody}}</blockquote>
+<p>Project: {{projectName}}</p>
+<p><a href="{{issueUrl}}" style="display:inline-block;padding:10px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px">View Comment</a></p>
+<p style="color:#888;font-size:12px"><a href="{{unsubscribeUrl}}">Notification settings</a></p></div>`,
+    text: '{{actorName}} commented on {{issueKey}}: {{issueTitle}}\n\n"{{commentBody}}"\n\nProject: {{projectName}}\nView: {{issueUrl}}',
+  },
+  issue_created: {
+    subject: '[{{projectName}}] New issue {{issueKey}} — {{issueTitle}}',
+    html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto">
+<p><strong>{{actorName}}</strong> created <strong>{{issueKey}}</strong> and assigned it to you.</p>
+<h3 style="margin:8px 0">{{issueTitle}}</h3>
+<p>Project: {{projectName}}</p>
+<p><a href="{{issueUrl}}" style="display:inline-block;padding:10px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px">View Issue</a></p>
+<p style="color:#888;font-size:12px"><a href="{{unsubscribeUrl}}">Notification settings</a></p></div>`,
+    text: '{{actorName}} created {{issueKey}} and assigned it to you: {{issueTitle}}\n\nProject: {{projectName}}\nView: {{issueUrl}}',
+  },
+  issue_mentioned: {
+    subject: '[{{projectName}}] You were mentioned in {{issueKey}} — {{issueTitle}}',
+    html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto">
+<p><strong>{{actorName}}</strong> mentioned you in <strong>{{issueKey}}</strong>.</p>
+<h3 style="margin:8px 0">{{issueTitle}}</h3>
+<p>Project: {{projectName}}</p>
+<p><a href="{{issueUrl}}" style="display:inline-block;padding:10px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px">View Issue</a></p>
+<p style="color:#888;font-size:12px"><a href="{{unsubscribeUrl}}">Notification settings</a></p></div>`,
+    text: '{{actorName}} mentioned you in {{issueKey}}: {{issueTitle}}\n\nProject: {{projectName}}\nView: {{issueUrl}}',
+  },
+};
+
+/**
  * Replace template variables with actual values
- * 
+ *
  * Example:
  * replaceVariables("Hello {{userName}}", { userName: "John" }) => "Hello John"
  */
@@ -206,19 +265,19 @@ export async function sendEmail(params: EmailParams): Promise<SendEmailResult> {
       }
     }
 
-    // Get template
+    // Get template from DB, fall back to built-in templates
     const template = await getTemplate(params.organizationId, params.templateType);
+    const builtin = BUILTIN_TEMPLATES[params.templateType];
 
-    if (!template) {
-      // No template - use a simple fallback
+    if (!template && !builtin) {
       console.warn(`No email template found for type: ${params.templateType}`);
       return { success: false, error: 'Template not found' };
     }
 
     // Replace variables in subject and body
-    const subject = replaceVariables(template.subject, params.variables);
-    const htmlBody = replaceVariables(template.htmlBody, params.variables);
-    const textBody = replaceVariables(template.textBody, params.variables);
+    const subject = replaceVariables(template?.subject ?? builtin!.subject, params.variables);
+    const htmlBody = replaceVariables(template?.htmlBody ?? builtin!.html, params.variables);
+    const textBody = replaceVariables(template?.textBody ?? builtin!.text, params.variables);
 
     const from = process.env.EMAIL_FROM || 'TaskNebula <noreply@localhost>';
 
