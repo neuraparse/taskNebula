@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, users } from '@tasknebula/db';
-import { eq } from 'drizzle-orm';
+import { db, users, organizationMembers } from '@tasknebula/db';
+import { eq, and } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request: NextRequest) {
@@ -29,6 +29,43 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingUser) {
+      // Allow invited users to complete signup by setting their password
+      if (existingUser.status === 'invited' && !existingUser.password) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const [updatedUser] = await db
+          .update(users)
+          .set({
+            name,
+            password: hashedPassword,
+            status: 'active',
+          })
+          .where(eq(users.id, existingUser.id))
+          .returning();
+
+        // Activate any pending org memberships
+        await db
+          .update(organizationMembers)
+          .set({ status: 'active' })
+          .where(
+            and(
+              eq(organizationMembers.userId, existingUser.id),
+              eq(organizationMembers.status, 'invited')
+            )
+          );
+
+        return NextResponse.json(
+          {
+            message: 'Account activated successfully',
+            user: {
+              id: updatedUser.id,
+              name: updatedUser.name,
+              email: updatedUser.email,
+            },
+          },
+          { status: 201 }
+        );
+      }
+
       return NextResponse.json(
         { error: 'User with this email already exists' },
         { status: 400 }
