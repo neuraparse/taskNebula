@@ -3,7 +3,7 @@
 import { KanbanColumn } from './kanban-column';
 import { KanbanCard } from './kanban-card';
 import { AddColumnDialog } from './add-column-dialog';
-import { BoardFiltersBar, BoardFilters } from './board-filters';
+import { BoardFilters } from './board-filters';
 import { useIssues, useUpdateIssue } from '@/lib/hooks/use-issues';
 import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
 import { Loader2, Plus } from 'lucide-react';
@@ -29,7 +29,13 @@ interface WorkflowStatus {
   position: number;
 }
 
-export function KanbanBoard({ projectId, sprintId }: { projectId: string; sprintId?: string }) {
+interface KanbanBoardProps {
+  projectId: string;
+  sprintId?: string;
+  filters: BoardFilters;
+}
+
+export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) {
   const { data: issues, isLoading, error } = useIssues({ projectId, sprintId });
   const updateIssue = useUpdateIssue();
   const queryClient = useQueryClient();
@@ -38,14 +44,7 @@ export function KanbanBoard({ projectId, sprintId }: { projectId: string; sprint
   const [workflowStatuses, setWorkflowStatuses] = useState<WorkflowStatus[]>([]);
   const [loadingStatuses, setLoadingStatuses] = useState(true);
   const [addColumnOpen, setAddColumnOpen] = useState(false);
-  const [filters, setFilters] = useState<BoardFilters>({
-    search: '',
-    priority: [],
-    assignee: [],
-    labels: [],
-  });
 
-  // Fetch workflow statuses
   const fetchStatuses = async () => {
     try {
       const response = await fetch(`/api/projects/${projectId}/workflow-statuses`);
@@ -64,12 +63,10 @@ export function KanbanBoard({ projectId, sprintId }: { projectId: string; sprint
     fetchStatuses();
   }, [projectId]);
 
-  // Filter issues
   const filteredIssues = useMemo(() => {
     if (!issues) return [];
 
     return issues.filter((issue) => {
-      // Search filter
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
         const matchesSearch =
@@ -79,7 +76,6 @@ export function KanbanBoard({ projectId, sprintId }: { projectId: string; sprint
         if (!matchesSearch) return false;
       }
 
-      // Priority filter
       if (filters.priority.length > 0) {
         if (!filters.priority.includes(issue.priority)) return false;
       }
@@ -112,7 +108,6 @@ export function KanbanBoard({ projectId, sprintId }: { projectId: string; sprint
     const issue = filteredIssues?.find((i) => i.id === issueId);
     if (!issue || issue.statusId === newStatusId) return;
 
-    // Optimistically update the cache
     const queryKey = ['issues', { projectId, sprintId }];
     queryClient.setQueryData(queryKey, (oldData: any) => {
       if (!oldData?.issues) return oldData;
@@ -124,7 +119,6 @@ export function KanbanBoard({ projectId, sprintId }: { projectId: string; sprint
       };
     });
 
-    // Update on server
     updateIssue.mutate(
       {
         issueId,
@@ -173,17 +167,6 @@ export function KanbanBoard({ projectId, sprintId }: { projectId: string; sprint
   return (
     <>
       <div className="flex flex-col h-full">
-        {/* Filters */}
-        <div className="px-5 pt-4 pb-3 border-b bg-background/95 backdrop-blur">
-          <BoardFiltersBar
-            filters={filters}
-            onFiltersChange={setFilters}
-            issueCount={issues?.length || 0}
-            filteredCount={filteredIssues.length}
-          />
-        </div>
-
-        {/* Board */}
         <DndContext
           sensors={sensors}
           onDragStart={handleDragStart}
@@ -236,7 +219,6 @@ export function KanbanBoard({ projectId, sprintId }: { projectId: string; sprint
               );
             })}
 
-            {/* Add Column Button */}
             <div className="flex-shrink-0 w-[300px]">
               <Button
                 variant="ghost"
@@ -283,7 +265,6 @@ export function KanbanBoard({ projectId, sprintId }: { projectId: string; sprint
         </DndContext>
       </div>
 
-      {/* Issue Detail Modal */}
       {selectedIssueId && (
         <IssueDetailModal
           issueId={selectedIssueId}
@@ -292,7 +273,6 @@ export function KanbanBoard({ projectId, sprintId }: { projectId: string; sprint
         />
       )}
 
-      {/* Add Column Dialog */}
       <AddColumnDialog
         open={addColumnOpen}
         onOpenChange={setAddColumnOpen}

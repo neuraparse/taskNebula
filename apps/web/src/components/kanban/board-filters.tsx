@@ -8,16 +8,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Search, Filter, X, Users, Tag, AlertCircle } from 'lucide-react';
+import { Search, Filter, X, AlertCircle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 export interface BoardFilters {
   search: string;
@@ -34,12 +28,15 @@ interface BoardFiltersProps {
 }
 
 export function BoardFiltersBar({ filters, onFiltersChange, issueCount, filteredCount }: BoardFiltersProps) {
-  const [open, setOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
-  const activeFilterCount = 
-    filters.priority.length + 
-    filters.assignee.length + 
+  const activeFilterCount =
+    filters.priority.length +
+    filters.assignee.length +
     filters.labels.length;
+
+  const hasAnyFilter = filters.search || activeFilterCount > 0;
 
   const clearFilters = () => {
     onFiltersChange({
@@ -48,6 +45,7 @@ export function BoardFiltersBar({ filters, onFiltersChange, issueCount, filtered
       assignee: [],
       labels: [],
     });
+    setSearchOpen(false);
   };
 
   const removeFilter = (type: keyof BoardFilters, value: string) => {
@@ -62,157 +60,152 @@ export function BoardFiltersBar({ filters, onFiltersChange, issueCount, filtered
   };
 
   return (
-    <div className="space-y-3">
-      {/* Search & Filter Bar */}
-      <div className="flex items-center gap-2">
-        {/* Search */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    <div className="flex items-center gap-2">
+      {/* Search toggle */}
+      {searchOpen ? (
+        <div className="relative w-56">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             placeholder="Search issues..."
             value={filters.search}
             onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
-            className="pl-9 h-9 bg-background/60 backdrop-blur border-muted-foreground/20"
+            className="pl-8 h-8 text-xs"
+            autoFocus
+            onBlur={() => {
+              if (!filters.search) setSearchOpen(false);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                onFiltersChange({ ...filters, search: '' });
+                setSearchOpen(false);
+              }
+            }}
           />
-          {filters.search && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-              onClick={() => onFiltersChange({ ...filters, search: '' })}
-            >
-              <X className="h-3.5 w-3.5" />
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-0.5 top-1/2 -translate-y-1/2 h-6 w-6"
+            onClick={() => {
+              onFiltersChange({ ...filters, search: '' });
+              setSearchOpen(false);
+            }}
+          >
+            <X className="h-3 w-3" />
+          </Button>
         </div>
+      ) : (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+          onClick={() => setSearchOpen(true)}
+        >
+          <Search className="h-3.5 w-3.5" />
+        </Button>
+      )}
 
-        {/* Filter Popover */}
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 gap-2">
-              <Filter className="h-4 w-4" />
-              Filters
-              {activeFilterCount > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                  {activeFilterCount}
-                </Badge>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80" align="start">
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-semibold text-sm mb-3">Filter Issues</h4>
-              </div>
-
-              {/* Priority Filter */}
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <AlertCircle className="h-3.5 w-3.5" />
-                  Priority
-                </Label>
-                <div className="flex flex-wrap gap-1.5">
-                  {['critical', 'high', 'medium', 'low'].map((priority) => (
-                    <Button
-                      key={priority}
-                      variant={filters.priority.includes(priority) ? 'default' : 'outline'}
-                      size="sm"
-                      className="h-7 text-xs capitalize"
-                      onClick={() => {
-                        const newPriority = filters.priority.includes(priority)
-                          ? filters.priority.filter((p) => p !== priority)
-                          : [...filters.priority, priority];
-                        onFiltersChange({ ...filters, priority: newPriority });
-                      }}
-                    >
-                      {priority}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Clear Filters */}
-              {activeFilterCount > 0 && (
+      {/* Filter Popover */}
+      <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              'h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground',
+              activeFilterCount > 0 && 'text-foreground'
+            )}
+          >
+            <Filter className="h-3.5 w-3.5" />
+            Filter
+            {activeFilterCount > 0 && (
+              <Badge variant="secondary" className="h-4 px-1 text-[10px] min-w-[16px] justify-center">
+                {activeFilterCount}
+              </Badge>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-72" align="start">
+          <div className="space-y-3">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Priority</h4>
+            <div className="flex flex-wrap gap-1.5">
+              {['critical', 'high', 'medium', 'low'].map((priority) => (
                 <Button
-                  variant="ghost"
+                  key={priority}
+                  variant={filters.priority.includes(priority) ? 'default' : 'outline'}
                   size="sm"
-                  className="w-full"
+                  className="h-7 text-xs capitalize"
                   onClick={() => {
-                    clearFilters();
-                    setOpen(false);
+                    const newPriority = filters.priority.includes(priority)
+                      ? filters.priority.filter((p) => p !== priority)
+                      : [...filters.priority, priority];
+                    onFiltersChange({ ...filters, priority: newPriority });
                   }}
                 >
-                  Clear all filters
+                  {priority}
                 </Button>
-              )}
+              ))}
             </div>
-          </PopoverContent>
-        </Popover>
 
-        {/* Results Count */}
-        <div className="text-xs text-muted-foreground ml-auto">
-          {filteredCount !== issueCount ? (
-            <span>
-              Showing <span className="font-semibold text-foreground">{filteredCount}</span> of{' '}
-              <span className="font-semibold">{issueCount}</span>
-            </span>
-          ) : (
-            <span>
-              <span className="font-semibold text-foreground">{issueCount}</span> issues
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Active Filters */}
-      {(filters.search || activeFilterCount > 0) && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-muted-foreground">Active filters:</span>
-
-          {filters.search && (
-            <Badge variant="secondary" className="gap-1 pl-2 pr-1">
-              <Search className="h-3 w-3" />
-              {filters.search}
+            {activeFilterCount > 0 && (
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-4 w-4 hover:bg-transparent"
+                size="sm"
+                className="w-full h-7 text-xs"
+                onClick={() => {
+                  clearFilters();
+                  setFilterOpen(false);
+                }}
+              >
+                Clear all filters
+              </Button>
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      {/* Issue count */}
+      <span className="text-[11px] text-muted-foreground tabular-nums">
+        {filteredCount !== issueCount ? (
+          <>{filteredCount}/{issueCount}</>
+        ) : (
+          <>{issueCount} issues</>
+        )}
+      </span>
+
+      {/* Active filter badges */}
+      {hasAnyFilter && (
+        <>
+          <div className="h-4 w-px bg-border" />
+          {filters.search && (
+            <Badge variant="secondary" className="h-5 gap-1 pl-1.5 pr-0.5 text-[10px]">
+              &quot;{filters.search}&quot;
+              <button
+                className="ml-0.5 hover:bg-muted rounded p-0.5"
                 onClick={() => removeFilter('search', '')}
               >
-                <X className="h-3 w-3" />
-              </Button>
+                <X className="h-2.5 w-2.5" />
+              </button>
             </Badge>
           )}
-
           {filters.priority.map((priority) => (
-            <Badge key={priority} variant="secondary" className="gap-1 pl-2 pr-1 capitalize">
-              <AlertCircle className="h-3 w-3" />
+            <Badge key={priority} variant="secondary" className="h-5 gap-1 pl-1.5 pr-0.5 text-[10px] capitalize">
               {priority}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-4 w-4 hover:bg-transparent"
+              <button
+                className="ml-0.5 hover:bg-muted rounded p-0.5"
                 onClick={() => removeFilter('priority', priority)}
               >
-                <X className="h-3 w-3" />
-              </Button>
+                <X className="h-2.5 w-2.5" />
+              </button>
             </Badge>
           ))}
-
-          {activeFilterCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 text-xs"
-              onClick={clearFilters}
-            >
-              Clear all
-            </Button>
-          )}
-        </div>
+          <button
+            className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+            onClick={clearFilters}
+          >
+            Clear
+          </button>
+        </>
       )}
     </div>
   );
 }
-
-
