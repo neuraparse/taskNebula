@@ -16,7 +16,7 @@ export default function HomePage() {
           </Link>
 
           <div className="hidden items-center gap-0.5 lg:flex">
-            {['Features', 'Open Source', 'Enterprise', 'Pricing'].map((item) => (
+            {['Features', 'Open Source', 'Security', 'Pricing'].map((item) => (
               <a key={item} href={`#${item.toLowerCase().replace(' ', '-')}`} className="px-3.5 py-1.5 text-[13px] font-[420] text-[var(--landing-text-body)] transition-colors duration-200 hover:text-[var(--landing-text)]">
                 {item}
               </a>
@@ -196,14 +196,14 @@ export default function HomePage() {
 
         <DotSeparator />
 
-        {/* ─── Enterprise ─── */}
-        <section id="enterprise" className="bg-[var(--landing-bg)]">
+        {/* ─── Security & Control ─── */}
+        <section id="security" className="bg-[var(--landing-bg)]">
           <div className="mx-auto max-w-screen-xl px-4 pt-[60px] pb-10 sm:px-8 lg:px-20 lg:pt-[100px]">
             <div className="flex flex-col items-start gap-3 sm:gap-4">
-              <SectionBadge color="var(--landing-accent-amber)" label="Enterprise" />
+              <SectionBadge color="var(--landing-accent-amber)" label="Security" />
               <h2 className="max-w-[600px] text-balance text-[32px] font-[500] leading-[100%] tracking-[-0.02em] text-[var(--landing-text-dark)] sm:text-[36px] lg:text-[40px]">
-                Enterprise features for
-                <br />secure, scalable teams
+                Built-in security for
+                <br />teams of any size
               </h2>
             </div>
 
@@ -218,12 +218,12 @@ export default function HomePage() {
                     </p>
                   </div>
                   <div className="mt-5 px-6 md:px-8">
-                    <AuditRow color="var(--landing-accent-blue)" initials="S" name="Sarah K." action='Updated sprint goal' time="just now" opacity={0.75} />
-                    <AuditRow color="var(--landing-accent-amber)" initials="D" name="Danny S." action="Created branch 'feat/api-v2'" time="2m ago" opacity={0.5} />
-                    <AuditRow color="var(--landing-accent-green)" initials="A" name="Abhay K." action='Moved 3 issues to Done' time="5m ago" opacity={0.35} />
-                    <AuditRow color="var(--landing-accent-violet)" initials="S" name="Sid G." action='Added webhook integration' time="12m ago" opacity={0.22} />
-                    <AuditRow color="var(--landing-accent-blue)" initials="S" name="Sarah K." action='Uploaded "Q3_Report.pdf"' time="32s ago" opacity={0.12} />
-                    <AuditRow color="var(--landing-accent-pink)" initials="T" name="Theo L." action="Changed permissions for sam@acme.com" time="1m ago" opacity={0.05} />
+                    <AuditRow color="var(--landing-accent-blue)" initials="S" name="Sarah K." action='Completed sprint "v2.1 Release"' time="just now" opacity={0.75} />
+                    <AuditRow color="var(--landing-accent-amber)" initials="D" name="Danny S." action='Moved TN-142 to In Review' time="2m ago" opacity={0.5} />
+                    <AuditRow color="var(--landing-accent-green)" initials="A" name="Abhay K." action='Created issue "Fix auth redirect"' time="5m ago" opacity={0.35} />
+                    <AuditRow color="var(--landing-accent-violet)" initials="S" name="Sid G." action='Changed role of alex@team.io to Admin' time="12m ago" opacity={0.22} />
+                    <AuditRow color="var(--landing-accent-blue)" initials="S" name="Sarah K." action='Assigned TN-89 to Danny S.' time="32s ago" opacity={0.12} />
+                    <AuditRow color="var(--landing-accent-pink)" initials="T" name="Theo L." action='Added custom workflow "Bug Triage"' time="1m ago" opacity={0.05} />
                   </div>
                   <div className="h-6 md:h-8" />
                 </div>
@@ -235,26 +235,26 @@ export default function HomePage() {
                     </p>
                   </div>
                   <div className="mt-5 space-y-2.5 px-6 pb-6 md:px-8 md:pb-8">
-                    <PermLabel label="Providers" />
+                    <PermLabel label="Issues" />
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                      <PermDot enabled label="OpenAI" color="var(--landing-accent-pink)" />
-                      <PermDot enabled label="Anthropic" color="var(--landing-accent-pink)" />
-                      <PermDot enabled={false} label="Google" />
-                      <PermDot enabled label="GitHub" color="var(--landing-accent-pink)" />
+                      <PermDot enabled label="Create Issues" color="var(--landing-accent-blue)" />
+                      <PermDot enabled label="Assign Issues" color="var(--landing-accent-blue)" />
+                      <PermDot enabled label="Transition Issues" color="var(--landing-accent-blue)" />
+                      <PermDot enabled={false} label="Delete Issues" />
                     </div>
-                    <PermLabel label="Workspace" />
+                    <PermLabel label="Sprint Management" />
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                      <PermDot enabled label="Knowledge Base" color="var(--landing-accent-blue)" />
-                      <PermDot enabled label="Tables" color="var(--landing-accent-blue)" />
-                      <PermDot enabled={false} label="Copilot" />
-                      <PermDot enabled={false} label="Environment" />
+                      <PermDot enabled label="Manage Sprints" color="var(--landing-accent-amber)" />
+                      <PermDot enabled label="Start Sprint" color="var(--landing-accent-amber)" />
+                      <PermDot enabled={false} label="Delete Sprint" />
+                      <PermDot enabled label="Complete Sprint" color="var(--landing-accent-amber)" />
                     </div>
-                    <PermLabel label="Tools" />
+                    <PermLabel label="Members & Workflows" />
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                      <PermDot enabled label="Webhooks" color="var(--landing-accent-green)" />
-                      <PermDot enabled={false} label="Custom Tools" />
-                      <PermDot enabled label="API Keys" color="var(--landing-accent-green)" />
-                      <PermDot enabled label="Invitations" color="var(--landing-accent-green)" />
+                      <PermDot enabled label="Invite Members" color="var(--landing-accent-green)" />
+                      <PermDot enabled={false} label="Remove Members" />
+                      <PermDot enabled label="Manage Workflows" color="var(--landing-accent-green)" />
+                      <PermDot enabled label="Change Roles" color="var(--landing-accent-green)" />
                     </div>
                   </div>
                 </div>
@@ -268,11 +268,11 @@ export default function HomePage() {
               </div>
 
               {/* Marquee */}
-              <Marquee tags={['RBAC', 'OAuth 2.0', 'Audit Logs', 'Webhooks', 'API Keys', 'Custom Workflows', 'Data Export', 'Self-Hosting', 'Granular Permissions', 'GitHub Sync', 'Sprint Analytics', 'Issue Security']} />
+              <Marquee tags={['RBAC', 'Audit Logs', 'Custom Workflows', 'Self-Hosting', '35+ Permissions', 'Sprint Management', 'Kanban Boards', 'Issue Tracking', 'Team Roles', 'Docker Deploy', 'Real-Time Updates', 'MIT Licensed']} />
 
               {/* CTA row */}
               <div className="flex items-center justify-between border-t border-[var(--landing-border)] px-6 py-5 md:px-8 md:py-6">
-                <p className="font-[420] text-[color-mix(in_srgb,var(--landing-text-subtle)_40%,transparent)] text-base leading-[150%] tracking-[0.02em]">Need enterprise features?</p>
+                <p className="font-[420] text-[color-mix(in_srgb,var(--landing-text-subtle)_40%,transparent)] text-base leading-[150%] tracking-[0.02em]">All included, free and open source</p>
                 <Link href="/auth/signup" className="group/cta inline-flex h-[32px] items-center gap-1.5 rounded-[5px] border border-white bg-white px-2.5 text-[14px] font-[420] text-black transition-colors hover:border-[#E0E0E0] hover:bg-[#E0E0E0]">
                   Get started
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -340,7 +340,7 @@ export default function HomePage() {
             <FooterCol title="Product" links={[
               { label: 'Features', href: '#features' },
               { label: 'Pricing', href: '#pricing' },
-              { label: 'Enterprise', href: '#enterprise' },
+              { label: 'Security', href: '#security' },
               { label: 'Docker Hub', href: 'https://hub.docker.com/r/neuraparse/tasknebula', ext: true },
             ]} />
             <FooterCol title="Resources" links={[

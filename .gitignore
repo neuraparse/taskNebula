@@ -103,3 +103,4 @@ uploads_data/
 apps/web/uploads/*
 !apps/web/uploads/.gitkeep
 docker-compose.override.yml
+todo.txt
