@@ -91,7 +91,7 @@ export function KanbanBoard({ projectId, sprintId }: { projectId: string; sprint
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5, // 5px movement required to start drag
+        distance: 5,
       },
     })
   );
@@ -109,7 +109,6 @@ export function KanbanBoard({ projectId, sprintId }: { projectId: string; sprint
     const issueId = active.id as string;
     const newStatusId = over.id as string;
 
-    // Find the issue being dragged
     const issue = filteredIssues?.find((i) => i.id === issueId);
     if (!issue || issue.statusId === newStatusId) return;
 
@@ -133,7 +132,6 @@ export function KanbanBoard({ projectId, sprintId }: { projectId: string; sprint
       },
       {
         onError: () => {
-          // Revert on error
           queryClient.invalidateQueries({ queryKey });
         },
       }
@@ -176,7 +174,7 @@ export function KanbanBoard({ projectId, sprintId }: { projectId: string; sprint
     <>
       <div className="flex flex-col h-full">
         {/* Filters */}
-        <div className="px-4 pt-4 pb-3 border-b bg-background/95 backdrop-blur">
+        <div className="px-5 pt-4 pb-3 border-b bg-background/95 backdrop-blur">
           <BoardFiltersBar
             filters={filters}
             onFiltersChange={setFilters}
@@ -192,7 +190,7 @@ export function KanbanBoard({ projectId, sprintId }: { projectId: string; sprint
           onDragEnd={handleDragEnd}
           collisionDetection={closestCorners}
         >
-          <div className="flex flex-1 gap-3 overflow-x-auto p-4 custom-scrollbar">
+          <div className="flex flex-1 gap-4 overflow-x-auto px-5 py-4 custom-scrollbar">
             {workflowStatuses.map((status) => {
               const columnIssues = filteredIssues.filter((issue) => issue.statusId === status.id);
               return (
@@ -207,41 +205,42 @@ export function KanbanBoard({ projectId, sprintId }: { projectId: string; sprint
                   issueCount={columnIssues.length}
                   projectId={projectId}
                 >
-                <div className="space-y-2">
-                  {columnIssues.map((issue) => (
-                    <KanbanCard
-                      key={issue.id}
-                      issue={{
-                        id: issue.key,
-                        title: issue.title,
-                        priority: issue.priority as 'low' | 'medium' | 'high',
-                        assignee: issue.assignee
-                          ? {
-                              name: issue.assignee.name || issue.assignee.email,
-                              avatar:
-                                issue.assignee.name
-                                  ?.split(' ')
-                                  .map((n) => n[0])
-                                  .join('')
-                                  .toUpperCase() || issue.assignee.email?.[0]?.toUpperCase() || '?',
-                            }
-                          : undefined,
-                        labels: [], // TODO: Add labels support
-                      }}
-                      draggableId={issue.id}
-                      onClick={() => setSelectedIssueId(issue.id)}
-                    />
-                  ))}
-                </div>
-              </KanbanColumn>
-            );
-          })}
+                  <div className="space-y-2">
+                    {columnIssues.map((issue) => (
+                      <KanbanCard
+                        key={issue.id}
+                        issue={{
+                          id: issue.key,
+                          title: issue.title,
+                          priority: issue.priority as 'low' | 'medium' | 'high' | 'critical',
+                          type: issue.type as 'task' | 'bug' | 'story' | 'epic',
+                          assignee: issue.assignee
+                            ? {
+                                name: issue.assignee.name || issue.assignee.email,
+                                avatar:
+                                  issue.assignee.name
+                                    ?.split(' ')
+                                    .map((n) => n[0])
+                                    .join('')
+                                    .toUpperCase() || issue.assignee.email?.[0]?.toUpperCase() || '?',
+                              }
+                            : undefined,
+                          labels: [],
+                        }}
+                        draggableId={issue.id}
+                        onClick={() => setSelectedIssueId(issue.id)}
+                      />
+                    ))}
+                  </div>
+                </KanbanColumn>
+              );
+            })}
 
             {/* Add Column Button */}
-            <div className="flex-shrink-0 w-72">
+            <div className="flex-shrink-0 w-[300px]">
               <Button
                 variant="ghost"
-                className="w-full h-12 border-2 border-dashed rounded-lg border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50 transition-colors"
+                className="w-full h-12 border-2 border-dashed rounded-xl border-muted-foreground/20 hover:border-primary/40 hover:bg-primary/5 transition-all text-muted-foreground/50 hover:text-primary"
                 onClick={() => setAddColumnOpen(true)}
               >
                 <Plus className="mr-2 h-4 w-4" />
@@ -250,17 +249,20 @@ export function KanbanBoard({ projectId, sprintId }: { projectId: string; sprint
             </div>
           </div>
 
-          <DragOverlay dropAnimation={{
-            duration: 200,
-            easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
-          }}>
+          <DragOverlay
+            dropAnimation={{
+              duration: 200,
+              easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+            }}
+          >
             {activeIssue ? (
-              <div className="rotate-3 scale-105">
+              <div className="rotate-2 scale-105 w-[284px]">
                 <KanbanCard
                   issue={{
                     id: activeIssue.key,
                     title: activeIssue.title,
-                    priority: activeIssue.priority as 'low' | 'medium' | 'high',
+                    priority: activeIssue.priority as 'low' | 'medium' | 'high' | 'critical',
+                    type: activeIssue.type as 'task' | 'bug' | 'story' | 'epic',
                     assignee: activeIssue.assignee
                       ? {
                           name: activeIssue.assignee.name || activeIssue.assignee.email,
@@ -300,4 +302,3 @@ export function KanbanBoard({ projectId, sprintId }: { projectId: string; sprint
     </>
   );
 }
-

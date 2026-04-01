@@ -89,26 +89,27 @@
 /* Kanban Styles */
 @layer components {
   .kanban-card {
-    @apply bg-card rounded-lg border border-border/60 p-3;
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.02), 0 1px 2px -1px rgb(0 0 0 / 0.02);
-    transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    @apply bg-card rounded-lg border border-border/50 p-3 pl-4 relative overflow-hidden;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.03), 0 1px 2px -1px rgb(0 0 0 / 0.03);
+    transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
   }
 
   .kanban-card:hover {
     border-color: hsl(var(--border));
-    box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+    box-shadow: 0 4px 16px -3px rgb(0 0 0 / 0.1), 0 2px 6px -2px rgb(0 0 0 / 0.05);
+    transform: translateY(-1px);
   }
 
   .kanban-column {
-    @apply bg-muted/30 rounded-xl border border-border/40;
+    @apply bg-muted/20 rounded-xl border border-border/30;
   }
 
   .kanban-column-header {
-    @apply px-3 py-3 border-b border-border/40;
+    @apply px-3 py-3;
   }
 
   .kanban-column-drop-active {
-    @apply bg-primary/5 border-primary/30;
+    @apply bg-primary/5 border-primary/30 ring-1 ring-primary/20;
   }
 
   .card-elevated {

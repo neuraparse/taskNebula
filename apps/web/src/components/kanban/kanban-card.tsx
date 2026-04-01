@@ -2,7 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { MessageSquare, Paperclip, Calendar, Flag, CheckCircle2 } from 'lucide-react';
+import { MessageSquare, Paperclip, Calendar, CheckCircle2, BookOpen, CheckSquare, Bug, Zap, FileText } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 
 interface KanbanCardProps {
@@ -27,10 +27,17 @@ interface KanbanCardProps {
 }
 
 const priorityConfig = {
-  critical: { color: 'bg-red-500', label: 'Critical' },
-  high: { color: 'bg-orange-500', label: 'High' },
-  medium: { color: 'bg-blue-500', label: 'Medium' },
-  low: { color: 'bg-slate-400 dark:bg-slate-500', label: 'Low' },
+  critical: { color: 'bg-red-500', ring: 'ring-red-500/20', text: 'text-red-600 dark:text-red-400' },
+  high: { color: 'bg-orange-500', ring: 'ring-orange-500/20', text: 'text-orange-600 dark:text-orange-400' },
+  medium: { color: 'bg-blue-500', ring: 'ring-blue-500/20', text: 'text-blue-600 dark:text-blue-400' },
+  low: { color: 'bg-slate-400 dark:bg-slate-500', ring: 'ring-slate-400/20', text: 'text-slate-500 dark:text-slate-400' },
+};
+
+const typeConfig: Record<string, { icon: React.ElementType; color: string }> = {
+  story: { icon: BookOpen, color: 'text-emerald-500' },
+  task: { icon: CheckSquare, color: 'text-blue-500' },
+  bug: { icon: Bug, color: 'text-red-500' },
+  epic: { icon: Zap, color: 'text-purple-500' },
 };
 
 export function KanbanCard({ issue, draggableId, onClick }: KanbanCardProps) {
@@ -55,6 +62,8 @@ export function KanbanCard({ issue, draggableId, onClick }: KanbanCardProps) {
   };
 
   const config = priorityConfig[issue.priority] || priorityConfig.medium;
+  const tConfig = typeConfig[issue.type || 'task'] || typeConfig.task;
+  const TypeIcon = tConfig.icon;
   const hasFooter = issue.commentCount || issue.attachmentCount || issue.dueDate || issue.subtaskCount;
 
   return (
@@ -65,24 +74,25 @@ export function KanbanCard({ issue, draggableId, onClick }: KanbanCardProps) {
       {...listeners}
       onClick={handleClick}
       className={cn(
-        'kanban-card cursor-pointer select-none',
-        isDragging && 'opacity-60 shadow-lg scale-[1.02] rotate-1'
+        'kanban-card cursor-pointer select-none group/card',
+        isDragging && 'opacity-50 shadow-xl scale-[1.03] rotate-[2deg]'
       )}
     >
-      {/* Top Row: Key + Priority + Assignee */}
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-[11px] font-mono font-medium text-muted-foreground shrink-0">
+      {/* Priority accent bar */}
+      <div className={cn('absolute top-0 left-0 w-[3px] h-full rounded-l-lg', config.color)} />
+
+      {/* Top: Type icon + Key + Assignee */}
+      <div className="flex items-center justify-between gap-2 mb-2.5 pl-1">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <TypeIcon className={cn('h-3.5 w-3.5 shrink-0', tConfig.color)} />
+          <span className="text-[11px] font-mono font-medium text-muted-foreground">
             {issue.id}
           </span>
-          {(issue.priority === 'critical' || issue.priority === 'high') && (
-            <div className={cn('w-1.5 h-1.5 rounded-full shrink-0', config.color)} />
-          )}
         </div>
         {issue.assignee && (
-          <Avatar className="h-5 w-5 shrink-0 ring-1 ring-background">
+          <Avatar className="h-6 w-6 shrink-0 ring-2 ring-background">
             <AvatarImage src={`https://avatar.vercel.sh/${issue.assignee.name}`} />
-            <AvatarFallback className="text-[9px] font-medium bg-muted text-muted-foreground">
+            <AvatarFallback className="text-[10px] font-semibold bg-primary/10 text-primary">
               {issue.assignee.avatar}
             </AvatarFallback>
           </Avatar>
@@ -90,64 +100,60 @@ export function KanbanCard({ issue, draggableId, onClick }: KanbanCardProps) {
       </div>
 
       {/* Title */}
-      <h4 className="text-[13px] font-medium leading-[1.4] text-foreground line-clamp-2 mb-2">
+      <h4 className="text-[13px] font-medium leading-snug text-foreground line-clamp-2 mb-2 pl-1">
         {issue.title}
       </h4>
 
       {/* Labels */}
       {issue.labels && issue.labels.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-2">
-          {issue.labels.slice(0, 2).map((label, idx) => (
+        <div className="flex flex-wrap gap-1 mb-2.5 pl-1">
+          {issue.labels.slice(0, 2).map((label) => (
             <span
               key={label}
-              className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground"
+              className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-primary/8 text-primary/80 border border-primary/10"
             >
               {label}
             </span>
           ))}
           {issue.labels.length > 2 && (
-            <span className="text-[10px] text-muted-foreground px-1">
+            <span className="text-[10px] text-muted-foreground px-1 self-center">
               +{issue.labels.length - 2}
             </span>
           )}
         </div>
       )}
 
-      {/* Footer */}
+      {/* Footer meta */}
       {hasFooter && (
-        <div className="flex items-center gap-3 pt-2 mt-1 border-t border-border/40">
-          {/* Subtasks */}
+        <div className="flex items-center gap-2.5 pt-2 mt-1 border-t border-border/30 pl-1">
           {issue.subtaskCount !== undefined && issue.subtaskCount > 0 && (
             <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <CheckCircle2 className="h-3 w-3" />
-              <span>{issue.subtaskDone || 0}/{issue.subtaskCount}</span>
+              <span className="tabular-nums">{issue.subtaskDone || 0}/{issue.subtaskCount}</span>
             </div>
           )}
 
-          {/* Comments */}
           {issue.commentCount !== undefined && issue.commentCount > 0 && (
             <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <MessageSquare className="h-3 w-3" />
-              <span>{issue.commentCount}</span>
+              <span className="tabular-nums">{issue.commentCount}</span>
             </div>
           )}
 
-          {/* Attachments */}
           {issue.attachmentCount !== undefined && issue.attachmentCount > 0 && (
             <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <Paperclip className="h-3 w-3" />
-              <span>{issue.attachmentCount}</span>
+              <span className="tabular-nums">{issue.attachmentCount}</span>
             </div>
           )}
 
-          {/* Due Date */}
           {issue.dueDate && (
             <div className="flex items-center gap-1 text-[11px] text-muted-foreground ml-auto">
               <Calendar className="h-3 w-3" />
               <span>
                 {new Date(issue.dueDate).toLocaleDateString('en-US', {
                   month: 'short',
-                  day: 'numeric'
+                  day: 'numeric',
                 })}
               </span>
             </div>
