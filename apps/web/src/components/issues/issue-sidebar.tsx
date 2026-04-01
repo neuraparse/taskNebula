@@ -1,7 +1,6 @@
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Calendar, User, Tag, Clock, AlertCircle } from 'lucide-react';
 import { AssigneePicker } from './assignee-picker';
 import { PriorityPicker } from './priority-picker';
 import { StatusPicker } from './status-picker';
@@ -10,7 +9,6 @@ import { IssueCustomFields } from '@/components/custom-fields/issue-custom-field
 import { WatchersList } from '@/components/watchers/watchers-list';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useUpdateIssue } from '@/lib/hooks/use-issues';
-import { cn } from '@/lib/utils';
 
 interface IssueSidebarProps {
   issue: {
@@ -35,10 +33,7 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
 
   const handleAssigneeChange = async (assigneeId: string | null) => {
     try {
-      await updateIssue.mutateAsync({
-        issueId: issue.id,
-        data: { assigneeId },
-      });
+      await updateIssue.mutateAsync({ issueId: issue.id, data: { assigneeId } });
     } catch (error) {
       console.error('Error updating assignee:', error);
     }
@@ -46,10 +41,7 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
 
   const handlePriorityChange = async (priority: string) => {
     try {
-      await updateIssue.mutateAsync({
-        issueId: issue.id,
-        data: { priority },
-      });
+      await updateIssue.mutateAsync({ issueId: issue.id, data: { priority } });
     } catch (error) {
       console.error('Error updating priority:', error);
     }
@@ -57,10 +49,7 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
 
   const handleLabelsChange = async (labels: string[]) => {
     try {
-      await updateIssue.mutateAsync({
-        issueId: issue.id,
-        data: { labels } as any,
-      });
+      await updateIssue.mutateAsync({ issueId: issue.id, data: { labels } as any });
     } catch (error) {
       console.error('Error updating labels:', error);
     }
@@ -68,140 +57,113 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
 
   const handleStatusChange = async (statusId: string) => {
     try {
-      await updateIssue.mutateAsync({
-        issueId: issue.id,
-        data: { statusId },
-      });
+      await updateIssue.mutateAsync({ issueId: issue.id, data: { statusId } });
     } catch (error) {
       console.error('Error updating status:', error);
     }
   };
 
   return (
-    <div className="space-y-5">
-      {/* Status */}
-      <SidebarSection title="Status">
+    <div className="space-y-1">
+      <PropertyRow label="Status">
         <StatusPicker
           projectId={issue.projectId}
           value={issue.statusId}
           onChange={handleStatusChange}
           disabled={updateIssue.isPending}
         />
-      </SidebarSection>
+      </PropertyRow>
 
-      {/* Priority */}
-      <SidebarSection title="Priority" icon={AlertCircle}>
+      <PropertyRow label="Priority">
         <PriorityPicker
           value={issue.priority}
           onChange={handlePriorityChange}
           disabled={updateIssue.isPending}
         />
-      </SidebarSection>
+      </PropertyRow>
 
-      {/* Assignee */}
-      <SidebarSection title="Assignee" icon={User}>
+      <PropertyRow label="Assignee">
         <AssigneePicker
           organizationId={currentOrganizationId}
           value={issue.assigneeId || null}
           onChange={handleAssigneeChange}
           disabled={updateIssue.isPending}
         />
-      </SidebarSection>
+      </PropertyRow>
 
-      {/* Reporter */}
-      <SidebarSection title="Reporter">
-        <div className="flex items-center gap-2.5 py-1">
-          <Avatar className="h-6 w-6">
+      <PropertyRow label="Reporter">
+        <div className="flex items-center gap-2 py-0.5">
+          <Avatar className="h-5 w-5">
             <AvatarImage src="https://avatar.vercel.sh/reporter" />
-            <AvatarFallback className="text-[10px] font-medium bg-muted">R</AvatarFallback>
+            <AvatarFallback className="text-[9px] font-medium bg-muted">R</AvatarFallback>
           </Avatar>
-          <span className="text-sm">Reporter User</span>
+          <span className="text-sm">Reporter</span>
         </div>
-      </SidebarSection>
+      </PropertyRow>
 
-      {/* Labels */}
-      <SidebarSection title="Labels" icon={Tag}>
+      <PropertyRow label="Labels">
         <LabelPicker
           value={issue.labels}
           onChange={handleLabelsChange}
           disabled={updateIssue.isPending}
         />
-      </SidebarSection>
+      </PropertyRow>
 
-      {/* Estimate */}
-      <SidebarSection title="Estimate" icon={Clock}>
-        <p className="text-sm py-1">
-          {issue.estimate ? (
-            <span className="font-medium">{issue.estimate} hours</span>
-          ) : (
-            <span className="text-muted-foreground">Not estimated</span>
-          )}
-        </p>
-      </SidebarSection>
+      <PropertyRow label="Estimate">
+        <span className="text-sm">
+          {issue.estimate ? `${issue.estimate}h` : <span className="text-muted-foreground/50">None</span>}
+        </span>
+      </PropertyRow>
 
-      {/* Due Date */}
-      <SidebarSection title="Due Date" icon={Calendar}>
-        <p className="text-sm py-1">
+      <PropertyRow label="Due date">
+        <span className="text-sm">
           {issue.dueDate ? (
-            <span className="font-medium">
-              {new Date(issue.dueDate).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-              })}
-            </span>
+            new Date(issue.dueDate).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+            })
           ) : (
-            <span className="text-muted-foreground">No due date</span>
+            <span className="text-muted-foreground/50">None</span>
           )}
-        </p>
-      </SidebarSection>
+        </span>
+      </PropertyRow>
 
       {/* Custom Fields */}
-      <div className="pt-4 border-t border-border">
+      <div className="pt-3 mt-3 border-t border-border/40">
         <IssueCustomFields issueId={issue.id} />
       </div>
 
       {/* Watchers */}
-      <div className="pt-4 border-t border-border">
+      <div className="pt-3 mt-1 border-t border-border/40">
         <WatchersList issueId={issue.id} />
       </div>
 
       {/* Metadata */}
-      <div className="pt-4 border-t border-border">
-        <div className="space-y-2">
-          <MetadataRow label="Created" value={formatDate(issue.createdAt)} />
-          <MetadataRow label="Updated" value={formatDate(issue.updatedAt)} />
+      <div className="pt-3 mt-1 border-t border-border/40 space-y-1.5">
+        <div className="flex justify-between text-[11px]">
+          <span className="text-muted-foreground/60">Created</span>
+          <span className="text-muted-foreground">{formatDate(issue.createdAt)}</span>
+        </div>
+        <div className="flex justify-between text-[11px]">
+          <span className="text-muted-foreground/60">Updated</span>
+          <span className="text-muted-foreground">{formatDate(issue.updatedAt)}</span>
         </div>
       </div>
     </div>
   );
 }
 
-function SidebarSection({
-  title,
-  icon: Icon,
+function PropertyRow({
+  label,
   children,
 }: {
-  title: string;
-  icon?: React.ElementType;
+  label: string;
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <label className="flex items-center gap-1.5 text-[11px] font-semibold uppercase text-muted-foreground tracking-wider mb-2">
-        {Icon && <Icon className="h-3 w-3" />}
-        {title}
-      </label>
-      {children}
-    </div>
-  );
-}
-
-function MetadataRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between text-xs">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium">{value}</span>
+    <div className="flex items-center gap-3 py-2 min-h-[38px]">
+      <span className="text-xs text-muted-foreground shrink-0 w-[80px]">{label}</span>
+      <div className="flex-1">{children}</div>
     </div>
   );
 }
@@ -210,6 +172,6 @@ function formatDate(date: string | Date): string {
   return new Date(date).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
-    year: 'numeric'
+    year: 'numeric',
   });
 }

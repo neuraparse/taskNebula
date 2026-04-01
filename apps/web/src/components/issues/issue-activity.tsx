@@ -31,67 +31,94 @@ export function IssueActivity({ issueId }: { issueId: string }) {
   };
 
   return (
-    <div className="rounded-lg border bg-card">
+    <section>
       <Tabs defaultValue="comments" className="flex flex-col">
-        <div className="border-b px-4 py-2.5">
-          <div className="flex items-center justify-between">
-            <TabsList>
-              <TabsTrigger value="comments" className="gap-2">
-                <MessageSquare className="h-4 w-4" />
-                Comments ({comments?.length || 0})
-              </TabsTrigger>
-              <TabsTrigger value="history" className="gap-2">
-                <History className="h-4 w-4" />
-                History
-              </TabsTrigger>
-            </TabsList>
-          </div>
-        </div>
+        <TabsList className="w-fit mb-4">
+          <TabsTrigger value="comments" className="gap-1.5 text-xs">
+            <MessageSquare className="h-3.5 w-3.5" />
+            Comments ({comments?.length || 0})
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-1.5 text-xs">
+            <History className="h-3.5 w-3.5" />
+            History
+          </TabsTrigger>
+        </TabsList>
 
-        <TabsContent value="comments" className="p-3 space-y-3">
+        <TabsContent value="comments" className="space-y-4 mt-0">
           {commentsLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           ) : comments && comments.length > 0 ? (
-            comments.map((comment) => {
-              const authorName = comment.author.name || comment.author.email;
-              const initials = authorName
-                .split(' ')
-                .map((n) => n[0])
-                .join('')
-                .toUpperCase()
-                .slice(0, 2);
+            <div className="space-y-4">
+              {comments.map((comment) => {
+                const authorName = comment.author.name || comment.author.email;
+                const initials = authorName
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .toUpperCase()
+                  .slice(0, 2);
 
-              return (
-                <div key={comment.id} className="flex gap-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={`https://avatar.vercel.sh/${authorName}`} />
-                    <AvatarFallback>{initials}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm">{authorName}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(comment.createdAt).toLocaleDateString()}
-                      </span>
+                return (
+                  <div key={comment.id} className="flex gap-3">
+                    <Avatar className="h-7 w-7 shrink-0">
+                      <AvatarImage src={`https://avatar.vercel.sh/${authorName}`} />
+                      <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2">
+                        <span className="font-medium text-sm">{authorName}</span>
+                        <span className="text-[11px] text-muted-foreground">
+                          {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-sm text-foreground/90 leading-relaxed">{comment.content}</p>
                     </div>
-                    <p className="mt-1 text-sm">{comment.content}</p>
                   </div>
-                </div>
-              );
-            })
-          ) : (
-            <div className="text-center py-8 text-sm text-muted-foreground">
-              No comments yet. Be the first to comment!
+                );
+              })}
             </div>
+          ) : (
+            <p className="text-sm text-muted-foreground/60 py-4">
+              No comments yet
+            </p>
           )}
+
+          {/* Comment Input */}
+          <div className="pt-2">
+            {issue?.organizationId && (
+              <MentionTextarea
+                value={newComment}
+                onChange={setNewComment}
+                onMention={(userId) => {
+                  if (!mentionedUsers.includes(userId)) {
+                    setMentionedUsers([...mentionedUsers, userId]);
+                  }
+                }}
+                placeholder="Write a comment... (@ to mention)"
+                organizationId={issue.organizationId}
+                className="min-h-[72px] text-sm"
+              />
+            )}
+            <div className="mt-2 flex justify-end">
+              <Button
+                size="sm"
+                className="h-7 text-xs"
+                onClick={handleAddComment}
+                disabled={createComment.isPending || !newComment.trim()}
+              >
+                {createComment.isPending && <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />}
+                Comment
+              </Button>
+            </div>
+          </div>
         </TabsContent>
 
-        <TabsContent value="history" className="p-3">
+        <TabsContent value="history" className="mt-0">
           {activitiesLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           ) : activities && activities.length > 0 ? (
             <div className="space-y-3">
@@ -116,49 +143,25 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                 }
 
                 return (
-                  <div key={activity.id} className="flex gap-3 text-sm">
-                    <div className="w-2 h-2 rounded-full bg-primary mt-1.5"></div>
+                  <div key={activity.id} className="flex gap-2.5 text-sm">
+                    <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 mt-1.5 shrink-0"></div>
                     <div className="flex-1">
-                      <p className="font-medium">{activityText}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <span className="text-foreground/80">{activityText}</span>
+                      <span className="text-[11px] text-muted-foreground ml-2">
                         {userName} · {timeAgo}
-                      </p>
+                      </span>
                     </div>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <div className="text-center py-8 text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground/60 py-4">
               No activity yet
-            </div>
+            </p>
           )}
         </TabsContent>
       </Tabs>
-
-      {/* Comment Input */}
-      <div className="border-t p-4">
-        {issue?.organizationId && (
-          <MentionTextarea
-            value={newComment}
-            onChange={setNewComment}
-            onMention={(userId) => {
-              if (!mentionedUsers.includes(userId)) {
-                setMentionedUsers([...mentionedUsers, userId]);
-              }
-            }}
-            placeholder="Add a comment... (Use @ to mention someone)"
-            organizationId={issue.organizationId}
-            className="min-h-[80px]"
-          />
-        )}
-        <div className="mt-2 flex justify-end">
-          <Button size="sm" onClick={handleAddComment} disabled={createComment.isPending || !newComment.trim()}>
-            {createComment.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Comment
-          </Button>
-        </div>
-      </div>
-    </div>
+    </section>
   );
 }

@@ -5,8 +5,7 @@ import { IssueContent } from './issue-content';
 import { IssueActivity } from './issue-activity';
 import { IssueSidebar } from './issue-sidebar';
 import { useIssue } from '@/lib/hooks/use-issues';
-import { Loader2, Activity, FileText, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Loader2, FileText, AlertCircle } from 'lucide-react';
 
 export function IssueDetailView({ issueId }: { issueId: string }) {
   const { data: issue, isLoading, error } = useIssue(issueId);
@@ -55,35 +54,24 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
   return (
     <div className="flex h-full flex-col overflow-hidden bg-background">
       {/* Header */}
-      <div className="border-b border-border px-6 py-4 shrink-0">
+      <div className="border-b border-border/60 px-6 py-3 shrink-0">
         <IssueHeader issue={issue} />
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-hidden">
-        <div className="grid grid-cols-[1fr_320px] h-full">
+        <div className="grid grid-cols-[1fr_340px] h-full">
           {/* Main Content Area */}
           <div className="overflow-y-auto custom-scrollbar">
-            <div className="p-6 max-w-3xl">
-              {/* Description */}
-              <div className="card-elevated p-5 mb-6">
-                <IssueContent issue={issue} />
-              </div>
-
-              {/* Activity */}
-              <div className="card-elevated p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <Activity className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="font-medium">Activity</h3>
-                </div>
-                <IssueActivity issueId={issue.id} />
-              </div>
+            <div className="px-8 py-6 space-y-8">
+              <IssueContent issue={issue} />
+              <IssueActivity issueId={issue.id} />
             </div>
           </div>
 
           {/* Sidebar */}
-          <div className="border-l border-border overflow-y-auto custom-scrollbar bg-muted/20">
-            <div className="p-5">
+          <div className="border-l border-border/60 overflow-y-auto custom-scrollbar bg-muted/10">
+            <div className="px-5 py-5">
               <IssueSidebar
                 issue={{
                   ...issue,
