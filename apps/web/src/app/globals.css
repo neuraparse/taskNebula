@@ -167,6 +167,16 @@
   .font-\[450\] { font-weight: 450; }
 }
 
+/* Landing animations */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out forwards;
+}
+
 /* Marquee animation */
 @keyframes landing-marquee {
   0% { transform: translateX(0); }

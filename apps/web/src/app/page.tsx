@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight, Check, Github, Zap, Users, Keyboard, BarChart3, GitBranch, Layers, Shield, Globe, Clock } from 'lucide-react';
+import { ProductShowcase, TeamShowcase, WorkflowShowcase, SprintShowcase, AnalyticsShowcase } from '@/components/landing/product-showcase';
 
 export default function HomePage() {
   return (
@@ -76,6 +77,9 @@ export default function HomePage() {
           <div className="dot-bg pointer-events-none absolute inset-0" />
         </section>
 
+        {/* ─── Product Showcase ─── */}
+        <ProductShowcase />
+
         <DotSeparator />
 
         {/* ─── Features ─── */}
@@ -99,6 +103,61 @@ export default function HomePage() {
                 <FeatureCard icon={<Layers className="h-4 w-4" />} color="var(--landing-accent-amber)" title="Kanban & Sprint Views" description="Switch between boards, roadmaps, timelines, and workload views." />
                 <FeatureCard icon={<GitBranch className="h-4 w-4" />} color="var(--landing-accent-green)" title="GitHub Integration" description="Connect pull requests to issues. Track deployments and code changes in context." />
                 <FeatureCard icon={<BarChart3 className="h-4 w-4" />} color="var(--landing-accent-pink)" title="Advanced Analytics" description="Burndown charts, velocity tracking, and capacity planning with real-time insights." />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ─── Feature Showcases ─── */}
+        <section className="bg-[var(--landing-bg)]">
+          <div className="mx-auto max-w-screen-xl px-4 pt-10 pb-10 sm:px-8 lg:px-20 space-y-16">
+            {/* Team & Collaboration */}
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_1.5fr] lg:gap-12 items-center">
+              <div>
+                <SectionBadge color="var(--landing-accent-green)" label="Collaboration" />
+                <h3 className="mt-3 text-[24px] font-[500] leading-[110%] tracking-[-0.02em] text-[var(--landing-text-dark)] sm:text-[28px]">
+                  Your entire team,<br />in real-time
+                </h3>
+                <p className="mt-3 font-[420] text-[color-mix(in_srgb,var(--landing-text-subtle)_60%,transparent)] text-[15px] leading-[150%] tracking-[0.02em]">
+                  See who&apos;s online, what they&apos;re working on, and collaborate without stepping on each other&apos;s toes.
+                </p>
+              </div>
+              <TeamShowcase />
+            </div>
+
+            {/* Workflows */}
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.5fr_1fr] lg:gap-12 items-center">
+              <WorkflowShowcase />
+              <div>
+                <SectionBadge color="var(--landing-accent-violet)" label="Workflows" />
+                <h3 className="mt-3 text-[24px] font-[500] leading-[110%] tracking-[-0.02em] text-[var(--landing-text-dark)] sm:text-[28px]">
+                  Custom workflows<br />that match your process
+                </h3>
+                <p className="mt-3 font-[420] text-[color-mix(in_srgb,var(--landing-text-subtle)_60%,transparent)] text-[15px] leading-[150%] tracking-[0.02em]">
+                  Define statuses, transitions, and automation rules. Auto-move issues when conditions are met.
+                </p>
+              </div>
+            </div>
+
+            {/* Sprints + Analytics side by side */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <div>
+                <div className="mb-4">
+                  <SectionBadge color="var(--landing-accent-amber)" label="Sprints" />
+                  <h3 className="mt-3 text-[24px] font-[500] leading-[110%] tracking-[-0.02em] text-[var(--landing-text-dark)]">
+                    Sprint planning,<br />visualized
+                  </h3>
+                </div>
+                <SprintShowcase />
+              </div>
+              <div>
+                <div className="mb-4">
+                  <SectionBadge color="var(--landing-accent-pink)" label="Analytics" />
+                  <h3 className="mt-3 text-[24px] font-[500] leading-[110%] tracking-[-0.02em] text-[var(--landing-text-dark)]">
+                    Data-driven<br />decisions
+                  </h3>
+                </div>
+                <AnalyticsShowcase />
               </div>
             </div>
           </div>
