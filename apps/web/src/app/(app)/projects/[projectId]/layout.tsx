@@ -31,7 +31,6 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
   const { projectId } = use(params);
   const pathname = usePathname();
 
-  // Fetch project details
   const { data: project } = useQuery({
     queryKey: ['project', projectId],
     queryFn: async () => {
@@ -41,7 +40,6 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
     },
   });
 
-  // Fetch active sprint
   const { data: sprints } = useQuery({
     queryKey: ['sprints', projectId],
     queryFn: async () => {
@@ -57,59 +55,57 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
   return (
     <div className="flex h-full flex-col">
       {/* Project Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="px-6 py-3">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-            <Link href="/projects" className="hover:text-foreground transition-colors">
-              Projects
-            </Link>
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground font-medium">
-              {project?.name || projectId}
-            </span>
-            {project?.key && (
-              <span className="text-xs bg-muted px-2 py-0.5 rounded">
-                {project.key}
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0">
+        <div className="px-6 pt-3 pb-0">
+          {/* Breadcrumb + Sprint */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-1.5 text-sm">
+              <Link href="/projects" className="text-muted-foreground hover:text-foreground transition-colors">
+                Projects
+              </Link>
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+              <span className="font-medium text-foreground">
+                {project?.name || projectId}
               </span>
+              {project?.key && (
+                <span className="text-[11px] bg-muted px-1.5 py-0.5 rounded font-mono text-muted-foreground ml-1">
+                  {project.key}
+                </span>
+              )}
+            </div>
+
+            {activeSprint && (
+              <Link
+                href={`/projects/${projectId}/sprints/${activeSprint.id}`}
+                className="flex items-center gap-2 text-xs group"
+              >
+                <div className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-full group-hover:bg-emerald-500/20 transition-colors">
+                  <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                  <span className="font-medium">{activeSprint.name}</span>
+                  <span className="text-emerald-600/60 dark:text-emerald-400/60">
+                    {activeSprint.issueCount || 0} issues
+                  </span>
+                </div>
+              </Link>
             )}
           </div>
 
-          {/* Active Sprint Banner */}
-          {activeSprint && (
-            <Link
-              href={`/projects/${projectId}/sprints/${activeSprint.id}`}
-              className="mb-3 flex items-center gap-2 text-sm group"
-            >
-              <div className="flex items-center gap-2 bg-green-500/10 text-green-600 dark:text-green-400 px-3 py-1.5 rounded-full group-hover:bg-green-500/20 transition-colors">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span className="font-medium">{activeSprint.name}</span>
-                <span className="text-green-600/70 dark:text-green-400/70">
-                  • {activeSprint.issueCount || 0} issues
-                </span>
-                <span className="text-green-600/50 dark:text-green-400/50 text-xs">
-                  • ends {new Date(activeSprint.endDate).toLocaleDateString()}
-                </span>
-              </div>
-            </Link>
-          )}
-
           {/* Tab Navigation */}
-          <nav className="flex gap-1">
+          <nav className="flex gap-0 -mb-px">
             {tabs.map((tab) => {
-              const isActive = currentTab === tab.href || 
+              const isActive = currentTab === tab.href ||
                 (tab.href === 'board' && currentTab === projectId);
               const Icon = tab.icon;
-              
+
               return (
                 <Link
                   key={tab.href}
                   href={`/projects/${projectId}/${tab.href}`}
                   className={cn(
-                    'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all',
+                    'flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
                     isActive
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                      ? 'border-primary text-foreground'
+                      : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -128,4 +124,3 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
     </div>
   );
 }
-

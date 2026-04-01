@@ -1,9 +1,8 @@
 'use client';
 
 import { use } from 'react';
-import { Plus, Calendar, Target, PlayCircle, CheckCircle2, Trash2, Lock } from 'lucide-react';
+import { Plus, Calendar, Target, CheckCircle2, Trash2, Lock, Timer, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useSprints, useDeleteSprint } from '@/lib/hooks/use-sprints';
 import { useProjectPermissions } from '@/lib/hooks/use-project-permissions';
@@ -11,6 +10,7 @@ import { CreateSprintModal } from '@/components/sprints/create-sprint-modal';
 import { useState } from 'react';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 export default function SprintsPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params);
@@ -29,25 +29,29 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <PlayCircle className="h-4 w-4 text-green-500" />;
-      case 'completed':
-        return <CheckCircle2 className="h-4 w-4 text-blue-500" />;
-      default:
-        return <Calendar className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <Badge className="bg-green-500">Active</Badge>;
+        return (
+          <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20">
+            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5 animate-pulse" />
+            Active
+          </Badge>
+        );
       case 'completed':
-        return <Badge className="bg-blue-500">Completed</Badge>;
+        return (
+          <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20">
+            <CheckCircle2 className="h-3 w-3 mr-1" />
+            Completed
+          </Badge>
+        );
       default:
-        return <Badge variant="outline">Planned</Badge>;
+        return (
+          <Badge variant="outline" className="text-muted-foreground">
+            <Calendar className="h-3 w-3 mr-1" />
+            Planned
+          </Badge>
+        );
     }
   };
 
@@ -59,13 +63,12 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
     );
   }
 
-  // Check if user has access to view this project
   if (!permissions.canBrowseProject && !permissions.isSuperAdmin && !permissions.isOrgOwner) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4">
         <Lock className="h-12 w-12 text-muted-foreground" />
         <div className="text-lg font-medium">Access Denied</div>
-        <div className="text-muted-foreground">You don't have permission to view this project.</div>
+        <div className="text-muted-foreground">You don&apos;t have permission to view this project.</div>
         <Link href="/projects">
           <Button variant="outline">Back to Projects</Button>
         </Link>
@@ -74,97 +77,138 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
   }
 
   return (
-    <div className="h-full overflow-y-auto p-8">
-      <div className="mx-auto max-w-6xl space-y-6">
+    <div className="h-full overflow-y-auto">
+      <div className="p-6 space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Sprints</h1>
-            <p className="text-muted-foreground">Plan and manage your project sprints</p>
+            <h1 className="text-lg font-semibold">Sprints</h1>
+            <p className="text-sm text-muted-foreground">Plan and manage your project sprints</p>
           </div>
           {permissions.canManageSprints && (
-            <Button onClick={() => setIsCreateModalOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Sprint
+            <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => setIsCreateModalOpen(true)}>
+              <Plus className="h-3.5 w-3.5" />
+              New Sprint
             </Button>
           )}
         </div>
 
-        {/* Sprints List */}
+        {/* Sprint List */}
         {sprints && sprints.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {sprints.map((sprint) => (
-              <Card key={sprint.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(sprint.status)}
-                      <CardTitle className="text-lg">{sprint.name}</CardTitle>
-                    </div>
-                    {getStatusBadge(sprint.status)}
-                  </div>
-                  {sprint.goal && (
-                    <CardDescription className="flex items-start gap-2">
-                      <Target className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      <span>{sprint.goal}</span>
-                    </CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Dates */}
-                  <div className="space-y-1 text-sm">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Calendar className="h-3 w-3" />
-                      <span>
-                        {format(new Date(sprint.startDate), 'MMM d')} -{' '}
-                        {format(new Date(sprint.endDate), 'MMM d, yyyy')}
-                      </span>
-                    </div>
-                    <div className="text-muted-foreground">
-                      {sprint.issueCount || 0} issues
-                    </div>
-                  </div>
+          <div className="space-y-3">
+            {sprints.map((sprint) => {
+              const startDate = new Date(sprint.startDate);
+              const endDate = new Date(sprint.endDate);
+              const now = Date.now();
+              const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+              const daysLeft = Math.max(0, Math.ceil((endDate.getTime() - now) / (1000 * 60 * 60 * 24)));
+              const progress = sprint.status === 'active'
+                ? Math.min(100, Math.max(0, ((now - startDate.getTime()) / (endDate.getTime() - startDate.getTime())) * 100))
+                : sprint.status === 'completed' ? 100 : 0;
 
-                  {/* Actions */}
-                  <div className="flex gap-2">
-                    <Link href={`/projects/${projectId}/sprints/${sprint.id}`} className="flex-1">
-                      <Button variant="outline" size="sm" className="w-full">
-                        View Sprint
-                      </Button>
-                    </Link>
-                    {permissions.canDeleteSprint && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteSprint(sprint.id)}
-                        disabled={deleteSprint.isPending}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    )}
+              return (
+                <div
+                  key={sprint.id}
+                  className={cn(
+                    'rounded-lg border bg-card hover:shadow-md transition-all group',
+                    sprint.status === 'active' && 'border-emerald-500/20'
+                  )}
+                >
+                  <div className="p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      {/* Left */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2.5 mb-2">
+                          <Link
+                            href={`/projects/${projectId}/sprints/${sprint.id}`}
+                            className="text-base font-semibold hover:text-primary transition-colors"
+                          >
+                            {sprint.name}
+                          </Link>
+                          {getStatusBadge(sprint.status)}
+                        </div>
+
+                        {sprint.goal && (
+                          <p className="text-sm text-muted-foreground mb-3 flex items-start gap-1.5">
+                            <Target className="h-3.5 w-3.5 mt-0.5 shrink-0 text-muted-foreground/50" />
+                            {sprint.goal}
+                          </p>
+                        )}
+
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')}
+                          </span>
+                          <span>{totalDays} days</span>
+                          <span>{sprint.issueCount || 0} issues</span>
+                          {sprint.status === 'active' && daysLeft > 0 && (
+                            <span className={cn(
+                              'font-medium',
+                              daysLeft <= 3 ? 'text-orange-500' : 'text-emerald-500'
+                            )}>
+                              {daysLeft}d remaining
+                            </span>
+                          )}
+                        </div>
+
+                        {sprint.status === 'active' && (
+                          <div className="mt-3 flex items-center gap-3">
+                            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-emerald-500 rounded-full transition-all"
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
+                            <span className="text-[11px] text-muted-foreground tabular-nums w-8">
+                              {Math.round(progress)}%
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right actions */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Link href={`/projects/${projectId}/sprints/${sprint.id}`}>
+                          <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5">
+                            View
+                            <ArrowRight className="h-3 w-3" />
+                          </Button>
+                        </Link>
+                        {permissions.canDeleteSprint && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleDeleteSprint(sprint.id)}
+                            disabled={deleteSprint.isPending}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                </div>
+              );
+            })}
           </div>
         ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No sprints yet</h3>
-              <p className="text-muted-foreground mb-4">
-                {permissions.canManageSprints
-                  ? 'Create your first sprint to get started'
-                  : 'No sprints have been created for this project yet'}
-              </p>
-              {permissions.canManageSprints && (
-                <Button onClick={() => setIsCreateModalOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Sprint
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Timer className="h-10 w-10 text-muted-foreground/30 mb-3" />
+            <h3 className="text-sm font-medium mb-1">No sprints yet</h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              {permissions.canManageSprints
+                ? 'Create your first sprint to get started'
+                : 'No sprints have been created for this project yet'}
+            </p>
+            {permissions.canManageSprints && (
+              <Button size="sm" variant="outline" onClick={() => setIsCreateModalOpen(true)}>
+                <Plus className="mr-1.5 h-3.5 w-3.5" />
+                Create Sprint
+              </Button>
+            )}
+          </div>
         )}
       </div>
 
@@ -176,4 +220,3 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
     </div>
   );
 }
-
