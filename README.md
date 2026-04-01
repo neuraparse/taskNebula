@@ -158,18 +158,25 @@ server {
 ## Screenshots
 
 <div align="center">
+
+<img src="images/home-page.png" alt="Landing Page" width="100%"/>
+<p><b>Landing Page</b></p>
+
+<br/>
+
 <table>
 <tr>
 <td width="50%">
-<img src="images/dashboard.png" alt="Dashboard" width="100%"/>
-<p align="center"><b>Dashboard</b></p>
+<img src="images/new-issue.png" alt="Kanban Board" width="100%"/>
+<p align="center"><b>Kanban Board</b></p>
 </td>
 <td width="50%">
-<img src="images/project-board.png" alt="Kanban Board" width="100%"/>
-<p align="center"><b>Kanban Board</b></p>
+<img src="images/new-issue-detail.png" alt="Issue Detail" width="100%"/>
+<p align="center"><b>Issue Detail</b></p>
 </td>
 </tr>
 </table>
+
 </div>
 
 ---
