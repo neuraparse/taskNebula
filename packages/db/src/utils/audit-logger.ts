@@ -19,6 +19,15 @@ export type AuditLogAction =
   | 'issue.attachment_added'
   | 'issue.attachment_removed'
   | 'issue.custom_field_changed'
+  | 'document.created'
+  | 'document.updated'
+  | 'document.deleted'
+  | 'document.restored'
+  | 'document.linked_issue'
+  | 'document.unlinked_issue'
+  | 'document.public_shared'
+  | 'document.public_unshared'
+  | 'document.public_link_regenerated'
   | 'project.created'
   | 'project.updated'
   | 'project.deleted'
@@ -288,4 +297,3 @@ async function deliverWebhook(
       .where(eq(webhooks.id, webhook.id));
   }
 }
-

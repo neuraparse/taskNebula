@@ -8,6 +8,7 @@ import { useDraggable } from '@dnd-kit/core';
 interface KanbanCardProps {
   issue: {
     id: string;
+    key?: string;
     title: string;
     priority: 'low' | 'medium' | 'high' | 'critical';
     type?: 'task' | 'bug' | 'story' | 'epic';
@@ -26,14 +27,14 @@ interface KanbanCardProps {
   onClick?: () => void;
 }
 
-const priorityConfig = {
+const priorityConfig: Record<KanbanCardProps['issue']['priority'], { color: string; ring: string; text: string }> = {
   critical: { color: 'bg-red-500', ring: 'ring-red-500/20', text: 'text-red-600 dark:text-red-400' },
   high: { color: 'bg-orange-500', ring: 'ring-orange-500/20', text: 'text-orange-600 dark:text-orange-400' },
   medium: { color: 'bg-blue-500', ring: 'ring-blue-500/20', text: 'text-blue-600 dark:text-blue-400' },
   low: { color: 'bg-slate-400 dark:bg-slate-500', ring: 'ring-slate-400/20', text: 'text-slate-500 dark:text-slate-400' },
 };
 
-const typeConfig: Record<string, { icon: React.ElementType; color: string }> = {
+const typeConfig: Record<NonNullable<KanbanCardProps['issue']['type']>, { icon: React.ElementType; color: string }> = {
   story: { icon: BookOpen, color: 'text-emerald-500' },
   task: { icon: CheckSquare, color: 'text-blue-500' },
   bug: { icon: Bug, color: 'text-red-500' },
@@ -65,6 +66,13 @@ export function KanbanCard({ issue, draggableId, onClick }: KanbanCardProps) {
   const tConfig = typeConfig[issue.type || 'task'] || typeConfig.task;
   const TypeIcon = tConfig.icon;
   const hasFooter = issue.commentCount || issue.attachmentCount || issue.dueDate || issue.subtaskCount;
+  const issueKey = issue.key || issue.id;
+  const assigneeInitials = issue.assignee?.name
+    ?.split(' ')
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <div
@@ -86,15 +94,16 @@ export function KanbanCard({ issue, draggableId, onClick }: KanbanCardProps) {
         <div className="flex items-center gap-1.5 min-w-0">
           <TypeIcon className={cn('h-3.5 w-3.5 shrink-0', tConfig.color)} />
           <span className="text-[11px] font-mono font-medium text-muted-foreground">
-            {issue.id}
+            {issueKey}
           </span>
         </div>
         {issue.assignee && (
           <Avatar className="h-6 w-6 shrink-0 ring-2 ring-background">
-            <AvatarImage src={`https://avatar.vercel.sh/${issue.assignee.name}`} />
+            <AvatarImage src={issue.assignee.avatar} alt={issue.assignee.name} />
             <AvatarFallback className="text-[10px] font-semibold bg-primary/10 text-primary">
-              {issue.assignee.avatar}
+              {assigneeInitials || '?'}
             </AvatarFallback>
+            <span className="sr-only">{issue.assignee.name}</span>
           </Avatar>
         )}
       </div>

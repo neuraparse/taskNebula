@@ -5,12 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Pencil, Loader2 } from 'lucide-react';
 import { useUpdateIssue } from '@/lib/hooks/use-issues';
 import { IssueAttachments } from './issue-attachments';
+import { IssueDocs } from './issue-docs';
 import { IssueLinks } from './issue-links';
 import { IssueSubtasks } from './issue-subtasks';
 
 interface IssueContentProps {
   issue: {
     id: string;
+    key: string;
+    title: string;
     projectId: string;
     description: string | null;
   };
@@ -103,6 +106,12 @@ export function IssueContent({ issue }: IssueContentProps) {
       <section>
         <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">Links</h3>
         <IssueLinks issueId={issue.id} projectId={issue.projectId} />
+      </section>
+
+      {/* Related Docs */}
+      <section>
+        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">Related Docs</h3>
+        <IssueDocs issueId={issue.id} issueKey={issue.key} issueTitle={issue.title} projectId={issue.projectId} />
       </section>
     </div>
   );

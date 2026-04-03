@@ -1,0 +1,499 @@
+'use client';
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+interface DocumentSpace {
+  id: string;
+  organizationId: string;
+  projectId: string | null;
+  scope: 'organization' | 'project';
+  name: string;
+  slug: string;
+  description: string | null;
+  isDefault: boolean;
+  permissions?: {
+    canBrowse: boolean;
+    canCreate: boolean;
+    canEdit: boolean;
+    canDelete: boolean;
+  };
+}
+
+export interface DocumentShareSettings {
+  canManagePublic: boolean;
+  internalPath: string;
+  public: {
+    enabled: boolean;
+    urlPath: string | null;
+    allowSearchIndexing: boolean;
+    includeAttachments: boolean;
+    publishedAt: string | null;
+  };
+}
+
+export interface DocumentShareUpdateInput {
+  enablePublic?: boolean;
+  allowSearchIndexing?: boolean;
+  includeAttachments?: boolean;
+  regenerateToken?: boolean;
+}
+
+export interface DocumentPage {
+  id: string;
+  spaceId: string;
+  organizationId: string;
+  projectId: string | null;
+  parentId: string | null;
+  title: string;
+  slug: string;
+  icon: string | null;
+  contentJson: Record<string, any>;
+  contentText: string;
+  excerpt: string | null;
+  currentRevision: number;
+  position: number;
+  isArchived: boolean;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  updatedBy: string;
+  permissions?: {
+    canBrowse: boolean;
+    canCreate: boolean;
+    canEdit: boolean;
+    canDelete: boolean;
+  };
+  backlinks?: Array<{ id: string; title: string; slug: string; projectId: string | null }>;
+  relatedIssues?: Array<{ linkId: string; id: string; key: string; title: string; projectId: string; priority: string; statusId: string }>;
+  attachments?: Array<DocumentAttachment>;
+  revisionCount?: number;
+  space?: DocumentSpace;
+  share?: DocumentShareSettings;
+}
+
+export interface DocumentRevision {
+  id: string;
+  pageId: string;
+  revision: number;
+  title: string;
+  contentText?: string;
+  excerpt: string | null;
+  changeSummary: string | null;
+  createdAt: string;
+  createdBy: string;
+  author?: {
+    id: string;
+    name: string | null;
+    email: string;
+    image: string | null;
+  } | null;
+}
+
+export interface DocumentTreeNode {
+  id: string;
+  parentId: string | null;
+  title: string;
+  slug: string;
+  icon: string | null;
+  projectId: string | null;
+  currentRevision: number;
+  updatedAt: string;
+  children: DocumentTreeNode[];
+}
+
+export interface DocumentAttachment {
+  id: string;
+  pageId: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  filePath: string;
+  uploadedById: string;
+  createdAt: string;
+}
+
+export function useDocumentSpaces(filters?: { organizationId?: string | null; projectId?: string | null }) {
+  return useQuery({
+    queryKey: ['document-spaces', filters],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (filters?.organizationId) params.append('organizationId', filters.organizationId);
+      if (filters?.projectId) params.append('projectId', filters.projectId);
+      const response = await fetch(`/api/docs/spaces?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch document spaces');
+      const data = await response.json();
+      return data.spaces as DocumentSpace[];
+    },
+  });
+}
+
+export function useDocumentPages(filters?: { spaceId?: string | null; organizationId?: string | null; projectId?: string | null }) {
+  return useQuery({
+    queryKey: ['document-pages', filters],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (filters?.spaceId) params.append('spaceId', filters.spaceId);
+      if (filters?.organizationId) params.append('organizationId', filters.organizationId);
+      if (filters?.projectId) params.append('projectId', filters.projectId);
+      const response = await fetch(`/api/docs/pages?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch document pages');
+      return response.json() as Promise<{
+        space: DocumentSpace | null;
+        permissions: DocumentSpace['permissions'];
+        pages: DocumentPage[];
+      }>;
+    },
+  });
+}
+
+export function useDocumentPage(pageId: string | null) {
+  return useQuery({
+    queryKey: ['document-page', pageId],
+    queryFn: async () => {
+      if (!pageId) return null;
+      const response = await fetch(`/api/docs/pages/${pageId}`);
+      if (!response.ok) throw new Error('Failed to fetch document page');
+      return response.json() as Promise<DocumentPage>;
+    },
+    enabled: !!pageId,
+  });
+}
+
+export function useDocumentTree(pageId: string | null) {
+  return useQuery({
+    queryKey: ['document-tree', pageId],
+    queryFn: async () => {
+      if (!pageId) return null;
+      const response = await fetch(`/api/docs/pages/${pageId}/tree`);
+      if (!response.ok) throw new Error('Failed to fetch document tree');
+      return response.json() as Promise<{
+        tree: DocumentTreeNode[];
+        currentPageId: string;
+        space: DocumentSpace;
+      }>;
+    },
+    enabled: !!pageId,
+  });
+}
+
+export function useDocumentRevisions(pageId: string | null) {
+  return useQuery({
+    queryKey: ['document-revisions', pageId],
+    queryFn: async () => {
+      if (!pageId) return [];
+      const response = await fetch(`/api/docs/pages/${pageId}/revisions`);
+      if (!response.ok) throw new Error('Failed to fetch document revisions');
+      const data = await response.json();
+      return data.revisions as DocumentRevision[];
+    },
+    enabled: !!pageId,
+  });
+}
+
+export function useDocumentSearch(filters: { query: string; organizationId?: string | null; projectId?: string | null; enabled?: boolean }) {
+  return useQuery({
+    queryKey: ['document-search', filters.query, filters.organizationId, filters.projectId],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (filters.query) params.append('q', filters.query);
+      if (filters.organizationId) params.append('organizationId', filters.organizationId);
+      if (filters.projectId) params.append('projectId', filters.projectId);
+      params.append('limit', '10');
+
+      const response = await fetch(`/api/docs/search?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to search docs');
+      const data = await response.json();
+      return data.results as Array<{
+        id: string;
+        title: string;
+        slug: string;
+        icon: string | null;
+        excerpt: string | null;
+        projectId: string | null;
+        spaceId: string;
+        updatedAt: string;
+        rank: number;
+        spaceName: string;
+      }>;
+    },
+    enabled: filters.enabled !== false,
+  });
+}
+
+export function useCreateDocumentPage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      title: string;
+      icon?: string | null;
+      parentId?: string | null;
+      spaceId?: string;
+      organizationId?: string;
+      projectId?: string;
+      changeSummary?: string;
+      contentJson?: Record<string, any>;
+    }) => {
+      const response = await fetch('/api/docs/pages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || 'Failed to create document page');
+      }
+      return response.json() as Promise<DocumentPage>;
+    },
+    onSuccess: (page, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['document-pages'] });
+      queryClient.invalidateQueries({ queryKey: ['document-spaces'] });
+      if (variables.parentId) {
+        queryClient.invalidateQueries({ queryKey: ['document-tree'] });
+      }
+      queryClient.setQueryData(['document-page', page.id], page);
+      queryClient.invalidateQueries({ queryKey: ['document-page', page.id] });
+    },
+  });
+}
+
+export function useUpdateDocumentPage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      pageId,
+      data,
+    }: {
+      pageId: string;
+      data: {
+        title?: string;
+        icon?: string | null;
+        contentJson?: Record<string, any>;
+        changeSummary?: string;
+        expectedRevision: number;
+      };
+    }) => {
+      const response = await fetch(`/api/docs/pages/${pageId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        const message = error.error || 'Failed to update document page';
+        const err = new Error(message) as Error & { status?: number; payload?: any };
+        err.status = response.status;
+        err.payload = error;
+        throw err;
+      }
+      return response.json() as Promise<DocumentPage>;
+    },
+    onSuccess: (page) => {
+      queryClient.setQueryData(['document-page', page.id], page);
+      queryClient.invalidateQueries({ queryKey: ['document-page', page.id] });
+      queryClient.invalidateQueries({ queryKey: ['document-pages'] });
+      queryClient.invalidateQueries({ queryKey: ['document-tree'] });
+      queryClient.invalidateQueries({ queryKey: ['document-revisions', page.id] });
+      queryClient.invalidateQueries({ queryKey: ['document-search'] });
+    },
+  });
+}
+
+export function useRestoreDocumentPage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ pageId, revision, revisionId }: { pageId: string; revision?: number; revisionId?: string }) => {
+      const response = await fetch(`/api/docs/pages/${pageId}/restore`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ revision, revisionId }),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || 'Failed to restore document revision');
+      }
+      return response.json() as Promise<DocumentPage>;
+    },
+    onSuccess: (page) => {
+      queryClient.setQueryData(['document-page', page.id], page);
+      queryClient.invalidateQueries({ queryKey: ['document-page', page.id] });
+      queryClient.invalidateQueries({ queryKey: ['document-pages'] });
+      queryClient.invalidateQueries({ queryKey: ['document-tree'] });
+      queryClient.invalidateQueries({ queryKey: ['document-revisions', page.id] });
+    },
+  });
+}
+
+export function useUpdateDocumentShare(pageId: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: DocumentShareUpdateInput) => {
+      if (!pageId) {
+        throw new Error('Open a page before updating sharing');
+      }
+
+      const response = await fetch(`/api/docs/pages/${pageId}/share`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || 'Failed to update document sharing');
+      }
+
+      return response.json() as Promise<DocumentPage>;
+    },
+    onSuccess: (page) => {
+      queryClient.setQueryData(['document-page', page.id], page);
+      queryClient.invalidateQueries({ queryKey: ['document-page', page.id] });
+      queryClient.invalidateQueries({ queryKey: ['document-pages'] });
+      queryClient.invalidateQueries({ queryKey: ['document-search'] });
+    },
+  });
+}
+
+export function useIssueDocs(issueId: string | null) {
+  return useQuery({
+    queryKey: ['issue-docs', issueId],
+    queryFn: async () => {
+      if (!issueId) return [];
+      const response = await fetch(`/api/issues/${issueId}/docs`);
+      if (!response.ok) throw new Error('Failed to fetch issue docs');
+      const data = await response.json();
+      return data.docs as Array<{
+        linkId: string;
+        id: string;
+        spaceId: string;
+        title: string;
+        icon: string | null;
+        slug: string;
+        excerpt: string | null;
+        projectId: string | null;
+        updatedAt: string;
+      }>;
+    },
+    enabled: !!issueId,
+  });
+}
+
+export function useAttachIssueDoc(issueId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { pageId?: string; createNew?: boolean; title?: string }) => {
+      const response = await fetch(`/api/issues/${issueId}/docs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || 'Failed to attach doc');
+      }
+      return response.json();
+    },
+    onSuccess: (result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['issue-docs', issueId] });
+      const maybePageId = variables.pageId;
+      if (maybePageId) {
+        queryClient.invalidateQueries({ queryKey: ['document-page', maybePageId] });
+      }
+      const createdPage = result?.page as DocumentPage | undefined;
+      if (createdPage?.id) {
+        queryClient.setQueryData(['document-page', createdPage.id], createdPage);
+        queryClient.invalidateQueries({ queryKey: ['document-page', createdPage.id] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['document-pages'] });
+    },
+  });
+}
+
+export function useDetachIssueDoc(issueId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (pageId: string) => {
+      const response = await fetch(`/api/issues/${issueId}/docs?pageId=${pageId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || 'Failed to detach doc');
+      }
+      return response.json();
+    },
+    onSuccess: (_, pageId) => {
+      queryClient.invalidateQueries({ queryKey: ['issue-docs', issueId] });
+      queryClient.invalidateQueries({ queryKey: ['document-page', pageId] });
+    },
+  });
+}
+
+export function useDocumentAttachments(pageId: string | null) {
+  return useQuery({
+    queryKey: ['document-attachments', pageId],
+    queryFn: async () => {
+      if (!pageId) return [];
+      const response = await fetch(`/api/docs/pages/${pageId}/attachments`);
+      if (!response.ok) throw new Error('Failed to fetch document attachments');
+      const data = await response.json();
+      return data.attachments as DocumentAttachment[];
+    },
+    enabled: !!pageId,
+  });
+}
+
+export function useUploadDocumentAttachment(pageId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`/api/docs/pages/${pageId}/attachments`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || 'Failed to upload document attachment');
+      }
+
+      return response.json() as Promise<{ attachment: DocumentAttachment }>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['document-attachments', pageId] });
+      queryClient.invalidateQueries({ queryKey: ['document-page', pageId] });
+    },
+  });
+}
+
+export function useDeleteDocumentAttachment(pageId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (attachmentId: string) => {
+      const response = await fetch(`/api/docs/pages/${pageId}/attachments?attachmentId=${attachmentId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || 'Failed to delete document attachment');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['document-attachments', pageId] });
+      queryClient.invalidateQueries({ queryKey: ['document-page', pageId] });
+    },
+  });
+}

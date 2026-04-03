@@ -2,6 +2,8 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import { useOrganization } from '@/lib/hooks/use-organization';
+import { useDocumentSearch } from '@/lib/hooks/use-docs';
 import {
   CommandDialog,
   CommandEmpty,
@@ -10,11 +12,18 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { Search, Plus, Settings, Users, FolderKanban } from 'lucide-react';
+import { Search, Plus, Settings, Users, FolderKanban, BookOpenText } from 'lucide-react';
 
 export function CommandPalette() {
   const [open, setOpen] = React.useState(false);
+  const [query, setQuery] = React.useState('');
   const router = useRouter();
+  const { currentOrganizationId } = useOrganization();
+  const { data: docResults = [] } = useDocumentSearch({
+    query,
+    organizationId: currentOrganizationId,
+    enabled: open && query.trim().length > 1,
+  });
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -30,12 +39,13 @@ export function CommandPalette() {
 
   const runCommand = React.useCallback((command: () => void) => {
     setOpen(false);
+    setQuery('');
     command();
   }, []);
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Type a command or search..." />
+      <CommandInput placeholder="Type a command or search..." value={query} onValueChange={setQuery} />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
         
@@ -69,6 +79,12 @@ export function CommandPalette() {
             <span>Projects</span>
           </CommandItem>
           <CommandItem
+            onSelect={() => runCommand(() => router.push('/docs'))}
+          >
+            <BookOpenText className="mr-2 h-4 w-4" />
+            <span>Docs</span>
+          </CommandItem>
+          <CommandItem
             onSelect={() => runCommand(() => router.push('/team'))}
           >
             <Users className="mr-2 h-4 w-4" />
@@ -81,8 +97,24 @@ export function CommandPalette() {
             <span>Settings</span>
           </CommandItem>
         </CommandGroup>
+
+        {query.trim().length > 1 && docResults.length > 0 && (
+          <CommandGroup heading="Docs">
+            {docResults.map((doc) => (
+              <CommandItem
+                key={doc.id}
+                onSelect={() => runCommand(() => router.push(`/docs?pageId=${doc.id}&spaceId=${doc.spaceId}`))}
+              >
+                <BookOpenText className="mr-2 h-4 w-4" />
+                <div className="flex min-w-0 flex-col">
+                  <span className="truncate">{doc.title}</span>
+                  <span className="truncate text-xs text-muted-foreground">{doc.spaceName}</span>
+                </div>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
       </CommandList>
     </CommandDialog>
   );
 }
-

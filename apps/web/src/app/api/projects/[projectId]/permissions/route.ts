@@ -15,6 +15,10 @@ export interface UserProjectPermissions extends GranularPermissions {
 const ALL_PERMISSIONS: GranularPermissions = {
   canBrowseProject: true,
   canAdministerProject: true,
+  canBrowseDocs: true,
+  canCreateDocs: true,
+  canEditDocs: true,
+  canDeleteDocs: true,
   canManageSprints: true,
   canStartSprint: true,
   canCompleteSprint: true,
@@ -58,6 +62,10 @@ const ALL_PERMISSIONS: GranularPermissions = {
 const NO_PERMISSIONS: GranularPermissions = {
   canBrowseProject: false,
   canAdministerProject: false,
+  canBrowseDocs: false,
+  canCreateDocs: false,
+  canEditDocs: false,
+  canDeleteDocs: false,
   canManageSprints: false,
   canStartSprint: false,
   canCompleteSprint: false,
@@ -221,6 +229,10 @@ export async function GET(
       // Project
       canBrowseProject: toBool(projectMember.canBrowseProject) || roleDefaults.canBrowseProject,
       canAdministerProject: toBool(projectMember.canAdministerProject) || roleDefaults.canAdministerProject,
+      canBrowseDocs: toBool(projectMember.canBrowseDocs) || roleDefaults.canBrowseDocs,
+      canCreateDocs: toBool(projectMember.canCreateDocs) || roleDefaults.canCreateDocs,
+      canEditDocs: toBool(projectMember.canEditDocs) || roleDefaults.canEditDocs,
+      canDeleteDocs: toBool(projectMember.canDeleteDocs) || roleDefaults.canDeleteDocs,
       // Sprint
       canManageSprints: toBool(projectMember.canManageSprints) || roleDefaults.canManageSprints,
       canStartSprint: toBool(projectMember.canStartSprint) || roleDefaults.canStartSprint,
@@ -277,4 +289,3 @@ export async function GET(
     );
   }
 }
-

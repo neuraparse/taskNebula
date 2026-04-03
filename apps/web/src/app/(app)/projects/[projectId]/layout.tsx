@@ -11,6 +11,7 @@ import {
   Timer,
   BarChart3,
   Settings,
+  BookOpenText,
   ChevronRight,
 } from 'lucide-react';
 
@@ -23,6 +24,7 @@ const tabs = [
   { name: 'Board', href: 'board', icon: LayoutGrid },
   { name: 'Backlog', href: 'backlog', icon: List },
   { name: 'Sprints', href: 'sprints', icon: Timer },
+  { name: 'Docs', href: 'docs', icon: BookOpenText },
   { name: 'Analytics', href: 'analytics', icon: BarChart3 },
   { name: 'Settings', href: 'settings', icon: Settings },
 ];

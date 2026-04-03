@@ -51,7 +51,8 @@ export const authConfig: NextAuthConfig = {
 
       // Public routes that don't require authentication
       const publicRoutes = ['/auth/signin', '/auth/signup', '/auth/error', '/auth/verify-request'];
-      const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
+      const isPublicRoute =
+        publicRoutes.some((route) => pathname.startsWith(route)) || pathname.startsWith('/share/');
 
       // API routes are handled separately
       const isApiRoute = pathname.startsWith('/api');
@@ -90,4 +91,3 @@ export const authConfig: NextAuthConfig = {
 };
 
 export default authConfig;
-

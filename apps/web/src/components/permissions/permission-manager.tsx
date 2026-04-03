@@ -26,7 +26,7 @@ const ROLE_INFO: Record<ProjectRole, { label: string; color: string; description
 
 // Permission categories for organized display
 const PERMISSION_CATEGORIES = {
-  project: { label: 'Project', permissions: ['canBrowseProject', 'canAdministerProject'] },
+  project: { label: 'Project', permissions: ['canBrowseProject', 'canAdministerProject', 'canBrowseDocs', 'canCreateDocs', 'canEditDocs', 'canDeleteDocs'] },
   sprint: { label: 'Sprint', permissions: ['canManageSprints', 'canStartSprint', 'canCompleteSprint', 'canDeleteSprint'] },
   issue: { label: 'Issues', permissions: ['canCreateIssues', 'canEditIssues', 'canEditOwnIssues', 'canDeleteIssues', 'canDeleteOwnIssues', 'canAssignIssues', 'canAssigneeIssues', 'canTransitionIssues', 'canScheduleIssues', 'canMoveIssues', 'canLinkIssues', 'canCloseIssues', 'canReopenIssues'] },
   comment: { label: 'Comments', permissions: ['canAddComments', 'canEditOwnComments', 'canEditAllComments', 'canDeleteOwnComments', 'canDeleteAllComments'] },
@@ -40,6 +40,10 @@ const PERMISSION_CATEGORIES = {
 const PERMISSION_LABELS: Record<string, string> = {
   canBrowseProject: 'Browse Project',
   canAdministerProject: 'Administer Project',
+  canBrowseDocs: 'Browse Docs',
+  canCreateDocs: 'Create Docs',
+  canEditDocs: 'Edit Docs',
+  canDeleteDocs: 'Delete Docs',
   canManageSprints: 'Manage Sprints',
   canStartSprint: 'Start Sprint',
   canCompleteSprint: 'Complete Sprint',
@@ -303,4 +307,3 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
     </div>
   );
 }
-

@@ -11,6 +11,10 @@ export const PERMISSION_KEYS = {
   // Project
   canBrowseProject: 'canBrowseProject',
   canAdministerProject: 'canAdministerProject',
+  canBrowseDocs: 'canBrowseDocs',
+  canCreateDocs: 'canCreateDocs',
+  canEditDocs: 'canEditDocs',
+  canDeleteDocs: 'canDeleteDocs',
   // Sprint
   canManageSprints: 'canManageSprints',
   canStartSprint: 'canStartSprint',
@@ -64,7 +68,7 @@ export type PermissionKey = keyof typeof PERMISSION_KEYS;
 export const PERMISSION_CATEGORIES = {
   project: {
     label: 'Project',
-    permissions: ['canBrowseProject', 'canAdministerProject'],
+    permissions: ['canBrowseProject', 'canAdministerProject', 'canBrowseDocs', 'canCreateDocs', 'canEditDocs', 'canDeleteDocs'],
   },
   sprint: {
     label: 'Sprint Management',
@@ -109,6 +113,10 @@ export const PERMISSION_CATEGORIES = {
 export const PERMISSION_DESCRIPTIONS: Record<PermissionKey, { label: string; description: string }> = {
   canBrowseProject: { label: 'Browse Project', description: 'View project, issues, and sprints' },
   canAdministerProject: { label: 'Administer Project', description: 'Full project administration access' },
+  canBrowseDocs: { label: 'Browse Docs', description: 'View project documents and wiki content' },
+  canCreateDocs: { label: 'Create Docs', description: 'Create new project documents' },
+  canEditDocs: { label: 'Edit Docs', description: 'Edit project documents' },
+  canDeleteDocs: { label: 'Delete Docs', description: 'Archive or delete project documents' },
   canManageSprints: { label: 'Manage Sprints', description: 'Create and edit sprints' },
   canStartSprint: { label: 'Start Sprint', description: 'Start a sprint' },
   canCompleteSprint: { label: 'Complete Sprint', description: 'Complete/close a sprint' },
@@ -278,7 +286,7 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<string, Permission[]> = {
 
 // Super admin permissions (all permissions)
 export const SUPER_ADMIN_PERMISSIONS: Permission[] = [
-  ...ORGANIZATION_ROLE_PERMISSIONS.owner,
+  ...(ORGANIZATION_ROLE_PERMISSIONS.owner || []),
   'system:view',
   'system:manage',
   'system:users',
@@ -405,6 +413,10 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<ProjectRole, GranularPermissions> 
     // Project - Full access
     canBrowseProject: true,
     canAdministerProject: true,
+    canBrowseDocs: true,
+    canCreateDocs: true,
+    canEditDocs: true,
+    canDeleteDocs: true,
     // Sprint - Full access
     canManageSprints: true,
     canStartSprint: true,
@@ -455,6 +467,10 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<ProjectRole, GranularPermissions> 
     // Project
     canBrowseProject: true,
     canAdministerProject: false,
+    canBrowseDocs: true,
+    canCreateDocs: true,
+    canEditDocs: true,
+    canDeleteDocs: false,
     // Sprint - Full access (main responsibility)
     canManageSprints: true,
     canStartSprint: true,
@@ -505,6 +521,10 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<ProjectRole, GranularPermissions> 
     // Project
     canBrowseProject: true,
     canAdministerProject: false,
+    canBrowseDocs: true,
+    canCreateDocs: true,
+    canEditDocs: true,
+    canDeleteDocs: false,
     // Sprint
     canManageSprints: true,
     canStartSprint: true,
@@ -555,6 +575,10 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<ProjectRole, GranularPermissions> 
     // Project
     canBrowseProject: true,
     canAdministerProject: false,
+    canBrowseDocs: true,
+    canCreateDocs: true,
+    canEditDocs: true,
+    canDeleteDocs: false,
     // Sprint - View only
     canManageSprints: false,
     canStartSprint: false,
@@ -605,6 +629,10 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<ProjectRole, GranularPermissions> 
     // Project
     canBrowseProject: true,
     canAdministerProject: false,
+    canBrowseDocs: true,
+    canCreateDocs: true,
+    canEditDocs: true,
+    canDeleteDocs: false,
     // Sprint
     canManageSprints: false,
     canStartSprint: false,
@@ -655,6 +683,10 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<ProjectRole, GranularPermissions> 
     // Project
     canBrowseProject: true,
     canAdministerProject: false,
+    canBrowseDocs: true,
+    canCreateDocs: true,
+    canEditDocs: true,
+    canDeleteDocs: false,
     // Sprint
     canManageSprints: false,
     canStartSprint: false,
@@ -705,6 +737,10 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<ProjectRole, GranularPermissions> 
     // Project - Read only
     canBrowseProject: true,
     canAdministerProject: false,
+    canBrowseDocs: true,
+    canCreateDocs: false,
+    canEditDocs: false,
+    canDeleteDocs: false,
     // Sprint
     canManageSprints: false,
     canStartSprint: false,
@@ -846,4 +882,3 @@ export function getRolePermissions(
 
   return ORGANIZATION_ROLE_PERMISSIONS[role] || [];
 }
-

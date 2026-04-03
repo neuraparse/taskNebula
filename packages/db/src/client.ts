@@ -1,9 +1,10 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
+import { getDatabaseConnectionString } from './utils/connection-string';
 
 // Database connection - DATABASE_URL must be set at runtime
-const connectionString = process.env.DATABASE_URL!;
+const connectionString = getDatabaseConnectionString();
 
 // Create postgres client
 const client = postgres(connectionString, {

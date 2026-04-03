@@ -17,6 +17,10 @@ export interface GranularPermissions {
   // Project
   canBrowseProject: boolean;
   canAdministerProject: boolean;
+  canBrowseDocs: boolean;
+  canCreateDocs: boolean;
+  canEditDocs: boolean;
+  canDeleteDocs: boolean;
   // Sprint
   canManageSprints: boolean;
   canStartSprint: boolean;
@@ -95,6 +99,10 @@ const DEFAULT_PERMISSIONS: UserProjectPermissions = {
   // Project
   canBrowseProject: false,
   canAdministerProject: false,
+  canBrowseDocs: false,
+  canCreateDocs: false,
+  canEditDocs: false,
+  canDeleteDocs: false,
   // Sprint
   canManageSprints: false,
   canStartSprint: false,
@@ -217,4 +225,3 @@ export function useProjectMembers(projectId: string | undefined) {
     refetch,
   };
 }
-

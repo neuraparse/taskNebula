@@ -5,6 +5,8 @@ import * as dotenv from 'dotenv';
 import { resolve } from 'path';
 import bcrypt from 'bcryptjs';
 import * as schema from './schema';
+import { ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from './utils/permissions';
+import { getDatabaseConnectionString } from './utils/connection-string';
 
 // Load environment variables from root .env file
 dotenv.config({ path: resolve(__dirname, '../../../.env') });
@@ -22,7 +24,7 @@ interface DemoUser {
   image: string;
   password: string;
   settings: object;
-  status: 'active' | 'inactive' | 'pending';
+  status: 'active' | 'inactive' | 'invited';
   isSuperAdmin?: boolean;
   orgRole: 'owner' | 'admin' | 'member' | 'viewer';
   projectRole: 'product_owner' | 'scrum_master' | 'tech_lead' | 'developer' | 'qa_engineer' | 'designer' | 'viewer';
@@ -151,10 +153,14 @@ const seedData = {
   workflowStatuses: [] as any[],
   sprints: [] as any[],
   issues: [] as any[],
+  documentSpaces: [] as any[],
+  documentPages: [] as any[],
+  documentPageRevisions: [] as any[],
+  issueDocumentLinks: [] as any[],
 };
 
 async function seed() {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = getDatabaseConnectionString();
   if (!connectionString) {
     throw new Error('DATABASE_URL environment variable is not set');
   }
@@ -168,6 +174,12 @@ async function seed() {
   try {
     // Clean up existing seed data first (ignore errors for non-existent tables)
     console.log('🧹 Cleaning up existing data...');
+    try { await db.delete(schema.issueDocumentLinks); } catch (e) { /* ignore */ }
+    try { await db.delete(schema.documentPageLinks); } catch (e) { /* ignore */ }
+    try { await db.delete(schema.documentPageRevisions); } catch (e) { /* ignore */ }
+    try { await db.delete(schema.documentPageAttachments); } catch (e) { /* ignore */ }
+    try { await db.delete(schema.documentPages); } catch (e) { /* ignore */ }
+    try { await db.delete(schema.documentSpaces); } catch (e) { /* ignore */ }
     try { await db.delete(schema.issues); } catch (e) { /* ignore */ }
     try { await db.delete(schema.sprints); } catch (e) { /* ignore */ }
     try { await db.delete(schema.workflowStatuses); } catch (e) { /* ignore */ }
@@ -252,6 +264,8 @@ async function seed() {
         settings: {},
       },
     ];
+    const productTeam = teams[0]!;
+    const designTeam = teams[1]!;
     seedData.teams = teams;
     await db.insert(schema.teams).values(teams);
 
@@ -265,15 +279,15 @@ async function seed() {
       // Product team members
       ...developers.map(u => ({
         id: createId(),
-        teamId: teams[0].id,
+        teamId: productTeam.id,
         userId: u.id,
         role: u.projectRole === 'tech_lead' ? 'lead' as const : 'member' as const,
       })),
-      { id: createId(), teamId: teams[0].id, userId: scrumMaster.id, role: 'lead' as const },
+      { id: createId(), teamId: productTeam.id, userId: scrumMaster.id, role: 'lead' as const },
       // Design team members
       ...designers.map(u => ({
         id: createId(),
-        teamId: teams[1].id,
+        teamId: designTeam.id,
         userId: u.id,
         role: 'member' as const,
       })),
@@ -289,7 +303,7 @@ async function seed() {
       {
         id: createId(),
         organizationId: org.id,
-        teamId: teams[0].id,
+        teamId: productTeam.id,
         key: 'DEMO',
         name: 'Demo Project',
         description: 'Main demo project showcasing TaskNebula features',
@@ -302,7 +316,7 @@ async function seed() {
       {
         id: createId(),
         organizationId: org.id,
-        teamId: teams[0].id,
+        teamId: productTeam.id,
         key: 'MOBILE',
         name: 'Mobile App',
         description: 'React Native mobile application',
@@ -323,19 +337,18 @@ async function seed() {
 
       for (const project of projects) {
         for (const user of seedData.users) {
-          // Determine permissions based on role
-          const canManageSprints = ['product_owner', 'scrum_master', 'tech_lead'].includes(user.projectRole);
-          const canManageMembers = ['product_owner', 'scrum_master'].includes(user.projectRole);
-          const canDeleteIssues = ['product_owner', 'tech_lead'].includes(user.projectRole);
+          const roleDefaults = ROLE_DEFAULT_PERMISSIONS[user.projectRole as ProjectRole];
+          const permissionValues: Record<string, string> = {};
+          for (const [key, value] of Object.entries(roleDefaults)) {
+            permissionValues[key] = value ? 'true' : 'false';
+          }
 
           projectMembersData.push({
             id: createId(),
             projectId: project.id,
             userId: user.id,
             role: user.projectRole,
-            canManageSprints: canManageSprints ? 'true' : 'false',
-            canManageMembers: canManageMembers ? 'true' : 'false',
-            canDeleteIssues: canDeleteIssues ? 'true' : 'false',
+            ...permissionValues,
             invitedBy: adminUser.id,
           });
         }
@@ -384,7 +397,7 @@ async function seed() {
 
     // Create sprints
     console.log('Creating sprints...');
-    const mainProject = projects[0];
+    const mainProject = projects[0]!;
     const mainWorkflowStatuses = seedData.workflowStatuses.slice(0, 6);
 
     const sprints = [
@@ -413,6 +426,7 @@ async function seed() {
     ];
     seedData.sprints = sprints;
     await db.insert(schema.sprints).values(sprints);
+    const activeSprint = sprints[0]!;
 
     // Create issues
     console.log('Creating issues...');
@@ -444,7 +458,7 @@ async function seed() {
         assigneeId: techLead.id,
         reporterId: productOwner.id,
         labels: ['epic', 'auth', 'security'],
-        sprintId: sprints[0].id,
+        sprintId: activeSprint.id,
         estimate: 40,
         customFields: {},
         metadata: {},
@@ -465,7 +479,7 @@ async function seed() {
         assigneeId: dev1.id,
         reporterId: productOwner.id,
         labels: ['auth', 'frontend'],
-        sprintId: sprints[0].id,
+        sprintId: activeSprint.id,
         estimate: 8,
         customFields: {},
         metadata: {},
@@ -486,7 +500,7 @@ async function seed() {
         assigneeId: dev2.id,
         reporterId: productOwner.id,
         labels: ['auth', 'oauth'],
-        sprintId: sprints[0].id,
+        sprintId: activeSprint.id,
         estimate: 13,
         customFields: {},
         metadata: {},
@@ -507,7 +521,7 @@ async function seed() {
         assigneeId: techLead.id,
         reporterId: scrumMaster.id,
         labels: ['backend', 'security'],
-        sprintId: sprints[0].id,
+        sprintId: activeSprint.id,
         estimate: 5,
         customFields: {},
         metadata: {},
@@ -528,7 +542,7 @@ async function seed() {
         assigneeId: dev1.id,
         reporterId: qa.id,
         labels: ['bug', 'auth', 'urgent'],
-        sprintId: sprints[0].id,
+        sprintId: activeSprint.id,
         estimate: 3,
         customFields: {},
         metadata: {},
@@ -549,7 +563,7 @@ async function seed() {
         assigneeId: designer.id,
         reporterId: productOwner.id,
         labels: ['design', 'ui'],
-        sprintId: sprints[0].id,
+        sprintId: activeSprint.id,
         estimate: 5,
         customFields: {},
         metadata: {},
@@ -602,6 +616,195 @@ async function seed() {
     ];
     await db.insert(schema.issues).values(seedData.issues);
 
+    // Create docs / wiki
+    console.log('Creating docs spaces and pages...');
+    const orgSpace = {
+      id: createId(),
+      organizationId: org.id,
+      projectId: null,
+      scope: 'organization' as const,
+      name: 'Team Wiki',
+      slug: 'team-wiki',
+      description: 'Shared company knowledge, onboarding, and operating guides',
+      isDefault: true,
+      createdBy: adminUser.id,
+      updatedBy: adminUser.id,
+    };
+
+    const projectSpace = {
+      id: createId(),
+      organizationId: mainProject.organizationId,
+      projectId: mainProject.id,
+      scope: 'project' as const,
+      name: `${mainProject.name} Docs`,
+      slug: `${mainProject.key.toLowerCase()}-docs`,
+      description: 'Technical specs and delivery notes for the demo project',
+      isDefault: true,
+      createdBy: techLead.id,
+      updatedBy: techLead.id,
+    };
+
+    seedData.documentSpaces.push(orgSpace, projectSpace);
+    await db.insert(schema.documentSpaces).values(seedData.documentSpaces);
+
+    const onboardingPageId = createId();
+    const releasePageId = createId();
+    const authSpecPageId = createId();
+    const qaPageId = createId();
+
+    const createDocContent = (title: string, paragraphs: string[]) => ({
+      type: 'doc',
+      content: [
+        {
+          type: 'heading',
+          attrs: { level: 1 },
+          content: [{ type: 'text', text: title }],
+        },
+        ...paragraphs.map((paragraph) => ({
+          type: 'paragraph',
+          content: [{ type: 'text', text: paragraph }],
+        })),
+      ],
+    });
+
+    const docPages = [
+      {
+        id: onboardingPageId,
+        spaceId: orgSpace.id,
+        organizationId: org.id,
+        projectId: null,
+        parentId: null,
+        title: 'Team Onboarding',
+        slug: 'team-onboarding',
+        icon: 'book-open',
+        contentJson: createDocContent('Team Onboarding', [
+          'Welcome to TaskNebula. Start here for local setup, daily rituals, and communication norms.',
+          'Review the project docs space for active engineering specs tied to current delivery work.',
+        ]),
+        contentText: 'Welcome to TaskNebula. Start here for local setup, daily rituals, and communication norms. Review the project docs space for active engineering specs tied to current delivery work.',
+        excerpt: 'Welcome to TaskNebula. Start here for local setup, daily rituals, and communication norms.',
+        currentRevision: 1,
+        position: 0,
+        isArchived: false,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id,
+      },
+      {
+        id: releasePageId,
+        spaceId: orgSpace.id,
+        organizationId: org.id,
+        projectId: null,
+        parentId: onboardingPageId,
+        title: 'Release Checklist',
+        slug: 'release-checklist',
+        icon: 'clipboard-check',
+        contentJson: createDocContent('Release Checklist', [
+          'Run migrations, verify smoke tests, and publish release notes before every production deployment.',
+        ]),
+        contentText: 'Run migrations, verify smoke tests, and publish release notes before every production deployment.',
+        excerpt: 'Run migrations, verify smoke tests, and publish release notes before every production deployment.',
+        currentRevision: 1,
+        position: 0,
+        isArchived: false,
+        createdBy: scrumMaster.id,
+        updatedBy: scrumMaster.id,
+      },
+      {
+        id: authSpecPageId,
+        spaceId: projectSpace.id,
+        organizationId: org.id,
+        projectId: mainProject.id,
+        parentId: null,
+        title: 'Authentication Rollout Spec',
+        slug: 'authentication-rollout-spec',
+        icon: 'shield',
+        contentJson: createDocContent('Authentication Rollout Spec', [
+          'This spec tracks implementation scope for the DEMO-1 auth epic and linked stories.',
+          'Document OAuth callback handling, session invalidation fixes, and release sequencing.',
+        ]),
+        contentText: 'This spec tracks implementation scope for the DEMO-1 auth epic and linked stories. Document OAuth callback handling, session invalidation fixes, and release sequencing.',
+        excerpt: 'This spec tracks implementation scope for the DEMO-1 auth epic and linked stories.',
+        currentRevision: 1,
+        position: 0,
+        isArchived: false,
+        createdBy: techLead.id,
+        updatedBy: techLead.id,
+      },
+      {
+        id: qaPageId,
+        spaceId: projectSpace.id,
+        organizationId: org.id,
+        projectId: mainProject.id,
+        parentId: authSpecPageId,
+        title: 'QA Test Matrix',
+        slug: 'qa-test-matrix',
+        icon: 'check-square',
+        contentJson: createDocContent('QA Test Matrix', [
+          'Cover session expiry, OAuth account linking, and role-based route protection before release.',
+        ]),
+        contentText: 'Cover session expiry, OAuth account linking, and role-based route protection before release.',
+        excerpt: 'Cover session expiry, OAuth account linking, and role-based route protection before release.',
+        currentRevision: 1,
+        position: 0,
+        isArchived: false,
+        createdBy: qa.id,
+        updatedBy: qa.id,
+      },
+    ];
+
+    seedData.documentPages.push(...docPages);
+    await db.insert(schema.documentPages).values(docPages);
+
+    const revisions = docPages.map((page) => ({
+      id: createId(),
+      pageId: page.id,
+      revision: 1,
+      title: page.title,
+      contentJson: page.contentJson,
+      contentText: page.contentText,
+      excerpt: page.excerpt,
+      changeSummary: 'Initial draft',
+      createdBy: page.createdBy,
+    }));
+    seedData.documentPageRevisions.push(...revisions);
+    await db.insert(schema.documentPageRevisions).values(revisions);
+
+    await db.insert(schema.documentPageLinks).values([
+      {
+        id: createId(),
+        sourcePageId: onboardingPageId,
+        targetPageId: authSpecPageId,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id,
+      },
+      {
+        id: createId(),
+        sourcePageId: qaPageId,
+        targetPageId: authSpecPageId,
+        createdBy: qa.id,
+        updatedBy: qa.id,
+      },
+    ]);
+
+    const issueDocLinks = [
+      {
+        id: createId(),
+        issueId: seedData.issues[0].id,
+        pageId: authSpecPageId,
+        createdBy: techLead.id,
+        updatedBy: techLead.id,
+      },
+      {
+        id: createId(),
+        issueId: seedData.issues[4].id,
+        pageId: qaPageId,
+        createdBy: qa.id,
+        updatedBy: qa.id,
+      },
+    ];
+    seedData.issueDocumentLinks.push(...issueDocLinks);
+    await db.insert(schema.issueDocumentLinks).values(issueDocLinks);
+
     // Print summary
     console.log('\n✅ Seed completed successfully!\n');
     console.log('📊 Created:');
@@ -614,6 +817,8 @@ async function seed() {
     console.log(`   - ${seedData.workflowStatuses.length} workflow statuses`);
     console.log(`   - ${seedData.sprints.length} sprints`);
     console.log(`   - ${seedData.issues.length} issues`);
+    console.log(`   - ${seedData.documentSpaces.length} document spaces`);
+    console.log(`   - ${seedData.documentPages.length} document pages`);
 
     console.log('\n👥 Demo Users (password: demo123):');
     console.log('┌─────────────────────────────┬──────────────────┬─────────────────┐');
@@ -636,4 +841,3 @@ async function seed() {
 }
 
 seed();
-

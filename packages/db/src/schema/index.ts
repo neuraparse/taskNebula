@@ -11,6 +11,7 @@ export * from './attachments';
 export * from './notifications';
 export * from './custom-fields';
 export * from './audit-logs';
+export * from './documents';
 export * from './api-keys';
 export * from './webhooks';
 export * from './watchers';

@@ -22,6 +22,17 @@ export const auditLogActionEnum = pgEnum('audit_log_action', [
   'issue.attachment_added',
   'issue.attachment_removed',
   'issue.custom_field_changed',
+
+  // Document actions
+  'document.created',
+  'document.updated',
+  'document.deleted',
+  'document.restored',
+  'document.linked_issue',
+  'document.unlinked_issue',
+  'document.public_shared',
+  'document.public_unshared',
+  'document.public_link_regenerated',
   
   // Project actions
   'project.created',
@@ -101,4 +112,3 @@ export const auditLogs = pgTable('audit_logs', {
   orgCreatedAtIdx: index('audit_log_org_created_at_idx').on(table.organizationId, table.createdAt),
   resourceIdx: index('audit_log_resource_idx').on(table.resourceType, table.resourceId),
 }));
-

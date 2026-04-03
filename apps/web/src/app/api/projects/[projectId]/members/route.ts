@@ -95,6 +95,10 @@ export async function GET(
       permissions: {
         canBrowseProject: m.canBrowseProject === 'true',
         canAdministerProject: m.canAdministerProject === 'true',
+        canBrowseDocs: m.canBrowseDocs === 'true',
+        canCreateDocs: m.canCreateDocs === 'true',
+        canEditDocs: m.canEditDocs === 'true',
+        canDeleteDocs: m.canDeleteDocs === 'true',
         canManageSprints: m.canManageSprints === 'true',
         canStartSprint: m.canStartSprint === 'true',
         canCompleteSprint: m.canCompleteSprint === 'true',
@@ -197,6 +201,10 @@ export async function POST(
       // Set all permissions based on role defaults
       canBrowseProject: roleDefaults.canBrowseProject ? 'true' : 'false',
       canAdministerProject: roleDefaults.canAdministerProject ? 'true' : 'false',
+      canBrowseDocs: roleDefaults.canBrowseDocs ? 'true' : 'false',
+      canCreateDocs: roleDefaults.canCreateDocs ? 'true' : 'false',
+      canEditDocs: roleDefaults.canEditDocs ? 'true' : 'false',
+      canDeleteDocs: roleDefaults.canDeleteDocs ? 'true' : 'false',
       canManageSprints: roleDefaults.canManageSprints ? 'true' : 'false',
       canStartSprint: roleDefaults.canStartSprint ? 'true' : 'false',
       canCompleteSprint: roleDefaults.canCompleteSprint ? 'true' : 'false',
@@ -242,4 +250,3 @@ export async function POST(
     return NextResponse.json({ error: 'Failed to add project member' }, { status: 500 });
   }
 }
-

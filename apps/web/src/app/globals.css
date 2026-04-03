@@ -235,3 +235,52 @@
   .priority-medium { @apply bg-blue-500; }
   .priority-low { @apply bg-slate-400; }
 }
+
+/* Docs syntax highlighting */
+.hljs-comment,
+.hljs-quote {
+  color: #94a3b8;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-section,
+.hljs-link {
+  color: #f472b6;
+}
+
+.hljs-string,
+.hljs-title,
+.hljs-name,
+.hljs-type,
+.hljs-attribute,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+  color: #86efac;
+}
+
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-params,
+.hljs-meta,
+.hljs-selector-id,
+.hljs-selector-class {
+  color: #93c5fd;
+}
+
+.hljs-variable,
+.hljs-template-variable,
+.hljs-deletion {
+  color: #fca5a5;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: 700;
+}

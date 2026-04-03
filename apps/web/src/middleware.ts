@@ -27,7 +27,7 @@ export default auth((req) => {
   }
 
   // Landing page is public
-  if (pathname === '/') {
+  if (pathname === '/' || pathname.startsWith('/share/')) {
     return NextResponse.next();
   }
 
@@ -38,7 +38,7 @@ export default auth((req) => {
 
   // Public auth routes
   const publicRoutes = ['/auth/signin', '/auth/signup', '/auth/error', '/auth/verify-request'];
-  const isPublicRoute = publicRoutes.includes(pathname);
+  const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith('/share/');
 
   // Redirect to signin if not logged in and trying to access protected route
   if (!isLoggedIn && !isPublicRoute) {

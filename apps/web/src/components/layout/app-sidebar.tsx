@@ -7,6 +7,7 @@ import {
   Home,
   Inbox,
   FolderKanban,
+  BookOpenText,
   Users,
   Settings,
   ChevronDown,
@@ -24,6 +25,7 @@ const navigation = [
   { name: 'Home', href: '/dashboard', icon: Home },
   { name: 'My Issues', href: '/my-issues', icon: Inbox },
   { name: 'Projects', href: '/projects', icon: FolderKanban },
+  { name: 'Docs', href: '/docs', icon: BookOpenText },
   { name: 'Team', href: '/team', icon: Users },
 ];
 

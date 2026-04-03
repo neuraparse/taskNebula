@@ -59,6 +59,10 @@ export const projectMembers = pgTable('project_members', {
   // Project Permissions
   canBrowseProject: varchar('can_browse_project', { length: 5 }).notNull().default('true'),
   canAdministerProject: varchar('can_administer_project', { length: 5 }).notNull().default('false'),
+  canBrowseDocs: varchar('can_browse_docs', { length: 5 }).notNull().default('true'),
+  canCreateDocs: varchar('can_create_docs', { length: 5 }).notNull().default('false'),
+  canEditDocs: varchar('can_edit_docs', { length: 5 }).notNull().default('false'),
+  canDeleteDocs: varchar('can_delete_docs', { length: 5 }).notNull().default('false'),
 
   // Sprint Permissions
   canManageSprints: varchar('can_manage_sprints', { length: 5 }).notNull().default('false'),
@@ -157,4 +161,3 @@ export const projectsRelations = relations(projects, ({ many, one }) => ({
     references: [users.id],
   }),
 }));
-
