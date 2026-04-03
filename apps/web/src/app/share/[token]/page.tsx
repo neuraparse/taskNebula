@@ -54,9 +54,9 @@ export default async function PublicDocumentPage({
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.08),transparent_30%),linear-gradient(180deg,#ffffff,rgba(248,250,252,0.92))] px-4 py-8 dark:bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.12),transparent_30%),linear-gradient(180deg,#020617,rgba(2,6,23,0.96))] sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-background px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-6xl flex-col gap-6">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-border/70 bg-background/90 px-5 py-4 shadow-sm backdrop-blur">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 bg-background px-5 py-4">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary" className="gap-1.5">
@@ -90,12 +90,12 @@ export default async function PublicDocumentPage({
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
-          <section className="rounded-[32px] border border-border/70 bg-background/95 px-4 py-5 shadow-[0_30px_90px_rgba(15,23,42,0.08)] sm:px-8 sm:py-8">
+          <section className="rounded-lg border border-border/70 bg-background px-4 py-5 sm:px-8 sm:py-8">
             <DocumentContentViewer content={page.contentJson} />
           </section>
 
           <aside className="space-y-4">
-            <div className="rounded-3xl border border-border/70 bg-background/90 p-5 shadow-sm">
+            <div className="rounded-lg border border-border/70 bg-background p-5">
               <div className="text-sm font-semibold">Sharing Safety</div>
               <Separator className="my-3" />
               <p className="text-sm leading-6 text-muted-foreground">
@@ -105,7 +105,7 @@ export default async function PublicDocumentPage({
             </div>
 
             {page.attachments.length > 0 && (
-              <div className="rounded-3xl border border-border/70 bg-background/90 p-5 shadow-sm">
+              <div className="rounded-lg border border-border/70 bg-background p-5">
                 <div className="text-sm font-semibold">Published Files</div>
                 <Separator className="my-3" />
                 <div className="space-y-2">
@@ -115,7 +115,7 @@ export default async function PublicDocumentPage({
                       href={attachment.publicUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block rounded-2xl border border-border/70 px-3 py-2 text-sm transition-colors hover:bg-accent"
+                      className="block rounded-md border border-border/70 px-3 py-2 text-sm transition-colors hover:bg-muted/10"
                     >
                       <div className="font-medium">{attachment.fileName}</div>
                       <div className="mt-1 text-xs text-muted-foreground">{attachment.mimeType}</div>
