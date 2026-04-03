@@ -15,7 +15,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { createDocumentAppHref, createInternalDocumentHref } from '@/lib/docs/content';
 import { normalizeDocumentPasteHtml, normalizeDocumentPasteText } from '@/lib/docs/paste';
 import type { DocumentPage, DocumentShareUpdateInput } from '@/lib/hooks/use-docs';
@@ -25,7 +24,7 @@ import {
   createDocumentEditorExtensions,
   DOCUMENT_EDITOR_PROSE_CLASSNAME,
 } from './document-editor-extensions';
-import { DOCUMENT_ICON_OPTIONS, DocumentIcon } from './document-icon';
+import { DocumentIcon } from './document-icon';
 import {
   AlertTriangle,
   Check,
@@ -86,7 +85,6 @@ export function DocumentEditor({
 }: DocumentEditorProps) {
   const { toast } = useToast();
   const [title, setTitle] = useState(page.title);
-  const [pageIcon, setPageIcon] = useState<string | null>(page.icon || null);
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUpdatingShare, setIsUpdatingShare] = useState(false);
@@ -275,7 +273,6 @@ export function DocumentEditor({
 
     if (isNewPage) {
       setTitle(page.title);
-      setPageIcon(page.icon || null);
       titleRef.current = page.title;
       iconRef.current = page.icon || null;
       setLinkSearch('');
@@ -299,7 +296,6 @@ export function DocumentEditor({
 
     if (currentSnapshot !== incomingSnapshot) {
       setTitle(page.title);
-      setPageIcon(page.icon || null);
       titleRef.current = page.title;
       iconRef.current = page.icon || null;
       setLinkSearch('');
@@ -324,7 +320,7 @@ export function DocumentEditor({
     }
 
     const contentJson = editor.getJSON() as Record<string, any>;
-    const snapshot = serializeDocumentSnapshot(nextTitle, pageIcon, contentJson);
+    const snapshot = serializeDocumentSnapshot(nextTitle, iconRef.current, contentJson);
 
     if (snapshot === lastServerSnapshotRef.current) {
       setIsDirty(false);
@@ -342,7 +338,7 @@ export function DocumentEditor({
     }, AUTOSAVE_DELAY);
 
     return () => window.clearTimeout(timeout);
-  }, [autosaveVersion, canEdit, editor, isDirty, isSaving, pageIcon, title]);
+  }, [autosaveVersion, canEdit, editor, isDirty, isSaving, title]);
 
   const filteredPages = allPages.filter((candidate) => {
     if (candidate.id === page.id) {
@@ -896,11 +892,11 @@ export function DocumentEditor({
       <div ref={editorScrollRef} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-6 md:px-8 md:py-8">
         {slashMenu.open && (
           <div
-            className="absolute z-50 flex max-h-[440px] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border bg-background shadow-lg"
+            className="absolute z-50 flex max-h-[440px] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border bg-background shadow-sm"
             style={{ left: slashMenuPosition.left, top: slashMenuPosition.top }}
           >
             <div className="shrink-0 border-b px-3 py-2.5">
-              <div className="flex items-center gap-2 rounded-xl border bg-background px-2.5">
+              <div className="flex items-center gap-2 rounded-xl border bg-transparent px-2.5">
                 <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <input
                   value={slashSearch}
@@ -928,15 +924,15 @@ export function DocumentEditor({
                             type="button"
                             data-slash-index={index}
                             className={cn(
-                              'flex w-full items-start gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-accent/60',
-                              index === selectedSlashIndex && 'bg-accent/70'
+                              'flex w-full items-start gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-muted/10',
+                              index === selectedSlashIndex && 'bg-muted/10'
                             )}
                             onMouseDown={(event) => {
                               event.preventDefault();
                               applySlashCommand(command);
                             }}
                           >
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-transparent text-muted-foreground">
                               <command.icon className="h-3.5 w-3.5" />
                             </div>
                             <div className="min-w-0 flex-1">
@@ -959,7 +955,7 @@ export function DocumentEditor({
         )}
 
         <div className="mx-auto w-full max-w-[84rem]">
-          <div className="relative rounded-[30px] border bg-background px-6 py-8 md:px-10 md:py-10">
+          <div className="relative rounded-[30px] border bg-transparent px-6 py-8 md:px-10 md:py-10">
             <div className="mx-auto w-full max-w-[60rem]">
               <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border/70 pb-6">
                 <div className="min-w-0 flex-1">
@@ -974,7 +970,7 @@ export function DocumentEditor({
                               spaceId: breadcrumb.spaceId,
                               projectId: breadcrumb.projectId,
                             })}
-                            className="inline-flex items-center gap-2 rounded-full border bg-background px-2.5 py-1 transition-colors hover:bg-accent"
+                            className="inline-flex items-center gap-2 rounded-full border bg-transparent px-2.5 py-1 transition-colors hover:bg-muted/10"
                           >
                             <DocumentIcon icon={breadcrumb.icon} className="h-5 w-5 rounded-lg border-0 bg-transparent text-[11px] shadow-none" />
                             <span className="max-w-[180px] truncate">{breadcrumb.title}</span>
@@ -1009,7 +1005,7 @@ export function DocumentEditor({
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-10 rounded-full bg-background px-4"
+                        className="h-10 rounded-full bg-transparent px-4"
                         disabled={isUpdatingShare}
                       >
                         <Share2 className="mr-2 h-4 w-4" />
@@ -1121,7 +1117,7 @@ export function DocumentEditor({
                   </DropdownMenu>
 
                   {onCreateChild && canEdit && (
-                    <Button variant="outline" size="sm" className="h-10 rounded-full bg-background px-4" onClick={onCreateChild}>
+                    <Button variant="outline" size="sm" className="h-10 rounded-full bg-transparent px-4" onClick={onCreateChild}>
                       <FilePlus2 className="mr-2 h-4 w-4" />
                       Sub-note
                     </Button>
@@ -1135,112 +1131,27 @@ export function DocumentEditor({
                 </div>
               </div>
 
-              <div className="mt-6 flex items-start gap-4">
-                <div className="shrink-0">
-                  {canEdit ? (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="h-16 w-16 rounded-[20px] border bg-background p-0 hover:bg-accent"
-                        >
-                          <DocumentIcon icon={pageIcon} className="h-16 w-16 rounded-[24px] border-0 bg-transparent text-2xl shadow-none" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-80 rounded-3xl p-4" align="start">
-                        <div className="space-y-4">
-                          <div>
-                            <div className="text-sm font-semibold">Page Icon</div>
-                            <div className="mt-1 text-xs text-muted-foreground">Shown in the tree and links.</div>
-                          </div>
-                          <div className="grid grid-cols-6 gap-2">
-                            {DOCUMENT_ICON_OPTIONS.map((iconOption) => {
-                              const isSelected = pageIcon === iconOption;
-                              return (
-                                <Button
-                                  key={iconOption}
-                                  type="button"
-                                  variant="outline"
-                                  className={cn(
-                                    'h-11 rounded-2xl border-border/70 text-xl',
-                                    isSelected && 'border-primary bg-primary/10 text-primary hover:bg-primary/10'
-                                  )}
-                                  onClick={() => {
-                                    setPageIcon(iconOption);
-                                    iconRef.current = iconOption;
-                                    const snapshot = serializeDocumentSnapshot(
-                                      titleRef.current,
-                                      iconOption,
-                                      editor?.getJSON() || page.contentJson
-                                    );
-                                    const dirty = snapshot !== lastServerSnapshotRef.current;
-                                    setIsDirty(dirty);
-                                    setSaveState(dirty ? 'dirty' : 'saved');
-                                    setAutosaveVersion((version) => version + 1);
-                                  }}
-                                >
-                                  {iconOption}
-                                </Button>
-                              );
-                            })}
-                          </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full rounded-2xl"
-                            onClick={() => {
-                              setPageIcon(null);
-                              iconRef.current = null;
-                              const snapshot = serializeDocumentSnapshot(
-                                titleRef.current,
-                                null,
-                                editor?.getJSON() || page.contentJson
-                              );
-                              const dirty = snapshot !== lastServerSnapshotRef.current;
-                              setIsDirty(dirty);
-                              setSaveState(dirty ? 'dirty' : 'saved');
-                              setAutosaveVersion((version) => version + 1);
-                            }}
-                          >
-                            Remove icon
-                          </Button>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  ) : (
-                    <DocumentIcon icon={page.icon} className="h-16 w-16 rounded-[24px] text-2xl" />
-                  )}
-                </div>
+              <div className="mt-6">
+                {canEdit ? (
+                  <Input
+                    value={title}
+                    onChange={(event) => {
+                      const nextTitle = event.target.value;
+                      setTitle(nextTitle);
+                      titleRef.current = nextTitle;
 
-                <div className="min-w-0 flex-1">
-                  {canEdit ? (
-                    <Input
-                      value={title}
-                      onChange={(event) => {
-                        const nextTitle = event.target.value;
-                        setTitle(nextTitle);
-                        titleRef.current = nextTitle;
-
-                        const snapshot = serializeDocumentSnapshot(nextTitle, iconRef.current, editor?.getJSON() || page.contentJson);
-                        const dirty = snapshot !== lastServerSnapshotRef.current;
-                        setIsDirty(dirty);
-                        setSaveState(dirty ? 'dirty' : 'saved');
-                        setAutosaveVersion((version) => version + 1);
-                      }}
-                      className="h-auto border-none bg-transparent px-0 text-[3rem] font-semibold tracking-[-0.04em] shadow-none focus-visible:ring-0 md:text-[4rem]"
-                      placeholder="Untitled page"
-                    />
-                  ) : (
-                    <h1 className="text-[3rem] font-semibold tracking-[-0.04em] md:text-[4rem]">{page.title}</h1>
-                  )}
-
-                  {page.excerpt && (
-                    <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
-                      {page.excerpt}
-                    </p>
-                  )}
-                </div>
+                      const snapshot = serializeDocumentSnapshot(nextTitle, iconRef.current, editor?.getJSON() || page.contentJson);
+                      const dirty = snapshot !== lastServerSnapshotRef.current;
+                      setIsDirty(dirty);
+                      setSaveState(dirty ? 'dirty' : 'saved');
+                      setAutosaveVersion((version) => version + 1);
+                    }}
+                    className="h-auto border-none bg-transparent px-0 text-[2.6rem] font-semibold leading-none tracking-[-0.045em] shadow-none focus-visible:ring-0 md:text-[3.45rem]"
+                    placeholder="Untitled page"
+                  />
+                ) : (
+                  <h1 className="text-[2.6rem] font-semibold leading-none tracking-[-0.045em] md:text-[3.45rem]">{page.title}</h1>
+                )}
               </div>
 
               {saveError && (
@@ -1272,12 +1183,12 @@ export function DocumentEditor({
                   <div className="flex items-center gap-2 text-sm font-semibold tracking-tight">
                     <FolderTree className="h-4 w-4 text-primary" />
                     <span>Sub-notes</span>
-                    <Badge variant="outline" className="rounded-full bg-background">
+                    <Badge variant="outline" className="rounded-full bg-transparent">
                       {childPages.length}
                     </Badge>
                   </div>
                   {canEdit && onCreateChild && (
-                    <Button variant="outline" size="sm" className="rounded-full bg-background px-4" onClick={onCreateChild}>
+                    <Button variant="outline" size="sm" className="rounded-full bg-transparent px-4" onClick={onCreateChild}>
                       <FilePlus2 className="mr-2 h-4 w-4" />
                       Add Sub-note
                     </Button>
@@ -1294,12 +1205,12 @@ export function DocumentEditor({
                           spaceId: childPage.spaceId,
                           projectId: childPage.projectId,
                         })}
-                        className="group rounded-[20px] border bg-background px-4 py-3 transition-colors hover:bg-accent/40"
+                        className="group rounded-[20px] border bg-transparent px-4 py-3 transition-colors hover:bg-muted/10"
                       >
                         <div className="flex items-start gap-3">
                           <DocumentIcon icon={childPage.icon} className="h-8 w-8 rounded-[18px] text-sm" />
                           <div className="min-w-0 flex-1">
-                            <div className="truncate text-sm font-semibold tracking-tight group-hover:text-primary">{childPage.title}</div>
+                            <div className="truncate text-sm font-semibold tracking-tight">{childPage.title}</div>
                             <div className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
                               {childPage.excerpt || `Updated ${new Date(childPage.updatedAt).toLocaleDateString()}`}
                             </div>
@@ -1309,7 +1220,7 @@ export function DocumentEditor({
                     ))}
                   </div>
                 ) : (
-                  <div className="mt-4 rounded-[20px] border border-dashed bg-muted/20 px-4 py-4 text-sm text-muted-foreground">
+                  <div className="mt-4 rounded-[20px] border border-dashed bg-transparent px-4 py-4 text-sm text-muted-foreground">
                     No sub-notes yet.
                   </div>
                 )}
@@ -1336,7 +1247,7 @@ export function DocumentEditor({
                 filteredPages.map((linkedPage) => (
                   <button
                     key={linkedPage.id}
-                    className="flex w-full items-start gap-3 rounded-2xl border px-3 py-2.5 text-left transition-colors hover:bg-accent"
+                    className="flex w-full items-start gap-3 rounded-2xl border bg-transparent px-3 py-2.5 text-left transition-colors hover:bg-muted/10"
                     onClick={() => {
                       insertInternalLink(linkedPage);
                       setIsLinkDialogOpen(false);

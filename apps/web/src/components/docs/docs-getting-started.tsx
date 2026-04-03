@@ -24,7 +24,7 @@ export function DocsGettingStarted({
   onCreatePage,
 }: DocsGettingStartedProps) {
   return (
-    <div className={cn('rounded-[28px] border border-dashed border-border/70 bg-background p-6', className)}>
+    <div className={cn('rounded-[28px] border border-dashed border-border/70 bg-transparent p-6', className)}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Docs</div>
@@ -36,7 +36,7 @@ export function DocsGettingStarted({
             <Badge variant="secondary">{scopeLabel}</Badge>
           </div>
         </div>
-        <div className="rounded-[18px] border bg-muted p-3 text-foreground">
+        <div className="rounded-[18px] border bg-transparent p-3 text-foreground">
           <Sparkles className="h-4 w-4" />
         </div>
       </div>
@@ -67,8 +67,8 @@ function Step({
   title: string;
 }) {
   return (
-    <div className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-2 text-sm">
-      <div className="rounded-lg bg-muted p-1.5 text-muted-foreground">
+    <div className="inline-flex items-center gap-2 rounded-full border bg-transparent px-3 py-2 text-sm">
+      <div className="rounded-lg bg-transparent p-1.5 text-muted-foreground">
         <Icon className="h-4 w-4" />
       </div>
       <div className="font-medium">{title}</div>
