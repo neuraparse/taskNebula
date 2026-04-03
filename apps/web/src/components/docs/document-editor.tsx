@@ -367,6 +367,7 @@ export function DocumentEditor({
   const publicSharePath = page.share?.public?.enabled ? page.share.public.urlPath : null;
   const canManagePublicShare = Boolean(page.share?.canManagePublic && onUpdateShare && canEdit);
   const sharePathForNative = publicSharePath || internalSharePath;
+  const documentScopeLabel = page.projectId ? 'Project note' : 'Workspace note';
   const slashMenuLeft =
     typeof window !== 'undefined' ? Math.max(16, Math.min(slashMenu.x, window.innerWidth - 464)) : slashMenu.x;
   const slashMenuTop =
@@ -888,27 +889,34 @@ export function DocumentEditor({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.08),transparent_36%),linear-gradient(180deg,rgba(15,23,42,0.02),transparent_30%)]">
-      <div className="sticky top-0 z-20 border-b border-border/70 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/75">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-2 px-6 py-4">
-          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background px-2.5 py-1 text-foreground">
-              <Sparkles className="h-3.5 w-3.5" />
-              Autosave
-            </span>
-            {page.share?.public?.enabled && (
-              <Badge variant="secondary" className="gap-1.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
-                <Globe2 className="h-3.5 w-3.5" />
-                Public
-              </Badge>
-            )}
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <StatusIcon className={cn('h-3.5 w-3.5', statusMeta.iconClassName)} />
-              <span>{statusMeta.label}</span>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
+      <div className="sticky top-0 z-20 border-b border-border bg-background">
+        <div className="mx-auto w-full max-w-5xl px-6 pb-4 pt-5">
+          <div className="flex flex-col gap-2 rounded-[28px] border bg-card px-5 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full border bg-muted px-2.5 py-1 text-foreground">
+                  {documentScopeLabel}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2.5 py-1 text-foreground">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Autosave
+                </span>
+                {page.share?.public?.enabled && (
+                  <Badge variant="secondary" className="gap-1.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                    <Globe2 className="h-3.5 w-3.5" />
+                    Public
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <StatusIcon className={cn('h-3.5 w-3.5', statusMeta.iconClassName)} />
+                <span>{statusMeta.label}</span>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-start gap-4">
+          <div className="mt-3 flex flex-wrap items-start gap-4 rounded-[28px] border bg-card px-5 py-5">
             <div className="flex items-start gap-4">
               {canEdit ? (
                 <Popover>
@@ -916,7 +924,7 @@ export function DocumentEditor({
                     <Button
                       type="button"
                       variant="ghost"
-                      className="h-16 w-16 rounded-[24px] border border-border/70 bg-background/90 p-0 shadow-sm hover:bg-accent"
+                      className="h-16 w-16 rounded-[20px] border bg-background p-0 hover:bg-accent"
                     >
                       <DocumentIcon icon={pageIcon} className="h-16 w-16 rounded-[24px] border-0 bg-transparent text-2xl shadow-none" />
                     </Button>
@@ -988,19 +996,19 @@ export function DocumentEditor({
 
             <div className="min-w-0 flex-1">
               {breadcrumbPages.length > 0 && (
-                <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   {breadcrumbPages.map((breadcrumb, index) => (
                     <div key={breadcrumb.id} className="flex items-center gap-2">
-                      {index > 0 && <span className="text-muted-foreground/60">/</span>}
+                      {index > 0 && <span className="text-muted-foreground/50">/</span>}
                       <Link
                         href={createDocumentAppHref({
                           id: breadcrumb.id,
                           spaceId: breadcrumb.spaceId,
                           projectId: breadcrumb.projectId,
                         })}
-                        className="inline-flex items-center gap-2 rounded-full border border-transparent px-2 py-1 transition-colors hover:border-border hover:bg-accent"
+                        className="inline-flex items-center gap-2 rounded-full border bg-background px-2.5 py-1 transition-colors hover:bg-accent"
                       >
-                        <DocumentIcon icon={breadcrumb.icon} className="h-6 w-6 rounded-xl text-xs" />
+                        <DocumentIcon icon={breadcrumb.icon} className="h-5 w-5 rounded-lg border-0 bg-transparent text-[11px] shadow-none" />
                         <span className="max-w-[180px] truncate">{breadcrumb.title}</span>
                       </Link>
                     </div>
@@ -1022,18 +1030,29 @@ export function DocumentEditor({
                     setSaveState(dirty ? 'dirty' : 'saved');
                     setAutosaveVersion((version) => version + 1);
                   }}
-                  className="h-auto border-none bg-transparent px-0 text-4xl font-semibold tracking-tight shadow-none focus-visible:ring-0"
+                  className="h-auto border-none bg-transparent px-0 text-[2.75rem] font-semibold tracking-[-0.03em] shadow-none focus-visible:ring-0 md:text-5xl"
                   placeholder="Untitled page"
                 />
               ) : (
-                <h1 className="text-4xl font-semibold tracking-tight">{page.title}</h1>
+                <h1 className="text-[2.75rem] font-semibold tracking-[-0.03em] md:text-5xl">{page.title}</h1>
+              )}
+
+              {page.excerpt && (
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                  {page.excerpt}
+                </p>
               )}
             </div>
 
             <div className="flex items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" disabled={isUpdatingShare}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-10 rounded-full bg-background px-4"
+                    disabled={isUpdatingShare}
+                  >
                     <Share2 className="mr-2 h-4 w-4" />
                     Share
                   </Button>
@@ -1143,13 +1162,13 @@ export function DocumentEditor({
               </DropdownMenu>
 
               {onCreateChild && canEdit && (
-                <Button variant="outline" size="sm" onClick={onCreateChild}>
+                <Button variant="outline" size="sm" className="h-10 rounded-full bg-background px-4" onClick={onCreateChild}>
                   <FilePlus2 className="mr-2 h-4 w-4" />
                   Sub-note
                 </Button>
               )}
               {saveState === 'error' && canEdit && (
-                <Button size="sm" onClick={retrySaveNow} disabled={isSaving || !title.trim()}>
+                <Button size="sm" className="h-10 rounded-full px-4" onClick={retrySaveNow} disabled={isSaving || !title.trim()}>
                   {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
                   Retry Save
                 </Button>
@@ -1158,7 +1177,7 @@ export function DocumentEditor({
           </div>
 
           {saveError && (
-            <div className="flex items-start gap-2 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            <div className="mt-4 flex items-start gap-2 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{saveError}</span>
             </div>
@@ -1166,14 +1185,14 @@ export function DocumentEditor({
         </div>
       </div>
 
-      <div ref={editorScrollRef} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-8">
+      <div ref={editorScrollRef} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-10 pt-3">
         {slashMenu.open && (
           <div
-            className="absolute z-50 flex max-h-[440px] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-[20px] border border-border/60 bg-background/98 shadow-[0_24px_70px_rgba(15,23,42,0.14)] backdrop-blur"
+            className="absolute z-50 flex max-h-[440px] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border bg-popover shadow-lg"
             style={{ left: slashMenuPosition.left, top: slashMenuPosition.top }}
           >
-            <div className="shrink-0 border-b border-border/60 bg-background/98 px-3 py-2.5">
-              <div className="flex items-center gap-2 rounded-xl bg-muted/20 px-2.5">
+            <div className="shrink-0 border-b px-3 py-2.5">
+              <div className="flex items-center gap-2 rounded-xl border bg-background px-2.5">
                 <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <input
                   value={slashSearch}
@@ -1209,7 +1228,7 @@ export function DocumentEditor({
                               applySlashCommand(command);
                             }}
                           >
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted/35 text-muted-foreground">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                               <command.icon className="h-3.5 w-3.5" />
                             </div>
                             <div className="min-w-0 flex-1">
@@ -1232,7 +1251,7 @@ export function DocumentEditor({
         )}
 
         <div className="mx-auto w-full max-w-5xl">
-          <div className="relative rounded-[28px] border border-border/70 bg-background/95 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+          <div className="relative rounded-[28px] border bg-background px-7 py-8">
             <EditorContent editor={editor} />
             <input
               ref={imageInputRef}
@@ -1246,15 +1265,17 @@ export function DocumentEditor({
             />
 
             {(childPages.length > 0 || (canEdit && onCreateChild)) && (
-              <div className="mt-10 border-t border-border/70 pt-8">
+              <div className="mt-12 border-t border-border/60 pt-7">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-sm font-semibold">
+                  <div className="flex items-center gap-2 text-sm font-semibold tracking-tight">
                     <FolderTree className="h-4 w-4 text-primary" />
                     <span>Sub-notes</span>
-                    <Badge variant="outline">{childPages.length}</Badge>
+                    <Badge variant="outline" className="rounded-full bg-background">
+                      {childPages.length}
+                    </Badge>
                   </div>
                   {canEdit && onCreateChild && (
-                    <Button variant="outline" size="sm" onClick={onCreateChild}>
+                    <Button variant="outline" size="sm" className="rounded-full bg-background px-4" onClick={onCreateChild}>
                       <FilePlus2 className="mr-2 h-4 w-4" />
                       Add Sub-note
                     </Button>
@@ -1262,7 +1283,7 @@ export function DocumentEditor({
                 </div>
 
                 {childPages.length > 0 ? (
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <div className="mt-4 grid gap-2.5 md:grid-cols-2">
                     {childPages.map((childPage) => (
                       <Link
                         key={childPage.id}
@@ -1271,12 +1292,12 @@ export function DocumentEditor({
                           spaceId: childPage.spaceId,
                           projectId: childPage.projectId,
                         })}
-                        className="group rounded-[22px] border border-border/70 bg-muted/15 px-4 py-3 transition-colors hover:border-primary/30 hover:bg-background"
+                        className="group rounded-[20px] border bg-background px-4 py-3 transition-colors hover:bg-accent/40"
                       >
                         <div className="flex items-start gap-3">
-                          <DocumentIcon icon={childPage.icon} className="h-9 w-9 rounded-2xl text-sm" />
+                          <DocumentIcon icon={childPage.icon} className="h-8 w-8 rounded-[18px] text-sm" />
                           <div className="min-w-0 flex-1">
-                            <div className="truncate text-sm font-semibold group-hover:text-primary">{childPage.title}</div>
+                            <div className="truncate text-sm font-semibold tracking-tight group-hover:text-primary">{childPage.title}</div>
                             <div className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
                               {childPage.excerpt || `Updated ${new Date(childPage.updatedAt).toLocaleDateString()}`}
                             </div>
@@ -1286,7 +1307,7 @@ export function DocumentEditor({
                     ))}
                   </div>
                 ) : (
-                  <div className="mt-4 rounded-[22px] border border-dashed border-border/70 bg-muted/15 px-4 py-4 text-sm text-muted-foreground">
+                  <div className="mt-4 rounded-[20px] border border-dashed bg-muted/20 px-4 py-4 text-sm text-muted-foreground">
                     No sub-notes yet.
                   </div>
                 )}

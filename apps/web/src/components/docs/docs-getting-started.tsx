@@ -24,7 +24,7 @@ export function DocsGettingStarted({
   onCreatePage,
 }: DocsGettingStartedProps) {
   return (
-    <div className={cn('rounded-[28px] border border-dashed bg-card/60 p-5 shadow-sm', className)}>
+    <div className={cn('rounded-[28px] border border-dashed border-border/70 bg-card p-6', className)}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Docs</div>
@@ -36,19 +36,19 @@ export function DocsGettingStarted({
             <Badge variant="secondary">{scopeLabel}</Badge>
           </div>
         </div>
-        <div className="rounded-2xl bg-primary/10 p-2.5 text-primary">
+        <div className="rounded-[18px] border bg-muted p-3 text-foreground">
           <Sparkles className="h-4 w-4" />
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-5 flex flex-wrap gap-2">
         <Step icon={FilePlus2} title="Root note" />
         <Step icon={WandSparkles} title="Autosave" />
         <Step icon={FolderTree} title="Sub-notes" />
       </div>
 
       {canCreate ? (
-        <Button className="mt-4" onClick={onCreatePage}>
+        <Button className="mt-5 rounded-full px-5" onClick={onCreatePage}>
           <FilePlus2 className="mr-2 h-4 w-4" />
           New Page
         </Button>
@@ -67,7 +67,7 @@ function Step({
   title: string;
 }) {
   return (
-    <div className="inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-2 text-sm">
+    <div className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-2 text-sm">
       <div className="rounded-lg bg-muted p-1.5 text-muted-foreground">
         <Icon className="h-4 w-4" />
       </div>
