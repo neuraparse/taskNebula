@@ -467,7 +467,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
   const navigationPane = (
     <>
       <div className="border-b border-border/60 p-4">
-        <div className="rounded-[24px] border bg-card p-4">
+        <div className="rounded-[24px] border bg-background p-4">
           <div className="flex items-start gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-[18px] border bg-muted text-foreground">
               <FolderOpen className="h-4 w-4" />
@@ -531,7 +531,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pt-3">
-        <div className="rounded-[24px] border bg-card p-2.5">
+        <div className="rounded-[24px] border bg-background p-2.5">
           {showSearchResults ? (
             <div className="space-y-1">
               {searchResults.length > 0 ? (
@@ -1221,7 +1221,7 @@ function DetailSection({
   children: ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-xl border bg-card">
+    <section className="overflow-hidden rounded-xl border bg-background">
       <div className="flex items-center justify-between border-b border-border/70 px-3 py-2.5">
         <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">{title}</div>
         {typeof count === 'number' && (

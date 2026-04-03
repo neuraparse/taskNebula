@@ -24,7 +24,7 @@ export function DocsGettingStarted({
   onCreatePage,
 }: DocsGettingStartedProps) {
   return (
-    <div className={cn('rounded-[28px] border border-dashed border-border/70 bg-card p-6', className)}>
+    <div className={cn('rounded-[28px] border border-dashed border-border/70 bg-background p-6', className)}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Docs</div>

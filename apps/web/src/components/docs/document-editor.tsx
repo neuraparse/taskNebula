@@ -17,6 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { createDocumentAppHref, createInternalDocumentHref } from '@/lib/docs/content';
+import { normalizeDocumentPasteHtml, normalizeDocumentPasteText } from '@/lib/docs/paste';
 import type { DocumentPage, DocumentShareUpdateInput } from '@/lib/hooks/use-docs';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -151,12 +152,14 @@ export function DocumentEditor({
 
   const editor = useEditor({
     extensions: createDocumentEditorExtensions({
-      placeholder: 'Write the context, decisions, and implementation notes for your team.',
+      placeholder: 'Start writing',
     }),
     content: page.contentJson,
     editable: canEdit,
     immediatelyRender: false,
     editorProps: {
+      transformPastedHTML: (html) => normalizeDocumentPasteHtml(html),
+      transformPastedText: (text) => normalizeDocumentPasteText(text),
       handleKeyDown: (_view, event) => {
         if (!slashMenuRef.current.open || filteredSlashCommandsRef.current.length === 0) {
           return false;
@@ -890,305 +893,10 @@ export function DocumentEditor({
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
-      <div className="sticky top-0 z-20 border-b border-border bg-background">
-        <div className="mx-auto w-full max-w-5xl px-6 pb-4 pt-5">
-          <div className="flex flex-col gap-2 rounded-[28px] border bg-card px-5 py-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full border bg-muted px-2.5 py-1 text-foreground">
-                  {documentScopeLabel}
-                </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2.5 py-1 text-foreground">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Autosave
-                </span>
-                {page.share?.public?.enabled && (
-                  <Badge variant="secondary" className="gap-1.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
-                    <Globe2 className="h-3.5 w-3.5" />
-                    Public
-                  </Badge>
-                )}
-              </div>
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <StatusIcon className={cn('h-3.5 w-3.5', statusMeta.iconClassName)} />
-                <span>{statusMeta.label}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-start gap-4 rounded-[28px] border bg-card px-5 py-5">
-            <div className="flex items-start gap-4">
-              {canEdit ? (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="h-16 w-16 rounded-[20px] border bg-background p-0 hover:bg-accent"
-                    >
-                      <DocumentIcon icon={pageIcon} className="h-16 w-16 rounded-[24px] border-0 bg-transparent text-2xl shadow-none" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80 rounded-3xl p-4" align="start">
-                    <div className="space-y-4">
-                      <div>
-                        <div className="text-sm font-semibold">Page Icon</div>
-                        <div className="mt-1 text-xs text-muted-foreground">Shown in the tree and links.</div>
-                      </div>
-                      <div className="grid grid-cols-6 gap-2">
-                        {DOCUMENT_ICON_OPTIONS.map((iconOption) => {
-                          const isSelected = pageIcon === iconOption;
-                          return (
-                            <Button
-                              key={iconOption}
-                              type="button"
-                              variant="outline"
-                              className={cn(
-                                'h-11 rounded-2xl border-border/70 text-xl',
-                                isSelected && 'border-primary bg-primary/10 text-primary hover:bg-primary/10'
-                              )}
-                              onClick={() => {
-                                setPageIcon(iconOption);
-                                iconRef.current = iconOption;
-                                const snapshot = serializeDocumentSnapshot(
-                                  titleRef.current,
-                                  iconOption,
-                                  editor?.getJSON() || page.contentJson
-                                );
-                                const dirty = snapshot !== lastServerSnapshotRef.current;
-                                setIsDirty(dirty);
-                                setSaveState(dirty ? 'dirty' : 'saved');
-                                setAutosaveVersion((version) => version + 1);
-                              }}
-                            >
-                              {iconOption}
-                            </Button>
-                          );
-                        })}
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full rounded-2xl"
-                        onClick={() => {
-                          setPageIcon(null);
-                          iconRef.current = null;
-                          const snapshot = serializeDocumentSnapshot(
-                            titleRef.current,
-                            null,
-                            editor?.getJSON() || page.contentJson
-                          );
-                          const dirty = snapshot !== lastServerSnapshotRef.current;
-                          setIsDirty(dirty);
-                          setSaveState(dirty ? 'dirty' : 'saved');
-                          setAutosaveVersion((version) => version + 1);
-                        }}
-                      >
-                        Remove icon
-                      </Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              ) : (
-                <DocumentIcon icon={page.icon} className="h-16 w-16 rounded-[24px] text-2xl" />
-              )}
-            </div>
-
-            <div className="min-w-0 flex-1">
-              {breadcrumbPages.length > 0 && (
-                <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  {breadcrumbPages.map((breadcrumb, index) => (
-                    <div key={breadcrumb.id} className="flex items-center gap-2">
-                      {index > 0 && <span className="text-muted-foreground/50">/</span>}
-                      <Link
-                        href={createDocumentAppHref({
-                          id: breadcrumb.id,
-                          spaceId: breadcrumb.spaceId,
-                          projectId: breadcrumb.projectId,
-                        })}
-                        className="inline-flex items-center gap-2 rounded-full border bg-background px-2.5 py-1 transition-colors hover:bg-accent"
-                      >
-                        <DocumentIcon icon={breadcrumb.icon} className="h-5 w-5 rounded-lg border-0 bg-transparent text-[11px] shadow-none" />
-                        <span className="max-w-[180px] truncate">{breadcrumb.title}</span>
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {canEdit ? (
-                <Input
-                  value={title}
-                  onChange={(event) => {
-                    const nextTitle = event.target.value;
-                    setTitle(nextTitle);
-                    titleRef.current = nextTitle;
-
-                    const snapshot = serializeDocumentSnapshot(nextTitle, iconRef.current, editor?.getJSON() || page.contentJson);
-                    const dirty = snapshot !== lastServerSnapshotRef.current;
-                    setIsDirty(dirty);
-                    setSaveState(dirty ? 'dirty' : 'saved');
-                    setAutosaveVersion((version) => version + 1);
-                  }}
-                  className="h-auto border-none bg-transparent px-0 text-[2.75rem] font-semibold tracking-[-0.03em] shadow-none focus-visible:ring-0 md:text-5xl"
-                  placeholder="Untitled page"
-                />
-              ) : (
-                <h1 className="text-[2.75rem] font-semibold tracking-[-0.03em] md:text-5xl">{page.title}</h1>
-              )}
-
-              {page.excerpt && (
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                  {page.excerpt}
-                </p>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-10 rounded-full bg-background px-4"
-                    disabled={isUpdatingShare}
-                  >
-                    <Share2 className="mr-2 h-4 w-4" />
-                    Share
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-64">
-                  <DropdownMenuItem onClick={() => void sharePage()}>
-                    <Share2 className="mr-2 h-4 w-4" />
-                    Share page
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => void copyUrlValue(internalSharePath, 'link', 'Page link')}>
-                    <Link2 className="mr-2 h-4 w-4" />
-                    Copy workspace link
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => void copyUrlValue(internalSharePath, 'markdown', 'Workspace markdown link')}>
-                    <NotebookText className="mr-2 h-4 w-4" />
-                    Copy markdown link
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => {
-                      if (typeof window !== 'undefined') {
-                        window.open(internalSharePath, '_blank', 'noopener,noreferrer');
-                      }
-                    }}
-                  >
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Open workspace page
-                  </DropdownMenuItem>
-                  {publicSharePath && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => void copyUrlValue(publicSharePath, 'link', 'Public link')}>
-                        <Globe2 className="mr-2 h-4 w-4" />
-                        Copy public link
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          if (typeof window !== 'undefined') {
-                            window.open(publicSharePath, '_blank', 'noopener,noreferrer');
-                          }
-                        }}
-                      >
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        Open public page
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  {canManagePublicShare && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() =>
-                          void updateShareSettings(
-                            { enablePublic: !page.share?.public?.enabled },
-                            page.share?.public?.enabled
-                              ? 'Public access has been disabled for this page.'
-                              : 'This page is now available on a public link.'
-                          )
-                        }
-                      >
-                        <Globe2 className="mr-2 h-4 w-4" />
-                        {page.share?.public?.enabled ? 'Disable public access' : 'Enable public access'}
-                      </DropdownMenuItem>
-                      <DropdownMenuCheckboxItem
-                        checked={page.share?.public?.allowSearchIndexing}
-                        disabled={!page.share?.public?.enabled || isUpdatingShare}
-                        onCheckedChange={(checked) =>
-                          void updateShareSettings(
-                            { allowSearchIndexing: Boolean(checked) },
-                            Boolean(checked)
-                              ? 'Search indexing is enabled for the public page.'
-                              : 'Search indexing is disabled for the public page.'
-                          )
-                        }
-                      >
-                        Allow search indexing
-                      </DropdownMenuCheckboxItem>
-                      <DropdownMenuCheckboxItem
-                        checked={page.share?.public?.includeAttachments}
-                        disabled={!page.share?.public?.enabled || isUpdatingShare}
-                        onCheckedChange={(checked) =>
-                          void updateShareSettings(
-                            { includeAttachments: Boolean(checked) },
-                            Boolean(checked)
-                              ? 'Uploaded attachments can now appear on the public page.'
-                              : 'Uploaded attachments are now hidden from the public page.'
-                          )
-                        }
-                      >
-                        Include uploaded attachments
-                      </DropdownMenuCheckboxItem>
-                      <DropdownMenuItem
-                        disabled={!page.share?.public?.enabled || isUpdatingShare}
-                        onClick={() =>
-                          void updateShareSettings(
-                            { regenerateToken: true, enablePublic: true },
-                            'A fresh public link has been generated and the previous one no longer works.'
-                          )
-                        }
-                      >
-                        <RefreshCcw className="mr-2 h-4 w-4" />
-                        Regenerate public link
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {onCreateChild && canEdit && (
-                <Button variant="outline" size="sm" className="h-10 rounded-full bg-background px-4" onClick={onCreateChild}>
-                  <FilePlus2 className="mr-2 h-4 w-4" />
-                  Sub-note
-                </Button>
-              )}
-              {saveState === 'error' && canEdit && (
-                <Button size="sm" className="h-10 rounded-full px-4" onClick={retrySaveNow} disabled={isSaving || !title.trim()}>
-                  {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                  Retry Save
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {saveError && (
-            <div className="mt-4 flex items-start gap-2 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{saveError}</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div ref={editorScrollRef} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-10 pt-3">
+      <div ref={editorScrollRef} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-6 md:px-8 md:py-8">
         {slashMenu.open && (
           <div
-            className="absolute z-50 flex max-h-[440px] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border bg-popover shadow-lg"
+            className="absolute z-50 flex max-h-[440px] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border bg-background shadow-lg"
             style={{ left: slashMenuPosition.left, top: slashMenuPosition.top }}
           >
             <div className="shrink-0 border-b px-3 py-2.5">
@@ -1250,9 +958,303 @@ export function DocumentEditor({
           </div>
         )}
 
-        <div className="mx-auto w-full max-w-5xl">
-          <div className="relative rounded-[28px] border bg-background px-7 py-8">
-            <EditorContent editor={editor} />
+        <div className="mx-auto w-full max-w-[84rem]">
+          <div className="relative rounded-[30px] border bg-background px-6 py-8 md:px-10 md:py-10">
+            <div className="mx-auto w-full max-w-[60rem]">
+              <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border/70 pb-6">
+                <div className="min-w-0 flex-1">
+                  {breadcrumbPages.length > 0 && (
+                    <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      {breadcrumbPages.map((breadcrumb, index) => (
+                        <div key={breadcrumb.id} className="flex items-center gap-2">
+                          {index > 0 && <span className="text-muted-foreground/50">/</span>}
+                          <Link
+                            href={createDocumentAppHref({
+                              id: breadcrumb.id,
+                              spaceId: breadcrumb.spaceId,
+                              projectId: breadcrumb.projectId,
+                            })}
+                            className="inline-flex items-center gap-2 rounded-full border bg-background px-2.5 py-1 transition-colors hover:bg-accent"
+                          >
+                            <DocumentIcon icon={breadcrumb.icon} className="h-5 w-5 rounded-lg border-0 bg-transparent text-[11px] shadow-none" />
+                            <span className="max-w-[180px] truncate">{breadcrumb.title}</span>
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span>{documentScopeLabel}</span>
+                    <span className="text-muted-foreground/50">•</span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <StatusIcon className={cn('h-3.5 w-3.5', statusMeta.iconClassName)} />
+                      {statusMeta.label}
+                    </span>
+                    {page.share?.public?.enabled && (
+                      <>
+                        <span className="text-muted-foreground/50">•</span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <Globe2 className="h-3.5 w-3.5" />
+                          Public
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-10 rounded-full bg-background px-4"
+                        disabled={isUpdatingShare}
+                      >
+                        <Share2 className="mr-2 h-4 w-4" />
+                        Share
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-64">
+                      <DropdownMenuItem onClick={() => void sharePage()}>
+                        <Share2 className="mr-2 h-4 w-4" />
+                        Share page
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => void copyUrlValue(internalSharePath, 'link', 'Page link')}>
+                        <Link2 className="mr-2 h-4 w-4" />
+                        Copy workspace link
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => void copyUrlValue(internalSharePath, 'markdown', 'Workspace markdown link')}>
+                        <NotebookText className="mr-2 h-4 w-4" />
+                        Copy markdown link
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => {
+                          if (typeof window !== 'undefined') {
+                            window.open(internalSharePath, '_blank', 'noopener,noreferrer');
+                          }
+                        }}
+                      >
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        Open workspace page
+                      </DropdownMenuItem>
+                      {publicSharePath && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => void copyUrlValue(publicSharePath, 'link', 'Public link')}>
+                            <Globe2 className="mr-2 h-4 w-4" />
+                            Copy public link
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              if (typeof window !== 'undefined') {
+                                window.open(publicSharePath, '_blank', 'noopener,noreferrer');
+                              }
+                            }}
+                          >
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            Open public page
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      {canManagePublicShare && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() =>
+                              void updateShareSettings(
+                                { enablePublic: !page.share?.public?.enabled },
+                                page.share?.public?.enabled
+                                  ? 'Public access has been disabled for this page.'
+                                  : 'This page is now available on a public link.'
+                              )
+                            }
+                          >
+                            <Globe2 className="mr-2 h-4 w-4" />
+                            {page.share?.public?.enabled ? 'Disable public access' : 'Enable public access'}
+                          </DropdownMenuItem>
+                          <DropdownMenuCheckboxItem
+                            checked={page.share?.public?.allowSearchIndexing}
+                            disabled={!page.share?.public?.enabled || isUpdatingShare}
+                            onCheckedChange={(checked) =>
+                              void updateShareSettings(
+                                { allowSearchIndexing: Boolean(checked) },
+                                Boolean(checked)
+                                  ? 'Search indexing is enabled for the public page.'
+                                  : 'Search indexing is disabled for the public page.'
+                              )
+                            }
+                          >
+                            Allow search indexing
+                          </DropdownMenuCheckboxItem>
+                          <DropdownMenuCheckboxItem
+                            checked={page.share?.public?.includeAttachments}
+                            disabled={!page.share?.public?.enabled || isUpdatingShare}
+                            onCheckedChange={(checked) =>
+                              void updateShareSettings(
+                                { includeAttachments: Boolean(checked) },
+                                Boolean(checked)
+                                  ? 'Uploaded attachments can now appear on the public page.'
+                                  : 'Uploaded attachments are now hidden from the public page.'
+                              )
+                            }
+                          >
+                            Include uploaded attachments
+                          </DropdownMenuCheckboxItem>
+                          <DropdownMenuItem
+                            disabled={!page.share?.public?.enabled || isUpdatingShare}
+                            onClick={() =>
+                              void updateShareSettings(
+                                { regenerateToken: true, enablePublic: true },
+                                'A fresh public link has been generated and the previous one no longer works.'
+                              )
+                            }
+                          >
+                            <RefreshCcw className="mr-2 h-4 w-4" />
+                            Regenerate public link
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {onCreateChild && canEdit && (
+                    <Button variant="outline" size="sm" className="h-10 rounded-full bg-background px-4" onClick={onCreateChild}>
+                      <FilePlus2 className="mr-2 h-4 w-4" />
+                      Sub-note
+                    </Button>
+                  )}
+                  {saveState === 'error' && canEdit && (
+                    <Button size="sm" className="h-10 rounded-full px-4" onClick={retrySaveNow} disabled={isSaving || !title.trim()}>
+                      {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                      Retry Save
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-6 flex items-start gap-4">
+                <div className="shrink-0">
+                  {canEdit ? (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="h-16 w-16 rounded-[20px] border bg-background p-0 hover:bg-accent"
+                        >
+                          <DocumentIcon icon={pageIcon} className="h-16 w-16 rounded-[24px] border-0 bg-transparent text-2xl shadow-none" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 rounded-3xl p-4" align="start">
+                        <div className="space-y-4">
+                          <div>
+                            <div className="text-sm font-semibold">Page Icon</div>
+                            <div className="mt-1 text-xs text-muted-foreground">Shown in the tree and links.</div>
+                          </div>
+                          <div className="grid grid-cols-6 gap-2">
+                            {DOCUMENT_ICON_OPTIONS.map((iconOption) => {
+                              const isSelected = pageIcon === iconOption;
+                              return (
+                                <Button
+                                  key={iconOption}
+                                  type="button"
+                                  variant="outline"
+                                  className={cn(
+                                    'h-11 rounded-2xl border-border/70 text-xl',
+                                    isSelected && 'border-primary bg-primary/10 text-primary hover:bg-primary/10'
+                                  )}
+                                  onClick={() => {
+                                    setPageIcon(iconOption);
+                                    iconRef.current = iconOption;
+                                    const snapshot = serializeDocumentSnapshot(
+                                      titleRef.current,
+                                      iconOption,
+                                      editor?.getJSON() || page.contentJson
+                                    );
+                                    const dirty = snapshot !== lastServerSnapshotRef.current;
+                                    setIsDirty(dirty);
+                                    setSaveState(dirty ? 'dirty' : 'saved');
+                                    setAutosaveVersion((version) => version + 1);
+                                  }}
+                                >
+                                  {iconOption}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full rounded-2xl"
+                            onClick={() => {
+                              setPageIcon(null);
+                              iconRef.current = null;
+                              const snapshot = serializeDocumentSnapshot(
+                                titleRef.current,
+                                null,
+                                editor?.getJSON() || page.contentJson
+                              );
+                              const dirty = snapshot !== lastServerSnapshotRef.current;
+                              setIsDirty(dirty);
+                              setSaveState(dirty ? 'dirty' : 'saved');
+                              setAutosaveVersion((version) => version + 1);
+                            }}
+                          >
+                            Remove icon
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  ) : (
+                    <DocumentIcon icon={page.icon} className="h-16 w-16 rounded-[24px] text-2xl" />
+                  )}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  {canEdit ? (
+                    <Input
+                      value={title}
+                      onChange={(event) => {
+                        const nextTitle = event.target.value;
+                        setTitle(nextTitle);
+                        titleRef.current = nextTitle;
+
+                        const snapshot = serializeDocumentSnapshot(nextTitle, iconRef.current, editor?.getJSON() || page.contentJson);
+                        const dirty = snapshot !== lastServerSnapshotRef.current;
+                        setIsDirty(dirty);
+                        setSaveState(dirty ? 'dirty' : 'saved');
+                        setAutosaveVersion((version) => version + 1);
+                      }}
+                      className="h-auto border-none bg-transparent px-0 text-[3rem] font-semibold tracking-[-0.04em] shadow-none focus-visible:ring-0 md:text-[4rem]"
+                      placeholder="Untitled page"
+                    />
+                  ) : (
+                    <h1 className="text-[3rem] font-semibold tracking-[-0.04em] md:text-[4rem]">{page.title}</h1>
+                  )}
+
+                  {page.excerpt && (
+                    <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
+                      {page.excerpt}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {saveError && (
+                <div className="mt-5 flex items-start gap-2 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>{saveError}</span>
+                </div>
+              )}
+
+              <div className="mt-10">
+                <EditorContent editor={editor} />
+              </div>
+            </div>
+
             <input
               ref={imageInputRef}
               type="file"
@@ -1265,7 +1267,7 @@ export function DocumentEditor({
             />
 
             {(childPages.length > 0 || (canEdit && onCreateChild)) && (
-              <div className="mt-12 border-t border-border/60 pt-7">
+              <div className="mx-auto mt-12 w-full max-w-[60rem] border-t border-border/60 pt-7">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-sm font-semibold tracking-tight">
                     <FolderTree className="h-4 w-4 text-primary" />
