@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db, projects, sprints, issues } from '@tasknebula/db';
 import { eq, and, count } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
+import { resolveProjectByIdOrKey } from '@/lib/projects/server';
 
 // GET /api/projects/[projectId] - Get single project
 export async function GET(
@@ -17,21 +18,7 @@ export async function GET(
   const { projectId } = await params;
 
   try {
-    // Try to find by ID first, then by key
-    let [project] = await db
-      .select()
-      .from(projects)
-      .where(eq(projects.id, projectId))
-      .limit(1);
-
-    if (!project) {
-      // Try finding by key (case insensitive)
-      [project] = await db
-        .select()
-        .from(projects)
-        .where(eq(projects.key, projectId.toUpperCase()))
-        .limit(1);
-    }
+    const project = await resolveProjectByIdOrKey(projectId);
 
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
@@ -82,7 +69,13 @@ export async function PATCH(
 
   try {
     const body = await request.json();
-    const { name, description, status, settings, metadata } = body;
+    const { name, key, description, status, visibility, settings, metadata, leadId, defaultWorkflowId } = body;
+
+    const project = await resolveProjectByIdOrKey(projectId);
+
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
 
     const updateData: Record<string, unknown> = {
       updatedBy: session.user.id,
@@ -90,22 +83,49 @@ export async function PATCH(
     };
 
     if (name !== undefined) updateData.name = name;
+    if (key !== undefined) {
+      const normalizedKey = String(key).trim().toUpperCase();
+
+      if (!normalizedKey) {
+        return NextResponse.json({ error: 'Project key cannot be empty' }, { status: 400 });
+      }
+
+      if (normalizedKey !== project.key) {
+        const [existingProject] = await db
+          .select({ id: projects.id })
+          .from(projects)
+          .where(and(eq(projects.organizationId, project.organizationId), eq(projects.key, normalizedKey)))
+          .limit(1);
+
+        if (existingProject) {
+          return NextResponse.json(
+            { error: 'Project key already exists in this organization' },
+            { status: 409 }
+          );
+        }
+      }
+
+      updateData.key = normalizedKey;
+    }
     if (description !== undefined) updateData.description = description;
     if (status !== undefined) updateData.status = status;
+    if (visibility !== undefined) updateData.visibility = visibility;
     if (settings !== undefined) updateData.settings = settings;
     if (metadata !== undefined) updateData.metadata = metadata;
+    if (leadId !== undefined) updateData.leadId = leadId || null;
+    if (defaultWorkflowId !== undefined) updateData.defaultWorkflowId = defaultWorkflowId || null;
 
     const [updatedProject] = await db
       .update(projects)
       .set(updateData)
-      .where(eq(projects.id, projectId))
+      .where(eq(projects.id, project.id))
       .returning();
 
     if (!updatedProject) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    publishEvent('project.updated', session.user.id, { projectId });
+    publishEvent('project.updated', session.user.id, { projectId: project.id });
 
     return NextResponse.json(updatedProject);
   } catch (error) {
@@ -127,11 +147,17 @@ export async function DELETE(
   const { projectId } = await params;
 
   try {
+    const project = await resolveProjectByIdOrKey(projectId);
+
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
     // Check if project has issues
     const [issueCount] = await db
       .select({ count: count() })
       .from(issues)
-      .where(eq(issues.projectId, projectId));
+      .where(eq(issues.projectId, project.id));
 
     if (issueCount && issueCount.count > 0) {
       return NextResponse.json(
@@ -142,14 +168,14 @@ export async function DELETE(
 
     const [deletedProject] = await db
       .delete(projects)
-      .where(eq(projects.id, projectId))
+      .where(eq(projects.id, project.id))
       .returning();
 
     if (!deletedProject) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    publishEvent('project.deleted', session.user.id, { projectId });
+    publishEvent('project.deleted', session.user.id, { projectId: project.id });
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -157,4 +183,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Failed to delete project' }, { status: 500 });
   }
 }
-

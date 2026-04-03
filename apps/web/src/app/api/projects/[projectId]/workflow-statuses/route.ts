@@ -3,6 +3,7 @@ import { db, projects, workflows, workflowStatuses } from '@tasknebula/db';
 import { auth } from '@/auth';
 import { eq, and, asc, desc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { resolveProjectByIdOrKey } from '@/lib/projects/server';
 
 // GET /api/projects/[projectId]/workflow-statuses - Get workflow statuses for a project
 export async function GET(
@@ -16,33 +17,11 @@ export async function GET(
     }
 
     const { projectId } = await params;
+    const project = await resolveProjectByIdOrKey(projectId);
 
-    // Convert project key to ID if needed
-    let actualProjectId = projectId;
-    if (!projectId.includes('_')) {
-      const projectByKey = await db
-        .select()
-        .from(projects)
-        .where(eq(projects.key, projectId.toUpperCase()))
-        .limit(1);
-      
-      if (projectByKey.length > 0) {
-        actualProjectId = projectByKey[0].id;
-      }
-    }
-
-    // Get project
-    const projectResults = await db
-      .select()
-      .from(projects)
-      .where(eq(projects.id, actualProjectId))
-      .limit(1);
-
-    if (projectResults.length === 0) {
+    if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
-
-    const project = projectResults[0];
 
     // Get workflow for project
     let workflowId = project.defaultWorkflowId;
@@ -59,12 +38,14 @@ export async function GET(
           )
         )
         .limit(1);
-      
-      if (defaultWorkflows.length === 0) {
+
+      const defaultWorkflow = defaultWorkflows[0];
+
+      if (!defaultWorkflow) {
         return NextResponse.json({ error: 'No workflow found' }, { status: 500 });
       }
-      
-      workflowId = defaultWorkflows[0].id;
+
+      workflowId = defaultWorkflow.id;
     }
 
     // Get workflow statuses
@@ -103,32 +84,11 @@ export async function POST(
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Convert project key to ID if needed
-    let actualProjectId = projectId;
-    if (!projectId.includes('_')) {
-      const projectByKey = await db
-        .select()
-        .from(projects)
-        .where(eq(projects.key, projectId.toUpperCase()))
-        .limit(1);
+    const project = await resolveProjectByIdOrKey(projectId);
 
-      if (projectByKey.length > 0) {
-        actualProjectId = projectByKey[0].id;
-      }
-    }
-
-    // Get project
-    const projectResults = await db
-      .select()
-      .from(projects)
-      .where(eq(projects.id, actualProjectId))
-      .limit(1);
-
-    if (projectResults.length === 0) {
+    if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
-
-    const project = projectResults[0];
 
     // Get workflow for project
     let workflowId = project.defaultWorkflowId;
@@ -146,11 +106,13 @@ export async function POST(
         )
         .limit(1);
 
-      if (defaultWorkflows.length === 0) {
+      const defaultWorkflow = defaultWorkflows[0];
+
+      if (!defaultWorkflow) {
         return NextResponse.json({ error: 'No workflow found' }, { status: 500 });
       }
 
-      workflowId = defaultWorkflows[0].id;
+      workflowId = defaultWorkflow.id;
     }
 
     // Get max position
@@ -161,7 +123,7 @@ export async function POST(
       .orderBy(desc(workflowStatuses.position))
       .limit(1);
 
-    const position = existingStatuses.length > 0 ? existingStatuses[0].position + 1 : 0;
+    const position = (existingStatuses[0]?.position ?? -1) + 1;
 
     // Create new status
     const newStatus = await db

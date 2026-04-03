@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -22,13 +22,23 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2 } from 'lucide-react';
-import { useCreateCustomField } from '@/lib/hooks/use-custom-fields';
+import { useCreateCustomField, useUpdateCustomField } from '@/lib/hooks/use-custom-fields';
+
+interface EditableCustomField {
+  id: string;
+  name: string;
+  description: string | null;
+  type: string;
+  isRequired: boolean;
+  options: string | null;
+}
 
 interface CreateCustomFieldDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   organizationId: string;
   projectId?: string;
+  fieldToEdit?: EditableCustomField | null;
 }
 
 export function CreateCustomFieldDialog({
@@ -36,6 +46,7 @@ export function CreateCustomFieldDialog({
   onOpenChange,
   organizationId,
   projectId,
+  fieldToEdit,
 }: CreateCustomFieldDialogProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -44,26 +55,54 @@ export function CreateCustomFieldDialog({
   const [options, setOptions] = useState('');
 
   const createField = useCreateCustomField();
+  const updateField = useUpdateCustomField();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const isEditMode = Boolean(fieldToEdit);
 
-    await createField.mutateAsync({
-      organizationId,
-      projectId,
-      name,
-      description: description || undefined,
-      type: type as any,
-      isRequired,
-      options: options || undefined,
-    });
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
 
-    // Reset form
+    if (fieldToEdit) {
+      setName(fieldToEdit.name);
+      setDescription(fieldToEdit.description || '');
+      setType(fieldToEdit.type);
+      setIsRequired(fieldToEdit.isRequired);
+      setOptions(fieldToEdit.options || '');
+      return;
+    }
+
     setName('');
     setDescription('');
     setType('text');
     setIsRequired(false);
     setOptions('');
+  }, [fieldToEdit, open]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (fieldToEdit) {
+      await updateField.mutateAsync({
+        fieldId: fieldToEdit.id,
+        name,
+        description: description || '',
+        isRequired,
+        options: options || '',
+      });
+    } else {
+      await createField.mutateAsync({
+        organizationId,
+        projectId,
+        name,
+        description: description || undefined,
+        type: type as any,
+        isRequired,
+        options: options || undefined,
+      });
+    }
+
     onOpenChange(false);
   };
 
@@ -74,9 +113,11 @@ export function CreateCustomFieldDialog({
       <DialogContent className="sm:max-w-[500px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create Custom Field</DialogTitle>
+            <DialogTitle>{isEditMode ? 'Edit Custom Field' : 'Create Custom Field'}</DialogTitle>
             <DialogDescription>
-              Add a new custom field to capture additional information.
+              {isEditMode
+                ? 'Update the field details used across your issues.'
+                : 'Add a new custom field to capture additional information.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -105,7 +146,7 @@ export function CreateCustomFieldDialog({
 
             <div className="space-y-2">
               <Label htmlFor="type">Field Type *</Label>
-              <Select value={type} onValueChange={setType}>
+              <Select value={type} onValueChange={setType} disabled={isEditMode}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -155,9 +196,11 @@ export function CreateCustomFieldDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createField.isPending || !name}>
-              {createField.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Field
+            <Button type="submit" disabled={createField.isPending || updateField.isPending || !name}>
+              {(createField.isPending || updateField.isPending) && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              {isEditMode ? 'Save Changes' : 'Create Field'}
             </Button>
           </DialogFooter>
         </form>
@@ -165,4 +208,3 @@ export function CreateCustomFieldDialog({
     </Dialog>
   );
 }
-

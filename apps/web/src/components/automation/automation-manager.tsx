@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -22,8 +21,8 @@ interface AutomationRule {
     event?: string;
     field?: string;
   };
-  conditions: any[];
-  actions: any[];
+  conditions: Array<Record<string, unknown>>;
+  actions: Array<{ type: string }>;
 }
 
 const TRIGGER_TYPES = [
@@ -49,26 +48,29 @@ interface AutomationManagerProps {
   projectId?: string;
 }
 
+const EMPTY_FORM = {
+  name: '',
+  description: '',
+  enabled: true,
+  triggerType: 'issue_created',
+  actionType: 'assign_issue',
+};
+
 export function AutomationManager({ organizationId, projectId }: AutomationManagerProps) {
   const [rules, setRules] = useState<AutomationRule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [formMode, setFormMode] = useState<'create' | 'edit' | null>(null);
+  const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
+  const [formData, setFormData] = useState(EMPTY_FORM);
   const { toast } = useToast();
 
-  // Form state
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    enabled: true,
-    triggerType: 'issue_created',
-    actionType: 'assign_issue',
-  });
-
   useEffect(() => {
-    fetchRules();
+    void fetchRules();
   }, [organizationId, projectId]);
 
-  const fetchRules = async () => {
+  async function fetchRules() {
+    setIsLoading(true);
+
     try {
       let url = `/api/automation-rules?organizationId=${organizationId}`;
       if (projectId) {
@@ -76,7 +78,10 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
       }
 
       const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch automation rules');
+      if (!response.ok) {
+        throw new Error('Failed to fetch automation rules');
+      }
+
       const data = await response.json();
       setRules(data);
     } catch (error) {
@@ -88,9 +93,33 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
     } finally {
       setIsLoading(false);
     }
-  };
+  }
 
-  const createRule = async () => {
+  function resetForm() {
+    setFormMode(null);
+    setEditingRuleId(null);
+    setFormData(EMPTY_FORM);
+  }
+
+  function openCreateForm() {
+    setEditingRuleId(null);
+    setFormData(EMPTY_FORM);
+    setFormMode('create');
+  }
+
+  function openEditForm(rule: AutomationRule) {
+    setEditingRuleId(rule.id);
+    setFormData({
+      name: rule.name,
+      description: rule.description || '',
+      enabled: rule.enabled,
+      triggerType: rule.trigger.type,
+      actionType: rule.actions[0]?.type || 'assign_issue',
+    });
+    setFormMode('edit');
+  }
+
+  async function saveRule() {
     if (!formData.name.trim()) {
       toast({
         title: 'Error',
@@ -101,46 +130,47 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
     }
 
     try {
-      const response = await fetch('/api/automation-rules', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          organizationId,
-          projectId: projectId || null,
-          name: formData.name,
-          description: formData.description,
-          enabled: formData.enabled,
-          trigger: { type: formData.triggerType },
-          actions: [{ type: formData.actionType }],
-        }),
-      });
+      const payload = {
+        organizationId,
+        projectId: projectId || null,
+        name: formData.name.trim(),
+        description: formData.description.trim() || null,
+        enabled: formData.enabled,
+        trigger: { type: formData.triggerType },
+        conditions: [],
+        actions: [{ type: formData.actionType }],
+      };
 
-      if (!response.ok) throw new Error('Failed to create automation rule');
+      const response = await fetch(
+        formMode === 'edit' && editingRuleId ? `/api/automation-rules/${editingRuleId}` : '/api/automation-rules',
+        {
+          method: formMode === 'edit' ? 'PATCH' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to ${formMode === 'edit' ? 'update' : 'create'} automation rule`);
+      }
 
       toast({
         title: 'Success',
-        description: 'Automation rule created successfully',
+        description: formMode === 'edit' ? 'Automation rule updated' : 'Automation rule created',
       });
 
-      setFormData({
-        name: '',
-        description: '',
-        enabled: true,
-        triggerType: 'issue_created',
-        actionType: 'assign_issue',
-      });
-      setShowCreateForm(false);
-      fetchRules();
+      resetForm();
+      await fetchRules();
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to create automation rule',
+        description: error instanceof Error ? error.message : 'Failed to save automation rule',
         variant: 'destructive',
       });
     }
-  };
+  }
 
-  const toggleRule = async (ruleId: string, currentState: boolean) => {
+  async function toggleRule(ruleId: string, currentState: boolean) {
     try {
       const response = await fetch(`/api/automation-rules/${ruleId}`, {
         method: 'PATCH',
@@ -155,7 +185,7 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
         description: `Rule ${!currentState ? 'enabled' : 'disabled'}`,
       });
 
-      fetchRules();
+      await fetchRules();
     } catch (error) {
       toast({
         title: 'Error',
@@ -163,10 +193,10 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
         variant: 'destructive',
       });
     }
-  };
+  }
 
-  const deleteRule = async (ruleId: string) => {
-    if (!confirm('Are you sure you want to delete this automation rule?')) {
+  async function deleteRule(ruleId: string) {
+    if (!window.confirm('Are you sure you want to delete this automation rule?')) {
       return;
     }
 
@@ -182,7 +212,11 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
         description: 'Automation rule deleted',
       });
 
-      fetchRules();
+      if (editingRuleId === ruleId) {
+        resetForm();
+      }
+
+      await fetchRules();
     } catch (error) {
       toast({
         title: 'Error',
@@ -190,46 +224,42 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
         variant: 'destructive',
       });
     }
-  };
+  }
 
   if (isLoading) {
-    return <div className="p-4">Loading automation rules...</div>;
+    return <div className="p-4 text-sm text-muted-foreground">Loading automation rules...</div>;
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">Automation Rules</h3>
-          <p className="text-sm text-muted-foreground">
-            Automate repetitive tasks with custom rules
-          </p>
+          <h3 className="text-lg font-semibold">Automation rules</h3>
+          <p className="text-sm text-muted-foreground">Automate repetitive work with project-specific or organization-wide rules.</p>
         </div>
-        <Button onClick={() => setShowCreateForm(!showCreateForm)} variant={showCreateForm ? 'outline' : 'default'}>
+        <Button onClick={() => (formMode ? resetForm() : openCreateForm())} variant={formMode ? 'outline' : 'default'}>
           <Plus className="mr-2 h-4 w-4" />
-          {showCreateForm ? 'Cancel' : 'Create Rule'}
+          {formMode ? 'Close editor' : 'Create rule'}
         </Button>
       </div>
 
-      {/* Create Form */}
-      {showCreateForm && (
-        <Card className="border-primary/50">
+      {formMode ? (
+        <Card className="border-primary/40">
           <CardHeader>
-            <CardTitle className="text-base">Create Automation Rule</CardTitle>
-            <CardDescription>
-              Define when and what actions to execute automatically
-            </CardDescription>
+            <CardTitle className="text-base">
+              {formMode === 'edit' ? 'Edit automation rule' : 'Create automation rule'}
+            </CardTitle>
+            <CardDescription>Define a trigger and the primary action the rule should perform.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="rule-name">Rule Name</Label>
+                <Label htmlFor="rule-name">Rule name</Label>
                 <Input
                   id="rule-name"
-                  placeholder="e.g., Auto-assign new issues"
+                  placeholder="Auto-assign new issues"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(event) => setFormData((current) => ({ ...current, name: event.target.value }))}
                 />
               </div>
               <div className="space-y-2">
@@ -238,7 +268,9 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
                   id="rule-description"
                   placeholder="Optional description"
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(event) =>
+                    setFormData((current) => ({ ...current, description: event.target.value }))
+                  }
                 />
               </div>
             </div>
@@ -248,7 +280,7 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
                 <Label htmlFor="trigger-type">Trigger</Label>
                 <Select
                   value={formData.triggerType}
-                  onValueChange={(value) => setFormData({ ...formData, triggerType: value })}
+                  onValueChange={(value) => setFormData((current) => ({ ...current, triggerType: value }))}
                 >
                   <SelectTrigger id="trigger-type">
                     <SelectValue />
@@ -266,7 +298,7 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
                 <Label htmlFor="action-type">Action</Label>
                 <Select
                   value={formData.actionType}
-                  onValueChange={(value) => setFormData({ ...formData, actionType: value })}
+                  onValueChange={(value) => setFormData((current) => ({ ...current, actionType: value }))}
                 >
                   <SelectTrigger id="action-type">
                     <SelectValue />
@@ -286,69 +318,77 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
               <Switch
                 id="enabled"
                 checked={formData.enabled}
-                onCheckedChange={(checked) => setFormData({ ...formData, enabled: checked })}
+                onCheckedChange={(checked) => setFormData((current) => ({ ...current, enabled: checked }))}
               />
-              <Label htmlFor="enabled">Enable rule immediately</Label>
+              <Label htmlFor="enabled">Enable immediately</Label>
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={createRule}>Create Rule</Button>
-              <Button variant="outline" onClick={() => setShowCreateForm(false)}>
+              <Button onClick={() => void saveRule()}>
+                {formMode === 'edit' ? 'Save changes' : 'Create rule'}
+              </Button>
+              <Button variant="outline" onClick={resetForm}>
                 Cancel
               </Button>
             </div>
           </CardContent>
         </Card>
-      )}
+      ) : null}
 
-      {/* Rules List */}
       <div className="grid gap-4">
-        {rules.length === 0 && !showCreateForm ? (
+        {rules.length === 0 && !formMode ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-              <Zap className="h-16 w-16 mb-4 opacity-20" />
-              <h4 className="font-semibold mb-2">No automation rules yet</h4>
-              <p className="text-sm text-muted-foreground mb-4">Click "Create Rule" to automate your workflow</p>
-              <Button onClick={() => setShowCreateForm(true)}>
+              <Zap className="mb-4 h-16 w-16 opacity-20" />
+              <h4 className="mb-2 font-semibold">No automation rules yet</h4>
+              <p className="mb-4 text-sm text-muted-foreground">Create the first rule to automate repetitive handoffs.</p>
+              <Button onClick={openCreateForm}>
                 <Plus className="mr-2 h-4 w-4" />
-                Create Your First Rule
+                Create your first rule
               </Button>
             </CardContent>
           </Card>
         ) : (
           rules.map((rule) => (
-            <Card key={rule.id} className={rule.enabled ? 'border-l-4 border-l-green-500' : 'opacity-60'}>
+            <Card key={rule.id} className={rule.enabled ? 'border-l-4 border-l-green-500' : 'opacity-70'}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-1 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex-1 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
                       <CardTitle className="text-base">{rule.name}</CardTitle>
                       <Badge variant={rule.enabled ? 'default' : 'secondary'} className="text-xs">
                         {rule.enabled ? 'Active' : 'Disabled'}
                       </Badge>
                     </div>
-                    {rule.description && (
-                      <CardDescription className="text-xs">{rule.description}</CardDescription>
+                    {rule.description ? (
+                      <CardDescription>{rule.description}</CardDescription>
+                    ) : (
+                      <CardDescription>No description provided.</CardDescription>
                     )}
                   </div>
-                  <div className="flex gap-1 flex-shrink-0">
+                  <div className="flex gap-1">
                     <Button
                       size="icon"
                       variant="ghost"
-                      onClick={() => toggleRule(rule.id, rule.enabled)}
+                      onClick={() => void toggleRule(rule.id, rule.enabled)}
                       className="h-8 w-8"
                       title={rule.enabled ? 'Disable' : 'Enable'}
                     >
-                      {rule.enabled ? (
-                        <Pause className="h-3 w-3" />
-                      ) : (
-                        <Play className="h-3 w-3" />
-                      )}
+                      {rule.enabled ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
                     </Button>
                     <Button
                       size="icon"
                       variant="ghost"
-                      onClick={() => deleteRule(rule.id)}
+                      onClick={() => openEditForm(rule)}
+                      className="h-8 w-8"
+                      title="Edit"
+                    >
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => void deleteRule(rule.id)}
                       className="h-8 w-8 text-destructive hover:text-destructive"
                       title="Delete"
                     >
@@ -360,17 +400,17 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
               <CardContent className="pt-0">
                 <div className="flex flex-wrap items-center gap-4 text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground font-medium">When:</span>
+                    <span className="font-medium text-muted-foreground">When:</span>
                     <Badge variant="outline" className="font-normal">
-                      {TRIGGER_TYPES.find((t) => t.value === rule.trigger.type)?.label || rule.trigger.type}
+                      {TRIGGER_TYPES.find((type) => type.value === rule.trigger.type)?.label || rule.trigger.type}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground font-medium">Then:</span>
+                    <span className="font-medium text-muted-foreground">Then:</span>
                     <div className="flex flex-wrap gap-1">
-                      {rule.actions.map((action, idx) => (
-                        <Badge key={idx} variant="secondary" className="font-normal">
-                          {ACTION_TYPES.find((t) => t.value === action.type)?.label || action.type}
+                      {rule.actions.map((action, index) => (
+                        <Badge key={`${action.type}-${index}`} variant="secondary" className="font-normal">
+                          {ACTION_TYPES.find((type) => type.value === action.type)?.label || action.type}
                         </Badge>
                       ))}
                     </div>

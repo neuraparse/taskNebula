@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, webhooks } from '@tasknebula/db';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import crypto from 'crypto';
 
@@ -40,6 +40,8 @@ export async function GET(request: NextRequest) {
     const conditions = [eq(webhooks.organizationId, organizationId)];
     if (projectId) {
       conditions.push(eq(webhooks.projectId, projectId));
+    } else {
+      conditions.push(isNull(webhooks.projectId));
     }
 
     // Fetch webhooks
@@ -57,7 +59,7 @@ export async function GET(request: NextRequest) {
         updatedAt: webhooks.updatedAt,
       })
       .from(webhooks)
-      .where(eq(webhooks.organizationId, organizationId));
+      .where(and(...conditions));
 
     return NextResponse.json({ webhooks: webhookList });
   } catch (error) {
@@ -108,4 +110,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to create webhook' }, { status: 500 });
   }
 }
-

@@ -8,8 +8,17 @@ interface Project {
   key: string;
   name: string;
   description: string | null;
+  visibility?: string;
   status: string;
   settings: Record<string, unknown>;
+  defaultWorkflowId?: string | null;
+  leadId?: string | null;
+  sprintCount?: number;
+  issueCount?: number;
+  activeSprint?: {
+    id: string;
+    name: string;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -120,4 +129,3 @@ export function useDeleteProject() {
     },
   });
 }
-

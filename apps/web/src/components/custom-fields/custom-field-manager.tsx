@@ -15,6 +15,7 @@ interface CustomFieldManagerProps {
 
 export function CustomFieldManager({ organizationId, projectId }: CustomFieldManagerProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingField, setEditingField] = useState<any | null>(null);
   const { data, isLoading } = useCustomFields(organizationId, projectId);
   const deleteField = useDeleteCustomField();
 
@@ -115,7 +116,7 @@ export function CustomFieldManager({ organizationId, projectId }: CustomFieldMan
                   </div>
 
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" onClick={() => setEditingField(field)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
@@ -140,7 +141,17 @@ export function CustomFieldManager({ organizationId, projectId }: CustomFieldMan
         organizationId={organizationId}
         projectId={projectId}
       />
+      <CreateCustomFieldDialog
+        open={Boolean(editingField)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingField(null);
+          }
+        }}
+        organizationId={organizationId}
+        projectId={projectId}
+        fieldToEdit={editingField}
+      />
     </>
   );
 }
-

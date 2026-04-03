@@ -8,9 +8,11 @@ import { PermissionSchemeManager } from '@/components/permissions/permission-sch
 import { IssueSecurityManager } from '@/components/security/issue-security-manager';
 import { WorkflowEditor } from '@/components/workflows/workflow-editor';
 import { AutomationManager } from '@/components/automation/automation-manager';
+import { WebhooksManager } from '@/components/settings/webhooks-manager';
+import { ProjectGeneralSettings } from '@/components/settings/project-general-settings';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useProjectPermissions } from '@/lib/hooks/use-project-permissions';
-import { Shield, Settings, Workflow, Zap, FileText, Lock, Key } from 'lucide-react';
+import { Shield, Settings, Workflow, Zap, FileText, Lock, Key, Webhook } from 'lucide-react';
 
 export default function ProjectSettingsPage({
   params,
@@ -53,7 +55,7 @@ export default function ProjectSettingsPage({
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-7xl px-6 py-6">
-          <Tabs defaultValue="permissions" className="space-y-6">
+          <Tabs defaultValue="general" className="space-y-6">
             <div className="sticky top-0 z-10 bg-background pb-4">
               <TabsList className="inline-flex h-auto w-auto rounded-lg bg-muted p-1">
                 <TabsTrigger value="permissions" className="flex items-center gap-2 px-4 py-2">
@@ -80,6 +82,10 @@ export default function ProjectSettingsPage({
                   <Zap className="h-4 w-4" />
                   <span>Automation</span>
                 </TabsTrigger>
+                <TabsTrigger value="webhooks" className="flex items-center gap-2 px-4 py-2">
+                  <Webhook className="h-4 w-4" />
+                  <span>Webhooks</span>
+                </TabsTrigger>
                 <TabsTrigger value="general" className="flex items-center gap-2 px-4 py-2">
                   <Settings className="h-4 w-4" />
                   <span>General</span>
@@ -92,11 +98,11 @@ export default function ProjectSettingsPage({
             </TabsContent>
 
             <TabsContent value="schemes" className="space-y-4 focus-visible:outline-none">
-              <PermissionSchemeManager organizationId={currentOrganizationId} />
+              <PermissionSchemeManager organizationId={currentOrganizationId} projectId={projectId} />
             </TabsContent>
 
             <TabsContent value="security" className="space-y-4 focus-visible:outline-none">
-              <IssueSecurityManager organizationId={currentOrganizationId} />
+              <IssueSecurityManager organizationId={currentOrganizationId} projectId={projectId} />
             </TabsContent>
 
             <TabsContent value="custom-fields" className="space-y-4 focus-visible:outline-none">
@@ -104,18 +110,19 @@ export default function ProjectSettingsPage({
             </TabsContent>
 
             <TabsContent value="workflows" className="space-y-4 focus-visible:outline-none">
-              <WorkflowEditor organizationId={currentOrganizationId} />
+              <WorkflowEditor organizationId={currentOrganizationId} projectId={projectId} />
             </TabsContent>
 
             <TabsContent value="automation" className="space-y-4 focus-visible:outline-none">
               <AutomationManager organizationId={currentOrganizationId} projectId={projectId} />
             </TabsContent>
 
+            <TabsContent value="webhooks" className="space-y-4 focus-visible:outline-none">
+              <WebhooksManager organizationId={currentOrganizationId} projectId={projectId} />
+            </TabsContent>
+
             <TabsContent value="general" className="space-y-4 focus-visible:outline-none">
-              <div className="rounded-lg border p-8 text-center text-muted-foreground">
-                <Settings className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>General settings coming soon...</p>
-              </div>
+              <ProjectGeneralSettings projectId={projectId} />
             </TabsContent>
           </Tabs>
         </div>
@@ -123,4 +130,3 @@ export default function ProjectSettingsPage({
     </div>
   );
 }
-

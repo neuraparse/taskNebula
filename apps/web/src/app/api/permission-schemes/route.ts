@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, permissionSchemes, permissionSchemeGrants, organizations, users } from '@tasknebula/db';
+import { db, permissionSchemes, projectPermissionSchemes } from '@tasknebula/db';
 import { eq, and, desc } from 'drizzle-orm';
 import { PERMISSION_KEYS, ROLE_DEFAULT_PERMISSIONS } from '@tasknebula/db';
 
@@ -33,7 +33,21 @@ export async function GET(request: NextRequest) {
       .where(eq(permissionSchemes.organizationId, organizationId))
       .orderBy(desc(permissionSchemes.isDefault), permissionSchemes.name);
 
-    return NextResponse.json(schemes);
+    const schemesWithProjectCounts = await Promise.all(
+      schemes.map(async (scheme) => {
+        const projectAssignments = await db
+          .select({ id: projectPermissionSchemes.id })
+          .from(projectPermissionSchemes)
+          .where(eq(projectPermissionSchemes.schemeId, scheme.id));
+
+        return {
+          ...scheme,
+          projectCount: projectAssignments.length,
+        };
+      })
+    );
+
+    return NextResponse.json(schemesWithProjectCounts);
   } catch (error) {
     console.error('Error fetching permission schemes:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -88,4 +102,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-

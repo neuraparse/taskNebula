@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, issueSecuritySchemes, issueSecurityLevels, issueSecurityLevelMembers } from '@tasknebula/db';
+import { db, issueSecuritySchemes, issueSecurityLevels, issueSecurityLevelMembers, projectSecuritySchemes } from '@tasknebula/db';
 import { eq, desc } from 'drizzle-orm';
 
 // GET /api/security-schemes - List all issue security schemes for an organization
@@ -39,7 +39,31 @@ export async function GET(request: NextRequest) {
           .from(issueSecurityLevels)
           .where(eq(issueSecurityLevels.schemeId, scheme.id))
           .orderBy(issueSecurityLevels.sortOrder);
-        return { ...scheme, levels };
+
+        const levelsWithMembers = await Promise.all(
+          levels.map(async (level) => {
+            const members = await db
+              .select()
+              .from(issueSecurityLevelMembers)
+              .where(eq(issueSecurityLevelMembers.levelId, level.id));
+
+            return {
+              ...level,
+              members,
+            };
+          })
+        );
+
+        const projectAssignments = await db
+          .select({ id: projectSecuritySchemes.id })
+          .from(projectSecuritySchemes)
+          .where(eq(projectSecuritySchemes.schemeId, scheme.id));
+
+        return {
+          ...scheme,
+          levels: levelsWithMembers,
+          projectCount: projectAssignments.length,
+        };
       })
     );
 
@@ -119,4 +143,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-

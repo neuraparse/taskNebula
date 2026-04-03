@@ -159,6 +159,12 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
+    const createdProject = newProject[0];
+
+    if (!createdProject) {
+      throw new Error('Project could not be created');
+    }
+
     // Add creator as product_owner with full permissions from role defaults
     const role: ProjectRole = 'product_owner';
     const defaults = ROLE_DEFAULT_PERMISSIONS[role];
@@ -177,14 +183,13 @@ export async function POST(request: NextRequest) {
     });
 
     publishEvent('project.created', session.user.id, {
-      projectId: newProject[0].id,
+      projectId: createdProject.id,
       organizationId: orgId,
     });
 
-    return NextResponse.json(newProject[0], { status: 201 });
+    return NextResponse.json(createdProject, { status: 201 });
   } catch (error) {
     console.error('Error creating project:', error);
     return NextResponse.json({ error: 'Failed to create project' }, { status: 500 });
   }
 }
-
