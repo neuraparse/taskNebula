@@ -27,6 +27,13 @@ const envSchema = z.object({
   
   // AI
   OPENAI_API_KEY: z.string().optional(),
+  LIVEKIT_URL: z.string().optional(),
+  LIVEKIT_API_KEY: z.string().optional(),
+  LIVEKIT_API_SECRET: z.string().optional(),
+  NEXT_PUBLIC_LIVEKIT_URL: z.string().optional(),
+  TURN_URL: z.string().optional(),
+  TURN_USERNAME: z.string().optional(),
+  TURN_PASSWORD: z.string().optional(),
   
   // App
   NEXT_PUBLIC_APP_URL: z.string().url(),
@@ -116,4 +123,3 @@ export const rateLimit = {
   maxRequests: env.RATE_LIMIT_MAX_REQUESTS,
   windowMs: env.RATE_LIMIT_WINDOW_MS,
 };
-

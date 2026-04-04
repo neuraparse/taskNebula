@@ -21,6 +21,12 @@ export interface GranularPermissions {
   canCreateDocs: boolean;
   canEditDocs: boolean;
   canDeleteDocs: boolean;
+  canBrowseChat: boolean;
+  canCreateChannels: boolean;
+  canPostMessages: boolean;
+  canModerateMessages: boolean;
+  canStartCalls: boolean;
+  canManageCalls: boolean;
   // Sprint
   canManageSprints: boolean;
   canStartSprint: boolean;
@@ -103,6 +109,12 @@ const DEFAULT_PERMISSIONS: UserProjectPermissions = {
   canCreateDocs: false,
   canEditDocs: false,
   canDeleteDocs: false,
+  canBrowseChat: false,
+  canCreateChannels: false,
+  canPostMessages: false,
+  canModerateMessages: false,
+  canStartCalls: false,
+  canManageCalls: false,
   // Sprint
   canManageSprints: false,
   canStartSprint: false,

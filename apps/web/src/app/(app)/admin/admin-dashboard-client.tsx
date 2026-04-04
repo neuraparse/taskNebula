@@ -33,6 +33,7 @@ import { EditFeatureFlagDialog } from '@/components/admin/edit-feature-flag-dial
 import { EditOrganizationDialog } from '@/components/admin/edit-organization-dialog';
 import { EditUserDialog } from '@/components/admin/edit-user-dialog';
 import { AgentOpsPanel } from '@/components/admin/agent-ops-panel';
+import { RealtimeHealthPanel } from '@/components/admin/realtime-health-panel';
 import { useDeleteFeatureFlag, useFeatureFlags, useUpdateFeatureFlag } from '@/lib/hooks/use-feature-flags';
 import { cn } from '@/lib/utils';
 import {
@@ -50,6 +51,7 @@ import {
   ToggleRight,
   Trash2,
   Users,
+  Radio,
 } from 'lucide-react';
 
 const adminTabsListClassName =
@@ -130,7 +132,7 @@ export function AdminDashboardClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const validTabs = useMemo(
-    () => ['overview', 'organizations', 'users', 'feature-flags', 'agents', 'audit'],
+    () => ['overview', 'organizations', 'users', 'feature-flags', 'agents', 'realtime', 'audit'],
     []
   );
   const requestedTab = searchParams.get('tab');
@@ -377,6 +379,10 @@ export function AdminDashboardClient() {
             </TabsTrigger>
             <TabsTrigger value="agents" className={adminTabTriggerClassName}>
               AI Ops
+            </TabsTrigger>
+            <TabsTrigger value="realtime" className={adminTabTriggerClassName}>
+              <Radio className="mr-2 h-4 w-4" />
+              Realtime / RTC
             </TabsTrigger>
             <TabsTrigger value="audit" className={adminTabTriggerClassName}>
               Audit
@@ -728,6 +734,10 @@ export function AdminDashboardClient() {
                 <AgentOpsPanel />
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="realtime" className="space-y-6">
+            <RealtimeHealthPanel />
           </TabsContent>
 
           <TabsContent value="audit" className="space-y-6">

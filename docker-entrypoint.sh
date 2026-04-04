@@ -23,11 +23,11 @@ echo "  PostgreSQL is ready!"
 # Wait a bit more to ensure database is fully initialized
 sleep 3
 
-# Apply database schema
-echo "[2/3] Applying database schema..."
+# Apply database migrations
+echo "[2/3] Applying database migrations..."
 cd /app/packages/db
-pnpm drizzle-kit push --force 2>&1 || {
-  echo "  Schema push failed or already applied"
+pnpm db:migrate:prod 2>&1 || {
+  echo "  Migration skipped or already applied"
 }
 
 # Seed database (demo data + default workflows)

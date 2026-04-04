@@ -34,6 +34,15 @@ export interface ProjectSettings {
       channelId: string;
     };
   };
+  communications?: {
+    enabled: boolean;
+    inheritWorkspaceDefaults?: boolean;
+    voiceEnabled: boolean;
+    issueThreadsEnabled: boolean;
+    documentThreadsEnabled: boolean;
+    attachmentsEnabled: boolean;
+    unreadTrackingEnabled: boolean;
+  };
 }
 
 // Issue Type Configuration
@@ -76,4 +85,3 @@ export interface Sprint extends AuditableEntity {
 }
 
 export type SprintStatus = 'planned' | 'active' | 'completed';
-

@@ -62,6 +62,19 @@ EMAIL_FROM=noreply@yourdomain.com
 # Caching
 REDIS_URL=redis://localhost:6379
 
+# Self-hosted voice rooms
+LIVEKIT_URL=http://host.docker.internal:7880
+LIVEKIT_PUBLIC_HOST=rtc.yourdomain.com
+NEXT_PUBLIC_LIVEKIT_URL=wss://rtc.yourdomain.com
+LIVEKIT_NODE_IP=
+LIVEKIT_API_KEY=replace-me
+LIVEKIT_API_SECRET=replace-me
+
+# Optional external TURN relay
+TURN_URL=turns://turn.yourdomain.com:5349
+TURN_USERNAME=replace-me
+TURN_PASSWORD=replace-me
+
 # Monitoring
 NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
 ```
@@ -110,6 +123,8 @@ NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
    docker-compose up -d
    ```
 
+   The local compose stack provisions PostgreSQL, Redis, and a self-hosted LiveKit server for project voice rooms.
+
 3. **Run Migrations**
    ```bash
    docker-compose exec web pnpm --filter=@tasknebula/db db:migrate:prod
@@ -142,6 +157,16 @@ NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
    ```bash
    pnpm --filter=@tasknebula/web start
    ```
+
+5. **Provision Realtime Services**
+  - Redis is required for multi-instance SSE fanout and room presence.
+  - LiveKit is required for voice rooms.
+  - For Docker deployments, run LiveKit on the host network. LiveKit’s official deployment guide says Dockerized environments should use host networking for optimal performance.
+  - The bundled compose stack auto-detects `LIVEKIT_NODE_IP` inside the LiveKit container when left blank.
+  - For same-machine localhost development, keep `LIVEKIT_PUBLIC_HOST=127.0.0.1`.
+  - For LAN testing from another device, set `LIVEKIT_PUBLIC_HOST` to your machine IP, for example `192.168.1.103`.
+  - For production, pin your own `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET` and terminate TLS in front of the LiveKit WebSocket endpoint.
+  - LiveKit includes an embedded TURN server; use `TURN_*` only if you operate a separate TURN relay for stricter network environments.
 
 5. **Setup Process Manager (PM2)**
    ```bash
@@ -229,4 +254,3 @@ pm2 logs tasknebula
 - Check Node.js version: `node --version`
 
 For more help, see [GitHub Issues](https://github.com/yourusername/tasknebula/issues)
-

@@ -12,9 +12,10 @@ import { AutomationManager } from '@/components/automation/automation-manager';
 import { WebhooksManager } from '@/components/settings/webhooks-manager';
 import { ProjectGeneralSettings } from '@/components/settings/project-general-settings';
 import { ProjectAiAgents } from '@/components/settings/project-ai-agents';
+import { ProjectCommunicationsSettings } from '@/components/settings/project-communications-settings';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useProjectPermissions } from '@/lib/hooks/use-project-permissions';
-import { Shield, Settings, Workflow, Zap, FileText, Lock, Key, Webhook, Bot } from 'lucide-react';
+import { Shield, Settings, Workflow, Zap, FileText, Lock, Key, Webhook, Bot, MessageSquareText } from 'lucide-react';
 
 export default function ProjectSettingsPage({
   params,
@@ -28,7 +29,7 @@ export default function ProjectSettingsPage({
   const { currentOrganizationId } = useOrganization();
   const { permissions, isLoading: permissionsLoading } = useProjectPermissions(projectId);
   const validTabs = useMemo(
-    () => ['permissions', 'schemes', 'security', 'custom-fields', 'workflows', 'automation', 'ai-agents', 'webhooks', 'general'],
+    () => ['permissions', 'schemes', 'security', 'custom-fields', 'workflows', 'automation', 'ai-agents', 'chat-calls', 'webhooks', 'general'],
     []
   );
   const requestedTab = searchParams.get('tab');
@@ -109,6 +110,10 @@ export default function ProjectSettingsPage({
                   <Bot className="h-4 w-4" />
                   <span>AI Agents</span>
                 </TabsTrigger>
+                <TabsTrigger value="chat-calls" className="flex items-center gap-2 px-4 py-2">
+                  <MessageSquareText className="h-4 w-4" />
+                  <span>Chat & Calls</span>
+                </TabsTrigger>
                 <TabsTrigger value="webhooks" className="flex items-center gap-2 px-4 py-2">
                   <Webhook className="h-4 w-4" />
                   <span>Webhooks</span>
@@ -146,6 +151,10 @@ export default function ProjectSettingsPage({
 
             <TabsContent value="ai-agents" className="space-y-4 focus-visible:outline-none">
               <ProjectAiAgents projectId={projectId} />
+            </TabsContent>
+
+            <TabsContent value="chat-calls" className="space-y-4 focus-visible:outline-none">
+              <ProjectCommunicationsSettings projectId={projectId} />
             </TabsContent>
 
             <TabsContent value="webhooks" className="space-y-4 focus-visible:outline-none">

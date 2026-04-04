@@ -63,6 +63,12 @@ export const projectMembers = pgTable('project_members', {
   canCreateDocs: varchar('can_create_docs', { length: 5 }).notNull().default('false'),
   canEditDocs: varchar('can_edit_docs', { length: 5 }).notNull().default('false'),
   canDeleteDocs: varchar('can_delete_docs', { length: 5 }).notNull().default('false'),
+  canBrowseChat: varchar('can_browse_chat', { length: 5 }).notNull().default('true'),
+  canCreateChannels: varchar('can_create_channels', { length: 5 }).notNull().default('false'),
+  canPostMessages: varchar('can_post_messages', { length: 5 }).notNull().default('true'),
+  canModerateMessages: varchar('can_moderate_messages', { length: 5 }).notNull().default('false'),
+  canStartCalls: varchar('can_start_calls', { length: 5 }).notNull().default('false'),
+  canManageCalls: varchar('can_manage_calls', { length: 5 }).notNull().default('false'),
 
   // Sprint Permissions
   canManageSprints: varchar('can_manage_sprints', { length: 5 }).notNull().default('false'),

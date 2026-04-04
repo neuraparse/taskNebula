@@ -14,6 +14,7 @@ type JournalEntry = {
 type PostgresClient = ReturnType<typeof postgres>;
 
 const MARKERS = [
+  { idx: 15, type: 'table', table: 'conversation_rooms' },
   { idx: 14, type: 'table', table: 'agent_model_configs' },
   { idx: 13, type: 'table', table: 'agent_runs' },
   { idx: 12, type: 'column', table: 'document_pages', column: 'public_share_enabled' },

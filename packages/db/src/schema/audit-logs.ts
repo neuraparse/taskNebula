@@ -34,6 +34,16 @@ export const auditLogActionEnum = pgEnum('audit_log_action', [
   'document.public_unshared',
   'document.public_link_regenerated',
 
+  // Chat actions
+  'chat.channel_created',
+  'chat.channel_updated',
+  'chat.channel_deleted',
+  'chat.message_created',
+  'chat.message_updated',
+  'chat.message_deleted',
+  'chat.call_started',
+  'chat.call_ended',
+
   // Agent actions
   'agent.config_updated',
   'agent.model_config_created',

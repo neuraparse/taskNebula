@@ -23,6 +23,7 @@ import {
 } from '@/lib/hooks/use-docs';
 import { DocumentEditor } from './document-editor';
 import { DocsGettingStarted } from './docs-getting-started';
+import { DocumentDiscussionCard } from '@/components/chat/document-discussion-card';
 import { extractDocumentHeadings } from '@/lib/docs/content';
 import { buildDocumentTree } from '@/lib/docs/tree';
 import { formatFileSize } from '@/lib/hooks/use-attachments';
@@ -862,6 +863,10 @@ export function DocsShell({ projectId }: DocsShellProps) {
         </TabsContent>
 
         <TabsContent value="connections" className="mt-0 space-y-3">
+          {currentPage.projectId ? (
+            <DocumentDiscussionCard pageId={currentPage.id} projectId={currentPage.projectId} />
+          ) : null}
+
           <DetailSection title="Related Tasks" count={currentPage.relatedIssues?.length || 0}>
             {canEditCurrentPage && (
               <div className="flex gap-2">

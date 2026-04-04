@@ -8,6 +8,7 @@ import { IssueAttachments } from './issue-attachments';
 import { IssueDocs } from './issue-docs';
 import { IssueLinks } from './issue-links';
 import { IssueSubtasks } from './issue-subtasks';
+import { IssueDiscussionCard } from '@/components/chat/issue-discussion-card';
 
 interface IssueContentProps {
   issue: {
@@ -112,6 +113,12 @@ export function IssueContent({ issue }: IssueContentProps) {
       <section>
         <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">Related Docs</h3>
         <IssueDocs issueId={issue.id} issueKey={issue.key} issueTitle={issue.title} projectId={issue.projectId} />
+      </section>
+
+      {/* Discussion */}
+      <section>
+        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">Discussion</h3>
+        <IssueDiscussionCard issueId={issue.id} projectId={issue.projectId} />
       </section>
     </div>
   );

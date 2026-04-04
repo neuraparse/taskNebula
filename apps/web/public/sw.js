@@ -1,14 +1,18 @@
 // Service Worker for TaskNebula PWA
-const CACHE_NAME = 'tasknebula-v1';
+const CACHE_NAME = 'tasknebula-v2';
 const RUNTIME_CACHE = 'tasknebula-runtime';
 
 // Assets to cache on install
 const PRECACHE_URLS = [
   '/',
-  '/dashboard',
   '/offline',
   '/manifest.json',
 ];
+
+function shouldHandleNavigation(requestUrl) {
+  const pathname = new URL(requestUrl).pathname;
+  return pathname === '/' || pathname === '/offline';
+}
 
 // Install event - cache essential assets
 self.addEventListener('install', (event) => {
@@ -56,6 +60,10 @@ self.addEventListener('fetch', (event) => {
 
   // Only cache navigation requests for offline support
   if (event.request.mode === 'navigate') {
+    if (!shouldHandleNavigation(event.request.url)) {
+      return;
+    }
+
     event.respondWith(
       fetch(event.request)
         .then((response) => {

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import '@livekit/components-styles';
 import { Providers } from '@/components/providers';
 import { Toaster } from '@/components/ui/toaster';
 
@@ -38,18 +39,42 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                  navigator.serviceWorker.register('/sw.js').then(
-                    (registration) => {
-                      console.log('SW registered:', registration);
-                    },
-                    (error) => {
-                      console.log('SW registration failed:', error);
+              (() => {
+                if (!('serviceWorker' in navigator)) {
+                  return;
+                }
+
+                const isLocalHost =
+                  ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname) ||
+                  window.location.hostname.endsWith('.local');
+                const shouldRegister = ${process.env.NODE_ENV === 'production' ? 'true' : 'false'} && !isLocalHost;
+
+                window.addEventListener('load', async () => {
+                  try {
+                    if (!shouldRegister) {
+                      const registrations = await navigator.serviceWorker.getRegistrations();
+                      await Promise.all(
+                        registrations.map((registration) => registration.unregister().catch(() => false))
+                      );
+
+                      if ('caches' in window) {
+                        const cacheKeys = await caches.keys();
+                        await Promise.all(
+                          cacheKeys
+                            .filter((key) => key.startsWith('tasknebula-'))
+                            .map((key) => caches.delete(key))
+                        );
+                      }
+
+                      return;
                     }
-                  );
+
+                    await navigator.serviceWorker.register('/sw.js');
+                  } catch {
+                    // Keep localhost and production consoles clean. The app works without SW.
+                  }
                 });
-              }
+              })();
             `,
           }}
         />

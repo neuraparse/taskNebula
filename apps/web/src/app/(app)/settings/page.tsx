@@ -9,10 +9,11 @@ import { AuditLogViewer } from '@/components/audit/audit-log-viewer';
 import { NotificationPreferences } from '@/components/settings/notification-preferences';
 import { AppearanceSettings } from '@/components/settings/appearance-settings';
 import { OrganizationAiAgentsSettings } from '@/components/settings/organization-ai-agents';
+import { OrganizationCommunicationsSettings } from '@/components/settings/organization-communications-settings';
 import { MembersPageClient } from './members/members-page-client';
 import { OrganizationSettingsClient } from './organization/organization-settings-client';
 import { useOrganization } from '@/lib/hooks/use-organization';
-import { Palette, Building2, Users, Bell, Key, Webhook, ScrollText, Bot } from 'lucide-react';
+import { Palette, Building2, Users, Bell, Key, Webhook, ScrollText, Bot, MessageSquareText } from 'lucide-react';
 
 const settingsTabsListClassName =
   'h-auto w-full flex-wrap justify-start gap-2 rounded-xl border border-border/70 bg-card/40 p-1';
@@ -26,7 +27,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const validTabs = useMemo(
-    () => ['appearance', 'organization', 'members', 'ai-agents', 'notifications', 'api-keys', 'webhooks', 'audit-log'],
+    () => ['appearance', 'organization', 'members', 'ai-agents', 'communications', 'notifications', 'api-keys', 'webhooks', 'audit-log'],
     []
   );
   const requestedTab = searchParams.get('tab');
@@ -79,6 +80,10 @@ export default function SettingsPage() {
             <Bot className="h-4 w-4" />
             AI & Agents
           </TabsTrigger>
+          <TabsTrigger value="communications" className={settingsTabTriggerClassName}>
+            <MessageSquareText className="h-4 w-4" />
+            Communications
+          </TabsTrigger>
           <TabsTrigger value="notifications" className={settingsTabTriggerClassName}>
             <Bell className="h-4 w-4" />
             Notifications
@@ -111,6 +116,10 @@ export default function SettingsPage() {
 
         <TabsContent value="ai-agents" className="space-y-4 animate-in fade-in">
           <OrganizationAiAgentsSettings organizationId={currentOrganizationId} />
+        </TabsContent>
+
+        <TabsContent value="communications" className="space-y-4 animate-in fade-in">
+          <OrganizationCommunicationsSettings organizationId={currentOrganizationId} />
         </TabsContent>
 
         <TabsContent value="notifications" className="space-y-4 animate-in fade-in">

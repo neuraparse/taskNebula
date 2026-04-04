@@ -35,6 +35,29 @@ services:
       timeout: 5s
       retries: 5
 
+  livekit:
+    image: livekit/livekit-server:v1.10.1
+    container_name: tasknebula-livekit
+    restart: unless-stopped
+    network_mode: host
+    depends_on:
+      redis:
+        condition: service_healthy
+    entrypoint: ['/bin/sh', '/etc/livekit/start-livekit.sh']
+    environment:
+      LIVEKIT_NODE_IP: ${LIVEKIT_NODE_IP:-}
+      LIVEKIT_PORT: ${LIVEKIT_PORT:-7880}
+      LIVEKIT_TCP_PORT: ${LIVEKIT_TCP_PORT:-7881}
+      LIVEKIT_TURN_UDP_PORT: ${LIVEKIT_TURN_UDP_PORT:-3478}
+      LIVEKIT_RTC_START_PORT: ${LIVEKIT_RTC_START_PORT:-50000}
+      LIVEKIT_RTC_END_PORT: ${LIVEKIT_RTC_END_PORT:-50020}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-tasknebula-dev}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-tasknebula-livekit-secret-local-2026}
+      LIVEKIT_WEBHOOK_URL: ${LIVEKIT_WEBHOOK_URL:-http://127.0.0.1:${PORT:-3000}/api/chat/livekit/webhook}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+    volumes:
+      - ./docker/livekit/start-livekit.sh:/etc/livekit/start-livekit.sh:ro
+
   web:
     build:
       context: .
@@ -50,6 +73,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      livekit:
+        condition: service_started
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-tasknebula}
       AUTH_SECRET: ${AUTH_SECRET:-change-me-generate-with-openssl-rand-base64-32}
@@ -57,6 +82,13 @@ services:
       NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost:3000}
       NEXT_PUBLIC_APP_NAME: ${APP_NAME:-TaskNebula}
       REDIS_URL: redis://redis:6379
+      LIVEKIT_URL: ${LIVEKIT_URL:-http://host.docker.internal:7880}
+      NEXT_PUBLIC_LIVEKIT_URL: ${NEXT_PUBLIC_LIVEKIT_URL:-ws://${LIVEKIT_PUBLIC_HOST:-127.0.0.1}:7880}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-tasknebula-dev}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-tasknebula-livekit-secret-local-2026}
+      TURN_URL: ${TURN_URL:-}
+      TURN_USERNAME: ${TURN_USERNAME:-}
+      TURN_PASSWORD: ${TURN_PASSWORD:-}
       # OAuth (optional)
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
@@ -76,6 +108,8 @@ services:
       - '${PORT:-3000}:3000'
     volumes:
       - uploads_data:/app/uploads
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     healthcheck:
       test: ['CMD', 'node', '-e', "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s

@@ -12,6 +12,7 @@ export * from './notifications';
 export * from './custom-fields';
 export * from './audit-logs';
 export * from './documents';
+export * from './chat';
 export * from './api-keys';
 export * from './webhooks';
 export * from './watchers';

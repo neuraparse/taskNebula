@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
+import { useProjectPermissions } from '@/lib/hooks/use-project-permissions';
 import {
   LayoutGrid,
   List,
@@ -12,6 +13,7 @@ import {
   BarChart3,
   Settings,
   BookOpenText,
+  MessagesSquare,
   ChevronRight,
 } from 'lucide-react';
 
@@ -25,6 +27,7 @@ const tabs = [
   { name: 'Backlog', href: 'backlog', icon: List },
   { name: 'Sprints', href: 'sprints', icon: Timer },
   { name: 'Docs', href: 'docs', icon: BookOpenText },
+  { name: 'Chat', href: 'chat', icon: MessagesSquare },
   { name: 'Analytics', href: 'analytics', icon: BarChart3 },
   { name: 'Settings', href: 'settings', icon: Settings },
 ];
@@ -32,6 +35,7 @@ const tabs = [
 export default function ProjectLayout({ children, params }: ProjectLayoutProps) {
   const { projectId } = use(params);
   const pathname = usePathname();
+  const { permissions } = useProjectPermissions(projectId);
 
   const { data: project } = useQuery({
     queryKey: ['project', projectId],
@@ -53,6 +57,13 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
 
   const activeSprint = sprints?.find((s: any) => s.status === 'active');
   const currentTab = pathname?.split('/').pop() || 'board';
+  const visibleTabs = tabs.filter((tab) => {
+    if (tab.href === 'chat') {
+      return permissions.canBrowseChat || currentTab === 'chat';
+    }
+
+    return true;
+  });
 
   return (
     <div className="flex h-full flex-col">
@@ -94,7 +105,7 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
 
           {/* Tab Navigation */}
           <nav className="flex gap-0 -mb-px">
-            {tabs.map((tab) => {
+            {visibleTabs.map((tab) => {
               const isActive = currentTab === tab.href ||
                 (tab.href === 'board' && currentTab === projectId);
               const Icon = tab.icon;
