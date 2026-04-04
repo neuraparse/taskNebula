@@ -122,6 +122,15 @@
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
   }
+
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Kanban Styles */
@@ -189,6 +198,7 @@
   --landing-accent-amber: #FFCC02;
   --landing-accent-violet: #701FFC;
   --landing-accent-pink: #FA4EDF;
+  --landing-shadow: 0 8px 24px -24px rgba(0, 0, 0, 0.78);
 
   /* Divider */
   --divider: #2a2a2a;
@@ -203,6 +213,29 @@
   .font-\[430\] { font-weight: 430; }
   .font-\[440\] { font-weight: 440; }
   .font-\[450\] { font-weight: 450; }
+  .landing-display {
+    font-weight: 560;
+    line-height: 0.94;
+    letter-spacing: -0.045em;
+  }
+
+  .landing-title {
+    font-weight: 520;
+    line-height: 1.02;
+    letter-spacing: -0.034em;
+  }
+
+  .landing-kicker {
+    font-family: var(--font-mono), monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .landing-body {
+    line-height: 1.8;
+    letter-spacing: 0.01em;
+  }
 }
 
 /* Landing animations */

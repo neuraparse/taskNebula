@@ -1,204 +1,639 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { BookOpen, CheckSquare, Bug, Zap, MessageSquare, CheckCircle2, ArrowUp, Minus, ArrowDown, Users, Shield, GitBranch, Play, BarChart3, Search, Bell, Settings, ChevronRight, ArrowRight, Clock } from 'lucide-react';
+import type { DragEvent, ReactNode } from 'react';
+import { useEffect, useState } from 'react';
+import {
+  ArrowRight,
+  BookOpen,
+  Bug,
+  CheckCircle2,
+  CheckSquare,
+  ChevronRight,
+  MessageSquare,
+  Zap,
+} from 'lucide-react';
+import { TaskNebulaLogo } from '@/components/branding/tasknebula-logo';
 
-/* ─── Shared ─── */
-const typeIcon: Record<string, { icon: typeof BookOpen; color: string }> = {
-  story: { icon: BookOpen, color: '#10b981' },
-  task: { icon: CheckSquare, color: '#3b82f6' },
-  bug: { icon: Bug, color: '#ef4444' },
-  epic: { icon: Zap, color: '#8b5cf6' },
+type IssueType = 'story' | 'task' | 'bug' | 'epic';
+type Priority = 'critical' | 'high' | 'medium' | 'low';
+
+type BoardIssue = {
+  key: string;
+  title: string;
+  type: IssueType;
+  priority: Priority;
+  col: number;
+  assignee?: string;
+  comments?: number;
+  subtasks?: string;
+  summary: string;
+  checklist: string[];
 };
-const priorityColor: Record<string, string> = { critical: '#ef4444', high: '#f97316', medium: '#3b82f6', low: '#94a3b8' };
-const c = (color: string, opacity: number) => `color-mix(in srgb, ${color} ${opacity}%, transparent)`;
 
-/* ════════════════════════════════════════════════════════
-   1. HERO SHOWCASE — Interactive Kanban Board
-   ════════════════════════════════════════════════════════ */
-const boardCards = [
-  { col: 0, key: 'TN-18', title: 'Add dark mode toggle', type: 'task' as const, priority: 'low' as const },
-  { col: 0, key: 'TN-22', title: 'API docs for v2 endpoints', type: 'task' as const, priority: 'medium' as const },
-  { col: 1, key: 'TN-12', title: 'OAuth2 with GitHub provider', type: 'story' as const, priority: 'high' as const, assignee: 'SK' },
-  { col: 1, key: 'TN-15', title: 'Fix pagination on project list', type: 'bug' as const, priority: 'critical' as const, assignee: 'DW', comments: 3 },
-  { col: 1, key: 'TN-19', title: 'Design sprint retro template', type: 'task' as const, priority: 'medium' as const },
-  { col: 2, key: 'TN-08', title: 'Real-time presence indicators', type: 'story' as const, priority: 'high' as const, assignee: 'AK', comments: 5, subtasks: '2/4' },
-  { col: 2, key: 'TN-11', title: 'Kanban DnD optimization', type: 'task' as const, priority: 'medium' as const, assignee: 'TL' },
-  { col: 3, key: 'TN-05', title: 'Email notification templates', type: 'story' as const, priority: 'high' as const, assignee: 'SK', comments: 8, subtasks: '3/3' },
-  { col: 4, key: 'TN-01', title: 'CI/CD with GitHub Actions', type: 'epic' as const, priority: 'high' as const, assignee: 'DW' },
-  { col: 4, key: 'TN-03', title: 'Database migration framework', type: 'task' as const, priority: 'medium' as const, assignee: 'AK' },
-];
+type BoardView = {
+  id: string;
+  label: string;
+  issues: BoardIssue[];
+};
+
+const typeIcon: Record<IssueType, { icon: typeof BookOpen; color: string }> = {
+  story: { icon: BookOpen, color: '#2ABBF8' },
+  task: { icon: CheckSquare, color: '#33c482' },
+  bug: { icon: Bug, color: '#ff7361' },
+  epic: { icon: Zap, color: '#a88bff' },
+};
+
+const priorityColor: Record<Priority, string> = {
+  critical: '#ff7361',
+  high: '#ffb340',
+  medium: '#58c8ff',
+  low: '#93a0b8',
+};
+
 const columns = [
   { name: 'Backlog', accent: '#64748b' },
-  { name: 'To Do', accent: '#6b7280' },
-  { name: 'In Progress', accent: '#3b82f6' },
-  { name: 'In Review', accent: '#8b5cf6' },
-  { name: 'Done', accent: '#10b981' },
+  { name: 'To Do', accent: '#7A7F8A' },
+  { name: 'In Progress', accent: '#2ABBF8' },
+  { name: 'In Review', accent: '#8D76FF' },
+  { name: 'Done', accent: '#33c482' },
+] as const;
+
+const boardViews: BoardView[] = [
+  {
+    id: 'website',
+    label: 'Website',
+    issues: [
+      {
+        key: 'WEB-18',
+        title: 'Refine launch page hierarchy',
+        type: 'story',
+        priority: 'high',
+        col: 2,
+        assignee: 'SK',
+        comments: 4,
+        subtasks: '3/5',
+        summary: 'Tighten hero, simplify copy, and make the landing feel more premium.',
+        checklist: ['Reduce copy density', 'Improve visual rhythm', 'Finalize CTA placement'],
+      },
+      {
+        key: 'WEB-21',
+        title: 'Docs intro for redesign project',
+        type: 'task',
+        priority: 'medium',
+        col: 1,
+        assignee: 'TL',
+        summary: 'Create a project note structure linked to the main redesign issue.',
+        checklist: ['Outline launch notes', 'Link blockers to docs', 'Add revision checkpoints'],
+      },
+      {
+        key: 'WEB-24',
+        title: 'Fix mobile footer alignment',
+        type: 'bug',
+        priority: 'critical',
+        col: 3,
+        assignee: 'DW',
+        comments: 2,
+        summary: 'Resolve spacing drift and prevent CTA overlap on smaller screens.',
+        checklist: ['Audit breakpoints', 'Normalize spacing tokens', 'QA Safari mobile'],
+      },
+      {
+        key: 'WEB-09',
+        title: 'Release marketing epic',
+        type: 'epic',
+        priority: 'high',
+        col: 0,
+        assignee: 'MC',
+        summary: 'Coordinate launch assets, copy, and release checklist for the redesign.',
+        checklist: ['Finalize visuals', 'Lock release notes', 'Review analytics events'],
+      },
+      {
+        key: 'WEB-05',
+        title: 'Shipping checklist',
+        type: 'task',
+        priority: 'low',
+        col: 4,
+        assignee: 'AK',
+        subtasks: '4/4',
+        summary: 'Final deploy checklist for copy, assets, analytics, and docs.',
+        checklist: ['Docs confirmed', 'Analytics checked', 'Post-launch owner assigned'],
+      },
+    ],
+  },
+  {
+    id: 'api',
+    label: 'API Platform',
+    issues: [
+      {
+        key: 'API-12',
+        title: 'Partner auth hardening',
+        type: 'story',
+        priority: 'high',
+        col: 2,
+        assignee: 'AK',
+        comments: 5,
+        summary: 'Tighten token refresh paths and rollout sequence for partner access.',
+        checklist: ['Review token lifecycle', 'Lock scopes', 'Publish rollout note'],
+      },
+      {
+        key: 'API-09',
+        title: 'Rate limiting policy',
+        type: 'task',
+        priority: 'medium',
+        col: 1,
+        assignee: 'SC',
+        summary: 'Define thresholds and recovery behavior for public endpoints.',
+        checklist: ['Draft policy', 'Add dashboard checks', 'Review with support'],
+      },
+      {
+        key: 'API-17',
+        title: 'Webhook retry bug',
+        type: 'bug',
+        priority: 'critical',
+        col: 3,
+        assignee: 'DW',
+        comments: 3,
+        summary: 'Retry window is shorter than expected under queue pressure.',
+        checklist: ['Reproduce in staging', 'Patch retry timing', 'Verify audit logging'],
+      },
+      {
+        key: 'API-03',
+        title: 'Versioning epic',
+        type: 'epic',
+        priority: 'high',
+        col: 0,
+        assignee: 'SK',
+        summary: 'Shape versioning and migration guidance for upcoming platform changes.',
+        checklist: ['Define policy', 'Write migration guide', 'Add rollout checklist'],
+      },
+      {
+        key: 'API-22',
+        title: 'Observability cleanup',
+        type: 'task',
+        priority: 'low',
+        col: 4,
+        assignee: 'TL',
+        subtasks: '2/2',
+        summary: 'Bring endpoint health signals and alerts into a cleaner baseline.',
+        checklist: ['Refine alert names', 'Review dashboard cards', 'Close migration notes'],
+      },
+    ],
+  },
+  {
+    id: 'mobile',
+    label: 'Mobile',
+    issues: [
+      {
+        key: 'APP-14',
+        title: 'Offline queue polish',
+        type: 'story',
+        priority: 'high',
+        col: 2,
+        assignee: 'MC',
+        comments: 4,
+        summary: 'Make offline sync state clearer and reduce ambiguous empty states.',
+        checklist: ['Review queue states', 'Refine copy', 'Test reconnect flow'],
+      },
+      {
+        key: 'APP-11',
+        title: 'Push preference setup',
+        type: 'task',
+        priority: 'medium',
+        col: 1,
+        assignee: 'SC',
+        summary: 'Add better first-run setup for notifications and reminders.',
+        checklist: ['Refine toggles', 'Clarify permission states', 'Document fallback flow'],
+      },
+      {
+        key: 'APP-06',
+        title: 'Board drag bug on tablets',
+        type: 'bug',
+        priority: 'critical',
+        col: 3,
+        assignee: 'DW',
+        comments: 2,
+        summary: 'Dragging cards feels sticky under split-screen tablet layouts.',
+        checklist: ['Fix pointer capture', 'QA iPad split view', 'Verify velocity'],
+      },
+      {
+        key: 'APP-02',
+        title: 'Release readiness epic',
+        type: 'epic',
+        priority: 'high',
+        col: 0,
+        assignee: 'SK',
+        summary: 'Coordinate release, QA, notes, and store assets for the mobile launch.',
+        checklist: ['Store assets', 'Release notes', 'QA sign-off'],
+      },
+      {
+        key: 'APP-19',
+        title: 'Checklist sync done',
+        type: 'task',
+        priority: 'low',
+        col: 4,
+        assignee: 'AK',
+        subtasks: '3/3',
+        summary: 'Checklist sync is stable across devices and background reconnects.',
+        checklist: ['Android check', 'iOS check', 'Docs update'],
+      },
+    ],
+  },
 ];
 
-export function HeroShowcase() {
-  const [cards, setCards] = useState(boardCards);
-  const [moving, setMoving] = useState<string | null>(null);
+const teamMembers = [
+  { name: 'Sarah Kim', role: 'Product', initials: 'SK', color: '#2ABBF8', status: 'Leading launch review' },
+  { name: 'Abhay Kumar', role: 'Tech Lead', initials: 'AK', color: '#33c482', status: 'Tracking API rollout' },
+  { name: 'Danny Wong', role: 'Engineer', initials: 'DW', color: '#FFB340', status: 'Finishing review fixes' },
+  { name: 'Maria Chen', role: 'Design', initials: 'MC', color: '#A88BFF', status: 'Updating launch assets' },
+] as const;
 
-  // Periodically move a card to next column
+const activityFeed = [
+  { who: 'SK', action: 'moved WEB-18 to In Review', time: 'just now', color: '#2ABBF8' },
+  { who: 'AK', action: 'linked docs to API-12', time: '4m ago', color: '#33c482' },
+  { who: 'DW', action: 'closed APP-19', time: '11m ago', color: '#FFB340' },
+] as const;
+
+const workflowSteps = [
+  { name: 'Backlog', color: '#64748b', count: 12 },
+  { name: 'To Do', color: '#7A7F8A', count: 8 },
+  { name: 'In Progress', color: '#2ABBF8', count: 5 },
+  { name: 'In Review', color: '#8D76FF', count: 3 },
+  { name: 'Done', color: '#33c482', count: 24 },
+] as const;
+
+const workflowRules = [
+  { from: 'To Do', to: 'In Progress', rule: 'Assignee required', auto: false },
+  { from: 'In Progress', to: 'In Review', rule: 'All subtasks complete', auto: true },
+  { from: 'In Review', to: 'Done', rule: 'Review approved', auto: false },
+] as const;
+
+export function HeroShowcase() {
+  const [boards, setBoards] = useState<BoardView[]>(() =>
+    boardViews.map((board) => ({
+      ...board,
+      issues: board.issues.map((issue) => ({ ...issue })),
+    })),
+  );
+  const [activeBoardId, setActiveBoardId] = useState(boardViews[0]?.id ?? '');
+  const [selectedIssueKey, setSelectedIssueKey] = useState(boardViews[0]?.issues[0]?.key ?? '');
+  const [draggingIssueKey, setDraggingIssueKey] = useState<string | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<number | null>(null);
+
+  const activeBoard = boards.find((board) => board.id === activeBoardId) ?? boards[0];
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCards(prev => {
-        const movable = prev.filter(c => c.col < 4);
-        if (movable.length === 0) return prev;
-        const pick = movable[Math.floor(Math.random() * movable.length)];
-        setMoving(pick.key);
-        setTimeout(() => setMoving(null), 800);
-        return prev.map(c => c.key === pick.key ? { ...c, col: c.col + 1 } : c);
-      });
-    }, 3500);
-    return () => clearInterval(interval);
-  }, []);
+    setSelectedIssueKey((current) => {
+      if (activeBoard?.issues.some((issue) => issue.key === current)) {
+        return current;
+      }
+
+      return activeBoard?.issues[0]?.key ?? '';
+    });
+  }, [activeBoard]);
+
+  const selectedIssue = activeBoard?.issues.find((issue) => issue.key === selectedIssueKey) ?? activeBoard?.issues[0];
+
+  const moveIssueToColumn = (issueKey: string, nextColumn: number) => {
+    if (!activeBoard || nextColumn < 0 || nextColumn >= columns.length) {
+      return;
+    }
+
+    setBoards((currentBoards) =>
+      currentBoards.map((board) =>
+        board.id === activeBoard.id
+          ? {
+              ...board,
+              issues: board.issues.map((issue) =>
+                issue.key === issueKey ? { ...issue, col: nextColumn } : issue,
+              ),
+            }
+          : board,
+      ),
+    );
+    setSelectedIssueKey(issueKey);
+  };
+
+  const handleDrop =
+    (columnIndex: number) =>
+    (event: DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      const issueKey = event.dataTransfer.getData('text/tasknebula-issue-key');
+
+      if (issueKey) {
+        moveIssueToColumn(issueKey, columnIndex);
+      }
+
+      setDraggingIssueKey(null);
+      setDragOverColumn(null);
+    };
 
   return (
-    <section className="bg-[var(--landing-bg)] pb-4">
-      <div className="mx-auto max-w-screen-xl px-4 sm:px-8 lg:px-20">
-        <div className="relative overflow-hidden rounded-xl border border-[var(--landing-border)] bg-[var(--landing-bg-card)]">
-          {/* Window chrome */}
-          <div className="flex items-center gap-2 border-b border-[var(--landing-border)] px-4 py-2">
-            <div className="flex gap-1.5">
-              <div className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
-              <div className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
-              <div className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
-            </div>
-            <div className="flex-1 flex justify-center">
-              <div className="rounded bg-[var(--landing-bg)] border border-[var(--landing-border)] px-3 py-0.5 text-[10px] text-[var(--landing-text-muted)] font-mono">
-                tasknebula.io / Sprint 4 — Board
-              </div>
+    <section id="board" className="border-t border-[var(--landing-border)] bg-[var(--landing-bg)]">
+      <div className="mx-auto max-w-screen-xl px-4 py-16 sm:px-8 sm:py-20 lg:px-20 lg:py-24">
+        <div className="mb-8 max-w-2xl">
+          <p className="landing-kicker text-[var(--landing-text-muted)]">Board</p>
+          <h2 className="landing-title mt-4 text-balance text-[34px] text-[var(--landing-text-dark)] sm:text-[42px] lg:text-[52px]">
+            A board you can actually move through.
+          </h2>
+          <p className="landing-body mt-4 text-[15px] text-[var(--landing-text-subtle)]">
+            Switch projects, drag issues between stages, and keep details close without fake motion or noisy chrome.
+          </p>
+        </div>
+
+        <div className="overflow-hidden rounded-lg border border-[var(--landing-border)] bg-[var(--landing-bg-card)]">
+          <ShowcaseHeader title="Board" url={`${activeBoard.label} / Current sprint`} />
+
+          <div className="border-b border-[var(--landing-border)] px-4 py-3">
+            <div className="flex flex-wrap items-center gap-2">
+              {boards.map((board) => (
+                <button
+                  key={board.id}
+                  type="button"
+                  onClick={() => setActiveBoardId(board.id)}
+                  className={`rounded-sm border px-3 py-1.5 text-[11px] transition-colors ${
+                    board.id === activeBoard.id
+                      ? 'border-[var(--landing-border-strong)] bg-[var(--landing-bg)] text-[var(--landing-text-dark)]'
+                      : 'border-[var(--landing-border)] text-[var(--landing-text-muted)] hover:bg-[var(--landing-bg-surface)]'
+                  }`}
+                >
+                  {board.label}
+                </button>
+              ))}
+              <span className="ml-auto hidden text-[11px] text-[var(--landing-text-muted)] lg:block">
+                Drag cards between stages.
+              </span>
             </div>
           </div>
 
-          {/* Board */}
-          <div className="flex gap-2.5 p-3 overflow-x-auto min-h-[380px]">
-            {columns.map((col, ci) => {
-              const colCards = cards.filter(c => c.col === ci);
-              return (
-                <div key={col.name} className="flex-shrink-0 w-[200px] rounded-lg bg-white/[0.015] border border-[var(--landing-border)]" style={{ borderTopColor: col.accent, borderTopWidth: 2 }}>
-                  <div className="flex items-center gap-2 px-2.5 py-2">
-                    <span className="text-[10px] font-[500] uppercase tracking-wider text-[var(--landing-text-body)]">{col.name}</span>
-                    <span className="rounded-full px-1.5 text-[9px] font-bold tabular-nums bg-white/5 text-[var(--landing-text-muted)]">{colCards.length}</span>
+          <div className="space-y-4 p-4">
+            <div className="scrollbar-none overflow-x-auto pb-1">
+              <div className="grid min-w-[980px] grid-flow-col auto-cols-[188px] gap-3 xl:min-w-0 xl:grid-flow-row xl:grid-cols-5 xl:auto-cols-auto">
+                {columns.map((column, columnIndex) => {
+                  const columnCards = activeBoard.issues.filter((issue) => issue.col === columnIndex);
+
+                  return (
+                    <div
+                      key={column.name}
+                      onDragOver={(event) => {
+                        event.preventDefault();
+                        setDragOverColumn(columnIndex);
+                      }}
+                      onDragLeave={() => {
+                        if (dragOverColumn === columnIndex) {
+                          setDragOverColumn(null);
+                        }
+                      }}
+                      onDrop={handleDrop(columnIndex)}
+                      className={`min-w-0 rounded-md border bg-[var(--landing-bg-surface)] transition-colors ${
+                        dragOverColumn === columnIndex
+                          ? 'border-[var(--landing-border-strong)] bg-[var(--landing-bg-elevated)]'
+                          : 'border-[var(--landing-border)]'
+                      }`}
+                      style={{ borderTopColor: column.accent, borderTopWidth: 2 }}
+                    >
+                      <div className="flex items-center justify-between gap-2 px-3 py-3">
+                        <span className="text-[10px] font-[500] uppercase tracking-[0.16em] text-[var(--landing-text-body)]">
+                          {column.name}
+                        </span>
+                        <span className="rounded-sm border border-[var(--landing-border)] bg-[var(--landing-bg)] px-2 py-0.5 text-[9px] font-bold tabular-nums text-[var(--landing-text-muted)]">
+                          {columnCards.length}
+                        </span>
+                      </div>
+                      <div className="min-h-[212px] space-y-2 px-2 pb-2">
+                        {columnCards.length ? (
+                          columnCards.map((card) => (
+                            <MiniCard
+                              key={card.key}
+                              card={card}
+                              isSelected={card.key === selectedIssue?.key}
+                              isDragging={draggingIssueKey === card.key}
+                              onSelect={() => setSelectedIssueKey(card.key)}
+                              onDragStart={() => {
+                                setDraggingIssueKey(card.key);
+                                setSelectedIssueKey(card.key);
+                              }}
+                              onDragEnd={() => {
+                                setDraggingIssueKey(null);
+                                setDragOverColumn(null);
+                              }}
+                            />
+                          ))
+                        ) : (
+                          <EmptyColumnState />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {selectedIssue ? (
+              <div className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] p-4">
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
+                  <div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-mono text-[11px] text-[var(--landing-text-muted)]">{selectedIssue.key}</span>
+                      <span
+                        className="rounded-sm px-2 py-1 text-[10px]"
+                        style={{
+                          backgroundColor: `color-mix(in srgb, ${priorityColor[selectedIssue.priority]} 12%, transparent)`,
+                          color: priorityColor[selectedIssue.priority],
+                        }}
+                      >
+                        {selectedIssue.priority}
+                      </span>
+                    </div>
+
+                    <h3 className="mt-4 text-[22px] font-[520] leading-8 text-[var(--landing-text-dark)]">
+                      {selectedIssue.title}
+                    </h3>
+                    <p className="mt-3 max-w-2xl text-[14px] leading-7 text-[var(--landing-text-muted)]">
+                      {selectedIssue.summary}
+                    </p>
+
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      <MetaChip label={`Stage ${columns[selectedIssue.col]?.name ?? 'Unknown'}`} />
+                      {selectedIssue.assignee ? <MetaChip label={`Owner ${selectedIssue.assignee}`} /> : null}
+                      {selectedIssue.comments ? <MetaChip label={`${selectedIssue.comments} comments`} /> : null}
+                      {selectedIssue.subtasks ? <MetaChip label={selectedIssue.subtasks} /> : null}
+                    </div>
+
+                    <div className="mt-5 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => moveIssueToColumn(selectedIssue.key, selectedIssue.col - 1)}
+                        disabled={selectedIssue.col === 0}
+                        className="inline-flex h-9 items-center rounded-sm border border-[var(--landing-border)] px-3 text-[12px] text-[var(--landing-text)] transition-colors hover:bg-[var(--landing-bg)] disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Move back
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveIssueToColumn(selectedIssue.key, selectedIssue.col + 1)}
+                        disabled={selectedIssue.col === columns.length - 1}
+                        className="inline-flex h-9 items-center rounded-sm border border-[var(--landing-border-strong)] bg-[var(--landing-bg)] px-3 text-[12px] text-[var(--landing-text-dark)] transition-colors hover:bg-[var(--landing-bg-elevated)] disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Move forward
+                      </button>
+                    </div>
                   </div>
-                  <div className="px-1.5 pb-1.5 space-y-1.5">
-                    {colCards.map(card => (
-                      <MiniCard key={card.key} card={card} isMoving={moving === card.key} />
-                    ))}
+
+                  <div className="border-t border-[var(--landing-border)] pt-5 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                    <p className="text-[10px] font-[500] uppercase tracking-[0.16em] text-[var(--landing-text-muted)]">
+                      Checklist
+                    </p>
+                    <div className="mt-4 space-y-3">
+                      {selectedIssue.checklist.map((item) => (
+                        <div key={item} className="flex items-start gap-3 text-[13px] text-[var(--landing-text)]">
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--landing-accent-green)]" />
+                          <span className="leading-6">{item}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-
-          {/* Presence bar */}
-          <div className="flex items-center justify-between border-t border-[var(--landing-border)] px-4 py-1.5">
-            <div className="flex items-center gap-1">
-              <div className="flex -space-x-1.5">
-                {['SK', 'AK', 'DW'].map(i => (
-                  <div key={i} className="h-5 w-5 rounded-full bg-white/10 border-2 border-[var(--landing-bg-card)] flex items-center justify-center text-[7px] font-bold text-[var(--landing-text-body)]">{i}</div>
-                ))}
               </div>
-              <span className="text-[9px] text-[var(--landing-text-muted)] ml-1">3 viewing</span>
-            </div>
-            <span className="text-[9px] text-[var(--landing-text-muted)]">Auto-saved</span>
+            ) : null}
           </div>
-
-          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12" style={{ background: 'linear-gradient(to top, var(--landing-bg-card), transparent)' }} />
         </div>
       </div>
     </section>
   );
 }
 
-function MiniCard({ card, isMoving }: { card: typeof boardCards[0]; isMoving: boolean }) {
-  const ti = typeIcon[card.type];
-  const Icon = ti.icon;
+function MiniCard({
+  card,
+  isSelected,
+  isDragging,
+  onSelect,
+  onDragStart,
+  onDragEnd,
+}: {
+  card: BoardIssue;
+  isSelected: boolean;
+  isDragging: boolean;
+  onSelect: () => void;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+}) {
+  const cardType = typeIcon[card.type];
+  const Icon = cardType.icon;
+
   return (
-    <div className={`relative rounded border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] p-2 overflow-hidden transition-all duration-500 ${isMoving ? 'scale-[1.04] shadow-lg shadow-blue-500/10 border-blue-500/30 -translate-y-0.5' : 'hover:border-[var(--landing-border-strong)]'}`}>
-      <div className="absolute top-0 left-0 w-[2px] h-full" style={{ backgroundColor: priorityColor[card.priority] }} />
-      <div className="flex items-center justify-between mb-1 pl-1">
+    <button
+      type="button"
+      draggable
+      onClick={onSelect}
+      onDragStart={(event) => {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/tasknebula-issue-key', card.key);
+        onDragStart();
+      }}
+      onDragEnd={onDragEnd}
+      className={`relative w-full cursor-grab overflow-hidden rounded-sm border bg-[var(--landing-bg)] p-2.5 text-left transition-colors active:cursor-grabbing ${
+        isSelected
+          ? 'border-[var(--landing-border-strong)] bg-[var(--landing-bg-elevated)]'
+          : 'border-[var(--landing-border)] hover:border-[var(--landing-border-strong)]'
+      } ${isDragging ? 'opacity-50' : ''}`}
+    >
+      <div className="absolute left-0 top-0 h-full w-[2px]" style={{ backgroundColor: priorityColor[card.priority] }} />
+      <div className="mb-1.5 flex items-center justify-between pl-1">
         <div className="flex items-center gap-1">
-          <Icon className="h-2.5 w-2.5" style={{ color: ti.color }} />
+          <Icon className="h-2.5 w-2.5" style={{ color: cardType.color }} />
           <span className="text-[9px] font-mono text-[var(--landing-text-muted)]">{card.key}</span>
         </div>
-        {card.assignee && (
-          <div className="h-4 w-4 rounded-full bg-white/10 flex items-center justify-center text-[7px] font-bold text-[var(--landing-text-body)]">{card.assignee}</div>
-        )}
+        {card.assignee ? (
+          <div className="flex h-4 w-4 items-center justify-center rounded-full border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] text-[7px] font-bold text-[var(--landing-text-body)]">
+            {card.assignee}
+          </div>
+        ) : null}
       </div>
-      <p className="text-[10px] font-[420] leading-[1.35] text-[var(--landing-text)] pl-1 line-clamp-2">{card.title}</p>
-      {(card.comments || card.subtasks) && (
-        <div className="flex items-center gap-2 mt-1.5 pt-1 border-t border-[var(--landing-border)] pl-1">
-          {card.subtasks && <span className="flex items-center gap-0.5 text-[8px] text-[var(--landing-text-muted)]"><CheckCircle2 className="h-2 w-2" />{card.subtasks}</span>}
-          {card.comments && <span className="flex items-center gap-0.5 text-[8px] text-[var(--landing-text-muted)]"><MessageSquare className="h-2 w-2" />{card.comments}</span>}
+
+      <p className="line-clamp-2 pl-1 text-[10px] font-[420] leading-[1.45] text-[var(--landing-text)]">{card.title}</p>
+
+      {(card.comments || card.subtasks) ? (
+        <div className="mt-2 flex items-center gap-2 border-t border-[var(--landing-border)] pt-1.5 pl-1">
+          {card.subtasks ? (
+            <span className="flex items-center gap-0.5 text-[8px] text-[var(--landing-text-muted)]">
+              <CheckCircle2 className="h-2 w-2" />
+              {card.subtasks}
+            </span>
+          ) : null}
+          {card.comments ? (
+            <span className="flex items-center gap-0.5 text-[8px] text-[var(--landing-text-muted)]">
+              <MessageSquare className="h-2 w-2" />
+              {card.comments}
+            </span>
+          ) : null}
         </div>
-      )}
+      ) : null}
+    </button>
+  );
+}
+
+function MetaChip({ label }: { label: string }) {
+  return (
+    <span className="rounded-sm border border-[var(--landing-border)] bg-[var(--landing-bg)] px-2.5 py-1 text-[11px] text-[var(--landing-text-muted)]">
+      {label}
+    </span>
+  );
+}
+
+function EmptyColumnState() {
+  return (
+    <div className="flex min-h-[152px] items-center justify-center rounded-sm border border-dashed border-[var(--landing-border)] bg-[var(--landing-bg)]/35 px-3 text-center text-[11px] text-[var(--landing-text-muted)]">
+      Drop an issue here
     </div>
   );
 }
 
-/* ════════════════════════════════════════════════════════
-   2. FEATURE SHOWCASES — Inline with feature sections
-   ════════════════════════════════════════════════════════ */
-
-/* ─── Team & Collaboration ─── */
-const teamMembers = [
-  { name: 'Sarah Kim', role: 'Product Owner', initials: 'SK', color: '#2ABBF8', status: 'online', activity: 'Reviewing TN-05' },
-  { name: 'Abhay Kumar', role: 'Tech Lead', initials: 'AK', color: '#33c482', status: 'online', activity: 'Working on TN-08' },
-  { name: 'Danny Wong', role: 'Developer', initials: 'DW', color: '#FFCC02', status: 'online', activity: 'In code review' },
-  { name: 'Theo Lee', role: 'Developer', initials: 'TL', color: '#701FFC', status: 'away', activity: 'Idle for 15m' },
-  { name: 'Maria Chen', role: 'Designer', initials: 'MC', color: '#FA4EDF', status: 'offline', activity: 'Last seen 2h ago' },
-  { name: 'Sam Carter', role: 'QA Engineer', initials: 'SC', color: '#f97316', status: 'online', activity: 'Testing sprint 3' },
-];
-
 export function TeamShowcase() {
-  const [pulse, setPulse] = useState(0);
-  useEffect(() => {
-    const i = setInterval(() => setPulse(p => (p + 1) % teamMembers.length), 2000);
-    return () => clearInterval(i);
-  }, []);
-
   return (
-    <ShowcaseFrame title="Team" url="tasknebula.io / Team Overview">
-      <div className="grid grid-cols-[220px_1fr] h-[340px]">
-        {/* Members list */}
-        <div className="border-r border-[var(--landing-border)] overflow-hidden">
-          <div className="px-3 py-2 border-b border-[var(--landing-border)]">
-            <span className="text-[10px] font-[500] uppercase tracking-wider text-[var(--landing-text-muted)]">Members ({teamMembers.length})</span>
+    <ShowcaseFrame title="Team" url="Workspace / Team">
+      <div className="grid h-[340px] grid-cols-[220px_1fr]">
+        <div className="overflow-hidden border-r border-[var(--landing-border)]">
+          <div className="border-b border-[var(--landing-border)] px-3 py-2">
+            <span className="text-[10px] font-[500] uppercase tracking-[0.16em] text-[var(--landing-text-muted)]">
+              Members
+            </span>
           </div>
-          {teamMembers.map((m, i) => (
-            <div key={m.initials} className={`flex items-center gap-2.5 px-3 py-2 border-b border-[var(--landing-border)] transition-colors duration-300 ${pulse === i ? 'bg-white/[0.03]' : ''}`}>
-              <div className="relative">
-                <div className="h-7 w-7 rounded-full flex items-center justify-center text-[9px] font-bold" style={{ backgroundColor: c(m.color, 12), color: m.color }}>{m.initials}</div>
-                <div className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[var(--landing-bg-card)] ${m.status === 'online' ? 'bg-emerald-500' : m.status === 'away' ? 'bg-amber-500' : 'bg-gray-500'}`} />
+          {teamMembers.map((member, index) => (
+            <div
+              key={member.initials}
+              className={`flex items-center gap-2.5 border-b border-[var(--landing-border)] px-3 py-2 last:border-b-0 ${
+                index === 0 ? 'bg-[var(--landing-bg-surface)]' : ''
+              }`}
+            >
+              <div
+                className="flex h-7 w-7 items-center justify-center rounded-full text-[9px] font-bold"
+                style={{ backgroundColor: `color-mix(in srgb, ${member.color} 12%, transparent)`, color: member.color }}
+              >
+                {member.initials}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-[500] text-[var(--landing-text)] truncate">{m.name}</p>
-                <p className="text-[9px] text-[var(--landing-text-muted)] truncate">{m.role}</p>
+                <p className="truncate text-[11px] font-[500] text-[var(--landing-text)]">{member.name}</p>
+                <p className="truncate text-[9px] text-[var(--landing-text-muted)]">{member.role}</p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Activity feed */}
         <div className="p-3">
-          <span className="text-[10px] font-[500] uppercase tracking-wider text-[var(--landing-text-muted)]">Live Activity</span>
-          <div className="mt-3 space-y-2.5">
-            {[
-              { who: 'SK', action: 'moved TN-05 to In Review', time: 'just now', color: '#2ABBF8' },
-              { who: 'AK', action: 'commented on TN-08', time: '2m ago', color: '#33c482' },
-              { who: 'DW', action: 'completed TN-03', time: '5m ago', color: '#FFCC02' },
-              { who: 'SC', action: 'created bug TN-15', time: '12m ago', color: '#f97316' },
-              { who: 'SK', action: 'started Sprint 4', time: '1h ago', color: '#2ABBF8' },
-              { who: 'TL', action: 'pushed 3 commits to feat/dnd', time: '2h ago', color: '#701FFC' },
-            ].map((a, i) => (
-              <div key={i} className="flex items-start gap-2.5 animate-fade-in" style={{ animationDelay: `${i * 100}ms`, opacity: 1 - i * 0.12 }}>
-                <div className="h-5 w-5 rounded-full flex items-center justify-center text-[7px] font-bold shrink-0" style={{ backgroundColor: c(a.color, 12), color: a.color }}>{a.who}</div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] text-[var(--landing-text)]"><span className="font-[500]">{a.who}</span> <span className="text-[#F6F6F6]/50">{a.action}</span></p>
-                  <p className="text-[9px] text-[var(--landing-text-muted)]">{a.time}</p>
+          <span className="text-[10px] font-[500] uppercase tracking-[0.16em] text-[var(--landing-text-muted)]">
+            Activity
+          </span>
+          <div className="mt-3 space-y-3">
+            {activityFeed.map((entry) => (
+              <div key={`${entry.who}-${entry.time}`} className="flex items-start gap-2.5">
+                <div
+                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[7px] font-bold"
+                  style={{ backgroundColor: `color-mix(in srgb, ${entry.color} 12%, transparent)`, color: entry.color }}
+                >
+                  {entry.who}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] text-[var(--landing-text)]">{entry.action}</p>
+                  <p className="text-[9px] text-[var(--landing-text-muted)]">{entry.time}</p>
                 </div>
               </div>
             ))}
@@ -209,70 +644,61 @@ export function TeamShowcase() {
   );
 }
 
-/* ─── Workflow Showcase ─── */
-const workflowSteps = [
-  { name: 'Backlog', color: '#64748b', count: 12 },
-  { name: 'To Do', color: '#6b7280', count: 8 },
-  { name: 'In Progress', color: '#3b82f6', count: 5 },
-  { name: 'In Review', color: '#8b5cf6', count: 3 },
-  { name: 'QA Testing', color: '#f97316', count: 2 },
-  { name: 'Done', color: '#10b981', count: 24 },
-];
-
 export function WorkflowShowcase() {
-  const [activeStep, setActiveStep] = useState(0);
-  useEffect(() => {
-    const i = setInterval(() => setActiveStep(s => (s + 1) % workflowSteps.length), 1800);
-    return () => clearInterval(i);
-  }, []);
+  const activeStep = 2;
 
   return (
-    <ShowcaseFrame title="Workflows" url="tasknebula.io / Project Settings / Workflow">
-      <div className="p-5 h-[320px]">
-        {/* Flow visualization */}
-        <div className="flex items-center justify-between mb-8">
-          {workflowSteps.map((step, i) => (
+    <ShowcaseFrame title="Workflow" url="Project settings / Workflow">
+      <div className="h-[320px] p-5">
+        <div className="mb-8 flex items-center justify-between">
+          {workflowSteps.map((step, index) => (
             <div key={step.name} className="flex items-center">
-              <div className={`flex flex-col items-center transition-all duration-300 ${activeStep === i ? 'scale-110' : ''}`}>
-                <div className={`h-10 w-10 rounded-lg flex items-center justify-center text-[11px] font-bold border-2 transition-all duration-300 ${activeStep === i ? 'shadow-lg' : ''}`}
+              <div className="flex flex-col items-center">
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-sm border-2 text-[11px] font-bold"
                   style={{
-                    backgroundColor: c(step.color, activeStep === i ? 20 : 8),
-                    borderColor: activeStep === i ? step.color : 'transparent',
+                    backgroundColor: `color-mix(in srgb, ${step.color} ${index === activeStep ? 16 : 6}%, transparent)`,
+                    borderColor: index === activeStep ? step.color : 'transparent',
                     color: step.color,
-                    boxShadow: activeStep === i ? `0 0 20px ${c(step.color, 15)}` : 'none',
-                  }}>
+                  }}
+                >
                   {step.count}
                 </div>
-                <span className={`mt-2 text-[9px] font-[500] transition-colors duration-300 ${activeStep === i ? 'text-white' : 'text-[var(--landing-text-muted)]'}`}>{step.name}</span>
+                <span className={`mt-2 text-[9px] ${index === activeStep ? 'text-white' : 'text-[var(--landing-text-muted)]'}`}>
+                  {step.name}
+                </span>
               </div>
-              {i < workflowSteps.length - 1 && (
-                <div className="flex-1 mx-2 flex items-center">
+              {index < workflowSteps.length - 1 ? (
+                <div className="mx-2 flex flex-1 items-center">
                   <div className="h-px flex-1 bg-[var(--landing-border)]" />
-                  <ChevronRight className={`h-3 w-3 mx-0.5 transition-colors duration-300 ${activeStep === i ? 'text-white/40' : 'text-[var(--landing-border)]'}`} />
+                  <ChevronRight className="mx-0.5 h-3 w-3 text-[var(--landing-border)]" />
                   <div className="h-px flex-1 bg-[var(--landing-border)]" />
                 </div>
-              )}
+              ) : null}
             </div>
           ))}
         </div>
 
-        {/* Transitions table */}
-        <div className="rounded-lg border border-[var(--landing-border)] overflow-hidden">
-          <div className="px-3 py-2 bg-white/[0.02] border-b border-[var(--landing-border)]">
-            <span className="text-[10px] font-[500] uppercase tracking-wider text-[var(--landing-text-muted)]">Transition Rules</span>
+        <div className="overflow-hidden rounded-md border border-[var(--landing-border)]">
+          <div className="border-b border-[var(--landing-border)] bg-[var(--landing-bg-surface)] px-3 py-2">
+            <span className="text-[10px] font-[500] uppercase tracking-[0.16em] text-[var(--landing-text-muted)]">
+              Transition rules
+            </span>
           </div>
-          {[
-            { from: 'To Do', to: 'In Progress', rule: 'Assignee required', auto: false },
-            { from: 'In Progress', to: 'In Review', rule: 'All subtasks complete', auto: true },
-            { from: 'In Review', to: 'QA Testing', rule: 'Code review approved', auto: true },
-            { from: 'QA Testing', to: 'Done', rule: 'QA sign-off', auto: false },
-          ].map((t, i) => (
-            <div key={i} className="flex items-center gap-3 px-3 py-2 border-b border-[var(--landing-border)] last:border-b-0 hover:bg-white/[0.02] transition-colors">
-              <span className="text-[10px] text-[var(--landing-text)] w-20">{t.from}</span>
+          {workflowRules.map((rule) => (
+            <div
+              key={`${rule.from}-${rule.to}`}
+              className="flex items-center gap-3 border-b border-[var(--landing-border)] px-3 py-2 last:border-b-0"
+            >
+              <span className="w-20 text-[10px] text-[var(--landing-text)]">{rule.from}</span>
               <ArrowRight className="h-3 w-3 text-[var(--landing-text-muted)]" />
-              <span className="text-[10px] text-[var(--landing-text)] w-20">{t.to}</span>
-              <span className="text-[10px] text-[#F6F6F6]/40 flex-1">{t.rule}</span>
-              {t.auto && <span className="text-[8px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">Auto</span>}
+              <span className="w-20 text-[10px] text-[var(--landing-text)]">{rule.to}</span>
+              <span className="flex-1 text-[10px] text-[#F6F6F6]/40">{rule.rule}</span>
+              {rule.auto ? (
+                <span className="rounded-sm border border-blue-500/20 bg-blue-500/10 px-1.5 py-0.5 text-[8px] text-blue-400">
+                  Auto
+                </span>
+              ) : null}
             </div>
           ))}
         </div>
@@ -281,27 +707,23 @@ export function WorkflowShowcase() {
   );
 }
 
-/* ─── Sprint Showcase ─── */
 export function SprintShowcase() {
-  const [progress, setProgress] = useState(0);
-  useEffect(() => {
-    const i = setInterval(() => setProgress(p => p >= 72 ? 0 : p + 1), 40);
-    return () => clearInterval(i);
-  }, []);
+  const progress = 72;
+  const burndown = [18, 17, 16, 15, 13, 11, 9, 7, 5, 5, 4, 3, 2, 0];
 
   return (
-    <ShowcaseFrame title="Sprints" url="tasknebula.io / Sprint 4 Overview">
-      <div className="p-5 h-[320px]">
-        {/* Sprint header */}
-        <div className="flex items-center justify-between mb-4">
+    <ShowcaseFrame title="Sprint" url="Sprint 4 / Overview">
+      <div className="h-[320px] p-5">
+        <div className="mb-4 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[14px] font-[500] text-white">Sprint 4 — Auth & Notifications</span>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-[500] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                <div className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />Active
+              <span className="flex items-center gap-1 rounded-sm border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] text-emerald-400">
+                <div className="h-1 w-1 rounded-full bg-emerald-400" />
+                Active
               </span>
             </div>
-            <p className="text-[11px] text-[var(--landing-text-muted)] mt-1">Mar 25 — Apr 8, 2026 · 14 days · 18 issues</p>
+            <p className="mt-1 text-[11px] text-[var(--landing-text-muted)]">14 days · 18 issues</p>
           </div>
           <div className="text-right">
             <span className="text-[20px] font-[500] text-white tabular-nums">{progress}%</span>
@@ -309,102 +731,101 @@ export function SprintShowcase() {
           </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="h-2 bg-white/5 rounded-full overflow-hidden mb-6">
-          <div className="h-full bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full transition-all duration-100" style={{ width: `${progress}%` }} />
+        <div className="mb-6 h-2 overflow-hidden rounded-full bg-[var(--landing-bg-surface)]">
+          <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-blue-500" style={{ width: `${progress}%` }} />
         </div>
 
-        {/* Stats grid */}
-        <div className="grid grid-cols-4 gap-3 mb-5">
+        <div className="mb-5 grid grid-cols-4 gap-3">
           {[
-            { label: 'Total', value: '18', sub: 'issues' },
-            { label: 'Done', value: '13', sub: 'completed' },
-            { label: 'In Progress', value: '3', sub: 'active' },
-            { label: 'Points', value: '42', sub: 'story pts' },
-          ].map(s => (
-            <div key={s.label} className="rounded-lg border border-[var(--landing-border)] bg-white/[0.015] p-3">
-              <p className="text-[9px] text-[var(--landing-text-muted)] mb-1">{s.label}</p>
-              <p className="text-[18px] font-[500] text-white leading-none">{s.value}</p>
-              <p className="text-[8px] text-[var(--landing-text-muted)] mt-0.5">{s.sub}</p>
+            { label: 'Total', value: '18' },
+            { label: 'Done', value: '13' },
+            { label: 'Active', value: '3' },
+            { label: 'Points', value: '42' },
+          ].map((stat) => (
+            <div key={stat.label} className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] p-3">
+              <p className="mb-1 text-[9px] text-[var(--landing-text-muted)]">{stat.label}</p>
+              <p className="text-[18px] font-[500] leading-none text-white">{stat.value}</p>
             </div>
           ))}
         </div>
 
-        {/* Mini burndown */}
-        <div className="rounded-lg border border-[var(--landing-border)] bg-white/[0.015] p-3">
-          <span className="text-[9px] font-[500] uppercase tracking-wider text-[var(--landing-text-muted)]">Burndown</span>
-          <div className="mt-2 flex items-end gap-1 h-[50px]">
-            {[18, 17, 16, 15, 13, 11, 9, 7, 5, 5, 4, 3, 2, 0].map((v, i) => (
-              <div key={i} className="flex-1 rounded-t transition-all duration-300" style={{
-                height: `${(v / 18) * 100}%`,
-                backgroundColor: i <= Math.floor(progress / 7.2) ? '#10b981' : c('#10b981', 20),
-                minHeight: v > 0 ? 2 : 0,
-              }} />
+        <div className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] p-3">
+          <span className="text-[9px] font-[500] uppercase tracking-[0.16em] text-[var(--landing-text-muted)]">Burndown</span>
+          <div className="mt-2 flex h-[50px] items-end gap-1">
+            {burndown.map((value, index) => (
+              <div
+                key={index}
+                className="flex-1 rounded-t"
+                style={{
+                  height: `${(value / 18) * 100}%`,
+                  backgroundColor: index <= Math.floor(progress / 7.2) ? '#33c482' : 'rgba(51,196,130,0.2)',
+                  minHeight: value > 0 ? 2 : 0,
+                }}
+              />
             ))}
           </div>
-          <div className="flex justify-between mt-1">
-            <span className="text-[7px] text-[var(--landing-text-muted)]">Day 1</span>
-            <span className="text-[7px] text-[var(--landing-text-muted)]">Day 14</span>
-          </div>
         </div>
       </div>
     </ShowcaseFrame>
   );
 }
 
-/* ─── Analytics Showcase ─── */
 export function AnalyticsShowcase() {
   return (
-    <ShowcaseFrame title="Analytics" url="tasknebula.io / Project Analytics">
-      <div className="p-5 h-[320px]">
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-3 mb-5">
+    <ShowcaseFrame title="Analytics" url="Project / Analytics">
+      <div className="h-[320px] p-5">
+        <div className="mb-5 grid grid-cols-4 gap-3">
           {[
-            { label: 'Velocity', value: '23', change: '+12%', up: true },
-            { label: 'Cycle Time', value: '2.4d', change: '-8%', up: false },
-            { label: 'Throughput', value: '18/wk', change: '+5%', up: true },
-            { label: 'Bug Rate', value: '4.2%', change: '-15%', up: false },
-          ].map(s => (
-            <div key={s.label} className="rounded-lg border border-[var(--landing-border)] bg-white/[0.015] p-3">
-              <p className="text-[9px] text-[var(--landing-text-muted)]">{s.label}</p>
-              <p className="text-[18px] font-[500] text-white leading-none mt-1">{s.value}</p>
-              <p className={`text-[9px] mt-0.5 ${s.up ? 'text-emerald-400' : 'text-blue-400'}`}>{s.change}</p>
+            { label: 'Velocity', value: '23', change: '+12%' },
+            { label: 'Cycle', value: '2.4d', change: '-8%' },
+            { label: 'Flow', value: '18/wk', change: '+5%' },
+            { label: 'Bugs', value: '4.2%', change: '-15%' },
+          ].map((stat) => (
+            <div key={stat.label} className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] p-3">
+              <p className="text-[9px] text-[var(--landing-text-muted)]">{stat.label}</p>
+              <p className="mt-1 text-[18px] font-[500] leading-none text-white">{stat.value}</p>
+              <p className="mt-0.5 text-[9px] text-[var(--landing-text-muted)]">{stat.change}</p>
             </div>
           ))}
         </div>
 
-        {/* Chart area */}
         <div className="grid grid-cols-2 gap-3">
-          {/* Velocity chart */}
-          <div className="rounded-lg border border-[var(--landing-border)] bg-white/[0.015] p-3">
-            <span className="text-[9px] font-[500] uppercase tracking-wider text-[var(--landing-text-muted)]">Sprint Velocity</span>
-            <div className="mt-3 flex items-end gap-2 h-[80px]">
-              {[14, 18, 16, 21, 19, 23].map((v, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                  <span className="text-[7px] text-[var(--landing-text-muted)] tabular-nums">{v}</span>
-                  <div className="w-full rounded-t" style={{ height: `${(v / 25) * 100}%`, backgroundColor: i === 5 ? '#2ABBF8' : c('#2ABBF8', 30) }} />
-                  <span className="text-[7px] text-[var(--landing-text-muted)]">S{i + 1}</span>
+          <div className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] p-3">
+            <span className="text-[9px] font-[500] uppercase tracking-[0.16em] text-[var(--landing-text-muted)]">Velocity</span>
+            <div className="mt-3 flex h-[80px] items-end gap-2">
+              {[14, 18, 16, 21, 19, 23].map((value, index) => (
+                <div key={index} className="flex flex-1 flex-col items-center gap-1">
+                  <div
+                    className="w-full rounded-t"
+                    style={{
+                      height: `${(value / 25) * 100}%`,
+                      backgroundColor: index === 5 ? '#2ABBF8' : 'rgba(42,187,248,0.3)',
+                    }}
+                  />
+                  <span className="text-[7px] text-[var(--landing-text-muted)]">S{index + 1}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Distribution */}
-          <div className="rounded-lg border border-[var(--landing-border)] bg-white/[0.015] p-3">
-            <span className="text-[9px] font-[500] uppercase tracking-wider text-[var(--landing-text-muted)]">By Priority</span>
+          <div className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] p-3">
+            <span className="text-[9px] font-[500] uppercase tracking-[0.16em] text-[var(--landing-text-muted)]">Priority mix</span>
             <div className="mt-3 space-y-2">
               {[
-                { label: 'Critical', value: 3, total: 42, color: '#ef4444' },
-                { label: 'High', value: 12, total: 42, color: '#f97316' },
-                { label: 'Medium', value: 18, total: 42, color: '#3b82f6' },
-                { label: 'Low', value: 9, total: 42, color: '#94a3b8' },
-              ].map(p => (
-                <div key={p.label} className="flex items-center gap-2">
-                  <span className="text-[9px] text-[var(--landing-text-muted)] w-12">{p.label}</span>
-                  <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full" style={{ width: `${(p.value / p.total) * 100}%`, backgroundColor: p.color }} />
+                { label: 'Critical', value: 3, total: 42, color: '#ff7361' },
+                { label: 'High', value: 12, total: 42, color: '#ffb340' },
+                { label: 'Medium', value: 18, total: 42, color: '#58c8ff' },
+                { label: 'Low', value: 9, total: 42, color: '#93a0b8' },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-2">
+                  <span className="w-12 text-[9px] text-[var(--landing-text-muted)]">{item.label}</span>
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--landing-bg)]">
+                    <div
+                      className="h-full rounded-full"
+                      style={{ width: `${(item.value / item.total) * 100}%`, backgroundColor: item.color }}
+                    />
                   </div>
-                  <span className="text-[9px] text-[var(--landing-text-muted)] tabular-nums w-4 text-right">{p.value}</span>
+                  <span className="w-4 text-right text-[9px] text-[var(--landing-text-muted)]">{item.value}</span>
                 </div>
               ))}
             </div>
@@ -415,31 +836,33 @@ export function AnalyticsShowcase() {
   );
 }
 
-/* ════════════════════════════════════════════════════════
-   SHARED — Window frame
-   ════════════════════════════════════════════════════════ */
-function ShowcaseFrame({ title, url, children }: { title: string; url: string; children: React.ReactNode }) {
+function ShowcaseFrame({ title, url, children }: { title: string; url: string; children: ReactNode }) {
   return (
-    <div className="relative overflow-hidden rounded-xl border border-[var(--landing-border)] bg-[var(--landing-bg-card)]">
-      <div className="flex items-center gap-2 border-b border-[var(--landing-border)] px-4 py-2">
-        <div className="flex gap-1.5">
-          <div className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
-          <div className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
-          <div className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
-        </div>
-        <div className="flex-1 flex justify-center">
-          <div className="rounded bg-[var(--landing-bg)] border border-[var(--landing-border)] px-3 py-0.5 text-[10px] text-[var(--landing-text-muted)] font-mono">{url}</div>
-        </div>
-      </div>
+    <div className="overflow-hidden rounded-lg border border-[var(--landing-border)] bg-[var(--landing-bg-card)]">
+      <ShowcaseHeader title={title} url={url} />
       {children}
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8" style={{ background: 'linear-gradient(to top, var(--landing-bg-card), transparent)' }} />
     </div>
   );
 }
 
-/* ════════════════════════════════════════════════════════
-   LEGACY EXPORT — kept for backward compat
-   ════════════════════════════════════════════════════════ */
+function ShowcaseHeader({ title, url }: { title: string; url: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4 border-b border-[var(--landing-border)] px-4 py-3">
+      <div className="flex items-center gap-3">
+        <TaskNebulaLogo compact />
+        <div>
+          <p className="text-[12px] font-medium text-[var(--landing-text-dark)]">TaskNebula {title}</p>
+          <p className="text-[10px] text-[var(--landing-text-muted)]">Workspace preview</p>
+        </div>
+      </div>
+      <div className="inline-flex items-center gap-2 rounded-sm border border-[var(--landing-border)] bg-[var(--landing-bg)] px-3 py-1 text-[10px] text-[var(--landing-text-muted)]">
+        <span className="h-1.5 w-1.5 rounded-full bg-[var(--landing-accent-green)]" />
+        {url}
+      </div>
+    </div>
+  );
+}
+
 export function ProductShowcase() {
   return <HeroShowcase />;
 }
