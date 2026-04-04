@@ -102,27 +102,29 @@ export async function PATCH(
       .returning();
 
     // Create audit log
-    const changes: Record<string, { old: any; new: any }> = {};
+    const changes: Record<string, { from: any; to: any }> = {};
     
     if (validatedData.isEnabled !== undefined && validatedData.isEnabled !== oldFlag.isEnabled) {
-      changes.isEnabled = { old: oldFlag.isEnabled, new: validatedData.isEnabled };
+      changes.isEnabled = { from: oldFlag.isEnabled, to: validatedData.isEnabled };
     }
     if (validatedData.rolloutPercentage !== undefined && validatedData.rolloutPercentage !== oldFlag.rolloutPercentage) {
-      changes.rolloutPercentage = { old: oldFlag.rolloutPercentage, new: validatedData.rolloutPercentage };
+      changes.rolloutPercentage = { from: oldFlag.rolloutPercentage, to: validatedData.rolloutPercentage };
     }
     if (validatedData.enabledForPlans !== undefined) {
-      changes.enabledForPlans = { old: oldFlag.enabledForPlans, new: validatedData.enabledForPlans };
+      changes.enabledForPlans = { from: oldFlag.enabledForPlans, to: validatedData.enabledForPlans };
     }
 
     if (Object.keys(changes).length > 0) {
       await db.insert(systemAuditLogs).values({
         id: createId(),
+        userId: session.user.id,
         action: 'feature_flag.update',
-        performedBy: session.user.id,
-        targetType: 'feature_flag',
-        targetId: flagId,
+        resourceType: 'feature_flag',
+        resourceId: flagId,
         changes,
         metadata: { flagKey: oldFlag.key, flagName: oldFlag.name },
+        ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
+        userAgent: request.headers.get('user-agent') || undefined,
       });
     }
 
@@ -179,11 +181,13 @@ export async function DELETE(
     // Create audit log
     await db.insert(systemAuditLogs).values({
       id: createId(),
+      userId: session.user.id,
       action: 'feature_flag.delete',
-      performedBy: session.user.id,
-      targetType: 'feature_flag',
-      targetId: flagId,
+      resourceType: 'feature_flag',
+      resourceId: flagId,
       metadata: { flagKey: flag.key, flagName: flag.name },
+      ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
+      userAgent: request.headers.get('user-agent') || undefined,
     });
 
     return NextResponse.json({ success: true });
@@ -195,4 +199,3 @@ export async function DELETE(
     );
   }
 }
-

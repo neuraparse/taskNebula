@@ -4,6 +4,7 @@ import { db, webhooks } from '@tasknebula/db';
 import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import crypto from 'crypto';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +35,11 @@ export async function GET(request: NextRequest) {
 
     if (!organizationId) {
       return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
+    }
+
+    const canView = await hasPermission(organizationId, 'webhook:view');
+    if (!canView) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
     // Build query conditions
@@ -78,6 +84,11 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const validatedData = createWebhookSchema.parse(body);
+
+    const canCreate = await hasPermission(validatedData.organizationId, 'webhook:create');
+    if (!canCreate) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
 
     // Generate webhook secret
     const secret = generateWebhookSecret();

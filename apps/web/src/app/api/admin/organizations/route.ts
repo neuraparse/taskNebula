@@ -6,8 +6,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { db, organizations, organizationMembers, users, projects, issues } from '@tasknebula/db';
-import { eq, desc, sql, count } from 'drizzle-orm';
+import { db, organizations, organizationMembers, users, projects, issues, systemAuditLogs } from '@tasknebula/db';
+import { eq, desc, count, and, ilike, or } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { isSuperAdmin } from '@/lib/auth/permissions';
 import { createId } from '@paralleldrive/cuid2';
@@ -33,10 +33,6 @@ export async function GET(request: NextRequest) {
     const plan = searchParams.get('plan'); // 'free', 'starter', 'growth', 'enterprise'
     const search = searchParams.get('search');
 
-    // Build query
-    let query = db.select().from(organizations);
-
-    // Apply filters
     const conditions = [];
     if (status) {
       conditions.push(eq(organizations.status, status as any));
@@ -44,14 +40,33 @@ export async function GET(request: NextRequest) {
     if (plan) {
       conditions.push(eq(organizations.plan, plan as any));
     }
+    if (search) {
+      conditions.push(
+        or(
+          ilike(organizations.name, `%${search}%`),
+          ilike(organizations.slug, `%${search}%`),
+          ilike(organizations.domain, `%${search}%`)
+        )!
+      );
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     // Get organizations
-    const orgs = await db
-      .select()
-      .from(organizations)
-      .orderBy(desc(organizations.createdAt))
-      .limit(limit)
-      .offset((page - 1) * limit);
+    const orgs = whereClause
+      ? await db
+          .select()
+          .from(organizations)
+          .where(whereClause)
+          .orderBy(desc(organizations.createdAt))
+          .limit(limit)
+          .offset((page - 1) * limit)
+      : await db
+          .select()
+          .from(organizations)
+          .orderBy(desc(organizations.createdAt))
+          .limit(limit)
+          .offset((page - 1) * limit);
 
     // Get stats for each organization
     const orgsWithStats = await Promise.all(
@@ -84,18 +99,18 @@ export async function GET(request: NextRequest) {
           })
           .from(organizationMembers)
           .innerJoin(users, eq(organizationMembers.userId, users.id))
-          .where(
+          .where(and(
             eq(organizationMembers.organizationId, org.id),
             eq(organizationMembers.role, 'owner')
-          )
+          ))
           .limit(1);
 
         return {
           ...org,
           stats: {
-            members: memberCount?.count || 0,
-            projects: projectCount?.count || 0,
-            issues: issueCount?.count || 0,
+            members: Number(memberCount?.count || 0),
+            projects: Number(projectCount?.count || 0),
+            issues: Number(issueCount?.count || 0),
           },
           owner,
         };
@@ -103,17 +118,21 @@ export async function GET(request: NextRequest) {
     );
 
     // Get total count
-    const [totalCount] = await db
+    const totalQuery = db
       .select({ count: count() })
       .from(organizations);
+
+    const [totalCount] = whereClause
+      ? await totalQuery.where(whereClause)
+      : await totalQuery;
 
     return NextResponse.json({
       organizations: orgsWithStats,
       pagination: {
         page,
         limit,
-        total: totalCount?.count || 0,
-        totalPages: Math.ceil((totalCount?.count || 0) / limit),
+        total: Number(totalCount?.count || 0),
+        totalPages: Math.ceil(Number(totalCount?.count || 0) / limit),
       },
     });
   } catch (error) {
@@ -152,7 +171,7 @@ export async function POST(request: NextRequest) {
 
     // Check if slug already exists
     const [existingOrg] = await db
-      .select()
+      .select({ id: organizations.id })
       .from(organizations)
       .where(eq(organizations.slug, data.slug))
       .limit(1);
@@ -194,6 +213,23 @@ export async function POST(request: NextRequest) {
       status: 'active',
     });
 
+    await db.insert(systemAuditLogs).values({
+      id: createId(),
+      userId: session.user.id,
+      action: 'org.created',
+      resourceType: 'organization',
+      resourceId: newOrg.id,
+      organizationId: newOrg.id,
+      metadata: {
+        plan: newOrg.plan,
+        status: newOrg.status,
+        ownerId: owner.id,
+        ownerEmail: owner.email,
+      },
+      ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
+      userAgent: request.headers.get('user-agent') || undefined,
+    });
+
     return NextResponse.json(newOrg, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -210,4 +246,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

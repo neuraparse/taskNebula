@@ -33,7 +33,7 @@ export function AuditLogViewer({
   issueId,
   limit = 50,
 }: AuditLogViewerProps) {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['audit-logs', organizationId, resourceType, resourceId, projectId, issueId, limit],
     queryFn: async () => {
       const params = new URLSearchParams({ organizationId, limit: limit.toString() });
@@ -43,10 +43,11 @@ export function AuditLogViewer({
       if (issueId) params.append('issueId', issueId);
 
       const response = await fetch(`/api/audit-logs?${params.toString()}`);
+      const payload = await response.json().catch(() => ({ error: 'Failed to fetch audit logs' }));
       if (!response.ok) {
-        throw new Error('Failed to fetch audit logs');
+        throw new Error(payload.error || 'Failed to fetch audit logs');
       }
-      return response.json();
+      return payload;
     },
     enabled: !!organizationId,
   });
@@ -83,6 +84,17 @@ export function AuditLogViewer({
         <CardHeader>
           <CardTitle>Activity Log</CardTitle>
           <CardDescription>Loading...</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Activity Log</CardTitle>
+          <CardDescription>{error instanceof Error ? error.message : 'Failed to load activity.'}</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -150,4 +162,3 @@ export function AuditLogViewer({
     </Card>
   );
 }
-

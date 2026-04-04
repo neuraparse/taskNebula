@@ -65,15 +65,16 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
 
   const queryKey = useMemo(() => ['webhooks', organizationId, projectId], [organizationId, projectId]);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey,
     queryFn: async () => {
       const params = new URLSearchParams({ organizationId });
       if (projectId) params.append('projectId', projectId);
 
       const response = await fetch(`/api/webhooks?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch webhooks');
-      return response.json() as Promise<{ webhooks: WebhookItem[] }>;
+      const payload = await response.json().catch(() => ({ error: 'Failed to fetch webhooks' }));
+      if (!response.ok) throw new Error(payload.error || 'Failed to fetch webhooks');
+      return payload as { webhooks: WebhookItem[] };
     },
     enabled: !!organizationId,
   });
@@ -260,9 +261,13 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
         </div>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <p className="text-muted-foreground">Loading...</p>
-        ) : webhooks.length === 0 ? (
+          {isLoading ? (
+            <p className="text-muted-foreground">Loading...</p>
+          ) : error ? (
+            <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-6 text-sm text-yellow-700 dark:text-yellow-200">
+              {error instanceof Error ? error.message : 'Webhooks could not be loaded.'}
+            </div>
+          ) : webhooks.length === 0 ? (
           <div className="py-8 text-center text-muted-foreground">
             <WebhookIcon className="mx-auto mb-4 h-12 w-12 opacity-50" />
             <p>No webhooks yet.</p>

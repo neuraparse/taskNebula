@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db, organizations, systemAuditLogs } from '@tasknebula/db';
-import { eq } from 'drizzle-orm';
+import { and, eq, ne } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { isSuperAdmin } from '@/lib/auth/permissions';
 import { createId } from '@paralleldrive/cuid2';
@@ -89,6 +89,18 @@ export async function PATCH(
 
     if (!currentOrg) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+
+    if (data.slug) {
+      const [existingOrg] = await db
+        .select({ id: organizations.id })
+        .from(organizations)
+        .where(and(eq(organizations.slug, data.slug), ne(organizations.id, organizationId)))
+        .limit(1);
+
+      if (existingOrg) {
+        return NextResponse.json({ error: 'Organization slug already exists' }, { status: 400 });
+      }
     }
 
     // Update organization
@@ -188,4 +200,3 @@ export async function DELETE(
     );
   }
 }
-

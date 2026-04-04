@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, featureFlags } from '@tasknebula/db';
+import { db, featureFlags, systemAuditLogs } from '@tasknebula/db';
 import { isSuperAdmin } from '@/lib/auth/permissions';
 import { desc } from 'drizzle-orm';
 import { z } from 'zod';
@@ -80,6 +80,24 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
+    await db.insert(systemAuditLogs).values({
+      id: createId(),
+      userId: session.user.id,
+      action: 'feature_flag.created',
+      resourceType: 'feature_flag',
+      resourceId: newFlag.id,
+      changes: {
+        isEnabled: { from: null, to: newFlag.isEnabled },
+        rolloutPercentage: { from: null, to: newFlag.rolloutPercentage },
+      },
+      metadata: {
+        flagKey: newFlag.key,
+        flagName: newFlag.name,
+      },
+      ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
+      userAgent: request.headers.get('user-agent') || undefined,
+    });
+
     return NextResponse.json(newFlag, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -96,4 +114,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

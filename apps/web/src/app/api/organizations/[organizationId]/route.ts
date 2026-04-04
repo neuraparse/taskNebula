@@ -8,8 +8,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/auth';
-import { db, organizations, organizationMembers } from '@tasknebula/db';
-import { eq, and } from 'drizzle-orm';
+import { db, organizations, organizationMembers, projects, teams, apiKeys } from '@tasknebula/db';
+import { eq, and, count, ne } from 'drizzle-orm';
 import { hasPermission, getUserRole } from '@/lib/auth/permissions';
 
 export async function GET(
@@ -44,10 +44,23 @@ export async function GET(
     // Get user's role in this organization
     const userRole = await getUserRole(organizationId);
 
+    const [[memberCount], [projectCount], [teamCount], [apiKeyCount]] = await Promise.all([
+      db.select({ count: count() }).from(organizationMembers).where(eq(organizationMembers.organizationId, organizationId)),
+      db.select({ count: count() }).from(projects).where(eq(projects.organizationId, organizationId)),
+      db.select({ count: count() }).from(teams).where(eq(teams.organizationId, organizationId)),
+      db.select({ count: count() }).from(apiKeys).where(eq(apiKeys.organizationId, organizationId)),
+    ]);
+
     return NextResponse.json({
       ...org,
       userRole: userRole?.role || null,
       isSuperAdmin: userRole?.isSuperAdmin || false,
+      stats: {
+        members: Number(memberCount?.count || 0),
+        projects: Number(projectCount?.count || 0),
+        teams: Number(teamCount?.count || 0),
+        apiKeys: Number(apiKeyCount?.count || 0),
+      },
     });
   } catch (error) {
     console.error('Failed to fetch organization:', error);
@@ -60,8 +73,9 @@ export async function GET(
 
 const updateOrgSchema = z.object({
   name: z.string().min(1).max(255).optional(),
+  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/).optional(),
   domain: z.string().max(255).optional(),
-  logoUrl: z.string().url().optional(),
+  logoUrl: z.union([z.string().url(), z.literal('')]).optional(),
 });
 
 export async function PATCH(
@@ -85,11 +99,27 @@ export async function PATCH(
     const body = await request.json();
     const data = updateOrgSchema.parse(body);
 
+    if (data.slug) {
+      const [existingOrg] = await db
+        .select({ id: organizations.id })
+        .from(organizations)
+        .where(and(eq(organizations.slug, data.slug), ne(organizations.id, organizationId)))
+        .limit(1);
+
+      if (existingOrg) {
+        return NextResponse.json(
+          { error: 'Organization slug already exists' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Update organization
     const [updatedOrg] = await db
       .update(organizations)
       .set({
         ...data,
+        logoUrl: data.logoUrl === '' ? null : data.logoUrl,
         updatedAt: new Date(),
       })
       .where(eq(organizations.id, organizationId))
@@ -144,4 +174,3 @@ export async function DELETE(
     );
   }
 }
-

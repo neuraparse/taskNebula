@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, apiKeys } from '@tasknebula/db';
 import { eq } from 'drizzle-orm';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,25 @@ export async function DELETE(
 
     const { keyId } = await params;
 
+    const [existingKey] = await db
+      .select({
+        id: apiKeys.id,
+        organizationId: apiKeys.organizationId,
+        isActive: apiKeys.isActive,
+      })
+      .from(apiKeys)
+      .where(eq(apiKeys.id, keyId))
+      .limit(1);
+
+    if (!existingKey) {
+      return NextResponse.json({ error: 'API key not found' }, { status: 404 });
+    }
+
+    const canDelete = await hasPermission(existingKey.organizationId, 'api_key:delete');
+    if (!canDelete) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
+
     // Revoke the API key
     const [revokedKey] = await db
       .update(apiKeys)
@@ -29,14 +49,9 @@ export async function DELETE(
       .where(eq(apiKeys.id, keyId))
       .returning();
 
-    if (!revokedKey) {
-      return NextResponse.json({ error: 'API key not found' }, { status: 404 });
-    }
-
     return NextResponse.json({ message: 'API key revoked successfully' });
   } catch (error) {
     console.error('Error revoking API key:', error);
     return NextResponse.json({ error: 'Failed to revoke API key' }, { status: 500 });
   }
 }
-

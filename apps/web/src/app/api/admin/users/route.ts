@@ -5,12 +5,20 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { db, users, organizationMembers, organizations } from '@tasknebula/db';
-import { eq, desc, count, like, or } from 'drizzle-orm';
+import { z } from 'zod';
+import { db, users, organizationMembers, organizations, systemAuditLogs } from '@tasknebula/db';
+import { eq, desc, count, ilike, or, and } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { isSuperAdmin } from '@/lib/auth/permissions';
 import { createId } from '@paralleldrive/cuid2';
 import bcrypt from 'bcryptjs';
+
+const createUserSchema = z.object({
+  name: z.string().min(1).max(255),
+  email: z.string().email(),
+  password: z.string().min(8).max(255),
+  isSuperAdmin: z.boolean().optional().default(false),
+});
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,10 +38,6 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
     const status = searchParams.get('status'); // 'active', 'inactive', 'invited'
 
-    // Build query
-    let query = db.select().from(users);
-
-    // Apply filters
     const conditions = [];
     if (status) {
       conditions.push(eq(users.status, status as any));
@@ -41,19 +45,29 @@ export async function GET(request: NextRequest) {
     if (search) {
       conditions.push(
         or(
-          like(users.name, `%${search}%`),
-          like(users.email, `%${search}%`)
-        )
+          ilike(users.name, `%${search}%`),
+          ilike(users.email, `%${search}%`)
+        )!
       );
     }
 
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
     // Get users
-    const allUsers = await db
-      .select()
-      .from(users)
-      .orderBy(desc(users.createdAt))
-      .limit(limit)
-      .offset((page - 1) * limit);
+    const allUsers = whereClause
+      ? await db
+          .select()
+          .from(users)
+          .where(whereClause)
+          .orderBy(desc(users.createdAt))
+          .limit(limit)
+          .offset((page - 1) * limit)
+      : await db
+          .select()
+          .from(users)
+          .orderBy(desc(users.createdAt))
+          .limit(limit)
+          .offset((page - 1) * limit);
 
     // Get organization memberships for each user
     const usersWithOrgs = await Promise.all(
@@ -83,15 +97,16 @@ export async function GET(request: NextRequest) {
     );
 
     // Get total count
-    const [totalCount] = await db.select({ count: count() }).from(users);
+    const totalQuery = db.select({ count: count() }).from(users);
+    const [totalCount] = whereClause ? await totalQuery.where(whereClause) : await totalQuery;
 
     return NextResponse.json({
       users: usersWithOrgs,
       pagination: {
         page,
         limit,
-        total: totalCount?.count || 0,
-        totalPages: Math.ceil((totalCount?.count || 0) / limit),
+        total: Number(totalCount?.count || 0),
+        totalPages: Math.ceil(Number(totalCount?.count || 0) / limit),
       },
     });
   } catch (error) {
@@ -116,15 +131,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, email, password, isSuperAdmin: makeSuperAdmin } = body;
-
-    // Validate required fields
-    if (!name || !email || !password) {
-      return NextResponse.json(
-        { error: 'Name, email, and password are required' },
-        { status: 400 }
-      );
-    }
+    const { name, email, password, isSuperAdmin: makeSuperAdmin } = createUserSchema.parse(body);
 
     // Check if user already exists
     const existingUser = await db.query.users.findFirst({
@@ -157,6 +164,24 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
+    await db.insert(systemAuditLogs).values({
+      id: createId(),
+      userId: session.user.id,
+      action: makeSuperAdmin ? 'user.created_super_admin' : 'user.created',
+      resourceType: 'user',
+      resourceId: newUser.id,
+      changes: {
+        status: { from: null, to: newUser.status },
+        isSuperAdmin: { from: null, to: newUser.isSuperAdmin },
+      },
+      metadata: {
+        email: newUser.email,
+        name: newUser.name,
+      },
+      ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
+      userAgent: request.headers.get('user-agent') || undefined,
+    });
+
     return NextResponse.json({
       user: {
         id: newUser.id,
@@ -168,6 +193,13 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.errors },
+        { status: 400 }
+      );
+    }
+
     console.error('Failed to create user:', error);
     return NextResponse.json(
       { error: 'Failed to create user' },

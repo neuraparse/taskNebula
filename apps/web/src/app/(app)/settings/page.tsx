@@ -11,6 +11,12 @@ import { OrganizationSettingsClient } from './organization/organization-settings
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { Palette, Building2, Users, Bell, Key, Webhook, ScrollText } from 'lucide-react';
 
+const settingsTabsListClassName =
+  'h-auto w-full flex-wrap justify-start gap-2 rounded-xl border border-border/70 bg-card/40 p-1';
+
+const settingsTabTriggerClassName =
+  'gap-2 rounded-lg border border-transparent px-3.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground data-[state=active]:border-border data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm';
+
 export default function SettingsPage() {
   const { currentOrganizationId } = useOrganization();
 
@@ -23,41 +29,41 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 p-6 bg-gradient-mesh min-h-full">
-      <div className="animate-in fade-in slide-in-from-top-4">
+    <div className="space-y-6 p-6">
+      <div>
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground mt-1">
-          Manage your organization and preferences
+        <p className="mt-1 text-muted-foreground">
+          Organization controls, personal preferences, and shared integrations.
         </p>
       </div>
 
-      <Tabs defaultValue="appearance" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 animate-delay-100">
-        <TabsList className="bg-muted/50 p-1">
-          <TabsTrigger value="appearance" className="gap-2">
+      <Tabs defaultValue="organization" className="space-y-6">
+        <TabsList className={settingsTabsListClassName}>
+          <TabsTrigger value="appearance" className={settingsTabTriggerClassName}>
             <Palette className="h-4 w-4" />
             Appearance
           </TabsTrigger>
-          <TabsTrigger value="organization" className="gap-2">
+          <TabsTrigger value="organization" className={settingsTabTriggerClassName}>
             <Building2 className="h-4 w-4" />
             Organization
           </TabsTrigger>
-          <TabsTrigger value="members" className="gap-2">
+          <TabsTrigger value="members" className={settingsTabTriggerClassName}>
             <Users className="h-4 w-4" />
             Members
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-2">
+          <TabsTrigger value="notifications" className={settingsTabTriggerClassName}>
             <Bell className="h-4 w-4" />
             Notifications
           </TabsTrigger>
-          <TabsTrigger value="api-keys" className="gap-2">
+          <TabsTrigger value="api-keys" className={settingsTabTriggerClassName}>
             <Key className="h-4 w-4" />
             API Keys
           </TabsTrigger>
-          <TabsTrigger value="webhooks" className="gap-2">
+          <TabsTrigger value="webhooks" className={settingsTabTriggerClassName}>
             <Webhook className="h-4 w-4" />
             Webhooks
           </TabsTrigger>
-          <TabsTrigger value="audit-log" className="gap-2">
+          <TabsTrigger value="audit-log" className={settingsTabTriggerClassName}>
             <ScrollText className="h-4 w-4" />
             Activity
           </TabsTrigger>

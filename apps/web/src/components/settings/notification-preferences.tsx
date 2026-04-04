@@ -1,288 +1,353 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Bell, Mail, Clock } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Bell, Clock, Mail, RefreshCcw, Smartphone } from 'lucide-react';
 import { useOrganization } from '@/lib/hooks/use-organization';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+
+type Preferences = {
+  userId?: string;
+  organizationId: string;
+  enableInApp: boolean;
+  enableEmail: boolean;
+  digestFrequency: 'none' | 'daily' | 'weekly';
+  emailOnAssigned: boolean;
+  emailOnMentioned: boolean;
+  emailOnCommented: boolean;
+  emailOnStatusChanged: boolean;
+  emailOnIssueCreated: boolean;
+  emailOnSprintStarted: boolean;
+  emailOnSprintCompleted: boolean;
+  inAppOnAssigned: boolean;
+  inAppOnMentioned: boolean;
+  inAppOnCommented: boolean;
+  inAppOnStatusChanged: boolean;
+  inAppOnIssueCreated: boolean;
+  inAppOnSprintStarted: boolean;
+  inAppOnSprintCompleted: boolean;
+  doNotDisturb: boolean;
+  doNotDisturbStart: string | null;
+  doNotDisturbEnd: string | null;
+};
+
+const DEFAULTS: Omit<Preferences, 'organizationId'> = {
+  enableInApp: true,
+  enableEmail: true,
+  digestFrequency: 'none',
+  emailOnAssigned: true,
+  emailOnMentioned: true,
+  emailOnCommented: true,
+  emailOnStatusChanged: false,
+  emailOnIssueCreated: false,
+  emailOnSprintStarted: false,
+  emailOnSprintCompleted: false,
+  inAppOnAssigned: true,
+  inAppOnMentioned: true,
+  inAppOnCommented: true,
+  inAppOnStatusChanged: true,
+  inAppOnIssueCreated: true,
+  inAppOnSprintStarted: true,
+  inAppOnSprintCompleted: true,
+  doNotDisturb: false,
+  doNotDisturbStart: null,
+  doNotDisturbEnd: null,
+};
+
+const EMAIL_EVENT_FIELDS = [
+  { key: 'emailOnAssigned', label: 'Assigned to me' },
+  { key: 'emailOnMentioned', label: 'Mentioned in a comment' },
+  { key: 'emailOnCommented', label: 'Comments on watched issues' },
+  { key: 'emailOnStatusChanged', label: 'Issue status changes' },
+  { key: 'emailOnIssueCreated', label: 'New issue in watched projects' },
+  { key: 'emailOnSprintStarted', label: 'Sprint starts' },
+  { key: 'emailOnSprintCompleted', label: 'Sprint completes' },
+] as const;
+
+const IN_APP_EVENT_FIELDS = [
+  { key: 'inAppOnAssigned', label: 'Assignments' },
+  { key: 'inAppOnMentioned', label: 'Mentions' },
+  { key: 'inAppOnCommented', label: 'Comments' },
+  { key: 'inAppOnStatusChanged', label: 'Status changes' },
+  { key: 'inAppOnIssueCreated', label: 'New issues' },
+  { key: 'inAppOnSprintStarted', label: 'Sprint starts' },
+  { key: 'inAppOnSprintCompleted', label: 'Sprint completions' },
+] as const;
 
 export function NotificationPreferences() {
   const { currentOrganizationId } = useOrganization();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [preferences, setPreferences] = useState<any>(null);
+  const [preferences, setPreferences] = useState<Preferences | null>(null);
 
-  // Fetch preferences
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['notification-preferences', currentOrganizationId],
     queryFn: async () => {
-      const response = await fetch(
-        `/api/notification-preferences?organizationId=${currentOrganizationId}`
-      );
-      if (!response.ok) throw new Error('Failed to fetch preferences');
-      return response.json();
+      const response = await fetch(`/api/notification-preferences?organizationId=${currentOrganizationId}`);
+      const payload = await response.json().catch(() => ({ error: 'Failed to fetch preferences' }));
+      if (!response.ok) {
+        throw new Error(payload.error || 'Failed to fetch preferences');
+      }
+      return payload as { preferences: Preferences };
     },
     enabled: !!currentOrganizationId,
   });
 
   useEffect(() => {
+    if (!currentOrganizationId) {
+      return;
+    }
+
     if (data?.preferences) {
       setPreferences(data.preferences);
+      return;
     }
-  }, [data]);
 
-  // Update preferences mutation
+    setPreferences({
+      organizationId: currentOrganizationId,
+      ...DEFAULTS,
+    });
+  }, [currentOrganizationId, data]);
+
   const updatePreferences = useMutation({
-    mutationFn: async (newPreferences: any) => {
+    mutationFn: async (nextPreferences: Preferences) => {
       const response = await fetch('/api/notification-preferences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          organizationId: currentOrganizationId,
-          ...newPreferences,
-        }),
+        body: JSON.stringify(nextPreferences),
       });
-      if (!response.ok) throw new Error('Failed to update preferences');
-      return response.json();
+      const payload = await response.json().catch(() => ({ error: 'Failed to update preferences' }));
+      if (!response.ok) {
+        throw new Error(payload.error || 'Failed to update preferences');
+      }
+      return payload;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['notification-preferences', currentOrganizationId],
+      queryClient.invalidateQueries({ queryKey: ['notification-preferences', currentOrganizationId] });
+      toast({
+        title: 'Preferences saved',
+        description: 'Notification settings were updated.',
+      });
+    },
+    onError: (mutationError: Error) => {
+      toast({
+        title: 'Failed to save preferences',
+        description: mutationError.message,
+        variant: 'destructive',
       });
     },
   });
 
-  const handleChange = (field: string, value: boolean | string) => {
-    const newPreferences = { ...preferences, [field]: value };
-    setPreferences(newPreferences);
-  };
+  function handleChange<K extends keyof Preferences>(field: K, value: Preferences[K]) {
+    setPreferences((current) => {
+      if (!current) {
+        return current;
+      }
 
-  const handleSave = () => {
-    updatePreferences.mutate(preferences);
-  };
+      return {
+        ...current,
+        [field]: value,
+      };
+    });
+  }
+
+  function resetToDefaults() {
+    if (!currentOrganizationId) {
+      return;
+    }
+
+    setPreferences({
+      organizationId: currentOrganizationId,
+      ...DEFAULTS,
+    });
+  }
 
   if (isLoading || !preferences) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Notification Preferences</CardTitle>
-          <CardDescription>Loading...</CardDescription>
+          <CardTitle>Notification preferences</CardTitle>
+          <CardDescription>Loading notification settings...</CardDescription>
         </CardHeader>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="py-6 text-sm text-destructive">
+          {error instanceof Error ? error.message : 'Notification preferences could not be loaded.'}
+        </CardContent>
       </Card>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* General Settings */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bell className="h-5 w-5" />
-            General Settings
+            Delivery settings
           </CardTitle>
-          <CardDescription>
-            Control how you receive notifications
-          </CardDescription>
+          <CardDescription>Control how activity reaches you across in-app, email, and digest channels.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-5">
           <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>In-App Notifications</Label>
-              <p className="text-sm text-muted-foreground">
-                Show notifications in the notification bell
-              </p>
+            <div className="space-y-1">
+              <Label>In-app notifications</Label>
+              <p className="text-sm text-muted-foreground">Show updates in the notification bell.</p>
             </div>
             <Switch
               checked={preferences.enableInApp}
               onCheckedChange={(checked) => handleChange('enableInApp', checked)}
             />
           </div>
-
           <Separator />
-
           <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Email Notifications</Label>
-              <p className="text-sm text-muted-foreground">
-                Receive notifications via email
-              </p>
+            <div className="space-y-1">
+              <Label>Email notifications</Label>
+              <p className="text-sm text-muted-foreground">Send important updates to your inbox.</p>
             </div>
             <Switch
               checked={preferences.enableEmail}
               onCheckedChange={(checked) => handleChange('enableEmail', checked)}
             />
           </div>
-
           <Separator />
-
           <div className="space-y-2">
-            <Label>Digest Frequency</Label>
+            <Label>Digest frequency</Label>
             <Select
               value={preferences.digestFrequency}
-              onValueChange={(value) => handleChange('digestFrequency', value)}
+              onValueChange={(value) => handleChange('digestFrequency', value as Preferences['digestFrequency'])}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                <SelectItem value="daily">Daily (9 AM)</SelectItem>
-                <SelectItem value="weekly">Weekly (Monday 9 AM)</SelectItem>
+                <SelectItem value="none">No digest</SelectItem>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-sm text-muted-foreground">
-              Receive a summary of activity at regular intervals
-            </p>
           </div>
         </CardContent>
       </Card>
 
-      {/* Email Notifications */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Mail className="h-5 w-5" />
-            Email Notifications
-          </CardTitle>
-          <CardDescription>
-            Choose which events trigger email notifications
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label>When I&apos;m assigned to an issue</Label>
-            <Switch
-              checked={preferences.emailOnAssigned}
-              onCheckedChange={(checked) => handleChange('emailOnAssigned', checked)}
-              disabled={!preferences.enableEmail}
-            />
-          </div>
+      <div className="grid gap-6 xl:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Email events
+            </CardTitle>
+            <CardDescription>Choose which events should trigger email delivery.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {EMAIL_EVENT_FIELDS.map((field) => (
+              <div key={field.key} className="flex items-center justify-between">
+                <Label>{field.label}</Label>
+                <Switch
+                  checked={preferences[field.key]}
+                  onCheckedChange={(checked) => handleChange(field.key, checked)}
+                  disabled={!preferences.enableEmail}
+                />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
 
-          <div className="flex items-center justify-between">
-            <Label>When I&apos;m mentioned in a comment</Label>
-            <Switch
-              checked={preferences.emailOnMentioned}
-              onCheckedChange={(checked) => handleChange('emailOnMentioned', checked)}
-              disabled={!preferences.enableEmail}
-            />
-          </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Smartphone className="h-5 w-5" />
+              In-app events
+            </CardTitle>
+            <CardDescription>Control what appears in your workspace notification feed.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {IN_APP_EVENT_FIELDS.map((field) => (
+              <div key={field.key} className="flex items-center justify-between">
+                <Label>{field.label}</Label>
+                <Switch
+                  checked={preferences[field.key]}
+                  onCheckedChange={(checked) => handleChange(field.key, checked)}
+                  disabled={!preferences.enableInApp}
+                />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
 
-          <div className="flex items-center justify-between">
-            <Label>When someone comments on an issue I&apos;m watching</Label>
-            <Switch
-              checked={preferences.emailOnCommented}
-              onCheckedChange={(checked) => handleChange('emailOnCommented', checked)}
-              disabled={!preferences.enableEmail}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <Label>When an issue status changes</Label>
-            <Switch
-              checked={preferences.emailOnStatusChanged}
-              onCheckedChange={(checked) => handleChange('emailOnStatusChanged', checked)}
-              disabled={!preferences.enableEmail}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <Label>When a new issue is created in a project I&apos;m watching</Label>
-            <Switch
-              checked={preferences.emailOnIssueCreated}
-              onCheckedChange={(checked) => handleChange('emailOnIssueCreated', checked)}
-              disabled={!preferences.enableEmail}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <Label>When a sprint starts</Label>
-            <Switch
-              checked={preferences.emailOnSprintStarted}
-              onCheckedChange={(checked) => handleChange('emailOnSprintStarted', checked)}
-              disabled={!preferences.enableEmail}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <Label>When a sprint completes</Label>
-            <Switch
-              checked={preferences.emailOnSprintCompleted}
-              onCheckedChange={(checked) => handleChange('emailOnSprintCompleted', checked)}
-              disabled={!preferences.enableEmail}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Do Not Disturb */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            Do Not Disturb
+            Do not disturb
           </CardTitle>
-          <CardDescription>
-            Pause notifications during specific hours
-          </CardDescription>
+          <CardDescription>Pause delivery during quiet hours.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Enable Do Not Disturb</Label>
-              <p className="text-sm text-muted-foreground">
-                Mute notifications during specified hours
-              </p>
+            <div className="space-y-1">
+              <Label>Enable quiet hours</Label>
+              <p className="text-sm text-muted-foreground">Mute notifications during the selected time window.</p>
             </div>
             <Switch
               checked={preferences.doNotDisturb}
               onCheckedChange={(checked) => handleChange('doNotDisturb', checked)}
             />
           </div>
-
-          {preferences.doNotDisturb && (
-            <>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Start Time</Label>
-                  <Input
-                    type="time"
-                    value={preferences.doNotDisturbStart || '22:00'}
-                    onChange={(e) => handleChange('doNotDisturbStart', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>End Time</Label>
-                  <Input
-                    type="time"
-                    value={preferences.doNotDisturbEnd || '08:00'}
-                    onChange={(e) => handleChange('doNotDisturbEnd', e.target.value)}
-                  />
-                </div>
+          {preferences.doNotDisturb ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Start</Label>
+                <Input
+                  type="time"
+                  value={preferences.doNotDisturbStart || '22:00'}
+                  onChange={(event) => handleChange('doNotDisturbStart', event.target.value)}
+                />
               </div>
-              <p className="text-sm text-muted-foreground">
-                Notifications will be paused between these hours
-              </p>
-            </>
-          )}
+              <div className="space-y-2">
+                <Label>End</Label>
+                <Input
+                  type="time"
+                  value={preferences.doNotDisturbEnd || '08:00'}
+                  onChange={(event) => handleChange('doNotDisturbEnd', event.target.value)}
+                />
+              </div>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
-      {/* Save Button */}
-      <div className="flex justify-end">
+      <div className="flex justify-between gap-3">
+        <Button variant="outline" onClick={resetToDefaults}>
+          <RefreshCcw className="mr-2 h-4 w-4" />
+          Reset to defaults
+        </Button>
         <Button
-          onClick={handleSave}
+          onClick={() => updatePreferences.mutate(preferences)}
           disabled={updatePreferences.isPending}
         >
-          {updatePreferences.isPending ? 'Saving...' : 'Save Preferences'}
+          {updatePreferences.isPending ? 'Saving...' : 'Save preferences'}
         </Button>
       </div>
     </div>
   );
 }
-

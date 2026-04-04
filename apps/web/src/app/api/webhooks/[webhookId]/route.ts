@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db, webhooks } from '@tasknebula/db';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,24 @@ export async function PATCH(
     const body = await request.json();
     const validatedData = updateWebhookSchema.parse(body);
 
+    const [existingWebhook] = await db
+      .select({
+        id: webhooks.id,
+        organizationId: webhooks.organizationId,
+      })
+      .from(webhooks)
+      .where(eq(webhooks.id, webhookId))
+      .limit(1);
+
+    if (!existingWebhook) {
+      return NextResponse.json({ error: 'Webhook not found' }, { status: 404 });
+    }
+
+    const canManage = await hasPermission(existingWebhook.organizationId, 'webhook:manage');
+    if (!canManage) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
+
     const [updatedWebhook] = await db
       .update(webhooks)
       .set({
@@ -37,10 +56,6 @@ export async function PATCH(
       })
       .where(eq(webhooks.id, webhookId))
       .returning();
-
-    if (!updatedWebhook) {
-      return NextResponse.json({ error: 'Webhook not found' }, { status: 404 });
-    }
 
     return NextResponse.json(updatedWebhook);
   } catch (error) {
@@ -65,6 +80,24 @@ export async function DELETE(
 
     const { webhookId } = await params;
 
+    const [existingWebhook] = await db
+      .select({
+        id: webhooks.id,
+        organizationId: webhooks.organizationId,
+      })
+      .from(webhooks)
+      .where(eq(webhooks.id, webhookId))
+      .limit(1);
+
+    if (!existingWebhook) {
+      return NextResponse.json({ error: 'Webhook not found' }, { status: 404 });
+    }
+
+    const canDelete = await hasPermission(existingWebhook.organizationId, 'webhook:delete');
+    if (!canDelete) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
+
     await db.delete(webhooks).where(eq(webhooks.id, webhookId));
 
     return NextResponse.json({ message: 'Webhook deleted successfully' });
@@ -73,4 +106,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Failed to delete webhook' }, { status: 500 });
   }
 }
-

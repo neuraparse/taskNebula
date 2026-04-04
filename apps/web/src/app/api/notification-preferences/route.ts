@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db, notificationPreferences } from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,6 +53,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const canView = await hasPermission(organizationId, 'org:view');
+    if (!canView) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
+
     const [prefs] = await db
       .select()
       .from(notificationPreferences)
@@ -117,6 +123,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = updatePreferencesSchema.parse(body);
 
+    const canView = await hasPermission(validatedData.organizationId, 'org:view');
+    if (!canView) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
+
     // Check if preferences already exist
     const [existing] = await db
       .select()
@@ -167,4 +178,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, apiKeys } from '@tasknebula/db';
-import { eq, and } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import crypto from 'crypto';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +39,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
     }
 
+    const canView = await hasPermission(organizationId, 'api_key:view');
+    if (!canView) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
+
     // Fetch API keys (excluding the actual key)
     const keys = await db
       .select({
@@ -51,7 +57,8 @@ export async function GET(request: NextRequest) {
         revokedAt: apiKeys.revokedAt,
       })
       .from(apiKeys)
-      .where(eq(apiKeys.organizationId, organizationId));
+      .where(eq(apiKeys.organizationId, organizationId))
+      .orderBy(desc(apiKeys.createdAt));
 
     return NextResponse.json({ apiKeys: keys });
   } catch (error) {
@@ -70,6 +77,11 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const validatedData = createApiKeySchema.parse(body);
+
+    const canCreate = await hasPermission(validatedData.organizationId, 'api_key:create');
+    if (!canCreate) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
 
     // Generate API key
     const { key, hashedKey, prefix } = generateApiKey();
@@ -102,4 +114,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to create API key' }, { status: 500 });
   }
 }
-
