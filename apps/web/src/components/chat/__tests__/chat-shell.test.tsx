@@ -9,7 +9,10 @@ const startCallMutateAsync = jest.fn();
 const callTokenMutateAsync = jest.fn();
 const leaveCallMutateAsync = jest.fn();
 const createMessageMutateAsync = jest.fn();
+const deleteMessageMutateAsync = jest.fn();
+const moderateMessagesMutateAsync = jest.fn();
 const messagesRefetch = jest.fn();
+const loadMoreMessages = jest.fn();
 const markReadMutate = jest.fn();
 const startSessionMock = jest.fn();
 var roomConnect: jest.Mock;
@@ -26,6 +29,8 @@ let currentMicrophoneError: Error | null = null;
 let currentTrackVolume = 0.42;
 let liveCallsData: Array<Record<string, unknown>> = [];
 let startSessionError: Error | null = null;
+let conversationMessagesData: Array<Record<string, unknown>> = [];
+let conversationHasMore = false;
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ replace }),
@@ -167,27 +172,12 @@ jest.mock('@/lib/hooks/use-chat', () => ({
     refetch: jest.fn(),
   }),
   useConversationMessages: () => ({
-    data: [
-      {
-        id: 'message-1',
-        roomId: 'room-1',
-        body: 'Latest release plan is ready.',
-        attachments: [],
-        mentions: [],
-        deletedAt: null,
-        editedAt: null,
-        createdAt: new Date('2026-04-04T08:00:00Z').toISOString(),
-        author: {
-          id: 'user-1',
-          name: 'Admin User',
-          email: 'admin@tasknebula.io',
-          image: null,
-        },
-        reactions: [],
-      },
-    ],
+    data: conversationMessagesData,
     isLoading: false,
     refetch: messagesRefetch,
+    hasMore: conversationHasMore,
+    isLoadingMore: false,
+    loadMore: loadMoreMessages,
   }),
   useCreateConversationMessage: () => ({
     mutateAsync: createMessageMutateAsync.mockResolvedValue(undefined),
@@ -195,6 +185,16 @@ jest.mock('@/lib/hooks/use-chat', () => ({
   }),
   useUpdateConversationMessage: () => ({
     mutateAsync: jest.fn().mockResolvedValue(undefined),
+  }),
+  useDeleteConversationMessage: () => ({
+    mutateAsync: deleteMessageMutateAsync.mockResolvedValue(undefined),
+  }),
+  useModerateConversationMessages: () => ({
+    mutateAsync: moderateMessagesMutateAsync.mockResolvedValue({
+      action: 'clear_deleted',
+      affectedCount: 1,
+    }),
+    isPending: false,
   }),
   useMarkConversationRead: () => ({
     mutate: markReadMutate,
@@ -310,6 +310,7 @@ describe('ChatShell', () => {
     jest.clearAllMocks();
     messagesRefetch.mockResolvedValue(undefined);
     createMessageMutateAsync.mockResolvedValue(undefined);
+    moderateMessagesMutateAsync.mockResolvedValue({ action: 'clear_deleted', affectedCount: 1 });
     markReadMutate.mockReset();
     roomConnect.mockResolvedValue(undefined);
     roomDisconnect.mockResolvedValue(undefined);
@@ -331,6 +332,29 @@ describe('ChatShell', () => {
     currentTrackVolume = 0.04;
     liveCallsData = [];
     startSessionError = null;
+    conversationHasMore = false;
+    conversationMessagesData = [
+      {
+        id: 'message-1',
+        roomId: 'room-1',
+        body: 'Latest release plan is ready.',
+        attachments: [],
+        mentions: [],
+        deletedAt: null,
+        editedAt: null,
+        createdAt: new Date('2026-04-04T08:00:00Z').toISOString(),
+        author: {
+          id: 'user-1',
+          name: 'Admin User',
+          email: 'admin@tasknebula.io',
+          image: null,
+        },
+        canDelete: true,
+        canEdit: true,
+        moderation: null,
+        reactions: [],
+      },
+    ];
     Object.defineProperty(global.navigator, 'mediaDevices', {
       configurable: true,
       value: {
@@ -469,6 +493,78 @@ describe('ChatShell', () => {
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText(/write a message/i)).toHaveValue('');
+    });
+  });
+
+  it('shows a load older button and requests older pages on demand', async () => {
+    const user = userEvent.setup();
+    conversationHasMore = true;
+
+    render(<ChatShell projectId="project-1" />);
+
+    await user.click(screen.getByRole('button', { name: /load older messages/i }));
+
+    expect(loadMoreMessages).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a deleted message in the timeline and lets moderators remove it', async () => {
+    const user = userEvent.setup();
+    render(<ChatShell projectId="project-1" />);
+
+    await user.click(screen.getByRole('button', { name: /delete/i }));
+
+    await waitFor(() => {
+      expect(deleteMessageMutateAsync).toHaveBeenCalledWith('message-1');
+    });
+  });
+
+  it('shows moderator context for deleted messages', () => {
+    conversationMessagesData = [
+      {
+        id: 'message-1',
+        roomId: 'room-1',
+        body: '',
+        attachments: [],
+        mentions: [],
+        deletedAt: new Date('2026-04-04T09:00:00Z').toISOString(),
+        editedAt: null,
+        createdAt: new Date('2026-04-04T08:00:00Z').toISOString(),
+        author: {
+          id: 'user-2',
+          name: 'Dev User',
+          email: 'dev1@tasknebula.io',
+          image: null,
+        },
+        canDelete: false,
+        canEdit: false,
+        moderation: {
+          deletedBody: 'Original confidential note',
+          deletedById: 'user-1',
+          deletedByName: 'Admin User',
+          deletedAt: new Date('2026-04-04T09:00:00Z').toISOString(),
+          deletedAttachments: [],
+        },
+        reactions: [],
+      },
+    ];
+
+    render(<ChatShell projectId="project-1" />);
+
+    expect(screen.getByText('Message deleted')).toBeInTheDocument();
+    expect(screen.getByText('Deleted by Admin User')).toBeInTheDocument();
+    expect(screen.getByText('Original confidential note')).toBeInTheDocument();
+  });
+
+  it('opens moderation tools and clears deleted messages', async () => {
+    const user = userEvent.setup();
+    render(<ChatShell projectId="project-1" />);
+
+    await user.click(screen.getByRole('button', { name: /moderation tools/i }));
+    await user.click(screen.getByRole('menuitem', { name: /clear deleted messages/i }));
+    await user.click(screen.getByRole('button', { name: /confirm/i }));
+
+    await waitFor(() => {
+      expect(moderateMessagesMutateAsync).toHaveBeenCalledWith('clear_deleted');
     });
   });
 

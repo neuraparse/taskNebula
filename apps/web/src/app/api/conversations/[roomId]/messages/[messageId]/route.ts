@@ -48,13 +48,13 @@ export async function DELETE(
 
   try {
     const { roomId, messageId } = await params;
-    await deleteConversationMessage({
+    const message = await deleteConversationMessage({
       roomId,
       messageId,
       userId: session.user.id,
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message });
   } catch (error) {
     if (error instanceof ChatAccessError) {
       return NextResponse.json({ error: error.message }, { status: error.status });

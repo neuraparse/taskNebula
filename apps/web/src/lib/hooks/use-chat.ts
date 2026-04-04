@@ -5,6 +5,25 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { removeById, upsertById } from '@/lib/chat/message-state';
 
+function mergeOlderMessages(current: ConversationMessage[], older: ConversationMessage[]) {
+  if (!older.length) {
+    return current;
+  }
+
+  const seen = new Set(current.map((message) => message.id));
+  return [...older.filter((message) => !seen.has(message.id)), ...current];
+}
+
+function mergeLatestMessages(current: ConversationMessage[], latest: ConversationMessage[]) {
+  if (!current.length) {
+    return latest;
+  }
+
+  const latestIds = new Set(latest.map((message) => message.id));
+  const olderTail = current.filter((message) => !latestIds.has(message.id));
+  return [...olderTail, ...latest];
+}
+
 export type ChatBootstrapResponse = {
   project: {
     id: string;
@@ -107,6 +126,23 @@ export type ConversationMessage = {
     email: string | null;
     image: string | null;
   };
+  canDelete: boolean;
+  canEdit: boolean;
+  moderation: {
+    deletedBody: string;
+    deletedByName: string | null;
+    deletedById: string | null;
+    deletedAt: string;
+    deletedAttachments: Array<{
+      id: string;
+      fileName: string;
+      fileSize: number;
+      mimeType: string;
+      filePath: string;
+      uploadedById: string;
+      uploadedAt: string;
+    }>;
+  } | null;
   reactions: Array<{
     emoji: string;
     count: number;
@@ -115,6 +151,16 @@ export type ConversationMessage = {
   }>;
   optimistic?: boolean;
 };
+
+type ConversationMessagesPage = {
+  messages: ConversationMessage[];
+  pageInfo: {
+    hasMore: boolean;
+    nextCursor: string | null;
+  };
+};
+
+type ConversationModerationAction = 'clear_deleted' | 'clear_room';
 
 type ConversationResponse = {
   room: {
@@ -176,7 +222,8 @@ export function useLiveCalls() {
 }
 
 export function useConversationMessages(roomId: string | undefined) {
-  return useQuery({
+  const queryClient = useQueryClient();
+  const query = useQuery({
     queryKey: ['conversation-messages', roomId],
     queryFn: async () => {
       const response = await fetch(`/api/conversations/${roomId}/messages`);
@@ -184,13 +231,50 @@ export function useConversationMessages(roomId: string | undefined) {
       if (!response.ok) {
         throw new Error(payload.error || 'Failed to load messages');
       }
-      return payload.messages as ConversationMessage[];
+      return payload as ConversationMessagesPage;
     },
     enabled: Boolean(roomId),
     staleTime: 10_000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
+
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const pageInfo = query.data?.pageInfo || { hasMore: false, nextCursor: null as string | null };
+
+  const loadMore = async () => {
+    if (!roomId || !pageInfo.hasMore || !pageInfo.nextCursor || isLoadingMore) {
+      return;
+    }
+
+    try {
+      setIsLoadingMore(true);
+      const response = await fetch(
+        `/api/conversations/${roomId}/messages?before=${encodeURIComponent(pageInfo.nextCursor)}`
+      );
+      const payload = await response.json().catch(() => ({ error: 'Failed to load older messages' }));
+      if (!response.ok) {
+        throw new Error(payload.error || 'Failed to load older messages');
+      }
+
+      const nextPage = payload as ConversationMessagesPage;
+      queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => ({
+        messages: mergeOlderMessages(current?.messages || [], nextPage.messages),
+        pageInfo: nextPage.pageInfo,
+      }));
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  return {
+    ...query,
+    data: query.data?.messages || [],
+    pageInfo,
+    hasMore: pageInfo.hasMore,
+    isLoadingMore,
+    loadMore,
+  };
 }
 
 export function useIssueConversation(issueId: string | undefined) {
@@ -286,13 +370,17 @@ export function useCreateConversationMessage(roomId: string | undefined) {
           email: session?.user?.email || null,
           image: session?.user?.image || null,
         },
+        canDelete: true,
+        canEdit: true,
+        moderation: null,
         reactions: [],
         optimistic: true,
       };
 
-      queryClient.setQueryData<ConversationMessage[]>(['conversation-messages', roomId], (current) =>
-        upsertById(current, optimisticMessage)
-      );
+      queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => ({
+        messages: upsertById(current?.messages, optimisticMessage),
+        pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
+      }));
 
       return { tempId };
     },
@@ -301,15 +389,21 @@ export function useCreateConversationMessage(roomId: string | undefined) {
         return;
       }
 
-      queryClient.setQueryData<ConversationMessage[]>(['conversation-messages', roomId], (current) =>
-        removeById(current, context.tempId as string)
-      );
+      queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => ({
+        messages: removeById(current?.messages, context.tempId as string),
+        pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
+      }));
     },
     onSuccess: (message, _input, context) => {
-      queryClient.setQueryData<ConversationMessage[]>(['conversation-messages', roomId], (current) => {
+      queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => {
         const withoutTemp =
-          roomId && context?.tempId ? removeById(current, context.tempId as string) : current || [];
-        return upsertById(withoutTemp, message);
+          roomId && context?.tempId
+            ? removeById(current?.messages, context.tempId as string)
+            : current?.messages || [];
+        return {
+          messages: upsertById(withoutTemp, message),
+          pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
+        };
       });
       queryClient.invalidateQueries({ queryKey: ['project-chat-bootstrap'] });
       queryClient.invalidateQueries({ queryKey: ['issue-conversation'] });
@@ -340,9 +434,10 @@ export function useUpdateConversationMessage(roomId: string | undefined) {
     },
     onSuccess: (message) => {
       if (message) {
-        queryClient.setQueryData<ConversationMessage[]>(['conversation-messages', roomId], (current) =>
-          upsertById(current, message)
-        );
+        queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => ({
+          messages: upsertById(current?.messages, message),
+          pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
+        }));
       }
       queryClient.invalidateQueries({ queryKey: ['project-chat-bootstrap'] });
       queryClient.invalidateQueries({ queryKey: ['issue-conversation'] });
@@ -368,12 +463,56 @@ export function useDeleteConversationMessage(roomId: string | undefined) {
         throw new Error(payload.error || 'Failed to delete message');
       }
 
-      return payload;
+      return payload.message as ConversationMessage | null;
     },
-    onSuccess: (_payload, messageId) => {
-      queryClient.setQueryData<ConversationMessage[]>(['conversation-messages', roomId], (current) =>
-        removeById(current, messageId)
-      );
+    onSuccess: (message, messageId) => {
+      queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => ({
+        messages: message
+          ? upsertById(current?.messages, message)
+          : removeById(current?.messages, messageId),
+        pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
+      }));
+      queryClient.invalidateQueries({ queryKey: ['project-chat-bootstrap'] });
+      queryClient.invalidateQueries({ queryKey: ['issue-conversation'] });
+      queryClient.invalidateQueries({ queryKey: ['document-conversation'] });
+    },
+  });
+}
+
+export function useModerateConversationMessages(roomId: string | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (action: ConversationModerationAction) => {
+      const response = await fetch(`/api/conversations/${roomId}/messages/moderation`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      const payload = await response
+        .json()
+        .catch(() => ({ error: 'Failed to moderate conversation messages' }));
+
+      if (!response.ok) {
+        throw new Error(payload.error || 'Failed to moderate conversation messages');
+      }
+
+      return payload as { action: ConversationModerationAction; affectedCount: number };
+    },
+    onSuccess: ({ action }) => {
+      queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => {
+        if (action === 'clear_room') {
+          return {
+            messages: [],
+            pageInfo: { hasMore: false, nextCursor: null },
+          };
+        }
+
+        return {
+          messages: (current?.messages || []).filter((message) => !message.deletedAt),
+          pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
+        };
+      });
       queryClient.invalidateQueries({ queryKey: ['project-chat-bootstrap'] });
       queryClient.invalidateQueries({ queryKey: ['issue-conversation'] });
       queryClient.invalidateQueries({ queryKey: ['document-conversation'] });
@@ -543,34 +682,100 @@ export function useConversationStream(roomId: string | undefined, enabled: boole
         if (payload.type === 'message.created' || payload.type === 'message.updated') {
           const message = payload.data.message as ConversationMessage | undefined;
           if (message) {
-            queryClient.setQueryData<ConversationMessage[]>(['conversation-messages', roomId], (current) =>
-              upsertById(current, message)
-            );
+            queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => ({
+              messages: upsertById(current?.messages, message),
+              pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
+            }));
           }
         }
         if (payload.type === 'message.deleted') {
-          const messageId = payload.data.messageId;
-          if (typeof messageId === 'string') {
-            queryClient.setQueryData<ConversationMessage[]>(['conversation-messages', roomId], (current) =>
-              removeById(current, messageId)
-            );
+          const messageId = typeof payload.data.messageId === 'string' ? payload.data.messageId : null;
+          if (messageId) {
+            queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => ({
+              messages: (current?.messages || []).map((message) =>
+                message.id === messageId
+                  ? {
+                      ...message,
+                      body: '',
+                      attachments: [],
+                      deletedAt: message.deletedAt || new Date().toISOString(),
+                      canDelete: false,
+                      canEdit: false,
+                    }
+                  : message
+              ),
+              pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
+            }));
           }
+
+          void fetch(`/api/conversations/${roomId}/messages?limit=40`)
+            .then((response) =>
+              response
+                .json()
+                .catch(() => ({ error: 'Failed to refresh messages' }))
+                .then((json) => ({ ok: response.ok, json }))
+            )
+            .then(({ ok, json }) => {
+              if (!ok) {
+                return;
+              }
+
+              const latestPage = json as ConversationMessagesPage;
+              queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => ({
+                messages: mergeLatestMessages(current?.messages || [], latestPage.messages),
+                pageInfo: current?.pageInfo || latestPage.pageInfo,
+              }));
+            })
+            .catch(() => {
+              // Ignore best-effort refresh failures.
+            });
         }
         if (payload.type === 'message.reaction') {
           const messageId = payload.data.messageId;
           const reactions = payload.data.reactions as ConversationMessage['reactions'] | undefined;
           if (typeof messageId === 'string' && reactions) {
-            queryClient.setQueryData<ConversationMessage[]>(['conversation-messages', roomId], (current) =>
-              (current || []).map((message) =>
+            queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => ({
+              messages: (current?.messages || []).map((message) =>
                 message.id === messageId
                   ? {
                       ...message,
                       reactions,
                     }
                   : message
-              )
-            );
+              ),
+              pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
+            }));
           }
+        }
+        if (payload.type === 'messages.cleared') {
+          const action = payload.data.action as ConversationModerationAction | undefined;
+          void fetch(`/api/conversations/${roomId}/messages?limit=40`)
+            .then((response) =>
+              response
+                .json()
+                .catch(() => ({ error: 'Failed to refresh messages' }))
+                .then((json) => ({ ok: response.ok, json }))
+            )
+            .then(({ ok, json }) => {
+              if (!ok) {
+                return;
+              }
+
+              const latestPage = json as ConversationMessagesPage;
+              queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => ({
+                messages:
+                  action === 'clear_room'
+                    ? latestPage.messages
+                    : mergeLatestMessages(
+                        (current?.messages || []).filter((message) => !message.deletedAt),
+                        latestPage.messages
+                      ),
+                pageInfo: latestPage.pageInfo,
+              }));
+            })
+            .catch(() => {
+              // Ignore best-effort refresh failures.
+            });
         }
         if (
           payload.type === 'call.started' ||

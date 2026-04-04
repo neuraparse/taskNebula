@@ -6,7 +6,7 @@ import { createId as cuid } from '@paralleldrive/cuid2';
 import {
   ChatAccessError,
   createConversationMessage,
-  listConversationMessages,
+  listConversationMessagesPage,
   resolveConversationRoomAccess,
 } from '@/lib/chat/server';
 
@@ -18,7 +18,7 @@ async function ensureUploadDir() {
 }
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ roomId: string }> }
 ) {
   const session = await auth();
@@ -28,13 +28,19 @@ export async function GET(
 
   try {
     const { roomId } = await params;
+    const beforeMessageId = request.nextUrl.searchParams.get('before');
+    const limitParam = request.nextUrl.searchParams.get('limit');
+    const parsedLimit = limitParam ? Number(limitParam) : undefined;
     const access = await resolveConversationRoomAccess(session.user.id, roomId);
     if (!access) {
       return NextResponse.json({ error: 'Conversation not found or unavailable' }, { status: 404 });
     }
 
-    const messages = await listConversationMessages(roomId, session.user.id);
-    return NextResponse.json({ messages });
+    const page = await listConversationMessagesPage(roomId, session.user.id, {
+      beforeMessageId,
+      limit: Number.isFinite(parsedLimit) ? parsedLimit : undefined,
+    });
+    return NextResponse.json(page);
   } catch (error) {
     if (error instanceof ChatAccessError) {
       return NextResponse.json({ error: error.message }, { status: error.status });

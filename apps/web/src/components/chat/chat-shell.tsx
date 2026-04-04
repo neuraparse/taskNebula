@@ -36,6 +36,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
@@ -46,9 +53,11 @@ import {
   useConversationMessages,
   useConversationStream,
   useCreateConversationMessage,
+  useDeleteConversationMessage,
   useEndConversationCall,
   useLeaveConversationCall,
   useMarkConversationRead,
+  useModerateConversationMessages,
   useProjectChatBootstrap,
   useStartConversationCall,
   useUpdateConversationMessage,
@@ -61,6 +70,7 @@ import {
   ImagePlus,
   Loader2,
   MessageSquareText,
+  MoreHorizontal,
   Mic,
   MicOff,
   PanelLeft,
@@ -69,6 +79,7 @@ import {
   SendHorizontal,
   Volume2,
   TestTube2,
+  Trash2,
   Users2,
   X,
 } from 'lucide-react';
@@ -117,6 +128,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [newChannelName, setNewChannelName] = useState('');
   const [newChannelDescription, setNewChannelDescription] = useState('');
+  const [pendingModerationAction, setPendingModerationAction] = useState<'clear_deleted' | 'clear_room' | null>(null);
   const [preparedVoiceSession, setPreparedVoiceSession] = useState<PreparedVoiceSession | null>(null);
   const [isVoicePanelOpen, setIsVoicePanelOpen] = useState(false);
   const [isVoiceSetupOpen, setIsVoiceSetupOpen] = useState(false);
@@ -143,6 +155,8 @@ export function ChatShell({ projectId }: { projectId: string }) {
   const messagesQuery = useConversationMessages(selectedRoomId || undefined);
   const createMessage = useCreateConversationMessage(selectedRoomId || undefined);
   const reactToMessage = useUpdateConversationMessage(selectedRoomId || undefined);
+  const deleteMessage = useDeleteConversationMessage(selectedRoomId || undefined);
+  const moderateMessages = useModerateConversationMessages(selectedRoomId || undefined);
   const markRead = useMarkConversationRead(selectedRoomId || undefined);
   const startCall = useStartConversationCall(selectedRoomId || undefined);
   const endCall = useEndConversationCall(selectedRoomId || undefined);
@@ -243,9 +257,11 @@ export function ChatShell({ projectId }: { projectId: string }) {
     });
   }, [bootstrap?.effectiveSettings.unreadTrackingEnabled, lastReadableMessageId, markRead.mutate, selectedRoomId]);
 
+  const lastMessageId = messageList.length ? messageList[messageList.length - 1]?.id : null;
+
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ block: 'end' });
-  }, [messageList.length, selectedRoomId]);
+  }, [lastMessageId, selectedRoomId]);
 
   useEffect(() => {
     setComposerError(null);
@@ -379,6 +395,48 @@ export function ChatShell({ projectId }: { projectId: string }) {
       toast({
         title: 'Failed to update reaction',
         description: mutationError instanceof Error ? mutationError.message : 'Failed to update reaction',
+        variant: 'destructive',
+      });
+    }
+  }
+
+  async function handleDeleteMessage(messageId: string) {
+    try {
+      await deleteMessage.mutateAsync(messageId);
+    } catch (mutationError) {
+      toast({
+        title: 'Failed to delete message',
+        description: mutationError instanceof Error ? mutationError.message : 'Failed to delete message',
+        variant: 'destructive',
+      });
+    }
+  }
+
+  async function handleModerationAction() {
+    if (!pendingModerationAction) {
+      return;
+    }
+
+    try {
+      const result = await moderateMessages.mutateAsync(pendingModerationAction);
+      toast({
+        title:
+          pendingModerationAction === 'clear_deleted'
+            ? 'Deleted messages cleared'
+            : 'Room history cleared',
+        description:
+          result.affectedCount > 0
+            ? `${result.affectedCount} message${result.affectedCount === 1 ? '' : 's'} updated.`
+            : 'Nothing needed cleaning up.',
+      });
+      setPendingModerationAction(null);
+    } catch (mutationError) {
+      toast({
+        title: 'Moderation action failed',
+        description:
+          mutationError instanceof Error
+            ? mutationError.message
+            : 'Failed to update conversation moderation state',
         variant: 'destructive',
       });
     }
@@ -605,6 +663,41 @@ export function ChatShell({ projectId }: { projectId: string }) {
         </DialogContent>
       </Dialog>
 
+      <Dialog
+        open={Boolean(pendingModerationAction)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingModerationAction(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {pendingModerationAction === 'clear_deleted' ? 'Clear deleted messages' : 'Clear room history'}
+            </DialogTitle>
+            <DialogDescription>
+              {pendingModerationAction === 'clear_deleted'
+                ? 'Permanently remove deleted tombstones from this conversation for everyone.'
+                : 'Permanently remove the room history for everyone. Active calls stay untouched.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setPendingModerationAction(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => void handleModerationAction()}
+              disabled={moderateMessages.isPending}
+            >
+              {moderateMessages.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Confirm
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
         <SheetContent side="left" className="w-[320px] p-0">
           <SheetHeader className="border-b px-4 py-4 text-left">
@@ -651,6 +744,35 @@ export function ChatShell({ projectId }: { projectId: string }) {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {bootstrap.permissions.canModerateMessages ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-9 w-9 rounded-md"
+                          aria-label="Moderation tools"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuItem onClick={() => setPendingModerationAction('clear_deleted')}>
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Clear deleted messages
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => setPendingModerationAction('clear_room')}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Clear room history
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : null}
                   {voice.currentSession ? (
                     <Button
                       variant={isCurrentVoiceRoom ? 'secondary' : 'outline'}
@@ -744,13 +866,33 @@ export function ChatShell({ projectId }: { projectId: string }) {
                       Loading messages…
                     </div>
                   ) : messageList.length ? (
-                    messageList.map((message) => (
-                      <ChatMessageRow
-                        key={message.id}
-                        message={message}
-                        onToggleReaction={handleToggleReaction}
-                      />
-                    ))
+                    <>
+                      {messagesQuery.hasMore ? (
+                        <div className="pb-3">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="rounded-sm"
+                            onClick={() => void messagesQuery.loadMore()}
+                            disabled={messagesQuery.isLoadingMore}
+                          >
+                            {messagesQuery.isLoadingMore ? (
+                              <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                            ) : null}
+                            Load older messages
+                          </Button>
+                        </div>
+                      ) : null}
+                      {messageList.map((message) => (
+                        <ChatMessageRow
+                          key={message.id}
+                          message={message}
+                          onDelete={handleDeleteMessage}
+                          onToggleReaction={handleToggleReaction}
+                        />
+                      ))}
+                    </>
                   ) : (
                     <div className="flex min-h-[280px] flex-col items-center justify-center rounded-sm border border-dashed px-6 text-center">
                       <div className="text-sm font-medium">No messages yet</div>
@@ -996,29 +1138,45 @@ function ChatSidebar({
 
 function ChatMessageRow({
   message,
+  onDelete,
   onToggleReaction,
 }: {
   message: ConversationMessage;
+  onDelete: (messageId: string) => Promise<void>;
   onToggleReaction: (messageId: string, emoji: string) => Promise<void>;
 }) {
   const authorName = message.author.name || message.author.email || 'Unknown user';
+  const moderationLabel = message.moderation?.deletedByName
+    ? `Deleted by ${message.moderation.deletedByName}`
+    : 'Deleted message';
 
   return (
-    <div className="flex gap-3 py-4">
+    <div className="group flex gap-3 py-4">
       <Avatar className="mt-0.5 h-9 w-9">
         <AvatarImage src={message.author.image || undefined} alt={authorName} />
         <AvatarFallback className="text-xs">{getInitials(authorName)}</AvatarFallback>
       </Avatar>
 
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-          <span className="text-sm font-medium">{authorName}</span>
-          <span className="text-xs text-muted-foreground">
-            {message.optimistic
-              ? 'Sending…'
-              : formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
-            {message.editedAt ? ' · edited' : ''}
-          </span>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <span className="text-sm font-medium">{authorName}</span>
+            <span className="text-xs text-muted-foreground">
+              {message.optimistic
+                ? 'Sending…'
+                : formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+              {message.editedAt ? ' · edited' : ''}
+            </span>
+          </div>
+          {message.canDelete ? (
+            <button
+              type="button"
+              className="rounded-sm border px-2 py-1 text-[11px] text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+              onClick={() => void onDelete(message.id)}
+            >
+              Delete
+            </button>
+          ) : null}
         </div>
 
         <div
@@ -1029,6 +1187,17 @@ function ChatMessageRow({
         >
           {message.deletedAt ? 'Message deleted' : message.body}
         </div>
+
+        {message.deletedAt && message.moderation?.deletedBody ? (
+          <div className="mt-3 rounded-sm border border-border/80 bg-muted/25 px-3 py-2">
+            <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+              {moderationLabel}
+            </div>
+            <div className="mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground/90">
+              {message.moderation.deletedBody}
+            </div>
+          </div>
+        ) : null}
 
         {message.attachments.length ? (
           <div className="mt-3 flex flex-wrap gap-2">
@@ -1051,6 +1220,19 @@ function ChatMessageRow({
                   {attachment.fileName}
                 </div>
               )
+            ))}
+          </div>
+        ) : null}
+
+        {message.deletedAt && message.moderation?.deletedAttachments.length ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {message.moderation.deletedAttachments.map((attachment) => (
+              <div
+                key={attachment.id}
+                className="rounded-sm border px-2 py-1 text-xs text-muted-foreground"
+              >
+                {attachment.fileName}
+              </div>
             ))}
           </div>
         ) : null}

@@ -95,6 +95,35 @@ type SerializedReaction = {
   reactedByCurrentUser: boolean;
 };
 
+type SerializedConversationMessage = typeof chatMessages.$inferSelect & {
+  mentions: string[];
+  attachments: ChatMessageAttachmentRecord[];
+  reactions: SerializedReaction[];
+  author: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    image: string | null;
+  };
+  canDelete: boolean;
+  canEdit: boolean;
+  moderation: {
+    deletedBody: string;
+    deletedByName: string | null;
+    deletedById: string | null;
+    deletedAt: string;
+    deletedAttachments: ChatMessageAttachmentRecord[];
+  } | null;
+};
+
+type ConversationMessagesPage = {
+  messages: SerializedConversationMessage[];
+  pageInfo: {
+    hasMore: boolean;
+    nextCursor: string | null;
+  };
+};
+
 export class ChatAccessError extends Error {
   status: number;
 
@@ -522,22 +551,43 @@ function parseMentions(value: unknown): string[] {
 }
 
 export async function listConversationMessages(roomId: string, currentUserId: string) {
-  const rows = await db
-    .select({
-      message: chatMessages,
-      author: {
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        image: users.image,
-      },
-    })
-    .from(chatMessages)
-    .innerJoin(users, eq(users.id, chatMessages.createdBy))
-    .where(eq(chatMessages.roomId, roomId))
-    .orderBy(asc(chatMessages.createdAt));
+  const page = await listConversationMessagesPage(roomId, currentUserId);
+  return page.messages;
+}
 
-  const messageIds = rows.map((row) => row.message.id);
+function parseDeletedSnapshot(bodyJson: unknown) {
+  if (!bodyJson || typeof bodyJson !== 'object' || !('deletedSnapshot' in bodyJson)) {
+    return null;
+  }
+
+  const snapshot = (bodyJson as { deletedSnapshot?: unknown }).deletedSnapshot;
+  if (!snapshot || typeof snapshot !== 'object') {
+    return null;
+  }
+
+  return snapshot as {
+    body?: unknown;
+    attachments?: unknown;
+    deletedById?: unknown;
+    deletedByName?: unknown;
+    deletedAt?: unknown;
+  };
+}
+
+async function serializeConversationMessageRows(params: {
+  rows: Array<{
+    message: typeof chatMessages.$inferSelect;
+    author: {
+      id: string;
+      name: string | null;
+      email: string | null;
+      image: string | null;
+    };
+  }>;
+  currentUserId: string;
+  canModerateMessages: boolean;
+}) {
+  const messageIds = params.rows.map((row) => row.message.id);
   const reactions = messageIds.length
     ? await db
         .select()
@@ -554,26 +604,200 @@ export async function listConversationMessages(roomId: string, currentUserId: st
     if (existing) {
       existing.count += 1;
       existing.reactedUserIds.push(reaction.userId);
-      existing.reactedByCurrentUser = existing.reactedByCurrentUser || reaction.userId === currentUserId;
+      existing.reactedByCurrentUser = existing.reactedByCurrentUser || reaction.userId === params.currentUserId;
     } else {
       list.push({
         emoji: reaction.emoji,
         count: 1,
         reactedUserIds: [reaction.userId],
-        reactedByCurrentUser: reaction.userId === currentUserId,
+        reactedByCurrentUser: reaction.userId === params.currentUserId,
       });
     }
 
     reactionsByMessage.set(reaction.messageId, list);
   }
 
-  return rows.map((row) => ({
-    ...row.message,
-    mentions: parseMentions(row.message.mentions),
-    attachments: parseAttachments(row.message.attachments),
-    reactions: reactionsByMessage.get(row.message.id) || [],
-    author: row.author,
-  }));
+  const deleterIds = [...new Set(
+    params.rows
+      .map((row) => {
+        const snapshot = parseDeletedSnapshot(row.message.bodyJson);
+        return typeof snapshot?.deletedById === 'string' ? snapshot.deletedById : row.message.deletedAt ? row.message.updatedBy : null;
+      })
+      .filter((value): value is string => Boolean(value))
+  )];
+
+  const deleterMap = deleterIds.length
+    ? new Map(
+        (
+          await db
+            .select({ id: users.id, name: users.name, email: users.email })
+            .from(users)
+            .where(inArray(users.id, deleterIds))
+        ).map((user) => [user.id, user.name || user.email || null])
+      )
+    : new Map<string, string | null>();
+
+  return params.rows.map((row) => {
+    const messageMentions = parseMentions(row.message.mentions);
+    const messageAttachments = parseAttachments(row.message.attachments);
+    const deletedSnapshot = parseDeletedSnapshot(row.message.bodyJson);
+    const deletedBody =
+      typeof deletedSnapshot?.body === 'string'
+        ? deletedSnapshot.body
+        : row.message.deletedAt
+          ? row.message.body
+          : '';
+    const deletedAttachments = parseAttachments(
+      deletedSnapshot && typeof deletedSnapshot.attachments !== 'undefined'
+        ? deletedSnapshot.attachments
+        : row.message.attachments
+    );
+    const deletedById =
+      typeof deletedSnapshot?.deletedById === 'string'
+        ? deletedSnapshot.deletedById
+        : row.message.deletedAt
+          ? row.message.updatedBy
+          : null;
+    const deletedByName =
+      typeof deletedSnapshot?.deletedByName === 'string'
+        ? deletedSnapshot.deletedByName
+        : deletedById
+          ? deleterMap.get(deletedById) || null
+          : null;
+
+    return {
+      ...row.message,
+      body: row.message.deletedAt && !params.canModerateMessages ? '' : row.message.body,
+      mentions: row.message.deletedAt ? [] : messageMentions,
+      attachments: row.message.deletedAt ? [] : messageAttachments,
+      reactions: reactionsByMessage.get(row.message.id) || [],
+      author: row.author,
+      canDelete:
+        !row.message.deletedAt &&
+        (row.message.createdBy === params.currentUserId || params.canModerateMessages),
+      canEdit:
+        !row.message.deletedAt &&
+        (row.message.createdBy === params.currentUserId || params.canModerateMessages),
+      moderation:
+        row.message.deletedAt && params.canModerateMessages
+          ? {
+              deletedBody,
+              deletedById,
+              deletedByName,
+              deletedAt: row.message.deletedAt.toISOString(),
+              deletedAttachments,
+            }
+          : null,
+    } satisfies SerializedConversationMessage;
+  });
+}
+
+async function getConversationMessageById(
+  roomId: string,
+  messageId: string,
+  currentUserId: string
+): Promise<SerializedConversationMessage | null> {
+  const access = await resolveConversationRoomAccess(currentUserId, roomId);
+  if (!access) {
+    throw new ChatAccessError('Conversation not found or unavailable.', 404);
+  }
+
+  const [row] = await db
+    .select({
+      message: chatMessages,
+      author: {
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        image: users.image,
+      },
+    })
+    .from(chatMessages)
+    .innerJoin(users, eq(users.id, chatMessages.createdBy))
+    .where(and(eq(chatMessages.roomId, roomId), eq(chatMessages.id, messageId)))
+    .limit(1);
+
+  if (!row) {
+    return null;
+  }
+
+  const [message] = await serializeConversationMessageRows({
+    rows: [row],
+    currentUserId,
+    canModerateMessages: access.context.permissions.canModerateMessages,
+  });
+
+  return message || null;
+}
+
+export async function listConversationMessagesPage(
+  roomId: string,
+  currentUserId: string,
+  options: {
+    beforeMessageId?: string | null;
+    limit?: number;
+  } = {}
+): Promise<ConversationMessagesPage> {
+  const access = await resolveConversationRoomAccess(currentUserId, roomId);
+  if (!access) {
+    throw new ChatAccessError('Conversation not found or unavailable.', 404);
+  }
+
+  const limit = Math.min(Math.max(options.limit ?? 40, 20), 100);
+  let beforeMessage: { id: string; createdAt: Date } | null = null;
+
+  if (options.beforeMessageId) {
+    const [cursorMessage] = await db
+      .select({ id: chatMessages.id, createdAt: chatMessages.createdAt })
+      .from(chatMessages)
+      .where(and(eq(chatMessages.roomId, roomId), eq(chatMessages.id, options.beforeMessageId)))
+      .limit(1);
+
+    if (!cursorMessage) {
+      throw new ChatAccessError('Message cursor not found for this conversation.', 404);
+    }
+
+    beforeMessage = cursorMessage;
+  }
+
+  const rows = await db
+    .select({
+      message: chatMessages,
+      author: {
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        image: users.image,
+      },
+    })
+    .from(chatMessages)
+    .innerJoin(users, eq(users.id, chatMessages.createdBy))
+    .where(
+      and(
+        eq(chatMessages.roomId, roomId),
+        beforeMessage
+          ? sql`(${chatMessages.createdAt} < ${beforeMessage.createdAt} OR (${chatMessages.createdAt} = ${beforeMessage.createdAt} AND ${chatMessages.id} < ${beforeMessage.id}))`
+          : sql`true`
+      )
+    )
+    .orderBy(desc(chatMessages.createdAt), desc(chatMessages.id))
+    .limit(limit + 1);
+
+  const hasMore = rows.length > limit;
+  const pageRows = rows.slice(0, limit).reverse();
+  const messages = await serializeConversationMessageRows({
+    rows: pageRows,
+    currentUserId,
+    canModerateMessages: access.context.permissions.canModerateMessages,
+  });
+
+  return {
+    messages,
+    pageInfo: {
+      hasMore,
+      nextCursor: hasMore ? pageRows[0]?.message.id || null : null,
+    },
+  };
 }
 
 async function getUnreadCountForRoom(roomId: string, userId: string, lastReadAt: Date | null) {
@@ -757,6 +981,9 @@ export async function createConversationMessage(params: {
     attachments: params.attachments || [],
     reactions: [] as SerializedReaction[],
     author,
+    canDelete: true,
+    canEdit: true,
+    moderation: null,
   };
 
   await publishRoomEvent(params.roomId, {
@@ -792,6 +1019,10 @@ export async function updateConversationMessage(params: {
     throw new ChatAccessError('Message not found', 404);
   }
 
+  if (existing.deletedAt && !params.reactionEmoji) {
+    throw new ChatAccessError('Deleted messages cannot be edited.', 400);
+  }
+
   if (params.reactionEmoji) {
     if (!access.context.permissions.canPostMessages) {
       throw new ChatAccessError('You do not have permission to react to messages.');
@@ -820,8 +1051,7 @@ export async function updateConversationMessage(params: {
       });
     }
 
-    const messages = await listConversationMessages(params.roomId, params.userId);
-    const message = messages.find((entry) => entry.id === params.messageId) || null;
+    const message = await getConversationMessageById(params.roomId, params.messageId, params.userId);
 
     await publishRoomEvent(params.roomId, {
       type: 'message.reaction',
@@ -878,8 +1108,7 @@ export async function updateConversationMessage(params: {
     metadata: { roomId: params.roomId },
   });
 
-  const messages = await listConversationMessages(params.roomId, params.userId);
-  const message = messages.find((entry) => entry.id === params.messageId) || null;
+  const message = await getConversationMessageById(params.roomId, params.messageId, params.userId);
   await publishRoomEvent(params.roomId, {
     type: 'message.updated',
     data: {
@@ -911,18 +1140,32 @@ export async function deleteConversationMessage(params: {
     throw new ChatAccessError('Message not found', 404);
   }
 
+  if (existing.deletedAt) {
+    return getConversationMessageById(params.roomId, params.messageId, params.userId);
+  }
+
   const canDelete = existing.createdBy === params.userId || access.context.permissions.canModerateMessages;
   if (!canDelete) {
     throw new ChatAccessError('You do not have permission to delete this message.');
   }
 
+  const now = new Date();
+  const deletedAttachments = parseAttachments(existing.attachments);
+
   await db
     .update(chatMessages)
     .set({
       body: '',
-      bodyJson: {},
-      deletedAt: new Date(),
-      updatedAt: new Date(),
+      bodyJson: {
+        deletedSnapshot: {
+          body: existing.body,
+          attachments: deletedAttachments,
+          deletedById: params.userId,
+          deletedAt: now.toISOString(),
+        },
+      },
+      deletedAt: now,
+      updatedAt: now,
       updatedBy: params.userId,
     })
     .where(eq(chatMessages.id, params.messageId));
@@ -945,6 +1188,92 @@ export async function deleteConversationMessage(params: {
       messageId: params.messageId,
     },
   });
+
+  return getConversationMessageById(params.roomId, params.messageId, params.userId);
+}
+
+async function syncConversationRoomMessagePointers(roomId: string, userId: string) {
+  const [latestMessage] = await db
+    .select({ createdAt: chatMessages.createdAt })
+    .from(chatMessages)
+    .where(eq(chatMessages.roomId, roomId))
+    .orderBy(desc(chatMessages.createdAt), desc(chatMessages.id))
+    .limit(1);
+
+  const now = new Date();
+  await db
+    .update(conversationRooms)
+    .set({
+      lastMessageAt: latestMessage?.createdAt || null,
+      lastActivityAt: latestMessage?.createdAt || now,
+      updatedAt: now,
+      updatedBy: userId,
+    })
+    .where(eq(conversationRooms.id, roomId));
+}
+
+export async function moderateConversationMessages(params: {
+  roomId: string;
+  userId: string;
+  action: 'clear_deleted' | 'clear_room';
+}) {
+  const access = await resolveConversationRoomAccess(params.userId, params.roomId);
+  if (!access) {
+    throw new ChatAccessError('Conversation not found or unavailable.', 404);
+  }
+
+  if (!access.context.permissions.canModerateMessages) {
+    throw new ChatAccessError('You do not have permission to moderate this conversation.', 403);
+  }
+
+  const whereClause = and(
+    eq(chatMessages.roomId, params.roomId),
+    params.action === 'clear_deleted' ? sql`${chatMessages.deletedAt} is not null` : sql`true`
+  );
+
+  const affectedMessages = await db
+    .select({ id: chatMessages.id })
+    .from(chatMessages)
+    .where(whereClause);
+
+  if (!affectedMessages.length) {
+    return {
+      action: params.action,
+      affectedCount: 0,
+    };
+  }
+
+  await db.delete(chatMessages).where(whereClause);
+  await syncConversationRoomMessagePointers(params.roomId, params.userId);
+
+  await createAuditLog({
+    userId: params.userId,
+    organizationId: access.context.project.organizationId,
+    action: 'chat.message_deleted',
+    resourceType: 'conversation_room',
+    resourceId: params.roomId,
+    projectId: access.context.project.id,
+    issueId: access.room.issueId || undefined,
+    metadata: {
+      roomId: params.roomId,
+      moderationAction: params.action,
+      affectedCount: affectedMessages.length,
+    },
+  });
+
+  await publishRoomEvent(params.roomId, {
+    type: 'messages.cleared',
+    data: {
+      roomId: params.roomId,
+      action: params.action,
+      affectedCount: affectedMessages.length,
+    },
+  });
+
+  return {
+    action: params.action,
+    affectedCount: affectedMessages.length,
+  };
 }
 
 export async function buildConversationContext(roomId: string) {
