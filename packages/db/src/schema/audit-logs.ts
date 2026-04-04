@@ -33,6 +33,15 @@ export const auditLogActionEnum = pgEnum('audit_log_action', [
   'document.public_shared',
   'document.public_unshared',
   'document.public_link_regenerated',
+
+  // Agent actions
+  'agent.config_updated',
+  'agent.model_config_created',
+  'agent.model_config_updated',
+  'agent.model_config_archived',
+  'agent.run_requested',
+  'agent.run_completed',
+  'agent.run_failed',
   
   // Project actions
   'project.created',

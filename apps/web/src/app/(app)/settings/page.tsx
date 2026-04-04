@@ -1,15 +1,18 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ApiKeysManager } from '@/components/settings/api-keys-manager';
 import { WebhooksManager } from '@/components/settings/webhooks-manager';
 import { AuditLogViewer } from '@/components/audit/audit-log-viewer';
 import { NotificationPreferences } from '@/components/settings/notification-preferences';
 import { AppearanceSettings } from '@/components/settings/appearance-settings';
+import { OrganizationAiAgentsSettings } from '@/components/settings/organization-ai-agents';
 import { MembersPageClient } from './members/members-page-client';
 import { OrganizationSettingsClient } from './organization/organization-settings-client';
 import { useOrganization } from '@/lib/hooks/use-organization';
-import { Palette, Building2, Users, Bell, Key, Webhook, ScrollText } from 'lucide-react';
+import { Palette, Building2, Users, Bell, Key, Webhook, ScrollText, Bot } from 'lucide-react';
 
 const settingsTabsListClassName =
   'h-auto w-full flex-wrap justify-start gap-2 rounded-xl border border-border/70 bg-card/40 p-1';
@@ -19,6 +22,27 @@ const settingsTabTriggerClassName =
 
 export default function SettingsPage() {
   const { currentOrganizationId } = useOrganization();
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const validTabs = useMemo(
+    () => ['appearance', 'organization', 'members', 'ai-agents', 'notifications', 'api-keys', 'webhooks', 'audit-log'],
+    []
+  );
+  const requestedTab = searchParams.get('tab');
+  const initialTab = requestedTab && validTabs.includes(requestedTab) ? requestedTab : 'organization';
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
+  function handleTabChange(nextTab: string) {
+    setActiveTab(nextTab);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', nextTab);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
 
   if (!currentOrganizationId) {
     return (
@@ -37,7 +61,7 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="organization" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className={settingsTabsListClassName}>
           <TabsTrigger value="appearance" className={settingsTabTriggerClassName}>
             <Palette className="h-4 w-4" />
@@ -50,6 +74,10 @@ export default function SettingsPage() {
           <TabsTrigger value="members" className={settingsTabTriggerClassName}>
             <Users className="h-4 w-4" />
             Members
+          </TabsTrigger>
+          <TabsTrigger value="ai-agents" className={settingsTabTriggerClassName}>
+            <Bot className="h-4 w-4" />
+            AI & Agents
           </TabsTrigger>
           <TabsTrigger value="notifications" className={settingsTabTriggerClassName}>
             <Bell className="h-4 w-4" />
@@ -79,6 +107,10 @@ export default function SettingsPage() {
 
         <TabsContent value="members" className="space-y-4 animate-in fade-in">
           <MembersPageClient />
+        </TabsContent>
+
+        <TabsContent value="ai-agents" className="space-y-4 animate-in fade-in">
+          <OrganizationAiAgentsSettings organizationId={currentOrganizationId} />
         </TabsContent>
 
         <TabsContent value="notifications" className="space-y-4 animate-in fade-in">

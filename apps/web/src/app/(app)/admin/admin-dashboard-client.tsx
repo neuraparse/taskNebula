@@ -1,7 +1,8 @@
 'use client';
 
 import type { ComponentType } from 'react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
@@ -31,10 +32,12 @@ import { CreateUserDialog } from '@/components/admin/create-user-dialog';
 import { EditFeatureFlagDialog } from '@/components/admin/edit-feature-flag-dialog';
 import { EditOrganizationDialog } from '@/components/admin/edit-organization-dialog';
 import { EditUserDialog } from '@/components/admin/edit-user-dialog';
+import { AgentOpsPanel } from '@/components/admin/agent-ops-panel';
 import { useDeleteFeatureFlag, useFeatureFlags, useUpdateFeatureFlag } from '@/lib/hooks/use-feature-flags';
 import { cn } from '@/lib/utils';
 import {
   Activity,
+  Bot,
   Building2,
   Clock3,
   Crown,
@@ -123,7 +126,16 @@ type AdminAuditLog = {
 };
 
 export function AdminDashboardClient() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const validTabs = useMemo(
+    () => ['overview', 'organizations', 'users', 'feature-flags', 'agents', 'audit'],
+    []
+  );
+  const requestedTab = searchParams.get('tab');
+  const initialTab = requestedTab && validTabs.includes(requestedTab) ? requestedTab : 'overview';
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [editOrgId, setEditOrgId] = useState<string | null>(null);
   const [editUserId, setEditUserId] = useState<string | null>(null);
   const [editFlagId, setEditFlagId] = useState<string | null>(null);
@@ -140,6 +152,17 @@ export function AdminDashboardClient() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
+  function handleTabChange(nextTab: string) {
+    setActiveTab(nextTab);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', nextTab);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['admin-stats'],
@@ -318,7 +341,7 @@ export function AdminDashboardClient() {
           </div>
           <Button
             variant="outline"
-            onClick={() => setActiveTab('audit')}
+            onClick={() => handleTabChange('audit')}
             className={cn(
               'border-border/70 bg-transparent',
               activeTab === 'audit' && 'border-border bg-background text-foreground shadow-sm',
@@ -338,7 +361,7 @@ export function AdminDashboardClient() {
           <StatCard title="Issues" value={statsLoading ? '...' : stats?.overview?.totalIssues || 0} icon={Flag} />
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className={adminTabsListClassName}>
             <TabsTrigger value="overview" className={adminTabTriggerClassName}>
               Overview
@@ -351,6 +374,9 @@ export function AdminDashboardClient() {
             </TabsTrigger>
             <TabsTrigger value="feature-flags" className={adminTabTriggerClassName}>
               Feature Flags
+            </TabsTrigger>
+            <TabsTrigger value="agents" className={adminTabTriggerClassName}>
+              AI Ops
             </TabsTrigger>
             <TabsTrigger value="audit" className={adminTabTriggerClassName}>
               Audit
@@ -681,6 +707,25 @@ export function AdminDashboardClient() {
                     ))}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="agents" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg border bg-card">
+                    <Bot className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <CardTitle>AI operations</CardTitle>
+                    <CardDescription>Global control plane for workspace agents, live safety, and rollout quality.</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <AgentOpsPanel />
               </CardContent>
             </Card>
           </TabsContent>

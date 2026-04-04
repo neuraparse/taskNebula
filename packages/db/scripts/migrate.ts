@@ -5,10 +5,8 @@
  * Usage: pnpm tsx scripts/migrate.ts
  */
 
-import { drizzle } from 'drizzle-orm/postgres-js';
-import { migrate } from 'drizzle-orm/postgres-js/migrator';
-import postgres from 'postgres';
 import { resolve } from 'path';
+import { runMigrationsWithLegacyBaselineSupport } from '../src/utils/migration';
 
 // Load environment variables only in development
 try {
@@ -32,22 +30,12 @@ async function runMigrations() {
   console.log('🔄 Starting database migrations...');
   console.log(`📍 Database: ${databaseUrl.replace(/:[^:@]+@/, ':****@')}`);
 
-  // Create connection for migrations
-  const migrationClient = postgres(databaseUrl, { max: 1 });
-  const db = drizzle(migrationClient);
-
   try {
-    // Run migrations
-    await migrate(db, {
-      migrationsFolder: resolve(__dirname, '../drizzle'),
-    });
-
+    await runMigrationsWithLegacyBaselineSupport(databaseUrl);
     console.log('✅ Migrations completed successfully!');
   } catch (error) {
     console.error('❌ Migration failed:', error);
     process.exit(1);
-  } finally {
-    await migrationClient.end();
   }
 }
 
@@ -56,4 +44,3 @@ runMigrations().catch((error) => {
   console.error('❌ Unexpected error:', error);
   process.exit(1);
 });
-

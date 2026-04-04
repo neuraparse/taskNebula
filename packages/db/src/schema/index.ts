@@ -21,6 +21,7 @@ export * from './saved-filters';
 export * from './search-history';
 export * from './push-subscriptions';
 export * from './system';
+export * from './agents';
 export * from './project-templates';
 export * from './semantic-search';
 export * from './resource-management';

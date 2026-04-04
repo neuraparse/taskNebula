@@ -1,6 +1,7 @@
 'use client';
 
-import { use } from 'react';
+import { use, useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CustomFieldManager } from '@/components/custom-fields/custom-field-manager';
 import { PermissionManager } from '@/components/permissions/permission-manager';
@@ -10,9 +11,10 @@ import { WorkflowEditor } from '@/components/workflows/workflow-editor';
 import { AutomationManager } from '@/components/automation/automation-manager';
 import { WebhooksManager } from '@/components/settings/webhooks-manager';
 import { ProjectGeneralSettings } from '@/components/settings/project-general-settings';
+import { ProjectAiAgents } from '@/components/settings/project-ai-agents';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useProjectPermissions } from '@/lib/hooks/use-project-permissions';
-import { Shield, Settings, Workflow, Zap, FileText, Lock, Key, Webhook } from 'lucide-react';
+import { Shield, Settings, Workflow, Zap, FileText, Lock, Key, Webhook, Bot } from 'lucide-react';
 
 export default function ProjectSettingsPage({
   params,
@@ -20,8 +22,29 @@ export default function ProjectSettingsPage({
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = use(params);
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { currentOrganizationId } = useOrganization();
   const { permissions, isLoading: permissionsLoading } = useProjectPermissions(projectId);
+  const validTabs = useMemo(
+    () => ['permissions', 'schemes', 'security', 'custom-fields', 'workflows', 'automation', 'ai-agents', 'webhooks', 'general'],
+    []
+  );
+  const requestedTab = searchParams.get('tab');
+  const initialTab = requestedTab && validTabs.includes(requestedTab) ? requestedTab : 'general';
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
+  function handleTabChange(nextTab: string) {
+    setActiveTab(nextTab);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', nextTab);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
 
   if (!currentOrganizationId || permissionsLoading) {
     return (
@@ -55,7 +78,7 @@ export default function ProjectSettingsPage({
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-7xl px-6 py-6">
-          <Tabs defaultValue="general" className="space-y-6">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
             <div className="sticky top-0 z-10 bg-background pb-4">
               <TabsList className="inline-flex h-auto w-auto rounded-lg bg-muted p-1">
                 <TabsTrigger value="permissions" className="flex items-center gap-2 px-4 py-2">
@@ -81,6 +104,10 @@ export default function ProjectSettingsPage({
                 <TabsTrigger value="automation" className="flex items-center gap-2 px-4 py-2">
                   <Zap className="h-4 w-4" />
                   <span>Automation</span>
+                </TabsTrigger>
+                <TabsTrigger value="ai-agents" className="flex items-center gap-2 px-4 py-2">
+                  <Bot className="h-4 w-4" />
+                  <span>AI Agents</span>
                 </TabsTrigger>
                 <TabsTrigger value="webhooks" className="flex items-center gap-2 px-4 py-2">
                   <Webhook className="h-4 w-4" />
@@ -115,6 +142,10 @@ export default function ProjectSettingsPage({
 
             <TabsContent value="automation" className="space-y-4 focus-visible:outline-none">
               <AutomationManager organizationId={currentOrganizationId} projectId={projectId} />
+            </TabsContent>
+
+            <TabsContent value="ai-agents" className="space-y-4 focus-visible:outline-none">
+              <ProjectAiAgents projectId={projectId} />
             </TabsContent>
 
             <TabsContent value="webhooks" className="space-y-4 focus-visible:outline-none">

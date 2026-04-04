@@ -6,6 +6,7 @@ import { EventEmitter } from 'events';
 
 export interface AgentLogEvent {
   executionId: string;
+  projectId: string;
   logIndex: number;
   type: 'stdout' | 'stderr' | 'system';
   content: string;
@@ -14,69 +15,104 @@ export interface AgentLogEvent {
 
 export interface AgentStatusEvent {
   executionId: string;
+  projectId: string;
   status: 'running' | 'completed' | 'failed' | 'cancelled';
   progress?: number;
   error?: string;
+  timestamp: Date;
 }
 
-class AgentEventStream extends EventEmitter {
-  private clients: Map<string, Set<(event: any) => void>> = new Map();
+export type AgentStreamEvent =
+  | { type: 'log'; data: AgentLogEvent }
+  | { type: 'status'; data: AgentStatusEvent };
 
-  subscribe(executionId: string, callback: (event: any) => void) {
-    if (!this.clients.has(executionId)) {
-      this.clients.set(executionId, new Set());
+class AgentEventStream extends EventEmitter {
+  private runClients = new Map<string, Set<(event: AgentStreamEvent) => void>>();
+  private projectClients = new Map<string, Set<(event: AgentStreamEvent) => void>>();
+  private adminClients = new Set<(event: AgentStreamEvent) => void>();
+
+  private subscribeMap(
+    store: Map<string, Set<(event: AgentStreamEvent) => void>>,
+    key: string,
+    callback: (event: AgentStreamEvent) => void
+  ) {
+    if (!store.has(key)) {
+      store.set(key, new Set());
     }
 
-    this.clients.get(executionId)!.add(callback);
+    store.get(key)!.add(callback);
 
-    console.log(`[WebSocket] Client subscribed to execution: ${executionId}`);
-
-    // Return unsubscribe function
     return () => {
-      this.clients.get(executionId)?.delete(callback);
-      if (this.clients.get(executionId)?.size === 0) {
-        this.clients.delete(executionId);
+      store.get(key)?.delete(callback);
+      if (store.get(key)?.size === 0) {
+        store.delete(key);
       }
-      console.log(`[WebSocket] Client unsubscribed from execution: ${executionId}`);
     };
   }
 
+  subscribeRun(executionId: string, callback: (event: AgentStreamEvent) => void) {
+    return this.subscribeMap(this.runClients, executionId, callback);
+  }
+
+  subscribeProject(projectId: string, callback: (event: AgentStreamEvent) => void) {
+    return this.subscribeMap(this.projectClients, projectId, callback);
+  }
+
+  subscribeAdmin(callback: (event: AgentStreamEvent) => void) {
+    this.adminClients.add(callback);
+
+    return () => {
+      this.adminClients.delete(callback);
+    };
+  }
+
+  private publish(event: AgentStreamEvent) {
+    const runCallbacks = this.runClients.get(event.data.executionId);
+    runCallbacks?.forEach((callback) => callback(event));
+
+    const projectCallbacks = this.projectClients.get(event.data.projectId);
+    projectCallbacks?.forEach((callback) => callback(event));
+
+    this.adminClients.forEach((callback) => callback(event));
+  }
+
   broadcastLog(event: AgentLogEvent) {
-    const callbacks = this.clients.get(event.executionId);
-    if (callbacks) {
-      callbacks.forEach((callback) => {
-        callback({ type: 'log', data: event });
-      });
-    }
+    this.publish({ type: 'log', data: event });
   }
 
   broadcastStatus(event: AgentStatusEvent) {
-    const callbacks = this.clients.get(event.executionId);
-    if (callbacks) {
-      callbacks.forEach((callback) => {
-        callback({ type: 'status', data: event });
-      });
-    }
+    this.publish({ type: 'status', data: event });
   }
 
   getSubscriberCount(executionId: string): number {
-    return this.clients.get(executionId)?.size || 0;
+    return this.runClients.get(executionId)?.size || 0;
   }
 }
 
 export const agentEventStream = new AgentEventStream();
 
 // Helper functions for emitting events
-export function emitAgentLog(executionId: string, log: Omit<AgentLogEvent, 'executionId'>) {
+export function emitAgentLog(
+  executionId: string,
+  projectId: string,
+  log: Omit<AgentLogEvent, 'executionId' | 'projectId'>
+) {
   agentEventStream.broadcastLog({
     executionId,
+    projectId,
     ...log,
   });
 }
 
-export function emitAgentStatus(executionId: string, status: Omit<AgentStatusEvent, 'executionId'>) {
+export function emitAgentStatus(
+  executionId: string,
+  projectId: string,
+  status: Omit<AgentStatusEvent, 'executionId' | 'projectId' | 'timestamp'>
+) {
   agentEventStream.broadcastStatus({
     executionId,
+    projectId,
+    timestamp: new Date(),
     ...status,
   });
 }

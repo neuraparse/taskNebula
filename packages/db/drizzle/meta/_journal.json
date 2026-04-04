@@ -92,6 +92,20 @@
       "when": 1775244000000,
       "tag": "0012_public_document_sharing",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1775254800000,
+      "tag": "0013_agent_control_center",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1775262000000,
+      "tag": "0014_agent_model_registry",
+      "breakpoints": true
     }
   ]
 }
