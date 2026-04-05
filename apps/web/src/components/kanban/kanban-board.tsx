@@ -166,7 +166,7 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
 
   return (
     <>
-      <div className="flex flex-col h-full">
+      <div className="flex h-full flex-col bg-muted/[0.03]">
         <DndContext
           sensors={sensors}
           onDragStart={handleDragStart}
@@ -219,10 +219,10 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
               );
             })}
 
-            <div className="flex-shrink-0 w-[300px]">
+            <div className="w-[308px] flex-shrink-0">
               <Button
                 variant="ghost"
-                className="w-full h-12 border-2 border-dashed rounded-xl border-muted-foreground/20 hover:border-primary/40 hover:bg-primary/5 transition-all text-muted-foreground/50 hover:text-primary"
+                className="h-12 w-full rounded-none border-2 border-dashed border-muted-foreground/20 text-muted-foreground/50 transition-all hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
                 onClick={() => setAddColumnOpen(true)}
               >
                 <Plus className="mr-2 h-4 w-4" />

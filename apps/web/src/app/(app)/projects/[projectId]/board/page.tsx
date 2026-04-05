@@ -62,19 +62,19 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
   const sprintProgress = getSprintProgress();
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col bg-muted/[0.03]">
       {/* Board Header - single compact row */}
-      <div className="border-b bg-background/95 backdrop-blur px-5 py-2 shrink-0">
+      <div className="shrink-0 border-b border-border/60 bg-background/95 px-5 py-3 backdrop-blur">
         <div className="flex items-center gap-3">
           {/* Sprint selector */}
           <Select
             value={selectedSprintId || 'all'}
             onValueChange={(value) => setSelectedSprintId(value === 'all' ? undefined : value)}
           >
-            <SelectTrigger className="w-48 h-8 text-xs">
+            <SelectTrigger className="h-8 w-48 rounded-none border-border/60 bg-background text-xs shadow-none">
               <SelectValue placeholder="All Issues" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-none">
               <SelectItem value="all">All Issues</SelectItem>
               <SelectItem value="backlog">Backlog (No Sprint)</SelectItem>
               {sprints && sprints.length > 0 && (
@@ -87,12 +87,12 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
                       <span className="flex items-center gap-2">
                         {sprint.name}
                         {sprint.status === 'active' && (
-                          <Badge variant="default" className="text-[9px] px-1 py-0 h-3.5 bg-emerald-500">
+                          <Badge variant="default" className="h-3.5 rounded-none bg-emerald-500 px-1 py-0 text-[9px]">
                             Active
                           </Badge>
                         )}
                         {sprint.status === 'planned' && (
-                          <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5">
+                          <Badge variant="outline" className="h-3.5 rounded-none px-1 py-0 text-[9px]">
                             Planned
                           </Badge>
                         )}
@@ -119,7 +119,7 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-5 w-5 text-muted-foreground"
+                className="h-5 w-5 rounded-none text-muted-foreground hover:bg-muted/10 hover:text-foreground"
                 onClick={() => setSelectedSprintId(undefined)}
               >
                 <X className="h-2.5 w-2.5" />
@@ -138,22 +138,24 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
           )}
 
           {/* Separator */}
-          <div className="h-4 w-px bg-border" />
+          <div className="h-5 w-px bg-border/70" />
 
           {/* Filters */}
-          <BoardFiltersBar
-            filters={filters}
-            onFiltersChange={setFilters}
-            issueCount={issues?.length || 0}
-            filteredCount={issues?.length || 0}
-          />
+          <div className="min-w-0 flex-1">
+            <BoardFiltersBar
+              filters={filters}
+              onFiltersChange={setFilters}
+              issueCount={issues?.length || 0}
+              filteredCount={issues?.length || 0}
+            />
+          </div>
 
           {/* Spacer + New Issue */}
           <div className="ml-auto">
             <Button
               size="sm"
               onClick={() => setCreateModalOpen(true)}
-              className="h-8 gap-1.5 text-xs"
+              className="h-8 gap-1.5 rounded-none border border-border/60 bg-background px-3 text-xs text-foreground shadow-none hover:bg-muted/10"
             >
               <Plus className="h-3.5 w-3.5" />
               New Issue

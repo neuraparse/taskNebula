@@ -81,7 +81,7 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
                 {project?.name || projectId}
               </span>
               {project?.key && (
-                <span className="text-[11px] bg-muted px-1.5 py-0.5 rounded font-mono text-muted-foreground ml-1">
+                <span className="ml-1 bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
                   {project.key}
                 </span>
               )}
@@ -92,8 +92,8 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
                 href={`/projects/${projectId}/sprints/${activeSprint.id}`}
                 className="flex items-center gap-2 text-xs group"
               >
-                <div className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-full group-hover:bg-emerald-500/20 transition-colors">
-                  <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                <div className="flex items-center gap-1.5 bg-emerald-500/10 px-2.5 py-1 text-emerald-600 transition-colors group-hover:bg-emerald-500/20 dark:text-emerald-400">
+                  <div className="h-1.5 w-1.5 bg-emerald-500 animate-pulse" />
                   <span className="font-medium">{activeSprint.name}</span>
                   <span className="text-emerald-600/60 dark:text-emerald-400/60">
                     {activeSprint.issueCount || 0} issues

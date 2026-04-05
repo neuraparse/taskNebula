@@ -2,7 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { MessageSquare, Paperclip, Calendar, CheckCircle2, BookOpen, CheckSquare, Bug, Zap, FileText } from 'lucide-react';
+import { MessageSquare, Paperclip, Calendar, CheckCircle2, BookOpen, CheckSquare, Bug, Zap } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 
 interface KanbanCardProps {
@@ -87,10 +87,10 @@ export function KanbanCard({ issue, draggableId, onClick }: KanbanCardProps) {
       )}
     >
       {/* Priority accent bar */}
-      <div className={cn('absolute top-0 left-0 w-[3px] h-full rounded-l-lg', config.color)} />
+      <div className={cn('absolute left-0 top-0 h-full w-[3px]', config.color)} />
 
       {/* Top: Type icon + Key + Assignee */}
-      <div className="flex items-center justify-between gap-2 mb-2.5 pl-1">
+      <div className="mb-3 flex items-center justify-between gap-2 pl-1">
         <div className="flex items-center gap-1.5 min-w-0">
           <TypeIcon className={cn('h-3.5 w-3.5 shrink-0', tConfig.color)} />
           <span className="text-[11px] font-mono font-medium text-muted-foreground">
@@ -109,17 +109,17 @@ export function KanbanCard({ issue, draggableId, onClick }: KanbanCardProps) {
       </div>
 
       {/* Title */}
-      <h4 className="text-[13px] font-medium leading-snug text-foreground line-clamp-2 mb-2 pl-1">
+      <h4 className="mb-3 line-clamp-2 pl-1 text-[13px] font-medium leading-snug text-foreground">
         {issue.title}
       </h4>
 
       {/* Labels */}
       {issue.labels && issue.labels.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-2.5 pl-1">
+        <div className="mb-3 flex flex-wrap gap-1.5 pl-1">
           {issue.labels.slice(0, 2).map((label) => (
             <span
               key={label}
-              className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-primary/8 text-primary/80 border border-primary/10"
+              className="inline-flex items-center border border-primary/10 bg-primary/8 px-1.5 py-0.5 text-[10px] font-medium text-primary/80"
             >
               {label}
             </span>
@@ -134,7 +134,7 @@ export function KanbanCard({ issue, draggableId, onClick }: KanbanCardProps) {
 
       {/* Footer meta */}
       {hasFooter && (
-        <div className="flex items-center gap-2.5 pt-2 mt-1 border-t border-border/30 pl-1">
+        <div className="mt-1 flex items-center gap-2.5 border-t border-border/40 pt-2 pl-1">
           {issue.subtaskCount !== undefined && issue.subtaskCount > 0 && (
             <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <CheckCircle2 className="h-3 w-3" />

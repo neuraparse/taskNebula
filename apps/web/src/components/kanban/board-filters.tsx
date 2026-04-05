@@ -9,8 +9,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
-import { Search, Filter, X, AlertCircle } from 'lucide-react';
-import { Label } from '@/components/ui/label';
+import { Search, Filter, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface BoardFilters {
@@ -60,7 +59,7 @@ export function BoardFiltersBar({ filters, onFiltersChange, issueCount, filtered
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex min-w-0 items-center gap-2.5">
       {/* Search toggle */}
       {searchOpen ? (
         <div className="relative w-56">
@@ -69,7 +68,7 @@ export function BoardFiltersBar({ filters, onFiltersChange, issueCount, filtered
             placeholder="Search issues..."
             value={filters.search}
             onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
-            className="pl-8 h-8 text-xs"
+            className="h-8 rounded-none border-border/60 bg-background pl-8 text-xs shadow-none"
             autoFocus
             onBlur={() => {
               if (!filters.search) setSearchOpen(false);
@@ -84,7 +83,7 @@ export function BoardFiltersBar({ filters, onFiltersChange, issueCount, filtered
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-0.5 top-1/2 -translate-y-1/2 h-6 w-6"
+            className="absolute right-0.5 top-1/2 h-6 w-6 -translate-y-1/2 rounded-none text-muted-foreground hover:bg-muted/10 hover:text-foreground"
             onClick={() => {
               onFiltersChange({ ...filters, search: '' });
               setSearchOpen(false);
@@ -97,7 +96,7 @@ export function BoardFiltersBar({ filters, onFiltersChange, issueCount, filtered
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+          className="h-8 w-8 rounded-none border border-transparent text-muted-foreground hover:border-border/60 hover:bg-background hover:text-foreground"
           onClick={() => setSearchOpen(true)}
         >
           <Search className="h-3.5 w-3.5" />
@@ -111,20 +110,20 @@ export function BoardFiltersBar({ filters, onFiltersChange, issueCount, filtered
             variant="ghost"
             size="sm"
             className={cn(
-              'h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground',
-              activeFilterCount > 0 && 'text-foreground'
+              'h-8 rounded-none border border-transparent px-2.5 text-xs text-muted-foreground hover:border-border/60 hover:bg-background hover:text-foreground',
+              activeFilterCount > 0 && 'border-border/60 bg-background text-foreground'
             )}
           >
             <Filter className="h-3.5 w-3.5" />
             Filter
             {activeFilterCount > 0 && (
-              <Badge variant="secondary" className="h-4 px-1 text-[10px] min-w-[16px] justify-center">
+              <Badge variant="secondary" className="h-4 min-w-[16px] justify-center rounded-none px-1 text-[10px]">
                 {activeFilterCount}
               </Badge>
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-72" align="start">
+        <PopoverContent className="w-72 rounded-none border-border/60 p-3" align="start">
           <div className="space-y-3">
             <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Priority</h4>
             <div className="flex flex-wrap gap-1.5">
@@ -133,7 +132,7 @@ export function BoardFiltersBar({ filters, onFiltersChange, issueCount, filtered
                   key={priority}
                   variant={filters.priority.includes(priority) ? 'default' : 'outline'}
                   size="sm"
-                  className="h-7 text-xs capitalize"
+                  className="h-7 rounded-none text-xs capitalize"
                   onClick={() => {
                     const newPriority = filters.priority.includes(priority)
                       ? filters.priority.filter((p) => p !== priority)
@@ -150,7 +149,7 @@ export function BoardFiltersBar({ filters, onFiltersChange, issueCount, filtered
               <Button
                 variant="ghost"
                 size="sm"
-                className="w-full h-7 text-xs"
+                className="h-7 w-full rounded-none text-xs"
                 onClick={() => {
                   clearFilters();
                   setFilterOpen(false);
@@ -177,10 +176,10 @@ export function BoardFiltersBar({ filters, onFiltersChange, issueCount, filtered
         <>
           <div className="h-4 w-px bg-border" />
           {filters.search && (
-            <Badge variant="secondary" className="h-5 gap-1 pl-1.5 pr-0.5 text-[10px]">
+            <Badge variant="secondary" className="h-5 gap-1 rounded-none pl-1.5 pr-0.5 text-[10px]">
               &quot;{filters.search}&quot;
               <button
-                className="ml-0.5 hover:bg-muted rounded p-0.5"
+                className="ml-0.5 p-0.5 hover:bg-muted"
                 onClick={() => removeFilter('search', '')}
               >
                 <X className="h-2.5 w-2.5" />
@@ -188,10 +187,10 @@ export function BoardFiltersBar({ filters, onFiltersChange, issueCount, filtered
             </Badge>
           )}
           {filters.priority.map((priority) => (
-            <Badge key={priority} variant="secondary" className="h-5 gap-1 pl-1.5 pr-0.5 text-[10px] capitalize">
+            <Badge key={priority} variant="secondary" className="h-5 gap-1 rounded-none pl-1.5 pr-0.5 text-[10px] capitalize">
               {priority}
               <button
-                className="ml-0.5 hover:bg-muted rounded p-0.5"
+                className="ml-0.5 p-0.5 hover:bg-muted"
                 onClick={() => removeFilter('priority', priority)}
               >
                 <X className="h-2.5 w-2.5" />
