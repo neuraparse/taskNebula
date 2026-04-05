@@ -2,13 +2,17 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-interface Issue {
+export interface Issue {
   id: string;
   key: string;
+  number?: number;
   title: string;
   description: string | null;
   type: string;
   status: string;
+  statusId?: string;
+  statusName?: string;
+  statusColor?: string;
   priority: string;
   assigneeId: string | null;
   reporterId: string;
@@ -16,8 +20,10 @@ interface Issue {
   projectId: string;
   sprintId: string | null;
   estimate: number | null;
-  createdAt: Date;
-  updatedAt: Date;
+  labels?: string[];
+  dueDate?: string | null;
+  createdAt: string;
+  updatedAt: string;
   assignee?: {
     id: string;
     name: string | null;
@@ -41,6 +47,7 @@ interface IssueFilters {
   assigneeId?: string;
   status?: string;
   sprintId?: string;
+  type?: string;
 }
 
 // Fetch issues with filters
@@ -53,6 +60,7 @@ export function useIssues(filters?: IssueFilters) {
       if (filters?.assigneeId) params.append('assigneeId', filters.assigneeId);
       if (filters?.status) params.append('status', filters.status);
       if (filters?.sprintId) params.append('sprintId', filters.sprintId);
+      if (filters?.type) params.append('type', filters.type);
 
       const response = await fetch(`/api/issues?${params.toString()}`);
       if (!response.ok) {
@@ -156,4 +164,3 @@ export function useDeleteIssue() {
     },
   });
 }
-

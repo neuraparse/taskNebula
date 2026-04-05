@@ -53,21 +53,19 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
       if (!response.ok) throw new Error('Failed to fetch epics');
 
       const data = await response.json();
+      const epicIssues = data.issues || [];
 
-      // Calculate progress for each epic
-      const epicsWithProgress = data.map((epic: any) => ({
+      const epicsWithProgress = epicIssues.map((epic: any) => ({
         id: epic.id,
         title: epic.title,
         description: epic.description,
         status: epic.status,
         priority: epic.priority,
-        startDate: epic.startDate,
+        startDate: epic.createdAt,
         dueDate: epic.dueDate,
-        totalIssues: epic.childIssues?.length || 0,
-        completedIssues: epic.childIssues?.filter((i: any) => i.status === 'done').length || 0,
-        progress: epic.childIssues?.length
-          ? Math.round((epic.childIssues.filter((i: any) => i.status === 'done').length / epic.childIssues.length) * 100)
-          : 0,
+        totalIssues: 0,
+        completedIssues: 0,
+        progress: epic.status === 'done' ? 100 : 0,
       }));
 
       setEpics(epicsWithProgress);

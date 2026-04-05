@@ -13,7 +13,5 @@ interface ProjectPageProps {
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { projectId } = await params;
-  // Redirect to board view by default
-  redirect(`/projects/${projectId}/board`);
+  redirect(`/projects/${projectId}/views`);
 }
-

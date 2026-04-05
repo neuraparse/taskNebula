@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/lib/hooks/use-organization';
+import { TeamspaceManager } from '@/components/organization/teamspace-manager';
 import {
   AlertTriangle,
   Building2,
@@ -70,9 +71,13 @@ export function OrganizationSettingsClient() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedTab = searchParams.get('tab');
 
   const [formData, setFormData] = useState(EMPTY_FORM);
-  const [activeTab, setActiveTab] = useState('general');
+  const [activeTab, setActiveTab] = useState(
+    requestedTab === 'teamspaces' || requestedTab === 'danger' ? requestedTab : 'general'
+  );
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmationName, setDeleteConfirmationName] = useState('');
 
@@ -101,6 +106,12 @@ export function OrganizationSettingsClient() {
       logoUrl: org.logoUrl || '',
     });
   }, [org]);
+
+  useEffect(() => {
+    if (requestedTab === 'teamspaces' || requestedTab === 'danger' || requestedTab === 'general') {
+      setActiveTab(requestedTab);
+    }
+  }, [requestedTab]);
 
   const updateOrgMutation = useMutation({
     mutationFn: async () => {
@@ -300,7 +311,7 @@ export function OrganizationSettingsClient() {
           <Card>
             <CardContent className="flex items-center justify-between p-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Teams</p>
+                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Teamspaces</p>
                 <p className="mt-1 text-2xl font-semibold">{org.stats?.teams || 0}</p>
               </div>
               <Shield className="h-4 w-4 text-muted-foreground" />
@@ -321,6 +332,9 @@ export function OrganizationSettingsClient() {
           <TabsList className={organizationTabsListClassName}>
             <TabsTrigger value="general" className={organizationTabTriggerClassName}>
               General
+            </TabsTrigger>
+            <TabsTrigger value="teamspaces" className={organizationTabTriggerClassName}>
+              Teamspaces
             </TabsTrigger>
             <TabsTrigger value="danger" className={organizationTabTriggerClassName}>
               Danger zone
@@ -420,6 +434,13 @@ export function OrganizationSettingsClient() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="teamspaces" className="space-y-4">
+            <TeamspaceManager
+              organizationId={currentOrganizationId}
+              canManage={canManageSettings}
+            />
           </TabsContent>
 
           <TabsContent value="danger" className="space-y-4">

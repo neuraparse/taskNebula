@@ -1,14 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 
-interface Member {
+export interface OrganizationMember {
   id: string;
   name: string | null;
   email: string | null;
   image: string | null;
+  status: string;
+  role: 'owner' | 'admin' | 'member' | 'viewer' | 'guest';
+  memberStatus: string;
+  joinedAt: string;
 }
 
-interface MembersResponse {
-  members: Member[];
+export interface OrganizationMembersResponse {
+  members: OrganizationMember[];
   userRole: 'owner' | 'admin' | 'member' | 'viewer' | 'guest' | null;
   isSuperAdmin: boolean;
 }
@@ -27,9 +31,8 @@ export function useOrganizationMembers(organizationId: string | null) {
         throw new Error('Failed to fetch organization members');
       }
 
-      return response.json() as Promise<MembersResponse>;
+      return response.json() as Promise<OrganizationMembersResponse>;
     },
     enabled: !!organizationId,
   });
 }
-

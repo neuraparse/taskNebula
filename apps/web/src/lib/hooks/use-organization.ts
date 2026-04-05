@@ -17,7 +17,11 @@ export const useOrganization = create<OrganizationState>()(
       currentOrganizationId: null,
       currentTeamId: null,
       setCurrentOrganization: (organizationId) =>
-        set({ currentOrganizationId: organizationId }),
+        set((state) => ({
+          currentOrganizationId: organizationId,
+          currentTeamId:
+            state.currentOrganizationId === organizationId ? state.currentTeamId : null,
+        })),
       setCurrentTeam: (teamId) => set({ currentTeamId: teamId }),
       clearContext: () =>
         set({ currentOrganizationId: null, currentTeamId: null }),
@@ -39,4 +43,3 @@ export const useOrganization = create<OrganizationState>()(
     }
   )
 );
-

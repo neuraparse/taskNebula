@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, issues, workflowStatuses, projects } from '@tasknebula/db';
-import { eq, desc, inArray } from 'drizzle-orm';
+import { eq, desc, inArray, and } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,11 +10,44 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const searchParams = request.nextUrl.searchParams;
+    const organizationId = searchParams.get('organizationId');
+    const teamId = searchParams.get('teamId');
+
+    let allowedProjectIds: string[] | null = null;
+    if (organizationId || teamId) {
+      const scopedProjects = await db
+        .select({
+          id: projects.id,
+          key: projects.key,
+          name: projects.name,
+          teamId: projects.teamId,
+        })
+        .from(projects)
+        .where(
+          and(
+            ...(organizationId ? [eq(projects.organizationId, organizationId)] : []),
+            ...(teamId ? [eq(projects.teamId, teamId)] : [])
+          )
+        );
+
+      allowedProjectIds = scopedProjects.map((project) => project.id);
+
+      if (allowedProjectIds.length === 0) {
+        return NextResponse.json({ issues: [] });
+      }
+    }
+
     // Fetch all issues assigned to the user
     const myIssuesRaw = await db
       .select()
       .from(issues)
-      .where(eq(issues.assigneeId, session.user.id))
+      .where(
+        and(
+          eq(issues.assigneeId, session.user.id),
+          ...(allowedProjectIds ? [inArray(issues.projectId, allowedProjectIds)] : [])
+        )
+      )
       .orderBy(desc(issues.updatedAt));
 
     if (myIssuesRaw.length === 0) {
@@ -55,4 +88,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to fetch issues' }, { status: 500 });
   }
 }
-

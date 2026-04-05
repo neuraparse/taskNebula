@@ -50,7 +50,7 @@ interface Issue {
 export function DashboardClient() {
   const { data: session } = useSession();
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
-  const { currentOrganizationId } = useOrganization();
+  const { currentOrganizationId, currentTeamId } = useOrganization();
 
   const { data: orgsData } = useQuery({
     queryKey: ['organizations'],
@@ -70,9 +70,13 @@ export function DashboardClient() {
   }, [currentOrganizationId, orgsData, setCurrentOrganization]);
 
   const { data: myIssues, isLoading } = useQuery<Issue[]>({
-    queryKey: ['my-issues', session?.user?.id],
+    queryKey: ['my-issues', session?.user?.id, currentOrganizationId, currentTeamId],
     queryFn: async () => {
-      const response = await fetch('/api/issues/my-issues');
+      const params = new URLSearchParams();
+      if (currentOrganizationId) params.set('organizationId', currentOrganizationId);
+      if (currentTeamId) params.set('teamId', currentTeamId);
+
+      const response = await fetch(`/api/issues/my-issues${params.size > 0 ? `?${params.toString()}` : ''}`);
       if (!response.ok) throw new Error('Failed to fetch issues');
       const data = await response.json();
       return data.issues || [];
@@ -122,7 +126,9 @@ export function DashboardClient() {
                   Welcome back, {session?.user?.name?.split(' ')[0] || 'User'}
                 </h1>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Here's your project overview for today
+                  {currentTeamId
+                    ? 'Teamspace-scoped work, priorities, and activity for today'
+                    : "Here's your project overview for today"}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -283,7 +289,7 @@ function IssueRow({ issue, onClick }: { issue: Issue; onClick: () => void }) {
     critical: { dot: 'bg-red-500' },
   };
 
-  const config = priorityConfig[issue.priority] || priorityConfig.medium;
+  const config = priorityConfig[issue.priority] ?? priorityConfig.medium ?? { dot: 'bg-slate-400' };
 
   return (
     <div

@@ -13,7 +13,7 @@ const updateSavedFilterSchema = z.object({
   criteria: z.record(z.any()).optional(),
   isPublic: z.boolean().optional(),
   isStarred: z.boolean().optional(),
-  viewType: z.enum(['list', 'board', 'timeline']).optional(),
+  viewType: z.enum(['list', 'board', 'timeline', 'calendar']).optional(),
   sortBy: z.string().optional(),
   sortOrder: z.enum(['asc', 'desc']).optional(),
 });
@@ -173,4 +173,3 @@ export async function POST(
     );
   }
 }
-

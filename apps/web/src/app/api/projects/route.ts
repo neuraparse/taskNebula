@@ -1,18 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, projects, organizationMembers, projectMembers, users, workflows, ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from '@tasknebula/db';
-import { eq, and, inArray, or } from 'drizzle-orm';
+import {
+  db,
+  projects,
+  organizationMembers,
+  projectMembers,
+  users,
+  workflows,
+  teams,
+  organizations,
+  ROLE_DEFAULT_PERMISSIONS,
+  type ProjectRole,
+} from '@tasknebula/db';
+import { eq, and, inArray, desc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { publishEvent } from '@/lib/realtime/events';
 
 // GET /api/projects - List all projects for the current user
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
+    const searchParams = request.nextUrl.searchParams;
+    const requestedOrganizationId = searchParams.get('organizationId');
+    const requestedTeamId = searchParams.get('teamId');
+
     // Check if user is super admin
     const [user] = await db
       .select({ isSuperAdmin: users.isSuperAdmin })
@@ -33,20 +48,66 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json([]);
     }
 
-    const orgIds = userOrgMemberships.map((m) => m.organizationId);
+    let orgIds = userOrgMemberships.map((m) => m.organizationId);
+    if (requestedOrganizationId) {
+      if (!user?.isSuperAdmin && !orgIds.includes(requestedOrganizationId)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+      orgIds = [requestedOrganizationId];
+    }
+
     const isOrgOwnerOrAdmin = userOrgMemberships.some(
       (m) => m.role === 'owner' || m.role === 'admin'
     );
+    const teamFilter = requestedTeamId
+      ? eq(projects.teamId, requestedTeamId)
+      : undefined;
+
+    const mapProjects = <
+      T extends {
+        project: typeof projects.$inferSelect;
+        organizationName: string | null;
+        teamId: string | null;
+        teamName: string | null;
+        teamSlug: string | null;
+      },
+    >(
+      rows: T[]
+    ) =>
+      rows.map((row) => ({
+        ...row.project,
+        organizationName: row.organizationName ?? '',
+        team: row.teamId
+          ? {
+              id: row.teamId,
+              name: row.teamName ?? 'Unknown teamspace',
+              slug: row.teamSlug ?? row.teamId,
+            }
+          : null,
+      }));
 
     // Super admins and org owners/admins see all projects in their orgs
     if (user?.isSuperAdmin || isOrgOwnerOrAdmin) {
       const userProjects = await db
-        .select()
+        .select({
+          project: projects,
+          organizationName: organizations.name,
+          teamId: teams.id,
+          teamName: teams.name,
+          teamSlug: teams.slug,
+        })
         .from(projects)
-        .where(inArray(projects.organizationId, orgIds))
-        .orderBy(projects.updatedAt);
+        .leftJoin(organizations, eq(projects.organizationId, organizations.id))
+        .leftJoin(teams, eq(projects.teamId, teams.id))
+        .where(
+          and(
+            inArray(projects.organizationId, orgIds),
+            ...(teamFilter ? [teamFilter] : [])
+          )
+        )
+        .orderBy(desc(projects.updatedAt));
 
-      return NextResponse.json(userProjects);
+      return NextResponse.json(mapProjects(userProjects));
     }
 
     // Regular users only see projects they are members of
@@ -62,17 +123,26 @@ export async function GET(_request: NextRequest) {
     const projectIds = userProjectMemberships.map((m) => m.projectId);
 
     const userProjects = await db
-      .select()
+      .select({
+        project: projects,
+        organizationName: organizations.name,
+        teamId: teams.id,
+        teamName: teams.name,
+        teamSlug: teams.slug,
+      })
       .from(projects)
+      .leftJoin(organizations, eq(projects.organizationId, organizations.id))
+      .leftJoin(teams, eq(projects.teamId, teams.id))
       .where(
         and(
           inArray(projects.organizationId, orgIds),
-          inArray(projects.id, projectIds)
+          inArray(projects.id, projectIds),
+          ...(teamFilter ? [teamFilter] : [])
         )
       )
-      .orderBy(projects.updatedAt);
+      .orderBy(desc(projects.updatedAt));
 
-    return NextResponse.json(userProjects);
+    return NextResponse.json(mapProjects(userProjects));
   } catch (error) {
     console.error('Error fetching projects:', error);
     return NextResponse.json({ error: 'Failed to fetch projects' }, { status: 500 });
@@ -88,7 +158,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name, key, description, organizationId } = body;
+    const { name, key, description, organizationId, teamId } = body;
 
     if (!name || !key) {
       return NextResponse.json(
@@ -113,6 +183,25 @@ export async function POST(request: NextRequest) {
         );
       }
       orgId = membership.organizationId;
+    }
+
+    let normalizedTeamId: string | null = teamId || null;
+    if (normalizedTeamId) {
+      const [team] = await db
+        .select({
+          id: teams.id,
+          organizationId: teams.organizationId,
+        })
+        .from(teams)
+        .where(eq(teams.id, normalizedTeamId))
+        .limit(1);
+
+      if (!team || team.organizationId !== orgId) {
+        return NextResponse.json(
+          { error: 'Selected teamspace does not belong to this organization' },
+          { status: 400 }
+        );
+      }
     }
 
     // Check if project key already exists
@@ -148,6 +237,7 @@ export async function POST(request: NextRequest) {
       .values({
         id: projectId,
         organizationId: orgId,
+        teamId: normalizedTeamId,
         key: key.toUpperCase(),
         name,
         description: description || null,

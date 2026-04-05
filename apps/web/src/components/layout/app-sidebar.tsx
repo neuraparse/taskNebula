@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { TeamspaceSwitcher } from '@/components/organization/teamspace-switcher';
 import {
   Dialog,
   DialogContent,
@@ -47,6 +48,7 @@ import {
 import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
 import { useProjects } from '@/lib/hooks/use-projects';
+import { useOrganization } from '@/lib/hooks/use-organization';
 import { useLiveCalls } from '@/lib/hooks/use-chat';
 import { useGlobalVoice } from '@/components/chat/global-voice-provider';
 import {
@@ -76,6 +78,7 @@ export function AppSidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
+  const { currentOrganizationId, currentTeamId } = useOrganization();
   const { data: liveCalls, isLoading: liveCallsLoading } = useLiveCalls();
   const {
     connectionState,
@@ -111,7 +114,10 @@ export function AppSidebar() {
     enabled: !!session?.user?.id,
   });
 
-  const { data: projects, isLoading: projectsLoading } = useProjects();
+  const { data: projects, isLoading: projectsLoading } = useProjects({
+    organizationId: currentOrganizationId,
+    teamId: currentTeamId,
+  });
 
   const isSuperAdmin = userData?.isSuperAdmin || false;
   const pinnedCall = currentTarget
@@ -199,6 +205,15 @@ export function AppSidebar() {
         })}
 
         <div className="pt-4">
+          <div className="mb-1 px-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Teamspaces
+            </span>
+          </div>
+          <div className="px-2 pb-3">
+            <TeamspaceSwitcher />
+          </div>
+
           <div className="mb-1 flex items-center justify-between px-2">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Projects
@@ -221,7 +236,7 @@ export function AppSidebar() {
                 return (
                   <Link
                     key={project.id}
-                    href={`/projects/${projectPath}/board`}
+                    href={`/projects/${projectPath}/views`}
                     className={cn(
                       'group flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors',
                       isActive

@@ -134,6 +134,7 @@ export async function GET(request: NextRequest) {
     const statusParam = searchParams.get('status');
     const sprintId = searchParams.get('sprintId');
     const parentId = searchParams.get('parentId');
+    const type = searchParams.get('type');
 
     // If projectId looks like a key (e.g., "demo", "PROJ"), convert to ID
     let actualProjectId = projectIdParam;
@@ -197,7 +198,7 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(issues.assigneeId, assigneeId));
     }
     if (statusParam) {
-      conditions.push(eq(workflowStatuses.category, statusParam));
+      conditions.push(eq(workflowStatuses.category, statusParam as any));
     }
     // Handle sprintId filter - 'none' means backlog (no sprint assigned)
     if (sprintId === 'none') {
@@ -208,6 +209,9 @@ export async function GET(request: NextRequest) {
     // Handle parentId filter for subtasks
     if (parentId) {
       conditions.push(eq(issues.parentId, parentId));
+    }
+    if (type) {
+      conditions.push(eq(issues.type, type as any));
     }
 
     if (conditions.length > 0) {
@@ -418,4 +422,3 @@ export async function POST(request: NextRequest) {
     }, { status: 500 });
   }
 }
-

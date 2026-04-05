@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { useProjectPermissions } from '@/lib/hooks/use-project-permissions';
 import {
+  PanelsTopLeft,
   LayoutGrid,
   List,
   Timer,
@@ -23,6 +24,7 @@ interface ProjectLayoutProps {
 }
 
 const tabs = [
+  { name: 'Views', href: 'views', icon: PanelsTopLeft },
   { name: 'Board', href: 'board', icon: LayoutGrid },
   { name: 'Backlog', href: 'backlog', icon: List },
   { name: 'Sprints', href: 'sprints', icon: Timer },
@@ -56,7 +58,7 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
   });
 
   const activeSprint = sprints?.find((s: any) => s.status === 'active');
-  const currentTab = pathname?.split('/').pop() || 'board';
+  const currentTab = pathname?.split('/').pop() || 'views';
   const visibleTabs = tabs.filter((tab) => {
     if (tab.href === 'chat') {
       return permissions.canBrowseChat || currentTab === 'chat';
@@ -107,7 +109,7 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
           <nav className="flex gap-0 -mb-px">
             {visibleTabs.map((tab) => {
               const isActive = currentTab === tab.href ||
-                (tab.href === 'board' && currentTab === projectId);
+                (tab.href === 'views' && currentTab === projectId);
               const Icon = tab.icon;
 
               return (

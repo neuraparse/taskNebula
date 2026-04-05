@@ -2,12 +2,19 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-interface Project {
+export interface Project {
   id: string;
   organizationId: string;
+  teamId?: string | null;
   key: string;
   name: string;
   description: string | null;
+  organizationName?: string;
+  team?: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
   visibility?: string;
   status: string;
   settings: Record<string, unknown>;
@@ -23,12 +30,21 @@ interface Project {
   updatedAt: string;
 }
 
+interface ProjectsFilters {
+  organizationId?: string | null;
+  teamId?: string | null;
+}
+
 // Get all projects
-export function useProjects() {
+export function useProjects(filters?: ProjectsFilters) {
   return useQuery<Project[]>({
-    queryKey: ['projects'],
+    queryKey: ['projects', filters],
     queryFn: async () => {
-      const response = await fetch('/api/projects');
+      const params = new URLSearchParams();
+      if (filters?.organizationId) params.append('organizationId', filters.organizationId);
+      if (filters?.teamId) params.append('teamId', filters.teamId);
+
+      const response = await fetch(`/api/projects${params.size > 0 ? `?${params.toString()}` : ''}`);
       if (!response.ok) {
         throw new Error('Failed to fetch projects');
       }
@@ -61,6 +77,8 @@ export function useCreateProject() {
       name: string;
       key: string;
       description?: string;
+      organizationId?: string | null;
+      teamId?: string | null;
     }) => {
       const response = await fetch('/api/projects', {
         method: 'POST',

@@ -1,34 +1,74 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useCreateProject } from '@/lib/hooks/use-projects';
-import { Plus, X } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useCreateProject, useProjects } from '@/lib/hooks/use-projects';
+import { useOrganization } from '@/lib/hooks/use-organization';
+import { useTeamspaces } from '@/lib/hooks/use-teamspaces';
+import { FolderKanban, Layers3, Plus, X } from 'lucide-react';
 
-interface ProjectItem {
+interface Organization {
   id: string;
-  key: string;
   name: string;
-  description: string | null;
-  status: string;
-  organizationName: string;
+  slug: string;
+  role: string;
 }
 
-export function ProjectsClient({ projects }: { projects: ProjectItem[] }) {
+export function ProjectsClient() {
   const [showDialog, setShowDialog] = useState(false);
+  const { currentOrganizationId, currentTeamId, setCurrentOrganization } = useOrganization();
+
+  const { data: orgsData } = useQuery<{ organizations: Organization[] }>({
+    queryKey: ['organizations'],
+    queryFn: async () => {
+      const response = await fetch('/api/organizations');
+      if (!response.ok) throw new Error('Failed to fetch organizations');
+      return response.json();
+    },
+  });
+
+  useEffect(() => {
+    const firstOrganization = orgsData?.organizations?.[0];
+    if (!currentOrganizationId && firstOrganization) {
+      setCurrentOrganization(firstOrganization.id);
+    }
+  }, [currentOrganizationId, orgsData, setCurrentOrganization]);
+
+  const { data: teamspaces = [] } = useTeamspaces(currentOrganizationId);
+  const { data: projects = [], isLoading } = useProjects({
+    organizationId: currentOrganizationId,
+    teamId: currentTeamId,
+  });
+
+  const activeTeamspace = useMemo(
+    () => teamspaces.find((teamspace) => teamspace.id === currentTeamId) ?? null,
+    [currentTeamId, teamspaces]
+  );
 
   return (
     <div className="flex h-full flex-col">
       <div className="border-b bg-background px-6 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold">Projects</h1>
             <p className="text-sm text-muted-foreground">
-              {projects.length} active project{projects.length !== 1 ? 's' : ''}
+              {isLoading
+                ? 'Loading projects...'
+                : `${projects.length} active project${projects.length !== 1 ? 's' : ''}${
+                    activeTeamspace ? ` in ${activeTeamspace.name}` : ''
+                  }`}
             </p>
           </div>
           <Button onClick={() => setShowDialog(true)}>
@@ -39,11 +79,13 @@ export function ProjectsClient({ projects }: { projects: ProjectItem[] }) {
       </div>
 
       <div className="flex-1 overflow-auto p-6">
-        {projects.length === 0 ? (
-          <div className="rounded-lg border border-dashed bg-card p-8 text-center">
+        {projects.length === 0 && !isLoading ? (
+          <div className="rounded-none border border-dashed bg-card p-8 text-center">
             <h2 className="text-lg font-semibold">No Projects Yet</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Create your first project to get started
+              {activeTeamspace
+                ? `Create the first project inside ${activeTeamspace.name}.`
+                : 'Create your first project to get started.'}
             </p>
             <Button className="mt-4" onClick={() => setShowDialog(true)}>
               <Plus className="mr-1.5 h-4 w-4" />
@@ -55,29 +97,33 @@ export function ProjectsClient({ projects }: { projects: ProjectItem[] }) {
             {projects.map((project) => (
               <Link
                 key={project.id}
-                href={`/projects/${project.key.toLowerCase()}`}
-                className="group rounded-lg border bg-card p-6 transition-colors hover:border-primary"
+                href={`/projects/${project.key.toLowerCase()}/views`}
+                className="group rounded-none border bg-card p-6 transition-colors hover:border-primary"
               >
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold group-hover:text-primary">
-                        {project.key}
-                      </h3>
-                      <Badge variant="outline" className="text-xs">
+                      <h3 className="font-semibold group-hover:text-primary">{project.key}</h3>
+                      <Badge variant="outline" className="rounded-none text-xs">
                         {project.status}
                       </Badge>
                     </div>
                     <p className="mt-1 font-medium">{project.name}</p>
-                    {project.description && (
+                    {project.description ? (
                       <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
                         {project.description}
                       </p>
-                    )}
+                    ) : null}
                   </div>
                 </div>
-                <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span>{project.organizationName}</span>
+                  {project.team ? (
+                    <Badge variant="secondary" className="gap-1 rounded-none text-[10px]">
+                      <Layers3 className="h-3 w-3" />
+                      {project.team.name}
+                    </Badge>
+                  ) : null}
                 </div>
               </Link>
             ))}
@@ -85,9 +131,7 @@ export function ProjectsClient({ projects }: { projects: ProjectItem[] }) {
         )}
       </div>
 
-      {showDialog && (
-        <CreateProjectDialog onClose={() => setShowDialog(false)} />
-      )}
+      {showDialog ? <CreateProjectDialog onClose={() => setShowDialog(false)} /> : null}
     </div>
   );
 }
@@ -95,10 +139,17 @@ export function ProjectsClient({ projects }: { projects: ProjectItem[] }) {
 function CreateProjectDialog({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const createProject = useCreateProject();
+  const { currentOrganizationId, currentTeamId } = useOrganization();
+  const { data: teamspaces = [] } = useTeamspaces(currentOrganizationId);
   const [name, setName] = useState('');
   const [key, setKey] = useState('');
   const [description, setDescription] = useState('');
+  const [teamId, setTeamId] = useState<string>(currentTeamId ?? 'none');
   const [keyManual, setKeyManual] = useState(false);
+
+  useEffect(() => {
+    setTeamId(currentTeamId ?? 'none');
+  }, [currentTeamId]);
 
   const handleNameChange = (value: string) => {
     setName(value);
@@ -107,7 +158,7 @@ function CreateProjectDialog({ onClose }: { onClose: () => void }) {
         .replace(/[^a-zA-Z0-9\s]/g, '')
         .split(/\s+/)
         .filter(Boolean)
-        .map((w) => w[0])
+        .map((word) => word[0])
         .join('')
         .toUpperCase()
         .slice(0, 6);
@@ -120,8 +171,8 @@ function CreateProjectDialog({ onClose }: { onClose: () => void }) {
     setKey(value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (!name.trim() || !key.trim()) return;
 
     try {
@@ -129,20 +180,30 @@ function CreateProjectDialog({ onClose }: { onClose: () => void }) {
         name: name.trim(),
         key: key.trim(),
         description: description.trim() || undefined,
+        organizationId: currentOrganizationId,
+        teamId: teamId === 'none' ? null : teamId,
       });
       onClose();
       router.refresh();
     } catch {
-      // error handled by mutation state
+      // handled by mutation state
     }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div className="w-full max-w-[440px] rounded-lg border bg-background p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-semibold">Create Project</h2>
-          <button onClick={onClose} className="rounded p-1 hover:bg-muted">
+      <div
+        className="w-full max-w-[460px] rounded-none border bg-background p-6 shadow-lg"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Create Project</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Projects inherit the current organization and can optionally live in a teamspace.
+            </p>
+          </div>
+          <button onClick={onClose} className="rounded-none p-1 hover:bg-muted">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -156,9 +217,10 @@ function CreateProjectDialog({ onClose }: { onClose: () => void }) {
               id="project-name"
               placeholder="My Awesome Project"
               value={name}
-              onChange={(e) => handleNameChange(e.target.value)}
+              onChange={(event) => handleNameChange(event.target.value)}
               required
               autoFocus
+              className="rounded-none"
             />
           </div>
 
@@ -170,13 +232,35 @@ function CreateProjectDialog({ onClose }: { onClose: () => void }) {
               id="project-key"
               placeholder="MAP"
               value={key}
-              onChange={(e) => handleKeyChange(e.target.value)}
+              onChange={(event) => handleKeyChange(event.target.value)}
               required
               maxLength={10}
-              className="uppercase"
+              className="rounded-none uppercase"
             />
             <p className="text-xs text-muted-foreground">
-              Used as issue prefix (e.g. {key || 'KEY'}-1, {key || 'KEY'}-2)
+              Used as issue prefix, for example {key || 'KEY'}-1.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="project-teamspace" className="text-sm font-medium">
+              Teamspace
+            </label>
+            <Select value={teamId} onValueChange={setTeamId}>
+              <SelectTrigger id="project-teamspace" className="rounded-none">
+                <SelectValue placeholder="No teamspace" />
+              </SelectTrigger>
+              <SelectContent className="rounded-none">
+                <SelectItem value="none">No teamspace</SelectItem>
+                {teamspaces.map((teamspace) => (
+                  <SelectItem key={teamspace.id} value={teamspace.id}>
+                    {teamspace.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Use teamspaces to group related projects without creating a duplicate top-level entity.
             </p>
           </div>
 
@@ -188,21 +272,26 @@ function CreateProjectDialog({ onClose }: { onClose: () => void }) {
               id="project-desc"
               placeholder="Brief project description"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(event) => setDescription(event.target.value)}
+              className="rounded-none"
             />
           </div>
 
-          {createProject.error && (
-            <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+          {createProject.error ? (
+            <div className="rounded-none bg-destructive/10 p-3 text-sm text-destructive">
               {createProject.error.message}
             </div>
-          )}
+          ) : null}
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose} className="rounded-none">
               Cancel
             </Button>
-            <Button type="submit" disabled={createProject.isPending || !name.trim() || !key.trim()}>
+            <Button
+              type="submit"
+              disabled={createProject.isPending || !name.trim() || !key.trim()}
+              className="rounded-none"
+            >
               {createProject.isPending ? 'Creating...' : 'Create Project'}
             </Button>
           </div>
