@@ -1,4 +1,6 @@
 import {
+  formatMicrophonePermissionStateLabel,
+  getMicrophonePermissionHelpMessage,
   getPendingMicrophoneJoinMessage,
   getTimedOutMicrophoneAccessMessage,
   requestRawMicrophoneStream,
@@ -12,6 +14,12 @@ describe('chat microphone helpers', () => {
       value: {
         enumerateDevices: jest.fn().mockResolvedValue([]),
         getUserMedia: jest.fn(),
+        getSupportedConstraints: jest.fn().mockReturnValue({
+          deviceId: true,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        }),
       },
     });
     Object.defineProperty(global.navigator, 'permissions', {
@@ -75,6 +83,31 @@ describe('chat microphone helpers', () => {
 
     await expect(resolveJoinAudioInputDeviceId('mic-usb')).rejects.toThrow('NotAllowedError');
     expect(global.navigator.mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
+  });
+
+  it('filters capture constraints down to the browser-supported set', async () => {
+    global.navigator.mediaDevices.getSupportedConstraints.mockReturnValue({
+      deviceId: true,
+      echoCancellation: true,
+      noiseSuppression: false,
+      autoGainControl: false,
+    });
+    global.navigator.mediaDevices.getUserMedia.mockResolvedValue({
+      getTracks: () => [{ stop: jest.fn() }],
+    });
+
+    await expect(resolveJoinAudioInputDeviceId('mic-usb')).resolves.toEqual({
+      audioDeviceId: 'mic-usb',
+      shouldPersist: false,
+      usedBrowserStabilityFallback: false,
+    });
+
+    expect(global.navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
+      audio: {
+        deviceId: { exact: 'mic-usb' },
+        echoCancellation: true,
+      },
+    });
   });
 
   it('prefers the system default microphone on Chromium for a more stable live join', async () => {
@@ -389,5 +422,25 @@ describe('chat microphone helpers', () => {
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15'
       )
     ).toContain('Safari > Settings > Websites > Microphone');
+  });
+
+  it('formats permission labels for the setup UI', () => {
+    expect(formatMicrophonePermissionStateLabel('granted')).toBe('Allowed');
+    expect(formatMicrophonePermissionStateLabel('denied')).toBe('Blocked');
+    expect(formatMicrophonePermissionStateLabel('prompt')).toBe(
+      'Waiting for browser decision'
+    );
+    expect(formatMicrophonePermissionStateLabel('unknown')).toBe('Browser-managed');
+  });
+
+  it('builds prompt guidance that explains hidden device labels', () => {
+    expect(
+      getMicrophonePermissionHelpMessage('prompt', {
+        userAgent:
+          'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+        hasDetectedDevices: true,
+        labelsVisible: false,
+      })
+    ).toContain('Device names stay hidden until the browser grants microphone access.');
   });
 });

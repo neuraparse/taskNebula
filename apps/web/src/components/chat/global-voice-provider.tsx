@@ -17,6 +17,8 @@ import {
 } from 'livekit-client';
 import {
   buildMicrophoneCaptureOptions,
+  detectMicrophoneBrowserFamily,
+  EXTENDED_CHROMIUM_MICROPHONE_PROMPT_TIMEOUT_MS,
   formatMicrophoneError,
   getMicrophonePermissionState,
   getPendingMicrophoneRuntimeMessage,
@@ -521,6 +523,151 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
             }
             return getPendingMicrophoneRuntimeMessage(getCurrentMicrophoneUserAgent());
           });
+          return;
+        }
+
+        const userAgent = getCurrentMicrophoneUserAgent();
+        const browserFamily = detectMicrophoneBrowserFamily(userAgent);
+        const permissionState = await getMicrophonePermissionState({ silent: true });
+        const shouldBridgePromptThroughPendingState =
+          permissionState === 'prompt' &&
+          (browserFamily === 'chromium' || browserFamily === 'edge');
+
+        if (shouldBridgePromptThroughPendingState) {
+          const pendingMicrophoneStreamPromise = requestRawMicrophoneStream(
+            currentSession?.audioDeviceId,
+            {
+              interactive: true,
+              timeoutMs: EXTENDED_CHROMIUM_MICROPHONE_PROMPT_TIMEOUT_MS,
+            }
+          );
+
+          setCurrentSession((current) =>
+            current
+              ? {
+                  ...current,
+                  pendingMicrophoneStreamPromise,
+                }
+              : current
+          );
+          chatClientDebug('global-voice.toggle-microphone.pending-start', {
+            roomId: currentTarget?.roomId || null,
+            audioDeviceId: currentSession?.audioDeviceId || null,
+            browserFamily,
+            permissionState,
+            requestTimeoutMs: EXTENDED_CHROMIUM_MICROPHONE_PROMPT_TIMEOUT_MS,
+          });
+          setRuntimeError(getPendingMicrophoneRuntimeMessage(userAgent));
+          let pendingPromptTimedOut = false;
+          const pendingPromptTimeout = window.setTimeout(() => {
+            if (roomRef.current !== room) {
+              return;
+            }
+
+            pendingPromptTimedOut = true;
+            chatClientError('global-voice.toggle-microphone.pending-timeout', {
+              roomId: currentTarget?.roomId || null,
+              audioDeviceId: currentSession?.audioDeviceId || null,
+              timeoutMs: PENDING_MICROPHONE_PROMPT_UI_TIMEOUT_MS,
+              error: new Error(
+                `Microphone access was still waiting for the browser prompt after ${PENDING_MICROPHONE_PROMPT_UI_TIMEOUT_MS}ms.`
+              ),
+            });
+            setRuntimeError(getTimedOutPendingMicrophonePromptMessage(userAgent));
+          }, PENDING_MICROPHONE_PROMPT_UI_TIMEOUT_MS);
+
+          void pendingMicrophoneStreamPromise
+            .then(async (stream) => {
+              window.clearTimeout(pendingPromptTimeout);
+              setCurrentSession((current) =>
+                current?.pendingMicrophoneStreamPromise === pendingMicrophoneStreamPromise
+                  ? { ...current, pendingMicrophoneStreamPromise: null }
+                  : current
+              );
+
+              if (!stream) {
+                return;
+              }
+
+              if (roomRef.current !== room) {
+                stopMediaStream(stream);
+                return;
+              }
+
+              chatClientDebug('global-voice.toggle-microphone.pending-resolve', {
+                roomId: currentTarget?.roomId || null,
+                audioDeviceId: currentSession?.audioDeviceId || null,
+              });
+
+              try {
+                await enableRoomMicrophoneWithTimeout(
+                  room,
+                  currentSession?.audioDeviceId,
+                  () => {
+                    setCurrentSession((current) => (current ? { ...current, audioDeviceId: 'default' } : current));
+                  },
+                  stream,
+                  {
+                    timeoutMs: MICROPHONE_ENABLE_TIMEOUT_MS,
+                  }
+                );
+                syncRoomState(room);
+                setRuntimeError(null);
+                chatClientDebug('global-voice.toggle-microphone.pending-success', {
+                  roomId: currentTarget?.roomId || null,
+                  audioDeviceId: currentSession?.audioDeviceId || null,
+                });
+              } catch (error) {
+                chatClientError('global-voice.toggle-microphone.pending-error', {
+                  roomId: currentTarget?.roomId || null,
+                  audioDeviceId: currentSession?.audioDeviceId || null,
+                  failure: MediaDeviceFailure.getFailure(error),
+                  error:
+                    error instanceof Error
+                      ? error
+                      : new Error('Failed to enable microphone after the browser prompt resolved'),
+                });
+                if (!isMicrophoneAccessTimeoutError(error)) {
+                  setRuntimeError(formatMicrophoneError(error));
+                }
+              } finally {
+                syncRoomState(room);
+              }
+            })
+            .catch((error) => {
+              window.clearTimeout(pendingPromptTimeout);
+              setCurrentSession((current) =>
+                current?.pendingMicrophoneStreamPromise === pendingMicrophoneStreamPromise
+                  ? { ...current, pendingMicrophoneStreamPromise: null }
+                  : current
+              );
+
+              if (isMicrophoneAccessTimeoutError(error)) {
+                chatClientError('global-voice.toggle-microphone.pending-final-timeout', {
+                  roomId: currentTarget?.roomId || null,
+                  audioDeviceId: currentSession?.audioDeviceId || null,
+                  error:
+                    error instanceof Error
+                      ? error
+                      : new Error('Microphone access timed out after the in-call prompt'),
+                });
+                if (!pendingPromptTimedOut) {
+                  setRuntimeError(getTimedOutPendingMicrophonePromptMessage(userAgent));
+                }
+                return;
+              }
+
+              chatClientError('global-voice.toggle-microphone.pending-error', {
+                roomId: currentTarget?.roomId || null,
+                audioDeviceId: currentSession?.audioDeviceId || null,
+                failure: MediaDeviceFailure.getFailure(error),
+                error:
+                  error instanceof Error
+                    ? error
+                    : new Error('Microphone access failed while the in-call prompt was pending'),
+              });
+              setRuntimeError(formatMicrophoneError(error));
+            });
           return;
         }
 

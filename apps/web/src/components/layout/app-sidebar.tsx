@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   Home,
@@ -39,6 +39,7 @@ const navigation = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
   const { data: liveCalls, isLoading: liveCallsLoading } = useLiveCalls();
   const {
@@ -78,6 +79,15 @@ export function AppSidebar() {
     currentSession && connectionState === 'connected' ? Math.max(participantCount, 1) : 0
   );
   const isCallConnecting = currentSession && connectionState !== 'connected';
+  const selectedRoomId = searchParams.get('roomId');
+  const currentCallRoomPath = currentTarget?.roomHref.split('?')[0] || null;
+  const isViewingCurrentCallRoom = Boolean(
+    currentTarget &&
+      currentCallRoomPath &&
+      pathname === currentCallRoomPath &&
+      selectedRoomId === currentTarget.roomId
+  );
+  const sidebarRuntimeError = isViewingCurrentCallRoom ? null : runtimeError;
   const voiceStatusLabel = !currentSession
     ? null
     : isCallConnecting
@@ -183,7 +193,7 @@ export function AppSidebar() {
         </div>
       </nav>
 
-      {currentTarget || otherActiveCalls.length > 0 || runtimeError ? (
+      {currentTarget || otherActiveCalls.length > 0 || sidebarRuntimeError ? (
         <div className="border-t border-border p-2 space-y-1.5">
           <div className="px-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.16em]">
             Live Calls
@@ -265,9 +275,9 @@ export function AppSidebar() {
             </div>
           ) : null}
 
-          {runtimeError ? (
+          {sidebarRuntimeError ? (
             <div className="rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1.5 text-[11px] text-destructive">
-              {runtimeError}
+              {sidebarRuntimeError}
             </div>
           ) : null}
 

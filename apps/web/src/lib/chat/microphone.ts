@@ -9,6 +9,8 @@ export const DEFAULT_MIC_CAPTURE_OPTIONS = {
 const MICROPHONE_ATTEMPT_TIMEOUT_MS = 2_500;
 const INTERACTIVE_MICROPHONE_PROMPT_TIMEOUT_MS = 20_000;
 const DEFAULT_DEVICE_RESOLUTION_TIMEOUT_MS = 750;
+const MICROPHONE_DEVICE_ENUMERATION_TIMEOUT_MS = 2_000;
+export const EXTENDED_CHROMIUM_MICROPHONE_PROMPT_TIMEOUT_MS = 300_000;
 
 type JoinMicrophoneResolution = {
   audioDeviceId: string;
@@ -23,10 +25,11 @@ export type MicrophoneBrowserFamily =
   | 'firefox'
   | 'safari'
   | 'unknown';
+export type MicrophoneDeviceOption = Pick<MediaDeviceInfo, 'deviceId' | 'kind' | 'label'>;
 
 type RequestRawMicrophoneStreamOptions = {
   interactive?: boolean;
-  timeoutMs?: number;
+  timeoutMs?: number | null;
 };
 
 export function normalizeAudioInputDeviceId(audioDeviceId?: string | null) {
@@ -80,20 +83,58 @@ export function shouldPreferDefaultMicrophoneForLiveJoin(userAgent?: string | nu
   return browserFamily === 'chromium' || browserFamily === 'edge' || browserFamily === 'safari';
 }
 
+function filterSupportedAudioConstraints(
+  constraints: MediaTrackConstraints
+): MediaTrackConstraints {
+  if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getSupportedConstraints) {
+    return constraints;
+  }
+
+  const supportedConstraints = navigator.mediaDevices.getSupportedConstraints();
+  const hasSupportMetadata = Object.keys(supportedConstraints).length > 0;
+  const filteredConstraints: MediaTrackConstraints = {};
+
+  if (constraints.deviceId !== undefined) {
+    if (!hasSupportMetadata || supportedConstraints.deviceId) {
+      filteredConstraints.deviceId = constraints.deviceId;
+    }
+  }
+
+  if (constraints.echoCancellation !== undefined) {
+    if (!hasSupportMetadata || supportedConstraints.echoCancellation) {
+      filteredConstraints.echoCancellation = constraints.echoCancellation;
+    }
+  }
+
+  if (constraints.noiseSuppression !== undefined) {
+    if (!hasSupportMetadata || supportedConstraints.noiseSuppression) {
+      filteredConstraints.noiseSuppression = constraints.noiseSuppression;
+    }
+  }
+
+  if (constraints.autoGainControl !== undefined) {
+    if (!hasSupportMetadata || supportedConstraints.autoGainControl) {
+      filteredConstraints.autoGainControl = constraints.autoGainControl;
+    }
+  }
+
+  return Object.keys(filteredConstraints).length > 0 ? filteredConstraints : constraints;
+}
+
 export function buildMicrophoneCaptureOptions(audioDeviceId?: string | null) {
   const normalizedDeviceId = normalizeAudioInputDeviceId(audioDeviceId);
-  return {
+  return filterSupportedAudioConstraints({
     ...DEFAULT_MIC_CAPTURE_OPTIONS,
     deviceId: normalizedDeviceId !== 'default' ? { exact: normalizedDeviceId } : undefined,
-  };
+  });
 }
 
 export function buildRawMicrophoneConstraints(audioDeviceId?: string | null): MediaTrackConstraints {
   const normalizedDeviceId = normalizeAudioInputDeviceId(audioDeviceId);
-  return {
+  return filterSupportedAudioConstraints({
     ...DEFAULT_MIC_CAPTURE_OPTIONS,
     ...(normalizedDeviceId !== 'default' ? { deviceId: { exact: normalizedDeviceId } } : {}),
-  };
+  });
 }
 
 export function resolvePreferredJoinAudioInputDeviceId(
@@ -154,7 +195,7 @@ function getMicrophonePermissionRecoveryHint(userAgent?: string | null) {
     case 'safari':
       return 'Safari may keep microphone access under Safari > Settings > Websites > Microphone, or in the website controls in the address bar.';
     case 'chromium':
-      return 'Look for the microphone prompt in the address bar. If it was dismissed, open Chrome site settings for this site and allow the microphone.';
+      return 'Look for the microphone prompt in the address bar and choose Allow this time or Allow on every visit. If it was dismissed, open Chrome site settings for this site and allow the microphone.';
     default:
       return 'Check the browser microphone prompt or this site\'s permissions and allow microphone access.';
   }
@@ -224,6 +265,106 @@ export async function getMicrophonePermissionState(options?: {
       });
     }
     return 'unknown';
+  }
+}
+
+export function formatMicrophonePermissionStateLabel(state: MicrophonePermissionState) {
+  switch (state) {
+    case 'granted':
+      return 'Allowed';
+    case 'denied':
+      return 'Blocked';
+    case 'prompt':
+      return 'Waiting for browser decision';
+    default:
+      return 'Browser-managed';
+  }
+}
+
+export function areMicrophoneDeviceLabelsVisible(
+  devices: Array<Pick<MicrophoneDeviceOption, 'label'>>
+) {
+  return devices.some((device) => device.label.trim().length > 0);
+}
+
+export function getMicrophonePermissionHelpMessage(
+  state: MicrophonePermissionState,
+  options?: {
+    userAgent?: string | null;
+    hasDetectedDevices?: boolean;
+    labelsVisible?: boolean;
+  }
+) {
+  const userAgent = options?.userAgent ?? getCurrentBrowserUserAgent();
+  const recoveryHint = getMicrophonePermissionRecoveryHint(userAgent);
+  const labelsHiddenNote =
+    options?.hasDetectedDevices && !options?.labelsVisible
+      ? ' Device names stay hidden until the browser grants microphone access.'
+      : '';
+
+  switch (state) {
+    case 'granted':
+      return options?.hasDetectedDevices
+        ? options?.labelsVisible
+          ? 'Microphone access is already allowed. You can switch between available microphones here.'
+          : 'Microphone access is allowed, but this browser has not exposed device names yet. Use Refresh devices after returning from browser settings.'
+        : 'Microphone access is allowed, but no audio input devices are currently visible to the browser.';
+    case 'denied':
+      return `Microphone access is blocked for this site. ${recoveryHint}`;
+    case 'prompt':
+      return `This browser is still waiting for a microphone decision. ${recoveryHint}${labelsHiddenNote}`;
+    default:
+      return `This browser does not expose a reliable microphone permission state before access. ${recoveryHint}${labelsHiddenNote}`;
+  }
+}
+
+export async function listAudioInputDevices(options?: {
+  silent?: boolean;
+  timeoutMs?: number;
+}): Promise<MicrophoneDeviceOption[]> {
+  if (typeof navigator === 'undefined' || !navigator.mediaDevices?.enumerateDevices) {
+    return [];
+  }
+
+  const timeoutMs = options?.timeoutMs ?? MICROPHONE_DEVICE_ENUMERATION_TIMEOUT_MS;
+
+  try {
+    const devices = await Promise.race([
+      navigator.mediaDevices.enumerateDevices(),
+      new Promise<MediaDeviceInfo[]>((_, reject) => {
+        window.setTimeout(() => {
+          reject(
+            new Error(
+              `Timed out while listing audio input devices after ${timeoutMs}ms.`
+            )
+          );
+        }, timeoutMs);
+      }),
+    ]);
+    const audioInputs = devices.filter(
+      (device): device is MicrophoneDeviceOption => device.kind === 'audioinput'
+    );
+
+    if (!options?.silent) {
+      chatClientDebug('microphone.devices.list', {
+        count: audioInputs.length,
+        labelsVisible: areMicrophoneDeviceLabelsVisible(audioInputs),
+        deviceIds: audioInputs.map((device) => device.deviceId),
+      });
+    }
+
+    return audioInputs;
+  } catch (error) {
+    if (!options?.silent) {
+      chatClientError('microphone.devices.error', {
+        timeoutMs,
+        error:
+          error instanceof Error
+            ? error
+            : new Error('Failed to enumerate microphone devices.'),
+      });
+    }
+    throw error;
   }
 }
 
@@ -433,7 +574,7 @@ function buildRawMicrophoneAttempts(
 async function requestMicrophoneWithAttempt(
   audioDeviceId: string,
   attempt: MicrophoneAttempt,
-  timeoutMs = MICROPHONE_ATTEMPT_TIMEOUT_MS
+  timeoutMs: number | null = MICROPHONE_ATTEMPT_TIMEOUT_MS
 ) {
   if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
     throw new Error('This browser does not support microphone capture.');
@@ -463,19 +604,22 @@ async function requestMicrophoneWithAttempt(
   );
 
   return await new Promise<MediaStream>((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      settled = true;
-      const error = new Error(
-        `Microphone request attempt "${attempt.label}" timed out after ${timeoutMs}ms.`
-      );
-      chatClientError('microphone.request.attempt.timeout', {
-        audioDeviceId,
-        attempt: attempt.label,
-        timeoutMs,
-        error,
-      });
-      reject(error);
-    }, timeoutMs);
+    const timeout =
+      typeof timeoutMs === 'number'
+        ? setTimeout(() => {
+            settled = true;
+            const error = new Error(
+              `Microphone request attempt "${attempt.label}" timed out after ${timeoutMs}ms.`
+            );
+            chatClientError('microphone.request.attempt.timeout', {
+              audioDeviceId,
+              attempt: attempt.label,
+              timeoutMs,
+              error,
+            });
+            reject(error);
+          }, timeoutMs)
+        : null;
 
     request.then(
       (stream) => {
@@ -484,7 +628,9 @@ async function requestMicrophoneWithAttempt(
         }
 
         settled = true;
-        clearTimeout(timeout);
+        if (timeout) {
+          clearTimeout(timeout);
+        }
         chatClientDebug('microphone.request.attempt.success', {
           audioDeviceId,
           attempt: attempt.label,
@@ -497,7 +643,9 @@ async function requestMicrophoneWithAttempt(
         }
 
         settled = true;
-        clearTimeout(timeout);
+        if (timeout) {
+          clearTimeout(timeout);
+        }
         chatClientError('microphone.request.attempt.error', {
           audioDeviceId,
           attempt: attempt.label,
@@ -537,14 +685,19 @@ export async function requestRawMicrophoneStream(
     resolvedDefaultAudioDeviceId,
   });
   let lastError: unknown = null;
+  const explicitTimeoutMs =
+    options && Object.prototype.hasOwnProperty.call(options, 'timeoutMs')
+      ? options.timeoutMs
+      : undefined;
   const timeoutMs =
-    options?.timeoutMs ??
-    (options?.interactive &&
-    normalizedDeviceId === 'default' &&
-    (permissionState === 'prompt' || permissionState === 'unknown') &&
-    !resolvedDefaultAudioDeviceId
-      ? INTERACTIVE_MICROPHONE_PROMPT_TIMEOUT_MS
-      : MICROPHONE_ATTEMPT_TIMEOUT_MS);
+    explicitTimeoutMs !== undefined
+      ? explicitTimeoutMs
+      : options?.interactive &&
+          normalizedDeviceId === 'default' &&
+          (permissionState === 'prompt' || permissionState === 'unknown') &&
+          !resolvedDefaultAudioDeviceId
+        ? INTERACTIVE_MICROPHONE_PROMPT_TIMEOUT_MS
+        : MICROPHONE_ATTEMPT_TIMEOUT_MS;
 
   for (const attempt of attempts) {
     try {

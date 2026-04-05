@@ -20,6 +20,7 @@ let currentMicrophonePublication: {
   unmute: jest.Mock;
 } | null = null;
 let registeredHandlers: Record<string, MockRoomHandler | undefined> = {};
+const defaultNavigatorUserAgent = global.navigator.userAgent;
 
 jest.mock('@livekit/components-react', () => {
   const React = require('react');
@@ -175,6 +176,10 @@ function renderWithQueryClient(children: ReactNode) {
 
 describe('GlobalVoiceProvider', () => {
   beforeEach(() => {
+    Object.defineProperty(global.navigator, 'userAgent', {
+      configurable: true,
+      value: defaultNavigatorUserAgent,
+    });
     Object.defineProperty(global.navigator, 'mediaDevices', {
       configurable: true,
       value: {
@@ -416,6 +421,89 @@ describe('GlobalVoiceProvider', () => {
 
     expect(mockGetUserMedia).not.toHaveBeenCalled();
     expect(mockCreateLocalAudioTrack).not.toHaveBeenCalled();
+  });
+
+  it('keeps an in-call chromium microphone prompt pending instead of failing fast', async () => {
+    jest.useFakeTimers();
+
+    const onRuntimeErrorChange = jest.fn();
+    const mediaTrack = { kind: 'audio', stop: jest.fn() } as unknown as MediaStreamTrack;
+    const originalUserAgent = global.navigator.userAgent;
+    let resolveMicrophoneStream: ((stream: MediaStream) => void) | null = null;
+
+    global.navigator.permissions.query.mockResolvedValue({ state: 'prompt' });
+    Object.defineProperty(global.navigator, 'userAgent', {
+      configurable: true,
+      value:
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+    });
+    mockGetUserMedia.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveMicrophoneStream = resolve;
+        })
+    );
+
+    function ToggleHarness() {
+      const voice = useGlobalVoice();
+      const toggledRef = useRef(false);
+
+      useEffect(() => {
+        if (voice.connectionState !== 'connected' || toggledRef.current) {
+          return;
+        }
+
+        toggledRef.current = true;
+        void voice.toggleMicrophone();
+      }, [voice]);
+
+      return null;
+    }
+
+    renderWithQueryClient(
+      <GlobalVoiceProvider>
+        <RuntimeErrorProbe onChange={onRuntimeErrorChange} />
+        <TestHarness />
+        <ToggleHarness />
+      </GlobalVoiceProvider>
+    );
+
+    await waitFor(() => {
+      expect(mockRoomConnect).toHaveBeenCalledTimes(1);
+    });
+
+    await waitFor(() => {
+      expect(mockGetUserMedia).toHaveBeenCalledWith({
+        audio: true,
+      });
+    });
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(7_000);
+      await Promise.resolve();
+    });
+
+    expect(onRuntimeErrorChange).toHaveBeenCalledWith(
+      'Browser is still waiting for microphone access. Look for the microphone prompt in the address bar and choose Allow this time or Allow on every visit. If it was dismissed, open Chrome site settings for this site and allow the microphone. TaskNebula will unmute automatically if access succeeds.'
+    );
+    expect(mockPublishTrack).not.toHaveBeenCalled();
+
+    resolveMicrophoneStream?.({
+      getAudioTracks: () => [mediaTrack],
+      getTracks: () => [mediaTrack],
+    } as unknown as MediaStream);
+
+    await waitFor(() => {
+      expect(mockPublishTrack).toHaveBeenCalledWith(mediaTrack, {
+        source: 'microphone',
+      });
+    });
+
+    Object.defineProperty(global.navigator, 'userAgent', {
+      configurable: true,
+      value: originalUserAgent,
+    });
+    jest.useRealTimers();
   });
 
   it('surfaces a timeout message when a pending microphone request expires after joining', async () => {
