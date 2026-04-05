@@ -218,7 +218,9 @@ describe('chat microphone helpers', () => {
     jest.useRealTimers();
   });
 
-  it('prefers the resolved concrete microphone device before retrying the default alias', async () => {
+  it('falls back to the resolved concrete microphone after a generic default request hangs', async () => {
+    jest.useFakeTimers();
+
     global.navigator.mediaDevices.enumerateDevices.mockResolvedValue([
       {
         deviceId: 'default',
@@ -232,17 +234,38 @@ describe('chat microphone helpers', () => {
       },
     ]);
 
+    const lateTracks = [{ stop: jest.fn() }];
+    const lateStream = {
+      getAudioTracks: () => lateTracks,
+      getTracks: () => lateTracks,
+    };
     const concreteTracks = [{ stop: jest.fn() }];
     const concreteStream = {
       getAudioTracks: () => concreteTracks,
       getTracks: () => concreteTracks,
     };
 
-    global.navigator.mediaDevices.getUserMedia.mockResolvedValueOnce(concreteStream);
+    let resolveDefaultRequest: ((stream: typeof concreteStream) => void) | null = null;
+    global.navigator.mediaDevices.getUserMedia
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveDefaultRequest = resolve;
+          })
+      )
+      .mockResolvedValueOnce(concreteStream);
 
-    await expect(requestRawMicrophoneStream('default')).resolves.toBe(concreteStream);
+    const requestPromise = requestRawMicrophoneStream('default');
+
+    await jest.advanceTimersByTimeAsync(2_500);
+    await Promise.resolve();
+
+    await expect(requestPromise).resolves.toBe(concreteStream);
     expect(global.navigator.mediaDevices.enumerateDevices).toHaveBeenCalledTimes(1);
     expect(global.navigator.mediaDevices.getUserMedia).toHaveBeenNthCalledWith(1, {
+      audio: true,
+    });
+    expect(global.navigator.mediaDevices.getUserMedia).toHaveBeenNthCalledWith(2, {
       audio: {
         deviceId: { exact: 'usb-arctis' },
         echoCancellation: false,
@@ -250,6 +273,12 @@ describe('chat microphone helpers', () => {
         autoGainControl: false,
       },
     });
+
+    resolveDefaultRequest?.(lateStream);
+    await Promise.resolve();
+    expect(lateTracks[0]?.stop).toHaveBeenCalledTimes(1);
+
+    jest.useRealTimers();
   });
 
   it('uses a single longer interactive attempt while the browser permission prompt is pending', async () => {
@@ -363,7 +392,7 @@ describe('chat microphone helpers', () => {
     expect(global.navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
   });
 
-  it('still resolves the concrete default microphone when the permissions API cannot report state', async () => {
+  it('still prefers a browser-native default microphone request when the permissions API cannot report state', async () => {
     global.navigator.permissions.query.mockRejectedValue(new Error('permissions query failed'));
     global.navigator.mediaDevices.enumerateDevices.mockResolvedValue([
       {
@@ -398,12 +427,7 @@ describe('chat microphone helpers', () => {
     });
     expect(global.navigator.mediaDevices.enumerateDevices).toHaveBeenCalledTimes(1);
     expect(global.navigator.mediaDevices.getUserMedia).toHaveBeenNthCalledWith(1, {
-      audio: {
-        deviceId: { exact: 'usb-arctis' },
-        echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: false,
-      },
+      audio: true,
     });
   });
 

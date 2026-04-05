@@ -65,8 +65,7 @@ function isClientDebugEnabled() {
     // Ignore localStorage failures.
   }
 
-  const host = window.location.hostname;
-  return ['localhost', '127.0.0.1', '[::1]'].includes(host) || host.endsWith('.local');
+  return process.env.NEXT_PUBLIC_CHAT_DEBUG === '1';
 }
 
 function isServerDebugEnabled() {
@@ -82,7 +81,7 @@ export function chatClientDebug(scope: string, payload?: Record<string, unknown>
     return;
   }
 
-  console.log(`[chat-debug][client] ${scope}`, serializeDebugValue(payload ?? {}));
+  console.debug(`[chat-debug][client] ${scope}`, serializeDebugValue(payload ?? {}));
 }
 
 export function chatClientError(scope: string, payload?: Record<string, unknown>) {
@@ -90,7 +89,7 @@ export function chatClientError(scope: string, payload?: Record<string, unknown>
     return;
   }
 
-  console.error(`[chat-debug][client] ${scope}`, serializeDebugValue(payload ?? {}));
+  console.debug(`[chat-debug][client] ${scope}`, serializeDebugValue(payload ?? {}));
 }
 
 export function chatServerDebug(scope: string, payload?: Record<string, unknown>) {

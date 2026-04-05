@@ -522,6 +522,31 @@ type MicrophoneAttempt = {
   constraints: boolean | MediaTrackConstraints;
 };
 
+function readCapturedAudioTrackIdentity(stream: MediaStream) {
+  const audioTrack =
+    stream.getAudioTracks?.()[0] ??
+    stream
+      .getTracks?.()
+      .find((track): track is MediaStreamTrack => track.kind === 'audio') ??
+    null;
+
+  if (!audioTrack || typeof audioTrack.getSettings !== 'function') {
+    return {
+      deviceId: null,
+      groupId: null,
+      label: typeof audioTrack?.label === 'string' ? audioTrack.label : null,
+    };
+  }
+
+  const settings = audioTrack.getSettings();
+
+  return {
+    deviceId: typeof settings.deviceId === 'string' ? settings.deviceId : null,
+    groupId: typeof settings.groupId === 'string' ? settings.groupId : null,
+    label: typeof audioTrack.label === 'string' ? audioTrack.label : null,
+  };
+}
+
 async function resolveConcreteDefaultAudioInputDeviceId(
   timeoutMs = DEFAULT_DEVICE_RESOLUTION_TIMEOUT_MS
 ) {
@@ -652,10 +677,6 @@ function buildRawMicrophoneAttempts(
         ]
       : [];
 
-    if (resolvedDefaultAttempts.length > 0) {
-      return resolvedDefaultAttempts;
-    }
-
     if (shouldUseSingleInteractiveAttempt) {
       return [
         {
@@ -666,11 +687,11 @@ function buildRawMicrophoneAttempts(
     }
 
     return [
-      ...resolvedDefaultAttempts,
       {
         label: 'default-audio-true',
         constraints: true,
       },
+      ...resolvedDefaultAttempts,
       {
         label: 'default-raw-minimal',
         constraints: {
@@ -754,9 +775,13 @@ async function requestMicrophoneWithAttempt(
         if (timeout) {
           clearTimeout(timeout);
         }
+        const actualDevice = readCapturedAudioTrackIdentity(stream);
         chatClientDebug('microphone.request.attempt.success', {
           audioDeviceId,
           attempt: attempt.label,
+          actualDeviceId: actualDevice.deviceId,
+          actualGroupId: actualDevice.groupId,
+          actualLabel: actualDevice.label,
         });
         resolve(stream);
       },
