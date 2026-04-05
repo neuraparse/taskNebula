@@ -13,7 +13,13 @@ import {
   normalizeWorkspaceCommunicationsSettings,
   resolveEffectiveProjectCommunicationsSettings,
 } from '@/lib/chat/config';
-import { buildLivekitRoomName, getLivekitStatus, resolveLivekitPublicUrl } from '@/lib/chat/livekit';
+import {
+  buildLivekitParticipantIdentity,
+  buildLivekitRoomName,
+  getLivekitStatus,
+  parseLivekitParticipantIdentity,
+  resolveLivekitPublicUrl,
+} from '@/lib/chat/livekit';
 
 describe('chat config', () => {
   const originalEnv = { ...process.env };
@@ -87,6 +93,18 @@ describe('chat config', () => {
     expect(first).toMatch(/^tn-web-room-1-/);
     expect(second).toMatch(/^tn-web-room-1-/);
     expect(first).not.toBe(second);
+  });
+
+  it('builds and parses browser-session livekit participant identities', () => {
+    const identity = buildLivekitParticipantIdentity('user-1', 'session-abc');
+    const parsed = parseLivekitParticipantIdentity(identity);
+
+    expect(identity).toBe('tnp:user-1:session-abc');
+    expect(parsed).toEqual({
+      participantIdentity: 'tnp:user-1:session-abc',
+      userId: 'user-1',
+      clientSessionId: 'session-abc',
+    });
   });
 
   it('derives a browser-reachable public url from the incoming request host', () => {

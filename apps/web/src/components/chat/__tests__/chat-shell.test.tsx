@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ChatShell } from '../chat-shell';
+import { ChatShell, VoiceJoinSetupPanel } from '../chat-shell';
 
 const toast = jest.fn();
 const replace = jest.fn();
@@ -31,6 +31,8 @@ let liveCallsData: Array<Record<string, unknown>> = [];
 let startSessionError: Error | null = null;
 let conversationMessagesData: Array<Record<string, unknown>> = [];
 let conversationHasMore = false;
+let setVoiceRuntimeErrorRef: ((message: string | null) => void) | null = null;
+const originalUserAgent = window.navigator.userAgent;
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ replace }),
@@ -214,6 +216,7 @@ jest.mock('@/lib/hooks/use-chat', () => ({
       url: 'ws://localhost:7880',
       token: 'token',
       roomName: 'room-name',
+      participantIdentity: 'tnp:user-1:session-1',
     }),
     isPending: false,
   }),
@@ -240,6 +243,8 @@ jest.mock('@/components/chat/global-voice-provider', () => {
       const [participantCount, setParticipantCount] = React.useState(0);
       const [isMicrophoneEnabled, setIsMicrophoneEnabled] = React.useState(false);
       const [isTogglingMicrophone, setIsTogglingMicrophone] = React.useState(false);
+
+      setVoiceRuntimeErrorRef = setRuntimeError;
 
       const clear = () => {
         setCurrentSession(null);
@@ -307,7 +312,14 @@ jest.mock('@/components/chat/global-voice-provider', () => {
 
 describe('ChatShell', () => {
   beforeEach(() => {
+    jest.useRealTimers();
     jest.clearAllMocks();
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+    Object.defineProperty(window.navigator, 'userAgent', {
+      configurable: true,
+      value: originalUserAgent,
+    });
     messagesRefetch.mockResolvedValue(undefined);
     createMessageMutateAsync.mockResolvedValue(undefined);
     moderateMessagesMutateAsync.mockResolvedValue({ action: 'clear_deleted', affectedCount: 1 });
@@ -333,6 +345,7 @@ describe('ChatShell', () => {
     liveCallsData = [];
     startSessionError = null;
     conversationHasMore = false;
+    setVoiceRuntimeErrorRef = null;
     conversationMessagesData = [
       {
         id: 'message-1',
@@ -369,6 +382,16 @@ describe('ChatShell', () => {
         }),
       },
     });
+    Object.defineProperty(global.navigator, 'permissions', {
+      configurable: true,
+      value: {
+        query: jest.fn().mockResolvedValue({ state: 'granted' }),
+      },
+    });
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('renders the simplified chat layout without the old detail sidebar', () => {
@@ -390,10 +413,13 @@ describe('ChatShell', () => {
     });
 
     expect(await screen.findByText('Join voice room')).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: /join with mic/i })).toBeInTheDocument();
+    const joinWithMicButton = await screen.findByRole('button', { name: /join with mic/i });
+    await waitFor(() => {
+      expect(joinWithMicButton).toBeEnabled();
+    });
 
     await act(async () => {
-      await user.click(screen.getByRole('button', { name: /join with mic/i }));
+      await user.click(joinWithMicButton);
     });
 
     await waitFor(() => {
@@ -402,6 +428,20 @@ describe('ChatShell', () => {
     expect(callTokenMutateAsync).toHaveBeenCalled();
     expect(screen.getAllByRole('button', { name: /in call/i }).length).toBeGreaterThan(0);
     expect(screen.queryByText('Join voice room')).not.toBeInTheDocument();
+  });
+
+  it('does not start or prepare a call just by opening the voice setup panel', async () => {
+    const user = userEvent.setup();
+    render(<ChatShell projectId="project-1" />);
+
+    await act(async () => {
+      await user.click(screen.getAllByRole('button', { name: /start call/i })[0]);
+    });
+
+    expect(await screen.findByText('Join voice room')).toBeInTheDocument();
+    expect(startCallMutateAsync).not.toHaveBeenCalled();
+    expect(callTokenMutateAsync).not.toHaveBeenCalled();
+    expect(startSessionMock).not.toHaveBeenCalled();
   });
 
   it('uses the selected microphone device when joining the call', async () => {
@@ -413,18 +453,176 @@ describe('ChatShell', () => {
     });
     const microphoneSelect = await screen.findByRole('combobox');
     fireEvent.change(microphoneSelect, { target: { value: 'mic-usb' } });
-    await user.click(screen.getByRole('button', { name: /join with mic/i }));
+    const joinWithMicButton = screen.getByRole('button', { name: /join with mic/i });
+    await waitFor(() => {
+      expect(joinWithMicButton).toBeEnabled();
+    });
+    await user.click(joinWithMicButton);
 
     await waitFor(() => {
       expect(startSessionMock).toHaveBeenCalledWith(
         expect.objectContaining({
           session: expect.objectContaining({
             audioDeviceId: 'mic-usb',
+            preflightMicrophoneStream: expect.any(Object),
             startWithMicrophone: true,
           }),
         })
       );
     });
+    expect(global.navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
+      audio: {
+        deviceId: { exact: 'mic-usb' },
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+    });
+  });
+
+  it('starts Chromium live joins on the system default microphone for stability', async () => {
+    const user = userEvent.setup();
+    Object.defineProperty(window.navigator, 'userAgent', {
+      configurable: true,
+      value:
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+    });
+
+    render(<ChatShell projectId="project-1" />);
+
+    await act(async () => {
+      await user.click(screen.getAllByRole('button', { name: /start call/i })[0]);
+    });
+
+    const microphoneSelect = await screen.findByRole('combobox');
+    fireEvent.change(microphoneSelect, { target: { value: 'mic-usb' } });
+    const joinWithMicButton = screen.getByRole('button', { name: /join with mic/i });
+    await waitFor(() => {
+      expect(joinWithMicButton).toBeEnabled();
+    });
+    await user.click(joinWithMicButton);
+
+    await waitFor(() => {
+      expect(startSessionMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          session: expect.objectContaining({
+            audioDeviceId: 'default',
+            preflightMicrophoneStream: expect.any(Object),
+            startWithMicrophone: true,
+          }),
+        })
+      );
+    });
+    expect(global.navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
+      audio: true,
+    });
+  });
+
+  it('does not probe the microphone when joining without mic', async () => {
+    const user = userEvent.setup();
+
+    render(<ChatShell projectId="project-1" />);
+
+    await act(async () => {
+      await user.click(screen.getAllByRole('button', { name: /start call/i })[0]);
+    });
+
+    const joinMutedButton = screen.getByRole('button', { name: /^join muted$/i });
+    await waitFor(() => {
+      expect(joinMutedButton).toBeEnabled();
+    });
+    await user.click(joinMutedButton);
+
+    await waitFor(() => {
+      expect(startSessionMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          session: expect.objectContaining({
+            startWithMicrophone: false,
+          }),
+        })
+      );
+    });
+    expect(global.navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+  });
+
+  it('joins muted quickly while microphone access is still waiting on a browser prompt', async () => {
+    jest.useFakeTimers();
+    const onJoin = jest.fn().mockResolvedValue(undefined);
+    global.navigator.permissions.query.mockResolvedValue({ state: 'prompt' });
+    global.navigator.mediaDevices.getUserMedia.mockImplementation(
+      () => new Promise(() => undefined)
+    );
+
+    render(
+      <VoiceJoinSetupPanel
+        isJoining={false}
+        isPreparing={false}
+        isReady
+        onClose={jest.fn()}
+        onJoin={onJoin}
+      />
+    );
+
+    const joinWithMicButton = await screen.findByRole('button', { name: /join with mic/i });
+    expect(joinWithMicButton).toBeEnabled();
+
+    await act(async () => {
+      fireEvent.click(joinWithMicButton);
+      await jest.advanceTimersByTimeAsync(1_500);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(onJoin).toHaveBeenCalledWith(
+      expect.objectContaining({
+        audioDeviceId: 'default',
+        startWithMicrophone: false,
+        pendingMicrophoneStreamPromise: expect.any(Promise),
+      })
+    );
+
+    expect(global.navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
+      audio: true,
+    });
+  });
+
+  it('replaces the pending microphone banner with the latest voice runtime error', async () => {
+    jest.useFakeTimers();
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    global.navigator.permissions.query.mockResolvedValue({ state: 'prompt' });
+    global.navigator.mediaDevices.getUserMedia.mockImplementation(
+      () => new Promise(() => undefined)
+    );
+
+    render(<ChatShell projectId="project-1" />);
+
+    await act(async () => {
+      await user.click(screen.getAllByRole('button', { name: /start call/i })[0]);
+    });
+
+    const joinWithMicButton = await screen.findByRole('button', { name: /join with mic/i });
+
+    await act(async () => {
+      await user.click(joinWithMicButton);
+      await jest.advanceTimersByTimeAsync(1_500);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(
+      await screen.findByText(/joined muted while the browser finishes microphone access/i)
+    ).toBeInTheDocument();
+
+    await act(async () => {
+      setVoiceRuntimeErrorRef?.(
+        'Microphone access timed out while waiting for the browser prompt. Check the browser microphone prompt or this site\'s permissions and allow microphone access. Then try the mic button again.'
+      );
+      await Promise.resolve();
+    });
+
+    expect(
+      await screen.findByText(/microphone access timed out while waiting for the browser prompt/i)
+    ).toBeInTheDocument();
   });
 
   it('runs a local mic test from the join setup panel before connecting', async () => {
@@ -604,6 +802,9 @@ describe('ChatShell', () => {
 
     await user.click(screen.getAllByRole('button', { name: /start call/i })[0]);
     const joinButton = await screen.findByRole('button', { name: /join with mic/i });
+    await waitFor(() => {
+      expect(joinButton).toBeEnabled();
+    });
     await user.click(joinButton);
     await user.click(joinButton);
 
@@ -627,13 +828,17 @@ describe('ChatShell', () => {
     await act(async () => {
       await user.click(screen.getAllByRole('button', { name: /start call/i })[0]);
     });
-    await user.click(await screen.findByRole('button', { name: /join with mic/i }));
+    const joinWithMicButton = await screen.findByRole('button', { name: /join with mic/i });
+    await waitFor(() => {
+      expect(joinWithMicButton).toBeEnabled();
+    });
+    await user.click(joinWithMicButton);
 
     await waitFor(() => {
       expect(screen.getByText('Voice call is live')).toBeInTheDocument();
     });
 
-    expect(startCallMutateAsync).toHaveBeenCalledTimes(2);
+    expect(startCallMutateAsync).toHaveBeenCalledTimes(1);
     expect(callTokenMutateAsync).toHaveBeenCalledTimes(2);
     expect(screen.queryByText(/failed to join call/i)).not.toBeInTheDocument();
   });
@@ -647,7 +852,11 @@ describe('ChatShell', () => {
     await act(async () => {
       fireEvent.click(screen.getAllByRole('button', { name: /start call/i })[0]);
     });
-    fireEvent.click(await screen.findByRole('button', { name: /join with mic/i }));
+    const joinWithMicButton = await screen.findByRole('button', { name: /join with mic/i });
+    await waitFor(() => {
+      expect(joinWithMicButton).toBeEnabled();
+    });
+    fireEvent.click(joinWithMicButton);
 
     await waitFor(() => {
       expect(screen.getByText(/permission denied/i)).toBeInTheDocument();

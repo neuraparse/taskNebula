@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { WebhookReceiver } from 'livekit-server-sdk';
 import { handleLivekitWebhookEvent } from '@/lib/chat/server';
+import { chatServerDebug, chatServerError } from '@/lib/chat/debug';
 
 function getWebhookReceiver() {
   const apiKey = process.env.LIVEKIT_API_KEY || '';
@@ -24,16 +25,29 @@ export async function POST(request: Request) {
     const authHeader =
       request.headers.get('authorization') || request.headers.get('Authorize') || undefined;
     const event = await receiver.receive(body, authHeader);
-
-    const result = await handleLivekitWebhookEvent({
+    chatServerDebug('route.livekit.webhook.request', {
       event: event.event,
       roomName: event.room?.name || null,
       participantIdentity: event.participant?.identity || null,
     });
 
+    const result = await handleLivekitWebhookEvent({
+      event: event.event,
+      roomName: event.room?.name || null,
+      participantIdentity: event.participant?.identity || null,
+      participantMetadata: event.participant?.metadata || null,
+    });
+
+    chatServerDebug('route.livekit.webhook.success', {
+      event: event.event,
+      roomName: event.room?.name || null,
+      result,
+    });
     return NextResponse.json({ ok: true, result });
   } catch (error) {
-    console.error('Failed to process LiveKit webhook:', error);
+    chatServerError('route.livekit.webhook.error', {
+      error: error instanceof Error ? error : new Error('Invalid LiveKit webhook'),
+    });
     return NextResponse.json({ error: 'Invalid LiveKit webhook' }, { status: 401 });
   }
 }

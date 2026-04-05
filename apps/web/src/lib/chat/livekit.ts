@@ -1,6 +1,8 @@
 import { AccessToken, RoomServiceClient } from 'livekit-server-sdk';
 import { createId } from '@paralleldrive/cuid2';
 
+const PARTICIPANT_IDENTITY_PREFIX = 'tnp';
+
 function stripPort(host: string) {
   if (host.startsWith('[')) {
     const closing = host.indexOf(']');
@@ -80,10 +82,43 @@ export function buildLivekitRoomName(projectKey: string, roomId: string) {
   return `tn-${projectKey.toLowerCase()}-${roomId}-${createId()}`;
 }
 
+export function buildLivekitParticipantIdentity(userId: string, clientSessionId: string) {
+  return `${PARTICIPANT_IDENTITY_PREFIX}:${userId}:${clientSessionId}`;
+}
+
+export function parseLivekitParticipantIdentity(identity: string | null | undefined) {
+  const trimmed = identity?.trim();
+  if (!trimmed) {
+    return {
+      participantIdentity: null,
+      userId: null,
+      clientSessionId: null,
+    };
+  }
+
+  if (!trimmed.startsWith(`${PARTICIPANT_IDENTITY_PREFIX}:`)) {
+    return {
+      participantIdentity: trimmed,
+      userId: trimmed,
+      clientSessionId: null,
+    };
+  }
+
+  const [, userId, ...sessionParts] = trimmed.split(':');
+  const clientSessionId = sessionParts.join(':') || null;
+
+  return {
+    participantIdentity: trimmed,
+    userId: userId || null,
+    clientSessionId,
+  };
+}
+
 export async function createLivekitToken(params: {
   roomName: string;
   identity: string;
   name: string;
+  metadata?: string;
   publicUrlOverride?: string;
 }) {
   const config = getLivekitConfig();
@@ -95,6 +130,7 @@ export async function createLivekitToken(params: {
   const token = new AccessToken(config.apiKey, config.apiSecret, {
     identity: params.identity,
     name: params.name,
+    metadata: params.metadata,
   });
 
   token.addGrant({

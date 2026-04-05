@@ -29,11 +29,14 @@ import {
   users,
 } from '@tasknebula/db';
 import {
+  buildLivekitParticipantIdentity,
   buildLivekitRoomName,
   createLivekitRoomService,
   createLivekitToken,
   getLivekitStatus,
+  parseLivekitParticipantIdentity,
 } from '@/lib/chat/livekit';
+import { chatServerDebug, chatServerError } from '@/lib/chat/debug';
 import {
   ACTIVE_CALL_HEARTBEAT_STALE_MS,
   hasFreshHeartbeatParticipants,
@@ -1505,6 +1508,10 @@ async function finalizeActiveCallSession(
     reason: string;
   }
 ) {
+  chatServerDebug('call.finalize.start', {
+    callId,
+    options,
+  });
   const finalizedCall = await db.transaction(async (tx) => {
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${callId}))`);
 
@@ -1540,10 +1547,16 @@ async function finalizeActiveCallSession(
   });
 
   if (!finalizedCall) {
+    chatServerDebug('call.finalize.skip', {
+      callId,
+      reason: 'not_found_or_not_active',
+    });
     return null;
   }
 
-  const roomService = createLivekitRoomService();
+  const livekitServerUrl = process.env.LIVEKIT_URL || '';
+  const roomService =
+    livekitServerUrl.includes('host.docker.internal') ? null : createLivekitRoomService();
   if (roomService) {
     void roomService.deleteRoom(finalizedCall.livekitRoomName).catch((error) => {
       const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
@@ -1557,6 +1570,11 @@ async function finalizeActiveCallSession(
       }
 
       console.warn('Failed to delete LiveKit room:', error);
+      chatServerError('call.finalize.delete-room.error', {
+        callId: finalizedCall.id,
+        livekitRoomName: finalizedCall.livekitRoomName,
+        error: error instanceof Error ? error : new Error(String(error)),
+      });
     });
   }
 
@@ -1587,6 +1605,12 @@ async function finalizeActiveCallSession(
     },
   });
 
+  chatServerDebug('call.finalize.success', {
+    callId: finalizedCall.id,
+    roomId: finalizedCall.roomId,
+    reason: options.reason,
+    livekitRoomName: finalizedCall.livekitRoomName,
+  });
   return finalizedCall;
 }
 
@@ -1594,7 +1618,9 @@ export async function handleLivekitWebhookEvent(input: {
   event: string;
   roomName?: string | null;
   participantIdentity?: string | null;
+  participantMetadata?: string | null;
 }) {
+  chatServerDebug('livekit.webhook.received', input);
   const roomName = input.roomName?.trim();
   if (!roomName) {
     return { handled: false, reason: 'missing_room_name' as const };
@@ -1630,18 +1656,35 @@ export async function handleLivekitWebhookEvent(input: {
     return { handled: false, reason: 'call_not_found' as const };
   }
 
+  const parsedMetadata = (() => {
+    if (!input.participantMetadata) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(input.participantMetadata) as {
+        userId?: string;
+        clientSessionId?: string;
+      };
+    } catch {
+      return null;
+    }
+  })();
+  const parsedIdentity = parseLivekitParticipantIdentity(input.participantIdentity);
+  const participantIdentity = parsedIdentity.participantIdentity;
+  const participantUserId = parsedMetadata?.userId || parsedIdentity.userId;
+
   if (input.event === 'participant_joined') {
-    const identity = input.participantIdentity?.trim();
     const now = new Date();
 
-    if (identity) {
+    if (participantIdentity && participantUserId) {
       const [existingParticipant] = await db
         .select({ id: callParticipants.id })
         .from(callParticipants)
         .where(
           and(
             eq(callParticipants.callSessionId, call.id),
-            eq(callParticipants.userId, identity),
+            eq(callParticipants.participantIdentity, participantIdentity),
             isNull(callParticipants.leftAt)
           )
         )
@@ -1651,15 +1694,26 @@ export async function handleLivekitWebhookEvent(input: {
         await db.insert(callParticipants).values({
           id: createId(),
           callSessionId: call.id,
-          userId: identity,
+          userId: participantUserId,
+          participantIdentity,
           joinedAt: now,
-          metadata: buildCallParticipantHeartbeatMetadata({}, now),
+          metadata: buildCallParticipantHeartbeatMetadata(
+            {
+              clientSessionId: parsedMetadata?.clientSessionId || parsedIdentity.clientSessionId,
+            },
+            now
+          ),
         });
       } else {
         await db
           .update(callParticipants)
           .set({
-            metadata: buildCallParticipantHeartbeatMetadata(undefined, now),
+            metadata: buildCallParticipantHeartbeatMetadata(
+              {
+                clientSessionId: parsedMetadata?.clientSessionId || parsedIdentity.clientSessionId,
+              },
+              now
+            ),
           })
           .where(eq(callParticipants.id, existingParticipant.id));
       }
@@ -1690,10 +1744,9 @@ export async function handleLivekitWebhookEvent(input: {
     return { handled: false, reason: 'ignored_event' as const };
   }
 
-  const identity = input.participantIdentity?.trim();
   const now = new Date();
 
-  if (identity) {
+  if (participantIdentity) {
     await db
       .update(callParticipants)
       .set({
@@ -1702,7 +1755,20 @@ export async function handleLivekitWebhookEvent(input: {
       .where(
         and(
           eq(callParticipants.callSessionId, call.id),
-          eq(callParticipants.userId, identity),
+          eq(callParticipants.participantIdentity, participantIdentity),
+          isNull(callParticipants.leftAt)
+        )
+      );
+  } else if (participantUserId) {
+    await db
+      .update(callParticipants)
+      .set({
+        leftAt: now,
+      })
+      .where(
+        and(
+          eq(callParticipants.callSessionId, call.id),
+          eq(callParticipants.userId, participantUserId),
           isNull(callParticipants.leftAt)
         )
       );
@@ -1760,14 +1826,24 @@ export async function handleLivekitWebhookEvent(input: {
 }
 
 export async function getActiveCallSummary(roomId: string) {
+  chatServerDebug('call.summary.start', {
+    roomId,
+  });
   const call = await getActiveCallState(roomId);
   const now = new Date();
 
   if (!call) {
+    chatServerDebug('call.summary.none', {
+      roomId,
+    });
     return null;
   }
 
   if (call.databaseParticipantCount === 0) {
+    chatServerDebug('call.summary.auto-end.database-empty', {
+      roomId,
+      callId: call.id,
+    });
     await finalizeActiveCallSession(call.id, {
       reason: 'last_participant_left',
     });
@@ -1784,6 +1860,12 @@ export async function getActiveCallSummary(roomId: string) {
       now,
     })
   ) {
+    chatServerDebug('call.summary.auto-end.livekit-empty', {
+      roomId,
+      callId: call.id,
+      roomExists: livekitOccupancy.roomExists,
+      livekitParticipantCount: livekitOccupancy.participantCount,
+    });
     await finalizeActiveCallSession(call.id, {
       reason:
         livekitOccupancy.roomExists === false
@@ -1802,6 +1884,12 @@ export async function getActiveCallSummary(roomId: string) {
       now,
     })
   ) {
+    chatServerDebug('call.summary.auto-end.heartbeat-stale', {
+      roomId,
+      callId: call.id,
+      databaseParticipantCount: call.databaseParticipantCount,
+      freshHeartbeatCount: call.freshHeartbeatCount,
+    });
     await finalizeActiveCallSession(call.id, {
       reason: 'participant_heartbeat_stale',
     });
@@ -1809,13 +1897,20 @@ export async function getActiveCallSummary(roomId: string) {
   }
 
   const { databaseParticipantCount, freshHeartbeatCount, ...callRecord } = call;
-  return {
+  const summary = {
     ...callRecord,
     participantCount: resolveActiveCallParticipantCount({
       databaseParticipantCount,
       livekitParticipantCount: livekitOccupancy.participantCount,
     }),
   };
+  chatServerDebug('call.summary.success', {
+    roomId,
+    callId: summary.id,
+    participantCount: summary.participantCount,
+    livekitRoomName: summary.livekitRoomName,
+  });
+  return summary;
 }
 
 export async function listAccessibleActiveCalls(userId: string) {
@@ -1917,6 +2012,10 @@ export async function countResolvedActiveCalls() {
 }
 
 export async function startConversationCall(roomId: string, userId: string) {
+  chatServerDebug('call.start.request', {
+    roomId,
+    userId,
+  });
   const access = await resolveConversationRoomAccess(userId, roomId);
   if (!access) {
     throw new ChatAccessError('Conversation not found or unavailable.', 404);
@@ -1940,6 +2039,11 @@ export async function startConversationCall(roomId: string, userId: string) {
 
   const existingCall = await getActiveCallSummary(roomId);
   if (existingCall) {
+    chatServerDebug('call.start.reuse-active', {
+      roomId,
+      userId,
+      callId: existingCall.id,
+    });
     return existingCall;
   }
 
@@ -2000,6 +2104,11 @@ export async function startConversationCall(roomId: string, userId: string) {
 
   const summary = await getActiveCallSummary(roomId);
   if (!createdCall.created) {
+    chatServerDebug('call.start.raced-existing', {
+      roomId,
+      userId,
+      callId: createdCall.callId,
+    });
     return summary;
   }
 
@@ -2022,6 +2131,13 @@ export async function startConversationCall(roomId: string, userId: string) {
     },
   });
 
+  chatServerDebug('call.start.success', {
+    roomId,
+    userId,
+    callId: createdCall.callId,
+    livekitRoomName: createdCall.livekitRoomName,
+    participantCount: summary?.participantCount || 0,
+  });
   return summary;
 }
 
@@ -2057,7 +2173,16 @@ export async function endConversationCall(roomId: string, userId: string) {
   });
 }
 
-export async function leaveConversationCall(roomId: string, userId: string) {
+export async function leaveConversationCall(
+  roomId: string,
+  userId: string,
+  participantIdentity?: string | null
+) {
+  chatServerDebug('call.leave.request', {
+    roomId,
+    userId,
+    participantIdentity: participantIdentity || null,
+  });
   const access = await resolveConversationRoomAccess(userId, roomId);
   if (!access) {
     throw new ChatAccessError('Conversation not found or unavailable.', 404);
@@ -2071,6 +2196,10 @@ export async function leaveConversationCall(roomId: string, userId: string) {
     .limit(1);
 
   if (!call) {
+    chatServerDebug('call.leave.no-active-call', {
+      roomId,
+      userId,
+    });
     return null;
   }
 
@@ -2081,11 +2210,17 @@ export async function leaveConversationCall(roomId: string, userId: string) {
       leftAt: now,
     })
     .where(
-      and(
-        eq(callParticipants.callSessionId, call.id),
-        eq(callParticipants.userId, userId),
-        isNull(callParticipants.leftAt)
-      )
+      participantIdentity
+        ? and(
+            eq(callParticipants.callSessionId, call.id),
+            eq(callParticipants.participantIdentity, participantIdentity),
+            isNull(callParticipants.leftAt)
+          )
+        : and(
+            eq(callParticipants.callSessionId, call.id),
+            eq(callParticipants.userId, userId),
+            isNull(callParticipants.leftAt)
+          )
     );
 
   await db
@@ -2103,6 +2238,11 @@ export async function leaveConversationCall(roomId: string, userId: string) {
     .where(and(eq(callParticipants.callSessionId, call.id), isNull(callParticipants.leftAt)));
 
   if (Number(remainingParticipants?.count || 0) === 0) {
+    chatServerDebug('call.leave.last-participant', {
+      roomId,
+      userId,
+      callId: call.id,
+    });
     await finalizeActiveCallSession(call.id, {
       endedByUserId: userId,
       issueId: access.room.issueId,
@@ -2113,6 +2253,11 @@ export async function leaveConversationCall(roomId: string, userId: string) {
 
   const summary = await getActiveCallSummary(roomId);
   if (!summary) {
+    chatServerDebug('call.leave.summary-empty', {
+      roomId,
+      userId,
+      callId: call.id,
+    });
     return null;
   }
 
@@ -2127,7 +2272,16 @@ export async function leaveConversationCall(roomId: string, userId: string) {
   return summary;
 }
 
-export async function touchConversationCallHeartbeat(roomId: string, userId: string) {
+export async function touchConversationCallHeartbeat(
+  roomId: string,
+  userId: string,
+  participantIdentity?: string | null
+) {
+  chatServerDebug('call.heartbeat.request', {
+    roomId,
+    userId,
+    participantIdentity: participantIdentity || null,
+  });
   const [call] = await db
     .select()
     .from(callSessions)
@@ -2136,6 +2290,10 @@ export async function touchConversationCallHeartbeat(roomId: string, userId: str
     .limit(1);
 
   if (!call) {
+    chatServerDebug('call.heartbeat.no-active-call', {
+      roomId,
+      userId,
+    });
     return null;
   }
 
@@ -2149,13 +2307,21 @@ export async function touchConversationCallHeartbeat(roomId: string, userId: str
     .where(
       and(
         eq(callParticipants.callSessionId, call.id),
-        eq(callParticipants.userId, userId),
+        participantIdentity
+          ? eq(callParticipants.participantIdentity, participantIdentity)
+          : eq(callParticipants.userId, userId),
         isNull(callParticipants.leftAt)
       )
     )
     .limit(1);
 
   if (!participant) {
+    chatServerDebug('call.heartbeat.no-participant', {
+      roomId,
+      userId,
+      callId: call.id,
+      participantIdentity: participantIdentity || null,
+    });
     return null;
   }
 
@@ -2188,8 +2354,14 @@ export async function touchConversationCallHeartbeat(roomId: string, userId: str
 export async function createConversationCallToken(
   roomId: string,
   userId: string,
-  options: { publicUrlOverride?: string } = {}
+  options: { publicUrlOverride?: string; clientSessionId?: string | null } = {}
 ) {
+  chatServerDebug('call.token.request', {
+    roomId,
+    userId,
+    clientSessionId: options.clientSessionId || null,
+    publicUrlOverride: options.publicUrlOverride || null,
+  });
   const access = await resolveConversationRoomAccess(userId, roomId);
   if (!access) {
     throw new ChatAccessError('Conversation not found or unavailable.', 404);
@@ -2211,6 +2383,10 @@ export async function createConversationCallToken(
 
   let call = await getActiveCallSummary(roomId);
   if (!call && access.context.permissions.canStartCalls) {
+    chatServerDebug('call.token.no-active-call-auto-start', {
+      roomId,
+      userId,
+    });
     call = await startConversationCall(roomId, userId);
   }
 
@@ -2226,13 +2402,18 @@ export async function createConversationCallToken(
     );
   }
 
+  const participantIdentity = buildLivekitParticipantIdentity(
+    userId,
+    options.clientSessionId?.trim() || createId()
+  );
+
   const [existingParticipant] = await db
     .select({ id: callParticipants.id })
     .from(callParticipants)
     .where(
       and(
         eq(callParticipants.callSessionId, call.id),
-        eq(callParticipants.userId, userId),
+        eq(callParticipants.participantIdentity, participantIdentity),
         isNull(callParticipants.leftAt)
       )
     )
@@ -2245,8 +2426,14 @@ export async function createConversationCallToken(
         id: createId(),
         callSessionId: call.id,
         userId,
+        participantIdentity,
         joinedAt: now,
-        metadata: buildCallParticipantHeartbeatMetadata({}, now),
+        metadata: buildCallParticipantHeartbeatMetadata(
+          {
+            clientSessionId: options.clientSessionId?.trim() || null,
+          },
+          now
+        ),
       });
 
       await tx
@@ -2260,8 +2447,12 @@ export async function createConversationCallToken(
 
   const token = await createLivekitToken({
     roomName: call.livekitRoomName,
-    identity: userId,
+    identity: participantIdentity,
     name: user?.name || user?.email || 'TaskNebula user',
+    metadata: JSON.stringify({
+      userId,
+      clientSessionId: options.clientSessionId?.trim() || null,
+    }),
     publicUrlOverride: options.publicUrlOverride,
   });
 
@@ -2273,7 +2464,16 @@ export async function createConversationCallToken(
     },
   });
 
+  chatServerDebug('call.token.success', {
+    roomId,
+    userId,
+    callId: call.id,
+    participantIdentity,
+    roomName: call.livekitRoomName,
+    publicUrl: token.url,
+  });
   return {
+    participantIdentity,
     roomName: call.livekitRoomName,
     token: token.token,
     url: token.url,

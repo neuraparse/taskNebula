@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { removeById, upsertById } from '@/lib/chat/message-state';
+import { chatClientDebug, chatClientError } from '@/lib/chat/debug';
 
 function mergeOlderMessages(current: ConversationMessage[], older: ConversationMessage[]) {
   if (!older.length) {
@@ -22,6 +23,153 @@ function mergeLatestMessages(current: ConversationMessage[], latest: Conversatio
   const latestIds = new Set(latest.map((message) => message.id));
   const olderTail = current.filter((message) => !latestIds.has(message.id));
   return [...olderTail, ...latest];
+}
+
+function isSameCallSummary(
+  current:
+    | ChatBootstrapResponse['activeCalls'][number]
+    | GlobalLiveCall
+    | Record<string, unknown>
+    | null
+    | undefined,
+  next:
+    | ChatBootstrapResponse['activeCalls'][number]
+    | Record<string, unknown>
+    | null
+    | undefined
+) {
+  if (!current && !next) {
+    return true;
+  }
+
+  if (!current || !next) {
+    return false;
+  }
+
+  return (
+    current.id === next.id &&
+    current.roomId === next.roomId &&
+    current.participantCount === next.participantCount &&
+    current.livekitRoomName === next.livekitRoomName
+  );
+}
+
+function patchBootstrapActiveCall(
+  current: ChatBootstrapResponse | undefined,
+  roomId: string,
+  nextCall: Record<string, unknown> | null
+) {
+  if (!current) {
+    return current;
+  }
+
+  let changed = false;
+  const activeCall = nextCall
+    ? ({
+        id: String(nextCall.id || ''),
+        roomId: String(nextCall.roomId || roomId),
+        participantCount: Number(nextCall.participantCount || 0),
+        livekitRoomName: String(nextCall.livekitRoomName || ''),
+      } satisfies ChatBootstrapResponse['activeCalls'][number])
+    : null;
+
+  const channels = current.channels.map((channel) => {
+    if (channel.roomId !== roomId) {
+      return channel;
+    }
+
+    if (isSameCallSummary(channel.activeCall, activeCall)) {
+      return channel;
+    }
+
+    changed = true;
+    return {
+      ...channel,
+      activeCall,
+    };
+  });
+
+  const recentDiscussions = current.recentDiscussions.map((discussion) => {
+    if (discussion.id !== roomId) {
+      return discussion;
+    }
+
+    if (isSameCallSummary(discussion.activeCall, activeCall)) {
+      return discussion;
+    }
+
+    changed = true;
+    return {
+      ...discussion,
+      activeCall,
+    };
+  });
+
+  let activeCalls = current.activeCalls;
+  if (activeCall) {
+    const existingIndex = current.activeCalls.findIndex((call) => call.roomId === roomId);
+    if (existingIndex >= 0) {
+      if (!isSameCallSummary(current.activeCalls[existingIndex], activeCall)) {
+        activeCalls = current.activeCalls.map((call, index) => (index === existingIndex ? activeCall : call));
+        changed = true;
+      }
+    } else {
+      activeCalls = [...current.activeCalls, activeCall];
+      changed = true;
+    }
+  } else {
+    const filtered = current.activeCalls.filter((call) => call.roomId !== roomId);
+    if (filtered.length !== current.activeCalls.length) {
+      activeCalls = filtered;
+      changed = true;
+    }
+  }
+
+  if (!changed) {
+    return current;
+  }
+
+  return {
+    ...current,
+    channels,
+    recentDiscussions,
+    activeCalls,
+  };
+}
+
+function patchLiveCalls(
+  current: GlobalLiveCall[] | undefined,
+  roomId: string,
+  nextCall: Record<string, unknown> | null
+) {
+  if (!current) {
+    return current;
+  }
+
+  if (!nextCall) {
+    const filtered = current.filter((call) => call.roomId !== roomId);
+    return filtered.length === current.length ? current : filtered;
+  }
+
+  const existingIndex = current.findIndex((call) => call.roomId === roomId);
+  if (existingIndex < 0) {
+    return current;
+  }
+
+  const existing = current[existingIndex];
+  if (isSameCallSummary(existing, nextCall)) {
+    return current;
+  }
+
+  const updated = {
+    ...existing,
+    id: String(nextCall.id || existing.id),
+    roomId: String(nextCall.roomId || existing.roomId),
+    participantCount: Number(nextCall.participantCount || 0),
+    livekitRoomName: String(nextCall.livekitRoomName || existing.livekitRoomName),
+  } satisfies GlobalLiveCall;
+
+  return current.map((call, index) => (index === existingIndex ? updated : call));
 }
 
 export type ChatBootstrapResponse = {
@@ -194,10 +342,10 @@ export function useProjectChatBootstrap(projectId: string | undefined) {
       return payload as ChatBootstrapResponse;
     },
     enabled: Boolean(projectId),
-    staleTime: 15_000,
-    refetchInterval: 3_000,
-    refetchIntervalInBackground: true,
-    refetchOnWindowFocus: true,
+    staleTime: 45_000,
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
     refetchOnReconnect: true,
   });
 }
@@ -213,10 +361,10 @@ export function useLiveCalls() {
       }
       return payload.calls as GlobalLiveCall[];
     },
-    staleTime: 2_000,
-    refetchInterval: 2_000,
-    refetchIntervalInBackground: true,
-    refetchOnWindowFocus: true,
+    staleTime: 10_000,
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
     refetchOnReconnect: true,
   });
 }
@@ -622,19 +770,26 @@ export function useLeaveConversationCall(roomId: string | undefined) {
 
 export function useCallToken(roomId: string | undefined) {
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async (input?: { clientSessionId?: string }) => {
       if (!roomId) {
         throw new Error('No room selected');
       }
 
       const response = await fetch(`/api/conversations/${roomId}/call/token`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          clientSessionId: input?.clientSessionId || null,
+        }),
       });
       const payload = await response.json().catch(() => ({ error: 'Failed to create call token' }));
       if (!response.ok) {
         throw new Error(payload.error || 'Failed to create call token');
       }
       return payload as {
+        participantIdentity: string;
         roomName: string;
         token: string;
         url: string;
@@ -655,9 +810,16 @@ export function useConversationStream(roomId: string | undefined, enabled: boole
       return;
     }
 
+    chatClientDebug('chat-stream.connect.start', {
+      roomId,
+      enabled,
+    });
     const eventSource = new EventSource(`/api/conversations/${roomId}/stream`);
 
     eventSource.onopen = () => {
+      chatClientDebug('chat-stream.connect.open', {
+        roomId,
+      });
       setIsConnected(true);
     };
 
@@ -668,6 +830,17 @@ export function useConversationStream(roomId: string | undefined, enabled: boole
 
       try {
         const payload = JSON.parse(event.data) as { type: string; data: Record<string, unknown> };
+        chatClientDebug('chat-stream.message', {
+          roomId,
+          type: payload.type,
+          data: payload.type.startsWith('call.')
+            ? payload.data
+            : {
+                roomId: payload.data.roomId,
+                messageId: payload.data.messageId,
+                action: payload.data.action,
+              },
+        });
         if (payload.type === 'presence') {
           const nextPresence = (payload.data.participants as ConversationResponse['presence']) || [];
           setPresence((current) => (isSamePresenceList(current, nextPresence) ? current : nextPresence));
@@ -675,9 +848,29 @@ export function useConversationStream(roomId: string | undefined, enabled: boole
         if (payload.type === 'call.started' || payload.type === 'call.presence') {
           const nextCall = (payload.data.call as Record<string, unknown>) || null;
           setActiveCall((current) => (isSameActiveCall(current, nextCall) ? current : nextCall));
+          queryClient.setQueriesData<ChatBootstrapResponse>(
+            { queryKey: ['project-chat-bootstrap'] },
+            (current) => patchBootstrapActiveCall(current, roomId, nextCall)
+          );
+          if (payload.type === 'call.started') {
+            queryClient.invalidateQueries({ queryKey: ['live-calls'] });
+          } else {
+            queryClient.setQueryData<GlobalLiveCall[]>(
+              ['live-calls'],
+              (current) => patchLiveCalls(current, roomId, nextCall)
+            );
+          }
         }
         if (payload.type === 'call.ended') {
           setActiveCall((current) => (current ? null : current));
+          queryClient.setQueriesData<ChatBootstrapResponse>(
+            { queryKey: ['project-chat-bootstrap'] },
+            (current) => patchBootstrapActiveCall(current, roomId, null)
+          );
+          queryClient.setQueryData<GlobalLiveCall[]>(
+            ['live-calls'],
+            (current) => patchLiveCalls(current, roomId, null)
+          );
         }
         if (payload.type === 'message.created' || payload.type === 'message.updated') {
           const message = payload.data.message as ConversationMessage | undefined;
@@ -777,24 +970,24 @@ export function useConversationStream(roomId: string | undefined, enabled: boole
               // Ignore best-effort refresh failures.
             });
         }
-        if (
-          payload.type === 'call.started' ||
-          payload.type === 'call.ended' ||
-          payload.type === 'call.presence'
-        ) {
-          queryClient.invalidateQueries({ queryKey: ['project-chat-bootstrap'] });
-          queryClient.invalidateQueries({ queryKey: ['live-calls'] });
-        }
       } catch {
         // Ignore malformed or transitional SSE payloads without polluting the browser console.
       }
     };
 
     eventSource.onerror = () => {
+      chatClientError('chat-stream.connect.error', {
+        roomId,
+        readyState: eventSource.readyState,
+      });
       setIsConnected(false);
     };
 
     return () => {
+      chatClientDebug('chat-stream.connect.close', {
+        roomId,
+        readyState: eventSource.readyState,
+      });
       eventSource.close();
       setIsConnected(false);
     };

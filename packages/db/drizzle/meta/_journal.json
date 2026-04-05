@@ -113,6 +113,13 @@
       "when": 1775268000000,
       "tag": "0015_native_chat_collaboration",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1775349000000,
+      "tag": "0016_livekit_participant_identity",
+      "breakpoints": true
     }
   ]
 }

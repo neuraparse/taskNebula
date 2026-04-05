@@ -108,7 +108,7 @@ describe('POST /api/chat/livekit/webhook', () => {
     receiveMock.mockResolvedValue({
       event: 'participant_left',
       room: { name: 'tn-web-room-1' },
-      participant: { identity: 'user-1' },
+      participant: { identity: 'tnp:user-1:session-1', metadata: JSON.stringify({ userId: 'user-1', clientSessionId: 'session-1' }) },
     });
     handleLivekitWebhookEventMock.mockResolvedValue({
       handled: true,
@@ -130,7 +130,8 @@ describe('POST /api/chat/livekit/webhook', () => {
     expect(handleLivekitWebhookEventMock).toHaveBeenCalledWith({
       event: 'participant_left',
       roomName: 'tn-web-room-1',
-      participantIdentity: 'user-1',
+      participantIdentity: 'tnp:user-1:session-1',
+      participantMetadata: JSON.stringify({ userId: 'user-1', clientSessionId: 'session-1' }),
     });
   });
 

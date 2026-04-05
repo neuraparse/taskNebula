@@ -65,6 +65,15 @@ import {
 } from '@/lib/hooks/use-chat';
 import { cn } from '@/lib/utils';
 import {
+  DEFAULT_MIC_CAPTURE_OPTIONS,
+  formatMicrophoneError,
+  getPendingMicrophoneJoinMessage,
+  requestRawMicrophoneStream,
+  resolveJoinAudioInputDeviceId,
+  shouldPreferDefaultMicrophoneForLiveJoin,
+} from '@/lib/chat/microphone';
+import { chatClientDebug, chatClientError } from '@/lib/chat/debug';
+import {
   ChevronDown,
   Hash,
   ImagePlus,
@@ -86,11 +95,14 @@ import {
 import { useGlobalVoice } from '@/components/chat/global-voice-provider';
 
 const QUICK_REACTIONS = ['👍', '👀', '🚀'];
-const DEFAULT_MIC_CAPTURE_OPTIONS = {
-  echoCancellation: true,
-  noiseSuppression: true,
-  autoGainControl: true,
-} as const;
+const VOICE_CLIENT_SESSION_STORAGE_KEY = 'tasknebula.voice-client-session';
+const JOIN_PREFLIGHT_MICROPHONE_TIMEOUT_MS = 1_500;
+const JOIN_PENDING_MICROPHONE_REQUEST_TIMEOUT_MS = 60_000;
+const MICROPHONE_TEST_TIMEOUT_MS = 2_000;
+
+function stopMediaStream(stream?: MediaStream | null) {
+  stream?.getTracks().forEach((track) => track.stop());
+}
 
 function createVoiceRoom() {
   return new Room({
@@ -98,6 +110,7 @@ function createVoiceRoom() {
     dynacast: false,
     disconnectOnPageLeave: false,
     singlePeerConnection: false,
+    webAudioMix: false,
   });
 }
 
@@ -114,7 +127,27 @@ type PreparedVoiceSession = {
   url: string;
   token: string;
   roomName: string;
+  participantIdentity: string;
 };
+
+function getOrCreateVoiceClientSessionId() {
+  if (typeof window === 'undefined') {
+    return 'server';
+  }
+
+  const existing = window.sessionStorage.getItem(VOICE_CLIENT_SESSION_STORAGE_KEY);
+  if (existing) {
+    return existing;
+  }
+
+  const nextId =
+    typeof window.crypto?.randomUUID === 'function'
+      ? window.crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+  window.sessionStorage.setItem(VOICE_CLIENT_SESSION_STORAGE_KEY, nextId);
+  return nextId;
+}
 
 export function ChatShell({ projectId }: { projectId: string }) {
   const router = useRouter();
@@ -142,6 +175,11 @@ export function ChatShell({ projectId }: { projectId: string }) {
   const sendLockRef = useRef(false);
   const joinCallLockRef = useRef(false);
   const lastReadMarkerRef = useRef<string | null>(null);
+  const preparedVoiceSessionRef = useRef<PreparedVoiceSession | null>(null);
+  const prepareVoiceSessionPromiseRef = useRef<{
+    roomId: string;
+    promise: Promise<PreparedVoiceSession>;
+  } | null>(null);
 
   useEffect(() => {
     // Keep browser consoles usable. We surface actionable voice errors in the UI instead.
@@ -214,6 +252,9 @@ export function ChatShell({ projectId }: { projectId: string }) {
     globalSelectedRoomCall ||
     selectedRoomMeta?.activeCall ||
     null;
+  const isPreparedVoiceSessionReady =
+    Boolean(selectedRoomId) &&
+    (combinedActiveCall ? preparedVoiceSession?.roomId === selectedRoomId : true);
   const trimmedComposerValue = composerValue.trim();
   const lastReadableMessageId =
     messageList.length > 0 && !messageList[messageList.length - 1]?.optimistic
@@ -228,6 +269,21 @@ export function ChatShell({ projectId }: { projectId: string }) {
       : queuedFiles.length > 0 && !attachmentsEnabled
         ? 'Attachments are disabled in this project.'
         : null;
+
+  useEffect(() => {
+    preparedVoiceSessionRef.current = preparedVoiceSession;
+  }, [preparedVoiceSession]);
+
+  useEffect(() => {
+    chatClientDebug('chat-shell.selected-room', {
+      projectId,
+      selectedRoomId,
+      selectedRoomTitle: selectedRoomMeta?.title || null,
+      hasCombinedActiveCall: Boolean(combinedActiveCall),
+      currentVoiceRoomId,
+      isCurrentVoiceRoom,
+    });
+  }, [combinedActiveCall, currentVoiceRoomId, isCurrentVoiceRoom, projectId, selectedRoomId, selectedRoomMeta?.title]);
 
   useEffect(() => {
     if (!selectedRoomId && bootstrap?.lastActiveRoomId) {
@@ -268,6 +324,8 @@ export function ChatShell({ projectId }: { projectId: string }) {
     setCallError(null);
     setQueuedFiles([]);
     setComposerValue('');
+    preparedVoiceSessionRef.current = null;
+    prepareVoiceSessionPromiseRef.current = null;
     setPreparedVoiceSession(null);
     setIsVoiceSetupOpen(false);
     lastReadMarkerRef.current = null;
@@ -277,6 +335,34 @@ export function ChatShell({ projectId }: { projectId: string }) {
     setIsJoiningCall(false);
     setIsPreparingVoiceSetup(false);
   }, [selectedRoomId]);
+
+  useEffect(() => {
+    if (!voice.currentSession || !voice.isMicrophoneEnabled) {
+      return;
+    }
+
+    setCallError((current) => {
+      if (!current) {
+        return current;
+      }
+
+      const normalized = current.toLowerCase();
+      const shouldClear =
+        normalized.includes('joined muted while the browser finishes microphone access') ||
+        normalized.includes('browser is still waiting for microphone access') ||
+        normalized.includes('microphone access timed out while waiting for the browser prompt');
+
+      return shouldClear ? null : current;
+    });
+  }, [voice.currentSession, voice.isMicrophoneEnabled]);
+
+  useEffect(() => {
+    if (!isCurrentVoiceRoom || !voice.runtimeError) {
+      return;
+    }
+
+    setCallError(voice.runtimeError);
+  }, [isCurrentVoiceRoom, voice.runtimeError]);
 
   async function handleCreateChannel() {
     try {
@@ -362,15 +448,31 @@ export function ChatShell({ projectId }: { projectId: string }) {
       sendLockRef.current = true;
       setIsSendingMessage(true);
       setComposerError(null);
+      chatClientDebug('chat-shell.message.send.start', {
+        roomId: selectedRoomId,
+        bodyLength: trimmedComposerValue.length,
+        attachmentCount: queuedFiles.length,
+      });
       await createMessage.mutateAsync({
         body: trimmedComposerValue,
         files: queuedFiles,
+      });
+      chatClientDebug('chat-shell.message.send.success', {
+        roomId: selectedRoomId,
+        bodyLength: trimmedComposerValue.length,
+        attachmentCount: queuedFiles.length,
       });
       setComposerValue('');
       setQueuedFiles([]);
     } catch (mutationError) {
       const description =
         mutationError instanceof Error ? mutationError.message : 'Failed to send message';
+      chatClientError('chat-shell.message.send.error', {
+        roomId: selectedRoomId,
+        bodyLength: trimmedComposerValue.length,
+        attachmentCount: queuedFiles.length,
+        error: mutationError instanceof Error ? mutationError : new Error(description),
+      });
       setComposerError(description);
       toast({
         title: 'Failed to send message',
@@ -442,47 +544,145 @@ export function ChatShell({ projectId }: { projectId: string }) {
     }
   }
 
-  async function prepareVoiceSession(roomId: string) {
-    if (preparedVoiceSession?.roomId === roomId) {
-      return preparedVoiceSession;
+  function clearPreparedVoiceSession(roomId?: string | null) {
+    if (!roomId || preparedVoiceSessionRef.current?.roomId === roomId) {
+      preparedVoiceSessionRef.current = null;
+      setPreparedVoiceSession((current) => (!roomId || current?.roomId === roomId ? null : current));
     }
 
-    if (!combinedActiveCall) {
-      await startCall.mutateAsync();
+    if (!roomId || prepareVoiceSessionPromiseRef.current?.roomId === roomId) {
+      prepareVoiceSessionPromiseRef.current = null;
+    }
+  }
+
+  async function resolvePreparedVoiceSession(roomId: string) {
+    const existingPrepared = preparedVoiceSessionRef.current;
+    if (existingPrepared?.roomId === roomId) {
+      chatClientDebug('chat-shell.voice.prepare.reuse-ready', {
+        roomId,
+        roomName: existingPrepared.roomName,
+      });
+      return existingPrepared;
     }
 
-    let token;
-    try {
-      token = await callToken.mutateAsync();
-    } catch (error) {
-      const message = error instanceof Error ? error.message.toLowerCase() : '';
-      if (message.includes('start a call before joining') || message.includes('no active call')) {
-        await startCall.mutateAsync();
-        token = await callToken.mutateAsync();
-      } else {
-        throw error;
-      }
+    const existingPending = prepareVoiceSessionPromiseRef.current;
+    if (existingPending?.roomId === roomId) {
+      chatClientDebug('chat-shell.voice.prepare.reuse-pending', {
+        roomId,
+      });
+      return existingPending.promise;
     }
 
-    const nextPreparedSession = {
+    const nextPromise = new Promise<PreparedVoiceSession>((resolve, reject) => {
+      chatClientDebug('chat-shell.voice.prepare.start', {
+        roomId,
+        hasCombinedActiveCall: Boolean(combinedActiveCall),
+      });
+      const timeout = window.setTimeout(() => {
+        chatClientError('chat-shell.voice.prepare.timeout', {
+          roomId,
+        });
+        reject(new Error('Preparing the voice room took too long. Try again.'));
+      }, 10_000);
+
+      void (async () => {
+        try {
+          let token;
+          try {
+            chatClientDebug('chat-shell.voice.prepare.token.request', {
+              roomId,
+            });
+            token = await callToken.mutateAsync({
+              clientSessionId: getOrCreateVoiceClientSessionId(),
+            });
+          } catch (error) {
+            const message = error instanceof Error ? error.message.toLowerCase() : '';
+            if (message.includes('start a call before joining') || message.includes('no active call')) {
+              chatClientDebug('chat-shell.voice.prepare.start-call', {
+                roomId,
+              });
+              await startCall.mutateAsync();
+              chatClientDebug('chat-shell.voice.prepare.token.retry-after-start', {
+                roomId,
+              });
+              token = await callToken.mutateAsync({
+                clientSessionId: getOrCreateVoiceClientSessionId(),
+              });
+            } else {
+              throw error;
+            }
+          }
+
+          const nextPreparedSession = {
+            roomId,
+            url: token.url,
+            token: token.token,
+            roomName: token.roomName,
+            participantIdentity: token.participantIdentity,
+          } satisfies PreparedVoiceSession;
+
+          preparedVoiceSessionRef.current = nextPreparedSession;
+          setPreparedVoiceSession(nextPreparedSession);
+          chatClientDebug('chat-shell.voice.prepare.success', {
+            roomId,
+            roomName: nextPreparedSession.roomName,
+            participantIdentity: nextPreparedSession.participantIdentity,
+            url: nextPreparedSession.url,
+          });
+          resolve(nextPreparedSession);
+        } catch (error) {
+          chatClientError('chat-shell.voice.prepare.error', {
+            roomId,
+            error: error instanceof Error ? error : new Error('Failed to prepare voice session'),
+          });
+          clearPreparedVoiceSession(roomId);
+          reject(error);
+        } finally {
+          window.clearTimeout(timeout);
+          if (prepareVoiceSessionPromiseRef.current?.promise === nextPromise) {
+            prepareVoiceSessionPromiseRef.current = null;
+          }
+        }
+      })();
+    });
+
+    prepareVoiceSessionPromiseRef.current = {
       roomId,
-      url: token.url,
-      token: token.token,
-      roomName: token.roomName,
-    } satisfies PreparedVoiceSession;
+      promise: nextPromise,
+    };
 
-    setPreparedVoiceSession(nextPreparedSession);
-    return nextPreparedSession;
+    return nextPromise;
+  }
+
+  async function prepareVoiceSession(roomId: string) {
+    return resolvePreparedVoiceSession(roomId);
   }
 
   function handleOpenVoiceSetup() {
     if (!selectedRoomId || isJoiningCall || voice.currentSession || isPreparingVoiceSetup) {
+      chatClientDebug('chat-shell.voice.setup.skip', {
+        selectedRoomId,
+        isJoiningCall,
+        hasCurrentSession: Boolean(voice.currentSession),
+        isPreparingVoiceSetup,
+      });
       return;
     }
 
+    chatClientDebug('chat-shell.voice.setup.open', {
+      selectedRoomId,
+      hasCombinedActiveCall: Boolean(combinedActiveCall),
+    });
     setCallError(null);
     setIsVoiceSetupOpen(true);
     setIsVoicePanelOpen(true);
+
+    if (!combinedActiveCall) {
+      clearPreparedVoiceSession(selectedRoomId);
+      setIsPreparingVoiceSetup(false);
+      return;
+    }
+
     setIsPreparingVoiceSetup(true);
     void prepareVoiceSession(selectedRoomId)
       .catch((mutationError) => {
@@ -498,8 +698,10 @@ export function ChatShell({ projectId }: { projectId: string }) {
   async function handleJoinCall(options: {
     audioDeviceId: string;
     startWithMicrophone: boolean;
+    preflightMicrophoneStream?: MediaStream | null;
+    pendingMicrophoneStreamPromise?: Promise<MediaStream | null> | null;
   }) {
-    if (!selectedRoomId || joinCallLockRef.current || voice.currentSession) {
+    if (!selectedRoomId || !bootstrap || joinCallLockRef.current || voice.currentSession) {
       return;
     }
 
@@ -507,6 +709,11 @@ export function ChatShell({ projectId }: { projectId: string }) {
       joinCallLockRef.current = true;
       setIsJoiningCall(true);
       setCallError(null);
+      chatClientDebug('chat-shell.voice.join.start', {
+        roomId: selectedRoomId,
+        options,
+        preparedReady: preparedVoiceSession?.roomId === selectedRoomId,
+      });
 
       const preparedSession =
         preparedVoiceSession?.roomId === selectedRoomId
@@ -520,6 +727,9 @@ export function ChatShell({ projectId }: { projectId: string }) {
           roomName: preparedSession.roomName,
           audioDeviceId: options.audioDeviceId,
           startWithMicrophone: options.startWithMicrophone,
+          participantIdentity: preparedSession.participantIdentity,
+          preflightMicrophoneStream: options.preflightMicrophoneStream,
+          pendingMicrophoneStreamPromise: options.pendingMicrophoneStreamPromise,
         },
         target: {
           roomId: selectedRoomId,
@@ -531,12 +741,32 @@ export function ChatShell({ projectId }: { projectId: string }) {
           canManageCalls: bootstrap.permissions.canManageCalls,
         },
       });
+      if (options.pendingMicrophoneStreamPromise) {
+        setCallError(
+          getPendingMicrophoneJoinMessage(
+            typeof navigator !== 'undefined' ? navigator.userAgent : ''
+          )
+        );
+      }
       setIsVoiceSetupOpen(false);
       setIsVoicePanelOpen(false);
-      setPreparedVoiceSession(null);
+      clearPreparedVoiceSession(selectedRoomId);
+      chatClientDebug('chat-shell.voice.join.success', {
+        roomId: selectedRoomId,
+        roomName: preparedSession.roomName,
+        participantIdentity: preparedSession.participantIdentity,
+        startWithMicrophone: options.startWithMicrophone,
+        audioDeviceId: options.audioDeviceId,
+      });
     } catch (mutationError) {
       const description =
         mutationError instanceof Error ? mutationError.message : 'Failed to join call';
+      stopMediaStream(options.preflightMicrophoneStream);
+      chatClientError('chat-shell.voice.join.error', {
+        roomId: selectedRoomId,
+        options,
+        error: mutationError instanceof Error ? mutationError : new Error(description),
+      });
       setCallError(description);
       toast({
         title: 'Failed to join call',
@@ -550,10 +780,10 @@ export function ChatShell({ projectId }: { projectId: string }) {
   }
 
   const handleCloseVoicePanel = useCallback(() => {
-    setPreparedVoiceSession(null);
+    clearPreparedVoiceSession(selectedRoomId);
     setIsVoiceSetupOpen(false);
     setIsVoicePanelOpen(false);
-  }, []);
+  }, [selectedRoomId]);
 
   function handlePaste(event: React.ClipboardEvent<HTMLTextAreaElement>) {
     const files = Array.from(event.clipboardData.files || []);
@@ -1009,6 +1239,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
                     )}
                     isJoining={isJoiningCall}
                     isPreparing={isPreparingVoiceSetup}
+                    isReady={isPreparedVoiceSessionReady}
                     onClose={handleCloseVoicePanel}
                     onJoin={handleJoinCall}
                   />
@@ -1386,29 +1617,35 @@ function ChatVoiceDock({
   );
 }
 
-function VoiceJoinSetupPanel({
+export function VoiceJoinSetupPanel({
   className,
   isJoining,
   isPreparing,
+  isReady,
   onClose,
   onJoin,
 }: {
   className?: string;
   isJoining: boolean;
   isPreparing: boolean;
+  isReady: boolean;
   onClose: () => void;
   onJoin: (options: {
     audioDeviceId: string;
     startWithMicrophone: boolean;
+    preflightMicrophoneStream?: MediaStream | null;
+    pendingMicrophoneStreamPromise?: Promise<MediaStream | null> | null;
   }) => Promise<void>;
 }) {
   const { storedAudioDeviceId, storeAudioDeviceId } = useStoredVoicePreferences();
   const [microphoneDevices, setMicrophoneDevices] = useState<MediaDeviceInfo[]>([]);
   const [isTestingMicrophone, setIsTestingMicrophone] = useState(false);
+  const [isPreparingMicrophoneTest, setIsPreparingMicrophoneTest] = useState(false);
   const [isSelfMonitorEnabled, setIsSelfMonitorEnabled] = useState(false);
   const [microphoneTestLevel, setMicrophoneTestLevel] = useState(0);
   const [setupError, setSetupError] = useState<string | null>(null);
   const [isSubmittingJoin, setIsSubmittingJoin] = useState(false);
+  const joinSubmissionLockRef = useRef(false);
   const microphoneTestStreamRef = useRef<MediaStream | null>(null);
   const microphoneTestAudioContextRef = useRef<AudioContext | null>(null);
   const microphoneTestSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
@@ -1425,6 +1662,14 @@ function VoiceJoinSetupPanel({
       const devices = await navigator.mediaDevices.enumerateDevices();
       const audioInputs = devices.filter((device) => device.kind === 'audioinput');
       setMicrophoneDevices(audioInputs);
+      chatClientDebug('voice-setup.devices.refreshed', {
+        count: audioInputs.length,
+        selected: storedAudioDeviceId,
+        labels: audioInputs.map((device) => ({
+          deviceId: device.deviceId,
+          label: device.label,
+        })),
+      });
       if (
         storedAudioDeviceId !== 'default' &&
         !audioInputs.some((device) => device.deviceId === storedAudioDeviceId)
@@ -1432,6 +1677,9 @@ function VoiceJoinSetupPanel({
         storeAudioDeviceId('default');
       }
     } catch (error) {
+      chatClientError('voice-setup.devices.error', {
+        error: error instanceof Error ? error : new Error('Failed to enumerate devices'),
+      });
       setSetupError(formatMicrophoneError(error));
     }
   }, [storeAudioDeviceId, storedAudioDeviceId]);
@@ -1538,22 +1786,17 @@ function VoiceJoinSetupPanel({
   }, [isSelfMonitorEnabled, isTestingMicrophone, resetMonitorAudio]);
 
   const requestMicrophoneStream = useCallback(async () => {
-    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-      throw new Error('This browser does not support microphone capture.');
-    }
-
-    return navigator.mediaDevices.getUserMedia({
-      audio: {
-        deviceId:
-          storedAudioDeviceId && storedAudioDeviceId !== 'default'
-            ? { exact: storedAudioDeviceId }
-            : undefined,
-        ...DEFAULT_MIC_CAPTURE_OPTIONS,
-      },
+    return requestRawMicrophoneStream(storedAudioDeviceId, {
+      interactive: true,
+      timeoutMs: MICROPHONE_TEST_TIMEOUT_MS,
     });
   }, [storedAudioDeviceId]);
 
   async function handleSelectMicrophone(deviceId: string) {
+    chatClientDebug('voice-setup.device.select', {
+      nextDeviceId: deviceId,
+      previousDeviceId: storedAudioDeviceId,
+    });
     setSetupError(null);
     storeAudioDeviceId(deviceId);
     if (isTestingMicrophone) {
@@ -1562,13 +1805,24 @@ function VoiceJoinSetupPanel({
   }
 
   async function handleToggleMicrophoneTest() {
+    if (isSubmittingJoin || isPreparingMicrophoneTest) {
+      return;
+    }
+
     if (isTestingMicrophone) {
+      chatClientDebug('voice-setup.mic-test.stop', {
+        selectedDeviceId: storedAudioDeviceId,
+      });
       await stopMicrophoneTest();
       return;
     }
 
     try {
+      setIsPreparingMicrophoneTest(true);
       setSetupError(null);
+      chatClientDebug('voice-setup.mic-test.start', {
+        selectedDeviceId: storedAudioDeviceId,
+      });
       const stream = await requestMicrophoneStream();
       await refreshMicrophoneDevices();
 
@@ -1617,27 +1871,178 @@ function VoiceJoinSetupPanel({
       setIsTestingMicrophone(true);
     } catch (error) {
       await stopMicrophoneTest();
+      chatClientError('voice-setup.mic-test.error', {
+        selectedDeviceId: storedAudioDeviceId,
+        error: error instanceof Error ? error : new Error('Microphone test failed'),
+      });
       setSetupError(formatMicrophoneError(error));
+    } finally {
+      setIsPreparingMicrophoneTest(false);
     }
   }
 
   async function handleJoin(startWithMicrophone: boolean) {
-    if (isJoining || isSubmittingJoin) {
+    if (isJoining || isSubmittingJoin || joinSubmissionLockRef.current) {
       return;
     }
 
+    let preflightMicrophoneStream: MediaStream | null = null;
+    let pendingMicrophoneStreamPromise: Promise<MediaStream | null> | null = null;
+    let shouldStartWithMicrophone = startWithMicrophone;
+
     try {
+      joinSubmissionLockRef.current = true;
       setIsSubmittingJoin(true);
       setSetupError(null);
-      await stopMicrophoneTest();
-      await onJoin({
-        audioDeviceId: storedAudioDeviceId || 'default',
+      chatClientDebug('voice-setup.join.click', {
         startWithMicrophone,
+        selectedDeviceId: storedAudioDeviceId,
+        isReady,
+        isPreparing,
       });
+      await stopMicrophoneTest();
+      const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+      const joinAudioResolution = startWithMicrophone
+        ? await resolveJoinAudioInputDeviceId(storedAudioDeviceId || 'default', {
+            preferBrowserStability: true,
+            userAgent,
+            microphoneRequestOptions: {
+              interactive: true,
+              timeoutMs: JOIN_PREFLIGHT_MICROPHONE_TIMEOUT_MS,
+            },
+          })
+        : {
+            audioDeviceId: shouldPreferDefaultMicrophoneForLiveJoin(userAgent)
+              ? 'default'
+              : storedAudioDeviceId || 'default',
+            shouldPersist: false,
+            usedBrowserStabilityFallback: false,
+          };
+
+      if (startWithMicrophone) {
+        if (joinAudioResolution.usedBrowserStabilityFallback) {
+          chatClientDebug('voice-setup.join.browser-fallback', {
+            selectedDeviceId: storedAudioDeviceId,
+            resolvedDeviceId: joinAudioResolution.audioDeviceId,
+          });
+          setSetupError(
+            'Chromium and Safari now start with the system default microphone first for a faster, more reliable join. You can switch inputs after the room connects.'
+          );
+        }
+        if (joinAudioResolution.shouldPersist && joinAudioResolution.audioDeviceId !== storedAudioDeviceId) {
+          storeAudioDeviceId(joinAudioResolution.audioDeviceId);
+          setSetupError('The selected microphone could not start, so TaskNebula switched to your system default microphone.');
+        }
+      }
+      chatClientDebug('voice-setup.join.resolved', {
+        startWithMicrophone,
+        selectedDeviceId: storedAudioDeviceId,
+        resolvedDeviceId: joinAudioResolution.audioDeviceId,
+        shouldPersist: joinAudioResolution.shouldPersist,
+        usedBrowserStabilityFallback: joinAudioResolution.usedBrowserStabilityFallback,
+      });
+      if (startWithMicrophone) {
+        const pendingMicrophoneJoinMessage = getPendingMicrophoneJoinMessage(userAgent);
+        try {
+          chatClientDebug('voice-setup.join.prefetch-mic.start', {
+            selectedDeviceId: storedAudioDeviceId,
+            resolvedDeviceId: joinAudioResolution.audioDeviceId,
+            timeoutMs: JOIN_PENDING_MICROPHONE_REQUEST_TIMEOUT_MS,
+            blockingTimeoutMs: JOIN_PREFLIGHT_MICROPHONE_TIMEOUT_MS,
+          });
+          const microphonePrefetchPromise = requestRawMicrophoneStream(
+            joinAudioResolution.audioDeviceId,
+            {
+              interactive: true,
+              timeoutMs: JOIN_PENDING_MICROPHONE_REQUEST_TIMEOUT_MS,
+            }
+          );
+          const preflightOutcome = await Promise.race([
+            microphonePrefetchPromise
+              .then((stream) => ({
+                status: 'success' as const,
+                stream,
+              }))
+              .catch((error) => ({
+                status: 'error' as const,
+                error,
+              })),
+            new Promise<{ status: 'pending' }>((resolve) => {
+              window.setTimeout(() => {
+                resolve({ status: 'pending' });
+              }, JOIN_PREFLIGHT_MICROPHONE_TIMEOUT_MS);
+            }),
+          ]);
+
+          if (preflightOutcome.status === 'success') {
+            preflightMicrophoneStream = preflightOutcome.stream;
+            chatClientDebug('voice-setup.join.prefetch-mic.success', {
+              selectedDeviceId: storedAudioDeviceId,
+              resolvedDeviceId: joinAudioResolution.audioDeviceId,
+            });
+          } else if (preflightOutcome.status === 'pending') {
+            pendingMicrophoneStreamPromise = microphonePrefetchPromise;
+            shouldStartWithMicrophone = false;
+            chatClientDebug('voice-setup.join.prefetch-mic.pending', {
+              selectedDeviceId: storedAudioDeviceId,
+              resolvedDeviceId: joinAudioResolution.audioDeviceId,
+              blockingTimeoutMs: JOIN_PREFLIGHT_MICROPHONE_TIMEOUT_MS,
+              requestTimeoutMs: JOIN_PENDING_MICROPHONE_REQUEST_TIMEOUT_MS,
+            });
+            chatClientDebug('voice-setup.join.prefetch-mic.fallback-muted', {
+              selectedDeviceId: storedAudioDeviceId,
+              resolvedDeviceId: joinAudioResolution.audioDeviceId,
+              reason: 'background-request-pending',
+            });
+            setSetupError(pendingMicrophoneJoinMessage);
+          } else {
+            throw preflightOutcome.error;
+          }
+        } catch (error) {
+          stopMediaStream(preflightMicrophoneStream);
+          preflightMicrophoneStream = null;
+          shouldStartWithMicrophone = false;
+          chatClientError('voice-setup.join.prefetch-mic.error', {
+            selectedDeviceId: storedAudioDeviceId,
+            resolvedDeviceId: joinAudioResolution.audioDeviceId,
+            timeoutMs: JOIN_PENDING_MICROPHONE_REQUEST_TIMEOUT_MS,
+            error: error instanceof Error ? error : new Error('Microphone preflight failed'),
+          });
+          chatClientDebug('voice-setup.join.prefetch-mic.fallback-muted', {
+            selectedDeviceId: storedAudioDeviceId,
+            resolvedDeviceId: joinAudioResolution.audioDeviceId,
+          });
+          setSetupError(
+            `${formatMicrophoneError(error, { userAgent })} Joined muted so the call can start right away. You can turn the mic on once you're inside.`
+          );
+        }
+      }
+      await onJoin({
+        audioDeviceId: joinAudioResolution.audioDeviceId,
+        startWithMicrophone: shouldStartWithMicrophone,
+        preflightMicrophoneStream,
+        pendingMicrophoneStreamPromise,
+      });
+      preflightMicrophoneStream = null;
+      pendingMicrophoneStreamPromise = null;
     } catch (error) {
-      setSetupError(formatMicrophoneError(error));
+      stopMediaStream(preflightMicrophoneStream);
+      void pendingMicrophoneStreamPromise?.then((stream) => {
+        stopMediaStream(stream);
+      }).catch(() => {});
+      chatClientError('voice-setup.join.error', {
+        startWithMicrophone,
+        selectedDeviceId: storedAudioDeviceId,
+        error: error instanceof Error ? error : new Error('Join setup failed'),
+      });
+      setSetupError(
+        formatMicrophoneError(error, {
+          userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+        })
+      );
     } finally {
       setIsSubmittingJoin(false);
+      joinSubmissionLockRef.current = false;
     }
   }
 
@@ -1692,17 +2097,26 @@ function VoiceJoinSetupPanel({
               variant="outline"
               className="rounded-sm"
               onClick={() => void handleToggleMicrophoneTest()}
-              disabled={isJoining || isPreparing}
+              disabled={isJoining || isSubmittingJoin || isPreparing || isPreparingMicrophoneTest}
             >
-              <TestTube2 className="mr-2 h-4 w-4" />
-              {isTestingMicrophone ? 'Stop test' : 'Test mic'}
+              {isPreparingMicrophoneTest ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <TestTube2 className="mr-2 h-4 w-4" />
+              )}
+              {isTestingMicrophone ? 'Stop test' : isPreparingMicrophoneTest ? 'Testing...' : 'Test mic'}
             </Button>
             <Button
               size="sm"
               variant={isSelfMonitorEnabled ? 'default' : 'outline'}
               className="rounded-sm"
               onClick={() => setIsSelfMonitorEnabled((current) => !current)}
-              disabled={isPreparing || (!isTestingMicrophone && !isSelfMonitorEnabled)}
+              disabled={
+                isSubmittingJoin ||
+                isPreparing ||
+                isPreparingMicrophoneTest ||
+                (!isTestingMicrophone && !isSelfMonitorEnabled)
+              }
             >
               <Volume2 className="mr-2 h-4 w-4" />
               {isSelfMonitorEnabled ? 'Stop monitor' : 'Hear myself'}
@@ -1745,13 +2159,29 @@ function VoiceJoinSetupPanel({
             </div>
           ) : null}
 
+          {!isPreparing && !isReady ? (
+            <div className="rounded-sm border px-3 py-2 text-xs text-muted-foreground">
+              The room is still getting ready. Wait a moment, then join.
+            </div>
+          ) : null}
+
           <div className="rounded-sm border bg-background px-3 py-2 text-xs text-muted-foreground">
-            The room connects first, then enables your chosen microphone. This keeps join noticeably faster while
-            still respecting the device you picked above.
+            {shouldPreferDefaultMicrophoneForLiveJoin(
+              typeof navigator !== 'undefined' ? navigator.userAgent : ''
+            )
+              ? 'Chromium and Safari join with the system default microphone first, then let you switch after the room is live.'
+              : 'Firefox can usually keep the selected microphone all the way through the join flow.'}
           </div>
 
           <div className="flex flex-wrap justify-end gap-2">
-            <Button type="button" size="sm" variant="outline" className="rounded-sm" onClick={onClose} disabled={isJoining}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="rounded-sm"
+              onClick={onClose}
+              disabled={isJoining || isSubmittingJoin}
+            >
               Cancel
             </Button>
             <Button
@@ -1760,7 +2190,7 @@ function VoiceJoinSetupPanel({
               variant="outline"
               className="rounded-sm"
               onClick={() => void handleJoin(false)}
-              disabled={isJoining || isSubmittingJoin || isPreparing}
+              disabled={isJoining || isSubmittingJoin || isPreparing || !isReady}
             >
               {isJoining || isSubmittingJoin || isPreparing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Join muted
@@ -1770,7 +2200,7 @@ function VoiceJoinSetupPanel({
               size="sm"
               className="rounded-sm"
               onClick={() => void handleJoin(true)}
-              disabled={isJoining || isSubmittingJoin || isPreparing}
+              disabled={isJoining || isSubmittingJoin || isPreparing || !isReady}
             >
               {isJoining || isSubmittingJoin || isPreparing ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -2379,27 +2809,6 @@ function formatConnectionStateLabel(state: string) {
     default:
       return 'Voice room';
   }
-}
-
-function formatMicrophoneError(error: unknown) {
-  if (error instanceof Error) {
-    const message = error.message.toLowerCase();
-    if (message.includes('permission denied') || message.includes('notallowederror')) {
-      return 'Microphone permission was denied. Allow microphone access in your browser and try again.';
-    }
-    if (message.includes('audiocontext encountered an error') || message.includes('webaudio renderer')) {
-      return 'The browser audio engine failed for this device. Stop other audio apps or switch microphones, then try again.';
-    }
-    if (message.includes('notfounderror') || message.includes('requested device not found')) {
-      return 'No microphone was found. Check your audio input device and try again.';
-    }
-    if (message.includes('notreadableerror') || message.includes('could not start audio source')) {
-      return 'Your microphone is busy in another app. Close other audio apps and try again.';
-    }
-    return error.message;
-  }
-
-  return 'Microphone access is unavailable. Check browser permissions and try again.';
 }
 
 function formatLivekitRuntimeError(error: Error) {

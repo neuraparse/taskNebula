@@ -49,7 +49,6 @@ export function AppSidebar() {
     isMicrophoneEnabled,
     isTogglingMicrophone,
     leaveCurrentCall,
-    microphoneLevel,
     participantCount,
     runtimeError,
     toggleMicrophone,
@@ -84,9 +83,7 @@ export function AppSidebar() {
     : isCallConnecting
       ? 'Connecting…'
       : isMicrophoneEnabled
-        ? microphoneLevel > 0.16
-          ? 'Speaking'
-          : 'Mic live'
+        ? 'Mic live'
         : 'Muted';
 
   return (
@@ -218,12 +215,6 @@ export function AppSidebar() {
                 <div className="flex items-center justify-between gap-3 text-[10px]">
                   <span className="font-medium uppercase tracking-[0.12em] text-muted-foreground">Voice</span>
                   <span className="truncate text-muted-foreground">{voiceStatusLabel}</span>
-                </div>
-                <div className="h-1 overflow-hidden rounded-sm bg-muted">
-                  <div
-                    className="h-full bg-foreground/80 transition-[width] duration-100"
-                    style={{ width: `${Math.round(microphoneLevel * 100)}%` }}
-                  />
                 </div>
               </div>
               <div className="flex items-center gap-1">

@@ -195,6 +195,7 @@ export const callParticipants = pgTable('call_participants', {
   userId: text('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
+  participantIdentity: text('participant_identity'),
   joinedAt: timestamp('joined_at').notNull().defaultNow(),
   leftAt: timestamp('left_at'),
   metadata: jsonb('metadata').notNull().default('{}'),
@@ -202,4 +203,5 @@ export const callParticipants = pgTable('call_participants', {
   callIdx: index('call_participant_call_idx').on(table.callSessionId),
   userIdx: index('call_participant_user_idx').on(table.userId),
   activeIdx: index('call_participant_active_idx').on(table.callSessionId, table.leftAt),
+  identityIdx: index('call_participant_identity_idx').on(table.participantIdentity),
 }));

@@ -9,6 +9,7 @@ import {
   listConversationMessagesPage,
   resolveConversationRoomAccess,
 } from '@/lib/chat/server';
+import { chatServerDebug, chatServerError } from '@/lib/chat/debug';
 
 const UPLOAD_DIR = join(process.cwd(), 'uploads');
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -40,13 +41,26 @@ export async function GET(
       beforeMessageId,
       limit: Number.isFinite(parsedLimit) ? parsedLimit : undefined,
     });
+    chatServerDebug('route.messages.get.success', {
+      roomId,
+      userId: session.user.id,
+      beforeMessageId,
+      limit: Number.isFinite(parsedLimit) ? parsedLimit : undefined,
+      count: page.messages.length,
+      hasMore: page.pageInfo.hasMore,
+      nextCursor: page.pageInfo.nextCursor,
+    });
     return NextResponse.json(page);
   } catch (error) {
     if (error instanceof ChatAccessError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
 
-    console.error('Failed to load conversation messages:', error);
+    chatServerError('route.messages.get.error', {
+      roomId: (await params).roomId,
+      userId: session.user.id,
+      error: error instanceof Error ? error : new Error('Failed to load conversation messages'),
+    });
     return NextResponse.json({ error: 'Failed to load conversation messages' }, { status: 500 });
   }
 }
@@ -114,6 +128,21 @@ export async function POST(
       parentMessageId = payload.parentMessageId || null;
     }
 
+    chatServerDebug('route.messages.post.request', {
+      roomId,
+      userId: session.user.id,
+      contentType,
+      bodyLength: body.trim().length,
+      parentMessageId,
+      attachmentCount: attachments.length,
+      attachments: attachments.map((attachment) => ({
+        id: attachment.id,
+        fileName: attachment.fileName,
+        fileSize: attachment.fileSize,
+        mimeType: attachment.mimeType,
+      })),
+    });
+
     if (!body.trim() && attachments.length === 0) {
       return NextResponse.json({ error: 'Message body or attachments are required' }, { status: 400 });
     }
@@ -126,13 +155,25 @@ export async function POST(
       attachments,
     });
 
+    chatServerDebug('route.messages.post.success', {
+      roomId,
+      userId: session.user.id,
+      messageId: message.id,
+      bodyLength: message.body.length,
+      attachmentCount: message.attachments.length,
+    });
+
     return NextResponse.json({ message }, { status: 201 });
   } catch (error) {
     if (error instanceof ChatAccessError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
 
-    console.error('Failed to create conversation message:', error);
+    chatServerError('route.messages.post.error', {
+      roomId: (await params).roomId,
+      userId: session.user.id,
+      error: error instanceof Error ? error : new Error('Failed to create conversation message'),
+    });
     return NextResponse.json({ error: 'Failed to create conversation message' }, { status: 500 });
   }
 }
