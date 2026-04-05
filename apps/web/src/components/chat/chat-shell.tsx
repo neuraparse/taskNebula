@@ -82,6 +82,7 @@ import {
   type MicrophonePermissionState,
 } from '@/lib/chat/microphone';
 import { chatClientDebug, chatClientError } from '@/lib/chat/debug';
+import { useStoredVoicePreferences } from '@/lib/chat/voice-preferences';
 import {
   ChevronDown,
   Hash,
@@ -3093,58 +3094,4 @@ function formatLivekitRuntimeError(error: Error) {
     return 'No microphone was found for this browser session.';
   }
   return error.message;
-}
-
-function useStoredVoicePreferences() {
-  const [storedAudioDeviceId, setStoredAudioDeviceId] = useState('default');
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    try {
-      const raw = window.localStorage.getItem('tasknebula-chat-voice-settings');
-      if (!raw) {
-        return;
-      }
-
-      const parsed = JSON.parse(raw) as { audioDeviceId?: string };
-      if (parsed.audioDeviceId) {
-        setStoredAudioDeviceId(parsed.audioDeviceId);
-      }
-    } catch {
-      // Ignore invalid saved voice preferences.
-    }
-  }, []);
-
-  const writePreference = useCallback((next: { audioDeviceId?: string }) => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    try {
-      const raw = window.localStorage.getItem('tasknebula-chat-voice-settings');
-      const current = raw ? (JSON.parse(raw) as { audioDeviceId?: string }) : {};
-      window.localStorage.setItem(
-        'tasknebula-chat-voice-settings',
-        JSON.stringify({ ...current, ...next })
-      );
-    } catch {
-      // Persistence issues should never break live calls.
-    }
-  }, []);
-
-  const storeAudioDeviceId = useCallback(
-    (audioDeviceId: string) => {
-      setStoredAudioDeviceId(audioDeviceId);
-      writePreference({ audioDeviceId });
-    },
-    [writePreference]
-  );
-
-  return {
-    storedAudioDeviceId,
-    storeAudioDeviceId,
-  };
 }

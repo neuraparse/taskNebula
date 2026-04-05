@@ -27,7 +27,7 @@ export type MicrophoneBrowserFamily =
   | 'unknown';
 export type MicrophoneDeviceOption = Pick<
   MediaDeviceInfo,
-  'deviceId' | 'groupId' | 'kind' | 'label'
+  'deviceId' | 'groupId' | 'kind' | 'label' | 'toJSON'
 >;
 
 type RequestRawMicrophoneStreamOptions = {

@@ -108,6 +108,7 @@ type GlobalVoiceContextValue = {
   isMicrophoneEnabled: boolean;
   isTogglingMicrophone: boolean;
   setRuntimeError: (message: string | null) => void;
+  setAudioDeviceId: (audioDeviceId: string) => Promise<void>;
   startSession: (input: {
     session: PersistentVoiceSession;
     target: PersistentVoiceTarget;
@@ -128,6 +129,7 @@ const GlobalVoiceContext = createContext<GlobalVoiceContextValue>({
   isMicrophoneEnabled: false,
   isTogglingMicrophone: false,
   setRuntimeError: () => {},
+  setAudioDeviceId: async () => {},
   startSession: () => {},
   toggleMicrophone: async () => {},
   leaveCurrentCall: async () => {},
@@ -485,6 +487,62 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
       queryClient.invalidateQueries({ queryKey: ['project-chat-bootstrap'] });
     },
     [queryClient]
+  );
+
+  const setAudioDeviceId = useCallback(
+    async (audioDeviceId: string) => {
+      const normalizedDeviceId = normalizeAudioInputDeviceId(audioDeviceId);
+      if (!currentSession) {
+        return;
+      }
+
+      if (currentSession.audioDeviceId === normalizedDeviceId) {
+        return;
+      }
+
+      const room = roomRef.current;
+      const isConnectedRoom = Boolean(room) && connectionState === 'connected';
+
+      try {
+        setRuntimeError(null);
+        chatClientDebug('global-voice.audio-device.change.start', {
+          roomId: currentTarget?.roomId || null,
+          previousAudioDeviceId: currentSession.audioDeviceId,
+          nextAudioDeviceId: normalizedDeviceId,
+          isConnectedRoom,
+        });
+
+        if (room && connectionState === 'connected') {
+          await room.switchActiveDevice('audioinput', normalizedDeviceId, normalizedDeviceId !== 'default');
+          syncRoomState(room);
+        }
+
+        setCurrentSession((current) =>
+          current ? { ...current, audioDeviceId: normalizedDeviceId } : current
+        );
+
+        chatClientDebug('global-voice.audio-device.change.success', {
+          roomId: currentTarget?.roomId || null,
+          audioDeviceId: normalizedDeviceId,
+          isConnectedRoom,
+        });
+      } catch (error) {
+        chatClientError('global-voice.audio-device.change.error', {
+          roomId: currentTarget?.roomId || null,
+          previousAudioDeviceId: currentSession.audioDeviceId,
+          nextAudioDeviceId: normalizedDeviceId,
+          error:
+            error instanceof Error ? error : new Error('Failed to change the active microphone device'),
+        });
+        throw error;
+      }
+    },
+    [
+      connectionState,
+      currentSession,
+      currentTarget?.roomId,
+      syncRoomState,
+    ]
   );
 
   const toggleMicrophone = useCallback(async () => {
@@ -1013,6 +1071,7 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
       isMicrophoneEnabled,
       isTogglingMicrophone,
       setRuntimeError,
+      setAudioDeviceId,
       startSession,
       toggleMicrophone,
       leaveCurrentCall,
@@ -1031,6 +1090,7 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
       leaveCurrentCall,
       participantCount,
       runtimeError,
+      setAudioDeviceId,
       startSession,
       toggleMicrophone,
     ]
