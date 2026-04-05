@@ -407,6 +407,73 @@ describe('chat microphone helpers', () => {
     });
   });
 
+  it('treats Safari unknown microphone permission as a pending prompt and skips device resolution', async () => {
+    jest.useFakeTimers();
+
+    global.navigator.permissions.query.mockRejectedValue(new Error('permissions query failed'));
+    global.navigator.mediaDevices.getUserMedia.mockImplementation(
+      () => new Promise(() => undefined)
+    );
+
+    const requestPromise = requestRawMicrophoneStream('default', {
+      interactive: true,
+      timeoutMs: 5_000,
+      userAgent:
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15',
+    });
+
+    await jest.advanceTimersByTimeAsync(4_999);
+    await Promise.resolve();
+
+    expect(global.navigator.mediaDevices.enumerateDevices).not.toHaveBeenCalled();
+    expect(global.navigator.mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
+    expect(global.navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
+      audio: true,
+    });
+
+    const rejection = expect(requestPromise).rejects.toThrow(
+      'Microphone access timed out while waiting for the browser prompt.'
+    );
+    await jest.advanceTimersByTimeAsync(1);
+    await rejection;
+
+    jest.useRealTimers();
+  });
+
+  it('re-resolves a selected microphone by stored label and group before capture', async () => {
+    const selectedTracks = [{ stop: jest.fn() }];
+    const selectedStream = {
+      getAudioTracks: () => selectedTracks,
+      getTracks: () => selectedTracks,
+    };
+
+    global.navigator.mediaDevices.enumerateDevices.mockResolvedValue([
+      {
+        deviceId: 'mic-new',
+        groupId: 'group-usb',
+        kind: 'audioinput',
+        label: 'USB Podcast Mic',
+      },
+    ]);
+    global.navigator.mediaDevices.getUserMedia.mockResolvedValue(selectedStream);
+
+    await expect(
+      requestRawMicrophoneStream('mic-old', {
+        preferredDeviceGroupId: 'group-usb',
+        preferredDeviceLabel: 'USB Podcast Mic',
+      })
+    ).resolves.toBe(selectedStream);
+
+    expect(global.navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
+      audio: {
+        deviceId: { exact: 'mic-new' },
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+    });
+  });
+
   it('keeps the fallback attempts when interactive access was already granted', async () => {
     jest.useFakeTimers();
 

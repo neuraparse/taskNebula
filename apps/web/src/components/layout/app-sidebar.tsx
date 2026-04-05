@@ -58,6 +58,7 @@ import {
   listAudioInputDevices,
   normalizeAudioInputDeviceId,
   requestMicrophonePermission,
+  resolvePreferredAudioInputDevice,
   type MicrophoneDeviceOption,
   type MicrophonePermissionState,
 } from '@/lib/chat/microphone';
@@ -90,7 +91,13 @@ export function AppSidebar() {
     setAudioDeviceId,
     toggleMicrophone,
   } = useGlobalVoice();
-  const { storedAudioDeviceId, storeAudioDeviceId } = useStoredVoicePreferences();
+  const {
+    storedAudioDeviceGroupId,
+    storedAudioDeviceId,
+    storedAudioDeviceLabel,
+    storeAudioDeviceId,
+    storeAudioDevicePreference,
+  } = useStoredVoicePreferences();
   const [isVoiceSettingsOpen, setIsVoiceSettingsOpen] = useState(false);
   const autoOpenedRoomIdRef = useRef<string | null>(null);
 
@@ -269,9 +276,12 @@ export function AppSidebar() {
                   isVoiceSettingsOpen={isVoiceSettingsOpen}
                   runtimeError={sidebarRuntimeError}
                   selectedAudioDeviceId={selectedAudioDeviceId}
+                  storedAudioDeviceGroupId={storedAudioDeviceGroupId}
+                  storedAudioDeviceLabel={storedAudioDeviceLabel}
                   sessionUserImage={session?.user?.image}
                   sessionUserName={session?.user?.name}
                   onChangeAudioDevice={handleChangeAudioDevice}
+                  onStoreAudioDevicePreference={storeAudioDevicePreference}
                   onVoiceSettingsOpenChange={setIsVoiceSettingsOpen}
                   onEndCurrentCall={() => void endCurrentCall()}
                   onLeaveCurrentCall={() => void leaveCurrentCall()}
@@ -382,9 +392,12 @@ function SidebarVoiceWorkspace({
   isVoiceSettingsOpen,
   runtimeError,
   selectedAudioDeviceId,
+  storedAudioDeviceGroupId,
+  storedAudioDeviceLabel,
   sessionUserImage,
   sessionUserName,
   onChangeAudioDevice,
+  onStoreAudioDevicePreference,
   onVoiceSettingsOpenChange,
   onEndCurrentCall,
   onLeaveCurrentCall,
@@ -399,9 +412,16 @@ function SidebarVoiceWorkspace({
   isVoiceSettingsOpen: boolean;
   runtimeError: string | null;
   selectedAudioDeviceId: string;
+  storedAudioDeviceGroupId: string | null;
+  storedAudioDeviceLabel: string | null;
   sessionUserImage?: string | null;
   sessionUserName?: string | null;
   onChangeAudioDevice: (audioDeviceId: string) => Promise<void>;
+  onStoreAudioDevicePreference: (input: {
+    audioDeviceId: string;
+    audioDeviceLabel?: string | null;
+    audioDeviceGroupId?: string | null;
+  }) => void;
   onVoiceSettingsOpenChange: (open: boolean) => void;
   onEndCurrentCall: () => void;
   onLeaveCurrentCall: () => void;
@@ -451,12 +471,22 @@ function SidebarVoiceWorkspace({
     [microphoneDevices]
   );
   const selectedMicrophoneLabel = useMemo(() => {
-    if (selectedAudioDeviceId === 'default') {
-      return 'System default microphone';
-    }
-    const selectedDevice = microphoneDevices.find((device) => device.deviceId === selectedAudioDeviceId);
-    return selectedDevice?.label?.trim() || 'Selected microphone unavailable';
-  }, [microphoneDevices, selectedAudioDeviceId]);
+    return (
+      resolvePreferredAudioInputDevice(microphoneDevices, {
+        audioDeviceId: selectedAudioDeviceId,
+        audioDeviceGroupId: storedAudioDeviceGroupId,
+        audioDeviceLabel: storedAudioDeviceLabel,
+      })?.label?.trim() ||
+      (selectedAudioDeviceId === 'default'
+        ? 'System default microphone'
+        : storedAudioDeviceLabel || 'Selected microphone unavailable')
+    );
+  }, [
+    microphoneDevices,
+    selectedAudioDeviceId,
+    storedAudioDeviceGroupId,
+    storedAudioDeviceLabel,
+  ]);
   const microphonePermissionLabel = formatMicrophonePermissionStateLabel(microphonePermissionState);
   const microphonePermissionHelp = useMemo(
     () =>
@@ -480,6 +510,35 @@ function SidebarVoiceWorkspace({
 
       setMicrophonePermissionState(permissionState);
       setMicrophoneDevices(audioInputs);
+
+      if (selectedAudioDeviceId !== 'default') {
+        const matchedSelectedDevice = resolvePreferredAudioInputDevice(audioInputs, {
+          audioDeviceId: selectedAudioDeviceId,
+          audioDeviceGroupId: storedAudioDeviceGroupId,
+          audioDeviceLabel: storedAudioDeviceLabel,
+        });
+
+        if (matchedSelectedDevice) {
+          const normalizedMatchedLabel = matchedSelectedDevice.label || '';
+          const normalizedMatchedGroupId = matchedSelectedDevice.groupId || '';
+          const normalizedStoredLabel = storedAudioDeviceLabel || '';
+          const normalizedStoredGroupId = storedAudioDeviceGroupId || '';
+
+          if (
+            matchedSelectedDevice.deviceId !== selectedAudioDeviceId ||
+            normalizedMatchedGroupId !== normalizedStoredGroupId ||
+            normalizedMatchedLabel !== normalizedStoredLabel
+          ) {
+            onStoreAudioDevicePreference({
+              audioDeviceId: matchedSelectedDevice.deviceId,
+              audioDeviceGroupId: matchedSelectedDevice.groupId,
+              audioDeviceLabel: matchedSelectedDevice.label,
+            });
+          }
+        } else {
+          await onChangeAudioDevice('default');
+        }
+      }
     } catch (error) {
       setSettingsError(
         formatMicrophoneError(error, {
@@ -489,7 +548,14 @@ function SidebarVoiceWorkspace({
     } finally {
       setIsRefreshingMicrophoneEnvironment(false);
     }
-  }, [userAgent]);
+  }, [
+    onChangeAudioDevice,
+    onStoreAudioDevicePreference,
+    selectedAudioDeviceId,
+    storedAudioDeviceGroupId,
+    storedAudioDeviceLabel,
+    userAgent,
+  ]);
 
   useEffect(() => {
     void refreshMicrophoneEnvironment();
@@ -530,6 +596,16 @@ function SidebarVoiceWorkspace({
       try {
         setIsChangingAudioDevice(true);
         setSettingsError(null);
+        const selectedDevice = microphoneDevices.find(
+          (device) => device.deviceId === nextAudioDeviceId
+        );
+        if (selectedDevice) {
+          onStoreAudioDevicePreference({
+            audioDeviceId: selectedDevice.deviceId,
+            audioDeviceGroupId: selectedDevice.groupId,
+            audioDeviceLabel: selectedDevice.label,
+          });
+        }
         await onChangeAudioDevice(nextAudioDeviceId);
         await refreshMicrophoneEnvironment();
       } catch (error) {
@@ -538,7 +614,7 @@ function SidebarVoiceWorkspace({
         setIsChangingAudioDevice(false);
       }
     },
-    [onChangeAudioDevice, refreshMicrophoneEnvironment]
+    [microphoneDevices, onChangeAudioDevice, onStoreAudioDevicePreference, refreshMicrophoneEnvironment]
   );
 
   const handleRequestMicrophoneAccess = useCallback(async () => {

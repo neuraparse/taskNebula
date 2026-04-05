@@ -33,6 +33,9 @@ export type MicrophoneDeviceOption = Pick<
 type RequestRawMicrophoneStreamOptions = {
   interactive?: boolean;
   timeoutMs?: number | null;
+  preferredDeviceLabel?: string | null;
+  preferredDeviceGroupId?: string | null;
+  userAgent?: string | null;
 };
 
 function stopMediaStream(stream?: MediaStream | null) {
@@ -97,6 +100,17 @@ export function shouldForceDefaultMicrophoneForLiveJoin(
   return (
     shouldPreferDefaultMicrophoneForLiveJoin(userAgent) && permissionState !== 'granted'
   );
+}
+
+export function isPendingMicrophonePermissionState(
+  userAgent?: string | null,
+  permissionState: MicrophonePermissionState = 'unknown'
+) {
+  if (permissionState === 'prompt') {
+    return true;
+  }
+
+  return detectMicrophoneBrowserFamily(userAgent) === 'safari' && permissionState === 'unknown';
 }
 
 function filterSupportedAudioConstraints(
@@ -384,6 +398,89 @@ export async function listAudioInputDevices(options?: {
   }
 }
 
+function trimMicrophonePreferenceValue(value?: string | null) {
+  const normalizedValue = value?.trim() || '';
+  return normalizedValue.length > 0 ? normalizedValue : null;
+}
+
+export function resolvePreferredAudioInputDevice(
+  devices: MicrophoneDeviceOption[],
+  preference: {
+    audioDeviceId?: string | null;
+    audioDeviceLabel?: string | null;
+    audioDeviceGroupId?: string | null;
+  }
+) {
+  const normalizedDeviceId = normalizeAudioInputDeviceId(preference.audioDeviceId);
+  const normalizedLabel = trimMicrophonePreferenceValue(preference.audioDeviceLabel);
+  const normalizedGroupId = trimMicrophonePreferenceValue(preference.audioDeviceGroupId);
+
+  if (normalizedDeviceId === 'default') {
+    return null;
+  }
+
+  return (
+    devices.find((device) => device.deviceId === normalizedDeviceId) ??
+    (normalizedGroupId
+      ? devices.find((device) => trimMicrophonePreferenceValue(device.groupId) === normalizedGroupId)
+      : null) ??
+    (normalizedLabel
+      ? devices.find((device) => trimMicrophonePreferenceValue(device.label) === normalizedLabel)
+      : null) ??
+    null
+  );
+}
+
+async function resolveRequestedAudioInputDeviceId(
+  audioDeviceId?: string | null,
+  options?: {
+    preferredDeviceLabel?: string | null;
+    preferredDeviceGroupId?: string | null;
+    timeoutMs?: number;
+  }
+) {
+  const normalizedDeviceId = normalizeAudioInputDeviceId(audioDeviceId);
+  if (normalizedDeviceId === 'default') {
+    return 'default';
+  }
+
+  const preferredDeviceLabel = trimMicrophonePreferenceValue(options?.preferredDeviceLabel);
+  const preferredDeviceGroupId = trimMicrophonePreferenceValue(options?.preferredDeviceGroupId);
+
+  if (!preferredDeviceLabel && !preferredDeviceGroupId) {
+    return normalizedDeviceId;
+  }
+
+  try {
+    const audioInputs = await listAudioInputDevices({
+      silent: true,
+      timeoutMs: options?.timeoutMs ?? DEFAULT_DEVICE_RESOLUTION_TIMEOUT_MS,
+    });
+    const matchedDevice = resolvePreferredAudioInputDevice(audioInputs, {
+      audioDeviceId: normalizedDeviceId,
+      audioDeviceLabel: preferredDeviceLabel,
+      audioDeviceGroupId: preferredDeviceGroupId,
+    });
+
+    if (!matchedDevice) {
+      return normalizedDeviceId;
+    }
+
+    if (matchedDevice.deviceId !== normalizedDeviceId) {
+      chatClientDebug('microphone.request.selected-device.resolved', {
+        requestedDeviceId: normalizedDeviceId,
+        resolvedDeviceId: matchedDevice.deviceId,
+        resolvedGroupId: matchedDevice.groupId,
+        resolvedLabel: matchedDevice.label,
+      });
+    }
+
+    return matchedDevice.deviceId;
+  } catch {
+    return normalizedDeviceId;
+  }
+}
+
 export function formatMicrophoneError(
   error: unknown,
   options?: {
@@ -525,13 +622,15 @@ function buildRawMicrophoneAttempts(
     interactive?: boolean;
     permissionState?: MicrophonePermissionState;
     resolvedDefaultAudioDeviceId?: string | null;
+    browserFamily?: MicrophoneBrowserFamily;
   }
 ): MicrophoneAttempt[] {
   const normalizedDeviceId = normalizeAudioInputDeviceId(audioDeviceId);
   const shouldUseSingleInteractiveAttempt =
     normalizedDeviceId === 'default' &&
     options?.interactive &&
-    (options.permissionState === 'prompt' || options.permissionState === 'unknown') &&
+    (options.permissionState === 'prompt' ||
+      (options.browserFamily === 'safari' && options.permissionState === 'unknown')) &&
     !options?.resolvedDefaultAudioDeviceId;
 
   if (normalizedDeviceId === 'default') {
@@ -687,8 +786,13 @@ export async function requestRawMicrophoneStream(
 ) {
   const normalizedDeviceId = normalizeAudioInputDeviceId(audioDeviceId);
   const permissionState = options?.interactive ? await getMicrophonePermissionState() : 'unknown';
+  const browserFamily = detectMicrophoneBrowserFamily(options?.userAgent);
+  const shouldTreatPermissionStateAsPending = isPendingMicrophonePermissionState(
+    options?.userAgent,
+    permissionState
+  );
   const shouldSkipDefaultDeviceResolution =
-    normalizedDeviceId === 'default' && options?.interactive && permissionState === 'prompt';
+    normalizedDeviceId === 'default' && options?.interactive && shouldTreatPermissionStateAsPending;
   const resolvedDefaultAudioDeviceId =
     normalizedDeviceId === 'default'
       ? shouldSkipDefaultDeviceResolution
@@ -703,10 +807,22 @@ export async function requestRawMicrophoneStream(
     throw new Error('Microphone permission was denied. Allow microphone access in your browser and try again.');
   }
 
-  const attempts = buildRawMicrophoneAttempts(normalizedDeviceId, {
+  const shouldUnlockPermissionBeforeExactDevice =
+    options?.interactive &&
+    normalizedDeviceId !== 'default' &&
+    shouldTreatPermissionStateAsPending;
+  const resolvedRequestedAudioDeviceId =
+    normalizedDeviceId !== 'default' && !shouldUnlockPermissionBeforeExactDevice
+      ? await resolveRequestedAudioInputDeviceId(normalizedDeviceId, {
+          preferredDeviceLabel: options?.preferredDeviceLabel,
+          preferredDeviceGroupId: options?.preferredDeviceGroupId,
+        })
+      : normalizedDeviceId;
+  const attempts = buildRawMicrophoneAttempts(resolvedRequestedAudioDeviceId, {
     interactive: options?.interactive,
     permissionState,
     resolvedDefaultAudioDeviceId,
+    browserFamily,
   });
   let lastError: unknown = null;
   const explicitTimeoutMs =
@@ -718,15 +834,10 @@ export async function requestRawMicrophoneStream(
       ? explicitTimeoutMs
       : options?.interactive &&
           normalizedDeviceId === 'default' &&
-          (permissionState === 'prompt' || permissionState === 'unknown') &&
+          shouldTreatPermissionStateAsPending &&
           !resolvedDefaultAudioDeviceId
         ? INTERACTIVE_MICROPHONE_PROMPT_TIMEOUT_MS
         : MICROPHONE_ATTEMPT_TIMEOUT_MS;
-
-  const shouldUnlockPermissionBeforeExactDevice =
-    options?.interactive &&
-    normalizedDeviceId !== 'default' &&
-    (permissionState === 'prompt' || permissionState === 'unknown');
 
   if (shouldUnlockPermissionBeforeExactDevice) {
     chatClientDebug('microphone.request.permission-unlock.start', {
@@ -750,16 +861,24 @@ export async function requestRawMicrophoneStream(
     });
 
     try {
-      const exactAttempts = buildRawMicrophoneAttempts(normalizedDeviceId, {
+      const resolvedSelectedAudioDeviceId = await resolveRequestedAudioInputDeviceId(
+        normalizedDeviceId,
+        {
+          preferredDeviceLabel: options?.preferredDeviceLabel,
+          preferredDeviceGroupId: options?.preferredDeviceGroupId,
+        }
+      );
+      const exactAttempts = buildRawMicrophoneAttempts(resolvedSelectedAudioDeviceId, {
         interactive: false,
         permissionState: 'granted',
+        browserFamily,
       });
       let lastExactError: unknown = null;
 
       for (const attempt of exactAttempts) {
         try {
           const selectedStream = await requestMicrophoneWithAttempt(
-            normalizedDeviceId,
+            resolvedSelectedAudioDeviceId,
             attempt,
             MICROPHONE_ATTEMPT_TIMEOUT_MS
           );
@@ -799,7 +918,11 @@ export async function requestRawMicrophoneStream(
 
   for (const attempt of attempts) {
     try {
-      return await requestMicrophoneWithAttempt(normalizedDeviceId, attempt, timeoutMs);
+      return await requestMicrophoneWithAttempt(
+        resolvedRequestedAudioDeviceId,
+        attempt,
+        timeoutMs
+      );
     } catch (error) {
       lastError = error;
     }

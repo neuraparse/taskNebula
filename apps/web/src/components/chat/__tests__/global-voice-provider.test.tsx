@@ -506,6 +506,91 @@ describe('GlobalVoiceProvider', () => {
     jest.useRealTimers();
   });
 
+  it('keeps an in-call Safari microphone prompt pending when permissions state is browser-managed', async () => {
+    jest.useFakeTimers();
+
+    const onRuntimeErrorChange = jest.fn();
+    const mediaTrack = { kind: 'audio', stop: jest.fn() } as unknown as MediaStreamTrack;
+    const originalUserAgent = global.navigator.userAgent;
+    let resolveMicrophoneStream: ((stream: MediaStream) => void) | null = null;
+
+    global.navigator.permissions.query.mockRejectedValue(
+      new Error('permissions query failed')
+    );
+    Object.defineProperty(global.navigator, 'userAgent', {
+      configurable: true,
+      value:
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15',
+    });
+    mockGetUserMedia.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveMicrophoneStream = resolve;
+        })
+    );
+
+    function ToggleHarness() {
+      const voice = useGlobalVoice();
+      const toggledRef = useRef(false);
+
+      useEffect(() => {
+        if (voice.connectionState !== 'connected' || toggledRef.current) {
+          return;
+        }
+
+        toggledRef.current = true;
+        void voice.toggleMicrophone();
+      }, [voice]);
+
+      return null;
+    }
+
+    renderWithQueryClient(
+      <GlobalVoiceProvider>
+        <RuntimeErrorProbe onChange={onRuntimeErrorChange} />
+        <TestHarness />
+        <ToggleHarness />
+      </GlobalVoiceProvider>
+    );
+
+    await waitFor(() => {
+      expect(mockRoomConnect).toHaveBeenCalledTimes(1);
+    });
+
+    await waitFor(() => {
+      expect(mockGetUserMedia).toHaveBeenCalledWith({
+        audio: true,
+      });
+    });
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(7_000);
+      await Promise.resolve();
+    });
+
+    expect(onRuntimeErrorChange).toHaveBeenCalledWith(
+      'Browser is still waiting for microphone access. Safari may keep microphone access under Safari > Settings > Websites > Microphone, or in the website controls in the address bar. TaskNebula will unmute automatically if access succeeds.'
+    );
+    expect(mockPublishTrack).not.toHaveBeenCalled();
+
+    resolveMicrophoneStream?.({
+      getAudioTracks: () => [mediaTrack],
+      getTracks: () => [mediaTrack],
+    } as unknown as MediaStream);
+
+    await waitFor(() => {
+      expect(mockPublishTrack).toHaveBeenCalledWith(mediaTrack, {
+        source: 'microphone',
+      });
+    });
+
+    Object.defineProperty(global.navigator, 'userAgent', {
+      configurable: true,
+      value: originalUserAgent,
+    });
+    jest.useRealTimers();
+  });
+
   it('surfaces a timeout message when a pending microphone request expires after joining', async () => {
     const onRuntimeErrorChange = jest.fn();
     let rejectPendingMicrophoneStream: ((error: Error) => void) | null = null;

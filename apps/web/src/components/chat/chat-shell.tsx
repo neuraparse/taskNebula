@@ -77,8 +77,10 @@ import {
   listAudioInputDevices,
   requestMicrophonePermission,
   requestRawMicrophoneStream,
+  resolvePreferredAudioInputDevice,
   resolveJoinAudioInputDeviceId,
   shouldPreferDefaultMicrophoneForLiveJoin,
+  type MicrophoneDeviceOption,
   type MicrophonePermissionState,
 } from '@/lib/chat/microphone';
 import { chatClientDebug, chatClientError } from '@/lib/chat/debug';
@@ -1643,13 +1645,23 @@ function formatMicrophoneDeviceOptionLabel(
 function useMicrophoneEnvironment({
   onError,
   storedAudioDeviceId,
+  storedAudioDeviceLabel,
+  storedAudioDeviceGroupId,
+  storeAudioDevicePreference,
   storeAudioDeviceId,
 }: {
   onError: (message: string | null) => void;
   storedAudioDeviceId: string;
+  storedAudioDeviceLabel: string | null;
+  storedAudioDeviceGroupId: string | null;
+  storeAudioDevicePreference: (input: {
+    audioDeviceId: string;
+    audioDeviceLabel?: string | null;
+    audioDeviceGroupId?: string | null;
+  }) => void;
   storeAudioDeviceId: (deviceId: string) => void;
 }) {
-  const [microphoneDevices, setMicrophoneDevices] = useState<MediaDeviceInfo[]>([]);
+  const [microphoneDevices, setMicrophoneDevices] = useState<MicrophoneDeviceOption[]>([]);
   const [microphonePermissionState, setMicrophonePermissionState] =
     useState<MicrophonePermissionState>('unknown');
   const [isRefreshingMicrophoneEnvironment, setIsRefreshingMicrophoneEnvironment] =
@@ -1668,11 +1680,33 @@ function useMicrophoneEnvironment({
       setMicrophonePermissionState(permissionState);
       setMicrophoneDevices(audioInputs);
 
-      if (
-        storedAudioDeviceId !== 'default' &&
-        !audioInputs.some((device) => device.deviceId === storedAudioDeviceId)
-      ) {
-        storeAudioDeviceId('default');
+      if (storedAudioDeviceId !== 'default') {
+        const matchedStoredDevice = resolvePreferredAudioInputDevice(audioInputs, {
+          audioDeviceId: storedAudioDeviceId,
+          audioDeviceLabel: storedAudioDeviceLabel,
+          audioDeviceGroupId: storedAudioDeviceGroupId,
+        });
+
+        if (matchedStoredDevice) {
+          const normalizedMatchedLabel = matchedStoredDevice.label || '';
+          const normalizedMatchedGroupId = matchedStoredDevice.groupId || '';
+          const normalizedStoredLabel = storedAudioDeviceLabel || '';
+          const normalizedStoredGroupId = storedAudioDeviceGroupId || '';
+
+          if (
+            matchedStoredDevice.deviceId !== storedAudioDeviceId ||
+            normalizedMatchedLabel !== normalizedStoredLabel ||
+            normalizedMatchedGroupId !== normalizedStoredGroupId
+          ) {
+            storeAudioDevicePreference({
+              audioDeviceId: matchedStoredDevice.deviceId,
+              audioDeviceLabel: matchedStoredDevice.label,
+              audioDeviceGroupId: matchedStoredDevice.groupId,
+            });
+          }
+        } else {
+          storeAudioDeviceId('default');
+        }
       }
     } catch (error) {
       onError(
@@ -1683,7 +1717,15 @@ function useMicrophoneEnvironment({
     } finally {
       setIsRefreshingMicrophoneEnvironment(false);
     }
-  }, [onError, storeAudioDeviceId, storedAudioDeviceId, userAgent]);
+  }, [
+    onError,
+    storeAudioDeviceId,
+    storeAudioDevicePreference,
+    storedAudioDeviceGroupId,
+    storedAudioDeviceId,
+    storedAudioDeviceLabel,
+    userAgent,
+  ]);
 
   useEffect(() => {
     void refreshMicrophoneEnvironment();
@@ -1725,7 +1767,11 @@ function useMicrophoneEnvironment({
   );
 
   const selectedMicrophoneLabel =
-    microphoneDevices.find((device) => device.deviceId === storedAudioDeviceId)?.label ||
+    resolvePreferredAudioInputDevice(microphoneDevices, {
+      audioDeviceId: storedAudioDeviceId,
+      audioDeviceLabel: storedAudioDeviceLabel,
+      audioDeviceGroupId: storedAudioDeviceGroupId,
+    })?.label ||
     (storedAudioDeviceId === 'default' ? 'System default microphone' : 'Selected microphone');
 
   const microphonePermissionLabel = formatMicrophonePermissionStateLabel(
@@ -1773,7 +1819,13 @@ export function VoiceJoinSetupPanel({
     pendingMicrophoneStreamPromise?: Promise<MediaStream | null> | null;
   }) => Promise<void>;
 }) {
-  const { storedAudioDeviceId, storeAudioDeviceId } = useStoredVoicePreferences();
+  const {
+    storedAudioDeviceGroupId,
+    storedAudioDeviceId,
+    storedAudioDeviceLabel,
+    storeAudioDeviceId,
+    storeAudioDevicePreference,
+  } = useStoredVoicePreferences();
   const [isTestingMicrophone, setIsTestingMicrophone] = useState(false);
   const [isPreparingMicrophoneTest, setIsPreparingMicrophoneTest] = useState(false);
   const [isSelfMonitorEnabled, setIsSelfMonitorEnabled] = useState(false);
@@ -1800,6 +1852,9 @@ export function VoiceJoinSetupPanel({
   } = useMicrophoneEnvironment({
     onError: setSetupError,
     storedAudioDeviceId,
+    storedAudioDeviceGroupId,
+    storedAudioDeviceLabel,
+    storeAudioDevicePreference,
     storeAudioDeviceId,
   });
 
@@ -1889,9 +1944,12 @@ export function VoiceJoinSetupPanel({
   const requestMicrophoneStream = useCallback(async () => {
     return requestRawMicrophoneStream(storedAudioDeviceId, {
       interactive: true,
+      preferredDeviceGroupId: storedAudioDeviceGroupId,
+      preferredDeviceLabel: storedAudioDeviceLabel,
       timeoutMs: MICROPHONE_TEST_TIMEOUT_MS,
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
     });
-  }, [storedAudioDeviceId]);
+  }, [storedAudioDeviceGroupId, storedAudioDeviceId, storedAudioDeviceLabel]);
 
   async function handleSelectMicrophone(deviceId: string) {
     chatClientDebug('voice-setup.device.select', {
@@ -1899,7 +1957,16 @@ export function VoiceJoinSetupPanel({
       previousDeviceId: storedAudioDeviceId,
     });
     setSetupError(null);
-    storeAudioDeviceId(deviceId);
+    const selectedDevice = microphoneDevices.find((device) => device.deviceId === deviceId);
+    if (selectedDevice) {
+      storeAudioDevicePreference({
+        audioDeviceId: selectedDevice.deviceId,
+        audioDeviceGroupId: selectedDevice.groupId,
+        audioDeviceLabel: selectedDevice.label,
+      });
+    } else {
+      storeAudioDeviceId(deviceId);
+    }
     if (isTestingMicrophone) {
       await stopMicrophoneTest();
     }
@@ -2037,7 +2104,7 @@ export function VoiceJoinSetupPanel({
       const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
       const browserFamily = detectMicrophoneBrowserFamily(userAgent);
       const shouldUseExtendedPromptWait =
-        browserFamily === 'chromium' || browserFamily === 'edge';
+        browserFamily === 'chromium' || browserFamily === 'edge' || browserFamily === 'safari';
       const joinAudioResolution = startWithMicrophone
         ? await resolveJoinAudioInputDeviceId(storedAudioDeviceId || 'default', {
             preferBrowserStability: true,
@@ -2045,7 +2112,10 @@ export function VoiceJoinSetupPanel({
             microphonePermissionState,
             microphoneRequestOptions: {
               interactive: true,
+              preferredDeviceGroupId: storedAudioDeviceGroupId,
+              preferredDeviceLabel: storedAudioDeviceLabel,
               timeoutMs: JOIN_PREFLIGHT_MICROPHONE_TIMEOUT_MS,
+              userAgent,
             },
           })
         : {
@@ -2094,7 +2164,10 @@ export function VoiceJoinSetupPanel({
             joinAudioResolution.audioDeviceId,
             {
               interactive: true,
+              preferredDeviceGroupId: storedAudioDeviceGroupId,
+              preferredDeviceLabel: storedAudioDeviceLabel,
               timeoutMs: backgroundRequestTimeoutMs,
+              userAgent,
             }
           );
           const preflightOutcome = await Promise.race([
@@ -2535,7 +2608,13 @@ function InlineVoiceRoom({
     ],
   });
   const { localParticipant, lastMicrophoneError } = useLocalParticipant();
-  const { storedAudioDeviceId, storeAudioDeviceId } = useStoredVoicePreferences();
+  const {
+    storedAudioDeviceGroupId,
+    storedAudioDeviceId,
+    storedAudioDeviceLabel,
+    storeAudioDeviceId,
+    storeAudioDevicePreference,
+  } = useStoredVoicePreferences();
   const [isLeaving, setIsLeaving] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
   const [expandedPanel, setExpandedPanel] = useState<'audio' | 'people' | null>(null);
@@ -2796,6 +2875,9 @@ function InlineVoiceRoom({
           isMicrophonePending={isMicrophonePending}
           onError={setVoiceError}
           storedAudioDeviceId={storedAudioDeviceId}
+          storedAudioDeviceGroupId={storedAudioDeviceGroupId}
+          storedAudioDeviceLabel={storedAudioDeviceLabel}
+          storeAudioDevicePreference={storeAudioDevicePreference}
           storeAudioDeviceId={storeAudioDeviceId}
         />
       ) : null}
@@ -2886,6 +2968,9 @@ function VoiceAudioSettingsPanel({
   isMicrophonePending,
   onError,
   storedAudioDeviceId,
+  storedAudioDeviceGroupId,
+  storedAudioDeviceLabel,
+  storeAudioDevicePreference,
   storeAudioDeviceId,
 }: {
   connectionState: string;
@@ -2894,6 +2979,13 @@ function VoiceAudioSettingsPanel({
   isMicrophonePending: boolean;
   onError: (message: string | null) => void;
   storedAudioDeviceId: string;
+  storedAudioDeviceGroupId: string | null;
+  storedAudioDeviceLabel: string | null;
+  storeAudioDevicePreference: (input: {
+    audioDeviceId: string;
+    audioDeviceLabel?: string | null;
+    audioDeviceGroupId?: string | null;
+  }) => void;
   storeAudioDeviceId: (deviceId: string) => void;
 }) {
   const room = useRoomContext();
@@ -2910,6 +3002,9 @@ function VoiceAudioSettingsPanel({
   } = useMicrophoneEnvironment({
     onError,
     storedAudioDeviceId,
+    storedAudioDeviceGroupId,
+    storedAudioDeviceLabel,
+    storeAudioDevicePreference,
     storeAudioDeviceId,
   });
 
@@ -2917,7 +3012,16 @@ function VoiceAudioSettingsPanel({
     try {
       onError(null);
       await room.switchActiveDevice('audioinput', deviceId, deviceId !== 'default');
-      storeAudioDeviceId(deviceId);
+      const selectedDevice = microphoneDevices.find((device) => device.deviceId === deviceId);
+      if (selectedDevice) {
+        storeAudioDevicePreference({
+          audioDeviceId: selectedDevice.deviceId,
+          audioDeviceGroupId: selectedDevice.groupId,
+          audioDeviceLabel: selectedDevice.label,
+        });
+      } else {
+        storeAudioDeviceId(deviceId);
+      }
       await refreshMicrophoneEnvironment();
     } catch (error) {
       onError(formatMicrophoneError(error));

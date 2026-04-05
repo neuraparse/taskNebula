@@ -24,11 +24,13 @@ import {
   getPendingMicrophoneRuntimeMessage,
   getTimedOutPendingMicrophonePromptMessage,
   isMicrophoneAccessTimeoutError,
+  isPendingMicrophonePermissionState,
   isRecoverableMicrophoneDeviceError,
   type MicrophonePermissionState,
   normalizeAudioInputDeviceId,
   requestRawMicrophoneStream,
 } from '@/lib/chat/microphone';
+import { readStoredVoicePreferences } from '@/lib/chat/voice-preferences';
 import { chatClientDebug, chatClientError } from '@/lib/chat/debug';
 const CALL_HEARTBEAT_INTERVAL_MS = 15_000;
 const MICROPHONE_ENABLE_TIMEOUT_MS = 7_000;
@@ -149,6 +151,35 @@ function getCurrentMicrophoneUserAgent() {
   return navigator.userAgent;
 }
 
+function buildStoredMicrophoneRequestOptions(
+  audioDeviceId?: string | null,
+  options?: {
+    interactive?: boolean;
+    timeoutMs?: number | null;
+  }
+): MicrophoneRequestOptions {
+  const storedPreferences = readStoredVoicePreferences();
+  const normalizedRequestedDeviceId = normalizeAudioInputDeviceId(audioDeviceId);
+  const normalizedStoredDeviceId = normalizeAudioInputDeviceId(
+    storedPreferences.audioDeviceId
+  );
+  const shouldAttachStoredPreferenceMetadata =
+    normalizedRequestedDeviceId !== 'default' &&
+    normalizedRequestedDeviceId === normalizedStoredDeviceId;
+
+  return {
+    interactive: options?.interactive,
+    timeoutMs: options?.timeoutMs,
+    preferredDeviceGroupId: shouldAttachStoredPreferenceMetadata
+      ? storedPreferences.audioDeviceGroupId ?? null
+      : null,
+    preferredDeviceLabel: shouldAttachStoredPreferenceMetadata
+      ? storedPreferences.audioDeviceLabel ?? null
+      : null,
+    userAgent: getCurrentMicrophoneUserAgent(),
+  };
+}
+
 function getRoomParticipantCount(room: Room, connectionState: string) {
   if (connectionState === 'disconnected') {
     return 0;
@@ -225,13 +256,27 @@ async function enableRoomMicrophoneWithFallback(
       }
     }
 
-    if (normalizedDeviceId === 'default') {
+    const shouldUseRawMicrophoneStream =
+      normalizedDeviceId === 'default' ||
+      Boolean(
+        requestOptions?.preferredDeviceLabel ||
+          requestOptions?.preferredDeviceGroupId ||
+          requestOptions?.interactive
+      );
+
+    if (shouldUseRawMicrophoneStream) {
       chatClientDebug('global-voice.mic.capture.start', {
         roomName: room.name,
         audioDeviceId: normalizedDeviceId,
-        strategy: 'raw-default-stream',
+        strategy:
+          normalizedDeviceId === 'default'
+            ? 'raw-default-stream'
+            : 'raw-selected-stream',
       });
-      const stream = await requestRawMicrophoneStream('default', requestOptions);
+      const stream = await requestRawMicrophoneStream(
+        normalizedDeviceId,
+        requestOptions
+      );
       const mediaTrack = stream.getAudioTracks()[0];
       if (!mediaTrack) {
         stream.getTracks().forEach((streamTrack) => streamTrack.stop());
@@ -241,7 +286,10 @@ async function enableRoomMicrophoneWithFallback(
       chatClientDebug('global-voice.mic.capture.success', {
         roomName: room.name,
         audioDeviceId: normalizedDeviceId,
-        strategy: 'raw-default-stream',
+        strategy:
+          normalizedDeviceId === 'default'
+            ? 'raw-default-stream'
+            : 'raw-selected-stream',
       });
 
       try {
@@ -588,16 +636,18 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
         const browserFamily = detectMicrophoneBrowserFamily(userAgent);
         const permissionState = await getMicrophonePermissionState({ silent: true });
         const shouldBridgePromptThroughPendingState =
-          permissionState === 'prompt' &&
-          (browserFamily === 'chromium' || browserFamily === 'edge');
+          isPendingMicrophonePermissionState(userAgent, permissionState) &&
+          (browserFamily === 'chromium' ||
+            browserFamily === 'edge' ||
+            browserFamily === 'safari');
 
         if (shouldBridgePromptThroughPendingState) {
           const pendingMicrophoneStreamPromise = requestRawMicrophoneStream(
             currentSession?.audioDeviceId,
-            {
+            buildStoredMicrophoneRequestOptions(currentSession?.audioDeviceId, {
               interactive: true,
               timeoutMs: EXTENDED_CHROMIUM_MICROPHONE_PROMPT_TIMEOUT_MS,
-            }
+            })
           );
 
           setCurrentSession((current) =>
@@ -736,10 +786,10 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
             setCurrentSession((current) => (current ? { ...current, audioDeviceId: 'default' } : current));
           },
           undefined,
-          {
+          buildStoredMicrophoneRequestOptions(currentSession?.audioDeviceId, {
             interactive: true,
             timeoutMs: MICROPHONE_ENABLE_TIMEOUT_MS,
-          }
+          })
         );
       } else {
         microphoneActivationIntentRef.current = false;
@@ -1272,9 +1322,9 @@ function PersistentVoiceHost({
               latestOnRuntimeErrorRef.current(
                 'The selected microphone could not start in this browser, so TaskNebula switched to your system default microphone.'
               );
-            }, session.preflightMicrophoneStream, {
+            }, session.preflightMicrophoneStream, buildStoredMicrophoneRequestOptions(session.audioDeviceId, {
               timeoutMs: MICROPHONE_ENABLE_TIMEOUT_MS,
-            });
+            }));
             chatClientDebug('global-voice.host.mic.enable.success', {
               roomName: session.roomName,
               audioDeviceId: session.audioDeviceId,
@@ -1351,9 +1401,9 @@ function PersistentVoiceHost({
                     );
                   },
                   stream,
-                  {
+                  buildStoredMicrophoneRequestOptions(session.audioDeviceId, {
                     timeoutMs: MICROPHONE_ENABLE_TIMEOUT_MS,
-                  }
+                  })
                 );
                 chatClientDebug('global-voice.host.mic.pending.success', {
                   roomName: session.roomName,

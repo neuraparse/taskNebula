@@ -604,7 +604,10 @@ describe('ChatShell', () => {
     );
     window.localStorage.setItem(
       'tasknebula-chat-voice-settings',
-      JSON.stringify({ audioDeviceId: 'mic-usb' })
+      JSON.stringify({
+        audioDeviceId: 'mic-usb',
+        audioDeviceLabel: 'USB Podcast Mic',
+      })
     );
 
     render(
@@ -617,16 +620,19 @@ describe('ChatShell', () => {
       />
     );
 
-    const microphoneSelect = await screen.findByRole('combobox');
-    await waitFor(() => {
-      expect(microphoneSelect).toHaveValue('mic-usb');
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
     });
-    const joinWithMicButton = await screen.findByRole('button', { name: /join with mic/i });
+    const microphoneSelect = screen.getByRole('combobox');
+    expect(microphoneSelect).toHaveValue('mic-usb');
+    const joinWithMicButton = screen.getByRole('button', { name: /join with mic/i });
     expect(joinWithMicButton).toBeEnabled();
 
+    fireEvent.click(joinWithMicButton);
+
     await act(async () => {
-      fireEvent.click(joinWithMicButton);
-      await jest.advanceTimersByTimeAsync(1_500);
+      await jest.advanceTimersByTimeAsync(1_600);
       await Promise.resolve();
       await Promise.resolve();
     });
