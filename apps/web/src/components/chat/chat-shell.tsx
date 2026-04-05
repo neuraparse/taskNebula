@@ -951,106 +951,108 @@ export function ChatShell({ projectId }: { projectId: string }) {
       </Sheet>
 
       <div className="flex h-full min-h-0 bg-background">
-        <aside className="hidden h-full w-[280px] shrink-0 border-r lg:flex">{sidebar}</aside>
+        <aside className="hidden h-full w-[272px] shrink-0 border-r bg-background lg:flex">{sidebar}</aside>
 
         <main className="flex min-w-0 flex-1">
           {selectedRoomMeta ? (
             <>
               <div className="flex min-w-0 flex-1 flex-col">
-              <div className="flex items-center justify-between gap-4 border-b px-4 py-3">
-                <div className="min-w-0 flex items-center gap-3">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 rounded-md lg:hidden"
-                    onClick={() => setIsSidebarOpen(true)}
-                  >
-                    <PanelLeft className="h-4 w-4" />
-                  </Button>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      {selectedRoomMeta.kind === 'channel' ? (
-                        <Hash className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      ) : (
-                        <MessageSquareText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      )}
-                      <div className="truncate text-sm font-semibold sm:text-base">{selectedRoomMeta.title}</div>
-                    </div>
-                    <div className="truncate text-xs text-muted-foreground">
-                      {selectedRoomMeta.subtitle}
-                      {combinedActiveCall ? ` · ${Number(combinedActiveCall.participantCount) || 0} in call` : ''}
-                      {stream.presence.length ? ` · ${stream.presence.length} online` : ''}
-                      {!stream.isConnected ? ' · reconnecting' : ''}
+              <div className="border-b bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-6">
+                <div className="mx-auto flex w-full max-w-6xl items-start justify-between gap-4">
+                  <div className="min-w-0 flex items-start gap-3">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="mt-0.5 h-8 w-8 rounded-none lg:hidden"
+                      onClick={() => setIsSidebarOpen(true)}
+                    >
+                      <PanelLeft className="h-4 w-4" />
+                    </Button>
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex items-center gap-2">
+                        {selectedRoomMeta.kind === 'channel' ? (
+                          <Hash className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        ) : (
+                          <MessageSquareText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        )}
+                        <div className="truncate text-base font-semibold">{selectedRoomMeta.title}</div>
+                      </div>
+                      <div className="truncate text-sm text-muted-foreground">
+                        {selectedRoomMeta.subtitle}
+                        {combinedActiveCall ? ` · ${Number(combinedActiveCall.participantCount) || 0} in call` : ''}
+                        {stream.presence.length ? ` · ${stream.presence.length} online` : ''}
+                        {!stream.isConnected ? ' · reconnecting' : ''}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-2">
-                  {bootstrap.permissions.canModerateMessages ? (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          className="h-9 w-9 rounded-md"
-                          aria-label="Moderation tools"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuItem onClick={() => setPendingModerationAction('clear_deleted')}>
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Clear deleted messages
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => setPendingModerationAction('clear_room')}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Clear room history
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  ) : null}
-                  {voice.currentSession ? (
-                    <Button
-                      variant={isCurrentVoiceRoom ? 'secondary' : 'outline'}
-                      size="sm"
-                      className="rounded-md"
-                      onClick={() => {
-                        if (voice.currentTarget?.roomHref && !isCurrentVoiceRoom) {
-                          router.push(voice.currentTarget.roomHref);
+                  <div className="flex shrink-0 items-center gap-2">
+                    {bootstrap.permissions.canModerateMessages ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9 rounded-none"
+                            aria-label="Moderation tools"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56 rounded-none">
+                          <DropdownMenuItem onClick={() => setPendingModerationAction('clear_deleted')}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Clear deleted messages
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => setPendingModerationAction('clear_room')}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Clear room history
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : null}
+                    {voice.currentSession ? (
+                      <Button
+                        variant={isCurrentVoiceRoom ? 'secondary' : 'outline'}
+                        size="sm"
+                        className="rounded-none"
+                        onClick={() => {
+                          if (voice.currentTarget?.roomHref && !isCurrentVoiceRoom) {
+                            router.push(voice.currentTarget.roomHref);
+                          }
+                        }}
+                      >
+                        <Volume2 className="mr-1.5 h-4 w-4" />
+                        {isCurrentVoiceRoom ? 'In call' : 'Open call'}
+                      </Button>
+                    ) : null}
+                    {bootstrap.effectiveSettings.voiceEnabled ? (
+                      <Button
+                        variant={combinedActiveCall ? 'outline' : 'default'}
+                        size="sm"
+                        className="rounded-none"
+                        onClick={handleOpenVoiceSetup}
+                        disabled={
+                          isJoiningCall ||
+                          Boolean(voice.currentSession) ||
+                          (!combinedActiveCall && !bootstrap.permissions.canStartCalls)
                         }
-                      }}
-                    >
-                      <Volume2 className="mr-1.5 h-4 w-4" />
-                      {isCurrentVoiceRoom ? 'In call' : 'Open call'}
-                    </Button>
-                  ) : null}
-                  {bootstrap.effectiveSettings.voiceEnabled ? (
-                    <Button
-                      variant={combinedActiveCall ? 'outline' : 'default'}
-                      size="sm"
-                      className="rounded-md"
-                      onClick={handleOpenVoiceSetup}
-                      disabled={
-                        isJoiningCall ||
-                        Boolean(voice.currentSession) ||
-                        (!combinedActiveCall && !bootstrap.permissions.canStartCalls)
-                      }
-                    >
-                      {isJoiningCall ? (
-                        <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                      ) : (
-                        <PhoneCall className="mr-1.5 h-4 w-4" />
-                      )}
-                      {voice.currentSession ? 'In call' : combinedActiveCall ? 'Join call' : 'Start call'}
-                    </Button>
-                  ) : null}
+                      >
+                        {isJoiningCall ? (
+                          <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                        ) : (
+                          <PhoneCall className="mr-1.5 h-4 w-4" />
+                        )}
+                        {voice.currentSession ? 'In call' : combinedActiveCall ? 'Join call' : 'Start call'}
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
               </div>
 
@@ -1064,7 +1066,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
 
               {combinedActiveCall ? (
                 <div className="border-b px-4 py-2">
-                  <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 rounded-sm border px-3 py-2 text-xs">
+                <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 rounded-none border px-3 py-2 text-xs">
                     <div className="min-w-0">
                       <div className="font-medium text-foreground">
                         {isCurrentVoiceRoom ? 'Voice call is live' : 'Active call in this room'}
@@ -1079,7 +1081,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
                       </div>
                     </div>
                     {isCurrentVoiceRoom ? (
-                      <Button size="sm" variant="outline" className="rounded-sm" onClick={() => void voice.leaveCurrentCall()}>
+                      <Button size="sm" variant="outline" className="rounded-none" onClick={() => void voice.leaveCurrentCall()}>
                         <PhoneOff className="mr-2 h-3.5 w-3.5" />
                         Leave
                       </Button>
@@ -1087,7 +1089,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="rounded-sm"
+                        className="rounded-none"
                         onClick={handleOpenVoiceSetup}
                         disabled={Boolean(voice.currentSession) || isJoiningCall}
                       >
@@ -1101,7 +1103,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
 
               <div className="flex-1 overflow-y-auto">
                 <div
-                  className="mx-auto flex w-full max-w-4xl flex-col px-4 py-4 sm:px-6"
+                  className="mx-auto flex w-full max-w-6xl flex-col px-4 py-5 sm:px-6"
                 >
                   {messagesQuery.isLoading ? (
                     <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
@@ -1137,7 +1139,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
                       ))}
                     </>
                   ) : (
-                    <div className="flex min-h-[280px] flex-col items-center justify-center rounded-sm border border-dashed px-6 text-center">
+                    <div className="flex min-h-[320px] flex-col items-center justify-center rounded-none border border-dashed border-border/60 bg-muted/[0.02] px-8 text-center">
                       <div className="text-sm font-medium">No messages yet</div>
                       <div className="mt-1 text-sm text-muted-foreground">Post the first update or paste a screenshot.</div>
                     </div>
@@ -1146,9 +1148,9 @@ export function ChatShell({ projectId }: { projectId: string }) {
                 </div>
               </div>
 
-              <div className="border-t px-4 py-3 sm:px-6">
+              <div className="border-t bg-background/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-6">
                 <form
-                  className="mx-auto flex w-full max-w-4xl flex-col gap-3"
+                  className="mx-auto flex w-full max-w-6xl flex-col gap-3"
                   onSubmit={handleComposerSubmit}
                 >
                   {queuedFiles.length ? (
@@ -1177,62 +1179,64 @@ export function ChatShell({ projectId }: { projectId: string }) {
                     </div>
                   ) : null}
 
-                  <Textarea
-                    value={composerValue}
-                    onChange={(event) => {
-                      setComposerValue(event.target.value);
-                      if (composerError) {
-                        setComposerError(null);
-                      }
-                    }}
-                    onKeyDown={handleComposerKeyDown}
-                    onPaste={handlePaste}
-                    placeholder="Write a message, use @name, or paste an image."
-                    className="min-h-[84px] resize-y rounded-sm border bg-background"
-                    disabled={!canSendMessages || isSendingMessage}
-                  />
+                  <div className="rounded-none border border-border/60 bg-background p-3">
+                    <Textarea
+                      value={composerValue}
+                      onChange={(event) => {
+                        setComposerValue(event.target.value);
+                        if (composerError) {
+                          setComposerError(null);
+                        }
+                      }}
+                      onKeyDown={handleComposerKeyDown}
+                      onPaste={handlePaste}
+                      placeholder="Write a message, use @name, or paste an image."
+                      className="min-h-[108px] resize-y rounded-none border-0 bg-transparent px-0 py-0 shadow-none focus-visible:ring-0"
+                      disabled={!canSendMessages || isSendingMessage}
+                    />
 
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-1 rounded-sm border px-2 py-1 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={!attachmentsEnabled || isSendingMessage}
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-3">
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1 rounded-none border px-2 py-1 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={!attachmentsEnabled || isSendingMessage}
+                        >
+                          <ImagePlus className="h-3.5 w-3.5" />
+                          Attach
+                        </button>
+                        {sendDisabledReason ? <span>{sendDisabledReason}</span> : null}
+                        {!sendDisabledReason ? (
+                          <span className="hidden sm:inline">Paste screenshots directly. Ctrl/Cmd + Enter sends.</span>
+                        ) : null}
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          className="hidden"
+                          onChange={(event) => queueFiles(Array.from(event.target.files || []))}
+                        />
+                      </div>
+
+                      <Button
+                        type="submit"
+                        disabled={
+                          isSendingMessage ||
+                          Boolean(sendDisabledReason) ||
+                          (!trimmedComposerValue && queuedFiles.length === 0)
+                        }
+                        size="sm"
+                        className="rounded-none"
                       >
-                        <ImagePlus className="h-3.5 w-3.5" />
-                        Attach
-                      </button>
-                      {sendDisabledReason ? <span>{sendDisabledReason}</span> : null}
-                      {!sendDisabledReason ? (
-                        <span className="hidden sm:inline">Paste screenshots directly. Ctrl/Cmd + Enter sends.</span>
-                      ) : null}
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        multiple
-                        className="hidden"
-                        onChange={(event) => queueFiles(Array.from(event.target.files || []))}
-                      />
+                        {isSendingMessage ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <SendHorizontal className="mr-2 h-4 w-4" />
+                        )}
+                        Send
+                      </Button>
                     </div>
-
-                    <Button
-                      type="submit"
-                      disabled={
-                        isSendingMessage ||
-                        Boolean(sendDisabledReason) ||
-                        (!trimmedComposerValue && queuedFiles.length === 0)
-                      }
-                      size="sm"
-                      className="rounded-md"
-                    >
-                      {isSendingMessage ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <SendHorizontal className="mr-2 h-4 w-4" />
-                      )}
-                      Send
-                    </Button>
                   </div>
                 </form>
               </div>
@@ -1289,15 +1293,16 @@ function ChatSidebar({
   onCreateChannel: () => void;
 }) {
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="border-b px-4 py-4">
+    <div className="flex h-full min-h-0 flex-col bg-background/98">
+      <div className="border-b bg-background/95 px-5 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">Project chat</div>
-            <div className="truncate pt-1 text-sm font-semibold">{bootstrap.project.name}</div>
+          <div className="min-w-0 space-y-1">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Project chat</div>
+            <div className="truncate text-sm font-semibold">{bootstrap.project.name}</div>
+            <div className="text-xs text-muted-foreground">Channels and linked discussions</div>
           </div>
           {bootstrap.permissions.canCreateChannels ? (
-            <Button size="sm" variant="outline" className="rounded-md" onClick={onCreateChannel}>
+            <Button size="sm" variant="outline" className="h-8 shrink-0 rounded-none px-3" onClick={onCreateChannel}>
               New
             </Button>
           ) : null}
@@ -1305,37 +1310,37 @@ function ChatSidebar({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="space-y-5 px-3 py-4">
-          <section className="space-y-1">
-            <div className="px-2 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">Channels</div>
+        <div className="space-y-6 px-4 py-4">
+          <section className="space-y-2">
+            <div className="px-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Channels</div>
             {bootstrap.channels.map((channel) => (
               <button
                 key={channel.id}
                 type="button"
                 onClick={() => channel.roomId && onSelectRoom(channel.roomId)}
                 className={cn(
-                  'flex w-full items-center gap-2 rounded-sm border border-transparent px-2.5 py-2 text-left text-sm transition-colors',
+                  'flex w-full items-center gap-2 rounded-none border border-transparent px-3 py-2.5 text-left text-sm transition-colors',
                   channel.roomId === selectedRoomId
-                    ? 'border-border bg-muted/70 text-foreground'
-                    : 'text-muted-foreground hover:border-border/60 hover:bg-muted/30 hover:text-foreground'
+                    ? 'border-border/70 bg-muted/45 text-foreground'
+                    : 'text-muted-foreground hover:border-border/50 hover:bg-muted/20 hover:text-foreground'
                 )}
               >
                 <Hash className="h-4 w-4 shrink-0" />
                 <span className="min-w-0 flex-1 truncate">{channel.name}</span>
                 {channel.activeCall ? (
-                  <span className="rounded-sm border px-1.5 py-0.5 text-[11px] text-foreground">
+                  <span className="rounded-none border px-1.5 py-0.5 text-[11px] text-foreground">
                     call
                   </span>
                 ) : null}
                 {channel.unreadCount ? (
-                  <span className="rounded-sm border px-1.5 py-0.5 text-[11px] text-foreground">{channel.unreadCount}</span>
+                  <span className="rounded-none border px-1.5 py-0.5 text-[11px] text-foreground">{channel.unreadCount}</span>
                 ) : null}
               </button>
             ))}
           </section>
 
-          <section className="space-y-1">
-            <div className="px-2 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">Recent</div>
+          <section className="space-y-2">
+            <div className="px-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Recent</div>
             {bootstrap.recentDiscussions.length ? (
               bootstrap.recentDiscussions.map((discussion) => (
                 <button
@@ -1343,10 +1348,10 @@ function ChatSidebar({
                   type="button"
                   onClick={() => onSelectRoom(discussion.id)}
                   className={cn(
-                    'flex w-full items-start gap-2 rounded-sm border border-transparent px-2.5 py-2 text-left transition-colors',
+                    'flex w-full items-start gap-2 rounded-none border border-transparent px-3 py-2.5 text-left transition-colors',
                     discussion.id === selectedRoomId
-                      ? 'border-border bg-muted/70 text-foreground'
-                      : 'text-muted-foreground hover:border-border/60 hover:bg-muted/30 hover:text-foreground'
+                      ? 'border-border/70 bg-muted/45 text-foreground'
+                      : 'text-muted-foreground hover:border-border/50 hover:bg-muted/20 hover:text-foreground'
                   )}
                 >
                   <MessageSquareText className="mt-0.5 h-4 w-4 shrink-0" />
@@ -1363,15 +1368,15 @@ function ChatSidebar({
                     </div>
                   </div>
                   {discussion.activeCall ? (
-                    <span className="rounded-sm border px-1.5 py-0.5 text-[11px] text-foreground">call</span>
+                    <span className="rounded-none border px-1.5 py-0.5 text-[11px] text-foreground">call</span>
                   ) : null}
                   {discussion.unreadCount ? (
-                    <span className="rounded-sm border px-1.5 py-0.5 text-[11px] text-foreground">{discussion.unreadCount}</span>
+                    <span className="rounded-none border px-1.5 py-0.5 text-[11px] text-foreground">{discussion.unreadCount}</span>
                   ) : null}
                 </button>
               ))
             ) : (
-              <div className="px-2 py-3 text-sm text-muted-foreground">Issue and doc threads appear here.</div>
+              <div className="px-1 py-3 text-sm text-muted-foreground">Issue and doc threads appear here.</div>
             )}
           </section>
         </div>

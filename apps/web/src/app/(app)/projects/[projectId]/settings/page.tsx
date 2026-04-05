@@ -126,43 +126,55 @@ export default function ProjectSettingsPage({
             </div>
 
             <TabsContent value="permissions" className="space-y-4 focus-visible:outline-none">
-              <PermissionManager projectId={projectId} />
+              {activeTab === 'permissions' ? <PermissionManager projectId={projectId} /> : null}
             </TabsContent>
 
             <TabsContent value="schemes" className="space-y-4 focus-visible:outline-none">
-              <PermissionSchemeManager organizationId={currentOrganizationId} projectId={projectId} />
+              {activeTab === 'schemes' ? (
+                <PermissionSchemeManager organizationId={currentOrganizationId} projectId={projectId} />
+              ) : null}
             </TabsContent>
 
             <TabsContent value="security" className="space-y-4 focus-visible:outline-none">
-              <IssueSecurityManager organizationId={currentOrganizationId} projectId={projectId} />
+              {activeTab === 'security' ? (
+                <IssueSecurityManager organizationId={currentOrganizationId} projectId={projectId} />
+              ) : null}
             </TabsContent>
 
             <TabsContent value="custom-fields" className="space-y-4 focus-visible:outline-none">
-              <CustomFieldManager organizationId={currentOrganizationId} projectId={projectId} />
+              {activeTab === 'custom-fields' ? (
+                <CustomFieldManager organizationId={currentOrganizationId} projectId={projectId} />
+              ) : null}
             </TabsContent>
 
             <TabsContent value="workflows" className="space-y-4 focus-visible:outline-none">
-              <WorkflowEditor organizationId={currentOrganizationId} projectId={projectId} />
+              {activeTab === 'workflows' ? (
+                <WorkflowEditor organizationId={currentOrganizationId} projectId={projectId} />
+              ) : null}
             </TabsContent>
 
             <TabsContent value="automation" className="space-y-4 focus-visible:outline-none">
-              <AutomationManager organizationId={currentOrganizationId} projectId={projectId} />
+              {activeTab === 'automation' ? (
+                <AutomationManager organizationId={currentOrganizationId} projectId={projectId} />
+              ) : null}
             </TabsContent>
 
             <TabsContent value="ai-agents" className="space-y-4 focus-visible:outline-none">
-              <ProjectAiAgents projectId={projectId} />
+              {activeTab === 'ai-agents' ? <ProjectAiAgents projectId={projectId} /> : null}
             </TabsContent>
 
             <TabsContent value="chat-calls" className="space-y-4 focus-visible:outline-none">
-              <ProjectCommunicationsSettings projectId={projectId} />
+              {activeTab === 'chat-calls' ? <ProjectCommunicationsSettings projectId={projectId} /> : null}
             </TabsContent>
 
             <TabsContent value="webhooks" className="space-y-4 focus-visible:outline-none">
-              <WebhooksManager organizationId={currentOrganizationId} projectId={projectId} />
+              {activeTab === 'webhooks' ? (
+                <WebhooksManager organizationId={currentOrganizationId} projectId={projectId} />
+              ) : null}
             </TabsContent>
 
             <TabsContent value="general" className="space-y-4 focus-visible:outline-none">
-              <ProjectGeneralSettings projectId={projectId} />
+              {activeTab === 'general' ? <ProjectGeneralSettings projectId={projectId} /> : null}
             </TabsContent>
           </Tabs>
         </div>

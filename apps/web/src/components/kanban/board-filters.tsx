@@ -19,6 +19,13 @@ export interface BoardFilters {
   labels: string[];
 }
 
+export const DEFAULT_BOARD_FILTERS: BoardFilters = {
+  search: '',
+  priority: [],
+  assignee: [],
+  labels: [],
+};
+
 interface BoardFiltersProps {
   filters: BoardFilters;
   onFiltersChange: (filters: BoardFilters) => void;
@@ -38,12 +45,7 @@ export function BoardFiltersBar({ filters, onFiltersChange, issueCount, filtered
   const hasAnyFilter = filters.search || activeFilterCount > 0;
 
   const clearFilters = () => {
-    onFiltersChange({
-      search: '',
-      priority: [],
-      assignee: [],
-      labels: [],
-    });
+    onFiltersChange(DEFAULT_BOARD_FILTERS);
     setSearchOpen(false);
   };
 

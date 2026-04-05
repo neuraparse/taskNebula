@@ -3,7 +3,7 @@
 import { KanbanColumn } from './kanban-column';
 import { KanbanCard } from './kanban-card';
 import { AddColumnDialog } from './add-column-dialog';
-import { BoardFilters } from './board-filters';
+import { DEFAULT_BOARD_FILTERS, type BoardFilters } from './board-filters';
 import { useIssues, useUpdateIssue } from '@/lib/hooks/use-issues';
 import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
 import { Loader2, Plus } from 'lucide-react';
@@ -32,7 +32,7 @@ interface WorkflowStatus {
 interface KanbanBoardProps {
   projectId: string;
   sprintId?: string;
-  filters: BoardFilters;
+  filters?: BoardFilters;
 }
 
 export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) {
@@ -44,6 +44,7 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
   const [workflowStatuses, setWorkflowStatuses] = useState<WorkflowStatus[]>([]);
   const [loadingStatuses, setLoadingStatuses] = useState(true);
   const [addColumnOpen, setAddColumnOpen] = useState(false);
+  const activeFilters = filters ?? DEFAULT_BOARD_FILTERS;
 
   const fetchStatuses = async () => {
     try {
@@ -67,8 +68,8 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
     if (!issues) return [];
 
     return issues.filter((issue) => {
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
+      if (activeFilters.search) {
+        const searchLower = activeFilters.search.toLowerCase();
         const matchesSearch =
           issue.title.toLowerCase().includes(searchLower) ||
           issue.key.toLowerCase().includes(searchLower) ||
@@ -76,13 +77,13 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
         if (!matchesSearch) return false;
       }
 
-      if (filters.priority.length > 0) {
-        if (!filters.priority.includes(issue.priority)) return false;
+      if (activeFilters.priority.length > 0) {
+        if (!activeFilters.priority.includes(issue.priority)) return false;
       }
 
       return true;
     });
-  }, [issues, filters]);
+  }, [activeFilters, issues]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
