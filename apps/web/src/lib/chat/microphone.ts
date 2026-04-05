@@ -25,12 +25,19 @@ export type MicrophoneBrowserFamily =
   | 'firefox'
   | 'safari'
   | 'unknown';
-export type MicrophoneDeviceOption = Pick<MediaDeviceInfo, 'deviceId' | 'kind' | 'label'>;
+export type MicrophoneDeviceOption = Pick<
+  MediaDeviceInfo,
+  'deviceId' | 'groupId' | 'kind' | 'label'
+>;
 
 type RequestRawMicrophoneStreamOptions = {
   interactive?: boolean;
   timeoutMs?: number | null;
 };
+
+function stopMediaStream(stream?: MediaStream | null) {
+  stream?.getTracks().forEach((track) => track.stop());
+}
 
 export function normalizeAudioInputDeviceId(audioDeviceId?: string | null) {
   return audioDeviceId && audioDeviceId !== 'default' ? audioDeviceId : 'default';
@@ -81,6 +88,15 @@ export function detectMicrophoneBrowserFamily(
 export function shouldPreferDefaultMicrophoneForLiveJoin(userAgent?: string | null) {
   const browserFamily = detectMicrophoneBrowserFamily(userAgent);
   return browserFamily === 'chromium' || browserFamily === 'edge' || browserFamily === 'safari';
+}
+
+export function shouldForceDefaultMicrophoneForLiveJoin(
+  userAgent?: string | null,
+  permissionState: MicrophonePermissionState = 'unknown'
+) {
+  return (
+    shouldPreferDefaultMicrophoneForLiveJoin(userAgent) && permissionState !== 'granted'
+  );
 }
 
 function filterSupportedAudioConstraints(
@@ -454,9 +470,13 @@ async function resolveConcreteDefaultAudioInputDeviceId(
     }
 
     const defaultLabel = defaultDevice?.label?.trim() ?? '';
+    const defaultGroupId = defaultDevice?.groupId?.trim() ?? '';
     const defaultLabelMatch = defaultLabel.match(/^default\s*\((.*)\)$/i);
     const preferredLabel = defaultLabelMatch?.[1]?.trim() ?? null;
     const matchedDevice =
+      (defaultGroupId
+        ? concreteDevices.find((device) => device.groupId.trim() === defaultGroupId)
+        : null) ??
       (preferredLabel
         ? concreteDevices.find((device) => device.label.trim() === preferredLabel)
         : null) ??
@@ -466,9 +486,11 @@ async function resolveConcreteDefaultAudioInputDeviceId(
       chatClientDebug('microphone.default-device.unresolved', {
         reason: 'ambiguous-concrete-audio-inputs',
         defaultDeviceId: defaultDevice?.deviceId ?? null,
+        defaultGroupId,
         defaultLabel,
         candidates: concreteDevices.map((device) => ({
           deviceId: device.deviceId,
+          groupId: device.groupId,
           label: device.label,
         })),
       });
@@ -477,8 +499,10 @@ async function resolveConcreteDefaultAudioInputDeviceId(
 
     chatClientDebug('microphone.default-device.resolved', {
       defaultDeviceId: defaultDevice?.deviceId ?? null,
+      defaultGroupId,
       defaultLabel,
       resolvedDeviceId: matchedDevice.deviceId,
+      resolvedGroupId: matchedDevice.groupId,
       resolvedLabel: matchedDevice.label,
     });
 
@@ -699,6 +723,80 @@ export async function requestRawMicrophoneStream(
         ? INTERACTIVE_MICROPHONE_PROMPT_TIMEOUT_MS
         : MICROPHONE_ATTEMPT_TIMEOUT_MS;
 
+  const shouldUnlockPermissionBeforeExactDevice =
+    options?.interactive &&
+    normalizedDeviceId !== 'default' &&
+    (permissionState === 'prompt' || permissionState === 'unknown');
+
+  if (shouldUnlockPermissionBeforeExactDevice) {
+    chatClientDebug('microphone.request.permission-unlock.start', {
+      audioDeviceId: normalizedDeviceId,
+      permissionState,
+      timeoutMs,
+    });
+
+    const permissionUnlockStream = await requestMicrophoneWithAttempt(
+      'default',
+      {
+        label: 'permission-unlock-audio-true',
+        constraints: true,
+      },
+      timeoutMs
+    );
+
+    chatClientDebug('microphone.request.permission-unlock.success', {
+      audioDeviceId: normalizedDeviceId,
+      permissionState,
+    });
+
+    try {
+      const exactAttempts = buildRawMicrophoneAttempts(normalizedDeviceId, {
+        interactive: false,
+        permissionState: 'granted',
+      });
+      let lastExactError: unknown = null;
+
+      for (const attempt of exactAttempts) {
+        try {
+          const selectedStream = await requestMicrophoneWithAttempt(
+            normalizedDeviceId,
+            attempt,
+            MICROPHONE_ATTEMPT_TIMEOUT_MS
+          );
+          stopMediaStream(permissionUnlockStream);
+          chatClientDebug('microphone.request.selected-device.success', {
+            audioDeviceId: normalizedDeviceId,
+            attempt: attempt.label,
+          });
+          return selectedStream;
+        } catch (error) {
+          lastExactError = error;
+        }
+      }
+
+      if (isRecoverableMicrophoneDeviceError(lastExactError)) {
+        chatClientDebug('microphone.request.selected-device.fallback-unlock-stream', {
+          audioDeviceId: normalizedDeviceId,
+          error:
+            lastExactError instanceof Error
+              ? lastExactError
+              : new Error('Selected microphone verification failed after permission unlock.'),
+        });
+        return permissionUnlockStream;
+      }
+
+      stopMediaStream(permissionUnlockStream);
+      throw (
+        lastExactError instanceof Error
+          ? lastExactError
+          : new Error('Failed to access the selected microphone after permission unlock.')
+      );
+    } catch (error) {
+      stopMediaStream(permissionUnlockStream);
+      throw error;
+    }
+  }
+
   for (const attempt of attempts) {
     try {
       return await requestMicrophoneWithAttempt(normalizedDeviceId, attempt, timeoutMs);
@@ -726,16 +824,29 @@ export async function probeMicrophoneCapture(
   stream.getTracks().forEach((track) => track.stop());
 }
 
+export async function requestMicrophonePermission(options?: {
+  timeoutMs?: number | null;
+}) {
+  await probeMicrophoneCapture('default', {
+    interactive: true,
+    timeoutMs: options?.timeoutMs ?? INTERACTIVE_MICROPHONE_PROMPT_TIMEOUT_MS,
+  });
+}
+
 export async function resolveJoinAudioInputDeviceId(
   audioDeviceId?: string | null,
   options?: {
     userAgent?: string | null;
     preferBrowserStability?: boolean;
     microphoneRequestOptions?: RequestRawMicrophoneStreamOptions;
+    microphonePermissionState?: MicrophonePermissionState;
   }
 ): Promise<JoinMicrophoneResolution> {
   const normalizedDeviceId = normalizeAudioInputDeviceId(audioDeviceId);
   const preferBrowserStability = options?.preferBrowserStability !== false;
+  const permissionState =
+    options?.microphonePermissionState ??
+    (preferBrowserStability ? await getMicrophonePermissionState({ silent: true }) : 'unknown');
 
   if (normalizedDeviceId === 'default') {
     return {
@@ -745,10 +856,18 @@ export async function resolveJoinAudioInputDeviceId(
     };
   }
 
+  if (options?.microphoneRequestOptions?.interactive && permissionState !== 'granted') {
+    return {
+      audioDeviceId: normalizedDeviceId,
+      shouldPersist: false,
+      usedBrowserStabilityFallback: false,
+    };
+  }
+
   if (
     preferBrowserStability &&
     normalizedDeviceId !== 'default' &&
-    shouldPreferDefaultMicrophoneForLiveJoin(options?.userAgent)
+    shouldForceDefaultMicrophoneForLiveJoin(options?.userAgent, permissionState)
   ) {
     return {
       audioDeviceId: 'default',

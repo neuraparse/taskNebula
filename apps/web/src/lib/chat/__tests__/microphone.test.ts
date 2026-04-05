@@ -110,7 +110,29 @@ describe('chat microphone helpers', () => {
     });
   });
 
-  it('prefers the system default microphone on Chromium for a more stable live join', async () => {
+  it('preserves the selected microphone on Chromium while permission is still pending', async () => {
+    global.navigator.permissions.query.mockResolvedValue({ state: 'prompt' });
+
+    await expect(
+      resolveJoinAudioInputDeviceId('mic-usb', {
+        preferBrowserStability: true,
+        microphoneRequestOptions: {
+          interactive: true,
+        },
+        userAgent:
+          'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+      })
+    ).resolves.toEqual({
+      audioDeviceId: 'mic-usb',
+      shouldPersist: false,
+      usedBrowserStabilityFallback: false,
+    });
+
+    expect(global.navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+  });
+
+  it('keeps the selected microphone on Chromium once microphone access is already granted', async () => {
+    global.navigator.permissions.query.mockResolvedValue({ state: 'granted' });
     global.navigator.mediaDevices.getUserMedia.mockResolvedValue({
       getTracks: () => [{ stop: jest.fn() }],
     });
@@ -122,12 +144,19 @@ describe('chat microphone helpers', () => {
           'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
       })
     ).resolves.toEqual({
-      audioDeviceId: 'default',
+      audioDeviceId: 'mic-usb',
       shouldPersist: false,
-      usedBrowserStabilityFallback: true,
+      usedBrowserStabilityFallback: false,
     });
 
-    expect(global.navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+    expect(global.navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
+      audio: {
+        deviceId: { exact: 'mic-usb' },
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+    });
   });
 
   it('does not probe the default microphone before joining', async () => {
@@ -252,6 +281,44 @@ describe('chat microphone helpers', () => {
     expect(global.navigator.mediaDevices.enumerateDevices).not.toHaveBeenCalled();
 
     jest.useRealTimers();
+  });
+
+  it('unlocks microphone permission before switching back to the selected device', async () => {
+    const unlockTracks = [{ stop: jest.fn() }];
+    const selectedTracks = [{ stop: jest.fn() }];
+    const unlockStream = {
+      getAudioTracks: () => unlockTracks,
+      getTracks: () => unlockTracks,
+    };
+    const selectedStream = {
+      getAudioTracks: () => selectedTracks,
+      getTracks: () => selectedTracks,
+    };
+
+    global.navigator.permissions.query.mockResolvedValue({ state: 'prompt' });
+    global.navigator.mediaDevices.getUserMedia
+      .mockResolvedValueOnce(unlockStream)
+      .mockResolvedValueOnce(selectedStream);
+
+    await expect(
+      requestRawMicrophoneStream('mic-usb', {
+        interactive: true,
+        timeoutMs: 5_000,
+      })
+    ).resolves.toBe(selectedStream);
+
+    expect(global.navigator.mediaDevices.getUserMedia).toHaveBeenNthCalledWith(1, {
+      audio: true,
+    });
+    expect(global.navigator.mediaDevices.getUserMedia).toHaveBeenNthCalledWith(2, {
+      audio: {
+        deviceId: { exact: 'mic-usb' },
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+    });
+    expect(unlockTracks[0]?.stop).toHaveBeenCalledTimes(1);
   });
 
   it('does not let a stalled default-device lookup block microphone capture', async () => {

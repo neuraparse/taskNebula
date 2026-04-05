@@ -480,7 +480,7 @@ describe('ChatShell', () => {
     });
   });
 
-  it('starts Chromium live joins on the system default microphone for stability', async () => {
+  it('keeps the selected microphone for Chromium live joins after access is already granted', async () => {
     const user = userEvent.setup();
     Object.defineProperty(window.navigator, 'userAgent', {
       configurable: true,
@@ -506,7 +506,7 @@ describe('ChatShell', () => {
       expect(startSessionMock).toHaveBeenCalledWith(
         expect.objectContaining({
           session: expect.objectContaining({
-            audioDeviceId: 'default',
+            audioDeviceId: 'mic-usb',
             preflightMicrophoneStream: expect.any(Object),
             startWithMicrophone: true,
           }),
@@ -514,7 +514,12 @@ describe('ChatShell', () => {
       );
     });
     expect(global.navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
-      audio: true,
+      audio: {
+        deviceId: { exact: 'mic-usb' },
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
     });
   });
 
@@ -563,6 +568,10 @@ describe('ChatShell', () => {
       />
     );
 
+    const microphoneSelect = await screen.findByRole('combobox');
+    await waitFor(() => {
+      expect(microphoneSelect).toHaveValue('default');
+    });
     const joinWithMicButton = await screen.findByRole('button', { name: /join with mic/i });
     expect(joinWithMicButton).toBeEnabled();
 
@@ -581,6 +590,54 @@ describe('ChatShell', () => {
       })
     );
 
+    expect(global.navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
+      audio: true,
+    });
+  });
+
+  it('preserves the selected microphone for later unmute when join falls back muted', async () => {
+    jest.useFakeTimers();
+    const onJoin = jest.fn().mockResolvedValue(undefined);
+    global.navigator.permissions.query.mockResolvedValue({ state: 'prompt' });
+    global.navigator.mediaDevices.getUserMedia.mockImplementation(
+      () => new Promise(() => undefined)
+    );
+    window.localStorage.setItem(
+      'tasknebula-chat-voice-settings',
+      JSON.stringify({ audioDeviceId: 'mic-usb' })
+    );
+
+    render(
+      <VoiceJoinSetupPanel
+        isJoining={false}
+        isPreparing={false}
+        isReady
+        onClose={jest.fn()}
+        onJoin={onJoin}
+      />
+    );
+
+    const microphoneSelect = await screen.findByRole('combobox');
+    await waitFor(() => {
+      expect(microphoneSelect).toHaveValue('mic-usb');
+    });
+    const joinWithMicButton = await screen.findByRole('button', { name: /join with mic/i });
+    expect(joinWithMicButton).toBeEnabled();
+
+    await act(async () => {
+      fireEvent.click(joinWithMicButton);
+      await jest.advanceTimersByTimeAsync(1_500);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(onJoin).toHaveBeenCalledWith(
+      expect.objectContaining({
+        audioDeviceId: 'mic-usb',
+        startWithMicrophone: false,
+        pendingMicrophoneStreamPromise: expect.any(Promise),
+      })
+    );
     expect(global.navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
       audio: true,
     });

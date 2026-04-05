@@ -75,6 +75,7 @@ import {
   getMicrophonePermissionState,
   getPendingMicrophoneJoinMessage,
   listAudioInputDevices,
+  requestMicrophonePermission,
   requestRawMicrophoneStream,
   resolveJoinAudioInputDeviceId,
   shouldPreferDefaultMicrophoneForLiveJoin,
@@ -1778,6 +1779,7 @@ export function VoiceJoinSetupPanel({
   const [microphoneTestLevel, setMicrophoneTestLevel] = useState(0);
   const [setupError, setSetupError] = useState<string | null>(null);
   const [isSubmittingJoin, setIsSubmittingJoin] = useState(false);
+  const [isUnlockingMicrophoneAccess, setIsUnlockingMicrophoneAccess] = useState(false);
   const joinSubmissionLockRef = useRef(false);
   const microphoneTestStreamRef = useRef<MediaStream | null>(null);
   const microphoneTestAudioContextRef = useRef<AudioContext | null>(null);
@@ -1979,6 +1981,38 @@ export function VoiceJoinSetupPanel({
     }
   }
 
+  async function handleRequestMicrophoneAccess() {
+    if (isSubmittingJoin || isPreparingMicrophoneTest || isUnlockingMicrophoneAccess) {
+      return;
+    }
+
+    try {
+      setIsUnlockingMicrophoneAccess(true);
+      setSetupError(null);
+      chatClientDebug('voice-setup.permission.unlock.start', {
+        selectedDeviceId: storedAudioDeviceId,
+        permissionState: microphonePermissionState,
+      });
+      await requestMicrophonePermission();
+      await refreshMicrophoneEnvironment();
+      chatClientDebug('voice-setup.permission.unlock.success', {
+        selectedDeviceId: storedAudioDeviceId,
+      });
+    } catch (error) {
+      chatClientError('voice-setup.permission.unlock.error', {
+        selectedDeviceId: storedAudioDeviceId,
+        error: error instanceof Error ? error : new Error('Failed to unlock microphone access'),
+      });
+      setSetupError(
+        formatMicrophoneError(error, {
+          userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+        })
+      );
+    } finally {
+      setIsUnlockingMicrophoneAccess(false);
+    }
+  }
+
   async function handleJoin(startWithMicrophone: boolean) {
     if (isJoining || isSubmittingJoin || joinSubmissionLockRef.current) {
       return;
@@ -2007,6 +2041,7 @@ export function VoiceJoinSetupPanel({
         ? await resolveJoinAudioInputDeviceId(storedAudioDeviceId || 'default', {
             preferBrowserStability: true,
             userAgent,
+            microphonePermissionState,
             microphoneRequestOptions: {
               interactive: true,
               timeoutMs: JOIN_PREFLIGHT_MICROPHONE_TIMEOUT_MS,
@@ -2121,8 +2156,13 @@ export function VoiceJoinSetupPanel({
           );
         }
       }
+      const sessionAudioDeviceId = shouldStartWithMicrophone
+        ? joinAudioResolution.audioDeviceId
+        : joinAudioResolution.shouldPersist
+          ? joinAudioResolution.audioDeviceId
+          : storedAudioDeviceId || joinAudioResolution.audioDeviceId;
       await onJoin({
-        audioDeviceId: joinAudioResolution.audioDeviceId,
+        audioDeviceId: sessionAudioDeviceId,
         startWithMicrophone: shouldStartWithMicrophone,
         preflightMicrophoneStream,
         pendingMicrophoneStreamPromise,
@@ -2196,20 +2236,43 @@ export function VoiceJoinSetupPanel({
               <span className="font-medium text-foreground">Permission:</span>{' '}
               {microphonePermissionLabel}
             </div>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 rounded-sm px-2 text-xs"
-              onClick={() => void refreshMicrophoneEnvironment()}
-              disabled={isSubmittingJoin || isPreparing || isRefreshingMicrophoneEnvironment}
-            >
-              {isRefreshingMicrophoneEnvironment ? (
-                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
-              )}
-              Refresh devices
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              {microphonePermissionState !== 'granted' ? (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 rounded-sm px-2 text-xs"
+                  onClick={() => void handleRequestMicrophoneAccess()}
+                  disabled={
+                    isSubmittingJoin ||
+                    isPreparing ||
+                    isPreparingMicrophoneTest ||
+                    isUnlockingMicrophoneAccess
+                  }
+                >
+                  {isUnlockingMicrophoneAccess ? (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Mic className="mr-1.5 h-3.5 w-3.5" />
+                  )}
+                  Unlock microphones
+                </Button>
+              ) : null}
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 rounded-sm px-2 text-xs"
+                onClick={() => void refreshMicrophoneEnvironment()}
+                disabled={isSubmittingJoin || isPreparing || isRefreshingMicrophoneEnvironment}
+              >
+                {isRefreshingMicrophoneEnvironment ? (
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                )}
+                Refresh devices
+              </Button>
+            </div>
           </div>
 
           <div className="rounded-sm border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
@@ -2217,6 +2280,9 @@ export function VoiceJoinSetupPanel({
             {microphoneDevices.length === 0 ? ' No microphones are currently visible to the browser.' : ''}
             {microphonePermissionState === 'granted' && !deviceLabelsVisible
               ? ' If you changed permissions in browser settings, use Refresh devices after returning to this tab.'
+              : ''}
+            {storedAudioDeviceId !== 'default' && microphonePermissionState !== 'granted'
+              ? ' Exact microphone selection becomes reliable after the browser grants microphone access.'
               : ''}
           </div>
 
@@ -2304,7 +2370,9 @@ export function VoiceJoinSetupPanel({
             {shouldPreferDefaultMicrophoneForLiveJoin(
               typeof navigator !== 'undefined' ? navigator.userAgent : ''
             )
-              ? 'Chromium and Safari join with the system default microphone first, then let you switch after the room is live.'
+              ? microphonePermissionState === 'granted'
+                ? 'Browser access is already allowed, so TaskNebula will try to keep your selected microphone through the join flow.'
+                : 'Before browser access is granted, Chromium and Safari may fall back to the system default microphone or the device chosen in the browser prompt.'
               : 'Firefox can usually keep the selected microphone all the way through the join flow.'}
           </div>
 
@@ -2828,6 +2896,7 @@ function VoiceAudioSettingsPanel({
   storeAudioDeviceId: (deviceId: string) => void;
 }) {
   const room = useRoomContext();
+  const [isUnlockingMicrophoneAccess, setIsUnlockingMicrophoneAccess] = useState(false);
   const {
     deviceLabelsVisible,
     isRefreshingMicrophoneEnvironment,
@@ -2851,6 +2920,34 @@ function VoiceAudioSettingsPanel({
       await refreshMicrophoneEnvironment();
     } catch (error) {
       onError(formatMicrophoneError(error));
+    }
+  }
+
+  async function handleRequestMicrophoneAccess() {
+    if (isMicrophonePending || isUnlockingMicrophoneAccess) {
+      return;
+    }
+
+    try {
+      setIsUnlockingMicrophoneAccess(true);
+      onError(null);
+      chatClientDebug('voice-settings.permission.unlock.start', {
+        selectedDeviceId: storedAudioDeviceId,
+        permissionState: microphonePermissionState,
+      });
+      await requestMicrophonePermission();
+      await refreshMicrophoneEnvironment();
+      chatClientDebug('voice-settings.permission.unlock.success', {
+        selectedDeviceId: storedAudioDeviceId,
+      });
+    } catch (error) {
+      chatClientError('voice-settings.permission.unlock.error', {
+        selectedDeviceId: storedAudioDeviceId,
+        error: error instanceof Error ? error : new Error('Failed to unlock microphone access'),
+      });
+      onError(formatMicrophoneError(error));
+    } finally {
+      setIsUnlockingMicrophoneAccess(false);
     }
   }
 
@@ -2891,20 +2988,38 @@ function VoiceAudioSettingsPanel({
             <span className="font-medium text-foreground">Permission:</span>{' '}
             {microphonePermissionLabel}
           </div>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-7 rounded-sm px-2 text-xs"
-            onClick={() => void refreshMicrophoneEnvironment()}
-            disabled={isMicrophonePending || isRefreshingMicrophoneEnvironment}
-          >
-            {isRefreshingMicrophoneEnvironment ? (
-              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
-            )}
-            Refresh devices
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {microphonePermissionState !== 'granted' ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 rounded-sm px-2 text-xs"
+                onClick={() => void handleRequestMicrophoneAccess()}
+                disabled={isMicrophonePending || isUnlockingMicrophoneAccess}
+              >
+                {isUnlockingMicrophoneAccess ? (
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Mic className="mr-1.5 h-3.5 w-3.5" />
+                )}
+                Unlock microphones
+              </Button>
+            ) : null}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 rounded-sm px-2 text-xs"
+              onClick={() => void refreshMicrophoneEnvironment()}
+              disabled={isMicrophonePending || isRefreshingMicrophoneEnvironment}
+            >
+              {isRefreshingMicrophoneEnvironment ? (
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+              )}
+              Refresh devices
+            </Button>
+          </div>
         </div>
 
         <div className="rounded-sm border bg-background px-3 py-2 text-xs text-muted-foreground">
@@ -2912,6 +3027,9 @@ function VoiceAudioSettingsPanel({
           {microphoneDevices.length === 0 ? ' No microphones are currently visible to the browser.' : ''}
           {microphonePermissionState === 'granted' && !deviceLabelsVisible
             ? ' The browser still has not exposed microphone labels; refreshing after returning from browser settings usually fixes that.'
+            : ''}
+          {storedAudioDeviceId !== 'default' && microphonePermissionState !== 'granted'
+            ? ' Exact device switching becomes reliable after browser microphone access is granted.'
             : ''}
         </div>
 
