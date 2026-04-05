@@ -888,7 +888,7 @@ export function DocumentEditor({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-transparent">
       <div ref={editorScrollRef} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-6 md:px-8 md:py-8">
         {slashMenu.open && (
           <div
@@ -954,184 +954,186 @@ export function DocumentEditor({
           </div>
         )}
 
-        <div className="mx-auto w-full max-w-[84rem]">
-          <div className="relative rounded-lg border bg-transparent px-5 py-6 md:px-8 md:py-8">
-            <div className="mx-auto w-full max-w-[60rem]">
-              <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border/70 pb-6">
-                <div className="min-w-0 flex-1">
-                  {breadcrumbPages.length > 0 && (
-                    <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      {breadcrumbPages.map((breadcrumb, index) => (
-                        <div key={breadcrumb.id} className="flex items-center gap-2">
-                          {index > 0 && <span className="text-muted-foreground/50">/</span>}
-                          <Link
-                            href={createDocumentAppHref({
-                              id: breadcrumb.id,
-                              spaceId: breadcrumb.spaceId,
-                              projectId: breadcrumb.projectId,
-                            })}
-                            className="inline-flex items-center gap-2 rounded-md border bg-transparent px-2 py-1 transition-colors hover:bg-muted/10"
-                          >
-                            <DocumentIcon icon={breadcrumb.icon} className="h-5 w-5 rounded-md border-0 bg-transparent text-[11px] shadow-none" />
-                            <span className="max-w-[180px] truncate">{breadcrumb.title}</span>
-                          </Link>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+        <div className="mx-auto w-full max-w-[92rem]">
+          <div className="relative overflow-hidden rounded-[28px] border border-border/70 bg-background/95 px-5 py-6 shadow-[0_30px_90px_-48px_rgba(0,0,0,0.65)] md:px-8 md:py-8">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-muted/[0.14] to-transparent" />
 
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span>{documentScopeLabel}</span>
-                    <span className="text-muted-foreground/50">•</span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <StatusIcon className={cn('h-3.5 w-3.5', statusMeta.iconClassName)} />
-                      {statusMeta.label}
-                    </span>
-                    {page.share?.public?.enabled && (
-                      <>
-                        <span className="text-muted-foreground/50">•</span>
-                        <span className="inline-flex items-center gap-1.5">
-                          <Globe2 className="h-3.5 w-3.5" />
+            <div className="relative mx-auto w-full max-w-[62rem]">
+              <div className="rounded-[22px] border border-border/60 bg-muted/[0.04] px-4 py-4 md:px-5">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    {breadcrumbPages.length > 0 && (
+                      <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        {breadcrumbPages.map((breadcrumb, index) => (
+                          <div key={breadcrumb.id} className="flex items-center gap-2">
+                            {index > 0 && <span className="text-muted-foreground/50">/</span>}
+                            <Link
+                              href={createDocumentAppHref({
+                                id: breadcrumb.id,
+                                spaceId: breadcrumb.spaceId,
+                                projectId: breadcrumb.projectId,
+                              })}
+                              className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-2.5 py-1 transition-colors hover:bg-muted/10"
+                            >
+                              <DocumentIcon icon={breadcrumb.icon} className="h-5 w-5 rounded-md border-0 bg-transparent text-[11px] shadow-none" />
+                              <span className="max-w-[180px] truncate">{breadcrumb.title}</span>
+                            </Link>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <Badge variant="outline" className="rounded-full border-border/60 bg-background/70 px-2.5 py-1 font-normal">
+                        {documentScopeLabel}
+                      </Badge>
+                      <Badge variant="outline" className="rounded-full border-border/60 bg-background/70 px-2.5 py-1 font-normal">
+                        <StatusIcon className={cn('mr-1.5 h-3.5 w-3.5', statusMeta.iconClassName)} />
+                        {statusMeta.label}
+                      </Badge>
+                      {page.share?.public?.enabled && (
+                        <Badge variant="outline" className="rounded-full border-border/60 bg-background/70 px-2.5 py-1 font-normal">
+                          <Globe2 className="mr-1.5 h-3.5 w-3.5" />
                           Public
-                        </span>
-                      </>
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-9 rounded-xl bg-background/70 px-3"
+                          disabled={isUpdatingShare}
+                        >
+                          <Share2 className="mr-2 h-4 w-4" />
+                          Share
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-64">
+                        <DropdownMenuItem onClick={() => void sharePage()}>
+                          <Share2 className="mr-2 h-4 w-4" />
+                          Share page
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => void copyUrlValue(internalSharePath, 'link', 'Page link')}>
+                          <Link2 className="mr-2 h-4 w-4" />
+                          Copy workspace link
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => void copyUrlValue(internalSharePath, 'markdown', 'Workspace markdown link')}>
+                          <NotebookText className="mr-2 h-4 w-4" />
+                          Copy markdown link
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => {
+                            if (typeof window !== 'undefined') {
+                              window.open(internalSharePath, '_blank', 'noopener,noreferrer');
+                            }
+                          }}
+                        >
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          Open workspace page
+                        </DropdownMenuItem>
+                        {publicSharePath && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => void copyUrlValue(publicSharePath, 'link', 'Public link')}>
+                              <Globe2 className="mr-2 h-4 w-4" />
+                              Copy public link
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                if (typeof window !== 'undefined') {
+                                  window.open(publicSharePath, '_blank', 'noopener,noreferrer');
+                                }
+                              }}
+                            >
+                              <ExternalLink className="mr-2 h-4 w-4" />
+                              Open public page
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        {canManagePublicShare && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() =>
+                                void updateShareSettings(
+                                  { enablePublic: !page.share?.public?.enabled },
+                                  page.share?.public?.enabled
+                                    ? 'Public access has been disabled for this page.'
+                                    : 'This page is now available on a public link.'
+                                )
+                              }
+                            >
+                              <Globe2 className="mr-2 h-4 w-4" />
+                              {page.share?.public?.enabled ? 'Disable public access' : 'Enable public access'}
+                            </DropdownMenuItem>
+                            <DropdownMenuCheckboxItem
+                              checked={page.share?.public?.allowSearchIndexing}
+                              disabled={!page.share?.public?.enabled || isUpdatingShare}
+                              onCheckedChange={(checked) =>
+                                void updateShareSettings(
+                                  { allowSearchIndexing: Boolean(checked) },
+                                  Boolean(checked)
+                                    ? 'Search indexing is enabled for the public page.'
+                                    : 'Search indexing is disabled for the public page.'
+                                )
+                              }
+                            >
+                              Allow search indexing
+                            </DropdownMenuCheckboxItem>
+                            <DropdownMenuCheckboxItem
+                              checked={page.share?.public?.includeAttachments}
+                              disabled={!page.share?.public?.enabled || isUpdatingShare}
+                              onCheckedChange={(checked) =>
+                                void updateShareSettings(
+                                  { includeAttachments: Boolean(checked) },
+                                  Boolean(checked)
+                                    ? 'Uploaded attachments can now appear on the public page.'
+                                    : 'Uploaded attachments are now hidden from the public page.'
+                                )
+                              }
+                            >
+                              Include uploaded attachments
+                            </DropdownMenuCheckboxItem>
+                            <DropdownMenuItem
+                              disabled={!page.share?.public?.enabled || isUpdatingShare}
+                              onClick={() =>
+                                void updateShareSettings(
+                                  { regenerateToken: true, enablePublic: true },
+                                  'A fresh public link has been generated and the previous one no longer works.'
+                                )
+                              }
+                            >
+                              <RefreshCcw className="mr-2 h-4 w-4" />
+                              Regenerate public link
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {onCreateChild && canEdit && (
+                      <Button variant="outline" size="sm" className="h-9 rounded-xl bg-background/70 px-3" onClick={onCreateChild}>
+                        <FilePlus2 className="mr-2 h-4 w-4" />
+                        Sub-note
+                      </Button>
+                    )}
+                    {saveState === 'error' && canEdit && (
+                      <Button size="sm" className="h-9 rounded-xl px-3" onClick={retrySaveNow} disabled={isSaving || !title.trim()}>
+                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                        Retry Save
+                      </Button>
                     )}
                   </div>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 rounded-md bg-transparent px-3"
-                        disabled={isUpdatingShare}
-                      >
-                        <Share2 className="mr-2 h-4 w-4" />
-                        Share
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-64">
-                      <DropdownMenuItem onClick={() => void sharePage()}>
-                        <Share2 className="mr-2 h-4 w-4" />
-                        Share page
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => void copyUrlValue(internalSharePath, 'link', 'Page link')}>
-                        <Link2 className="mr-2 h-4 w-4" />
-                        Copy workspace link
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => void copyUrlValue(internalSharePath, 'markdown', 'Workspace markdown link')}>
-                        <NotebookText className="mr-2 h-4 w-4" />
-                        Copy markdown link
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => {
-                          if (typeof window !== 'undefined') {
-                            window.open(internalSharePath, '_blank', 'noopener,noreferrer');
-                          }
-                        }}
-                      >
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        Open workspace page
-                      </DropdownMenuItem>
-                      {publicSharePath && (
-                        <>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => void copyUrlValue(publicSharePath, 'link', 'Public link')}>
-                            <Globe2 className="mr-2 h-4 w-4" />
-                            Copy public link
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              if (typeof window !== 'undefined') {
-                                window.open(publicSharePath, '_blank', 'noopener,noreferrer');
-                              }
-                            }}
-                          >
-                            <ExternalLink className="mr-2 h-4 w-4" />
-                            Open public page
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                      {canManagePublicShare && (
-                        <>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() =>
-                              void updateShareSettings(
-                                { enablePublic: !page.share?.public?.enabled },
-                                page.share?.public?.enabled
-                                  ? 'Public access has been disabled for this page.'
-                                  : 'This page is now available on a public link.'
-                              )
-                            }
-                          >
-                            <Globe2 className="mr-2 h-4 w-4" />
-                            {page.share?.public?.enabled ? 'Disable public access' : 'Enable public access'}
-                          </DropdownMenuItem>
-                          <DropdownMenuCheckboxItem
-                            checked={page.share?.public?.allowSearchIndexing}
-                            disabled={!page.share?.public?.enabled || isUpdatingShare}
-                            onCheckedChange={(checked) =>
-                              void updateShareSettings(
-                                { allowSearchIndexing: Boolean(checked) },
-                                Boolean(checked)
-                                  ? 'Search indexing is enabled for the public page.'
-                                  : 'Search indexing is disabled for the public page.'
-                              )
-                            }
-                          >
-                            Allow search indexing
-                          </DropdownMenuCheckboxItem>
-                          <DropdownMenuCheckboxItem
-                            checked={page.share?.public?.includeAttachments}
-                            disabled={!page.share?.public?.enabled || isUpdatingShare}
-                            onCheckedChange={(checked) =>
-                              void updateShareSettings(
-                                { includeAttachments: Boolean(checked) },
-                                Boolean(checked)
-                                  ? 'Uploaded attachments can now appear on the public page.'
-                                  : 'Uploaded attachments are now hidden from the public page.'
-                              )
-                            }
-                          >
-                            Include uploaded attachments
-                          </DropdownMenuCheckboxItem>
-                          <DropdownMenuItem
-                            disabled={!page.share?.public?.enabled || isUpdatingShare}
-                            onClick={() =>
-                              void updateShareSettings(
-                                { regenerateToken: true, enablePublic: true },
-                                'A fresh public link has been generated and the previous one no longer works.'
-                              )
-                            }
-                          >
-                            <RefreshCcw className="mr-2 h-4 w-4" />
-                            Regenerate public link
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-
-                  {onCreateChild && canEdit && (
-                    <Button variant="outline" size="sm" className="h-8 rounded-md bg-transparent px-3" onClick={onCreateChild}>
-                      <FilePlus2 className="mr-2 h-4 w-4" />
-                      Sub-note
-                    </Button>
-                  )}
-                  {saveState === 'error' && canEdit && (
-                    <Button size="sm" className="h-8 rounded-md px-3" onClick={retrySaveNow} disabled={isSaving || !title.trim()}>
-                      {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                      Retry Save
-                    </Button>
-                  )}
-                </div>
               </div>
 
-              <div className="mt-6">
+              <div className="mt-8">
                 {canEdit ? (
                   <Input
                     value={title}
@@ -1146,22 +1148,34 @@ export function DocumentEditor({
                       setSaveState(dirty ? 'dirty' : 'saved');
                       setAutosaveVersion((version) => version + 1);
                     }}
-                    className="h-auto border-none bg-transparent px-0 text-[2.6rem] font-semibold leading-none tracking-[-0.045em] shadow-none focus-visible:ring-0 md:text-[3.45rem]"
+                    className="h-auto border-none bg-transparent px-0 text-[2.85rem] font-semibold leading-[0.98] tracking-[-0.04em] shadow-none focus-visible:ring-0 md:text-[3.2rem]"
                     placeholder="Untitled page"
                   />
                 ) : (
-                  <h1 className="text-[2.6rem] font-semibold leading-none tracking-[-0.045em] md:text-[3.45rem]">{page.title}</h1>
+                  <h1 className="text-[2.85rem] font-semibold leading-[0.98] tracking-[-0.04em] md:text-[3.2rem]">{page.title}</h1>
                 )}
               </div>
 
               {saveError && (
-                <div className="mt-5 flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+                <div className="mt-5 flex items-start gap-2 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>{saveError}</span>
                 </div>
               )}
 
-              <div className="mt-10">
+              <div className="mt-8 rounded-[24px] border border-border/60 bg-background/80 px-5 py-5 shadow-[0_20px_50px_-38px_rgba(0,0,0,0.75)] md:px-7 md:py-7">
+                <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-4">
+                  <div>
+                    <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Page Body</div>
+                    <div className="mt-1 text-sm text-muted-foreground">
+                      {canEdit ? 'Use / for blocks, templates, media, and structured content.' : 'Read-only document content.'}
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="rounded-full border-border/60 bg-muted/[0.04] px-2.5 py-1 font-normal text-muted-foreground">
+                    {canEdit ? 'Editing enabled' : 'Read only'}
+                  </Badge>
+                </div>
+
                 <EditorContent editor={editor} />
               </div>
             </div>
@@ -1178,17 +1192,17 @@ export function DocumentEditor({
             />
 
             {(childPages.length > 0 || (canEdit && onCreateChild)) && (
-              <div className="mx-auto mt-12 w-full max-w-[60rem] border-t border-border/60 pt-7">
+              <div className="mx-auto mt-12 w-full max-w-[62rem] rounded-[24px] border border-border/60 bg-muted/[0.03] px-5 py-6 md:px-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-sm font-semibold tracking-tight">
                     <FolderTree className="h-4 w-4 text-primary" />
                     <span>Sub-notes</span>
-                    <Badge variant="outline" className="rounded-md bg-transparent">
+                    <Badge variant="outline" className="rounded-full bg-background/70">
                       {childPages.length}
                     </Badge>
                   </div>
                   {canEdit && onCreateChild && (
-                    <Button variant="outline" size="sm" className="h-8 rounded-md bg-transparent px-3" onClick={onCreateChild}>
+                    <Button variant="outline" size="sm" className="h-9 rounded-xl bg-background/70 px-3" onClick={onCreateChild}>
                       <FilePlus2 className="mr-2 h-4 w-4" />
                       Add Sub-note
                     </Button>
@@ -1196,7 +1210,7 @@ export function DocumentEditor({
                 </div>
 
                 {childPages.length > 0 ? (
-                  <div className="mt-4 grid gap-2.5 md:grid-cols-2">
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
                     {childPages.map((childPage) => (
                       <Link
                         key={childPage.id}
@@ -1205,10 +1219,10 @@ export function DocumentEditor({
                           spaceId: childPage.spaceId,
                           projectId: childPage.projectId,
                         })}
-                        className="group rounded-lg border bg-transparent px-4 py-3 transition-colors hover:bg-muted/10"
+                        className="group rounded-2xl border border-border/60 bg-background/75 px-4 py-3 transition-colors hover:bg-muted/10"
                       >
                         <div className="flex items-start gap-3">
-                          <DocumentIcon icon={childPage.icon} className="h-8 w-8 rounded-md text-sm" />
+                          <DocumentIcon icon={childPage.icon} className="h-8 w-8 rounded-lg text-sm" />
                           <div className="min-w-0 flex-1">
                             <div className="truncate text-sm font-semibold tracking-tight">{childPage.title}</div>
                             <div className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
@@ -1220,7 +1234,7 @@ export function DocumentEditor({
                     ))}
                   </div>
                 ) : (
-                  <div className="mt-4 rounded-lg border border-dashed bg-transparent px-4 py-4 text-sm text-muted-foreground">
+                  <div className="mt-4 rounded-xl border border-dashed border-border/70 bg-background/50 px-4 py-4 text-sm text-muted-foreground">
                     No sub-notes yet.
                   </div>
                 )}
@@ -1231,7 +1245,7 @@ export function DocumentEditor({
       </div>
 
       <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="rounded-none sm:max-w-lg sm:rounded-none">
           <DialogHeader>
             <DialogTitle>Link a page</DialogTitle>
           </DialogHeader>

@@ -213,6 +213,14 @@
   .font-\[430\] { font-weight: 430; }
   .font-\[440\] { font-weight: 440; }
   .font-\[450\] { font-weight: 450; }
+  .docs-square-ui [class*='rounded'] {
+    border-radius: 0 !important;
+  }
+
+  .docs-square-ui .ProseMirror :is(pre, code, mark, img) {
+    border-radius: 0 !important;
+  }
+
   .landing-display {
     font-weight: 560;
     line-height: 0.94;

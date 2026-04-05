@@ -54,7 +54,7 @@ function isClientDebugEnabled() {
   }
 
   try {
-    const raw = window.localStorage.getItem(CLIENT_DEBUG_STORAGE_KEY);
+    const raw = window.sessionStorage.getItem(CLIENT_DEBUG_STORAGE_KEY);
     if (raw === '0') {
       return false;
     }
@@ -62,7 +62,7 @@ function isClientDebugEnabled() {
       return true;
     }
   } catch {
-    // Ignore localStorage failures.
+    // Ignore sessionStorage failures.
   }
 
   return process.env.NEXT_PUBLIC_CHAT_DEBUG === '1';
