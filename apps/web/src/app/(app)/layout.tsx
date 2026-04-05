@@ -1,5 +1,6 @@
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { AppHeader } from '@/components/layout/app-header';
+import { AppUiScope } from '@/components/layout/app-ui-scope';
 import { CommandPalette } from '@/components/command-palette';
 import { GlobalVoiceProvider } from '@/components/chat/global-voice-provider';
 
@@ -9,7 +10,8 @@ export const dynamic = 'force-dynamic';
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <GlobalVoiceProvider>
-      <div className="flex h-screen overflow-hidden bg-background">
+      <AppUiScope />
+      <div className="app-square-ui flex h-screen overflow-hidden bg-background">
         {/* Command Palette - Global */}
         <CommandPalette />
 

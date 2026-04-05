@@ -25,7 +25,7 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
     return (
       <div className="flex h-full items-center justify-center bg-background">
         <div className="text-center max-w-sm px-4">
-          <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center bg-destructive/10">
             <AlertCircle className="h-5 w-5 text-destructive" />
           </div>
           <p className="font-medium text-foreground">Failed to load issue</p>
@@ -39,7 +39,7 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
     return (
       <div className="flex h-full items-center justify-center bg-background">
         <div className="text-center max-w-sm px-4">
-          <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center bg-muted">
             <FileText className="h-5 w-5 text-muted-foreground" />
           </div>
           <p className="font-medium text-foreground">Issue not found</p>
@@ -54,23 +54,23 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
   return (
     <div className="flex h-full flex-col overflow-hidden bg-background">
       {/* Header */}
-      <div className="border-b border-border/60 px-6 py-3 shrink-0">
+      <div className="shrink-0 border-b border-border/60 bg-background/95 px-6 py-3">
         <IssueHeader issue={issue} />
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-hidden">
-        <div className="grid grid-cols-[1fr_340px] h-full">
+        <div className="grid h-full grid-cols-[1fr_340px]">
           {/* Main Content Area */}
           <div className="overflow-y-auto custom-scrollbar">
-            <div className="px-8 py-6 space-y-8">
+            <div className="space-y-8 px-8 py-6">
               <IssueContent issue={issue} />
               <IssueActivity issueId={issue.id} />
             </div>
           </div>
 
           {/* Sidebar */}
-          <div className="border-l border-border/60 overflow-y-auto custom-scrollbar bg-muted/10">
+          <div className="overflow-y-auto border-l border-border/60 bg-muted/[0.04] custom-scrollbar">
             <div className="px-5 py-5">
               <IssueSidebar
                 issue={{
