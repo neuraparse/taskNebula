@@ -145,7 +145,17 @@ export function useUpdateSprint() {
       queryClient.invalidateQueries({ queryKey: ['sprint', data.id] });
       queryClient.invalidateQueries({ queryKey: ['sprints', data.projectId] });
       queryClient.invalidateQueries({ queryKey: ['sprint-issues'] });
-      queryClient.invalidateQueries({ queryKey: ['issues'] });
+      if (data.projectId) {
+        queryClient.invalidateQueries({
+          queryKey: ['issues'],
+          predicate: (query) => {
+            const filters = query.queryKey[1] as { projectId?: string } | undefined;
+            return filters?.projectId === data.projectId;
+          },
+        });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['issues'] });
+      }
     },
   });
 }
@@ -156,15 +166,30 @@ export function useDeleteSprint() {
 
   return useMutation({
     mutationFn: async (sprintId: string) => {
+      // Capture projectId from cache before deletion so we can scope invalidation
+      const cached = queryClient.getQueryData<Sprint>(['sprint', sprintId]);
       const response = await fetch(`/api/sprints/${sprintId}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Failed to delete sprint');
-      return response.json();
+      const json = await response.json();
+      return { ...json, projectId: cached?.projectId };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sprints'] });
-      queryClient.invalidateQueries({ queryKey: ['issues'] });
+    onSuccess: (data: { projectId?: string }) => {
+      const projectId = data?.projectId;
+      if (projectId) {
+        queryClient.invalidateQueries({ queryKey: ['sprints', projectId] });
+        queryClient.invalidateQueries({
+          queryKey: ['issues'],
+          predicate: (query) => {
+            const filters = query.queryKey[1] as { projectId?: string } | undefined;
+            return filters?.projectId === projectId;
+          },
+        });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['sprints'] });
+        queryClient.invalidateQueries({ queryKey: ['issues'] });
+      }
     },
   });
 }

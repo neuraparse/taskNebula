@@ -381,8 +381,15 @@ function useAgentStream(params: {
     };
 
     source.onmessage = (message) => {
+      let event: AgentStreamEvent;
       try {
-        const event = JSON.parse(message.data) as AgentStreamEvent;
+        event = JSON.parse(message.data) as AgentStreamEvent;
+      } catch (err) {
+        console.warn('agent-stream: failed to parse SSE payload', err);
+        return;
+      }
+
+      try {
         setLastEventAt(event.data.timestamp);
         setLiveRuns((current) => reduceAgentStreamEvent(current, event));
 

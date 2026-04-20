@@ -37,7 +37,9 @@ export type AgentModelConfigRecord = {
   updatedAt: Date;
 };
 
-type DbExecutor = typeof db;
+// Accepts the root `db` or a transaction handle `tx`. Both share the
+// query-builder shape used by the helpers below.
+type DbExecutor = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 function clampNumber(value: unknown, min: number, max: number) {
   if (typeof value !== 'number' || Number.isNaN(value)) {
@@ -238,6 +240,10 @@ export async function createAgentModelConfig(params: {
       })
       .returning();
 
+    if (!created) {
+      throw new Error('Failed to create agent model config');
+    }
+
     await tx.insert(agentModelConfigRevisions).values({
       configId: created.id,
       organizationId: params.organizationId,
@@ -256,6 +262,10 @@ export async function createAgentModelConfig(params: {
 
     return [created];
   });
+
+  if (!config) {
+    throw new Error('Failed to create agent model config');
+  }
 
   return getAgentModelConfigById(params.organizationId, config.id);
 }
@@ -310,6 +320,10 @@ export async function updateAgentModelConfig(params: {
       })
       .where(and(eq(agentModelConfigs.organizationId, params.organizationId), eq(agentModelConfigs.id, params.configId)))
       .returning();
+
+    if (!updated) {
+      throw new Error('Failed to update agent model config');
+    }
 
     const nextRevision = await getNextRevision(tx, params.configId);
     await tx.insert(agentModelConfigRevisions).values({

@@ -8,7 +8,7 @@ import { createId } from '@paralleldrive/cuid2';
 export async function GET() {
   try {
     const [result] = await db.select({ count: sql<number>`count(*)` }).from(users);
-    const userCount = Number(result.count);
+    const userCount = Number(result?.count ?? 0);
 
     return NextResponse.json({
       setupRequired: userCount === 0,
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
   try {
     // Check if setup is already done
     const [result] = await db.select({ count: sql<number>`count(*)` }).from(users);
-    if (Number(result.count) > 0) {
+    if (Number(result?.count ?? 0) > 0) {
       return NextResponse.json(
         { error: 'Setup already completed. Use the login page.' },
         { status: 400 }
@@ -68,6 +68,10 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
+    if (!newUser) {
+      throw new Error('Failed to create admin user');
+    }
+
     // Create default organization
     const orgName = organizationName || `${name}'s Organization`;
     const orgSlug = orgName
@@ -80,7 +84,6 @@ export async function POST(request: NextRequest) {
       id: orgId,
       name: orgName,
       slug: orgSlug,
-      ownerId: userId,
       plan: 'free',
       status: 'active',
       settings: {},

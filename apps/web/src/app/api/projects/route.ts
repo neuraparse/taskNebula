@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
       orgId = membership.organizationId;
     }
 
-    let normalizedTeamId: string | null = teamId || null;
+    const normalizedTeamId: string | null = teamId || null;
     if (normalizedTeamId) {
       const [team] = await db
         .select({

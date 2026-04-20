@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { type ComponentType, type KeyboardEvent, useDeferredValue, useEffect, useRef, useState } from 'react';
+import { type ComponentType, type KeyboardEvent, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { EditorContent, useEditor, type Editor } from '@tiptap/react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -128,14 +128,32 @@ export function DocumentEditor({
   const filteredSlashCommandsRef = useRef<SlashCommand[]>([]);
   const deferredLinkSearch = useDeferredValue(linkSearch);
 
-  async function handleImageUpload(file: File | null) {
-    if (!file || !editor || !onUploadImage) {
+  // Stable refs for callbacks that otherwise would need to capture rendering-time values.
+  const canEditRef = useRef(canEdit);
+  const onUploadImageRef = useRef(onUploadImage);
+  const editorRef = useRef<Editor | null>(null);
+  const handleImageUploadRef = useRef<(file: File | null) => Promise<void>>(() => Promise.resolve());
+  const applySlashCommandRef = useRef<(command: any) => void>(() => {});
+  const syncSlashMenuRef = useRef<(editor: Editor | null) => void>(() => {});
+
+  useEffect(() => {
+    canEditRef.current = canEdit;
+  }, [canEdit]);
+
+  useEffect(() => {
+    onUploadImageRef.current = onUploadImage;
+  }, [onUploadImage]);
+
+  const handleImageUpload = useCallback(async (file: File | null) => {
+    const activeEditor = editorRef.current;
+    const uploader = onUploadImageRef.current;
+    if (!file || !activeEditor || !uploader) {
       return;
     }
 
     try {
-      const url = await onUploadImage(file);
-      editor.chain().focus().setImage({ src: `/api/uploads/${url.split('/').pop()}`, alt: file.name }).run();
+      const url = await uploader(file);
+      activeEditor.chain().focus().setImage({ src: `/api/uploads/${url.split('/').pop()}`, alt: file.name }).run();
       setIsDirty(true);
       setSaveState('dirty');
       setAutosaveVersion((version) => version + 1);
@@ -146,19 +164,23 @@ export function DocumentEditor({
         variant: 'destructive',
       });
     }
-  }
+  }, [toast]);
 
-  const editor = useEditor({
-    extensions: createDocumentEditorExtensions({
-      placeholder: 'Start writing',
-    }),
-    content: page.contentJson,
-    editable: canEdit,
-    immediatelyRender: false,
-    editorProps: {
-      transformPastedHTML: (html) => normalizeDocumentPasteHtml(html),
-      transformPastedText: (text) => normalizeDocumentPasteText(text),
-      handleKeyDown: (_view, event) => {
+  useEffect(() => {
+    handleImageUploadRef.current = handleImageUpload;
+  }, [handleImageUpload]);
+
+  // Extensions: cached at module scope per-option-set, so this ref is stable across renders.
+  const editorExtensions = useMemo(
+    () => createDocumentEditorExtensions({ placeholder: 'Start writing' }),
+    []
+  );
+
+  const editorProps = useMemo(
+    () => ({
+      transformPastedHTML: (html: string) => normalizeDocumentPasteHtml(html),
+      transformPastedText: (text: string) => normalizeDocumentPasteText(text),
+      handleKeyDown: (_view: unknown, event: globalThis.KeyboardEvent) => {
         if (!slashMenuRef.current.open || filteredSlashCommandsRef.current.length === 0) {
           return false;
         }
@@ -181,7 +203,7 @@ export function DocumentEditor({
           event.preventDefault();
           const command = filteredSlashCommandsRef.current[selectedSlashIndexRef.current];
           if (command) {
-            applySlashCommand(command);
+            applySlashCommandRef.current(command);
           }
           return true;
         }
@@ -194,8 +216,8 @@ export function DocumentEditor({
 
         return false;
       },
-      handlePaste: (_view, event) => {
-        if (!canEdit || !onUploadImage) {
+      handlePaste: (_view: unknown, event: ClipboardEvent) => {
+        if (!canEditRef.current || !onUploadImageRef.current) {
           return false;
         }
 
@@ -209,25 +231,42 @@ export function DocumentEditor({
         }
 
         event.preventDefault();
-        void handleImageUpload(file);
+        void handleImageUploadRef.current(file);
         return true;
       },
       attributes: {
         class: DOCUMENT_EDITOR_PROSE_CLASSNAME,
       },
-    },
-    onUpdate: ({ editor }) => {
-      const snapshot = serializeDocumentSnapshot(titleRef.current, iconRef.current, editor.getJSON());
-      const dirty = snapshot !== lastServerSnapshotRef.current;
-      setIsDirty(dirty);
-      setSaveState(dirty ? 'dirty' : 'saved');
-      setAutosaveVersion((version) => version + 1);
-      syncSlashMenu(editor);
-    },
-    onSelectionUpdate: ({ editor }) => {
-      syncSlashMenu(editor);
-    },
+    }),
+    []
+  );
+
+  const handleEditorUpdate = useCallback(({ editor }: { editor: Editor }) => {
+    const snapshot = serializeDocumentSnapshot(titleRef.current, iconRef.current, editor.getJSON());
+    const dirty = snapshot !== lastServerSnapshotRef.current;
+    setIsDirty(dirty);
+    setSaveState(dirty ? 'dirty' : 'saved');
+    setAutosaveVersion((version) => version + 1);
+    syncSlashMenuRef.current(editor);
+  }, []);
+
+  const handleSelectionUpdate = useCallback(({ editor }: { editor: Editor }) => {
+    syncSlashMenuRef.current(editor);
+  }, []);
+
+  const editor = useEditor({
+    extensions: editorExtensions,
+    content: page.contentJson,
+    editable: canEdit,
+    immediatelyRender: false,
+    editorProps: editorProps as any,
+    onUpdate: handleEditorUpdate,
+    onSelectionUpdate: handleSelectionUpdate,
   });
+
+  useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
 
   useEffect(() => {
     titleRef.current = title;
@@ -495,6 +534,10 @@ export function DocumentEditor({
     }));
     setSelectedSlashIndex(0);
   }
+
+  // Expose the latest closures to the memoized editor handlers via refs.
+  applySlashCommandRef.current = applySlashCommand;
+  syncSlashMenuRef.current = syncSlashMenu;
 
   function handleSlashSearchKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === 'ArrowDown') {
@@ -1078,7 +1121,7 @@ export function DocumentEditor({
                               onCheckedChange={(checked) =>
                                 void updateShareSettings(
                                   { allowSearchIndexing: Boolean(checked) },
-                                  Boolean(checked)
+                                  checked
                                     ? 'Search indexing is enabled for the public page.'
                                     : 'Search indexing is disabled for the public page.'
                                 )
@@ -1092,7 +1135,7 @@ export function DocumentEditor({
                               onCheckedChange={(checked) =>
                                 void updateShareSettings(
                                   { includeAttachments: Boolean(checked) },
-                                  Boolean(checked)
+                                  checked
                                     ? 'Uploaded attachments can now appear on the public page.'
                                     : 'Uploaded attachments are now hidden from the public page.'
                                 )

@@ -38,10 +38,12 @@ const envSchema = z.object({
   // App
   NEXT_PUBLIC_APP_URL: z.string().url(),
   NEXT_PUBLIC_APP_NAME: z.string().default('TaskNebula'),
-  
+  NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().optional(),
+  NEXT_PUBLIC_CHAT_DEBUG: z.string().optional(),
+
   // Email / SMTP
   SMTP_HOST: z.string().optional(),
-  SMTP_PORT: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().positive().optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASSWORD: z.string().optional(),
   SMTP_SECURE: z.string().optional(),
@@ -103,6 +105,14 @@ function parseEnv() {
 
 // Export validated environment variables
 export const env = parseEnv();
+
+// Runtime guard: prevent booting production with the placeholder AUTH_SECRET.
+// Scoped to production so local dev using the default template `.env` still works.
+if (env.NODE_ENV === 'production' && env.AUTH_SECRET && env.AUTH_SECRET.startsWith('change-me')) {
+  throw new Error(
+    'AUTH_SECRET is still the placeholder value. Generate a real secret with `openssl rand -base64 32`.'
+  );
+}
 
 // Helper functions
 export const isDevelopment = env.NODE_ENV === 'development';

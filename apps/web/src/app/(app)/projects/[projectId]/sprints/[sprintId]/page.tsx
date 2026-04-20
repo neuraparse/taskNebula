@@ -99,7 +99,7 @@ export default function SprintDetailPage({
       <div className="flex h-full flex-col items-center justify-center gap-4">
         <Lock className="h-12 w-12 text-muted-foreground" />
         <div className="text-lg font-medium">Access Denied</div>
-        <div className="text-muted-foreground">You don't have permission to view this sprint.</div>
+        <div className="text-muted-foreground">You don&apos;t have permission to view this sprint.</div>
         <Link href="/projects">
           <Button variant="outline">Back to Projects</Button>
         </Link>

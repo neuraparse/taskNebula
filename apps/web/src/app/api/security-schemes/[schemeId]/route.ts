@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, issueSecuritySchemes, issueSecurityLevels, issueSecurityLevelMembers, projectSecuritySchemes } from '@tasknebula/db';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 
 // GET /api/security-schemes/[schemeId] - Get a specific security scheme with levels
 export async function GET(
@@ -25,22 +25,34 @@ export async function GET(
       return NextResponse.json({ error: 'Security scheme not found' }, { status: 404 });
     }
 
-    // Get levels with members
+    // Get levels and members in batched queries
+    type LevelMemberRow = typeof issueSecurityLevelMembers.$inferSelect;
     const levels = await db
       .select()
       .from(issueSecurityLevels)
       .where(eq(issueSecurityLevels.schemeId, schemeId))
       .orderBy(issueSecurityLevels.sortOrder);
 
-    const levelsWithMembers = await Promise.all(
-      levels.map(async (level) => {
-        const members = await db
-          .select()
-          .from(issueSecurityLevelMembers)
-          .where(eq(issueSecurityLevelMembers.levelId, level.id));
-        return { ...level, members };
-      })
-    );
+    const membersByLevel = new Map<string, LevelMemberRow[]>();
+    const levelIds = levels.map((l) => l.id);
+
+    if (levelIds.length > 0) {
+      const allMembers = await db
+        .select()
+        .from(issueSecurityLevelMembers)
+        .where(inArray(issueSecurityLevelMembers.levelId, levelIds));
+
+      for (const member of allMembers) {
+        const list = membersByLevel.get(member.levelId) || [];
+        list.push(member);
+        membersByLevel.set(member.levelId, list);
+      }
+    }
+
+    const levelsWithMembers = levels.map((level) => ({
+      ...level,
+      members: membersByLevel.get(level.id) || [],
+    }));
 
     // Get project count
     const projectAssignments = await db

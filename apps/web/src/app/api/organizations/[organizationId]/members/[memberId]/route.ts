@@ -69,6 +69,10 @@ export async function PATCH(
       )
       .returning();
 
+    if (!updatedMember) {
+      throw new Error('Failed to update member');
+    }
+
     // Create audit log
     await db.insert(auditLogs).values({
       id: createId(),
@@ -90,6 +94,10 @@ export async function PATCH(
       .from(users)
       .where(eq(users.id, memberId))
       .limit(1);
+
+    if (!user) {
+      throw new Error('User not found');
+    }
 
     publishEvent('member.updated', session.user.id, { organizationId });
 

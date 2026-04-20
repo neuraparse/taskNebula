@@ -45,7 +45,7 @@ async function ensureTeamspaceSlug(
   let candidate = baseSlug;
   let suffix = 2;
 
-  while (true) {
+  for (;;) {
     const [existingTeamspace] = await db
       .select({ id: teams.id })
       .from(teams)
@@ -284,6 +284,10 @@ export async function POST(
         updatedAt: new Date(),
       })
       .returning();
+
+    if (!createdTeamspace) {
+      throw new Error('Failed to create teamspace');
+    }
 
     const memberships = new Map<string, 'lead' | 'member'>();
     const initialLeadId = data.leadId ?? session.user.id;

@@ -282,7 +282,7 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Project assignment</CardTitle>
-            <CardDescription>Choose which permission scheme should drive this project's default access model.</CardDescription>
+            <CardDescription>Choose which permission scheme should drive this project&apos;s default access model.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
             <div className="space-y-1">

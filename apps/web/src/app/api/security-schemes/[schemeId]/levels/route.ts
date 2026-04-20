@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, issueSecurityLevels, issueSecurityLevelMembers, issueSecuritySchemes } from '@tasknebula/db';
-import { eq, max } from 'drizzle-orm';
+import { eq, max, inArray } from 'drizzle-orm';
 
 // GET /api/security-schemes/[schemeId]/levels - Get all levels for a scheme
 export async function GET(
@@ -16,21 +16,33 @@ export async function GET(
 
     const { schemeId } = await params;
 
+    type LevelMemberRow = typeof issueSecurityLevelMembers.$inferSelect;
     const levels = await db
       .select()
       .from(issueSecurityLevels)
       .where(eq(issueSecurityLevels.schemeId, schemeId))
       .orderBy(issueSecurityLevels.sortOrder);
 
-    const levelsWithMembers = await Promise.all(
-      levels.map(async (level) => {
-        const members = await db
-          .select()
-          .from(issueSecurityLevelMembers)
-          .where(eq(issueSecurityLevelMembers.levelId, level.id));
-        return { ...level, members };
-      })
-    );
+    const levelIds = levels.map((l) => l.id);
+    const membersByLevel = new Map<string, LevelMemberRow[]>();
+
+    if (levelIds.length > 0) {
+      const allMembers = await db
+        .select()
+        .from(issueSecurityLevelMembers)
+        .where(inArray(issueSecurityLevelMembers.levelId, levelIds));
+
+      for (const member of allMembers) {
+        const list = membersByLevel.get(member.levelId) || [];
+        list.push(member);
+        membersByLevel.set(member.levelId, list);
+      }
+    }
+
+    const levelsWithMembers = levels.map((level) => ({
+      ...level,
+      members: membersByLevel.get(level.id) || [],
+    }));
 
     return NextResponse.json(levelsWithMembers);
   } catch (error) {
@@ -97,6 +109,10 @@ export async function POST(
         isDefault: isDefault || false,
       })
       .returning();
+
+    if (!level) {
+      throw new Error('Failed to create security level');
+    }
 
     // Add members
     if (members && Array.isArray(members)) {

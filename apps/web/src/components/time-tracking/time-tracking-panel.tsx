@@ -124,7 +124,7 @@ export function TimeTrackingPanel({ issueId, canLog, canDelete }: TimeTrackingPa
               <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No time logged yet</p>
               {canLog && (
-                <p className="text-sm mt-2">Click "Log Time" to record your work</p>
+                <p className="text-sm mt-2">Click &quot;Log Time&quot; to record your work</p>
               )}
             </div>
           ) : (

@@ -26,7 +26,8 @@ export default async function TeamPage() {
     .from(organizationMembers)
     .where(eq(organizationMembers.userId, session.user.id));
 
-  if (userOrgs.length === 0) {
+  const primaryOrg = userOrgs[0];
+  if (!primaryOrg) {
     return (
       <div className="flex h-full flex-col">
         <div className="border-b bg-background px-6 py-4">
@@ -48,7 +49,7 @@ export default async function TeamPage() {
   const allMembers = await db
     .select()
     .from(organizationMembers)
-    .where(eq(organizationMembers.organizationId, userOrgs[0].organizationId));
+    .where(eq(organizationMembers.organizationId, primaryOrg.organizationId));
 
   // Get user IDs
   const userIds = allMembers.map((m) => m.userId);

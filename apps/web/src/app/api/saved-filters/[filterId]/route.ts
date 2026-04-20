@@ -142,17 +142,22 @@ export async function POST(
 
     const { filterId } = await params;
 
-    // Get current filter
+    // Get current filter — scoped to the caller so they cannot touch others' filters
     const [existing] = await db
       .select()
       .from(savedFilters)
-      .where(eq(savedFilters.id, filterId));
+      .where(
+        and(
+          eq(savedFilters.id, filterId),
+          eq(savedFilters.userId, session.user.id)
+        )
+      );
 
     if (!existing) {
       return NextResponse.json({ error: 'Filter not found' }, { status: 404 });
     }
 
-    // Increment usage count
+    // Increment usage count — scope the update to the caller too
     const newCount = (parseInt(existing.usageCount) + 1).toString();
 
     const [updated] = await db
@@ -161,7 +166,12 @@ export async function POST(
         usageCount: newCount,
         lastUsedAt: new Date(),
       })
-      .where(eq(savedFilters.id, filterId))
+      .where(
+        and(
+          eq(savedFilters.id, filterId),
+          eq(savedFilters.userId, session.user.id)
+        )
+      )
       .returning();
 
     return NextResponse.json({ filter: updated });

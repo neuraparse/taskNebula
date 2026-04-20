@@ -165,7 +165,7 @@ export async function GET(
 ) {
   try {
     const session = await auth();
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -174,6 +174,20 @@ export async function GET(
 
     if (!issue) {
       return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+    }
+
+    // Permission check: ensure caller can view this issue
+    const permission = await checkIssuePermission(
+      session.user.id,
+      issue.projectId,
+      'view',
+      issue.reporterId
+    );
+    if (!permission.allowed) {
+      return NextResponse.json(
+        { error: permission.reason || 'Permission denied' },
+        { status: 403 }
+      );
     }
 
     return NextResponse.json(issue);
@@ -190,7 +204,7 @@ export async function PATCH(
 ) {
   try {
     const session = await auth();
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -247,7 +261,7 @@ export async function PATCH(
     }
 
     // If status category is provided instead of statusId, convert it
-    let updateData = { ...validatedData };
+    const updateData = { ...validatedData };
     if (validatedData.status && !validatedData.statusId) {
       // Get the workflow for this project's organization
       const workflowResults = await db
@@ -261,11 +275,10 @@ export async function PATCH(
         )
         .limit(1);
 
-      if (workflowResults.length === 0) {
+      const workflow = workflowResults[0];
+      if (!workflow) {
         return NextResponse.json({ error: 'No workflow found' }, { status: 500 });
       }
-
-      const workflow = workflowResults[0];
 
       // Get the first status with the matching category
       const statusResults = await db
@@ -277,12 +290,13 @@ export async function PATCH(
         .filter(s => s.category === validatedData.status)
         .sort((a, b) => a.position - b.position);
 
-      if (matchingStatuses.length === 0) {
+      const firstMatching = matchingStatuses[0];
+      if (!firstMatching) {
         return NextResponse.json({ error: 'Status not found' }, { status: 404 });
       }
 
       // Use the first matching status
-      updateData.statusId = matchingStatuses[0].id;
+      updateData.statusId = firstMatching.id;
       delete updateData.status;
     }
 
@@ -453,7 +467,7 @@ export async function DELETE(
 ) {
   try {
     const session = await auth();
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

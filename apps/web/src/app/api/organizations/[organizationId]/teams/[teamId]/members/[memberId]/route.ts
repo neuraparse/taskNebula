@@ -95,6 +95,10 @@ export async function PATCH(
       .where(eq(teamMembers.id, existingMember.id))
       .returning();
 
+    if (!updatedMember) {
+      throw new Error('Failed to update team member');
+    }
+
     if (data.role === 'lead') {
       await updateLead(teamId, teamspace.leadId, memberId);
     } else if (teamspace.leadId === memberId) {
@@ -112,6 +116,10 @@ export async function PATCH(
       .from(users)
       .where(eq(users.id, memberId))
       .limit(1);
+
+    if (!user) {
+      throw new Error('User not found');
+    }
 
     return NextResponse.json({
       member: {

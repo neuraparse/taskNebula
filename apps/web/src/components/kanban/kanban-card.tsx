@@ -83,7 +83,8 @@ export function KanbanCard({ issue, draggableId, onClick }: KanbanCardProps) {
       onClick={handleClick}
       className={cn(
         'kanban-card cursor-pointer select-none group/card',
-        isDragging && 'opacity-50 shadow-xl scale-[1.03] rotate-[2deg]'
+        isDragging &&
+          'opacity-50 shadow-xl scale-[1.03] rotate-[2deg] motion-reduce:transform-none motion-reduce:shadow-none'
       )}
     >
       {/* Priority accent bar */}
@@ -93,7 +94,7 @@ export function KanbanCard({ issue, draggableId, onClick }: KanbanCardProps) {
       <div className="mb-3 flex items-center justify-between gap-2 pl-1">
         <div className="flex items-center gap-1.5 min-w-0">
           <TypeIcon className={cn('h-3.5 w-3.5 shrink-0', tConfig.color)} />
-          <span className="text-[11px] font-mono font-medium text-muted-foreground">
+          <span className="text-[11px] font-mono font-medium text-foreground/75">
             {issueKey}
           </span>
         </div>
@@ -125,7 +126,7 @@ export function KanbanCard({ issue, draggableId, onClick }: KanbanCardProps) {
             </span>
           ))}
           {issue.labels.length > 2 && (
-            <span className="text-[10px] text-muted-foreground px-1 self-center">
+            <span className="text-[11px] text-foreground/75 px-1 self-center">
               +{issue.labels.length - 2}
             </span>
           )}
@@ -136,28 +137,28 @@ export function KanbanCard({ issue, draggableId, onClick }: KanbanCardProps) {
       {hasFooter && (
         <div className="mt-1 flex items-center gap-2.5 border-t border-border/40 pt-2 pl-1">
           {issue.subtaskCount !== undefined && issue.subtaskCount > 0 && (
-            <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <div className="flex items-center gap-1 text-[11px] text-foreground/75">
               <CheckCircle2 className="h-3 w-3" />
               <span className="tabular-nums">{issue.subtaskDone || 0}/{issue.subtaskCount}</span>
             </div>
           )}
 
           {issue.commentCount !== undefined && issue.commentCount > 0 && (
-            <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <div className="flex items-center gap-1 text-[11px] text-foreground/75">
               <MessageSquare className="h-3 w-3" />
               <span className="tabular-nums">{issue.commentCount}</span>
             </div>
           )}
 
           {issue.attachmentCount !== undefined && issue.attachmentCount > 0 && (
-            <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <div className="flex items-center gap-1 text-[11px] text-foreground/75">
               <Paperclip className="h-3 w-3" />
               <span className="tabular-nums">{issue.attachmentCount}</span>
             </div>
           )}
 
           {issue.dueDate && (
-            <div className="flex items-center gap-1 text-[11px] text-muted-foreground ml-auto">
+            <div className="flex items-center gap-1 text-[11px] text-foreground/75 ml-auto">
               <Calendar className="h-3 w-3" />
               <span>
                 {new Date(issue.dueDate).toLocaleDateString('en-US', {

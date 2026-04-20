@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db, organizations, organizationMembers, users, projects, issues, systemAuditLogs } from '@tasknebula/db';
-import { eq, desc, count, and, ilike, or } from 'drizzle-orm';
+import { eq, desc, count, and, ilike, or, inArray } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { isSuperAdmin } from '@/lib/auth/permissions';
 import { createId } from '@paralleldrive/cuid2';
@@ -68,54 +68,95 @@ export async function GET(request: NextRequest) {
           .limit(limit)
           .offset((page - 1) * limit);
 
-    // Get stats for each organization
-    const orgsWithStats = await Promise.all(
-      orgs.map(async (org) => {
-        // Count members
-        const [memberCount] = await db
-          .select({ count: count() })
-          .from(organizationMembers)
-          .where(eq(organizationMembers.organizationId, org.id));
+    const orgIds = orgs.map((o) => o.id);
 
-        // Count projects
-        const [projectCount] = await db
-          .select({ count: count() })
-          .from(projects)
-          .where(eq(projects.organizationId, org.id));
+    // Aggregate member, project, issue counts per org in a single query
+    const statsMap = new Map<string, { members: number; projects: number; issues: number }>();
 
-        // Count issues
-        const [issueCount] = await db
-          .select({ count: count() })
-          .from(issues)
-          .where(eq(issues.organizationId, org.id));
+    if (orgIds.length > 0) {
+      const memberStats = await db
+        .select({
+          organizationId: organizationMembers.organizationId,
+          total: count(),
+        })
+        .from(organizationMembers)
+        .where(inArray(organizationMembers.organizationId, orgIds))
+        .groupBy(organizationMembers.organizationId);
 
-        // Get owner
-        const [owner] = await db
-          .select({
-            id: users.id,
-            name: users.name,
-            email: users.email,
-            image: users.image,
-          })
-          .from(organizationMembers)
-          .innerJoin(users, eq(organizationMembers.userId, users.id))
-          .where(and(
-            eq(organizationMembers.organizationId, org.id),
-            eq(organizationMembers.role, 'owner')
-          ))
-          .limit(1);
+      const projectStats = await db
+        .select({
+          organizationId: projects.organizationId,
+          total: count(),
+        })
+        .from(projects)
+        .where(inArray(projects.organizationId, orgIds))
+        .groupBy(projects.organizationId);
 
-        return {
-          ...org,
-          stats: {
-            members: Number(memberCount?.count || 0),
-            projects: Number(projectCount?.count || 0),
-            issues: Number(issueCount?.count || 0),
-          },
-          owner,
-        };
-      })
-    );
+      const issueStats = await db
+        .select({
+          organizationId: issues.organizationId,
+          total: count(),
+        })
+        .from(issues)
+        .where(inArray(issues.organizationId, orgIds))
+        .groupBy(issues.organizationId);
+
+      for (const orgId of orgIds) {
+        statsMap.set(orgId, { members: 0, projects: 0, issues: 0 });
+      }
+      for (const row of memberStats) {
+        const entry = statsMap.get(row.organizationId);
+        if (entry) entry.members = Number(row.total) || 0;
+      }
+      for (const row of projectStats) {
+        const entry = statsMap.get(row.organizationId);
+        if (entry) entry.projects = Number(row.total) || 0;
+      }
+      for (const row of issueStats) {
+        const entry = statsMap.get(row.organizationId);
+        if (entry) entry.issues = Number(row.total) || 0;
+      }
+    }
+
+    // Batch fetch owners for all orgs in one query
+    const ownersMap = new Map<string, { id: string; name: string | null; email: string; image: string | null }>();
+
+    if (orgIds.length > 0) {
+      const ownerRows = await db
+        .select({
+          organizationId: organizationMembers.organizationId,
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          image: users.image,
+        })
+        .from(organizationMembers)
+        .innerJoin(users, eq(organizationMembers.userId, users.id))
+        .where(and(
+          inArray(organizationMembers.organizationId, orgIds),
+          eq(organizationMembers.role, 'owner')
+        ));
+
+      for (const row of ownerRows) {
+        if (!ownersMap.has(row.organizationId)) {
+          ownersMap.set(row.organizationId, {
+            id: row.id,
+            name: row.name,
+            email: row.email,
+            image: row.image,
+          });
+        }
+      }
+    }
+
+    const orgsWithStats = orgs.map((org) => {
+      const stats = statsMap.get(org.id) || { members: 0, projects: 0, issues: 0 };
+      return {
+        ...org,
+        stats,
+        owner: ownersMap.get(org.id) || undefined,
+      };
+    });
 
     // Get total count
     const totalQuery = db
@@ -203,6 +244,10 @@ export async function POST(request: NextRequest) {
         settings: {},
       })
       .returning();
+
+    if (!newOrg) {
+      throw new Error('Failed to create organization');
+    }
 
     // Add owner as member
     await db.insert(organizationMembers).values({

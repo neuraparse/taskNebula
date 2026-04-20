@@ -74,8 +74,17 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
             <div className="px-5 py-5">
               <IssueSidebar
                 issue={{
-                  ...issue,
+                  id: issue.id,
+                  projectId: issue.projectId,
+                  statusId: issue.statusId ?? issue.status,
+                  priority: issue.priority,
+                  assigneeId: issue.assigneeId,
+                  reporterId: issue.reporterId,
                   labels: Array.isArray(issue.labels) ? issue.labels : [],
+                  estimate: issue.estimate,
+                  dueDate: issue.dueDate,
+                  createdAt: issue.createdAt,
+                  updatedAt: issue.updatedAt,
                 }}
                 onUpdate={() => {}}
               />

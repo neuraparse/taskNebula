@@ -43,8 +43,8 @@ export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprin
       const twoWeeksLater = new Date(today);
       twoWeeksLater.setDate(today.getDate() + 14);
 
-      setStartDate(today.toISOString().split('T')[0]);
-      setEndDate(twoWeeksLater.toISOString().split('T')[0]);
+      setStartDate(today.toISOString().split('T')[0] ?? '');
+      setEndDate(twoWeeksLater.toISOString().split('T')[0] ?? '');
     }
   }, [open, existingSprints]);
 

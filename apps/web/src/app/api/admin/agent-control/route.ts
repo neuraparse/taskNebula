@@ -41,6 +41,7 @@ export async function GET() {
         summary: agentRuns.summary,
         writeActionsCount: agentRuns.writeActionsCount,
         createdAt: agentRuns.createdAt,
+        error: agentRuns.error,
         organizationId: organizations.id,
         organizationName: organizations.name,
         projectId: projects.id,

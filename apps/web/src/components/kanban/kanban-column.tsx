@@ -50,7 +50,10 @@ export function KanbanColumn({ column, issueCount, projectId, children }: Kanban
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
-  const config = categoryConfig[column.category] || categoryConfig.backlog;
+  const config = categoryConfig[column.category] ?? categoryConfig.backlog ?? {
+    countBg: 'bg-slate-100 text-slate-600 dark:bg-slate-800/60 dark:text-slate-400',
+    headerAccent: 'border-t-slate-400',
+  };
 
   return (
     <>

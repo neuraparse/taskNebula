@@ -60,7 +60,7 @@ export default function ProjectSettingsPage({
     return (
       <div className="p-6">
         <div className="rounded-lg border border-red-200 bg-red-50 p-8 text-center">
-          <p className="text-red-800">You don't have permission to access project settings.</p>
+          <p className="text-red-800">You don&apos;t have permission to access project settings.</p>
         </div>
       </div>
     );

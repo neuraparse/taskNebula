@@ -238,6 +238,10 @@ export async function PATCH(
       .where(eq(savedFilters.id, existingView.id))
       .returning();
 
+    if (!view) {
+      throw new Error('Failed to update view');
+    }
+
     return NextResponse.json({ view: serializeProjectView(view, session.user.id) });
   } catch (error) {
     if (error instanceof z.ZodError) {

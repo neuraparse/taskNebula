@@ -43,12 +43,14 @@ export function useRealtimeSync() {
       };
 
       es.onmessage = (e) => {
+        let event: RealtimeEvent;
         try {
-          const event: RealtimeEvent = JSON.parse(e.data);
-          handleEvent(event);
-        } catch {
-          // Ignore parse errors
+          event = JSON.parse(e.data) as RealtimeEvent;
+        } catch (err) {
+          console.warn('Failed to parse SSE event payload', err);
+          return;
         }
+        handleEvent(event);
       };
 
       es.onerror = () => {
@@ -63,13 +65,27 @@ export function useRealtimeSync() {
       };
     }
 
+    function invalidateIssuesForProject(projectId: string | undefined) {
+      if (projectId) {
+        queryClient.invalidateQueries({
+          queryKey: ['issues'],
+          predicate: (query) => {
+            const filters = query.queryKey[1] as { projectId?: string } | undefined;
+            return filters?.projectId === projectId;
+          },
+        });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['issues'] });
+      }
+    }
+
     function handleEvent(event: RealtimeEvent) {
       const { type, projectId, sprintId, issueId } = event;
 
       switch (type) {
         case 'issue.created':
         case 'issue.deleted':
-          queryClient.invalidateQueries({ queryKey: ['issues'] });
+          invalidateIssuesForProject(projectId);
           if (sprintId) {
             queryClient.invalidateQueries({ queryKey: ['sprint-issues', sprintId] });
           }
@@ -79,7 +95,7 @@ export function useRealtimeSync() {
           break;
 
         case 'issue.updated':
-          queryClient.invalidateQueries({ queryKey: ['issues'] });
+          invalidateIssuesForProject(projectId);
           if (issueId) {
             queryClient.invalidateQueries({ queryKey: ['issue', issueId] });
             queryClient.invalidateQueries({ queryKey: ['subtasks', issueId] });
@@ -102,7 +118,7 @@ export function useRealtimeSync() {
           break;
 
         case 'sprint.issues.changed':
-          queryClient.invalidateQueries({ queryKey: ['issues'] });
+          invalidateIssuesForProject(projectId);
           if (sprintId) {
             queryClient.invalidateQueries({ queryKey: ['sprint-issues', sprintId] });
             queryClient.invalidateQueries({ queryKey: ['sprint', sprintId] });
@@ -134,9 +150,8 @@ export function useRealtimeSync() {
 
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
-        // Reconnect and refetch stale data
+        // Reconnect; SSE covers cross-client sync, no blanket invalidation.
         connect();
-        queryClient.invalidateQueries();
       } else {
         // Disconnect when tab is hidden to save resources
         if (eventSourceRef.current) {

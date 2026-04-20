@@ -173,7 +173,10 @@ export function AppSidebar() {
   return (
     <aside className="flex w-60 flex-col border-r border-border bg-card">
       <div className="border-b border-border p-3">
-        <button className="flex w-full items-center justify-between rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-accent">
+        <button
+          className="flex w-full items-center justify-between rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-accent"
+          aria-label="Switch workspace"
+        >
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded bg-primary">
               <span className="text-xs font-bold text-primary-foreground">T</span>
@@ -184,7 +187,7 @@ export function AppSidebar() {
         </button>
       </div>
 
-      <nav className="flex-1 space-y-0.5 p-2">
+      <nav aria-label="Primary" className="flex-1 space-y-0.5 p-2">
         {navigation.map((item) => {
           const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
           return (
@@ -219,7 +222,12 @@ export function AppSidebar() {
               Projects
             </span>
             <Link href="/projects">
-              <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-foreground">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                aria-label="Create project"
+              >
                 <Plus className="h-3 w-3" />
               </Button>
             </Link>
@@ -227,7 +235,10 @@ export function AppSidebar() {
           <div className="custom-scrollbar max-h-48 space-y-0.5 overflow-y-auto">
             {projectsLoading ? (
               <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <span role="status" aria-live="polite" aria-busy="true">
+                  <span className="sr-only">Loading…</span>
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </span>
               </div>
             ) : projects && projects.length > 0 ? (
               projects.slice(0, 5).map((project) => {
@@ -382,7 +393,9 @@ export function AppSidebar() {
         <div className="cursor-pointer rounded-md px-2 py-2 transition-colors hover:bg-accent">
           <div className="flex items-center gap-2">
             <Avatar className="h-6 w-6">
-              {session?.user?.image ? <AvatarImage src={session.user.image} /> : null}
+              {session?.user?.image ? (
+                <AvatarImage src={session.user.image} alt={session.user.name ?? 'User avatar'} />
+              ) : null}
               <AvatarFallback className="bg-muted text-[10px] font-medium text-muted-foreground">
                 {session?.user?.name?.split(' ').map((part) => part[0]).join('').toUpperCase() || 'U'}
               </AvatarFallback>
@@ -1160,7 +1173,9 @@ function SidebarVoiceParticipantAvatar({
         className
       )}
     >
-      {isCurrentUser && sessionUserImage ? <AvatarImage src={sessionUserImage} /> : null}
+      {isCurrentUser && sessionUserImage ? (
+        <AvatarImage src={sessionUserImage} alt={displayName ?? 'Participant'} />
+      ) : null}
       <AvatarFallback
         className={cn(
           'text-[10px] font-semibold',

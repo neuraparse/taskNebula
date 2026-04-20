@@ -157,6 +157,9 @@ function patchLiveCalls(
   }
 
   const existing = current[existingIndex];
+  if (!existing) {
+    return current;
+  }
   if (isSameCallSummary(existing, nextCall)) {
     return current;
   }
@@ -828,8 +831,15 @@ export function useConversationStream(roomId: string | undefined, enabled: boole
         return;
       }
 
+      let payload: { type: string; data: Record<string, unknown> };
       try {
-        const payload = JSON.parse(event.data) as { type: string; data: Record<string, unknown> };
+        payload = JSON.parse(event.data) as { type: string; data: Record<string, unknown> };
+      } catch (err) {
+        console.warn('chat-stream: failed to parse SSE payload', err);
+        return;
+      }
+
+      try {
         chatClientDebug('chat-stream.message', {
           roomId,
           type: payload.type,

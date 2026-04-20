@@ -716,7 +716,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                   <CompactSwitchRow
                     label="Search indexing"
                     hint="Allow search engines"
-                    checked={currentPage.share?.public?.allowSearchIndexing}
+                    checked={currentPage.share?.public?.allowSearchIndexing ?? false}
                     disabled={!currentPage.share?.public?.enabled || !currentPage.share?.canManagePublic || updateShare.isPending}
                     onCheckedChange={(checked) =>
                       void updateShareWithToast(
@@ -730,7 +730,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                   <CompactSwitchRow
                     label="Attachments"
                     hint="Publish uploaded files"
-                    checked={currentPage.share?.public?.includeAttachments}
+                    checked={currentPage.share?.public?.includeAttachments ?? false}
                     disabled={!currentPage.share?.public?.enabled || !currentPage.share?.canManagePublic || updateShare.isPending}
                     onCheckedChange={(checked) =>
                       void updateShareWithToast(

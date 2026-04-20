@@ -31,6 +31,7 @@ import {
 import {
   AGENT_CAPABILITY_DETAILS,
   getSuggestedModelForProvider,
+  normalizeWorkspaceAgentSettings,
   type AgentProvider,
   type WorkspaceAgentSettings,
 } from '@/lib/agents/config';
@@ -216,7 +217,7 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
 
   useEffect(() => {
     if (data?.workspaceSettings) {
-      setFormState(data.workspaceSettings);
+      setFormState(normalizeWorkspaceAgentSettings(data.workspaceSettings));
       setCredentialInput('');
       setRemoveStoredCredential(false);
     }
@@ -972,7 +973,7 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
             <Button
               variant="outline"
               onClick={() => {
-                setFormState(data.workspaceSettings);
+                setFormState(normalizeWorkspaceAgentSettings(data.workspaceSettings));
                 setCredentialInput('');
                 setRemoveStoredCredential(false);
               }}

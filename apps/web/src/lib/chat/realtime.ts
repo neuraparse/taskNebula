@@ -8,6 +8,7 @@ type ChatRealtimeEvent = {
 };
 
 declare global {
+  // eslint-disable-next-line no-var -- required for global augmentation
   var __tasknebulaChatEmitter__: EventEmitter | undefined;
 }
 
@@ -88,6 +89,7 @@ type PresenceEntry = {
 };
 
 declare global {
+  // eslint-disable-next-line no-var -- required for global augmentation
   var __tasknebulaRoomPresence__: Map<string, PresenceEntry> | undefined;
 }
 

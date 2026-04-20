@@ -99,7 +99,7 @@ export async function POST(
     let slug = slugBase;
     let suffix = 1;
 
-    while (true) {
+    for (;;) {
       const [existing] = await db
         .select({ id: projectChannels.id })
         .from(projectChannels)

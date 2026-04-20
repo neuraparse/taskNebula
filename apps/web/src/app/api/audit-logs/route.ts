@@ -26,7 +26,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
     }
 
-    const canView = await hasPermission(organizationId, 'org:view');
+    // Audit logs are sensitive — require org management access (owners/admins/super admins)
+    const canView = await hasPermission(organizationId, 'org:manage');
     if (!canView) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }

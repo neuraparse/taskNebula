@@ -280,6 +280,10 @@ export async function POST(
       })
       .returning();
 
+    if (!view) {
+      throw new Error('Failed to create view');
+    }
+
     return NextResponse.json({ view: serializeProjectView(view, session.user.id) }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {

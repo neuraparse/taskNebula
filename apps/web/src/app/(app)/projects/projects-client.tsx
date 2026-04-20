@@ -14,6 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useCreateProject, useProjects } from '@/lib/hooks/use-projects';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useTeamspaces } from '@/lib/hooks/use-teamspaces';
@@ -131,12 +137,22 @@ export function ProjectsClient() {
         )}
       </div>
 
-      {showDialog ? <CreateProjectDialog onClose={() => setShowDialog(false)} /> : null}
+      <CreateProjectDialog
+        open={showDialog}
+        onOpenChange={(open) => setShowDialog(open)}
+      />
     </div>
   );
 }
 
-function CreateProjectDialog({ onClose }: { onClose: () => void }) {
+function CreateProjectDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const onClose = () => onOpenChange(false);
   const router = useRouter();
   const createProject = useCreateProject();
   const { currentOrganizationId, currentTeamId } = useOrganization();
@@ -191,19 +207,21 @@ function CreateProjectDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div
-        className="w-full max-w-[460px] rounded-none border bg-background p-6 shadow-lg"
-        onClick={(event) => event.stopPropagation()}
-      >
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-full max-w-[460px] rounded-none border bg-background p-6 shadow-lg">
         <div className="mb-5 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold">Create Project</h2>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <DialogTitle className="text-lg font-semibold">Create Project</DialogTitle>
+            <DialogDescription className="mt-1 text-xs text-muted-foreground">
               Projects inherit the current organization and can optionally live in a teamspace.
-            </p>
+            </DialogDescription>
           </div>
-          <button onClick={onClose} className="rounded-none p-1 hover:bg-muted">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-none p-1 hover:bg-muted"
+            aria-label="Close dialog"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -296,7 +314,7 @@ function CreateProjectDialog({ onClose }: { onClose: () => void }) {
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

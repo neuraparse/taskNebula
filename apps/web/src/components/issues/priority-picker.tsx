@@ -74,11 +74,16 @@ export function PriorityPicker({ value, onChange, disabled = false }: PriorityPi
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-haspopup="listbox"
+          aria-label="Priority"
           className="w-full justify-between"
           disabled={disabled}
         >
           <div className="flex items-center gap-2">
-            <div className={`h-3 w-3 rounded-full ${selectedPriority?.bgColor || 'bg-gray-500'}`}></div>
+            <div
+              aria-hidden="true"
+              className={`h-3 w-3 rounded-full ${selectedPriority?.bgColor || 'bg-gray-500'}`}
+            ></div>
             <span className="capitalize">{selectedPriority?.label || 'None'}</span>
           </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -106,7 +111,10 @@ export function PriorityPicker({ value, onChange, disabled = false }: PriorityPi
                         value === priority.value ? 'opacity-100' : 'opacity-0'
                       )}
                     />
-                    <div className={`mr-2 h-3 w-3 rounded-full ${priority.bgColor}`}></div>
+                    <div
+                      aria-hidden="true"
+                      className={`mr-2 h-3 w-3 rounded-full ${priority.bgColor}`}
+                    ></div>
                     <PriorityIcon className={`mr-2 h-4 w-4 ${priority.color}`} />
                     <span className="capitalize">{priority.label}</span>
                   </CommandItem>

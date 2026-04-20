@@ -374,7 +374,10 @@ function buildPrompt(params: ProviderParams) {
             },
           },
         },
-        parser: (value: unknown) => ({ kind: params.kind, ...sprintPlanResponseSchema.parse(value) }),
+        parser: (value: unknown) => ({
+          kind: params.kind as 'sprint_planning' | 'bulk_sprint_creation',
+          ...sprintPlanResponseSchema.parse(value),
+        }),
       };
     default:
       throw new AgentExecutionError('Unsupported agent run kind.', 'unsupported_run_kind', 400);

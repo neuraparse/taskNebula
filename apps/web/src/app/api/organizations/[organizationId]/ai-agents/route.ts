@@ -291,23 +291,29 @@ export async function PATCH(
         })
       : nextSettings;
 
-    let nextOrganizationSettings = {
+    let nextOrganizationSettings: Record<string, unknown> = {
       ...((organization.settings as Record<string, unknown>) || {}),
       aiAgents: appliedNextSettings,
     };
 
     if (updates.credential?.provider === 'openai' && updates.credential.apiKey) {
-      nextOrganizationSettings = upsertProviderSecretInSettings({
-        settings: nextOrganizationSettings,
-        provider: 'openai',
-        apiKey: updates.credential.apiKey,
-        userId: session.user.id,
-      });
+      nextOrganizationSettings = {
+        ...upsertProviderSecretInSettings({
+          settings: nextOrganizationSettings,
+          provider: 'openai',
+          apiKey: updates.credential.apiKey,
+          userId: session.user.id,
+        }),
+        aiAgents: appliedNextSettings,
+      };
     } else if (updates.credential?.provider === 'openai' && updates.credential.remove) {
-      nextOrganizationSettings = removeProviderSecretFromSettings({
-        settings: nextOrganizationSettings,
-        provider: 'openai',
-      });
+      nextOrganizationSettings = {
+        ...removeProviderSecretFromSettings({
+          settings: nextOrganizationSettings,
+          provider: 'openai',
+        }),
+        aiAgents: appliedNextSettings,
+      };
     }
 
     await db

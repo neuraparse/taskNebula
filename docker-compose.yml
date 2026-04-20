@@ -10,7 +10,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-tasknebula}
     ports:
-      - '${DB_PORT:-5432}:5432'
+      # Bind to localhost only to prevent external network access to the database.
+      - '127.0.0.1:${DB_PORT:-5432}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql
@@ -52,7 +53,7 @@ services:
       LIVEKIT_RTC_START_PORT: ${LIVEKIT_RTC_START_PORT:-50000}
       LIVEKIT_RTC_END_PORT: ${LIVEKIT_RTC_END_PORT:-50020}
       LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-tasknebula-dev}
-      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-tasknebula-livekit-secret-local-2026}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:?LIVEKIT_API_SECRET must be set}
       LIVEKIT_WEBHOOK_URL: ${LIVEKIT_WEBHOOK_URL:-http://127.0.0.1:${PORT:-3000}/api/chat/livekit/webhook}
       REDIS_PORT: ${REDIS_PORT:-6379}
     volumes:
@@ -63,7 +64,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        AUTH_SECRET: ${AUTH_SECRET:-change-me-generate-with-openssl-rand-base64-32}
+        AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET must be set (generate with `openssl rand -base64 32`)}
         AUTH_URL: ${APP_URL:-http://localhost:3000}
         NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost:3000}
     container_name: tasknebula-web
@@ -77,7 +78,7 @@ services:
         condition: service_started
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-tasknebula}
-      AUTH_SECRET: ${AUTH_SECRET:-change-me-generate-with-openssl-rand-base64-32}
+      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET must be set (generate with `openssl rand -base64 32`)}
       AUTH_URL: ${APP_URL:-http://localhost:3000}
       NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost:3000}
       NEXT_PUBLIC_APP_NAME: ${APP_NAME:-TaskNebula}
@@ -85,7 +86,7 @@ services:
       LIVEKIT_URL: ${LIVEKIT_URL:-http://host.docker.internal:7880}
       NEXT_PUBLIC_LIVEKIT_URL: ${NEXT_PUBLIC_LIVEKIT_URL:-ws://${LIVEKIT_PUBLIC_HOST:-127.0.0.1}:7880}
       LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-tasknebula-dev}
-      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-tasknebula-livekit-secret-local-2026}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:?LIVEKIT_API_SECRET must be set}
       TURN_URL: ${TURN_URL:-}
       TURN_USERNAME: ${TURN_USERNAME:-}
       TURN_PASSWORD: ${TURN_PASSWORD:-}
