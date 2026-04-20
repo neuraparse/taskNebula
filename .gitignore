@@ -106,3 +106,92 @@ docker-compose.override.yml
 todo.txt
 packages/db/scripts/setup-api-platform-docs.ts
 forensic/
+
+# ===========================================
+# LOCAL / DEPLOYMENT-SPECIFIC OVERRIDES
+# ===========================================
+
+# Any file ending with .local (lets users keep local variants side-by-side)
+*.local
+*.local.*
+
+# Secrets / credential files
+secrets/
+.secrets
+.secrets.*
+*.secret
+*.secrets.json
+.pgpass
+.netrc
+.htpasswd
+
+# SSH keys (any form)
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+*.pub.backup
+known_hosts.backup
+
+# Direnv / asdf / nvm local
+.envrc
+.tool-versions.local
+.nvmrc.local
+
+# Docker compose overrides (keep base docker-compose.yml only)
+docker-compose.*.override.yml
+docker-compose.local.yml
+docker-compose.prod.yml
+docker-compose.staging.yml
+docker-compose.personal.yml
+
+# User-customized nginx vhost files (keep nginx/tasknebula.conf as template)
+nginx/sites-available/
+nginx/sites-enabled/
+nginx/*.local.conf
+nginx/*-local.conf
+nginx/*.personal.conf
+nginx/conf.d/
+# Real deployment vhosts should be named with your domain and ignored:
+nginx/*.nowflow.io*
+nginx/*.your-domain.*
+
+# Database dumps / backups
+*.dump
+*.dump.gz
+*.sql.gz
+*.sqlite
+*.sqlite3
+*.db
+pg-backup/
+pg-backups/
+db-backups/
+
+# Let's Encrypt / Certbot staging
+letsencrypt/
+certbot/
+
+# CI / deployment configs that include project-specific bits
+.terraform/
+*.tfvars
+*.tfstate
+*.tfstate.backup
+ansible/vault_pass
+.vault_pass*
+
+# Editor/AI caches
+.cursor/
+.aider*
+.continue/
+.windsurf/
+
+# OS-level extra
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Local notes & drafts
+NOTES.md
+NOTES.local.md
+scratch/
+.scratch/
