@@ -3,54 +3,65 @@ import { eventBus, type RealtimeEvent } from '@/lib/realtime/events';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return new Response('Unauthorized', { status: 401 });
   }
 
   const userId = session.user.id;
+  const encoder = new TextEncoder();
+  let cleanup = () => {};
 
   const stream = new ReadableStream({
     start(controller) {
-      const encoder = new TextEncoder();
+      let closed = false;
 
-      // Send initial keepalive
-      controller.enqueue(encoder.encode(': connected\n\n'));
+      const send = (chunk: string) => {
+        if (closed) return;
+        try {
+          controller.enqueue(encoder.encode(chunk));
+        } catch {
+          cleanup();
+        }
+      };
+
+      const onAbort = () => {
+        cleanup();
+      };
 
       // Keepalive every 25 seconds
       const keepalive = setInterval(() => {
-        try {
-          controller.enqueue(encoder.encode(': ping\n\n'));
-        } catch {
-          clearInterval(keepalive);
-        }
+        send(': ping\n\n');
       }, 25000);
 
       // Subscribe to events
       const unsubscribe = eventBus.subscribe((event: RealtimeEvent) => {
         // Don't send events back to the user who triggered them
         if (event.userId === userId) return;
-
-        try {
-          const data = JSON.stringify(event);
-          controller.enqueue(encoder.encode(`data: ${data}\n\n`));
-        } catch {
-          // Connection closed
-        }
+        send(`data: ${JSON.stringify(event)}\n\n`);
       });
 
-      // Cleanup on close - use a check interval since ReadableStream
-      // doesn't have a native close event in all environments
-      const checkClosed = setInterval(() => {
+      cleanup = () => {
+        if (closed) return;
+        closed = true;
+        clearInterval(keepalive);
+        unsubscribe();
+        request.signal.removeEventListener('abort', onAbort);
         try {
-          controller.enqueue(encoder.encode(''));
+          controller.close();
         } catch {
-          clearInterval(keepalive);
-          clearInterval(checkClosed);
-          unsubscribe();
+          // Stream may already be closed.
         }
-      }, 30000);
+      };
+
+      request.signal.addEventListener('abort', onAbort);
+
+      // Send initial keepalive
+      send(': connected\n\n');
+    },
+    cancel() {
+      cleanup();
     },
   });
 

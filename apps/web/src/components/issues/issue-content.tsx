@@ -83,7 +83,13 @@ export function IssueContent({ issue }: IssueContentProps) {
         ) : (
           <div className="prose prose-sm max-w-none dark:prose-invert text-sm leading-relaxed">
             {issue.description ? (
-              <div dangerouslySetInnerHTML={{ __html: issue.description.replace(/\n/g, '<br />') }} />
+              <div className="whitespace-pre-wrap">
+                {issue.description.split('\n').map((line, idx) => (
+                  <p key={idx} className="min-h-[1em]">
+                    {line}
+                  </p>
+                ))}
+              </div>
             ) : (
               <p className="text-muted-foreground/60 italic">No description provided</p>
             )}

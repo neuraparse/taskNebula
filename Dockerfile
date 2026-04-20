@@ -30,7 +30,7 @@ COPY packages/types/package.json ./packages/types/
 COPY packages/config/package.json ./packages/config/
 
 # Install dependencies (lockfile will be updated if needed)
-RUN pnpm install --no-frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 # =============================================================================
 # Builder stage - Build the application

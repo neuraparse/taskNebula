@@ -27,6 +27,7 @@ import {
   AgentExecutionError,
   generateAgentPlan,
   normalizeAgentLabels,
+  type AgentProviderPlan,
   type SprintPlanProviderPlan,
   type TriageProviderPlan,
   type TrackingProviderPlan,
@@ -265,7 +266,7 @@ function buildBacklogTriageProposals(
 
   if (!generatedPlan) {
     return backlogIssues
-      .map((issue) => {
+      .map<TriageProposal>((issue) => {
         const labels = asStringArray(issue.labels);
         const targetPriority = deriveTriagePriority({
           id: issue.id,
@@ -287,7 +288,7 @@ function buildBacklogTriageProposals(
           changed:
             targetPriority !== issue.priority
             || JSON.stringify(nextLabels) !== JSON.stringify(labels),
-        } satisfies TriageProposal;
+        };
       })
       .filter((proposal) => proposal.changed);
   }
@@ -693,6 +694,10 @@ async function runBulkSprintCreation(params: {
       })
       .returning();
 
+    if (!createdSprint) {
+      throw new Error('Failed to create sprint');
+    }
+
     createdSprints.push({
       id: createdSprint.id,
       name: createdSprint.name,
@@ -899,11 +904,7 @@ export async function runProjectAgent(params: {
       writeActionsCount?: number;
       output: Record<string, unknown>;
     };
-    let generatedPlan:
-      | TrackingProviderPlan
-      | TriageProviderPlan
-      | SprintPlanProviderPlan
-      | undefined;
+    let generatedPlan: AgentProviderPlan | undefined;
 
     const providerLog = nextLog(
       logs,

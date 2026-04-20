@@ -126,6 +126,10 @@ export async function PATCH(
       .where(eq(users.id, userId))
       .returning();
 
+    if (!updatedUser) {
+      throw new Error('Failed to update user');
+    }
+
     // Create audit log
     const changes: Record<string, { from: any; to: any }> = {};
     if (data.isSuperAdmin !== undefined && data.isSuperAdmin !== currentUser.isSuperAdmin) {

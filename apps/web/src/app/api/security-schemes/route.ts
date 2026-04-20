@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, issueSecuritySchemes, issueSecurityLevels, issueSecurityLevelMembers, projectSecuritySchemes } from '@tasknebula/db';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, inArray } from 'drizzle-orm';
 
 // GET /api/security-schemes - List all issue security schemes for an organization
 export async function GET(request: NextRequest) {
@@ -31,41 +31,58 @@ export async function GET(request: NextRequest) {
       .where(eq(issueSecuritySchemes.organizationId, organizationId))
       .orderBy(desc(issueSecuritySchemes.isDefault), issueSecuritySchemes.name);
 
-    // Get levels for each scheme
-    const schemesWithLevels = await Promise.all(
-      schemes.map(async (scheme) => {
-        const levels = await db
+    // Batch fetch levels, level members, and project assignments
+    type SecurityLevelRow = typeof issueSecurityLevels.$inferSelect;
+    type LevelMemberRow = typeof issueSecurityLevelMembers.$inferSelect;
+
+    const schemeIds = schemes.map((s) => s.id);
+    const levelsByScheme = new Map<string, (SecurityLevelRow & { members: LevelMemberRow[] })[]>();
+    const projectCountsByScheme = new Map<string, number>();
+
+    if (schemeIds.length > 0) {
+      const allLevels = await db
+        .select()
+        .from(issueSecurityLevels)
+        .where(inArray(issueSecurityLevels.schemeId, schemeIds))
+        .orderBy(issueSecurityLevels.sortOrder);
+
+      const levelIds = allLevels.map((l) => l.id);
+      const membersByLevel = new Map<string, LevelMemberRow[]>();
+
+      if (levelIds.length > 0) {
+        const allMembers = await db
           .select()
-          .from(issueSecurityLevels)
-          .where(eq(issueSecurityLevels.schemeId, scheme.id))
-          .orderBy(issueSecurityLevels.sortOrder);
+          .from(issueSecurityLevelMembers)
+          .where(inArray(issueSecurityLevelMembers.levelId, levelIds));
 
-        const levelsWithMembers = await Promise.all(
-          levels.map(async (level) => {
-            const members = await db
-              .select()
-              .from(issueSecurityLevelMembers)
-              .where(eq(issueSecurityLevelMembers.levelId, level.id));
+        for (const member of allMembers) {
+          const list = membersByLevel.get(member.levelId) || [];
+          list.push(member);
+          membersByLevel.set(member.levelId, list);
+        }
+      }
 
-            return {
-              ...level,
-              members,
-            };
-          })
-        );
+      for (const level of allLevels) {
+        const list = levelsByScheme.get(level.schemeId) || [];
+        list.push({ ...level, members: membersByLevel.get(level.id) || [] });
+        levelsByScheme.set(level.schemeId, list);
+      }
 
-        const projectAssignments = await db
-          .select({ id: projectSecuritySchemes.id })
-          .from(projectSecuritySchemes)
-          .where(eq(projectSecuritySchemes.schemeId, scheme.id));
+      const assignments = await db
+        .select({ schemeId: projectSecuritySchemes.schemeId })
+        .from(projectSecuritySchemes)
+        .where(inArray(projectSecuritySchemes.schemeId, schemeIds));
 
-        return {
-          ...scheme,
-          levels: levelsWithMembers,
-          projectCount: projectAssignments.length,
-        };
-      })
-    );
+      for (const row of assignments) {
+        projectCountsByScheme.set(row.schemeId, (projectCountsByScheme.get(row.schemeId) || 0) + 1);
+      }
+    }
+
+    const schemesWithLevels = schemes.map((scheme) => ({
+      ...scheme,
+      levels: levelsByScheme.get(scheme.id) || [],
+      projectCount: projectCountsByScheme.get(scheme.id) || 0,
+    }));
 
     return NextResponse.json(schemesWithLevels);
   } catch (error) {

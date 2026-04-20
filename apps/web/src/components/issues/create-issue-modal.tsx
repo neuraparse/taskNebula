@@ -21,7 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle, Loader2 } from 'lucide-react';
 
 interface CreateIssueModalProps {
   open: boolean;
@@ -42,13 +43,18 @@ export function CreateIssueModal({
   const [description, setDescription] = useState('');
   const [type, setType] = useState<string>('task');
   const [priority, setPriority] = useState<string>('medium');
+  const [error, setError] = useState<string | null>(null);
+  const [showError, setShowError] = useState(false);
 
   const createIssue = useCreateIssue();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
 
     if (!title.trim()) {
+      setShowError(true);
+      setError('Title is required.');
       return;
     }
 
@@ -67,11 +73,14 @@ export function CreateIssueModal({
       setDescription('');
       setType('task');
       setPriority('medium');
+      setError(null);
+      setShowError(false);
 
       // Close modal
       onOpenChange(false);
-    } catch (error) {
-      console.error('Failed to create issue:', error);
+    } catch (err) {
+      console.error('Failed to create issue:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create issue.');
     }
   };
 
@@ -86,6 +95,12 @@ export function CreateIssueModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
+          {error && (
+            <Alert variant="destructive" role="alert" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <div className="space-y-4 py-4">
             {/* Title */}
             <div className="space-y-2">
@@ -94,9 +109,21 @@ export function CreateIssueModal({
                 id="title"
                 placeholder="Enter issue title..."
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  if (showError && e.target.value.trim()) {
+                    setShowError(false);
+                  }
+                }}
                 required
+                aria-invalid={showError && !title.trim()}
+                aria-describedby={showError && !title.trim() ? 'title-error' : undefined}
               />
+              {showError && !title.trim() ? (
+                <p id="title-error" className="text-xs text-destructive">
+                  Title is required.
+                </p>
+              ) : null}
             </div>
 
             {/* Description */}
@@ -157,7 +184,12 @@ export function CreateIssueModal({
               Cancel
             </Button>
             <Button type="submit" disabled={createIssue.isPending || !title.trim()}>
-              {createIssue.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {createIssue.isPending && (
+                <span role="status" aria-live="polite" aria-busy="true" className="mr-2">
+                  <span className="sr-only">Loading…</span>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </span>
+              )}
               Create Issue
             </Button>
           </DialogFooter>

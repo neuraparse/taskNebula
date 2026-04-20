@@ -1,6 +1,7 @@
 import Redis from 'ioredis';
 
 declare global {
+  // eslint-disable-next-line no-var -- required for global augmentation
   var __tasknebulaRedis__: Redis | undefined;
 }
 

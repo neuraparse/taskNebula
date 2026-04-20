@@ -2,7 +2,11 @@
 
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { IssueDetailView } from './issue-detail-view';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+
+// Local VisuallyHidden replacement - renders children in sr-only span
+const VisuallyHidden = ({ children }: { children: React.ReactNode }) => (
+  <span className="sr-only">{children}</span>
+);
 
 interface IssueDetailModalProps {
   issueId: string;

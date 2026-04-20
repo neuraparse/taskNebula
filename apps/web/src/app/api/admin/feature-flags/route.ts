@@ -80,6 +80,10 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
+    if (!newFlag) {
+      throw new Error('Failed to create feature flag');
+    }
+
     await db.insert(systemAuditLogs).values({
       id: createId(),
       userId: session.user.id,

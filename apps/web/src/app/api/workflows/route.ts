@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, workflows, workflowStatuses, workflowTransitions } from '@tasknebula/db';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, inArray } from 'drizzle-orm';
 
 // GET /api/workflows - List all workflows for an organization
 export async function GET(request: NextRequest) {
@@ -31,17 +31,29 @@ export async function GET(request: NextRequest) {
       .where(eq(workflows.organizationId, organizationId))
       .orderBy(desc(workflows.isDefault), workflows.name);
 
-    // Get statuses for each workflow
-    const workflowsWithStatuses = await Promise.all(
-      workflowList.map(async (workflow) => {
-        const statuses = await db
-          .select()
-          .from(workflowStatuses)
-          .where(eq(workflowStatuses.workflowId, workflow.id))
-          .orderBy(workflowStatuses.position);
-        return { ...workflow, statuses };
-      })
-    );
+    // Batch fetch statuses for all workflows in a single query
+    type WorkflowStatusRow = typeof workflowStatuses.$inferSelect;
+    const workflowIds = workflowList.map((w) => w.id);
+    const statusesByWorkflow = new Map<string, WorkflowStatusRow[]>();
+
+    if (workflowIds.length > 0) {
+      const allStatuses = await db
+        .select()
+        .from(workflowStatuses)
+        .where(inArray(workflowStatuses.workflowId, workflowIds))
+        .orderBy(workflowStatuses.position);
+
+      for (const status of allStatuses) {
+        const list = statusesByWorkflow.get(status.workflowId) || [];
+        list.push(status);
+        statusesByWorkflow.set(status.workflowId, list);
+      }
+    }
+
+    const workflowsWithStatuses = workflowList.map((workflow) => ({
+      ...workflow,
+      statuses: statusesByWorkflow.get(workflow.id) || [],
+    }));
 
     return NextResponse.json(workflowsWithStatuses);
   } catch (error) {

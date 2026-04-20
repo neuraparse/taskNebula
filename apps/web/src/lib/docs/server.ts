@@ -566,7 +566,7 @@ export async function ensureUniqueDocumentSlug(spaceId: string, parentId: string
   let slug = baseSlug;
   let suffix = 1;
 
-  while (true) {
+  for (;;) {
     const conditions = [
       eq(documentPages.spaceId, spaceId),
       eq(documentPages.slug, slug),
@@ -624,7 +624,7 @@ export async function replaceDocumentLinks(pageId: string, linkedPageIds: string
 }
 
 export async function generateUniqueDocumentPublicShareToken() {
-  while (true) {
+  for (;;) {
     const token = crypto.randomBytes(24).toString('base64url');
     const [existingPage] = await db
       .select({ id: documentPages.id })

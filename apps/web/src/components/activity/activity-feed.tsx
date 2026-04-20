@@ -108,7 +108,7 @@ export function ActivityFeed({ organizationId, limit = 20 }: ActivityFeedProps) 
                 <Avatar className="h-8 w-8 ring-1 ring-border">
                   <AvatarImage src={activity.user.image || undefined} />
                   <AvatarFallback className="text-xs font-semibold">
-                    {activity.user.name?.[0]?.toUpperCase() || activity.user.email[0].toUpperCase()}
+                    {activity.user.name?.[0]?.toUpperCase() || activity.user.email[0]?.toUpperCase() || '?'}
                   </AvatarFallback>
                 </Avatar>
 

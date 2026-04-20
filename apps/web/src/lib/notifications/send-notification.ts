@@ -65,7 +65,7 @@ async function _send(params: {
     actorName: actor?.name || 'Someone',
     projectName: params.projectName,
     additionalVariables: {
-      recipientName: recipient.name || recipient.email.split('@')[0],
+      recipientName: recipient.name || recipient.email.split('@')[0] || recipient.email,
       ...params.extra,
     },
   });

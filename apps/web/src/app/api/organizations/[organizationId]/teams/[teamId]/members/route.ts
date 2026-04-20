@@ -182,6 +182,10 @@ export async function POST(
       })
       .returning();
 
+    if (!createdMember) {
+      throw new Error('Failed to create team member');
+    }
+
     if (data.role === 'lead') {
       await setLead(teamId, teamspace.leadId, data.userId);
     }
@@ -197,6 +201,10 @@ export async function POST(
       .from(users)
       .where(eq(users.id, data.userId))
       .limit(1);
+
+    if (!user) {
+      throw new Error('User not found');
+    }
 
     return NextResponse.json({
       member: {

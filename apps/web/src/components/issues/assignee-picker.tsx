@@ -53,7 +53,10 @@ export function AssigneePicker({
           {selectedMember ? (
             <div className="flex items-center gap-2">
               <Avatar className="h-5 w-5">
-                <AvatarImage src={selectedMember.image || undefined} />
+                <AvatarImage
+                  src={selectedMember.image || undefined}
+                  alt={selectedMember.name ?? selectedMember.email ?? 'Member avatar'}
+                />
                 <AvatarFallback className="text-xs">
                   {selectedMember.name?.[0] || selectedMember.email?.[0] || '?'}
                 </AvatarFallback>

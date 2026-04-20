@@ -234,7 +234,7 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
             {!canManage && (
               <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg mb-4">
                 <p className="text-yellow-800 dark:text-yellow-200">
-                  You don't have permission to manage team permissions.
+                  You don&apos;t have permission to manage team permissions.
                 </p>
               </div>
             )}

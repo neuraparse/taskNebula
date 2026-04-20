@@ -107,8 +107,21 @@ export function useCreateIssue() {
       }
       return response.json();
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['issues'] });
+    onSuccess: (data, variables) => {
+      // Scope invalidation to the affected project when possible
+      const createdProjectId =
+        (data as Issue | undefined)?.projectId || variables.projectId;
+      if (createdProjectId) {
+        queryClient.invalidateQueries({
+          queryKey: ['issues'],
+          predicate: (query) => {
+            const filters = query.queryKey[1] as { projectId?: string } | undefined;
+            return filters?.projectId === createdProjectId;
+          },
+        });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['issues'] });
+      }
       // Also invalidate subtasks if this was a subtask
       if (variables.parentId) {
         queryClient.invalidateQueries({ queryKey: ['subtasks', variables.parentId] });
@@ -133,11 +146,35 @@ export function useUpdateIssue() {
       }
       return response.json();
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['issues'] });
+    onSuccess: (data, variables) => {
+      // Targeted cache update for the single-issue query
+      const updated = data as Issue | undefined;
+      if (updated?.id) {
+        queryClient.setQueryData(['issue', updated.id], updated);
+      }
+
+      // Scope list invalidations by projectId when known
+      const updatedProjectId = updated?.projectId || variables.data.projectId;
+      if (updatedProjectId) {
+        queryClient.invalidateQueries({
+          queryKey: ['issues'],
+          predicate: (query) => {
+            const filters = query.queryKey[1] as { projectId?: string } | undefined;
+            return filters?.projectId === updatedProjectId;
+          },
+        });
+        queryClient.invalidateQueries({ queryKey: ['sprints', updatedProjectId] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['issues'] });
+        queryClient.invalidateQueries({ queryKey: ['sprints'] });
+      }
+
       queryClient.invalidateQueries({ queryKey: ['issue', variables.issueId] });
-      queryClient.invalidateQueries({ queryKey: ['sprint-issues'] });
-      queryClient.invalidateQueries({ queryKey: ['sprints'] });
+      if (updated?.sprintId) {
+        queryClient.invalidateQueries({ queryKey: ['sprint-issues', updated.sprintId] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['sprint-issues'] });
+      }
     },
   });
 }
@@ -148,18 +185,32 @@ export function useDeleteIssue() {
 
   return useMutation({
     mutationFn: async (issueId: string) => {
+      // Capture projectId from cache before deletion so we can scope invalidation
+      const cached = queryClient.getQueryData<Issue>(['issue', issueId]);
       const response = await fetch(`/api/issues/${issueId}`, {
         method: 'DELETE',
       });
       if (!response.ok) {
         throw new Error('Failed to delete issue');
       }
-      return response.json();
+      return { ...(await response.json()), projectId: cached?.projectId };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['issues'] });
+    onSuccess: (data: { projectId?: string }) => {
+      const projectId = data?.projectId;
+      if (projectId) {
+        queryClient.invalidateQueries({
+          queryKey: ['issues'],
+          predicate: (query) => {
+            const filters = query.queryKey[1] as { projectId?: string } | undefined;
+            return filters?.projectId === projectId;
+          },
+        });
+        queryClient.invalidateQueries({ queryKey: ['sprints', projectId] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['issues'] });
+        queryClient.invalidateQueries({ queryKey: ['sprints'] });
+      }
       queryClient.invalidateQueries({ queryKey: ['sprint-issues'] });
-      queryClient.invalidateQueries({ queryKey: ['sprints'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
   });

@@ -23,6 +23,7 @@ let registeredHandlers: Record<string, MockRoomHandler | undefined> = {};
 const defaultNavigatorUserAgent = global.navigator.userAgent;
 
 jest.mock('@livekit/components-react', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires -- required inside jest.mock factory
   const React = require('react');
   return {
     RoomContext: React.createContext(null),

@@ -106,6 +106,10 @@ export async function POST(
         .returning();
     }
 
+    if (!user) {
+      throw new Error('Failed to find or create user');
+    }
+
     // Check if already a member
     const [existingMember] = await db
       .select()
@@ -133,6 +137,10 @@ export async function POST(
         status: user.status === 'invited' ? 'invited' : 'active',
       })
       .returning();
+
+    if (!newMember) {
+      throw new Error('Failed to add member');
+    }
 
     // Create audit log
     await db.insert(auditLogs).values({

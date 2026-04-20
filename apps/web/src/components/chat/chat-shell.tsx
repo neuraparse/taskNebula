@@ -2032,7 +2032,7 @@ export function VoiceJoinSetupPanel({
         analyser.getByteTimeDomainData(buffer);
         let sum = 0;
         for (let index = 0; index < buffer.length; index += 1) {
-          const centered = (buffer[index] - 128) / 128;
+          const centered = ((buffer[index] ?? 128) - 128) / 128;
           sum += centered * centered;
         }
         const rms = Math.sqrt(sum / buffer.length);
@@ -2284,7 +2284,7 @@ export function VoiceJoinSetupPanel({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        <audio ref={monitorAudioRef} hidden playsInline />
+        <audio ref={monitorAudioRef} hidden />
 
         <div className="space-y-4 rounded-sm border bg-muted/10 px-3 py-3">
           <div className="space-y-2">

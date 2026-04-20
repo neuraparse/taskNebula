@@ -3,6 +3,9 @@ import { db, users, organizationMembers } from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 
+const GENERIC_SIGNUP_MESSAGE =
+  'If that email is available, an account will be created';
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -16,9 +19,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       return NextResponse.json(
-        { error: 'Password must be at least 6 characters' },
+        { error: 'Password must be at least 8 characters' },
         { status: 400 }
       );
     }
@@ -41,6 +44,10 @@ export async function POST(request: NextRequest) {
           })
           .where(eq(users.id, existingUser.id))
           .returning();
+
+        if (!updatedUser) {
+          throw new Error('Failed to activate user');
+        }
 
         // Activate any pending org memberships
         await db
@@ -66,9 +73,12 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Don't leak account existence to callers. Introduce a small random
+      // delay so timing doesn't reveal the duplicate branch either.
+      await new Promise((r) => setTimeout(r, 50 + Math.random() * 100));
       return NextResponse.json(
-        { error: 'User with this email already exists' },
-        { status: 400 }
+        { message: GENERIC_SIGNUP_MESSAGE },
+        { status: 200 }
       );
     }
 
@@ -85,6 +95,10 @@ export async function POST(request: NextRequest) {
         status: 'active',
       })
       .returning();
+
+    if (!newUser) {
+      throw new Error('Failed to create user');
+    }
 
     return NextResponse.json(
       {
@@ -105,4 +119,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

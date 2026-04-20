@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, issues, createAuditLog } from '@tasknebula/db';
+import {
+  db,
+  issues,
+  projects,
+  projectMembers,
+  organizationMembers,
+  users,
+  createAuditLog,
+} from '@tasknebula/db';
 import { eq, inArray, and } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -21,11 +29,120 @@ const bulkDeleteSchema = z.object({
   issueIds: z.array(z.string()).min(1),
 });
 
+type BulkAction = 'edit' | 'delete';
+
+/**
+ * Verify the caller has the given permission on every distinct project the
+ * provided issues belong to. Rejects the ENTIRE request if any id is
+ * unauthorized or unknown.
+ */
+async function assertBulkPermission(
+  userId: string,
+  issueIds: string[],
+  action: BulkAction
+): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+  const rows = await db
+    .select({ id: issues.id, projectId: issues.projectId })
+    .from(issues)
+    .where(inArray(issues.id, issueIds));
+
+  if (rows.length !== issueIds.length) {
+    return { ok: false, status: 404, error: 'Some issues not found' };
+  }
+
+  const [user] = await db
+    .select({ isSuperAdmin: users.isSuperAdmin })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (user?.isSuperAdmin) {
+    return { ok: true };
+  }
+
+  const projectIds = Array.from(new Set(rows.map((r) => r.projectId)));
+
+  for (const projectId of projectIds) {
+    const [project] = await db
+      .select({ id: projects.id, organizationId: projects.organizationId })
+      .from(projects)
+      .where(eq(projects.id, projectId))
+      .limit(1);
+
+    if (!project) {
+      return { ok: false, status: 404, error: 'Project not found' };
+    }
+
+    const [orgMember] = await db
+      .select({ role: organizationMembers.role })
+      .from(organizationMembers)
+      .where(
+        and(
+          eq(organizationMembers.userId, userId),
+          eq(organizationMembers.organizationId, project.organizationId)
+        )
+      )
+      .limit(1);
+
+    if (orgMember?.role === 'owner') {
+      continue;
+    }
+
+    const [projectMember] = await db
+      .select({
+        role: projectMembers.role,
+        canEditIssues: projectMembers.canEditIssues,
+        canDeleteIssues: projectMembers.canDeleteIssues,
+      })
+      .from(projectMembers)
+      .where(
+        and(
+          eq(projectMembers.userId, userId),
+          eq(projectMembers.projectId, projectId)
+        )
+      )
+      .limit(1);
+
+    if (!projectMember) {
+      return {
+        ok: false,
+        status: 403,
+        error: 'Not a project member for one or more issues',
+      };
+    }
+
+    const toBool = (val: string | null | undefined): boolean => val === 'true';
+    const canModify =
+      action === 'edit'
+        ? toBool(projectMember.canEditIssues)
+        : toBool(projectMember.canDeleteIssues);
+
+    // Fall back to role defaults for common roles
+    const elevatedRoles = ['product_owner', 'tech_lead', 'scrum_master'];
+    const allowedByRole =
+      action === 'edit'
+        ? ['product_owner', 'scrum_master', 'tech_lead', 'developer', 'qa_engineer', 'designer'].includes(
+            projectMember.role
+          )
+        : elevatedRoles.includes(projectMember.role);
+
+    if (!canModify && !allowedByRole) {
+      return {
+        ok: false,
+        status: 403,
+        error: `Insufficient permission to ${action} issues in one or more projects`,
+      };
+    }
+  }
+
+  return { ok: true };
+}
+
 /**
  * POST /api/issues/bulk
- * 
+ *
  * Bulk update issues
- * 
+ *
  * Body:
  * {
  *   "action": "update" | "delete",
@@ -79,6 +196,11 @@ export async function POST(request: NextRequest) {
 async function handleBulkUpdate(body: any, userId: string) {
   const validatedData = bulkUpdateSchema.parse(body);
   const { issueIds, updates } = validatedData;
+
+  const auth = await assertBulkPermission(userId, issueIds, 'edit');
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
 
   // Verify all issues exist and get their current state
   const existingIssues = await db
@@ -152,6 +274,11 @@ async function handleBulkDelete(body: any, userId: string) {
   const validatedData = bulkDeleteSchema.parse(body);
   const { issueIds } = validatedData;
 
+  const auth = await assertBulkPermission(userId, issueIds, 'delete');
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   // Verify all issues exist
   const existingIssues = await db
     .select()
@@ -192,4 +319,3 @@ async function handleBulkDelete(body: any, userId: string) {
     deletedCount: existingIssues.length,
   });
 }
-

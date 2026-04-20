@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, sprints, issues } from '@tasknebula/db';
-import { eq, and, count, sum } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 
 // GET /api/analytics/velocity?projectId=xxx
 export async function GET(request: NextRequest) {
@@ -18,53 +18,30 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Fetch completed sprints with their issues
-    const completedSprints = await db
+    // Fetch completed sprints with aggregated issue metrics in a single query
+    const rows = await db
       .select({
         id: sprints.id,
         name: sprints.name,
         startDate: sprints.startDate,
         endDate: sprints.endDate,
+        completedIssues: sql<number>`COALESCE(SUM(CASE WHEN ${issues.statusId} = 'done' THEN 1 ELSE 0 END), 0)`,
+        completedPoints: sql<number>`COALESCE(SUM(CASE WHEN ${issues.statusId} = 'done' THEN ${issues.estimate} ELSE 0 END), 0)`,
       })
       .from(sprints)
+      .leftJoin(issues, eq(issues.sprintId, sprints.id))
       .where(and(eq(sprints.projectId, projectId), eq(sprints.status, 'completed')))
+      .groupBy(sprints.id, sprints.name, sprints.startDate, sprints.endDate)
       .orderBy(sprints.startDate);
 
-    // Calculate velocity for each sprint
-    const velocityData = await Promise.all(
-      completedSprints.map(async (sprint) => {
-        // Get completed issues count
-        const [completedCount] = await db
-          .select({ count: count() })
-          .from(issues)
-          .where(
-            and(
-              eq(issues.sprintId, sprint.id),
-              eq(issues.statusId, 'done') // Assuming 'done' status
-            )
-          );
-
-        // Get total story points
-        const [pointsData] = await db
-          .select({ total: sum(issues.estimate) })
-          .from(issues)
-          .where(
-            and(
-              eq(issues.sprintId, sprint.id),
-              eq(issues.statusId, 'done')
-            )
-          );
-
-        return {
-          sprintId: sprint.id,
-          sprintName: sprint.name,
-          startDate: sprint.startDate,
-          endDate: sprint.endDate,
-          completedIssues: completedCount?.count || 0,
-          completedPoints: Number(pointsData?.total) || 0,
-        };
-      })
-    );
+    const velocityData = rows.map((row) => ({
+      sprintId: row.id,
+      sprintName: row.name,
+      startDate: row.startDate,
+      endDate: row.endDate,
+      completedIssues: Number(row.completedIssues) || 0,
+      completedPoints: Number(row.completedPoints) || 0,
+    }));
 
     // Calculate average velocity
     const avgIssues =

@@ -7,14 +7,6 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   transpilePackages: ['@tasknebula/types'],
   serverExternalPackages: ['@tasknebula/db', 'postgres', 'drizzle-orm'],
-  eslint: {
-    // Allow production builds to complete with ESLint warnings
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    // Allow production builds to complete with TypeScript errors
-    ignoreBuildErrors: true,
-  },
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },

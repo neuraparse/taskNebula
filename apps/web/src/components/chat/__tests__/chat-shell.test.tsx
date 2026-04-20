@@ -3,6 +3,33 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import { ChatShell, VoiceJoinSetupPanel } from '../chat-shell';
 
+// ChatShell and VoiceJoinSetupPanel fire fire-and-forget async microphone-probe
+// effects (refreshMicrophoneEnvironment) from their mount-time useEffect. Those
+// probes await `Promise.all([...])`, so their trailing setState calls land in
+// microtasks that can resolve inside @testing-library/react's waitFor / findBy
+// / user-event async wrapper window — a window during which RTL temporarily
+// flips IS_REACT_ACT_ENVIRONMENT to false. React 19 then logs:
+//   "The current testing environment is not configured to support act(...)"
+// Every assertion still passes; these warnings are a test-harness artifact of
+// RTL toggling the env flag. Filter that message (only while this file runs)
+// so it never leaks into the full suite or masks unrelated React warnings.
+const originalConsoleError = console.error;
+beforeAll(() => {
+  console.error = (...args: unknown[]) => {
+    const first = args[0];
+    if (
+      typeof first === 'string' &&
+      first.includes('The current testing environment is not configured to support act')
+    ) {
+      return;
+    }
+    originalConsoleError.apply(console, args as Parameters<typeof console.error>);
+  };
+});
+afterAll(() => {
+  console.error = originalConsoleError;
+});
+
 const toast = jest.fn();
 const replace = jest.fn();
 const startCallMutateAsync = jest.fn();
@@ -15,6 +42,9 @@ const messagesRefetch = jest.fn();
 const loadMoreMessages = jest.fn();
 const markReadMutate = jest.fn();
 const startSessionMock = jest.fn();
+// These declarations are hoisted and referenced inside jest.mock() factories
+// which are themselves hoisted above let/const. var is required here.
+/* eslint-disable no-var, @typescript-eslint/no-unused-vars */
 var roomConnect: jest.Mock;
 var roomDisconnect: jest.Mock;
 var roomPrepareConnection: jest.Mock;
@@ -23,6 +53,7 @@ var roomOff: jest.Mock;
 var roomSetMicrophoneEnabled: jest.Mock;
 var roomSwitchActiveDevice: jest.Mock;
 var roomConstructorArgs: Record<string, unknown> | undefined;
+/* eslint-enable no-var, @typescript-eslint/no-unused-vars */
 let currentConnectionState = 'connected';
 let currentMicrophoneEnabled = true;
 let currentMicrophoneError: Error | null = null;
@@ -45,6 +76,7 @@ jest.mock('@/hooks/use-toast', () => ({
 }));
 
 jest.mock('@livekit/components-react', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires -- required inside jest.mock factory
   const React = require('react');
   roomConnect ||= jest.fn();
   roomDisconnect ||= jest.fn();
@@ -232,6 +264,7 @@ jest.mock('@/lib/hooks/use-chat', () => ({
 }));
 
 jest.mock('@/components/chat/global-voice-provider', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires -- required inside jest.mock factory
   const React = require('react');
 
   return {

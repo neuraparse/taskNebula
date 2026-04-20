@@ -35,7 +35,10 @@ export function MobileNav() {
   return (
     <>
       {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background md:hidden">
+      <nav
+        aria-label="Mobile primary"
+        className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background md:hidden"
+      >
         <div className="flex items-center justify-around px-2 py-2">
           {navItems.map((item) => {
             const Icon = item.icon;

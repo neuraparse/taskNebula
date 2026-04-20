@@ -75,6 +75,10 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
+    if (!newOrg) {
+      throw new Error('Failed to create organization');
+    }
+
     // Add creator as owner
     await db.insert(organizationMembers).values({
       id: createId(),
@@ -97,6 +101,10 @@ export async function POST(request: NextRequest) {
         updatedBy: session.user.id,
       })
       .returning();
+
+    if (!defaultWorkflow) {
+      throw new Error('Failed to create default workflow');
+    }
 
     // Create default workflow statuses
     const defaultStatuses = [

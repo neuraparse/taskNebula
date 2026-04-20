@@ -39,7 +39,11 @@ export function UserProfileDropdown() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Button
+          variant="ghost"
+          className="relative h-8 w-8 rounded-full"
+          aria-label={`Account menu for ${user.name ?? user.email}`}
+        >
           <Avatar className="h-8 w-8">
             <AvatarImage src={user.image || undefined} alt={user.name || 'User'} />
             <AvatarFallback>{initials}</AvatarFallback>

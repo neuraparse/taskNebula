@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, sprints, issues, projects, projectMembers, organizationMembers, users } from '@tasknebula/db';
-import { eq, and, desc, count } from 'drizzle-orm';
+import { eq, and, desc, count, inArray } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { publishEvent } from '@/lib/realtime/events';
 
@@ -151,20 +151,28 @@ export async function GET(request: NextRequest) {
       .where(eq(sprints.projectId, projectId))
       .orderBy(desc(sprints.createdAt));
 
-    // Get issue counts for each sprint
-    const sprintsWithCounts = await Promise.all(
-      sprintList.map(async (sprint) => {
-        const [issueCount] = await db
-          .select({ count: count() })
-          .from(issues)
-          .where(eq(issues.sprintId, sprint.id));
+    // Get issue counts for all sprints in a single aggregated query
+    const sprintIdsList = sprintList.map((s) => s.id);
+    const countsMap = new Map<string, number>();
 
-        return {
-          ...sprint,
-          issueCount: issueCount?.count || 0,
-        };
-      })
-    );
+    if (sprintIdsList.length > 0) {
+      const countsResult = await db
+        .select({ sprintId: issues.sprintId, total: count() })
+        .from(issues)
+        .where(inArray(issues.sprintId, sprintIdsList))
+        .groupBy(issues.sprintId);
+
+      for (const row of countsResult) {
+        if (row.sprintId) {
+          countsMap.set(row.sprintId, Number(row.total) || 0);
+        }
+      }
+    }
+
+    const sprintsWithCounts = sprintList.map((sprint) => ({
+      ...sprint,
+      issueCount: countsMap.get(sprint.id) || 0,
+    }));
 
     return NextResponse.json(sprintsWithCounts);
   } catch (error) {
@@ -248,12 +256,17 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
+    const createdSprint = newSprint[0];
+    if (!createdSprint) {
+      throw new Error('Failed to create sprint');
+    }
+
     publishEvent('sprint.created', session.user.id, {
-      projectId: newSprint[0].projectId,
-      sprintId: newSprint[0].id,
+      projectId: createdSprint.projectId,
+      sprintId: createdSprint.id,
     });
 
-    return NextResponse.json(newSprint[0], { status: 201 });
+    return NextResponse.json(createdSprint, { status: 201 });
   } catch (error) {
     console.error('Error creating sprint:', error);
     return NextResponse.json({ error: 'Failed to create sprint' }, { status: 500 });

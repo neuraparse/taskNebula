@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, permissionSchemes, projectPermissionSchemes } from '@tasknebula/db';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, inArray } from 'drizzle-orm';
 import { PERMISSION_KEYS, ROLE_DEFAULT_PERMISSIONS } from '@tasknebula/db';
 
 // GET /api/permission-schemes - List all permission schemes for an organization
@@ -33,19 +33,25 @@ export async function GET(request: NextRequest) {
       .where(eq(permissionSchemes.organizationId, organizationId))
       .orderBy(desc(permissionSchemes.isDefault), permissionSchemes.name);
 
-    const schemesWithProjectCounts = await Promise.all(
-      schemes.map(async (scheme) => {
-        const projectAssignments = await db
-          .select({ id: projectPermissionSchemes.id })
-          .from(projectPermissionSchemes)
-          .where(eq(projectPermissionSchemes.schemeId, scheme.id));
+    // Batch fetch project assignments for all schemes in a single query
+    const schemeIds = schemes.map((s) => s.id);
+    const countsBySchemeId = new Map<string, number>();
 
-        return {
-          ...scheme,
-          projectCount: projectAssignments.length,
-        };
-      })
-    );
+    if (schemeIds.length > 0) {
+      const assignments = await db
+        .select({ schemeId: projectPermissionSchemes.schemeId })
+        .from(projectPermissionSchemes)
+        .where(inArray(projectPermissionSchemes.schemeId, schemeIds));
+
+      for (const row of assignments) {
+        countsBySchemeId.set(row.schemeId, (countsBySchemeId.get(row.schemeId) || 0) + 1);
+      }
+    }
+
+    const schemesWithProjectCounts = schemes.map((scheme) => ({
+      ...scheme,
+      projectCount: countsBySchemeId.get(scheme.id) || 0,
+    }));
 
     return NextResponse.json(schemesWithProjectCounts);
   } catch (error) {

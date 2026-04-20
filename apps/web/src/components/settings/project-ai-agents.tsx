@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useProjectAgents, useProjectAgentStream, useRunProjectAgent, useUpdateProjectAgents } from '@/lib/hooks/use-agents';
-import { AGENT_CAPABILITY_DETAILS, type ProjectAgentSettings } from '@/lib/agents/config';
+import { AGENT_CAPABILITY_DETAILS, normalizeProjectAgentSettings, type ProjectAgentSettings } from '@/lib/agents/config';
 import { Activity, ArrowRight, Bot, Clock3, Cpu, Loader2, Play, Radar, ShieldCheck, Sparkles, Wand2, Wifi, WifiOff } from 'lucide-react';
 
 const EMPTY_SETTINGS: ProjectAgentSettings = {
@@ -109,7 +109,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
 
   useEffect(() => {
     if (data?.projectSettings) {
-      setFormState(data.projectSettings);
+      setFormState(normalizeProjectAgentSettings(data.projectSettings));
     }
   }, [data]);
 
@@ -172,7 +172,10 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
   const blockingIssues = data.configIssues.filter((issue) => issue.blocksRuns);
   const nonBlockingIssues = data.configIssues.filter((issue) => !issue.blocksRuns);
 
-  function getRunDisabledReason(capabilityKey: keyof typeof data.effectiveSettings.capabilities) {
+  function getRunDisabledReason(capabilityKey: keyof NonNullable<typeof data>['effectiveSettings']['capabilities']) {
+    if (!data) {
+      return 'Loading project AI agents.';
+    }
     if (!data.effectiveSettings.capabilities[capabilityKey]) {
       return 'This capability is disabled in project policy.';
     }
@@ -710,7 +713,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                 <div className="flex items-center justify-end gap-2">
                   <Button
                     variant="outline"
-                    onClick={() => setFormState(data.projectSettings)}
+                    onClick={() => setFormState(normalizeProjectAgentSettings(data.projectSettings))}
                     disabled={!hasChanges || updateAgents.isPending}
                   >
                     Reset

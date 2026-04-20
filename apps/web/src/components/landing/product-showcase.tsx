@@ -278,7 +278,9 @@ export function HeroShowcase() {
   const [draggingIssueKey, setDraggingIssueKey] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<number | null>(null);
 
-  const activeBoard = boards.find((board) => board.id === activeBoardId) ?? boards[0];
+  // boards is initialized from the static boardViews list which is non-empty,
+  // so boards[0] is always defined; narrow the type for downstream usage.
+  const activeBoard = (boards.find((board) => board.id === activeBoardId) ?? boards[0]) as BoardView;
 
   useEffect(() => {
     setSelectedIssueKey((current) => {
@@ -349,7 +351,7 @@ export function HeroShowcase() {
                   key={board.id}
                   type="button"
                   onClick={() => setActiveBoardId(board.id)}
-                  className={`rounded-sm border px-3 py-1.5 text-[11px] transition-colors ${
+                  className={`rounded-sm border px-3 py-1.5 text-[11px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] ${
                     board.id === activeBoard.id
                       ? 'border-[var(--landing-border-strong)] bg-[var(--landing-bg)] text-[var(--landing-text-dark)]'
                       : 'border-[var(--landing-border)] text-[var(--landing-text-muted)] hover:bg-[var(--landing-bg-surface)]'
@@ -463,7 +465,7 @@ export function HeroShowcase() {
                         type="button"
                         onClick={() => moveIssueToColumn(selectedIssue.key, selectedIssue.col - 1)}
                         disabled={selectedIssue.col === 0}
-                        className="inline-flex h-9 items-center rounded-sm border border-[var(--landing-border)] px-3 text-[12px] text-[var(--landing-text)] transition-colors hover:bg-[var(--landing-bg)] disabled:cursor-not-allowed disabled:opacity-40"
+                        className="inline-flex h-9 items-center rounded-sm border border-[var(--landing-border)] px-3 text-[12px] text-[var(--landing-text)] transition-colors hover:bg-[var(--landing-bg)] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
                       >
                         Move back
                       </button>
@@ -471,7 +473,7 @@ export function HeroShowcase() {
                         type="button"
                         onClick={() => moveIssueToColumn(selectedIssue.key, selectedIssue.col + 1)}
                         disabled={selectedIssue.col === columns.length - 1}
-                        className="inline-flex h-9 items-center rounded-sm border border-[var(--landing-border-strong)] bg-[var(--landing-bg)] px-3 text-[12px] text-[var(--landing-text-dark)] transition-colors hover:bg-[var(--landing-bg-elevated)] disabled:cursor-not-allowed disabled:opacity-40"
+                        className="inline-flex h-9 items-center rounded-sm border border-[var(--landing-border-strong)] bg-[var(--landing-bg)] px-3 text-[12px] text-[var(--landing-text-dark)] transition-colors hover:bg-[var(--landing-bg-elevated)] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
                       >
                         Move forward
                       </button>
@@ -530,7 +532,7 @@ function MiniCard({
         onDragStart();
       }}
       onDragEnd={onDragEnd}
-      className={`relative w-full cursor-grab overflow-hidden rounded-sm border bg-[var(--landing-bg)] p-2.5 text-left transition-colors active:cursor-grabbing ${
+      className={`relative w-full cursor-grab overflow-hidden rounded-sm border bg-[var(--landing-bg)] p-2.5 text-left transition-colors active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] ${
         isSelected
           ? 'border-[var(--landing-border-strong)] bg-[var(--landing-bg-elevated)]'
           : 'border-[var(--landing-border)] hover:border-[var(--landing-border-strong)]'

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getIssues, createIssue, createActivity, createAuditLog, db, projects, issues, workflowStatuses, workflows, users, projectMembers, organizationMembers } from '@tasknebula/db';
 import { auth } from '@/auth';
 import { createId } from '@paralleldrive/cuid2';
-import { eq, and, desc, asc, sql } from 'drizzle-orm';
+import { eq, and, desc, asc, sql, inArray } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 
@@ -124,12 +124,12 @@ const createIssueSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const searchParams = request.nextUrl.searchParams;
-    let projectIdParam = searchParams.get('projectId');
+    const projectIdParam = searchParams.get('projectId');
     const assigneeId = searchParams.get('assigneeId');
     const statusParam = searchParams.get('status');
     const sprintId = searchParams.get('sprintId');
@@ -146,9 +146,59 @@ export async function GET(request: NextRequest) {
         .where(eq(projects.key, projectIdParam.toUpperCase()))
         .limit(1);
 
-      if (projectByKey.length > 0) {
+      if (projectByKey[0]) {
         actualProjectId = projectByKey[0].id;
       }
+    }
+
+    // Determine accessible organization scope (super admin bypasses)
+    const [currentUser] = await db
+      .select({ isSuperAdmin: users.isSuperAdmin })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1);
+
+    const isSuperAdmin = currentUser?.isSuperAdmin === true;
+
+    // Load orgs the caller is a member of
+    const orgMemberships = await db
+      .select({ organizationId: organizationMembers.organizationId })
+      .from(organizationMembers)
+      .where(eq(organizationMembers.userId, session.user.id));
+    const accessibleOrgIds = orgMemberships.map((m) => m.organizationId);
+
+    // If projectId was given, verify the caller can access that project's org
+    if (actualProjectId) {
+      const [project] = await db
+        .select({ id: projects.id, organizationId: projects.organizationId })
+        .from(projects)
+        .where(eq(projects.id, actualProjectId))
+        .limit(1);
+
+      if (!project) {
+        return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+      }
+
+      if (!isSuperAdmin && !accessibleOrgIds.includes(project.organizationId)) {
+        // Fall back to project membership check
+        const [projectMember] = await db
+          .select({ userId: projectMembers.userId })
+          .from(projectMembers)
+          .where(
+            and(
+              eq(projectMembers.userId, session.user.id),
+              eq(projectMembers.projectId, actualProjectId)
+            )
+          )
+          .limit(1);
+
+        if (!projectMember) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+      }
+    } else if (!isSuperAdmin && accessibleOrgIds.length === 0) {
+      // No projectId and no org memberships — caller sees nothing
+      return NextResponse.json({ issues: [], total: 0 });
     }
 
     // Build query with joins
@@ -193,6 +243,9 @@ export async function GET(request: NextRequest) {
     const conditions = [];
     if (actualProjectId) {
       conditions.push(eq(issues.projectId, actualProjectId));
+    } else if (!isSuperAdmin) {
+      // No projectId: restrict to issues belonging to orgs the caller is in
+      conditions.push(inArray(issues.organizationId, accessibleOrgIds));
     }
     if (assigneeId) {
       conditions.push(eq(issues.assigneeId, assigneeId));
@@ -252,7 +305,7 @@ export async function POST(request: NextRequest) {
         .where(eq(projects.key, validatedData.projectId.toUpperCase()))
         .limit(1);
 
-      if (projectByKey.length > 0) {
+      if (projectByKey[0]) {
         actualProjectId = projectByKey[0].id;
       }
     }
@@ -264,11 +317,10 @@ export async function POST(request: NextRequest) {
       .where(eq(projects.id, actualProjectId))
       .limit(1);
 
-    if (projectResults.length === 0) {
+    const project = projectResults[0];
+    if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
-
-    const project = projectResults[0];
 
     // Check permission to create issues
     const permission = await checkIssuePermission(session.user.id!, actualProjectId, 'create');
@@ -287,7 +339,7 @@ export async function POST(request: NextRequest) {
       .orderBy(desc(issues.number))
       .limit(1);
 
-    const nextNumber = lastIssueResults.length > 0 ? (lastIssueResults[0].number || 0) + 1 : 1;
+    const nextNumber = lastIssueResults[0] ? (lastIssueResults[0].number || 0) + 1 : 1;
     const issueKey = `${project.key}-${nextNumber}`;
 
     // Get default workflow for the project
@@ -306,11 +358,12 @@ export async function POST(request: NextRequest) {
         )
         .limit(1);
 
-      if (defaultWorkflows.length === 0) {
+      const defaultWorkflow = defaultWorkflows[0];
+      if (!defaultWorkflow) {
         return NextResponse.json({ error: 'No workflow found for project' }, { status: 500 });
       }
 
-      workflowId = defaultWorkflows[0].id;
+      workflowId = defaultWorkflow.id;
     }
 
     // Get workflow statuses
@@ -324,11 +377,10 @@ export async function POST(request: NextRequest) {
       .filter(s => s.category === 'backlog')
       .sort((a, b) => a.position - b.position);
 
-    if (backlogStatuses.length === 0) {
+    const defaultStatus = backlogStatuses[0];
+    if (!defaultStatus) {
       return NextResponse.json({ error: 'No backlog status found in workflow' }, { status: 500 });
     }
-
-    const defaultStatus = backlogStatuses[0];
 
     const issueData = {
       id: createId(),
@@ -353,8 +405,6 @@ export async function POST(request: NextRequest) {
       updatedBy: session.user.id,
     };
 
-    console.log('Creating issue with data:', JSON.stringify(issueData, null, 2));
-
     // Insert issue directly using db.insert
     let newIssue;
     try {
@@ -363,7 +413,9 @@ export async function POST(request: NextRequest) {
         .values(issueData)
         .returning();
       newIssue = newIssueResults[0];
-      console.log('Issue created successfully:', newIssue);
+      if (!newIssue) {
+        throw new Error('Failed to create issue');
+      }
 
       // Create activity log for issue creation
       await createActivity({
@@ -416,9 +468,6 @@ export async function POST(request: NextRequest) {
       );
     }
     console.error('Error creating issue:', error);
-    return NextResponse.json({
-      error: 'Failed to create issue',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to create issue' }, { status: 500 });
   }
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, issues, users, workflowStatuses } from '@tasknebula/db';
-import { eq } from 'drizzle-orm';
+import { db, issues, users, workflowStatuses, projects, organizationMembers, projectMembers } from '@tasknebula/db';
+import { eq, and } from 'drizzle-orm';
 
 // GET /api/export/issues?projectId=xxx&format=csv|json
 export async function GET(request: NextRequest) {
@@ -19,6 +19,52 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Permission check: caller must be member of the project's org (or super admin / project member)
+    const [project] = await db
+      .select({ id: projects.id, organizationId: projects.organizationId })
+      .from(projects)
+      .where(eq(projects.id, projectId))
+      .limit(1);
+
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const [currentUser] = await db
+      .select({ isSuperAdmin: users.isSuperAdmin })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1);
+
+    if (!currentUser?.isSuperAdmin) {
+      const [orgMember] = await db
+        .select({ role: organizationMembers.role })
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.userId, session.user.id),
+            eq(organizationMembers.organizationId, project.organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!orgMember) {
+        const [projectMember] = await db
+          .select({ userId: projectMembers.userId })
+          .from(projectMembers)
+          .where(
+            and(
+              eq(projectMembers.userId, session.user.id),
+              eq(projectMembers.projectId, projectId)
+            )
+          )
+          .limit(1);
+
+        if (!projectMember) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+      }
+    }
     // Fetch issues with related data
     const issuesList = await db
       .select({

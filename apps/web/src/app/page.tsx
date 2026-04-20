@@ -100,7 +100,10 @@ const pricingPlans = [
 export default function HomePage() {
   return (
     <div className="landing-dark min-h-screen bg-[var(--landing-bg)] text-[var(--landing-text)] antialiased">
-      <nav className="sticky top-0 z-50 border-b border-[var(--landing-border)] bg-[color-mix(in_srgb,var(--landing-bg)_97%,black)]">
+      <nav
+        aria-label="Marketing"
+        className="sticky top-0 z-50 border-b border-[var(--landing-border)] bg-[color-mix(in_srgb,var(--landing-bg)_97%,black)]"
+      >
         <Shell className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-3" aria-label="TaskNebula home">
             <TaskNebulaLogo className="shrink-0" />
@@ -117,7 +120,7 @@ export default function HomePage() {
               <a
                 key={item.href}
                 href={item.href}
-                className="rounded-sm px-3 py-2 text-[13px] text-[var(--landing-text-muted)] transition-colors hover:text-[var(--landing-text-dark)]"
+                className="rounded-sm px-3 py-2 text-[13px] text-[var(--landing-text-muted)] transition-colors hover:text-[var(--landing-text-dark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
               >
                 {item.label}
               </a>

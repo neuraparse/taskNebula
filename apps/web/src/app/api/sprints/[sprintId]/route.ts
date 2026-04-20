@@ -133,6 +133,15 @@ export async function GET(
       return NextResponse.json({ error: 'Sprint not found' }, { status: 404 });
     }
 
+    // Permission check: caller must be able to view this sprint
+    const permission = await checkSprintPermission(session.user.id, sprint.projectId, 'view');
+    if (!permission.allowed) {
+      return NextResponse.json(
+        { error: permission.reason || 'Permission denied' },
+        { status: 403 }
+      );
+    }
+
     // Get issue count and completion stats
     const sprintIssues = await db
       .select({

@@ -106,7 +106,7 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
           </div>
 
           {/* Tab Navigation */}
-          <nav className="flex gap-0 -mb-px">
+          <nav aria-label="Project sections" className="flex gap-0 -mb-px">
             {visibleTabs.map((tab) => {
               const isActive = currentTab === tab.href ||
                 (tab.href === 'views' && currentTab === projectId);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, auditLogs, users, issues } from '@tasknebula/db';
 import { eq, desc, and, inArray } from 'drizzle-orm';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +20,11 @@ export async function GET(request: NextRequest) {
 
     if (!organizationId) {
       return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
+    }
+
+    const canView = await hasPermission(organizationId, 'org:view');
+    if (!canView) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
     // Fetch recent audit logs with user information

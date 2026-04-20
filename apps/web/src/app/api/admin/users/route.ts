@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db, users, organizationMembers, organizations, systemAuditLogs } from '@tasknebula/db';
-import { eq, desc, count, ilike, or, and } from 'drizzle-orm';
+import { eq, desc, count, ilike, or, and, inArray } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { isSuperAdmin } from '@/lib/auth/permissions';
 import { createId } from '@paralleldrive/cuid2';
@@ -69,32 +69,47 @@ export async function GET(request: NextRequest) {
           .limit(limit)
           .offset((page - 1) * limit);
 
-    // Get organization memberships for each user
-    const usersWithOrgs = await Promise.all(
-      allUsers.map(async (user) => {
-        const memberships = await db
-          .select({
-            organizationId: organizationMembers.organizationId,
-            organizationName: organizations.name,
-            role: organizationMembers.role,
-          })
-          .from(organizationMembers)
-          .innerJoin(organizations, eq(organizationMembers.organizationId, organizations.id))
-          .where(eq(organizationMembers.userId, user.id));
+    // Batch fetch organization memberships for all users in a single query
+    const userIds = allUsers.map((u) => u.id);
+    const membershipsByUser = new Map<
+      string,
+      Array<{ organizationId: string; organizationName: string; role: string }>
+    >();
 
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          image: user.image,
-          status: user.status,
-          isSuperAdmin: user.isSuperAdmin,
-          superAdminGrantedAt: user.superAdminGrantedAt,
-          createdAt: user.createdAt,
-          organizations: memberships,
-        };
-      })
-    );
+    if (userIds.length > 0) {
+      const allMemberships = await db
+        .select({
+          userId: organizationMembers.userId,
+          organizationId: organizationMembers.organizationId,
+          organizationName: organizations.name,
+          role: organizationMembers.role,
+        })
+        .from(organizationMembers)
+        .innerJoin(organizations, eq(organizationMembers.organizationId, organizations.id))
+        .where(inArray(organizationMembers.userId, userIds));
+
+      for (const row of allMemberships) {
+        const list = membershipsByUser.get(row.userId) || [];
+        list.push({
+          organizationId: row.organizationId,
+          organizationName: row.organizationName,
+          role: row.role,
+        });
+        membershipsByUser.set(row.userId, list);
+      }
+    }
+
+    const usersWithOrgs = allUsers.map((user) => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      image: user.image,
+      status: user.status,
+      isSuperAdmin: user.isSuperAdmin,
+      superAdminGrantedAt: user.superAdminGrantedAt,
+      createdAt: user.createdAt,
+      organizations: membershipsByUser.get(user.id) || [],
+    }));
 
     // Get total count
     const totalQuery = db.select({ count: count() }).from(users);
@@ -163,6 +178,10 @@ export async function POST(request: NextRequest) {
         settings: {},
       })
       .returning();
+
+    if (!newUser) {
+      throw new Error('Failed to create user');
+    }
 
     await db.insert(systemAuditLogs).values({
       id: createId(),
