@@ -25,9 +25,9 @@ services:
     image: redis:7-alpine
     container_name: tasknebula-redis
     restart: unless-stopped
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
     ports:
-      - '${REDIS_PORT:-6379}:6379'
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
     volumes:
       - redis_data:/data
     healthcheck:
@@ -82,7 +82,7 @@ services:
       AUTH_URL: ${APP_URL:-http://localhost:3000}
       NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost:3000}
       NEXT_PUBLIC_APP_NAME: ${APP_NAME:-TaskNebula}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       LIVEKIT_URL: ${LIVEKIT_URL:-http://host.docker.internal:7880}
       NEXT_PUBLIC_LIVEKIT_URL: ${NEXT_PUBLIC_LIVEKIT_URL:-ws://${LIVEKIT_PUBLIC_HOST:-127.0.0.1}:7880}
       LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-tasknebula-dev}
@@ -106,7 +106,7 @@ services:
       EMAIL_FROM: ${EMAIL_FROM:-}
       FEATURE_EMAIL_ENABLED: ${FEATURE_EMAIL_ENABLED:-false}
     ports:
-      - '${PORT:-3000}:3000'
+      - '127.0.0.1:${PORT:-3000}:3000'
     volumes:
       - uploads_data:/app/uploads
     extra_hosts:

@@ -105,3 +105,4 @@ apps/web/uploads/*
 docker-compose.override.yml
 todo.txt
 packages/db/scripts/setup-api-platform-docs.ts
+forensic/
