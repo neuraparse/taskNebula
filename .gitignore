@@ -1,197 +1,588 @@
-# ============================================
-# TaskNebula - Open Source .gitignore
-# ============================================
+# ============================================================================
+# TaskNebula — Comprehensive .gitignore
+# Covers: secrets/credentials, env, build, logs, caches, IDE/AI, DBs, certs,
+# archives, OS junk, deployment overrides, IaC state, profiling, media, etc.
+# Keep this list alphabetically grouped within sections where practical.
+# ============================================================================
 
-# ===========================================
-# DEPENDENCIES
-# ===========================================
+# ============================================================================
+# DEPENDENCIES (package managers)
+# ============================================================================
 node_modules/
 .pnp
 .pnp.js
+.pnp.cjs
+.pnp.loader.mjs
+.yarn/cache/
+.yarn/install-state.gz
+.yarn/unplugged/
+.yarn/build-state.yml
+.pnpm-store/
+.pnpm-debug.log*
+.npm/
+.bun/
+bun.lockb.local
+jspm_packages/
+bower_components/
+vendor/
+.venv/
+venv/
+env/
+.virtualenv/
+__pypackages__/
 
-# ===========================================
-# BUILD OUTPUTS
-# ===========================================
+# ============================================================================
+# BUILD & COMPILED OUTPUTS
+# ============================================================================
 .next/
 out/
 build/
 dist/
 .turbo/
-
-# ===========================================
-# ENVIRONMENT & SECRETS
-# ===========================================
-.env
-.env.local
-.env*.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# SSL Certificates
-nginx/ssl/
-*.pem
-*.key
-*.crt
-*.p12
-
-# ===========================================
-# TESTING
-# ===========================================
-coverage/
-.nyc_output
-
-# ===========================================
-# IDE & OS
-# ===========================================
-
-# VS Code
-.vscode/
-
-# JetBrains
-.idea/
-
-# Vim/Neovim
-*.swp
-*.swo
-*~
-
-# macOS
-.DS_Store
-
-# Windows
-Thumbs.db
-Desktop.ini
-
-# ===========================================
-# LOGS & DEBUG
-# ===========================================
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-*.log
-
-# ===========================================
-# MISC
-# ===========================================
-
-# TypeScript
+.cache/
+.parcel-cache/
+.rollup.cache/
+.svelte-kit/
+.nuxt/
+.docusaurus/
+.astro/
+.remix/
+.expo/
+.expo-shared/
+.gatsby/
+public/build/
+storybook-static/
+.storybook-out/
 *.tsbuildinfo
 next-env.d.ts
 
-# Vercel
-.vercel
+# ============================================================================
+# ENVIRONMENT & SECRETS (credentials never-commit zone)
+# ============================================================================
+# Env files — all variants
+.env
+.env.*
+!.env.example
+!.env.template
+!.env.sample
+!.env.defaults
+.envrc
+.env.backup
+.env.old
 
-# Temporary files
-tmp/
-temp/
-*.tmp
-
-# Claude
-.claude
-
-# Docker volumes
-postgres_data/
-redis_data/
-uploads_data/
-
-# Backup files
-*.backup*
-
-# Upload files
-apps/web/uploads/*
-!apps/web/uploads/.gitkeep
-docker-compose.override.yml
-todo.txt
-packages/db/scripts/setup-api-platform-docs.ts
-forensic/
-
-# ===========================================
-# LOCAL / DEPLOYMENT-SPECIFIC OVERRIDES
-# ===========================================
-
-# Any file ending with .local (lets users keep local variants side-by-side)
+# Any file ending in .local (override files)
 *.local
 *.local.*
 
-# Secrets / credential files
+# Secret-bearing files by naming convention
 secrets/
 .secrets
 .secrets.*
 *.secret
+*.secrets
 *.secrets.json
+secret.json
+secret.yaml
+secret.yml
+credentials
+credentials.json
+credentials.yaml
+credentials.yml
+.credentials
+.credentials.json
+*.credentials.json
+auth.json
+.auth
+*.auth.json
+
+# Unix credential stores
 .pgpass
 .netrc
+.my.cnf
 .htpasswd
+.htaccess.local
+.boto
 
-# SSH keys (any form)
+# SSH keys (never commit private keys)
 id_rsa
 id_rsa.*
 id_ed25519
 id_ed25519.*
+id_ecdsa
+id_ecdsa.*
+id_dsa
+id_dsa.*
+*.rsa
 *.pub.backup
 known_hosts.backup
+authorized_keys.backup
 
-# Direnv / asdf / nvm local
-.envrc
-.tool-versions.local
-.nvmrc.local
+# TLS / X.509 / PKI
+*.pem
+*.key
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.crt
+*.cer
+*.der
+*.csr
+*.pkcs12
+*.gpg
+*.asc
+*.age
+*.enc
+nginx/ssl/
+certs/
+certificates/
+letsencrypt/
+certbot/
+acme.json
 
-# Docker compose overrides (keep base docker-compose.yml only)
+# API keys / tokens (common patterns)
+*.token
+*.apikey
+*_rsa
+*_ed25519
+.aws/
+.gcp/
+.azure/
+.doctl/
+.digitalocean/
+.kube/config
+kubeconfig
+kubeconfig.*
+
+# Vault / Ansible secrets
+.vault_pass
+.vault_pass.*
+ansible/vault_pass
+ansible/vault.yml
+vault.yml
+
+# ============================================================================
+# DATABASE DUMPS & BACKUPS (may contain PII/credentials)
+# ============================================================================
+*.dump
+*.dump.gz
+*.dump.xz
+*.dump.bz2
+*.sql
+!drizzle/**/*.sql
+!packages/db/drizzle/**/*.sql
+!docker/postgres/init.sql
+*.sql.gz
+*.sql.xz
+*.sql.bz2
+*.sqlite
+*.sqlite-journal
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite3
+*.db
+*.db-journal
+*.mdb
+*.bak
+*.backup
+*.backup.*
+*.old
+*.orig
+pg-backup/
+pg-backups/
+db-backup/
+db-backups/
+postgres-backup/
+mysql-backup/
+dumps/
+backups/
+
+# Docker managed volumes (local mount-point safety)
+postgres_data/
+redis_data/
+uploads_data/
+
+# ============================================================================
+# DEPLOYMENT / INFRA OVERRIDES
+# ============================================================================
+# Docker
+docker-compose.override.yml
 docker-compose.*.override.yml
 docker-compose.local.yml
 docker-compose.prod.yml
 docker-compose.staging.yml
+docker-compose.dev.local.yml
 docker-compose.personal.yml
+docker-compose.private.yml
+.dockerignore.local
 
-# User-customized nginx vhost files (keep nginx/tasknebula.conf as template)
+# Nginx user-customized vhosts (keep nginx/tasknebula.conf as template)
 nginx/sites-available/
 nginx/sites-enabled/
+nginx/conf.d/
 nginx/*.local.conf
 nginx/*-local.conf
 nginx/*.personal.conf
-nginx/conf.d/
-# Real deployment vhosts should be named with your domain and ignored:
-nginx/*.nowflow.io*
-nginx/*.your-domain.*
+nginx/*.private.conf
+nginx/*.deploy.conf
 
-# Database dumps / backups
-*.dump
-*.dump.gz
-*.sql.gz
-*.sqlite
-*.sqlite3
-*.db
-pg-backup/
-pg-backups/
-db-backups/
-
-# Let's Encrypt / Certbot staging
-letsencrypt/
-certbot/
-
-# CI / deployment configs that include project-specific bits
+# Terraform / OpenTofu
 .terraform/
+.terraform.lock.hcl
 *.tfvars
+*.tfvars.json
 *.tfstate
+*.tfstate.*
 *.tfstate.backup
-ansible/vault_pass
-.vault_pass*
+.terraformrc
+crash.log
+crash.*.log
 
-# Editor/AI caches
+# Pulumi
+Pulumi.*.yaml
+!Pulumi.yaml
+.pulumi/
+
+# Serverless / SST / CDK
+.serverless/
+.sst/
+.sst.cache/
+cdk.out/
+cdk.context.json
+
+# Helm / Kubernetes local values
+*.values.local.yaml
+*.values.local.yml
+values.local.yaml
+values.local.yml
+charts/*/charts/
+*.tgz
+!docs/**/*.tgz
+
+# Ansible
+*.retry
+ansible/*.log
+
+# Cloud CLI local state
+.vercel
+.netlify
+.fly/
+.railway/
+.render/
+.supabase/
+
+# ============================================================================
+# LOGS & DEBUG
+# ============================================================================
+*.log
+!**/CHANGELOG*.md
+logs/
+log/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+bun-debug.log*
+*.pid
+*.pid.lock
+*.seed
+*.crash
+*.rpt
+*.trace
+
+# Profiling / heap dumps
+*.heapsnapshot
+*.heapprofile
+*.cpuprofile
+*.trace.json
+v8-*.log
+isolate-*.log
+*.prof
+
+# Test/coverage outputs
+coverage/
+.nyc_output/
+.coverage
+htmlcov/
+junit.xml
+test-results/
+playwright-report/
+playwright/.cache/
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/
+.jest-cache/
+
+# ============================================================================
+# IDE / EDITORS
+# ============================================================================
+# JetBrains (IntelliJ, WebStorm, PyCharm, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.idea_modules/
+
+# VS Code
+.vscode/
+!.vscode/settings.shared.json
+.history/
+.vscode-test/
+
+# Cursor
 .cursor/
+.cursorrules.local
+
+# Zed
+.zed/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Atom
+.atom/
+
+# TextMate
+*.tmproj
+*.tmproject
+tmtags
+
+# Eclipse
+.project
+.classpath
+.settings/
+.factorypath
+
+# NetBeans
+nbproject/
+nbbuild/
+nbdist/
+
+# Vim / Neovim
+*.swp
+*.swo
+*.swn
+*~
+.vimrc.local
+.nvimrc.local
+Session.vim
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+.\#*
+.elc
+.emacs.desktop
+.emacs.desktop.lock
+auto-save-list/
+tramp
+
+# Helix
+.helix/
+
+# Kate
+*.kate-swp
+
+# Fleet
+.fleet/
+
+# ============================================================================
+# AI / LLM TOOLING
+# ============================================================================
+# Claude
+.claude
+.claude/
+CLAUDE.local.md
+.anthropic/
+
+# Cursor / Aider / Continue / Cody / Windsurf / etc.
 .aider*
+.aider.conf.yml.local
 .continue/
 .windsurf/
+.codeium/
+.cody/
+.tabnine/
+.gh-copilot/
+.github-copilot/
+.codewhisperer/
 
-# OS-level extra
+# OpenAI project files
+openai.yaml.local
+.openai/
+.openai.local
+
+# LLM chat exports / transcripts
+*.chat.md
+transcripts/
+conversations/
+
+# ============================================================================
+# OS FILES
+# ============================================================================
+# macOS
+.DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+Icon
+._*
 .Spotlight-V100
 .Trashes
-ehthumbs.db
+.fseventsd
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+.apdisk
 
-# Local notes & drafts
-NOTES.md
-NOTES.local.md
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+.Trash-*
+.fuse_hidden*
+.nfs*
+
+# ============================================================================
+# ARCHIVES (usually binary junk or backups)
+# ============================================================================
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.tar.xz
+*.txz
+*.tar.bz2
+*.tbz2
+*.7z
+*.rar
+*.iso
+*.dmg
+
+# ============================================================================
+# TEMP / CACHE / WORKING FILES
+# ============================================================================
+tmp/
+temp/
+.tmp/
+.temp/
+*.tmp
+*.temp
+*.stackdump
+*.orig.*
+*.rej
+*.patch.bak
+*.swp.bak
 scratch/
 .scratch/
+sandbox/
+.playground/
+
+# Python (if any Python scripts creep in)
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.pytype/
+
+# Rust
+target/
+!src/target/
+Cargo.lock.bak
+
+# ============================================================================
+# MEDIA / BINARY ASSETS (allow-list via exceptions below if needed)
+# ============================================================================
+# Large raw media that doesn't belong in git (use LFS or external storage)
+*.mov
+*.mp4
+*.m4v
+*.avi
+*.mkv
+*.webm
+*.flv
+*.wmv
+# Audio
+*.wav
+*.aiff
+*.flac
+*.m4a
+# Large images
+*.psd
+*.ai
+*.sketch
+*.fig
+# PDFs (enable if docs need them)
+# *.pdf
+
+# ============================================================================
+# PROJECT-SPECIFIC (TaskNebula)
+# ============================================================================
+# Uploads directory contents (keep placeholder)
+apps/web/uploads/*
+!apps/web/uploads/.gitkeep
+
+# Forensic incident artifacts (binary malware samples / large logs)
+forensic/
+
+# Operator notes and drafts
+todo.txt
+TODO.local.md
+NOTES.md
+NOTES.local.md
+
+# Deployment-specific nginx vhosts bearing real domains
+nginx/*.nowflow.io*
+nginx/*.nowflow.*
+nginx/*.your-domain.*
+nginx/*.example.com*
+nginx/sites-*.local/
+
+# Internal generated scripts or data
+packages/db/scripts/setup-api-platform-docs.ts
+
+# ============================================================================
+# MISC / FALLBACKS
+# ============================================================================
+# Editor swap/backups
+*.bak
+*.backup*
+*.autosave
+*.recovery
+
+# Mac resource forks
+._*
+
+# Git merge leftovers
+*.orig
+
+# Lock files from tools you don't use (keep your package manager's, ignore others)
+# package-lock.json    # <-- ignore if you use pnpm/yarn (uncomment)
+# yarn.lock            # <-- ignore if you use pnpm (uncomment)
+
+# Local JSON dumps / exports users may create
+export.json
+export-*.json
+exports/
+data-dump/
+*.csv.local
+*.xlsx.local
