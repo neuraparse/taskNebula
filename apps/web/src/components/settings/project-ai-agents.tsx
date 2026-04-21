@@ -192,7 +192,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="animate-fade-up space-y-6">
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -258,7 +258,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
               )}
 
               {runBlockedReason ? (
-                <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+                <div className="rounded-lg border border-accent-amber/30 bg-accent-amber/10 px-4 py-3 text-sm text-accent-amber">
                   {runBlockedReason}
                 </div>
               ) : null}
@@ -478,7 +478,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                     </div>
                   ) : null}
                   {!data.providerStatus.ready ? (
-                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                    <div className="rounded-lg border border-accent-amber/30 bg-accent-amber/10 px-3 py-2 text-xs text-accent-amber">
                       {data.providerStatus.summary}
                     </div>
                   ) : null}
@@ -513,7 +513,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                     </div>
                   ))}
                   {data.runtimeSummary.lastFailure ? (
-                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                    <div className="rounded-lg border border-accent-amber/30 bg-accent-amber/10 px-3 py-2 text-xs text-accent-amber">
                       Last failure: {data.runtimeSummary.lastFailure}
                     </div>
                   ) : null}

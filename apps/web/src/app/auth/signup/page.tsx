@@ -3,23 +3,28 @@ import Link from 'next/link';
 
 export default function SignUpPage() {
   return (
-    <div className="relative min-h-screen bg-background overflow-hidden flex items-center justify-center px-4">
-      {/* Aurora background */}
-      <div className="bg-aurora absolute inset-0 pointer-events-none animate-aurora opacity-80" />
+    <div className="relative min-h-dvh grid place-items-center bg-background overflow-hidden px-4 py-10">
+      {/* Aurora glow behind card */}
+      <div
+        aria-hidden="true"
+        className="bg-aurora absolute inset-0 pointer-events-none blur-3xl opacity-60 -z-10"
+      />
 
-      {/* Centered card */}
-      <div className="relative z-10 w-full max-w-md animate-scale-in">
-        {/* Logo */}
-        <div className="mb-6 flex justify-center">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-foreground">
-              <span className="text-xs font-semibold tracking-tight text-background">TN</span>
+      <div className="relative w-full max-w-sm animate-scale-in">
+        {/* Brand mark */}
+        <div className="mb-5 flex justify-center">
+          <Link
+            href="/"
+            className="flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-foreground">
+              <span className="text-[11px] font-semibold tracking-tight text-background">TN</span>
             </div>
-            <span className="text-[15px] font-semibold tracking-tight text-foreground">TaskNebula</span>
+            <span className="text-sm font-semibold tracking-tight text-foreground">TaskNebula</span>
           </Link>
         </div>
 
-        <div className="surface-card p-8 shadow-lg rounded-xl">
+        <div className="surface-card rounded-lg p-6 sm:p-8">
           <SignUpForm />
         </div>
       </div>

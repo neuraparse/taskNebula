@@ -39,19 +39,24 @@ export function DocumentDiscussionCard({
         <div className="space-y-2">
           {/* Last two messages — compact preview */}
           {data.messages.length === 0 ? (
-            <p className="text-sm text-muted-foreground border border-dashed border-border rounded-md px-3 py-3">
+            <p className="text-sm text-muted-foreground border border-dashed border-border/60 rounded-md px-3 py-3">
               No messages yet. Keep spec decisions and implementation notes in one linked thread.
             </p>
           ) : (
             data.messages.slice(-2).map((message) => (
               <div
                 key={message.id}
-                className="surface-inset rounded-md px-3 py-2 space-y-1"
+                className="border-l-2 border-primary/40 pl-3 py-1 space-y-1"
               >
                 <p className="text-[11px] font-medium text-muted-foreground">
                   {message.author.name || message.author.email || 'Unknown'}
                 </p>
-                <p className={cn('text-sm leading-snug prose-sm line-clamp-2', message.deletedAt && 'italic text-muted-foreground')}>
+                <p
+                  className={cn(
+                    'text-sm leading-relaxed line-clamp-2',
+                    message.deletedAt && 'italic text-muted-foreground'
+                  )}
+                >
                   {message.deletedAt ? 'Message deleted' : message.body || 'Attachment-only update'}
                 </p>
               </div>

@@ -3,14 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useDeleteProject, useProject, useUpdateProject } from '@/lib/hooks/use-projects';
+import { AlertTriangle } from 'lucide-react';
 
 interface ProjectGeneralSettingsProps {
   projectId: string;
@@ -120,42 +119,59 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
     formData.visibility !== ((project as { visibility?: string }).visibility || 'internal');
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>General</CardTitle>
-          <CardDescription>Update the core project details your team sees across TaskNebula.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="project-name">Project name</Label>
-              <Input
-                id="project-name"
-                value={formData.name}
-                onChange={(event) => setFormData((current) => ({ ...current, name: event.target.value }))}
-                placeholder="Website Redesign"
-              />
+    <div className="animate-fade-up space-y-8 stagger">
+      <section className="space-y-4">
+        <div className="space-y-1">
+          <span className="kicker">Project</span>
+          <h2 className="text-lg font-semibold tracking-tight">General</h2>
+          <p className="text-sm text-muted-foreground max-w-prose">
+            Update the core project details your team sees across TaskNebula.
+          </p>
+        </div>
+        <div className="surface-card p-5 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+            <div className="space-y-1">
+              <Label htmlFor="project-name" className="text-sm font-medium">
+                Project name
+              </Label>
+              <p className="text-xs text-muted-foreground mt-1">Shown throughout TaskNebula.</p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="project-key">Project key</Label>
-              <Input
-                id="project-key"
-                value={formData.key}
-                onChange={(event) =>
-                  setFormData((current) => ({
-                    ...current,
-                    key: event.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''),
-                  }))
-                }
-                maxLength={20}
-                placeholder="WEB"
-              />
-            </div>
+            <Input
+              id="project-name"
+              value={formData.name}
+              onChange={(event) => setFormData((current) => ({ ...current, name: event.target.value }))}
+              placeholder="Website Redesign"
+            />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="project-description">Description</Label>
+          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+            <div className="space-y-1">
+              <Label htmlFor="project-key" className="text-sm font-medium">
+                Project key
+              </Label>
+              <p className="text-xs text-muted-foreground mt-1">Uppercase letters, digits, dashes.</p>
+            </div>
+            <Input
+              id="project-key"
+              value={formData.key}
+              onChange={(event) =>
+                setFormData((current) => ({
+                  ...current,
+                  key: event.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''),
+                }))
+              }
+              maxLength={20}
+              placeholder="WEB"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+            <div className="space-y-1">
+              <Label htmlFor="project-description" className="text-sm font-medium">
+                Description
+              </Label>
+              <p className="text-xs text-muted-foreground mt-1">Goal, scope, and audience.</p>
+            </div>
             <Textarea
               id="project-description"
               rows={4}
@@ -167,91 +183,108 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
             />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Project status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => setFormData((current) => ({ ...current, status: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PROJECT_STATUSES.map((status) => (
-                    <SelectItem key={status.value} value={status.value}>
-                      {status.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+            <div className="space-y-1">
+              <Label className="text-sm font-medium">Status</Label>
+              <p className="text-xs text-muted-foreground mt-1">Current project lifecycle.</p>
             </div>
-            <div className="space-y-2">
-              <Label>Visibility</Label>
-              <Select
-                value={formData.visibility}
-                onValueChange={(value) => setFormData((current) => ({ ...current, visibility: value }))}
+            <Select
+              value={formData.status}
+              onValueChange={(value) => setFormData((current) => ({ ...current, status: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PROJECT_STATUSES.map((status) => (
+                  <SelectItem key={status.value} value={status.value}>
+                    {status.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+            <div className="space-y-1">
+              <Label className="text-sm font-medium">Visibility</Label>
+              <p className="text-xs text-muted-foreground mt-1">Who can discover this project.</p>
+            </div>
+            <Select
+              value={formData.visibility}
+              onValueChange={(value) => setFormData((current) => ({ ...current, visibility: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PROJECT_VISIBILITY.map((visibility) => (
+                  <SelectItem key={visibility.value} value={visibility.value}>
+                    {visibility.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center justify-between border-t border-border pt-4">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <span className="chip">
+                {(project as { issueCount?: number }).issueCount || 0} issues
+              </span>
+              <span className="chip">
+                {(project as { sprintCount?: number }).sprintCount || 0} sprints
+              </span>
+              {(project as { activeSprint?: { name?: string } | null }).activeSprint?.name ? (
+                <span className="chip-accent">
+                  Active: {(project as { activeSprint: { name: string } }).activeSprint.name}
+                </span>
+              ) : null}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setFormData({
+                    name: project.name || '',
+                    key: project.key || '',
+                    description: project.description || '',
+                    status: project.status || 'active',
+                    visibility: (project as { visibility?: string }).visibility || 'internal',
+                  })
+                }
+                disabled={!hasChanges || updateProject.isPending}
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PROJECT_VISIBILITY.map((visibility) => (
-                    <SelectItem key={visibility.value} value={visibility.value}>
-                      {visibility.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                Reset
+              </Button>
+              <Button
+                onClick={handleSave}
+                disabled={!hasChanges || updateProject.isPending || !formData.name.trim() || !formData.key.trim()}
+              >
+                {updateProject.isPending ? 'Saving...' : 'Save changes'}
+              </Button>
             </div>
           </div>
+        </div>
+      </section>
 
-          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <Badge variant="outline">Issues {(project as { issueCount?: number }).issueCount || 0}</Badge>
-            <Badge variant="outline">Sprints {(project as { sprintCount?: number }).sprintCount || 0}</Badge>
-            {(project as { activeSprint?: { name?: string } | null }).activeSprint?.name ? (
-              <Badge variant="outline">Active sprint {(project as { activeSprint: { name: string } }).activeSprint.name}</Badge>
-            ) : null}
-          </div>
-
-          <div className="flex items-center justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={() =>
-                setFormData({
-                  name: project.name || '',
-                  key: project.key || '',
-                  description: project.description || '',
-                  status: project.status || 'active',
-                  visibility: (project as { visibility?: string }).visibility || 'internal',
-                })
-              }
-              disabled={!hasChanges || updateProject.isPending}
-            >
-              Reset
-            </Button>
-            <Button
-              onClick={handleSave}
-              disabled={!hasChanges || updateProject.isPending || !formData.name.trim() || !formData.key.trim()}
-            >
-              {updateProject.isPending ? 'Saving...' : 'Save changes'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-destructive/30">
-        <CardHeader>
-          <CardTitle>Danger zone</CardTitle>
-          <CardDescription>Archive or remove the project once you are sure the team no longer needs it.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1">
-            <div className="font-medium">Delete project</div>
-            <p className="text-sm text-muted-foreground">
-              This action is blocked while the project still has issues.
-            </p>
-          </div>
+      <section className="space-y-4">
+        <div className="space-y-1">
+          <span className="kicker text-destructive">Danger zone</span>
+          <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+            Delete project
+          </h2>
+          <p className="text-sm text-muted-foreground max-w-prose">
+            Archive or remove the project once you are sure the team no longer needs it.
+            This action is blocked while the project still has issues.
+          </p>
+        </div>
+        <div className="surface-card border-destructive/30 p-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <p className="text-sm text-muted-foreground">
+            Deleted projects cannot be restored.
+          </p>
           <Button
             variant="destructive"
             onClick={handleDelete}
@@ -259,8 +292,8 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
           >
             {deleteProject.isPending ? 'Deleting...' : 'Delete project'}
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
     </div>
   );
 }

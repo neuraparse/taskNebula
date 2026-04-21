@@ -572,14 +572,15 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
       </Dialog>
 
       {/* Teamspace list */}
-      <div className="surface-card p-5">
-        <div className="mb-5 flex items-start justify-between gap-4">
+      <section className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Layers3 className="h-4 w-4 text-muted-foreground" />
-              <h2 className="text-sm font-semibold">Teamspaces</h2>
-            </div>
-            <p className="text-xs text-muted-foreground">
+            <span className="kicker">Planning</span>
+            <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
+              <Layers3 className="h-4 w-4" />
+              Teamspaces
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-prose">
               Planning lanes above individual projects, without splitting the organization.
             </p>
           </div>
@@ -590,7 +591,7 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
         </div>
 
         {!canManage && (
-          <div className="mb-4 rounded-lg border border-accent-amber/20 bg-accent-amber/10 px-4 py-3 text-sm text-accent-amber">
+          <div className="rounded-lg border border-accent-amber/20 bg-accent-amber/10 px-4 py-3 text-sm text-accent-amber">
             Browse only — owners and admins can change the structure.
           </div>
         )}
@@ -729,22 +730,19 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
             })}
           </div>
         ) : (
-          <div className="rounded-lg border border-dashed border-border px-4 py-10 text-center">
-            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-              <Layers3 className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <p className="text-sm font-medium">No teamspaces yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Group projects, views, and planning scope above individual projects.
+          <div className="flex flex-col items-center gap-3 py-12 text-center">
+            <Layers3 className="h-8 w-8 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">
+              No teamspaces yet. Group projects above the individual project level.
             </p>
             {canManage && (
-              <Button type="button" size="sm" className="mt-4" onClick={openCreateDialog}>
+              <Button type="button" size="sm" onClick={openCreateDialog}>
                 Create your first teamspace
               </Button>
             )}
           </div>
         )}
-      </div>
+      </section>
     </>
   );
 }

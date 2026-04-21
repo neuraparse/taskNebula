@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -69,6 +68,33 @@ function StatusChip({ status }: { status: WorkflowStatus }) {
     <span className={`inline-flex items-center rounded-sm px-2 py-0.5 text-[11px] font-medium ${tokenClass}`}>
       {status.name}
     </span>
+  );
+}
+
+// Two-column label + control
+function FormRow({
+  label,
+  description,
+  children,
+  htmlFor,
+}: {
+  label: string;
+  description?: string;
+  children: React.ReactNode;
+  htmlFor?: string;
+}) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+      <div className="space-y-1 pt-2">
+        <Label htmlFor={htmlFor} className="text-sm font-medium">
+          {label}
+        </Label>
+        {description ? (
+          <p className="text-xs text-muted-foreground">{description}</p>
+        ) : null}
+      </div>
+      <div>{children}</div>
+    </div>
   );
 }
 
@@ -468,286 +494,297 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-up">
       {projectId ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Project workflow</CardTitle>
-            <CardDescription>Choose which workflow this project should use for issue statuses and transitions.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
-            <div className="space-y-1">
+        <div className="surface-card p-5 space-y-4">
+          <div className="space-y-1">
+            <span className="kicker">Project workflow</span>
+            <h3 className="text-sm font-semibold tracking-tight">Project workflow</h3>
+            <p className="text-xs text-muted-foreground">
+              Choose which workflow this project should use for issue statuses and transitions.
+            </p>
+          </div>
+          <FormRow
+            label="Active workflow"
+            description="Changing this updates statuses across the board and issue views."
+          >
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <div className="text-sm font-medium">
                 {workflows.find((workflow) => workflow.id === project?.defaultWorkflowId)?.name || 'No workflow assigned'}
               </div>
-              <p className="text-sm text-muted-foreground">
-                Changing this updates the statuses available across the board and issue detail views.
-              </p>
+              <div className="sm:ml-auto sm:w-[240px]">
+                <Select
+                  value={project?.defaultWorkflowId || selectedWorkflow?.id || ''}
+                  onValueChange={(value) => void assignWorkflowToProject(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select workflow" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {workflows.map((workflow) => (
+                      <SelectItem key={workflow.id} value={workflow.id}>
+                        {workflow.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <Select
-              value={project?.defaultWorkflowId || selectedWorkflow?.id || ''}
-              onValueChange={(value) => void assignWorkflowToProject(value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select workflow" />
-              </SelectTrigger>
-              <SelectContent>
-                {workflows.map((workflow) => (
-                  <SelectItem key={workflow.id} value={workflow.id}>
-                    {workflow.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </CardContent>
-        </Card>
+          </FormRow>
+        </div>
       ) : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Create workflow</CardTitle>
-          <CardDescription>Start a new workflow with a simple To Do → In Progress → Done flow.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="workflow-name">Workflow name</Label>
-              <Input
-                id="workflow-name"
-                placeholder="Development workflow"
-                value={newWorkflowName}
-                onChange={(event) => setNewWorkflowName(event.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="workflow-description">Description</Label>
-              <Input
-                id="workflow-description"
-                placeholder="Optional description"
-                value={newWorkflowDescription}
-                onChange={(event) => setNewWorkflowDescription(event.target.value)}
-              />
-            </div>
-          </div>
+      <div className="surface-card p-5 space-y-5">
+        <div className="space-y-1">
+          <span className="kicker">Create</span>
+          <h3 className="text-sm font-semibold tracking-tight">Create workflow</h3>
+          <p className="text-xs text-muted-foreground">
+            Start a new workflow with a simple To Do &rarr; In Progress &rarr; Done flow.
+          </p>
+        </div>
+
+        <FormRow label="Workflow name" htmlFor="workflow-name">
+          <Input
+            id="workflow-name"
+            placeholder="Development workflow"
+            value={newWorkflowName}
+            onChange={(event) => setNewWorkflowName(event.target.value)}
+          />
+        </FormRow>
+        <FormRow label="Description" htmlFor="workflow-description" description="Optional — who uses this workflow.">
+          <Input
+            id="workflow-description"
+            placeholder="Optional description"
+            value={newWorkflowDescription}
+            onChange={(event) => setNewWorkflowDescription(event.target.value)}
+          />
+        </FormRow>
+
+        <div className="flex justify-end">
           <Button onClick={() => void createWorkflow()} disabled={isSaving || !newWorkflowName.trim()}>
             <Plus className="mr-2 h-4 w-4" />
             Create workflow
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {workflows.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Workflows</CardTitle>
-            <CardDescription>Select a workflow to manage its statuses and transitions.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-              {workflows.map((workflow) => (
-                <Button
-                  key={workflow.id}
-                  variant={selectedWorkflow?.id === workflow.id ? 'default' : 'outline'}
-                  onClick={() => void loadWorkflowDetails(workflow.id)}
-                  className="h-auto justify-start py-3"
-                >
-                  <div className="flex w-full flex-col items-start gap-1">
-                    <div className="flex w-full items-center gap-2">
-                      <span className="font-medium">{workflow.name}</span>
-                      {workflow.isDefault ? (
-                        <span className="chip ml-auto">Default</span>
-                      ) : null}
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {workflow.statuses?.length || 0} statuses
-                    </span>
+        <div className="surface-card p-5 space-y-4">
+          <div className="space-y-1">
+            <span className="kicker">Library</span>
+            <h3 className="text-sm font-semibold tracking-tight">Workflows</h3>
+            <p className="text-xs text-muted-foreground">Select a workflow to manage its statuses and transitions.</p>
+          </div>
+
+          <div className="grid gap-2 stagger sm:grid-cols-2 xl:grid-cols-3">
+            {workflows.map((workflow) => (
+              <Button
+                key={workflow.id}
+                variant={selectedWorkflow?.id === workflow.id ? 'default' : 'outline'}
+                onClick={() => void loadWorkflowDetails(workflow.id)}
+                className="h-auto justify-start py-3"
+              >
+                <div className="flex w-full flex-col items-start gap-1">
+                  <div className="flex w-full items-center gap-2">
+                    <span className="font-medium">{workflow.name}</span>
+                    {workflow.isDefault ? <span className="chip ml-auto">Default</span> : null}
                   </div>
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                  <span className="text-xs text-muted-foreground">
+                    {workflow.statuses?.length || 0} statuses
+                  </span>
+                </div>
+              </Button>
+            ))}
+          </div>
+        </div>
       ) : null}
 
       {selectedWorkflow ? (
-        <Card>
-          <CardHeader>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <CardTitle className="text-base">Workflow details</CardTitle>
-                <CardDescription>Update metadata, add statuses, and manage transitions.</CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                {!selectedWorkflow.isDefault ? (
-                  <Button variant="outline" size="sm" onClick={() => void setWorkflowAsDefault(selectedWorkflow.id)}>
-                    <Star className="mr-2 h-4 w-4" />
-                    Make default
-                  </Button>
-                ) : null}
-                <Button variant="outline" size="sm" onClick={() => void deleteWorkflow(selectedWorkflow.id)}>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </Button>
-              </div>
+        <div className="surface-card p-5 space-y-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="space-y-1">
+              <span className="kicker">Details</span>
+              <h3 className="text-sm font-semibold tracking-tight">Workflow details</h3>
+              <p className="text-xs text-muted-foreground">Update metadata, add statuses, and manage transitions.</p>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Name</Label>
-                <Input
-                  value={workflowDraft.name}
-                  onChange={(event) => setWorkflowDraft((current) => ({ ...current, name: event.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea
-                  rows={3}
-                  value={workflowDraft.description}
-                  onChange={(event) =>
-                    setWorkflowDraft((current) => ({ ...current, description: event.target.value }))
-                  }
-                />
+            <div className="flex items-center gap-2">
+              {!selectedWorkflow.isDefault ? (
+                <Button variant="outline" size="sm" onClick={() => void setWorkflowAsDefault(selectedWorkflow.id)}>
+                  <Star className="mr-2 h-4 w-4" />
+                  Make default
+                </Button>
+              ) : null}
+              <Button variant="outline" size="sm" onClick={() => void deleteWorkflow(selectedWorkflow.id)}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
+            </div>
+          </div>
+
+          <FormRow label="Name" description="Shown wherever this workflow is referenced.">
+            <Input
+              value={workflowDraft.name}
+              onChange={(event) => setWorkflowDraft((current) => ({ ...current, name: event.target.value }))}
+            />
+          </FormRow>
+          <FormRow label="Description" description="Optional — what this workflow is for.">
+            <Textarea
+              rows={3}
+              value={workflowDraft.description}
+              onChange={(event) =>
+                setWorkflowDraft((current) => ({ ...current, description: event.target.value }))
+              }
+            />
+          </FormRow>
+
+          <div className="flex justify-end">
+            <Button
+              onClick={() => void saveWorkflowMeta()}
+              disabled={!hasWorkflowMetaChanges || !workflowDraft.name.trim()}
+            >
+              <Save className="mr-2 h-4 w-4" />
+              Save workflow
+            </Button>
+          </div>
+
+          {/* Statuses */}
+          <div className="surface-inset p-4 rounded-md space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <span className="kicker">Statuses</span>
+              <div className="flex flex-wrap gap-1.5">
+                {selectedWorkflow.statuses.map((status) => (
+                  <StatusChip key={status.id} status={status} />
+                ))}
               </div>
             </div>
 
-            <div className="flex justify-end">
-              <Button onClick={() => void saveWorkflowMeta()} disabled={!hasWorkflowMetaChanges || !workflowDraft.name.trim()}>
-                <Save className="mr-2 h-4 w-4" />
-                Save workflow
+            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_140px_auto]">
+              <Input
+                placeholder="New status name"
+                value={statusForm.name}
+                onChange={(event) => setStatusForm((current) => ({ ...current, name: event.target.value }))}
+              />
+              <Select
+                value={statusForm.category}
+                onValueChange={(value: WorkflowStatus['category']) =>
+                  setStatusForm((current) => ({
+                    ...current,
+                    category: value,
+                    color: STATUS_CATEGORY_COLORS[value],
+                  }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(STATUS_CATEGORY_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                type="color"
+                value={statusForm.color}
+                onChange={(event) => setStatusForm((current) => ({ ...current, color: event.target.value }))}
+                className="h-10 w-full"
+                aria-label="Status color"
+              />
+              <Button onClick={() => void addStatus()} disabled={!statusForm.name.trim()}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add
+              </Button>
+            </div>
+          </div>
+
+          {/* Transitions */}
+          <div className="surface-inset p-4 rounded-md space-y-4">
+            <div className="flex items-center gap-2">
+              <GitBranch className="h-4 w-4 text-muted-foreground" />
+              <span className="kicker">Transitions</span>
+            </div>
+            <div className="grid gap-3 md:grid-cols-4">
+              <Input
+                placeholder="Transition name (optional)"
+                value={transitionForm.name}
+                onChange={(event) => setTransitionForm((current) => ({ ...current, name: event.target.value }))}
+              />
+              <Select
+                value={transitionForm.fromStatusId}
+                onValueChange={(value) => setTransitionForm((current) => ({ ...current, fromStatusId: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="From status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {selectedWorkflow.statuses.map((status) => (
+                    <SelectItem key={status.id} value={status.id}>
+                      {status.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={transitionForm.toStatusId}
+                onValueChange={(value) => setTransitionForm((current) => ({ ...current, toStatusId: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="To status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {selectedWorkflow.statuses.map((status) => (
+                    <SelectItem key={status.id} value={status.id}>
+                      {status.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                onClick={() => void addTransition()}
+                disabled={!transitionForm.fromStatusId || !transitionForm.toStatusId}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add transition
               </Button>
             </div>
 
-            {/* Statuses */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="kicker">Statuses</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedWorkflow.statuses.map((status) => (
-                    <StatusChip key={status.id} status={status} />
-                  ))}
-                </div>
+            {selectedWorkflow.transitions.length === 0 ? (
+              <div className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                No transitions defined yet.
               </div>
+            ) : (
+              <div className="divide-y divide-border/60 rounded-md border border-border/60 bg-card">
+                {selectedWorkflow.transitions.map((transition) => {
+                  const fromStatus = selectedWorkflow.statuses.find((status) => status.id === transition.fromStatusId);
+                  const toStatus = selectedWorkflow.statuses.find((status) => status.id === transition.toStatusId);
 
-              <div className="grid gap-3 rounded-lg border border-dashed border-border p-4 md:grid-cols-[minmax(0,1fr)_180px_140px_auto]">
-                <Input
-                  placeholder="New status name"
-                  value={statusForm.name}
-                  onChange={(event) => setStatusForm((current) => ({ ...current, name: event.target.value }))}
-                />
-                <Select
-                  value={statusForm.category}
-                  onValueChange={(value: WorkflowStatus['category']) =>
-                    setStatusForm((current) => ({
-                      ...current,
-                      category: value,
-                      color: STATUS_CATEGORY_COLORS[value],
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(STATUS_CATEGORY_LABELS).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  type="color"
-                  value={statusForm.color}
-                  onChange={(event) => setStatusForm((current) => ({ ...current, color: event.target.value }))}
-                  className="h-10 w-full"
-                />
-                <Button onClick={() => void addStatus()} disabled={!statusForm.name.trim()}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add
-                </Button>
-              </div>
-            </div>
-
-            {/* Transitions */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <GitBranch className="h-4 w-4 text-muted-foreground" />
-                <span className="kicker">Transitions</span>
-              </div>
-              <div className="grid gap-3 rounded-lg border border-dashed border-border p-4 md:grid-cols-4">
-                <Input
-                  placeholder="Transition name (optional)"
-                  value={transitionForm.name}
-                  onChange={(event) => setTransitionForm((current) => ({ ...current, name: event.target.value }))}
-                />
-                <Select
-                  value={transitionForm.fromStatusId}
-                  onValueChange={(value) => setTransitionForm((current) => ({ ...current, fromStatusId: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="From status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {selectedWorkflow.statuses.map((status) => (
-                      <SelectItem key={status.id} value={status.id}>
-                        {status.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={transitionForm.toStatusId}
-                  onValueChange={(value) => setTransitionForm((current) => ({ ...current, toStatusId: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="To status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {selectedWorkflow.statuses.map((status) => (
-                      <SelectItem key={status.id} value={status.id}>
-                        {status.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button onClick={() => void addTransition()} disabled={!transitionForm.fromStatusId || !transitionForm.toStatusId}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add transition
-                </Button>
-              </div>
-
-              {selectedWorkflow.transitions.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                  No transitions defined yet. Add the first workflow transition above.
-                </div>
-              ) : (
-                <div className="grid gap-1.5">
-                  {selectedWorkflow.transitions.map((transition) => {
-                    const fromStatus = selectedWorkflow.statuses.find((status) => status.id === transition.fromStatusId);
-                    const toStatus = selectedWorkflow.statuses.find((status) => status.id === transition.toStatusId);
-
-                    return (
-                      <div
-                        key={transition.id}
-                        className="flex items-center gap-3 rounded-md border border-dashed border-border px-3 py-2 transition-colors duration-200 hover:bg-accent/50"
+                  return (
+                    <div
+                      key={transition.id}
+                      className="flex items-center gap-3 px-4 py-2.5 transition-colors duration-150 hover:bg-accent/40"
+                    >
+                      {fromStatus ? <StatusChip status={fromStatus} /> : null}
+                      <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      {toStatus ? <StatusChip status={toStatus} /> : null}
+                      <span className="flex-1 truncate text-sm text-muted-foreground">{transition.name}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => void deleteTransition(transition.id)}
+                        aria-label="Delete transition"
                       >
-                        {fromStatus ? <StatusChip status={fromStatus} /> : null}
-                        <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        {toStatus ? <StatusChip status={toStatus} /> : null}
-                        <span className="flex-1 text-sm text-muted-foreground">{transition.name}</span>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => void deleteTransition(transition.id)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       ) : null}
     </div>
   );

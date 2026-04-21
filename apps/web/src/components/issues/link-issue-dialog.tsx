@@ -153,11 +153,11 @@ export function LinkIssueDialog({ issueId, projectId, open, onOpenChange }: Link
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={!targetIssueId || createLink.isPending}>
-            {createLink.isPending ? 'Creating...' : 'Create Link'}
+            {createLink.isPending ? 'Creating...' : 'Create link'}
           </Button>
         </DialogFooter>
       </DialogContent>

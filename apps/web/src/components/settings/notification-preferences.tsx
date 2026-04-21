@@ -174,42 +174,55 @@ export function NotificationPreferences() {
   }
 
   return (
-    <div className="animate-fade-in space-y-8">
+    <div className="animate-fade-up space-y-8 stagger">
       {/* Delivery */}
-      <div className="surface-card p-6 space-y-4">
+      <section className="space-y-4">
         <div className="space-y-1">
           <span className="kicker">Notifications</span>
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Bell className="h-5 w-5" />
+          <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
+            <Bell className="h-4 w-4" />
             Delivery
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground max-w-prose">
             Control how activity reaches you across in-app, email, and digest channels.
           </p>
         </div>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>In-app notifications</Label>
-              <p className="text-xs text-muted-foreground">Show updates in the notification bell.</p>
+        <div className="surface-card p-5 space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+            <div className="space-y-1">
+              <Label className="text-sm font-medium">In-app notifications</Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Show updates in the notification bell.
+              </p>
             </div>
-            <Switch
-              checked={preferences.enableInApp}
-              onCheckedChange={(checked) => handleChange('enableInApp', checked)}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Email notifications</Label>
-              <p className="text-xs text-muted-foreground">Send important updates to your inbox.</p>
+            <div className="flex md:justify-end">
+              <Switch
+                checked={preferences.enableInApp}
+                onCheckedChange={(checked) => handleChange('enableInApp', checked)}
+              />
             </div>
-            <Switch
-              checked={preferences.enableEmail}
-              onCheckedChange={(checked) => handleChange('enableEmail', checked)}
-            />
           </div>
-          <div className="space-y-2">
-            <Label>Digest frequency</Label>
+          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+            <div className="space-y-1">
+              <Label className="text-sm font-medium">Email notifications</Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Send important updates to your inbox.
+              </p>
+            </div>
+            <div className="flex md:justify-end">
+              <Switch
+                checked={preferences.enableEmail}
+                onCheckedChange={(checked) => handleChange('enableEmail', checked)}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+            <div className="space-y-1">
+              <Label className="text-sm font-medium">Digest frequency</Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Bundle activity into a scheduled summary.
+              </p>
+            </div>
             <Select
               value={preferences.digestFrequency}
               onValueChange={(value) =>
@@ -227,99 +240,124 @@ export function NotificationPreferences() {
             </Select>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Email + In-app events */}
-      <div className="grid gap-6 xl:grid-cols-2">
-        <div className="surface-card p-6 space-y-4">
-          <div className="flex items-center gap-2">
-            <Mail className="h-4 w-4 text-muted-foreground" />
-            <h3 className="font-semibold">Email events</h3>
-          </div>
-          <p className="text-xs text-muted-foreground -mt-2">
+      {/* Email events */}
+      <section className="space-y-4">
+        <div className="space-y-1">
+          <span className="kicker">Email</span>
+          <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            Email events
+          </h2>
+          <p className="text-sm text-muted-foreground max-w-prose">
             Choose which events trigger email delivery.
           </p>
-          <div className="space-y-3">
-            {EMAIL_EVENT_FIELDS.map((field) => (
-              <div key={field.key} className="flex items-center justify-between">
-                <Label className="text-sm font-normal">{field.label}</Label>
-                <Switch
-                  checked={preferences[field.key]}
-                  onCheckedChange={(checked) => handleChange(field.key, checked)}
-                  disabled={!preferences.enableEmail}
-                />
-              </div>
-            ))}
-          </div>
         </div>
+        <div className="surface-card p-5 divide-y divide-border/60">
+          {EMAIL_EVENT_FIELDS.map((field) => (
+            <div
+              key={field.key}
+              className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
+            >
+              <Label className="text-sm font-normal">{field.label}</Label>
+              <Switch
+                checked={preferences[field.key]}
+                onCheckedChange={(checked) => handleChange(field.key, checked)}
+                disabled={!preferences.enableEmail}
+              />
+            </div>
+          ))}
+        </div>
+      </section>
 
-        <div className="surface-card p-6 space-y-4">
-          <div className="flex items-center gap-2">
-            <Smartphone className="h-4 w-4 text-muted-foreground" />
-            <h3 className="font-semibold">In-app events</h3>
-          </div>
-          <p className="text-xs text-muted-foreground -mt-2">
+      {/* In-app events */}
+      <section className="space-y-4">
+        <div className="space-y-1">
+          <span className="kicker">In-app</span>
+          <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
+            <Smartphone className="h-4 w-4" />
+            In-app events
+          </h2>
+          <p className="text-sm text-muted-foreground max-w-prose">
             Control what appears in your notification feed.
           </p>
-          <div className="space-y-3">
-            {IN_APP_EVENT_FIELDS.map((field) => (
-              <div key={field.key} className="flex items-center justify-between">
-                <Label className="text-sm font-normal">{field.label}</Label>
-                <Switch
-                  checked={preferences[field.key]}
-                  onCheckedChange={(checked) => handleChange(field.key, checked)}
-                  disabled={!preferences.enableInApp}
-                />
-              </div>
-            ))}
-          </div>
         </div>
-      </div>
+        <div className="surface-card p-5 divide-y divide-border/60">
+          {IN_APP_EVENT_FIELDS.map((field) => (
+            <div
+              key={field.key}
+              className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
+            >
+              <Label className="text-sm font-normal">{field.label}</Label>
+              <Switch
+                checked={preferences[field.key]}
+                onCheckedChange={(checked) => handleChange(field.key, checked)}
+                disabled={!preferences.enableInApp}
+              />
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* Do Not Disturb */}
-      <div className="surface-card p-6 space-y-4">
+      <section className="space-y-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <h3 className="font-semibold">Do not disturb</h3>
-          </div>
-          <p className="text-sm text-muted-foreground">Pause delivery during quiet hours.</p>
+          <span className="kicker">Schedule</span>
+          <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            Do not disturb
+          </h2>
+          <p className="text-sm text-muted-foreground max-w-prose">
+            Pause delivery during quiet hours.
+          </p>
         </div>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Enable quiet hours</Label>
-              <p className="text-xs text-muted-foreground">
-                Mute notifications during the selected time window.
+        <div className="surface-card p-5 space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+            <div className="space-y-1">
+              <Label className="text-sm font-medium">Enable quiet hours</Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Mute notifications during the selected window.
               </p>
             </div>
-            <Switch
-              checked={preferences.doNotDisturb}
-              onCheckedChange={(checked) => handleChange('doNotDisturb', checked)}
-            />
+            <div className="flex md:justify-end">
+              <Switch
+                checked={preferences.doNotDisturb}
+                onCheckedChange={(checked) => handleChange('doNotDisturb', checked)}
+              />
+            </div>
           </div>
           {preferences.doNotDisturb ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Start</Label>
-                <Input
-                  type="time"
-                  value={preferences.doNotDisturbStart || '22:00'}
-                  onChange={(event) => handleChange('doNotDisturbStart', event.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>End</Label>
-                <Input
-                  type="time"
-                  value={preferences.doNotDisturbEnd || '08:00'}
-                  onChange={(event) => handleChange('doNotDisturbEnd', event.target.value)}
-                />
+            <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+              <Label className="text-sm font-medium">Window</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor="dnd-start" className="text-xs text-muted-foreground">
+                    Start
+                  </Label>
+                  <Input
+                    id="dnd-start"
+                    type="time"
+                    value={preferences.doNotDisturbStart || '22:00'}
+                    onChange={(event) => handleChange('doNotDisturbStart', event.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="dnd-end" className="text-xs text-muted-foreground">
+                    End
+                  </Label>
+                  <Input
+                    id="dnd-end"
+                    type="time"
+                    value={preferences.doNotDisturbEnd || '08:00'}
+                    onChange={(event) => handleChange('doNotDisturbEnd', event.target.value)}
+                  />
+                </div>
               </div>
             </div>
           ) : null}
         </div>
-      </div>
+      </section>
 
       <div className="flex justify-between gap-3">
         <Button variant="ghost" onClick={resetToDefaults} size="sm">

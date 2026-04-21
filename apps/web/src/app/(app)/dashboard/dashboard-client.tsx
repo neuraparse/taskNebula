@@ -8,12 +8,8 @@ import { ActivityFeed } from '@/components/activity/activity-feed';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import {
   ArrowUpRight,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
   Loader2,
   Target,
-  BarChart3,
   Inbox,
   TrendingUp,
   TrendingDown,
@@ -21,7 +17,6 @@ import {
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
 
 interface Issue {
   id: string;
@@ -111,23 +106,25 @@ export function DashboardClient() {
     );
   }
 
+  const firstName = session?.user?.name?.split(' ')[0] || 'there';
+
   return (
     <>
       <div className="flex h-full flex-col bg-background">
         <div className="flex-1 overflow-auto">
-          <div className="space-y-8 max-w-[1400px] mx-auto p-6 animate-fade-up">
+          <div className="max-w-[1400px] mx-auto p-6 space-y-8">
 
-            {/* Header */}
-            <div className="flex items-center justify-between">
+            {/* Greeting */}
+            <div className="flex items-end justify-between gap-4 animate-fade-up">
               <div className="space-y-1">
                 <span className="kicker">Dashboard</span>
-                <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-                  Welcome back, {session?.user?.name?.split(' ')[0] || 'User'}
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground text-balance">
+                  Welcome back, {firstName}
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   {currentTeamId
-                    ? 'Teamspace-scoped work and priorities for today'
-                    : "Your project overview for today"}
+                    ? 'Teamspace-scoped work and priorities for today.'
+                    : 'Your project overview for today.'}
                 </p>
               </div>
               <Link href="/my-issues">
@@ -138,40 +135,37 @@ export function DashboardClient() {
               </Link>
             </div>
 
-            {/* Stats Grid */}
-            <div className="stagger grid gap-4 md:grid-cols-4">
-              <StatCard
-                label="Active Issues"
+            {/* KPI Summary Row */}
+            <div className="stagger grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <StatTile
+                label="Active"
                 value={stats.active}
-                icon={Clock}
                 trend={12}
-                trendUp={true}
+                trendUp
+                emphasized
               />
-              <StatCard
+              <StatTile
                 label="Completed"
                 value={stats.completed}
-                icon={CheckCircle2}
                 trend={8}
-                trendUp={true}
+                trendUp
               />
-              <StatCard
+              <StatTile
                 label="Blocked"
                 value={stats.blocked}
-                icon={AlertCircle}
                 trend={2}
                 trendUp={false}
               />
-              <StatCard
+              <StatTile
                 label="Story Points"
                 value={stats.points}
-                icon={BarChart3}
                 trend={15}
-                trendUp={true}
+                trendUp
               />
             </div>
 
-            {/* Main Content Grid */}
-            <div className="grid gap-6 lg:grid-cols-3">
+            {/* Main Content */}
+            <div className="stagger grid gap-6 lg:grid-cols-3">
               {/* My Issues */}
               <div className="surface-card p-6 lg:col-span-2">
                 <div className="flex items-center justify-between mb-4">
@@ -181,33 +175,36 @@ export function DashboardClient() {
                   </div>
                   <Link
                     href="/my-issues"
-                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors duration-200"
                   >
                     View all
                     <ArrowUpRight className="h-3 w-3" />
                   </Link>
                 </div>
-                <div className="space-y-0.5">
-                  {!myIssues || myIssues.length === 0 ? (
-                    <div className="text-center py-10">
-                      <Inbox className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-                      <p className="text-sm text-muted-foreground">No issues assigned to you</p>
-                      <Link href="/my-issues">
-                        <Button variant="outline" size="sm" className="mt-4">
-                          Create issue
-                        </Button>
-                      </Link>
-                    </div>
-                  ) : (
-                    myIssues.slice(0, 5).map((issue) => (
+
+                {!myIssues || myIssues.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <Inbox className="h-10 w-10 text-muted-foreground mb-3" />
+                    <p className="text-sm text-muted-foreground mb-4">
+                      You&apos;re all caught up — nothing assigned right now.
+                    </p>
+                    <Link href="/my-issues">
+                      <Button variant="outline" size="sm">
+                        Create issue
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-0.5">
+                    {myIssues.slice(0, 5).map((issue) => (
                       <IssueRow
                         key={issue.id}
                         issue={issue}
                         onClick={() => setSelectedIssueId(issue.id)}
                       />
-                    ))
-                  )}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Recent Activity */}
@@ -232,43 +229,47 @@ export function DashboardClient() {
   );
 }
 
-function StatCard({
+function StatTile({
   label,
   value,
-  icon: Icon,
   trend,
   trendUp,
+  emphasized = false,
 }: {
   label: string;
   value: number;
-  icon: React.ElementType;
   trend: number;
   trendUp: boolean;
+  emphasized?: boolean;
 }) {
   return (
-    <div className="surface-card surface-card-hover p-6">
-      <div className="flex items-start justify-between">
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">{label}</p>
-          <p className="text-2xl font-semibold">{value}</p>
-          <span className={cn(
-            'chip flex items-center gap-1 w-fit',
-            trendUp
-              ? 'bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20'
-              : 'bg-accent-rose/10 text-accent-rose border-accent-rose/20'
-          )}>
-            {trendUp ? (
-              <TrendingUp className="h-3 w-3" />
-            ) : (
-              <TrendingDown className="h-3 w-3" />
-            )}
-            {trend}%
-          </span>
-        </div>
-        <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center">
-          <Icon className="h-4 w-4 text-muted-foreground" />
-        </div>
+    <div className="surface-card surface-card-hover p-5 transition-all duration-200 ease-smooth hover:-translate-y-0.5 hover:shadow-md">
+      <div className="flex items-baseline justify-between gap-2">
+        <p
+          className={cn(
+            'text-3xl font-semibold tracking-tight',
+            emphasized ? 'text-gradient-primary' : 'text-foreground'
+          )}
+        >
+          {value}
+        </p>
+        <span
+          className={cn(
+            'inline-flex items-center gap-0.5 text-xs font-medium',
+            trendUp ? 'text-accent-emerald' : 'text-accent-rose'
+          )}
+        >
+          {trendUp ? (
+            <TrendingUp className="h-3 w-3" />
+          ) : (
+            <TrendingDown className="h-3 w-3" />
+          )}
+          {trend}%
+        </span>
       </div>
+      <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
     </div>
   );
 }
@@ -281,15 +282,23 @@ function IssueRow({ issue, onClick }: { issue: Issue; onClick: () => void }) {
     critical: 'priority-critical',
   };
 
-  const cls = priorityClass[issue.priority] ?? 'priority-medium';
+  const statusDotClass: Record<string, string> = {
+    in_progress: 'status-live',
+    blocked: 'status-danger',
+    backlog: 'status-idle',
+    done: 'status-live',
+  };
+
+  const priorityCls = priorityClass[issue.priority] ?? 'priority-medium';
+  const statusCls = statusDotClass[issue.status.category] ?? 'status-idle';
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex items-center gap-3 rounded-md px-3 py-2.5 min-h-[40px] text-left transition-colors cursor-pointer hover:bg-accent/50"
+      className="w-full flex items-center gap-3 rounded-md pl-2 pr-3 py-2.5 min-h-[40px] text-left transition-all duration-200 ease-smooth cursor-pointer hover:bg-accent/50"
     >
-      <span className={cn('h-2 w-2 rounded-full shrink-0', cls)} />
+      <span className={cn('priority-indicator h-6 shrink-0', priorityCls)} />
 
       <span className="text-xs font-mono text-muted-foreground shrink-0 w-20">
         {issue.key}
@@ -299,7 +308,8 @@ function IssueRow({ issue, onClick }: { issue: Issue; onClick: () => void }) {
         {issue.title}
       </p>
 
-      <span className="chip shrink-0 hidden sm:inline-flex">
+      <span className="hidden sm:inline-flex items-center gap-1.5 shrink-0 text-xs text-muted-foreground">
+        <span className={cn('status-dot', statusCls)} />
         {issue.status.name}
       </span>
     </button>

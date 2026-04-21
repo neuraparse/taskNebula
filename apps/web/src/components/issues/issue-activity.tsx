@@ -97,7 +97,7 @@ export function IssueActivity({ issueId }: { issueId: string }) {
               )}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground/60 py-4">
+            <p className="text-sm text-muted-foreground py-4">
               No comments yet
             </p>
           )}
@@ -182,7 +182,7 @@ export function IssueActivity({ issueId }: { issueId: string }) {
               )}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground/60 py-4">
+            <p className="text-sm text-muted-foreground py-4">
               No activity yet
             </p>
           )}

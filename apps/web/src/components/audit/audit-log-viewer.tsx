@@ -35,6 +35,14 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: 'deleted', label: 'Deleted' },
 ];
 
+// Severity -> 2px left border token. Info is the default; trace is neutral.
+function severityBorder(action: string) {
+  if (action.includes('deleted') || action.includes('revoked')) return 'border-l-accent-rose';
+  if (action.includes('updated') || action.includes('changed')) return 'border-l-accent-amber';
+  if (action.includes('created')) return 'border-l-accent-blue';
+  return 'border-l-border';
+}
+
 export function AuditLogViewer({
   organizationId,
   resourceType,
@@ -67,9 +75,8 @@ export function AuditLogViewer({
 
   const allLogs: any[] = data?.auditLogs || [];
 
-  const filteredLogs = activeFilter === 'all'
-    ? allLogs
-    : allLogs.filter((log) => log.action.includes(activeFilter));
+  const filteredLogs =
+    activeFilter === 'all' ? allLogs : allLogs.filter((log) => log.action.includes(activeFilter));
 
   const getActionIcon = (action: string) => {
     if (action.startsWith('issue.')) return FileText;
@@ -81,13 +88,6 @@ export function AuditLogViewer({
     return AlertCircle;
   };
 
-  const getActionChipClass = (action: string) => {
-    if (action.includes('created')) return 'bg-accent-emerald/10 text-accent-emerald border border-accent-emerald/20';
-    if (action.includes('deleted') || action.includes('revoked')) return 'bg-accent-rose/10 text-accent-rose border border-accent-rose/20';
-    if (action.includes('updated') || action.includes('changed')) return 'bg-accent-blue/10 text-accent-blue border border-accent-blue/20';
-    return 'bg-muted text-muted-foreground border border-border';
-  };
-
   const formatAction = (action: string) => {
     return action
       .split('.')
@@ -97,11 +97,11 @@ export function AuditLogViewer({
 
   if (isLoading) {
     return (
-      <div className="surface-card p-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="surface-card p-5">
+        <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <span className="kicker">Security</span>
-            <h3 className="text-sm font-semibold tracking-tight text-foreground">Audit Log</h3>
+            <h3 className="text-sm font-semibold tracking-tight">Audit log</h3>
           </div>
         </div>
         <div className="flex items-center justify-center py-10">
@@ -113,10 +113,10 @@ export function AuditLogViewer({
 
   if (error) {
     return (
-      <div className="surface-card p-6">
-        <div className="space-y-0.5 mb-2">
+      <div className="surface-card p-5">
+        <div className="mb-2 space-y-0.5">
           <span className="kicker">Security</span>
-          <h3 className="text-sm font-semibold tracking-tight text-foreground">Audit Log</h3>
+          <h3 className="text-sm font-semibold tracking-tight">Audit log</h3>
         </div>
         <p className="text-sm text-muted-foreground">
           {error instanceof Error ? error.message : 'Failed to load activity.'}
@@ -126,28 +126,28 @@ export function AuditLogViewer({
   }
 
   return (
-    <div className="surface-card p-6 space-y-4">
+    <div className="surface-card p-5 space-y-4 animate-fade-up">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-0.5">
           <span className="kicker">Security</span>
-          <h3 className="text-sm font-semibold tracking-tight text-foreground">Audit Log</h3>
+          <h3 className="text-sm font-semibold tracking-tight">Audit log</h3>
         </div>
-        <span className="chip">{filteredLogs.length} {filteredLogs.length === 1 ? 'event' : 'events'}</span>
+        <span className="chip">
+          {filteredLogs.length} {filteredLogs.length === 1 ? 'event' : 'events'}
+        </span>
       </div>
 
       {/* Filter pills */}
-      <div className="flex items-center gap-1.5 flex-wrap">
+      <div className="flex flex-wrap items-center gap-1.5">
         {FILTERS.map((f) => (
           <button
             key={f.key}
             onClick={() => setActiveFilter(f.key)}
             className={cn(
-              'rounded-full px-2.5 py-0.5 text-[11px] font-medium border transition-colors duration-200',
+              'rounded-full px-2.5 py-0.5 text-[11px] font-medium border transition-colors duration-150',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-              activeFilter === f.key
-                ? 'chip-accent'
-                : 'chip hover:border-border-strong'
+              activeFilter === f.key ? 'chip-accent' : 'chip hover:border-border-strong'
             )}
           >
             {f.label}
@@ -157,27 +157,27 @@ export function AuditLogViewer({
 
       {/* Log rows */}
       {filteredLogs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-10 gap-2">
+        <div className="flex flex-col items-center justify-center gap-2 py-10">
           <AlertCircle className="h-8 w-8 text-muted-foreground/30" />
           <p className="text-sm text-muted-foreground">No events found</p>
         </div>
       ) : (
-        <div className="max-h-[560px] overflow-y-auto custom-scrollbar -mr-2 pr-2 divide-y divide-border">
+        <div className="max-h-[560px] divide-y divide-border/60 overflow-y-auto custom-scrollbar -mr-2 pr-2">
           {filteredLogs.map((log) => {
             const Icon = getActionIcon(log.action);
             const isExpanded = expandedId === log.id;
             const hasChanges = log.changes && Object.keys(log.changes).length > 0;
 
             return (
-              <div key={log.id}>
+              <div key={log.id} className={cn('border-l-2', severityBorder(log.action))}>
                 <button
                   aria-expanded={isExpanded}
                   onClick={() => setExpandedId(isExpanded ? null : log.id)}
                   className={cn(
-                    'w-full flex items-center gap-3 px-2 text-left transition-colors duration-200',
-                    'h-9 rounded-sm hover:bg-accent/40',
+                    'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors duration-150',
+                    'hover:bg-accent/40',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-                    isExpanded && 'bg-accent/20'
+                    isExpanded && 'bg-accent/30'
                   )}
                 >
                   <Avatar className="h-5 w-5 shrink-0">
@@ -187,26 +187,23 @@ export function AuditLogViewer({
                     </AvatarFallback>
                   </Avatar>
 
-                  <span className="text-xs font-medium text-foreground truncate min-w-0 shrink-0 max-w-[120px]">
+                  <span className="shrink-0 truncate text-xs font-medium text-foreground max-w-[140px]">
                     {log.user.name || log.user.email}
                   </span>
 
-                  <span className={cn(
-                    'rounded-full px-2 py-0.5 text-[10px] font-medium inline-flex items-center gap-1 shrink-0',
-                    getActionChipClass(log.action)
-                  )}>
-                    <Icon className="h-2.5 w-2.5" />
-                    {formatAction(log.action)}
+                  <span className="inline-flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                    <Icon className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{formatAction(log.action)}</span>
                   </span>
 
-                  <span className="text-xs text-muted-foreground ml-auto shrink-0">
+                  <span className="ml-auto shrink-0 font-mono text-[11px] text-muted-foreground">
                     {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
                   </span>
 
                   {hasChanges && (
                     <ChevronDown
                       className={cn(
-                        'h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform duration-200',
+                        'h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200',
                         isExpanded && 'rotate-180'
                       )}
                     />
@@ -215,9 +212,9 @@ export function AuditLogViewer({
 
                 {/* Inline expansion */}
                 {isExpanded && hasChanges && (
-                  <div className="animate-fade-in px-3 pb-3 pt-1 ml-8 space-y-1">
+                  <div className="animate-fade-in space-y-1 px-4 pb-3 pt-1 pl-10 text-xs">
                     {Object.entries(log.changes).map(([field, change]: [string, any]) => (
-                      <div key={field} className="text-xs text-muted-foreground">
+                      <div key={field} className="text-muted-foreground">
                         <span className="font-medium text-foreground">{field}:</span>{' '}
                         <span className="line-through">{String(change.from)}</span>
                         <span className="mx-1 text-muted-foreground/60">to</span>

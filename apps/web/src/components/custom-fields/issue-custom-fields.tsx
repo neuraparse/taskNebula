@@ -143,15 +143,15 @@ export function IssueCustomFields({ issueId }: IssueCustomFieldsProps) {
   };
 
   return (
-    <div className="space-y-3">
-      <span className="kicker">Custom Fields</span>
-      <div className="space-y-3">
+    <div className="space-y-3 animate-fade-up">
+      <span className="kicker">Custom fields</span>
+      <div className="space-y-3 stagger">
         {customFieldValues.map((fieldValue) => (
           <div key={fieldValue.customFieldId} className="space-y-1.5">
             <Label className="text-xs">
               {fieldValue.field.name}
               {fieldValue.field.isRequired && (
-                <span className="text-destructive ml-1" aria-label="required">*</span>
+                <span className="ml-1 text-destructive" aria-label="required">*</span>
               )}
             </Label>
             {fieldValue.field.description && (

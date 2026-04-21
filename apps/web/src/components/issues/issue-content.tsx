@@ -91,7 +91,7 @@ export function IssueContent({ issue }: IssueContentProps) {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground/60 italic">No description provided</p>
+              <p className="text-muted-foreground italic">No description provided</p>
             )}
           </div>
         )}

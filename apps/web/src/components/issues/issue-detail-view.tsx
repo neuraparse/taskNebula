@@ -53,15 +53,12 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-background animate-fade-in">
-      {/* Header */}
-      <div className="shrink-0 border-b border-border/60 bg-background/95 px-6 py-3">
+      <div className="shrink-0 border-b border-border bg-background px-6 py-4">
         <IssueHeader issue={issue} />
       </div>
 
-      {/* Content */}
       <div className="flex-1 overflow-hidden">
-        <div className="grid h-full grid-cols-[1fr_320px]">
-          {/* Main Content Area */}
+        <div className="grid h-full grid-cols-[1fr_300px]">
           <div className="overflow-y-auto custom-scrollbar">
             <div className="space-y-8 px-8 py-6">
               <IssueContent issue={issue} />
@@ -69,9 +66,8 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="overflow-y-auto border-l border-border/60 custom-scrollbar">
-            <div className="px-4 py-5">
+          <div className="overflow-y-auto border-l border-border custom-scrollbar">
+            <div className="px-5 py-5">
               <IssueSidebar
                 issue={{
                   id: issue.id,

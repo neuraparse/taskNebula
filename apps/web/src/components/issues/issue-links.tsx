@@ -52,7 +52,7 @@ export function IssueLinks({ issueId, projectId }: IssueLinksProps) {
         </div>
 
         {allLinks.length === 0 ? (
-          <p className="text-sm text-muted-foreground/60">
+          <p className="text-sm text-muted-foreground">
             No linked issues.{' '}
             <button
               onClick={() => setDialogOpen(true)}

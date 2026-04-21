@@ -71,13 +71,13 @@ export function UserProfileDropdown() {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem className="gap-2 px-3 transition-colors duration-200" asChild>
+        <DropdownMenuItem className="gap-2 px-3 transition-colors duration-150" asChild>
           <a href="/settings/profile">
             <User className="h-4 w-4 shrink-0 text-muted-foreground" />
             Profile
           </a>
         </DropdownMenuItem>
-        <DropdownMenuItem className="gap-2 px-3 transition-colors duration-200" asChild>
+        <DropdownMenuItem className="gap-2 px-3 transition-colors duration-150" asChild>
           <a href="/settings">
             <Settings className="h-4 w-4 shrink-0 text-muted-foreground" />
             Settings
@@ -87,7 +87,7 @@ export function UserProfileDropdown() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
-          className="gap-2 px-3 text-destructive transition-colors duration-200 focus:bg-destructive/10 focus:text-destructive"
+          className="gap-2 px-3 text-destructive transition-colors duration-150 focus:bg-destructive/10 focus:text-destructive"
           onClick={() => signOut({ callbackUrl: '/auth/signin' })}
         >
           <LogOut className="h-4 w-4 shrink-0" />

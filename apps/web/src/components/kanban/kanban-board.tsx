@@ -167,7 +167,7 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
 
   return (
     <>
-      <div className="flex h-full flex-col bg-muted/[0.03]">
+      <div className="dot-grid flex h-full flex-col bg-background">
         <DndContext
           sensors={sensors}
           onDragStart={handleDragStart}
@@ -176,7 +176,7 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
           accessibility={{ announcements }}
           measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
         >
-          <div className="flex flex-1 gap-3 overflow-x-auto px-4 py-4 custom-scrollbar">
+          <div className="stagger flex flex-1 gap-3 overflow-x-auto px-4 py-4 custom-scrollbar">
             {workflowStatuses.map((status) => {
               const columnIssues = filteredIssues.filter((issue) => issue.statusId === status.id);
               return (
@@ -227,7 +227,7 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
             <div className="w-[280px] flex-shrink-0 self-start">
               <Button
                 variant="ghost"
-                className="h-10 w-full rounded-lg border border-dashed border-border/50 text-sm text-muted-foreground/60 transition-all duration-200 ease-smooth hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+                className="h-10 w-full rounded-lg border border-dashed border-border text-sm text-muted-foreground transition-all duration-200 ease-smooth hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
                 onClick={() => setAddColumnOpen(true)}
               >
                 <Plus className="mr-1.5 h-4 w-4" />
@@ -243,7 +243,7 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
             }}
           >
             {activeIssue ? (
-              <div className="w-[288px] rotate-[0.8deg] shadow-lg">
+              <div className="w-[288px] rotate-[0.8deg] shadow-md">
                 <KanbanCard
                   issue={{
                     id: activeIssue.key,

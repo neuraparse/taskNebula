@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -432,20 +431,23 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 animate-fade-up">
       {projectId ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Project assignment</CardTitle>
-            <CardDescription>Choose which issue visibility scheme this project should apply by default.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
+        <div className="surface-card p-5 space-y-3">
+          <div className="space-y-1">
+            <span className="kicker">Project assignment</span>
+            <h3 className="text-sm font-semibold tracking-tight">Project assignment</h3>
+            <p className="text-xs text-muted-foreground">
+              Choose which issue visibility scheme this project should apply by default.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-4 items-center md:grid-cols-[240px_1fr]">
             <div className="space-y-1">
               <div className="text-sm font-medium">{activeSchemeName}</div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {projectSecurityState?.source === 'project'
-                  ? 'This project uses an explicit issue security scheme.'
-                  : 'This project currently inherits the organization default scheme.'}
+                  ? 'This project uses an explicit scheme.'
+                  : 'This project inherits the organization default.'}
               </p>
             </div>
             <Select value={selectedProjectScheme} onValueChange={(value) => void assignSchemeToProject(value)}>
@@ -461,14 +463,17 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                 ))}
               </SelectContent>
             </Select>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : null}
 
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-base font-semibold text-foreground">Issue security schemes</h3>
-          <p className="text-sm text-muted-foreground">Control who can see sensitive issues and what defaults new work starts with.</p>
+        <div className="space-y-1">
+          <span className="kicker">Security schemes</span>
+          <h3 className="text-sm font-semibold tracking-tight text-foreground">Issue security schemes</h3>
+          <p className="text-sm text-muted-foreground">
+            Control who can see sensitive issues and what defaults new work starts with.
+          </p>
         </div>
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
@@ -512,19 +517,31 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
         </Dialog>
       </div>
 
-      <div className="space-y-4">
-        {schemes.map((scheme) => {
-          const isAssignedToProject = projectSecurityState?.assignedSchemeId === scheme.id;
-          const isEffectiveForProject = projectSecurityState?.effectiveSchemeId === scheme.id;
+      {schemes.length === 0 ? (
+        <div className="surface-card p-10 text-center space-y-3">
+          <Lock className="mx-auto h-8 w-8 text-muted-foreground/40" />
+          <p className="text-sm text-muted-foreground">No security schemes yet.</p>
+          <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create your first scheme
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-4 stagger">
+          {schemes.map((scheme) => {
+            const isAssignedToProject = projectSecurityState?.assignedSchemeId === scheme.id;
+            const isEffectiveForProject = projectSecurityState?.effectiveSchemeId === scheme.id;
 
-          return (
-            <Card key={scheme.id} className={scheme.isDefault ? 'border-primary/60' : undefined}>
-              <CardHeader className="space-y-3 pb-3">
+            return (
+              <div
+                key={scheme.id}
+                className={`surface-card p-5 space-y-4 ${scheme.isDefault ? 'border-primary/30' : ''}`}
+              >
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="space-y-2">
+                  <div className="min-w-0 space-y-1">
                     <div className="flex items-center gap-2">
-                      <Lock className="h-4 w-4 text-primary" />
-                      <CardTitle className="text-base">{scheme.name}</CardTitle>
+                      <Lock className="h-4 w-4 shrink-0 text-primary" />
+                      <h4 className="truncate text-sm font-semibold">{scheme.name}</h4>
                       {scheme.isDefault ? (
                         <span className="chip gap-1">
                           <Star className="h-3 w-3" />
@@ -532,30 +549,48 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                         </span>
                       ) : null}
                     </div>
-                    <CardDescription>
+                    <p className="text-xs text-muted-foreground">
                       {scheme.description || 'No description provided.'}
-                    </CardDescription>
+                    </p>
                   </div>
                   <div className="flex items-center gap-1">
                     {!scheme.isDefault ? (
-                      <Button variant="ghost" size="icon" onClick={() => void setAsDefault(scheme.id)} title="Set as default">
-                        <Star className="h-4 w-4" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => void setAsDefault(scheme.id)}
+                        aria-label="Set as default"
+                      >
+                        <Star className="h-3.5 w-3.5" />
                       </Button>
                     ) : null}
-                    <Button variant="ghost" size="icon" onClick={() => openEditDialog(scheme)} title="Edit">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => openLevelDialog(scheme.id)} title="Add level">
-                      <Plus className="h-4 w-4" />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => openEditDialog(scheme)}
+                      aria-label="Edit scheme"
+                    >
+                      <Edit className="h-3.5 w-3.5" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => void deleteScheme(scheme.id)}
-                      title="Delete"
-                      className="text-destructive hover:text-destructive"
+                      className="h-7 w-7"
+                      onClick={() => openLevelDialog(scheme.id)}
+                      aria-label="Add level"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Plus className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      onClick={() => void deleteScheme(scheme.id)}
+                      aria-label="Delete scheme"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </div>
@@ -563,67 +598,68 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                 <div className="flex flex-wrap gap-1.5">
                   <span className="chip">{scheme.projectCount || 0} projects</span>
                   <span className="chip">{scheme.levels.length} levels</span>
-                  {isAssignedToProject ? (
-                    <span className="chip-accent">Assigned here</span>
-                  ) : null}
+                  {isAssignedToProject ? <span className="chip-accent">Assigned here</span> : null}
                   {!isAssignedToProject && isEffectiveForProject ? (
                     <span className="chip">Inherited here</span>
                   ) : null}
                 </div>
-              </CardHeader>
-              <CardContent>
+
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value={`${scheme.id}-levels`} className="border-none">
-                    <AccordionTrigger className="py-2 text-sm">
-                      Security levels
-                    </AccordionTrigger>
-                    <AccordionContent className="space-y-2 pt-2">
+                    <AccordionTrigger className="py-2 text-sm">Security levels</AccordionTrigger>
+                    <AccordionContent className="pt-2">
                       {scheme.levels.length ? (
-                        scheme.levels.map((level) => (
-                          <div key={level.id} className="rounded-md border border-border p-3 transition-colors duration-200 hover:bg-accent/50">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="space-y-1.5">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium">{level.name}</span>
-                                  {level.isDefault ? (
-                                    <span className="chip">Default</span>
+                        <div className="surface-inset divide-y divide-border/60 rounded-md">
+                          {scheme.levels.map((level) => (
+                            <div key={level.id} className="px-4 py-3 transition-colors duration-150 hover:bg-accent/30">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0 space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="truncate text-sm font-medium">{level.name}</span>
+                                    {level.isDefault ? <span className="chip">Default</span> : null}
+                                  </div>
+                                  {level.description ? (
+                                    <p className="text-xs text-muted-foreground">{level.description}</p>
                                   ) : null}
                                 </div>
-                                {level.description ? (
-                                  <p className="text-xs text-muted-foreground">{level.description}</p>
-                                ) : null}
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openLevelDialog(scheme.id, level)}>
-                                  <Edit className="h-3.5 w-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-destructive hover:text-destructive"
-                                  onClick={() => void deleteLevel(scheme.id, level.id)}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              </div>
-                            </div>
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              {(Array.isArray(level.members) ? level.members : []).map((member, index) => {
-                                const Icon = getMemberIcon(member.memberType);
-
-                                return (
-                                  <span
-                                    key={member.id || `${member.memberType}-${member.memberValue || index}`}
-                                    className="chip gap-1"
+                                <div className="flex shrink-0 items-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() => openLevelDialog(scheme.id, level)}
+                                    aria-label="Edit level"
                                   >
-                                    <Icon className="h-3 w-3" />
-                                    {getMemberLabel(member.memberType, member.memberValue)}
-                                  </span>
-                                );
-                              })}
+                                    <Edit className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-destructive hover:text-destructive"
+                                    onClick={() => void deleteLevel(scheme.id, level.id)}
+                                    aria-label="Delete level"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="mt-2 flex flex-wrap gap-1">
+                                {(Array.isArray(level.members) ? level.members : []).map((member, index) => {
+                                  const Icon = getMemberIcon(member.memberType);
+                                  return (
+                                    <span
+                                      key={member.id || `${member.memberType}-${member.memberValue || index}`}
+                                      className="chip gap-1"
+                                    >
+                                      <Icon className="h-3 w-3" />
+                                      {getMemberLabel(member.memberType, member.memberValue)}
+                                    </span>
+                                  );
+                                })}
+                              </div>
                             </div>
-                          </div>
-                        ))
+                          ))}
+                        </div>
                       ) : (
                         <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
                           No levels yet. Add the first visibility level for this scheme.
@@ -632,17 +668,11 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
-              </CardContent>
-            </Card>
-          );
-        })}
-
-        {schemes.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-            No security schemes yet. Create one to control issue visibility.
-          </div>
-        ) : null}
-      </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>
@@ -813,6 +843,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                         }))
                       }
                       disabled={levelForm.members.length === 1}
+                      aria-label="Remove member"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

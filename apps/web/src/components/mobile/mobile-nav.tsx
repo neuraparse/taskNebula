@@ -37,9 +37,9 @@ export function MobileNav() {
       {/* Bottom tab bar */}
       <nav
         aria-label="Mobile primary"
-        className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur md:hidden"
+        className="fixed bottom-0 left-0 right-0 z-50 h-14 border-t border-border bg-background/80 backdrop-blur md:hidden"
       >
-        <div className="flex items-center justify-around px-1 py-1">
+        <div className="flex h-full items-center justify-around px-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -49,15 +49,21 @@ export function MobileNav() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex flex-col items-center gap-0.5 rounded-md px-3 py-2 text-[10px] transition-colors duration-200',
+                  'relative flex h-full flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-2 text-[10px] font-medium transition-colors duration-150',
                   isActive
                     ? 'text-primary'
                     : 'text-muted-foreground hover:text-foreground'
                 )}
                 aria-current={isActive ? 'page' : undefined}
               >
-                <Icon className={cn('h-5 w-5', isActive && 'text-primary')} />
+                <Icon className="h-4 w-4" />
                 <span>{item.name}</span>
+                {isActive ? (
+                  <span
+                    aria-hidden="true"
+                    className="absolute bottom-1 h-1 w-1 rounded-full bg-primary"
+                  />
+                ) : null}
               </Link>
             );
           })}

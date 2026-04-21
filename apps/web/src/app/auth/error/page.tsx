@@ -19,16 +19,27 @@ function ErrorContent() {
   const errorMessage = errorMessages[error] || errorMessages.Default;
 
   return (
-    <div className="text-center space-y-6 animate-fade-in">
+    <div className="text-center space-y-5 animate-fade-in">
       <div className="flex justify-center">
-        <div className="rounded-full bg-destructive/10 p-4">
-          <AlertCircle className="h-8 w-8 text-destructive" aria-hidden="true" />
-        </div>
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full border border-accent-rose/20 bg-accent-rose/10 px-2.5 py-0.5 text-[11px] font-medium tracking-tight text-accent-rose"
+          aria-hidden="true"
+        >
+          Error · {error}
+        </span>
       </div>
+
+      <div className="flex justify-center">
+        <AlertCircle className="h-8 w-8 text-destructive" aria-hidden="true" />
+      </div>
+
       <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">Authentication error</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          Authentication error
+        </h1>
         <p className="text-sm text-muted-foreground">{errorMessage}</p>
       </div>
+
       <Button asChild className="w-full" size="lg">
         <Link href="/auth/signin">Try again</Link>
       </Button>
@@ -38,16 +49,21 @@ function ErrorContent() {
 
 export default function AuthErrorPage() {
   return (
-    <div className="relative min-h-screen bg-background overflow-hidden flex items-center justify-center px-4">
-      {/* Aurora background */}
-      <div className="bg-aurora absolute inset-0 pointer-events-none animate-aurora opacity-80" />
+    <div className="relative min-h-dvh grid place-items-center bg-background overflow-hidden px-4">
+      <div
+        aria-hidden="true"
+        className="bg-aurora absolute inset-0 pointer-events-none blur-3xl opacity-60 -z-10"
+      />
 
-      <div className="relative z-10 w-full max-w-sm animate-scale-in">
-        <div className="surface-card p-8 shadow-lg rounded-xl">
+      <div className="relative w-full max-w-sm animate-scale-in">
+        <div className="surface-card rounded-lg p-6 sm:p-8">
           <Suspense
             fallback={
               <div className="flex items-center justify-center py-8">
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+                <div
+                  className="h-5 w-5 animate-spin rounded-full border-2 border-foreground border-t-transparent"
+                  aria-label="Loading"
+                />
               </div>
             }
           >

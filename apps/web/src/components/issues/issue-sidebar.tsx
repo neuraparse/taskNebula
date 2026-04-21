@@ -64,106 +64,94 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
   };
 
   return (
-    <div className="space-y-1">
-      <PropertyRow label="Status">
-        <StatusPicker
-          projectId={issue.projectId}
-          value={issue.statusId}
-          onChange={handleStatusChange}
-          disabled={updateIssue.isPending}
-        />
-      </PropertyRow>
+    <div className="space-y-6">
+      <section className="space-y-3">
+        <span className="kicker">Details</span>
+        <dl className="grid grid-cols-[80px_1fr] gap-y-2 text-sm items-center">
+          <dt className="text-muted-foreground">Status</dt>
+          <dd>
+            <StatusPicker
+              projectId={issue.projectId}
+              value={issue.statusId}
+              onChange={handleStatusChange}
+              disabled={updateIssue.isPending}
+            />
+          </dd>
 
-      <PropertyRow label="Priority">
-        <PriorityPicker
-          value={issue.priority}
-          onChange={handlePriorityChange}
-          disabled={updateIssue.isPending}
-        />
-      </PropertyRow>
+          <dt className="text-muted-foreground">Priority</dt>
+          <dd>
+            <PriorityPicker
+              value={issue.priority}
+              onChange={handlePriorityChange}
+              disabled={updateIssue.isPending}
+            />
+          </dd>
 
-      <PropertyRow label="Assignee">
-        <AssigneePicker
-          organizationId={currentOrganizationId}
-          value={issue.assigneeId || null}
-          onChange={handleAssigneeChange}
-          disabled={updateIssue.isPending}
-        />
-      </PropertyRow>
+          <dt className="text-muted-foreground">Assignee</dt>
+          <dd>
+            <AssigneePicker
+              organizationId={currentOrganizationId}
+              value={issue.assigneeId || null}
+              onChange={handleAssigneeChange}
+              disabled={updateIssue.isPending}
+            />
+          </dd>
 
-      <PropertyRow label="Reporter">
-        <div className="flex items-center gap-2 py-0.5">
-          <Avatar className="h-5 w-5">
-            <AvatarImage src="https://avatar.vercel.sh/reporter" />
-            <AvatarFallback className="text-[9px] font-medium bg-muted">R</AvatarFallback>
-          </Avatar>
-          <span className="text-sm">Reporter</span>
-        </div>
-      </PropertyRow>
+          <dt className="text-muted-foreground">Reporter</dt>
+          <dd className="flex items-center gap-2">
+            <Avatar className="h-5 w-5">
+              <AvatarImage src="https://avatar.vercel.sh/reporter" />
+              <AvatarFallback className="text-[9px] font-medium bg-muted">R</AvatarFallback>
+            </Avatar>
+            <span className="text-foreground">Reporter</span>
+          </dd>
 
-      <PropertyRow label="Labels">
+          <dt className="text-muted-foreground">Estimate</dt>
+          <dd className="text-foreground">
+            {issue.estimate ? `${issue.estimate}h` : <span className="text-muted-foreground">None</span>}
+          </dd>
+
+          <dt className="text-muted-foreground">Due date</dt>
+          <dd className="text-foreground">
+            {issue.dueDate ? (
+              new Date(issue.dueDate).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+              })
+            ) : (
+              <span className="text-muted-foreground">None</span>
+            )}
+          </dd>
+        </dl>
+      </section>
+
+      <section className="space-y-3">
+        <span className="kicker">Labels</span>
         <LabelPicker
           value={issue.labels}
           onChange={handleLabelsChange}
           disabled={updateIssue.isPending}
         />
-      </PropertyRow>
+      </section>
 
-      <PropertyRow label="Estimate">
-        <span className="text-sm">
-          {issue.estimate ? `${issue.estimate}h` : <span className="text-muted-foreground/50">None</span>}
-        </span>
-      </PropertyRow>
-
-      <PropertyRow label="Due date">
-        <span className="text-sm">
-          {issue.dueDate ? (
-            new Date(issue.dueDate).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-            })
-          ) : (
-            <span className="text-muted-foreground/50">None</span>
-          )}
-        </span>
-      </PropertyRow>
-
-      {/* Custom Fields */}
-      <div className="pt-4 mt-4">
+      <section className="space-y-3">
         <IssueCustomFields issueId={issue.id} />
-      </div>
+      </section>
 
-      {/* Watchers */}
-      <div className="pt-4">
+      <section className="space-y-3">
         <WatchersList issueId={issue.id} />
-      </div>
+      </section>
 
-      {/* Metadata */}
-      <div className="pt-4 space-y-1.5">
-        <div className="flex justify-between text-[11px]">
-          <span className="text-muted-foreground/60">Created</span>
-          <span className="text-muted-foreground">{formatDate(issue.createdAt)}</span>
+      <section className="space-y-1 pt-2 border-t border-border">
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>Created</span>
+          <span>{formatDate(issue.createdAt)}</span>
         </div>
-        <div className="flex justify-between text-[11px]">
-          <span className="text-muted-foreground/60">Updated</span>
-          <span className="text-muted-foreground">{formatDate(issue.updatedAt)}</span>
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>Updated</span>
+          <span>{formatDate(issue.updatedAt)}</span>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function PropertyRow({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center gap-3 py-2 min-h-[38px]">
-      <span className="text-xs text-muted-foreground shrink-0 w-[80px]">{label}</span>
-      <div className="flex-1">{children}</div>
+      </section>
     </div>
   );
 }

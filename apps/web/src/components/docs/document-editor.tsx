@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { type ComponentType, type KeyboardEvent, type ReactNode, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { EditorContent, useEditor, type Editor } from '@tiptap/react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -931,9 +930,9 @@ export function DocumentEditor({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-transparent">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
       {canEdit && editor && (
-        <div className="shrink-0 border-b border-border bg-card px-4 py-2">
+        <div className="shrink-0 border-b border-border bg-background px-4 py-1.5">
           <div className="flex flex-wrap items-center gap-0.5">
             <MenuBarButton
               onClick={() => editor.chain().focus().toggleBold().run()}
@@ -1062,52 +1061,52 @@ export function DocumentEditor({
           </div>
         </div>
       )}
-      <div ref={editorScrollRef} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-6 md:px-8 md:py-8">
+      <div ref={editorScrollRef} className="animate-fade-up relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-8 md:px-8 md:py-10">
         {slashMenu.open && (
           <div
-            className="absolute z-50 flex max-h-[440px] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-lg border bg-background shadow-sm"
+            className="surface-card absolute z-50 flex max-h-[440px] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden shadow-md"
             style={{ left: slashMenuPosition.left, top: slashMenuPosition.top }}
           >
-            <div className="shrink-0 border-b px-3 py-2.5">
-              <div className="flex items-center gap-2 rounded-md border bg-transparent px-2.5">
+            <div className="shrink-0 border-b border-border px-3 py-2">
+              <div className="flex items-center gap-2">
                 <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <input
                   value={slashSearch}
                   onChange={(event) => setSlashSearch(event.target.value)}
                   onKeyDown={handleSlashSearchKeyDown}
-                  placeholder="Search blocks..."
-                  className="h-9 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                  placeholder="Search blocks"
+                  className="h-8 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                 />
               </div>
             </div>
-            <div ref={slashMenuListRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-1.5">
+            <div ref={slashMenuListRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1.5 py-1.5">
               {groupedSlashCommands.length > 0 ? (
                 groupedSlashCommands.map((group) => (
                   <div key={group.id} className="pb-1.5 last:pb-0">
-                    <div className="px-2.5 pb-1 pt-2 text-[11px] font-medium text-muted-foreground">
+                    <div className="px-3 pb-1 pt-2 text-[11px] font-medium text-muted-foreground">
                       {group.label}
                     </div>
                     <div className="space-y-0.5">
                       {group.commands.map((command) => {
                         const index = filteredSlashCommands.findIndex((candidate) => candidate.id === command.id);
+                        const isSelected = index === selectedSlashIndex;
 
                         return (
                           <button
                             key={command.id}
                             type="button"
                             data-slash-index={index}
+                            data-selected={isSelected || undefined}
                             className={cn(
-                              'flex w-full items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors duration-150 hover:bg-accent/50',
-                              index === selectedSlashIndex && 'bg-primary/10 text-primary'
+                              'flex w-full items-start gap-2.5 rounded-sm px-3 py-1.5 text-left text-sm transition-colors duration-150 hover:bg-accent/60',
+                              isSelected && 'bg-primary/10 text-primary'
                             )}
                             onMouseDown={(event) => {
                               event.preventDefault();
                               applySlashCommand(command);
                             }}
                           >
-                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-transparent text-muted-foreground">
-                              <command.icon className="h-3.5 w-3.5" />
-                            </div>
+                            <command.icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                             <div className="min-w-0 flex-1">
                               <div className="truncate text-sm font-medium">{command.title}</div>
                               <div className="truncate text-xs text-muted-foreground">{command.description}</div>
@@ -1120,73 +1119,66 @@ export function DocumentEditor({
                 ))
               ) : (
                 <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-                  No matching blocks found.
+                  No matching blocks.
                 </div>
               )}
             </div>
           </div>
         )}
 
-        <div className="mx-auto w-full max-w-[92rem]">
-          <div className="relative overflow-hidden rounded-[28px] border border-border bg-background/95 px-5 py-6 shadow-[0_30px_90px_-48px_rgba(0,0,0,0.65)] md:px-8 md:py-8">
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-muted/[0.14] to-transparent" />
+        <div className="mx-auto w-full max-w-3xl">
+          {page.share?.public?.enabled && (
+            <div className="mb-6 flex justify-center">
+              <span className="chip-accent">
+                <Globe2 className="h-3 w-3" />
+                This page is public
+              </span>
+            </div>
+          )}
 
-            <div className="relative mx-auto w-full max-w-[62rem]">
-              <div className="rounded-[22px] border border-border bg-muted/[0.04] px-4 py-4 md:px-5">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    {breadcrumbPages.length > 0 && (
-                      <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        {breadcrumbPages.map((breadcrumb, index) => (
-                          <div key={breadcrumb.id} className="flex items-center gap-2">
-                            {index > 0 && <span className="text-muted-foreground/50">/</span>}
-                            <Link
-                              href={createDocumentAppHref({
-                                id: breadcrumb.id,
-                                spaceId: breadcrumb.spaceId,
-                                projectId: breadcrumb.projectId,
-                              })}
-                              className="inline-flex items-center gap-2 rounded-full border border-border bg-background/80 px-2.5 py-1 transition-colors duration-150 hover:bg-accent/50"
-                            >
-                              <DocumentIcon icon={breadcrumb.icon} className="h-5 w-5 rounded-md border-0 bg-transparent text-[11px] shadow-none" />
-                              <span className="max-w-[180px] truncate">{breadcrumb.title}</span>
-                            </Link>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <Badge variant="outline" className="rounded-full border-border bg-background/70 px-2.5 py-1 font-normal">
-                        {documentScopeLabel}
-                      </Badge>
-                      <Badge variant="outline" className="rounded-full border-border bg-background/70 px-2.5 py-1 font-normal">
-                        <StatusIcon className={cn('mr-1.5 h-3.5 w-3.5', statusMeta.iconClassName)} />
-                        {statusMeta.label}
-                      </Badge>
-                      {page.share?.public?.enabled && (
-                        <Badge variant="outline" className="rounded-full border-border bg-background/70 px-2.5 py-1 font-normal">
-                          <Globe2 className="mr-1.5 h-3.5 w-3.5" />
-                          Public
-                        </Badge>
-                      )}
+          <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0 flex-1 space-y-2">
+              {breadcrumbPages.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                  {breadcrumbPages.map((breadcrumb, index) => (
+                    <div key={breadcrumb.id} className="flex items-center gap-1.5">
+                      {index > 0 && <span className="text-muted-foreground/50">/</span>}
+                      <Link
+                        href={createDocumentAppHref({
+                          id: breadcrumb.id,
+                          spaceId: breadcrumb.spaceId,
+                          projectId: breadcrumb.projectId,
+                        })}
+                        className="inline-flex items-center gap-1.5 rounded-sm px-1 py-0.5 transition-colors duration-150 hover:bg-accent/60 hover:text-foreground"
+                      >
+                        <span className="max-w-[180px] truncate">{breadcrumb.title}</span>
+                      </Link>
                     </div>
-                  </div>
+                  ))}
+                </div>
+              ) : (
+                <span className="kicker">{documentScopeLabel}</span>
+              )}
+            </div>
 
-                  <div className="flex items-center gap-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-9 rounded-xl bg-background/70 px-3"
-                          disabled={isUpdatingShare}
-                        >
-                          <Share2 className="mr-2 h-4 w-4" />
-                          Share
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-64">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <StatusIcon className={cn('h-3.5 w-3.5', statusMeta.iconClassName)} />
+                <span>{statusMeta.label}</span>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8"
+                    disabled={isUpdatingShare}
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64">
                         <DropdownMenuItem onClick={() => void sharePage()}>
                           <Share2 className="mr-2 h-4 w-4" />
                           Share page
@@ -1290,168 +1282,147 @@ export function DocumentEditor({
                       </DropdownMenuContent>
                     </DropdownMenu>
 
-                    {onCreateChild && canEdit && (
-                      <Button variant="outline" size="sm" className="h-9 rounded-xl bg-background/70 px-3" onClick={onCreateChild}>
-                        <FilePlus2 className="mr-2 h-4 w-4" />
-                        Sub-note
-                      </Button>
-                    )}
-                    {saveState === 'error' && canEdit && (
-                      <Button size="sm" className="h-9 rounded-xl px-3" onClick={retrySaveNow} disabled={isSaving || !title.trim()}>
-                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                        Retry Save
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-8">
-                {canEdit ? (
-                  <Input
-                    value={title}
-                    onChange={(event) => {
-                      const nextTitle = event.target.value;
-                      setTitle(nextTitle);
-                      titleRef.current = nextTitle;
-
-                      const snapshot = serializeDocumentSnapshot(nextTitle, iconRef.current, editor?.getJSON() || page.contentJson);
-                      const dirty = snapshot !== lastServerSnapshotRef.current;
-                      setIsDirty(dirty);
-                      setSaveState(dirty ? 'dirty' : 'saved');
-                      setAutosaveVersion((version) => version + 1);
-                    }}
-                    className="h-auto border-none bg-transparent px-0 text-[2.85rem] font-semibold leading-[0.98] tracking-[-0.04em] shadow-none focus-visible:ring-0 md:text-[3.2rem]"
-                    placeholder="Untitled page"
-                  />
-                ) : (
-                  <h1 className="text-[2.85rem] font-semibold leading-[0.98] tracking-[-0.04em] md:text-[3.2rem]">{page.title}</h1>
-                )}
-              </div>
-
-              {saveError && (
-                <div className="mt-5 flex items-start gap-2 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                  <span>{saveError}</span>
-                </div>
+              {onCreateChild && canEdit && (
+                <Button variant="outline" size="sm" className="h-8" onClick={onCreateChild}>
+                  <FilePlus2 className="mr-2 h-4 w-4" />
+                  Sub-note
+                </Button>
               )}
-
-              <div className="mt-8 rounded-[24px] border border-border bg-background/80 px-5 py-5 shadow-[0_20px_50px_-38px_rgba(0,0,0,0.75)] md:px-7 md:py-7">
-                <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
-                  <div>
-                    <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Page Body</div>
-                    <div className="mt-1 text-sm text-muted-foreground">
-                      {canEdit ? 'Use / for blocks, templates, media, and structured content.' : 'Read-only document content.'}
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="rounded-full border-border bg-muted/[0.04] px-2.5 py-1 font-normal text-muted-foreground">
-                    {canEdit ? 'Editing enabled' : 'Read only'}
-                  </Badge>
-                </div>
-
-                <EditorContent editor={editor} />
-              </div>
+              {saveState === 'error' && canEdit && (
+                <Button size="sm" className="h-8" onClick={retrySaveNow} disabled={isSaving || !title.trim()}>
+                  {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                  Retry save
+                </Button>
+              )}
             </div>
+          </div>
 
-            <input
-              ref={imageInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(event) => {
-                void handleImageUpload(event.target.files?.[0] || null);
-                event.currentTarget.value = '';
-              }}
-            />
+          <div>
+            {canEdit ? (
+              <Input
+                value={title}
+                onChange={(event) => {
+                  const nextTitle = event.target.value;
+                  setTitle(nextTitle);
+                  titleRef.current = nextTitle;
 
-            {(childPages.length > 0 || (canEdit && onCreateChild)) && (
-              <div className="mx-auto mt-12 w-full max-w-[62rem] rounded-[24px] border border-border bg-muted/[0.03] px-5 py-6 md:px-6">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-sm font-semibold tracking-tight">
-                    <FolderTree className="h-4 w-4 text-primary" />
-                    <span>Sub-notes</span>
-                    <Badge variant="outline" className="rounded-full bg-background/70">
-                      {childPages.length}
-                    </Badge>
-                  </div>
-                  {canEdit && onCreateChild && (
-                    <Button variant="outline" size="sm" className="h-9 rounded-xl bg-background/70 px-3" onClick={onCreateChild}>
-                      <FilePlus2 className="mr-2 h-4 w-4" />
-                      Add Sub-note
-                    </Button>
-                  )}
-                </div>
-
-                {childPages.length > 0 ? (
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    {childPages.map((childPage) => (
-                      <Link
-                        key={childPage.id}
-                        href={createDocumentAppHref({
-                          id: childPage.id,
-                          spaceId: childPage.spaceId,
-                          projectId: childPage.projectId,
-                        })}
-                        className="group rounded-2xl border border-border bg-background/75 px-4 py-3 transition-colors duration-150 hover:bg-accent/50"
-                      >
-                        <div className="flex items-start gap-3">
-                          <DocumentIcon icon={childPage.icon} className="h-8 w-8 rounded-lg text-sm" />
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate text-sm font-semibold tracking-tight">{childPage.title}</div>
-                            <div className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                              {childPage.excerpt || `Updated ${new Date(childPage.updatedAt).toLocaleDateString()}`}
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="mt-4 rounded-xl border border-dashed border-border bg-background/50 px-4 py-4 text-sm text-muted-foreground">
-                    No sub-notes yet.
-                  </div>
-                )}
-              </div>
+                  const snapshot = serializeDocumentSnapshot(nextTitle, iconRef.current, editor?.getJSON() || page.contentJson);
+                  const dirty = snapshot !== lastServerSnapshotRef.current;
+                  setIsDirty(dirty);
+                  setSaveState(dirty ? 'dirty' : 'saved');
+                  setAutosaveVersion((version) => version + 1);
+                }}
+                className="h-auto border-none bg-transparent px-0 text-3xl font-semibold tracking-tight text-foreground shadow-none focus-visible:ring-0"
+                placeholder="Untitled page"
+              />
+            ) : (
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground">{page.title}</h1>
             )}
           </div>
+
+          {saveError && (
+            <div className="mt-4 flex items-start gap-2 rounded-md border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{saveError}</span>
+            </div>
+          )}
+
+          <div className="mt-6">
+            <EditorContent editor={editor} />
+          </div>
+
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(event) => {
+              void handleImageUpload(event.target.files?.[0] || null);
+              event.currentTarget.value = '';
+            }}
+          />
+
+          {(childPages.length > 0 || (canEdit && onCreateChild)) && (
+            <div className="mt-12">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-semibold tracking-tight">
+                  <FolderTree className="h-4 w-4 text-muted-foreground" />
+                  <span>Sub-notes</span>
+                  <span className="text-xs font-normal text-muted-foreground">{childPages.length}</span>
+                </div>
+                {canEdit && onCreateChild && (
+                  <Button variant="outline" size="sm" className="h-8" onClick={onCreateChild}>
+                    <FilePlus2 className="mr-2 h-4 w-4" />
+                    Add
+                  </Button>
+                )}
+              </div>
+
+              {childPages.length > 0 ? (
+                <div className="grid gap-3 md:grid-cols-2">
+                  {childPages.map((childPage) => (
+                    <Link
+                      key={childPage.id}
+                      href={createDocumentAppHref({
+                        id: childPage.id,
+                        spaceId: childPage.spaceId,
+                        projectId: childPage.projectId,
+                      })}
+                      className="surface-card surface-card-hover p-5"
+                    >
+                      <div className="flex items-start gap-3">
+                        <DocumentIcon icon={childPage.icon} className="h-8 w-8 rounded-sm text-sm" />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-semibold tracking-tight">{childPage.title}</div>
+                          <div className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                            {childPage.excerpt || `Updated ${new Date(childPage.updatedAt).toLocaleDateString()}`}
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No sub-notes yet.</p>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
-        <DialogContent className="rounded-none sm:max-w-lg sm:rounded-none">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Link a page</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <Input
-              placeholder="Search pages..."
+              placeholder="Search pages"
               value={linkSearch}
               onChange={(event) => setLinkSearch(event.target.value)}
               autoFocus
             />
-            <div className="max-h-[360px] space-y-1 overflow-y-auto">
+            <div className="max-h-[360px] space-y-0.5 overflow-y-auto">
               {filteredPages.length > 0 ? (
                 filteredPages.map((linkedPage) => (
                   <button
                     key={linkedPage.id}
-                    className="flex w-full items-start gap-3 rounded-lg border bg-transparent px-3 py-2.5 text-left transition-colors duration-150 hover:bg-accent/50"
+                    className="flex w-full items-start gap-2.5 rounded-sm px-3 py-1.5 text-left text-sm transition-colors duration-150 hover:bg-accent/60"
                     onClick={() => {
                       insertInternalLink(linkedPage);
                       setIsLinkDialogOpen(false);
                     }}
                     type="button"
                   >
-                    <DocumentIcon icon={linkedPage.icon} className="h-8 w-8 rounded-md text-xs" />
-                    <div className="min-w-0">
+                    <DocumentIcon icon={linkedPage.icon} className="h-7 w-7 rounded-sm text-xs" />
+                    <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium">{linkedPage.title}</div>
                       <div className="truncate text-xs text-muted-foreground">{linkedPage.slug}</div>
                     </div>
                   </button>
                 ))
               ) : (
-                <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
-                  No matching pages found.
-                </div>
+                <p className="px-3 py-6 text-center text-sm text-muted-foreground">No matching pages.</p>
               )}
             </div>
           </div>
@@ -1620,7 +1591,7 @@ function MenuBarButton({
       aria-label={ariaLabel}
       title={title}
       className={cn(
-        'inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+        'inline-flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground transition-colors duration-150 hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
         isActive && 'bg-primary/10 text-primary'
       )}
     >

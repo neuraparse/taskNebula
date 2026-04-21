@@ -27,7 +27,11 @@ export function PresenceAvatars({ issueId }: PresenceAvatarsProps) {
 
   return (
     <TooltipProvider>
-      <div className="flex items-center" role="group" aria-label={`${count} ${count === 1 ? 'person' : 'people'} viewing`}>
+      <div
+        className="flex items-center"
+        role="group"
+        aria-label={`${count} ${count === 1 ? 'person' : 'people'} viewing`}
+      >
         <div className="flex items-center">
           {visible.map((user) => {
             const initials = user.userName
@@ -39,27 +43,37 @@ export function PresenceAvatars({ issueId }: PresenceAvatarsProps) {
               .toUpperCase();
 
             const isSpeaking = Boolean((user as { isSpeaking?: boolean }).isSpeaking);
-            const isActive = Boolean((user as { isActive?: boolean }).isActive) || isSpeaking;
+            const isActive =
+              Boolean((user as { isActive?: boolean }).isActive) || isSpeaking;
 
             return (
               <Tooltip key={user.userId}>
                 <TooltipTrigger asChild>
-                  <Avatar
-                    className={cn(
-                      '-ml-2 first:ml-0 h-6 w-6 ring-2 ring-background transition-all duration-200',
-                      isActive || isSpeaking
-                        ? 'ring-accent-emerald shadow-glow'
-                        : 'ring-background'
-                    )}
-                  >
-                    <AvatarImage
-                      src={`https://avatar.vercel.sh/${user.userName}`}
-                      alt={user.userName}
+                  <span className="relative -ml-1.5 first:ml-0 inline-flex">
+                    <Avatar
+                      className={cn(
+                        'h-6 w-6 ring-2 ring-background transition-colors duration-200',
+                        isActive || isSpeaking
+                          ? 'ring-accent-emerald/70'
+                          : 'ring-background'
+                      )}
+                    >
+                      <AvatarImage
+                        src={`https://avatar.vercel.sh/${user.userName}`}
+                        alt={user.userName}
+                      />
+                      <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span
+                      className={cn(
+                        'status-dot absolute -bottom-0.5 -right-0.5 ring-2 ring-background',
+                        isSpeaking || isActive ? 'status-live' : 'status-idle'
+                      )}
+                      aria-hidden
                     />
-                    <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
+                  </span>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">
                   <p className="text-xs">
@@ -75,7 +89,7 @@ export function PresenceAvatars({ issueId }: PresenceAvatarsProps) {
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="-ml-2 flex h-6 w-6 items-center justify-center rounded-full ring-2 ring-background bg-muted text-[10px] font-semibold text-muted-foreground cursor-default select-none"
+                  className="-ml-1.5 flex h-6 w-6 items-center justify-center rounded-full ring-2 ring-background bg-muted text-[10px] font-semibold text-muted-foreground cursor-default select-none"
                   aria-label={`${overflow} more`}
                 >
                   +{overflow}

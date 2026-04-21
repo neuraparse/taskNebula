@@ -67,7 +67,10 @@ export function SignInForm() {
   if (checkingSetup) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+        <div
+          className="h-5 w-5 animate-spin rounded-full border-2 border-foreground border-t-transparent"
+          aria-label="Loading"
+        />
       </div>
     );
   }
@@ -75,9 +78,9 @@ export function SignInForm() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="text-center space-y-1">
+      <div className="text-center space-y-1.5">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Welcome back</h1>
-        <p className="text-sm text-muted-foreground">Sign in to your account to continue</p>
+        <p className="text-sm text-muted-foreground">Sign in to continue</p>
       </div>
 
       {/* OAuth Buttons */}
@@ -168,7 +171,7 @@ export function SignInForm() {
         </div>
 
         {error && (
-          <p className="text-sm text-destructive">{error}</p>
+          <p className="text-sm text-destructive" role="alert">{error}</p>
         )}
 
         <Button type="submit" className="w-full" size="lg" disabled={loading}>

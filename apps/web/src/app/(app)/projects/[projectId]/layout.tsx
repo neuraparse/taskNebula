@@ -2,9 +2,9 @@
 
 import { use } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
+import { usePathname, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useProjectPermissions } from '@/lib/hooks/use-project-permissions';
 import {
   PanelsTopLeft,
@@ -34,9 +34,19 @@ const tabs = [
   { name: 'Settings', href: 'settings', icon: Settings },
 ];
 
+function getInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0] ?? '')
+    .join('')
+    .toUpperCase();
+}
+
 export default function ProjectLayout({ children, params }: ProjectLayoutProps) {
   const { projectId } = use(params);
   const pathname = usePathname();
+  const router = useRouter();
   const { permissions } = useProjectPermissions(projectId);
 
   const { data: project } = useQuery({
@@ -63,36 +73,62 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
     if (tab.href === 'chat') {
       return permissions.canBrowseChat || currentTab === 'chat';
     }
-
     return true;
   });
+
+  const activeTabValue = visibleTabs.some((t) => t.href === currentTab)
+    ? currentTab
+    : 'views';
+
+  const projectName = project?.name || projectId;
+  const initials = getInitials(projectName);
 
   return (
     <div className="flex h-full flex-col">
       {/* Project Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0">
-        <div className="px-6 pt-3 pb-0">
-          {/* Breadcrumb + Sprint */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-1.5 text-sm">
-              <Link href="/projects" className="text-muted-foreground hover:text-foreground transition-colors">
-                Projects
-              </Link>
-              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-              <span className="font-medium text-foreground">
-                {project?.name || projectId}
+      <div className="shrink-0 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="px-6 pt-4 pb-0">
+          {/* Breadcrumb */}
+          <div className="mb-3 flex items-center gap-1.5 text-sm">
+            <Link
+              href="/projects"
+              className="text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Projects
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+            <span className="font-medium text-foreground">{projectName}</span>
+          </div>
+
+          {/* Identity + right action row */}
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 font-mono text-sm font-semibold text-primary">
+                {initials}
               </span>
-              {project?.key && (
-                <span className="ml-1 rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
-                  {project.key}
-                </span>
-              )}
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h1 className="truncate text-2xl font-semibold tracking-tight">
+                    {projectName}
+                  </h1>
+                  {project?.key && (
+                    <span className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+                      {project.key}
+                    </span>
+                  )}
+                </div>
+                {project?.description ? (
+                  <p className="truncate text-sm text-muted-foreground">
+                    {project.description}
+                  </p>
+                ) : null}
+              </div>
             </div>
 
             {activeSprint && (
               <Link
                 href={`/projects/${projectId}/sprints/${activeSprint.id}`}
-                className="group flex items-center gap-2 text-xs"
+                className="group flex shrink-0 items-center gap-2 text-xs"
               >
                 <div className="flex items-center gap-1.5 rounded-sm bg-accent-emerald/10 px-2.5 py-1 text-accent-emerald transition-colors group-hover:bg-accent-emerald/20">
                   <span className="status-dot status-live" />
@@ -105,37 +141,32 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
             )}
           </div>
 
-          {/* Tab Navigation */}
-          <nav aria-label="Project sections" className="flex gap-0 -mb-px">
-            {visibleTabs.map((tab) => {
-              const isActive = currentTab === tab.href ||
-                (tab.href === 'views' && currentTab === projectId);
-              const Icon = tab.icon;
-
-              return (
-                <Link
-                  key={tab.href}
-                  href={`/projects/${projectId}/${tab.href}`}
-                  className={cn(
-                    'flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
-                    isActive
-                      ? 'border-primary text-foreground'
-                      : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {tab.name}
-                </Link>
-              );
-            })}
-          </nav>
+          {/* Tab Navigation (uses shared <Tabs> primitive) */}
+          <Tabs
+            value={activeTabValue}
+            onValueChange={(value) => router.push(`/projects/${projectId}/${value}`)}
+          >
+            <TabsList className="gap-0" aria-label="Project sections">
+              {visibleTabs.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <TabsTrigger
+                    key={tab.href}
+                    value={tab.href}
+                    className="gap-1.5 px-4 py-2.5"
+                  >
+                    <Icon className="h-4 w-4" />
+                    {tab.name}
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+          </Tabs>
         </div>
       </div>
 
       {/* Page Content */}
-      <div className="flex-1 overflow-hidden">
-        {children}
-      </div>
+      <div className="flex-1 overflow-hidden">{children}</div>
     </div>
   );
 }

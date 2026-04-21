@@ -14,7 +14,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,22 +44,23 @@ import { useDeleteFeatureFlag, useFeatureFlags, useUpdateFeatureFlag } from '@/l
 import { cn } from '@/lib/utils';
 import {
   Activity,
+  BarChart3,
   Bot,
   Building2,
-  Clock3,
+  ChevronDown,
+  ChevronRight,
   Crown,
   Edit,
   Flag,
+  Gauge,
   MoreVertical,
+  Radio,
+  Scroll,
   Search,
   Shield,
   Trash2,
   Users,
-  Radio,
 } from 'lucide-react';
-
-const adminTabTriggerClass =
-  'rounded-md border border-transparent px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground data-[state=active]:border-border data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs';
 
 type StatsResponse = {
   overview?: {
@@ -103,26 +112,58 @@ type AdminAuditLog = {
   user: { id: string | null; name: string | null; email: string | null; image?: string | null } | null;
 };
 
+type NavItem = {
+  key: string;
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+};
+
+const NAV: NavItem[] = [
+  { key: 'overview', label: 'Overview', icon: Gauge },
+  { key: 'organizations', label: 'Organizations', icon: Building2 },
+  { key: 'users', label: 'Users', icon: Users },
+  { key: 'feature-flags', label: 'Feature flags', icon: Flag },
+  { key: 'agents', label: 'Agent control', icon: Bot },
+  { key: 'realtime', label: 'Realtime health', icon: Radio },
+  { key: 'audit', label: 'Audit logs', icon: Scroll },
+];
+
+const DEFAULT_CHIP = 'bg-muted text-muted-foreground border-border';
+
 const orgStatusChip: Record<string, string> = {
-  active: 'bg-accent-emerald/10 text-accent-emerald border border-accent-emerald/20',
-  trial: 'bg-accent-amber/10 text-accent-amber border border-accent-amber/20',
-  suspended: 'bg-destructive/10 text-destructive border border-destructive/20',
+  active: 'bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20',
+  trial: 'bg-accent-amber/10 text-accent-amber border-accent-amber/20',
+  suspended: 'bg-accent-rose/10 text-accent-rose border-accent-rose/20',
+};
+
+const userStatusChip: Record<string, string> = {
+  active: 'bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20',
+  invited: 'bg-accent-amber/10 text-accent-amber border-accent-amber/20',
+  inactive: 'bg-muted text-muted-foreground border-border',
+  suspended: 'bg-accent-rose/10 text-accent-rose border-accent-rose/20',
+};
+
+const auditSeverity = (action: string): 'critical' | 'high' | 'medium' | 'low' => {
+  if (/delete|revoke|suspend|purge/i.test(action)) return 'critical';
+  if (/update|change|rotate|disable|enable/i.test(action)) return 'high';
+  if (/create|invite|add/i.test(action)) return 'medium';
+  return 'low';
 };
 
 export function AdminDashboardClient() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const validTabs = useMemo(
-    () => ['overview', 'organizations', 'users', 'feature-flags', 'agents', 'realtime', 'audit'],
-    []
-  );
+  const validTabs = useMemo(() => NAV.map((item) => item.key), []);
   const requestedTab = searchParams.get('tab');
   const initialTab = requestedTab && validTabs.includes(requestedTab) ? requestedTab : 'overview';
   const [activeTab, setActiveTab] = useState(initialTab);
   const [editOrgId, setEditOrgId] = useState<string | null>(null);
   const [editUserId, setEditUserId] = useState<string | null>(null);
   const [editFlagId, setEditFlagId] = useState<string | null>(null);
+  const [deleteOrg, setDeleteOrg] = useState<OrganizationItem | null>(null);
+  const [deleteFlag, setDeleteFlag] = useState<{ id: string; name: string } | null>(null);
+  const [expandedAuditId, setExpandedAuditId] = useState<string | null>(null);
 
   const [orgSearch, setOrgSearch] = useState('');
   const [orgStatus, setOrgStatus] = useState('all');
@@ -223,6 +264,7 @@ export function AdminDashboardClient() {
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
       queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
       toast({ title: 'Organization deleted', description: 'The organization was removed permanently.' });
+      setDeleteOrg(null);
     },
     onError: (mutationError: Error) => {
       toast({
@@ -248,13 +290,13 @@ export function AdminDashboardClient() {
     return matchesSearch && matchesState;
   });
 
-  async function handleToggleFlag(flag: any) {
+  async function handleToggleFlag(flag: any, next: boolean) {
     try {
-      await updateFeatureFlag.mutateAsync({ flagId: flag.id, data: { isEnabled: !flag.isEnabled } });
+      await updateFeatureFlag.mutateAsync({ flagId: flag.id, data: { isEnabled: next } });
       queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
       toast({
-        title: flag.isEnabled ? 'Feature disabled' : 'Feature enabled',
-        description: `${flag.name} is now ${flag.isEnabled ? 'disabled' : 'enabled'}.`,
+        title: next ? 'Feature enabled' : 'Feature disabled',
+        description: `${flag.name} is now ${next ? 'enabled' : 'disabled'}.`,
       });
     } catch (error) {
       toast({
@@ -264,6 +306,24 @@ export function AdminDashboardClient() {
       });
     }
   }
+
+  async function handleConfirmDeleteFlag() {
+    if (!deleteFlag) return;
+    try {
+      await deleteFeatureFlag.mutateAsync(deleteFlag.id);
+      queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
+      toast({ title: 'Feature flag deleted', description: `${deleteFlag.name} was removed.` });
+      setDeleteFlag(null);
+    } catch (error) {
+      toast({
+        title: 'Failed to delete feature flag',
+        description: error instanceof Error ? error.message : 'Failed to delete feature flag',
+        variant: 'destructive',
+      });
+    }
+  }
+
+  const currentNav = NAV.find((item) => item.key === activeTab) ?? NAV[0]!;
 
   return (
     <>
@@ -289,513 +349,763 @@ export function AdminDashboardClient() {
         />
       ) : null}
 
-      <div className="animate-fade-in space-y-6 p-6">
-        {/* Header */}
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card">
-              <Shield className="h-4 w-4 text-muted-foreground" />
+      <ConfirmDialog
+        open={!!deleteOrg}
+        onOpenChange={(open) => !open && setDeleteOrg(null)}
+        title="Delete organization?"
+        description={
+          deleteOrg
+            ? `"${deleteOrg.name}" and all associated data will be removed permanently. This cannot be undone.`
+            : ''
+        }
+        confirmLabel="Delete organization"
+        pending={deleteOrgMutation.isPending}
+        onConfirm={() => deleteOrg && deleteOrgMutation.mutate(deleteOrg.id)}
+      />
+
+      <ConfirmDialog
+        open={!!deleteFlag}
+        onOpenChange={(open) => !open && setDeleteFlag(null)}
+        title="Delete feature flag?"
+        description={
+          deleteFlag
+            ? `"${deleteFlag.name}" will be removed. Any rollouts referencing it will revert.`
+            : ''
+        }
+        confirmLabel="Delete flag"
+        pending={deleteFeatureFlag.isPending}
+        onConfirm={handleConfirmDeleteFlag}
+      />
+
+      <div className="flex min-h-[calc(100vh-4rem)]">
+        {/* Sidebar */}
+        <aside className="hidden w-56 shrink-0 border-r border-border lg:block">
+          <div className="sticky top-0 space-y-4 p-4">
+            <div className="flex items-center gap-2 px-2 py-1">
+              <Shield className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold tracking-tight">Admin</span>
             </div>
-            <div>
-              <h1 className="text-xl font-semibold tracking-tight">Admin</h1>
-              <p className="text-xs text-muted-foreground">
-                System-wide organizations, users, rollout flags, and audit activity.
-              </p>
-            </div>
+            <nav className="space-y-0.5">
+              {NAV.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.key;
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => handleTabChange(item.key)}
+                    className={cn(
+                      'group flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors duration-200 ease-smooth',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                      isActive
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="truncate">{item.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleTabChange('audit')}
-            className={cn(activeTab === 'audit' && 'bg-accent/50')}
-          >
-            <Activity className="mr-1.5 h-4 w-4" />
-            Audit log
-          </Button>
+        </aside>
+
+        <div className="flex-1 animate-fade-up space-y-6 p-6">
+          {/* Mobile nav */}
+          <div className="lg:hidden">
+            <Select value={activeTab} onValueChange={handleTabChange}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {NAV.map((item) => (
+                  <SelectItem key={item.key} value={item.key}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Header */}
+          <div className="flex flex-col gap-1">
+            <span className="kicker">Admin</span>
+            <h1 className="text-2xl font-semibold tracking-tight text-balance">{currentNav.label}</h1>
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              System-wide organizations, users, rollout flags, agent control, and audit activity.
+            </p>
+          </div>
+
+          {/* Section body */}
+          {activeTab === 'overview' && (
+            <OverviewSection stats={stats} loading={statsLoading} />
+          )}
+
+          {activeTab === 'organizations' && (
+            <OrganizationsSection
+              orgsData={orgsData}
+              orgsLoading={orgsLoading}
+              orgsError={orgsError}
+              orgSearch={orgSearch}
+              setOrgSearch={setOrgSearch}
+              orgStatus={orgStatus}
+              setOrgStatus={setOrgStatus}
+              orgPlan={orgPlan}
+              setOrgPlan={setOrgPlan}
+              onEdit={setEditOrgId}
+              onDelete={setDeleteOrg}
+            />
+          )}
+
+          {activeTab === 'users' && (
+            <UsersSection
+              usersData={usersData}
+              usersLoading={usersLoading}
+              usersError={usersError}
+              userSearch={userSearch}
+              setUserSearch={setUserSearch}
+              userStatus={userStatus}
+              setUserStatus={setUserStatus}
+              onEdit={setEditUserId}
+            />
+          )}
+
+          {activeTab === 'feature-flags' && (
+            <FeatureFlagsSection
+              flags={filteredFlags}
+              loading={flagsLoading}
+              error={flagsError}
+              search={flagSearch}
+              setSearch={setFlagSearch}
+              state={flagState}
+              setState={setFlagState}
+              onEdit={setEditFlagId}
+              onDelete={(flag) => setDeleteFlag({ id: flag.id, name: flag.name })}
+              onToggle={handleToggleFlag}
+              updatePending={updateFeatureFlag.isPending}
+            />
+          )}
+
+          {activeTab === 'agents' && <AgentOpsPanel />}
+
+          {activeTab === 'realtime' && <RealtimeHealthPanel />}
+
+          {activeTab === 'audit' && (
+            <AuditSection
+              logs={auditData?.auditLogs || []}
+              loading={auditLoading}
+              error={auditError}
+              search={auditSearch}
+              setSearch={setAuditSearch}
+              resourceType={auditResourceType}
+              setResourceType={setAuditResourceType}
+              expandedId={expandedAuditId}
+              setExpandedId={setExpandedAuditId}
+            />
+          )}
         </div>
-
-        {/* Stats row */}
-        <div className="stagger grid gap-3 md:grid-cols-3 xl:grid-cols-6">
-          <StatTile title="Orgs" value={statsLoading ? '—' : stats?.overview?.totalOrganizations ?? 0} icon={Building2} />
-          <StatTile title="Users" value={statsLoading ? '—' : stats?.overview?.totalUsers ?? 0} icon={Users} />
-          <StatTile title="Active" value={statsLoading ? '—' : stats?.overview?.activeUsers ?? 0} icon={Activity} />
-          <StatTile title="Admins" value={statsLoading ? '—' : stats?.overview?.superAdmins ?? 0} icon={Crown} />
-          <StatTile title="Projects" value={statsLoading ? '—' : stats?.overview?.totalProjects ?? 0} icon={Building2} />
-          <StatTile title="Issues" value={statsLoading ? '—' : stats?.overview?.totalIssues ?? 0} icon={Flag} />
-        </div>
-
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="h-auto w-full justify-start gap-1 rounded-lg border border-border bg-card/40 p-1">
-            <TabsTrigger value="overview" className={adminTabTriggerClass}>Overview</TabsTrigger>
-            <TabsTrigger value="organizations" className={adminTabTriggerClass}>Organizations</TabsTrigger>
-            <TabsTrigger value="users" className={adminTabTriggerClass}>Users</TabsTrigger>
-            <TabsTrigger value="feature-flags" className={adminTabTriggerClass}>Feature Flags</TabsTrigger>
-            <TabsTrigger value="agents" className={adminTabTriggerClass}>
-              <Bot className="mr-1.5 h-4 w-4" />
-              AI Ops
-            </TabsTrigger>
-            <TabsTrigger value="realtime" className={adminTabTriggerClass}>
-              <Radio className="mr-1.5 h-4 w-4" />
-              Realtime
-            </TabsTrigger>
-            <TabsTrigger value="audit" className={adminTabTriggerClass}>Audit</TabsTrigger>
-          </TabsList>
-
-          {/* Overview */}
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div className="surface-card p-6 space-y-3">
-                <h3 className="font-semibold">Organization health</h3>
-                <p className="text-xs text-muted-foreground">Breakdown by status and plan.</p>
-                <div className="space-y-2 text-sm">
-                  <MetricRow label="Active" value={stats?.organizations?.byStatus?.active ?? 0} />
-                  <MetricRow label="Trial" value={stats?.organizations?.byStatus?.trial ?? 0} />
-                  <MetricRow label="Suspended" value={stats?.organizations?.byStatus?.suspended ?? 0} />
-                  <div className="border-t border-border pt-2" />
-                  <MetricRow label="Free" value={stats?.organizations?.byPlan?.free ?? 0} />
-                  <MetricRow label="Starter" value={stats?.organizations?.byPlan?.starter ?? 0} />
-                  <MetricRow label="Growth" value={stats?.organizations?.byPlan?.growth ?? 0} />
-                  <MetricRow label="Enterprise" value={stats?.organizations?.byPlan?.enterprise ?? 0} />
-                </div>
-              </div>
-              <div className="surface-card p-6 space-y-3">
-                <h3 className="font-semibold">Last 30 days</h3>
-                <p className="text-xs text-muted-foreground">Growth snapshot across the system.</p>
-                <div className="space-y-2 text-sm">
-                  <MetricRow label="New organizations" value={stats?.growth?.newOrganizations30d ?? 0} />
-                  <MetricRow label="New users" value={stats?.growth?.newUsers30d ?? 0} />
-                  <MetricRow label="Comments" value={stats?.overview?.totalComments ?? 0} />
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* Organizations */}
-          <TabsContent value="organizations" className="space-y-4">
-            <div className="surface-card p-6 space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <span className="kicker">Admin</span>
-                  <h2 className="text-lg font-semibold">Organizations</h2>
-                  <p className="text-xs text-muted-foreground">
-                    {orgsData?.pagination?.total ?? 0} matching workspaces
-                  </p>
-                </div>
-                <CreateOrganizationAdminDialog />
-              </div>
-              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_180px]">
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    className="pl-9"
-                    placeholder="Search organizations"
-                    value={orgSearch}
-                    onChange={(event) => setOrgSearch(event.target.value)}
-                  />
-                </div>
-                <Select value={orgStatus} onValueChange={setOrgStatus}>
-                  <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All statuses</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="trial">Trial</SelectItem>
-                    <SelectItem value="suspended">Suspended</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={orgPlan} onValueChange={setOrgPlan}>
-                  <SelectTrigger><SelectValue placeholder="Plan" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All plans</SelectItem>
-                    <SelectItem value="free">Free</SelectItem>
-                    <SelectItem value="starter">Starter</SelectItem>
-                    <SelectItem value="growth">Growth</SelectItem>
-                    <SelectItem value="enterprise">Enterprise</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {orgsLoading ? (
-                <EmptyState message="Loading organizations..." />
-              ) : orgsError ? (
-                <ErrorState message={orgsError instanceof Error ? orgsError.message : 'Failed to load organizations'} />
-              ) : (orgsData?.organizations || []).length === 0 ? (
-                <EmptyState message="No organizations match the current filters." />
-              ) : (
-                <div className="space-y-px">
-                  {orgsData?.organizations.map((org) => (
-                    <div
-                      key={org.id}
-                      className="flex min-h-[44px] items-start justify-between gap-4 rounded-md px-2 py-3 transition-colors hover:bg-accent/40"
-                    >
-                      <div className="min-w-0 flex-1 space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-medium">{org.name}</span>
-                          <span className="chip font-mono text-[11px]">{org.slug}</span>
-                          <span
-                            className={cn(
-                              'rounded-full px-2 py-0.5 text-[11px] font-medium border capitalize',
-                              orgStatusChip[org.status] ?? orgStatusChip.active
-                            )}
-                          >
-                            {org.status}
-                          </span>
-                          <span className="chip capitalize">{org.plan}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {org.owner?.name || org.owner?.email || 'No owner'}
-                          {' · '}
-                          {org.stats?.members ?? 0} members · {org.stats?.projects ?? 0} projects
-                        </p>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setEditOrgId(org.id)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => {
-                              if (window.confirm(`Delete "${org.name}"? This cannot be undone.`)) {
-                                deleteOrgMutation.mutate(org.id);
-                              }
-                            }}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Users */}
-          <TabsContent value="users" className="space-y-4">
-            <div className="surface-card p-6 space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <span className="kicker">Admin</span>
-                  <h2 className="text-lg font-semibold">Users</h2>
-                  <p className="text-xs text-muted-foreground">
-                    {usersData?.pagination?.total ?? 0} matching users
-                  </p>
-                </div>
-                <CreateUserDialog />
-              </div>
-              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px]">
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    className="pl-9"
-                    placeholder="Search users"
-                    value={userSearch}
-                    onChange={(event) => setUserSearch(event.target.value)}
-                  />
-                </div>
-                <Select value={userStatus} onValueChange={setUserStatus}>
-                  <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All statuses</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="invited">Invited</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {usersLoading ? (
-                <EmptyState message="Loading users..." />
-              ) : usersError ? (
-                <ErrorState message={usersError instanceof Error ? usersError.message : 'Failed to load users'} />
-              ) : (usersData?.users || []).length === 0 ? (
-                <EmptyState message="No users match the current filters." />
-              ) : (
-                <div className="space-y-px">
-                  {usersData?.users.map((user) => (
-                    <div
-                      key={user.id}
-                      className="flex min-h-[44px] items-center justify-between gap-4 rounded-md px-2 py-2.5 transition-colors hover:bg-accent/40"
-                    >
-                      <div className="min-w-0 flex-1 space-y-0.5">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-medium">{user.name || user.email}</span>
-                          {user.isSuperAdmin && (
-                            <span className="flex items-center gap-1 rounded-full border border-accent-amber/20 bg-accent-amber/10 px-2 py-0.5 text-[11px] font-medium text-accent-amber">
-                              <Crown className="h-3 w-3" />
-                              Super admin
-                            </span>
-                          )}
-                          <span className="chip capitalize">{user.status}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {user.email} · {(user.organizations || []).length} org
-                          {(user.organizations || []).length !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setEditUserId(user.id)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit user
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Feature Flags */}
-          <TabsContent value="feature-flags" className="space-y-4">
-            <div className="surface-card p-6 space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <span className="kicker">Admin</span>
-                  <h2 className="text-lg font-semibold">Feature Flags</h2>
-                  <p className="text-xs text-muted-foreground">{filteredFlags.length} matching flags</p>
-                </div>
-                <CreateFeatureFlagDialog />
-              </div>
-              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px]">
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    className="pl-9"
-                    placeholder="Search feature flags"
-                    value={flagSearch}
-                    onChange={(event) => setFlagSearch(event.target.value)}
-                  />
-                </div>
-                <Select value={flagState} onValueChange={setFlagState}>
-                  <SelectTrigger><SelectValue placeholder="State" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All flags</SelectItem>
-                    <SelectItem value="enabled">Enabled</SelectItem>
-                    <SelectItem value="disabled">Disabled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {flagsLoading ? (
-                <EmptyState message="Loading feature flags..." />
-              ) : flagsError ? (
-                <ErrorState message={flagsError instanceof Error ? flagsError.message : 'Failed to load feature flags'} />
-              ) : filteredFlags.length === 0 ? (
-                <EmptyState message="No feature flags match the current filters." />
-              ) : (
-                <div className="space-y-px">
-                  {filteredFlags.map((flag: any) => (
-                    <div
-                      key={flag.id}
-                      className="flex min-h-[44px] items-center justify-between gap-4 rounded-md px-2 py-2.5 transition-colors hover:bg-accent/40"
-                    >
-                      <div className="min-w-0 flex-1 space-y-0.5">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-medium">{flag.name}</span>
-                          {flag.isEnabled ? (
-                            <span className="chip-accent">Enabled</span>
-                          ) : (
-                            <span className="chip">Disabled</span>
-                          )}
-                          {flag.rolloutPercentage < 100 && (
-                            <span className="chip">{flag.rolloutPercentage}% rollout</span>
-                          )}
-                        </div>
-                        <p className="font-mono text-xs text-muted-foreground">{flag.key}</p>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs"
-                          onClick={() => handleToggleFlag(flag)}
-                          disabled={updateFeatureFlag.isPending}
-                        >
-                          {flag.isEnabled ? 'Disable' : 'Enable'}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() => setEditFlagId(flag.id)}
-                        >
-                          <Edit className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                          onClick={async () => {
-                            if (window.confirm(`Delete "${flag.name}"?`)) {
-                              try {
-                                await deleteFeatureFlag.mutateAsync(flag.id);
-                                queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
-                                toast({ title: 'Feature flag deleted', description: `${flag.name} was removed.` });
-                              } catch (error) {
-                                toast({
-                                  title: 'Failed to delete feature flag',
-                                  description: error instanceof Error ? error.message : 'Failed to delete feature flag',
-                                  variant: 'destructive',
-                                });
-                              }
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Agent Ops */}
-          <TabsContent value="agents" className="space-y-4">
-            <div className="surface-card p-6 space-y-1">
-              <span className="kicker">Admin</span>
-              <h2 className="text-lg font-semibold">AI Operations</h2>
-              <p className="text-sm text-muted-foreground">
-                Global control plane for workspace agents, live safety, and rollout quality.
-              </p>
-            </div>
-            <AgentOpsPanel />
-          </TabsContent>
-
-          {/* Realtime */}
-          <TabsContent value="realtime" className="space-y-4">
-            <RealtimeHealthPanel />
-          </TabsContent>
-
-          {/* Audit */}
-          <TabsContent value="audit" className="space-y-4">
-            <div className="surface-card p-6 space-y-4">
-              <div>
-                <span className="kicker">Admin</span>
-                <h2 className="text-lg font-semibold">System audit</h2>
-                <p className="text-xs text-muted-foreground">
-                  Recent super admin activity across organizations, users, and flags.
-                </p>
-              </div>
-              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    className="pl-9"
-                    placeholder="Search by action, resource, or user"
-                    value={auditSearch}
-                    onChange={(event) => setAuditSearch(event.target.value)}
-                  />
-                </div>
-                <Select value={auditResourceType} onValueChange={setAuditResourceType}>
-                  <SelectTrigger><SelectValue placeholder="Resource type" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All resources</SelectItem>
-                    <SelectItem value="organization">Organization</SelectItem>
-                    <SelectItem value="user">User</SelectItem>
-                    <SelectItem value="feature_flag">Feature flag</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {auditLoading ? (
-                <EmptyState message="Loading audit logs..." />
-              ) : auditError ? (
-                <ErrorState message={auditError instanceof Error ? auditError.message : 'Failed to load audit logs'} />
-              ) : (auditData?.auditLogs || []).length === 0 ? (
-                <EmptyState message="No audit events match the current filters." />
-              ) : (
-                <div className="space-y-px">
-                  {auditData?.auditLogs.map((log) => (
-                    <div
-                      key={log.id}
-                      className="rounded-md px-2 py-3 transition-colors hover:bg-accent/40"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0 space-y-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-sm font-medium">{formatAdminAction(log.action)}</span>
-                            <span className="chip capitalize">{log.resourceType}</span>
-                            {log.resourceId ? (
-                              <span className="chip font-mono text-[11px]">{log.resourceId.slice(0, 8)}</span>
-                            ) : null}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            {log.user?.name || log.user?.email || 'Unknown user'}
-                          </p>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
-                          <Clock3 className="h-3.5 w-3.5" />
-                          {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
-                        </div>
-                      </div>
-                      {log.changes ? (
-                        <details className="mt-2">
-                          <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
-                            Changes ({Object.keys(log.changes).length})
-                          </summary>
-                          <div className="mt-1.5 grid gap-1 text-xs text-muted-foreground pl-2">
-                            {Object.entries(log.changes).map(([field, change]) => (
-                              <div key={field} className="flex flex-wrap items-center gap-2">
-                                <span className="font-medium text-foreground">{field}</span>
-                                <span className="line-through">{String(change.from ?? 'null')}</span>
-                                <span>→</span>
-                                <span className="text-foreground">{String(change.to ?? 'null')}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </details>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
       </div>
     </>
   );
 }
 
-function StatTile({
-  title,
-  value,
-  icon: Icon,
+/* --------------------------------- Overview -------------------------------- */
+
+function OverviewSection({
+  stats,
+  loading,
 }: {
-  title: string;
-  value: string | number;
-  icon: ComponentType<{ className?: string }>;
+  stats: StatsResponse | undefined;
+  loading: boolean;
+}) {
+  const tiles: Array<{ label: string; value: number | string; icon: ComponentType<{ className?: string }> }> = [
+    { label: 'Organizations', value: loading ? '—' : stats?.overview?.totalOrganizations ?? 0, icon: Building2 },
+    { label: 'Users', value: loading ? '—' : stats?.overview?.totalUsers ?? 0, icon: Users },
+    { label: 'Active users', value: loading ? '—' : stats?.overview?.activeUsers ?? 0, icon: Activity },
+    { label: 'Super admins', value: loading ? '—' : stats?.overview?.superAdmins ?? 0, icon: Crown },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="stagger grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {tiles.map(({ label, value, icon: Icon }) => (
+          <KpiTile key={label} label={label} value={value} icon={Icon} />
+        ))}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="surface-card p-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Organization health</h3>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+            <MetricRow label="Active" value={stats?.organizations?.byStatus?.active ?? 0} />
+            <MetricRow label="Trial" value={stats?.organizations?.byStatus?.trial ?? 0} />
+            <MetricRow label="Suspended" value={stats?.organizations?.byStatus?.suspended ?? 0} />
+            <MetricRow label="Free" value={stats?.organizations?.byPlan?.free ?? 0} />
+            <MetricRow label="Starter" value={stats?.organizations?.byPlan?.starter ?? 0} />
+            <MetricRow label="Growth" value={stats?.organizations?.byPlan?.growth ?? 0} />
+            <MetricRow label="Enterprise" value={stats?.organizations?.byPlan?.enterprise ?? 0} />
+          </dl>
+        </div>
+
+        <div className="surface-card p-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Last 30 days</h3>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <dl className="space-y-2 text-sm">
+            <MetricRow label="New organizations" value={stats?.growth?.newOrganizations30d ?? 0} />
+            <MetricRow label="New users" value={stats?.growth?.newUsers30d ?? 0} />
+            <MetricRow label="Projects total" value={stats?.overview?.totalProjects ?? 0} />
+            <MetricRow label="Issues total" value={stats?.overview?.totalIssues ?? 0} />
+            <MetricRow label="Comments total" value={stats?.overview?.totalComments ?? 0} />
+          </dl>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------ Organizations ----------------------------- */
+
+function OrganizationsSection({
+  orgsData,
+  orgsLoading,
+  orgsError,
+  orgSearch,
+  setOrgSearch,
+  orgStatus,
+  setOrgStatus,
+  orgPlan,
+  setOrgPlan,
+  onEdit,
+  onDelete,
+}: {
+  orgsData: { organizations: OrganizationItem[]; pagination: { total: number } } | undefined;
+  orgsLoading: boolean;
+  orgsError: unknown;
+  orgSearch: string;
+  setOrgSearch: (v: string) => void;
+  orgStatus: string;
+  setOrgStatus: (v: string) => void;
+  orgPlan: string;
+  setOrgPlan: (v: string) => void;
+  onEdit: (id: string) => void;
+  onDelete: (org: OrganizationItem) => void;
+}) {
+  const orgs = orgsData?.organizations || [];
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <p className="text-xs text-muted-foreground">
+          {orgsData?.pagination?.total ?? 0} matching workspaces
+        </p>
+        <CreateOrganizationAdminDialog />
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_180px]">
+        <SearchInput value={orgSearch} onChange={setOrgSearch} placeholder="Search organizations" />
+        <Select value={orgStatus} onValueChange={setOrgStatus}>
+          <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="trial">Trial</SelectItem>
+            <SelectItem value="suspended">Suspended</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={orgPlan} onValueChange={setOrgPlan}>
+          <SelectTrigger><SelectValue placeholder="Plan" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All plans</SelectItem>
+            <SelectItem value="free">Free</SelectItem>
+            <SelectItem value="starter">Starter</SelectItem>
+            <SelectItem value="growth">Growth</SelectItem>
+            <SelectItem value="enterprise">Enterprise</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="surface-card overflow-hidden">
+        {orgsLoading ? (
+          <EmptyState icon={Building2} message="Loading organizations..." />
+        ) : orgsError ? (
+          <ErrorState message={orgsError instanceof Error ? orgsError.message : 'Failed to load organizations'} />
+        ) : orgs.length === 0 ? (
+          <EmptyState icon={Building2} message="No organizations match the current filters." />
+        ) : (
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="px-4 py-2 text-left text-xs uppercase tracking-wider font-medium text-muted-foreground">Name</th>
+                <th className="px-4 py-2 text-left text-xs uppercase tracking-wider font-medium text-muted-foreground">Status</th>
+                <th className="px-4 py-2 text-left text-xs uppercase tracking-wider font-medium text-muted-foreground">Plan</th>
+                <th className="px-4 py-2 text-left text-xs uppercase tracking-wider font-medium text-muted-foreground">Owner</th>
+                <th className="px-4 py-2 text-right text-xs uppercase tracking-wider font-medium text-muted-foreground">Members</th>
+                <th className="px-4 py-2" />
+              </tr>
+            </thead>
+            <tbody className="stagger">
+              {orgs.map((org) => (
+                <tr
+                  key={org.id}
+                  className="border-b border-border/50 last:border-b-0 transition-colors hover:bg-accent/40"
+                >
+                  <td className="px-4 py-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{org.name}</p>
+                      <p className="text-xs text-muted-foreground font-mono truncate">{org.slug}</p>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <SemanticChip tone={orgStatusChip[org.status] ?? DEFAULT_CHIP}>
+                      {org.status}
+                    </SemanticChip>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="chip capitalize">{org.plan}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="text-sm truncate max-w-[200px]">
+                      {org.owner?.name || org.owner?.email || (
+                        <span className="text-muted-foreground">No owner</span>
+                      )}
+                    </p>
+                  </td>
+                  <td className="px-4 py-3 text-right text-sm tabular-nums">
+                    {org.stats?.members ?? 0}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => onEdit(org.id)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => onDelete(org)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------- Users --------------------------------- */
+
+function UsersSection({
+  usersData,
+  usersLoading,
+  usersError,
+  userSearch,
+  setUserSearch,
+  userStatus,
+  setUserStatus,
+  onEdit,
+}: {
+  usersData: { users: UserItem[]; pagination: { total: number } } | undefined;
+  usersLoading: boolean;
+  usersError: unknown;
+  userSearch: string;
+  setUserSearch: (v: string) => void;
+  userStatus: string;
+  setUserStatus: (v: string) => void;
+  onEdit: (id: string) => void;
+}) {
+  const users = usersData?.users || [];
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <p className="text-xs text-muted-foreground">
+          {usersData?.pagination?.total ?? 0} matching users
+        </p>
+        <CreateUserDialog />
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px]">
+        <SearchInput value={userSearch} onChange={setUserSearch} placeholder="Search users" />
+        <Select value={userStatus} onValueChange={setUserStatus}>
+          <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="invited">Invited</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="surface-card overflow-hidden">
+        {usersLoading ? (
+          <EmptyState icon={Users} message="Loading users..." />
+        ) : usersError ? (
+          <ErrorState message={usersError instanceof Error ? usersError.message : 'Failed to load users'} />
+        ) : users.length === 0 ? (
+          <EmptyState icon={Users} message="No users match the current filters." />
+        ) : (
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="px-4 py-2 text-left text-xs uppercase tracking-wider font-medium text-muted-foreground">User</th>
+                <th className="px-4 py-2 text-left text-xs uppercase tracking-wider font-medium text-muted-foreground">Role</th>
+                <th className="px-4 py-2 text-left text-xs uppercase tracking-wider font-medium text-muted-foreground">Status</th>
+                <th className="px-4 py-2 text-right text-xs uppercase tracking-wider font-medium text-muted-foreground">Orgs</th>
+                <th className="px-4 py-2" />
+              </tr>
+            </thead>
+            <tbody className="stagger">
+              {users.map((user) => {
+                const isSuspended = user.status === 'suspended' || user.status === 'inactive';
+                return (
+                  <tr
+                    key={user.id}
+                    className="border-b border-border/50 last:border-b-0 transition-colors hover:bg-accent/40"
+                  >
+                    <td className="px-4 py-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{user.name || user.email}</p>
+                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {user.isSuperAdmin ? (
+                        <span className="chip-accent inline-flex items-center gap-1">
+                          <Crown className="h-3 w-3" />
+                          Admin
+                        </span>
+                      ) : isSuspended ? (
+                        <SemanticChip tone="bg-accent-rose/10 text-accent-rose border-accent-rose/20">
+                          Suspended
+                        </SemanticChip>
+                      ) : (
+                        <span className="chip">Member</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <SemanticChip tone={userStatusChip[user.status] ?? DEFAULT_CHIP}>
+                        {user.status}
+                      </SemanticChip>
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm tabular-nums">
+                      {(user.organizations || []).length}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => onEdit(user.id)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit user
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------ Feature flags ----------------------------- */
+
+function FeatureFlagsSection({
+  flags,
+  loading,
+  error,
+  search,
+  setSearch,
+  state,
+  setState,
+  onEdit,
+  onDelete,
+  onToggle,
+  updatePending,
+}: {
+  flags: any[];
+  loading: boolean;
+  error: unknown;
+  search: string;
+  setSearch: (v: string) => void;
+  state: string;
+  setState: (v: string) => void;
+  onEdit: (id: string) => void;
+  onDelete: (flag: { id: string; name: string }) => void;
+  onToggle: (flag: any, next: boolean) => void;
+  updatePending: boolean;
 }) {
   return (
-    <div className="surface-card flex items-center justify-between p-4">
-      <div>
-        <p className="kicker">{title}</p>
-        <p className="mt-1 text-2xl font-semibold">{value}</p>
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <p className="text-xs text-muted-foreground">{flags.length} matching flags</p>
+        <CreateFeatureFlagDialog />
       </div>
-      <Icon className="h-4 w-4 text-muted-foreground" />
+
+      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px]">
+        <SearchInput value={search} onChange={setSearch} placeholder="Search feature flags" />
+        <Select value={state} onValueChange={setState}>
+          <SelectTrigger><SelectValue placeholder="State" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All flags</SelectItem>
+            <SelectItem value="enabled">Enabled</SelectItem>
+            <SelectItem value="disabled">Disabled</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="surface-card overflow-hidden">
+        {loading ? (
+          <EmptyState icon={Flag} message="Loading feature flags..." />
+        ) : error ? (
+          <ErrorState message={error instanceof Error ? error.message : 'Failed to load feature flags'} />
+        ) : flags.length === 0 ? (
+          <EmptyState icon={Flag} message="No feature flags match the current filters." />
+        ) : (
+          <ul className="stagger divide-y divide-border/50">
+            {flags.map((flag: any) => (
+              <li
+                key={flag.id}
+                className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-accent/40"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium truncate">{flag.name}</span>
+                    <span className="chip font-mono text-[11px]">{flag.key}</span>
+                    {flag.rolloutPercentage < 100 && (
+                      <span className="chip">{flag.rolloutPercentage}%</span>
+                    )}
+                  </div>
+                  {flag.description ? (
+                    <p className="mt-0.5 text-xs text-muted-foreground truncate">{flag.description}</p>
+                  ) : null}
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Switch
+                    checked={flag.isEnabled}
+                    onCheckedChange={(next) => onToggle(flag, next)}
+                    disabled={updatePending}
+                    aria-label={flag.isEnabled ? 'Disable flag' : 'Enable flag'}
+                  />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => onEdit(flag.id)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => onDelete(flag)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------- Audit --------------------------------- */
+
+function AuditSection({
+  logs,
+  loading,
+  error,
+  search,
+  setSearch,
+  resourceType,
+  setResourceType,
+  expandedId,
+  setExpandedId,
+}: {
+  logs: AdminAuditLog[];
+  loading: boolean;
+  error: unknown;
+  search: string;
+  setSearch: (v: string) => void;
+  resourceType: string;
+  setResourceType: (v: string) => void;
+  expandedId: string | null;
+  setExpandedId: (id: string | null) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
+        <SearchInput value={search} onChange={setSearch} placeholder="Search by action, resource, or user" />
+        <Select value={resourceType} onValueChange={setResourceType}>
+          <SelectTrigger><SelectValue placeholder="Resource type" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All resources</SelectItem>
+            <SelectItem value="organization">Organization</SelectItem>
+            <SelectItem value="user">User</SelectItem>
+            <SelectItem value="feature_flag">Feature flag</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="surface-card overflow-hidden">
+        {loading ? (
+          <EmptyState icon={Scroll} message="Loading audit logs..." />
+        ) : error ? (
+          <ErrorState message={error instanceof Error ? error.message : 'Failed to load audit logs'} />
+        ) : logs.length === 0 ? (
+          <EmptyState icon={Scroll} message="No audit events match the current filters." />
+        ) : (
+          <ul className="stagger divide-y divide-border/50">
+            {logs.map((log) => {
+              const severity = auditSeverity(log.action);
+              const isOpen = expandedId === log.id;
+              const hasChanges = log.changes && Object.keys(log.changes).length > 0;
+              return (
+                <li key={log.id} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedId(isOpen ? null : log.id)}
+                    className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    aria-expanded={isOpen}
+                  >
+                    <span
+                      className={cn(
+                        'priority-indicator self-stretch min-h-[2.5rem] shrink-0',
+                        severity === 'critical' && 'priority-critical',
+                        severity === 'high' && 'priority-high',
+                        severity === 'medium' && 'priority-medium',
+                        severity === 'low' && 'priority-low'
+                      )}
+                      aria-hidden="true"
+                    />
+                    <div className="min-w-0 flex-1 space-y-0.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs text-muted-foreground font-mono">
+                          {new Date(log.createdAt).toLocaleTimeString()}
+                        </span>
+                        <span className="text-sm font-medium">{formatAdminAction(log.action)}</span>
+                        <span className="chip capitalize">{log.resourceType}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">
+                        <span className="text-foreground/80">
+                          {log.user?.name || log.user?.email || 'Unknown user'}
+                        </span>
+                        {log.resourceId ? (
+                          <>
+                            {' · '}
+                            <span className="font-mono">{log.resourceId.slice(0, 8)}</span>
+                          </>
+                        ) : null}
+                        {' · '}
+                        {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
+                      </p>
+                    </div>
+                    {hasChanges ? (
+                      isOpen ? (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
+                      )
+                    ) : null}
+                  </button>
+                  {isOpen && hasChanges && log.changes ? (
+                    <div className="bg-surface px-4 pb-3 pl-10 text-xs text-muted-foreground animate-fade-in">
+                      <div className="grid gap-1">
+                        {Object.entries(log.changes).map(([field, change]) => (
+                          <div key={field} className="flex flex-wrap items-center gap-2">
+                            <span className="font-medium text-foreground">{field}</span>
+                            <span className="line-through">{String(change.from ?? 'null')}</span>
+                            <span>→</span>
+                            <span className="text-foreground">{String(change.to ?? 'null')}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------- UI Helpers ------------------------------- */
+
+function KpiTile({
+  label,
+  value,
+  icon: Icon,
+  trend,
+}: {
+  label: string;
+  value: string | number;
+  icon: ComponentType<{ className?: string }>;
+  trend?: { direction: 'up' | 'down'; value: string };
+}) {
+  return (
+    <div className="surface-card flex flex-col justify-between gap-2 p-4">
+      <div className="flex items-center justify-between">
+        <p className="kicker">{label}</p>
+        <Icon className="h-4 w-4 text-muted-foreground" />
+      </div>
+      <div className="flex items-end justify-between gap-2">
+        <p className="text-2xl font-semibold tabular-nums">{value}</p>
+        {trend ? (
+          <span
+            className={cn(
+              'text-xs font-medium',
+              trend.direction === 'up' ? 'text-accent-emerald' : 'text-accent-rose'
+            )}
+          >
+            {trend.direction === 'up' ? '↑' : '↓'} {trend.value}
+          </span>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -803,21 +1113,107 @@ function StatTile({
 function MetricRow({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-foreground">{value}</span>
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="font-medium text-foreground tabular-nums">{value}</dd>
     </div>
   );
 }
 
-function EmptyState({ message }: { message: string }) {
-  return <div className="py-8 text-center text-sm text-muted-foreground">{message}</div>;
+function SearchInput({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <div className="relative">
+      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        className="pl-9"
+        placeholder={placeholder}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </div>
+  );
+}
+
+function SemanticChip({ tone, children }: { tone: string; children: React.ReactNode }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium capitalize',
+        tone
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function EmptyState({
+  icon: Icon,
+  message,
+  action,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  message: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
+      <Icon className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+      <p className="text-sm text-muted-foreground">{message}</p>
+      {action}
+    </div>
+  );
 }
 
 function ErrorState({ message }: { message: string }) {
   return (
-    <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-4 text-sm text-destructive">
+    <div className="px-6 py-6 text-sm text-destructive">
       {message}
     </div>
+  );
+}
+
+function ConfirmDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  confirmLabel,
+  pending,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  title: string;
+  description: string;
+  confirmLabel: string;
+  pending: boolean;
+  onConfirm: () => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button variant="destructive" size="sm" onClick={onConfirm} disabled={pending}>
+            {pending ? 'Deleting...' : confirmLabel}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

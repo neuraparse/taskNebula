@@ -25,8 +25,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -35,12 +33,7 @@ import { useOrganization } from '@/lib/hooks/use-organization';
 import {
   Users,
   UserPlus,
-  MoreVertical,
-  Mail,
-  Shield,
-  Crown,
-  Eye,
-  User,
+  MoreHorizontal,
   Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -56,19 +49,11 @@ type Member = {
   joinedAt: string;
 };
 
-const roleIcons = {
-  owner: Crown,
-  admin: Shield,
-  member: User,
-  viewer: Eye,
-  guest: Mail,
-};
-
 // Token-driven role chips
 const roleChipClass: Record<Member['role'], string> = {
   owner: 'bg-accent-amber/10 text-accent-amber border border-accent-amber/20',
   admin: 'bg-accent-violet/10 text-accent-violet border border-accent-violet/20',
-  member: 'bg-accent-blue/10 text-accent-blue border border-accent-blue/20',
+  member: 'bg-muted text-muted-foreground border border-border',
   viewer: 'bg-muted text-muted-foreground border border-border',
   guest: 'bg-accent-emerald/10 text-accent-emerald border border-accent-emerald/20',
 };
@@ -183,19 +168,18 @@ export function MembersPageClient() {
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
-      <div className="surface-card p-6">
-        <div className="flex items-center justify-between gap-3 pb-5">
+    <div className="animate-fade-up space-y-8 stagger">
+      <section className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
             <span className="kicker">Access</span>
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <Users className="h-5 w-5" />
+            <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
               Members
-              <span className="text-base font-normal text-muted-foreground">
+              <span className="text-sm font-normal text-muted-foreground">
                 ({members.length})
               </span>
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground max-w-prose">
               Manage organization members and their roles.
             </p>
           </div>
@@ -204,7 +188,7 @@ export function MembersPageClient() {
             {userRole && (
               <span
                 className={cn(
-                  'rounded-full px-2.5 py-0.5 text-[11px] font-medium border',
+                  'rounded-full px-2.5 py-0.5 text-[11px] font-medium capitalize',
                   roleChipClass[userRole] ?? roleChipClass.member
                 )}
               >
@@ -226,7 +210,7 @@ export function MembersPageClient() {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Invite Member</DialogTitle>
+                  <DialogTitle>Invite member</DialogTitle>
                   <DialogDescription>
                     Send an invitation to join this organization.
                   </DialogDescription>
@@ -280,7 +264,7 @@ export function MembersPageClient() {
         </div>
 
         {!canManage && (
-          <div className="mb-4 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-muted-foreground">
+          <div className="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-muted-foreground">
             You can view members but cannot manage them. Only owners and admins can invite, change
             roles, or remove members.
           </div>
@@ -290,86 +274,86 @@ export function MembersPageClient() {
           <div className="flex items-center justify-center py-10">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           </div>
+        ) : members.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 py-12 text-center">
+            <Users className="h-8 w-8 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">No members yet.</p>
+            {canInvite && (
+              <Button size="sm" onClick={() => setInviteOpen(true)}>
+                Invite your first member
+              </Button>
+            )}
+          </div>
         ) : (
-          <div className="space-y-px">
+          <div>
             {members.map((member) => {
-              const RoleIcon = roleIcons[member.role];
+              const disableRoleChange = member.role === 'owner' || !canManage;
               return (
                 <div
                   key={member.id}
-                  className="flex min-h-[48px] items-center justify-between gap-4 rounded-md px-2 py-2 transition-colors hover:bg-accent/40"
+                  className="flex min-h-[52px] items-center justify-between gap-4 rounded-md px-2 py-2 transition-colors duration-150 hover:bg-accent/40"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={member.image} alt={member.name} />
                       <AvatarFallback className="text-xs">
                         {member.name.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
+                    <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium">{member.name}</p>
+                        <p className="truncate text-sm font-medium">{member.name}</p>
                         {member.status === 'invited' && (
                           <span className="chip text-[11px]">Invited</span>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground">{member.email}</p>
+                      <p className="truncate text-xs text-muted-foreground">{member.email}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        'flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium border',
-                        roleChipClass[member.role]
-                      )}
-                    >
-                      <RoleIcon className="h-3 w-3" />
-                      {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
-                    </span>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {disableRoleChange ? (
+                      <span
+                        className={cn(
+                          'rounded-full px-2.5 py-0.5 text-[11px] font-medium capitalize',
+                          roleChipClass[member.role]
+                        )}
+                      >
+                        {member.role}
+                      </span>
+                    ) : (
+                      <Select
+                        value={member.role}
+                        onValueChange={(value) =>
+                          updateRoleMutation.mutate({
+                            memberId: member.id,
+                            role: value as Member['role'],
+                          })
+                        }
+                      >
+                        <SelectTrigger className="h-8 w-[120px] text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="member">Member</SelectItem>
+                          <SelectItem value="viewer">Viewer</SelectItem>
+                          <SelectItem value="guest">Guest</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
 
-                    {member.role !== 'owner' && canManage && (
+                    {member.role !== 'owner' && canRemove && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7">
-                            <MoreVertical className="h-4 w-4" />
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Change role</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() =>
-                              updateRoleMutation.mutate({ memberId: member.id, role: 'admin' })
-                            }
-                            disabled={member.role === 'admin'}
-                          >
-                            <Shield className="mr-2 h-4 w-4" />
-                            Admin
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              updateRoleMutation.mutate({ memberId: member.id, role: 'member' })
-                            }
-                            disabled={member.role === 'member'}
-                          >
-                            <User className="mr-2 h-4 w-4" />
-                            Member
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              updateRoleMutation.mutate({ memberId: member.id, role: 'viewer' })
-                            }
-                            disabled={member.role === 'viewer'}
-                          >
-                            <Eye className="mr-2 h-4 w-4" />
-                            Viewer
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => removeMutation.mutate(member.id)}
-                            className="text-destructive"
-                            disabled={!canRemove}
+                            className="text-destructive focus:text-destructive"
                           >
                             Remove member
                           </DropdownMenuItem>
@@ -382,7 +366,7 @@ export function MembersPageClient() {
             })}
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

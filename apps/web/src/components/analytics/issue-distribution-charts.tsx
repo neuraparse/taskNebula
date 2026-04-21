@@ -35,7 +35,7 @@ function DistributionTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   const item = payload[0];
   return (
-    <div className="surface-card shadow-md rounded-md px-3 py-2 text-xs space-y-0.5">
+    <div className="surface-card px-3 py-2 text-xs space-y-0.5">
       <p className="font-medium text-foreground capitalize">{item.name}</p>
       <p className="text-muted-foreground">
         <span className="font-semibold text-foreground tabular-nums">{item.value}</span> issues
@@ -47,18 +47,37 @@ function DistributionTooltip({ active, payload }: any) {
 interface PieCardProps {
   kicker: string;
   title: string;
+  subtitle?: string;
   data: { name: string; value: number }[];
   colorMap: Record<string, string>;
   fallbackColor: string;
 }
 
-function PieCard({ kicker, title, data, colorMap, fallbackColor }: PieCardProps) {
+function PieCard({ kicker, title, subtitle, data, colorMap, fallbackColor }: PieCardProps) {
   return (
-    <div className="surface-card p-6 space-y-4">
-      <div className="space-y-0.5">
+    <div className="surface-card animate-fade-up p-5 space-y-3">
+      <div className="space-y-1">
         <span className="kicker">{kicker}</span>
-        <h3 className="text-sm font-semibold tracking-tight text-foreground">{title}</h3>
+        <h3 className="text-base font-semibold tracking-tight text-foreground">{title}</h3>
+        {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
       </div>
+
+      {/* Legend chips */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {data.map((entry) => (
+          <span
+            key={entry.name}
+            className="chip inline-flex items-center gap-1.5 capitalize"
+          >
+            <span
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ backgroundColor: colorMap[entry.name] || fallbackColor }}
+            />
+            {entry.name}
+          </span>
+        ))}
+      </div>
+
       <ResponsiveContainer width="100%" height={220}>
         <PieChart>
           <Pie
@@ -107,10 +126,11 @@ export function IssueDistributionCharts({
   }));
 
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="stagger grid gap-4 md:grid-cols-3">
       <PieCard
         kicker="Distribution"
         title="By Status"
+        subtitle="Where work currently sits."
         data={statusData}
         colorMap={STATUS_COLORS}
         fallbackColor="hsl(var(--muted-foreground))"
@@ -118,6 +138,7 @@ export function IssueDistributionCharts({
       <PieCard
         kicker="Distribution"
         title="By Priority"
+        subtitle="How urgent the backlog is."
         data={priorityData}
         colorMap={PRIORITY_COLORS}
         fallbackColor="hsl(var(--muted-foreground))"
@@ -125,6 +146,7 @@ export function IssueDistributionCharts({
       <PieCard
         kicker="Distribution"
         title="By Type"
+        subtitle="Mix of work categories."
         data={typeData}
         colorMap={TYPE_COLORS}
         fallbackColor="hsl(var(--muted-foreground))"

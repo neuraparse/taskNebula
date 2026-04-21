@@ -1056,7 +1056,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
 
               {callError ? (
                 <div className="border-b px-4 py-2">
-                  <div className="mx-auto w-full max-w-3xl rounded-sm border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+                  <div className="mx-auto w-full max-w-3xl rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
                     {callError}
                   </div>
                 </div>
@@ -1135,9 +1135,9 @@ export function ChatShell({ projectId }: { projectId: string }) {
                       ))}
                     </>
                   ) : (
-                    <div className="flex min-h-[320px] flex-col items-center justify-center rounded-lg border border-dashed border-border/60 bg-muted/[0.02] px-8 text-center">
-                      <div className="text-sm font-medium">No messages yet</div>
-                      <div className="mt-1 text-sm text-muted-foreground">Post the first update or paste a screenshot.</div>
+                    <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border/60 px-8 text-center">
+                      <MessageSquareText className="h-6 w-6 text-muted-foreground" aria-hidden />
+                      <p className="text-sm text-muted-foreground">No messages yet — post the first update.</p>
                     </div>
                   )}
                   <div ref={messageEndRef} />
@@ -1154,7 +1154,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
                       {queuedFiles.map((file, index) => (
                         <div
                           key={`${file.name}-${index}`}
-                          className="flex max-w-full items-center gap-2 rounded-md border px-2 py-1 text-xs"
+                          className="flex max-w-full items-center gap-2 rounded-md border border-border bg-muted/30 px-2 py-1 text-xs"
                         >
                           <span className="truncate">{file.name}</span>
                           <button
@@ -1170,42 +1170,31 @@ export function ChatShell({ projectId }: { projectId: string }) {
                   ) : null}
 
                   {composerError ? (
-                    <div className="rounded-sm border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+                    <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
                       {composerError}
                     </div>
                   ) : null}
 
-                  <div className="surface-card rounded-lg border border-border/60 p-3">
-                    <Textarea
-                      value={composerValue}
-                      onChange={(event) => {
-                        setComposerValue(event.target.value);
-                        if (composerError) {
-                          setComposerError(null);
-                        }
-                      }}
-                      onKeyDown={handleComposerKeyDown}
-                      onPaste={handlePaste}
-                      placeholder="Write a message, use @name, or paste an image."
-                      className="min-h-[108px] resize-y rounded-none border-0 bg-transparent px-0 py-0 shadow-none focus-visible:ring-0"
-                      disabled={!canSendMessages || isSendingMessage}
-                    />
-
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-3">
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <div className="surface-card p-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-2 text-xs text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-2">
                         <button
                           type="button"
-                          className="inline-flex items-center gap-1 rounded-md border px-2 py-1 hover:text-foreground transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 transition-colors duration-200 ease-smooth hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
                           onClick={() => fileInputRef.current?.click()}
                           disabled={!attachmentsEnabled || isSendingMessage}
+                          aria-label="Attach files"
                         >
                           <ImagePlus className="h-3.5 w-3.5" />
                           Attach
                         </button>
-                        {sendDisabledReason ? <span>{sendDisabledReason}</span> : null}
-                        {!sendDisabledReason ? (
-                          <span className="hidden sm:inline">Paste screenshots directly. Ctrl/Cmd + Enter sends.</span>
-                        ) : null}
+                        {sendDisabledReason ? (
+                          <span>{sendDisabledReason}</span>
+                        ) : (
+                          <span className="hidden sm:inline">
+                            Paste screenshots directly. Ctrl/Cmd + Enter sends.
+                          </span>
+                        )}
                         <input
                           ref={fileInputRef}
                           type="file"
@@ -1214,22 +1203,40 @@ export function ChatShell({ projectId }: { projectId: string }) {
                           onChange={(event) => queueFiles(Array.from(event.target.files || []))}
                         />
                       </div>
+                    </div>
+
+                    <div className="flex items-end gap-2">
+                      <Textarea
+                        value={composerValue}
+                        onChange={(event) => {
+                          setComposerValue(event.target.value);
+                          if (composerError) {
+                            setComposerError(null);
+                          }
+                        }}
+                        onKeyDown={handleComposerKeyDown}
+                        onPaste={handlePaste}
+                        placeholder="Write a message, use @name, or paste an image."
+                        className="min-h-[80px] flex-1 resize-y border-0 bg-transparent px-2 py-1.5 shadow-none focus-visible:ring-0"
+                        disabled={!canSendMessages || isSendingMessage}
+                      />
 
                       <Button
                         type="submit"
+                        size="sm"
+                        className="h-8 w-8 p-0 shrink-0"
+                        aria-label="Send message"
                         disabled={
                           isSendingMessage ||
                           Boolean(sendDisabledReason) ||
                           (!trimmedComposerValue && queuedFiles.length === 0)
                         }
-                        size="sm"
                       >
                         {isSendingMessage ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                          <SendHorizontal className="mr-2 h-4 w-4" />
+                          <SendHorizontal className="h-4 w-4" />
                         )}
-                        Send
                       </Button>
                     </div>
                   </div>
@@ -1393,29 +1400,39 @@ function ChatMessageRow({
   const moderationLabel = message.moderation?.deletedByName
     ? `Deleted by ${message.moderation.deletedByName}`
     : 'Deleted message';
+  // Heuristic: users can edit their own messages. Used for a subtle right-aligned variant.
+  const isOwnMessage = Boolean(message.canEdit) && !message.deletedAt;
 
   return (
-    <div className="group flex gap-3 py-4">
-      <Avatar className="mt-0.5 h-9 w-9">
+    <div
+      className={cn(
+        'group flex gap-3 py-3 animate-fade-up',
+        isOwnMessage && 'flex-row-reverse'
+      )}
+    >
+      <Avatar className="mt-0.5 h-7 w-7 shrink-0">
         <AvatarImage src={message.author.image || undefined} alt={authorName} />
-        <AvatarFallback className="text-xs">{getInitials(authorName)}</AvatarFallback>
+        <AvatarFallback className="text-[10px]">{getInitials(authorName)}</AvatarFallback>
       </Avatar>
 
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <span className="text-sm font-medium">{authorName}</span>
-            <span className="text-xs text-muted-foreground">
-              {message.optimistic
-                ? 'Sending…'
-                : formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
-              {message.editedAt ? ' · edited' : ''}
-            </span>
-          </div>
+      <div className={cn('min-w-0 flex-1', isOwnMessage && 'text-right')}>
+        <div
+          className={cn(
+            'flex flex-wrap items-baseline gap-x-2 gap-y-1',
+            isOwnMessage && 'justify-end'
+          )}
+        >
+          <span className="text-sm font-medium">{authorName}</span>
+          <span className="text-xs text-muted-foreground">
+            {message.optimistic
+              ? 'Sending…'
+              : formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+            {message.editedAt ? ' · edited' : ''}
+          </span>
           {message.canDelete ? (
             <button
               type="button"
-              className="rounded-sm border px-2 py-1 text-[11px] text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+              className="text-[11px] text-muted-foreground opacity-0 transition-opacity duration-200 hover:text-foreground group-hover:opacity-100"
               onClick={() => void onDelete(message.id)}
             >
               Delete
@@ -1425,77 +1442,85 @@ function ChatMessageRow({
 
         <div
           className={cn(
-            'mt-1 whitespace-pre-wrap text-sm leading-6 text-foreground',
-            message.deletedAt && 'italic text-muted-foreground'
+            'mt-1 whitespace-pre-wrap text-sm leading-relaxed text-foreground',
+            message.deletedAt && 'italic text-muted-foreground',
+            isOwnMessage &&
+              !message.deletedAt &&
+              'inline-block max-w-full rounded-md bg-primary/8 px-3 py-1.5 text-left'
           )}
         >
           {message.deletedAt ? 'Message deleted' : message.body}
         </div>
 
         {message.deletedAt && message.moderation?.deletedBody ? (
-          <div className="mt-3 rounded-sm border border-border/80 bg-muted/25 px-3 py-2">
+          <div className="surface-inset mt-2 rounded-md px-3 py-2 text-left">
             <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
               {moderationLabel}
             </div>
-            <div className="mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground/90">
+            <div className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
               {message.moderation.deletedBody}
             </div>
           </div>
         ) : null}
 
         {message.attachments.length ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {message.attachments.map((attachment) => (
+          <div
+            className={cn(
+              'mt-2 flex flex-wrap gap-2',
+              isOwnMessage && 'justify-end'
+            )}
+          >
+            {message.attachments.map((attachment) =>
               attachment.filePath ? (
                 <a
                   key={attachment.id}
                   href={`/api/uploads/${attachment.filePath.split('/').pop()}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-sm border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+                  className="chip transition-colors duration-200 hover:text-foreground"
                 >
                   {attachment.fileName}
                 </a>
               ) : (
-                <div
-                  key={attachment.id}
-                  className="rounded-sm border px-2 py-1 text-xs text-muted-foreground"
-                >
+                <span key={attachment.id} className="chip">
                   {attachment.fileName}
-                </div>
+                </span>
               )
-            ))}
+            )}
           </div>
         ) : null}
 
         {message.deletedAt && message.moderation?.deletedAttachments.length ? (
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-2 flex flex-wrap gap-2">
             {message.moderation.deletedAttachments.map((attachment) => (
-              <div
-                key={attachment.id}
-                className="rounded-sm border px-2 py-1 text-xs text-muted-foreground"
-              >
+              <span key={attachment.id} className="chip">
                 {attachment.fileName}
-              </div>
+              </span>
             ))}
           </div>
         ) : null}
 
         {!message.deletedAt && !message.optimistic ? (
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div
+            className={cn(
+              'mt-2 flex flex-wrap gap-1.5',
+              isOwnMessage && 'justify-end'
+            )}
+          >
             {message.reactions.map((reaction) => (
               <button
                 key={`${message.id}-${reaction.emoji}`}
                 type="button"
                 onClick={() => void onToggleReaction(message.id, reaction.emoji)}
                 className={cn(
-                  'rounded-sm border px-2 py-1 text-xs transition-colors',
+                  'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors duration-200',
                   reaction.reactedByCurrentUser
-                    ? 'border-foreground/40 text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'border-primary/30 bg-primary/10 text-primary'
+                    : 'border-border text-muted-foreground hover:bg-accent hover:text-foreground'
                 )}
               >
-                {reaction.emoji} {reaction.count}
+                <span>{reaction.emoji}</span>
+                <span className="tabular-nums">{reaction.count}</span>
               </button>
             ))}
             {QUICK_REACTIONS.map((emoji) => (
@@ -1503,7 +1528,7 @@ function ChatMessageRow({
                 key={`${message.id}-${emoji}-quick`}
                 type="button"
                 onClick={() => void onToggleReaction(message.id, emoji)}
-                className="rounded-sm border border-dashed px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+                className="inline-flex items-center rounded-full border border-dashed border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors duration-200 hover:bg-accent hover:text-foreground opacity-0 group-hover:opacity-100"
               >
                 {emoji}
               </button>
@@ -1592,7 +1617,7 @@ function ChatVoiceDock({
 
   return (
     <div className={cn('flex h-full min-h-0 flex-col bg-background', className)}>
-      <div className="flex items-center justify-between border-b px-4 py-3">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div>
           <div className="text-sm font-semibold">Voice room</div>
           <div className="text-xs text-muted-foreground">Mic, levels, test, and people</div>
@@ -1602,8 +1627,9 @@ function ChatVoiceDock({
             type="button"
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-sm"
+            className="h-8 w-8"
             onClick={onClose}
+            aria-label="Close voice room"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -2266,14 +2292,21 @@ export function VoiceJoinSetupPanel({
 
   return (
     <div className={cn('flex h-full min-h-0 flex-col bg-background', className)}>
-      <div className="flex items-center justify-between border-b px-4 py-3">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div>
           <div className="text-sm font-semibold">Join voice room</div>
           <div className="text-xs text-muted-foreground">
             Pick a mic once before connecting. This keeps self-hosted calls more stable.
           </div>
         </div>
-        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-sm" onClick={onClose}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={onClose}
+          aria-label="Close setup panel"
+        >
           <X className="h-4 w-4" />
         </Button>
       </div>
@@ -2281,7 +2314,7 @@ export function VoiceJoinSetupPanel({
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         <audio ref={monitorAudioRef} hidden />
 
-        <div className="space-y-4 rounded-sm border bg-muted/10 px-3 py-3">
+        <div className="surface-inset space-y-4 rounded-md px-3 py-3">
           <div className="space-y-2">
             <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
               Input device
@@ -2290,7 +2323,7 @@ export function VoiceJoinSetupPanel({
           </div>
 
           <select
-            className="flex h-9 w-full rounded-sm border bg-background px-3 text-sm outline-none"
+            className="flex h-9 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             value={storedAudioDeviceId || 'default'}
             onChange={(event) => {
               void handleSelectMicrophone(event.target.value);
@@ -2305,7 +2338,7 @@ export function VoiceJoinSetupPanel({
             ))}
           </select>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border bg-background px-3 py-2 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs text-muted-foreground">
             <div>
               <span className="font-medium text-foreground">Permission:</span>{' '}
               {microphonePermissionLabel}
@@ -2315,7 +2348,7 @@ export function VoiceJoinSetupPanel({
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-7 rounded-sm px-2 text-xs"
+                  className="h-7 rounded-md px-2 text-xs"
                   onClick={() => void handleRequestMicrophoneAccess()}
                   disabled={
                     isSubmittingJoin ||
@@ -2335,7 +2368,7 @@ export function VoiceJoinSetupPanel({
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-7 rounded-sm px-2 text-xs"
+                className="h-7 rounded-md px-2 text-xs"
                 onClick={() => void refreshMicrophoneEnvironment()}
                 disabled={isSubmittingJoin || isPreparing || isRefreshingMicrophoneEnvironment}
               >
@@ -2349,7 +2382,7 @@ export function VoiceJoinSetupPanel({
             </div>
           </div>
 
-          <div className="rounded-sm border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+          <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
             {microphonePermissionHelp}
             {microphoneDevices.length === 0 ? ' No microphones are currently visible to the browser.' : ''}
             {microphonePermissionState === 'granted' && !deviceLabelsVisible
@@ -2398,7 +2431,7 @@ export function VoiceJoinSetupPanel({
             </Button>
           </div>
 
-          <div className="space-y-2 rounded-sm border bg-background px-3 py-3">
+          <div className="space-y-2 rounded-md border border-border bg-background px-3 py-3">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-medium">
                 {isTestingMicrophone
@@ -2411,22 +2444,22 @@ export function VoiceJoinSetupPanel({
                 {Math.round(microphoneTestLevel * 100)}%
               </div>
             </div>
-            <div className="h-3 overflow-hidden rounded-sm border bg-muted/20">
+            <div className="h-2 overflow-hidden rounded-full bg-muted">
               <div
-                className="h-full bg-foreground/80 transition-[width] duration-100"
+                className="h-full bg-primary/70 transition-[width] duration-100"
                 style={{ width: `${Math.round(microphoneTestLevel * 100)}%` }}
               />
             </div>
           </div>
 
           {setupError ? (
-            <div className="rounded-sm border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
               {setupError}
             </div>
           ) : null}
 
           {isPreparing ? (
-            <div className="rounded-sm border px-3 py-2 text-xs text-muted-foreground">
+            <div className="rounded-md border border-border px-3 py-2 text-xs text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 Preparing room token and call state…
@@ -2435,12 +2468,12 @@ export function VoiceJoinSetupPanel({
           ) : null}
 
           {!isPreparing && !isReady ? (
-            <div className="rounded-sm border px-3 py-2 text-xs text-muted-foreground">
+            <div className="rounded-md border border-border px-3 py-2 text-xs text-muted-foreground">
               The room is still getting ready. Wait a moment, then join.
             </div>
           ) : null}
 
-          <div className="rounded-sm border bg-background px-3 py-2 text-xs text-muted-foreground">
+          <div className="rounded-md border border-border bg-background px-3 py-2 text-xs text-muted-foreground">
             {shouldPreferDefaultMicrophoneForLiveJoin(
               typeof navigator !== 'undefined' ? navigator.userAgent : ''
             )
@@ -2717,7 +2750,7 @@ function InlineVoiceRoom({
   const hasRemoteAudio = remoteParticipants.some((participant) => participant.isMicrophoneEnabled);
 
   return (
-    <div className="flex h-full min-h-0 flex-col rounded-sm border bg-muted/10 px-3 py-3">
+    <div className="relative flex h-full min-h-0 flex-col">
       {hasRemoteAudio ? <RoomAudioRenderer /> : null}
 
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -2725,11 +2758,10 @@ function InlineVoiceRoom({
           <div className="flex flex-wrap items-center gap-2">
             <span
               className={cn(
-                'h-2.5 w-2.5 rounded-full',
-                isActivelySpeaking
-                  ? 'bg-accent-emerald shadow-glow'
-                  : 'bg-accent-amber/80'
+                'status-dot',
+                isActivelySpeaking ? 'status-live' : 'status-warn'
               )}
+              aria-hidden
             />
             <div className="text-sm font-medium">Voice room live</div>
             <Badge variant="outline" className="h-6 rounded-md px-2">
@@ -2743,90 +2775,46 @@ function InlineVoiceRoom({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {!canPlayAudio && remoteParticipants.length > 0 ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="rounded-md"
-              onClick={() => void handleEnableAudioPlayback()}
-              disabled={isStartingAudioPlayback}
-            >
-              {isStartingAudioPlayback ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Volume2 className="mr-2 h-4 w-4" />
-              )}
-              Enable audio
-            </Button>
-          ) : null}
+        {!canPlayAudio && remoteParticipants.length > 0 ? (
           <Button
-            size="sm"
-            variant={isMicrophoneEnabled ? 'default' : 'outline'}
-            className="rounded-md"
-            onClick={() => void handleToggleMicrophone()}
-            disabled={
-              isMicrophonePending ||
-              isLeaving ||
-              isEnding ||
-              connectionState !== 'connected'
-            }
-          >
-            {isMicrophonePending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : isMicrophoneEnabled ? (
-              <Mic className="mr-2 h-4 w-4" />
-            ) : (
-              <MicOff className="mr-2 h-4 w-4" />
-            )}
-            {isMicrophonePending ? 'Updating' : isMicrophoneEnabled ? (isActivelySpeaking ? 'Speaking' : 'Mute') : 'Unmute'}
-          </Button>
-          <Button
+            type="button"
             size="sm"
             variant="outline"
-            className="rounded-md"
-            onClick={() => void handleLeave()}
-            disabled={isLeaving || isEnding}
+            onClick={() => void handleEnableAudioPlayback()}
+            disabled={isStartingAudioPlayback}
           >
-            {isLeaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PhoneOff className="mr-2 h-4 w-4" />}
-            Leave
+            {isStartingAudioPlayback ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Volume2 className="mr-2 h-4 w-4" />
+            )}
+            Enable audio
           </Button>
-          {canManageCalls ? (
-            <Button
-              size="sm"
-              variant="outline"
-              className="rounded-md"
-              onClick={() => void handleEnd()}
-              disabled={isEnding || isLeaving}
-            >
-              {isEnding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              End room
-            </Button>
-          ) : null}
-        </div>
+        ) : null}
       </div>
 
-        <div className="mt-3 rounded-sm border bg-background px-3 py-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="min-w-0">
-              <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                Microphone
-            </div>
-            <div className="truncate pt-1 text-sm font-medium">{microphoneStatus}</div>
-          </div>
+      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {participants.map((participant) => (
+          <VoiceParticipantTile
+            key={participant.identity}
+            participant={participant}
+            isCurrentUser={participant.identity === localParticipant.identity}
+          />
+        ))}
+      </div>
 
-          <div className="text-right">
-            <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">Level</div>
-            <div className="pt-1 text-sm font-medium tabular-nums">{Math.round(deferredMicrophoneLevel * 100)}%</div>
-          </div>
+      <div className="mt-3 space-y-2">
+        <div className="flex items-center justify-between gap-3 text-[11px] text-muted-foreground">
+          <span className="font-medium uppercase tracking-[0.14em]">
+            Microphone · {microphoneStatus}
+          </span>
+          <span className="tabular-nums">{Math.round(deferredMicrophoneLevel * 100)}%</span>
         </div>
-
-        <div className="mt-3 h-3 overflow-hidden rounded-sm border bg-muted/20">
+        <div className="h-2 overflow-hidden rounded-full bg-muted">
           <div
             className={cn(
               'h-full transition-[width,background-color] duration-100',
-              isActivelySpeaking ? 'bg-accent-emerald' : 'bg-foreground/80'
+              isActivelySpeaking ? 'bg-accent-emerald' : 'bg-primary/70'
             )}
             style={{ width: `${Math.round(deferredMicrophoneLevel * 100)}%` }}
           />
@@ -2834,7 +2822,7 @@ function InlineVoiceRoom({
       </div>
 
       {voiceError || lastMicrophoneError ? (
-        <div className="mt-3 rounded-sm border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+        <div className="mt-3 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
           Audio error:{' '}
           {voiceError ||
             formatMicrophoneError(lastMicrophoneError) ||
@@ -2847,23 +2835,16 @@ function InlineVoiceRoom({
           type="button"
           size="sm"
           variant="outline"
-          className={cn('rounded-sm', expandedPanel === 'audio' && 'border-foreground/40 bg-muted/40')}
+          className={cn(expandedPanel === 'audio' && 'border-primary/40 bg-primary/10 text-primary')}
           onClick={() => setExpandedPanel((current) => (current === 'audio' ? null : 'audio'))}
         >
           Audio settings
           <ChevronDown
-            className={cn('ml-2 h-4 w-4 transition-transform', expandedPanel === 'audio' && 'rotate-180')}
+            className={cn(
+              'ml-2 h-4 w-4 transition-transform duration-200',
+              expandedPanel === 'audio' && 'rotate-180'
+            )}
           />
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className={cn('rounded-sm', expandedPanel === 'people' && 'border-foreground/40 bg-muted/40')}
-          onClick={() => setExpandedPanel((current) => (current === 'people' ? null : 'people'))}
-        >
-          People
-          <span className="ml-2 rounded-sm border px-1.5 py-0.5 text-[11px]">{participants.length}</span>
         </Button>
       </div>
 
@@ -2882,22 +2863,69 @@ function InlineVoiceRoom({
         />
       ) : null}
 
-      {expandedPanel === 'people' ? (
-        <div className="mt-3 grid gap-2">
-          {participants.map((participant) => (
-            <VoiceParticipantRow
-              key={participant.identity}
-              participant={participant}
-              isCurrentUser={participant.identity === localParticipant.identity}
-            />
-          ))}
+      {/* Floating control bar */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center">
+        <div className="surface-card pointer-events-auto flex items-center gap-1 rounded-full px-3 py-2 shadow-md">
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            aria-label={isMicrophoneEnabled ? 'Mute microphone' : 'Unmute microphone'}
+            className={cn(
+              'h-9 w-9 rounded-full p-0',
+              isMicrophoneEnabled
+                ? 'bg-primary/10 text-primary hover:bg-primary/15'
+                : 'bg-destructive/10 text-destructive hover:bg-destructive/15'
+            )}
+            onClick={() => void handleToggleMicrophone()}
+            disabled={
+              isMicrophonePending || isLeaving || isEnding || connectionState !== 'connected'
+            }
+          >
+            {isMicrophonePending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isMicrophoneEnabled ? (
+              <Mic className="h-4 w-4" />
+            ) : (
+              <MicOff className="h-4 w-4" />
+            )}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            aria-label="Leave call"
+            className="h-9 w-9 rounded-full bg-destructive/10 p-0 text-destructive hover:bg-destructive/15"
+            onClick={() => void handleLeave()}
+            disabled={isLeaving || isEnding}
+          >
+            {isLeaving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <PhoneOff className="h-4 w-4" />
+            )}
+          </Button>
+          {canManageCalls ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              aria-label="End room for everyone"
+              className="h-9 rounded-full px-3 text-xs"
+              onClick={() => void handleEnd()}
+              disabled={isEnding || isLeaving}
+            >
+              {isEnding ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
+              End
+            </Button>
+          ) : null}
         </div>
-      ) : null}
+      </div>
     </div>
   );
 }
 
-function VoiceParticipantRow({
+function VoiceParticipantTile({
   participant,
   isCurrentUser,
 }: {
@@ -2920,43 +2948,39 @@ function VoiceParticipantRow({
   return (
     <div
       className={cn(
-        'flex items-center gap-3 rounded-md border px-3 py-2 transition-colors duration-200',
-        isSpeaking ? 'border-accent-emerald/40 bg-accent-emerald/5' : 'bg-muted/10'
+        'relative flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-border bg-card transition-colors duration-200',
+        isSpeaking && micEnabled && 'ring-2 ring-accent-emerald'
       )}
     >
-      <Avatar className="h-8 w-8">
-        <AvatarFallback className="text-xs">{getInitials(displayName)}</AvatarFallback>
+      <Avatar className="h-12 w-12">
+        <AvatarFallback className="text-sm">{getInitials(displayName)}</AvatarFallback>
       </Avatar>
 
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <div className="truncate text-sm font-medium">{displayName}</div>
+      <div className="absolute inset-x-2 bottom-2 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-1.5 rounded-md bg-background/70 px-2 py-1 text-xs backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <span className="truncate font-medium">{displayName}</span>
           {isCurrentUser ? (
-            <span className="rounded-sm border px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+            <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
               You
             </span>
           ) : null}
         </div>
-        <div className="text-xs text-muted-foreground">{stateLabel}</div>
+
+        <div className="flex items-center gap-1 rounded-md bg-background/70 px-1.5 py-1 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          {micEnabled ? (
+            <Mic
+              className={cn(
+                'h-3.5 w-3.5',
+                isSpeaking ? 'text-accent-emerald' : 'text-muted-foreground'
+              )}
+            />
+          ) : (
+            <MicOff className="h-3.5 w-3.5 text-destructive" />
+          )}
+        </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        {micEnabled ? (
-          <Mic className={cn('h-3.5 w-3.5', isSpeaking ? 'text-accent-emerald' : 'text-muted-foreground')} />
-        ) : (
-          <MicOff className="h-3.5 w-3.5 text-muted-foreground" />
-        )}
-        <span
-          className={cn(
-            'h-2 w-2 rounded-full',
-            !micEnabled
-              ? 'bg-muted-foreground/35'
-              : isSpeaking
-                ? 'bg-accent-emerald'
-                : 'bg-accent-amber'
-          )}
-        />
-      </div>
+      <span className="sr-only">{stateLabel}</span>
     </div>
   );
 }
@@ -3057,7 +3081,7 @@ function VoiceAudioSettingsPanel({
   }
 
   return (
-    <div className="mt-3 rounded-sm border bg-background px-3 py-3">
+    <div className="surface-inset mt-3 rounded-md px-3 py-3">
       <div className="space-y-4">
         <div className="space-y-2">
           <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
@@ -3068,7 +3092,7 @@ function VoiceAudioSettingsPanel({
 
         <div className="space-y-2">
           <select
-            className="flex h-9 w-full rounded-sm border bg-background px-3 text-sm outline-none"
+            className="flex h-9 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             value={storedAudioDeviceId || 'default'}
             onChange={(event) => {
               void handleSelectMicrophone(event.target.value);
@@ -3088,7 +3112,7 @@ function VoiceAudioSettingsPanel({
           </select>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
           <div>
             <span className="font-medium text-foreground">Permission:</span>{' '}
             {microphonePermissionLabel}
@@ -3098,7 +3122,7 @@ function VoiceAudioSettingsPanel({
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-7 rounded-sm px-2 text-xs"
+                className="h-7 rounded-md px-2 text-xs"
                 onClick={() => void handleRequestMicrophoneAccess()}
                 disabled={isMicrophonePending || isUnlockingMicrophoneAccess}
               >
@@ -3113,7 +3137,7 @@ function VoiceAudioSettingsPanel({
             <Button
               size="sm"
               variant="ghost"
-              className="h-7 rounded-sm px-2 text-xs"
+              className="h-7 rounded-md px-2 text-xs"
               onClick={() => void refreshMicrophoneEnvironment()}
               disabled={isMicrophonePending || isRefreshingMicrophoneEnvironment}
             >
@@ -3127,7 +3151,7 @@ function VoiceAudioSettingsPanel({
           </div>
         </div>
 
-        <div className="rounded-sm border bg-background px-3 py-2 text-xs text-muted-foreground">
+        <div className="rounded-md border border-border bg-background px-3 py-2 text-xs text-muted-foreground">
           {microphonePermissionHelp}
           {microphoneDevices.length === 0 ? ' No microphones are currently visible to the browser.' : ''}
           {microphonePermissionState === 'granted' && !deviceLabelsVisible
@@ -3138,7 +3162,7 @@ function VoiceAudioSettingsPanel({
             : ''}
         </div>
 
-        <div className="rounded-sm border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+        <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
           {hasRemoteAudio
             ? 'Speaker output activates when others are talking. Use the join setup panel if you want to test or self-monitor this device before reconnecting.'
             : 'No one else is in the room yet. Re-open join setup if you want to re-test this microphone locally.'}

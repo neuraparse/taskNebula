@@ -188,7 +188,7 @@ export function BulkOperationsDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isLoading}>
             Cancel
           </Button>
           <Button
@@ -197,7 +197,7 @@ export function BulkOperationsDialog({
             disabled={isLoading}
           >
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {operation === 'update' ? 'Update Issues' : 'Delete Issues'}
+            {operation === 'update' ? 'Update issues' : 'Delete issues'}
           </Button>
         </DialogFooter>
       </DialogContent>

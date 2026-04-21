@@ -453,7 +453,7 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
   const canManage = data.access.canManage;
 
   return (
-    <div className="space-y-6">
+    <div className="animate-fade-up space-y-6">
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -769,7 +769,7 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                     </div>
 
                     {!data.providerStatus.configured ? (
-                      <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                      <div className="mt-4 rounded-lg border border-accent-amber/30 bg-accent-amber/10 px-3 py-2 text-xs text-accent-amber">
                         Runs are blocked until you add a workspace key here or expose `OPENAI_API_KEY` on the server.
                       </div>
                     ) : null}
@@ -819,7 +819,7 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                       </div>
 
                       {removeStoredCredential ? (
-                        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                        <div className="rounded-lg border border-accent-amber/30 bg-accent-amber/10 px-3 py-2 text-xs text-accent-amber">
                           The stored workspace key will be removed on save. A server env key, if present, will still keep OpenAI ready.
                         </div>
                       ) : null}
@@ -1058,7 +1058,7 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                 ))}
 
                 {data.runtimeSummary.lastFailure ? (
-                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+                  <div className="rounded-lg border border-accent-amber/30 bg-accent-amber/10 px-3 py-2 text-sm text-accent-amber">
                     Last failure: {data.runtimeSummary.lastFailure}
                   </div>
                 ) : null}
@@ -1363,7 +1363,7 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                         Optional. Save or rotate the workspace OpenAI key while creating the profile.
                       </p>
                       {formState.provider === 'openai' && !data.providerStatus.configured ? (
-                        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                        <div className="rounded-lg border border-accent-amber/30 bg-accent-amber/10 px-3 py-2 text-xs text-accent-amber">
                           No runnable OpenAI key is configured right now. Add one here or provide `OPENAI_API_KEY` on the server.
                         </div>
                       ) : null}

@@ -172,51 +172,51 @@ export function AppSidebar() {
   );
 
   return (
-    <aside className="flex w-60 flex-col border-r border-border bg-card">
-      <div className="border-b border-border p-3">
+    <aside className="flex w-60 flex-col border-r border-border bg-surface">
+      <div className="flex h-14 items-center px-4">
         <button
-          className="flex w-full items-center justify-between rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-accent"
+          className="flex w-full items-center justify-between rounded-md py-1.5 text-sm font-medium transition-colors duration-150 hover:bg-accent/60"
           aria-label="Switch workspace"
         >
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-primary">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary">
               <TaskNebulaLogo compact className="h-5 w-5" />
             </div>
-            <span className="font-semibold text-foreground">TaskNebula</span>
+            <span className="font-semibold tracking-tight text-foreground">TaskNebula</span>
           </div>
           <ChevronDown className="h-4 w-4 text-muted-foreground" />
         </button>
       </div>
 
-      <nav aria-label="Primary" className="flex-1 space-y-0.5 p-2">
-        {navigation.map((item) => {
-          const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors duration-150',
-                isActive
-                  ? 'bg-primary/10 text-primary border-l-2 border-primary'
-                  : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-              )}
-            >
-              <item.icon className="h-4 w-4" />
-              <span>{item.name}</span>
-            </Link>
-          );
-        })}
+      <nav aria-label="Primary" className="custom-scrollbar flex-1 overflow-y-auto px-3 pb-3">
+        <div className="space-y-0.5">
+          {navigation.map((item) => {
+            const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={cn(
+                  'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150',
+                  isActive
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                <span>{item.name}</span>
+              </Link>
+            );
+          })}
+        </div>
 
-        <div className="pt-4">
-          <div className="mb-1 px-2">
-            <span className="kicker">Teamspaces</span>
-          </div>
-          <div className="px-2 pb-3">
+        <div>
+          <span className="kicker mb-1 mt-4 block px-3">Teamspaces</span>
+          <div className="px-1 pb-2">
             <TeamspaceSwitcher />
           </div>
 
-          <div className="mb-1 flex items-center justify-between px-2">
+          <div className="mb-1 mt-4 flex items-center justify-between px-3">
             <span className="kicker">Projects</span>
             <Link href="/projects">
               <Button
@@ -229,7 +229,7 @@ export function AppSidebar() {
               </Button>
             </Link>
           </div>
-          <div className="custom-scrollbar max-h-48 space-y-0.5 overflow-y-auto">
+          <div className="space-y-0.5">
             {projectsLoading ? (
               <div className="flex items-center justify-center py-4">
                 <span role="status" aria-live="polite" aria-busy="true">
@@ -246,33 +246,33 @@ export function AppSidebar() {
                     key={project.id}
                     href={`/projects/${projectPath}/views`}
                     className={cn(
-                      'group flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors duration-150',
+                      'group flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150',
                       isActive
-                        ? 'bg-primary/10 text-primary border-l-2 border-primary'
-                        : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
                     )}
                   >
-                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-muted">
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-sm bg-muted">
                       <span className="text-[9px] font-bold text-muted-foreground">
                         {project.name.substring(0, 2).toUpperCase()}
                       </span>
                     </div>
                     <span className="flex-1 truncate">{project.name}</span>
-                    <span className="font-mono text-[10px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
+                    <span className="font-mono text-[10px] text-muted-foreground opacity-0 transition-opacity duration-150 group-hover:opacity-100">
                       {project.key}
                     </span>
                   </Link>
                 );
               })
             ) : (
-              <div className="px-2 py-4 text-center">
+              <div className="px-3 py-4 text-center">
                 <p className="text-xs text-muted-foreground">No projects yet</p>
               </div>
             )}
             {projects && projects.length > 5 ? (
               <Link
                 href="/projects"
-                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                className="flex items-center gap-2.5 rounded-md px-3 py-2 text-xs text-muted-foreground transition-colors duration-150 hover:bg-accent/60 hover:text-foreground"
               >
                 View all {projects.length} projects
               </Link>
@@ -282,10 +282,8 @@ export function AppSidebar() {
       </nav>
 
       {currentTarget || otherActiveCalls.length > 0 || sidebarRuntimeError ? (
-        <div className="space-y-1.5 border-t border-border p-2">
-          <div className="px-2">
-            <span className="kicker">Live Calls</span>
-          </div>
+        <div className="space-y-1.5 px-3 py-3">
+          <span className="kicker px-0">Live Calls</span>
 
           {currentTarget && currentSession ? (
             room ? (
@@ -339,7 +337,7 @@ export function AppSidebar() {
             <Link
               key={call.id}
               href={call.room.href}
-              className="flex items-center gap-1.5 rounded-sm bg-surface px-2 py-1.5 text-left transition-colors duration-150 hover:bg-accent"
+              className="flex items-center gap-1.5 rounded-md bg-surface-2 px-2 py-1.5 text-left transition-colors duration-150 hover:bg-accent/60"
             >
               <span className="status-dot status-live shrink-0" />
               <div className="min-w-0 flex-1">
@@ -358,15 +356,15 @@ export function AppSidebar() {
         </div>
       ) : null}
 
-      <div className="space-y-0.5 border-t border-border p-2">
+      <div className="space-y-0.5 px-3 pb-2 pt-1">
         {isSuperAdmin ? (
           <Link
             href="/admin"
             className={cn(
-              'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors duration-150',
+              'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150',
               pathname === '/admin'
-                ? 'bg-primary/10 text-primary border-l-2 border-primary'
-                : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                ? 'bg-primary/10 text-primary'
+                : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
             )}
           >
             <Shield className="h-4 w-4" />
@@ -377,32 +375,41 @@ export function AppSidebar() {
         <Link
           href="/settings"
           className={cn(
-            'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors duration-150',
+            'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150',
             pathname === '/settings'
-              ? 'bg-primary/10 text-primary border-l-2 border-primary'
-              : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+              ? 'bg-primary/10 text-primary'
+              : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
           )}
         >
           <Settings className="h-4 w-4" />
           <span>Settings</span>
         </Link>
+      </div>
 
-        <div className="cursor-pointer rounded-md px-2 py-2 transition-colors duration-150 hover:bg-accent">
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
-              {session?.user?.image ? (
-                <AvatarImage src={session.user.image} alt={session.user.name ?? 'User avatar'} />
-              ) : null}
-              <AvatarFallback className="bg-muted text-[10px] font-medium text-muted-foreground">
-                {session?.user?.name?.split(' ').map((part) => part[0]).join('').toUpperCase() || 'U'}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 overflow-hidden">
-              <p className="truncate text-sm font-medium">{session?.user?.name || 'User'}</p>
-            </div>
-            <span className="status-dot status-live" />
+      <div className="px-3 pb-3">
+        <button
+          type="button"
+          className="surface-inset flex w-full items-center gap-2.5 p-3 text-left transition-colors duration-150 hover:bg-accent/60"
+          aria-label="Open account menu"
+        >
+          <Avatar className="h-7 w-7">
+            {session?.user?.image ? (
+              <AvatarImage src={session.user.image} alt={session.user.name ?? 'User avatar'} />
+            ) : null}
+            <AvatarFallback className="bg-muted text-[10px] font-medium text-muted-foreground">
+              {session?.user?.name?.split(' ').map((part) => part[0]).join('').toUpperCase() || 'U'}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-foreground">
+              {session?.user?.name || 'User'}
+            </p>
+            <p className="truncate text-[11px] text-muted-foreground">
+              {session?.user?.email || 'Workspace'}
+            </p>
           </div>
-        </div>
+          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+        </button>
       </div>
     </aside>
   );

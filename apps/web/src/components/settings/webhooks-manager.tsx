@@ -187,14 +187,14 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
   }
 
   return (
-    <div className="surface-card p-6 animate-fade-in">
-      <div className="flex items-center justify-between gap-3 pb-5">
+    <section className="animate-fade-up space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <span className="kicker">Integrations</span>
-          <h2 className="text-xl font-semibold">
-            {projectId ? 'Project Webhooks' : 'Webhooks'}
+          <h2 className="text-lg font-semibold tracking-tight">
+            {projectId ? 'Project webhooks' : 'Webhooks'}
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground max-w-prose">
             {projectId
               ? 'Send project-specific events to external services.'
               : 'Manage organization-wide webhook integrations.'}
@@ -276,18 +276,19 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
           {error instanceof Error ? error.message : 'Webhooks could not be loaded.'}
         </div>
       ) : webhooks.length === 0 ? (
-        <div className="py-10 text-center text-muted-foreground">
-          <WebhookIcon className="mx-auto mb-3 h-8 w-8 opacity-30" />
-          <p className="text-sm">
-            No webhooks yet. Create one to send TaskNebula events to your tools.
-          </p>
+        <div className="flex flex-col items-center gap-3 py-12 text-center">
+          <WebhookIcon className="h-8 w-8 text-muted-foreground/50" />
+          <p className="text-sm text-muted-foreground">No webhooks yet.</p>
+          <Button size="sm" onClick={openCreateDialog}>
+            Create your first webhook
+          </Button>
         </div>
       ) : (
-        <div className="space-y-px">
+        <div className="surface-card p-2">
           {webhooks.map((webhook) => (
             <div
               key={webhook.id}
-              className="flex min-h-[44px] items-start justify-between gap-4 rounded-md px-2 py-3 transition-colors hover:bg-accent/40"
+              className="flex min-h-[44px] items-start justify-between gap-4 rounded-md px-3 py-3 transition-colors duration-150 hover:bg-accent/40"
             >
               <div className="min-w-0 flex-1 space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2">
@@ -357,6 +358,6 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }

@@ -114,7 +114,7 @@ export function CreateCustomFieldDialog({
       <DialogContent className="sm:max-w-[480px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>{isEditMode ? 'Edit Custom Field' : 'Create Custom Field'}</DialogTitle>
+            <DialogTitle>{isEditMode ? 'Edit custom field' : 'Create custom field'}</DialogTitle>
             <DialogDescription>
               {isEditMode
                 ? 'Update the field details used across your issues.'
@@ -125,7 +125,7 @@ export function CreateCustomFieldDialog({
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="name">
-                Field Name <span className="text-destructive">*</span>
+                Field name <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="name"
@@ -138,7 +138,7 @@ export function CreateCustomFieldDialog({
 
             <div className="space-y-2">
               <Label htmlFor="description">
-                Description <span className="text-muted-foreground font-normal">(optional)</span>
+                Description <span className="font-normal text-muted-foreground">(optional)</span>
               </Label>
               <Textarea
                 id="description"
@@ -151,7 +151,7 @@ export function CreateCustomFieldDialog({
 
             <div className="space-y-2">
               <Label htmlFor="type">
-                Field Type <span className="text-destructive">*</span>
+                Field type <span className="text-destructive">*</span>
               </Label>
               <Select value={type} onValueChange={setType} disabled={isEditMode}>
                 <SelectTrigger>
@@ -161,8 +161,8 @@ export function CreateCustomFieldDialog({
                   <SelectItem value="text">Text</SelectItem>
                   <SelectItem value="number">Number</SelectItem>
                   <SelectItem value="date">Date</SelectItem>
-                  <SelectItem value="select">Select (Dropdown)</SelectItem>
-                  <SelectItem value="multi_select">Multi-Select</SelectItem>
+                  <SelectItem value="select">Select (dropdown)</SelectItem>
+                  <SelectItem value="multi_select">Multi-select</SelectItem>
                   <SelectItem value="checkbox">Checkbox</SelectItem>
                   <SelectItem value="url">URL</SelectItem>
                   <SelectItem value="email">Email</SelectItem>
@@ -186,7 +186,7 @@ export function CreateCustomFieldDialog({
                   rows={4}
                   required={showOptionsField}
                 />
-                <p className="text-xs text-muted-foreground">Enter each option on a new line</p>
+                <p className="text-xs text-muted-foreground">Enter each option on a new line.</p>
               </div>
             )}
 
@@ -206,7 +206,7 @@ export function CreateCustomFieldDialog({
             </Button>
             <Button type="submit" disabled={isPending || !name}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isEditMode ? 'Save Changes' : 'Create Field'}
+              {isEditMode ? 'Save changes' : 'Create field'}
             </Button>
           </DialogFooter>
         </form>
