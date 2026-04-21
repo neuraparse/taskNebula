@@ -62,19 +62,19 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
   const sprintProgress = getSprintProgress();
 
   return (
-    <div className="flex h-full flex-col bg-muted/[0.03]">
+    <div className="flex h-full flex-col">
       {/* Board Header - single compact row */}
-      <div className="shrink-0 border-b border-border/60 bg-background/95 px-5 py-3 backdrop-blur">
+      <div className="shrink-0 border-b border-border bg-background/95 px-5 py-3 backdrop-blur">
         <div className="flex items-center gap-3">
           {/* Sprint selector */}
           <Select
             value={selectedSprintId || 'all'}
             onValueChange={(value) => setSelectedSprintId(value === 'all' ? undefined : value)}
           >
-            <SelectTrigger className="h-8 w-48 rounded-none border-border/60 bg-background text-xs shadow-none">
+            <SelectTrigger className="h-8 w-48 border-border bg-background text-xs shadow-none">
               <SelectValue placeholder="All Issues" />
             </SelectTrigger>
-            <SelectContent className="rounded-none">
+            <SelectContent>
               <SelectItem value="all">All Issues</SelectItem>
               <SelectItem value="backlog">Backlog (No Sprint)</SelectItem>
               {sprints && sprints.length > 0 && (
@@ -87,12 +87,12 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
                       <span className="flex items-center gap-2">
                         {sprint.name}
                         {sprint.status === 'active' && (
-                          <Badge variant="default" className="h-3.5 rounded-none bg-emerald-500 px-1 py-0 text-[9px]">
+                          <Badge variant="default" className="h-3.5 bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20 px-1 py-0 text-[9px]">
                             Active
                           </Badge>
                         )}
                         {sprint.status === 'planned' && (
-                          <Badge variant="outline" className="h-3.5 rounded-none px-1 py-0 text-[9px]">
+                          <Badge variant="outline" className="h-3.5 px-1 py-0 text-[9px]">
                             Planned
                           </Badge>
                         )}
@@ -111,7 +111,7 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
               {sprintProgress && sprintProgress.daysLeft > 0 && (
                 <>
                   <span className="text-border">·</span>
-                  <span className={sprintProgress.daysLeft <= 2 ? 'text-orange-500 font-medium' : ''}>
+                  <span className={sprintProgress.daysLeft <= 2 ? 'text-accent-amber font-medium' : ''}>
                     {sprintProgress.daysLeft}d left
                   </span>
                 </>
@@ -119,7 +119,7 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-5 w-5 rounded-none text-muted-foreground hover:bg-muted/10 hover:text-foreground"
+                className="h-5 w-5 text-muted-foreground hover:bg-muted hover:text-foreground"
                 onClick={() => setSelectedSprintId(undefined)}
               >
                 <X className="h-2.5 w-2.5" />
@@ -129,7 +129,7 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
 
           {!activeSprint && !sprintsLoading && isInitialized && (
             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <AlertCircle className="h-3 w-3 text-orange-500" />
+              <AlertCircle className="h-3 w-3 text-accent-amber" />
               No active sprint
               <Link href={`/projects/${projectId}/sprints`} className="text-primary hover:underline ml-0.5">
                 {plannedSprints.length > 0 ? 'Start' : 'Create'}
@@ -155,7 +155,7 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
             <Button
               size="sm"
               onClick={() => setCreateModalOpen(true)}
-              className="h-8 gap-1.5 rounded-none border border-border/60 bg-background px-3 text-xs text-foreground shadow-none hover:bg-muted/10"
+              className="h-8 gap-1.5"
             >
               <Plus className="h-3.5 w-3.5" />
               New Issue

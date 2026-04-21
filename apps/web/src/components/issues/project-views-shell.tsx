@@ -465,44 +465,34 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
 
   return (
     <>
-      <div className="flex h-full flex-col bg-muted/[0.03]">
+      <div className="flex h-full flex-col bg-background">
         <div className="shrink-0 border-b border-border/60 bg-background/95 px-5 py-3 backdrop-blur">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <FolderKanban className="h-4 w-4 text-muted-foreground" />
-                <h1 className="text-sm font-semibold">Views</h1>
-                <Badge variant="outline" className="rounded-none text-[10px] uppercase tracking-wide">
-                  {viewsData?.project.name || projectId}
-                </Badge>
-                {activeTeamspace ? (
-                  <Badge variant="secondary" className="gap-1 rounded-none text-[10px] uppercase tracking-wide">
-                    <Settings2 className="h-3 w-3" />
-                    {activeTeamspace.name}
-                  </Badge>
-                ) : null}
-                {defaultView ? (
-                  <Badge variant="outline" className="rounded-none text-[10px] uppercase tracking-wide">
-                    Default: {defaultView.name}
-                  </Badge>
-                ) : null}
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Unified planning surface for list, board, timeline, and calendar with reusable project and teamspace views.
-              </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <FolderKanban className="h-4 w-4 text-muted-foreground" />
+              <h1 className="text-sm font-semibold">{viewsData?.project.name || projectId}</h1>
+              {activeTeamspace ? (
+                <span className="chip gap-1 text-[10px]">
+                  <Settings2 className="h-3 w-3" />
+                  {activeTeamspace.name}
+                </span>
+              ) : null}
+              {defaultView ? (
+                <span className="chip text-[10px]">Default: {defaultView.name}</span>
+              ) : null}
             </div>
 
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-1.5 rounded-none"
+                className="gap-1.5 h-8"
                 onClick={() => setSaveViewOpen(true)}
               >
                 <Save className="h-3.5 w-3.5" />
-                Save current view
+                Save view
               </Button>
-              <Button size="sm" className="gap-1.5 rounded-none" onClick={() => setCreateIssueOpen(true)}>
+              <Button size="sm" className="gap-1.5 h-8" onClick={() => setCreateIssueOpen(true)}>
                 <Plus className="h-3.5 w-3.5" />
                 New Issue
               </Button>
@@ -511,21 +501,21 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
 
           <div className="mt-3 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <Tabs value={activeViewType} onValueChange={(value) => setActiveViewType(value as ViewType)}>
-              <TabsList className="rounded-none bg-transparent p-0">
-                <TabsTrigger value="list" className="gap-1.5 rounded-none border border-border/60 data-[state=active]:border-primary data-[state=active]:shadow-none">
-                  <LayoutList className="h-4 w-4" />
+              <TabsList className="h-8 bg-muted/30 p-0.5 rounded-md">
+                <TabsTrigger value="list" className="gap-1.5 h-7 rounded-sm text-xs data-[state=active]:bg-card data-[state=active]:shadow-xs">
+                  <LayoutList className="h-3.5 w-3.5" />
                   List
                 </TabsTrigger>
-                <TabsTrigger value="board" className="gap-1.5 rounded-none border border-border/60 data-[state=active]:border-primary data-[state=active]:shadow-none">
-                  <FolderKanban className="h-4 w-4" />
+                <TabsTrigger value="board" className="gap-1.5 h-7 rounded-sm text-xs data-[state=active]:bg-card data-[state=active]:shadow-xs">
+                  <FolderKanban className="h-3.5 w-3.5" />
                   Board
                 </TabsTrigger>
-                <TabsTrigger value="timeline" className="gap-1.5 rounded-none border border-border/60 data-[state=active]:border-primary data-[state=active]:shadow-none">
-                  <GanttChartSquare className="h-4 w-4" />
+                <TabsTrigger value="timeline" className="gap-1.5 h-7 rounded-sm text-xs data-[state=active]:bg-card data-[state=active]:shadow-xs">
+                  <GanttChartSquare className="h-3.5 w-3.5" />
                   Timeline
                 </TabsTrigger>
-                <TabsTrigger value="calendar" className="gap-1.5 rounded-none border border-border/60 data-[state=active]:border-primary data-[state=active]:shadow-none">
-                  <CalendarDays className="h-4 w-4" />
+                <TabsTrigger value="calendar" className="gap-1.5 h-7 rounded-sm text-xs data-[state=active]:bg-card data-[state=active]:shadow-xs">
+                  <CalendarDays className="h-3.5 w-3.5" />
                   Calendar
                 </TabsTrigger>
               </TabsList>
@@ -541,12 +531,10 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
             </div>
           </div>
 
-          <div className="mt-3">
+          <div className="mt-2">
             <ScrollArea className="w-full whitespace-nowrap">
-              <div className="flex items-center gap-2 pb-1">
-                <Badge variant="secondary" className="rounded-none text-[10px] uppercase tracking-wide">
-                  Saved Views
-                </Badge>
+              <div className="flex items-center gap-1.5 pb-1">
+                <span className="kicker shrink-0">Views</span>
                 {viewsLoading ? (
                   <span className="text-xs text-muted-foreground">Loading…</span>
                 ) : visibleViews.length ? (
@@ -554,25 +542,21 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                     <div
                       key={view.id}
                       className={cn(
-                        'inline-flex items-center gap-1 border bg-background pr-1 text-xs transition-colors',
+                        'inline-flex items-center gap-1 rounded-md border pr-1 text-xs transition-colors duration-200',
                         activeViewType === view.viewType
-                          ? 'border-primary bg-primary/5 text-foreground'
-                          : 'border-border/60 text-muted-foreground hover:text-foreground'
+                          ? 'border-primary/20 bg-primary/10 text-primary'
+                          : 'border-border text-muted-foreground hover:text-foreground hover:bg-accent'
                       )}
                     >
                       <button
                         onClick={() => applyView(view)}
-                        className="inline-flex items-center gap-2 px-2.5 py-1.5"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1"
                       >
                         <span>{view.name}</span>
                         {view.isStarred ? <Star className="h-3 w-3 fill-current" /> : null}
                         {view.isDefault ? <Target className="h-3 w-3" /> : null}
-                        <Badge variant="outline" className="rounded-none px-1 text-[9px] uppercase">
-                          {view.viewType}
-                        </Badge>
-                        <Badge variant="secondary" className="rounded-none px-1 text-[9px] uppercase">
-                          {getScopeLabel(view.scope)}
-                        </Badge>
+                        <span className="chip text-[9px]">{view.viewType}</span>
+                        <span className="chip text-[9px]">{getScopeLabel(view.scope)}</span>
                       </button>
                       {view.isOwned ? (
                         <DropdownMenu>
@@ -580,13 +564,13 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 rounded-none"
+                              className="h-6 w-6 rounded-sm"
                               aria-label={`Manage ${view.name}`}
                             >
-                              <MoreHorizontal className="h-3.5 w-3.5" />
+                              <MoreHorizontal className="h-3 w-3" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="rounded-none">
+                          <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => void handleTogglePinned(view)}>
                               <Star className="mr-2 h-3.5 w-3.5" />
                               {view.isStarred ? 'Unpin view' : 'Pin view'}
@@ -610,7 +594,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                   ))
                 ) : (
                   <span className="text-xs text-muted-foreground">
-                    Save a filtered view to make it reusable for this {currentTeamId ? 'teamspace' : 'project'} context.
+                    Save a view to reuse it across this {currentTeamId ? 'teamspace' : 'project'}.
                   </span>
                 )}
               </div>
@@ -621,8 +605,8 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
         <Tabs value={activeViewType} onValueChange={(value) => setActiveViewType(value as ViewType)} className="flex min-h-0 flex-1 flex-col">
           <TabsContent value="list" className="mt-0 min-h-0 flex-1 overflow-hidden">
             <div className="h-full overflow-auto px-5 py-4">
-              <div className="overflow-hidden border border-border/60 bg-background">
-                <div className="grid grid-cols-[120px_minmax(0,1fr)_120px_120px_150px_150px] gap-3 border-b bg-muted/30 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <div className="overflow-hidden rounded-lg border border-border/60 bg-card">
+                <div className="grid grid-cols-[110px_minmax(0,1fr)_110px_100px_140px_120px] gap-3 border-b border-border/60 bg-surface px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                   <span>Issue</span>
                   <span>Title</span>
                   <span>Status</span>
@@ -642,17 +626,17 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                     <button
                       key={issue.id}
                       onClick={() => setSelectedIssueId(issue.id)}
-                      className="grid w-full grid-cols-[120px_minmax(0,1fr)_120px_120px_150px_150px] gap-3 border-b border-border/40 px-4 py-3 text-left transition-colors hover:bg-muted/20"
+                      className="grid w-full grid-cols-[110px_minmax(0,1fr)_110px_100px_140px_120px] gap-3 border-b border-border/40 px-4 py-2.5 text-left transition-colors duration-200 hover:bg-accent"
                     >
                       <span className="font-mono text-xs text-muted-foreground">{issue.key}</span>
                       <span className="truncate text-sm font-medium">{issue.title}</span>
-                      <span className="text-xs text-muted-foreground">{issue.statusName || issue.status}</span>
+                      <span className="text-xs text-muted-foreground truncate">{issue.statusName || issue.status}</span>
                       <span className="text-xs capitalize text-muted-foreground">{issue.priority}</span>
                       <span className="truncate text-xs text-muted-foreground">
                         {issue.assignee?.name || issue.assignee?.email || 'Unassigned'}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {issue.dueDate ? format(parseISO(issue.dueDate), 'MMM d, yyyy') : 'No due date'}
+                        {issue.dueDate ? format(parseISO(issue.dueDate), 'MMM d') : '—'}
                       </span>
                     </button>
                   ))
@@ -667,12 +651,12 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
 
           <TabsContent value="timeline" className="mt-0 min-h-0 flex-1 overflow-hidden">
             <div className="h-full overflow-auto px-5 py-4">
-              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-                <div className="border border-border/60 bg-background">
-                  <div className="border-b bg-muted/30 px-4 py-3">
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
+                <div className="rounded-lg border border-border/60 bg-card overflow-hidden">
+                  <div className="border-b border-border/60 bg-surface px-4 py-3">
                     <h2 className="text-sm font-semibold">Scheduled Work</h2>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Ordered by due date to give us a lightweight timeline without replacing the roadmap.
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Ordered by due date.
                     </p>
                   </div>
                   <div className="divide-y divide-border/40">
@@ -683,17 +667,15 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                         <button
                           key={issue.id}
                           onClick={() => setSelectedIssueId(issue.id)}
-                          className="flex w-full items-start justify-between gap-4 px-4 py-4 text-left transition-colors hover:bg-muted/20"
+                          className="flex w-full items-start justify-between gap-4 px-4 py-3 text-left transition-colors duration-200 hover:bg-accent"
                         >
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="font-mono text-xs text-muted-foreground">{issue.key}</span>
-                              <Badge variant="outline" className="rounded-none text-[10px] capitalize">
-                                {issue.priority}
-                              </Badge>
+                              <span className="chip text-[10px] capitalize">{issue.priority}</span>
                             </div>
-                            <p className="mt-1 text-sm font-medium">{issue.title}</p>
-                            <p className="mt-1 text-xs text-muted-foreground">
+                            <p className="mt-0.5 text-sm font-medium">{issue.title}</p>
+                            <p className="mt-0.5 text-xs text-muted-foreground">
                               {issue.statusName || issue.status} · {issue.assignee?.name || issue.assignee?.email || 'Unassigned'}
                             </p>
                           </div>
@@ -711,12 +693,10 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                   </div>
                 </div>
 
-                <div className="border border-border/60 bg-background">
-                  <div className="border-b bg-muted/30 px-4 py-3">
+                <div className="rounded-lg border border-border/60 bg-card overflow-hidden">
+                  <div className="border-b border-border/60 bg-surface px-4 py-3">
                     <h2 className="text-sm font-semibold">Unscheduled</h2>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Issues still missing a target date.
-                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">Missing a target date.</p>
                   </div>
                   <div className="divide-y divide-border/40">
                     {unscheduledIssues.length === 0 ? (
@@ -726,15 +706,13 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                         <button
                           key={issue.id}
                           onClick={() => setSelectedIssueId(issue.id)}
-                          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/20"
+                          className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition-colors duration-200 hover:bg-accent"
                         >
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium">{issue.title}</p>
                             <p className="text-xs text-muted-foreground">{issue.key}</p>
                           </div>
-                          <Badge variant="secondary" className="rounded-none text-[10px]">
-                            No due date
-                          </Badge>
+                          <span className="chip text-[10px] shrink-0">No date</span>
                         </button>
                       ))
                     )}
@@ -746,35 +724,34 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
 
           <TabsContent value="calendar" className="mt-0 min-h-0 flex-1 overflow-hidden">
             <div className="h-full overflow-auto px-5 py-4">
-              <div className="border border-border/60 bg-background">
-                <div className="flex items-center justify-between border-b bg-muted/30 px-4 py-3">
-                  <div>
-                    <h2 className="text-sm font-semibold">{format(calendarMonth, 'MMMM yyyy')}</h2>
-                    <p className="mt-1 text-xs text-muted-foreground">Due-date calendar for the current filtered dataset.</p>
-                  </div>
-                  <div className="flex items-center gap-2">
+              <div className="rounded-lg border border-border/60 bg-card overflow-hidden">
+                <div className="flex items-center justify-between border-b border-border/60 bg-surface px-4 py-3">
+                  <h2 className="text-sm font-semibold">{format(calendarMonth, 'MMMM yyyy')}</h2>
+                  <div className="flex items-center gap-1">
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="icon"
-                      className="h-8 w-8 rounded-none"
+                      className="h-7 w-7"
                       onClick={() => setCalendarMonth((value) => subMonths(value, 1))}
+                      aria-label="Previous month"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="icon"
-                      className="h-8 w-8 rounded-none"
+                      className="h-7 w-7"
                       onClick={() => setCalendarMonth((value) => addMonths(value, 1))}
+                      aria-label="Next month"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-7 border-b bg-muted/20">
+                <div className="grid grid-cols-7 border-b border-border/60 bg-surface">
                   {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                    <div key={day} className="border-r border-border/40 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground last:border-r-0">
+                    <div key={day} className="border-r border-border/40 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground last:border-r-0">
                       {day}
                     </div>
                   ))}
@@ -789,32 +766,30 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                       <div
                         key={key}
                         className={cn(
-                          'min-h-36 border-r border-b border-border/40 px-3 py-2 last:border-r-0',
+                          'min-h-32 border-r border-b border-border/40 px-2 py-2 last:border-r-0',
                           !isSameMonth(day, calendarMonth) && 'bg-muted/10 text-muted-foreground/50'
                         )}
                       >
-                        <div className="mb-2 flex items-center justify-between">
+                        <div className="mb-1.5 flex items-center justify-between">
                           <span
                             className={cn(
                               'text-xs font-medium',
-                              isToday(day) && 'bg-primary px-1.5 py-0.5 text-primary-foreground'
+                              isToday(day) && 'bg-primary px-1.5 py-0.5 rounded-sm text-primary-foreground'
                             )}
                           >
                             {format(day, 'd')}
                           </span>
-                          {dayIssues.length ? (
-                            <Badge variant="secondary" className="rounded-none text-[10px]">
-                              {dayIssues.length}
-                            </Badge>
+                          {dayIssues.length > 1 ? (
+                            <span className="chip text-[9px]">{dayIssues.length}</span>
                           ) : null}
                         </div>
 
-                        <div className="space-y-1.5">
+                        <div className="space-y-1">
                           {dayIssues.slice(0, 3).map((issue) => (
                             <button
                               key={issue.id}
                               onClick={() => setSelectedIssueId(issue.id)}
-                              className="w-full border border-border/60 bg-background px-2 py-1 text-left transition-colors hover:border-primary"
+                              className="w-full rounded-sm border border-border/60 bg-card px-1.5 py-0.5 text-left transition-colors duration-200 hover:border-primary/40 hover:bg-accent"
                             >
                               <p className="truncate text-[11px] font-medium">{issue.title}</p>
                               <p className="truncate text-[10px] text-muted-foreground">{issue.key}</p>
@@ -835,11 +810,11 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
       </div>
 
       <Dialog open={saveViewOpen} onOpenChange={setSaveViewOpen}>
-        <DialogContent className="rounded-none border-border/60">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Save current view</DialogTitle>
             <DialogDescription>
-              This stores the active view type and filters on top of the existing saved filters foundation.
+              Stores the active view type and filters as a reusable saved view.
             </DialogDescription>
           </DialogHeader>
 
@@ -853,7 +828,6 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                 value={viewName}
                 onChange={(event) => setViewName(event.target.value)}
                 placeholder="Sprint planning board"
-                className="rounded-none"
               />
             </div>
 
@@ -866,7 +840,6 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                 value={viewDescription}
                 onChange={(event) => setViewDescription(event.target.value)}
                 placeholder="Optional context for teammates"
-                className="rounded-none"
               />
             </div>
 
@@ -875,10 +848,10 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                 Scope
               </label>
               <Select value={viewScope} onValueChange={(value) => setViewScope(value as ViewScope)}>
-                <SelectTrigger id="view-scope" className="rounded-none">
+                <SelectTrigger id="view-scope">
                   <SelectValue placeholder="Select scope" />
                 </SelectTrigger>
-                <SelectContent className="rounded-none">
+                <SelectContent>
                   <SelectItem value="personal">Personal</SelectItem>
                   <SelectItem value="project">Project</SelectItem>
                   <SelectItem value="teamspace" disabled={!currentTeamId}>
@@ -887,7 +860,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Personal views stay private. Project and Teamspace views are reusable by others in the same context.
+                Personal views stay private. Project and Teamspace views are shared.
               </p>
             </div>
 
@@ -898,24 +871,23 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
 
             <label className="flex items-center gap-3 text-sm">
               <Checkbox checked={isDefaultView} onCheckedChange={(checked) => setIsDefaultView(checked === true)} />
-              Apply this as the default view for the selected scope
+              Set as default view for this scope
             </label>
 
             {saveViewMutation.error ? (
-              <div className="rounded-none bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {saveViewMutation.error.message}
               </div>
             ) : null}
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSaveViewOpen(false)} className="rounded-none">
+            <Button variant="outline" onClick={() => setSaveViewOpen(false)}>
               Cancel
             </Button>
             <Button
               onClick={() => saveViewMutation.mutate()}
               disabled={!viewName.trim() || saveViewMutation.isPending}
-              className="rounded-none"
             >
               {saveViewMutation.isPending ? 'Saving…' : 'Save view'}
             </Button>

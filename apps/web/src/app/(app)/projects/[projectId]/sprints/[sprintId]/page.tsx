@@ -120,10 +120,10 @@ export default function SprintDetailPage({
   const totalIssues = issues?.length || 0;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden animate-fade-in">
       {/* Sprint Header */}
-      <div className="border-b bg-background px-6 py-4">
-        <div className="mx-auto max-w-7xl space-y-4">
+      <div className="border-b border-border bg-background px-6 py-4 shrink-0">
+        <div className="space-y-3">
           {/* Back Button */}
           <Link href={`/projects/${projectId}/sprints`}>
             <Button variant="ghost" size="sm">
@@ -136,9 +136,17 @@ export default function SprintDetailPage({
           <div className="flex items-start justify-between">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold">{sprint.name}</h1>
-                {sprint.status === 'active' && <Badge className="bg-green-500">Active</Badge>}
-                {sprint.status === 'completed' && <Badge className="bg-blue-500">Completed</Badge>}
+                <h1 className="text-2xl font-semibold tracking-tight">{sprint.name}</h1>
+                {sprint.status === 'active' && (
+                  <Badge className="bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20">
+                    <span className="status-dot status-live mr-1.5" />Active
+                  </Badge>
+                )}
+                {sprint.status === 'completed' && (
+                  <Badge className="bg-accent-blue/10 text-accent-blue border-accent-blue/20">
+                    Completed
+                  </Badge>
+                )}
                 {sprint.status === 'planned' && <Badge variant="outline">Planned</Badge>}
               </div>
 
@@ -207,34 +215,22 @@ export default function SprintDetailPage({
 
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="space-y-6">
+        <div className="space-y-6 p-6">
           {/* Sprint Stats */}
           {issues && issues.length > 0 && (
-            <div className="bg-background px-6 py-4">
-              <div className="mx-auto max-w-7xl">
-                <SprintStats sprint={sprint} issues={issues} />
-              </div>
-            </div>
+            <SprintStats sprint={sprint} issues={issues} />
           )}
 
           {/* Burndown Chart */}
           {burndownData && sprint.status === 'active' && (
-            <div className="bg-background px-6 py-4">
-              <div className="mx-auto max-w-7xl">
-                <div className="rounded-lg border bg-card p-6">
-                  <h2 className="mb-4 text-lg font-semibold">Sprint Burndown</h2>
-                  <BurndownChart data={burndownData} />
-                </div>
-              </div>
+            <div className="surface-card p-5">
+              <h2 className="mb-4 text-sm font-semibold">Sprint Burndown</h2>
+              <BurndownChart data={burndownData} />
             </div>
           )}
 
           {/* Sprint Board */}
-          <div className="px-6 pb-6">
-            <div className="mx-auto max-w-7xl">
-              <KanbanBoard projectId={projectId} sprintId={sprintId} />
-            </div>
-          </div>
+          <KanbanBoard projectId={projectId} sprintId={sprintId} />
         </div>
       </div>
     </div>

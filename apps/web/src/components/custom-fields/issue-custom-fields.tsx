@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -41,16 +40,9 @@ export function IssueCustomFields({ issueId }: IssueCustomFieldsProps) {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Custom Fields</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-4">
-            <Loader2 className="h-4 w-4 animate-spin" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-center py-6">
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      </div>
     );
   }
 
@@ -99,7 +91,7 @@ export function IssueCustomFields({ issueId }: IssueCustomFieldsProps) {
 
       case 'checkbox':
         return (
-          <div className="flex items-center space-x-2">
+          <label className="flex cursor-pointer items-center gap-2">
             <Checkbox
               checked={value === 'true'}
               onCheckedChange={(checked) =>
@@ -110,7 +102,7 @@ export function IssueCustomFields({ issueId }: IssueCustomFieldsProps) {
             <span className="text-sm text-muted-foreground">
               {value === 'true' ? 'Yes' : 'No'}
             </span>
-          </div>
+          </label>
         );
 
       case 'select': {
@@ -136,7 +128,6 @@ export function IssueCustomFields({ issueId }: IssueCustomFieldsProps) {
       }
 
       case 'multi_select':
-        // For multi-select, we'll use a simple comma-separated input for now
         return (
           <Input
             value={value || ''}
@@ -152,16 +143,16 @@ export function IssueCustomFields({ issueId }: IssueCustomFieldsProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm">Custom Fields</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="space-y-3">
+      <span className="kicker">Custom Fields</span>
+      <div className="space-y-3">
         {customFieldValues.map((fieldValue) => (
-          <div key={fieldValue.customFieldId} className="space-y-2">
-            <Label>
+          <div key={fieldValue.customFieldId} className="space-y-1.5">
+            <Label className="text-xs">
               {fieldValue.field.name}
-              {fieldValue.field.isRequired && <span className="text-destructive ml-1">*</span>}
+              {fieldValue.field.isRequired && (
+                <span className="text-destructive ml-1" aria-label="required">*</span>
+              )}
             </Label>
             {fieldValue.field.description && (
               <p className="text-xs text-muted-foreground">{fieldValue.field.description}</p>
@@ -169,8 +160,7 @@ export function IssueCustomFields({ issueId }: IssueCustomFieldsProps) {
             {renderFieldInput(fieldValue)}
           </div>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
-

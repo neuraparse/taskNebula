@@ -35,6 +35,7 @@ import {
   Users2,
   Volume2,
 } from 'lucide-react';
+import { TaskNebulaLogo } from '@/components/branding/tasknebula-logo';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TeamspaceSwitcher } from '@/components/organization/teamspace-switcher';
@@ -178,8 +179,8 @@ export function AppSidebar() {
           aria-label="Switch workspace"
         >
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded bg-primary">
-              <span className="text-xs font-bold text-primary-foreground">T</span>
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-primary">
+              <TaskNebulaLogo compact className="h-5 w-5" />
             </div>
             <span className="font-semibold text-foreground">TaskNebula</span>
           </div>
@@ -195,9 +196,9 @@ export function AppSidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors',
+                'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors duration-150',
                 isActive
-                  ? 'bg-primary/10 text-primary'
+                  ? 'bg-primary/10 text-primary border-l-2 border-primary'
                   : 'text-muted-foreground hover:bg-accent hover:text-foreground'
               )}
             >
@@ -209,18 +210,14 @@ export function AppSidebar() {
 
         <div className="pt-4">
           <div className="mb-1 px-2">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Teamspaces
-            </span>
+            <span className="kicker">Teamspaces</span>
           </div>
           <div className="px-2 pb-3">
             <TeamspaceSwitcher />
           </div>
 
           <div className="mb-1 flex items-center justify-between px-2">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Projects
-            </span>
+            <span className="kicker">Projects</span>
             <Link href="/projects">
               <Button
                 variant="ghost"
@@ -249,9 +246,9 @@ export function AppSidebar() {
                     key={project.id}
                     href={`/projects/${projectPath}/views`}
                     className={cn(
-                      'group flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors',
+                      'group flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors duration-150',
                       isActive
-                        ? 'bg-primary/10 text-primary'
+                        ? 'bg-primary/10 text-primary border-l-2 border-primary'
                         : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                     )}
                   >
@@ -286,8 +283,8 @@ export function AppSidebar() {
 
       {currentTarget || otherActiveCalls.length > 0 || sidebarRuntimeError ? (
         <div className="space-y-1.5 border-t border-border p-2">
-          <div className="px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Live Calls
+          <div className="px-2">
+            <span className="kicker">Live Calls</span>
           </div>
 
           {currentTarget && currentSession ? (
@@ -342,9 +339,9 @@ export function AppSidebar() {
             <Link
               key={call.id}
               href={call.room.href}
-              className="flex items-center gap-1.5 rounded-sm border px-2 py-1 text-left transition-colors hover:bg-accent"
+              className="flex items-center gap-1.5 rounded-sm bg-surface px-2 py-1.5 text-left transition-colors duration-150 hover:bg-accent"
             >
-              <Radio className="h-2.5 w-2.5 shrink-0 text-muted-foreground" />
+              <span className="status-dot status-live shrink-0" />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[11px] font-medium text-foreground">{call.room.title}</div>
                 <div className="truncate text-[10px] text-muted-foreground">
@@ -352,8 +349,8 @@ export function AppSidebar() {
                   {call.isParticipant ? ' · joined' : ''}
                 </div>
               </div>
-              <div className="inline-flex items-center gap-1 rounded-sm border px-1 py-0.5 text-[9px] text-muted-foreground">
-                <Users2 className="h-2.5 w-2.5 shrink-0" />
+              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <Users2 className="h-3 w-3 shrink-0" />
                 <span>{call.participantCount}</span>
               </div>
             </Link>
@@ -366,9 +363,9 @@ export function AppSidebar() {
           <Link
             href="/admin"
             className={cn(
-              'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors',
+              'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors duration-150',
               pathname === '/admin'
-                ? 'bg-primary/10 text-primary'
+                ? 'bg-primary/10 text-primary border-l-2 border-primary'
                 : 'text-muted-foreground hover:bg-accent hover:text-foreground'
             )}
           >
@@ -380,9 +377,9 @@ export function AppSidebar() {
         <Link
           href="/settings"
           className={cn(
-            'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors',
+            'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors duration-150',
             pathname === '/settings'
-              ? 'bg-primary/10 text-primary'
+              ? 'bg-primary/10 text-primary border-l-2 border-primary'
               : 'text-muted-foreground hover:bg-accent hover:text-foreground'
           )}
         >
@@ -390,7 +387,7 @@ export function AppSidebar() {
           <span>Settings</span>
         </Link>
 
-        <div className="cursor-pointer rounded-md px-2 py-2 transition-colors hover:bg-accent">
+        <div className="cursor-pointer rounded-md px-2 py-2 transition-colors duration-150 hover:bg-accent">
           <div className="flex items-center gap-2">
             <Avatar className="h-6 w-6">
               {session?.user?.image ? (
@@ -403,7 +400,7 @@ export function AppSidebar() {
             <div className="flex-1 overflow-hidden">
               <p className="truncate text-sm font-medium">{session?.user?.name || 'User'}</p>
             </div>
-            <div className="h-2 w-2 rounded-full bg-green-500" />
+            <span className="status-dot status-live" />
           </div>
         </div>
       </div>
@@ -678,12 +675,12 @@ function SidebarVoiceWorkspace({
 
   return (
     <>
-      <div className="space-y-2 rounded-sm border bg-muted/15 p-2">
+      <div className="space-y-2 rounded-sm bg-surface p-2">
         <div className="flex items-start gap-2">
-          <div
+          <span
             className={cn(
-              'mt-1 h-1.5 w-1.5 shrink-0 rounded-full',
-              resolvedConnectionState === 'connected' ? 'bg-emerald-500' : 'bg-amber-500'
+              'status-dot mt-1 shrink-0',
+              resolvedConnectionState === 'connected' ? 'status-live' : 'status-warn'
             )}
           />
           <div className="min-w-0 flex-1">
@@ -695,9 +692,7 @@ function SidebarVoiceWorkspace({
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <span className="rounded-sm border px-1 py-0.5 text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
-              live
-            </span>
+            <span className="chip text-[9px]">live</span>
             <Button
               size="sm"
               variant="ghost"
@@ -711,7 +706,7 @@ function SidebarVoiceWorkspace({
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2 rounded-sm border bg-background/60 px-2 py-2">
+        <div className="flex items-center justify-between gap-2 rounded-sm bg-surface-2 px-2 py-2">
           <div className="flex min-w-0 flex-1 items-center">
             {participantsPreview.length > 0 ? (
               <div className="flex min-w-0 items-center">
@@ -743,7 +738,7 @@ function SidebarVoiceWorkspace({
           </div>
         </div>
 
-        <div className="space-y-1 rounded-sm border bg-background/60 px-2 py-2">
+        <div className="space-y-1 rounded-sm bg-surface-2 px-2 py-2">
           <div className="flex items-center justify-between gap-3 text-[10px]">
             <span className="font-medium uppercase tracking-[0.12em] text-muted-foreground">
               Mic level
@@ -753,8 +748,8 @@ function SidebarVoiceWorkspace({
           <div className="h-2 overflow-hidden rounded-full bg-muted/30">
             <div
               className={cn(
-                'h-full transition-[width,background-color] duration-100',
-                isActivelySpeaking ? 'bg-emerald-500' : 'bg-foreground/80'
+                'h-full transition-[width] duration-150',
+                isActivelySpeaking ? 'bg-accent-emerald' : 'bg-foreground/80'
               )}
               style={{ width: `${Math.round(deferredMicrophoneLevel * 100)}%` }}
             />
@@ -826,18 +821,18 @@ function SidebarVoiceWorkspace({
           </DialogHeader>
 
           <div className="max-h-[75vh] space-y-4 overflow-y-auto pr-1">
-            <div className="rounded-md border bg-muted/10 p-4">
+            <div className="rounded-md bg-surface p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span
                       className={cn(
-                        'h-2.5 w-2.5 rounded-full',
+                        'status-dot',
                         resolvedConnectionState === 'connected'
                           ? isActivelySpeaking
-                            ? 'bg-emerald-500 shadow-[0_0_0_4px_rgba(34,197,94,0.12)]'
-                            : 'bg-amber-500'
-                          : 'bg-amber-500'
+                            ? 'status-live'
+                            : 'status-warn'
+                          : 'status-warn'
                       )}
                     />
                     <div className="text-sm font-semibold text-foreground">{currentTarget.roomTitle}</div>
@@ -935,8 +930,8 @@ function SidebarVoiceWorkspace({
               <div className="mt-4 h-3 overflow-hidden rounded-full bg-muted/25">
                 <div
                   className={cn(
-                    'h-full transition-[width,background-color] duration-100',
-                    isActivelySpeaking ? 'bg-emerald-500' : 'bg-foreground/80'
+                    'h-full transition-[width] duration-150',
+                    isActivelySpeaking ? 'bg-accent-emerald' : 'bg-foreground/80'
                   )}
                   style={{ width: `${Math.round(deferredMicrophoneLevel * 100)}%` }}
                 />
@@ -966,7 +961,7 @@ function SidebarVoiceWorkspace({
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-md border bg-muted/15 px-3 py-2 text-xs text-muted-foreground">
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-md bg-surface px-3 py-2 text-xs text-muted-foreground">
                 <div>
                   <span className="font-medium text-foreground">Permission:</span> {microphonePermissionLabel}
                 </div>
@@ -1004,7 +999,7 @@ function SidebarVoiceWorkspace({
                 </div>
               </div>
 
-              <div className="mt-3 rounded-md border bg-muted/10 px-3 py-2 text-xs text-muted-foreground">
+              <div className="mt-3 rounded-md bg-surface px-3 py-2 text-xs text-muted-foreground">
                 {microphonePermissionHelp}
                 {microphoneDevices.length === 0 ? ' No microphones are currently visible to the browser.' : ''}
                 {microphonePermissionState === 'granted' && !deviceLabelsVisible
@@ -1075,9 +1070,9 @@ function SidebarVoiceFallbackCard({
   const voiceStatusLabel = isConnecting ? 'Connecting…' : isMicrophoneEnabled ? 'Mic live' : 'Muted';
 
   return (
-    <div className="space-y-2 rounded-sm border bg-muted/15 p-2">
+    <div className="space-y-2 rounded-sm bg-surface p-2">
       <div className="flex items-start gap-2">
-        <div className={cn('mt-1 h-1.5 w-1.5 shrink-0 rounded-full', isConnecting ? 'bg-amber-500' : 'bg-emerald-500')} />
+        <span className={cn('status-dot mt-1 shrink-0', isConnecting ? 'status-warn' : 'status-live')} />
         <div className="min-w-0 flex-1">
           <div className="truncate text-[11px] font-semibold text-foreground">{currentTarget.roomTitle}</div>
           <div className="truncate text-[10px] text-muted-foreground">
@@ -1094,7 +1089,7 @@ function SidebarVoiceFallbackCard({
         </Button>
       </div>
 
-      <div className="rounded-sm border bg-background/60 px-2 py-2 text-[10px] text-muted-foreground">
+      <div className="rounded-sm bg-surface-2 px-2 py-2 text-[10px] text-muted-foreground">
         Voice status: {voiceStatusLabel}
       </div>
 
@@ -1166,9 +1161,9 @@ function SidebarVoiceParticipantAvatar({
   return (
     <Avatar
       className={cn(
-        'h-7 w-7 border border-background transition-[box-shadow,transform,background-color]',
+        'h-7 w-7 border border-background transition-[box-shadow,transform,background-color] duration-150',
         isSpeaking && isMicrophoneActive
-          ? 'shadow-[0_0_0_2px_rgba(34,197,94,0.9),0_0_14px_rgba(34,197,94,0.32)]'
+          ? 'ring-2 ring-accent-emerald/60 shadow-glow'
           : 'shadow-none',
         className
       )}
@@ -1180,7 +1175,7 @@ function SidebarVoiceParticipantAvatar({
         className={cn(
           'text-[10px] font-semibold',
           isSpeaking && isMicrophoneActive
-            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+            ? 'bg-accent-emerald/15 text-accent-emerald'
             : 'bg-muted text-muted-foreground'
         )}
       >
@@ -1218,8 +1213,10 @@ function SidebarVoiceParticipantRow({
   return (
     <div
       className={cn(
-        'flex items-center gap-3 rounded-md border px-3 py-2',
-        isSpeaking && isMicrophoneActive ? 'border-emerald-500/35 bg-emerald-500/5' : 'bg-muted/10'
+        'flex items-center gap-3 rounded-md px-3 py-2 transition-colors duration-150',
+        isSpeaking && isMicrophoneActive
+          ? 'border border-accent-emerald/30 bg-accent-emerald/10'
+          : 'bg-surface'
       )}
     >
       <SidebarVoiceParticipantAvatar
@@ -1242,7 +1239,7 @@ function SidebarVoiceParticipantRow({
       </div>
 
       {isMicrophoneActive ? (
-        <Mic className={cn('h-3.5 w-3.5', isSpeaking ? 'text-emerald-500' : 'text-muted-foreground')} />
+        <Mic className={cn('h-3.5 w-3.5', isSpeaking ? 'text-accent-emerald' : 'text-muted-foreground')} />
       ) : (
         <MicOff className="h-3.5 w-3.5 text-muted-foreground" />
       )}

@@ -118,6 +118,7 @@ const createIssueSchema = z.object({
   estimate: z.number().optional(),
   dueDate: z.string().datetime().optional(),
   customFields: z.record(z.any()).default({}),
+  statusId: z.string().optional(),
 });
 
 // GET /api/issues - List issues with filters
@@ -372,14 +373,26 @@ export async function POST(request: NextRequest) {
       .from(workflowStatuses)
       .where(eq(workflowStatuses.workflowId, workflowId));
 
-    // Filter for backlog category and sort by position
-    const backlogStatuses = allStatuses
-      .filter(s => s.category === 'backlog')
-      .sort((a, b) => a.position - b.position);
+    // Resolve the final status: prefer the client-supplied statusId when it
+    // belongs to this workflow; otherwise fall back to the first backlog status.
+    let finalStatusId: string | undefined;
+    if (validatedData.statusId) {
+      const match = allStatuses.find(s => s.id === validatedData.statusId);
+      if (match) {
+        finalStatusId = match.id;
+      }
+      // Unrecognised / cross-workflow statusId: silently fall through to backlog default.
+    }
 
-    const defaultStatus = backlogStatuses[0];
-    if (!defaultStatus) {
-      return NextResponse.json({ error: 'No backlog status found in workflow' }, { status: 500 });
+    if (!finalStatusId) {
+      const backlogStatuses = allStatuses
+        .filter(s => s.category === 'backlog')
+        .sort((a, b) => a.position - b.position);
+      const defaultStatus = backlogStatuses[0];
+      if (!defaultStatus) {
+        return NextResponse.json({ error: 'No backlog status found in workflow' }, { status: 500 });
+      }
+      finalStatusId = defaultStatus.id;
     }
 
     const issueData = {
@@ -390,7 +403,7 @@ export async function POST(request: NextRequest) {
       number: nextNumber,
       title: validatedData.title,
       description: validatedData.description || null,
-      statusId: defaultStatus.id,
+      statusId: finalStatusId,
       priority: validatedData.priority,
       type: validatedData.type,
       reporterId: session.user.id,

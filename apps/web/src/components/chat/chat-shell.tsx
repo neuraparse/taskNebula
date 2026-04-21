@@ -964,7 +964,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="mt-0.5 h-8 w-8 rounded-none lg:hidden"
+                      className="mt-0.5 h-8 w-8 lg:hidden"
                       onClick={() => setIsSidebarOpen(true)}
                     >
                       <PanelLeft className="h-4 w-4" />
@@ -995,13 +995,13 @@ export function ChatShell({ projectId }: { projectId: string }) {
                             type="button"
                             variant="outline"
                             size="icon"
-                            className="h-9 w-9 rounded-none"
+                            className="h-9 w-9"
                             aria-label="Moderation tools"
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56 rounded-none">
+                        <DropdownMenuContent align="end" className="w-56">
                           <DropdownMenuItem onClick={() => setPendingModerationAction('clear_deleted')}>
                             <Trash2 className="mr-2 h-4 w-4" />
                             Clear deleted messages
@@ -1021,7 +1021,6 @@ export function ChatShell({ projectId }: { projectId: string }) {
                       <Button
                         variant={isCurrentVoiceRoom ? 'secondary' : 'outline'}
                         size="sm"
-                        className="rounded-none"
                         onClick={() => {
                           if (voice.currentTarget?.roomHref && !isCurrentVoiceRoom) {
                             router.push(voice.currentTarget.roomHref);
@@ -1036,7 +1035,6 @@ export function ChatShell({ projectId }: { projectId: string }) {
                       <Button
                         variant={combinedActiveCall ? 'outline' : 'default'}
                         size="sm"
-                        className="rounded-none"
                         onClick={handleOpenVoiceSetup}
                         disabled={
                           isJoiningCall ||
@@ -1066,7 +1064,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
 
               {combinedActiveCall ? (
                 <div className="border-b px-4 py-2">
-                <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 rounded-none border px-3 py-2 text-xs">
+                <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 rounded-md border border-accent-emerald/20 bg-accent-emerald/5 px-3 py-2 text-xs">
                     <div className="min-w-0">
                       <div className="font-medium text-foreground">
                         {isCurrentVoiceRoom ? 'Voice call is live' : 'Active call in this room'}
@@ -1081,7 +1079,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
                       </div>
                     </div>
                     {isCurrentVoiceRoom ? (
-                      <Button size="sm" variant="outline" className="rounded-none" onClick={() => void voice.leaveCurrentCall()}>
+                      <Button size="sm" variant="outline" onClick={() => void voice.leaveCurrentCall()}>
                         <PhoneOff className="mr-2 h-3.5 w-3.5" />
                         Leave
                       </Button>
@@ -1089,7 +1087,6 @@ export function ChatShell({ projectId }: { projectId: string }) {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="rounded-none"
                         onClick={handleOpenVoiceSetup}
                         disabled={Boolean(voice.currentSession) || isJoiningCall}
                       >
@@ -1118,7 +1115,6 @@ export function ChatShell({ projectId }: { projectId: string }) {
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="rounded-sm"
                             onClick={() => void messagesQuery.loadMore()}
                             disabled={messagesQuery.isLoadingMore}
                           >
@@ -1139,7 +1135,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
                       ))}
                     </>
                   ) : (
-                    <div className="flex min-h-[320px] flex-col items-center justify-center rounded-none border border-dashed border-border/60 bg-muted/[0.02] px-8 text-center">
+                    <div className="flex min-h-[320px] flex-col items-center justify-center rounded-lg border border-dashed border-border/60 bg-muted/[0.02] px-8 text-center">
                       <div className="text-sm font-medium">No messages yet</div>
                       <div className="mt-1 text-sm text-muted-foreground">Post the first update or paste a screenshot.</div>
                     </div>
@@ -1179,7 +1175,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
                     </div>
                   ) : null}
 
-                  <div className="rounded-none border border-border/60 bg-background p-3">
+                  <div className="surface-card rounded-lg border border-border/60 p-3">
                     <Textarea
                       value={composerValue}
                       onChange={(event) => {
@@ -1199,7 +1195,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
                       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <button
                           type="button"
-                          className="inline-flex items-center gap-1 rounded-none border px-2 py-1 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded-md border px-2 py-1 hover:text-foreground transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
                           onClick={() => fileInputRef.current?.click()}
                           disabled={!attachmentsEnabled || isSendingMessage}
                         >
@@ -1227,7 +1223,6 @@ export function ChatShell({ projectId }: { projectId: string }) {
                           (!trimmedComposerValue && queuedFiles.length === 0)
                         }
                         size="sm"
-                        className="rounded-none"
                       >
                         {isSendingMessage ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1265,14 +1260,12 @@ export function ChatShell({ projectId }: { projectId: string }) {
             </>
           ) : (
             <div className="flex h-full items-center justify-center p-6">
-              <Card className="max-w-lg">
-                <CardHeader>
-                  <CardTitle>Select a conversation</CardTitle>
-                  <CardDescription>
-                    Choose a channel or open an issue/doc discussion to start collaborating.
-                  </CardDescription>
-                </CardHeader>
-              </Card>
+              <div className="text-center space-y-2">
+                <p className="text-sm font-medium text-foreground">Select a conversation</p>
+                <p className="text-sm text-muted-foreground max-w-xs">
+                  Choose a channel or open an issue or doc discussion to start collaborating.
+                </p>
+              </div>
             </div>
           )}
         </main>
@@ -1302,7 +1295,7 @@ function ChatSidebar({
             <div className="text-xs text-muted-foreground">Channels and linked discussions</div>
           </div>
           {bootstrap.permissions.canCreateChannels ? (
-            <Button size="sm" variant="outline" className="h-8 shrink-0 rounded-none px-3" onClick={onCreateChannel}>
+            <Button size="sm" variant="outline" className="h-8 shrink-0 px-3" onClick={onCreateChannel}>
               New
             </Button>
           ) : null}
@@ -1319,7 +1312,7 @@ function ChatSidebar({
                 type="button"
                 onClick={() => channel.roomId && onSelectRoom(channel.roomId)}
                 className={cn(
-                  'flex w-full items-center gap-2 rounded-none border border-transparent px-3 py-2.5 text-left text-sm transition-colors',
+                  'flex w-full items-center gap-2 rounded-md border border-transparent px-3 py-2 text-left text-sm transition-colors duration-200',
                   channel.roomId === selectedRoomId
                     ? 'border-border/70 bg-muted/45 text-foreground'
                     : 'text-muted-foreground hover:border-border/50 hover:bg-muted/20 hover:text-foreground'
@@ -1328,12 +1321,12 @@ function ChatSidebar({
                 <Hash className="h-4 w-4 shrink-0" />
                 <span className="min-w-0 flex-1 truncate">{channel.name}</span>
                 {channel.activeCall ? (
-                  <span className="rounded-none border px-1.5 py-0.5 text-[11px] text-foreground">
-                    call
-                  </span>
+                  <span className="chip text-[11px]">call</span>
                 ) : null}
                 {channel.unreadCount ? (
-                  <span className="rounded-none border px-1.5 py-0.5 text-[11px] text-foreground">{channel.unreadCount}</span>
+                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-semibold px-1">
+                    {channel.unreadCount > 99 ? '99+' : channel.unreadCount}
+                  </span>
                 ) : null}
               </button>
             ))}
@@ -1348,7 +1341,7 @@ function ChatSidebar({
                   type="button"
                   onClick={() => onSelectRoom(discussion.id)}
                   className={cn(
-                    'flex w-full items-start gap-2 rounded-none border border-transparent px-3 py-2.5 text-left transition-colors',
+                    'flex w-full items-start gap-2 rounded-md border border-transparent px-3 py-2 text-left transition-colors duration-200',
                     discussion.id === selectedRoomId
                       ? 'border-border/70 bg-muted/45 text-foreground'
                       : 'text-muted-foreground hover:border-border/50 hover:bg-muted/20 hover:text-foreground'
@@ -1368,10 +1361,12 @@ function ChatSidebar({
                     </div>
                   </div>
                   {discussion.activeCall ? (
-                    <span className="rounded-none border px-1.5 py-0.5 text-[11px] text-foreground">call</span>
+                    <span className="chip text-[11px]">call</span>
                   ) : null}
                   {discussion.unreadCount ? (
-                    <span className="rounded-none border px-1.5 py-0.5 text-[11px] text-foreground">{discussion.unreadCount}</span>
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-semibold px-1">
+                      {discussion.unreadCount > 99 ? '99+' : discussion.unreadCount}
+                    </span>
                   ) : null}
                 </button>
               ))
@@ -2369,7 +2364,7 @@ export function VoiceJoinSetupPanel({
             <Button
               size="sm"
               variant="outline"
-              className="rounded-sm"
+              className="rounded-md"
               onClick={() => void handleToggleMicrophoneTest()}
               disabled={
                 isJoining ||
@@ -2389,7 +2384,7 @@ export function VoiceJoinSetupPanel({
             <Button
               size="sm"
               variant={isSelfMonitorEnabled ? 'default' : 'outline'}
-              className="rounded-sm"
+              className="rounded-md"
               onClick={() => setIsSelfMonitorEnabled((current) => !current)}
               disabled={
                 isSubmittingJoin ||
@@ -2460,7 +2455,7 @@ export function VoiceJoinSetupPanel({
               type="button"
               size="sm"
               variant="outline"
-              className="rounded-sm"
+              className="rounded-md"
               onClick={onClose}
               disabled={isJoining || isSubmittingJoin}
             >
@@ -2470,7 +2465,7 @@ export function VoiceJoinSetupPanel({
               type="button"
               size="sm"
               variant="outline"
-              className="rounded-sm"
+              className="rounded-md"
               onClick={() => void handleJoin(false)}
               disabled={isJoining || isSubmittingJoin || isPreparing || !isReady}
             >
@@ -2480,7 +2475,7 @@ export function VoiceJoinSetupPanel({
             <Button
               type="button"
               size="sm"
-              className="rounded-sm"
+              className="rounded-md"
               onClick={() => void handleJoin(true)}
               disabled={isJoining || isSubmittingJoin || isPreparing || !isReady}
             >
@@ -2732,8 +2727,8 @@ function InlineVoiceRoom({
               className={cn(
                 'h-2.5 w-2.5 rounded-full',
                 isActivelySpeaking
-                  ? 'bg-emerald-500 shadow-[0_0_0_4px_rgba(34,197,94,0.12)]'
-                  : 'bg-amber-500/80'
+                  ? 'bg-accent-emerald shadow-glow'
+                  : 'bg-accent-amber/80'
               )}
             />
             <div className="text-sm font-medium">Voice room live</div>
@@ -2754,7 +2749,7 @@ function InlineVoiceRoom({
               type="button"
               size="sm"
               variant="outline"
-              className="rounded-sm"
+              className="rounded-md"
               onClick={() => void handleEnableAudioPlayback()}
               disabled={isStartingAudioPlayback}
             >
@@ -2769,7 +2764,7 @@ function InlineVoiceRoom({
           <Button
             size="sm"
             variant={isMicrophoneEnabled ? 'default' : 'outline'}
-            className="rounded-sm"
+            className="rounded-md"
             onClick={() => void handleToggleMicrophone()}
             disabled={
               isMicrophonePending ||
@@ -2790,7 +2785,7 @@ function InlineVoiceRoom({
           <Button
             size="sm"
             variant="outline"
-            className="rounded-sm"
+            className="rounded-md"
             onClick={() => void handleLeave()}
             disabled={isLeaving || isEnding}
           >
@@ -2801,7 +2796,7 @@ function InlineVoiceRoom({
             <Button
               size="sm"
               variant="outline"
-              className="rounded-sm"
+              className="rounded-md"
               onClick={() => void handleEnd()}
               disabled={isEnding || isLeaving}
             >
@@ -2831,7 +2826,7 @@ function InlineVoiceRoom({
           <div
             className={cn(
               'h-full transition-[width,background-color] duration-100',
-              isActivelySpeaking ? 'bg-emerald-500' : 'bg-foreground/80'
+              isActivelySpeaking ? 'bg-accent-emerald' : 'bg-foreground/80'
             )}
             style={{ width: `${Math.round(deferredMicrophoneLevel * 100)}%` }}
           />
@@ -2925,8 +2920,8 @@ function VoiceParticipantRow({
   return (
     <div
       className={cn(
-        'flex items-center gap-3 rounded-sm border px-3 py-2',
-        isSpeaking ? 'border-emerald-500/40 bg-emerald-500/5' : 'bg-muted/10'
+        'flex items-center gap-3 rounded-md border px-3 py-2 transition-colors duration-200',
+        isSpeaking ? 'border-accent-emerald/40 bg-accent-emerald/5' : 'bg-muted/10'
       )}
     >
       <Avatar className="h-8 w-8">
@@ -2947,7 +2942,7 @@ function VoiceParticipantRow({
 
       <div className="flex items-center gap-2">
         {micEnabled ? (
-          <Mic className={cn('h-3.5 w-3.5', isSpeaking ? 'text-emerald-500' : 'text-muted-foreground')} />
+          <Mic className={cn('h-3.5 w-3.5', isSpeaking ? 'text-accent-emerald' : 'text-muted-foreground')} />
         ) : (
           <MicOff className="h-3.5 w-3.5 text-muted-foreground" />
         )}
@@ -2957,8 +2952,8 @@ function VoiceParticipantRow({
             !micEnabled
               ? 'bg-muted-foreground/35'
               : isSpeaking
-                ? 'bg-emerald-500'
-                : 'bg-amber-500'
+                ? 'bg-accent-emerald'
+                : 'bg-accent-amber'
           )}
         />
       </div>

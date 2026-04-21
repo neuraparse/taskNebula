@@ -5,8 +5,9 @@ import { KanbanCard } from './kanban-card';
 import { AddColumnDialog } from './add-column-dialog';
 import { DEFAULT_BOARD_FILTERS, type BoardFilters } from './board-filters';
 import { useIssues, useUpdateIssue } from '@/lib/hooks/use-issues';
+import { useWorkflowStatuses } from '@/lib/hooks/use-workflow-statuses';
 import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
-import { Loader2, Plus } from 'lucide-react';
+import { Loader2, Plus, Kanban as LayoutKanban } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DndContext,
@@ -14,20 +15,19 @@ import {
   DragOverlay,
   DragStartEvent,
   PointerSensor,
+  TouchSensor,
+  KeyboardSensor,
   useSensor,
   useSensors,
-  closestCorners,
+  pointerWithin,
+  rectIntersection,
+  closestCenter,
+  CollisionDetection,
+  MeasuringStrategy,
 } from '@dnd-kit/core';
-import { useState, useEffect, useMemo } from 'react';
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { useState, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-
-interface WorkflowStatus {
-  id: string;
-  name: string;
-  category: string;
-  color: string;
-  position: number;
-}
 
 interface KanbanBoardProps {
   projectId: string;
@@ -36,33 +36,14 @@ interface KanbanBoardProps {
 }
 
 export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) {
-  const { data: issues, isLoading, error } = useIssues({ projectId, sprintId });
+  const { data: issues, isLoading: issuesLoading, error } = useIssues({ projectId, sprintId });
+  const { data: workflowStatuses = [], isLoading: statusesLoading } = useWorkflowStatuses(projectId);
   const updateIssue = useUpdateIssue();
   const queryClient = useQueryClient();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
-  const [workflowStatuses, setWorkflowStatuses] = useState<WorkflowStatus[]>([]);
-  const [loadingStatuses, setLoadingStatuses] = useState(true);
   const [addColumnOpen, setAddColumnOpen] = useState(false);
   const activeFilters = filters ?? DEFAULT_BOARD_FILTERS;
-
-  const fetchStatuses = async () => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}/workflow-statuses`);
-      if (response.ok) {
-        const data = await response.json();
-        setWorkflowStatuses(data.statuses || []);
-      }
-    } catch (error) {
-      console.error('Error fetching workflow statuses:', error);
-    } finally {
-      setLoadingStatuses(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStatuses();
-  }, [projectId]);
 
   const filteredIssues = useMemo(() => {
     if (!issues) return [];
@@ -86,12 +67,35 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
   }, [activeFilters, issues]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
+
+  const collisionDetection: CollisionDetection = (args) => {
+    const pointerIntersections = pointerWithin(args);
+    if (pointerIntersections.length > 0) return pointerIntersections;
+    const rect = rectIntersection(args);
+    if (rect.length > 0) return rect;
+    return closestCenter(args);
+  };
+
+  const announcements = {
+    onDragStart({ active }: { active: { id: string | number } }) {
+      return `Picked up issue. Use arrow keys to move between columns.`;
+    },
+    onDragOver({ active, over }: { active: { id: string | number }; over: { id: string | number } | null }) {
+      if (over) return `Issue is over a drop target.`;
+      return `Issue is not over a drop target.`;
+    },
+    onDragEnd({ active, over }: { active: { id: string | number }; over: { id: string | number } | null }) {
+      if (over) return `Issue was moved.`;
+      return `Issue drop was cancelled.`;
+    },
+    onDragCancel() {
+      return `Dragging cancelled.`;
+    },
+  };
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
@@ -100,42 +104,30 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
-
     if (!over) return;
 
-    const issueId = active.id as string;
-    const newStatusId = over.id as string;
+    const activeData = active.data.current as { type?: string; statusId?: string; issueId?: string } | undefined;
+    const overData = over.data.current as { type?: string; statusId?: string } | undefined;
 
-    const issue = filteredIssues?.find((i) => i.id === issueId);
-    if (!issue || issue.statusId === newStatusId) return;
+    if (activeData?.type !== 'card') return;
 
-    const queryKey = ['issues', { projectId, sprintId }];
-    queryClient.setQueryData(queryKey, (oldData: any) => {
-      if (!oldData?.issues) return oldData;
-      return {
-        ...oldData,
-        issues: oldData.issues.map((i: any) =>
-          i.id === issueId ? { ...i, statusId: newStatusId } : i
-        ),
-      };
-    });
+    const targetStatusId =
+      overData?.type === 'column' || overData?.type === 'card'
+        ? overData.statusId
+        : undefined;
 
-    updateIssue.mutate(
-      {
-        issueId,
-        data: { statusId: newStatusId },
-      },
-      {
-        onError: () => {
-          queryClient.invalidateQueries({ queryKey });
-        },
-      }
-    );
+    const issueId = activeData.issueId;
+    if (!issueId || !targetStatusId) return;
+    if (activeData.statusId === targetStatusId) return;
+
+    updateIssue.mutate({ issueId, data: { statusId: targetStatusId } });
   };
 
   const activeIssue = filteredIssues?.find((i) => i.id === activeId);
 
-  if (isLoading || loadingStatuses) {
+  const isLoading = issuesLoading || statusesLoading;
+
+  if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -154,13 +146,21 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
     );
   }
 
-  if (!issues || issues.length === 0) {
+  if (workflowStatuses.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground">No issues found</p>
-          <p className="text-xs text-muted-foreground">Create your first issue to get started</p>
-        </div>
+      <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+        <LayoutKanban className="h-8 w-8 text-muted-foreground/40" />
+        <p className="text-sm text-muted-foreground">No columns yet</p>
+        <Button variant="outline" size="sm" onClick={() => setAddColumnOpen(true)}>
+          <Plus className="mr-1.5 h-3.5 w-3.5" />
+          Add column
+        </Button>
+        <AddColumnDialog
+          open={addColumnOpen}
+          onOpenChange={setAddColumnOpen}
+          projectId={projectId}
+          onSuccess={() => queryClient.invalidateQueries({ queryKey: ['workflow-statuses', projectId] })}
+        />
       </div>
     );
   }
@@ -172,9 +172,11 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
           sensors={sensors}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
-          collisionDetection={closestCorners}
+          collisionDetection={collisionDetection}
+          accessibility={{ announcements }}
+          measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
         >
-          <div className="flex flex-1 gap-4 overflow-x-auto px-5 py-4 custom-scrollbar">
+          <div className="flex flex-1 gap-3 overflow-x-auto px-4 py-4 custom-scrollbar">
             {workflowStatuses.map((status) => {
               const columnIssues = filteredIssues.filter((issue) => issue.statusId === status.id);
               return (
@@ -188,46 +190,48 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
                   }}
                   issueCount={columnIssues.length}
                   projectId={projectId}
+                  statusId={status.id}
+                  issueIds={columnIssues.map((i) => i.id)}
                 >
-                  <div className="space-y-2">
-                    {columnIssues.map((issue) => (
-                      <KanbanCard
-                        key={issue.id}
-                        issue={{
-                          id: issue.key,
-                          title: issue.title,
-                          priority: issue.priority as 'low' | 'medium' | 'high' | 'critical',
-                          type: issue.type as 'task' | 'bug' | 'story' | 'epic',
-                          assignee: issue.assignee
-                            ? {
-                                name: issue.assignee.name || issue.assignee.email,
-                                avatar:
-                                  issue.assignee.name
-                                    ?.split(' ')
-                                    .map((n) => n[0])
-                                    .join('')
-                                    .toUpperCase() || issue.assignee.email?.[0]?.toUpperCase() || '?',
-                              }
-                            : undefined,
-                          labels: [],
-                        }}
-                        draggableId={issue.id}
-                        onClick={() => setSelectedIssueId(issue.id)}
-                      />
-                    ))}
-                  </div>
+                  {columnIssues.map((issue) => (
+                    <KanbanCard
+                      key={issue.id}
+                      draggableId={issue.id}
+                      statusId={status.id}
+                      issueId={issue.id}
+                      issue={{
+                        id: issue.key,
+                        title: issue.title,
+                        priority: issue.priority as 'low' | 'medium' | 'high' | 'critical',
+                        type: issue.type as 'task' | 'bug' | 'story' | 'epic',
+                        assignee: issue.assignee
+                          ? {
+                              name: issue.assignee.name || issue.assignee.email,
+                              avatar:
+                                issue.assignee.name
+                                  ?.split(' ')
+                                  .map((n) => n[0])
+                                  .join('')
+                                  .toUpperCase() || issue.assignee.email?.[0]?.toUpperCase() || '?',
+                            }
+                          : undefined,
+                        labels: [],
+                      }}
+                      onClick={() => setSelectedIssueId(issue.id)}
+                    />
+                  ))}
                 </KanbanColumn>
               );
             })}
 
-            <div className="w-[308px] flex-shrink-0">
+            <div className="w-[280px] flex-shrink-0 self-start">
               <Button
                 variant="ghost"
-                className="h-12 w-full rounded-none border-2 border-dashed border-muted-foreground/20 text-muted-foreground/50 transition-all hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                className="h-10 w-full rounded-lg border border-dashed border-border/50 text-sm text-muted-foreground/60 transition-all duration-200 ease-smooth hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
                 onClick={() => setAddColumnOpen(true)}
               >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Column
+                <Plus className="mr-1.5 h-4 w-4" />
+                Add column
               </Button>
             </div>
           </div>
@@ -239,7 +243,7 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
             }}
           >
             {activeIssue ? (
-              <div className="rotate-2 scale-105 w-[284px]">
+              <div className="w-[288px] rotate-[0.8deg] shadow-lg">
                 <KanbanCard
                   issue={{
                     id: activeIssue.key,
@@ -278,7 +282,7 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
         open={addColumnOpen}
         onOpenChange={setAddColumnOpen}
         projectId={projectId}
-        onSuccess={fetchStatuses}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['workflow-statuses', projectId] })}
       />
     </>
   );

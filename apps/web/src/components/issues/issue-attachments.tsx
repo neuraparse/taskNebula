@@ -53,21 +53,13 @@ export function IssueAttachments({ issueId }: IssueAttachmentsProps) {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Paperclip className="h-4 w-4 text-muted-foreground" />
-        <h3 className="font-semibold text-sm">Attachments</h3>
-        <span className="text-xs text-muted-foreground">
-          ({attachments?.length || 0})
-        </span>
-      </div>
-
+    <div className="space-y-2 animate-fade-in">
       {/* Upload Area */}
       <div
-        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+        className={`border border-dashed rounded-lg px-4 py-3 text-center transition-colors duration-200 ${
           isDragging
             ? 'border-primary bg-primary/5'
-            : 'border-muted-foreground/25 hover:border-muted-foreground/50'
+            : 'border-border hover:border-border-strong'
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -82,23 +74,23 @@ export function IssueAttachments({ issueId }: IssueAttachmentsProps) {
         />
 
         {uploadAttachment.isPending ? (
-          <div className="flex flex-col items-center gap-2">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <div className="flex items-center justify-center gap-2 py-1">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             <p className="text-sm text-muted-foreground">Uploading...</p>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-2">
-            <Upload className="h-8 w-8 text-muted-foreground" />
+          <div className="flex items-center justify-center gap-2 py-1">
+            <Upload className="h-4 w-4 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
-              Drag and drop a file here, or{' '}
+              Drop a file or{' '}
               <button
-                className="text-primary hover:underline"
+                className="text-primary hover:underline transition-colors duration-200"
                 onClick={() => fileInputRef.current?.click()}
               >
                 browse
               </button>
+              <span className="ml-1 text-xs text-muted-foreground/60">(max 10MB)</span>
             </p>
-            <p className="text-xs text-muted-foreground">Max file size: 10MB</p>
           </div>
         )}
       </div>
@@ -106,27 +98,27 @@ export function IssueAttachments({ issueId }: IssueAttachmentsProps) {
       {/* Attachments List */}
       {isLoading ? (
         <div className="flex items-center justify-center py-4">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         </div>
       ) : attachments && attachments.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-1">
           {attachments.map((attachment) => (
             <div
               key={attachment.id}
-              className="flex items-center gap-3 rounded-lg border p-3 hover:bg-muted/50"
+              className="group flex items-center gap-2.5 rounded-md px-2 py-1.5 hover:bg-accent transition-colors duration-200"
             >
-              <File className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+              <File className="h-4 w-4 text-muted-foreground shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{attachment.fileName}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   {formatFileSize(attachment.fileSize)}
                 </p>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
+                  className="h-7 w-7"
                   asChild
                 >
                   <a
@@ -135,24 +127,25 @@ export function IssueAttachments({ issueId }: IssueAttachmentsProps) {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <Download className="h-4 w-4" />
+                    <Download className="h-3.5 w-3.5" />
                   </a>
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
+                  className="h-7 w-7"
                   onClick={() => handleDelete(attachment.id)}
                   disabled={deleteAttachment.isPending}
+                  aria-label="Delete attachment"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3.5 w-3.5" />
                 </Button>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground text-center py-4">
+        <p className="text-sm text-muted-foreground/60 py-2">
           No attachments yet
         </p>
       )}

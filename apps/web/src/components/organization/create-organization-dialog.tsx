@@ -3,14 +3,26 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Plus, Building2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-export function CreateOrganizationDialog() {
+interface CreateOrganizationDialogProps {
+  /** Optional custom trigger element. Defaults to a "New Organization" button. */
+  trigger?: React.ReactNode;
+}
+
+export function CreateOrganizationDialog({ trigger }: CreateOrganizationDialogProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -18,10 +30,8 @@ export function CreateOrganizationDialog() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Auto-generate slug from name
   const handleNameChange = (value: string) => {
     setName(value);
-    // Generate slug: lowercase, replace spaces with hyphens, remove special chars
     const generatedSlug = value
       .toLowerCase()
       .replace(/\s+/g, '-')
@@ -73,31 +83,33 @@ export function CreateOrganizationDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          New Organization
-        </Button>
+        {trigger ?? (
+          <Button size="sm" className="gap-2">
+            <Plus className="h-4 w-4" />
+            New organization
+          </Button>
+        )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[460px]">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-              <Building2 className="h-5 w-5 text-white" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10">
+              <Building2 className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <DialogTitle>Create Organization</DialogTitle>
+              <DialogTitle>Create organization</DialogTitle>
               <DialogDescription>
-                Create a new organization to manage your projects and teams.
+                A workspace for your projects and team.
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div className="space-y-2">
-            <Label htmlFor="name">Organization Name</Label>
+            <Label htmlFor="org-name">Name</Label>
             <Input
-              id="name"
+              id="org-name"
               placeholder="Acme Inc."
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
@@ -106,11 +118,11 @@ export function CreateOrganizationDialog() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="slug">URL Slug</Label>
+            <Label htmlFor="org-slug">URL slug</Label>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">tasknebula.io/</span>
+              <span className="shrink-0 text-sm text-muted-foreground">tasknebula.io/</span>
               <Input
-                id="slug"
+                id="org-slug"
                 placeholder="acme-inc"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
@@ -119,14 +131,15 @@ export function CreateOrganizationDialog() {
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Only lowercase letters, numbers, and hyphens allowed
+              Lowercase letters, numbers, and hyphens only.
             </p>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4">
+          <div className="flex justify-end gap-2 pt-2">
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={() => setOpen(false)}
               disabled={createOrgMutation.isPending}
             >
@@ -134,12 +147,13 @@ export function CreateOrganizationDialog() {
             </Button>
             <Button
               type="submit"
+              size="sm"
               disabled={!name || !slug || createOrgMutation.isPending}
             >
               {createOrgMutation.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Create Organization
+              Create
             </Button>
           </div>
         </form>
@@ -147,4 +161,3 @@ export function CreateOrganizationDialog() {
     </Dialog>
   );
 }
-

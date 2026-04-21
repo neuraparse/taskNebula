@@ -8,7 +8,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Badge } from '@/components/ui/badge';
 import { Search, Filter, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -33,6 +32,8 @@ interface BoardFiltersProps {
   filteredCount: number;
 }
 
+const PRIORITIES = ['critical', 'high', 'medium', 'low'] as const;
+
 export function BoardFiltersBar({ filters, onFiltersChange, issueCount, filteredCount }: BoardFiltersProps) {
   const [filterOpen, setFilterOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -55,22 +56,29 @@ export function BoardFiltersBar({ filters, onFiltersChange, issueCount, filtered
     } else {
       onFiltersChange({
         ...filters,
-        [type]: filters[type].filter((v) => v !== value),
+        [type]: (filters[type] as string[]).filter((v) => v !== value),
       });
     }
   };
 
+  const togglePriority = (priority: string) => {
+    const next = filters.priority.includes(priority)
+      ? filters.priority.filter((p) => p !== priority)
+      : [...filters.priority, priority];
+    onFiltersChange({ ...filters, priority: next });
+  };
+
   return (
-    <div className="flex min-w-0 items-center gap-2.5">
-      {/* Search toggle */}
+    <div className="flex min-w-0 items-center gap-2">
+      {/* Search */}
       {searchOpen ? (
-        <div className="relative w-56">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <div className="relative w-52">
+          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search issues..."
             value={filters.search}
             onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
-            className="h-8 rounded-none border-border/60 bg-background pl-8 text-xs shadow-none"
+            className="h-8 rounded-md border-border/60 bg-background pl-8 text-xs shadow-none"
             autoFocus
             onBlur={() => {
               if (!filters.search) setSearchOpen(false);
@@ -85,11 +93,12 @@ export function BoardFiltersBar({ filters, onFiltersChange, issueCount, filtered
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-0.5 top-1/2 h-6 w-6 -translate-y-1/2 rounded-none text-muted-foreground hover:bg-muted/10 hover:text-foreground"
+            className="absolute right-0.5 top-1/2 h-6 w-6 -translate-y-1/2 rounded-md text-muted-foreground hover:text-foreground"
             onClick={() => {
               onFiltersChange({ ...filters, search: '' });
               setSearchOpen(false);
             }}
+            aria-label="Clear search"
           >
             <X className="h-3 w-3" />
           </Button>
@@ -98,52 +107,51 @@ export function BoardFiltersBar({ filters, onFiltersChange, issueCount, filtered
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 rounded-none border border-transparent text-muted-foreground hover:border-border/60 hover:bg-background hover:text-foreground"
+          className="h-8 w-8 rounded-md text-muted-foreground hover:text-foreground"
           onClick={() => setSearchOpen(true)}
+          aria-label="Search issues"
         >
           <Search className="h-3.5 w-3.5" />
         </Button>
       )}
 
-      {/* Filter Popover */}
+      {/* Filter popover trigger */}
       <Popover open={filterOpen} onOpenChange={setFilterOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="ghost"
             size="sm"
             className={cn(
-              'h-8 rounded-none border border-transparent px-2.5 text-xs text-muted-foreground hover:border-border/60 hover:bg-background hover:text-foreground',
-              activeFilterCount > 0 && 'border-border/60 bg-background text-foreground'
+              'h-8 gap-1.5 rounded-md px-2.5 text-xs text-muted-foreground transition-colors duration-200',
+              activeFilterCount > 0
+                ? 'chip-accent'
+                : 'hover:border-primary/30 hover:text-foreground'
             )}
           >
             <Filter className="h-3.5 w-3.5" />
             Filter
             {activeFilterCount > 0 && (
-              <Badge variant="secondary" className="h-4 min-w-[16px] justify-center rounded-none px-1 text-[10px]">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/20 text-[9px] font-bold text-primary">
                 {activeFilterCount}
-              </Badge>
+              </span>
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-72 rounded-none border-border/60 p-3" align="start">
+        <PopoverContent className="w-64 rounded-lg border-border p-3 shadow-sm" align="start">
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Priority</h4>
+            <p className="kicker">Priority</p>
             <div className="flex flex-wrap gap-1.5">
-              {['critical', 'high', 'medium', 'low'].map((priority) => (
-                <Button
+              {PRIORITIES.map((priority) => (
+                <button
                   key={priority}
-                  variant={filters.priority.includes(priority) ? 'default' : 'outline'}
-                  size="sm"
-                  className="h-7 rounded-none text-xs capitalize"
-                  onClick={() => {
-                    const newPriority = filters.priority.includes(priority)
-                      ? filters.priority.filter((p) => p !== priority)
-                      : [...filters.priority, priority];
-                    onFiltersChange({ ...filters, priority: newPriority });
-                  }}
+                  onClick={() => togglePriority(priority)}
+                  className={cn(
+                    'capitalize transition-colors duration-200',
+                    filters.priority.includes(priority) ? 'chip-accent' : 'chip hover:border-primary/30'
+                  )}
                 >
                   {priority}
-                </Button>
+                </button>
               ))}
             </div>
 
@@ -151,13 +159,13 @@ export function BoardFiltersBar({ filters, onFiltersChange, issueCount, filtered
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 w-full rounded-none text-xs"
+                className="h-7 w-full rounded-md text-xs text-muted-foreground"
                 onClick={() => {
                   clearFilters();
                   setFilterOpen(false);
                 }}
               >
-                Clear all filters
+                Clear all
               </Button>
             )}
           </div>
@@ -165,42 +173,40 @@ export function BoardFiltersBar({ filters, onFiltersChange, issueCount, filtered
       </Popover>
 
       {/* Issue count */}
-      <span className="text-[11px] text-muted-foreground tabular-nums">
-        {filteredCount !== issueCount ? (
-          <>{filteredCount}/{issueCount}</>
-        ) : (
-          <>{issueCount} issues</>
-        )}
+      <span className="text-[11px] tabular-nums text-muted-foreground">
+        {filteredCount !== issueCount ? `${filteredCount}/${issueCount}` : `${issueCount} issues`}
       </span>
 
-      {/* Active filter badges */}
+      {/* Active filter pills */}
       {hasAnyFilter && (
         <>
-          <div className="h-4 w-px bg-border" />
+          <div className="h-3.5 w-px bg-border" />
           {filters.search && (
-            <Badge variant="secondary" className="h-5 gap-1 rounded-none pl-1.5 pr-0.5 text-[10px]">
+            <span className="chip gap-1">
               &quot;{filters.search}&quot;
               <button
-                className="ml-0.5 p-0.5 hover:bg-muted"
+                className="ml-0.5 rounded-full p-0.5 hover:bg-muted"
                 onClick={() => removeFilter('search', '')}
+                aria-label="Remove search filter"
               >
                 <X className="h-2.5 w-2.5" />
               </button>
-            </Badge>
+            </span>
           )}
           {filters.priority.map((priority) => (
-            <Badge key={priority} variant="secondary" className="h-5 gap-1 rounded-none pl-1.5 pr-0.5 text-[10px] capitalize">
+            <span key={priority} className="chip-accent gap-1 capitalize">
               {priority}
               <button
-                className="ml-0.5 p-0.5 hover:bg-muted"
+                className="ml-0.5 rounded-full p-0.5 hover:bg-primary/20"
                 onClick={() => removeFilter('priority', priority)}
+                aria-label={`Remove ${priority} filter`}
               >
                 <X className="h-2.5 w-2.5" />
               </button>
-            </Badge>
+            </span>
           ))}
           <button
-            className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+            className="text-[11px] text-muted-foreground transition-colors duration-200 hover:text-foreground"
             onClick={clearFilters}
           >
             Clear

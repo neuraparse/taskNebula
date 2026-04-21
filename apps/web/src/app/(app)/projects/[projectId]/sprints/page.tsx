@@ -33,14 +33,14 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
     switch (status) {
       case 'active':
         return (
-          <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20">
-            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5 animate-pulse" />
+          <Badge className="bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20 hover:bg-accent-emerald/20">
+            <span className="status-dot status-live mr-1.5" />
             Active
           </Badge>
         );
       case 'completed':
         return (
-          <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20">
+          <Badge className="bg-accent-blue/10 text-accent-blue border-accent-blue/20">
             <CheckCircle2 className="h-3 w-3 mr-1" />
             Completed
           </Badge>
@@ -77,12 +77,12 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
   }
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto animate-fade-in">
       <div className="p-6 space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-semibold">Sprints</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Sprints</h1>
             <p className="text-sm text-muted-foreground">Plan and manage your project sprints</p>
           </div>
           {permissions.canManageSprints && (
@@ -110,8 +110,8 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
                 <div
                   key={sprint.id}
                   className={cn(
-                    'rounded-lg border bg-card hover:shadow-md transition-all group',
-                    sprint.status === 'active' && 'border-emerald-500/20'
+                    'surface-card group transition-all',
+                    sprint.status === 'active' && 'border-accent-emerald/20'
                   )}
                 >
                   <div className="p-5">
@@ -145,7 +145,7 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
                           {sprint.status === 'active' && daysLeft > 0 && (
                             <span className={cn(
                               'font-medium',
-                              daysLeft <= 3 ? 'text-orange-500' : 'text-emerald-500'
+                              daysLeft <= 3 ? 'text-accent-amber' : 'text-accent-emerald'
                             )}>
                               {daysLeft}d remaining
                             </span>
@@ -154,9 +154,9 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
 
                         {sprint.status === 'active' && (
                           <div className="mt-3 flex items-center gap-3">
-                            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div className="flex-1 h-1.5 bg-border rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-emerald-500 rounded-full transition-all"
+                                className="h-full bg-accent-emerald rounded-full transition-all"
                                 style={{ width: `${progress}%` }}
                               />
                             </div>

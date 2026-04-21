@@ -7,9 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Edit, Zap, Play, Pause } from 'lucide-react';
+import { Plus, Trash2, Edit, Zap, ArrowRight } from 'lucide-react';
 
 interface AutomationRule {
   id: string;
@@ -234,7 +233,7 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">Automation rules</h3>
+          <h3 className="text-base font-semibold text-foreground">Automation rules</h3>
           <p className="text-sm text-muted-foreground">Automate repetitive work with project-specific or organization-wide rules.</p>
         </div>
         <Button onClick={() => (formMode ? resetForm() : openCreateForm())} variant={formMode ? 'outline' : 'default'}>
@@ -314,13 +313,13 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <Switch
                 id="enabled"
                 checked={formData.enabled}
                 onCheckedChange={(checked) => setFormData((current) => ({ ...current, enabled: checked }))}
               />
-              <Label htmlFor="enabled">Enable immediately</Label>
+              <Label htmlFor="enabled" className="cursor-pointer">Enable immediately</Label>
             </div>
 
             <div className="flex gap-2">
@@ -335,90 +334,76 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
         </Card>
       ) : null}
 
-      <div className="grid gap-4">
+      <div className="grid gap-3">
         {rules.length === 0 && !formMode ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-              <Zap className="mb-4 h-16 w-16 opacity-20" />
-              <h4 className="mb-2 font-semibold">No automation rules yet</h4>
-              <p className="mb-4 text-sm text-muted-foreground">Create the first rule to automate repetitive handoffs.</p>
-              <Button onClick={openCreateForm}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create your first rule
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="rounded-lg border border-dashed border-border p-10 text-center">
+            <Zap className="mx-auto mb-3 h-10 w-10 text-muted-foreground opacity-30" />
+            <p className="font-medium">No automation rules yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">Create the first rule to automate repetitive handoffs.</p>
+            <Button className="mt-4" onClick={openCreateForm}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create your first rule
+            </Button>
+          </div>
         ) : (
-          rules.map((rule) => (
-            <Card key={rule.id} className={rule.enabled ? 'border-l-4 border-l-green-500' : 'opacity-70'}>
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <CardTitle className="text-base">{rule.name}</CardTitle>
-                      <Badge variant={rule.enabled ? 'default' : 'secondary'} className="text-xs">
-                        {rule.enabled ? 'Active' : 'Disabled'}
-                      </Badge>
+          rules.map((rule) => {
+            const triggerLabel = TRIGGER_TYPES.find((t) => t.value === rule.trigger.type)?.label || rule.trigger.type;
+
+            return (
+              <Card
+                key={rule.id}
+                className={rule.enabled ? 'border-l-2 border-l-accent-emerald' : 'opacity-60'}
+              >
+                <CardContent className="flex items-center gap-4 py-4">
+                  {/* Trigger → Action flow */}
+                  <div className="flex flex-1 flex-wrap items-center gap-2 min-w-0">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{rule.name}</p>
+                      {rule.description && (
+                        <p className="truncate text-xs text-muted-foreground">{rule.description}</p>
+                      )}
                     </div>
-                    {rule.description ? (
-                      <CardDescription>{rule.description}</CardDescription>
-                    ) : (
-                      <CardDescription>No description provided.</CardDescription>
-                    )}
-                  </div>
-                  <div className="flex gap-1">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => void toggleRule(rule.id, rule.enabled)}
-                      className="h-8 w-8"
-                      title={rule.enabled ? 'Disable' : 'Enable'}
-                    >
-                      {rule.enabled ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => openEditForm(rule)}
-                      className="h-8 w-8"
-                      title="Edit"
-                    >
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => void deleteRule(rule.id)}
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      title="Delete"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="flex flex-wrap items-center gap-4 text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-muted-foreground">When:</span>
-                    <Badge variant="outline" className="font-normal">
-                      {TRIGGER_TYPES.find((type) => type.value === rule.trigger.type)?.label || rule.trigger.type}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-muted-foreground">Then:</span>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="ml-auto flex shrink-0 items-center gap-1.5">
+                      <span className="chip-accent text-xs">{triggerLabel}</span>
+                      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                       {rule.actions.map((action, index) => (
-                        <Badge key={`${action.type}-${index}`} variant="secondary" className="font-normal">
-                          {ACTION_TYPES.find((type) => type.value === action.type)?.label || action.type}
-                        </Badge>
+                        <span key={`${action.type}-${index}`} className="chip text-xs">
+                          {ACTION_TYPES.find((t) => t.value === action.type)?.label || action.type}
+                        </span>
                       ))}
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+
+                  {/* Enabled switch + actions */}
+                  <div className="flex shrink-0 items-center gap-2 border-l border-border pl-4">
+                    <Switch
+                      checked={rule.enabled}
+                      onCheckedChange={() => void toggleRule(rule.id, rule.enabled)}
+                      aria-label={rule.enabled ? 'Disable rule' : 'Enable rule'}
+                    />
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      onClick={() => openEditForm(rule)}
+                      title="Edit"
+                    >
+                      <Edit className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      onClick={() => void deleteRule(rule.id)}
+                      title="Delete"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })
         )}
       </div>
     </div>

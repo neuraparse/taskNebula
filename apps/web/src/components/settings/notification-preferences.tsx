@@ -6,7 +6,6 @@ import { Bell, Clock, Mail, RefreshCcw, Smartphone } from 'lucide-react';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -16,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 
 type Preferences = {
@@ -96,7 +94,9 @@ export function NotificationPreferences() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['notification-preferences', currentOrganizationId],
     queryFn: async () => {
-      const response = await fetch(`/api/notification-preferences?organizationId=${currentOrganizationId}`);
+      const response = await fetch(
+        `/api/notification-preferences?organizationId=${currentOrganizationId}`
+      );
       const payload = await response.json().catch(() => ({ error: 'Failed to fetch preferences' }));
       if (!response.ok) {
         throw new Error(payload.error || 'Failed to fetch preferences');
@@ -107,19 +107,12 @@ export function NotificationPreferences() {
   });
 
   useEffect(() => {
-    if (!currentOrganizationId) {
-      return;
-    }
-
+    if (!currentOrganizationId) return;
     if (data?.preferences) {
       setPreferences(data.preferences);
       return;
     }
-
-    setPreferences({
-      organizationId: currentOrganizationId,
-      ...DEFAULTS,
-    });
+    setPreferences({ organizationId: currentOrganizationId, ...DEFAULTS });
   }, [currentOrganizationId, data]);
 
   const updatePreferences = useMutation({
@@ -129,18 +122,19 @@ export function NotificationPreferences() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(nextPreferences),
       });
-      const payload = await response.json().catch(() => ({ error: 'Failed to update preferences' }));
+      const payload = await response
+        .json()
+        .catch(() => ({ error: 'Failed to update preferences' }));
       if (!response.ok) {
         throw new Error(payload.error || 'Failed to update preferences');
       }
       return payload;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notification-preferences', currentOrganizationId] });
-      toast({
-        title: 'Preferences saved',
-        description: 'Notification settings were updated.',
+      queryClient.invalidateQueries({
+        queryKey: ['notification-preferences', currentOrganizationId],
       });
+      toast({ title: 'Preferences saved', description: 'Notification settings were updated.' });
     },
     onError: (mutationError: Error) => {
       toast({
@@ -153,89 +147,76 @@ export function NotificationPreferences() {
 
   function handleChange<K extends keyof Preferences>(field: K, value: Preferences[K]) {
     setPreferences((current) => {
-      if (!current) {
-        return current;
-      }
-
-      return {
-        ...current,
-        [field]: value,
-      };
+      if (!current) return current;
+      return { ...current, [field]: value };
     });
   }
 
   function resetToDefaults() {
-    if (!currentOrganizationId) {
-      return;
-    }
-
-    setPreferences({
-      organizationId: currentOrganizationId,
-      ...DEFAULTS,
-    });
+    if (!currentOrganizationId) return;
+    setPreferences({ organizationId: currentOrganizationId, ...DEFAULTS });
   }
 
   if (isLoading || !preferences) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Notification preferences</CardTitle>
-          <CardDescription>Loading notification settings...</CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="surface-card p-6">
+        <p className="text-sm text-muted-foreground">Loading notification settings...</p>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Card>
-        <CardContent className="py-6 text-sm text-destructive">
-          {error instanceof Error ? error.message : 'Notification preferences could not be loaded.'}
-        </CardContent>
-      </Card>
+      <div className="surface-card p-6 text-sm text-destructive">
+        {error instanceof Error ? error.message : 'Notification preferences could not be loaded.'}
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+    <div className="animate-fade-in space-y-8">
+      {/* Delivery */}
+      <div className="surface-card p-6 space-y-4">
+        <div className="space-y-1">
+          <span className="kicker">Notifications</span>
+          <h2 className="text-xl font-semibold flex items-center gap-2">
             <Bell className="h-5 w-5" />
-            Delivery settings
-          </CardTitle>
-          <CardDescription>Control how activity reaches you across in-app, email, and digest channels.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-5">
+            Delivery
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Control how activity reaches you across in-app, email, and digest channels.
+          </p>
+        </div>
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <Label>In-app notifications</Label>
-              <p className="text-sm text-muted-foreground">Show updates in the notification bell.</p>
+              <p className="text-xs text-muted-foreground">Show updates in the notification bell.</p>
             </div>
             <Switch
               checked={preferences.enableInApp}
               onCheckedChange={(checked) => handleChange('enableInApp', checked)}
             />
           </div>
-          <Separator />
           <div className="flex items-center justify-between">
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <Label>Email notifications</Label>
-              <p className="text-sm text-muted-foreground">Send important updates to your inbox.</p>
+              <p className="text-xs text-muted-foreground">Send important updates to your inbox.</p>
             </div>
             <Switch
               checked={preferences.enableEmail}
               onCheckedChange={(checked) => handleChange('enableEmail', checked)}
             />
           </div>
-          <Separator />
           <div className="space-y-2">
             <Label>Digest frequency</Label>
             <Select
               value={preferences.digestFrequency}
-              onValueChange={(value) => handleChange('digestFrequency', value as Preferences['digestFrequency'])}
+              onValueChange={(value) =>
+                handleChange('digestFrequency', value as Preferences['digestFrequency'])
+              }
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -245,22 +226,23 @@ export function NotificationPreferences() {
               </SelectContent>
             </Select>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
+      {/* Email + In-app events */}
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5" />
-              Email events
-            </CardTitle>
-            <CardDescription>Choose which events should trigger email delivery.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="surface-card p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <Mail className="h-4 w-4 text-muted-foreground" />
+            <h3 className="font-semibold">Email events</h3>
+          </div>
+          <p className="text-xs text-muted-foreground -mt-2">
+            Choose which events trigger email delivery.
+          </p>
+          <div className="space-y-3">
             {EMAIL_EVENT_FIELDS.map((field) => (
               <div key={field.key} className="flex items-center justify-between">
-                <Label>{field.label}</Label>
+                <Label className="text-sm font-normal">{field.label}</Label>
                 <Switch
                   checked={preferences[field.key]}
                   onCheckedChange={(checked) => handleChange(field.key, checked)}
@@ -268,21 +250,21 @@ export function NotificationPreferences() {
                 />
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Smartphone className="h-5 w-5" />
-              In-app events
-            </CardTitle>
-            <CardDescription>Control what appears in your workspace notification feed.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="surface-card p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <Smartphone className="h-4 w-4 text-muted-foreground" />
+            <h3 className="font-semibold">In-app events</h3>
+          </div>
+          <p className="text-xs text-muted-foreground -mt-2">
+            Control what appears in your notification feed.
+          </p>
+          <div className="space-y-3">
             {IN_APP_EVENT_FIELDS.map((field) => (
               <div key={field.key} className="flex items-center justify-between">
-                <Label>{field.label}</Label>
+                <Label className="text-sm font-normal">{field.label}</Label>
                 <Switch
                   checked={preferences[field.key]}
                   onCheckedChange={(checked) => handleChange(field.key, checked)}
@@ -290,23 +272,26 @@ export function NotificationPreferences() {
                 />
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Do not disturb
-          </CardTitle>
-          <CardDescription>Pause delivery during quiet hours.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      {/* Do Not Disturb */}
+      <div className="surface-card p-6 space-y-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <h3 className="font-semibold">Do not disturb</h3>
+          </div>
+          <p className="text-sm text-muted-foreground">Pause delivery during quiet hours.</p>
+        </div>
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <Label>Enable quiet hours</Label>
-              <p className="text-sm text-muted-foreground">Mute notifications during the selected time window.</p>
+              <p className="text-xs text-muted-foreground">
+                Mute notifications during the selected time window.
+              </p>
             </div>
             <Switch
               checked={preferences.doNotDisturb}
@@ -333,11 +318,11 @@ export function NotificationPreferences() {
               </div>
             </div>
           ) : null}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <div className="flex justify-between gap-3">
-        <Button variant="outline" onClick={resetToDefaults}>
+        <Button variant="ghost" onClick={resetToDefaults} size="sm">
           <RefreshCcw className="mr-2 h-4 w-4" />
           Reset to defaults
         </Button>

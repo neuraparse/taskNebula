@@ -84,35 +84,35 @@ export function PullToRefresh({
     >
       {/* Pull indicator */}
       <div
-        className="absolute left-0 right-0 top-0 z-10 flex items-center justify-center overflow-hidden transition-all"
+        className="absolute left-0 right-0 top-0 z-10 flex items-center justify-center overflow-hidden transition-all duration-200"
         style={{
           height: `${pullDistance}px`,
           opacity: pullDistance > 0 ? 1 : 0,
         }}
       >
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-1.5">
           <RefreshCw
             className={cn(
-              'h-6 w-6 text-muted-foreground transition-transform',
+              'h-5 w-5 text-primary transition-transform',
               isRefreshing && 'animate-spin'
             )}
             style={{
               transform: isRefreshing ? undefined : `rotate(${rotation}deg)`,
             }}
           />
-          <div className="text-xs text-muted-foreground">
+          <span className="text-[11px] text-muted-foreground">
             {isRefreshing
               ? 'Refreshing...'
               : pullDistance >= threshold
               ? 'Release to refresh'
               : 'Pull to refresh'}
-          </div>
+          </span>
         </div>
       </div>
 
       {/* Content */}
       <div
-        className="transition-transform"
+        className="transition-transform duration-200"
         style={{
           transform: `translateY(${pullDistance}px)`,
         }}
@@ -122,4 +122,3 @@ export function PullToRefresh({
     </div>
   );
 }
-

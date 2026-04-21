@@ -33,6 +33,27 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var raw = localStorage.getItem('tasknebula-theme');
+                  var state = raw ? (JSON.parse(raw).state || {}) : {};
+                  var theme = state.colorTheme || 'default';
+                  var visual = state.visualStyle || 'modern';
+                  var anims = state.enableAnimations === false ? 'false' : 'true';
+                  var root = document.documentElement;
+                  root.setAttribute('data-theme', theme);
+                  root.setAttribute('data-visual', visual);
+                  root.setAttribute('data-animations', anims);
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className="font-sans antialiased">
         <Providers>{children}</Providers>
         <Toaster />

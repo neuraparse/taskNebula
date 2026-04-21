@@ -1,29 +1,39 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Check, ChevronsUpDown, Building2 } from 'lucide-react';
+import { Check, ChevronsUpDown, Building2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { cn } from '@/lib/utils';
+import { CreateOrganizationDialog } from './create-organization-dialog';
 
 interface Organization {
   id: string;
   name: string;
   slug: string;
   role: string;
+  memberCount?: number;
+}
+
+function OrgAvatar({ name }: { name: string }) {
+  const initials = name
+    .split(' ')
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() || '')
+    .join('');
+
+  return (
+    <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-[10px] font-semibold text-primary">
+      {initials}
+    </span>
+  );
 }
 
 export function OrganizationSwitcher() {
@@ -42,8 +52,6 @@ export function OrganizationSwitcher() {
       if (response.ok) {
         const data = await response.json();
         setOrganizations(data.organizations);
-        
-        // Set first organization as current if none selected
         if (!currentOrganizationId && data.organizations.length > 0) {
           setCurrentOrganization(data.organizations[0].id);
         }
@@ -59,74 +67,92 @@ export function OrganizationSwitcher() {
 
   if (loading) {
     return (
-      <Button variant="outline" className="w-[200px] justify-between" disabled>
-        <span className="flex items-center gap-2">
-          <Building2 className="h-4 w-4" />
-          Loading...
-        </span>
-      </Button>
-    );
-  }
-
-  if (organizations.length === 0) {
-    return (
-      <Button variant="outline" className="w-[200px] justify-between" disabled>
-        <span className="flex items-center gap-2">
-          <Building2 className="h-4 w-4" />
-          No organizations
+      <Button
+        variant="ghost"
+        size="sm"
+        className="w-[180px] justify-between px-2 text-muted-foreground"
+        disabled
+      >
+        <span className="flex items-center gap-2 truncate">
+          <Building2 className="h-4 w-4 shrink-0" />
+          <span className="truncate text-sm">Loading...</span>
         </span>
       </Button>
     );
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
+          size="sm"
           role="combobox"
           aria-expanded={open}
-          className="w-[200px] justify-between"
+          aria-label="Switch organization"
+          className="h-9 w-[180px] justify-between gap-2 px-2 transition-colors duration-200"
         >
-          <span className="flex items-center gap-2 truncate">
-            <Building2 className="h-4 w-4 shrink-0" />
-            {currentOrg?.name || 'Select organization'}
+          <span className="flex min-w-0 items-center gap-2 truncate">
+            {currentOrg ? (
+              <OrgAvatar name={currentOrg.name} />
+            ) : (
+              <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+            )}
+            <span className="truncate text-sm font-medium">
+              {currentOrg?.name || 'Select org'}
+            </span>
           </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
-        <Command>
-          <CommandInput placeholder="Search organization..." />
-          <CommandList>
-            <CommandEmpty>No organization found.</CommandEmpty>
-            <CommandGroup>
-              {organizations.map((org) => (
-                <CommandItem
-                  key={org.id}
-                  value={org.name}
-                  onSelect={() => {
-                    setCurrentOrganization(org.id);
-                    setOpen(false);
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      'mr-2 h-4 w-4',
-                      currentOrganizationId === org.id ? 'opacity-100' : 'opacity-0'
-                    )}
-                  />
-                  <div className="flex flex-col">
-                    <span>{org.name}</span>
-                    <span className="text-xs text-muted-foreground">{org.role}</span>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        className="w-[200px] shadow-sm data-[state=open]:animate-scale-in"
+        align="start"
+        sideOffset={4}
+      >
+        {organizations.length === 0 ? (
+          <DropdownMenuItem disabled className="text-sm text-muted-foreground">
+            No organizations
+          </DropdownMenuItem>
+        ) : (
+          organizations.map((org) => {
+            const isActive = org.id === currentOrganizationId;
+            return (
+              <DropdownMenuItem
+                key={org.id}
+                className={cn(
+                  'flex min-h-[36px] items-center gap-2 px-2 transition-colors duration-200',
+                  isActive && 'bg-accent'
+                )}
+                onSelect={() => {
+                  setCurrentOrganization(org.id);
+                  setOpen(false);
+                }}
+              >
+                <OrgAvatar name={org.name} />
+                <span className="flex-1 truncate text-sm">{org.name}</span>
+                {isActive ? (
+                  <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
+                ) : org.memberCount != null ? (
+                  <span className="chip text-[10px]">{org.memberCount}</span>
+                ) : null}
+              </DropdownMenuItem>
+            );
+          })
+        )}
+        <DropdownMenuSeparator />
+        <CreateOrganizationDialog
+          trigger={
+            <DropdownMenuItem
+              className="min-h-[36px] gap-2 px-2 text-sm transition-colors duration-200"
+              onSelect={(e) => e.preventDefault()}
+            >
+              <Plus className="h-4 w-4 shrink-0 text-muted-foreground" />
+              Create organization
+            </DropdownMenuItem>
+          }
+        />
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
-

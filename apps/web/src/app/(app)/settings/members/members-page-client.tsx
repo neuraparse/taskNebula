@@ -2,11 +2,9 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -34,7 +32,18 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/lib/hooks/use-organization';
-import { Users, UserPlus, MoreVertical, Mail, Shield, Crown, Eye, User, Loader2, AlertTriangle } from 'lucide-react';
+import {
+  Users,
+  UserPlus,
+  MoreVertical,
+  Mail,
+  Shield,
+  Crown,
+  Eye,
+  User,
+  Loader2,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type Member = {
   id: string;
@@ -55,12 +64,13 @@ const roleIcons = {
   guest: Mail,
 };
 
-const roleColors = {
-  owner: 'text-yellow-600 bg-yellow-50 border-yellow-200',
-  admin: 'text-purple-600 bg-purple-50 border-purple-200',
-  member: 'text-blue-600 bg-blue-50 border-blue-200',
-  viewer: 'text-gray-600 bg-gray-50 border-gray-200',
-  guest: 'text-green-600 bg-green-50 border-green-200',
+// Token-driven role chips
+const roleChipClass: Record<Member['role'], string> = {
+  owner: 'bg-accent-amber/10 text-accent-amber border border-accent-amber/20',
+  admin: 'bg-accent-violet/10 text-accent-violet border border-accent-violet/20',
+  member: 'bg-accent-blue/10 text-accent-blue border border-accent-blue/20',
+  viewer: 'bg-muted text-muted-foreground border border-border',
+  guest: 'bg-accent-emerald/10 text-accent-emerald border border-accent-emerald/20',
 };
 
 export function MembersPageClient() {
@@ -71,7 +81,6 @@ export function MembersPageClient() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<Member['role']>('member');
 
-  // Fetch members
   const { data, isLoading } = useQuery({
     queryKey: ['organization-members', currentOrganizationId],
     queryFn: async () => {
@@ -90,12 +99,10 @@ export function MembersPageClient() {
   const userRole = data?.userRole || null;
   const isSuperAdmin = data?.isSuperAdmin || false;
 
-  // Permission checks
   const canInvite = userRole === 'owner' || userRole === 'admin' || isSuperAdmin;
   const canManage = userRole === 'owner' || userRole === 'admin' || isSuperAdmin;
   const canRemove = userRole === 'owner' || userRole === 'admin' || isSuperAdmin;
 
-  // Invite member mutation
   const inviteMutation = useMutation({
     mutationFn: async (data: { email: string; role: Member['role'] }) => {
       const response = await fetch(`/api/organizations/${currentOrganizationId}/members`, {
@@ -111,24 +118,16 @@ export function MembersPageClient() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organization-members', currentOrganizationId] });
-      toast({
-        title: 'Member invited',
-        description: 'Invitation sent successfully',
-      });
+      toast({ title: 'Invitation sent', description: 'Member invited successfully.' });
       setInviteOpen(false);
       setInviteEmail('');
       setInviteRole('member');
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Failed to invite member',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Failed to invite member', description: error.message, variant: 'destructive' });
     },
   });
 
-  // Update role mutation
   const updateRoleMutation = useMutation({
     mutationFn: async ({ memberId, role }: { memberId: string; role: Member['role'] }) => {
       const response = await fetch(
@@ -147,28 +146,18 @@ export function MembersPageClient() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organization-members', currentOrganizationId] });
-      toast({
-        title: 'Role updated',
-        description: 'Member role updated successfully',
-      });
+      toast({ title: 'Role updated', description: 'Member role updated successfully.' });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Failed to update role',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Failed to update role', description: error.message, variant: 'destructive' });
     },
   });
 
-  // Remove member mutation
   const removeMutation = useMutation({
     mutationFn: async (memberId: string) => {
       const response = await fetch(
         `/api/organizations/${currentOrganizationId}/members/${memberId}`,
-        {
-          method: 'DELETE',
-        }
+        { method: 'DELETE' }
       );
       if (!response.ok) {
         const error = await response.json();
@@ -178,218 +167,222 @@ export function MembersPageClient() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organization-members', currentOrganizationId] });
-      toast({
-        title: 'Member removed',
-        description: 'Member removed successfully',
-      });
+      toast({ title: 'Member removed', description: 'Member removed successfully.' });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Failed to remove member',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Failed to remove member', description: error.message, variant: 'destructive' });
     },
   });
 
-  const handleInvite = () => {
-    if (!inviteEmail) return;
-    inviteMutation.mutate({ email: inviteEmail, role: inviteRole });
-  };
-
   if (!currentOrganizationId) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <p className="text-muted-foreground">Please select an organization</p>
+      <div className="flex h-64 items-center justify-center">
+        <p className="text-sm text-muted-foreground">Please select an organization.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold">Members</h1>
-            <Badge variant="outline" className="text-sm">
-              {userRole?.toUpperCase() || 'MEMBER'}
-            </Badge>
-            {isSuperAdmin && (
-              <Badge variant="default" className="text-sm bg-purple-600">
-                SUPER ADMIN
-              </Badge>
-            )}
+    <div className="animate-fade-in space-y-6">
+      <div className="surface-card p-6">
+        <div className="flex items-center justify-between gap-3 pb-5">
+          <div className="space-y-1">
+            <span className="kicker">Access</span>
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Members
+              <span className="text-base font-normal text-muted-foreground">
+                ({members.length})
+              </span>
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Manage organization members and their roles.
+            </p>
           </div>
-          <p className="text-muted-foreground mt-1">
-            Manage organization members and their roles
-          </p>
+
+          <div className="flex items-center gap-2">
+            {userRole && (
+              <span
+                className={cn(
+                  'rounded-full px-2.5 py-0.5 text-[11px] font-medium border',
+                  roleChipClass[userRole] ?? roleChipClass.member
+                )}
+              >
+                {userRole}
+              </span>
+            )}
+            {isSuperAdmin && (
+              <span className="rounded-full border border-accent-violet/20 bg-accent-violet/10 px-2.5 py-0.5 text-[11px] font-medium text-accent-violet">
+                Super admin
+              </span>
+            )}
+
+            <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" disabled={!canInvite}>
+                  <UserPlus className="mr-1.5 h-4 w-4" />
+                  Invite
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Invite Member</DialogTitle>
+                  <DialogDescription>
+                    Send an invitation to join this organization.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="member@example.com"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="role">Role</Label>
+                    <Select
+                      value={inviteRole}
+                      onValueChange={(value) => setInviteRole(value as Member['role'])}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="member">Member</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="viewer">Viewer</SelectItem>
+                        <SelectItem value="guest">Guest</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setInviteOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => inviteMutation.mutate({ email: inviteEmail, role: inviteRole })}
+                    disabled={inviteMutation.isPending || !inviteEmail}
+                  >
+                    {inviteMutation.isPending && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Send invitation
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
-        <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2" disabled={!canInvite}>
-              <UserPlus className="h-4 w-4" />
-              {canInvite ? 'Invite Member' : 'Admin Only'}
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Invite Member</DialogTitle>
-              <DialogDescription>
-                Send an invitation to join this organization
-              </DialogDescription>
-            </DialogHeader>
+        {!canManage && (
+          <div className="mb-4 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-muted-foreground">
+            You can view members but cannot manage them. Only owners and admins can invite, change
+            roles, or remove members.
+          </div>
+        )}
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="member@example.com"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
-                <Select value={inviteRole} onValueChange={(value) => setInviteRole(value as Member['role'])}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="member">Member</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="viewer">Viewer</SelectItem>
-                    <SelectItem value="guest">Guest</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setInviteOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleInvite} disabled={inviteMutation.isPending || !inviteEmail}>
-                {inviteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Send Invitation
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Organization Members
-          </CardTitle>
-          <CardDescription>
-            {data?.members.length || 0} member{data?.members.length !== 1 ? 's' : ''}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {!canManage && (
-            <div className="mb-4 p-4 rounded-lg bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
-              <p className="text-sm text-yellow-800 dark:text-yellow-200 flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" />
-                You can view members but cannot manage them. Only owners and admins can invite, change roles, or remove members.
-              </p>
-            </div>
-          )}
-
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {data?.members.map((member) => {
-                const RoleIcon = roleIcons[member.role];
-                return (
-                  <div
-                    key={member.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <Avatar>
-                        <AvatarImage src={member.image} alt={member.name} />
-                        <AvatarFallback>{member.name.charAt(0).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{member.name}</p>
-                          {member.status === 'invited' && (
-                            <Badge variant="outline" className="text-xs">
-                              Invited
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">{member.email}</p>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-10">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="space-y-px">
+            {members.map((member) => {
+              const RoleIcon = roleIcons[member.role];
+              return (
+                <div
+                  key={member.id}
+                  className="flex min-h-[48px] items-center justify-between gap-4 rounded-md px-2 py-2 transition-colors hover:bg-accent/40"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={member.image} alt={member.name} />
+                      <AvatarFallback className="text-xs">
+                        {member.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">{member.name}</p>
+                        {member.status === 'invited' && (
+                          <span className="chip text-[11px]">Invited</span>
+                        )}
                       </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <Badge variant="outline" className={`gap-1 ${roleColors[member.role]}`}>
-                        <RoleIcon className="h-3 w-3" />
-                        {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
-                      </Badge>
-
-                      {member.role !== 'owner' && canManage && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Change Role</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => updateRoleMutation.mutate({ memberId: member.id, role: 'admin' })}
-                              disabled={member.role === 'admin'}
-                            >
-                              <Shield className="mr-2 h-4 w-4" />
-                              Admin
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => updateRoleMutation.mutate({ memberId: member.id, role: 'member' })}
-                              disabled={member.role === 'member'}
-                            >
-                              <User className="mr-2 h-4 w-4" />
-                              Member
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => updateRoleMutation.mutate({ memberId: member.id, role: 'viewer' })}
-                              disabled={member.role === 'viewer'}
-                            >
-                              <Eye className="mr-2 h-4 w-4" />
-                              Viewer
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => removeMutation.mutate(member.id)}
-                              className="text-destructive"
-                              disabled={!canRemove}
-                            >
-                              Remove Member
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
+                      <p className="text-xs text-muted-foreground">{member.email}</p>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        'flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium border',
+                        roleChipClass[member.role]
+                      )}
+                    >
+                      <RoleIcon className="h-3 w-3" />
+                      {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
+                    </span>
+
+                    {member.role !== 'owner' && canManage && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Change role</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() =>
+                              updateRoleMutation.mutate({ memberId: member.id, role: 'admin' })
+                            }
+                            disabled={member.role === 'admin'}
+                          >
+                            <Shield className="mr-2 h-4 w-4" />
+                            Admin
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              updateRoleMutation.mutate({ memberId: member.id, role: 'member' })
+                            }
+                            disabled={member.role === 'member'}
+                          >
+                            <User className="mr-2 h-4 w-4" />
+                            Member
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              updateRoleMutation.mutate({ memberId: member.id, role: 'viewer' })
+                            }
+                            disabled={member.role === 'viewer'}
+                          >
+                            <Eye className="mr-2 h-4 w-4" />
+                            Viewer
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => removeMutation.mutate(member.id)}
+                            className="text-destructive"
+                            disabled={!canRemove}
+                          >
+                            Remove member
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-

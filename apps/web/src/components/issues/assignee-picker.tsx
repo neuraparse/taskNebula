@@ -44,10 +44,10 @@ export function AssigneePicker({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          className="w-full justify-between h-8 px-2 text-sm hover:bg-accent transition-colors duration-200"
           disabled={disabled || isLoading}
         >
           {selectedMember ? (
@@ -71,7 +71,7 @@ export function AssigneePicker({
               <span>Unassigned</span>
             </div>
           )}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-40" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[300px] p-0">

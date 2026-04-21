@@ -88,7 +88,7 @@ export function TimeLogDialog({ issueId, open, onOpenChange, onSuccess }: TimeLo
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
+            <Clock className="h-4 w-4 text-accent-emerald" />
             Log Time
           </DialogTitle>
           <DialogDescription>Record time spent on this issue</DialogDescription>
@@ -122,7 +122,7 @@ export function TimeLogDialog({ issueId, open, onOpenChange, onSuccess }: TimeLo
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description (Optional)</Label>
+            <Label htmlFor="description">Description <span className="text-muted-foreground font-normal">(optional)</span></Label>
             <Textarea
               id="description"
               placeholder="What did you work on?"
@@ -133,9 +133,9 @@ export function TimeLogDialog({ issueId, open, onOpenChange, onSuccess }: TimeLo
           </div>
 
           {(hours || minutes) && (
-            <div className="rounded-lg bg-muted p-3 text-sm">
-              <span className="font-semibold">Total time:</span>{' '}
-              {hours || 0} hour(s) {minutes || 0} minute(s)
+            <div className="surface-inset rounded-md px-3 py-2 text-sm">
+              <span className="text-muted-foreground">Total: </span>
+              <span className="font-semibold text-foreground">{hours || 0}h {minutes || 0}m</span>
             </div>
           )}
         </div>

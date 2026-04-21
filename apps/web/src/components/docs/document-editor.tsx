@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { type ComponentType, type KeyboardEvent, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { type ComponentType, type KeyboardEvent, type ReactNode, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { EditorContent, useEditor, type Editor } from '@tiptap/react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -932,6 +932,136 @@ export function DocumentEditor({
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-transparent">
+      {canEdit && editor && (
+        <div className="shrink-0 border-b border-border bg-card px-4 py-2">
+          <div className="flex flex-wrap items-center gap-0.5">
+            <MenuBarButton
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              isActive={editor.isActive('bold')}
+              aria-label="Bold"
+              title="Bold"
+            >
+              <span className="font-bold text-sm leading-none">B</span>
+            </MenuBarButton>
+            <MenuBarButton
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              isActive={editor.isActive('italic')}
+              aria-label="Italic"
+              title="Italic"
+            >
+              <span className="italic text-sm leading-none">I</span>
+            </MenuBarButton>
+            <MenuBarButton
+              onClick={() => editor.chain().focus().toggleUnderline().run()}
+              isActive={editor.isActive('underline')}
+              aria-label="Underline"
+              title="Underline"
+            >
+              <span className="underline text-sm leading-none">U</span>
+            </MenuBarButton>
+            <MenuBarButton
+              onClick={() => editor.chain().focus().toggleStrike().run()}
+              isActive={editor.isActive('strike')}
+              aria-label="Strikethrough"
+              title="Strikethrough"
+            >
+              <span className="line-through text-sm leading-none">S</span>
+            </MenuBarButton>
+            <MenuBarDivider />
+            <MenuBarButton
+              onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+              isActive={editor.isActive('heading', { level: 1 })}
+              aria-label="Heading 1"
+              title="Heading 1"
+            >
+              <Heading1 className="h-4 w-4" />
+            </MenuBarButton>
+            <MenuBarButton
+              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+              isActive={editor.isActive('heading', { level: 2 })}
+              aria-label="Heading 2"
+              title="Heading 2"
+            >
+              <Heading2 className="h-4 w-4" />
+            </MenuBarButton>
+            <MenuBarButton
+              onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+              isActive={editor.isActive('heading', { level: 3 })}
+              aria-label="Heading 3"
+              title="Heading 3"
+            >
+              <Heading3 className="h-4 w-4" />
+            </MenuBarButton>
+            <MenuBarDivider />
+            <MenuBarButton
+              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              isActive={editor.isActive('bulletList')}
+              aria-label="Bullet list"
+              title="Bullet list"
+            >
+              <List className="h-4 w-4" />
+            </MenuBarButton>
+            <MenuBarButton
+              onClick={() => editor.chain().focus().toggleOrderedList().run()}
+              isActive={editor.isActive('orderedList')}
+              aria-label="Numbered list"
+              title="Numbered list"
+            >
+              <ListOrdered className="h-4 w-4" />
+            </MenuBarButton>
+            <MenuBarButton
+              onClick={() => editor.chain().focus().toggleTaskList().run()}
+              isActive={editor.isActive('taskList')}
+              aria-label="Checklist"
+              title="Checklist"
+            >
+              <CheckSquare className="h-4 w-4" />
+            </MenuBarButton>
+            <MenuBarDivider />
+            <MenuBarButton
+              onClick={() => editor.chain().focus().toggleBlockquote().run()}
+              isActive={editor.isActive('blockquote')}
+              aria-label="Blockquote"
+              title="Blockquote"
+            >
+              <Quote className="h-4 w-4" />
+            </MenuBarButton>
+            <MenuBarButton
+              onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+              isActive={editor.isActive('codeBlock')}
+              aria-label="Code block"
+              title="Code block"
+            >
+              <Code2 className="h-4 w-4" />
+            </MenuBarButton>
+            <MenuBarButton
+              onClick={() => editor.chain().focus().setHorizontalRule().run()}
+              isActive={false}
+              aria-label="Divider"
+              title="Divider"
+            >
+              <Minus className="h-4 w-4" />
+            </MenuBarButton>
+            <MenuBarDivider />
+            <MenuBarButton
+              onClick={() => { setLinkSearch(''); setIsLinkDialogOpen(true); }}
+              isActive={editor.isActive('link')}
+              aria-label="Insert page link"
+              title="Insert page link"
+            >
+              <Link2 className="h-4 w-4" />
+            </MenuBarButton>
+            <MenuBarButton
+              onClick={() => imageInputRef.current?.click()}
+              isActive={false}
+              aria-label="Upload image"
+              title="Upload image"
+            >
+              <ImagePlus className="h-4 w-4" />
+            </MenuBarButton>
+          </div>
+        </div>
+      )}
       <div ref={editorScrollRef} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-6 md:px-8 md:py-8">
         {slashMenu.open && (
           <div
@@ -967,8 +1097,8 @@ export function DocumentEditor({
                             type="button"
                             data-slash-index={index}
                             className={cn(
-                              'flex w-full items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-muted/10',
-                              index === selectedSlashIndex && 'bg-muted/10'
+                              'flex w-full items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors duration-150 hover:bg-accent/50',
+                              index === selectedSlashIndex && 'bg-primary/10 text-primary'
                             )}
                             onMouseDown={(event) => {
                               event.preventDefault();
@@ -998,11 +1128,11 @@ export function DocumentEditor({
         )}
 
         <div className="mx-auto w-full max-w-[92rem]">
-          <div className="relative overflow-hidden rounded-[28px] border border-border/70 bg-background/95 px-5 py-6 shadow-[0_30px_90px_-48px_rgba(0,0,0,0.65)] md:px-8 md:py-8">
+          <div className="relative overflow-hidden rounded-[28px] border border-border bg-background/95 px-5 py-6 shadow-[0_30px_90px_-48px_rgba(0,0,0,0.65)] md:px-8 md:py-8">
             <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-muted/[0.14] to-transparent" />
 
             <div className="relative mx-auto w-full max-w-[62rem]">
-              <div className="rounded-[22px] border border-border/60 bg-muted/[0.04] px-4 py-4 md:px-5">
+              <div className="rounded-[22px] border border-border bg-muted/[0.04] px-4 py-4 md:px-5">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
                     {breadcrumbPages.length > 0 && (
@@ -1016,7 +1146,7 @@ export function DocumentEditor({
                                 spaceId: breadcrumb.spaceId,
                                 projectId: breadcrumb.projectId,
                               })}
-                              className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-2.5 py-1 transition-colors hover:bg-muted/10"
+                              className="inline-flex items-center gap-2 rounded-full border border-border bg-background/80 px-2.5 py-1 transition-colors duration-150 hover:bg-accent/50"
                             >
                               <DocumentIcon icon={breadcrumb.icon} className="h-5 w-5 rounded-md border-0 bg-transparent text-[11px] shadow-none" />
                               <span className="max-w-[180px] truncate">{breadcrumb.title}</span>
@@ -1027,15 +1157,15 @@ export function DocumentEditor({
                     )}
 
                     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <Badge variant="outline" className="rounded-full border-border/60 bg-background/70 px-2.5 py-1 font-normal">
+                      <Badge variant="outline" className="rounded-full border-border bg-background/70 px-2.5 py-1 font-normal">
                         {documentScopeLabel}
                       </Badge>
-                      <Badge variant="outline" className="rounded-full border-border/60 bg-background/70 px-2.5 py-1 font-normal">
+                      <Badge variant="outline" className="rounded-full border-border bg-background/70 px-2.5 py-1 font-normal">
                         <StatusIcon className={cn('mr-1.5 h-3.5 w-3.5', statusMeta.iconClassName)} />
                         {statusMeta.label}
                       </Badge>
                       {page.share?.public?.enabled && (
-                        <Badge variant="outline" className="rounded-full border-border/60 bg-background/70 px-2.5 py-1 font-normal">
+                        <Badge variant="outline" className="rounded-full border-border bg-background/70 px-2.5 py-1 font-normal">
                           <Globe2 className="mr-1.5 h-3.5 w-3.5" />
                           Public
                         </Badge>
@@ -1206,15 +1336,15 @@ export function DocumentEditor({
                 </div>
               )}
 
-              <div className="mt-8 rounded-[24px] border border-border/60 bg-background/80 px-5 py-5 shadow-[0_20px_50px_-38px_rgba(0,0,0,0.75)] md:px-7 md:py-7">
-                <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-4">
+              <div className="mt-8 rounded-[24px] border border-border bg-background/80 px-5 py-5 shadow-[0_20px_50px_-38px_rgba(0,0,0,0.75)] md:px-7 md:py-7">
+                <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
                   <div>
                     <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Page Body</div>
                     <div className="mt-1 text-sm text-muted-foreground">
                       {canEdit ? 'Use / for blocks, templates, media, and structured content.' : 'Read-only document content.'}
                     </div>
                   </div>
-                  <Badge variant="outline" className="rounded-full border-border/60 bg-muted/[0.04] px-2.5 py-1 font-normal text-muted-foreground">
+                  <Badge variant="outline" className="rounded-full border-border bg-muted/[0.04] px-2.5 py-1 font-normal text-muted-foreground">
                     {canEdit ? 'Editing enabled' : 'Read only'}
                   </Badge>
                 </div>
@@ -1235,7 +1365,7 @@ export function DocumentEditor({
             />
 
             {(childPages.length > 0 || (canEdit && onCreateChild)) && (
-              <div className="mx-auto mt-12 w-full max-w-[62rem] rounded-[24px] border border-border/60 bg-muted/[0.03] px-5 py-6 md:px-6">
+              <div className="mx-auto mt-12 w-full max-w-[62rem] rounded-[24px] border border-border bg-muted/[0.03] px-5 py-6 md:px-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-sm font-semibold tracking-tight">
                     <FolderTree className="h-4 w-4 text-primary" />
@@ -1262,7 +1392,7 @@ export function DocumentEditor({
                           spaceId: childPage.spaceId,
                           projectId: childPage.projectId,
                         })}
-                        className="group rounded-2xl border border-border/60 bg-background/75 px-4 py-3 transition-colors hover:bg-muted/10"
+                        className="group rounded-2xl border border-border bg-background/75 px-4 py-3 transition-colors duration-150 hover:bg-accent/50"
                       >
                         <div className="flex items-start gap-3">
                           <DocumentIcon icon={childPage.icon} className="h-8 w-8 rounded-lg text-sm" />
@@ -1277,7 +1407,7 @@ export function DocumentEditor({
                     ))}
                   </div>
                 ) : (
-                  <div className="mt-4 rounded-xl border border-dashed border-border/70 bg-background/50 px-4 py-4 text-sm text-muted-foreground">
+                  <div className="mt-4 rounded-xl border border-dashed border-border bg-background/50 px-4 py-4 text-sm text-muted-foreground">
                     No sub-notes yet.
                   </div>
                 )}
@@ -1304,7 +1434,7 @@ export function DocumentEditor({
                 filteredPages.map((linkedPage) => (
                   <button
                     key={linkedPage.id}
-                    className="flex w-full items-start gap-3 rounded-lg border bg-transparent px-3 py-2.5 text-left transition-colors hover:bg-muted/10"
+                    className="flex w-full items-start gap-3 rounded-lg border bg-transparent px-3 py-2.5 text-left transition-colors duration-150 hover:bg-accent/50"
                     onClick={() => {
                       insertInternalLink(linkedPage);
                       setIsLinkDialogOpen(false);
@@ -1456,16 +1586,49 @@ function getSaveStateMeta(saveState: SaveState, saveError: string | null | undef
   if (saveState === 'dirty') {
     return {
       icon: Check,
-      iconClassName: 'text-amber-500',
+      iconClassName: 'text-accent-amber',
       label: 'Waiting to save...',
     };
   }
 
   return {
     icon: CheckCheck,
-    iconClassName: 'text-emerald-500',
+    iconClassName: 'text-accent-emerald',
     label: lastSavedAt
       ? `Saved at ${lastSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
       : 'All changes saved',
   };
+}
+
+function MenuBarButton({
+  onClick,
+  isActive,
+  children,
+  'aria-label': ariaLabel,
+  title,
+}: {
+  onClick: () => void;
+  isActive: boolean;
+  children: ReactNode;
+  'aria-label': string;
+  title?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      title={title}
+      className={cn(
+        'inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+        isActive && 'bg-primary/10 text-primary'
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function MenuBarDivider() {
+  return <div className="mx-1 h-5 w-px bg-border" aria-hidden="true" />;
 }

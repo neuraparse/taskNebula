@@ -3,9 +3,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -126,17 +124,12 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
   });
 
   async function handleCreate() {
-    if (!newKeyName.trim()) {
-      return;
-    }
+    if (!newKeyName.trim()) return;
     await createKey.mutateAsync(newKeyName.trim());
   }
 
   function handleCopyKey() {
-    if (!createdKey) {
-      return;
-    }
-
+    if (!createdKey) return;
     navigator.clipboard.writeText(createdKey);
     setCopiedKey(true);
     setTimeout(() => setCopiedKey(false), 2000);
@@ -154,68 +147,89 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <CardTitle>API Keys</CardTitle>
-              <CardDescription>Create and revoke keys for service integrations and automation.</CardDescription>
-            </div>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create key
-            </Button>
+      <div className="surface-card p-6 animate-fade-in">
+        <div className="flex items-center justify-between gap-3 pb-5">
+          <div className="space-y-1">
+            <span className="kicker">Integrations</span>
+            <h2 className="text-xl font-semibold">API Keys</h2>
+            <p className="text-sm text-muted-foreground">
+              Create and revoke keys for service integrations and automation.
+            </p>
           </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading API keys...</p>
-          ) : error ? (
-            <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-6 text-sm text-yellow-700 dark:text-yellow-200">
-              {error instanceof Error ? error.message : 'API keys could not be loaded.'}
-            </div>
-          ) : apiKeys.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground">
-              <Key className="mx-auto mb-4 h-10 w-10 opacity-50" />
-              <p>No API keys yet.</p>
-              <p className="text-sm">Create the first key when you need programmatic access.</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {apiKeys.map((key) => (
-                <div key={key.id} className="flex flex-col gap-3 rounded-lg border p-4 md:flex-row md:items-start md:justify-between">
-                  <div className="space-y-2">
+          <Button onClick={() => setIsCreateDialogOpen(true)} size="sm">
+            <Plus className="mr-1.5 h-4 w-4" />
+            Create key
+          </Button>
+        </div>
+
+        {isLoading ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">Loading API keys...</p>
+        ) : error ? (
+          <div className="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-muted-foreground">
+            {error instanceof Error ? error.message : 'API keys could not be loaded.'}
+          </div>
+        ) : apiKeys.length === 0 ? (
+          <div className="py-10 text-center text-muted-foreground">
+            <Key className="mx-auto mb-3 h-8 w-8 opacity-30" />
+            <p className="text-sm">No API keys yet. Create one when you need programmatic access.</p>
+          </div>
+        ) : (
+          <div className="space-y-px">
+            {apiKeys.map((key) => (
+              <div
+                key={key.id}
+                className="flex min-h-[44px] items-center justify-between gap-4 rounded-md px-2 py-2.5 transition-colors hover:bg-accent/40"
+              >
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium">{key.name}</span>
-                      {key.isActive ? <Badge>Active</Badge> : <Badge variant="secondary">Revoked</Badge>}
-                      {key.expiresAt ? <Badge variant="outline">Expires {new Date(key.expiresAt).toLocaleDateString()}</Badge> : null}
+                      <span className="text-sm font-medium">{key.name}</span>
+                      {key.isActive ? (
+                        <span className="chip-accent">Active</span>
+                      ) : (
+                        <span className="chip">Revoked</span>
+                      )}
+                      {key.expiresAt ? (
+                        <span className="chip">
+                          Expires {new Date(key.expiresAt).toLocaleDateString()}
+                        </span>
+                      ) : null}
                     </div>
-                    <code className="inline-flex rounded bg-muted px-2 py-1 text-xs">{key.keyPrefix}...</code>
-                    <div className="text-xs text-muted-foreground">
-                      Created {formatDistanceToNow(new Date(key.createdAt), { addSuffix: true })}
-                      {key.lastUsedAt ? <> · Last used {formatDistanceToNow(new Date(key.lastUsedAt), { addSuffix: true })}</> : null}
+                    <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
+                      <code className="rounded bg-muted px-1.5 py-0.5">{key.keyPrefix}...</code>
+                      <span>
+                        Created {formatDistanceToNow(new Date(key.createdAt), { addSuffix: true })}
+                      </span>
+                      {key.lastUsedAt ? (
+                        <span>
+                          Last used{' '}
+                          {formatDistanceToNow(new Date(key.lastUsedAt), { addSuffix: true })}
+                        </span>
+                      ) : null}
                     </div>
                   </div>
-                  {key.isActive ? (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        if (window.confirm(`Revoke "${key.name}"?`)) {
-                          revokeKey.mutate(key.id);
-                        }
-                      }}
-                      disabled={revokeKey.isPending}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  ) : null}
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                {key.isActive ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => {
+                      if (window.confirm(`Revoke "${key.name}"?`)) {
+                        revokeKey.mutate(key.id);
+                      }
+                    }}
+                    disabled={revokeKey.isPending}
+                    aria-label="Revoke key"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <Dialog open={isCreateDialogOpen} onOpenChange={handleCloseDialog}>
         <DialogContent>
@@ -230,11 +244,15 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
 
           {createdKey ? (
             <div className="space-y-4">
-              <div className="rounded-lg bg-muted p-4">
+              <div className="rounded-lg bg-surface p-4">
                 <code className="break-all text-sm">{createdKey}</code>
               </div>
               <Button onClick={handleCopyKey} className="w-full">
-                {copiedKey ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
+                {copiedKey ? (
+                  <Check className="mr-2 h-4 w-4" />
+                ) : (
+                  <Copy className="mr-2 h-4 w-4" />
+                )}
                 {copiedKey ? 'Copied' : 'Copy to clipboard'}
               </Button>
             </div>
@@ -274,7 +292,10 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
                 <Button variant="outline" onClick={handleCloseDialog}>
                   Cancel
                 </Button>
-                <Button onClick={handleCreate} disabled={!newKeyName.trim() || createKey.isPending}>
+                <Button
+                  onClick={handleCreate}
+                  disabled={!newKeyName.trim() || createKey.isPending}
+                >
                   {createKey.isPending ? 'Creating...' : 'Create key'}
                 </Button>
               </>
@@ -287,19 +308,10 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
 }
 
 function getExpiryDate(preset: string) {
-  if (preset === 'never') {
-    return null;
-  }
-
+  if (preset === 'never') return null;
   const date = new Date();
-
-  if (preset === '30d') {
-    date.setDate(date.getDate() + 30);
-  } else if (preset === '90d') {
-    date.setDate(date.getDate() + 90);
-  } else if (preset === '365d') {
-    date.setFullYear(date.getFullYear() + 1);
-  }
-
+  if (preset === '30d') date.setDate(date.getDate() + 30);
+  else if (preset === '90d') date.setDate(date.getDate() + 90);
+  else if (preset === '365d') date.setFullYear(date.getFullYear() + 1);
   return date;
 }

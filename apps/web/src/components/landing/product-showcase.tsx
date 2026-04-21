@@ -36,26 +36,26 @@ type BoardView = {
   issues: BoardIssue[];
 };
 
-const typeIcon: Record<IssueType, { icon: typeof BookOpen; color: string }> = {
-  story: { icon: BookOpen, color: '#2ABBF8' },
-  task: { icon: CheckSquare, color: '#33c482' },
-  bug: { icon: Bug, color: '#ff7361' },
-  epic: { icon: Zap, color: '#a88bff' },
+const typeIcon: Record<IssueType, { icon: typeof BookOpen; colorVar: string }> = {
+  story: { icon: BookOpen, colorVar: 'var(--landing-accent-blue)' },
+  task: { icon: CheckSquare, colorVar: 'var(--landing-accent-green)' },
+  bug: { icon: Bug, colorVar: 'var(--landing-accent-rose)' },
+  epic: { icon: Zap, colorVar: 'var(--landing-accent-violet)' },
 };
 
-const priorityColor: Record<Priority, string> = {
-  critical: '#ff7361',
-  high: '#ffb340',
-  medium: '#58c8ff',
-  low: '#93a0b8',
+const priorityColorVar: Record<Priority, string> = {
+  critical: 'var(--landing-accent-rose)',
+  high: 'var(--landing-accent-amber)',
+  medium: 'var(--landing-accent-blue)',
+  low: 'var(--landing-text-muted)',
 };
 
 const columns = [
-  { name: 'Backlog', accent: '#64748b' },
-  { name: 'To Do', accent: '#7A7F8A' },
-  { name: 'In Progress', accent: '#2ABBF8' },
-  { name: 'In Review', accent: '#8D76FF' },
-  { name: 'Done', accent: '#33c482' },
+  { name: 'Backlog', accentVar: 'var(--landing-text-muted)' },
+  { name: 'To Do', accentVar: 'var(--landing-text-body)' },
+  { name: 'In Progress', accentVar: 'var(--landing-accent-blue)' },
+  { name: 'In Review', accentVar: 'var(--landing-accent-violet)' },
+  { name: 'Done', accentVar: 'var(--landing-accent-green)' },
 ] as const;
 
 const boardViews: BoardView[] = [
@@ -240,24 +240,24 @@ const boardViews: BoardView[] = [
 ];
 
 const teamMembers = [
-  { name: 'Sarah Kim', role: 'Product', initials: 'SK', color: '#2ABBF8', status: 'Leading launch review' },
-  { name: 'Abhay Kumar', role: 'Tech Lead', initials: 'AK', color: '#33c482', status: 'Tracking API rollout' },
-  { name: 'Danny Wong', role: 'Engineer', initials: 'DW', color: '#FFB340', status: 'Finishing review fixes' },
-  { name: 'Maria Chen', role: 'Design', initials: 'MC', color: '#A88BFF', status: 'Updating launch assets' },
+  { name: 'Sarah Kim', role: 'Product', initials: 'SK', colorVar: 'var(--landing-accent-blue)', status: 'Leading launch review' },
+  { name: 'Abhay Kumar', role: 'Tech Lead', initials: 'AK', colorVar: 'var(--landing-accent-green)', status: 'Tracking API rollout' },
+  { name: 'Danny Wong', role: 'Engineer', initials: 'DW', colorVar: 'var(--landing-accent-amber)', status: 'Finishing review fixes' },
+  { name: 'Maria Chen', role: 'Design', initials: 'MC', colorVar: 'var(--landing-accent-violet)', status: 'Updating launch assets' },
 ] as const;
 
 const activityFeed = [
-  { who: 'SK', action: 'moved WEB-18 to In Review', time: 'just now', color: '#2ABBF8' },
-  { who: 'AK', action: 'linked docs to API-12', time: '4m ago', color: '#33c482' },
-  { who: 'DW', action: 'closed APP-19', time: '11m ago', color: '#FFB340' },
+  { who: 'SK', action: 'moved WEB-18 to In Review', time: 'just now', colorVar: 'var(--landing-accent-blue)' },
+  { who: 'AK', action: 'linked docs to API-12', time: '4m ago', colorVar: 'var(--landing-accent-green)' },
+  { who: 'DW', action: 'closed APP-19', time: '11m ago', colorVar: 'var(--landing-accent-amber)' },
 ] as const;
 
 const workflowSteps = [
-  { name: 'Backlog', color: '#64748b', count: 12 },
-  { name: 'To Do', color: '#7A7F8A', count: 8 },
-  { name: 'In Progress', color: '#2ABBF8', count: 5 },
-  { name: 'In Review', color: '#8D76FF', count: 3 },
-  { name: 'Done', color: '#33c482', count: 24 },
+  { name: 'Backlog', colorVar: 'var(--landing-text-muted)', count: 12 },
+  { name: 'To Do', colorVar: 'var(--landing-text-body)', count: 8 },
+  { name: 'In Progress', colorVar: 'var(--landing-accent-blue)', count: 5 },
+  { name: 'In Review', colorVar: 'var(--landing-accent-violet)', count: 3 },
+  { name: 'Done', colorVar: 'var(--landing-accent-green)', count: 24 },
 ] as const;
 
 const workflowRules = [
@@ -278,8 +278,6 @@ export function HeroShowcase() {
   const [draggingIssueKey, setDraggingIssueKey] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<number | null>(null);
 
-  // boards is initialized from the static boardViews list which is non-empty,
-  // so boards[0] is always defined; narrow the type for downstream usage.
   const activeBoard = (boards.find((board) => board.id === activeBoardId) ?? boards[0]) as BoardView;
 
   useEffect(() => {
@@ -330,7 +328,7 @@ export function HeroShowcase() {
 
   return (
     <section id="board" className="border-t border-[var(--landing-border)] bg-[var(--landing-bg)]">
-      <div className="mx-auto max-w-screen-xl px-4 py-16 sm:px-8 sm:py-20 lg:px-20 lg:py-24">
+      <div className="mx-auto max-w-screen-xl px-4 py-20 sm:px-8 sm:py-24 lg:px-20">
         <div className="mb-8 max-w-2xl">
           <p className="landing-kicker text-[var(--landing-text-muted)]">Board</p>
           <h2 className="landing-title mt-4 text-balance text-[34px] text-[var(--landing-text-dark)] sm:text-[42px] lg:text-[52px]">
@@ -351,7 +349,7 @@ export function HeroShowcase() {
                   key={board.id}
                   type="button"
                   onClick={() => setActiveBoardId(board.id)}
-                  className={`rounded-sm border px-3 py-1.5 text-[11px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] ${
+                  className={`rounded-sm border px-3 py-1.5 text-[11px] transition-all duration-200 ease-smooth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] ${
                     board.id === activeBoard.id
                       ? 'border-[var(--landing-border-strong)] bg-[var(--landing-bg)] text-[var(--landing-text-dark)]'
                       : 'border-[var(--landing-border)] text-[var(--landing-text-muted)] hover:bg-[var(--landing-bg-surface)]'
@@ -385,12 +383,12 @@ export function HeroShowcase() {
                         }
                       }}
                       onDrop={handleDrop(columnIndex)}
-                      className={`min-w-0 rounded-md border bg-[var(--landing-bg-surface)] transition-colors ${
+                      className={`min-w-0 rounded-md border bg-[var(--landing-bg-surface)] transition-colors duration-200 ${
                         dragOverColumn === columnIndex
                           ? 'border-[var(--landing-border-strong)] bg-[var(--landing-bg-elevated)]'
                           : 'border-[var(--landing-border)]'
                       }`}
-                      style={{ borderTopColor: column.accent, borderTopWidth: 2 }}
+                      style={{ borderTopColor: column.accentVar, borderTopWidth: 2 }}
                     >
                       <div className="flex items-center justify-between gap-2 px-3 py-3">
                         <span className="text-[10px] font-[500] uppercase tracking-[0.16em] text-[var(--landing-text-body)]">
@@ -438,8 +436,8 @@ export function HeroShowcase() {
                       <span
                         className="rounded-sm px-2 py-1 text-[10px]"
                         style={{
-                          backgroundColor: `color-mix(in srgb, ${priorityColor[selectedIssue.priority]} 12%, transparent)`,
-                          color: priorityColor[selectedIssue.priority],
+                          backgroundColor: `color-mix(in srgb, ${priorityColorVar[selectedIssue.priority]} 12%, transparent)`,
+                          color: priorityColorVar[selectedIssue.priority],
                         }}
                       >
                         {selectedIssue.priority}
@@ -465,7 +463,7 @@ export function HeroShowcase() {
                         type="button"
                         onClick={() => moveIssueToColumn(selectedIssue.key, selectedIssue.col - 1)}
                         disabled={selectedIssue.col === 0}
-                        className="inline-flex h-9 items-center rounded-sm border border-[var(--landing-border)] px-3 text-[12px] text-[var(--landing-text)] transition-colors hover:bg-[var(--landing-bg)] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
+                        className="inline-flex h-9 items-center rounded-sm border border-[var(--landing-border)] px-3 text-[12px] text-[var(--landing-text)] transition-all duration-200 ease-smooth hover:bg-[var(--landing-bg)] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
                       >
                         Move back
                       </button>
@@ -473,7 +471,7 @@ export function HeroShowcase() {
                         type="button"
                         onClick={() => moveIssueToColumn(selectedIssue.key, selectedIssue.col + 1)}
                         disabled={selectedIssue.col === columns.length - 1}
-                        className="inline-flex h-9 items-center rounded-sm border border-[var(--landing-border-strong)] bg-[var(--landing-bg)] px-3 text-[12px] text-[var(--landing-text-dark)] transition-colors hover:bg-[var(--landing-bg-elevated)] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
+                        className="inline-flex h-9 items-center rounded-sm border border-[var(--landing-border-strong)] bg-[var(--landing-bg)] px-3 text-[12px] text-[var(--landing-text-dark)] transition-all duration-200 ease-smooth hover:bg-[var(--landing-bg-elevated)] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
                       >
                         Move forward
                       </button>
@@ -532,16 +530,16 @@ function MiniCard({
         onDragStart();
       }}
       onDragEnd={onDragEnd}
-      className={`relative w-full cursor-grab overflow-hidden rounded-sm border bg-[var(--landing-bg)] p-2.5 text-left transition-colors active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] ${
+      className={`relative w-full cursor-grab overflow-hidden rounded-sm border bg-[var(--landing-bg)] p-2.5 text-left transition-all duration-200 ease-smooth active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] ${
         isSelected
           ? 'border-[var(--landing-border-strong)] bg-[var(--landing-bg-elevated)]'
           : 'border-[var(--landing-border)] hover:border-[var(--landing-border-strong)]'
       } ${isDragging ? 'opacity-50' : ''}`}
     >
-      <div className="absolute left-0 top-0 h-full w-[2px]" style={{ backgroundColor: priorityColor[card.priority] }} />
+      <div className="absolute left-0 top-0 h-full w-[2px]" style={{ backgroundColor: priorityColorVar[card.priority] }} />
       <div className="mb-1.5 flex items-center justify-between pl-1">
         <div className="flex items-center gap-1">
-          <Icon className="h-2.5 w-2.5" style={{ color: cardType.color }} />
+          <Icon className="h-2.5 w-2.5" style={{ color: cardType.colorVar }} />
           <span className="text-[9px] font-mono text-[var(--landing-text-muted)]">{card.key}</span>
         </div>
         {card.assignee ? (
@@ -608,7 +606,7 @@ export function TeamShowcase() {
             >
               <div
                 className="flex h-7 w-7 items-center justify-center rounded-full text-[9px] font-bold"
-                style={{ backgroundColor: `color-mix(in srgb, ${member.color} 12%, transparent)`, color: member.color }}
+                style={{ backgroundColor: `color-mix(in srgb, ${member.colorVar} 12%, transparent)`, color: member.colorVar }}
               >
                 {member.initials}
               </div>
@@ -629,7 +627,7 @@ export function TeamShowcase() {
               <div key={`${entry.who}-${entry.time}`} className="flex items-start gap-2.5">
                 <div
                   className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[7px] font-bold"
-                  style={{ backgroundColor: `color-mix(in srgb, ${entry.color} 12%, transparent)`, color: entry.color }}
+                  style={{ backgroundColor: `color-mix(in srgb, ${entry.colorVar} 12%, transparent)`, color: entry.colorVar }}
                 >
                   {entry.who}
                 </div>
@@ -659,14 +657,14 @@ export function WorkflowShowcase() {
                 <div
                   className="flex h-10 w-10 items-center justify-center rounded-sm border-2 text-[11px] font-bold"
                   style={{
-                    backgroundColor: `color-mix(in srgb, ${step.color} ${index === activeStep ? 16 : 6}%, transparent)`,
-                    borderColor: index === activeStep ? step.color : 'transparent',
-                    color: step.color,
+                    backgroundColor: `color-mix(in srgb, ${step.colorVar} ${index === activeStep ? 16 : 6}%, transparent)`,
+                    borderColor: index === activeStep ? step.colorVar : 'transparent',
+                    color: step.colorVar,
                   }}
                 >
                   {step.count}
                 </div>
-                <span className={`mt-2 text-[9px] ${index === activeStep ? 'text-white' : 'text-[var(--landing-text-muted)]'}`}>
+                <span className={`mt-2 text-[9px] ${index === activeStep ? 'text-[var(--landing-text-dark)]' : 'text-[var(--landing-text-muted)]'}`}>
                   {step.name}
                 </span>
               </div>
@@ -695,9 +693,16 @@ export function WorkflowShowcase() {
               <span className="w-20 text-[10px] text-[var(--landing-text)]">{rule.from}</span>
               <ArrowRight className="h-3 w-3 text-[var(--landing-text-muted)]" />
               <span className="w-20 text-[10px] text-[var(--landing-text)]">{rule.to}</span>
-              <span className="flex-1 text-[10px] text-[#F6F6F6]/40">{rule.rule}</span>
+              <span className="flex-1 text-[10px] text-[var(--landing-text-muted)]">{rule.rule}</span>
               {rule.auto ? (
-                <span className="rounded-sm border border-blue-500/20 bg-blue-500/10 px-1.5 py-0.5 text-[8px] text-blue-400">
+                <span
+                  className="rounded-sm border px-1.5 py-0.5 text-[8px]"
+                  style={{
+                    borderColor: 'color-mix(in srgb, var(--landing-accent-blue) 20%, transparent)',
+                    backgroundColor: 'color-mix(in srgb, var(--landing-accent-blue) 10%, transparent)',
+                    color: 'var(--landing-accent-blue)',
+                  }}
+                >
                   Auto
                 </span>
               ) : null}
@@ -719,22 +724,35 @@ export function SprintShowcase() {
         <div className="mb-4 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[14px] font-[500] text-white">Sprint 4 — Auth & Notifications</span>
-              <span className="flex items-center gap-1 rounded-sm border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] text-emerald-400">
-                <div className="h-1 w-1 rounded-full bg-emerald-400" />
+              <span className="text-[14px] font-[500] text-[var(--landing-text-dark)]">Sprint 4 — Auth &amp; Notifications</span>
+              <span
+                className="flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[9px]"
+                style={{
+                  borderColor: 'color-mix(in srgb, var(--landing-accent-green) 20%, transparent)',
+                  backgroundColor: 'color-mix(in srgb, var(--landing-accent-green) 10%, transparent)',
+                  color: 'var(--landing-accent-green)',
+                }}
+              >
+                <div className="h-1 w-1 rounded-full bg-[var(--landing-accent-green)]" />
                 Active
               </span>
             </div>
             <p className="mt-1 text-[11px] text-[var(--landing-text-muted)]">14 days · 18 issues</p>
           </div>
           <div className="text-right">
-            <span className="text-[20px] font-[500] text-white tabular-nums">{progress}%</span>
+            <span className="text-[20px] font-[500] text-[var(--landing-text-dark)] tabular-nums">{progress}%</span>
             <p className="text-[9px] text-[var(--landing-text-muted)]">5 days remaining</p>
           </div>
         </div>
 
         <div className="mb-6 h-2 overflow-hidden rounded-full bg-[var(--landing-bg-surface)]">
-          <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-blue-500" style={{ width: `${progress}%` }} />
+          <div
+            className="h-full rounded-full"
+            style={{
+              width: `${progress}%`,
+              background: 'linear-gradient(to right, var(--landing-accent-green), var(--landing-accent-blue))',
+            }}
+          />
         </div>
 
         <div className="mb-5 grid grid-cols-4 gap-3">
@@ -746,7 +764,7 @@ export function SprintShowcase() {
           ].map((stat) => (
             <div key={stat.label} className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] p-3">
               <p className="mb-1 text-[9px] text-[var(--landing-text-muted)]">{stat.label}</p>
-              <p className="text-[18px] font-[500] leading-none text-white">{stat.value}</p>
+              <p className="text-[18px] font-[500] leading-none text-[var(--landing-text-dark)]">{stat.value}</p>
             </div>
           ))}
         </div>
@@ -760,7 +778,9 @@ export function SprintShowcase() {
                 className="flex-1 rounded-t"
                 style={{
                   height: `${(value / 18) * 100}%`,
-                  backgroundColor: index <= Math.floor(progress / 7.2) ? '#33c482' : 'rgba(51,196,130,0.2)',
+                  backgroundColor: index <= Math.floor(progress / 7.2)
+                    ? 'var(--landing-accent-green)'
+                    : 'color-mix(in srgb, var(--landing-accent-green) 20%, transparent)',
                   minHeight: value > 0 ? 2 : 0,
                 }}
               />
@@ -785,7 +805,7 @@ export function AnalyticsShowcase() {
           ].map((stat) => (
             <div key={stat.label} className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] p-3">
               <p className="text-[9px] text-[var(--landing-text-muted)]">{stat.label}</p>
-              <p className="mt-1 text-[18px] font-[500] leading-none text-white">{stat.value}</p>
+              <p className="mt-1 text-[18px] font-[500] leading-none text-[var(--landing-text-dark)]">{stat.value}</p>
               <p className="mt-0.5 text-[9px] text-[var(--landing-text-muted)]">{stat.change}</p>
             </div>
           ))}
@@ -801,7 +821,9 @@ export function AnalyticsShowcase() {
                     className="w-full rounded-t"
                     style={{
                       height: `${(value / 25) * 100}%`,
-                      backgroundColor: index === 5 ? '#2ABBF8' : 'rgba(42,187,248,0.3)',
+                      backgroundColor: index === 5
+                        ? 'var(--landing-accent-blue)'
+                        : 'color-mix(in srgb, var(--landing-accent-blue) 30%, transparent)',
                     }}
                   />
                   <span className="text-[7px] text-[var(--landing-text-muted)]">S{index + 1}</span>
@@ -814,17 +836,17 @@ export function AnalyticsShowcase() {
             <span className="text-[9px] font-[500] uppercase tracking-[0.16em] text-[var(--landing-text-muted)]">Priority mix</span>
             <div className="mt-3 space-y-2">
               {[
-                { label: 'Critical', value: 3, total: 42, color: '#ff7361' },
-                { label: 'High', value: 12, total: 42, color: '#ffb340' },
-                { label: 'Medium', value: 18, total: 42, color: '#58c8ff' },
-                { label: 'Low', value: 9, total: 42, color: '#93a0b8' },
+                { label: 'Critical', value: 3, total: 42, colorVar: 'var(--landing-accent-rose)' },
+                { label: 'High', value: 12, total: 42, colorVar: 'var(--landing-accent-amber)' },
+                { label: 'Medium', value: 18, total: 42, colorVar: 'var(--landing-accent-blue)' },
+                { label: 'Low', value: 9, total: 42, colorVar: 'var(--landing-text-muted)' },
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-2">
                   <span className="w-12 text-[9px] text-[var(--landing-text-muted)]">{item.label}</span>
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--landing-bg)]">
                     <div
                       className="h-full rounded-full"
-                      style={{ width: `${(item.value / item.total) * 100}%`, backgroundColor: item.color }}
+                      style={{ width: `${(item.value / item.total) * 100}%`, backgroundColor: item.colorVar }}
                     />
                   </div>
                   <span className="w-4 text-right text-[9px] text-[var(--landing-text-muted)]">{item.value}</span>

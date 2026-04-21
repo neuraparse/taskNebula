@@ -119,8 +119,11 @@ export function useCreateIssue() {
             return filters?.projectId === createdProjectId;
           },
         });
+        // Keep column counts fresh
+        queryClient.invalidateQueries({ queryKey: ['workflow-statuses', createdProjectId] });
       } else {
         queryClient.invalidateQueries({ queryKey: ['issues'] });
+        queryClient.invalidateQueries({ queryKey: ['workflow-statuses'] });
       }
       // Also invalidate subtasks if this was a subtask
       if (variables.parentId) {
@@ -142,39 +145,61 @@ export function useUpdateIssue() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        throw new Error('Failed to update issue');
+        const err = await response.json().catch(() => null);
+        throw new Error(err?.error || 'Failed to update issue');
       }
       return response.json();
     },
-    onSuccess: (data, variables) => {
-      // Targeted cache update for the single-issue query
+
+    // Optimistic update
+    onMutate: async ({ issueId, data }) => {
+      // Cancel any outgoing refetches that would overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['issues'] });
+      await queryClient.cancelQueries({ queryKey: ['issue', issueId] });
+
+      // Snapshot all ['issues', ...] queries currently cached
+      const prevListsEntries = queryClient.getQueriesData<Issue[]>({ queryKey: ['issues'] });
+      const prevIssue = queryClient.getQueryData<Issue>(['issue', issueId]);
+
+      // Apply the patch optimistically across ALL matching list caches
+      queryClient.setQueriesData<Issue[]>({ queryKey: ['issues'] }, (oldList) => {
+        if (!oldList) return oldList;
+        return oldList.map((i) => (i.id === issueId ? { ...i, ...data } : i));
+      });
+
+      if (prevIssue) {
+        queryClient.setQueryData<Issue>(['issue', issueId], { ...prevIssue, ...data });
+      }
+
+      return { prevListsEntries, prevIssue };
+    },
+
+    onError: (_err, { issueId }, context) => {
+      // Rollback
+      if (context?.prevListsEntries) {
+        for (const [key, data] of context.prevListsEntries) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+      if (context?.prevIssue) {
+        queryClient.setQueryData(['issue', issueId], context.prevIssue);
+      }
+    },
+
+    onSuccess: (data) => {
       const updated = data as Issue | undefined;
       if (updated?.id) {
         queryClient.setQueryData(['issue', updated.id], updated);
       }
+    },
 
-      // Scope list invalidations by projectId when known
-      const updatedProjectId = updated?.projectId || variables.data.projectId;
-      if (updatedProjectId) {
-        queryClient.invalidateQueries({
-          queryKey: ['issues'],
-          predicate: (query) => {
-            const filters = query.queryKey[1] as { projectId?: string } | undefined;
-            return filters?.projectId === updatedProjectId;
-          },
-        });
-        queryClient.invalidateQueries({ queryKey: ['sprints', updatedProjectId] });
-      } else {
-        queryClient.invalidateQueries({ queryKey: ['issues'] });
-        queryClient.invalidateQueries({ queryKey: ['sprints'] });
-      }
-
-      queryClient.invalidateQueries({ queryKey: ['issue', variables.issueId] });
-      if (updated?.sprintId) {
-        queryClient.invalidateQueries({ queryKey: ['sprint-issues', updated.sprintId] });
-      } else {
-        queryClient.invalidateQueries({ queryKey: ['sprint-issues'] });
-      }
+    onSettled: (_data, _error, { issueId }) => {
+      // Always refetch after mutation resolves to ensure server truth
+      queryClient.invalidateQueries({ queryKey: ['issues'] });
+      queryClient.invalidateQueries({ queryKey: ['issue', issueId] });
+      queryClient.invalidateQueries({ queryKey: ['sprints'] });
+      queryClient.invalidateQueries({ queryKey: ['sprint-issues'] });
+      queryClient.invalidateQueries({ queryKey: ['workflow-statuses'] });
     },
   });
 }

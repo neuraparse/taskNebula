@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Trash2, ArrowRight, Save, Star, GitBranch } from 'lucide-react';
 import { useProject, useUpdateProject } from '@/lib/hooks/use-projects';
@@ -54,6 +53,24 @@ const STATUS_CATEGORY_LABELS = {
   done: 'Done',
   blocked: 'Blocked',
 };
+
+// Map status category to design token classes
+const STATUS_CATEGORY_TOKEN: Record<string, string> = {
+  backlog: 'bg-muted text-muted-foreground border border-border',
+  in_progress: 'bg-accent-blue/10 text-accent-blue border border-accent-blue/20',
+  in_review: 'bg-accent-amber/10 text-accent-amber border border-accent-amber/20',
+  done: 'bg-accent-emerald/10 text-accent-emerald border border-accent-emerald/20',
+  blocked: 'bg-accent-rose/10 text-accent-rose border border-accent-rose/20',
+};
+
+function StatusChip({ status }: { status: WorkflowStatus }) {
+  const tokenClass = STATUS_CATEGORY_TOKEN[status.category] || 'bg-muted text-muted-foreground border border-border';
+  return (
+    <span className={`inline-flex items-center rounded-sm px-2 py-0.5 text-[11px] font-medium ${tokenClass}`}>
+      {status.name}
+    </span>
+  );
+}
 
 interface WorkflowEditorProps {
   organizationId: string;
@@ -538,9 +555,7 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
                     <div className="flex w-full items-center gap-2">
                       <span className="font-medium">{workflow.name}</span>
                       {workflow.isDefault ? (
-                        <Badge className="ml-auto" variant="secondary" size="sm">
-                          Default
-                        </Badge>
+                        <span className="chip ml-auto">Default</span>
                       ) : null}
                     </div>
                     <span className="text-xs text-muted-foreground">
@@ -604,19 +619,18 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
               </Button>
             </div>
 
+            {/* Statuses */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold">Statuses</h4>
-                <div className="flex flex-wrap gap-2">
+                <span className="kicker">Statuses</span>
+                <div className="flex flex-wrap gap-1.5">
                   {selectedWorkflow.statuses.map((status) => (
-                    <Badge key={status.id} style={{ backgroundColor: status.color }} className="text-white">
-                      {status.name}
-                    </Badge>
+                    <StatusChip key={status.id} status={status} />
                   ))}
                 </div>
               </div>
 
-              <div className="grid gap-3 rounded-lg border p-4 md:grid-cols-[minmax(0,1fr)_180px_140px_auto]">
+              <div className="grid gap-3 rounded-lg border border-dashed border-border p-4 md:grid-cols-[minmax(0,1fr)_180px_140px_auto]">
                 <Input
                   placeholder="New status name"
                   value={statusForm.name}
@@ -656,12 +670,13 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
               </div>
             </div>
 
+            {/* Transitions */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <GitBranch className="h-4 w-4 text-muted-foreground" />
-                <h4 className="text-sm font-semibold">Transitions</h4>
+                <span className="kicker">Transitions</span>
               </div>
-              <div className="grid gap-3 rounded-lg border p-4 md:grid-cols-4">
+              <div className="grid gap-3 rounded-lg border border-dashed border-border p-4 md:grid-cols-4">
                 <Input
                   placeholder="Transition name (optional)"
                   value={transitionForm.name}
@@ -704,31 +719,26 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
               </div>
 
               {selectedWorkflow.transitions.length === 0 ? (
-                <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
                   No transitions defined yet. Add the first workflow transition above.
                 </div>
               ) : (
-                <div className="grid gap-2">
+                <div className="grid gap-1.5">
                   {selectedWorkflow.transitions.map((transition) => {
                     const fromStatus = selectedWorkflow.statuses.find((status) => status.id === transition.fromStatusId);
                     const toStatus = selectedWorkflow.statuses.find((status) => status.id === transition.toStatusId);
 
                     return (
-                      <div key={transition.id} className="flex items-center gap-3 rounded-lg border p-3">
-                        {fromStatus ? (
-                          <Badge style={{ backgroundColor: fromStatus.color }} className="text-white text-xs">
-                            {fromStatus.name}
-                          </Badge>
-                        ) : null}
-                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                        {toStatus ? (
-                          <Badge style={{ backgroundColor: toStatus.color }} className="text-white text-xs">
-                            {toStatus.name}
-                          </Badge>
-                        ) : null}
-                        <span className="flex-1 text-sm font-medium">{transition.name}</span>
-                        <Button variant="ghost" size="icon" onClick={() => void deleteTransition(transition.id)}>
-                          <Trash2 className="h-4 w-4" />
+                      <div
+                        key={transition.id}
+                        className="flex items-center gap-3 rounded-md border border-dashed border-border px-3 py-2 transition-colors duration-200 hover:bg-accent/50"
+                      >
+                        {fromStatus ? <StatusChip status={fromStatus} /> : null}
+                        <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        {toStatus ? <StatusChip status={toStatus} /> : null}
+                        <span className="flex-1 text-sm text-muted-foreground">{transition.name}</span>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => void deleteTransition(transition.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     );

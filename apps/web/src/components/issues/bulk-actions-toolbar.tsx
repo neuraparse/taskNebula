@@ -77,13 +77,13 @@ export function BulkActionsToolbar({
 
   return (
     <>
-      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
-        <div className="bg-background border rounded-lg shadow-lg p-4 flex items-center gap-4">
-          <Badge variant="secondary" className="text-sm">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-fade-up">
+        <div className="surface-glass border border-border rounded-full shadow-lg px-4 py-2.5 flex items-center gap-3">
+          <span className="chip-accent text-xs">
             {selectedIssueIds.length} selected
-          </Badge>
+          </span>
 
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">

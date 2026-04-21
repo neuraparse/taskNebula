@@ -24,8 +24,8 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
   if (error) {
     return (
       <div className="flex h-full items-center justify-center bg-background">
-        <div className="text-center max-w-sm px-4">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center bg-destructive/10">
+        <div className="text-center max-w-sm px-4 animate-fade-in">
+          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10">
             <AlertCircle className="h-5 w-5 text-destructive" />
           </div>
           <p className="font-medium text-foreground">Failed to load issue</p>
@@ -38,8 +38,8 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
   if (!issue) {
     return (
       <div className="flex h-full items-center justify-center bg-background">
-        <div className="text-center max-w-sm px-4">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center bg-muted">
+        <div className="text-center max-w-sm px-4 animate-fade-in">
+          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
             <FileText className="h-5 w-5 text-muted-foreground" />
           </div>
           <p className="font-medium text-foreground">Issue not found</p>
@@ -52,7 +52,7 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-background">
+    <div className="flex h-full flex-col overflow-hidden bg-background animate-fade-in">
       {/* Header */}
       <div className="shrink-0 border-b border-border/60 bg-background/95 px-6 py-3">
         <IssueHeader issue={issue} />
@@ -60,7 +60,7 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
 
       {/* Content */}
       <div className="flex-1 overflow-hidden">
-        <div className="grid h-full grid-cols-[1fr_340px]">
+        <div className="grid h-full grid-cols-[1fr_320px]">
           {/* Main Content Area */}
           <div className="overflow-y-auto custom-scrollbar">
             <div className="space-y-8 px-8 py-6">
@@ -70,8 +70,8 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
           </div>
 
           {/* Sidebar */}
-          <div className="overflow-y-auto border-l border-border/60 bg-muted/[0.04] custom-scrollbar">
-            <div className="px-5 py-5">
+          <div className="overflow-y-auto border-l border-border/60 custom-scrollbar">
+            <div className="px-4 py-5">
               <IssueSidebar
                 issue={{
                   id: issue.id,

@@ -15,7 +15,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
@@ -468,7 +467,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
 
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">Issue security schemes</h3>
+          <h3 className="text-base font-semibold text-foreground">Issue security schemes</h3>
           <p className="text-sm text-muted-foreground">Control who can see sensitive issues and what defaults new work starts with.</p>
         </div>
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
@@ -527,17 +526,15 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                       <Lock className="h-4 w-4 text-primary" />
                       <CardTitle className="text-base">{scheme.name}</CardTitle>
                       {scheme.isDefault ? (
-                        <Badge variant="secondary" className="gap-1">
+                        <span className="chip gap-1">
                           <Star className="h-3 w-3" />
                           Default
-                        </Badge>
+                        </span>
                       ) : null}
                     </div>
-                    {scheme.description ? (
-                      <CardDescription>{scheme.description}</CardDescription>
-                    ) : (
-                      <CardDescription>No description provided.</CardDescription>
-                    )}
+                    <CardDescription>
+                      {scheme.description || 'No description provided.'}
+                    </CardDescription>
                   </div>
                   <div className="flex items-center gap-1">
                     {!scheme.isDefault ? (
@@ -563,11 +560,15 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline">{scheme.projectCount || 0} projects</Badge>
-                  <Badge variant="outline">{scheme.levels.length} levels</Badge>
-                  {isAssignedToProject ? <Badge>Assigned here</Badge> : null}
-                  {!isAssignedToProject && isEffectiveForProject ? <Badge variant="secondary">Inherited here</Badge> : null}
+                <div className="flex flex-wrap gap-1.5">
+                  <span className="chip">{scheme.projectCount || 0} projects</span>
+                  <span className="chip">{scheme.levels.length} levels</span>
+                  {isAssignedToProject ? (
+                    <span className="chip-accent">Assigned here</span>
+                  ) : null}
+                  {!isAssignedToProject && isEffectiveForProject ? (
+                    <span className="chip">Inherited here</span>
+                  ) : null}
                 </div>
               </CardHeader>
               <CardContent>
@@ -576,54 +577,55 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                     <AccordionTrigger className="py-2 text-sm">
                       Security levels
                     </AccordionTrigger>
-                    <AccordionContent className="space-y-3 pt-2">
+                    <AccordionContent className="space-y-2 pt-2">
                       {scheme.levels.length ? (
                         scheme.levels.map((level) => (
-                          <div key={level.id} className="rounded-lg border p-3">
+                          <div key={level.id} className="rounded-md border border-border p-3 transition-colors duration-200 hover:bg-accent/50">
                             <div className="flex items-start justify-between gap-3">
-                              <div className="space-y-2">
+                              <div className="space-y-1.5">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-medium text-sm">{level.name}</span>
-                                  {level.isDefault ? <Badge variant="outline">Default</Badge> : null}
+                                  <span className="text-sm font-medium">{level.name}</span>
+                                  {level.isDefault ? (
+                                    <span className="chip">Default</span>
+                                  ) : null}
                                 </div>
                                 {level.description ? (
                                   <p className="text-xs text-muted-foreground">{level.description}</p>
                                 ) : null}
                               </div>
                               <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" onClick={() => openLevelDialog(scheme.id, level)}>
-                                  <Edit className="h-4 w-4" />
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openLevelDialog(scheme.id, level)}>
+                                  <Edit className="h-3.5 w-3.5" />
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="icon"
+                                  className="h-7 w-7 text-destructive hover:text-destructive"
                                   onClick={() => void deleteLevel(scheme.id, level.id)}
-                                  className="text-destructive hover:text-destructive"
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash2 className="h-3.5 w-3.5" />
                                 </Button>
                               </div>
                             </div>
-                            <div className="mt-3 flex flex-wrap gap-1">
+                            <div className="mt-2 flex flex-wrap gap-1">
                               {(Array.isArray(level.members) ? level.members : []).map((member, index) => {
                                 const Icon = getMemberIcon(member.memberType);
 
                                 return (
-                                  <Badge
+                                  <span
                                     key={member.id || `${member.memberType}-${member.memberValue || index}`}
-                                    variant="secondary"
-                                    className="gap-1"
+                                    className="chip gap-1"
                                   >
                                     <Icon className="h-3 w-3" />
                                     {getMemberLabel(member.memberType, member.memberValue)}
-                                  </Badge>
+                                  </span>
                                 );
                               })}
                             </div>
                           </div>
                         ))
                       ) : (
-                        <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                        <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
                           No levels yet. Add the first visibility level for this scheme.
                         </div>
                       )}
@@ -636,7 +638,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
         })}
 
         {schemes.length === 0 ? (
-          <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+          <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
             No security schemes yet. Create one to control issue visibility.
           </div>
         ) : null}

@@ -44,7 +44,6 @@ export function EditOrganizationDialog({
     domain: '',
   });
 
-  // Fetch organization details
   const { data: org, isLoading } = useQuery({
     queryKey: ['admin-organization', organizationId],
     queryFn: async () => {
@@ -55,7 +54,6 @@ export function EditOrganizationDialog({
     enabled: !!organizationId && open,
   });
 
-  // Update form data when org loads
   useEffect(() => {
     if (org) {
       setFormData({
@@ -68,7 +66,6 @@ export function EditOrganizationDialog({
     }
   }, [org]);
 
-  // Update mutation
   const updateMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const response = await fetch(`/api/admin/organizations/${organizationId}`, {
@@ -83,18 +80,11 @@ export function EditOrganizationDialog({
       queryClient.invalidateQueries({ queryKey: ['admin-organizations'] });
       queryClient.invalidateQueries({ queryKey: ['admin-organization', organizationId] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
-      toast({
-        title: 'Organization updated',
-        description: 'The organization has been successfully updated.',
-      });
+      toast({ title: 'Organization updated', description: 'Changes were saved successfully.' });
       onOpenChange(false);
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Failed to update organization',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Failed to update organization', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -105,22 +95,20 @@ export function EditOrganizationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit Organization</DialogTitle>
-          <DialogDescription>
-            Update organization details, plan, and status
-          </DialogDescription>
+          <DialogTitle>Edit organization</DialogTitle>
+          <DialogDescription>Update organization details, plan, and status.</DialogDescription>
         </DialogHeader>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="name">Organization Name</Label>
+              <Label htmlFor="name">Name</Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -140,37 +128,45 @@ export function EditOrganizationDialog({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="plan">Plan</Label>
-              <Select value={formData.plan} onValueChange={(value: any) => setFormData({ ...formData, plan: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value="starter">Starter</SelectItem>
-                  <SelectItem value="growth">Growth</SelectItem>
-                  <SelectItem value="enterprise">Enterprise</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="plan">Plan</Label>
+                <Select
+                  value={formData.plan}
+                  onValueChange={(value: any) => setFormData({ ...formData, plan: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="free">Free</SelectItem>
+                    <SelectItem value="starter">Starter</SelectItem>
+                    <SelectItem value="growth">Growth</SelectItem>
+                    <SelectItem value="enterprise">Enterprise</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value: any) => setFormData({ ...formData, status: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="trial">Trial</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="trial">Trial</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="domain">Domain (Optional)</Label>
+              <Label htmlFor="domain">Domain (optional)</Label>
               <Input
                 id="domain"
                 value={formData.domain}
@@ -184,10 +180,8 @@ export function EditOrganizationDialog({
                 Cancel
               </Button>
               <Button type="submit" disabled={updateMutation.isPending}>
-                {updateMutation.isPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                Save Changes
+                {updateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save changes
               </Button>
             </DialogFooter>
           </form>
@@ -196,4 +190,3 @@ export function EditOrganizationDialog({
     </Dialog>
   );
 }
-

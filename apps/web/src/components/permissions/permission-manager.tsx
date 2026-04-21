@@ -4,24 +4,22 @@ import { useState } from 'react';
 import { useProjectMembers, useProjectPermissions, type ProjectMember, type ProjectRole } from '@/lib/hooks/use-project-permissions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { Shield, Users, Settings2, Save, RotateCcw } from 'lucide-react';
 
-// Role info with colors
-const ROLE_INFO: Record<ProjectRole, { label: string; color: string; description: string }> = {
-  product_owner: { label: 'Product Owner', color: 'bg-purple-500', description: 'Full project control' },
-  scrum_master: { label: 'Scrum Master', color: 'bg-blue-500', description: 'Sprint & team management' },
-  tech_lead: { label: 'Tech Lead', color: 'bg-indigo-500', description: 'Technical decisions' },
-  developer: { label: 'Developer', color: 'bg-green-500', description: 'Development work' },
-  qa_engineer: { label: 'QA Engineer', color: 'bg-orange-500', description: 'Testing & QA' },
-  designer: { label: 'Designer', color: 'bg-pink-500', description: 'Design work' },
-  viewer: { label: 'Viewer', color: 'bg-gray-500', description: 'Read-only access' },
+// Role info using design token classes
+const ROLE_INFO: Record<ProjectRole, { label: string; tokenClass: string; description: string }> = {
+  product_owner: { label: 'Product Owner', tokenClass: 'bg-accent-violet/10 text-accent-violet', description: 'Full project control' },
+  scrum_master: { label: 'Scrum Master', tokenClass: 'bg-accent-blue/10 text-accent-blue', description: 'Sprint & team management' },
+  tech_lead: { label: 'Tech Lead', tokenClass: 'bg-accent-indigo/10 text-accent-indigo', description: 'Technical decisions' },
+  developer: { label: 'Developer', tokenClass: 'bg-accent-emerald/10 text-accent-emerald', description: 'Development work' },
+  qa_engineer: { label: 'QA Engineer', tokenClass: 'bg-accent-amber/10 text-accent-amber', description: 'Testing & QA' },
+  designer: { label: 'Designer', tokenClass: 'bg-accent-cyan/10 text-accent-cyan', description: 'Design work' },
+  viewer: { label: 'Viewer', tokenClass: 'bg-muted text-muted-foreground', description: 'Read-only access' },
 };
 
 // Permission categories for organized display
@@ -159,70 +157,74 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
   };
 
   if (isLoading) {
-    return <div className="p-4">Loading members...</div>;
+    return <div className="p-4 text-sm text-muted-foreground">Loading members...</div>;
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <Shield className="h-5 w-5 text-primary" />
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Shield className="h-6 w-6" /> Permission Management
-          </h2>
-          <p className="text-muted-foreground">Manage team member roles and permissions</p>
+          <h2 className="text-lg font-semibold">Permission Management</h2>
+          <p className="text-sm text-muted-foreground">Manage team member roles and permissions</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Members List */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Members list */}
         <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" /> Team Members
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Users className="h-4 w-4" />
+              Team Members
             </CardTitle>
             <CardDescription>{members.length} members</CardDescription>
           </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[500px]">
-              <div className="space-y-2">
-                {members.map((member) => (
-                  <div
-                    key={member.id}
-                    onClick={() => canManage && handleMemberSelect(member)}
-                    className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                      selectedMember?.id === member.id
-                        ? 'border-primary bg-primary/5'
-                        : 'hover:bg-muted/50'
-                    } ${!canManage ? 'cursor-default' : ''}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={member.user?.image || ''} />
-                        <AvatarFallback>
-                          {member.user?.name?.charAt(0) || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{member.user?.name || 'Unknown'}</p>
-                        <p className="text-sm text-muted-foreground truncate">{member.user?.email}</p>
+          <CardContent className="p-0">
+            <ScrollArea className="h-[440px]">
+              <div className="space-y-px px-3 pb-3">
+                {members.map((member) => {
+                  const roleInfo = ROLE_INFO[member.role];
+                  return (
+                    <button
+                      key={member.id}
+                      type="button"
+                      onClick={() => canManage && handleMemberSelect(member)}
+                      className={`w-full rounded-md px-2 py-2.5 text-left transition-colors duration-200 ${
+                        selectedMember?.id === member.id
+                          ? 'bg-primary/10 ring-1 ring-primary/20'
+                          : 'hover:bg-accent/50'
+                      } ${!canManage ? 'cursor-default' : 'cursor-pointer'}`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Avatar className="h-7 w-7 shrink-0">
+                          <AvatarImage src={member.user?.image || ''} />
+                          <AvatarFallback className="text-[11px]">
+                            {member.user?.name?.charAt(0) || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{member.user?.name || 'Unknown'}</p>
+                          <p className="truncate text-xs text-muted-foreground">{member.user?.email}</p>
+                        </div>
+                        <span className={`chip shrink-0 text-[10px] ${roleInfo?.tokenClass}`}>
+                          {roleInfo?.label}
+                        </span>
                       </div>
-                      <Badge className={`${ROLE_INFO[member.role]?.color} text-white`}>
-                        {ROLE_INFO[member.role]?.label}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </ScrollArea>
           </CardContent>
         </Card>
 
-        {/* Permission Editor */}
+        {/* Permission editor */}
         <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings2 className="h-5 w-5" />
-              {selectedMember ? `Edit: ${selectedMember.user?.name}` : 'Select a Member'}
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Settings2 className="h-4 w-4" />
+              {selectedMember ? `Editing: ${selectedMember.user?.name}` : 'Select a Member'}
             </CardTitle>
             <CardDescription>
               {selectedMember
@@ -232,18 +234,18 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
           </CardHeader>
           <CardContent>
             {!canManage && (
-              <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg mb-4">
-                <p className="text-yellow-800 dark:text-yellow-200">
+              <div className="mb-4 rounded-md border border-warning/30 bg-warning/10 p-3">
+                <p className="text-sm text-warning">
                   You don&apos;t have permission to manage team permissions.
                 </p>
               </div>
             )}
 
             {selectedMember && canManage ? (
-              <div className="space-y-6">
-                {/* Role Selector */}
-                <div className="flex items-center gap-4">
-                  <label className="font-medium w-24">Role:</label>
+              <div className="space-y-5">
+                {/* Role selector */}
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-medium text-muted-foreground w-12 shrink-0">Role</label>
                   <Select value={editedRole || ''} onValueChange={(v) => handleRoleChange(v as ProjectRole)}>
                     <SelectTrigger className="w-48">
                       <SelectValue />
@@ -252,7 +254,7 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
                       {Object.entries(ROLE_INFO).map(([key, info]) => (
                         <SelectItem key={key} value={key}>
                           <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${info.color}`} />
+                            <span className={`inline-block h-2 w-2 rounded-full ${info.tokenClass}`} />
                             {info.label}
                           </div>
                         </SelectItem>
@@ -260,29 +262,31 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
                     </SelectContent>
                   </Select>
                   <Button variant="outline" size="sm" onClick={handleResetToDefaults} disabled={saving}>
-                    <RotateCcw className="h-4 w-4 mr-1" /> Reset to Defaults
+                    <RotateCcw className="mr-1.5 h-4 w-4" />
+                    Reset defaults
                   </Button>
                 </div>
 
-                <Separator />
-
-                {/* Permission Categories */}
-                <ScrollArea className="h-[400px]">
-                  <div className="space-y-6 pr-4">
+                {/* Permission categories */}
+                <ScrollArea className="h-[360px]">
+                  <div className="space-y-5 pr-2">
                     {Object.entries(PERMISSION_CATEGORIES).map(([catKey, category]) => (
-                      <div key={catKey} className="space-y-3">
-                        <h4 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
-                          {category.label}
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div key={catKey} className="space-y-2">
+                        <span className="kicker">{category.label}</span>
+                        <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
                           {category.permissions.map((permKey) => (
-                            <div key={permKey} className="flex items-center justify-between p-2 rounded border">
-                              <span className="text-sm">{PERMISSION_LABELS[permKey] || permKey}</span>
-                              <Switch
+                            <label
+                              key={permKey}
+                              className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors duration-200 hover:bg-accent/50"
+                            >
+                              <Checkbox
+                                id={permKey}
                                 checked={editedPermissions[permKey] || false}
-                                onCheckedChange={(v) => handlePermissionChange(permKey, v)}
+                                onCheckedChange={(v) => handlePermissionChange(permKey, Boolean(v))}
+                                className="shrink-0"
                               />
-                            </div>
+                              <span className="text-sm">{PERMISSION_LABELS[permKey] || permKey}</span>
+                            </label>
                           ))}
                         </div>
                       </div>
@@ -290,21 +294,22 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
                   </div>
                 </ScrollArea>
 
-                {/* Save Button */}
-                <div className="flex justify-end gap-2 pt-4 border-t">
+                {/* Save bar */}
+                <div className="flex justify-end gap-2 border-t border-border pt-4">
                   <Button variant="outline" onClick={() => setSelectedMember(null)}>
                     Cancel
                   </Button>
                   <Button onClick={handleSave} disabled={saving}>
-                    <Save className="h-4 w-4 mr-1" /> {saving ? 'Saving...' : 'Save Changes'}
+                    <Save className="mr-1.5 h-4 w-4" />
+                    {saving ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="h-[400px] flex items-center justify-center text-muted-foreground">
+              <div className="flex h-[360px] items-center justify-center text-muted-foreground">
                 <div className="text-center">
-                  <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Select a team member to view and edit their permissions</p>
+                  <Shield className="mx-auto mb-3 h-10 w-10 opacity-20" />
+                  <p className="text-sm">Select a team member to view and edit their permissions</p>
                 </div>
               </div>
             )}

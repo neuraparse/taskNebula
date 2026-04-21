@@ -4,13 +4,13 @@ import type { LucideIcon } from 'lucide-react';
 import {
   ArrowRight,
   BookOpen,
-  Check,
   Github,
   Keyboard,
   Shield,
   Sparkles,
   Users,
   Workflow,
+  Check,
 } from 'lucide-react';
 import {
   AnalyticsShowcase,
@@ -32,12 +32,6 @@ const heroSignals = [
   'Docs linked to tasks',
   'Custom workflows and rules',
   'Self-hosted with Docker',
-] as const;
-
-const launchRows = [
-  { label: 'Boards', value: 'Backlog, triage, sprint flow' },
-  { label: 'Docs', value: 'Specs, sub-notes, revisions' },
-  { label: 'Control', value: 'Permissions, audit, admin' },
 ] as const;
 
 const capabilities: Array<{
@@ -102,7 +96,7 @@ export default function HomePage() {
     <div className="landing-dark min-h-screen bg-[var(--landing-bg)] text-[var(--landing-text)] antialiased">
       <nav
         aria-label="Marketing"
-        className="sticky top-0 z-50 border-b border-[var(--landing-border)] bg-[color-mix(in_srgb,var(--landing-bg)_97%,black)]"
+        className="sticky top-0 z-50 border-b border-[var(--landing-border)] bg-[color-mix(in_srgb,var(--landing-bg)_97%,black)] backdrop-blur-sm"
       >
         <Shell className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-3" aria-label="TaskNebula home">
@@ -120,7 +114,7 @@ export default function HomePage() {
               <a
                 key={item.href}
                 href={item.href}
-                className="rounded-sm px-3 py-2 text-[13px] text-[var(--landing-text-muted)] transition-colors hover:text-[var(--landing-text-dark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
+                className="rounded-sm px-3 py-2 text-[13px] text-[var(--landing-text-muted)] transition-colors duration-200 hover:text-[var(--landing-text-dark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
               >
                 {item.label}
               </a>
@@ -130,13 +124,13 @@ export default function HomePage() {
           <div className="flex items-center gap-2">
             <Link
               href="/auth/signin"
-              className="inline-flex h-10 items-center rounded-sm border border-[var(--landing-border-strong)] px-3.5 text-[13px] text-[var(--landing-text)] transition-colors hover:bg-[var(--landing-bg-elevated)]"
+              className="inline-flex h-10 items-center rounded-sm border border-[var(--landing-border-strong)] px-3.5 text-[13px] text-[var(--landing-text)] transition-all duration-200 ease-smooth hover:bg-[var(--landing-bg-elevated)]"
             >
               Sign in
             </Link>
             <Link
               href="/auth/signup"
-              className="inline-flex h-10 items-center gap-2 rounded-sm border border-white bg-white px-4 text-[13px] font-medium text-black transition-colors hover:border-[#dddddd] hover:bg-[#dddddd]"
+              className="inline-flex h-10 items-center gap-2 rounded-sm bg-primary px-4 text-[13px] font-medium text-primary-foreground transition-all duration-200 ease-smooth hover:-translate-y-0.5 hover:opacity-90"
             >
               Get started
               <ArrowRight className="h-4 w-4" />
@@ -146,82 +140,48 @@ export default function HomePage() {
       </nav>
 
       <main id="main-content">
-        <section className="border-b border-[var(--landing-border)]">
-          <Shell className="relative py-16 sm:py-20 lg:py-24">
-            <div className="grid gap-10 xl:grid-cols-[minmax(0,1.08fr)_360px] xl:items-start">
-              <div className="max-w-4xl">
-                <SectionBadge color="var(--landing-accent-blue)" label="Open source • docs-native • self-hosted" />
-                <h1 className="landing-display mt-7 max-w-4xl text-balance text-[46px] text-[var(--landing-text-dark)] sm:text-[64px] lg:text-[84px]">
-                  Project operations, without the sprawl.
-                </h1>
-                <p className="landing-body mt-6 max-w-2xl text-[16px] text-[var(--landing-text-subtle)] sm:text-[18px]">
-                  Boards, docs, workflows, analytics, and admin control in one stable workspace.
-                </p>
+        {/* Hero */}
+        <section className="relative border-b border-[var(--landing-border)] overflow-hidden">
+          <div className="bg-aurora animate-aurora absolute inset-0 pointer-events-none" aria-hidden="true" />
+          <Shell className="relative py-20 sm:py-24">
+            <div className="animate-fade-up max-w-4xl">
+              <SectionBadge color="var(--landing-accent-blue)" label="Open source · docs-native · self-hosted" />
+              <h1 className="landing-display mt-7 max-w-4xl text-balance text-[46px] text-gradient-primary sm:text-[64px] lg:text-[84px]">
+                Project operations, without the sprawl.
+              </h1>
+              <p className="landing-body mt-6 max-w-2xl text-[16px] text-[var(--landing-text-subtle)] sm:text-[18px]">
+                Boards, docs, workflows, analytics, and admin control in one stable workspace.
+              </p>
 
-                <div className="mt-8 flex flex-wrap items-center gap-3">
-                  <Link
-                    href="/auth/signup"
-                    className="inline-flex h-11 items-center gap-2 rounded-sm border border-white bg-white px-4 text-sm font-medium text-black transition-colors hover:border-[#dddddd] hover:bg-[#dddddd]"
-                  >
-                    Start with Community
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                  <a
-                    href="https://github.com/neuraparse/tasknebula"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex h-11 items-center gap-2 rounded-sm border border-[var(--landing-border-strong)] px-4 text-sm text-[var(--landing-text)] transition-colors hover:bg-[var(--landing-bg-elevated)]"
-                  >
-                    <Github className="h-4 w-4" />
-                    View source
-                  </a>
-                </div>
-
-                <div className="mt-9 flex flex-wrap gap-3">
-                  {heroSignals.map((signal) => (
-                    <div
-                      key={signal}
-                      className="rounded-sm border border-[var(--landing-border)] bg-[var(--landing-bg-card)] px-3.5 py-2 text-[12px] text-[var(--landing-text-muted)]"
-                    >
-                      {signal}
-                    </div>
-                  ))}
-                </div>
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Link
+                  href="/auth/signup"
+                  className="inline-flex h-11 items-center gap-2 rounded-sm bg-primary px-4 text-sm font-medium text-primary-foreground transition-all duration-200 ease-smooth hover:-translate-y-0.5 hover:opacity-90"
+                >
+                  Start with Community
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <a
+                  href="https://github.com/neuraparse/tasknebula"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-11 items-center gap-2 rounded-sm border border-[var(--landing-border-strong)] px-4 text-sm text-[var(--landing-text)] transition-all duration-200 ease-smooth hover:bg-[var(--landing-bg-elevated)]"
+                >
+                  <Github className="h-4 w-4" />
+                  View source
+                </a>
               </div>
 
-              <SurfacePanel className="overflow-hidden p-0">
-                <div className="border-b border-[var(--landing-border)] px-5 py-4">
-                  <div className="flex items-center gap-3">
-                    <TaskNebulaLogo compact />
-                    <div>
-                      <p className="text-[13px] font-medium text-[var(--landing-text-dark)]">Community includes</p>
-                      <p className="text-[11px] text-[var(--landing-text-muted)]">The full operating surface</p>
-                    </div>
+              <div className="stagger mt-9 flex flex-wrap gap-3">
+                {heroSignals.map((signal) => (
+                  <div
+                    key={signal}
+                    className="rounded-sm border border-[var(--landing-border)] bg-[var(--landing-bg-card)] px-3.5 py-2 text-[12px] text-[var(--landing-text-muted)]"
+                  >
+                    {signal}
                   </div>
-                </div>
-
-                <div className="space-y-3 px-5 py-5">
-                  <div className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] px-4 py-3">
-                    <p className="landing-kicker text-[var(--landing-text-muted)]">Deploy</p>
-                    <code className="mt-2 block overflow-x-auto whitespace-nowrap font-mono text-[12px] text-[var(--landing-text-subtle)]">
-                      docker pull neuraparse/tasknebula
-                    </code>
-                  </div>
-
-                  {launchRows.map((row) => (
-                    <div
-                      key={row.label}
-                      className="flex items-start gap-4 rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] px-4 py-4"
-                    >
-                      <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--landing-accent-blue)]" />
-                      <div>
-                        <p className="text-[13px] font-medium text-[var(--landing-text-dark)]">{row.label}</p>
-                        <p className="mt-1 text-[13px] leading-6 text-[var(--landing-text-muted)]">{row.value}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </SurfacePanel>
+                ))}
+              </div>
             </div>
           </Shell>
         </section>
@@ -229,7 +189,7 @@ export default function HomePage() {
         <HeroShowcase />
 
         <section id="product" className="border-t border-[var(--landing-border)]">
-          <Shell className="py-16 sm:py-20 lg:py-24">
+          <Shell className="py-20 sm:py-24">
             <SectionHeader
               badge="Product"
               badgeColor="var(--landing-accent-green)"
@@ -237,7 +197,7 @@ export default function HomePage() {
               description="Less noise, tighter surfaces, and one product language across execution, docs, and control."
             />
 
-            <div className="mt-10 grid gap-4 xl:grid-cols-3">
+            <div className="stagger mt-10 grid gap-4 xl:grid-cols-3">
               {capabilities.map((item) => (
                 <CapabilityPanel key={item.title} {...item} />
               ))}
@@ -274,7 +234,7 @@ export default function HomePage() {
         </section>
 
         <section id="security" className="border-t border-[var(--landing-border)]">
-          <Shell className="py-16 sm:py-20 lg:py-24">
+          <Shell className="py-20 sm:py-24">
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1.02fr)_360px]">
               <SurfacePanel className="p-6 sm:p-8">
                 <SectionHeader
@@ -295,7 +255,7 @@ export default function HomePage() {
 
               <SurfacePanel className="p-6">
                 <p className="landing-kicker text-[var(--landing-text-muted)]">Why teams self-host</p>
-                <ul className="mt-5 space-y-3">
+                <ul className="stagger mt-5 space-y-3">
                   {['MIT licensed', 'Docker-first', 'Postgres + Redis ready', 'Your infra, your data'].map((item) => (
                     <li key={item} className="flex items-center gap-3 text-sm text-[var(--landing-text)]">
                       <div className="h-2 w-2 rounded-full bg-[var(--landing-accent-amber)]" />
@@ -309,15 +269,15 @@ export default function HomePage() {
         </section>
 
         <section id="pricing" className="border-t border-[var(--landing-border)]">
-          <Shell className="py-16 sm:py-20 lg:py-24">
+          <Shell className="py-20 sm:py-24">
             <SectionHeader
               badge="Pricing"
-              badgeColor="var(--landing-accent-pink)"
+              badgeColor="var(--landing-accent-violet)"
               title="Strong free core. Extra layers only when needed."
               description="The open-source base is the product, not a teaser."
             />
 
-            <div className="mt-10 grid gap-4 xl:grid-cols-3">
+            <div className="stagger mt-10 grid gap-4 xl:grid-cols-3">
               {pricingPlans.map((plan) => (
                 <PricingCard key={plan.name} {...plan} />
               ))}
@@ -326,7 +286,7 @@ export default function HomePage() {
         </section>
 
         <section className="border-t border-[var(--landing-border)]">
-          <Shell className="py-16 sm:py-20 lg:py-24">
+          <Shell className="py-20 sm:py-24">
             <SurfacePanel className="px-6 py-10 text-center sm:px-10 sm:py-14">
               <SectionBadge color="var(--landing-accent-green)" label="Ready to launch" />
               <h2 className="landing-display mx-auto mt-5 max-w-3xl text-balance text-[36px] text-[var(--landing-text-dark)] sm:text-[48px] lg:text-[60px]">
@@ -335,7 +295,7 @@ export default function HomePage() {
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
                 <Link
                   href="/auth/signup"
-                  className="inline-flex h-11 items-center gap-2 rounded-sm border border-white bg-white px-4 text-sm font-medium text-black transition-colors hover:border-[#dddddd] hover:bg-[#dddddd]"
+                  className="inline-flex h-11 items-center gap-2 rounded-sm bg-primary px-4 text-sm font-medium text-primary-foreground transition-all duration-200 ease-smooth hover:-translate-y-0.5 hover:opacity-90"
                 >
                   Create workspace
                   <ArrowRight className="h-4 w-4" />
@@ -344,7 +304,7 @@ export default function HomePage() {
                   href="https://github.com/neuraparse/tasknebula"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex h-11 items-center gap-2 rounded-sm border border-[var(--landing-border-strong)] px-4 text-sm text-[var(--landing-text)] transition-colors hover:bg-[var(--landing-bg-elevated)]"
+                  className="inline-flex h-11 items-center gap-2 rounded-sm border border-[var(--landing-border-strong)] px-4 text-sm text-[var(--landing-text)] transition-all duration-200 ease-smooth hover:bg-[var(--landing-bg-elevated)]"
                 >
                   <Github className="h-4 w-4" />
                   Explore repo
@@ -463,7 +423,7 @@ function CapabilityPanel({
   accent: string;
 }) {
   return (
-    <SurfacePanel className="h-full p-6">
+    <SurfacePanel className="h-full p-6 transition-all duration-200 ease-smooth hover:-translate-y-0.5 hover:shadow-md">
       <div
         className="flex h-12 w-12 items-center justify-center rounded-md"
         style={{ backgroundColor: `color-mix(in srgb, ${accent} 14%, var(--landing-bg-surface))`, color: accent }}
@@ -517,7 +477,7 @@ function CompactShowcase({ title, body, children }: { title: string; body: strin
 
 function MiniFeature({ icon: Icon, title }: { icon: LucideIcon; title: string }) {
   return (
-    <div className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] px-4 py-3">
+    <div className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] px-4 py-3 transition-all duration-200 ease-smooth hover:-translate-y-0.5">
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-[var(--landing-bg)] text-[var(--landing-text-subtle)]">
           <Icon className="h-4 w-4" />
@@ -549,7 +509,7 @@ function PricingCard({
 }) {
   return (
     <SurfacePanel
-      className={`flex h-full flex-col p-6 ${highlighted ? 'border-white/15 bg-[color-mix(in_srgb,var(--landing-bg-card)_82%,white_4%)]' : ''}`}
+      className={`flex h-full flex-col p-6 transition-all duration-200 ease-smooth hover:-translate-y-0.5 hover:shadow-md ${highlighted ? 'border-primary/20' : ''}`}
     >
       <div
         className="inline-flex w-fit items-center rounded-sm px-3 py-1 text-[11px] uppercase tracking-[0.16em]"
@@ -562,9 +522,9 @@ function PricingCard({
 
       <Link
         href={href}
-        className={`mt-6 inline-flex h-11 items-center justify-center rounded-sm border px-4 text-sm transition-colors ${
+        className={`mt-6 inline-flex h-11 items-center justify-center rounded-sm border px-4 text-sm transition-all duration-200 ease-smooth hover:-translate-y-0.5 ${
           highlighted
-            ? 'border-white bg-white font-medium text-black hover:border-[#dddddd] hover:bg-[#dddddd]'
+            ? 'border-primary bg-primary font-medium text-primary-foreground hover:opacity-90'
             : 'border-[var(--landing-border-strong)] text-[var(--landing-text)] hover:bg-[var(--landing-bg-elevated)]'
         }`}
       >
@@ -601,7 +561,7 @@ function FooterColumn({
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-[var(--landing-text-muted)] transition-colors hover:text-[var(--landing-text)]"
+              className="text-sm text-[var(--landing-text-muted)] transition-colors duration-200 hover:text-[var(--landing-text)]"
             >
               {link.label}
             </a>
@@ -609,7 +569,7 @@ function FooterColumn({
             <a
               key={link.label}
               href={link.href}
-              className="text-sm text-[var(--landing-text-muted)] transition-colors hover:text-[var(--landing-text)]"
+              className="text-sm text-[var(--landing-text-muted)] transition-colors duration-200 hover:text-[var(--landing-text)]"
             >
               {link.label}
             </a>

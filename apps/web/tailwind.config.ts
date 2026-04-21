@@ -8,6 +8,18 @@ const config: Config = {
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
+    container: {
+      center: true,
+      padding: {
+        DEFAULT: '1rem',
+        sm: '1.5rem',
+        lg: '2rem',
+        xl: '3rem',
+      },
+      screens: {
+        '2xl': '1280px',
+      },
+    },
     extend: {
       fontFamily: {
         sans: ['var(--font-sans)', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
@@ -15,13 +27,19 @@ const config: Config = {
       },
       colors: {
         border: 'hsl(var(--border))',
+        'border-strong': 'hsl(var(--border-strong))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
+        surface: {
+          DEFAULT: 'hsl(var(--surface))',
+          2: 'hsl(var(--surface-2))',
+        },
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
+          soft: 'hsl(var(--primary-soft))',
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
@@ -31,6 +49,18 @@ const config: Config = {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
         },
+        success: {
+          DEFAULT: 'hsl(var(--success))',
+          foreground: 'hsl(var(--success-foreground))',
+        },
+        warning: {
+          DEFAULT: 'hsl(var(--warning))',
+          foreground: 'hsl(var(--warning-foreground))',
+        },
+        info: {
+          DEFAULT: 'hsl(var(--info))',
+          foreground: 'hsl(var(--info-foreground))',
+        },
         muted: {
           DEFAULT: 'hsl(var(--muted))',
           foreground: 'hsl(var(--muted-foreground))',
@@ -38,6 +68,13 @@ const config: Config = {
         accent: {
           DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))',
+          blue: 'hsl(var(--accent-blue))',
+          violet: 'hsl(var(--accent-violet))',
+          cyan: 'hsl(var(--accent-cyan))',
+          emerald: 'hsl(var(--accent-emerald))',
+          amber: 'hsl(var(--accent-amber))',
+          rose: 'hsl(var(--accent-rose))',
+          indigo: 'hsl(var(--accent-indigo))',
         },
         popover: {
           DEFAULT: 'hsl(var(--popover))',
@@ -49,18 +86,31 @@ const config: Config = {
         },
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        lg: 'var(--radius-lg)',
+        md: 'var(--radius)',
+        sm: 'var(--radius-sm)',
+        xl: 'calc(var(--radius) + 0.375rem)',
+        '2xl': 'calc(var(--radius) + 0.75rem)',
       },
       boxShadow: {
-        'glass': '0 4px 30px rgba(0, 0, 0, 0.05)',
-        'glass-lg': '0 8px 32px rgba(0, 0, 0, 0.06)',
-        'elevated': '0 8px 30px rgba(0, 0, 0, 0.08)',
-        'elevated-lg': '0 12px 40px rgba(0, 0, 0, 0.1)',
-        'subtle': '0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
-        'card': '0 1px 3px rgba(0, 0, 0, 0.02), 0 4px 12px rgba(0, 0, 0, 0.04)',
-        'card-hover': '0 4px 12px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06)',
+        xs: 'var(--shadow-xs)',
+        sm: 'var(--shadow-sm)',
+        md: 'var(--shadow-md)',
+        lg: 'var(--shadow-lg)',
+        glow: 'var(--shadow-glow)',
+        'glow-primary':
+          '0 0 0 1px hsl(var(--primary) / 0.25), 0 6px 24px -8px hsl(var(--primary) / 0.35)',
+        'inner-border': 'inset 0 0 0 1px hsl(var(--border))',
+      },
+      backgroundImage: {
+        'gradient-primary':
+          'linear-gradient(135deg, hsl(var(--accent-indigo)) 0%, hsl(var(--accent-violet)) 100%)',
+        'gradient-accent':
+          'linear-gradient(135deg, hsl(var(--accent-emerald)) 0%, hsl(var(--accent-cyan)) 100%)',
+        'gradient-warm':
+          'linear-gradient(135deg, hsl(var(--accent-amber)) 0%, hsl(var(--accent-rose)) 100%)',
+        'gradient-mesh':
+          'radial-gradient(at 20% 20%, hsl(var(--accent-violet) / 0.18) 0px, transparent 50%), radial-gradient(at 80% 0%, hsl(var(--accent-blue) / 0.15) 0px, transparent 50%), radial-gradient(at 0% 80%, hsl(var(--accent-cyan) / 0.12) 0px, transparent 50%)',
       },
       backdropBlur: {
         xs: '2px',
@@ -82,6 +132,14 @@ const config: Config = {
           from: { opacity: '1' },
           to: { opacity: '0' },
         },
+        'fade-up': {
+          from: { opacity: '0', transform: 'translateY(12px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'fade-down': {
+          from: { opacity: '0', transform: 'translateY(-12px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
         'slide-in-from-top': {
           from: { opacity: '0', transform: 'translateY(-8px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
@@ -99,33 +157,53 @@ const config: Config = {
           to: { opacity: '1', transform: 'translateX(0)' },
         },
         'scale-in': {
-          from: { opacity: '0', transform: 'scale(0.95)' },
+          from: { opacity: '0', transform: 'scale(0.96)' },
           to: { opacity: '1', transform: 'scale(1)' },
         },
         'pulse-subtle': {
           '0%, 100%': { opacity: '1' },
-          '50%': { opacity: '0.7' },
+          '50%': { opacity: '0.65' },
+        },
+        'pulse-ring': {
+          '0%': { boxShadow: '0 0 0 0 hsl(var(--primary) / 0.35)' },
+          '70%': { boxShadow: '0 0 0 10px hsl(var(--primary) / 0)' },
+          '100%': { boxShadow: '0 0 0 0 hsl(var(--primary) / 0)' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '200% 0' },
+          '100%': { backgroundPosition: '-200% 0' },
+        },
+        'gradient-pan': {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
         },
       },
       animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
-        'fade-in': 'fade-in 0.2s ease-out',
-        'fade-out': 'fade-out 0.2s ease-out',
-        'slide-in-from-top': 'slide-in-from-top 0.25s ease-out',
-        'slide-in-from-bottom': 'slide-in-from-bottom 0.25s ease-out',
-        'slide-in-from-left': 'slide-in-from-left 0.25s ease-out',
-        'slide-in-from-right': 'slide-in-from-right 0.25s ease-out',
-        'scale-in': 'scale-in 0.2s ease-out',
-        'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite',
+        'accordion-down': 'accordion-down 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+        'accordion-up': 'accordion-up 0.2s cubic-bezier(0.4, 0, 0.6, 1)',
+        'fade-in': 'fade-in 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+        'fade-out': 'fade-out 0.2s cubic-bezier(0.4, 0, 0.6, 1)',
+        'fade-up': 'fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'fade-down': 'fade-down 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'slide-in-from-top': 'slide-in-from-top 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        'slide-in-from-bottom': 'slide-in-from-bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        'slide-in-from-left': 'slide-in-from-left 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        'slide-in-from-right': 'slide-in-from-right 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        'scale-in': 'scale-in 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+        'pulse-subtle': 'pulse-subtle 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'pulse-ring': 'pulse-ring 2s cubic-bezier(0.16, 1, 0.3, 1) infinite',
+        shimmer: 'shimmer 1.6s ease-in-out infinite',
+        'gradient-pan': 'gradient-pan 10s ease-in-out infinite',
       },
       transitionDuration: {
         '250': '250ms',
         '350': '350ms',
+        '450': '450ms',
       },
       transitionTimingFunction: {
-        'smooth': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        smooth: 'cubic-bezier(0.16, 1, 0.3, 1)',
         'bounce-soft': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+        'ease-out-expo': 'cubic-bezier(0.16, 1, 0.3, 1)',
       },
     },
   },

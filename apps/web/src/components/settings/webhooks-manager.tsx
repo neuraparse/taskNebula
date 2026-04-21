@@ -3,8 +3,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -70,7 +68,6 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
     queryFn: async () => {
       const params = new URLSearchParams({ organizationId });
       if (projectId) params.append('projectId', projectId);
-
       const response = await fetch(`/api/webhooks?${params.toString()}`);
       const payload = await response.json().catch(() => ({ error: 'Failed to fetch webhooks' }));
       if (!response.ok) throw new Error(payload.error || 'Failed to fetch webhooks');
@@ -114,18 +111,18 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
         projectId,
         events: formData.events,
       };
-
-      const response = await fetch(editingWebhook ? `/api/webhooks/${editingWebhook.id}` : '/api/webhooks', {
-        method: editingWebhook ? 'PATCH' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
+      const response = await fetch(
+        editingWebhook ? `/api/webhooks/${editingWebhook.id}` : '/api/webhooks',
+        {
+          method: editingWebhook ? 'PATCH' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }
+      );
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Failed to save webhook' }));
-        throw new Error(error.error || 'Failed to save webhook');
+        const errPayload = await response.json().catch(() => ({ error: 'Failed to save webhook' }));
+        throw new Error(errPayload.error || 'Failed to save webhook');
       }
-
       return response.json();
     },
     onSuccess: () => {
@@ -159,7 +156,7 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
       ...current,
       events: checked
         ? [...current.events, eventName]
-        : current.events.filter((event) => event !== eventName),
+        : current.events.filter((e) => e !== eventName),
     }));
   }
 
@@ -172,7 +169,6 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
       });
       return;
     }
-
     try {
       await saveWebhook.mutateAsync();
       toast({
@@ -181,163 +177,186 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
           ? 'Webhook settings were saved successfully.'
           : 'Webhook created successfully.',
       });
-    } catch (error) {
+    } catch (err) {
       toast({
         title: 'Save failed',
-        description: error instanceof Error ? error.message : 'Failed to save webhook',
+        description: err instanceof Error ? err.message : 'Failed to save webhook',
         variant: 'destructive',
       });
     }
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <CardTitle>{projectId ? 'Project webhooks' : 'Organization webhooks'}</CardTitle>
-            <CardDescription>
-              {projectId
-                ? 'Send project-specific events to external services.'
-                : 'Manage organization-wide webhook integrations.'}
-            </CardDescription>
-          </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={openCreateDialog}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create webhook
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[580px]">
-              <DialogHeader>
-                <DialogTitle>{editingWebhook ? 'Edit webhook' : 'Create webhook'}</DialogTitle>
-                <DialogDescription>
-                  Choose the events to deliver and the destination URL that should receive them.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label>Name</Label>
-                  <Input
-                    value={formData.name}
-                    onChange={(event) => setFormData((current) => ({ ...current, name: event.target.value }))}
-                    placeholder="GitHub sync"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Destination URL</Label>
-                  <Input
-                    value={formData.url}
-                    onChange={(event) => setFormData((current) => ({ ...current, url: event.target.value }))}
-                    placeholder="https://example.com/webhooks/tasknebula"
-                  />
-                </div>
-                <div className="space-y-3">
-                  <Label>Events</Label>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {WEBHOOK_EVENTS.map((eventName) => (
-                      <label key={eventName} className="flex items-center gap-3 rounded-md border p-3 text-sm">
-                        <Checkbox
-                          checked={formData.events.includes(eventName)}
-                          onCheckedChange={(checked) => toggleEvent(eventName, checked === true)}
-                        />
-                        <span>{eventName}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={() => void handleSave()} disabled={saveWebhook.isPending}>
-                  {saveWebhook.isPending ? 'Saving...' : editingWebhook ? 'Save changes' : 'Create webhook'}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+    <div className="surface-card p-6 animate-fade-in">
+      <div className="flex items-center justify-between gap-3 pb-5">
+        <div className="space-y-1">
+          <span className="kicker">Integrations</span>
+          <h2 className="text-xl font-semibold">
+            {projectId ? 'Project Webhooks' : 'Webhooks'}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {projectId
+              ? 'Send project-specific events to external services.'
+              : 'Manage organization-wide webhook integrations.'}
+          </p>
         </div>
-      </CardHeader>
-      <CardContent>
-          {isLoading ? (
-            <p className="text-muted-foreground">Loading...</p>
-          ) : error ? (
-            <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-6 text-sm text-yellow-700 dark:text-yellow-200">
-              {error instanceof Error ? error.message : 'Webhooks could not be loaded.'}
-            </div>
-          ) : webhooks.length === 0 ? (
-          <div className="py-8 text-center text-muted-foreground">
-            <WebhookIcon className="mx-auto mb-4 h-12 w-12 opacity-50" />
-            <p>No webhooks yet.</p>
-            <p className="text-sm">Create the first webhook to send TaskNebula events to your tools.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {webhooks.map((webhook) => (
-              <div key={webhook.id} className="flex flex-col gap-4 rounded-lg border p-4 md:flex-row md:items-start md:justify-between">
-                <div className="flex-1 space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium">{webhook.name}</span>
-                    {webhook.isActive ? <Badge variant="default">Active</Badge> : <Badge variant="secondary">Inactive</Badge>}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    <code className="rounded bg-muted px-2 py-1 text-xs">{webhook.url}</code>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {webhook.events.map((event) => (
-                      <Badge key={event} variant="outline">
-                        {event}
-                      </Badge>
-                    ))}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {webhook.successCount} successful · {webhook.failureCount} failed
-                    {webhook.lastTriggeredAt ? (
-                      <>
-                        {' '}
-                        · Last triggered{' '}
-                        {formatDistanceToNow(new Date(webhook.lastTriggeredAt), { addSuffix: true })}
-                      </>
-                    ) : null}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openEditDialog(webhook)}
-                  >
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Edit
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => toggleWebhook.mutate({ webhookId: webhook.id, isActive: !webhook.isActive })}
-                    disabled={toggleWebhook.isPending}
-                  >
-                    {webhook.isActive ? 'Disable' : 'Enable'}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      if (window.confirm('Delete this webhook?')) {
-                        deleteWebhook.mutate(webhook.id);
-                      }
-                    }}
-                    disabled={deleteWebhook.isPending}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" onClick={openCreateDialog}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Create webhook
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[580px]">
+            <DialogHeader>
+              <DialogTitle>{editingWebhook ? 'Edit webhook' : 'Create webhook'}</DialogTitle>
+              <DialogDescription>
+                Choose the events to deliver and the destination URL that should receive them.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label>Name</Label>
+                <Input
+                  value={formData.name}
+                  onChange={(event) =>
+                    setFormData((current) => ({ ...current, name: event.target.value }))
+                  }
+                  placeholder="GitHub sync"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Destination URL</Label>
+                <Input
+                  value={formData.url}
+                  onChange={(event) =>
+                    setFormData((current) => ({ ...current, url: event.target.value }))
+                  }
+                  placeholder="https://example.com/webhooks/tasknebula"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Events</Label>
+                <div className="grid gap-1.5 sm:grid-cols-2">
+                  {WEBHOOK_EVENTS.map((eventName) => (
+                    <label
+                      key={eventName}
+                      className="flex cursor-pointer items-center gap-2.5 rounded-md border border-border px-3 py-2 text-sm transition-colors hover:bg-accent/40"
+                    >
+                      <Checkbox
+                        checked={formData.events.includes(eventName)}
+                        onCheckedChange={(checked) => toggleEvent(eventName, checked === true)}
+                      />
+                      <span className="font-mono text-xs">{eventName}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => void handleSave()} disabled={saveWebhook.isPending}>
+                {saveWebhook.isPending
+                  ? 'Saving...'
+                  : editingWebhook
+                    ? 'Save changes'
+                    : 'Create webhook'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {isLoading ? (
+        <p className="py-6 text-center text-sm text-muted-foreground">Loading...</p>
+      ) : error ? (
+        <div className="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-muted-foreground">
+          {error instanceof Error ? error.message : 'Webhooks could not be loaded.'}
+        </div>
+      ) : webhooks.length === 0 ? (
+        <div className="py-10 text-center text-muted-foreground">
+          <WebhookIcon className="mx-auto mb-3 h-8 w-8 opacity-30" />
+          <p className="text-sm">
+            No webhooks yet. Create one to send TaskNebula events to your tools.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-px">
+          {webhooks.map((webhook) => (
+            <div
+              key={webhook.id}
+              className="flex min-h-[44px] items-start justify-between gap-4 rounded-md px-2 py-3 transition-colors hover:bg-accent/40"
+            >
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium">{webhook.name}</span>
+                  {webhook.isActive ? (
+                    <span className="chip-accent">Active</span>
+                  ) : (
+                    <span className="chip">Inactive</span>
+                  )}
+                </div>
+                <code className="text-xs text-muted-foreground">{webhook.url}</code>
+                <div className="flex flex-wrap gap-1">
+                  {webhook.events.map((event) => (
+                    <span key={event} className="chip font-mono text-[11px]">
+                      {event}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {webhook.successCount} ok · {webhook.failureCount} failed
+                  {webhook.lastTriggeredAt ? (
+                    <>
+                      {' '}
+                      · Last triggered{' '}
+                      {formatDistanceToNow(new Date(webhook.lastTriggeredAt), { addSuffix: true })}
+                    </>
+                  ) : null}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground"
+                  onClick={() => openEditDialog(webhook)}
+                  aria-label="Edit webhook"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs text-muted-foreground"
+                  onClick={() =>
+                    toggleWebhook.mutate({ webhookId: webhook.id, isActive: !webhook.isActive })
+                  }
+                  disabled={toggleWebhook.isPending}
+                >
+                  {webhook.isActive ? 'Disable' : 'Enable'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  onClick={() => {
+                    if (window.confirm('Delete this webhook?')) {
+                      deleteWebhook.mutate(webhook.id);
+                    }
+                  }}
+                  disabled={deleteWebhook.isPending}
+                  aria-label="Delete webhook"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

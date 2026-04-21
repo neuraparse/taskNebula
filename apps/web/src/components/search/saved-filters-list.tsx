@@ -1,10 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Star, Trash2, Globe, Lock, MoreVertical } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Star, Trash2, Globe, Lock, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -102,112 +100,107 @@ export function SavedFiltersList({ onSelectFilter }: SavedFiltersListProps) {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Saved Filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        </CardContent>
-      </Card>
+      <div className="py-6 text-center text-sm text-muted-foreground">Loading filters...</div>
     );
   }
 
   if (filters.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Saved Filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            No saved filters yet. Create one from the advanced search.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="py-6 text-center text-sm text-muted-foreground">
+        No saved filters yet. Create one from the search builder.
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Saved Filters</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[400px]">
-          <div className="space-y-2">
-            {filters.map((filter) => (
-              <div
-                key={filter.id}
-                className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent cursor-pointer"
-                onClick={() => applyFilter(filter)}
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-medium truncate">{filter.name}</h4>
-                    {filter.isPublic ? (
-                      <Globe className="h-3 w-3 text-muted-foreground" />
-                    ) : (
-                      <Lock className="h-3 w-3 text-muted-foreground" />
-                    )}
-                  </div>
-                  {filter.description && (
-                    <p className="text-sm text-muted-foreground truncate">
-                      {filter.description}
-                    </p>
-                  )}
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {filter.query}
-                  </p>
-                  <div className="flex gap-2 mt-2">
-                    <Badge variant="secondary" className="text-xs">
-                      Used {filter.usageCount} times
-                    </Badge>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleStar(filter.id, filter.isStarred);
-                    }}
-                  >
-                    <Star
-                      className={`h-4 w-4 ${
-                        filter.isStarred ? 'fill-yellow-400 text-yellow-400' : ''
-                      }`}
-                    />
-                  </Button>
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteFilter(filter.id);
-                        }}
-                        className="text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+    <div className="space-y-1">
+      <span className="kicker px-1">Saved filters</span>
+      <ScrollArea className="max-h-[360px]">
+        <div className="space-y-px">
+          {filters.map((filter) => (
+            <div
+              key={filter.id}
+              className="group flex items-center gap-2 rounded-md px-2 py-2 transition-colors duration-200 hover:bg-accent/50"
+            >
+              {/* Visibility icon */}
+              <div className="shrink-0 text-muted-foreground">
+                {filter.isPublic ? (
+                  <Globe className="h-3.5 w-3.5" aria-label="Public filter" />
+                ) : (
+                  <Lock className="h-3.5 w-3.5" aria-label="Private filter" />
+                )}
               </div>
-            ))}
-          </div>
-        </ScrollArea>
-      </CardContent>
-    </Card>
+
+              {/* Name + meta */}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline gap-2">
+                  <span className="truncate text-sm font-medium">{filter.name}</span>
+                  {filter.isStarred && (
+                    <Star className="h-3 w-3 shrink-0 fill-accent-amber text-accent-amber" aria-label="Starred" />
+                  )}
+                </div>
+                {filter.description && (
+                  <p className="truncate text-xs text-muted-foreground">{filter.description}</p>
+                )}
+                <p className="truncate text-[10px] text-muted-foreground font-mono mt-0.5">{filter.query}</p>
+              </div>
+
+              {/* Actions (visible on hover) */}
+              <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleStar(filter.id, filter.isStarred);
+                  }}
+                  aria-label={filter.isStarred ? 'Unstar filter' : 'Star filter'}
+                >
+                  <Star
+                    className={`h-3.5 w-3.5 ${
+                      filter.isStarred ? 'fill-accent-amber text-accent-amber' : 'text-muted-foreground'
+                    }`}
+                  />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-primary"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    applyFilter(filter);
+                  }}
+                  aria-label="Run filter"
+                >
+                  <Play className="h-3.5 w-3.5" />
+                </Button>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteFilter(filter.id);
+                      }}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete filter
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
+    </div>
   );
 }
-

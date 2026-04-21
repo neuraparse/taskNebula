@@ -129,17 +129,17 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
       </PropertyRow>
 
       {/* Custom Fields */}
-      <div className="pt-3 mt-3 border-t border-border/40">
+      <div className="pt-4 mt-4">
         <IssueCustomFields issueId={issue.id} />
       </div>
 
       {/* Watchers */}
-      <div className="pt-3 mt-1 border-t border-border/40">
+      <div className="pt-4">
         <WatchersList issueId={issue.id} />
       </div>
 
       {/* Metadata */}
-      <div className="pt-3 mt-1 border-t border-border/40 space-y-1.5">
+      <div className="pt-4 space-y-1.5">
         <div className="flex justify-between text-[11px]">
           <span className="text-muted-foreground/60">Created</span>
           <span className="text-muted-foreground">{formatDate(issue.createdAt)}</span>

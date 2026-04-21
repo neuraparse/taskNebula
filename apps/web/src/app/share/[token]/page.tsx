@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { DocumentContentViewer } from '@/components/docs/document-content-viewer';
@@ -56,57 +55,59 @@ export default async function PublicDocumentPage({
   return (
     <main className="min-h-screen bg-background px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-6xl flex-col gap-6">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 bg-background px-5 py-4">
-          <div className="min-w-0">
+        {/* Header bar */}
+        <div className="surface-card flex flex-wrap items-center justify-between gap-3 px-5 py-4 rounded-lg">
+          <div className="min-w-0 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary" className="gap-1.5">
-                <Globe2 className="h-3.5 w-3.5" />
-                Public Page
-              </Badge>
+              <span className="chip gap-1.5 flex items-center">
+                <Globe2 className="h-3.5 w-3.5" aria-hidden="true" />
+                Public
+              </span>
               {!page.allowSearchIndexing && (
-                <Badge variant="outline" className="gap-1.5">
-                  <LockKeyhole className="h-3.5 w-3.5" />
-                  Search Hidden
-                </Badge>
+                <span className="chip flex items-center gap-1.5">
+                  <LockKeyhole className="h-3.5 w-3.5" aria-hidden="true" />
+                  Search hidden
+                </span>
               )}
             </div>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">{page.title}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              {page.title}
+            </h1>
             {page.excerpt && (
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base">
-                {page.excerpt}
-              </p>
+              <p className="max-w-3xl text-sm leading-6 text-muted-foreground">{page.excerpt}</p>
             )}
-            <div className="mt-3 text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Updated {new Date(page.updatedAt).toLocaleString()}
-            </div>
+            </p>
           </div>
 
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" size="sm">
             <Link href="/">
               TaskNebula
-              <ExternalLink className="ml-2 h-4 w-4" />
+              <ExternalLink className="ml-1.5 h-4 w-4" aria-hidden="true" />
             </Link>
           </Button>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
-          <section className="rounded-lg border border-border/70 bg-background px-4 py-5 sm:px-8 sm:py-8">
+        {/* Content grid */}
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_260px]">
+          <section className="surface-card px-4 py-5 sm:px-8 sm:py-8 rounded-lg">
             <DocumentContentViewer content={page.contentJson} />
           </section>
 
           <aside className="space-y-4">
-            <div className="rounded-lg border border-border/70 bg-background p-5">
-              <div className="text-sm font-semibold">Sharing Safety</div>
+            <div className="surface-inset p-5 rounded-lg">
+              <p className="text-sm font-medium text-foreground">Sharing safety</p>
               <Separator className="my-3" />
               <p className="text-sm leading-6 text-muted-foreground">
-                This public view hides workspace-only metadata, task relations, revision authors, and any uploaded
-                files that were not explicitly published with the page.
+                This public view hides workspace-only metadata, task relations, revision authors,
+                and any files not explicitly published with the page.
               </p>
             </div>
 
             {page.attachments.length > 0 && (
-              <div className="rounded-lg border border-border/70 bg-background p-5">
-                <div className="text-sm font-semibold">Published Files</div>
+              <div className="surface-inset p-5 rounded-lg">
+                <p className="text-sm font-medium text-foreground">Published files</p>
                 <Separator className="my-3" />
                 <div className="space-y-2">
                   {page.attachments.map((attachment) => (
@@ -115,10 +116,10 @@ export default async function PublicDocumentPage({
                       href={attachment.publicUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block rounded-md border border-border/70 px-3 py-2 text-sm transition-colors hover:bg-muted/10"
+                      className="block rounded-md border border-border px-3 py-2 text-sm transition-colors duration-200 hover:bg-accent"
                     >
-                      <div className="font-medium">{attachment.fileName}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">{attachment.mimeType}</div>
+                      <div className="font-medium text-foreground">{attachment.fileName}</div>
+                      <div className="mt-0.5 text-xs text-muted-foreground">{attachment.mimeType}</div>
                     </a>
                   ))}
                 </div>

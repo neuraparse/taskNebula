@@ -112,7 +112,7 @@ export function MentionTextarea({
 
       {showMentions && filteredMembers.length > 0 && (
         <div
-          className="absolute z-50 mt-1 w-64 rounded-md border bg-popover p-1 shadow-md"
+          className="absolute z-50 mt-1 w-64 rounded-md border border-border bg-card p-1 shadow-sm"
           style={{
             top: '100%',
             left: 0,
