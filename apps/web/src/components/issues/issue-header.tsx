@@ -17,10 +17,10 @@ interface IssueHeaderProps {
 }
 
 const typeConfig: Record<string, { icon: React.ElementType; color: string; label: string }> = {
-  story: { icon: BookOpen, color: 'text-emerald-500', label: 'Story' },
-  task: { icon: CheckSquare, color: 'text-blue-500', label: 'Task' },
-  bug: { icon: Bug, color: 'text-red-500', label: 'Bug' },
-  epic: { icon: Zap, color: 'text-purple-500', label: 'Epic' },
+  story: { icon: BookOpen, color: 'text-accent-emerald', label: 'Story' },
+  task: { icon: CheckSquare, color: 'text-accent-blue', label: 'Task' },
+  bug: { icon: Bug, color: 'text-accent-rose', label: 'Bug' },
+  epic: { icon: Zap, color: 'text-accent-violet', label: 'Epic' },
 };
 
 export function IssueHeader({ issue }: IssueHeaderProps) {
@@ -61,8 +61,8 @@ export function IssueHeader({ issue }: IssueHeaderProps) {
           variant="ghost"
           size="icon"
           className={cn(
-            'h-7 w-7',
-            isStarred ? 'text-amber-500' : 'text-muted-foreground hover:text-foreground'
+            'h-7 w-7 transition-colors duration-200',
+            isStarred ? 'text-accent-amber' : 'text-muted-foreground hover:text-foreground'
           )}
           onClick={() => setIsStarred(!isStarred)}
         >
@@ -72,8 +72,8 @@ export function IssueHeader({ issue }: IssueHeaderProps) {
           variant="ghost"
           size="icon"
           className={cn(
-            'h-7 w-7',
-            isWatching ? 'text-blue-500' : 'text-muted-foreground hover:text-foreground'
+            'h-7 w-7 transition-colors duration-200',
+            isWatching ? 'text-accent-blue' : 'text-muted-foreground hover:text-foreground'
           )}
           onClick={() => setIsWatching(!isWatching)}
         >
@@ -82,10 +82,10 @@ export function IssueHeader({ issue }: IssueHeaderProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-muted-foreground hover:text-foreground"
+          className="h-7 w-7 text-muted-foreground hover:text-foreground transition-colors duration-200"
           onClick={handleCopyLink}
         >
-          {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? <Check className="h-3.5 w-3.5 text-accent-emerald" /> : <Copy className="h-3.5 w-3.5" />}
         </Button>
       </div>
     </div>

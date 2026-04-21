@@ -16,7 +16,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Shield, Trash2, Edit, Star, Link2 } from 'lucide-react';
 
@@ -312,7 +311,7 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
 
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">Permission schemes</h3>
+          <h3 className="text-base font-semibold text-foreground">Permission schemes</h3>
           <p className="text-sm text-muted-foreground">Create reusable access templates and reuse them across projects.</p>
         </div>
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
@@ -389,25 +388,25 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
                       <Shield className="h-4 w-4 text-primary" />
                       <CardTitle className="text-base">{scheme.name}</CardTitle>
                     </div>
-                    {scheme.description ? (
-                      <CardDescription>{scheme.description}</CardDescription>
-                    ) : (
-                      <CardDescription>No description provided.</CardDescription>
-                    )}
+                    <CardDescription>
+                      {scheme.description || 'No description provided.'}
+                    </CardDescription>
                   </div>
                   {scheme.isDefault ? (
-                    <Badge variant="secondary" className="gap-1">
+                    <span className="chip gap-1 shrink-0">
                       <Star className="h-3 w-3" />
                       Default
-                    </Badge>
+                    </span>
                   ) : null}
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline">{Object.keys(scheme.permissions || {}).length} permission groups</Badge>
-                  <Badge variant="outline">{scheme.projectCount || 0} projects</Badge>
-                  {isAssignedToProject ? <Badge>Assigned here</Badge> : null}
-                  {!isAssignedToProject && isEffectiveForProject ? <Badge variant="secondary">Inherited here</Badge> : null}
+                <div className="flex flex-wrap gap-1.5">
+                  <span className="chip">{Object.keys(scheme.permissions || {}).length} groups</span>
+                  <span className="chip">{scheme.projectCount || 0} projects</span>
+                  {isAssignedToProject ? <span className="chip-accent">Assigned here</span> : null}
+                  {!isAssignedToProject && isEffectiveForProject ? (
+                    <span className="chip">Inherited here</span>
+                  ) : null}
                 </div>
               </CardHeader>
               <CardContent className="flex items-center justify-between gap-2">
@@ -423,21 +422,21 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
                 </div>
                 <div className="flex items-center gap-1">
                   {!scheme.isDefault ? (
-                    <Button variant="ghost" size="icon" onClick={() => void setAsDefault(scheme.id)} title="Set as default">
-                      <Star className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => void setAsDefault(scheme.id)} title="Set as default">
+                      <Star className="h-3.5 w-3.5" />
                     </Button>
                   ) : null}
-                  <Button variant="ghost" size="icon" onClick={() => openEditDialog(scheme)} title="Edit">
-                    <Edit className="h-4 w-4" />
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(scheme)} title="Edit">
+                    <Edit className="h-3.5 w-3.5" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="h-7 w-7 text-destructive hover:text-destructive"
                     onClick={() => void deleteScheme(scheme.id)}
                     title="Delete"
-                    className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               </CardContent>
@@ -447,7 +446,7 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
       </div>
 
       {schemes.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
           No permission schemes yet. Create one to get started.
         </div>
       ) : null}

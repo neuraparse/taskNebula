@@ -2,6 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { CheckCircle2 } from 'lucide-react';
+
+const STEPS = ['Admin account', 'Organization', 'Done'];
 
 export default function SetupPage() {
   const router = useRouter();
@@ -77,24 +83,28 @@ export default function SetupPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <div className="text-gray-500">Loading...</div>
+      <div className="relative min-h-screen bg-background overflow-hidden flex items-center justify-center">
+        <div className="bg-aurora absolute inset-0 pointer-events-none animate-aurora opacity-80" />
+        <div className="relative z-10 h-5 w-5 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
       </div>
     );
   }
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <div className="max-w-md w-full mx-4 text-center">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 p-8">
-            <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
-              <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+      <div className="relative min-h-screen bg-background overflow-hidden flex items-center justify-center px-4">
+        <div className="bg-aurora absolute inset-0 pointer-events-none animate-aurora opacity-80" />
+        <div className="relative z-10 w-full max-w-md animate-scale-in">
+          <div className="surface-card p-8 shadow-lg rounded-xl text-center space-y-4">
+            <div className="flex justify-center">
+              <div className="rounded-full bg-accent-emerald/10 p-4">
+                <CheckCircle2 className="h-8 w-8 text-accent-emerald" aria-hidden="true" />
+              </div>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Setup Complete!</h2>
-            <p className="text-gray-600 dark:text-gray-400">Redirecting to sign in...</p>
+            <div className="space-y-1">
+              <h2 className="text-xl font-semibold tracking-tight text-foreground">Setup complete</h2>
+              <p className="text-sm text-muted-foreground">Redirecting to sign in...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -102,116 +112,117 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 py-12 px-4">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <div className="h-14 w-14 rounded-xl bg-blue-600 flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl font-bold text-white">T</span>
+    <div className="relative min-h-screen bg-background overflow-hidden flex items-center justify-center px-4 py-12">
+      {/* Aurora background */}
+      <div className="bg-aurora absolute inset-0 pointer-events-none animate-aurora opacity-80" />
+
+      <div className="relative z-10 w-full max-w-md animate-scale-in">
+        {/* Logo + heading */}
+        <div className="mb-6 text-center space-y-3">
+          <div className="flex justify-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-foreground">
+              <span className="text-sm font-bold tracking-tight text-background">TN</span>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome to TaskNebula</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Create your admin account to get started
-          </p>
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Welcome to TaskNebula</h1>
+            <p className="text-sm text-muted-foreground">Create your admin account to get started</p>
+          </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Step indicator */}
+        <div className="mb-6 flex items-center justify-center gap-2">
+          {STEPS.map((step, i) => (
+            <span
+              key={step}
+              className={i === 0 ? 'chip-accent' : 'chip'}
+            >
+              {step}
+            </span>
+          ))}
+        </div>
+
+        <div className="surface-card p-8 shadow-lg rounded-xl">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
-              </div>
+              <p className="text-sm text-destructive">{error}</p>
             )}
 
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Full Name
-              </label>
-              <input
+            <div className="space-y-1.5">
+              <Label htmlFor="name">Full name</Label>
+              <Input
                 id="name"
                 type="text"
                 required
+                placeholder="John Doe"
+                autoComplete="name"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                placeholder="John Doe"
               />
             </div>
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Email Address
-              </label>
-              <input
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email address</Label>
+              <Input
                 id="email"
                 type="email"
                 required
+                placeholder="admin@company.com"
+                autoComplete="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                placeholder="admin@company.com"
               />
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Password
-              </label>
-              <input
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Password</Label>
+              <Input
                 id="password"
                 type="password"
                 required
                 minLength={8}
+                placeholder="Min. 8 characters"
+                autoComplete="new-password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                placeholder="Min. 8 characters"
               />
             </div>
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Confirm Password
-              </label>
-              <input
+            <div className="space-y-1.5">
+              <Label htmlFor="confirmPassword">Confirm password</Label>
+              <Input
                 id="confirmPassword"
                 type="password"
                 required
+                placeholder="Confirm your password"
+                autoComplete="new-password"
                 value={form.confirmPassword}
                 onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                placeholder="Confirm your password"
               />
             </div>
 
-            <div>
-              <label htmlFor="orgName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Organization Name <span className="text-gray-400">(optional)</span>
-              </label>
-              <input
+            <div className="space-y-1.5">
+              <Label htmlFor="orgName">
+                Organization name{' '}
+                <span className="text-muted-foreground font-normal">(optional)</span>
+              </Label>
+              <Input
                 id="orgName"
                 type="text"
+                placeholder="My Company"
                 value={form.organizationName}
                 onChange={(e) => setForm({ ...form, organizationName: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                placeholder="My Company"
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              {submitting ? 'Creating account...' : 'Create Admin Account'}
-            </button>
+            <Button type="submit" className="w-full" size="lg" disabled={submitting}>
+              {submitting ? 'Creating account...' : 'Create admin account'}
+            </Button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-800">
-            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-              This setup page is only available when the database is empty.
-              After creating your admin account, use the sign-in page.
-            </p>
-          </div>
+          <p className="mt-6 text-xs text-muted-foreground text-center">
+            This page is only available when the database is empty.
+          </p>
         </div>
       </div>
     </div>

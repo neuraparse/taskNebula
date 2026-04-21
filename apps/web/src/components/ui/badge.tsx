@@ -12,13 +12,15 @@ const badgeVariants = cva(
         secondary:
           'border-transparent bg-secondary text-secondary-foreground',
         destructive:
-          'border-transparent bg-destructive/10 text-destructive',
+          'border-destructive/20 bg-destructive/10 text-destructive',
         outline:
           'text-foreground border-border',
         success:
-          'border-transparent bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+          'border-accent-emerald/20 bg-accent-emerald/10 text-accent-emerald',
         warning:
-          'border-transparent bg-amber-500/10 text-amber-600 dark:text-amber-400',
+          'border-accent-amber/20 bg-accent-amber/10 text-accent-amber',
+        info:
+          'border-accent-blue/20 bg-accent-blue/10 text-accent-blue',
         muted:
           'border-transparent bg-muted text-muted-foreground',
       },

@@ -1,12 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, X, Plus, Save } from 'lucide-react';
+import { Search, X, Plus, Save, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { criteriaToJQL, type ParsedCriteria } from '@tasknebula/db';
 
 interface AdvancedSearchProps {
@@ -119,121 +117,145 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
     onSaveFilter?.(name, query, criteria);
   };
 
+  // Active filter chips for visual feedback
+  const activeFilters = conditions.filter(c => c.value.trim());
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Advanced Search</CardTitle>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowJQL(!showJQL)}
-            >
-              {showJQL ? 'Visual Builder' : 'JQL Editor'}
-            </Button>
-            {onSaveFilter && (
-              <Button variant="outline" size="sm" onClick={handleSaveFilter}>
-                <Save className="h-4 w-4 mr-2" />
-                Save Filter
-              </Button>
-            )}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {showJQL ? (
-          <div className="space-y-2">
-            <Input
-              placeholder="Enter JQL query (e.g., assignee = me AND status = 'In Progress')"
-              value={jqlQuery}
-              onChange={(e) => setJqlQuery(e.target.value)}
-            />
-            <p className="text-sm text-muted-foreground">
-              Examples: assignee = me, status IN (&quot;To Do&quot;, &quot;In Progress&quot;), priority = high
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {conditions.map((condition, index) => (
-              <div key={condition.id} className="flex gap-2 items-center">
-                {index > 0 && (
-                  <Badge variant="secondary" className="px-2">
-                    AND
-                  </Badge>
-                )}
-                <Select
-                  value={condition.field}
-                  onValueChange={(value) =>
-                    updateCondition(condition.id, { field: value })
-                  }
-                >
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {fields.map((field) => (
-                      <SelectItem key={field.value} value={field.value}>
-                        {field.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={condition.operator}
-                  onValueChange={(value) =>
-                    updateCondition(condition.id, { operator: value })
-                  }
-                >
-                  <SelectTrigger className="w-[120px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {operators.map((op) => (
-                      <SelectItem key={op.value} value={op.value}>
-                        {op.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Input
-                  placeholder="Value"
-                  value={condition.value}
-                  onChange={(e) =>
-                    updateCondition(condition.id, { value: e.target.value })
-                  }
-                  className="flex-1"
-                />
-
-                {conditions.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeCondition(condition.id)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            ))}
-
-            <Button variant="outline" size="sm" onClick={addCondition}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Condition
-            </Button>
-          </div>
+    <div className="space-y-3">
+      {/* Toolbar */}
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowJQL(!showJQL)}
+          className="text-muted-foreground"
+        >
+          {showJQL ? 'Visual Builder' : 'JQL Editor'}
+          <ChevronDown className="ml-1 h-3 w-3" />
+        </Button>
+        {onSaveFilter && (
+          <Button variant="ghost" size="sm" onClick={handleSaveFilter} className="text-muted-foreground">
+            <Save className="mr-1.5 h-4 w-4" />
+            Save filter
+          </Button>
         )}
-
-        <div className="flex gap-2">
-          <Button onClick={handleSearch} className="flex-1">
-            <Search className="h-4 w-4 mr-2" />
+        <div className="ml-auto">
+          <Button onClick={handleSearch} size="sm">
+            <Search className="mr-1.5 h-4 w-4" />
             Search
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Active filter chips */}
+      {!showJQL && activeFilters.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {activeFilters.map(c => (
+            <span
+              key={c.id}
+              className="chip-accent inline-flex items-center gap-1"
+            >
+              <span className="font-medium">{c.field}</span>
+              <span className="text-muted-foreground">{c.operator}</span>
+              <span>{c.value}</span>
+              <button
+                onClick={() => updateCondition(c.id, { value: '' })}
+                className="ml-0.5 rounded-full hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={`Remove ${c.field} filter`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Builder / JQL */}
+      {showJQL ? (
+        <div className="space-y-2">
+          <Input
+            placeholder="Enter JQL query (e.g., assignee = me AND status = 'In Progress')"
+            value={jqlQuery}
+            onChange={(e) => setJqlQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+          />
+          <p className="text-xs text-muted-foreground">
+            Examples: assignee = me, status IN (&quot;To Do&quot;, &quot;In Progress&quot;), priority = high
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {conditions.map((condition, index) => (
+            <div key={condition.id} className="flex items-center gap-2">
+              {index > 0 && (
+                <span className="chip shrink-0">AND</span>
+              )}
+              <Select
+                value={condition.field}
+                onValueChange={(value) =>
+                  updateCondition(condition.id, { field: value })
+                }
+              >
+                <SelectTrigger className="w-[140px] shrink-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {fields.map((field) => (
+                    <SelectItem key={field.value} value={field.value}>
+                      {field.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={condition.operator}
+                onValueChange={(value) =>
+                  updateCondition(condition.id, { operator: value })
+                }
+              >
+                <SelectTrigger className="w-[110px] shrink-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {operators.map((op) => (
+                    <SelectItem key={op.value} value={op.value}>
+                      {op.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Input
+                placeholder="Value"
+                value={condition.value}
+                onChange={(e) =>
+                  updateCondition(condition.id, { value: e.target.value })
+                }
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                className="flex-1"
+              />
+
+              {conditions.length > 1 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0 text-muted-foreground"
+                  onClick={() => removeCondition(condition.id)}
+                  aria-label="Remove condition"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          ))}
+
+          <Button variant="ghost" size="sm" onClick={addCondition} className="text-muted-foreground">
+            <Plus className="mr-1.5 h-4 w-4" />
+            Add condition
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }
-

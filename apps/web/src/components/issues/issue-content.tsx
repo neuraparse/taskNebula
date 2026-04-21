@@ -43,11 +43,11 @@ export function IssueContent({ issue }: IssueContentProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Description */}
       <section>
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Description</h3>
+          <h3 className="kicker">Description</h3>
           {!isEditing && (
             <Button
               variant="ghost"
@@ -99,31 +99,31 @@ export function IssueContent({ issue }: IssueContentProps) {
 
       {/* Subtasks */}
       <section>
-        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">Subtasks</h3>
+        <h3 className="kicker mb-2">Subtasks</h3>
         <IssueSubtasks issueId={issue.id} projectId={issue.projectId} />
       </section>
 
       {/* Attachments */}
       <section>
-        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">Attachments</h3>
+        <h3 className="kicker mb-2">Attachments</h3>
         <IssueAttachments issueId={issue.id} />
       </section>
 
       {/* Links */}
       <section>
-        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">Links</h3>
+        <h3 className="kicker mb-2">Links</h3>
         <IssueLinks issueId={issue.id} projectId={issue.projectId} />
       </section>
 
       {/* Related Docs */}
       <section>
-        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">Related Docs</h3>
+        <h3 className="kicker mb-2">Related Docs</h3>
         <IssueDocs issueId={issue.id} issueKey={issue.key} issueTitle={issue.title} projectId={issue.projectId} />
       </section>
 
       {/* Discussion */}
       <section>
-        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">Discussion</h3>
+        <h3 className="kicker mb-2">Discussion</h3>
         <IssueDiscussionCard issueId={issue.id} projectId={issue.projectId} />
       </section>
     </div>

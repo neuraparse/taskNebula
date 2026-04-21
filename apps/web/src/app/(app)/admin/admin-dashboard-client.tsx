@@ -5,9 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -47,18 +45,13 @@ import {
   MoreVertical,
   Search,
   Shield,
-  ToggleLeft,
-  ToggleRight,
   Trash2,
   Users,
   Radio,
 } from 'lucide-react';
 
-const adminTabsListClassName =
-  'h-auto w-full flex-wrap justify-start gap-2 rounded-xl border border-border/70 bg-card/40 p-1';
-
-const adminTabTriggerClassName =
-  'rounded-lg border border-transparent px-3.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground data-[state=active]:border-border data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm';
+const adminTabTriggerClass =
+  'rounded-md border border-transparent px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground data-[state=active]:border-border data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs';
 
 type StatsResponse = {
   overview?: {
@@ -86,16 +79,8 @@ type OrganizationItem = {
   slug: string;
   plan: string;
   status: string;
-  owner?: {
-    id: string;
-    name: string | null;
-    email: string | null;
-  } | null;
-  stats?: {
-    members: number;
-    projects: number;
-    issues: number;
-  };
+  owner?: { id: string; name: string | null; email: string | null } | null;
+  stats?: { members: number; projects: number; issues: number };
 };
 
 type UserItem = {
@@ -104,11 +89,7 @@ type UserItem = {
   email: string;
   status: string;
   isSuperAdmin: boolean;
-  organizations?: Array<{
-    organizationId: string;
-    organizationName: string;
-    role: string;
-  }>;
+  organizations?: Array<{ organizationId: string; organizationName: string; role: string }>;
 };
 
 type AdminAuditLog = {
@@ -119,12 +100,13 @@ type AdminAuditLog = {
   changes: Record<string, { from?: unknown; to?: unknown }> | null;
   metadata: Record<string, unknown> | null;
   createdAt: string;
-  user: {
-    id: string | null;
-    name: string | null;
-    email: string | null;
-    image?: string | null;
-  } | null;
+  user: { id: string | null; name: string | null; email: string | null; image?: string | null } | null;
+};
+
+const orgStatusChip: Record<string, string> = {
+  active: 'bg-accent-emerald/10 text-accent-emerald border border-accent-emerald/20',
+  trial: 'bg-accent-amber/10 text-accent-amber border border-accent-amber/20',
+  suspended: 'bg-destructive/10 text-destructive border border-destructive/20',
 };
 
 export function AdminDashboardClient() {
@@ -171,9 +153,7 @@ export function AdminDashboardClient() {
     queryFn: async () => {
       const response = await fetch('/api/admin/stats');
       const payload = await response.json().catch(() => ({ error: 'Failed to fetch stats' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to fetch stats');
-      }
+      if (!response.ok) throw new Error(payload.error || 'Failed to fetch stats');
       return payload as StatsResponse;
     },
   });
@@ -185,16 +165,12 @@ export function AdminDashboardClient() {
       if (orgSearch.trim()) params.set('search', orgSearch.trim());
       if (orgStatus !== 'all') params.set('status', orgStatus);
       if (orgPlan !== 'all') params.set('plan', orgPlan);
-
       const response = await fetch(`/api/admin/organizations?${params.toString()}`);
-      const payload = await response.json().catch(() => ({ error: 'Failed to fetch organizations' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to fetch organizations');
-      }
-      return payload as {
-        organizations: OrganizationItem[];
-        pagination: { total: number };
-      };
+      const payload = await response
+        .json()
+        .catch(() => ({ error: 'Failed to fetch organizations' }));
+      if (!response.ok) throw new Error(payload.error || 'Failed to fetch organizations');
+      return payload as { organizations: OrganizationItem[]; pagination: { total: number } };
     },
   });
 
@@ -204,16 +180,10 @@ export function AdminDashboardClient() {
       const params = new URLSearchParams({ limit: '50' });
       if (userSearch.trim()) params.set('search', userSearch.trim());
       if (userStatus !== 'all') params.set('status', userStatus);
-
       const response = await fetch(`/api/admin/users?${params.toString()}`);
       const payload = await response.json().catch(() => ({ error: 'Failed to fetch users' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to fetch users');
-      }
-      return payload as {
-        users: UserItem[];
-        pagination: { total: number };
-      };
+      if (!response.ok) throw new Error(payload.error || 'Failed to fetch users');
+      return payload as { users: UserItem[]; pagination: { total: number } };
     },
   });
 
@@ -223,12 +193,11 @@ export function AdminDashboardClient() {
       const params = new URLSearchParams({ limit: '50' });
       if (auditSearch.trim()) params.set('search', auditSearch.trim());
       if (auditResourceType !== 'all') params.set('resourceType', auditResourceType);
-
       const response = await fetch(`/api/admin/audit-logs?${params.toString()}`);
-      const payload = await response.json().catch(() => ({ error: 'Failed to fetch audit logs' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to fetch audit logs');
-      }
+      const payload = await response
+        .json()
+        .catch(() => ({ error: 'Failed to fetch audit logs' }));
+      if (!response.ok) throw new Error(payload.error || 'Failed to fetch audit logs');
       return payload as { auditLogs: AdminAuditLog[] };
     },
     enabled: activeTab === 'audit',
@@ -243,20 +212,17 @@ export function AdminDashboardClient() {
       const response = await fetch(`/api/admin/organizations/${organizationId}`, {
         method: 'DELETE',
       });
-      const payload = await response.json().catch(() => ({ error: 'Failed to delete organization' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to delete organization');
-      }
+      const payload = await response
+        .json()
+        .catch(() => ({ error: 'Failed to delete organization' }));
+      if (!response.ok) throw new Error(payload.error || 'Failed to delete organization');
       return payload;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-organizations'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
       queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
-      toast({
-        title: 'Organization deleted',
-        description: 'The organization was removed permanently.',
-      });
+      toast({ title: 'Organization deleted', description: 'The organization was removed permanently.' });
     },
     onError: (mutationError: Error) => {
       toast({
@@ -270,26 +236,21 @@ export function AdminDashboardClient() {
   const selectedFlag = featureFlags?.find((flag: any) => flag.id === editFlagId);
   const filteredFlags = (featureFlags || []).filter((flag: any) => {
     const searchTerm = flagSearch.trim().toLowerCase();
-    const matchesSearch = !searchTerm
-      || flag.name.toLowerCase().includes(searchTerm)
-      || flag.key.toLowerCase().includes(searchTerm)
-      || (flag.description || '').toLowerCase().includes(searchTerm);
-
-    const matchesState = flagState === 'all'
-      || (flagState === 'enabled' && flag.isEnabled)
-      || (flagState === 'disabled' && !flag.isEnabled);
-
+    const matchesSearch =
+      !searchTerm ||
+      flag.name.toLowerCase().includes(searchTerm) ||
+      flag.key.toLowerCase().includes(searchTerm) ||
+      (flag.description || '').toLowerCase().includes(searchTerm);
+    const matchesState =
+      flagState === 'all' ||
+      (flagState === 'enabled' && flag.isEnabled) ||
+      (flagState === 'disabled' && !flag.isEnabled);
     return matchesSearch && matchesState;
   });
 
   async function handleToggleFlag(flag: any) {
     try {
-      await updateFeatureFlag.mutateAsync({
-        flagId: flag.id,
-        data: {
-          isEnabled: !flag.isEnabled,
-        },
-      });
+      await updateFeatureFlag.mutateAsync({ flagId: flag.id, data: { isEnabled: !flag.isEnabled } });
       queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
       toast({
         title: flag.isEnabled ? 'Feature disabled' : 'Feature enabled',
@@ -328,476 +289,474 @@ export function AdminDashboardClient() {
         />
       ) : null}
 
-      <div className="space-y-6 p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg border bg-card">
-                <Shield className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-semibold tracking-tight">Admin</h1>
-                <p className="text-sm text-muted-foreground">System-wide organizations, users, rollout flags, and audit activity.</p>
-              </div>
+      <div className="animate-fade-in space-y-6 p-6">
+        {/* Header */}
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card">
+              <Shield className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold tracking-tight">Admin</h1>
+              <p className="text-xs text-muted-foreground">
+                System-wide organizations, users, rollout flags, and audit activity.
+              </p>
             </div>
           </div>
           <Button
-            variant="outline"
+            variant="ghost"
+            size="sm"
             onClick={() => handleTabChange('audit')}
-            className={cn(
-              'border-border/70 bg-transparent',
-              activeTab === 'audit' && 'border-border bg-background text-foreground shadow-sm',
-            )}
+            className={cn(activeTab === 'audit' && 'bg-accent/50')}
           >
-            <Activity className="mr-2 h-4 w-4" />
-            Open audit log
+            <Activity className="mr-1.5 h-4 w-4" />
+            Audit log
           </Button>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-          <StatCard title="Organizations" value={statsLoading ? '...' : stats?.overview?.totalOrganizations || 0} icon={Building2} />
-          <StatCard title="Users" value={statsLoading ? '...' : stats?.overview?.totalUsers || 0} icon={Users} />
-          <StatCard title="Active Users" value={statsLoading ? '...' : stats?.overview?.activeUsers || 0} icon={Activity} />
-          <StatCard title="Super Admins" value={statsLoading ? '...' : stats?.overview?.superAdmins || 0} icon={Crown} />
-          <StatCard title="Projects" value={statsLoading ? '...' : stats?.overview?.totalProjects || 0} icon={Building2} />
-          <StatCard title="Issues" value={statsLoading ? '...' : stats?.overview?.totalIssues || 0} icon={Flag} />
+        {/* Stats row */}
+        <div className="stagger grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+          <StatTile title="Orgs" value={statsLoading ? '—' : stats?.overview?.totalOrganizations ?? 0} icon={Building2} />
+          <StatTile title="Users" value={statsLoading ? '—' : stats?.overview?.totalUsers ?? 0} icon={Users} />
+          <StatTile title="Active" value={statsLoading ? '—' : stats?.overview?.activeUsers ?? 0} icon={Activity} />
+          <StatTile title="Admins" value={statsLoading ? '—' : stats?.overview?.superAdmins ?? 0} icon={Crown} />
+          <StatTile title="Projects" value={statsLoading ? '—' : stats?.overview?.totalProjects ?? 0} icon={Building2} />
+          <StatTile title="Issues" value={statsLoading ? '—' : stats?.overview?.totalIssues ?? 0} icon={Flag} />
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className={adminTabsListClassName}>
-            <TabsTrigger value="overview" className={adminTabTriggerClassName}>
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="organizations" className={adminTabTriggerClassName}>
-              Organizations
-            </TabsTrigger>
-            <TabsTrigger value="users" className={adminTabTriggerClassName}>
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="feature-flags" className={adminTabTriggerClassName}>
-              Feature Flags
-            </TabsTrigger>
-            <TabsTrigger value="agents" className={adminTabTriggerClassName}>
+          <TabsList className="h-auto w-full justify-start gap-1 rounded-lg border border-border bg-card/40 p-1">
+            <TabsTrigger value="overview" className={adminTabTriggerClass}>Overview</TabsTrigger>
+            <TabsTrigger value="organizations" className={adminTabTriggerClass}>Organizations</TabsTrigger>
+            <TabsTrigger value="users" className={adminTabTriggerClass}>Users</TabsTrigger>
+            <TabsTrigger value="feature-flags" className={adminTabTriggerClass}>Feature Flags</TabsTrigger>
+            <TabsTrigger value="agents" className={adminTabTriggerClass}>
+              <Bot className="mr-1.5 h-4 w-4" />
               AI Ops
             </TabsTrigger>
-            <TabsTrigger value="realtime" className={adminTabTriggerClassName}>
-              <Radio className="mr-2 h-4 w-4" />
-              Realtime / RTC
+            <TabsTrigger value="realtime" className={adminTabTriggerClass}>
+              <Radio className="mr-1.5 h-4 w-4" />
+              Realtime
             </TabsTrigger>
-            <TabsTrigger value="audit" className={adminTabTriggerClassName}>
-              Audit
-            </TabsTrigger>
+            <TabsTrigger value="audit" className={adminTabTriggerClass}>Audit</TabsTrigger>
           </TabsList>
 
+          {/* Overview */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid gap-6 lg:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Organization health</CardTitle>
-                  <CardDescription>Breakdown by status and plan.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                  <MetricRow label="Active" value={stats?.organizations?.byStatus?.active || 0} />
-                  <MetricRow label="Trial" value={stats?.organizations?.byStatus?.trial || 0} />
-                  <MetricRow label="Suspended" value={stats?.organizations?.byStatus?.suspended || 0} />
-                  <div className="pt-3" />
-                  <MetricRow label="Free" value={stats?.organizations?.byPlan?.free || 0} />
-                  <MetricRow label="Starter" value={stats?.organizations?.byPlan?.starter || 0} />
-                  <MetricRow label="Growth" value={stats?.organizations?.byPlan?.growth || 0} />
-                  <MetricRow label="Enterprise" value={stats?.organizations?.byPlan?.enterprise || 0} />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Last 30 days</CardTitle>
-                  <CardDescription>Growth snapshot across the system.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                  <MetricRow label="New organizations" value={stats?.growth?.newOrganizations30d || 0} />
-                  <MetricRow label="New users" value={stats?.growth?.newUsers30d || 0} />
-                  <MetricRow label="Comments" value={stats?.overview?.totalComments || 0} />
-                </CardContent>
-              </Card>
+              <div className="surface-card p-6 space-y-3">
+                <h3 className="font-semibold">Organization health</h3>
+                <p className="text-xs text-muted-foreground">Breakdown by status and plan.</p>
+                <div className="space-y-2 text-sm">
+                  <MetricRow label="Active" value={stats?.organizations?.byStatus?.active ?? 0} />
+                  <MetricRow label="Trial" value={stats?.organizations?.byStatus?.trial ?? 0} />
+                  <MetricRow label="Suspended" value={stats?.organizations?.byStatus?.suspended ?? 0} />
+                  <div className="border-t border-border pt-2" />
+                  <MetricRow label="Free" value={stats?.organizations?.byPlan?.free ?? 0} />
+                  <MetricRow label="Starter" value={stats?.organizations?.byPlan?.starter ?? 0} />
+                  <MetricRow label="Growth" value={stats?.organizations?.byPlan?.growth ?? 0} />
+                  <MetricRow label="Enterprise" value={stats?.organizations?.byPlan?.enterprise ?? 0} />
+                </div>
+              </div>
+              <div className="surface-card p-6 space-y-3">
+                <h3 className="font-semibold">Last 30 days</h3>
+                <p className="text-xs text-muted-foreground">Growth snapshot across the system.</p>
+                <div className="space-y-2 text-sm">
+                  <MetricRow label="New organizations" value={stats?.growth?.newOrganizations30d ?? 0} />
+                  <MetricRow label="New users" value={stats?.growth?.newUsers30d ?? 0} />
+                  <MetricRow label="Comments" value={stats?.overview?.totalComments ?? 0} />
+                </div>
+              </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="organizations" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
-                    <CardTitle>Organizations</CardTitle>
-                    <CardDescription>{orgsData?.pagination?.total || 0} matching workspaces</CardDescription>
-                  </div>
-                  <CreateOrganizationAdminDialog />
+          {/* Organizations */}
+          <TabsContent value="organizations" className="space-y-4">
+            <div className="surface-card p-6 space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <span className="kicker">Admin</span>
+                  <h2 className="text-lg font-semibold">Organizations</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {orgsData?.pagination?.total ?? 0} matching workspaces
+                  </p>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_180px]">
-                  <div className="relative">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      className="pl-9"
-                      placeholder="Search organizations"
-                      value={orgSearch}
-                      onChange={(event) => setOrgSearch(event.target.value)}
-                    />
-                  </div>
-                  <Select value={orgStatus} onValueChange={setOrgStatus}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All statuses</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="trial">Trial</SelectItem>
-                      <SelectItem value="suspended">Suspended</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={orgPlan} onValueChange={setOrgPlan}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Plan" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All plans</SelectItem>
-                      <SelectItem value="free">Free</SelectItem>
-                      <SelectItem value="starter">Starter</SelectItem>
-                      <SelectItem value="growth">Growth</SelectItem>
-                      <SelectItem value="enterprise">Enterprise</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <CreateOrganizationAdminDialog />
+              </div>
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_180px]">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    className="pl-9"
+                    placeholder="Search organizations"
+                    value={orgSearch}
+                    onChange={(event) => setOrgSearch(event.target.value)}
+                  />
                 </div>
+                <Select value={orgStatus} onValueChange={setOrgStatus}>
+                  <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All statuses</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="trial">Trial</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={orgPlan} onValueChange={setOrgPlan}>
+                  <SelectTrigger><SelectValue placeholder="Plan" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All plans</SelectItem>
+                    <SelectItem value="free">Free</SelectItem>
+                    <SelectItem value="starter">Starter</SelectItem>
+                    <SelectItem value="growth">Growth</SelectItem>
+                    <SelectItem value="enterprise">Enterprise</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-                {orgsLoading ? (
-                  <EmptyState message="Loading organizations..." />
-                ) : orgsError ? (
-                  <ErrorState message={orgsError instanceof Error ? orgsError.message : 'Failed to load organizations'} />
-                ) : (orgsData?.organizations || []).length === 0 ? (
-                  <EmptyState message="No organizations match the current filters." />
-                ) : (
-                  <div className="space-y-3">
-                    {orgsData?.organizations.map((org) => (
-                      <div key={org.id} className="flex flex-col gap-4 rounded-lg border p-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-medium">{org.name}</span>
-                            <Badge variant="outline">{org.slug}</Badge>
-                            <Badge variant={org.status === 'active' ? 'default' : org.status === 'trial' ? 'secondary' : 'destructive'}>
-                              {org.status}
-                            </Badge>
-                            <Badge variant="outline">{org.plan}</Badge>
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            Owner: {org.owner?.name || org.owner?.email || 'Not assigned'}
-                          </div>
-                          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                            <span>{org.stats?.members || 0} members</span>
-                            <span>{org.stats?.projects || 0} projects</span>
-                            <span>{org.stats?.issues || 0} issues</span>
-                          </div>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => setEditOrgId(org.id)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit organization
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => {
-                                if (window.confirm(`Delete "${org.name}"? This cannot be undone.`)) {
-                                  deleteOrgMutation.mutate(org.id);
-                                }
-                              }}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete organization
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="users" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
-                    <CardTitle>Users</CardTitle>
-                    <CardDescription>{usersData?.pagination?.total || 0} matching users</CardDescription>
-                  </div>
-                  <CreateUserDialog />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px]">
-                  <div className="relative">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      className="pl-9"
-                      placeholder="Search users"
-                      value={userSearch}
-                      onChange={(event) => setUserSearch(event.target.value)}
-                    />
-                  </div>
-                  <Select value={userStatus} onValueChange={setUserStatus}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All statuses</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                      <SelectItem value="invited">Invited</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {usersLoading ? (
-                  <EmptyState message="Loading users..." />
-                ) : usersError ? (
-                  <ErrorState message={usersError instanceof Error ? usersError.message : 'Failed to load users'} />
-                ) : (usersData?.users || []).length === 0 ? (
-                  <EmptyState message="No users match the current filters." />
-                ) : (
-                  <div className="space-y-3">
-                    {usersData?.users.map((user) => (
-                      <div key={user.id} className="flex flex-col gap-4 rounded-lg border p-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-medium">{user.name || user.email}</span>
-                            {user.isSuperAdmin ? <Badge className="gap-1"><Crown className="h-3 w-3" />Super admin</Badge> : null}
-                            <Badge variant="outline">{user.status}</Badge>
-                          </div>
-                          <div className="text-sm text-muted-foreground">{user.email}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {(user.organizations || []).length} organization{(user.organizations || []).length === 1 ? '' : 's'}
-                          </div>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => setEditUserId(user.id)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit user
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="feature-flags" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
-                    <CardTitle>Feature flags</CardTitle>
-                    <CardDescription>{filteredFlags.length} matching flags</CardDescription>
-                  </div>
-                  <CreateFeatureFlagDialog />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px]">
-                  <div className="relative">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      className="pl-9"
-                      placeholder="Search feature flags"
-                      value={flagSearch}
-                      onChange={(event) => setFlagSearch(event.target.value)}
-                    />
-                  </div>
-                  <Select value={flagState} onValueChange={setFlagState}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="State" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All flags</SelectItem>
-                      <SelectItem value="enabled">Enabled</SelectItem>
-                      <SelectItem value="disabled">Disabled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {flagsLoading ? (
-                  <EmptyState message="Loading feature flags..." />
-                ) : flagsError ? (
-                  <ErrorState message={flagsError instanceof Error ? flagsError.message : 'Failed to load feature flags'} />
-                ) : filteredFlags.length === 0 ? (
-                  <EmptyState message="No feature flags match the current filters." />
-                ) : (
-                  <div className="space-y-3">
-                    {filteredFlags.map((flag: any) => (
-                      <div key={flag.id} className="flex flex-col gap-4 rounded-lg border p-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-medium">{flag.name}</span>
-                            <Badge variant={flag.isEnabled ? 'default' : 'secondary'}>
-                              <span className="flex items-center gap-1">
-                                {flag.isEnabled ? <ToggleRight className="h-3 w-3" /> : <ToggleLeft className="h-3 w-3" />}
-                                {flag.isEnabled ? 'Enabled' : 'Disabled'}
-                              </span>
-                            </Badge>
-                            {flag.rolloutPercentage < 100 ? (
-                              <Badge variant="outline">{flag.rolloutPercentage}% rollout</Badge>
-                            ) : null}
-                          </div>
-                          <div className="font-mono text-xs text-muted-foreground">{flag.key}</div>
-                          {flag.description ? <p className="text-sm text-muted-foreground">{flag.description}</p> : null}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleToggleFlag(flag)}
-                            disabled={updateFeatureFlag.isPending}
+              {orgsLoading ? (
+                <EmptyState message="Loading organizations..." />
+              ) : orgsError ? (
+                <ErrorState message={orgsError instanceof Error ? orgsError.message : 'Failed to load organizations'} />
+              ) : (orgsData?.organizations || []).length === 0 ? (
+                <EmptyState message="No organizations match the current filters." />
+              ) : (
+                <div className="space-y-px">
+                  {orgsData?.organizations.map((org) => (
+                    <div
+                      key={org.id}
+                      className="flex min-h-[44px] items-start justify-between gap-4 rounded-md px-2 py-3 transition-colors hover:bg-accent/40"
+                    >
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-medium">{org.name}</span>
+                          <span className="chip font-mono text-[11px]">{org.slug}</span>
+                          <span
+                            className={cn(
+                              'rounded-full px-2 py-0.5 text-[11px] font-medium border capitalize',
+                              orgStatusChip[org.status] ?? orgStatusChip.active
+                            )}
                           >
-                            {flag.isEnabled ? 'Disable' : 'Enable'}
+                            {org.status}
+                          </span>
+                          <span className="chip capitalize">{org.plan}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {org.owner?.name || org.owner?.email || 'No owner'}
+                          {' · '}
+                          {org.stats?.members ?? 0} members · {org.stats?.projects ?? 0} projects
+                        </p>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
+                            <MoreVertical className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => setEditFlagId(flag.id)}>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setEditOrgId(org.id)}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={async () => {
-                              if (window.confirm(`Delete "${flag.name}"?`)) {
-                                try {
-                                  await deleteFeatureFlag.mutateAsync(flag.id);
-                                  queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
-                                  toast({
-                                    title: 'Feature flag deleted',
-                                    description: `${flag.name} was removed.`,
-                                  });
-                                } catch (error) {
-                                  toast({
-                                    title: 'Failed to delete feature flag',
-                                    description: error instanceof Error ? error.message : 'Failed to delete feature flag',
-                                    variant: 'destructive',
-                                  });
-                                }
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => {
+                              if (window.confirm(`Delete "${org.name}"? This cannot be undone.`)) {
+                                deleteOrgMutation.mutate(org.id);
                               }
                             }}
                           >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="agents" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg border bg-card">
-                    <Bot className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <CardTitle>AI operations</CardTitle>
-                    <CardDescription>Global control plane for workspace agents, live safety, and rollout quality.</CardDescription>
-                  </div>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  ))}
                 </div>
-              </CardHeader>
-              <CardContent>
-                <AgentOpsPanel />
-              </CardContent>
-            </Card>
+              )}
+            </div>
           </TabsContent>
 
-          <TabsContent value="realtime" className="space-y-6">
+          {/* Users */}
+          <TabsContent value="users" className="space-y-4">
+            <div className="surface-card p-6 space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <span className="kicker">Admin</span>
+                  <h2 className="text-lg font-semibold">Users</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {usersData?.pagination?.total ?? 0} matching users
+                  </p>
+                </div>
+                <CreateUserDialog />
+              </div>
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px]">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    className="pl-9"
+                    placeholder="Search users"
+                    value={userSearch}
+                    onChange={(event) => setUserSearch(event.target.value)}
+                  />
+                </div>
+                <Select value={userStatus} onValueChange={setUserStatus}>
+                  <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All statuses</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="invited">Invited</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {usersLoading ? (
+                <EmptyState message="Loading users..." />
+              ) : usersError ? (
+                <ErrorState message={usersError instanceof Error ? usersError.message : 'Failed to load users'} />
+              ) : (usersData?.users || []).length === 0 ? (
+                <EmptyState message="No users match the current filters." />
+              ) : (
+                <div className="space-y-px">
+                  {usersData?.users.map((user) => (
+                    <div
+                      key={user.id}
+                      className="flex min-h-[44px] items-center justify-between gap-4 rounded-md px-2 py-2.5 transition-colors hover:bg-accent/40"
+                    >
+                      <div className="min-w-0 flex-1 space-y-0.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-medium">{user.name || user.email}</span>
+                          {user.isSuperAdmin && (
+                            <span className="flex items-center gap-1 rounded-full border border-accent-amber/20 bg-accent-amber/10 px-2 py-0.5 text-[11px] font-medium text-accent-amber">
+                              <Crown className="h-3 w-3" />
+                              Super admin
+                            </span>
+                          )}
+                          <span className="chip capitalize">{user.status}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {user.email} · {(user.organizations || []).length} org
+                          {(user.organizations || []).length !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setEditUserId(user.id)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit user
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Feature Flags */}
+          <TabsContent value="feature-flags" className="space-y-4">
+            <div className="surface-card p-6 space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <span className="kicker">Admin</span>
+                  <h2 className="text-lg font-semibold">Feature Flags</h2>
+                  <p className="text-xs text-muted-foreground">{filteredFlags.length} matching flags</p>
+                </div>
+                <CreateFeatureFlagDialog />
+              </div>
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px]">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    className="pl-9"
+                    placeholder="Search feature flags"
+                    value={flagSearch}
+                    onChange={(event) => setFlagSearch(event.target.value)}
+                  />
+                </div>
+                <Select value={flagState} onValueChange={setFlagState}>
+                  <SelectTrigger><SelectValue placeholder="State" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All flags</SelectItem>
+                    <SelectItem value="enabled">Enabled</SelectItem>
+                    <SelectItem value="disabled">Disabled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {flagsLoading ? (
+                <EmptyState message="Loading feature flags..." />
+              ) : flagsError ? (
+                <ErrorState message={flagsError instanceof Error ? flagsError.message : 'Failed to load feature flags'} />
+              ) : filteredFlags.length === 0 ? (
+                <EmptyState message="No feature flags match the current filters." />
+              ) : (
+                <div className="space-y-px">
+                  {filteredFlags.map((flag: any) => (
+                    <div
+                      key={flag.id}
+                      className="flex min-h-[44px] items-center justify-between gap-4 rounded-md px-2 py-2.5 transition-colors hover:bg-accent/40"
+                    >
+                      <div className="min-w-0 flex-1 space-y-0.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-medium">{flag.name}</span>
+                          {flag.isEnabled ? (
+                            <span className="chip-accent">Enabled</span>
+                          ) : (
+                            <span className="chip">Disabled</span>
+                          )}
+                          {flag.rolloutPercentage < 100 && (
+                            <span className="chip">{flag.rolloutPercentage}% rollout</span>
+                          )}
+                        </div>
+                        <p className="font-mono text-xs text-muted-foreground">{flag.key}</p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => handleToggleFlag(flag)}
+                          disabled={updateFeatureFlag.isPending}
+                        >
+                          {flag.isEnabled ? 'Disable' : 'Enable'}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => setEditFlagId(flag.id)}
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          onClick={async () => {
+                            if (window.confirm(`Delete "${flag.name}"?`)) {
+                              try {
+                                await deleteFeatureFlag.mutateAsync(flag.id);
+                                queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
+                                toast({ title: 'Feature flag deleted', description: `${flag.name} was removed.` });
+                              } catch (error) {
+                                toast({
+                                  title: 'Failed to delete feature flag',
+                                  description: error instanceof Error ? error.message : 'Failed to delete feature flag',
+                                  variant: 'destructive',
+                                });
+                              }
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Agent Ops */}
+          <TabsContent value="agents" className="space-y-4">
+            <div className="surface-card p-6 space-y-1">
+              <span className="kicker">Admin</span>
+              <h2 className="text-lg font-semibold">AI Operations</h2>
+              <p className="text-sm text-muted-foreground">
+                Global control plane for workspace agents, live safety, and rollout quality.
+              </p>
+            </div>
+            <AgentOpsPanel />
+          </TabsContent>
+
+          {/* Realtime */}
+          <TabsContent value="realtime" className="space-y-4">
             <RealtimeHealthPanel />
           </TabsContent>
 
-          <TabsContent value="audit" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>System audit</CardTitle>
-                <CardDescription>Recent super admin activity across organizations, users, and flags.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
-                  <div className="relative">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      className="pl-9"
-                      placeholder="Search by action, resource, or user"
-                      value={auditSearch}
-                      onChange={(event) => setAuditSearch(event.target.value)}
-                    />
-                  </div>
-                  <Select value={auditResourceType} onValueChange={setAuditResourceType}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Resource type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All resources</SelectItem>
-                      <SelectItem value="organization">Organization</SelectItem>
-                      <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="feature_flag">Feature flag</SelectItem>
-                    </SelectContent>
-                  </Select>
+          {/* Audit */}
+          <TabsContent value="audit" className="space-y-4">
+            <div className="surface-card p-6 space-y-4">
+              <div>
+                <span className="kicker">Admin</span>
+                <h2 className="text-lg font-semibold">System audit</h2>
+                <p className="text-xs text-muted-foreground">
+                  Recent super admin activity across organizations, users, and flags.
+                </p>
+              </div>
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    className="pl-9"
+                    placeholder="Search by action, resource, or user"
+                    value={auditSearch}
+                    onChange={(event) => setAuditSearch(event.target.value)}
+                  />
                 </div>
+                <Select value={auditResourceType} onValueChange={setAuditResourceType}>
+                  <SelectTrigger><SelectValue placeholder="Resource type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All resources</SelectItem>
+                    <SelectItem value="organization">Organization</SelectItem>
+                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="feature_flag">Feature flag</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-                {auditLoading ? (
-                  <EmptyState message="Loading audit logs..." />
-                ) : auditError ? (
-                  <ErrorState message={auditError instanceof Error ? auditError.message : 'Failed to load audit logs'} />
-                ) : (auditData?.auditLogs || []).length === 0 ? (
-                  <EmptyState message="No audit events match the current filters." />
-                ) : (
-                  <div className="space-y-3">
-                    {auditData?.auditLogs.map((log) => (
-                      <div key={log.id} className="rounded-lg border p-4">
-                        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-                          <div className="space-y-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="font-medium">{formatAdminAction(log.action)}</span>
-                              <Badge variant="outline">{log.resourceType}</Badge>
-                              {log.resourceId ? <Badge variant="secondary">{log.resourceId}</Badge> : null}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {log.user?.name || log.user?.email || 'Unknown user'}
-                            </div>
+              {auditLoading ? (
+                <EmptyState message="Loading audit logs..." />
+              ) : auditError ? (
+                <ErrorState message={auditError instanceof Error ? auditError.message : 'Failed to load audit logs'} />
+              ) : (auditData?.auditLogs || []).length === 0 ? (
+                <EmptyState message="No audit events match the current filters." />
+              ) : (
+                <div className="space-y-px">
+                  {auditData?.auditLogs.map((log) => (
+                    <div
+                      key={log.id}
+                      className="rounded-md px-2 py-3 transition-colors hover:bg-accent/40"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-medium">{formatAdminAction(log.action)}</span>
+                            <span className="chip capitalize">{log.resourceType}</span>
+                            {log.resourceId ? (
+                              <span className="chip font-mono text-[11px]">{log.resourceId.slice(0, 8)}</span>
+                            ) : null}
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Clock3 className="h-3.5 w-3.5" />
-                            {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
-                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {log.user?.name || log.user?.email || 'Unknown user'}
+                          </p>
                         </div>
-                        {log.changes ? (
-                          <div className="mt-3 grid gap-2 text-sm text-muted-foreground">
+                        <div className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+                          <Clock3 className="h-3.5 w-3.5" />
+                          {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
+                        </div>
+                      </div>
+                      {log.changes ? (
+                        <details className="mt-2">
+                          <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
+                            Changes ({Object.keys(log.changes).length})
+                          </summary>
+                          <div className="mt-1.5 grid gap-1 text-xs text-muted-foreground pl-2">
                             {Object.entries(log.changes).map(([field, change]) => (
                               <div key={field} className="flex flex-wrap items-center gap-2">
                                 <span className="font-medium text-foreground">{field}</span>
@@ -807,13 +766,13 @@ export function AdminDashboardClient() {
                               </div>
                             ))}
                           </div>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                        </details>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
@@ -821,7 +780,7 @@ export function AdminDashboardClient() {
   );
 }
 
-function StatCard({
+function StatTile({
   title,
   value,
   icon: Icon,
@@ -831,15 +790,13 @@ function StatCard({
   icon: ComponentType<{ className?: string }>;
 }) {
   return (
-    <Card>
-      <CardContent className="flex items-center justify-between p-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
-          <p className="mt-1 text-2xl font-semibold">{value}</p>
-        </div>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </CardContent>
-    </Card>
+    <div className="surface-card flex items-center justify-between p-4">
+      <div>
+        <p className="kicker">{title}</p>
+        <p className="mt-1 text-2xl font-semibold">{value}</p>
+      </div>
+      <Icon className="h-4 w-4 text-muted-foreground" />
+    </div>
   );
 }
 
@@ -853,11 +810,15 @@ function MetricRow({ label, value }: { label: string; value: number }) {
 }
 
 function EmptyState({ message }: { message: string }) {
-  return <div className="py-10 text-center text-sm text-muted-foreground">{message}</div>;
+  return <div className="py-8 text-center text-sm text-muted-foreground">{message}</div>;
 }
 
 function ErrorState({ message }: { message: string }) {
-  return <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-6 text-sm text-destructive">{message}</div>;
+  return (
+    <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-4 text-sm text-destructive">
+      {message}
+    </div>
+  );
 }
 
 function formatAdminAction(action: string) {

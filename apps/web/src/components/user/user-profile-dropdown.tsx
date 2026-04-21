@@ -8,7 +8,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -19,9 +18,9 @@ export function UserProfileDropdown() {
 
   if (isLoading || !user) {
     return (
-      <Button variant="ghost" size="icon" disabled>
+      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" disabled aria-label="Account menu">
         <Avatar className="h-8 w-8">
-          <AvatarFallback>...</AvatarFallback>
+          <AvatarFallback className="bg-muted text-xs text-muted-foreground">--</AvatarFallback>
         </Avatar>
       </Button>
     );
@@ -41,41 +40,60 @@ export function UserProfileDropdown() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="relative h-8 w-8 rounded-full"
+          className="relative h-8 w-8 rounded-full p-0 transition-opacity duration-200 hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           aria-label={`Account menu for ${user.name ?? user.email}`}
         >
           <Avatar className="h-8 w-8">
             <AvatarImage src={user.image || undefined} alt={user.name || 'User'} />
-            <AvatarFallback>{initials}</AvatarFallback>
+            <AvatarFallback className="text-xs font-medium">{initials}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.name}</p>
-            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+      <DropdownMenuContent
+        className="w-60 shadow-sm data-[state=open]:animate-scale-in"
+        align="end"
+        sideOffset={8}
+        forceMount
+      >
+        {/* Avatar header */}
+        <div className="flex items-center gap-3 px-3 py-3">
+          <Avatar className="h-9 w-9 shrink-0">
+            <AvatarImage src={user.image || undefined} alt={user.name || 'User'} />
+            <AvatarFallback className="text-xs font-medium">{initials}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            {user.name && (
+              <p className="truncate text-sm font-medium leading-tight">{user.name}</p>
+            )}
+            <p className="truncate text-xs leading-tight text-muted-foreground">{user.email}</p>
           </div>
-        </DropdownMenuLabel>
+        </div>
+
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <User className="mr-2 h-4 w-4" />
-          <span>Profile</span>
+
+        <DropdownMenuItem className="gap-2 px-3 transition-colors duration-200" asChild>
+          <a href="/settings/profile">
+            <User className="h-4 w-4 shrink-0 text-muted-foreground" />
+            Profile
+          </a>
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Settings className="mr-2 h-4 w-4" />
-          <span>Settings</span>
+        <DropdownMenuItem className="gap-2 px-3 transition-colors duration-200" asChild>
+          <a href="/settings">
+            <Settings className="h-4 w-4 shrink-0 text-muted-foreground" />
+            Settings
+          </a>
         </DropdownMenuItem>
+
         <DropdownMenuSeparator />
+
         <DropdownMenuItem
-          className="text-destructive focus:text-destructive"
+          className="gap-2 px-3 text-destructive transition-colors duration-200 focus:bg-destructive/10 focus:text-destructive"
           onClick={() => signOut({ callbackUrl: '/auth/signin' })}
         >
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Log out</span>
+          <LogOut className="h-4 w-4 shrink-0" />
+          Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
-

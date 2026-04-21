@@ -5,7 +5,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Plus, CheckCircle2, Circle, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { useCreateIssue, useUpdateIssue } from '@/lib/hooks/use-issues';
 import Link from 'next/link';
 
@@ -105,33 +104,32 @@ export function IssueSubtasks({ issueId, projectId }: IssueSubtasksProps) {
 
       {/* Subtasks list */}
       {subtasks && subtasks.length > 0 ? (
-        <ul className="space-y-1">
+        <ul className="space-y-0.5">
           {subtasks.map((subtask) => (
             <li
               key={subtask.id}
-              className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50 group"
+              className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent transition-colors duration-200 group"
             >
               <button
                 onClick={() => handleToggleComplete(subtask)}
-                className="flex-shrink-0"
+                className="shrink-0"
                 disabled={updateIssue.isPending}
+                aria-label={subtask.statusCategory === 'done' ? 'Mark incomplete' : 'Mark complete'}
               >
                 {subtask.statusCategory === 'done' ? (
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <CheckCircle2 className="h-4 w-4 text-accent-emerald" />
                 ) : (
-                  <Circle className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                  <Circle className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors duration-200" />
                 )}
               </button>
               <Link
                 href={`/issues/${subtask.id}`}
-                className={`flex-1 text-sm hover:text-primary ${
+                className={`flex-1 text-sm hover:text-primary transition-colors duration-200 flex items-center gap-1.5 ${
                   subtask.statusCategory === 'done' ? 'line-through text-muted-foreground' : ''
                 }`}
               >
-                <Badge variant="outline" className="mr-2 text-xs">
-                  {subtask.key}
-                </Badge>
-                {subtask.title}
+                <span className="chip font-mono text-[11px] shrink-0">{subtask.key}</span>
+                <span className="truncate">{subtask.title}</span>
               </Link>
             </li>
           ))}

@@ -7,7 +7,6 @@ import { useOrganization } from '@/lib/hooks/use-organization';
 import { useAttachIssueDoc, useDetachIssueDoc, useDocumentSearch, useIssueDocs } from '@/lib/hooks/use-docs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { createDocumentAppHref } from '@/lib/docs/content';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentIcon } from '@/components/docs/document-icon';
@@ -35,8 +34,10 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
     enabled: search.trim().length > 1,
   });
 
+  const [showAll, setShowAll] = useState(false);
   const linkedDocIds = new Set((docs || []).map((doc) => doc.id));
   const availableResults = searchResults.filter((doc) => !linkedDocIds.has(doc.id));
+  const SHOW_LIMIT = 5;
 
   async function handleCreateSpecDoc() {
     try {
@@ -101,133 +102,123 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
     }
   }
 
+  const visibleDocs = showAll ? (docs || []) : (docs || []).slice(0, SHOW_LIMIT);
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 animate-fade-in">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold">Related Docs</h3>
-          <span className="text-xs text-muted-foreground">({docs?.length || 0})</span>
-        </div>
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className="h-7 text-xs"
+          className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground transition-colors duration-200"
           onClick={() => void handleCreateSpecDoc()}
           disabled={attachDoc.isPending}
         >
-          <Plus className="mr-1.5 h-3.5 w-3.5" />
-          Create Spec Doc
+          <Plus className="mr-1 h-3.5 w-3.5" />
+          Create spec
         </Button>
       </div>
 
-      <div className="space-y-2 rounded-lg border p-3">
-        <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Attach Existing</div>
-        <Input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search project docs..."
-        />
-        {search.trim().length > 1 && (
-          <div className="max-h-48 space-y-1 overflow-y-auto">
-            {availableResults.length > 0 ? (
-              availableResults.map((doc) => (
-                <button
-                  key={doc.id}
-                  type="button"
-                  className="flex w-full items-start justify-between rounded-xl border px-3 py-2.5 text-left transition-colors hover:bg-accent"
-                  onClick={() => void handleAttachExisting(doc.id, doc.title)}
-                >
-                  <div className="flex min-w-0 items-start gap-3">
-                    <DocumentIcon icon={doc.icon} className="h-10 w-10 rounded-xl text-base" />
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-medium">{doc.title}</div>
-                      {doc.excerpt && <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">{doc.excerpt}</div>}
-                    </div>
-                  </div>
-                  <div className="mt-1 shrink-0 text-muted-foreground">
-                    <Link2 className="h-4 w-4" />
-                  </div>
-                </button>
-              ))
-            ) : (
-              <div className="rounded-md border border-dashed px-3 py-4 text-sm text-muted-foreground">
-                No matching docs found.
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      {/* Search to attach existing */}
+      <Input
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        placeholder="Search docs to link..."
+        className="h-8 text-sm"
+      />
+      {search.trim().length > 1 && (
+        <div className="max-h-48 space-y-1 overflow-y-auto">
+          {availableResults.length > 0 ? (
+            availableResults.map((doc) => (
+              <button
+                key={doc.id}
+                type="button"
+                className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left transition-colors duration-200 hover:bg-accent"
+                onClick={() => void handleAttachExisting(doc.id, doc.title)}
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <DocumentIcon icon={doc.icon} className="h-7 w-7 rounded-lg text-sm shrink-0" />
+                  <span className="truncate text-sm font-medium">{doc.title}</span>
+                </div>
+                <Link2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              </button>
+            ))
+          ) : (
+            <p className="px-2 py-3 text-sm text-muted-foreground/60">No matching docs found.</p>
+          )}
+        </div>
+      )}
 
+      {/* Linked docs list */}
       {isLoading ? (
         <div className="flex items-center justify-center py-4">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         </div>
       ) : docs && docs.length > 0 ? (
-        <div className="space-y-2">
-          {docs.map((doc) => (
-            <div key={doc.id} className="rounded-xl border p-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 items-start gap-3">
-                  <DocumentIcon icon={doc.icon} className="h-11 w-11 rounded-2xl text-base" />
-                  <div className="min-w-0">
-                    <Link
-                      href={createDocumentAppHref({
-                        id: doc.id,
-                        spaceId: doc.spaceId,
-                        projectId: doc.projectId,
-                      })}
-                      className="truncate text-sm font-medium hover:text-primary"
-                    >
-                      {doc.title}
-                    </Link>
-                    {doc.excerpt && <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">{doc.excerpt}</div>}
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <Badge variant="outline" size="sm">
-                        Linked
-                      </Badge>
-                      <Badge variant="secondary" size="sm">
-                        {doc.projectId ? 'Project Doc' : 'Wiki'}
-                      </Badge>
-                      <span className="text-[11px] text-muted-foreground">
-                        Updated {new Date(doc.updatedAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button asChild variant="ghost" size="icon" className="h-8 w-8">
-                    <Link
-                      href={createDocumentAppHref({
-                        id: doc.id,
-                        spaceId: doc.spaceId,
-                        projectId: doc.projectId,
-                      })}
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => void handleDetach(doc.id, doc.title)}
-                    disabled={detachDoc.isPending}
+        <div className="space-y-1">
+          {visibleDocs.map((doc) => (
+            <div
+              key={doc.id}
+              className="group flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-accent transition-colors duration-200"
+            >
+              <div className="flex min-w-0 items-center gap-2">
+                <DocumentIcon icon={doc.icon} className="h-7 w-7 rounded-lg text-sm shrink-0" />
+                <div className="min-w-0">
+                  <Link
+                    href={createDocumentAppHref({
+                      id: doc.id,
+                      spaceId: doc.spaceId,
+                      projectId: doc.projectId,
+                    })}
+                    className="block truncate text-sm font-medium hover:text-primary transition-colors duration-200"
                   >
-                    <Unlink2 className="h-4 w-4" />
-                  </Button>
+                    {doc.title}
+                  </Link>
+                  <span className="text-[11px] text-muted-foreground">
+                    {doc.projectId ? 'Project doc' : 'Wiki'} · Updated {new Date(doc.updatedAt).toLocaleDateString()}
+                  </span>
                 </div>
+              </div>
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0">
+                <Button asChild variant="ghost" size="icon" className="h-7 w-7">
+                  <Link
+                    href={createDocumentAppHref({
+                      id: doc.id,
+                      spaceId: doc.spaceId,
+                      projectId: doc.projectId,
+                    })}
+                    aria-label="Open doc"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </Link>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => void handleDetach(doc.id, doc.title)}
+                  disabled={detachDoc.isPending}
+                  aria-label="Unlink doc"
+                >
+                  <Unlink2 className="h-3.5 w-3.5" />
+                </Button>
               </div>
             </div>
           ))}
+          {docs.length > SHOW_LIMIT && (
+            <button
+              type="button"
+              onClick={() => setShowAll(!showAll)}
+              className="w-full text-xs text-muted-foreground hover:text-foreground py-1 transition-colors duration-200"
+            >
+              {showAll ? 'Show less' : `+${docs.length - SHOW_LIMIT} more`}
+            </button>
+          )}
         </div>
       ) : (
-        <div className="rounded-lg border border-dashed p-4 text-center">
-          <p className="text-sm text-muted-foreground">No docs linked yet.</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Link design notes, specs, or runbooks to keep context close to the task.
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground/60">
+          No docs linked yet. Link design notes, specs, or runbooks to keep context close.
+        </p>
       )}
     </div>
   );

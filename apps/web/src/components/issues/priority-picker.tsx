@@ -28,36 +28,36 @@ const priorities = [
     value: 'critical',
     label: 'Critical',
     icon: AlertCircle,
-    color: 'text-red-500',
-    bgColor: 'bg-red-500',
+    color: 'text-accent-rose',
+    dotClass: 'priority-critical',
   },
   {
     value: 'high',
     label: 'High',
     icon: ArrowUp,
-    color: 'text-orange-500',
-    bgColor: 'bg-orange-500',
+    color: 'text-accent-amber',
+    dotClass: 'priority-high',
   },
   {
     value: 'medium',
     label: 'Medium',
     icon: Minus,
-    color: 'text-yellow-500',
-    bgColor: 'bg-yellow-500',
+    color: 'text-accent-blue',
+    dotClass: 'priority-medium',
   },
   {
     value: 'low',
     label: 'Low',
     icon: ArrowDown,
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500',
+    color: 'text-muted-foreground',
+    dotClass: 'priority-low',
   },
   {
     value: 'none',
     label: 'None',
     icon: Minus,
-    color: 'text-gray-500',
-    bgColor: 'bg-gray-500',
+    color: 'text-muted-foreground',
+    dotClass: 'priority-low',
   },
 ];
 
@@ -71,22 +71,19 @@ export function PriorityPicker({ value, onChange, disabled = false }: PriorityPi
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
           role="combobox"
           aria-expanded={open}
           aria-haspopup="listbox"
           aria-label="Priority"
-          className="w-full justify-between"
+          className="w-full justify-between h-8 px-2 text-sm hover:bg-accent transition-colors duration-200"
           disabled={disabled}
         >
           <div className="flex items-center gap-2">
-            <div
-              aria-hidden="true"
-              className={`h-3 w-3 rounded-full ${selectedPriority?.bgColor || 'bg-gray-500'}`}
-            ></div>
+            <span aria-hidden="true" className={selectedPriority?.dotClass || 'priority-low'} />
             <span className="capitalize">{selectedPriority?.label || 'None'}</span>
           </div>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-40" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
@@ -111,11 +108,8 @@ export function PriorityPicker({ value, onChange, disabled = false }: PriorityPi
                         value === priority.value ? 'opacity-100' : 'opacity-0'
                       )}
                     />
-                    <div
-                      aria-hidden="true"
-                      className={`mr-2 h-3 w-3 rounded-full ${priority.bgColor}`}
-                    ></div>
-                    <PriorityIcon className={`mr-2 h-4 w-4 ${priority.color}`} />
+                    <span aria-hidden="true" className={`mr-2 ${priority.dotClass}`} />
+                    <PriorityIcon className={`mr-1.5 h-3.5 w-3.5 ${priority.color}`} />
                     <span className="capitalize">{priority.label}</span>
                   </CommandItem>
                 );

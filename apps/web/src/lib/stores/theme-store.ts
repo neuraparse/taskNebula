@@ -18,26 +18,42 @@ interface ThemeState {
   visualStyle: VisualStyle;
   enableAnimations: boolean;
   enableGradients: boolean;
+  hydrated: boolean;
   setColorTheme: (theme: ColorTheme) => void;
   setVisualStyle: (style: VisualStyle) => void;
   setEnableAnimations: (enabled: boolean) => void;
   setEnableGradients: (enabled: boolean) => void;
+  setHydrated: (hydrated: boolean) => void;
+  reset: () => void;
 }
+
+const defaultState = {
+  colorTheme: 'default' as ColorTheme,
+  visualStyle: 'modern' as VisualStyle,
+  enableAnimations: true,
+  enableGradients: true,
+  hydrated: false,
+};
 
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
-      colorTheme: 'default',
-      visualStyle: 'modern',
-      enableAnimations: true,
-      enableGradients: true,
+      ...defaultState,
       setColorTheme: (theme) => set({ colorTheme: theme }),
       setVisualStyle: (style) => set({ visualStyle: style }),
       setEnableAnimations: (enabled) => set({ enableAnimations: enabled }),
       setEnableGradients: (enabled) => set({ enableGradients: enabled }),
+      setHydrated: (hydrated) => set({ hydrated }),
+      reset: () => set({ ...defaultState, hydrated: true }),
     }),
     {
       name: 'tasknebula-theme',
+      skipHydration: false,
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.setHydrated(true);
+        }
+      },
     }
   )
 );
@@ -45,7 +61,7 @@ export const useThemeStore = create<ThemeState>()(
 export const themeInfo: Record<ColorTheme, { name: string; description: string; preview: string[] }> = {
   default: {
     name: 'Blue',
-    description: 'Professional blue accent',
+    description: 'Classic blue — default',
     preview: ['#3b82f6', '#60a5fa', '#93c5fd'],
   },
   ocean: {

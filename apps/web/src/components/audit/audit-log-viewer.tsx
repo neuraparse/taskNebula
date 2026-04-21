@@ -1,10 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';
 import {
   FileText,
@@ -14,7 +12,10 @@ import {
   Webhook,
   Key,
   AlertCircle,
+  ChevronDown,
+  Loader2,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface AuditLogViewerProps {
   organizationId: string;
@@ -25,6 +26,15 @@ interface AuditLogViewerProps {
   limit?: number;
 }
 
+type FilterKey = 'all' | 'created' | 'updated' | 'deleted';
+
+const FILTERS: { key: FilterKey; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'created', label: 'Created' },
+  { key: 'updated', label: 'Updated' },
+  { key: 'deleted', label: 'Deleted' },
+];
+
 export function AuditLogViewer({
   organizationId,
   resourceType,
@@ -33,6 +43,9 @@ export function AuditLogViewer({
   issueId,
   limit = 50,
 }: AuditLogViewerProps) {
+  const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['audit-logs', organizationId, resourceType, resourceId, projectId, issueId, limit],
     queryFn: async () => {
@@ -52,7 +65,11 @@ export function AuditLogViewer({
     enabled: !!organizationId,
   });
 
-  const auditLogs = data?.auditLogs || [];
+  const allLogs: any[] = data?.auditLogs || [];
+
+  const filteredLogs = activeFilter === 'all'
+    ? allLogs
+    : allLogs.filter((log) => log.action.includes(activeFilter));
 
   const getActionIcon = (action: string) => {
     if (action.startsWith('issue.')) return FileText;
@@ -64,11 +81,11 @@ export function AuditLogViewer({
     return AlertCircle;
   };
 
-  const getActionColor = (action: string) => {
-    if (action.includes('created')) return 'bg-green-100 text-green-800';
-    if (action.includes('deleted') || action.includes('revoked')) return 'bg-red-100 text-red-800';
-    if (action.includes('updated') || action.includes('changed')) return 'bg-blue-100 text-blue-800';
-    return 'bg-gray-100 text-gray-800';
+  const getActionChipClass = (action: string) => {
+    if (action.includes('created')) return 'bg-accent-emerald/10 text-accent-emerald border border-accent-emerald/20';
+    if (action.includes('deleted') || action.includes('revoked')) return 'bg-accent-rose/10 text-accent-rose border border-accent-rose/20';
+    if (action.includes('updated') || action.includes('changed')) return 'bg-accent-blue/10 text-accent-blue border border-accent-blue/20';
+    return 'bg-muted text-muted-foreground border border-border';
   };
 
   const formatAction = (action: string) => {
@@ -80,85 +97,140 @@ export function AuditLogViewer({
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Activity Log</CardTitle>
-          <CardDescription>Loading...</CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="surface-card p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="space-y-0.5">
+            <span className="kicker">Security</span>
+            <h3 className="text-sm font-semibold tracking-tight text-foreground">Audit Log</h3>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-10">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Activity Log</CardTitle>
-          <CardDescription>{error instanceof Error ? error.message : 'Failed to load activity.'}</CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="surface-card p-6">
+        <div className="space-y-0.5 mb-2">
+          <span className="kicker">Security</span>
+          <h3 className="text-sm font-semibold tracking-tight text-foreground">Audit Log</h3>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {error instanceof Error ? error.message : 'Failed to load activity.'}
+        </p>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Activity Log</CardTitle>
-        <CardDescription>
-          {auditLogs.length} {auditLogs.length === 1 ? 'event' : 'events'}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[600px] pr-4">
-          {auditLogs.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No activity yet.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {auditLogs.map((log: any) => {
-                const Icon = getActionIcon(log.action);
-                return (
-                  <div key={log.id} className="flex gap-3 pb-4 border-b last:border-0">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={log.user.image} />
-                      <AvatarFallback>
-                        {log.user.name?.charAt(0) || log.user.email?.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
+    <div className="surface-card p-6 space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-0.5">
+          <span className="kicker">Security</span>
+          <h3 className="text-sm font-semibold tracking-tight text-foreground">Audit Log</h3>
+        </div>
+        <span className="chip">{filteredLogs.length} {filteredLogs.length === 1 ? 'event' : 'events'}</span>
+      </div>
 
-                    <div className="flex-1 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm">{log.user.name || log.user.email}</span>
-                        <Badge className={getActionColor(log.action)}>
-                          <Icon className="h-3 w-3 mr-1" />
-                          {formatAction(log.action)}
-                        </Badge>
-                      </div>
+      {/* Filter pills */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {FILTERS.map((f) => (
+          <button
+            key={f.key}
+            onClick={() => setActiveFilter(f.key)}
+            className={cn(
+              'rounded-full px-2.5 py-0.5 text-[11px] font-medium border transition-colors duration-200',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+              activeFilter === f.key
+                ? 'chip-accent'
+                : 'chip hover:border-border-strong'
+            )}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
 
-                      {log.changes && (
-                        <div className="text-sm text-muted-foreground">
-                          {Object.entries(log.changes).map(([field, change]: [string, any]) => (
-                            <div key={field}>
-                              <span className="font-medium">{field}:</span>{' '}
-                              <span className="line-through">{String(change.from)}</span> →{' '}
-                              <span className="text-foreground">{String(change.to)}</span>
-                            </div>
-                          ))}
-                        </div>
+      {/* Log rows */}
+      {filteredLogs.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-10 gap-2">
+          <AlertCircle className="h-8 w-8 text-muted-foreground/30" />
+          <p className="text-sm text-muted-foreground">No events found</p>
+        </div>
+      ) : (
+        <div className="max-h-[560px] overflow-y-auto custom-scrollbar -mr-2 pr-2 divide-y divide-border">
+          {filteredLogs.map((log) => {
+            const Icon = getActionIcon(log.action);
+            const isExpanded = expandedId === log.id;
+            const hasChanges = log.changes && Object.keys(log.changes).length > 0;
+
+            return (
+              <div key={log.id}>
+                <button
+                  aria-expanded={isExpanded}
+                  onClick={() => setExpandedId(isExpanded ? null : log.id)}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-2 text-left transition-colors duration-200',
+                    'h-9 rounded-sm hover:bg-accent/40',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+                    isExpanded && 'bg-accent/20'
+                  )}
+                >
+                  <Avatar className="h-5 w-5 shrink-0">
+                    <AvatarImage src={log.user.image} />
+                    <AvatarFallback className="text-[9px] font-semibold">
+                      {log.user.name?.charAt(0) || log.user.email?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <span className="text-xs font-medium text-foreground truncate min-w-0 shrink-0 max-w-[120px]">
+                    {log.user.name || log.user.email}
+                  </span>
+
+                  <span className={cn(
+                    'rounded-full px-2 py-0.5 text-[10px] font-medium inline-flex items-center gap-1 shrink-0',
+                    getActionChipClass(log.action)
+                  )}>
+                    <Icon className="h-2.5 w-2.5" />
+                    {formatAction(log.action)}
+                  </span>
+
+                  <span className="text-xs text-muted-foreground ml-auto shrink-0">
+                    {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
+                  </span>
+
+                  {hasChanges && (
+                    <ChevronDown
+                      className={cn(
+                        'h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform duration-200',
+                        isExpanded && 'rotate-180'
                       )}
+                    />
+                  )}
+                </button>
 
-                      <div className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
+                {/* Inline expansion */}
+                {isExpanded && hasChanges && (
+                  <div className="animate-fade-in px-3 pb-3 pt-1 ml-8 space-y-1">
+                    {Object.entries(log.changes).map(([field, change]: [string, any]) => (
+                      <div key={field} className="text-xs text-muted-foreground">
+                        <span className="font-medium text-foreground">{field}:</span>{' '}
+                        <span className="line-through">{String(change.from)}</span>
+                        <span className="mx-1 text-muted-foreground/60">to</span>
+                        <span className="text-foreground">{String(change.to)}</span>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </ScrollArea>
-      </CardContent>
-    </Card>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }

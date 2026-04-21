@@ -64,11 +64,11 @@ export function ProjectsClient() {
   );
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="border-b bg-background px-6 py-4">
+    <div className="flex h-full flex-col animate-fade-in">
+      <div className="border-b border-border bg-background px-6 py-4">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Projects</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
             <p className="text-sm text-muted-foreground">
               {isLoading
                 ? 'Loading projects...'
@@ -86,9 +86,9 @@ export function ProjectsClient() {
 
       <div className="flex-1 overflow-auto p-6">
         {projects.length === 0 && !isLoading ? (
-          <div className="rounded-none border border-dashed bg-card p-8 text-center">
-            <h2 className="text-lg font-semibold">No Projects Yet</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
+          <div className="surface-card p-8 text-center border-dashed">
+            <p className="text-sm font-medium">No projects yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">
               {activeTeamspace
                 ? `Create the first project inside ${activeTeamspace.name}.`
                 : 'Create your first project to get started.'}
@@ -99,40 +99,44 @@ export function ProjectsClient() {
             </Button>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {projects.map((project) => (
-              <Link
-                key={project.id}
-                href={`/projects/${project.key.toLowerCase()}/views`}
-                className="group rounded-none border bg-card p-6 transition-colors hover:border-primary"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold group-hover:text-primary">{project.key}</h3>
-                      <Badge variant="outline" className="rounded-none text-xs">
-                        {project.status}
-                      </Badge>
-                    </div>
-                    <p className="mt-1 font-medium">{project.name}</p>
-                    {project.description ? (
-                      <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                        {project.description}
+          <div className="stagger grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {projects.map((project) => {
+              const initials = project.name
+                .split(/\s+/)
+                .slice(0, 2)
+                .map((w: string) => w[0])
+                .join('')
+                .toUpperCase();
+              return (
+                <Link
+                  key={project.id}
+                  href={`/projects/${project.key.toLowerCase()}/views`}
+                  className="surface-card surface-card-hover group flex flex-col gap-3 p-5"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-primary font-mono text-xs font-semibold text-primary-foreground">
+                      {initials}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold leading-tight group-hover:text-primary transition-colors">
+                        {project.name}
                       </p>
-                    ) : null}
+                      <p className="font-mono text-[11px] text-muted-foreground">{project.key}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span>{project.organizationName}</span>
-                  {project.team ? (
-                    <Badge variant="secondary" className="gap-1 rounded-none text-[10px]">
-                      <Layers3 className="h-3 w-3" />
-                      {project.team.name}
-                    </Badge>
-                  ) : null}
-                </div>
-              </Link>
-            ))}
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    {project.team ? (
+                      <span className="flex items-center gap-1">
+                        <Layers3 className="h-3 w-3" />
+                        {project.team.name}
+                      </span>
+                    ) : (
+                      <span>{project.organizationName}</span>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
@@ -208,7 +212,7 @@ function CreateProjectDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[460px] rounded-none border bg-background p-6 shadow-lg">
+      <DialogContent className="w-full max-w-[460px] border border-border bg-background p-6 shadow-md">
         <div className="mb-5 flex items-center justify-between">
           <div>
             <DialogTitle className="text-lg font-semibold">Create Project</DialogTitle>
@@ -219,7 +223,7 @@ function CreateProjectDialog({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-none p-1 hover:bg-muted"
+            className="rounded-md p-1 hover:bg-muted transition-colors"
             aria-label="Close dialog"
           >
             <X className="h-4 w-4" />
@@ -238,7 +242,6 @@ function CreateProjectDialog({
               onChange={(event) => handleNameChange(event.target.value)}
               required
               autoFocus
-              className="rounded-none"
             />
           </div>
 
@@ -253,7 +256,7 @@ function CreateProjectDialog({
               onChange={(event) => handleKeyChange(event.target.value)}
               required
               maxLength={10}
-              className="rounded-none uppercase"
+              className="uppercase"
             />
             <p className="text-xs text-muted-foreground">
               Used as issue prefix, for example {key || 'KEY'}-1.
@@ -265,10 +268,10 @@ function CreateProjectDialog({
               Teamspace
             </label>
             <Select value={teamId} onValueChange={setTeamId}>
-              <SelectTrigger id="project-teamspace" className="rounded-none">
+              <SelectTrigger id="project-teamspace">
                 <SelectValue placeholder="No teamspace" />
               </SelectTrigger>
-              <SelectContent className="rounded-none">
+              <SelectContent>
                 <SelectItem value="none">No teamspace</SelectItem>
                 {teamspaces.map((teamspace) => (
                   <SelectItem key={teamspace.id} value={teamspace.id}>
@@ -291,24 +294,22 @@ function CreateProjectDialog({
               placeholder="Brief project description"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              className="rounded-none"
             />
           </div>
 
           {createProject.error ? (
-            <div className="rounded-none bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               {createProject.error.message}
             </div>
           ) : null}
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={onClose} className="rounded-none">
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={createProject.isPending || !name.trim() || !key.trim()}
-              className="rounded-none"
             >
               {createProject.isPending ? 'Creating...' : 'Create Project'}
             </Button>

@@ -1,7 +1,6 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface IssueDistributionChartsProps {
   issuesByStatus: { status: string; count: number }[];
@@ -9,27 +8,83 @@ interface IssueDistributionChartsProps {
   issuesByType: { type: string; count: number }[];
 }
 
+// Token-mapped colors using CSS variables
 const STATUS_COLORS: Record<string, string> = {
-  todo: '#94a3b8',
-  'in-progress': '#3b82f6',
-  done: '#22c55e',
-  backlog: '#64748b',
+  todo: 'hsl(var(--muted-foreground))',
+  'in-progress': 'hsl(var(--primary))',
+  done: 'hsl(var(--accent-emerald))',
+  backlog: 'hsl(var(--border-strong))',
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  lowest: '#94a3b8',
-  low: '#60a5fa',
-  medium: '#fbbf24',
-  high: '#fb923c',
-  highest: '#ef4444',
+  lowest: 'hsl(var(--muted-foreground))',
+  low: 'hsl(var(--accent-cyan))',
+  medium: 'hsl(var(--accent-amber))',
+  high: 'hsl(var(--accent-rose))',
+  highest: 'hsl(var(--destructive))',
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  bug: '#ef4444',
-  feature: '#3b82f6',
-  task: '#8b5cf6',
-  story: '#10b981',
+  bug: 'hsl(var(--accent-rose))',
+  feature: 'hsl(var(--primary))',
+  task: 'hsl(var(--accent-violet))',
+  story: 'hsl(var(--accent-emerald))',
 };
+
+function DistributionTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  const item = payload[0];
+  return (
+    <div className="surface-card shadow-md rounded-md px-3 py-2 text-xs space-y-0.5">
+      <p className="font-medium text-foreground capitalize">{item.name}</p>
+      <p className="text-muted-foreground">
+        <span className="font-semibold text-foreground tabular-nums">{item.value}</span> issues
+      </p>
+    </div>
+  );
+}
+
+interface PieCardProps {
+  kicker: string;
+  title: string;
+  data: { name: string; value: number }[];
+  colorMap: Record<string, string>;
+  fallbackColor: string;
+}
+
+function PieCard({ kicker, title, data, colorMap, fallbackColor }: PieCardProps) {
+  return (
+    <div className="surface-card p-6 space-y-4">
+      <div className="space-y-0.5">
+        <span className="kicker">{kicker}</span>
+        <h3 className="text-sm font-semibold tracking-tight text-foreground">{title}</h3>
+      </div>
+      <ResponsiveContainer width="100%" height={220}>
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            label={({ name, percent }) =>
+              `${name} (${((percent || 0) * 100).toFixed(0)}%)`
+            }
+            outerRadius={80}
+            dataKey="value"
+          >
+            {data.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={colorMap[entry.name] || fallbackColor}
+              />
+            ))}
+          </Pie>
+          <Tooltip content={<DistributionTooltip />} />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
 
 export function IssueDistributionCharts({
   issuesByStatus,
@@ -53,102 +108,27 @@ export function IssueDistributionCharts({
 
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      {/* Status Distribution */}
-      <Card>
-        <CardHeader>
-          <CardTitle>By Status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie
-                data={statusData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) =>
-                  `${name} (${((percent || 0) * 100).toFixed(0)}%)`
-                }
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {statusData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={STATUS_COLORS[entry.name] || '#94a3b8'}
-                  />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* Priority Distribution */}
-      <Card>
-        <CardHeader>
-          <CardTitle>By Priority</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie
-                data={priorityData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) =>
-                  `${name} (${((percent || 0) * 100).toFixed(0)}%)`
-                }
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {priorityData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={PRIORITY_COLORS[entry.name] || '#94a3b8'}
-                  />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* Type Distribution */}
-      <Card>
-        <CardHeader>
-          <CardTitle>By Type</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie
-                data={typeData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) =>
-                  `${name} (${((percent || 0) * 100).toFixed(0)}%)`
-                }
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {typeData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={TYPE_COLORS[entry.name] || '#94a3b8'} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      <PieCard
+        kicker="Distribution"
+        title="By Status"
+        data={statusData}
+        colorMap={STATUS_COLORS}
+        fallbackColor="hsl(var(--muted-foreground))"
+      />
+      <PieCard
+        kicker="Distribution"
+        title="By Priority"
+        data={priorityData}
+        colorMap={PRIORITY_COLORS}
+        fallbackColor="hsl(var(--muted-foreground))"
+      />
+      <PieCard
+        kicker="Distribution"
+        title="By Type"
+        data={typeData}
+        colorMap={TYPE_COLORS}
+        fallbackColor="hsl(var(--muted-foreground))"
+      />
     </div>
   );
 }
-

@@ -2,9 +2,7 @@
 
 import { Issue } from '@tasknebula/types';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
 import {
   Sheet,
   SheetContent,
@@ -18,7 +16,6 @@ import {
   User,
   Calendar,
   Tag,
-  Link as LinkIcon,
   MessageSquare,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -32,30 +29,32 @@ interface MobileIssueDetailProps {
 export function MobileIssueDetail({ issue, onBack }: MobileIssueDetailProps) {
   return (
     <div className="flex h-full flex-col bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-10 border-b bg-background">
-        <div className="flex items-center justify-between p-4">
+      {/* Compact header */}
+      <div className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur">
+        <div className="flex h-12 items-center justify-between px-3">
           <Button
             variant="ghost"
             size="icon"
+            className="h-8 w-8"
             onClick={onBack}
             asChild={!onBack}
+            aria-label="Go back"
           >
             {onBack ? (
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className="h-4 w-4" />
             ) : (
               <Link href="/board">
-                <ArrowLeft className="h-5 w-5" />
+                <ArrowLeft className="h-4 w-4" />
               </Link>
             )}
           </Button>
 
-          <span className="text-sm text-muted-foreground">{issue.key}</span>
+          <span className="font-mono text-xs text-muted-foreground">{issue.key}</span>
 
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreVertical className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="More actions">
+                <MoreVertical className="h-4 w-4" />
               </Button>
             </SheetTrigger>
             <SheetContent side="bottom">
@@ -86,52 +85,41 @@ export function MobileIssueDetail({ issue, onBack }: MobileIssueDetailProps) {
 
       {/* Content */}
       <div className="flex-1 overflow-auto">
-        <div className="space-y-6 p-4">
-          {/* Title */}
-          <div>
-            <h1 className="text-xl font-bold leading-tight">{issue.title}</h1>
+        <div className="space-y-5 p-4">
+          {/* Status + priority chips */}
+          <div className="flex flex-wrap gap-1.5">
+            <span className="chip-accent">{issue.status}</span>
+            <span className="chip">{issue.priority}</span>
+            {issue.type && <span className="chip">{issue.type}</span>}
           </div>
 
-          {/* Status & Priority */}
-          <div className="flex gap-2">
-            <Badge>{issue.status}</Badge>
-            <Badge variant="outline">{issue.priority}</Badge>
-            {issue.type && <Badge variant="secondary">{issue.type}</Badge>}
-          </div>
+          {/* Title */}
+          <h1 className="text-xl font-semibold leading-snug">{issue.title}</h1>
 
           {/* Description */}
           {issue.description && (
-            <div>
-              <h3 className="mb-2 text-sm font-semibold">Description</h3>
-              <p className="text-sm text-muted-foreground">
-                {issue.description}
-              </p>
-            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {issue.description}
+            </p>
           )}
 
-          <Separator />
-
           {/* Details */}
-          <div className="space-y-4">
+          <div className="space-y-3 border-t border-border pt-4">
             {/* Assignee */}
             <div className="flex items-center gap-3">
-              <User className="h-4 w-4 text-muted-foreground" />
+              <User className="h-4 w-4 shrink-0 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">Assignee</span>
               <div className="ml-auto flex items-center gap-2">
                 {issue.assigneeId ? (
                   <>
-                    <Avatar className="h-6 w-6">
+                    <Avatar className="h-5 w-5">
                       <AvatarImage src={undefined} />
-                      <AvatarFallback className="text-xs">
-                        ?
-                      </AvatarFallback>
+                      <AvatarFallback className="text-[9px]">?</AvatarFallback>
                     </Avatar>
                     <span className="text-sm">Assigned</span>
                   </>
                 ) : (
-                  <span className="text-sm text-muted-foreground">
-                    Unassigned
-                  </span>
+                  <span className="text-sm text-muted-foreground">Unassigned</span>
                 )}
               </div>
             </div>
@@ -139,14 +127,12 @@ export function MobileIssueDetail({ issue, onBack }: MobileIssueDetailProps) {
             {/* Reporter */}
             {issue.reporterId && (
               <div className="flex items-center gap-3">
-                <User className="h-4 w-4 text-muted-foreground" />
+                <User className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Reporter</span>
                 <div className="ml-auto flex items-center gap-2">
-                  <Avatar className="h-6 w-6">
+                  <Avatar className="h-5 w-5">
                     <AvatarImage src={undefined} />
-                    <AvatarFallback className="text-xs">
-                      ?
-                    </AvatarFallback>
+                    <AvatarFallback className="text-[9px]">?</AvatarFallback>
                   </Avatar>
                   <span className="text-sm">Reporter</span>
                 </div>
@@ -155,25 +141,23 @@ export function MobileIssueDetail({ issue, onBack }: MobileIssueDetailProps) {
 
             {/* Created */}
             <div className="flex items-center gap-3">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Calendar className="h-4 w-4 shrink-0 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">Created</span>
               <span className="ml-auto text-sm">
-                {formatDistanceToNow(new Date(issue.createdAt), {
-                  addSuffix: true,
-                })}
+                {formatDistanceToNow(new Date(issue.createdAt), { addSuffix: true })}
               </span>
             </div>
 
             {/* Labels */}
             {issue.labels && issue.labels.length > 0 && (
               <div className="flex items-start gap-3">
-                <Tag className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                <Tag className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Labels</span>
                 <div className="ml-auto flex flex-wrap justify-end gap-1">
                   {issue.labels.map((label) => (
-                    <Badge key={label} variant="secondary" className="text-xs">
+                    <span key={label} className="chip text-xs">
                       {label}
-                    </Badge>
+                    </span>
                   ))}
                 </div>
               </div>
@@ -182,9 +166,9 @@ export function MobileIssueDetail({ issue, onBack }: MobileIssueDetailProps) {
         </div>
       </div>
 
-      {/* Bottom Actions */}
-      <div className="border-t p-4">
-        <Button className="w-full" size="lg">
+      {/* Bottom action */}
+      <div className="border-t border-border p-3">
+        <Button className="w-full">
           <MessageSquare className="mr-2 h-4 w-4" />
           Add Comment
         </Button>
@@ -192,4 +176,3 @@ export function MobileIssueDetail({ issue, onBack }: MobileIssueDetailProps) {
     </div>
   );
 }
-

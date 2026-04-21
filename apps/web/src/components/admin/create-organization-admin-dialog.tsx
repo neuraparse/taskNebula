@@ -35,7 +35,6 @@ export function CreateOrganizationAdminDialog() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch all users for owner selection
   const { data: usersData } = useQuery({
     queryKey: ['admin-all-users'],
     queryFn: async () => {
@@ -53,30 +52,21 @@ export function CreateOrganizationAdminDialog() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to create organization');
       }
-
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: 'Organization created',
-        description: 'The organization has been created successfully.',
-      });
+      toast({ title: 'Organization created', description: 'The organization was created successfully.' });
       queryClient.invalidateQueries({ queryKey: ['admin-organizations'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
       setOpen(false);
       setFormData({ name: '', slug: '', ownerId: '', plan: 'free' });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Failed to create organization', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -84,8 +74,8 @@ export function CreateOrganizationAdminDialog() {
     e.preventDefault();
     if (!formData.name || !formData.slug || !formData.ownerId) {
       toast({
-        title: 'Error',
-        description: 'Please fill in all required fields',
+        title: 'Missing fields',
+        description: 'Name, slug, and owner are required.',
         variant: 'destructive',
       });
       return;
@@ -93,48 +83,45 @@ export function CreateOrganizationAdminDialog() {
     createOrgMutation.mutate(formData);
   };
 
-  const generateSlug = (name: string) => {
-    return name
+  const generateSlug = (name: string) =>
+    name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
-  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          New Organization
+        <Button size="sm">
+          <Plus className="mr-1.5 h-4 w-4" />
+          New organization
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create New Organization</DialogTitle>
-            <DialogDescription>
-              Create a new organization and assign an owner.
-            </DialogDescription>
+            <DialogTitle>Create organization</DialogTitle>
+            <DialogDescription>Create a new organization and assign an owner.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Organization Name *</Label>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => {
                   const name = e.target.value;
-                  setFormData({ 
-                    ...formData, 
+                  setFormData({
+                    ...formData,
                     name,
-                    slug: formData.slug || generateSlug(name)
+                    slug: formData.slug || generateSlug(name),
                   });
                 }}
                 placeholder="Acme Inc"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="slug">Slug *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="slug">Slug</Label>
               <Input
                 id="slug"
                 value={formData.slug}
@@ -142,11 +129,11 @@ export function CreateOrganizationAdminDialog() {
                 placeholder="acme-inc"
               />
               <p className="text-xs text-muted-foreground">
-                URL-friendly identifier (lowercase, hyphens only)
+                URL-friendly identifier (lowercase, hyphens only).
               </p>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="owner">Owner *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="owner">Owner</Label>
               <Select
                 value={formData.ownerId}
                 onValueChange={(value) => setFormData({ ...formData, ownerId: value })}
@@ -163,6 +150,23 @@ export function CreateOrganizationAdminDialog() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="plan">Plan</Label>
+              <Select
+                value={formData.plan}
+                onValueChange={(value: any) => setFormData({ ...formData, plan: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="free">Free</SelectItem>
+                  <SelectItem value="starter">Starter</SelectItem>
+                  <SelectItem value="growth">Growth</SelectItem>
+                  <SelectItem value="enterprise">Enterprise</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
@@ -170,7 +174,7 @@ export function CreateOrganizationAdminDialog() {
             </Button>
             <Button type="submit" disabled={createOrgMutation.isPending}>
               {createOrgMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Organization
+              Create organization
             </Button>
           </DialogFooter>
         </form>
@@ -178,4 +182,3 @@ export function CreateOrganizationAdminDialog() {
     </Dialog>
   );
 }
-

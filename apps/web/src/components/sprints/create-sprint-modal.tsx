@@ -118,26 +118,25 @@ export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprin
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Create Sprint</DialogTitle>
-          <DialogDescription>
-            Create a new sprint to organize your work into time-boxed iterations.
+      <DialogContent className="sm:max-w-[480px]">
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="text-base font-semibold">Create Sprint</DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            Organize work into a time-boxed iteration.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Error Alert */}
+        <form onSubmit={handleSubmit} className="space-y-4 pt-1">
           {error && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="py-2">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
           {/* Sprint Name */}
-          <div className="space-y-2">
-            <Label htmlFor="name">
+          <div className="space-y-1.5">
+            <Label htmlFor="name" className="text-sm">
               Sprint Name <span className="text-destructive">*</span>
             </Label>
             <Input
@@ -150,21 +149,25 @@ export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprin
           </div>
 
           {/* Sprint Goal */}
-          <div className="space-y-2">
-            <Label htmlFor="goal">Sprint Goal</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="goal" className="text-sm">
+              Sprint Goal
+              <span className="ml-1.5 text-xs text-muted-foreground font-normal">(optional)</span>
+            </Label>
             <Textarea
               id="goal"
               placeholder="What do you want to achieve in this sprint?"
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
-              rows={3}
+              rows={2}
+              className="resize-none"
             />
           </div>
 
           {/* Date Range */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="startDate">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="startDate" className="text-sm">
                 Start Date <span className="text-destructive">*</span>
               </Label>
               <Input
@@ -175,8 +178,8 @@ export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprin
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="endDate">
+            <div className="space-y-1.5">
+              <Label htmlFor="endDate" className="text-sm">
                 End Date <span className="text-destructive">*</span>
               </Label>
               <Input
@@ -192,29 +195,30 @@ export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprin
 
           {/* Duration Info */}
           {duration && duration > 0 && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
-              <Calendar className="h-4 w-4" />
+            <div className="surface-inset flex items-center gap-2 text-sm text-muted-foreground rounded-md px-3 py-2">
+              <Calendar className="h-3.5 w-3.5 shrink-0" />
               <span>
-                Duration: <strong>{duration} days</strong>
-                {duration === 14 && ' (2 weeks - recommended)'}
-                {duration === 7 && ' (1 week)'}
-                {duration === 21 && ' (3 weeks)'}
+                <span className="font-medium text-foreground">{duration} days</span>
+                {duration === 14 && ' — 2 weeks (recommended)'}
+                {duration === 7 && ' — 1 week'}
+                {duration === 21 && ' — 3 weeks'}
               </span>
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex justify-end gap-2 pt-4">
+          <div className="flex justify-end gap-2 pt-2">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
+              size="sm"
               onClick={() => handleClose(false)}
               disabled={createSprint.isPending}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={createSprint.isPending}>
-              {createSprint.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" size="sm" disabled={createSprint.isPending}>
+              {createSprint.isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
               Create Sprint
             </Button>
           </div>
@@ -223,4 +227,3 @@ export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprin
     </Dialog>
   );
 }
-

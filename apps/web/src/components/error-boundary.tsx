@@ -15,12 +15,6 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-/**
- * Error Boundary Component
- * 
- * Catches JavaScript errors anywhere in the child component tree,
- * logs those errors, and displays a fallback UI.
- */
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
@@ -32,16 +26,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error to console in development
     if (process.env.NODE_ENV === 'development') {
       console.error('Error caught by boundary:', error, errorInfo);
     }
 
-    // Call custom error handler if provided
     this.props.onError?.(error, errorInfo);
-
-    // TODO: Send to error tracking service (Sentry, etc.)
-    // logErrorToService(error, errorInfo);
   }
 
   handleReset = () => {
@@ -55,34 +44,29 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       }
 
       return (
-        <div className="flex min-h-[400px] flex-col items-center justify-center gap-4 p-8">
-          <div className="rounded-full bg-destructive/10 p-4">
-            <AlertTriangle className="h-12 w-12 text-destructive" />
+        <div className="flex min-h-[320px] flex-col items-center justify-center gap-4 p-8 animate-fade-up">
+          <div className="rounded-full bg-destructive/10 p-3">
+            <AlertTriangle className="h-8 w-8 text-destructive" aria-hidden />
           </div>
-          
+
           <div className="text-center">
-            <h2 className="text-2xl font-bold">Something went wrong</h2>
-            <p className="mt-2 text-muted-foreground">
-              {this.state.error?.message || 'An unexpected error occurred'}
+            <h2 className="text-lg font-semibold">Something went wrong</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              An unexpected error occurred. Try reloading the page.
             </p>
           </div>
 
-          <div className="flex gap-2">
-            <Button onClick={this.handleReset} variant="outline">
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Try Again
-            </Button>
-            <Button onClick={() => window.location.reload()}>
-              Reload Page
-            </Button>
-          </div>
+          <Button onClick={() => window.location.reload()} size="sm">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Reload page
+          </Button>
 
           {process.env.NODE_ENV === 'development' && this.state.error && (
-            <details className="mt-4 max-w-2xl">
-              <summary className="cursor-pointer text-sm font-medium">
-                Error Details (Development Only)
+            <details className="mt-2 max-w-xl w-full">
+              <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
+                Error details (dev only)
               </summary>
-              <pre className="mt-2 overflow-auto rounded-md bg-muted p-4 text-xs">
+              <pre className="mt-2 overflow-auto rounded-md bg-surface p-3 text-[11px] text-muted-foreground">
                 {this.state.error.stack}
               </pre>
             </details>
@@ -95,21 +79,14 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 }
 
-/**
- * Async Error Boundary
- * 
- * Catches errors from async operations
- */
 export function AsyncErrorBoundary({ children }: { children: ReactNode }) {
   return (
     <ErrorBoundary
       fallback={
-        <div className="flex min-h-[200px] items-center justify-center">
-          <div className="text-center">
-            <AlertTriangle className="mx-auto h-8 w-8 text-destructive" />
-            <p className="mt-2 text-sm text-muted-foreground">
-              Failed to load content
-            </p>
+        <div className="flex min-h-[160px] items-center justify-center">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <AlertTriangle className="h-4 w-4 text-destructive" aria-hidden />
+            Failed to load content
           </div>
         </div>
       }
@@ -119,11 +96,6 @@ export function AsyncErrorBoundary({ children }: { children: ReactNode }) {
   );
 }
 
-/**
- * Section Error Boundary
- * 
- * Smaller error boundary for individual sections
- */
 export function SectionErrorBoundary({
   children,
   sectionName,
@@ -134,10 +106,10 @@ export function SectionErrorBoundary({
   return (
     <ErrorBoundary
       fallback={
-        <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4">
+        <div className="rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2">
           <div className="flex items-center gap-2 text-destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <p className="text-sm font-medium">
+            <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
+            <p className="text-sm">
               {sectionName ? `Failed to load ${sectionName}` : 'Failed to load section'}
             </p>
           </div>
@@ -148,4 +120,3 @@ export function SectionErrorBoundary({
     </ErrorBoundary>
   );
 }
-

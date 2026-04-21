@@ -60,7 +60,7 @@ export function SwipeableItem({
 
   return (
     <div className={cn('relative overflow-hidden', className)}>
-      {/* Left Action */}
+      {/* Left action reveal */}
       {leftAction && (
         <div
           className={cn(
@@ -68,12 +68,13 @@ export function SwipeableItem({
             leftAction.color
           )}
           style={{ width: '100px' }}
+          aria-label={leftAction.label}
         >
           {leftAction.icon}
         </div>
       )}
 
-      {/* Right Action */}
+      {/* Right action reveal */}
       {rightAction && (
         <div
           className={cn(
@@ -81,6 +82,7 @@ export function SwipeableItem({
             rightAction.color
           )}
           style={{ width: '100px' }}
+          aria-label={rightAction.label}
         >
           {rightAction.icon}
         </div>
@@ -101,7 +103,7 @@ export function SwipeableItem({
   );
 }
 
-// Predefined actions
+// Predefined actions using design token colors
 export const swipeActions = {
   delete: (onClick: () => void): SwipeAction => ({
     icon: <Trash2 className="h-5 w-5 text-white" />,
@@ -112,14 +114,13 @@ export const swipeActions = {
   archive: (onClick: () => void): SwipeAction => ({
     icon: <Archive className="h-5 w-5 text-white" />,
     label: 'Archive',
-    color: 'bg-orange-500',
+    color: 'bg-accent-amber',
     onClick,
   }),
   complete: (onClick: () => void): SwipeAction => ({
     icon: <Check className="h-5 w-5 text-white" />,
     label: 'Complete',
-    color: 'bg-green-500',
+    color: 'bg-accent-emerald',
     onClick,
   }),
 };
-

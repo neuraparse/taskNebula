@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { TimeLogDialog } from './time-log-dialog';
 import { Clock, Plus, Trash2, User } from 'lucide-react';
@@ -98,76 +96,68 @@ export function TimeTrackingPanel({ issueId, canLog, canDelete }: TimeTrackingPa
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Time Tracking
-              </CardTitle>
-              <CardDescription>
-                Total time logged: <strong className="text-foreground">{formatTime(totalTime)}</strong>
-              </CardDescription>
-            </div>
-            {canLog && (
-              <Button size="sm" onClick={() => setShowLogDialog(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Log Time
-              </Button>
+      <div className="space-y-3">
+        {/* Header row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">Time Tracking</span>
+            {totalTime > 0 && (
+              <span className="chip">{formatTime(totalTime)} total</span>
             )}
           </div>
-        </CardHeader>
-        <CardContent>
-          {worklogs.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No time logged yet</p>
-              {canLog && (
-                <p className="text-sm mt-2">Click &quot;Log Time&quot; to record your work</p>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {worklogs.map((log) => (
-                <div
-                  key={log.id}
-                  className="flex items-start justify-between p-3 border rounded-lg"
-                >
-                  <div className="space-y-1 flex-1">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary">{formatTime(log.timeSpent)}</Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {new Date(log.startedAt).toLocaleDateString()} at{' '}
-                        {new Date(log.startedAt).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+          {canLog && (
+            <Button size="sm" variant="ghost" onClick={() => setShowLogDialog(true)}>
+              <Plus className="mr-1 h-4 w-4" />
+              Log time
+            </Button>
+          )}
+        </div>
+
+        {/* Log rows */}
+        {worklogs.length === 0 ? (
+          <div className="py-6 text-center text-sm text-muted-foreground">
+            <Clock className="mx-auto mb-2 h-8 w-8 opacity-30" />
+            <p>No time logged yet</p>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            {worklogs.map((log) => (
+              <div
+                key={log.id}
+                className="flex items-center justify-between rounded-md px-2 py-1.5 transition-colors duration-200 hover:bg-accent/50"
+              >
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <span className="chip-accent shrink-0">{formatTime(log.timeSpent)}</span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <User className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{log.author.name}</span>
+                      <span className="text-border-strong">·</span>
+                      <span className="shrink-0">
+                        {new Date(log.startedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                       </span>
                     </div>
                     {log.description && (
-                      <p className="text-sm text-muted-foreground">{log.description}</p>
+                      <p className="truncate text-xs text-muted-foreground">{log.description}</p>
                     )}
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <User className="h-3 w-3" />
-                      <span>{log.author.name}</span>
-                    </div>
                   </div>
-                  {canDelete && (
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => deleteWorklog(log.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                {canDelete && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => deleteWorklog(log.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <TimeLogDialog
         issueId={issueId}

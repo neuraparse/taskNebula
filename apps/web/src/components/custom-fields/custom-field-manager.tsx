@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, GripVertical } from 'lucide-react';
+import { Plus, Pencil, Trash2, GripVertical, Type, Hash, Calendar, List, ToggleLeft, Link, Mail, Layers } from 'lucide-react';
 import { useCustomFields, useDeleteCustomField } from '@/lib/hooks/use-custom-fields';
 import { CreateCustomFieldDialog } from './create-custom-field-dialog';
 
@@ -13,6 +12,18 @@ interface CustomFieldManagerProps {
   projectId?: string;
 }
 
+// Field type icons colored via accent palette tokens
+const FIELD_TYPE_CONFIG: Record<string, { label: string; icon: React.ElementType; iconClass: string }> = {
+  text: { label: 'Text', icon: Type, iconClass: 'text-accent-blue' },
+  number: { label: 'Number', icon: Hash, iconClass: 'text-accent-emerald' },
+  date: { label: 'Date', icon: Calendar, iconClass: 'text-accent-violet' },
+  select: { label: 'Select', icon: List, iconClass: 'text-accent-amber' },
+  multi_select: { label: 'Multi-Select', icon: Layers, iconClass: 'text-accent-rose' },
+  checkbox: { label: 'Checkbox', icon: ToggleLeft, iconClass: 'text-accent-cyan' },
+  url: { label: 'URL', icon: Link, iconClass: 'text-accent-indigo' },
+  email: { label: 'Email', icon: Mail, iconClass: 'text-accent-cyan' },
+};
+
 export function CustomFieldManager({ organizationId, projectId }: CustomFieldManagerProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingField, setEditingField] = useState<any | null>(null);
@@ -20,34 +31,6 @@ export function CustomFieldManager({ organizationId, projectId }: CustomFieldMan
   const deleteField = useDeleteCustomField();
 
   const customFields = data?.customFields || [];
-
-  const getFieldTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      text: 'Text',
-      number: 'Number',
-      date: 'Date',
-      select: 'Select',
-      multi_select: 'Multi-Select',
-      checkbox: 'Checkbox',
-      url: 'URL',
-      email: 'Email',
-    };
-    return labels[type] || type;
-  };
-
-  const getFieldTypeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      text: 'bg-blue-100 text-blue-800',
-      number: 'bg-green-100 text-green-800',
-      date: 'bg-purple-100 text-purple-800',
-      select: 'bg-yellow-100 text-yellow-800',
-      multi_select: 'bg-orange-100 text-orange-800',
-      checkbox: 'bg-pink-100 text-pink-800',
-      url: 'bg-indigo-100 text-indigo-800',
-      email: 'bg-cyan-100 text-cyan-800',
-    };
-    return colors[type] || 'bg-gray-100 text-gray-800';
-  };
 
   const handleDelete = async (fieldId: string) => {
     if (confirm('Are you sure you want to delete this custom field?')) {
@@ -59,7 +42,7 @@ export function CustomFieldManager({ organizationId, projectId }: CustomFieldMan
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Custom Fields</CardTitle>
+          <CardTitle className="text-base">Custom Fields</CardTitle>
           <CardDescription>Loading...</CardDescription>
         </CardHeader>
       </Card>
@@ -72,12 +55,12 @@ export function CustomFieldManager({ organizationId, projectId }: CustomFieldMan
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Custom Fields</CardTitle>
+              <CardTitle className="text-base">Custom Fields</CardTitle>
               <CardDescription>
                 Manage custom fields for {projectId ? 'this project' : 'your organization'}
               </CardDescription>
             </div>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Button size="sm" onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Add Field
             </Button>
@@ -85,51 +68,57 @@ export function CustomFieldManager({ organizationId, projectId }: CustomFieldMan
         </CardHeader>
         <CardContent>
           {customFields.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No custom fields yet.</p>
-              <p className="text-sm">Create your first custom field to get started.</p>
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              <Type className="mx-auto mb-2 h-8 w-8 opacity-20" />
+              <p>No custom fields yet. Create your first one to get started.</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {customFields.map((field) => (
-                <div
-                  key={field.id}
-                  className="flex items-center gap-3 rounded-lg border p-3 hover:bg-accent"
-                >
-                  <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
-                  
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{field.name}</span>
-                      <Badge className={getFieldTypeColor(field.type)}>
-                        {getFieldTypeLabel(field.type)}
-                      </Badge>
-                      {field.isRequired && (
-                        <Badge variant="destructive" className="text-xs">
-                          Required
-                        </Badge>
+            <div className="space-y-1">
+              {customFields.map((field) => {
+                const config = FIELD_TYPE_CONFIG[field.type] || { label: field.type, icon: Type, iconClass: 'text-muted-foreground' };
+                const FieldIcon = config.icon;
+
+                return (
+                  <div
+                    key={field.id}
+                    className="flex items-center gap-3 rounded-md px-2 py-2.5 transition-colors duration-200 hover:bg-accent/50"
+                  >
+                    <GripVertical className="h-4 w-4 shrink-0 cursor-move text-muted-foreground" aria-label="Drag to reorder" />
+
+                    <FieldIcon className={`h-4 w-4 shrink-0 ${config.iconClass}`} aria-label={config.label} />
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{field.name}</span>
+                        <span className="chip text-[10px]">{config.label}</span>
+                        {field.isRequired && (
+                          <span className="inline-flex items-center rounded-sm border border-destructive/30 bg-destructive/10 px-1.5 py-0.5 text-[10px] font-medium text-destructive">
+                            Required
+                          </span>
+                        )}
+                      </div>
+                      {field.description && (
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">{field.description}</p>
                       )}
                     </div>
-                    {field.description && (
-                      <p className="text-sm text-muted-foreground mt-1">{field.description}</p>
-                    )}
-                  </div>
 
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => setEditingField(field)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(field.id)}
-                      disabled={deleteField.isPending}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingField(field)}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        onClick={() => handleDelete(field.id)}
+                        disabled={deleteField.isPending}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

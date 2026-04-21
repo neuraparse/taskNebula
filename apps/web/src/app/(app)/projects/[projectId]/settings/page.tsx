@@ -59,66 +59,65 @@ export default function ProjectSettingsPage({
   if (!permissions.canBrowseProject && !permissions.isSuperAdmin && !permissions.isOrgOwner) {
     return (
       <div className="p-6">
-        <div className="rounded-lg border border-red-200 bg-red-50 p-8 text-center">
-          <p className="text-red-800">You don&apos;t have permission to access project settings.</p>
+        <div className="surface-card p-8 text-center border-destructive/30 bg-destructive/5">
+          <p className="text-sm text-destructive">You don&apos;t have permission to access project settings.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden animate-fade-in">
       {/* Fixed Header */}
-      <div className="border-b bg-background px-6 py-4">
-        <div className="mx-auto max-w-7xl">
-          <h1 className="text-3xl font-bold tracking-tight">Project Settings</h1>
-          <p className="text-muted-foreground">Manage your project configuration, permissions, and custom fields.</p>
-        </div>
+      <div className="border-b border-border bg-background px-6 py-4 shrink-0">
+        <span className="kicker">Project</span>
+        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
+        <p className="text-sm text-muted-foreground">Manage configuration, permissions, and custom fields.</p>
       </div>
 
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-7xl px-6 py-6">
+        <div className="px-6 py-6">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-            <div className="sticky top-0 z-10 bg-background pb-4">
-              <TabsList className="inline-flex h-auto w-auto rounded-lg bg-muted p-1">
-                <TabsTrigger value="permissions" className="flex items-center gap-2 px-4 py-2">
+            <div className="sticky top-0 z-10 bg-background -mx-6 px-6 border-b border-border pb-0 mb-2">
+              <TabsList className="inline-flex h-auto w-full overflow-x-auto rounded-none bg-transparent p-0 gap-0 justify-start">
+                <TabsTrigger value="permissions" className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent text-muted-foreground">
                   <Shield className="h-4 w-4" />
                   <span>Permissions</span>
                 </TabsTrigger>
-                <TabsTrigger value="schemes" className="flex items-center gap-2 px-4 py-2">
+                <TabsTrigger value="schemes" className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent text-muted-foreground">
                   <Key className="h-4 w-4" />
                   <span>Schemes</span>
                 </TabsTrigger>
-                <TabsTrigger value="security" className="flex items-center gap-2 px-4 py-2">
+                <TabsTrigger value="security" className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent text-muted-foreground">
                   <Lock className="h-4 w-4" />
                   <span>Security</span>
                 </TabsTrigger>
-                <TabsTrigger value="custom-fields" className="flex items-center gap-2 px-4 py-2">
+                <TabsTrigger value="custom-fields" className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent text-muted-foreground">
                   <FileText className="h-4 w-4" />
                   <span>Custom Fields</span>
                 </TabsTrigger>
-                <TabsTrigger value="workflows" className="flex items-center gap-2 px-4 py-2">
+                <TabsTrigger value="workflows" className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent text-muted-foreground">
                   <Workflow className="h-4 w-4" />
                   <span>Workflows</span>
                 </TabsTrigger>
-                <TabsTrigger value="automation" className="flex items-center gap-2 px-4 py-2">
+                <TabsTrigger value="automation" className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent text-muted-foreground">
                   <Zap className="h-4 w-4" />
                   <span>Automation</span>
                 </TabsTrigger>
-                <TabsTrigger value="ai-agents" className="flex items-center gap-2 px-4 py-2">
+                <TabsTrigger value="ai-agents" className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent text-muted-foreground">
                   <Bot className="h-4 w-4" />
                   <span>AI Agents</span>
                 </TabsTrigger>
-                <TabsTrigger value="chat-calls" className="flex items-center gap-2 px-4 py-2">
+                <TabsTrigger value="chat-calls" className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent text-muted-foreground">
                   <MessageSquareText className="h-4 w-4" />
                   <span>Chat & Calls</span>
                 </TabsTrigger>
-                <TabsTrigger value="webhooks" className="flex items-center gap-2 px-4 py-2">
+                <TabsTrigger value="webhooks" className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent text-muted-foreground">
                   <Webhook className="h-4 w-4" />
                   <span>Webhooks</span>
                 </TabsTrigger>
-                <TabsTrigger value="general" className="flex items-center gap-2 px-4 py-2">
+                <TabsTrigger value="general" className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent text-muted-foreground">
                   <Settings className="h-4 w-4" />
                   <span>General</span>
                 </TabsTrigger>

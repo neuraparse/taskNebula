@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useCreateIssue } from '@/lib/hooks/use-issues';
+import { useWorkflowStatuses } from '@/lib/hooks/use-workflow-statuses';
 import {
   Dialog,
   DialogContent,
@@ -29,7 +30,8 @@ interface CreateIssueModalProps {
   onOpenChange: (open: boolean) => void;
   projectId: string;
   sprintId?: string;
-  defaultStatus?: string;
+  /** UUID of the workflow status to pre-assign. When provided, no status picker is shown. */
+  defaultStatusId?: string;
 }
 
 export function CreateIssueModal({
@@ -37,14 +39,47 @@ export function CreateIssueModal({
   onOpenChange,
   projectId,
   sprintId,
-  defaultStatus = 'backlog',
+  defaultStatusId,
 }: CreateIssueModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState<string>('task');
   const [priority, setPriority] = useState<string>('medium');
+  const [selectedStatusId, setSelectedStatusId] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [showError, setShowError] = useState(false);
+
+  // Only fetch statuses when no defaultStatusId is provided
+  const {
+    data: statuses,
+    isLoading: statusesLoading,
+  } = useWorkflowStatuses(defaultStatusId ? undefined : projectId);
+
+  // Sorted statuses by position
+  const sortedStatuses = statuses
+    ? [...statuses].sort((a, b) => a.position - b.position)
+    : [];
+
+  // Default selectedStatusId to the first status by position when statuses load
+  useEffect(() => {
+    const first = sortedStatuses[0];
+    if (!defaultStatusId && first && !selectedStatusId) {
+      setSelectedStatusId(first.id);
+    }
+  }, [defaultStatusId, sortedStatuses, selectedStatusId]);
+
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!open) {
+      setTitle('');
+      setDescription('');
+      setType('task');
+      setPriority('medium');
+      setSelectedStatusId('');
+      setError(null);
+      setShowError(false);
+    }
+  }, [open]);
 
   const createIssue = useCreateIssue();
 
@@ -66,6 +101,7 @@ export function CreateIssueModal({
         priority,
         projectId,
         sprintId,
+        statusId: defaultStatusId ?? (selectedStatusId || undefined),
       });
 
       // Reset form
@@ -73,6 +109,7 @@ export function CreateIssueModal({
       setDescription('');
       setType('task');
       setPriority('medium');
+      setSelectedStatusId('');
       setError(null);
       setShowError(false);
 
@@ -83,6 +120,8 @@ export function CreateIssueModal({
       setError(err instanceof Error ? err.message : 'Failed to create issue.');
     }
   };
+
+  const showStatusPicker = !defaultStatusId;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -172,6 +211,33 @@ export function CreateIssueModal({
                 </Select>
               </div>
             </div>
+
+            {/* Status Row — only shown when no defaultStatusId is provided */}
+            {showStatusPicker && (
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={selectedStatusId}
+                  onValueChange={setSelectedStatusId}
+                  disabled={statusesLoading || sortedStatuses.length === 0}
+                >
+                  <SelectTrigger id="status">
+                    <SelectValue
+                      placeholder={
+                        statusesLoading ? 'Loading statuses…' : 'Select a status'
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sortedStatuses.map((status) => (
+                      <SelectItem key={status.id} value={status.id}>
+                        {status.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           <DialogFooter>

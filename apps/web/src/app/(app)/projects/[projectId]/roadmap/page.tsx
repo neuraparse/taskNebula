@@ -1,8 +1,6 @@
 'use client';
 
 import { use, useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Calendar, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
@@ -29,11 +27,11 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-const PRIORITY_COLORS = {
-  critical: '#EF4444',
-  high: '#F59E0B',
-  medium: '#3B82F6',
-  low: '#6B7280',
+const PRIORITY_BADGE: Record<string, string> = {
+  critical: 'bg-accent-rose/10 text-accent-rose border-accent-rose/20',
+  high: 'bg-accent-amber/10 text-accent-amber border-accent-amber/20',
+  medium: 'bg-accent-blue/10 text-accent-blue border-accent-blue/20',
+  low: 'bg-muted text-muted-foreground border-border',
 };
 
 export default function RoadmapPage({ params }: RoadmapPageProps) {
@@ -110,170 +108,147 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden animate-fade-in">
       {/* Fixed Header */}
-      <div className="border-b bg-background px-6 py-4">
-        <div className="mx-auto max-w-7xl">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold flex items-center gap-2">
-                <MapPin className="h-8 w-8" />
-                Epic Roadmap
-              </h1>
-              <p className="text-muted-foreground">
-                Timeline view of your project epics
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setCurrentYear(currentYear - 1)}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-lg font-semibold w-20 text-center">{currentYear}</span>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setCurrentYear(currentYear + 1)}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+      <div className="border-b border-border bg-background px-6 py-4 shrink-0">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="kicker">Project</span>
+            <h1 className="text-2xl font-semibold tracking-tight">Roadmap</h1>
+            <p className="text-sm text-muted-foreground">Timeline view of your project epics</p>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setCurrentYear(currentYear - 1)}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm font-semibold w-16 text-center tabular-nums">{currentYear}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setCurrentYear(currentYear + 1)}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
 
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-7xl px-6 py-6 space-y-6">
+        <div className="px-6 py-6 space-y-6">
 
         {/* Roadmap Timeline */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Timeline View</CardTitle>
-            <CardDescription>
-              Visual representation of epic timelines throughout the year
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {/* Month Headers */}
-            <div className="grid grid-cols-12 gap-1 mb-4">
-              {MONTHS.map((month, idx) => (
-                <div
-                  key={idx}
-                  className="text-center text-xs font-semibold text-muted-foreground p-2 border-b"
-                >
-                  {month.slice(0, 3)}
-                </div>
-              ))}
-            </div>
+        <div className="surface-card p-5">
+          <p className="text-sm font-semibold mb-1">Timeline</p>
+          <p className="text-xs text-muted-foreground mb-4">Visual representation of epic timelines throughout the year</p>
 
-            {/* Epic Bars */}
-            <div className="space-y-3">
-              {epics.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No epics found for this project</p>
-                </div>
-              ) : (
-                epics.map((epic) => {
-                  const duration = getEpicDuration(epic);
-                  if (!duration) return null;
+          {/* Month Headers */}
+          <div className="grid grid-cols-12 gap-1 mb-3">
+            {MONTHS.map((month, idx) => (
+              <div
+                key={idx}
+                className="text-center text-[10px] font-medium text-muted-foreground pb-1 border-b border-border"
+              >
+                {month.slice(0, 3)}
+              </div>
+            ))}
+          </div>
 
-                  return (
-                    <div key={epic.id} className="relative">
-                      <div className="grid grid-cols-12 gap-1">
-                        {MONTHS.map((_, idx) => {
-                          const isInRange = idx >= duration.start && idx <= duration.end;
-                          const isStart = idx === duration.start;
-                          const isEnd = idx === duration.end;
+          {/* Epic Bars */}
+          <div className="space-y-3">
+            {epics.length === 0 ? (
+              <div className="text-center py-10 text-muted-foreground">
+                <Calendar className="h-8 w-8 mx-auto mb-3 opacity-40" />
+                <p className="text-sm">No epics found for this project</p>
+              </div>
+            ) : (
+              epics.map((epic) => {
+                const duration = getEpicDuration(epic);
+                if (!duration) return null;
 
-                          return (
-                            <div
-                              key={idx}
-                              className={`h-12 border ${
-                                isInRange
-                                  ? 'bg-primary/10 border-primary'
-                                  : 'border-transparent'
-                              } ${isStart ? 'rounded-l-md' : ''} ${isEnd ? 'rounded-r-md' : ''}`}
-                            >
-                              {isStart && (
-                                <div className="p-1 text-xs truncate font-medium">
-                                  {epic.title}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                      {/* Progress Indicator */}
-                      <div className="absolute top-0 left-0 right-0 h-1 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-green-500 transition-all"
-                          style={{
-                            width: `${(epic.progress / 12) * duration.span * 100}%`,
-                            marginLeft: `${(duration.start / 12) * 100}%`
-                          }}
-                        />
-                      </div>
+                return (
+                  <div key={epic.id} className="relative">
+                    <div className="grid grid-cols-12 gap-1">
+                      {MONTHS.map((_, idx) => {
+                        const isInRange = idx >= duration.start && idx <= duration.end;
+                        const isStart = idx === duration.start;
+                        const isEnd = idx === duration.end;
+
+                        return (
+                          <div
+                            key={idx}
+                            className={`h-10 border ${
+                              isInRange
+                                ? 'bg-primary/10 border-primary/30'
+                                : 'border-transparent'
+                            } ${isStart ? 'rounded-l-sm' : ''} ${isEnd ? 'rounded-r-sm' : ''}`}
+                          >
+                            {isStart && (
+                              <div className="px-1.5 py-1 text-[11px] truncate font-medium text-primary">
+                                {epic.title}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                    {/* Progress Indicator */}
+                    <div className="absolute top-0 left-0 right-0 h-0.5 bg-border rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-accent-emerald transition-all"
+                        style={{
+                          width: `${(epic.progress / 12) * duration.span * 100}%`,
+                          marginLeft: `${(duration.start / 12) * 100}%`
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
 
         {/* Epic List */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2">
           {epics.map((epic) => (
-            <Card key={epic.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{epic.title}</CardTitle>
-                    {epic.description && (
-                      <CardDescription className="mt-1">
-                        {epic.description.slice(0, 100)}
-                        {epic.description.length > 100 && '...'}
-                      </CardDescription>
-                    )}
-                  </div>
-                  <Badge
-                    style={{
-                      backgroundColor: PRIORITY_COLORS[epic.priority as keyof typeof PRIORITY_COLORS] || PRIORITY_COLORS.low,
-                    }}
-                    className="text-white"
-                  >
-                    {epic.priority}
-                  </Badge>
+            <div key={epic.id} className="surface-card p-4 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-semibold leading-snug">{epic.title}</p>
+                <span className={`chip text-[10px] capitalize border ${PRIORITY_BADGE[epic.priority] ?? PRIORITY_BADGE.low}`}>
+                  {epic.priority}
+                </span>
+              </div>
+              {epic.description && (
+                <p className="text-xs text-muted-foreground line-clamp-2">
+                  {epic.description}
+                </p>
+              )}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Progress</span>
+                  <span className="font-medium tabular-nums">{epic.progress}%</span>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Progress</span>
-                    <span className="font-medium">{epic.progress}%</span>
-                  </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-green-500 transition-all"
-                      style={{ width: `${epic.progress}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>{epic.completedIssues} of {epic.totalIssues} issues completed</span>
-                    {epic.startDate && epic.dueDate && (
-                      <span>
-                        {new Date(epic.startDate).toLocaleDateString()} - {new Date(epic.dueDate).toLocaleDateString()}
-                      </span>
-                    )}
-                  </div>
+                <div className="h-1.5 bg-border rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-accent-emerald transition-all rounded-full"
+                    style={{ width: `${epic.progress}%` }}
+                  />
                 </div>
-              </CardContent>
-            </Card>
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>{epic.completedIssues} of {epic.totalIssues} completed</span>
+                  {epic.startDate && epic.dueDate && (
+                    <span className="tabular-nums">
+                      {new Date(epic.startDate).toLocaleDateString()} - {new Date(epic.dueDate).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
           ))}
         </div>
         </div>

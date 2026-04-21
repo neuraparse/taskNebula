@@ -6,7 +6,7 @@ export const metadata = {
 
 export default function DocsPage() {
   return (
-    <div className="h-full min-h-0 overflow-hidden">
+    <div className="animate-fade-in h-full min-h-0 overflow-hidden">
       <DocsShell />
     </div>
   );

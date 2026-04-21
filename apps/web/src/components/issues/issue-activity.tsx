@@ -11,9 +11,14 @@ import { useIssue } from '@/lib/hooks/use-issues';
 import { MentionTextarea } from './mention-textarea';
 import { formatDistanceToNow } from 'date-fns';
 
+const COMMENT_LIMIT = 5;
+const ACTIVITY_LIMIT = 7;
+
 export function IssueActivity({ issueId }: { issueId: string }) {
   const [newComment, setNewComment] = useState('');
   const [mentionedUsers, setMentionedUsers] = useState<string[]>([]);
+  const [showAllComments, setShowAllComments] = useState(false);
+  const [showAllActivity, setShowAllActivity] = useState(false);
   const { data: issue } = useIssue(issueId);
   const { data: comments, isLoading: commentsLoading } = useComments(issueId);
   const { data: activities, isLoading: activitiesLoading } = useActivities(issueId);
@@ -30,13 +35,16 @@ export function IssueActivity({ issueId }: { issueId: string }) {
     }
   };
 
+  const visibleComments = showAllComments ? (comments || []) : (comments || []).slice(0, COMMENT_LIMIT);
+  const visibleActivities = showAllActivity ? (activities || []) : (activities || []).slice(0, ACTIVITY_LIMIT);
+
   return (
-    <section>
+    <section className="animate-fade-in">
       <Tabs defaultValue="comments" className="flex flex-col">
         <TabsList className="w-fit mb-4">
           <TabsTrigger value="comments" className="gap-1.5 text-xs">
             <MessageSquare className="h-3.5 w-3.5" />
-            Comments ({comments?.length || 0})
+            Comments {comments && comments.length > 0 ? `(${comments.length})` : ''}
           </TabsTrigger>
           <TabsTrigger value="history" className="gap-1.5 text-xs">
             <History className="h-3.5 w-3.5" />
@@ -47,11 +55,11 @@ export function IssueActivity({ issueId }: { issueId: string }) {
         <TabsContent value="comments" className="space-y-4 mt-0">
           {commentsLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             </div>
           ) : comments && comments.length > 0 ? (
             <div className="space-y-4">
-              {comments.map((comment) => {
+              {visibleComments.map((comment) => {
                 const authorName = comment.author.name || comment.author.email;
                 const initials = authorName
                   .split(' ')
@@ -78,6 +86,15 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                   </div>
                 );
               })}
+              {comments.length > COMMENT_LIMIT && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllComments(!showAllComments)}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-200"
+                >
+                  {showAllComments ? 'Show fewer' : `Show ${comments.length - COMMENT_LIMIT} more comments`}
+                </button>
+              )}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground/60 py-4">
@@ -118,11 +135,11 @@ export function IssueActivity({ issueId }: { issueId: string }) {
         <TabsContent value="history" className="mt-0">
           {activitiesLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             </div>
           ) : activities && activities.length > 0 ? (
             <div className="space-y-3">
-              {activities.map((activity) => {
+              {visibleActivities.map((activity) => {
                 const userName = activity.user?.name || activity.user?.email || 'Unknown';
                 const timeAgo = formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true });
 
@@ -154,6 +171,15 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                   </div>
                 );
               })}
+              {activities.length > ACTIVITY_LIMIT && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllActivity(!showAllActivity)}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-200"
+                >
+                  {showAllActivity ? 'Show fewer' : `Show ${activities.length - ACTIVITY_LIMIT} more`}
+                </button>
+              )}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground/60 py-4">

@@ -1,10 +1,9 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { CheckCircle2, Circle, Clock, TrendingUp } from 'lucide-react';
 import { Sprint, SprintIssue } from '@/lib/hooks/use-sprints';
-import { differenceInDays, format } from 'date-fns';
+import { differenceInDays } from 'date-fns';
 
 interface SprintStatsProps {
   sprint: Sprint;
@@ -42,76 +41,81 @@ export function SprintStats({ sprint, issues }: SprintStatsProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {/* Completion Progress */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Completion</CardTitle>
-          <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{Math.round(completionPercentage)}%</div>
-          <Progress value={completionPercentage} className="mt-2" />
-          <p className="text-xs text-muted-foreground mt-2">
-            {completedIssues} of {totalIssues} issues
-          </p>
-        </CardContent>
-      </Card>
+      <div className="surface-card p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Completion</span>
+          <CheckCircle2 className="h-4 w-4 text-accent-emerald" />
+        </div>
+        <div className="text-3xl font-semibold tabular-nums text-foreground">
+          {Math.round(completionPercentage)}%
+        </div>
+        <Progress value={completionPercentage} className="h-1.5" />
+        <p className="text-xs text-muted-foreground">
+          {completedIssues} of {totalIssues} issues
+        </p>
+      </div>
 
       {/* Time Progress */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Time Progress</CardTitle>
-          <Clock className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{Math.round(timePercentage)}%</div>
-          <Progress value={timePercentage} className="mt-2" />
-          <p className="text-xs text-muted-foreground mt-2">
-            {daysRemaining} days remaining
-          </p>
-        </CardContent>
-      </Card>
+      <div className="surface-card p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Time Progress</span>
+          <Clock className="h-4 w-4 text-accent-amber" />
+        </div>
+        <div className="text-3xl font-semibold tabular-nums text-foreground">
+          {Math.round(timePercentage)}%
+        </div>
+        <Progress value={timePercentage} className="h-1.5" />
+        <p className="text-xs text-muted-foreground">
+          {daysRemaining} days remaining
+        </p>
+      </div>
 
       {/* Story Points */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Story Points</CardTitle>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
-            {completedPoints} / {totalPoints}
-          </div>
-          <Progress value={pointsPercentage} className="mt-2" />
-          <p className="text-xs text-muted-foreground mt-2">
-            {Math.round(pointsPercentage)}% completed
-          </p>
-        </CardContent>
-      </Card>
+      <div className="surface-card p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Story Points</span>
+          <TrendingUp className="h-4 w-4 text-primary" />
+        </div>
+        <div className="text-3xl font-semibold tabular-nums text-foreground">
+          {completedPoints}
+          <span className="text-lg font-normal text-muted-foreground"> / {totalPoints}</span>
+        </div>
+        <Progress value={pointsPercentage} className="h-1.5" />
+        <p className="text-xs text-muted-foreground">
+          {Math.round(pointsPercentage)}% completed
+        </p>
+      </div>
 
       {/* Issue Breakdown */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Issue Status</CardTitle>
+      <div className="surface-card p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Issue Status</span>
           <Circle className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Done</span>
-              <span className="font-medium">{completedIssues}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">In Progress</span>
-              <span className="font-medium">{inProgressIssues}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">To Do</span>
-              <span className="font-medium">{todoIssues}</span>
-            </div>
+        </div>
+        <div className="space-y-2 pt-1">
+          <div className="flex items-center justify-between text-sm">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent-emerald inline-block" />
+              Done
+            </span>
+            <span className="font-semibold tabular-nums">{completedIssues}</span>
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-center justify-between text-sm">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent-blue inline-block" />
+              In Progress
+            </span>
+            <span className="font-semibold tabular-nums">{inProgressIssues}</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40 inline-block" />
+              To Do
+            </span>
+            <span className="font-semibold tabular-nums">{todoIssues}</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
-

@@ -107,10 +107,11 @@ export function CreateCustomFieldDialog({
   };
 
   const showOptionsField = type === 'select' || type === 'multi_select';
+  const isPending = createField.isPending || updateField.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[480px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{isEditMode ? 'Edit Custom Field' : 'Create Custom Field'}</DialogTitle>
@@ -123,7 +124,9 @@ export function CreateCustomFieldDialog({
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Field Name *</Label>
+              <Label htmlFor="name">
+                Field Name <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="name"
                 value={name}
@@ -134,18 +137,22 @@ export function CreateCustomFieldDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">
+                Description <span className="text-muted-foreground font-normal">(optional)</span>
+              </Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Optional description"
+                placeholder="Help text shown to users filling this field"
                 rows={2}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="type">Field Type *</Label>
+              <Label htmlFor="type">
+                Field Type <span className="text-destructive">*</span>
+              </Label>
               <Select value={type} onValueChange={setType} disabled={isEditMode}>
                 <SelectTrigger>
                   <SelectValue />
@@ -161,45 +168,44 @@ export function CreateCustomFieldDialog({
                   <SelectItem value="email">Email</SelectItem>
                 </SelectContent>
               </Select>
+              {isEditMode && (
+                <p className="text-xs text-muted-foreground">Field type cannot be changed after creation.</p>
+              )}
             </div>
 
             {showOptionsField && (
               <div className="space-y-2">
-                <Label htmlFor="options">Options (one per line) *</Label>
+                <Label htmlFor="options">
+                  Options <span className="text-destructive">*</span>
+                </Label>
                 <Textarea
                   id="options"
                   value={options}
                   onChange={(e) => setOptions(e.target.value)}
-                  placeholder="Option 1&#10;Option 2&#10;Option 3"
+                  placeholder={'Option 1\nOption 2\nOption 3'}
                   rows={4}
                   required={showOptionsField}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Enter each option on a new line
-                </p>
+                <p className="text-xs text-muted-foreground">Enter each option on a new line</p>
               </div>
             )}
 
-            <div className="flex items-center space-x-2">
+            <label className="flex cursor-pointer items-center gap-2.5">
               <Checkbox
                 id="required"
                 checked={isRequired}
                 onCheckedChange={(checked) => setIsRequired(checked as boolean)}
               />
-              <Label htmlFor="required" className="cursor-pointer">
-                Required field
-              </Label>
-            </div>
+              <span className="text-sm">Required field</span>
+            </label>
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createField.isPending || updateField.isPending || !name}>
-              {(createField.isPending || updateField.isPending) && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+            <Button type="submit" disabled={isPending || !name}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isEditMode ? 'Save Changes' : 'Create Field'}
             </Button>
           </DialogFooter>

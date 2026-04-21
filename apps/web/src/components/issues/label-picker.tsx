@@ -59,17 +59,18 @@ export function LabelPicker({ value, onChange, disabled = false }: LabelPickerPr
       {value.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {value.map((label) => (
-            <Badge key={label} variant="secondary" className="gap-1">
+            <span key={label} className="chip inline-flex items-center gap-1">
               {label}
               {!disabled && (
                 <button
                   onClick={() => handleRemoveLabel(label)}
-                  className="ml-1 hover:text-destructive"
+                  className="ml-0.5 hover:text-destructive transition-colors duration-200"
+                  aria-label={`Remove label ${label}`}
                 >
                   <X className="h-3 w-3" />
                 </button>
               )}
-            </Badge>
+            </span>
           ))}
         </div>
       )}
@@ -78,9 +79,9 @@ export function LabelPicker({ value, onChange, disabled = false }: LabelPickerPr
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="w-full justify-start"
+            className="h-8 px-2 justify-start text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors duration-200"
             disabled={disabled}
           >
             <Plus className="mr-2 h-4 w-4" />
@@ -108,24 +109,24 @@ export function LabelPicker({ value, onChange, disabled = false }: LabelPickerPr
 
             {/* Predefined labels */}
             <div>
-              <p className="mb-2 text-xs font-semibold text-muted-foreground">
-                SUGGESTED LABELS
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Suggested Labels
               </p>
               <div className="flex flex-wrap gap-1">
                 {predefinedLabels
                   .filter((label) => !value.includes(label))
                   .map((label) => (
-                    <Badge
+                    <button
                       key={label}
-                      variant="outline"
-                      className="cursor-pointer hover:bg-secondary"
+                      type="button"
+                      className="chip cursor-pointer hover:bg-accent transition-colors duration-200"
                       onClick={() => {
                         handleAddLabel(label);
                         setOpen(false);
                       }}
                     >
                       {label}
-                    </Badge>
+                    </button>
                   ))}
               </div>
             </div>

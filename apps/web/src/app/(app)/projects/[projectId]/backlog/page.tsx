@@ -42,10 +42,10 @@ import {
 import { cn } from '@/lib/utils';
 
 const typeConfig: Record<string, { icon: React.ElementType; color: string }> = {
-  story: { icon: BookOpen, color: 'text-emerald-500' },
-  task: { icon: CheckSquare, color: 'text-blue-500' },
-  bug: { icon: Bug, color: 'text-red-500' },
-  epic: { icon: Zap, color: 'text-purple-500' },
+  story: { icon: BookOpen, color: 'text-accent-emerald' },
+  task: { icon: CheckSquare, color: 'text-accent-blue' },
+  bug: { icon: Bug, color: 'text-accent-rose' },
+  epic: { icon: Zap, color: 'text-accent-violet' },
 };
 
 export default function BacklogPage({ params }: { params: Promise<{ projectId: string }> }) {
@@ -88,15 +88,15 @@ export default function BacklogPage({ params }: { params: Promise<{ projectId: s
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
       case 'critical':
-        return <AlertCircle className="h-3.5 w-3.5 text-red-500" />;
+        return <AlertCircle className="h-3.5 w-3.5 text-accent-rose" />;
       case 'high':
-        return <ArrowUp className="h-3.5 w-3.5 text-orange-500" />;
+        return <ArrowUp className="h-3.5 w-3.5 text-accent-amber" />;
       case 'medium':
-        return <Minus className="h-3.5 w-3.5 text-yellow-500" />;
+        return <Minus className="h-3.5 w-3.5 text-accent-amber" />;
       case 'low':
-        return <ArrowDown className="h-3.5 w-3.5 text-blue-500" />;
+        return <ArrowDown className="h-3.5 w-3.5 text-accent-blue" />;
       default:
-        return <Circle className="h-3.5 w-3.5 text-gray-400" />;
+        return <Circle className="h-3.5 w-3.5 text-muted-foreground" />;
     }
   };
 
@@ -109,12 +109,12 @@ export default function BacklogPage({ params }: { params: Promise<{ projectId: s
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col animate-fade-in">
       {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur px-6 py-3 shrink-0">
+      <div className="border-b border-border bg-background/95 backdrop-blur px-6 py-3 shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h1 className="text-sm font-semibold">Backlog</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Backlog</h1>
             <span className="text-xs text-muted-foreground">
               {backlogIssues.length} issue{backlogIssues.length !== 1 ? 's' : ''}
             </span>
@@ -172,7 +172,7 @@ export default function BacklogPage({ params }: { params: Promise<{ projectId: s
         ) : (
           <div>
             {/* Table Header */}
-            <div className="flex items-center gap-3 px-6 py-2 border-b bg-muted/30 text-[11px] font-medium uppercase tracking-wider text-muted-foreground sticky top-0 z-10">
+            <div className="flex items-center gap-3 px-6 py-2 border-b border-border bg-surface text-[11px] font-medium uppercase tracking-wider text-muted-foreground sticky top-0 z-10">
               <div className="w-8 flex justify-center">
                 <Checkbox
                   checked={selectedIssues.length === backlogIssues.length && backlogIssues.length > 0}
@@ -203,7 +203,7 @@ export default function BacklogPage({ params }: { params: Promise<{ projectId: s
                 <div
                   key={issue.id}
                   className={cn(
-                    'flex items-center gap-3 px-6 py-2.5 border-b border-border/30 hover:bg-muted/30 transition-colors group',
+                    'flex items-center gap-3 px-6 py-2.5 border-b border-border/30 hover:bg-accent/50 transition-colors group',
                     selectedIssues.includes(issue.id) && 'bg-primary/5'
                   )}
                 >
@@ -240,8 +240,8 @@ export default function BacklogPage({ params }: { params: Promise<{ projectId: s
                       variant="outline"
                       className={cn(
                         'text-[10px] px-1.5 py-0 capitalize font-medium',
-                        issue.priority === 'critical' && 'border-red-500/30 text-red-600 dark:text-red-400',
-                        issue.priority === 'high' && 'border-orange-500/30 text-orange-600 dark:text-orange-400',
+                        issue.priority === 'critical' && 'border-accent-rose/30 text-accent-rose',
+                        issue.priority === 'high' && 'border-accent-amber/30 text-accent-amber',
                       )}
                     >
                       {issue.priority}
