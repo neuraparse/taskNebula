@@ -73,7 +73,7 @@ function mockDbWithPrefs(prefs: Record<string, unknown> | null) {
 const ORIGINAL_ENV = { ...process.env };
 
 async function loadService(): Promise<{ sendEmail: SendEmail }> {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
   return require('@tasknebula/db/src/utils/email-service') as {
     sendEmail: SendEmail;
   };
