@@ -68,12 +68,12 @@ export function ProjectsClient() {
     },
   });
 
+  const firstOrganizationId = orgsData?.organizations?.[0]?.id ?? null;
   useEffect(() => {
-    const firstOrganization = orgsData?.organizations?.[0];
-    if (!currentOrganizationId && firstOrganization) {
-      setCurrentOrganization(firstOrganization.id);
+    if (!currentOrganizationId && firstOrganizationId) {
+      setCurrentOrganization(firstOrganizationId);
     }
-  }, [currentOrganizationId, orgsData, setCurrentOrganization]);
+  }, [currentOrganizationId, firstOrganizationId, setCurrentOrganization]);
 
   const { data: teamspaces = [] } = useTeamspaces(currentOrganizationId);
   const { data: projects = [], isLoading } = useProjects({

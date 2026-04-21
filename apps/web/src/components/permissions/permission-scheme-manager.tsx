@@ -280,7 +280,6 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
         <div className="surface-card p-5 space-y-3">
           <div className="space-y-1">
             <span className="kicker">Project assignment</span>
-            <h3 className="text-sm font-semibold tracking-tight">Project assignment</h3>
             <p className="text-xs text-muted-foreground">
               Choose which permission scheme should drive this project&apos;s default access model.
             </p>
@@ -313,7 +312,7 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
 
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <span className="kicker">Permission schemes</span>
+          <span className="kicker">Schemes</span>
           <h3 className="text-sm font-semibold tracking-tight text-foreground">Permission schemes</h3>
           <p className="text-sm text-muted-foreground">
             Create reusable access templates and reuse them across projects.

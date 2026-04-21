@@ -436,7 +436,6 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
         <div className="surface-card p-5 space-y-3">
           <div className="space-y-1">
             <span className="kicker">Project assignment</span>
-            <h3 className="text-sm font-semibold tracking-tight">Project assignment</h3>
             <p className="text-xs text-muted-foreground">
               Choose which issue visibility scheme this project should apply by default.
             </p>
@@ -469,7 +468,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
 
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <span className="kicker">Security schemes</span>
+          <span className="kicker">Schemes</span>
           <h3 className="text-sm font-semibold tracking-tight text-foreground">Issue security schemes</h3>
           <p className="text-sm text-muted-foreground">
             Control who can see sensitive issues and what defaults new work starts with.

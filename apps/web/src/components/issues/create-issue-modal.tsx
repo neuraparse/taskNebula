@@ -125,7 +125,7 @@ export function CreateIssueModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto rounded-lg">
         <DialogHeader>
           <DialogTitle>Create New Issue</DialogTitle>
           <DialogDescription>

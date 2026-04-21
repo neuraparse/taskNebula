@@ -120,6 +120,13 @@
       "when": 1775349000000,
       "tag": "0016_livekit_participant_identity",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1776800000000,
+      "tag": "0017_quiet_email_defaults",
+      "breakpoints": true
     }
   ]
 }

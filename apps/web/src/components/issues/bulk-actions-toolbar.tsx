@@ -149,7 +149,7 @@ export function BulkActionsToolbar({
 
       {/* Update Dialog */}
       <Dialog open={showUpdateDialog} onOpenChange={setShowUpdateDialog}>
-        <DialogContent>
+        <DialogContent className="max-h-[85vh] overflow-y-auto rounded-lg">
           <DialogHeader>
             <DialogTitle>Bulk Update Issues</DialogTitle>
             <DialogDescription>
@@ -216,7 +216,7 @@ export function BulkActionsToolbar({
       </Dialog>
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
+        <DialogContent className="rounded-lg">
           <DialogHeader>
             <DialogTitle>Delete issues</DialogTitle>
             <DialogDescription>

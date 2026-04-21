@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db, emailTemplates } from '@tasknebula/db';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +34,30 @@ export async function PATCH(
   try {
     const body = await request.json();
     const validatedData = updateEmailTemplateSchema.parse(body);
+
+    // Look up the template to determine owning organization, then authorize.
+    const [existing] = await db
+      .select({ organizationId: emailTemplates.organizationId, isDefault: emailTemplates.isDefault })
+      .from(emailTemplates)
+      .where(eq(emailTemplates.id, templateId))
+      .limit(1);
+
+    if (!existing) {
+      return NextResponse.json(
+        { error: 'Email template not found' },
+        { status: 404 }
+      );
+    }
+
+    // System default templates (organizationId = null) are not editable via this API.
+    if (!existing.organizationId || existing.isDefault) {
+      return NextResponse.json({ error: 'Cannot modify system default templates' }, { status: 403 });
+    }
+
+    const canManage = await hasPermission(existing.organizationId, 'org:settings');
+    if (!canManage) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
 
     const [updatedTemplate] = await db
       .update(emailTemplates)
@@ -84,6 +109,29 @@ export async function DELETE(
   const { templateId } = await params;
 
   try {
+    // Look up the template to determine owning organization, then authorize.
+    const [existing] = await db
+      .select({ organizationId: emailTemplates.organizationId, isDefault: emailTemplates.isDefault })
+      .from(emailTemplates)
+      .where(eq(emailTemplates.id, templateId))
+      .limit(1);
+
+    if (!existing) {
+      return NextResponse.json(
+        { error: 'Email template not found' },
+        { status: 404 }
+      );
+    }
+
+    if (!existing.organizationId || existing.isDefault) {
+      return NextResponse.json({ error: 'Cannot delete system default templates' }, { status: 403 });
+    }
+
+    const canManage = await hasPermission(existing.organizationId, 'org:settings');
+    if (!canManage) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
+
     await db.delete(emailTemplates).where(eq(emailTemplates.id, templateId));
 
     return NextResponse.json({ message: 'Email template deleted successfully' });

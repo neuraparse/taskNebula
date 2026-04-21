@@ -62,11 +62,12 @@ export function DashboardClient() {
   });
 
   const { setCurrentOrganization } = useOrganization();
+  const firstOrganizationId = orgsData?.organizations?.[0]?.id ?? null;
   useEffect(() => {
-    if (!currentOrganizationId && orgsData?.organizations?.length > 0) {
-      setCurrentOrganization(orgsData.organizations[0].id);
+    if (!currentOrganizationId && firstOrganizationId) {
+      setCurrentOrganization(firstOrganizationId);
     }
-  }, [currentOrganizationId, orgsData, setCurrentOrganization]);
+  }, [currentOrganizationId, firstOrganizationId, setCurrentOrganization]);
 
   const { data: myIssues, isLoading } = useQuery<Issue[]>({
     queryKey: ['my-issues', session?.user?.id, currentOrganizationId, currentTeamId],

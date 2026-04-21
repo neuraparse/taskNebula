@@ -7,6 +7,16 @@ import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
+// DND start/end are HH:MM strings OR null when unset.
+// Client state holds `null` until the user enables DND and picks a time, so the
+// API must accept null, not just string | undefined — otherwise the first save
+// from a fresh user (or anyone with DND off) fails with a 400.
+const timeString = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Expected HH:MM')
+  .nullable()
+  .optional();
+
 const updatePreferencesSchema = z.object({
   organizationId: z.string(),
   enableInApp: z.boolean().optional(),
@@ -27,8 +37,8 @@ const updatePreferencesSchema = z.object({
   inAppOnSprintStarted: z.boolean().optional(),
   inAppOnSprintCompleted: z.boolean().optional(),
   doNotDisturb: z.boolean().optional(),
-  doNotDisturbStart: z.string().optional(),
-  doNotDisturbEnd: z.string().optional(),
+  doNotDisturbStart: timeString,
+  doNotDisturbEnd: timeString,
 });
 
 /**
@@ -68,7 +78,9 @@ export async function GET(request: NextRequest) {
         )
       );
 
-    // If no preferences found, return defaults
+    // If no preferences found, return defaults.
+    // Email defaults are QUIET by design: only assigned + mentioned are opt-in.
+    // All other events require the user to enable them explicitly.
     if (!prefs) {
       return NextResponse.json({
         preferences: {
@@ -79,7 +91,7 @@ export async function GET(request: NextRequest) {
           digestFrequency: 'none',
           emailOnAssigned: true,
           emailOnMentioned: true,
-          emailOnCommented: true,
+          emailOnCommented: false,
           emailOnStatusChanged: false,
           emailOnIssueCreated: false,
           emailOnSprintStarted: false,

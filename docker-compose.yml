@@ -60,6 +60,11 @@ services:
       - ./docker/livekit/start-livekit.sh:/etc/livekit/start-livekit.sh:ro
 
   web:
+    # Pull the published image by default (instant start). Override via
+    # TASKNEBULA_IMAGE=... or run `docker compose build web` to rebuild from
+    # source — the `build:` stanza below is the fallback when the image is
+    # not available locally or on the registry.
+    image: ${TASKNEBULA_IMAGE:-neuraparse/tasknebula:latest}
     build:
       context: .
       dockerfile: Dockerfile

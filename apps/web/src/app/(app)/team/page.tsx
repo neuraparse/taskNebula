@@ -27,11 +27,11 @@ export default async function TeamPage() {
   const primaryOrg = userOrgs[0];
   if (!primaryOrg) {
     return (
-      <div className="flex h-full flex-col">
+      <div className="flex h-full min-h-0 flex-col">
         <div className="border-b bg-background px-6 py-4">
           <h1 className="text-xl font-semibold tracking-tight">Team</h1>
         </div>
-        <div className="flex-1 p-6">
+        <div className="min-h-0 flex-1 p-6">
           <div className="surface-card p-8 text-center space-y-3">
             <Users className="mx-auto h-8 w-8 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
@@ -78,7 +78,7 @@ export default async function TeamPage() {
   }));
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <div className="border-b bg-background px-6 py-4">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -93,7 +93,7 @@ export default async function TeamPage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-6">
+      <div className="min-h-0 flex-1 overflow-auto p-6">
         <TeamMembersList members={plainMembers} />
       </div>
     </div>

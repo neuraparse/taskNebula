@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db, emailTemplates } from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,6 +53,12 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // Require org:settings permission (owner/admin) to view email templates.
+  const canView = await hasPermission(organizationId, 'org:settings');
+  if (!canView) {
+    return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+  }
+
   try {
     const conditions = [eq(emailTemplates.organizationId, organizationId)];
     if (type) {
@@ -87,6 +94,12 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const validatedData = createEmailTemplateSchema.parse(body);
+
+    // Require org:settings permission (owner/admin) on the target org.
+    const canManage = await hasPermission(validatedData.organizationId, 'org:settings');
+    if (!canManage) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
 
     const [newTemplate] = await db
       .insert(emailTemplates)

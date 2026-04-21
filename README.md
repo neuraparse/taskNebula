@@ -4,7 +4,8 @@
 
 ### Open-Source, Self-Hosted Project Management
 
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker)](https://hub.docker.com/r/neuraparse/tasknebula)
+[![Docker Pulls](https://img.shields.io/docker/pulls/neuraparse/tasknebula?style=for-the-badge&logo=docker&color=2496ED)](https://hub.docker.com/r/neuraparse/tasknebula)
+[![Docker Image Version](https://img.shields.io/docker/v/neuraparse/tasknebula/latest?style=for-the-badge&logo=docker&label=image&color=2496ED)](https://hub.docker.com/r/neuraparse/tasknebula/tags)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
@@ -13,7 +14,7 @@
 The power of Jira, the speed of Linear, the flexibility of Notion.
 Self-hosted and production-ready in one command.
 
-[Docker Hub](https://hub.docker.com/r/neuraparse/tasknebula) · [Report Bug](https://github.com/neuraparse/tasknebula/issues)
+[Docker Hub](https://hub.docker.com/r/neuraparse/tasknebula) · [Report Bug](https://github.com/neuraparse/tasknebula/issues) · Latest: **v0.2.4**
 
 <br/>
 
@@ -38,6 +39,18 @@ Self-hosted and production-ready in one command.
 
 ## Quick Start
 
+### One-command run (prebuilt image, zero build time)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/neuraparse/tasknebula/main/scripts/quickstart.sh | bash
+```
+
+Pulls the latest `neuraparse/tasknebula` image from Docker Hub, provisions
+Postgres + Redis + LiveKit via Docker Compose, generates a secure
+`AUTH_SECRET` for you, and opens at http://localhost:3000.
+
+### Build from source
+
 ```bash
 git clone https://github.com/neuraparse/tasknebula.git
 cd tasknebula
@@ -48,7 +61,16 @@ docker compose up -d
 
 Open **http://localhost:3000** — setup wizard creates your admin account.
 
-> Already have Docker? Just `docker pull neuraparse/tasknebula:latest` — see [docker-compose.yml](docker-compose.yml) for the full config.
+### Pinned version
+
+```bash
+docker pull neuraparse/tasknebula:0.2.4
+# or always-latest
+docker pull neuraparse/tasknebula:latest
+```
+
+See [docker-compose.yml](docker-compose.yml) for the full stack.
+Release notes for each tag live on the [GitHub releases page](https://github.com/neuraparse/tasknebula/releases).
 
 ---
 
@@ -104,12 +126,16 @@ See [.env.example](.env.example) for all configuration options.
 ## Commands
 
 ```bash
-docker compose up -d            # Start
-docker compose down             # Stop
-docker compose logs -f web      # Logs
-docker compose up -d --build    # Rebuild
-git pull && docker compose up -d --build  # Update
+docker compose up -d                       # Start (pulls neuraparse/tasknebula:latest)
+docker compose down                        # Stop
+docker compose logs -f web                 # Logs
+docker compose pull web && docker compose up -d     # Update to latest prebuilt image
+docker compose up -d --build               # Rebuild from source (uses local Dockerfile)
+git pull && docker compose up -d --build   # Pull source + rebuild
 ```
+
+> `docker-compose.yml` defaults to `image: neuraparse/tasknebula:latest`.
+> Pin a version by setting `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.2.4` in your `.env`.
 
 ---
 

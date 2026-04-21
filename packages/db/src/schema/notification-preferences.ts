@@ -58,10 +58,12 @@ export const notificationPreferences = pgTable('notification_preferences', {
   enableEmail: boolean('enable_email').notNull().default(true),
   digestFrequency: digestFrequencyEnum('digest_frequency').notNull().default('none'),
 
-  // Event-specific settings (email)
+  // Event-specific email settings — default policy: quiet by default.
+  // Only events with direct, personal impact (direct assignment, direct mention)
+  // are opted-in at creation. Everything else is opt-in by the user.
   emailOnAssigned: boolean('email_on_assigned').notNull().default(true),
   emailOnMentioned: boolean('email_on_mentioned').notNull().default(true),
-  emailOnCommented: boolean('email_on_commented').notNull().default(true),
+  emailOnCommented: boolean('email_on_commented').notNull().default(false),
   emailOnStatusChanged: boolean('email_on_status_changed').notNull().default(false),
   emailOnIssueCreated: boolean('email_on_issue_created').notNull().default(false),
   emailOnSprintStarted: boolean('email_on_sprint_started').notNull().default(false),

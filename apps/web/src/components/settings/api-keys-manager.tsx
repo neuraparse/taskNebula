@@ -177,17 +177,17 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
             </Button>
           </div>
         ) : (
-          <div className="surface-card p-2">
+          <div className="surface-card rounded-lg p-2">
             {apiKeys.map((key) => (
               <div
                 key={key.id}
-                className="flex min-h-[52px] items-center justify-between gap-4 rounded-md px-3 py-2.5 transition-colors duration-150 hover:bg-accent/40"
+                className="row-interactive flex min-h-[52px] items-center justify-between gap-4 rounded-md px-3 py-2.5"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-sm font-medium">{key.name}</span>
                     {key.isActive ? (
-                      <span className="chip-accent">Active</span>
+                      <span className="chip-emerald">Active</span>
                     ) : (
                       <span className="chip">Revoked</span>
                     )}

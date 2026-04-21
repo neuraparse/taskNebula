@@ -74,7 +74,7 @@ export function LinkIssueDialog({ issueId, projectId, open, onOpenChange }: Link
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto rounded-lg">
         <DialogHeader>
           <DialogTitle>Link Issue</DialogTitle>
           <DialogDescription>Create a relationship between this issue and another issue.</DialogDescription>
@@ -119,7 +119,7 @@ export function LinkIssueDialog({ issueId, projectId, open, onOpenChange }: Link
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[400px] p-0">
+              <PopoverContent className="w-[400px] p-0 z-[60]">
                 <Command>
                   <CommandInput placeholder="Search issues..." />
                   <CommandEmpty>No issue found.</CommandEmpty>

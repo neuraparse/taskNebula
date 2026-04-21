@@ -214,6 +214,9 @@ export function OrganizationSettingsClient() {
               <span className="font-semibold text-foreground">{org.name}</span> to confirm.
             </DialogDescription>
           </DialogHeader>
+          <div className="panel-danger animate-alert-in text-sm">
+            Projects, issues, docs, API keys, and memberships will be permanently removed.
+          </div>
           <div className="space-y-3">
             <Label htmlFor="delete-org-name">Organization name</Label>
             <Input

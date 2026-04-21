@@ -388,6 +388,9 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
               teamspace association is cleared.
             </DialogDescription>
           </DialogHeader>
+          <div className="panel-danger animate-alert-in text-sm">
+            This action cannot be undone.
+          </div>
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setDeleteTarget(null)}>
               Cancel
