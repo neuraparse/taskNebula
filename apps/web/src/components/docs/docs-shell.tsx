@@ -48,7 +48,6 @@ import {
   FilePlus2,
   FolderOpen,
   Globe2,
-  Loader2,
   RefreshCcw,
   Search,
   Share2,
@@ -525,12 +524,12 @@ export function DocsShell({ projectId }: DocsShellProps) {
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-2">
         {showSearchResults ? (
-          <div className="space-y-0.5">
+          <div className="stagger space-y-0.5">
             {searchResults.length > 0 ? (
               searchResults.map((result) => (
                 <button
                   key={result.id}
-                  className="flex w-full items-start gap-2.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors duration-150 hover:bg-accent/60"
+                  className="row-interactive flex w-full items-start gap-2.5 px-2 py-1.5 text-left text-sm"
                   onClick={() => {
                     setPageSearch('');
                     updateQueryParams({ pageId: result.id, spaceId: result.spaceId });
@@ -551,7 +550,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
             )}
           </div>
         ) : tree.length > 0 ? (
-          <div className="space-y-0.5">
+          <div className="stagger space-y-0.5">
             {tree.map((node) => (
               <TreeNode
                 key={node.id}
@@ -561,6 +560,8 @@ export function DocsShell({ projectId }: DocsShellProps) {
               />
             ))}
           </div>
+        ) : pagesLoading ? (
+          <DocsTreeSkeleton />
         ) : (
           <div className="flex flex-col items-center gap-3 px-3 py-8 text-center">
             <p className="text-sm text-muted-foreground">No pages yet</p>
@@ -961,7 +962,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
   return (
     <>
       <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
-        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2 xl:hidden">
+        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2 lg:hidden">
           <div className="min-w-0 truncate text-sm font-medium">
             {currentPage?.title || activeSpace?.name || 'Docs'}
           </div>
@@ -994,16 +995,14 @@ export function DocsShell({ projectId }: DocsShellProps) {
           </div>
         </div>
 
-        <div className="grid h-full min-h-0 grid-cols-1 overflow-hidden xl:grid-cols-[16rem_minmax(0,1fr)]">
-          <div className="hidden h-full min-h-0 flex-col border-r border-border bg-surface xl:flex">
+        <div className="grid h-full min-h-0 grid-cols-1 overflow-hidden lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[17rem_minmax(0,1fr)]">
+          <div className="hidden h-full min-h-0 flex-col border-r border-border bg-surface lg:flex">
             {navigationPane}
           </div>
 
           <div className="min-h-0 min-w-0 overflow-hidden">
             {isLoading ? (
-              <div className="flex h-full items-center justify-center">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
+              <DocsShellSkeleton />
             ) : currentPage ? (
               <DocumentEditor
                 page={currentPage}
@@ -1126,10 +1125,8 @@ function TreeNode({
     <div>
       <div
         aria-selected={isActive || undefined}
-        className={cn(
-          'group flex items-center gap-1 rounded-md px-1.5 py-1 text-sm text-foreground/90 transition-colors duration-150 hover:bg-accent/60',
-          isActive && 'bg-primary/10 text-primary'
-        )}
+        data-active={isActive || undefined}
+        className="row-interactive group flex items-center gap-1 px-1.5 py-1 text-sm"
         style={{ paddingLeft: `${depth * 12 + 6}px` }}
       >
         <button
@@ -1289,4 +1286,63 @@ function sortDocumentPages(left: DocumentPage, right: DocumentPage) {
   }
 
   return left.title.localeCompare(right.title);
+}
+
+function DocsTreeSkeleton() {
+  const rowWidths = ['w-11/12', 'w-3/4', 'w-5/6', 'w-2/3', 'w-4/5', 'w-1/2', 'w-9/12', 'w-3/5'];
+  return (
+    <div
+      aria-hidden="true"
+      role="presentation"
+      className="space-y-1 px-1 py-1"
+      data-testid="docs-tree-skeleton"
+    >
+      {rowWidths.map((width, index) => (
+        <div key={index} className="flex items-center gap-2 px-1.5 py-1">
+          <div className="shimmer h-4 w-4 shrink-0 rounded-sm" />
+          <div className={cn('shimmer h-3.5 rounded-sm', width)} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DocsShellSkeleton() {
+  const paragraphWidths = ['w-11/12', 'w-10/12', 'w-9/12', 'w-11/12', 'w-8/12', 'w-10/12', 'w-7/12'];
+  return (
+    <div
+      aria-hidden="true"
+      role="presentation"
+      className="flex h-full min-h-0 flex-col overflow-hidden"
+      data-testid="docs-shell-skeleton"
+    >
+      <div className="border-b border-border px-8 py-5">
+        <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="shimmer h-8 w-8 rounded-md" />
+            <div className="shimmer h-4 w-40 rounded-sm" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="shimmer h-6 w-24 rounded-sm" />
+            <div className="shimmer h-8 w-20 rounded-md" />
+          </div>
+        </div>
+      </div>
+      <div className="min-h-0 flex-1 overflow-hidden px-8 py-8">
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+          <div className="shimmer h-3 w-24 rounded-sm" />
+          <div className="shimmer h-9 w-3/4 rounded-md" />
+          <div className="mt-2 space-y-3">
+            {paragraphWidths.map((width, index) => (
+              <div key={index} className={cn('shimmer h-4 rounded-sm', width)} />
+            ))}
+          </div>
+          <div className="mt-4 space-y-3">
+            <div className="shimmer h-4 w-5/6 rounded-sm" />
+            <div className="shimmer h-4 w-2/3 rounded-sm" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

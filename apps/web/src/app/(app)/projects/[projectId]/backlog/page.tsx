@@ -158,11 +158,10 @@ export default function BacklogPage({ params }: { params: Promise<{ projectId: s
       {/* Table */}
       <div className="flex-1 overflow-y-auto">
         {backlogIssues.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <Inbox className="h-10 w-10 text-muted-foreground/30 mb-3" />
-            <p className="text-sm font-medium text-muted-foreground">Backlog is empty</p>
-            <p className="text-xs text-muted-foreground/60 mt-1 mb-4">
-              All issues are assigned to sprints
+          <div className="mx-auto mt-16 flex max-w-md animate-fade-up flex-col items-center gap-3 rounded-lg border border-dashed border-border p-8 text-center">
+            <Inbox className="h-8 w-8 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              Backlog is empty. All issues are assigned to sprints.
             </p>
             <Button size="sm" variant="outline" onClick={() => setCreateModalOpen(true)}>
               <Plus className="mr-1.5 h-3.5 w-3.5" />

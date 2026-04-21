@@ -47,7 +47,7 @@ export function ProjectCommunicationsSettings({ projectId }: { projectId: string
 
   if (error || !data) {
     return (
-      <div className="surface-card p-6 text-sm text-destructive">
+      <div className="panel-danger animate-alert-in text-sm">
         {error instanceof Error ? error.message : 'Failed to load project communications.'}
       </div>
     );
@@ -82,7 +82,7 @@ export function ProjectCommunicationsSettings({ projectId }: { projectId: string
             <span className="chip">{data.project.key}</span>
           </div>
         </div>
-        <div className="surface-card p-5 divide-y divide-border/60">
+        <div className="surface-card rounded-lg p-6 divide-y divide-border/60">
           {TOGGLES.map((toggle) => (
             <div
               key={toggle.key}
@@ -115,7 +115,7 @@ export function ProjectCommunicationsSettings({ projectId }: { projectId: string
         </div>
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
           {Object.entries(data.effectiveSettings).map(([key, value]) => (
-            <div key={key} className="surface-card px-4 py-3">
+            <div key={key} className="surface-card rounded-lg px-4 py-3">
               <div className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{key}</div>
               <div className="mt-1 text-sm font-medium">{String(value)}</div>
             </div>

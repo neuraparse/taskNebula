@@ -165,7 +165,7 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
         {isLoading ? (
           <p className="py-6 text-center text-sm text-muted-foreground">Loading API keys...</p>
         ) : error ? (
-          <div className="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-muted-foreground">
+          <div className="panel-warn text-sm">
             {error instanceof Error ? error.message : 'API keys could not be loaded.'}
           </div>
         ) : apiKeys.length === 0 ? (
@@ -245,7 +245,7 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
 
           {createdKey ? (
             <div className="space-y-4">
-              <div className="rounded-lg bg-surface p-4">
+              <div className="rounded-md bg-surface p-4">
                 <code className="break-all text-sm">{createdKey}</code>
               </div>
               <Button onClick={handleCopyKey} className="w-full">

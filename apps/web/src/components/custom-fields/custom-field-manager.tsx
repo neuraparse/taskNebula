@@ -109,7 +109,7 @@ export function CustomFieldManager({ organizationId, projectId }: CustomFieldMan
             </Button>
           </div>
         ) : (
-          <div className="divide-y divide-border/60 rounded-md border border-border/60 bg-card stagger">
+          <div className="divide-y divide-border/60 stagger -mx-1">
             {customFields.map((field) => {
               const config =
                 FIELD_TYPE_CONFIG[field.type] || {
@@ -122,7 +122,7 @@ export function CustomFieldManager({ organizationId, projectId }: CustomFieldMan
               return (
                 <div
                   key={field.id}
-                  className="group flex items-center gap-3 px-4 py-2.5 transition-colors duration-150 hover:bg-accent/40"
+                  className="row-interactive group flex items-center gap-3 px-3 py-2"
                 >
                   <GripVertical
                     className="h-4 w-4 shrink-0 cursor-grab text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"

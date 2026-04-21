@@ -177,6 +177,35 @@ const config: Config = {
           '0%, 100%': { backgroundPosition: '0% 50%' },
           '50%': { backgroundPosition: '100% 50%' },
         },
+        'blur-in': {
+          from: { opacity: '0', filter: 'blur(8px)', transform: 'translateY(6px)' },
+          to: { opacity: '1', filter: 'blur(0)', transform: 'translateY(0)' },
+        },
+        'pop-in': {
+          '0%': { opacity: '0', transform: 'scale(0.92)' },
+          '60%': { opacity: '1', transform: 'scale(1.015)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        'alert-in': {
+          from: { opacity: '0', transform: 'translateY(-6px) scale(0.98)' },
+          to: { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        'toast-in': {
+          from: { opacity: '0', transform: 'translate3d(0, 24px, 0) scale(0.96)' },
+          to: { opacity: '1', transform: 'translate3d(0, 0, 0) scale(1)' },
+        },
+        'realtime-ping': {
+          '0%': { transform: 'scale(1)', opacity: '0.7' },
+          '80%, 100%': { transform: 'scale(2.2)', opacity: '0' },
+        },
+        'dot-breathe': {
+          '0%, 100%': { opacity: '0.9', transform: 'scale(1)' },
+          '50%': { opacity: '0.55', transform: 'scale(0.92)' },
+        },
+        'page-enter': {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -194,14 +223,22 @@ const config: Config = {
         'pulse-ring': 'pulse-ring 2s cubic-bezier(0.16, 1, 0.3, 1) infinite',
         shimmer: 'shimmer 1.6s ease-in-out infinite',
         'gradient-pan': 'gradient-pan 10s ease-in-out infinite',
+        'blur-in': 'blur-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'pop-in': 'pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+        'alert-in': 'alert-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'toast-in': 'toast-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'dot-breathe': 'dot-breathe 2.4s ease-in-out infinite',
+        'page-enter': 'page-enter 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards',
       },
       transitionDuration: {
+        '150': '150ms',
         '250': '250ms',
         '350': '350ms',
         '450': '450ms',
       },
       transitionTimingFunction: {
         smooth: 'cubic-bezier(0.16, 1, 0.3, 1)',
+        snap: 'cubic-bezier(0.32, 0.72, 0, 1)',
         'bounce-soft': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
         'ease-out-expo': 'cubic-bezier(0.16, 1, 0.3, 1)',
       },

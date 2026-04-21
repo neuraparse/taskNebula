@@ -48,8 +48,9 @@ export function MobileNav() {
               <Link
                 key={item.href}
                 href={item.href}
+                data-active={isActive ? 'true' : undefined}
                 className={cn(
-                  'relative flex h-full flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-2 text-[10px] font-medium transition-colors duration-150',
+                  'relative flex h-full flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-2 text-[10px] font-medium transition-all duration-150 ease-snap',
                   isActive
                     ? 'text-primary'
                     : 'text-muted-foreground hover:text-foreground'

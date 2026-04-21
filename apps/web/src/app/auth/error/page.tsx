@@ -19,12 +19,9 @@ function ErrorContent() {
   const errorMessage = errorMessages[error] || errorMessages.Default;
 
   return (
-    <div className="text-center space-y-5 animate-fade-in">
+    <div className="text-center space-y-5 stagger">
       <div className="flex justify-center">
-        <span
-          className="inline-flex items-center gap-1.5 rounded-full border border-accent-rose/20 bg-accent-rose/10 px-2.5 py-0.5 text-[11px] font-medium tracking-tight text-accent-rose"
-          aria-hidden="true"
-        >
+        <span className="chip-rose" aria-hidden="true">
           Error · {error}
         </span>
       </div>
@@ -40,7 +37,7 @@ function ErrorContent() {
         <p className="text-sm text-muted-foreground">{errorMessage}</p>
       </div>
 
-      <Button asChild className="w-full" size="lg">
+      <Button asChild className="w-full transition-all duration-150 ease-snap" size="lg">
         <Link href="/auth/signin">Try again</Link>
       </Button>
     </div>
@@ -55,7 +52,7 @@ export default function AuthErrorPage() {
         className="bg-aurora absolute inset-0 pointer-events-none blur-3xl opacity-60 -z-10"
       />
 
-      <div className="relative w-full max-w-sm animate-scale-in">
+      <div className="relative w-full max-w-sm animate-blur-in">
         <div className="surface-card rounded-lg p-6 sm:p-8">
           <Suspense
             fallback={

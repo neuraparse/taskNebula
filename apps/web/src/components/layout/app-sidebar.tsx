@@ -175,7 +175,7 @@ export function AppSidebar() {
     <aside className="flex w-60 flex-col border-r border-border bg-surface">
       <div className="flex h-14 items-center px-4">
         <button
-          className="flex w-full items-center justify-between rounded-md py-1.5 text-sm font-medium transition-colors duration-150 hover:bg-accent/60"
+          className="flex w-full items-center justify-between rounded-md py-1.5 text-sm font-medium transition-all duration-150 ease-snap hover:bg-accent/60"
           aria-label="Switch workspace"
         >
           <div className="flex items-center gap-2.5">
@@ -196,14 +196,10 @@ export function AppSidebar() {
               <Link
                 key={item.name}
                 href={item.href}
-                className={cn(
-                  'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150',
-                  isActive
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
-                )}
+                data-active={isActive ? 'true' : undefined}
+                className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
               >
-                <item.icon className="h-4 w-4" />
+                <item.icon className="h-4 w-4 shrink-0" />
                 <span>{item.name}</span>
               </Link>
             );
@@ -245,12 +241,8 @@ export function AppSidebar() {
                   <Link
                     key={project.id}
                     href={`/projects/${projectPath}/views`}
-                    className={cn(
-                      'group flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150',
-                      isActive
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
-                    )}
+                    data-active={isActive ? 'true' : undefined}
+                    className="row-interactive group rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
                   >
                     <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-sm bg-muted">
                       <span className="text-[9px] font-bold text-muted-foreground">
@@ -272,7 +264,7 @@ export function AppSidebar() {
             {projects && projects.length > 5 ? (
               <Link
                 href="/projects"
-                className="flex items-center gap-2.5 rounded-md px-3 py-2 text-xs text-muted-foreground transition-colors duration-150 hover:bg-accent/60 hover:text-foreground"
+                className="row-interactive rounded-md text-xs text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground"
               >
                 View all {projects.length} projects
               </Link>
@@ -337,9 +329,11 @@ export function AppSidebar() {
             <Link
               key={call.id}
               href={call.room.href}
-              className="flex items-center gap-1.5 rounded-md bg-surface-2 px-2 py-1.5 text-left transition-colors duration-150 hover:bg-accent/60"
+              className="flex items-center gap-1.5 rounded-md bg-surface-2 px-2 py-1.5 text-left transition-all duration-150 ease-snap hover:bg-accent/60"
             >
-              <span className="status-dot status-live shrink-0" />
+              <span className="realtime-ping shrink-0">
+                <span className="status-dot status-live" />
+              </span>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[11px] font-medium text-foreground">{call.room.title}</div>
                 <div className="truncate text-[10px] text-muted-foreground">
@@ -360,28 +354,20 @@ export function AppSidebar() {
         {isSuperAdmin ? (
           <Link
             href="/admin"
-            className={cn(
-              'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150',
-              pathname === '/admin'
-                ? 'bg-primary/10 text-primary'
-                : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
-            )}
+            data-active={pathname === '/admin' ? 'true' : undefined}
+            className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
           >
-            <Shield className="h-4 w-4" />
+            <Shield className="h-4 w-4 shrink-0" />
             <span>Admin</span>
           </Link>
         ) : null}
 
         <Link
           href="/settings"
-          className={cn(
-            'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150',
-            pathname === '/settings'
-              ? 'bg-primary/10 text-primary'
-              : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
-          )}
+          data-active={pathname === '/settings' ? 'true' : undefined}
+          className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
         >
-          <Settings className="h-4 w-4" />
+          <Settings className="h-4 w-4 shrink-0" />
           <span>Settings</span>
         </Link>
       </div>
@@ -389,7 +375,7 @@ export function AppSidebar() {
       <div className="px-3 pb-3">
         <button
           type="button"
-          className="surface-inset flex w-full items-center gap-2.5 p-3 text-left transition-colors duration-150 hover:bg-accent/60"
+          className="surface-inset flex w-full items-center gap-2.5 p-3 text-left transition-all duration-150 ease-snap hover:bg-accent/60"
           aria-label="Open account menu"
         >
           <Avatar className="h-7 w-7">
@@ -684,12 +670,14 @@ function SidebarVoiceWorkspace({
     <>
       <div className="space-y-2 rounded-sm bg-surface p-2">
         <div className="flex items-start gap-2">
-          <span
-            className={cn(
-              'status-dot mt-1 shrink-0',
-              resolvedConnectionState === 'connected' ? 'status-live' : 'status-warn'
-            )}
-          />
+          <span className="realtime-ping mt-1 shrink-0">
+            <span
+              className={cn(
+                'status-dot',
+                resolvedConnectionState === 'connected' ? 'status-live' : 'status-warn'
+              )}
+            />
+          </span>
           <div className="min-w-0 flex-1">
             <div className="truncate text-[11px] font-semibold text-foreground">
               {currentTarget.roomTitle}
@@ -699,11 +687,15 @@ function SidebarVoiceWorkspace({
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <span className="chip text-[9px]">live</span>
+            {resolvedConnectionState === 'connected' ? (
+              <span className="live-pill text-[9px]">live</span>
+            ) : (
+              <span className="chip text-[9px]">offline</span>
+            )}
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 w-6 rounded-sm px-0 text-muted-foreground"
+              className="h-6 w-6 rounded-sm px-0 text-muted-foreground transition-all duration-150 ease-snap"
               onClick={onOpenVoiceSettings}
               title="Open voice settings"
               aria-label="Open voice settings"
@@ -1079,7 +1071,9 @@ function SidebarVoiceFallbackCard({
   return (
     <div className="space-y-2 rounded-sm bg-surface p-2">
       <div className="flex items-start gap-2">
-        <span className={cn('status-dot mt-1 shrink-0', isConnecting ? 'status-warn' : 'status-live')} />
+        <span className="realtime-ping mt-1 shrink-0">
+          <span className={cn('status-dot', isConnecting ? 'status-warn' : 'status-live')} />
+        </span>
         <div className="min-w-0 flex-1">
           <div className="truncate text-[11px] font-semibold text-foreground">{currentTarget.roomTitle}</div>
           <div className="truncate text-[10px] text-muted-foreground">

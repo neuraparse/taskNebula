@@ -146,9 +146,9 @@ export function EditUserDialog({ userId, open, onOpenChange }: EditUserDialogPro
             </div>
 
             {formData.isSuperAdmin && (
-              <div className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/5 px-3 py-3 text-xs text-muted-foreground">
-                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-amber" />
-                This user will have full access to all organizations and system settings.
+              <div className="panel-warn flex items-start gap-2 px-3 py-3 text-xs">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <span>This user will have full access to all organizations and system settings.</span>
               </div>
             )}
 

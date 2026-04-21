@@ -43,7 +43,7 @@ export function IssueContent({ issue }: IssueContentProps) {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-up">
       {/* Description */}
       <section>
         <div className="flex items-center justify-between mb-2">
@@ -100,7 +100,9 @@ export function IssueContent({ issue }: IssueContentProps) {
       {/* Subtasks */}
       <section>
         <h3 className="kicker mb-2">Subtasks</h3>
-        <IssueSubtasks issueId={issue.id} projectId={issue.projectId} />
+        <div className="surface-inset rounded-md p-3">
+          <IssueSubtasks issueId={issue.id} projectId={issue.projectId} />
+        </div>
       </section>
 
       {/* Attachments */}

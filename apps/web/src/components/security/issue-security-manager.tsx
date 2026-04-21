@@ -609,9 +609,9 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                     <AccordionTrigger className="py-2 text-sm">Security levels</AccordionTrigger>
                     <AccordionContent className="pt-2">
                       {scheme.levels.length ? (
-                        <div className="surface-inset divide-y divide-border/60 rounded-md">
+                        <div className="surface-inset divide-y divide-border/60">
                           {scheme.levels.map((level) => (
-                            <div key={level.id} className="px-4 py-3 transition-colors duration-150 hover:bg-accent/30">
+                            <div key={level.id} className="row-interactive px-4 py-3">
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0 space-y-1">
                                   <div className="flex items-center gap-2">

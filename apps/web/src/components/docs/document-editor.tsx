@@ -1129,7 +1129,7 @@ export function DocumentEditor({
         <div className="mx-auto w-full max-w-3xl">
           {page.share?.public?.enabled && (
             <div className="mb-6 flex justify-center">
-              <span className="chip-accent">
+              <span className="chip-emerald">
                 <Globe2 className="h-3 w-3" />
                 This page is public
               </span>
@@ -1162,8 +1162,14 @@ export function DocumentEditor({
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <StatusIcon className={cn('h-3.5 w-3.5', statusMeta.iconClassName)} />
+              <div
+                aria-live="polite"
+                className={cn(
+                  'inline-flex items-center gap-1.5 transition-all duration-150 ease-snap',
+                  statusMeta.chipClassName
+                )}
+              >
+                <StatusIcon className={cn('h-3 w-3', statusMeta.iconClassName)} />
                 <span>{statusMeta.label}</span>
               </div>
               <DropdownMenu>
@@ -1316,7 +1322,7 @@ export function DocumentEditor({
                 placeholder="Untitled page"
               />
             ) : (
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground">{page.title}</h1>
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground text-balance">{page.title}</h1>
             )}
           </div>
 
@@ -1359,7 +1365,7 @@ export function DocumentEditor({
               </div>
 
               {childPages.length > 0 ? (
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="stagger grid gap-3 md:grid-cols-2">
                   {childPages.map((childPage) => (
                     <Link
                       key={childPage.id}
@@ -1407,7 +1413,7 @@ export function DocumentEditor({
                 filteredPages.map((linkedPage) => (
                   <button
                     key={linkedPage.id}
-                    className="flex w-full items-start gap-2.5 rounded-sm px-3 py-1.5 text-left text-sm transition-colors duration-150 hover:bg-accent/60"
+                    className="row-interactive flex w-full items-start gap-2.5 px-3 py-1.5 text-left text-sm"
                     onClick={() => {
                       insertInternalLink(linkedPage);
                       setIsLinkDialogOpen(false);
@@ -1542,7 +1548,8 @@ function getSaveStateMeta(saveState: SaveState, saveError: string | null | undef
     return {
       icon: Loader2,
       iconClassName: 'animate-spin',
-      label: 'Saving changes...',
+      chipClassName: 'chip-amber',
+      label: 'Saving...',
     };
   }
 
@@ -1550,6 +1557,7 @@ function getSaveStateMeta(saveState: SaveState, saveError: string | null | undef
     return {
       icon: AlertTriangle,
       iconClassName: 'text-destructive',
+      chipClassName: 'chip-rose',
       label: 'Autosave paused',
     };
   }
@@ -1558,6 +1566,7 @@ function getSaveStateMeta(saveState: SaveState, saveError: string | null | undef
     return {
       icon: Check,
       iconClassName: 'text-accent-amber',
+      chipClassName: 'chip-amber',
       label: 'Waiting to save...',
     };
   }
@@ -1565,6 +1574,7 @@ function getSaveStateMeta(saveState: SaveState, saveError: string | null | undef
   return {
     icon: CheckCheck,
     iconClassName: 'text-accent-emerald',
+    chipClassName: 'chip-emerald',
     label: lastSavedAt
       ? `Saved at ${lastSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
       : 'All changes saved',

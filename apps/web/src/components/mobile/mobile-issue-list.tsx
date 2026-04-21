@@ -40,7 +40,7 @@ export function MobileIssueList({
 }: MobileIssueListProps) {
   return (
     <PullToRefresh onRefresh={onRefresh} className="h-full">
-      <div className="divide-y divide-border">
+      <div className="stagger divide-y divide-border">
         {issues.map((issue) => (
           <SwipeableItem
             key={issue.id}
@@ -57,7 +57,7 @@ export function MobileIssueList({
           >
             <Link
               href={`/issues/${issue.id}`}
-              className="flex items-stretch transition-colors duration-200 hover:bg-accent/50"
+              className="flex items-stretch transition-all duration-150 ease-snap hover:bg-accent/50"
             >
               {/* Left priority indicator bar */}
               <div
@@ -72,12 +72,18 @@ export function MobileIssueList({
               <div className="flex-1 px-3 py-3 space-y-1.5">
                 {/* Key + status */}
                 <div className="flex items-center gap-2">
-                  <span
-                    className={cn(
-                      statusDotClass[issue.status as keyof typeof statusDotClass] || 'status-dot status-idle'
-                    )}
-                    aria-label={`Status: ${issue.status}`}
-                  />
+                  {issue.status === 'In Progress' ? (
+                    <span className="realtime-ping" aria-label={`Status: ${issue.status}`}>
+                      <span className="status-dot status-live" />
+                    </span>
+                  ) : (
+                    <span
+                      className={cn(
+                        statusDotClass[issue.status as keyof typeof statusDotClass] || 'status-dot status-idle'
+                      )}
+                      aria-label={`Status: ${issue.status}`}
+                    />
+                  )}
                   <span className="text-[11px] font-mono text-muted-foreground">{issue.key}</span>
                   <span className="ml-auto text-[10px] text-muted-foreground">
                     {formatDistanceToNow(new Date(issue.updatedAt), { addSuffix: true })}

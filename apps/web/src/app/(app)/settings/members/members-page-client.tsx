@@ -264,9 +264,8 @@ export function MembersPageClient() {
         </div>
 
         {!canManage && (
-          <div className="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-muted-foreground">
-            You can view members but cannot manage them. Only owners and admins can invite, change
-            roles, or remove members.
+          <div className="panel-warn text-sm">
+            View-only access. Only owners and admins can manage members.
           </div>
         )}
 

@@ -96,22 +96,29 @@ export function AgentOpsPanel() {
     );
   }
 
-  const kpis: Array<{ label: string; value: number; icon: ComponentType<{ className?: string }> }> = [
-    { label: 'Enabled workspaces', value: data.stats.enabledWorkspaceCount, icon: Bot },
-    { label: 'Enabled projects', value: data.stats.enabledProjectCount, icon: Sparkles },
-    { label: 'Running now', value: data.stats.runningRuns, icon: Zap },
-    { label: 'Recent failures', value: data.stats.failedRuns, icon: Shield },
+  const kpis: Array<{
+    label: string;
+    value: number;
+    icon: ComponentType<{ className?: string }>;
+    tone: 'blue' | 'violet' | 'emerald' | 'amber' | 'rose';
+  }> = [
+    { label: 'Enabled workspaces', value: data.stats.enabledWorkspaceCount, icon: Bot, tone: 'blue' },
+    { label: 'Enabled projects', value: data.stats.enabledProjectCount, icon: Sparkles, tone: 'violet' },
+    { label: 'Running now', value: data.stats.runningRuns, icon: Zap, tone: 'emerald' },
+    { label: 'Recent failures', value: data.stats.failedRuns, icon: Shield, tone: 'rose' },
   ];
 
   return (
     <div className="animate-fade-up space-y-6">
       {/* KPIs */}
       <div className="stagger grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {kpis.map(({ label, value, icon: Icon }) => (
-          <div key={label} className="surface-card flex flex-col justify-between gap-2 p-4">
-            <div className="flex items-center justify-between">
-              <p className="kicker">{label}</p>
-              <Icon className="h-4 w-4 text-muted-foreground" />
+        {kpis.map(({ label, value, icon: Icon, tone }) => (
+          <div key={label} className="surface-card flex max-h-[140px] flex-col justify-between gap-2 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <p className="kicker truncate">{label}</p>
+              <span className={cn('icon-tile', `icon-tile-accent-${tone}`)}>
+                <Icon className="h-3.5 w-3.5" />
+              </span>
             </div>
             <p className="text-2xl font-semibold tabular-nums">{value}</p>
           </div>
@@ -269,7 +276,7 @@ export function AgentOpsPanel() {
                       {item.ready} ready
                     </span>
                     {item.blocked > 0 && (
-                      <span className="inline-flex items-center rounded-full border border-accent-rose/20 bg-accent-rose/10 px-2 py-0.5 text-[11px] font-medium text-accent-rose">
+                      <span className="chip-rose realtime-ping">
                         {item.blocked} blocked
                       </span>
                     )}
@@ -302,10 +309,7 @@ export function AgentOpsPanel() {
                         <span className="text-sm font-medium truncate">{workspace.organizationName}</span>
                         <span
                           className={cn(
-                            'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium',
-                            workspace.providerStatus.ready
-                              ? 'bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20'
-                              : 'bg-accent-rose/10 text-accent-rose border-accent-rose/20'
+                            workspace.providerStatus.ready ? 'chip-emerald' : 'chip-rose'
                           )}
                         >
                           {workspace.providerStatus.ready ? 'Runnable' : 'Blocked'}
@@ -328,7 +332,7 @@ export function AgentOpsPanel() {
                   {workspace.lastFailure ? (
                     <details>
                       <summary className="cursor-pointer text-xs text-accent-amber">Last failure</summary>
-                      <p className="mt-1 rounded-md bg-accent-amber/10 border border-accent-amber/20 px-3 py-2 text-xs text-accent-amber">
+                      <p className="panel-warn mt-1 px-3 py-2 text-xs">
                         {workspace.lastFailure}
                       </p>
                     </details>
@@ -511,7 +515,7 @@ export function AgentOpsPanel() {
               {data.recentRuns.map((run) => (
                 <li
                   key={run.id}
-                  className="flex items-start justify-between gap-4 px-1 py-2.5 transition-colors hover:bg-accent/40 rounded-md"
+                  className="row-interactive flex items-start justify-between gap-4 px-1 py-2.5"
                 >
                   <div className="min-w-0 space-y-0.5">
                     <div className="flex flex-wrap items-center gap-2">
@@ -559,22 +563,13 @@ function SectionHeader({
 }
 
 function RunStatusChip({ status }: { status: string }) {
-  const tone =
+  const toneClass =
     status === 'completed'
-      ? 'bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20'
+      ? 'chip-emerald'
       : status === 'failed'
-        ? 'bg-accent-rose/10 text-accent-rose border-accent-rose/20'
+        ? 'chip-rose'
         : status === 'running'
-          ? 'bg-accent-blue/10 text-accent-blue border-accent-blue/20'
-          : 'bg-muted text-muted-foreground border-border';
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium capitalize',
-        tone
-      )}
-    >
-      {status}
-    </span>
-  );
+          ? 'chip-blue'
+          : 'chip';
+  return <span className={cn(toneClass, 'capitalize')}>{status}</span>;
 }

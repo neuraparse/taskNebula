@@ -34,7 +34,7 @@ export function KanbanColumn({ column, issueCount, projectId, statusId, issueIds
       <div
         ref={setNodeRef}
         className={cn(
-          'kanban-column group flex max-h-full w-[308px] flex-shrink-0 flex-col touch-manipulation',
+          'kanban-column group flex h-full min-h-[520px] w-[320px] flex-shrink-0 flex-col touch-manipulation',
           isOver && 'kanban-column-drop-active'
         )}
       >
@@ -59,7 +59,7 @@ export function KanbanColumn({ column, issueCount, projectId, statusId, issueIds
         </div>
 
         {/* Content */}
-        <div className="min-h-[160px] flex-1 overflow-y-auto px-2.5 py-2.5 custom-scrollbar">
+        <div className="min-h-[420px] flex-1 overflow-y-auto px-2.5 py-2.5 custom-scrollbar">
           <SortableContext items={issueIds} strategy={verticalListSortingStrategy}>
             <div className="space-y-2">
               {children}

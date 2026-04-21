@@ -95,7 +95,7 @@ export function WatchersList({ issueId, projectId }: WatchersListProps) {
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="flex items-center gap-2 rounded-md px-1 py-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="flex items-center gap-2 rounded-md px-1 py-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors duration-150 ease-snap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               aria-label={`${watchers.length} ${watchers.length === 1 ? 'watcher' : 'watchers'} — click to view`}
             >
               {/* Overlapping avatar stack */}
@@ -131,7 +131,7 @@ export function WatchersList({ issueId, projectId }: WatchersListProps) {
 
           <PopoverContent
             align="start"
-            className="surface-card w-64 overflow-hidden rounded-lg p-0 shadow-md animate-scale-in"
+            className="surface-card w-64 overflow-hidden rounded-lg p-0 shadow-md animate-pop-in"
           >
             <div className="border-b border-border/60 px-4 py-2.5">
               <span className="kicker">Watchers</span>
@@ -139,9 +139,9 @@ export function WatchersList({ issueId, projectId }: WatchersListProps) {
             {watchers.length === 0 ? (
               <p className="px-4 py-4 text-sm text-muted-foreground">No one is watching yet.</p>
             ) : (
-              <ul role="list" className="divide-y divide-border/60 stagger">
+              <ul role="list" className="stagger">
                 {watchers.map((watcher: any) => (
-                  <li key={watcher.id} className="flex items-center gap-2.5 px-4 py-2.5">
+                  <li key={watcher.id} className="flex items-center gap-2.5 px-3 py-1.5">
                     <Avatar className="h-6 w-6 shrink-0">
                       <AvatarImage src={watcher.user.image} alt={watcher.user.name ?? ''} />
                       <AvatarFallback className="bg-muted text-xs text-muted-foreground">
@@ -150,7 +150,6 @@ export function WatchersList({ issueId, projectId }: WatchersListProps) {
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{watcher.user.name}</p>
-                      <p className="truncate text-[11px] text-muted-foreground">{watcher.user.email}</p>
                     </div>
                   </li>
                 ))}
@@ -165,7 +164,7 @@ export function WatchersList({ issueId, projectId }: WatchersListProps) {
         variant={isWatching ? 'outline' : 'ghost'}
         size="sm"
         className={cn(
-          'h-7 px-2.5 text-xs gap-1.5 transition-colors duration-200',
+          'h-7 px-2.5 text-xs gap-1.5 rounded-md transition-colors duration-150 ease-snap',
           isWatching && 'text-primary border-primary/30'
         )}
         onClick={handleToggleWatch}

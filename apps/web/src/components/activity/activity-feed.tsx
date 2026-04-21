@@ -97,11 +97,11 @@ export function ActivityFeed({ organizationId, limit = 20 }: ActivityFeedProps) 
           <p className="text-sm text-muted-foreground">No recent activity</p>
         </div>
       ) : (
-        <div className="max-h-[560px] overflow-y-auto custom-scrollbar -mr-2 pr-2 space-y-6">
+        <div className="max-h-[560px] overflow-y-auto custom-scrollbar -mr-2 pr-2 space-y-5">
           {groups.map((group) => (
-            <section key={group.key} className="space-y-2">
+            <section key={group.key} className="space-y-1.5">
               <span className="kicker">{group.label}</span>
-              <ol className="relative border-l border-border ml-[5px] stagger">
+              <ol className="stagger -mx-2">
                 {group.items.map((activity) => {
                   const actor =
                     activity.user.name || activity.user.email.split('@')[0] || 'Someone';
@@ -115,41 +115,33 @@ export function ActivityFeed({ organizationId, limit = 20 }: ActivityFeedProps) 
                   return (
                     <li
                       key={activity.id}
-                      className="animate-fade-up relative pl-4 py-2 group"
+                      className="row-interactive animate-fade-down flex items-center gap-2.5 px-2 py-1.5 rounded-md"
                       title={tooltip}
                     >
-                      <span
-                        className="absolute -left-[5px] top-2 h-2 w-2 rounded-full bg-primary ring-2 ring-background"
-                        aria-hidden="true"
-                      />
-                      <div className="flex items-start gap-2.5">
-                        <Avatar className="h-5 w-5 shrink-0 ring-1 ring-border mt-0.5">
-                          <AvatarImage src={activity.user.image || undefined} alt="" />
-                          <AvatarFallback className="text-[9px] font-semibold">
-                            {initial}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1 flex items-start gap-3">
-                          <p className="text-sm leading-snug line-clamp-2 flex-1">
-                            <span className="font-medium text-foreground">{actor}</span>{' '}
-                            <span className="text-muted-foreground">{activity.message}</span>
-                            {activity.issue && (
-                              <>
-                                {' '}
-                                <span className="font-mono text-xs text-muted-foreground">
-                                  {activity.issue.key}
-                                </span>
-                              </>
-                            )}
-                          </p>
-                          <time
-                            className="text-xs text-muted-foreground shrink-0 pt-px"
-                            dateTime={timestamp.toISOString()}
-                          >
-                            {formatDistanceToNow(timestamp, { addSuffix: true })}
-                          </time>
-                        </div>
-                      </div>
+                      <Avatar className="h-5 w-5 shrink-0 ring-1 ring-border">
+                        <AvatarImage src={activity.user.image || undefined} alt="" />
+                        <AvatarFallback className="text-[9px] font-semibold">
+                          {initial}
+                        </AvatarFallback>
+                      </Avatar>
+                      <p className="min-w-0 flex-1 truncate text-sm leading-snug">
+                        <span className="font-medium text-foreground">{actor}</span>{' '}
+                        <span className="text-muted-foreground">{activity.message}</span>
+                        {activity.issue && (
+                          <>
+                            {' '}
+                            <span className="font-mono text-xs text-muted-foreground">
+                              {activity.issue.key}
+                            </span>
+                          </>
+                        )}
+                      </p>
+                      <time
+                        className="text-xs text-muted-foreground shrink-0 tabular-nums"
+                        dateTime={timestamp.toISOString()}
+                      >
+                        {formatDistanceToNow(timestamp, { addSuffix: true })}
+                      </time>
                     </li>
                   );
                 })}

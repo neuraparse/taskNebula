@@ -978,11 +978,17 @@ export function ChatShell({ projectId }: { projectId: string }) {
                         )}
                         <div className="truncate text-base font-semibold">{selectedRoomMeta.title}</div>
                       </div>
-                      <div className="truncate text-sm text-muted-foreground">
-                        {selectedRoomMeta.subtitle}
-                        {combinedActiveCall ? ` · ${Number(combinedActiveCall.participantCount) || 0} in call` : ''}
-                        {stream.presence.length ? ` · ${stream.presence.length} online` : ''}
-                        {!stream.isConnected ? ' · reconnecting' : ''}
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span className="truncate">
+                          {selectedRoomMeta.subtitle}
+                          {combinedActiveCall ? ` · ${Number(combinedActiveCall.participantCount) || 0} in call` : ''}
+                          {stream.presence.length ? ` · ${stream.presence.length} online` : ''}
+                        </span>
+                        {stream.isConnected ? (
+                          <span className="live-pill shrink-0">Live</span>
+                        ) : (
+                          <span className="chip-amber shrink-0">Reconnecting</span>
+                        )}
                       </div>
                     </div>
                   </div>

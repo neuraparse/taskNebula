@@ -83,7 +83,6 @@ export default function SetupPage() {
 
   // Progress driven by completion of the admin step (step 1 of 2)
   const currentStep = success ? STEP_LABELS.length : 1;
-  const progressPct = (currentStep / STEP_LABELS.length) * 100;
 
   if (loading) {
     return (
@@ -107,14 +106,14 @@ export default function SetupPage() {
           aria-hidden="true"
           className="bg-aurora absolute inset-0 pointer-events-none blur-3xl opacity-60 -z-10"
         />
-        <div className="relative w-full max-w-sm animate-scale-in">
+        <div className="relative w-full max-w-sm animate-fade-up">
           <div className="surface-card rounded-lg p-8 text-center space-y-4">
             <div className="flex justify-center">
               <CheckCircle2 className="h-8 w-8 text-accent-emerald" aria-hidden="true" />
             </div>
             <div className="space-y-1">
               <h2 className="text-2xl font-semibold tracking-tight text-foreground">Setup complete</h2>
-              <p className="text-sm text-muted-foreground">Redirecting to sign in…</p>
+              <p className="text-sm text-muted-foreground">Redirecting to sign in&hellip;</p>
             </div>
           </div>
         </div>
@@ -130,7 +129,7 @@ export default function SetupPage() {
         className="bg-aurora absolute inset-0 pointer-events-none blur-3xl opacity-60 -z-10"
       />
 
-      <div className="relative w-full max-w-md animate-scale-in">
+      <div className="relative w-full max-w-md animate-fade-up">
         {/* Brand + heading */}
         <div className="mb-6 text-center space-y-3">
           <div className="flex justify-center">
@@ -148,27 +147,34 @@ export default function SetupPage() {
           </div>
         </div>
 
-        {/* Subtle progress */}
-        <div className="mb-6 space-y-2">
-          <div
-            className="h-1 w-full overflow-hidden rounded-full bg-primary/20"
-            role="progressbar"
-            aria-valuenow={currentStep}
-            aria-valuemin={0}
-            aria-valuemax={STEP_LABELS.length}
-            aria-label="Setup progress"
-          >
-            <div
-              className="h-full rounded-full bg-primary transition-all duration-300 ease-smooth"
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground text-center">
-            Step {currentStep} of {STEP_LABELS.length} · {STEP_LABELS[currentStep - 1]}
-          </p>
-        </div>
+        {/* Step nav chips */}
+        <nav
+          aria-label="Setup progress"
+          className="mb-6 flex items-center justify-center gap-2"
+        >
+          {STEP_LABELS.map((label, idx) => {
+            const stepNum = idx + 1;
+            const isCurrent = stepNum === currentStep;
+            const isComplete = stepNum < currentStep;
+            const chipClass = isComplete
+              ? 'chip-emerald'
+              : isCurrent
+                ? 'chip-accent'
+                : 'chip';
+            return (
+              <span
+                key={label}
+                className={chipClass}
+                aria-current={isCurrent ? 'step' : undefined}
+              >
+                <span className="tabular-nums">{stepNum}</span>
+                <span>{label}</span>
+              </span>
+            );
+          })}
+        </nav>
 
-        <div className="surface-card rounded-lg p-6 sm:p-8">
+        <div className="surface-card rounded-lg p-6 sm:p-8 animate-fade-up">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <p className="text-sm text-destructive" role="alert">{error}</p>

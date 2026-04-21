@@ -12,7 +12,6 @@ import { OrganizationCommunicationsSettings } from '@/components/settings/organi
 import { MembersPageClient } from './members/members-page-client';
 import { OrganizationSettingsClient } from './organization/organization-settings-client';
 import { useOrganization } from '@/lib/hooks/use-organization';
-import { cn } from '@/lib/utils';
 import {
   Palette,
   Building2,
@@ -84,15 +83,11 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={() => handleTabChange(value)}
-                className={cn(
-                  'flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors duration-150',
-                  activeTab === value
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
-                )}
+                data-active={activeTab === value ? 'true' : undefined}
+                className="row-interactive w-full gap-2.5 px-3 py-2 text-sm"
               >
                 <Icon className="h-4 w-4 shrink-0" />
-                {label}
+                <span>{label}</span>
               </button>
             </li>
           ))}
@@ -107,15 +102,11 @@ export default function SettingsPage() {
               key={value}
               type="button"
               onClick={() => handleTabChange(value)}
-              className={cn(
-                'flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors duration-150',
-                activeTab === value
-                  ? 'bg-primary/10 text-primary font-medium'
-                  : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
-              )}
+              data-active={activeTab === value ? 'true' : undefined}
+              className="row-interactive shrink-0 gap-1.5 px-3 py-1.5 text-sm"
             >
               <Icon className="h-3.5 w-3.5" />
-              {label}
+              <span>{label}</span>
             </button>
           ))}
         </div>

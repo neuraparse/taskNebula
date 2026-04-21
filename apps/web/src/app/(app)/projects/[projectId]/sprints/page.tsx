@@ -95,7 +95,7 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
 
         {/* Sprint List */}
         {sprints && sprints.length > 0 ? (
-          <div className="space-y-3">
+          <div className="stagger space-y-3">
             {sprints.map((sprint) => {
               const startDate = new Date(sprint.startDate);
               const endDate = new Date(sprint.endDate);
@@ -110,7 +110,7 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
                 <div
                   key={sprint.id}
                   className={cn(
-                    'surface-card group transition-all',
+                    'surface-card surface-card-hover group rounded-lg transition-all duration-150 ease-snap',
                     sprint.status === 'active' && 'border-accent-emerald/20'
                   )}
                 >
@@ -154,9 +154,9 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
 
                         {sprint.status === 'active' && (
                           <div className="mt-3 flex items-center gap-3">
-                            <div className="flex-1 h-1.5 bg-border rounded-full overflow-hidden">
+                            <div className="flex-1 h-1.5 overflow-hidden rounded-sm bg-primary/10">
                               <div
-                                className="h-full bg-accent-emerald rounded-full transition-all"
+                                className="h-full rounded-sm bg-primary transition-all duration-150 ease-snap"
                                 style={{ width: `${progress}%` }}
                               />
                             </div>
@@ -194,13 +194,12 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
             })}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Timer className="h-10 w-10 text-muted-foreground/30 mb-3" />
-            <h3 className="text-sm font-medium mb-1">No sprints yet</h3>
-            <p className="text-xs text-muted-foreground mb-4">
+          <div className="mx-auto flex max-w-md animate-fade-up flex-col items-center gap-3 rounded-lg border border-dashed border-border p-8 text-center">
+            <Timer className="h-8 w-8 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
               {permissions.canManageSprints
-                ? 'Create your first sprint to get started'
-                : 'No sprints have been created for this project yet'}
+                ? 'No sprints yet. Create your first to plan iteration.'
+                : 'No sprints have been created for this project yet.'}
             </p>
             {permissions.canManageSprints && (
               <Button size="sm" variant="outline" onClick={() => setIsCreateModalOpen(true)}>

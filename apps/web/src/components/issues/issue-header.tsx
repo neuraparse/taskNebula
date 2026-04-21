@@ -62,7 +62,7 @@ export function IssueHeader({ issue }: IssueHeaderProps) {
           variant="ghost"
           size="sm"
           className={cn(
-            'gap-1.5 transition-colors duration-200',
+            'gap-1.5 rounded-md transition-colors duration-150 ease-snap',
             isStarred && 'text-accent-amber'
           )}
           onClick={() => setIsStarred(!isStarred)}
@@ -74,7 +74,7 @@ export function IssueHeader({ issue }: IssueHeaderProps) {
           variant="ghost"
           size="sm"
           className={cn(
-            'gap-1.5 transition-colors duration-200',
+            'gap-1.5 rounded-md transition-colors duration-150 ease-snap',
             isWatching && 'text-accent-blue'
           )}
           onClick={() => setIsWatching(!isWatching)}
@@ -85,7 +85,7 @@ export function IssueHeader({ issue }: IssueHeaderProps) {
         <Button
           variant="ghost"
           size="sm"
-          className="gap-1.5 text-muted-foreground hover:text-foreground transition-colors duration-200"
+          className="gap-1.5 rounded-md text-muted-foreground hover:text-foreground transition-colors duration-150 ease-snap"
           onClick={handleCopyLink}
         >
           {copied ? (

@@ -1,6 +1,7 @@
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { AppHeader } from '@/components/layout/app-header';
 import { AppUiScope } from '@/components/layout/app-ui-scope';
+import { RouteTransition } from '@/components/layout/route-transition';
 import { CommandPalette } from '@/components/command-palette';
 import { GlobalVoiceProvider } from '@/components/chat/global-voice-provider';
 
@@ -24,7 +25,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <AppHeader />
 
           {/* Content */}
-          <main className="flex-1 overflow-auto">{children}</main>
+          <main className="flex-1 overflow-auto">
+            <RouteTransition>{children}</RouteTransition>
+          </main>
         </div>
       </div>
     </GlobalVoiceProvider>

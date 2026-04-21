@@ -117,11 +117,11 @@ export function SavedFiltersList({ onSelectFilter }: SavedFiltersListProps) {
     <div className="space-y-2">
       <span className="kicker px-1">Saved filters</span>
       <ScrollArea className="max-h-[360px]">
-        <ul className="space-y-px stagger">
+        <ul className="stagger space-y-px">
           {filters.map((filter) => (
             <li
               key={filter.id}
-              className="animate-fade-up group flex items-center gap-2 rounded-md px-2 py-2 transition-colors duration-150 hover:bg-accent/40"
+              className="row-interactive group animate-fade-up rounded-md transition-all duration-150 ease-snap"
             >
               {/* Visibility icon */}
               <div className="shrink-0 text-muted-foreground">

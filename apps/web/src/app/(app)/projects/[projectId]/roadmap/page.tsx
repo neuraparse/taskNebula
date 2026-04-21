@@ -197,9 +197,9 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
                       })}
                     </div>
                     {/* Progress Indicator */}
-                    <div className="absolute top-0 left-0 right-0 h-0.5 bg-border rounded-full overflow-hidden">
+                    <div className="absolute top-0 left-0 right-0 h-0.5 overflow-hidden rounded-sm bg-primary/10">
                       <div
-                        className="h-full bg-accent-emerald transition-all"
+                        className="h-full rounded-sm bg-primary transition-all duration-150 ease-snap"
                         style={{
                           width: `${(epic.progress / 12) * duration.span * 100}%`,
                           marginLeft: `${(duration.start / 12) * 100}%`
@@ -214,9 +214,12 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
         </div>
 
         {/* Epic List */}
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="stagger grid gap-3 md:grid-cols-2">
           {epics.map((epic) => (
-            <div key={epic.id} className="surface-card p-4 space-y-3">
+            <div
+              key={epic.id}
+              className="surface-card surface-card-hover space-y-3 rounded-lg p-4 transition-all duration-150 ease-snap"
+            >
               <div className="flex items-start justify-between gap-3">
                 <p className="text-sm font-semibold leading-snug">{epic.title}</p>
                 <span className={`chip text-[10px] capitalize border ${PRIORITY_BADGE[epic.priority] ?? PRIORITY_BADGE.low}`}>
@@ -233,9 +236,9 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
                   <span className="text-muted-foreground">Progress</span>
                   <span className="font-medium tabular-nums">{epic.progress}%</span>
                 </div>
-                <div className="h-1.5 bg-border rounded-full overflow-hidden">
+                <div className="h-1.5 overflow-hidden rounded-sm bg-primary/10">
                   <div
-                    className="h-full bg-accent-emerald transition-all rounded-full"
+                    className="h-full rounded-sm bg-primary transition-all duration-150 ease-snap"
                     style={{ width: `${epic.progress}%` }}
                   />
                 </div>

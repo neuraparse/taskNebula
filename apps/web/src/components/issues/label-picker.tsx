@@ -59,12 +59,12 @@ export function LabelPicker({ value, onChange, disabled = false }: LabelPickerPr
       {value.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {value.map((label) => (
-            <span key={label} className="chip inline-flex items-center gap-1">
+            <span key={label} className="chip rounded-sm inline-flex items-center gap-1">
               {label}
               {!disabled && (
                 <button
                   onClick={() => handleRemoveLabel(label)}
-                  className="ml-0.5 hover:text-destructive transition-colors duration-200"
+                  className="ml-0.5 hover:text-destructive transition-colors duration-150"
                   aria-label={`Remove label ${label}`}
                 >
                   <X className="h-3 w-3" />
@@ -81,7 +81,7 @@ export function LabelPicker({ value, onChange, disabled = false }: LabelPickerPr
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 px-2 justify-start text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors duration-200"
+            className="h-8 px-2 justify-start text-sm rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors duration-150 ease-snap"
             disabled={disabled}
           >
             <Plus className="mr-2 h-4 w-4" />
@@ -119,7 +119,7 @@ export function LabelPicker({ value, onChange, disabled = false }: LabelPickerPr
                     <button
                       key={label}
                       type="button"
-                      className="chip cursor-pointer hover:bg-accent transition-colors duration-200"
+                      className="chip rounded-sm cursor-pointer hover:bg-accent transition-colors duration-150 ease-snap"
                       onClick={() => {
                         handleAddLabel(label);
                         setOpen(false);

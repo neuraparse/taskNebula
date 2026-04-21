@@ -73,11 +73,11 @@ export function TeamMembersList({ members }: TeamMembersListProps) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search members"
-            className="h-9 pl-8"
+            className="h-9 rounded-md pl-8 transition-all duration-150 ease-snap"
           />
         </div>
         <Select value={role} onValueChange={setRole}>
-          <SelectTrigger className="h-9 w-[160px]">
+          <SelectTrigger className="h-9 w-[160px] rounded-md transition-all duration-150 ease-snap">
             <SelectValue placeholder="Role" />
           </SelectTrigger>
           <SelectContent>
@@ -107,40 +107,44 @@ export function TeamMembersList({ members }: TeamMembersListProps) {
           </Button>
         </div>
       ) : (
-        <div className="stagger divide-y divide-border rounded-lg border border-border bg-card">
-          {filtered.map((member) => (
-            <div
-              key={member.id}
-              className="flex items-center gap-3 px-4 py-3 hover:bg-accent/60 transition-colors"
-            >
-              <Avatar className="h-8 w-8 shrink-0 rounded-full">
-                <AvatarImage
-                  src={member.user.image || undefined}
-                  alt={member.user.name || 'Member'}
-                />
-                <AvatarFallback className="rounded-full text-xs font-medium">
-                  {member.user.name?.charAt(0).toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground">
-                  {member.user.name || member.user.email}
-                </p>
-                {member.user.name && member.user.email && (
-                  <p className="truncate text-xs text-muted-foreground">
-                    {member.user.email}
+        <div className="stagger grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((member) => {
+            const isActive = member.user.status === 'active';
+            return (
+              <div
+                key={member.id}
+                className="surface-card rounded-lg flex items-center gap-3 px-4 py-3 transition-all duration-150 ease-snap hover:border-border-strong"
+              >
+                <Avatar className="h-9 w-9 shrink-0 rounded-full">
+                  <AvatarImage
+                    src={member.user.image || undefined}
+                    alt={member.user.name || 'Member'}
+                  />
+                  <AvatarFallback className="rounded-full text-xs font-medium">
+                    {member.user.name?.charAt(0).toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {member.user.name || member.user.email}
                   </p>
+                  <p className="truncate text-xs text-muted-foreground capitalize">
+                    {member.role}
+                  </p>
+                </div>
+                {isActive ? (
+                  <span className="live-pill" aria-label="Online">
+                    Online
+                  </span>
+                ) : (
+                  <span className="chip" aria-label="Offline">
+                    <span className="status-dot status-idle" aria-hidden />
+                    Offline
+                  </span>
                 )}
               </div>
-              <span className="chip capitalize">{member.role}</span>
-              <span
-                className={`status-dot ${
-                  member.user.status === 'active' ? 'status-live' : 'status-idle'
-                }`}
-                aria-label={member.user.status === 'active' ? 'Active' : 'Idle'}
-              />
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

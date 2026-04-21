@@ -5,7 +5,6 @@ import {
   ArrowRight,
   BookOpen,
   Github,
-  Keyboard,
   Shield,
   Sparkles,
   Users,
@@ -34,29 +33,35 @@ const heroSignals = [
   'Self-hosted with Docker',
 ] as const;
 
+type AccentTone = 'blue' | 'violet' | 'cyan' | 'emerald' | 'amber' | 'rose';
+
 const capabilities: Array<{
   icon: LucideIcon;
   title: string;
   body: string;
-  accentVar: string;
+  tag: string;
+  tone: AccentTone;
 }> = [
   {
     icon: Workflow,
     title: 'Run delivery in one place',
     body: 'Backlog, board, sprint, and roadmap stay in the same surface.',
-    accentVar: 'var(--landing-accent-blue)',
+    tag: 'Delivery',
+    tone: 'violet',
   },
   {
     icon: BookOpen,
     title: 'Write next to the work',
     body: 'Docs, notes, revisions, and linked issues live inside the workspace.',
-    accentVar: 'var(--landing-accent-emerald)',
+    tag: 'Docs',
+    tone: 'emerald',
   },
   {
     icon: Shield,
     title: 'Keep control close',
     body: 'Settings, permissions, API keys, webhooks, and audit stay readable.',
-    accentVar: 'var(--landing-accent-amber)',
+    tag: 'Control',
+    tone: 'cyan',
   },
 ];
 
@@ -65,7 +70,7 @@ const pricingPlans = [
     name: 'Community',
     price: 'Free',
     body: 'Full self-hosted core.',
-    accentVar: 'var(--landing-accent-blue)',
+    tone: 'blue' as AccentTone,
     href: '/auth/signup',
     cta: 'Create workspace',
     features: ['Projects, docs, sprints', 'Workflows and permissions', 'GitHub, API keys, webhooks'],
@@ -74,7 +79,7 @@ const pricingPlans = [
     name: 'Growth',
     price: 'Soon',
     body: 'More automation and reporting.',
-    accentVar: 'var(--landing-accent-emerald)',
+    tone: 'emerald' as AccentTone,
     href: '/auth/signup',
     cta: 'Join waitlist',
     highlighted: true,
@@ -84,7 +89,7 @@ const pricingPlans = [
     name: 'Enterprise',
     price: 'Custom',
     body: 'Rollout and governance support.',
-    accentVar: 'var(--landing-accent-amber)',
+    tone: 'amber' as AccentTone,
     href: '/auth/signup',
     cta: 'Talk to us',
     features: ['Everything in Growth', 'Custom deployment path', 'Dedicated success support'],
@@ -116,7 +121,7 @@ export default function HomePage() {
               <a
                 key={item.href}
                 href={item.href}
-                className="rounded-md px-3 py-2 text-[13px] text-[var(--landing-text-muted)] transition-colors duration-200 hover:text-[var(--landing-text-dark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--accent-blue))]"
+                className="rounded-md px-3 py-2 text-[13px] text-[var(--landing-text-muted)] transition-colors duration-150 hover:text-[var(--landing-text-dark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--accent-blue))]"
               >
                 {item.label}
               </a>
@@ -126,13 +131,13 @@ export default function HomePage() {
           <div className="flex items-center gap-2">
             <Link
               href="/auth/signin"
-              className="hidden h-[34px] items-center rounded-md border border-[var(--landing-border-strong)] px-3 text-[13px] font-[430] text-[var(--landing-text)] transition-all duration-200 ease-smooth hover:bg-[var(--landing-bg-elevated)] sm:inline-flex"
+              className="hidden h-[34px] items-center rounded-md border border-[var(--landing-border-strong)] px-3 text-[13px] font-[430] text-[var(--landing-text)] transition-all duration-150 ease-snap hover:bg-[var(--landing-bg-elevated)] sm:inline-flex"
             >
               Sign in
             </Link>
             <Link
               href="/auth/signup"
-              className="inline-flex h-[34px] items-center gap-2 rounded-md bg-primary px-3 text-[13px] font-[430] text-primary-foreground transition-all duration-200 ease-smooth hover:-translate-y-0.5 hover:shadow-glow-primary hover:opacity-95"
+              className="inline-flex h-[34px] items-center gap-2 rounded-md bg-primary px-3 text-[13px] font-[430] text-primary-foreground transition-all duration-150 ease-snap hover:-translate-y-0.5 hover:shadow-glow-primary hover:opacity-95"
             >
               Get started
               <ArrowRight className="h-4 w-4" />
@@ -149,7 +154,7 @@ export default function HomePage() {
             aria-hidden="true"
           />
           <Shell className="relative py-24 sm:py-28">
-            <div className="animate-fade-up max-w-4xl">
+            <div className="animate-blur-in max-w-4xl">
               <Kicker label="Open source · docs-native · self-hosted" accentVar="var(--landing-accent-blue)" />
               <h1 className="landing-display mt-7 max-w-4xl text-balance text-[48px] text-[var(--landing-text-dark)] sm:text-[66px] lg:text-[86px]">
                 Project operations,{' '}
@@ -162,7 +167,7 @@ export default function HomePage() {
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Link
                   href="/auth/signup"
-                  className="inline-flex h-11 items-center gap-2 rounded-md bg-primary px-4 text-sm font-[430] text-primary-foreground transition-all duration-200 ease-smooth hover:-translate-y-0.5 hover:shadow-glow-primary hover:opacity-95"
+                  className="inline-flex h-11 items-center gap-2 rounded-md bg-primary px-4 text-sm font-[430] text-primary-foreground transition-all duration-150 ease-snap hover:-translate-y-0.5 hover:shadow-glow-primary hover:opacity-95"
                 >
                   Start with Community
                   <ArrowRight className="h-4 w-4" />
@@ -171,23 +176,17 @@ export default function HomePage() {
                   href="https://github.com/neuraparse/tasknebula"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex h-11 items-center gap-2 rounded-md border border-[var(--landing-border-strong)] px-4 text-sm font-[430] text-[var(--landing-text)] transition-all duration-200 ease-smooth hover:-translate-y-0.5 hover:bg-[var(--landing-bg-elevated)]"
+                  className="inline-flex h-11 items-center gap-2 rounded-md border border-[var(--landing-border-strong)] px-4 text-sm font-[430] text-[var(--landing-text)] transition-all duration-150 ease-snap hover:-translate-y-0.5 hover:bg-[var(--landing-bg-elevated)]"
                 >
                   <Github className="h-4 w-4" />
                   View source
                 </a>
               </div>
 
-              <div className="stagger mt-10 flex flex-wrap gap-2">
+              <div className="stagger mt-10 flex flex-wrap items-center gap-2">
+                <span className="live-pill">Live demo below</span>
                 {heroSignals.map((signal) => (
-                  <span
-                    key={signal}
-                    className="inline-flex items-center gap-2 rounded-full border border-[var(--landing-border)] bg-[var(--landing-bg-card)] px-3 py-1.5 text-[12px] text-[var(--landing-text-muted)]"
-                  >
-                    <span
-                      className="h-1.5 w-1.5 rounded-full"
-                      style={{ backgroundColor: 'hsl(var(--accent-cyan))' }}
-                    />
+                  <span key={signal} className="chip-cyan">
                     {signal}
                   </span>
                 ))}
@@ -255,25 +254,19 @@ export default function HomePage() {
                   compact
                 />
                 <ul className="stagger mt-8 space-y-3">
-                  {['MIT licensed', 'Docker-first', 'Postgres + Redis ready', 'Your infra, your data'].map(
-                    (item) => (
-                      <li key={item} className="flex items-center gap-3 text-sm text-[var(--landing-text)]">
-                        <span
-                          className="h-1.5 w-1.5 rounded-full"
-                          style={{ backgroundColor: 'hsl(var(--accent-cyan))' }}
-                        />
-                        {item}
-                      </li>
-                    ),
-                  )}
+                  {['MIT licensed', 'Docker-first', 'Your infra, your data'].map((item) => (
+                    <li key={item} className="flex items-center gap-3 text-sm text-[var(--landing-text)]">
+                      <span className="status-dot status-live" />
+                      {item}
+                    </li>
+                  ))}
                 </ul>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <MiniFeature icon={Shield} title="Role-based access" />
-                <MiniFeature icon={Sparkles} title="Automation and rules" />
-                <MiniFeature icon={Keyboard} title="Keyboard-first flow" />
-                <MiniFeature icon={Users} title="Admin and team controls" />
+              <div className="stagger grid gap-3 sm:grid-cols-2">
+                <MiniFeature icon={Shield} title="Role-based access" tone="blue" />
+                <MiniFeature icon={Sparkles} title="Automation and rules" tone="violet" />
+                <MiniFeature icon={Users} title="Admin and team controls" tone="emerald" />
               </div>
             </div>
           </Shell>
@@ -315,7 +308,7 @@ export default function HomePage() {
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
                 <Link
                   href="/auth/signup"
-                  className="inline-flex h-11 items-center gap-2 rounded-md bg-primary px-4 text-sm font-[430] text-primary-foreground transition-all duration-200 ease-smooth hover:-translate-y-0.5 hover:shadow-glow-primary hover:opacity-95"
+                  className="inline-flex h-11 items-center gap-2 rounded-md bg-primary px-4 text-sm font-[430] text-primary-foreground transition-all duration-150 ease-snap hover:-translate-y-0.5 hover:shadow-glow-primary hover:opacity-95"
                 >
                   Create workspace
                   <ArrowRight className="h-4 w-4" />
@@ -324,7 +317,7 @@ export default function HomePage() {
                   href="https://github.com/neuraparse/tasknebula"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex h-11 items-center gap-2 rounded-md border border-[var(--landing-border-strong)] px-4 text-sm font-[430] text-[var(--landing-text)] transition-all duration-200 ease-smooth hover:-translate-y-0.5 hover:bg-[var(--landing-bg-elevated)]"
+                  className="inline-flex h-11 items-center gap-2 rounded-md border border-[var(--landing-border-strong)] px-4 text-sm font-[430] text-[var(--landing-text)] transition-all duration-150 ease-snap hover:-translate-y-0.5 hover:bg-[var(--landing-bg-elevated)]"
                 >
                   <Github className="h-4 w-4" />
                   Explore repo
@@ -449,26 +442,23 @@ function CapabilityPanel({
   icon: Icon,
   title,
   body,
-  accentVar,
+  tag,
+  tone,
 }: {
   icon: LucideIcon;
   title: string;
   body: string;
-  accentVar: string;
+  tag: string;
+  tone: AccentTone;
 }) {
   return (
     <SurfacePanel className="h-full p-6 transition-all duration-200 ease-smooth hover:-translate-y-0.5 hover:shadow-md">
-      <div
-        className="flex h-11 w-11 items-center justify-center rounded-md"
-        style={{
-          backgroundColor: `color-mix(in srgb, ${accentVar} 14%, var(--landing-bg-surface))`,
-          color: accentVar,
-        }}
-      >
+      <div className={`icon-tile icon-tile-accent-${tone} h-11 w-11`}>
         <Icon className="h-5 w-5" />
       </div>
       <h3 className="landing-title mt-6 text-[22px] text-[var(--landing-text-dark)]">{title}</h3>
       <p className="landing-body mt-3 text-[14px] text-[var(--landing-text-muted)]">{body}</p>
+      <span className={`chip-${tone} mt-5 inline-flex`}>{tag}</span>
     </SurfacePanel>
   );
 }
@@ -516,10 +506,18 @@ function CompactShowcase({ title, body, children }: { title: string; body: strin
   );
 }
 
-function MiniFeature({ icon: Icon, title }: { icon: LucideIcon; title: string }) {
+function MiniFeature({
+  icon: Icon,
+  title,
+  tone,
+}: {
+  icon: LucideIcon;
+  title: string;
+  tone: AccentTone;
+}) {
   return (
     <div className="flex items-center gap-3 rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] px-4 py-3 transition-all duration-200 ease-smooth hover:-translate-y-0.5 hover:shadow-sm">
-      <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[var(--landing-bg)] text-[var(--landing-text-subtle)]">
+      <div className={`icon-tile icon-tile-accent-${tone} h-9 w-9`}>
         <Icon className="h-4 w-4" />
       </div>
       <span className="text-sm text-[var(--landing-text)]">{title}</span>
@@ -531,7 +529,7 @@ function PricingCard({
   name,
   price,
   body,
-  accentVar,
+  tone,
   href,
   cta,
   features,
@@ -540,7 +538,7 @@ function PricingCard({
   name: string;
   price: string;
   body: string;
-  accentVar: string;
+  tone: AccentTone;
   href: string;
   cta: string;
   features: readonly string[];
@@ -552,16 +550,13 @@ function PricingCard({
         highlighted ? 'border-primary/25' : ''
       }`}
     >
-      <span className="landing-kicker inline-flex items-center gap-2 text-[var(--landing-text-muted)]">
-        <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: accentVar }} />
-        {name}
-      </span>
+      <span className={`chip-${tone} self-start`}>{name}</span>
       <p className="landing-title mt-5 text-[38px] text-[var(--landing-text-dark)]">{price}</p>
       <p className="landing-body mt-2 text-[14px] text-[var(--landing-text-muted)]">{body}</p>
 
       <Link
         href={href}
-        className={`mt-6 inline-flex h-11 items-center justify-center rounded-md px-4 text-sm font-[430] transition-all duration-200 ease-smooth hover:-translate-y-0.5 ${
+        className={`mt-6 inline-flex h-11 items-center justify-center rounded-md px-4 text-sm font-[430] transition-all duration-150 ease-snap hover:-translate-y-0.5 ${
           highlighted
             ? 'bg-primary text-primary-foreground hover:shadow-glow-primary hover:opacity-95'
             : 'border border-[var(--landing-border-strong)] text-[var(--landing-text)] hover:bg-[var(--landing-bg-elevated)]'
@@ -603,7 +598,7 @@ function FooterColumn({
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-[var(--landing-text-muted)] transition-colors duration-200 hover:text-[var(--landing-text)]"
+              className="text-sm text-[var(--landing-text-muted)] transition-colors duration-150 hover:text-[var(--landing-text)]"
             >
               {link.label}
             </a>
@@ -611,7 +606,7 @@ function FooterColumn({
             <a
               key={link.label}
               href={link.href}
-              className="text-sm text-[var(--landing-text-muted)] transition-colors duration-200 hover:text-[var(--landing-text)]"
+              className="text-sm text-[var(--landing-text-muted)] transition-colors duration-150 hover:text-[var(--landing-text)]"
             >
               {link.label}
             </a>

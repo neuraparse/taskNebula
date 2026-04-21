@@ -272,7 +272,7 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
       {isLoading ? (
         <p className="py-6 text-center text-sm text-muted-foreground">Loading...</p>
       ) : error ? (
-        <div className="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-muted-foreground">
+        <div className="panel-warn text-sm">
           {error instanceof Error ? error.message : 'Webhooks could not be loaded.'}
         </div>
       ) : webhooks.length === 0 ? (

@@ -104,11 +104,11 @@ export function IssueSubtasks({ issueId, projectId }: IssueSubtasksProps) {
 
       {/* Subtasks list */}
       {subtasks && subtasks.length > 0 ? (
-        <ul className="space-y-0.5">
+        <ul className="stagger space-y-0.5">
           {subtasks.map((subtask) => (
             <li
               key={subtask.id}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent transition-colors duration-200 group"
+              className="row-interactive flex items-center gap-2 px-2 py-1.5 rounded-md group"
             >
               <button
                 onClick={() => handleToggleComplete(subtask)}
@@ -119,16 +119,16 @@ export function IssueSubtasks({ issueId, projectId }: IssueSubtasksProps) {
                 {subtask.statusCategory === 'done' ? (
                   <CheckCircle2 className="h-4 w-4 text-accent-emerald" />
                 ) : (
-                  <Circle className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors duration-200" />
+                  <Circle className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors duration-150" />
                 )}
               </button>
               <Link
                 href={`/issues/${subtask.id}`}
-                className={`flex-1 text-sm hover:text-primary transition-colors duration-200 flex items-center gap-1.5 ${
+                className={`flex-1 text-sm hover:text-primary transition-colors duration-150 ease-snap flex items-center gap-1.5 ${
                   subtask.statusCategory === 'done' ? 'line-through text-muted-foreground' : ''
                 }`}
               >
-                <span className="chip font-mono text-[11px] shrink-0">{subtask.key}</span>
+                <span className="chip font-mono text-[11px] rounded-sm shrink-0">{subtask.key}</span>
                 <span className="truncate">{subtask.title}</span>
               </Link>
             </li>

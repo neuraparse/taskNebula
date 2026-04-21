@@ -53,10 +53,10 @@ export function IssueAttachments({ issueId }: IssueAttachmentsProps) {
   };
 
   return (
-    <div className="space-y-2 animate-fade-in">
+    <div className="space-y-2 animate-fade-up">
       {/* Upload Area */}
       <div
-        className={`border border-dashed rounded-lg px-4 py-3 text-center transition-colors duration-200 ${
+        className={`border border-dashed rounded-md px-4 py-3 text-center transition-colors duration-150 ease-snap ${
           isDragging
             ? 'border-primary bg-primary/5'
             : 'border-border hover:border-border-strong'
@@ -105,7 +105,7 @@ export function IssueAttachments({ issueId }: IssueAttachmentsProps) {
           {attachments.map((attachment) => (
             <div
               key={attachment.id}
-              className="group flex items-center gap-2.5 rounded-md px-2 py-1.5 hover:bg-accent transition-colors duration-200"
+              className="row-interactive group flex items-center gap-2.5 rounded-md px-2 py-1.5"
             >
               <File className="h-4 w-4 text-muted-foreground shrink-0" />
               <div className="flex-1 min-w-0">

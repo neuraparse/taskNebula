@@ -86,13 +86,13 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
   return (
     <div className="flex h-full flex-col">
       {/* Project Header */}
-      <div className="shrink-0 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="shrink-0 animate-blur-in border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="px-6 pt-4 pb-0">
           {/* Breadcrumb */}
           <div className="mb-3 flex items-center gap-1.5 text-sm">
             <Link
               href="/projects"
-              className="text-muted-foreground transition-colors hover:text-foreground"
+              className="text-muted-foreground transition-colors duration-150 ease-snap hover:text-foreground"
             >
               Projects
             </Link>
@@ -103,7 +103,7 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
           {/* Identity + right action row */}
           <div className="mb-4 flex items-start justify-between gap-4">
             <div className="flex min-w-0 items-center gap-3">
-              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 font-mono text-sm font-semibold text-primary">
+              <span className="icon-tile icon-tile-accent-violet h-10 w-10 shrink-0 font-mono text-sm font-semibold">
                 {initials}
               </span>
               <div className="min-w-0">
@@ -112,9 +112,7 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
                     {projectName}
                   </h1>
                   {project?.key && (
-                    <span className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
-                      {project.key}
-                    </span>
+                    <span className="chip font-mono text-[11px]">{project.key}</span>
                   )}
                 </div>
                 {project?.description ? (
@@ -130,8 +128,7 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
                 href={`/projects/${projectId}/sprints/${activeSprint.id}`}
                 className="group flex shrink-0 items-center gap-2 text-xs"
               >
-                <div className="flex items-center gap-1.5 rounded-sm bg-accent-emerald/10 px-2.5 py-1 text-accent-emerald transition-colors group-hover:bg-accent-emerald/20">
-                  <span className="status-dot status-live" />
+                <div className="live-pill transition-all duration-150 ease-snap group-hover:bg-accent-emerald/20">
                   <span className="font-medium">{activeSprint.name}</span>
                   <span className="text-accent-emerald/60">
                     {activeSprint.issueCount || 0} issues

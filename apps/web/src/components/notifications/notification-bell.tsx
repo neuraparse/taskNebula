@@ -63,15 +63,17 @@ function NotificationRow({
   const body = (
     <div
       className={cn(
-        'relative flex items-start gap-3 px-4 py-3 border-l-2 transition-colors duration-150 hover:bg-accent/40',
+        'row-interactive relative flex items-start gap-3 px-4 py-3 border-l-2',
         accent,
         !notification.isRead && 'bg-primary/[0.03]'
       )}
     >
-      <Avatar className="h-7 w-7 shrink-0 ring-1 ring-border">
-        <AvatarImage src={notification.actor?.image || undefined} alt="" />
-        <AvatarFallback className="text-[10px] font-semibold">{initial}</AvatarFallback>
-      </Avatar>
+      <div className={cn('relative shrink-0', !notification.isRead && 'realtime-ping')}>
+        <Avatar className="h-7 w-7 ring-1 ring-border">
+          <AvatarImage src={notification.actor?.image || undefined} alt="" />
+          <AvatarFallback className="text-[10px] font-semibold">{initial}</AvatarFallback>
+        </Avatar>
+      </div>
 
       <div className="min-w-0 flex-1">
         <p className="text-sm leading-snug line-clamp-2">
@@ -87,10 +89,9 @@ function NotificationRow({
       </div>
 
       {!notification.isRead && (
-        <span
-          className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
-          aria-label="Unread"
-        />
+        <span className="chip-blue mt-0.5 shrink-0" aria-label="Unread">
+          NEW
+        </span>
       )}
     </div>
   );
@@ -159,7 +160,8 @@ export function NotificationBell() {
           {unreadCount > 0 && (
             <span
               aria-hidden="true"
-              className="absolute -top-1 -right-1 h-4 min-w-4 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold px-1 flex items-center justify-center"
+              key={unreadCount}
+              className="absolute -top-1 -right-1 h-4 min-w-4 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold px-1 flex items-center justify-center animate-pop-in"
             >
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
@@ -170,7 +172,7 @@ export function NotificationBell() {
       <PopoverContent
         align="end"
         data-state={open ? 'open' : 'closed'}
-        className="surface-card shadow-md w-[380px] max-h-[480px] overflow-hidden flex flex-col rounded-lg p-0 animate-scale-in"
+        className="surface-card shadow-md w-[380px] max-h-[480px] overflow-hidden flex flex-col rounded-lg p-0 animate-pop-in"
       >
         {/* Header */}
         <div className="flex items-center justify-between gap-3 px-4 pt-3 pb-2">

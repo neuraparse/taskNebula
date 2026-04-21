@@ -257,9 +257,10 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
                     key={member.id}
                     type="button"
                     onClick={() => canManage && handleMemberSelect(member)}
-                    className={`w-full px-4 py-2.5 text-left transition-colors duration-150 ${
-                      isActive ? 'bg-primary/10' : 'hover:bg-accent/40'
-                    } ${!canManage ? 'cursor-default' : 'cursor-pointer'}`}
+                    data-active={isActive ? 'true' : undefined}
+                    className={`row-interactive w-full px-4 py-2.5 text-left ${
+                      !canManage ? 'cursor-default' : 'cursor-pointer'
+                    }`}
                   >
                     <div className="flex items-center gap-2.5">
                       <Avatar className="h-7 w-7 shrink-0">
@@ -299,8 +300,8 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
 
           <div className="p-5">
             {!canManage && (
-              <div className="mb-4 rounded-md border border-warning/30 bg-warning/10 p-3">
-                <p className="text-sm text-warning">You don&apos;t have permission to manage team permissions.</p>
+              <div className="panel-warn mb-4 p-3">
+                <p className="text-sm">You don&apos;t have permission to manage team permissions.</p>
               </div>
             )}
 
@@ -335,14 +336,14 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
                     {Object.entries(PERMISSION_CATEGORIES).map(([catKey, category]) => (
                       <div key={catKey} className="space-y-2">
                         <span className="kicker">{category.label}</span>
-                        <div className="divide-y divide-border/60 rounded-md border border-border/60 bg-card">
+                        <div className="surface-inset divide-y divide-border/60">
                           {category.permissions.map((permKey) => {
                             const def = PERMISSION_DEFS[permKey] || { label: permKey };
                             return (
                               <label
                                 key={permKey}
                                 htmlFor={`perm-${permKey}`}
-                                className="flex cursor-pointer items-center justify-between gap-3 px-4 py-2.5 transition-colors duration-150 hover:bg-accent/40"
+                                className="row-interactive flex cursor-pointer items-center justify-between gap-3 px-4 py-2.5"
                               >
                                 <div className="min-w-0">
                                   <p className="text-sm font-medium">{def.label}</p>

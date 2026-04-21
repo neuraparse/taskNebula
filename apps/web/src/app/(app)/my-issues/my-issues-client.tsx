@@ -37,12 +37,14 @@ const priorityClass: Record<string, string> = {
   critical: 'priority-critical',
 };
 
-const categoryStatusClass: Record<string, string> = {
-  backlog: 'bg-muted text-muted-foreground border-border',
-  in_progress: 'bg-accent-blue/10 text-accent-blue border-accent-blue/20',
-  in_review: 'bg-accent-violet/10 text-accent-violet border-accent-violet/20',
-  done: 'bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20',
-  blocked: 'bg-accent-rose/10 text-accent-rose border-accent-rose/20',
+const statusChipClass: Record<string, string> = {
+  backlog: 'chip',
+  todo: 'chip',
+  in_progress: 'chip-blue',
+  in_review: 'chip-violet',
+  done: 'chip-emerald',
+  blocked: 'chip-rose',
+  pending: 'chip-amber',
 };
 
 type ScopeFilter = 'assigned' | 'watching' | 'reporting';
@@ -105,7 +107,7 @@ export function MyIssuesClient() {
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex h-full min-h-0 items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
@@ -113,10 +115,10 @@ export function MyIssuesClient() {
 
   return (
     <>
-      <div className="flex h-full flex-col bg-background">
+      <div className="flex h-full min-h-0 flex-col bg-background">
         {/* Header */}
-        <div className="border-b border-border bg-background px-6 py-5">
-          <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4">
+        <div className="shrink-0 border-b border-border bg-background px-8 py-5">
+          <div className="flex items-center justify-between gap-4">
             <div className="space-y-1">
               <span className="kicker">Issues</span>
               <h1 className="text-2xl font-semibold tracking-tight">My Issues</h1>
@@ -137,15 +139,15 @@ export function MyIssuesClient() {
         </div>
 
         {/* Filter toolbar: single simple scope switch */}
-        <div className="border-b border-border bg-background px-6 py-2.5">
-          <div className="mx-auto flex max-w-[1400px] items-center gap-1 overflow-x-auto">
+        <div className="shrink-0 border-b border-border bg-background px-8 py-2.5">
+          <div className="flex items-center gap-1 overflow-x-auto">
             {scopeOptions.map((option) => (
               <button
                 key={option.value}
                 type="button"
                 onClick={() => setScope(option.value)}
                 className={cn(
-                  'shrink-0 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 ease-smooth',
+                  'shrink-0 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-150 ease-snap',
                   scope === option.value
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
@@ -158,7 +160,7 @@ export function MyIssuesClient() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-y-auto custom-scrollbar px-8 py-6">
           {filteredIssues.length === 0 ? (
             <div className="flex h-full items-center justify-center animate-fade-up">
               <div className="text-center">
@@ -185,16 +187,18 @@ export function MyIssuesClient() {
               </div>
             </div>
           ) : (
-            <div className="mx-auto max-w-[1400px] animate-fade-up">
-              <div className="surface-card overflow-hidden">
-                {filteredIssues.map((issue, idx) => (
-                  <IssueRow
-                    key={issue.id}
-                    issue={issue}
-                    isLast={idx === filteredIssues.length - 1}
-                    onClick={() => setSelectedIssueId(issue.id)}
-                  />
-                ))}
+            <div className="animate-fade-up">
+              <div className="surface-card overflow-hidden rounded-lg">
+                <ul className="stagger">
+                  {filteredIssues.map((issue, idx) => (
+                    <IssueRow
+                      key={issue.id}
+                      issue={issue}
+                      isLast={idx === filteredIssues.length - 1}
+                      onClick={() => setSelectedIssueId(issue.id)}
+                    />
+                  ))}
+                </ul>
               </div>
             </div>
           )}
@@ -222,45 +226,39 @@ function IssueRow({
   onClick: () => void;
 }) {
   const pClass = priorityClass[issue.priority] ?? 'priority-medium';
-  const statusClass =
-    categoryStatusClass[issue.status.category] ??
-    'bg-muted text-muted-foreground border-border';
+  const chipClass = statusChipClass[issue.status.category] ?? 'chip';
   const updated = formatRelativeDate(issue.updatedAt ?? issue.createdAt);
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'group flex min-h-[44px] w-full items-center gap-3 px-4 text-left transition-colors duration-200 ease-smooth hover:bg-accent/50',
-        !isLast && 'border-b border-border'
-      )}
-    >
-      {/* 1. Priority stripe */}
-      <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', pClass)} aria-hidden />
-
-      {/* 2. Title (with inline key) */}
-      <p className="flex-1 truncate text-sm text-foreground">
-        <span className="mr-2 font-mono text-xs text-muted-foreground">{issue.key}</span>
-        {issue.title}
-      </p>
-
-      {/* 3. Status chip */}
+    <li className={cn('relative', !isLast && 'border-b border-border/60')}>
+      {/* Left-edge priority indicator */}
       <span
-        className={cn(
-          'hidden shrink-0 rounded-full border px-2 py-0.5 text-[11px] sm:inline-flex',
-          statusClass
-        )}
+        aria-hidden
+        className={cn('absolute left-0 top-0 bottom-0 w-0.5', pClass)}
+      />
+      <button
+        type="button"
+        onClick={onClick}
+        className="row-interactive group flex min-h-[44px] w-full items-center gap-3 rounded-md pl-4 pr-4 text-left"
       >
-        {issue.status.name}
-      </span>
+        {/* Title (with inline key) */}
+        <p className="flex-1 truncate text-sm text-foreground">
+          <span className="mr-2 font-mono text-xs text-muted-foreground">{issue.key}</span>
+          {issue.title}
+        </p>
 
-      {/* 4. Compact time */}
-      {updated && (
-        <span className="hidden w-10 shrink-0 text-right font-mono text-[11px] text-muted-foreground sm:inline">
-          {updated}
+        {/* Status chip */}
+        <span className={cn('hidden shrink-0 sm:inline-flex', chipClass)}>
+          {issue.status.name}
         </span>
-      )}
-    </button>
+
+        {/* Compact time */}
+        {updated && (
+          <span className="hidden w-10 shrink-0 text-right font-mono text-[11px] text-muted-foreground sm:inline">
+            {updated}
+          </span>
+        )}
+      </button>
+    </li>
   );
 }

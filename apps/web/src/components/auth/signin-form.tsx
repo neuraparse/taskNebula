@@ -76,7 +76,7 @@ export function SignInForm() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 stagger">
       {/* Header */}
       <div className="text-center space-y-1.5">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Welcome back</h1>
@@ -89,7 +89,7 @@ export function SignInForm() {
           variant="outline"
           onClick={handleGitHubSignIn}
           type="button"
-          className="w-full"
+          className="w-full transition-all duration-150 ease-snap"
           size="lg"
         >
           <Github className="mr-2 h-4 w-4" />
@@ -99,7 +99,7 @@ export function SignInForm() {
           variant="outline"
           onClick={handleGoogleSignIn}
           type="button"
-          className="w-full"
+          className="w-full transition-all duration-150 ease-snap"
           size="lg"
         >
           <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
@@ -154,7 +154,7 @@ export function SignInForm() {
             <Label htmlFor="password">Password</Label>
             <Link
               href="/auth/forgot-password"
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-200"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-150 ease-snap"
             >
               Forgot password?
             </Link>
@@ -171,10 +171,17 @@ export function SignInForm() {
         </div>
 
         {error && (
-          <p className="text-sm text-destructive" role="alert">{error}</p>
+          <div className="panel-danger animate-alert-in text-sm" role="alert">
+            {error}
+          </div>
         )}
 
-        <Button type="submit" className="w-full" size="lg" disabled={loading}>
+        <Button
+          type="submit"
+          className="w-full transition-all duration-150 ease-snap"
+          size="lg"
+          disabled={loading}
+        >
           {loading ? 'Signing in...' : 'Sign in'}
         </Button>
       </form>
@@ -182,7 +189,10 @@ export function SignInForm() {
       {/* Sign Up Link */}
       <p className="text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{' '}
-        <Link href="/auth/signup" className="font-medium text-foreground hover:text-primary transition-colors duration-200">
+        <Link
+          href="/auth/signup"
+          className="font-medium text-foreground hover:text-primary transition-colors duration-150 ease-snap"
+        >
           Sign up
         </Link>
       </p>

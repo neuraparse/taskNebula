@@ -541,7 +541,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                     <div
                       key={view.id}
                       className={cn(
-                        'inline-flex items-center gap-1 rounded-md border pr-1 text-xs transition-colors duration-200',
+                        'inline-flex items-center gap-1 rounded-md border pr-1 text-xs transition-colors duration-150 ease-snap',
                         activeViewType === view.viewType
                           ? 'border-primary/20 bg-primary/10 text-primary'
                           : 'border-border text-muted-foreground hover:text-foreground hover:bg-accent'
@@ -622,7 +622,18 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                         ? issue.priority
                         : 'low';
                       const statusLabel = issue.statusName || issue.status;
-                      const isInProgress = /progress/i.test(statusLabel || '');
+                      const status = (statusLabel || '').toLowerCase();
+                      const statusChip = /progress/.test(status)
+                        ? 'chip-blue'
+                        : /block/.test(status)
+                          ? 'chip-rose'
+                          : /done|complete/.test(status)
+                            ? 'chip-emerald'
+                            : /pending|todo|backlog/.test(status)
+                              ? 'chip'
+                              : /review/.test(status)
+                                ? 'chip-violet'
+                                : 'chip';
                       const dueLabel = issue.dueDate ? format(parseISO(issue.dueDate), 'MMM d') : null;
                       const assigneeLabel =
                         issue.assignee?.name || issue.assignee?.email || null;
@@ -638,7 +649,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                           />
                           <button
                             onClick={() => setSelectedIssueId(issue.id)}
-                            className="group flex w-full items-center gap-3 pl-4 pr-4 py-2.5 text-left transition-all duration-200 ease-smooth hover:bg-accent/60"
+                            className="row-interactive group flex w-full items-center gap-3 rounded-md pl-4 pr-4 py-2.5 text-left"
                           >
                             <span className="font-mono text-[11px] text-muted-foreground shrink-0 w-[72px]">
                               {issue.key}
@@ -653,12 +664,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                               {dueLabel ? <span>{dueLabel}</span> : null}
                             </span>
                             {statusLabel ? (
-                              <span
-                                className={cn(
-                                  'shrink-0',
-                                  isInProgress ? 'chip-accent' : 'chip'
-                                )}
-                              >
+                              <span className={cn('shrink-0', statusChip)}>
                                 {statusLabel}
                               </span>
                             ) : null}
@@ -698,7 +704,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                               />
                               <button
                                 onClick={() => setSelectedIssueId(issue.id)}
-                                className="flex w-full items-center justify-between gap-4 pl-4 pr-4 py-2.5 text-left transition-all duration-200 ease-smooth hover:bg-accent/60"
+                                className="row-interactive flex w-full items-center justify-between gap-4 rounded-md pl-4 pr-4 py-2.5 text-left"
                               >
                                 <div className="min-w-0">
                                   <p className="truncate text-sm font-medium">{issue.title}</p>
@@ -730,7 +736,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                           <li key={issue.id}>
                             <button
                               onClick={() => setSelectedIssueId(issue.id)}
-                              className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition-all duration-200 ease-smooth hover:bg-accent/60"
+                              className="row-interactive flex w-full items-center justify-between gap-3 rounded-md px-4 py-2.5 text-left"
                             >
                               <div className="min-w-0">
                                 <p className="truncate text-sm font-medium">{issue.title}</p>
@@ -814,7 +820,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                             <button
                               key={issue.id}
                               onClick={() => setSelectedIssueId(issue.id)}
-                              className="w-full rounded-sm px-1.5 py-0.5 text-left transition-all duration-200 ease-smooth hover:bg-accent/60"
+                              className="w-full rounded-sm px-1.5 py-0.5 text-left transition-all duration-150 ease-snap hover:bg-accent/60"
                             >
                               <p className="truncate text-[11px] font-medium">{issue.title}</p>
                               <p className="truncate text-[10px] text-muted-foreground font-mono">{issue.key}</p>

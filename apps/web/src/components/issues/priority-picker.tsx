@@ -76,7 +76,7 @@ export function PriorityPicker({ value, onChange, disabled = false }: PriorityPi
           aria-expanded={open}
           aria-haspopup="listbox"
           aria-label="Priority"
-          className="w-full justify-between h-8 px-2 text-sm hover:bg-accent transition-colors duration-200"
+          className="w-full justify-between h-8 px-2 text-sm rounded-md hover:bg-accent transition-colors duration-150 ease-snap"
           disabled={disabled}
         >
           <div className="flex items-center gap-2">

@@ -159,7 +159,7 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
               <span>{c.value}</span>
               <button
                 onClick={() => updateCondition(c.id, { value: '' })}
-                className="ml-0.5 rounded-full hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="ml-0.5 rounded-full transition-all duration-150 ease-snap hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label={`Remove ${c.field} filter`}
               >
                 <X className="h-3 w-3" />
