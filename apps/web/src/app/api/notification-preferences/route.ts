@@ -68,7 +68,9 @@ export async function GET(request: NextRequest) {
         )
       );
 
-    // If no preferences found, return defaults
+    // If no preferences found, return defaults.
+    // Email defaults are QUIET by design: only assigned + mentioned are opt-in.
+    // All other events require the user to enable them explicitly.
     if (!prefs) {
       return NextResponse.json({
         preferences: {
@@ -79,7 +81,7 @@ export async function GET(request: NextRequest) {
           digestFrequency: 'none',
           emailOnAssigned: true,
           emailOnMentioned: true,
-          emailOnCommented: true,
+          emailOnCommented: false,
           emailOnStatusChanged: false,
           emailOnIssueCreated: false,
           emailOnSprintStarted: false,
