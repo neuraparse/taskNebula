@@ -253,17 +253,26 @@ export function OrganizationSettingsClient() {
         </DialogContent>
       </Dialog>
 
-      <div className="animate-fade-in space-y-6">
+      <div className="animate-fade-up space-y-8">
         {/* Header */}
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card">
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div>
-              <h1 className="text-xl font-semibold tracking-tight">{org.name}</h1>
-              <p className="text-xs text-muted-foreground">
-                Workspace settings, access, and shared service configuration.
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex items-start gap-3">
+            {org.logoUrl ? (
+              <div
+                className="h-12 w-12 shrink-0 rounded-md border border-border bg-cover bg-center"
+                style={{ backgroundImage: `url(${org.logoUrl})` }}
+                aria-hidden
+              />
+            ) : (
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-border bg-card">
+                <Building2 className="h-5 w-5 text-muted-foreground" />
+              </div>
+            )}
+            <div className="space-y-1">
+              <span className="kicker">Workspace</span>
+              <h1 className="text-lg font-semibold tracking-tight">{org.name}</h1>
+              <p className="text-sm text-muted-foreground max-w-prose">
+                Settings, access, and shared service configuration.
               </p>
             </div>
           </div>
@@ -282,26 +291,24 @@ export function OrganizationSettingsClient() {
           </div>
         </div>
 
-        {/* Stat tiles */}
-        <div className="stagger grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {/* Stat summary — minimal text row */}
+        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
           {[
             { label: 'Members', value: org.stats?.members || 0, icon: Users },
             { label: 'Projects', value: org.stats?.projects || 0, icon: Layers3 },
             { label: 'Teamspaces', value: org.stats?.teams || 0, icon: Shield },
-            { label: 'API Keys', value: org.stats?.apiKeys || 0, icon: KeyRound },
+            { label: 'API keys', value: org.stats?.apiKeys || 0, icon: KeyRound },
           ].map(({ label, value, icon: Icon }) => (
-            <div key={label} className="surface-card flex items-center justify-between p-4">
-              <div>
-                <p className="kicker">{label}</p>
-                <p className="mt-1 text-2xl font-semibold">{value}</p>
-              </div>
-              <Icon className="h-4 w-4 text-muted-foreground" />
-            </div>
+            <span key={label} className="inline-flex items-center gap-1.5">
+              <Icon className="h-3.5 w-3.5" />
+              <span className="font-medium text-foreground">{value}</span>
+              {label}
+            </span>
           ))}
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="h-auto w-full justify-start gap-1 rounded-lg border border-border bg-card/40 p-1">
             <TabsTrigger value="general" className={orgTabTriggerClass}>
               General
@@ -314,12 +321,12 @@ export function OrganizationSettingsClient() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="general" className="space-y-0">
-            <div className="surface-card p-6 space-y-5">
+          <TabsContent value="general" className="space-y-8">
+            <section className="space-y-4">
               <div className="space-y-1">
                 <span className="kicker">Details</span>
-                <h2 className="text-lg font-semibold">Workspace details</h2>
-                <p className="text-sm text-muted-foreground">
+                <h2 className="text-lg font-semibold tracking-tight">Workspace details</h2>
+                <p className="text-sm text-muted-foreground max-w-prose">
                   Name, domain, and brand information used across the workspace.
                 </p>
               </div>
@@ -330,9 +337,54 @@ export function OrganizationSettingsClient() {
                 </div>
               ) : null}
 
-              <div className="grid gap-5 lg:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="org-name">Organization name</Label>
+              <div className="surface-card p-5 space-y-6">
+                {/* Logo preview tile + URL */}
+                <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+                  <div className="space-y-1">
+                    <Label htmlFor="org-logo-url" className="text-sm font-medium">
+                      Logo
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Square image URL, 128px or larger.
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div
+                      className="h-16 w-16 shrink-0 rounded-md border border-border bg-cover bg-center bg-muted"
+                      style={
+                        formData.logoUrl
+                          ? { backgroundImage: `url(${formData.logoUrl})` }
+                          : undefined
+                      }
+                      aria-hidden
+                    >
+                      {!formData.logoUrl && (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <Building2 className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
+                    <Input
+                      id="org-logo-url"
+                      placeholder="https://cdn.example.com/logo.png"
+                      value={formData.logoUrl}
+                      onChange={(event) =>
+                        setFormData((current) => ({ ...current, logoUrl: event.target.value }))
+                      }
+                      disabled={!canManageSettings}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+                  <div className="space-y-1">
+                    <Label htmlFor="org-name" className="text-sm font-medium">
+                      Organization name
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Shown throughout TaskNebula.
+                    </p>
+                  </div>
                   <Input
                     id="org-name"
                     value={formData.name}
@@ -342,15 +394,28 @@ export function OrganizationSettingsClient() {
                     disabled={!canManageSettings}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="org-slug">Workspace slug</Label>
+
+                <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+                  <div className="space-y-1">
+                    <Label htmlFor="org-slug" className="text-sm font-medium">
+                      Workspace slug
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Used in URLs. Super admins can change it.
+                    </p>
+                  </div>
                   <Input id="org-slug" value={formData.slug} disabled />
-                  <p className="text-xs text-muted-foreground">
-                    Used in URLs. Super admins can change it from the Admin panel.
-                  </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="org-domain">Verified domain</Label>
+
+                <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+                  <div className="space-y-1">
+                    <Label htmlFor="org-domain" className="text-sm font-medium">
+                      Verified domain
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Auto-join members with this email domain.
+                    </p>
+                  </div>
                   <div className="relative">
                     <Globe className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -365,52 +430,32 @@ export function OrganizationSettingsClient() {
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="org-logo-url">Logo URL</Label>
-                  <Input
-                    id="org-logo-url"
-                    placeholder="https://cdn.example.com/logo.png"
-                    value={formData.logoUrl}
-                    onChange={(event) =>
-                      setFormData((current) => ({ ...current, logoUrl: event.target.value }))
+
+                <div className="flex items-center justify-between border-t border-border pt-4">
+                  <p className="text-xs text-muted-foreground">
+                    Updated {new Date(org.updatedAt).toLocaleString()}
+                  </p>
+                  <Button
+                    onClick={() => updateOrgMutation.mutate()}
+                    disabled={
+                      !canManageSettings || !formData.name.trim() || updateOrgMutation.isPending
                     }
-                    disabled={!canManageSettings}
-                  />
+                  >
+                    {updateOrgMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save changes
+                      </>
+                    )}
+                  </Button>
                 </div>
               </div>
-
-              <div className="grid gap-5 lg:grid-cols-2 text-sm text-muted-foreground">
-                <div className="space-y-1">
-                  <Label className="text-muted-foreground">Created</Label>
-                  <p>{new Date(org.createdAt).toLocaleString()}</p>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-muted-foreground">Last updated</Label>
-                  <p>{new Date(org.updatedAt).toLocaleString()}</p>
-                </div>
-              </div>
-
-              <div className="flex justify-end">
-                <Button
-                  onClick={() => updateOrgMutation.mutate()}
-                  disabled={
-                    !canManageSettings || !formData.name.trim() || updateOrgMutation.isPending
-                  }
-                >
-                  {updateOrgMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving
-                    </>
-                  ) : (
-                    <>
-                      <Save className="mr-2 h-4 w-4" />
-                      Save changes
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
+            </section>
           </TabsContent>
 
           <TabsContent value="teamspaces">
@@ -421,22 +466,22 @@ export function OrganizationSettingsClient() {
           </TabsContent>
 
           <TabsContent value="danger">
-            <div className="surface-card border-destructive/30 p-6">
-              <div className="space-y-1 pb-4">
-                <div className="flex items-center gap-2 text-destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <h2 className="font-semibold">Delete organization</h2>
-                </div>
-                <p className="text-sm text-muted-foreground">
+            <section className="space-y-4">
+              <div className="space-y-1">
+                <span className="kicker text-destructive">Danger zone</span>
+                <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                  Delete organization
+                </h2>
+                <p className="text-sm text-muted-foreground max-w-prose">
                   Permanently removes this workspace and every project, issue, document, webhook,
-                  and member under it.
+                  and member under it. Owner access required.
                 </p>
               </div>
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="space-y-1 text-sm text-muted-foreground">
-                  <p>Owner access is required for this action.</p>
-                  <p>Deleted organizations cannot be restored.</p>
-                </div>
+              <div className="surface-card border-destructive/30 p-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Deleted organizations cannot be restored.
+                </p>
                 <Button
                   variant="destructive"
                   disabled={!canDeleteOrg}
@@ -445,7 +490,7 @@ export function OrganizationSettingsClient() {
                   {canDeleteOrg ? 'Delete organization' : 'Owner only'}
                 </Button>
               </div>
-            </div>
+            </section>
           </TabsContent>
         </Tabs>
       </div>

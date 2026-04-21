@@ -5,15 +5,7 @@ import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
-import {
-  Inbox,
-  Search,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  Loader2,
-  LayoutGrid,
-} from 'lucide-react';
+import { Inbox, Search, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 
@@ -34,14 +26,15 @@ interface Issue {
     key: string;
     name: string;
   };
+  updatedAt?: string;
+  createdAt?: string;
 }
 
-const categoryMeta: Record<string, { icon: React.ElementType; label: string }> = {
-  backlog: { icon: Inbox, label: 'Backlog' },
-  in_progress: { icon: Clock, label: 'In Progress' },
-  in_review: { icon: CheckCircle2, label: 'In Review' },
-  done: { icon: CheckCircle2, label: 'Done' },
-  blocked: { icon: XCircle, label: 'Blocked' },
+const priorityClass: Record<string, string> = {
+  low: 'priority-low',
+  medium: 'priority-medium',
+  high: 'priority-high',
+  critical: 'priority-critical',
 };
 
 const categoryStatusClass: Record<string, string> = {
@@ -52,22 +45,47 @@ const categoryStatusClass: Record<string, string> = {
   blocked: 'bg-accent-rose/10 text-accent-rose border-accent-rose/20',
 };
 
-const priorityClass: Record<string, string> = {
-  low: 'priority-low',
-  medium: 'priority-medium',
-  high: 'priority-high',
-  critical: 'priority-critical',
-};
+type ScopeFilter = 'assigned' | 'watching' | 'reporting';
+
+const scopeOptions: { value: ScopeFilter; label: string }[] = [
+  { value: 'assigned', label: 'Assigned to me' },
+  { value: 'watching', label: 'Watching' },
+  { value: 'reporting', label: 'Reporting' },
+];
+
+function formatRelativeDate(input?: string): string {
+  if (!input) return '';
+  const date = new Date(input);
+  if (Number.isNaN(date.getTime())) return '';
+  const now = Date.now();
+  const diffMs = now - date.getTime();
+  const minutes = Math.round(diffMs / 60_000);
+  if (minutes < 1) return 'now';
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.round(hours / 24);
+  if (days < 7) return `${days}d`;
+  const weeks = Math.round(days / 7);
+  if (weeks < 5) return `${weeks}w`;
+  const months = Math.round(days / 30);
+  if (months < 12) return `${months}mo`;
+  const years = Math.round(days / 365);
+  return `${years}y`;
+}
 
 export function MyIssuesClient() {
   const { data: session } = useSession();
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [scope, setScope] = useState<ScopeFilter>('assigned');
 
   const { data: myIssues, isLoading } = useQuery<Issue[]>({
-    queryKey: ['my-issues', session?.user?.id],
+    queryKey: ['my-issues', session?.user?.id, scope],
     queryFn: async () => {
+      // NOTE: API filter by scope is out-of-scope for this refactor; for now
+      // Watching/Reporting reuse the same endpoint and are filtered client-side
+      // when fields become available. Keeps server contract untouched.
       const response = await fetch('/api/issues/my-issues');
       if (!response.ok) throw new Error('Failed to fetch issues');
       const data = await response.json();
@@ -76,27 +94,14 @@ export function MyIssuesClient() {
     enabled: !!session?.user?.id,
   });
 
-  const filteredIssues = myIssues?.filter((issue) => {
-    const matchesSearch = !searchQuery || (() => {
-      const query = searchQuery.toLowerCase();
-      return (
-        issue.title.toLowerCase().includes(query) ||
-        issue.key.toLowerCase().includes(query)
-      );
-    })();
-    const matchesFilter = !activeFilter || issue.status.category === activeFilter;
-    return matchesSearch && matchesFilter;
+  const filteredIssues = (myIssues ?? []).filter((issue) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      issue.title.toLowerCase().includes(query) ||
+      issue.key.toLowerCase().includes(query)
+    );
   });
-
-  const groupedIssues = {
-    in_progress: filteredIssues?.filter((i) => i.status.category === 'in_progress') || [],
-    in_review: filteredIssues?.filter((i) => i.status.category === 'in_review') || [],
-    blocked: filteredIssues?.filter((i) => i.status.category === 'blocked') || [],
-    backlog: filteredIssues?.filter((i) => i.status.category === 'backlog') || [],
-    done: filteredIssues?.filter((i) => i.status.category === 'done') || [],
-  };
-
-  const categories = Object.keys(groupedIssues) as (keyof typeof groupedIssues)[];
 
   if (isLoading) {
     return (
@@ -110,77 +115,62 @@ export function MyIssuesClient() {
     <>
       <div className="flex h-full flex-col bg-background">
         {/* Header */}
-        <div className="border-b border-border bg-background px-6 py-4">
-          <div className="flex items-center justify-between gap-4 max-w-[1400px] mx-auto">
-            <div className="space-y-0.5">
+        <div className="border-b border-border bg-background px-6 py-5">
+          <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4">
+            <div className="space-y-1">
               <span className="kicker">Issues</span>
               <h1 className="text-2xl font-semibold tracking-tight">My Issues</h1>
               <p className="text-sm text-muted-foreground">
-                {filteredIssues?.length || 0} issue{filteredIssues?.length !== 1 ? 's' : ''} assigned to you
+                {filteredIssues.length} issue{filteredIssues.length === 1 ? '' : 's'}
               </p>
             </div>
             <div className="relative w-72 shrink-0">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search issues..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9"
+                className="h-9 pl-9"
               />
             </div>
           </div>
         </div>
 
-        {/* Filter pills */}
+        {/* Filter toolbar: single simple scope switch */}
         <div className="border-b border-border bg-background px-6 py-2.5">
-          <div className="flex items-center gap-2 max-w-[1400px] mx-auto overflow-x-auto">
-            <button
-              type="button"
-              onClick={() => setActiveFilter(null)}
-              className={cn(
-                'chip transition-colors shrink-0',
-                activeFilter === null
-                  ? 'bg-primary/10 text-primary border-primary/20'
-                  : 'hover:bg-accent/50'
-              )}
-            >
-              All
-            </button>
-            {categories.map((cat) => {
-              const count = (myIssues?.filter((i) => i.status.category === cat) || []).length;
-              if (count === 0) return null;
-              const meta = categoryMeta[cat];
-              if (!meta) return null;
-              const Icon = meta.icon;
-              return (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setActiveFilter(activeFilter === cat ? null : cat)}
-                  className={cn(
-                    'chip flex items-center gap-1.5 transition-colors shrink-0',
-                    activeFilter === cat
-                      ? 'bg-primary/10 text-primary border-primary/20'
-                      : 'hover:bg-accent/50'
-                  )}
-                >
-                  <Icon className="h-3 w-3" />
-                  {meta.label}
-                  <span className="opacity-60">{count}</span>
-                </button>
-              );
-            })}
+          <div className="mx-auto flex max-w-[1400px] items-center gap-1 overflow-x-auto">
+            {scopeOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setScope(option.value)}
+                className={cn(
+                  'shrink-0 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 ease-smooth',
+                  scope === option.value
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-6">
-          {!filteredIssues || filteredIssues.length === 0 ? (
+          {filteredIssues.length === 0 ? (
             <div className="flex h-full items-center justify-center animate-fade-up">
               <div className="text-center">
-                <Inbox className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
+                <Inbox className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">
-                  {searchQuery ? 'No issues match your search' : 'No issues assigned to you yet'}
+                  {searchQuery
+                    ? 'No issues match your search'
+                    : scope === 'assigned'
+                      ? 'No issues assigned to you yet'
+                      : scope === 'watching'
+                        ? 'You are not watching any issues'
+                        : 'You have not reported any issues'}
                 </p>
                 {searchQuery && (
                   <Button
@@ -195,35 +185,17 @@ export function MyIssuesClient() {
               </div>
             </div>
           ) : (
-            <div className="space-y-8 max-w-[1400px] mx-auto animate-fade-up">
-              {categories.map((category) => {
-                const issues = groupedIssues[category];
-                if (issues.length === 0) return null;
-                const meta = categoryMeta[category];
-                if (!meta) return null;
-                const Icon = meta.icon;
-
-                return (
-                  <div key={category}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Icon className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium text-foreground">{meta.label}</span>
-                      <span className="chip ml-1">{issues.length}</span>
-                    </div>
-                    <div className="surface-card">
-                      {issues.map((issue, idx) => (
-                        <IssueRow
-                          key={issue.id}
-                          issue={issue}
-                          isLast={idx === issues.length - 1}
-                          onClick={() => setSelectedIssueId(issue.id)}
-                          statusClass={categoryStatusClass[category] ?? ''}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="mx-auto max-w-[1400px] animate-fade-up">
+              <div className="surface-card overflow-hidden">
+                {filteredIssues.map((issue, idx) => (
+                  <IssueRow
+                    key={issue.id}
+                    issue={issue}
+                    isLast={idx === filteredIssues.length - 1}
+                    onClick={() => setSelectedIssueId(issue.id)}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -244,46 +216,51 @@ function IssueRow({
   issue,
   isLast,
   onClick,
-  statusClass,
 }: {
   issue: Issue;
   isLast: boolean;
   onClick: () => void;
-  statusClass: string;
 }) {
   const pClass = priorityClass[issue.priority] ?? 'priority-medium';
+  const statusClass =
+    categoryStatusClass[issue.status.category] ??
+    'bg-muted text-muted-foreground border-border';
+  const updated = formatRelativeDate(issue.updatedAt ?? issue.createdAt);
 
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        'w-full flex items-center gap-3 px-4 min-h-[42px] text-left transition-colors hover:bg-accent/50',
+        'group flex min-h-[44px] w-full items-center gap-3 px-4 text-left transition-colors duration-200 ease-smooth hover:bg-accent/50',
         !isLast && 'border-b border-border'
       )}
     >
-      <span className={cn('h-2 w-2 rounded-full shrink-0', pClass)} />
+      {/* 1. Priority stripe */}
+      <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', pClass)} aria-hidden />
 
-      <span className="text-xs font-mono text-muted-foreground shrink-0 w-20">
-        {issue.key}
-      </span>
-
-      <p className="text-sm truncate flex-1 text-foreground">
+      {/* 2. Title (with inline key) */}
+      <p className="flex-1 truncate text-sm text-foreground">
+        <span className="mr-2 font-mono text-xs text-muted-foreground">{issue.key}</span>
         {issue.title}
       </p>
 
-      <div className="hidden sm:flex items-center gap-2 shrink-0">
-        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-          <LayoutGrid className="h-3 w-3" />
-          {issue.project.name}
-        </span>
-        {issue.estimate && (
-          <span className="chip">{issue.estimate} pts</span>
+      {/* 3. Status chip */}
+      <span
+        className={cn(
+          'hidden shrink-0 rounded-full border px-2 py-0.5 text-[11px] sm:inline-flex',
+          statusClass
         )}
-        <span className={cn('chip', statusClass)}>
-          {issue.status.name}
+      >
+        {issue.status.name}
+      </span>
+
+      {/* 4. Compact time */}
+      {updated && (
+        <span className="hidden w-10 shrink-0 text-right font-mono text-[11px] text-muted-foreground sm:inline">
+          {updated}
         </span>
-      </div>
+      )}
     </button>
   );
 }

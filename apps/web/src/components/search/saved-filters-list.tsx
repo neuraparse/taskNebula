@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Star, Trash2, Globe, Lock, Play } from 'lucide-react';
+import { Star, Trash2, Globe, Lock, Play, Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -100,27 +100,28 @@ export function SavedFiltersList({ onSelectFilter }: SavedFiltersListProps) {
 
   if (loading) {
     return (
-      <div className="py-6 text-center text-sm text-muted-foreground">Loading filters...</div>
+      <div className="py-6 text-center text-sm text-muted-foreground">Loading filters…</div>
     );
   }
 
   if (filters.length === 0) {
     return (
-      <div className="py-6 text-center text-sm text-muted-foreground">
-        No saved filters yet. Create one from the search builder.
+      <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
+        <Bookmark className="h-7 w-7 text-muted-foreground/40" aria-hidden="true" />
+        <p className="text-sm text-muted-foreground">No saved filters yet</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
       <span className="kicker px-1">Saved filters</span>
       <ScrollArea className="max-h-[360px]">
-        <div className="space-y-px">
+        <ul className="space-y-px stagger">
           {filters.map((filter) => (
-            <div
+            <li
               key={filter.id}
-              className="group flex items-center gap-2 rounded-md px-2 py-2 transition-colors duration-200 hover:bg-accent/50"
+              className="animate-fade-up group flex items-center gap-2 rounded-md px-2 py-2 transition-colors duration-150 hover:bg-accent/40"
             >
               {/* Visibility icon */}
               <div className="shrink-0 text-muted-foreground">
@@ -197,9 +198,9 @@ export function SavedFiltersList({ onSelectFilter }: SavedFiltersListProps) {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       </ScrollArea>
     </div>
   );

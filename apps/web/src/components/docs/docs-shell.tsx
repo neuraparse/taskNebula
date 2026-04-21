@@ -78,14 +78,6 @@ export function DocsShell({ projectId }: DocsShellProps) {
   const [isPagesSheetOpen, setIsPagesSheetOpen] = useState(false);
   const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
 
-  useEffect(() => {
-    document.body.classList.add('docs-square-ui');
-
-    return () => {
-      document.body.classList.remove('docs-square-ui');
-    };
-  }, []);
-
   const selectedPageId = searchParams.get('pageId');
   const selectedSpaceId = searchParams.get('spaceId');
 
@@ -475,135 +467,109 @@ export function DocsShell({ projectId }: DocsShellProps) {
   const isLoading = pagesLoading || (selectedPageId ? pageLoading : false);
   const navigationPane = (
     <>
-      <div className="border-b border-border bg-background/95 px-4 py-4">
-        <div className="space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-muted text-foreground">
-              <FolderOpen className="h-3.5 w-3.5" />
-            </div>
+      <div className="border-b border-border px-3 py-3">
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-2 px-1">
+            <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" />
             <div className="min-w-0 flex-1">
-              <span className="kicker">Wiki</span>
-              <div className="mt-1 truncate text-base font-semibold tracking-tight">
+              <div className="truncate text-sm font-semibold tracking-tight">
                 {activeSpace?.name || 'Docs'}
               </div>
-              <div className="mt-1 line-clamp-1 text-xs text-muted-foreground">{scopeLabel}</div>
             </div>
-            <Badge variant="outline" className="rounded-full border-border bg-transparent px-2 py-0.5 text-[10px] text-muted-foreground">
-              {allPages.length}
-            </Badge>
+            <span className="text-[11px] text-muted-foreground">{allPages.length}</span>
           </div>
 
           {spaces && spaces.length > 1 && (
-            <div className="space-y-1.5">
-              <span className="kicker">Space</span>
-              <Select
-                value={activeSpace?.id}
-                onValueChange={(spaceId) => {
-                  updateQueryParams({ spaceId, pageId: null });
-                }}
-              >
-                <SelectTrigger className="h-8 rounded-xl bg-transparent">
-                  <SelectValue placeholder="Select space" />
-                </SelectTrigger>
-                <SelectContent>
-                  {spaces.map((space) => (
-                    <SelectItem key={space.id} value={space.id}>
-                      {space.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Select
+              value={activeSpace?.id}
+              onValueChange={(spaceId) => {
+                updateQueryParams({ spaceId, pageId: null });
+              }}
+            >
+              <SelectTrigger className="h-8">
+                <SelectValue placeholder="Select space" />
+              </SelectTrigger>
+              <SelectContent>
+                {spaces.map((space) => (
+                  <SelectItem key={space.id} value={space.id}>
+                    {space.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
 
-          <div className="space-y-1.5">
-            <span className="kicker">Browse</span>
-            <div className="flex items-center gap-1.5">
-              <div className="relative flex-1">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={pageSearch}
-                  onChange={(event) => setPageSearch(event.target.value)}
-                  placeholder="Search pages..."
-                  className="h-8 rounded-xl border-border bg-muted/[0.03] pl-9 shadow-none"
-                />
-              </div>
-              <Button
-                size="sm"
-                className="h-8 w-8 shrink-0 rounded-xl px-0"
-                onClick={() => openCreateDialog(null)}
-                disabled={!canCreateInContext}
-                aria-label="Create new page"
-              >
-                <FilePlus2 className="h-4 w-4" />
-              </Button>
+          <div className="flex items-center gap-1.5">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={pageSearch}
+                onChange={(event) => setPageSearch(event.target.value)}
+                placeholder="Search pages"
+                className="h-8 pl-8 text-sm"
+              />
             </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 w-8 shrink-0 px-0"
+              onClick={() => openCreateDialog(null)}
+              disabled={!canCreateInContext}
+              aria-label="Create new page"
+            >
+              <FilePlus2 className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-muted/[0.02] px-3 py-3">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between px-2">
-            <span className="kicker">{showSearchResults ? 'Search Results' : 'Pages'}</span>
-            {!showSearchResults && tree.length > 0 ? (
-              <span className="text-[11px] text-muted-foreground">{tree.length}</span>
-            ) : null}
-          </div>
-
-          <div className="rounded-2xl border border-border bg-background/70 p-1.5">
-            {showSearchResults ? (
-              <div className="space-y-1">
-                {searchResults.length > 0 ? (
-                  searchResults.map((result) => (
-                    <button
-                      key={result.id}
-                      className="w-full rounded-xl border border-transparent px-2.5 py-2.5 text-left transition-colors duration-150 hover:border-border hover:bg-accent/50"
-                      onClick={() => {
-                        setPageSearch('');
-                        updateQueryParams({ pageId: result.id, spaceId: result.spaceId });
-                      }}
-                      type="button"
-                    >
-                      <div className="flex items-start gap-3">
-                        <DocumentIcon icon={result.icon} className="h-8 w-8 rounded-lg text-xs" />
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-medium">{result.title}</div>
-                          <div className="mt-0.5 text-[11px] text-muted-foreground">{result.spaceName}</div>
-                          {result.excerpt && <div className="mt-1 line-clamp-1 text-[11px] text-muted-foreground">{result.excerpt}</div>}
-                        </div>
-                      </div>
-                    </button>
-                  ))
-                ) : (
-                  <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-                    No matching docs found.
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-2">
+        {showSearchResults ? (
+          <div className="space-y-0.5">
+            {searchResults.length > 0 ? (
+              searchResults.map((result) => (
+                <button
+                  key={result.id}
+                  className="flex w-full items-start gap-2.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors duration-150 hover:bg-accent/60"
+                  onClick={() => {
+                    setPageSearch('');
+                    updateQueryParams({ pageId: result.id, spaceId: result.spaceId });
+                  }}
+                  type="button"
+                >
+                  <DocumentIcon icon={result.icon} className="h-6 w-6 rounded-md text-[11px]" />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium">{result.title}</div>
+                    <div className="mt-0.5 truncate text-[11px] text-muted-foreground">{result.spaceName}</div>
                   </div>
-                )}
-              </div>
-            ) : tree.length > 0 ? (
-              <div className="space-y-1">
-                {tree.map((node) => (
-                  <TreeNode
-                    key={node.id}
-                    node={node}
-                    activePageId={selectedPageId}
-                    onSelect={(pageId) => updateQueryParams({ pageId, spaceId: activeSpace?.id || null })}
-                  />
-                ))}
-              </div>
+                </button>
+              ))
             ) : (
-              <div className="rounded-xl border border-dashed border-border p-5 text-center">
-                <div className="text-sm font-medium">No pages yet</div>
-                <div className="mt-1 text-xs text-muted-foreground">Start your space with a first note</div>
-                <Button className="mt-3 h-8 rounded-xl" size="sm" onClick={() => openCreateDialog(null)} disabled={!canCreateInContext}>
-                  <FilePlus2 className="mr-2 h-4 w-4" />
-                  New Page
-                </Button>
+              <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                No matches.
               </div>
             )}
           </div>
-        </div>
+        ) : tree.length > 0 ? (
+          <div className="space-y-0.5">
+            {tree.map((node) => (
+              <TreeNode
+                key={node.id}
+                node={node}
+                activePageId={selectedPageId}
+                onSelect={(pageId) => updateQueryParams({ pageId, spaceId: activeSpace?.id || null })}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-3 px-3 py-8 text-center">
+            <p className="text-sm text-muted-foreground">No pages yet</p>
+            <Button size="sm" onClick={() => openCreateDialog(null)} disabled={!canCreateInContext}>
+              <FilePlus2 className="mr-2 h-4 w-4" />
+              Create page
+            </Button>
+          </div>
+        )}
       </div>
     </>
   );
@@ -613,7 +579,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
       <div className="border-b border-border px-5 pb-4 pt-5 pr-14">
         <span className="kicker">Details</span>
         <div className="mt-3 flex items-start gap-3">
-          <DocumentIcon icon={currentPage.icon} className="h-9 w-9 rounded-xl text-sm" />
+          <DocumentIcon icon={currentPage.icon} className="h-9 w-9 rounded-md text-sm" />
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold tracking-tight">{currentPage.title}</div>
             <div className="mt-1 truncate text-xs text-muted-foreground">
@@ -624,23 +590,17 @@ export function DocsShell({ projectId }: DocsShellProps) {
       </div>
 
       <Tabs defaultValue="overview" className="flex min-h-full flex-col gap-4 p-4">
-        <TabsList className="grid h-10 grid-cols-3 rounded-xl border border-border bg-background/80 p-1">
-          <TabsTrigger value="overview" className="rounded-lg text-[13px] font-medium data-[state=active]:bg-muted/10 data-[state=active]:shadow-none">
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="history" className="rounded-lg text-[13px] font-medium data-[state=active]:bg-muted/10 data-[state=active]:shadow-none">
-            History
-          </TabsTrigger>
-          <TabsTrigger value="connections" className="rounded-lg text-[13px] font-medium data-[state=active]:bg-muted/10 data-[state=active]:shadow-none">
-            Links
-          </TabsTrigger>
+        <TabsList className="grid h-9 grid-cols-3">
+          <TabsTrigger value="overview" className="text-sm">Overview</TabsTrigger>
+          <TabsTrigger value="history" className="text-sm">History</TabsTrigger>
+          <TabsTrigger value="connections" className="text-sm">Links</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-0 space-y-3">
           <DetailSection title="Overview">
             <DetailRow label="Page">
               <div className="flex items-start gap-3">
-                <DocumentIcon icon={currentPage.icon} className="h-8 w-8 rounded-md text-xs" />
+                <DocumentIcon icon={currentPage.icon} className="h-8 w-8 rounded-sm text-xs" />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium">{currentPage.title}</div>
                   {currentPage.excerpt && (
@@ -810,7 +770,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                   onClick={() => updateQueryParams({ pageId: childPage.id, spaceId: childPage.spaceId })}
                 >
                   <DetailButtonRow
-                    icon={<DocumentIcon icon={childPage.icon} className="h-7 w-7 rounded-md text-[11px]" />}
+                    icon={<DocumentIcon icon={childPage.icon} className="h-7 w-7 rounded-sm text-[11px]" />}
                     primary={childPage.title}
                     secondary={childPage.excerpt || new Date(childPage.updatedAt).toLocaleDateString()}
                     action={<ChevronRight className="h-4 w-4 text-muted-foreground" />}
@@ -1000,29 +960,20 @@ export function DocsShell({ projectId }: DocsShellProps) {
 
   return (
     <>
-      <div className="animate-fade-in flex h-full min-h-0 flex-col overflow-hidden bg-muted/[0.04]">
-        <div className="flex items-center justify-between gap-3 border-b border-border bg-background/95 px-5 py-3.5 backdrop-blur">
-          <div className="flex min-w-0 items-center gap-3">
-            {currentPage && <DocumentIcon icon={currentPage.icon} className="h-9 w-9 rounded-xl text-sm" />}
-            <div className="min-w-0">
-              <div className="truncate text-sm font-semibold tracking-tight">{currentPage?.title || activeSpace?.name || 'Docs'}</div>
-              <div className="truncate text-xs text-muted-foreground">
-                {currentPage ? currentPage.slug : scopeLabel}
-              </div>
-            </div>
+      <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
+        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2 xl:hidden">
+          <div className="min-w-0 truncate text-sm font-medium">
+            {currentPage?.title || activeSpace?.name || 'Docs'}
           </div>
           <div className="flex items-center gap-2">
             <Sheet open={isPagesSheetOpen} onOpenChange={setIsPagesSheetOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 rounded-md xl:hidden">
+                <Button variant="outline" size="sm" className="h-8">
                   Pages
                 </Button>
               </SheetTrigger>
-              <SheetContent
-                side="left"
-                className="w-[92vw] max-w-md rounded-none p-0 sm:rounded-none [&>button]:right-3 [&>button]:top-3 [&>button]:h-8 [&>button]:w-8 [&>button]:rounded-md [&>button]:border [&>button]:border-border [&>button]:bg-transparent [&>button]:opacity-100 [&>button]:shadow-none [&>button:hover]:bg-muted/10 [&>button_svg]:h-3.5 [&>button_svg]:w-3.5"
-              >
-                <div className="flex h-full min-h-0 flex-col bg-background">
+              <SheetContent side="left" className="w-[92vw] max-w-md p-0">
+                <div className="flex h-full min-h-0 flex-col bg-surface">
                   {navigationPane}
                 </div>
               </SheetContent>
@@ -1030,14 +981,11 @@ export function DocsShell({ projectId }: DocsShellProps) {
 
             <Sheet open={isDetailsSheetOpen} onOpenChange={setIsDetailsSheetOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 rounded-md" disabled={!currentPage}>
+                <Button variant="outline" size="sm" className="h-8" disabled={!currentPage}>
                   Details
                 </Button>
               </SheetTrigger>
-              <SheetContent
-                side="right"
-                className="w-[95vw] max-w-[32rem] rounded-none p-0 sm:rounded-none [&>button]:right-3 [&>button]:top-3 [&>button]:h-8 [&>button]:w-8 [&>button]:rounded-md [&>button]:border [&>button]:border-border [&>button]:bg-transparent [&>button]:opacity-100 [&>button]:shadow-none [&>button:hover]:bg-muted/10 [&>button_svg]:h-3.5 [&>button_svg]:w-3.5"
-              >
+              <SheetContent side="right" className="w-[95vw] max-w-[32rem] p-0">
                 <div className="h-full min-h-0 overflow-y-auto overscroll-contain bg-background">
                   {detailsPane}
                 </div>
@@ -1045,8 +993,9 @@ export function DocsShell({ projectId }: DocsShellProps) {
             </Sheet>
           </div>
         </div>
-        <div className="grid h-full min-h-0 grid-cols-1 overflow-hidden xl:grid-cols-[252px_minmax(0,1fr)]">
-          <div className="hidden h-full min-h-0 flex-col border-r border-border bg-background xl:flex">
+
+        <div className="grid h-full min-h-0 grid-cols-1 overflow-hidden xl:grid-cols-[16rem_minmax(0,1fr)]">
+          <div className="hidden h-full min-h-0 flex-col border-r border-border bg-surface xl:flex">
             {navigationPane}
           </div>
 
@@ -1090,16 +1039,16 @@ export function DocsShell({ projectId }: DocsShellProps) {
       </div>
 
       <Dialog open={isCreateDialogOpen} onOpenChange={(open) => (open ? setIsCreateDialogOpen(true) : resetCreateDialog())}>
-        <DialogContent className="rounded-none sm:rounded-none">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>{newPageParentId ? 'Create Sub-note' : 'Create New Page'}</DialogTitle>
+            <DialogTitle>{newPageParentId ? 'Create sub-note' : 'Create new page'}</DialogTitle>
             <p className="text-sm text-muted-foreground">
               {selectedParentPage
-                ? `This page will be nested under ${selectedParentPage.title}.`
-                : `This will create a root page in ${createTargetSpace?.name || 'Docs'}.`}
+                ? `Nested under ${selectedParentPage.title}.`
+                : `Creates a root page in ${createTargetSpace?.name || 'Docs'}.`}
             </p>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="page-title">Title</Label>
               <Input
@@ -1112,23 +1061,23 @@ export function DocsShell({ projectId }: DocsShellProps) {
             </div>
             <div className="space-y-2">
               <Label>Icon</Label>
-              <div className="grid grid-cols-6 gap-2 rounded-lg border bg-transparent p-3">
+              <div className="grid grid-cols-6 gap-1.5">
                 <button
                   type="button"
                   className={cn(
-                    'flex h-10 items-center justify-center rounded-md border border-border bg-transparent text-muted-foreground transition-colors duration-150 hover:bg-accent/50',
+                    'flex h-10 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent/60',
                     !newPageIcon && 'bg-primary/10 text-primary'
                   )}
                   onClick={() => setNewPageIcon(null)}
                 >
-                  <DocumentIcon icon={null} className="h-8 w-8 rounded-md" />
+                  <DocumentIcon icon={null} className="h-7 w-7 rounded-sm" />
                 </button>
                 {DOCUMENT_ICON_OPTIONS.map((iconOption) => (
                   <button
                     key={iconOption}
                     type="button"
                     className={cn(
-                      'flex h-10 items-center justify-center rounded-md border border-border bg-transparent text-xl transition-colors duration-150 hover:bg-accent/50',
+                      'flex h-10 items-center justify-center rounded-md text-xl transition-colors duration-150 hover:bg-accent/60',
                       newPageIcon === iconOption && 'bg-primary/10 text-primary'
                     )}
                     onClick={() => setNewPageIcon(iconOption)}
@@ -1138,16 +1087,8 @@ export function DocsShell({ projectId }: DocsShellProps) {
                 ))}
               </div>
             </div>
-            {selectedParentPage && (
-              <div className="rounded-lg border bg-transparent px-3 py-2 text-sm text-muted-foreground">
-                Parent page: <span className="font-medium text-foreground">{selectedParentPage.title}</span>
-              </div>
-            )}
-            <div className="rounded-lg border bg-transparent px-3 py-2 text-sm text-muted-foreground">
-              Opens immediately with autosave enabled.
-            </div>
             {!canCreateInContext && (
-              <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+              <div className="rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
                 You do not have permission to create docs in this space.
               </div>
             )}
@@ -1157,7 +1098,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
               Cancel
             </Button>
             <Button onClick={handleCreatePage} disabled={!newPageTitle.trim() || createPage.isPending || !canCreateInContext}>
-              {createPage.isPending ? 'Creating...' : 'Create Page'}
+              {createPage.isPending ? 'Creating...' : 'Create page'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1184,26 +1125,21 @@ function TreeNode({
   return (
     <div>
       <div
+        aria-selected={isActive || undefined}
         className={cn(
-          'group relative flex items-center gap-1 rounded-xl px-1.5 py-1 text-sm text-foreground/90 transition-colors duration-150 hover:bg-accent/50',
+          'group flex items-center gap-1 rounded-md px-1.5 py-1 text-sm text-foreground/90 transition-colors duration-150 hover:bg-accent/60',
           isActive && 'bg-primary/10 text-primary'
         )}
-        style={{ paddingLeft: `${depth * 12 + 10}px` }}
+        style={{ paddingLeft: `${depth * 12 + 6}px` }}
       >
-        {isActive && <div className="absolute inset-y-2 left-1 w-0.5 rounded-full bg-primary" />}
-        {depth > 0 && (
-          <div
-            className="absolute bottom-2 top-2 w-px bg-border"
-            style={{ left: `${depth * 12 + 4}px` }}
-          />
-        )}
         <button
           type="button"
           className={cn(
-            'flex h-5 w-5 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent/50',
+            'flex h-5 w-5 items-center justify-center rounded-sm text-muted-foreground transition-colors duration-150 hover:bg-accent/60',
             !hasChildren && 'opacity-0'
           )}
           onClick={() => setOpen((value) => !value)}
+          aria-label={hasChildren ? (open ? 'Collapse' : 'Expand') : undefined}
         >
           {hasChildren ? (
             open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />
@@ -1213,26 +1149,16 @@ function TreeNode({
         </button>
 
         <button type="button" className="flex min-w-0 flex-1 items-center gap-2 text-left" onClick={() => onSelect(node.id)}>
-          <DocumentIcon
-            icon={node.icon}
-            className={cn(
-              'h-6 w-6 rounded-md border border-border bg-muted text-[10px] transition-transform',
-              isActive && 'scale-[1.03]'
-            )}
-          />
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-[13px] font-medium tracking-tight">{node.title}</div>
-          </div>
+          <DocumentIcon icon={node.icon} className="h-5 w-5 rounded-sm text-[10px]" />
+          <span className="min-w-0 flex-1 truncate text-sm">{node.title}</span>
           {hasChildren && (
-            <span className="rounded-full bg-muted/10 px-2 py-0.5 text-[10px] text-muted-foreground">
-              {node.children.length}
-            </span>
+            <span className="text-[11px] text-muted-foreground">{node.children.length}</span>
           )}
         </button>
       </div>
 
       {open && hasChildren && (
-        <div className="mt-1 space-y-1">
+        <div className="mt-0.5 space-y-0.5">
           {node.children.map((child) => (
             <TreeNode key={child.id} node={child} depth={depth + 1} activePageId={activePageId} onSelect={onSelect} />
           ))}
@@ -1272,7 +1198,7 @@ function DetailSection({
   children: ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-border bg-background shadow-xs">
+    <section className="surface-card overflow-hidden">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <span className="kicker">{title}</span>
         {typeof count === 'number' && (
@@ -1342,7 +1268,7 @@ function CompactSwitchRow({
   onCheckedChange: (checked: boolean) => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted/[0.04] px-3 py-3">
+    <div className="surface-inset flex items-center justify-between gap-3 px-3 py-3">
       <div className="min-w-0">
         <div className="text-sm font-medium">{label}</div>
         <div className="mt-1 text-xs text-muted-foreground">{hint}</div>
@@ -1353,7 +1279,7 @@ function CompactSwitchRow({
 }
 
 function CompactEmptyState({ children }: { children: ReactNode }) {
-  return <div className="rounded-xl border border-dashed border-border px-4 py-4 text-sm text-muted-foreground">{children}</div>;
+  return <div className="px-4 py-4 text-sm text-muted-foreground">{children}</div>;
 }
 
 function sortDocumentPages(left: DocumentPage, right: DocumentPage) {

@@ -329,8 +329,14 @@ export function HeroShowcase() {
   return (
     <section id="board" className="border-t border-[var(--landing-border)] bg-[var(--landing-bg)]">
       <div className="mx-auto max-w-screen-xl px-4 py-20 sm:px-8 sm:py-24 lg:px-20">
-        <div className="mb-8 max-w-2xl">
-          <p className="landing-kicker text-[var(--landing-text-muted)]">Board</p>
+        <div className="animate-fade-up mb-8 max-w-2xl">
+          <span className="landing-kicker inline-flex items-center gap-2 text-[var(--landing-text-muted)]">
+            <span
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ backgroundColor: 'hsl(var(--accent-cyan))' }}
+            />
+            Board
+          </span>
           <h2 className="landing-title mt-4 text-balance text-[34px] text-[var(--landing-text-dark)] sm:text-[42px] lg:text-[52px]">
             A board you can actually move through.
           </h2>

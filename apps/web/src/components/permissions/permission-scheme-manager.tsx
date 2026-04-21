@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -276,20 +275,23 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 animate-fade-up">
       {projectId ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Project assignment</CardTitle>
-            <CardDescription>Choose which permission scheme should drive this project&apos;s default access model.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
+        <div className="surface-card p-5 space-y-3">
+          <div className="space-y-1">
+            <span className="kicker">Project assignment</span>
+            <h3 className="text-sm font-semibold tracking-tight">Project assignment</h3>
+            <p className="text-xs text-muted-foreground">
+              Choose which permission scheme should drive this project&apos;s default access model.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-4 items-center md:grid-cols-[240px_1fr]">
             <div className="space-y-1">
               <div className="text-sm font-medium">{assignedSchemeName}</div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {projectSchemeState?.source === 'project'
-                  ? 'This project uses its own explicit permission scheme.'
-                  : 'This project currently inherits the organization default scheme.'}
+                  ? 'This project uses its own explicit scheme.'
+                  : 'This project inherits the organization default.'}
               </p>
             </div>
             <Select value={selectedProjectScheme} onValueChange={(value) => void assignSchemeToProject(value)}>
@@ -305,14 +307,17 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
                 ))}
               </SelectContent>
             </Select>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : null}
 
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-base font-semibold text-foreground">Permission schemes</h3>
-          <p className="text-sm text-muted-foreground">Create reusable access templates and reuse them across projects.</p>
+        <div className="space-y-1">
+          <span className="kicker">Permission schemes</span>
+          <h3 className="text-sm font-semibold tracking-tight text-foreground">Permission schemes</h3>
+          <p className="text-sm text-muted-foreground">
+            Create reusable access templates and reuse them across projects.
+          </p>
         </div>
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
@@ -324,7 +329,9 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create permission scheme</DialogTitle>
-              <DialogDescription>Start from a role template and adjust member-level permissions later if needed.</DialogDescription>
+              <DialogDescription>
+                Start from a role template and adjust member-level permissions later if needed.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
@@ -374,26 +381,40 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {schemes.map((scheme) => {
-          const isAssignedToProject = projectSchemeState?.assignedSchemeId === scheme.id;
-          const isEffectiveForProject = projectSchemeState?.effectiveSchemeId === scheme.id;
+      {schemes.length === 0 ? (
+        <div className="surface-card p-10 text-center space-y-3">
+          <Shield className="mx-auto h-8 w-8 text-muted-foreground/40" />
+          <p className="text-sm text-muted-foreground">No permission schemes yet.</p>
+          <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create your first scheme
+          </Button>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 stagger">
+          {schemes.map((scheme) => {
+            const isAssignedToProject = projectSchemeState?.assignedSchemeId === scheme.id;
+            const isEffectiveForProject = projectSchemeState?.effectiveSchemeId === scheme.id;
 
-          return (
-            <Card key={scheme.id} className={scheme.isDefault ? 'border-primary/60' : undefined}>
-              <CardHeader className="space-y-3 pb-3">
+            return (
+              <div
+                key={scheme.id}
+                className={`surface-card surface-card-hover p-5 space-y-3 ${
+                  scheme.isDefault ? 'border-primary/30' : ''
+                }`}
+              >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
+                  <div className="min-w-0 space-y-1">
                     <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-primary" />
-                      <CardTitle className="text-base">{scheme.name}</CardTitle>
+                      <Shield className="h-4 w-4 shrink-0 text-primary" />
+                      <h4 className="truncate text-sm font-semibold">{scheme.name}</h4>
                     </div>
-                    <CardDescription>
+                    <p className="text-xs text-muted-foreground line-clamp-2">
                       {scheme.description || 'No description provided.'}
-                    </CardDescription>
+                    </p>
                   </div>
                   {scheme.isDefault ? (
-                    <span className="chip gap-1 shrink-0">
+                    <span className="chip shrink-0 gap-1">
                       <Star className="h-3 w-3" />
                       Default
                     </span>
@@ -408,54 +429,63 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
                     <span className="chip">Inherited here</span>
                   ) : null}
                 </div>
-              </CardHeader>
-              <CardContent className="flex items-center justify-between gap-2">
-                <div className="text-xs text-muted-foreground">
-                  {isEffectiveForProject ? (
-                    <span className="inline-flex items-center gap-1">
-                      <Link2 className="h-3 w-3" />
-                      Active for this project
-                    </span>
-                  ) : (
-                    'Reusable across the organization'
-                  )}
-                </div>
-                <div className="flex items-center gap-1">
-                  {!scheme.isDefault ? (
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => void setAsDefault(scheme.id)} title="Set as default">
-                      <Star className="h-3.5 w-3.5" />
-                    </Button>
-                  ) : null}
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(scheme)} title="Edit">
-                    <Edit className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-destructive hover:text-destructive"
-                    onClick={() => void deleteScheme(scheme.id)}
-                    title="Delete"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
 
-      {schemes.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          No permission schemes yet. Create one to get started.
+                <div className="flex items-center justify-between gap-2 border-t border-border/60 pt-3">
+                  <div className="text-xs text-muted-foreground">
+                    {isEffectiveForProject ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Link2 className="h-3 w-3" />
+                        Active here
+                      </span>
+                    ) : (
+                      'Reusable org-wide'
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {!scheme.isDefault ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => void setAsDefault(scheme.id)}
+                        aria-label="Set as default"
+                      >
+                        <Star className="h-3.5 w-3.5" />
+                      </Button>
+                    ) : null}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => openEditDialog(scheme)}
+                      aria-label="Edit scheme"
+                    >
+                      <Edit className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      onClick={() => void deleteScheme(scheme.id)}
+                      aria-label="Delete scheme"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
-      ) : null}
+      )}
 
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit permission scheme</DialogTitle>
-            <DialogDescription>Update the scheme metadata and default behavior for new projects.</DialogDescription>
+            <DialogDescription>
+              Update the scheme metadata and default behavior for new projects.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">

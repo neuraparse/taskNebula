@@ -243,7 +243,7 @@ export function CreateIssueModal({
           <DialogFooter>
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={() => onOpenChange(false)}
               disabled={createIssue.isPending}
             >
@@ -256,7 +256,7 @@ export function CreateIssueModal({
                   <Loader2 className="h-4 w-4 animate-spin" />
                 </span>
               )}
-              Create Issue
+              Create issue
             </Button>
           </DialogFooter>
         </form>

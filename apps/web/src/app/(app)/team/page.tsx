@@ -3,8 +3,9 @@ import { auth } from '@/auth';
 import { db, organizationMembers, users as usersTable } from '@tasknebula/db';
 import { eq, inArray } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { TeamMembersList } from './team-members-list';
 
 export const metadata: Metadata = {
   title: 'Team | TaskNebula',
@@ -31,11 +32,14 @@ export default async function TeamPage() {
           <h1 className="text-xl font-semibold tracking-tight">Team</h1>
         </div>
         <div className="flex-1 p-6">
-          <div className="surface-card p-8 text-center">
-            <p className="text-sm font-medium">No organization</p>
-            <p className="mt-1 text-sm text-muted-foreground">
+          <div className="surface-card p-8 text-center space-y-3">
+            <Users className="mx-auto h-8 w-8 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
               You are not a member of any organization yet.
             </p>
+            <a href="/settings">
+              <Button size="sm">Create organization</Button>
+            </a>
           </div>
         </div>
       </div>
@@ -61,14 +65,26 @@ export default async function TeamPage() {
     })
     .filter((m) => m.user);
 
+  const plainMembers = membersWithUsers.map((m) => ({
+    id: m.id,
+    role: m.role,
+    user: {
+      id: m.user!.id,
+      name: m.user!.name ?? null,
+      email: m.user!.email ?? null,
+      image: m.user!.image ?? null,
+      status: (m.user as any).status ?? null,
+    },
+  }));
+
   return (
     <div className="flex h-full flex-col">
       <div className="border-b bg-background px-6 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-semibold tracking-tight">Team</h1>
             <p className="text-sm text-muted-foreground">
-              {membersWithUsers.length} member{membersWithUsers.length !== 1 ? 's' : ''}
+              {plainMembers.length} member{plainMembers.length !== 1 ? 's' : ''}
             </p>
           </div>
           <a href="/settings/members">
@@ -78,51 +94,7 @@ export default async function TeamPage() {
       </div>
 
       <div className="flex-1 overflow-auto p-6">
-        {membersWithUsers.length === 0 ? (
-          <div className="surface-card p-8 text-center">
-            <p className="text-sm font-medium">No members yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Invite team members to collaborate on projects.
-            </p>
-            <a href="/settings/members">
-              <Button size="sm" className="mt-4">Invite member</Button>
-            </a>
-          </div>
-        ) : (
-          <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {membersWithUsers.map((member) =>
-              member.user ? (
-                <div
-                  key={member.id}
-                  className="surface-card surface-card-hover animate-fade-up p-4"
-                >
-                  <div className="flex items-start gap-3">
-                    <Avatar className="h-12 w-12 shrink-0 rounded-full">
-                      <AvatarImage src={member.user.image || undefined} alt={member.user.name || 'Member'} />
-                      <AvatarFallback className="rounded-full text-sm font-medium">
-                        {member.user.name?.charAt(0).toUpperCase() || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <p className="truncate text-sm font-medium text-foreground">
-                        {member.user.name || member.user.email}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground capitalize">
-                        {member.role}
-                      </p>
-                      {member.user.status === 'active' && (
-                        <span className="inline-flex items-center gap-1">
-                          <span className="status-dot status-live" />
-                          <span className="text-xs text-muted-foreground">Active</span>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ) : null
-            )}
-          </div>
-        )}
+        <TeamMembersList members={plainMembers} />
       </div>
     </div>
   );

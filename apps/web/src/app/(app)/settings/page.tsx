@@ -120,12 +120,12 @@ export default function SettingsPage() {
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">{renderContent(activeTab, currentOrganizationId)}</div>
+        <div className="flex-1 overflow-y-auto p-6 animate-fade-up">{renderContent(activeTab, currentOrganizationId)}</div>
       </div>
 
       {/* Right content */}
       <div className="hidden flex-1 overflow-y-auto p-8 lg:block">
-        <div className="mx-auto max-w-3xl space-y-2">
+        <div className="mx-auto max-w-3xl animate-fade-up">
           {renderContent(activeTab, currentOrganizationId)}
         </div>
       </div>

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -54,6 +53,33 @@ const EMPTY_FORM = {
   triggerType: 'issue_created',
   actionType: 'assign_issue',
 };
+
+// Two-column row for label + control. Keeps forms calm and scannable.
+function FormRow({
+  label,
+  description,
+  children,
+  htmlFor,
+}: {
+  label: string;
+  description?: string;
+  children: React.ReactNode;
+  htmlFor?: string;
+}) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+      <div className="space-y-1 pt-2">
+        <Label htmlFor={htmlFor} className="text-sm font-medium">
+          {label}
+        </Label>
+        {description ? (
+          <p className="text-xs text-muted-foreground">{description}</p>
+        ) : null}
+      </div>
+      <div>{children}</div>
+    </div>
+  );
+}
 
 export function AutomationManager({ organizationId, projectId }: AutomationManagerProps) {
   const [rules, setRules] = useState<AutomationRule[]>([]);
@@ -230,53 +256,59 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-up">
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-base font-semibold text-foreground">Automation rules</h3>
+        <div className="space-y-1">
+          <span className="kicker">Automation</span>
+          <h3 className="text-base font-semibold tracking-tight text-foreground">Automation rules</h3>
           <p className="text-sm text-muted-foreground">Automate repetitive work with project-specific or organization-wide rules.</p>
         </div>
-        <Button onClick={() => (formMode ? resetForm() : openCreateForm())} variant={formMode ? 'outline' : 'default'}>
+        <Button
+          onClick={() => (formMode ? resetForm() : openCreateForm())}
+          variant={formMode ? 'outline' : 'default'}
+        >
           <Plus className="mr-2 h-4 w-4" />
           {formMode ? 'Close editor' : 'Create rule'}
         </Button>
       </div>
 
       {formMode ? (
-        <Card className="border-primary/40">
-          <CardHeader>
-            <CardTitle className="text-base">
+        <div className="surface-card p-5 space-y-5 animate-fade-up">
+          <div className="space-y-1">
+            <span className="kicker">{formMode === 'edit' ? 'Edit rule' : 'New rule'}</span>
+            <h4 className="text-sm font-semibold tracking-tight">
               {formMode === 'edit' ? 'Edit automation rule' : 'Create automation rule'}
-            </CardTitle>
-            <CardDescription>Define a trigger and the primary action the rule should perform.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="rule-name">Rule name</Label>
-                <Input
-                  id="rule-name"
-                  placeholder="Auto-assign new issues"
-                  value={formData.name}
-                  onChange={(event) => setFormData((current) => ({ ...current, name: event.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="rule-description">Description</Label>
-                <Input
-                  id="rule-description"
-                  placeholder="Optional description"
-                  value={formData.description}
-                  onChange={(event) =>
-                    setFormData((current) => ({ ...current, description: event.target.value }))
-                  }
-                />
-              </div>
-            </div>
+            </h4>
+            <p className="text-xs text-muted-foreground">
+              Define a trigger and the primary action the rule should perform.
+            </p>
+          </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="trigger-type">Trigger</Label>
+          <div className="space-y-5">
+            <FormRow label="Rule name" htmlFor="rule-name" description="A short name team members will recognize.">
+              <Input
+                id="rule-name"
+                placeholder="Auto-assign new issues"
+                value={formData.name}
+                onChange={(event) => setFormData((current) => ({ ...current, name: event.target.value }))}
+              />
+            </FormRow>
+
+            <FormRow label="Description" htmlFor="rule-description" description="Optional — explain when this rule fires.">
+              <Input
+                id="rule-description"
+                placeholder="Optional description"
+                value={formData.description}
+                onChange={(event) =>
+                  setFormData((current) => ({ ...current, description: event.target.value }))
+                }
+              />
+            </FormRow>
+
+            <div className="surface-inset p-4 rounded-md space-y-5">
+              <span className="kicker">Triggers and actions</span>
+
+              <FormRow label="Trigger" htmlFor="trigger-type" description="What event starts this rule.">
                 <Select
                   value={formData.triggerType}
                   onValueChange={(value) => setFormData((current) => ({ ...current, triggerType: value }))}
@@ -292,9 +324,9 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="action-type">Action</Label>
+              </FormRow>
+
+              <FormRow label="Action" htmlFor="action-type" description="What should happen when the rule fires.">
                 <Select
                   value={formData.actionType}
                   onValueChange={(value) => setFormData((current) => ({ ...current, actionType: value }))}
@@ -310,102 +342,99 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
                     ))}
                   </SelectContent>
                 </Select>
+              </FormRow>
+            </div>
+
+            <FormRow label="Enabled" htmlFor="enabled" description="Turn on as soon as saved.">
+              <div className="flex h-10 items-center">
+                <Switch
+                  id="enabled"
+                  checked={formData.enabled}
+                  onCheckedChange={(checked) => setFormData((current) => ({ ...current, enabled: checked }))}
+                />
               </div>
-            </div>
+            </FormRow>
+          </div>
 
-            <div className="flex items-center gap-2">
-              <Switch
-                id="enabled"
-                checked={formData.enabled}
-                onCheckedChange={(checked) => setFormData((current) => ({ ...current, enabled: checked }))}
-              />
-              <Label htmlFor="enabled" className="cursor-pointer">Enable immediately</Label>
-            </div>
-
-            <div className="flex gap-2">
-              <Button onClick={() => void saveRule()}>
-                {formMode === 'edit' ? 'Save changes' : 'Create rule'}
-              </Button>
-              <Button variant="outline" onClick={resetForm}>
-                Cancel
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      <div className="grid gap-3">
-        {rules.length === 0 && !formMode ? (
-          <div className="rounded-lg border border-dashed border-border p-10 text-center">
-            <Zap className="mx-auto mb-3 h-10 w-10 text-muted-foreground opacity-30" />
-            <p className="font-medium">No automation rules yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">Create the first rule to automate repetitive handoffs.</p>
-            <Button className="mt-4" onClick={openCreateForm}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create your first rule
+          <div className="flex justify-end gap-2 border-t border-border/60 pt-4">
+            <Button variant="outline" onClick={resetForm}>
+              Cancel
+            </Button>
+            <Button onClick={() => void saveRule()}>
+              {formMode === 'edit' ? 'Save changes' : 'Create rule'}
             </Button>
           </div>
-        ) : (
-          rules.map((rule) => {
+        </div>
+      ) : null}
+
+      {rules.length === 0 && !formMode ? (
+        <div className="surface-card p-10 text-center space-y-3">
+          <Zap className="mx-auto h-8 w-8 text-muted-foreground/50" />
+          <p className="text-sm text-muted-foreground">No automation rules yet.</p>
+          <Button size="sm" onClick={openCreateForm}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create your first rule
+          </Button>
+        </div>
+      ) : rules.length > 0 ? (
+        <div className="surface-card divide-y divide-border/60 stagger">
+          {rules.map((rule) => {
             const triggerLabel = TRIGGER_TYPES.find((t) => t.value === rule.trigger.type)?.label || rule.trigger.type;
 
             return (
-              <Card
+              <div
                 key={rule.id}
-                className={rule.enabled ? 'border-l-2 border-l-accent-emerald' : 'opacity-60'}
+                className={`flex items-center gap-4 px-4 py-2.5 transition-colors duration-150 hover:bg-accent/40 ${
+                  rule.enabled ? '' : 'opacity-60'
+                }`}
               >
-                <CardContent className="flex items-center gap-4 py-4">
-                  {/* Trigger → Action flow */}
-                  <div className="flex flex-1 flex-wrap items-center gap-2 min-w-0">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{rule.name}</p>
-                      {rule.description && (
-                        <p className="truncate text-xs text-muted-foreground">{rule.description}</p>
-                      )}
-                    </div>
-                    <div className="ml-auto flex shrink-0 items-center gap-1.5">
-                      <span className="chip-accent text-xs">{triggerLabel}</span>
-                      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                      {rule.actions.map((action, index) => (
-                        <span key={`${action.type}-${index}`} className="chip text-xs">
-                          {ACTION_TYPES.find((t) => t.value === action.type)?.label || action.type}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{rule.name}</p>
+                  {rule.description ? (
+                    <p className="truncate text-xs text-muted-foreground">{rule.description}</p>
+                  ) : null}
+                </div>
 
-                  {/* Enabled switch + actions */}
-                  <div className="flex shrink-0 items-center gap-2 border-l border-border pl-4">
-                    <Switch
-                      checked={rule.enabled}
-                      onCheckedChange={() => void toggleRule(rule.id, rule.enabled)}
-                      aria-label={rule.enabled ? 'Disable rule' : 'Enable rule'}
-                    />
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7"
-                      onClick={() => openEditForm(rule)}
-                      title="Edit"
-                    >
-                      <Edit className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 text-destructive hover:text-destructive"
-                      onClick={() => void deleteRule(rule.id)}
-                      title="Delete"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                <div className="hidden shrink-0 items-center gap-1.5 md:flex">
+                  <span className="chip-accent text-[11px]">{triggerLabel}</span>
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  {rule.actions.slice(0, 1).map((action, index) => (
+                    <span key={`${action.type}-${index}`} className="chip text-[11px]">
+                      {ACTION_TYPES.find((t) => t.value === action.type)?.label || action.type}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <Switch
+                    checked={rule.enabled}
+                    onCheckedChange={() => void toggleRule(rule.id, rule.enabled)}
+                    aria-label={rule.enabled ? 'Disable rule' : 'Enable rule'}
+                  />
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7"
+                    onClick={() => openEditForm(rule)}
+                    aria-label="Edit rule"
+                  >
+                    <Edit className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 text-destructive hover:text-destructive"
+                    onClick={() => void deleteRule(rule.id)}
+                    aria-label="Delete rule"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      ) : null}
     </div>
   );
 }

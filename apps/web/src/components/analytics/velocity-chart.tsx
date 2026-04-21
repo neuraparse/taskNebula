@@ -20,12 +20,12 @@ interface VelocityChartProps {
 function VelocityTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="surface-card shadow-md rounded-md px-3 py-2 text-xs space-y-1">
+    <div className="surface-card px-3 py-2 text-xs space-y-1">
       <p className="text-muted-foreground font-medium">{label}</p>
       {payload.map((entry: any) => (
         <div key={entry.name} className="flex items-center gap-2">
           <span
-            className="h-1.5 w-3 rounded-full inline-block"
+            className="h-1.5 w-1.5 rounded-full inline-block"
             style={{ backgroundColor: entry.color }}
           />
           <span className="text-muted-foreground">{entry.name}:</span>
@@ -33,6 +33,15 @@ function VelocityTooltip({ active, payload, label }: any) {
         </div>
       ))}
     </div>
+  );
+}
+
+function LegendChip({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="chip inline-flex items-center gap-1.5">
+      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />
+      {label}
+    </span>
   );
 }
 
@@ -48,14 +57,25 @@ export function VelocityChart({ data }: VelocityChartProps) {
   const avgPoints = data.averageVelocity.points;
 
   return (
-    <div className="surface-card p-6 space-y-4">
+    <div className="surface-card animate-fade-up p-5 space-y-3">
       {/* Header */}
-      <div className="space-y-0.5">
+      <div className="space-y-1">
         <span className="kicker">Team Performance</span>
-        <h3 className="text-sm font-semibold tracking-tight text-foreground">Velocity</h3>
+        <h3 className="text-base font-semibold tracking-tight text-foreground">Velocity</h3>
+        <p className="text-sm text-muted-foreground">
+          Completed issues and story points across recent sprints.
+        </p>
       </div>
 
-      <ResponsiveContainer width="100%" height={300}>
+      {/* Legend */}
+      <div className="flex flex-wrap items-center gap-2">
+        <LegendChip color="hsl(var(--primary))" label="Issues" />
+        <LegendChip color="hsl(var(--accent-cyan))" label="Points" />
+        <LegendChip color="hsl(var(--accent-emerald))" label="Avg Issues" />
+        <LegendChip color="hsl(var(--accent-amber))" label="Avg Points" />
+      </div>
+
+      <ResponsiveContainer width="100%" height={280}>
         <ComposedChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
@@ -78,16 +98,26 @@ export function VelocityChart({ data }: VelocityChartProps) {
             tickLine={false}
           />
           <Tooltip content={<VelocityTooltip />} />
-          <Legend
-            wrapperStyle={{ fontSize: 11, color: 'hsl(var(--muted-foreground))' }}
+          <Legend wrapperStyle={{ display: 'none' }} />
+          <Bar
+            yAxisId="left"
+            dataKey="issues"
+            fill="hsl(var(--primary))"
+            name="Completed Issues"
+            radius={[3, 3, 0, 0]}
           />
-          <Bar yAxisId="left" dataKey="issues" fill="hsl(var(--primary))" name="Completed Issues" radius={[3, 3, 0, 0]} />
-          <Bar yAxisId="right" dataKey="points" fill="hsl(var(--accent-cyan))" name="Story Points" radius={[3, 3, 0, 0]} />
+          <Bar
+            yAxisId="right"
+            dataKey="points"
+            fill="hsl(var(--accent-cyan))"
+            name="Story Points"
+            radius={[3, 3, 0, 0]}
+          />
           <Line
             yAxisId="left"
             type="monotone"
             dataKey={() => avgIssues}
-            stroke="hsl(var(--accent-amber))"
+            stroke="hsl(var(--accent-emerald))"
             strokeDasharray="5 5"
             name="Avg Issues"
             dot={false}
@@ -96,7 +126,7 @@ export function VelocityChart({ data }: VelocityChartProps) {
             yAxisId="right"
             type="monotone"
             dataKey={() => avgPoints}
-            stroke="hsl(var(--accent-rose))"
+            stroke="hsl(var(--accent-amber))"
             strokeDasharray="5 5"
             name="Avg Points"
             dot={false}

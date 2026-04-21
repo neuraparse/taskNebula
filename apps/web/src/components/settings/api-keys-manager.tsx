@@ -147,12 +147,12 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
 
   return (
     <>
-      <div className="surface-card p-6 animate-fade-in">
-        <div className="flex items-center justify-between gap-3 pb-5">
+      <section className="animate-fade-up space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
             <span className="kicker">Integrations</span>
-            <h2 className="text-xl font-semibold">API Keys</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className="text-lg font-semibold tracking-tight">API keys</h2>
+            <p className="text-sm text-muted-foreground max-w-prose">
               Create and revoke keys for service integrations and automation.
             </p>
           </div>
@@ -169,44 +169,45 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
             {error instanceof Error ? error.message : 'API keys could not be loaded.'}
           </div>
         ) : apiKeys.length === 0 ? (
-          <div className="py-10 text-center text-muted-foreground">
-            <Key className="mx-auto mb-3 h-8 w-8 opacity-30" />
-            <p className="text-sm">No API keys yet. Create one when you need programmatic access.</p>
+          <div className="flex flex-col items-center gap-3 py-12 text-center">
+            <Key className="h-8 w-8 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">No API keys yet.</p>
+            <Button size="sm" onClick={() => setIsCreateDialogOpen(true)}>
+              Create your first key
+            </Button>
           </div>
         ) : (
-          <div className="space-y-px">
+          <div className="surface-card p-2">
             {apiKeys.map((key) => (
               <div
                 key={key.id}
-                className="flex min-h-[44px] items-center justify-between gap-4 rounded-md px-2 py-2.5 transition-colors hover:bg-accent/40"
+                className="flex min-h-[52px] items-center justify-between gap-4 rounded-md px-3 py-2.5 transition-colors duration-150 hover:bg-accent/40"
               >
-                <div className="flex min-w-0 flex-1 items-center gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-medium">{key.name}</span>
-                      {key.isActive ? (
-                        <span className="chip-accent">Active</span>
-                      ) : (
-                        <span className="chip">Revoked</span>
-                      )}
-                      {key.expiresAt ? (
-                        <span className="chip">
-                          Expires {new Date(key.expiresAt).toLocaleDateString()}
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
-                      <code className="rounded bg-muted px-1.5 py-0.5">{key.keyPrefix}...</code>
-                      <span>
-                        Created {formatDistanceToNow(new Date(key.createdAt), { addSuffix: true })}
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium">{key.name}</span>
+                    {key.isActive ? (
+                      <span className="chip-accent">Active</span>
+                    ) : (
+                      <span className="chip">Revoked</span>
+                    )}
+                    {key.expiresAt ? (
+                      <span className="chip">
+                        Expires {new Date(key.expiresAt).toLocaleDateString()}
                       </span>
-                      {key.lastUsedAt ? (
-                        <span>
-                          Last used{' '}
-                          {formatDistanceToNow(new Date(key.lastUsedAt), { addSuffix: true })}
-                        </span>
-                      ) : null}
-                    </div>
+                    ) : null}
+                  </div>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                    <code className="rounded bg-muted px-1.5 py-0.5">{key.keyPrefix}...</code>
+                    <span>
+                      Created {formatDistanceToNow(new Date(key.createdAt), { addSuffix: true })}
+                    </span>
+                    {key.lastUsedAt ? (
+                      <span>
+                        Last used{' '}
+                        {formatDistanceToNow(new Date(key.lastUsedAt), { addSuffix: true })}
+                      </span>
+                    ) : null}
                   </div>
                 </div>
                 {key.isActive ? (
@@ -229,7 +230,7 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
             ))}
           </div>
         )}
-      </div>
+      </section>
 
       <Dialog open={isCreateDialogOpen} onOpenChange={handleCloseDialog}>
         <DialogContent>

@@ -30,12 +30,12 @@ export function MobileIssueDetail({ issue, onBack }: MobileIssueDetailProps) {
   return (
     <div className="flex h-full flex-col bg-background">
       {/* Compact header */}
-      <div className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur">
-        <div className="flex h-12 items-center justify-between px-3">
+      <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur">
+        <div className="flex h-14 items-center justify-between px-3">
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-9 w-9"
             onClick={onBack}
             asChild={!onBack}
             aria-label="Go back"
@@ -53,7 +53,7 @@ export function MobileIssueDetail({ issue, onBack }: MobileIssueDetailProps) {
 
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="More actions">
+              <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="More actions">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </SheetTrigger>

@@ -205,7 +205,7 @@ export function BulkActionsToolbar({
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowUpdateDialog(false)}>
+            <Button variant="ghost" onClick={() => setShowUpdateDialog(false)}>
               Cancel
             </Button>
             <Button onClick={handleBulkUpdate} disabled={loading || !updateField || !updateValue}>
@@ -215,18 +215,17 @@ export function BulkActionsToolbar({
         </DialogContent>
       </Dialog>
 
-      {/* Delete Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Issues</DialogTitle>
+            <DialogTitle>Delete issues</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete {selectedIssueIds.length} issue(s)? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+            <Button variant="ghost" onClick={() => setShowDeleteDialog(false)}>
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleBulkDelete} disabled={loading}>

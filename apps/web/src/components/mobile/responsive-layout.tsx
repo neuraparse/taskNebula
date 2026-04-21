@@ -27,13 +27,13 @@ export function ResponsiveLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-background">
       <MobileHeader
         title={title}
         showSearch={showSearch}
         onSearchClick={onSearchClick}
       />
-      <main className="flex-1 pb-16">{children}</main>
+      <main className="flex-1 pb-14">{children}</main>
       {showMobileNav && <MobileNav />}
     </div>
   );

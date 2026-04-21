@@ -4,8 +4,14 @@ import { useState } from 'react';
 import { Search, X, Plus, Save, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { criteriaToJQL, type ParsedCriteria } from '@tasknebula/db';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { type ParsedCriteria } from '@tasknebula/db';
 
 interface AdvancedSearchProps {
   onSearch: (query: string, criteria: ParsedCriteria) => void;
@@ -55,31 +61,23 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
   };
 
   const removeCondition = (id: string) => {
-    setConditions(conditions.filter(c => c.id !== id));
+    setConditions(conditions.filter((c) => c.id !== id));
   };
 
   const updateCondition = (id: string, updates: Partial<Condition>) => {
-    setConditions(
-      conditions.map(c => (c.id === id ? { ...c, ...updates } : c))
-    );
+    setConditions(conditions.map((c) => (c.id === id ? { ...c, ...updates } : c)));
   };
 
   const buildQuery = () => {
     const parts = conditions
-      .filter(c => c.value.trim())
-      .map(c => {
+      .filter((c) => c.value.trim())
+      .map((c) => {
         const value = c.value.includes(' ') ? `"${c.value}"` : c.value;
-        if (c.operator === 'IN') {
-          return `${c.field} IN (${value})`;
-        } else if (c.operator === '>=') {
-          return `${c.field} >= "${value}"`;
-        } else if (c.operator === '<=') {
-          return `${c.field} <= "${value}"`;
-        } else if (c.operator === 'CONTAINS') {
-          return `${c.field} CONTAINS "${value}"`;
-        } else {
-          return `${c.field} = ${value}`;
-        }
+        if (c.operator === 'IN') return `${c.field} IN (${value})`;
+        if (c.operator === '>=') return `${c.field} >= "${value}"`;
+        if (c.operator === '<=') return `${c.field} <= "${value}"`;
+        if (c.operator === 'CONTAINS') return `${c.field} CONTAINS "${value}"`;
+        return `${c.field} = ${value}`;
       });
 
     return parts.join(' AND ');
@@ -89,12 +87,9 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
     const query = showJQL ? jqlQuery : buildQuery();
     if (!query.trim()) return;
 
-    // Parse query to criteria (simplified)
     const criteria: ParsedCriteria = {};
-    conditions.forEach(c => {
-      if (c.value.trim()) {
-        criteria[c.field] = c.value;
-      }
+    conditions.forEach((c) => {
+      if (c.value.trim()) criteria[c.field] = c.value;
     });
 
     onSearch(query, criteria);
@@ -108,40 +103,47 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
     if (!name) return;
 
     const criteria: ParsedCriteria = {};
-    conditions.forEach(c => {
-      if (c.value.trim()) {
-        criteria[c.field] = c.value;
-      }
+    conditions.forEach((c) => {
+      if (c.value.trim()) criteria[c.field] = c.value;
     });
 
     onSaveFilter?.(name, query, criteria);
   };
 
-  // Active filter chips for visual feedback
-  const activeFilters = conditions.filter(c => c.value.trim());
+  const activeFilters = conditions.filter((c) => c.value.trim());
 
   return (
-    <div className="space-y-3">
+    <div className="surface-card p-4 rounded-lg space-y-3">
       {/* Toolbar */}
       <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowJQL(!showJQL)}
-          className="text-muted-foreground"
-        >
-          {showJQL ? 'Visual Builder' : 'JQL Editor'}
-          <ChevronDown className="ml-1 h-3 w-3" />
-        </Button>
-        {onSaveFilter && (
-          <Button variant="ghost" size="sm" onClick={handleSaveFilter} className="text-muted-foreground">
-            <Save className="mr-1.5 h-4 w-4" />
-            Save filter
+        <Search className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
+        <span className="text-sm font-medium tracking-tight">
+          {showJQL ? 'JQL editor' : 'Filter builder'}
+        </span>
+
+        <div className="ml-auto flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowJQL(!showJQL)}
+            className="h-7 px-2 text-xs text-muted-foreground"
+          >
+            {showJQL ? 'Visual builder' : 'JQL editor'}
+            <ChevronDown className="ml-1 h-3 w-3" />
           </Button>
-        )}
-        <div className="ml-auto">
-          <Button onClick={handleSearch} size="sm">
-            <Search className="mr-1.5 h-4 w-4" />
+          {onSaveFilter && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSaveFilter}
+              className="h-7 px-2 text-xs text-muted-foreground"
+            >
+              <Save className="mr-1.5 h-3.5 w-3.5" />
+              Save
+            </Button>
+          )}
+          <Button onClick={handleSearch} size="sm" className="h-7 px-3 text-xs">
+            <Search className="mr-1.5 h-3.5 w-3.5" />
             Search
           </Button>
         </div>
@@ -150,11 +152,8 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
       {/* Active filter chips */}
       {!showJQL && activeFilters.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
-          {activeFilters.map(c => (
-            <span
-              key={c.id}
-              className="chip-accent inline-flex items-center gap-1"
-            >
+          {activeFilters.map((c) => (
+            <span key={c.id} className="chip-accent inline-flex items-center gap-1">
               <span className="font-medium">{c.field}</span>
               <span className="text-muted-foreground">{c.operator}</span>
               <span>{c.value}</span>
@@ -174,7 +173,7 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
       {showJQL ? (
         <div className="space-y-2">
           <Input
-            placeholder="Enter JQL query (e.g., assignee = me AND status = 'In Progress')"
+            placeholder="e.g. assignee = me AND status = 'In Progress'"
             value={jqlQuery}
             onChange={(e) => setJqlQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -184,17 +183,13 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 stagger">
           {conditions.map((condition, index) => (
-            <div key={condition.id} className="flex items-center gap-2">
-              {index > 0 && (
-                <span className="chip shrink-0">AND</span>
-              )}
+            <div key={condition.id} className="animate-fade-up flex items-center gap-2">
+              {index > 0 && <span className="chip shrink-0">AND</span>}
               <Select
                 value={condition.field}
-                onValueChange={(value) =>
-                  updateCondition(condition.id, { field: value })
-                }
+                onValueChange={(value) => updateCondition(condition.id, { field: value })}
               >
                 <SelectTrigger className="w-[140px] shrink-0">
                   <SelectValue />
@@ -210,9 +205,7 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
 
               <Select
                 value={condition.operator}
-                onValueChange={(value) =>
-                  updateCondition(condition.id, { operator: value })
-                }
+                onValueChange={(value) => updateCondition(condition.id, { operator: value })}
               >
                 <SelectTrigger className="w-[110px] shrink-0">
                   <SelectValue />
@@ -229,9 +222,7 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
               <Input
                 placeholder="Value"
                 value={condition.value}
-                onChange={(e) =>
-                  updateCondition(condition.id, { value: e.target.value })
-                }
+                onChange={(e) => updateCondition(condition.id, { value: e.target.value })}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className="flex-1"
               />
@@ -250,8 +241,13 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
             </div>
           ))}
 
-          <Button variant="ghost" size="sm" onClick={addCondition} className="text-muted-foreground">
-            <Plus className="mr-1.5 h-4 w-4" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={addCondition}
+            className="h-7 px-2 text-xs text-muted-foreground"
+          >
+            <Plus className="mr-1.5 h-3.5 w-3.5" />
             Add condition
           </Button>
         </div>

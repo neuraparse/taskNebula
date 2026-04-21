@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CheckCircle2 } from 'lucide-react';
 
-const STEPS = ['Admin account', 'Organization', 'Done'];
+const STEP_LABELS = ['Admin', 'Workspace', 'Done'] as const;
 
 export default function SetupPage() {
   const router = useRouter();
@@ -81,29 +81,40 @@ export default function SetupPage() {
     }
   };
 
+  // Progress driven by completion of the admin step (step 1 of 2)
+  const currentStep = success ? STEP_LABELS.length : 1;
+  const progressPct = (currentStep / STEP_LABELS.length) * 100;
+
   if (loading) {
     return (
-      <div className="relative min-h-screen bg-background overflow-hidden flex items-center justify-center">
-        <div className="bg-aurora absolute inset-0 pointer-events-none animate-aurora opacity-80" />
-        <div className="relative z-10 h-5 w-5 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+      <div className="relative min-h-dvh grid place-items-center bg-background overflow-hidden">
+        <div
+          aria-hidden="true"
+          className="bg-aurora absolute inset-0 pointer-events-none blur-3xl opacity-60 -z-10"
+        />
+        <div
+          className="relative h-5 w-5 animate-spin rounded-full border-2 border-foreground border-t-transparent"
+          aria-label="Loading"
+        />
       </div>
     );
   }
 
   if (success) {
     return (
-      <div className="relative min-h-screen bg-background overflow-hidden flex items-center justify-center px-4">
-        <div className="bg-aurora absolute inset-0 pointer-events-none animate-aurora opacity-80" />
-        <div className="relative z-10 w-full max-w-md animate-scale-in">
-          <div className="surface-card p-8 shadow-lg rounded-xl text-center space-y-4">
+      <div className="relative min-h-dvh grid place-items-center bg-background overflow-hidden px-4">
+        <div
+          aria-hidden="true"
+          className="bg-aurora absolute inset-0 pointer-events-none blur-3xl opacity-60 -z-10"
+        />
+        <div className="relative w-full max-w-sm animate-scale-in">
+          <div className="surface-card rounded-lg p-8 text-center space-y-4">
             <div className="flex justify-center">
-              <div className="rounded-full bg-accent-emerald/10 p-4">
-                <CheckCircle2 className="h-8 w-8 text-accent-emerald" aria-hidden="true" />
-              </div>
+              <CheckCircle2 className="h-8 w-8 text-accent-emerald" aria-hidden="true" />
             </div>
             <div className="space-y-1">
-              <h2 className="text-xl font-semibold tracking-tight text-foreground">Setup complete</h2>
-              <p className="text-sm text-muted-foreground">Redirecting to sign in...</p>
+              <h2 className="text-2xl font-semibold tracking-tight text-foreground">Setup complete</h2>
+              <p className="text-sm text-muted-foreground">Redirecting to sign in…</p>
             </div>
           </div>
         </div>
@@ -112,40 +123,55 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-background overflow-hidden flex items-center justify-center px-4 py-12">
-      {/* Aurora background */}
-      <div className="bg-aurora absolute inset-0 pointer-events-none animate-aurora opacity-80" />
+    <div className="relative min-h-dvh grid place-items-center bg-background overflow-hidden px-4 py-10">
+      {/* Aurora glow */}
+      <div
+        aria-hidden="true"
+        className="bg-aurora absolute inset-0 pointer-events-none blur-3xl opacity-60 -z-10"
+      />
 
-      <div className="relative z-10 w-full max-w-md animate-scale-in">
-        {/* Logo + heading */}
+      <div className="relative w-full max-w-md animate-scale-in">
+        {/* Brand + heading */}
         <div className="mb-6 text-center space-y-3">
           <div className="flex justify-center">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-foreground">
-              <span className="text-sm font-bold tracking-tight text-background">TN</span>
+            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-foreground">
+              <span className="text-xs font-semibold tracking-tight text-background">TN</span>
             </div>
           </div>
           <div className="space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Welcome to TaskNebula</h1>
-            <p className="text-sm text-muted-foreground">Create your admin account to get started</p>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              Welcome to TaskNebula
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Create your admin account to get started
+            </p>
           </div>
         </div>
 
-        {/* Step indicator */}
-        <div className="mb-6 flex items-center justify-center gap-2">
-          {STEPS.map((step, i) => (
-            <span
-              key={step}
-              className={i === 0 ? 'chip-accent' : 'chip'}
-            >
-              {step}
-            </span>
-          ))}
+        {/* Subtle progress */}
+        <div className="mb-6 space-y-2">
+          <div
+            className="h-1 w-full overflow-hidden rounded-full bg-primary/20"
+            role="progressbar"
+            aria-valuenow={currentStep}
+            aria-valuemin={0}
+            aria-valuemax={STEP_LABELS.length}
+            aria-label="Setup progress"
+          >
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-300 ease-smooth"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground text-center">
+            Step {currentStep} of {STEP_LABELS.length} · {STEP_LABELS[currentStep - 1]}
+          </p>
         </div>
 
-        <div className="surface-card p-8 shadow-lg rounded-xl">
+        <div className="surface-card rounded-lg p-6 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <p className="text-sm text-destructive">{error}</p>
+              <p className="text-sm text-destructive" role="alert">{error}</p>
             )}
 
             <div className="space-y-1.5">
@@ -216,14 +242,14 @@ export default function SetupPage() {
             </div>
 
             <Button type="submit" className="w-full" size="lg" disabled={submitting}>
-              {submitting ? 'Creating account...' : 'Create admin account'}
+              {submitting ? 'Creating account…' : 'Create admin account'}
             </Button>
           </form>
-
-          <p className="mt-6 text-xs text-muted-foreground text-center">
-            This page is only available when the database is empty.
-          </p>
         </div>
+
+        <p className="mt-4 text-xs text-muted-foreground text-center">
+          This page is only available when the database is empty.
+        </p>
       </div>
     </div>
   );

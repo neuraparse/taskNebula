@@ -35,7 +35,6 @@ import { BoardFiltersBar, DEFAULT_BOARD_FILTERS, type BoardFilters } from '@/com
 import { KanbanBoard } from '@/components/kanban/kanban-board';
 import { CreateIssueModal } from '@/components/issues/create-issue-modal';
 import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -466,19 +465,20 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
   return (
     <>
       <div className="flex h-full flex-col bg-background">
-        <div className="shrink-0 border-b border-border/60 bg-background/95 px-5 py-3 backdrop-blur">
+        <div className="shrink-0 border-b border-border bg-background px-5 py-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <FolderKanban className="h-4 w-4 text-muted-foreground" />
-              <h1 className="text-sm font-semibold">{viewsData?.project.name || projectId}</h1>
+            <div className="flex flex-wrap items-center gap-2 min-w-0">
+              <h1 className="text-2xl font-semibold tracking-tight truncate">
+                {viewsData?.project.name || projectId}
+              </h1>
               {activeTeamspace ? (
-                <span className="chip gap-1 text-[10px]">
+                <span className="chip gap-1">
                   <Settings2 className="h-3 w-3" />
                   {activeTeamspace.name}
                 </span>
               ) : null}
               {defaultView ? (
-                <span className="chip text-[10px]">Default: {defaultView.name}</span>
+                <span className="chip">Default: {defaultView.name}</span>
               ) : null}
             </div>
 
@@ -486,14 +486,13 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-1.5 h-8"
                 onClick={() => setSaveViewOpen(true)}
               >
-                <Save className="h-3.5 w-3.5" />
+                <Save className="mr-1.5 h-3.5 w-3.5" />
                 Save view
               </Button>
-              <Button size="sm" className="gap-1.5 h-8" onClick={() => setCreateIssueOpen(true)}>
-                <Plus className="h-3.5 w-3.5" />
+              <Button size="sm" onClick={() => setCreateIssueOpen(true)}>
+                <Plus className="mr-1.5 h-3.5 w-3.5" />
                 New Issue
               </Button>
             </div>
@@ -605,41 +604,69 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
         <Tabs value={activeViewType} onValueChange={(value) => setActiveViewType(value as ViewType)} className="flex min-h-0 flex-1 flex-col">
           <TabsContent value="list" className="mt-0 min-h-0 flex-1 overflow-hidden">
             <div className="h-full overflow-auto px-5 py-4">
-              <div className="overflow-hidden rounded-lg border border-border/60 bg-card">
-                <div className="grid grid-cols-[110px_minmax(0,1fr)_110px_100px_140px_120px] gap-3 border-b border-border/60 bg-surface px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  <span>Issue</span>
-                  <span>Title</span>
-                  <span>Status</span>
-                  <span>Priority</span>
-                  <span>Assignee</span>
-                  <span>Due</span>
-                </div>
-
+              <div className="overflow-hidden rounded-lg border border-border bg-card animate-fade-up">
                 {isLoading ? (
                   <div className="px-4 py-8 text-sm text-muted-foreground">Loading issues…</div>
                 ) : filteredIssues.length === 0 ? (
-                  <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-                    No issues match the current view.
+                  <div className="flex flex-col items-center gap-3 px-4 py-12 text-center">
+                    <p className="text-sm text-muted-foreground">No issues match the current view.</p>
+                    <Button size="sm" onClick={() => setCreateIssueOpen(true)}>
+                      <Plus className="mr-1.5 h-3.5 w-3.5" />
+                      New Issue
+                    </Button>
                   </div>
                 ) : (
-                  filteredIssues.map((issue) => (
-                    <button
-                      key={issue.id}
-                      onClick={() => setSelectedIssueId(issue.id)}
-                      className="grid w-full grid-cols-[110px_minmax(0,1fr)_110px_100px_140px_120px] gap-3 border-b border-border/40 px-4 py-2.5 text-left transition-colors duration-200 hover:bg-accent"
-                    >
-                      <span className="font-mono text-xs text-muted-foreground">{issue.key}</span>
-                      <span className="truncate text-sm font-medium">{issue.title}</span>
-                      <span className="text-xs text-muted-foreground truncate">{issue.statusName || issue.status}</span>
-                      <span className="text-xs capitalize text-muted-foreground">{issue.priority}</span>
-                      <span className="truncate text-xs text-muted-foreground">
-                        {issue.assignee?.name || issue.assignee?.email || 'Unassigned'}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {issue.dueDate ? format(parseISO(issue.dueDate), 'MMM d') : '—'}
-                      </span>
-                    </button>
-                  ))
+                  <ul className="stagger divide-y divide-border/60">
+                    {filteredIssues.map((issue) => {
+                      const priorityKey = ['critical', 'high', 'medium', 'low'].includes(issue.priority)
+                        ? issue.priority
+                        : 'low';
+                      const statusLabel = issue.statusName || issue.status;
+                      const isInProgress = /progress/i.test(statusLabel || '');
+                      const dueLabel = issue.dueDate ? format(parseISO(issue.dueDate), 'MMM d') : null;
+                      const assigneeLabel =
+                        issue.assignee?.name || issue.assignee?.email || null;
+
+                      return (
+                        <li key={issue.id} className="relative">
+                          <span
+                            aria-hidden="true"
+                            className={cn(
+                              'priority-indicator absolute left-0 top-0 bottom-0 h-full',
+                              `priority-${priorityKey}`
+                            )}
+                          />
+                          <button
+                            onClick={() => setSelectedIssueId(issue.id)}
+                            className="group flex w-full items-center gap-3 pl-4 pr-4 py-2.5 text-left transition-all duration-200 ease-smooth hover:bg-accent/60"
+                          >
+                            <span className="font-mono text-[11px] text-muted-foreground shrink-0 w-[72px]">
+                              {issue.key}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                              {issue.title}
+                            </span>
+                            <span className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground shrink-0">
+                              {assigneeLabel ? (
+                                <span className="truncate max-w-[140px]">{assigneeLabel}</span>
+                              ) : null}
+                              {dueLabel ? <span>{dueLabel}</span> : null}
+                            </span>
+                            {statusLabel ? (
+                              <span
+                                className={cn(
+                                  'shrink-0',
+                                  isInProgress ? 'chip-accent' : 'chip'
+                                )}
+                              >
+                                {statusLabel}
+                              </span>
+                            ) : null}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 )}
               </div>
             </div>
@@ -651,70 +678,68 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
 
           <TabsContent value="timeline" className="mt-0 min-h-0 flex-1 overflow-hidden">
             <div className="h-full overflow-auto px-5 py-4">
-              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
-                <div className="rounded-lg border border-border/60 bg-card overflow-hidden">
-                  <div className="border-b border-border/60 bg-surface px-4 py-3">
-                    <h2 className="text-sm font-semibold">Scheduled Work</h2>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      Ordered by due date.
-                    </p>
-                  </div>
-                  <div className="divide-y divide-border/40">
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+                <div className="space-y-3 animate-fade-up">
+                  <span className="kicker">Scheduled</span>
+                  <div className="overflow-hidden rounded-lg border border-border bg-card">
                     {scheduledIssues.length === 0 ? (
                       <div className="px-4 py-8 text-sm text-muted-foreground">No scheduled issues in this view.</div>
                     ) : (
-                      scheduledIssues.map((issue) => (
-                        <button
-                          key={issue.id}
-                          onClick={() => setSelectedIssueId(issue.id)}
-                          className="flex w-full items-start justify-between gap-4 px-4 py-3 text-left transition-colors duration-200 hover:bg-accent"
-                        >
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono text-xs text-muted-foreground">{issue.key}</span>
-                              <span className="chip text-[10px] capitalize">{issue.priority}</span>
-                            </div>
-                            <p className="mt-0.5 text-sm font-medium">{issue.title}</p>
-                            <p className="mt-0.5 text-xs text-muted-foreground">
-                              {issue.statusName || issue.status} · {issue.assignee?.name || issue.assignee?.email || 'Unassigned'}
-                            </p>
-                          </div>
-                          <div className="shrink-0 text-right">
-                            <p className="text-sm font-medium">
-                              {issue.dueDate ? format(parseISO(issue.dueDate), 'MMM d') : '—'}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {issue.dueDate ? format(parseISO(issue.dueDate), 'yyyy') : ''}
-                            </p>
-                          </div>
-                        </button>
-                      ))
+                      <ul className="stagger divide-y divide-border/60">
+                        {scheduledIssues.map((issue) => {
+                          const priorityKey = ['critical', 'high', 'medium', 'low'].includes(issue.priority)
+                            ? issue.priority
+                            : 'low';
+                          return (
+                            <li key={issue.id} className="relative">
+                              <span
+                                aria-hidden="true"
+                                className={cn('priority-indicator absolute left-0 top-0 bottom-0 h-full', `priority-${priorityKey}`)}
+                              />
+                              <button
+                                onClick={() => setSelectedIssueId(issue.id)}
+                                className="flex w-full items-center justify-between gap-4 pl-4 pr-4 py-2.5 text-left transition-all duration-200 ease-smooth hover:bg-accent/60"
+                              >
+                                <div className="min-w-0">
+                                  <p className="truncate text-sm font-medium">{issue.title}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    <span className="font-mono">{issue.key}</span> ·{' '}
+                                    {issue.assignee?.name || issue.assignee?.email || 'Unassigned'}
+                                  </p>
+                                </div>
+                                <span className="shrink-0 text-xs font-medium text-muted-foreground">
+                                  {issue.dueDate ? format(parseISO(issue.dueDate), 'MMM d') : '—'}
+                                </span>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
                     )}
                   </div>
                 </div>
 
-                <div className="rounded-lg border border-border/60 bg-card overflow-hidden">
-                  <div className="border-b border-border/60 bg-surface px-4 py-3">
-                    <h2 className="text-sm font-semibold">Unscheduled</h2>
-                    <p className="mt-0.5 text-xs text-muted-foreground">Missing a target date.</p>
-                  </div>
-                  <div className="divide-y divide-border/40">
+                <div className="space-y-3 animate-fade-up">
+                  <span className="kicker">Unscheduled</span>
+                  <div className="overflow-hidden rounded-lg border border-border bg-card">
                     {unscheduledIssues.length === 0 ? (
                       <div className="px-4 py-8 text-sm text-muted-foreground">Everything in this view is scheduled.</div>
                     ) : (
-                      unscheduledIssues.map((issue) => (
-                        <button
-                          key={issue.id}
-                          onClick={() => setSelectedIssueId(issue.id)}
-                          className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition-colors duration-200 hover:bg-accent"
-                        >
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium">{issue.title}</p>
-                            <p className="text-xs text-muted-foreground">{issue.key}</p>
-                          </div>
-                          <span className="chip text-[10px] shrink-0">No date</span>
-                        </button>
-                      ))
+                      <ul className="divide-y divide-border/60">
+                        {unscheduledIssues.map((issue) => (
+                          <li key={issue.id}>
+                            <button
+                              onClick={() => setSelectedIssueId(issue.id)}
+                              className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition-all duration-200 ease-smooth hover:bg-accent/60"
+                            >
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-medium">{issue.title}</p>
+                                <p className="text-xs text-muted-foreground font-mono">{issue.key}</p>
+                              </div>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
                     )}
                   </div>
                 </div>
@@ -724,8 +749,8 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
 
           <TabsContent value="calendar" className="mt-0 min-h-0 flex-1 overflow-hidden">
             <div className="h-full overflow-auto px-5 py-4">
-              <div className="rounded-lg border border-border/60 bg-card overflow-hidden">
-                <div className="flex items-center justify-between border-b border-border/60 bg-surface px-4 py-3">
+              <div className="overflow-hidden rounded-lg border border-border bg-card animate-fade-up">
+                <div className="flex items-center justify-between border-b border-border px-4 py-3">
                   <h2 className="text-sm font-semibold">{format(calendarMonth, 'MMMM yyyy')}</h2>
                   <div className="flex items-center gap-1">
                     <Button
@@ -749,9 +774,9 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-7 border-b border-border/60 bg-surface">
+                <div className="grid grid-cols-7 border-b border-border">
                   {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                    <div key={day} className="border-r border-border/40 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground last:border-r-0">
+                    <div key={day} className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                       {day}
                     </div>
                   ))}
@@ -766,8 +791,8 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                       <div
                         key={key}
                         className={cn(
-                          'min-h-32 border-r border-b border-border/40 px-2 py-2 last:border-r-0',
-                          !isSameMonth(day, calendarMonth) && 'bg-muted/10 text-muted-foreground/50'
+                          'min-h-32 border-r border-b border-border/60 px-2 py-2 last:border-r-0',
+                          !isSameMonth(day, calendarMonth) && 'bg-muted/30 text-muted-foreground/60'
                         )}
                       >
                         <div className="mb-1.5 flex items-center justify-between">
@@ -789,10 +814,10 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                             <button
                               key={issue.id}
                               onClick={() => setSelectedIssueId(issue.id)}
-                              className="w-full rounded-sm border border-border/60 bg-card px-1.5 py-0.5 text-left transition-colors duration-200 hover:border-primary/40 hover:bg-accent"
+                              className="w-full rounded-sm px-1.5 py-0.5 text-left transition-all duration-200 ease-smooth hover:bg-accent/60"
                             >
                               <p className="truncate text-[11px] font-medium">{issue.title}</p>
-                              <p className="truncate text-[10px] text-muted-foreground">{issue.key}</p>
+                              <p className="truncate text-[10px] text-muted-foreground font-mono">{issue.key}</p>
                             </button>
                           ))}
                           {dayIssues.length > 3 ? (

@@ -17,25 +17,25 @@ export function AppHeader() {
   };
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-border px-6">
-      {/* Organization Switcher & Search */}
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/80 px-6 backdrop-blur">
+      {/* Breadcrumb / workspace + search trigger */}
       <div className="flex flex-1 items-center gap-4">
         <OrganizationSwitcher />
         <button
           type="button"
           onClick={openPalette}
           aria-label="Open command palette"
-          className="relative flex h-9 w-full max-w-md items-center rounded-md border border-border bg-surface pl-9 pr-4 text-left text-sm text-muted-foreground transition-colors duration-200 hover:border-primary/30 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="group relative flex h-9 w-full max-w-md items-center rounded-md border border-border bg-surface pl-9 pr-2 text-left text-sm text-muted-foreground transition-all duration-200 ease-smooth hover:border-primary/30 hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <span className="truncate">Search issues, projects, docs...</span>
-          <kbd className="pointer-events-none ml-auto inline-flex h-5 shrink-0 select-none items-center gap-1 rounded bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+          <span className="truncate">Search issues, projects, docs…</span>
+          <kbd className="chip pointer-events-none ml-auto inline-flex shrink-0 select-none items-center gap-1 font-mono text-[10px]">
             <Command className="h-3 w-3" />K
           </kbd>
         </button>
       </div>
 
-      {/* Actions */}
+      {/* Quick actions */}
       <div className="flex items-center gap-1">
         <NotificationBell />
         <Button variant="ghost" size="icon" aria-label="Help">

@@ -29,7 +29,13 @@ export function DocumentContentViewer({ content, className }: DocumentContentVie
   });
 
   return (
-    <div className={cn('text-foreground [&_pre]:bg-surface-2 [&_pre]:border [&_pre]:border-border [&_pre]:rounded-md [&_code:not(pre_code)]:bg-muted [&_code:not(pre_code)]:px-1 [&_code:not(pre_code)]:py-0.5 [&_code:not(pre_code)]:rounded [&_code:not(pre_code)]:text-xs [&_code:not(pre_code)]:font-mono')}>
+    <div
+      className={cn(
+        'text-foreground',
+        '[&_pre]:surface-inset [&_pre]:p-4 [&_pre]:text-sm [&_pre]:overflow-x-auto',
+        '[&_code:not(pre_code)]:bg-surface [&_code:not(pre_code)]:px-1 [&_code:not(pre_code)]:py-0.5 [&_code:not(pre_code)]:rounded-sm [&_code:not(pre_code)]:text-[0.85em] [&_code:not(pre_code)]:font-mono'
+      )}
+    >
       <EditorContent editor={editor} />
     </div>
   );

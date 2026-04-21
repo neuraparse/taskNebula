@@ -38,7 +38,7 @@ export function DocumentIcon({ icon, className, emojiClassName }: DocumentIconPr
       <span
         aria-hidden="true"
         className={cn(
-          'inline-flex shrink-0 items-center justify-center rounded-md border border-border bg-muted text-lg',
+          'inline-flex shrink-0 items-center justify-center rounded-md bg-surface text-lg',
           className
         )}
       >
@@ -51,7 +51,7 @@ export function DocumentIcon({ icon, className, emojiClassName }: DocumentIconPr
     <span
       aria-hidden="true"
       className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground',
+        'inline-flex shrink-0 items-center justify-center rounded-md bg-surface text-muted-foreground',
         className
       )}
     >

@@ -1,14 +1,14 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import {
   useUpdateWorkspaceCommunicationsSettings,
   useWorkspaceCommunicationsSettings,
 } from '@/lib/hooks/use-chat';
-import { Radio, Wifi, WifiOff } from 'lucide-react';
+import { MessageSquareText, Radio, Wifi, WifiOff } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const TOGGLES = [
   { key: 'enabled', label: 'Enable module', description: 'Allow project channels and contextual discussions across the workspace.' },
@@ -41,92 +41,111 @@ export function OrganizationCommunicationsSettings({ organizationId }: { organiz
   }
 
   if (isLoading) {
-    return <div className="p-4 text-sm text-muted-foreground">Loading communications…</div>;
+    return <div className="p-4 text-sm text-muted-foreground">Loading communications...</div>;
   }
 
   if (error || !data) {
     return (
-      <Card>
-        <CardContent className="py-8 text-sm text-destructive">
-          {error instanceof Error ? error.message : 'Failed to load communications settings.'}
-        </CardContent>
-      </Card>
+      <div className="surface-card p-6 text-sm text-destructive">
+        {error instanceof Error ? error.message : 'Failed to load communications settings.'}
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <CardTitle>Communications</CardTitle>
-              <CardDescription>
-                Control project chat, linked issue/doc threads, unread tracking, and self-hosted voice rooms.
-              </CardDescription>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant={data.settings.enabled ? 'default' : 'secondary'}>
-                {data.settings.enabled ? 'Enabled' : 'Disabled'}
-              </Badge>
-              <Badge variant={data.serviceStatus.redisReady ? 'outline' : 'secondary'}>
-                {data.serviceStatus.redisReady ? 'Redis fanout' : 'In-memory fallback'}
-              </Badge>
-              <Badge variant={data.serviceStatus.livekit.ready ? 'outline' : 'destructive'}>
-                {data.serviceStatus.livekit.ready ? 'LiveKit ready' : 'LiveKit blocked'}
-              </Badge>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {TOGGLES.map((toggle) => (
-            <div key={toggle.key} className="flex items-start justify-between gap-6 rounded-lg border border-border/60 p-4">
-              <div className="space-y-1">
-                <div className="font-medium">{toggle.label}</div>
-                <p className="text-sm text-muted-foreground">{toggle.description}</p>
-              </div>
-              <Switch
-                checked={Boolean(data.settings[toggle.key])}
-                disabled={updateSettings.isPending}
-                onCheckedChange={(checked) => void handleToggle(toggle.key, checked)}
-              />
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Service readiness</CardTitle>
-          <CardDescription>
-            Deployment secrets stay at the infra layer. This panel shows whether realtime and RTC are ready to accept project traffic.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-lg border border-border/60 p-4">
-            <div className="mb-2 flex items-center gap-2 font-medium">
-              {data.serviceStatus.redisReady ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
-              Redis
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {data.serviceStatus.redisReady
-                ? 'Project rooms will fan out over Redis-backed pub/sub.'
-                : 'Redis is missing. The app will fall back to single-instance in-memory fanout.'}
+    <div className="animate-fade-up space-y-8 stagger">
+      <section className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <span className="kicker">Realtime</span>
+            <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
+              <MessageSquareText className="h-4 w-4" />
+              Communications
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-prose">
+              Control project chat, linked issue/doc threads, unread tracking, and voice rooms.
             </p>
           </div>
-          <div className="rounded-lg border border-border/60 p-4">
-            <div className="mb-2 flex items-center gap-2 font-medium">
-              <Radio className="h-4 w-4" />
+          <div className="flex flex-wrap gap-1.5">
+            <span
+              className={cn(
+                'rounded-full px-2.5 py-0.5 text-[11px] font-medium border',
+                data.settings.enabled
+                  ? 'bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20'
+                  : 'bg-muted text-muted-foreground border-border'
+              )}
+            >
+              {data.settings.enabled ? 'Enabled' : 'Disabled'}
+            </span>
+            <span className="chip">
+              {data.serviceStatus.redisReady ? 'Redis fanout' : 'In-memory fallback'}
+            </span>
+          </div>
+        </div>
+        <div className="surface-card p-5 divide-y divide-border/60">
+          {TOGGLES.map((toggle) => (
+            <div
+              key={toggle.key}
+              className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start py-4 first:pt-0 last:pb-0"
+            >
+              <div className="space-y-1">
+                <Label className="text-sm font-medium">{toggle.label}</Label>
+                <p className="text-xs text-muted-foreground mt-1">{toggle.description}</p>
+              </div>
+              <div className="flex md:justify-end">
+                <Switch
+                  checked={Boolean(data.settings[toggle.key])}
+                  disabled={updateSettings.isPending}
+                  onCheckedChange={(checked) => void handleToggle(toggle.key, checked)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="space-y-1">
+          <span className="kicker">Service status</span>
+          <h2 className="text-lg font-semibold tracking-tight">Service readiness</h2>
+          <p className="text-sm text-muted-foreground max-w-prose">
+            Whether realtime and RTC services are accepting project traffic.
+          </p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="surface-card p-4 space-y-1.5">
+            <div className="flex items-center gap-2 font-medium text-sm">
+              {data.serviceStatus.redisReady ? (
+                <Wifi className="h-4 w-4 text-accent-emerald" />
+              ) : (
+                <WifiOff className="h-4 w-4 text-muted-foreground" />
+              )}
+              Redis
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {data.serviceStatus.redisReady
+                ? 'Project rooms fan out over Redis-backed pub/sub.'
+                : 'Redis is missing. Falling back to single-instance in-memory fanout.'}
+            </p>
+          </div>
+          <div className="surface-card p-4 space-y-1.5">
+            <div className="flex items-center gap-2 font-medium text-sm">
+              <Radio
+                className={cn(
+                  'h-4 w-4',
+                  data.serviceStatus.livekit.ready ? 'text-accent-emerald' : 'text-destructive'
+                )}
+              />
               LiveKit
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {data.serviceStatus.livekit.ready
-                ? `Voice rooms can connect through ${data.serviceStatus.livekit.url}. LiveKit handles the RTC runtime; optional TURN relays stay at deploy time.`
+                ? `Voice rooms connect through ${data.serviceStatus.livekit.url}.`
                 : `Missing ${data.serviceStatus.livekit.missing.join(', ')}.`}
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
     </div>
   );
 }

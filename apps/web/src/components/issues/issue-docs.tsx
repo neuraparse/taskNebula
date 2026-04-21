@@ -144,7 +144,7 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
               </button>
             ))
           ) : (
-            <p className="px-2 py-3 text-sm text-muted-foreground/60">No matching docs found.</p>
+            <p className="px-2 py-3 text-sm text-muted-foreground">No matching docs found.</p>
           )}
         </div>
       )}
@@ -216,7 +216,7 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
           )}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground/60">
+        <p className="text-sm text-muted-foreground">
           No docs linked yet. Link design notes, specs, or runbooks to keep context close.
         </p>
       )}

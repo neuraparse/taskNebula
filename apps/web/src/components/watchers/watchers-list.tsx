@@ -129,27 +129,28 @@ export function WatchersList({ issueId, projectId }: WatchersListProps) {
             </button>
           </PopoverTrigger>
 
-          <PopoverContent align="start" className="surface-card shadow-md w-64 rounded-lg p-0 overflow-hidden animate-scale-in">
-            <div className="px-3 py-2.5 border-b border-border">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Watchers
-              </span>
+          <PopoverContent
+            align="start"
+            className="surface-card w-64 overflow-hidden rounded-lg p-0 shadow-md animate-scale-in"
+          >
+            <div className="border-b border-border/60 px-4 py-2.5">
+              <span className="kicker">Watchers</span>
             </div>
             {watchers.length === 0 ? (
-              <p className="px-3 py-4 text-sm text-muted-foreground">No one is watching yet.</p>
+              <p className="px-4 py-4 text-sm text-muted-foreground">No one is watching yet.</p>
             ) : (
-              <ul role="list" className="divide-y divide-border/50">
+              <ul role="list" className="divide-y divide-border/60 stagger">
                 {watchers.map((watcher: any) => (
-                  <li key={watcher.id} className="flex items-center gap-2.5 px-3 py-2">
+                  <li key={watcher.id} className="flex items-center gap-2.5 px-4 py-2.5">
                     <Avatar className="h-6 w-6 shrink-0">
                       <AvatarImage src={watcher.user.image} alt={watcher.user.name ?? ''} />
-                      <AvatarFallback className="text-xs bg-muted text-muted-foreground">
+                      <AvatarFallback className="bg-muted text-xs text-muted-foreground">
                         {watcher.user.name?.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">{watcher.user.name}</p>
-                      <p className="text-[11px] text-muted-foreground truncate">{watcher.user.email}</p>
+                      <p className="truncate text-sm font-medium">{watcher.user.name}</p>
+                      <p className="truncate text-[11px] text-muted-foreground">{watcher.user.email}</p>
                     </div>
                   </li>
                 ))}

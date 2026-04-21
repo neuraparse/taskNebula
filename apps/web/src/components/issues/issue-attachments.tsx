@@ -89,7 +89,7 @@ export function IssueAttachments({ issueId }: IssueAttachmentsProps) {
               >
                 browse
               </button>
-              <span className="ml-1 text-xs text-muted-foreground/60">(max 10MB)</span>
+              <span className="ml-1 text-xs text-muted-foreground">(max 10MB)</span>
             </p>
           </div>
         )}
@@ -145,7 +145,7 @@ export function IssueAttachments({ issueId }: IssueAttachmentsProps) {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground/60 py-2">
+        <p className="text-sm text-muted-foreground py-2">
           No attachments yet
         </p>
       )}
