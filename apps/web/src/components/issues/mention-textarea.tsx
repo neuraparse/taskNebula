@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Textarea } from '@/components/ui/textarea';
 import { Command, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useOrganizationMembers } from '@/lib/hooks/use-members';
-import { cn } from '@/lib/utils';
 
 interface MentionTextareaProps {
   value: string;
@@ -27,8 +27,13 @@ export function MentionTextarea({
   const [showMentions, setShowMentions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
   const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 });
+  const [mounted, setMounted] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { data } = useOrganizationMembers(organizationId);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const members = data?.members || [];
 
@@ -110,39 +115,41 @@ export function MentionTextarea({
         className={className}
       />
 
-      {showMentions && filteredMembers.length > 0 && (
-        <div
-          className="absolute z-50 mt-1 w-64 rounded-md border border-border bg-card p-1 shadow-sm"
-          style={{
-            top: '100%',
-            left: 0,
-          }}
-        >
-          <Command>
-            <CommandEmpty>No members found.</CommandEmpty>
-            <CommandGroup className="max-h-48 overflow-auto">
-              {filteredMembers.map((member: any) => (
-                <CommandItem
-                  key={member.id}
-                  onSelect={() => handleSelectMention(member)}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={member.image || undefined} />
-                    <AvatarFallback className="text-xs">
-                      {member.name?.[0]?.toUpperCase() || '?'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">{member.name}</span>
-                    <span className="text-xs text-muted-foreground">{member.email}</span>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </Command>
-        </div>
-      )}
+      {mounted && showMentions && filteredMembers.length > 0 &&
+        createPortal(
+          <div
+            className="fixed z-[60] w-64 rounded-md border border-border bg-card p-1 shadow-md"
+            style={{
+              top: mentionPosition.top,
+              left: mentionPosition.left,
+            }}
+          >
+            <Command>
+              <CommandEmpty>No members found.</CommandEmpty>
+              <CommandGroup className="max-h-48 overflow-auto">
+                {filteredMembers.map((member: any) => (
+                  <CommandItem
+                    key={member.id}
+                    onSelect={() => handleSelectMention(member)}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={member.image || undefined} />
+                      <AvatarFallback className="text-xs">
+                        {member.name?.[0]?.toUpperCase() || '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">{member.name}</span>
+                      <span className="text-xs text-muted-foreground">{member.email}</span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </Command>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

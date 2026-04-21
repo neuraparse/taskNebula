@@ -1061,7 +1061,7 @@ export function DocumentEditor({
           </div>
         </div>
       )}
-      <div ref={editorScrollRef} className="animate-fade-up relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-8 md:px-8 md:py-10">
+      <div ref={editorScrollRef} className="animate-fade-in relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-8 md:px-8 md:py-10">
         {slashMenu.open && (
           <div
             className="surface-card absolute z-50 flex max-h-[440px] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden shadow-md"

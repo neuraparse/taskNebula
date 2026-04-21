@@ -1,5 +1,5 @@
 'use client';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useOrganization } from '@/lib/hooks/use-organization';
@@ -80,6 +80,21 @@ export function DocsShell({ projectId }: DocsShellProps) {
   const selectedPageId = searchParams.get('pageId');
   const selectedSpaceId = searchParams.get('spaceId');
 
+  // Ref-capture router/pathname/searchParams to avoid effects re-firing when
+  // Next.js returns a new searchParams instance after each router.replace().
+  // A single boolean guard prevents the three URL-sync effects from
+  // ping-ponging during a mutation burst (same fix as chat-shell).
+  const routerRef = useRef(router);
+  const pathnameRef = useRef(pathname);
+  const searchParamsRef = useRef(searchParams);
+  const isSyncingUrlRef = useRef(false);
+
+  useEffect(() => {
+    routerRef.current = router;
+    pathnameRef.current = pathname;
+    searchParamsRef.current = searchParams;
+  }, [router, pathname, searchParams]);
+
   const { data: spaces } = useDocumentSpaces({
     organizationId: currentOrganizationId,
     projectId: projectId || null,
@@ -151,14 +166,22 @@ export function DocsShell({ projectId }: DocsShellProps) {
   const publicSharePath = currentPage?.share?.public?.enabled ? currentPage.share.public.urlPath : null;
 
   useEffect(() => {
+    if (isSyncingUrlRef.current) {
+      return;
+    }
     if (!selectedSpaceId && pagesData?.space?.id) {
+      isSyncingUrlRef.current = true;
       updateQueryParams({ spaceId: pagesData.space.id, pageId: selectedPageId });
     }
   }, [pagesData?.space?.id, selectedSpaceId, selectedPageId]);
 
   useEffect(() => {
+    if (isSyncingUrlRef.current) {
+      return;
+    }
     const firstPage = pagesData?.pages?.[0];
     if (!selectedPageId && firstPage) {
+      isSyncingUrlRef.current = true;
       updateQueryParams({
         pageId: firstPage.id,
         spaceId: pagesData.space?.id || selectedSpaceId || undefined,
@@ -167,20 +190,29 @@ export function DocsShell({ projectId }: DocsShellProps) {
   }, [pagesData?.pages, pagesData?.space?.id, selectedPageId, selectedSpaceId]);
 
   useEffect(() => {
+    if (isSyncingUrlRef.current) {
+      return;
+    }
     if (currentPage?.space?.id && currentPage.space.id !== selectedSpaceId) {
+      isSyncingUrlRef.current = true;
       updateQueryParams({ pageId: currentPage.id, spaceId: currentPage.space.id });
     }
   }, [currentPage?.id, currentPage?.space?.id, selectedSpaceId]);
 
+  // Release the guard once a new searchParams snapshot has propagated.
+  useEffect(() => {
+    isSyncingUrlRef.current = false;
+  }, [searchParams]);
+
   function updateQueryParams(next: { pageId?: string | null; spaceId?: string | null }) {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParamsRef.current.toString());
 
     if (next.pageId) params.set('pageId', next.pageId);
     if (next.spaceId) params.set('spaceId', next.spaceId);
     if (next.pageId === null) params.delete('pageId');
     if (next.spaceId === null) params.delete('spaceId');
 
-    router.replace(`${pathname}?${params.toString()}`);
+    routerRef.current.replace(`${pathnameRef.current}?${params.toString()}`);
     setIsPagesSheetOpen(false);
     setIsDetailsSheetOpen(false);
   }

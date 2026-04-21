@@ -7,6 +7,16 @@ import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
+// DND start/end are HH:MM strings OR null when unset.
+// Client state holds `null` until the user enables DND and picks a time, so the
+// API must accept null, not just string | undefined — otherwise the first save
+// from a fresh user (or anyone with DND off) fails with a 400.
+const timeString = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Expected HH:MM')
+  .nullable()
+  .optional();
+
 const updatePreferencesSchema = z.object({
   organizationId: z.string(),
   enableInApp: z.boolean().optional(),
@@ -27,8 +37,8 @@ const updatePreferencesSchema = z.object({
   inAppOnSprintStarted: z.boolean().optional(),
   inAppOnSprintCompleted: z.boolean().optional(),
   doNotDisturb: z.boolean().optional(),
-  doNotDisturbStart: z.string().optional(),
-  doNotDisturbEnd: z.string().optional(),
+  doNotDisturbStart: timeString,
+  doNotDisturbEnd: timeString,
 });
 
 /**

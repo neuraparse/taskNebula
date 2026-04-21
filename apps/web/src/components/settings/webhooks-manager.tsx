@@ -284,17 +284,17 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
           </Button>
         </div>
       ) : (
-        <div className="surface-card p-2">
+        <div className="surface-card rounded-lg p-2">
           {webhooks.map((webhook) => (
             <div
               key={webhook.id}
-              className="flex min-h-[44px] items-start justify-between gap-4 rounded-md px-3 py-3 transition-colors duration-150 hover:bg-accent/40"
+              className="row-interactive flex min-h-[44px] items-start justify-between gap-4 rounded-md px-3 py-3"
             >
               <div className="min-w-0 flex-1 space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm font-medium">{webhook.name}</span>
                   {webhook.isActive ? (
-                    <span className="chip-accent">Active</span>
+                    <span className="chip-emerald">Active</span>
                   ) : (
                     <span className="chip">Inactive</span>
                   )}

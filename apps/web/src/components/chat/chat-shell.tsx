@@ -193,6 +193,20 @@ export function ChatShell({ projectId }: { projectId: string }) {
     roomId: string;
     promise: Promise<PreparedVoiceSession>;
   } | null>(null);
+  // Capture router/searchParams/pathname in refs so the URL-sync effect
+  // does NOT re-fire on every render (each of these is a new reference per
+  // render from next/navigation). Without this, router.replace() mutates the
+  // URL, searchParams changes identity, the effect re-runs, and the page
+  // appears to "continuously refresh".
+  const routerRef = useRef(router);
+  const pathnameRef = useRef(pathname);
+  const searchParamsRef = useRef(searchParams);
+  const syncedBootstrapRoomRef = useRef<string | null>(null);
+  useEffect(() => {
+    routerRef.current = router;
+    pathnameRef.current = pathname;
+    searchParamsRef.current = searchParams;
+  });
 
   useEffect(() => {
     // Keep browser consoles usable. We surface actionable voice errors in the UI instead.
@@ -299,12 +313,27 @@ export function ChatShell({ projectId }: { projectId: string }) {
   }, [combinedActiveCall, currentVoiceRoomId, isCurrentVoiceRoom, projectId, selectedRoomId, selectedRoomMeta?.title]);
 
   useEffect(() => {
-    if (!selectedRoomId && bootstrap?.lastActiveRoomId) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set('roomId', bootstrap.lastActiveRoomId);
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    const lastActiveRoomId = bootstrap?.lastActiveRoomId;
+    if (selectedRoomId || !lastActiveRoomId) {
+      // Reset the synced guard any time the user has an explicit room
+      // selected so a later logout/re-bootstrap can hydrate again.
+      if (selectedRoomId) {
+        syncedBootstrapRoomRef.current = null;
+      }
+      return;
     }
-  }, [bootstrap?.lastActiveRoomId, pathname, router, searchParams, selectedRoomId]);
+    // Only sync once per bootstrap value. Without this guard, router.replace
+    // changes searchParams which, if it were in the deps, would re-fire the
+    // effect in an infinite loop. Reading router/searchParams/pathname from
+    // refs also keeps per-render identity changes from retriggering.
+    if (syncedBootstrapRoomRef.current === lastActiveRoomId) {
+      return;
+    }
+    syncedBootstrapRoomRef.current = lastActiveRoomId;
+    const params = new URLSearchParams(searchParamsRef.current.toString());
+    params.set('roomId', lastActiveRoomId);
+    routerRef.current.replace(`${pathnameRef.current}?${params.toString()}`, { scroll: false });
+  }, [bootstrap?.lastActiveRoomId, selectedRoomId]);
 
   useEffect(() => {
     if (!selectedRoomId || !bootstrap?.effectiveSettings.unreadTrackingEnabled || !lastReadableMessageId) {
@@ -953,10 +982,10 @@ export function ChatShell({ projectId }: { projectId: string }) {
       <div className="flex h-full min-h-0 bg-background">
         <aside className="hidden h-full w-[272px] shrink-0 border-r bg-background lg:flex">{sidebar}</aside>
 
-        <main className="flex min-w-0 flex-1">
+        <main className="flex min-h-0 min-w-0 flex-1">
           {selectedRoomMeta ? (
             <>
-              <div className="flex min-w-0 flex-1 flex-col">
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               <div className="border-b bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-6">
                 <div className="mx-auto flex w-full max-w-6xl items-start justify-between gap-4">
                   <div className="min-w-0 flex items-start gap-3">
@@ -1104,7 +1133,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
                 </div>
               ) : null}
 
-              <div className="flex-1 overflow-y-auto">
+              <div className="min-h-0 flex-1 overflow-y-auto">
                 <div
                   className="mx-auto flex w-full max-w-6xl flex-col px-4 py-5 sm:px-6"
                 >
@@ -1158,19 +1187,20 @@ export function ChatShell({ projectId }: { projectId: string }) {
                   {queuedFiles.length ? (
                     <div className="flex flex-wrap gap-2">
                       {queuedFiles.map((file, index) => (
-                        <div
+                        <span
                           key={`${file.name}-${index}`}
-                          className="flex max-w-full items-center gap-2 rounded-md border border-border bg-muted/30 px-2 py-1 text-xs"
+                          className="chip max-w-full gap-1.5"
                         >
                           <span className="truncate">{file.name}</span>
                           <button
                             type="button"
                             onClick={() => setQueuedFiles((current) => current.filter((_, currentIndex) => currentIndex !== index))}
-                            className="text-muted-foreground hover:text-foreground"
+                            className="text-muted-foreground transition-colors duration-150 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                            aria-label={`Remove ${file.name}`}
                           >
                             <X className="h-3.5 w-3.5" />
                           </button>
-                        </div>
+                        </span>
                       ))}
                     </div>
                   ) : null}
@@ -1223,7 +1253,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
                         onKeyDown={handleComposerKeyDown}
                         onPaste={handlePaste}
                         placeholder="Write a message, use @name, or paste an image."
-                        className="min-h-[80px] flex-1 resize-y border-0 bg-transparent px-2 py-1.5 shadow-none focus-visible:ring-0"
+                        className="min-h-[80px] max-h-[200px] flex-1 resize-none overflow-y-auto border-0 bg-transparent px-2 py-1.5 shadow-none focus-visible:ring-0"
                         disabled={!canSendMessages || isSendingMessage}
                       />
 
@@ -1324,12 +1354,8 @@ function ChatSidebar({
                 key={channel.id}
                 type="button"
                 onClick={() => channel.roomId && onSelectRoom(channel.roomId)}
-                className={cn(
-                  'flex w-full items-center gap-2 rounded-md border border-transparent px-3 py-2 text-left text-sm transition-colors duration-200',
-                  channel.roomId === selectedRoomId
-                    ? 'border-border/70 bg-muted/45 text-foreground'
-                    : 'text-muted-foreground hover:border-border/50 hover:bg-muted/20 hover:text-foreground'
-                )}
+                data-active={channel.roomId === selectedRoomId ? 'true' : undefined}
+                className="row-interactive flex w-full items-center gap-2 px-3 py-2 text-left text-sm"
               >
                 <Hash className="h-4 w-4 shrink-0" />
                 <span className="min-w-0 flex-1 truncate">{channel.name}</span>
@@ -1353,12 +1379,8 @@ function ChatSidebar({
                   key={discussion.id}
                   type="button"
                   onClick={() => onSelectRoom(discussion.id)}
-                  className={cn(
-                    'flex w-full items-start gap-2 rounded-md border border-transparent px-3 py-2 text-left transition-colors duration-200',
-                    discussion.id === selectedRoomId
-                      ? 'border-border/70 bg-muted/45 text-foreground'
-                      : 'text-muted-foreground hover:border-border/50 hover:bg-muted/20 hover:text-foreground'
-                  )}
+                  data-active={discussion.id === selectedRoomId ? 'true' : undefined}
+                  className="row-interactive flex w-full items-start gap-2 px-3 py-2 text-left"
                 >
                   <MessageSquareText className="mt-0.5 h-4 w-4 shrink-0" />
                   <div className="min-w-0 flex-1">

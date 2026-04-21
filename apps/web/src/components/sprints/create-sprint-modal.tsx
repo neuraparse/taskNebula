@@ -118,7 +118,7 @@ export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprin
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[480px] max-h-[85vh] overflow-y-auto">
         <DialogHeader className="space-y-1">
           <DialogTitle className="text-base font-semibold">Create Sprint</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">

@@ -250,6 +250,15 @@ export function NotificationPreferences() {
     },
   });
 
+  // `updatePreferences` from useMutation is a NEW object reference every render,
+  // so we can't put it in the effect dep array — that would re-run the effect on
+  // every render (including during isPending flips) and trigger a save loop.
+  // Keep the latest mutate fn in a ref and depend only on `preferences`.
+  const mutateRef = useRef(updatePreferences.mutate);
+  useEffect(() => {
+    mutateRef.current = updatePreferences.mutate;
+  });
+
   // Debounced auto-save whenever local preferences mutate after hydration.
   useEffect(() => {
     if (!preferences) return;
@@ -262,14 +271,14 @@ export function NotificationPreferences() {
     }
     const snapshot = preferences;
     saveTimerRef.current = setTimeout(() => {
-      updatePreferences.mutate(snapshot);
+      mutateRef.current(snapshot);
     }, AUTOSAVE_DEBOUNCE_MS);
     return () => {
       if (saveTimerRef.current) {
         clearTimeout(saveTimerRef.current);
       }
     };
-  }, [preferences, updatePreferences]);
+  }, [preferences]);
 
   useEffect(() => {
     return () => {

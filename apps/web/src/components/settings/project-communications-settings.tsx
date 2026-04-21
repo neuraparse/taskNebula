@@ -8,7 +8,6 @@ import {
   useUpdateProjectCommunicationsSettings,
 } from '@/lib/hooks/use-chat';
 import { MessageSquareText } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 const TOGGLES = [
   { key: 'enabled', label: 'Enable project chat', description: 'Allow channels and contextual discussions in this project.' },
@@ -69,14 +68,7 @@ export function ProjectCommunicationsSettings({ projectId }: { projectId: string
             </p>
           </div>
           <div className="flex flex-wrap gap-1.5">
-            <span
-              className={cn(
-                'rounded-full px-2.5 py-0.5 text-[11px] font-medium border',
-                data.effectiveSettings.enabled
-                  ? 'bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20'
-                  : 'bg-muted text-muted-foreground border-border'
-              )}
-            >
+            <span className={data.effectiveSettings.enabled ? 'chip-emerald' : 'chip'}>
               {data.effectiveSettings.enabled ? 'Live' : 'Disabled'}
             </span>
             <span className="chip">{data.project.key}</span>
