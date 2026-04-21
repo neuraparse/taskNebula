@@ -62,7 +62,7 @@ export function StatusPicker({ projectId, value, onChange, disabled }: StatusPic
           variant="ghost"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between h-8 px-2 text-sm hover:bg-accent transition-colors duration-200"
+          className="w-full justify-between h-8 px-2 text-sm rounded-md hover:bg-accent transition-colors duration-150 ease-snap"
           disabled={disabled || loading}
         >
           {selectedStatus ? (

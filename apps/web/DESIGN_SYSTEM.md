@@ -1,13 +1,25 @@
-# TaskNebula Design System — Agent Contract
+# TaskNebula Design System — Agent Contract (v0.2.1 square-sharp refresh)
 
 > **STATUS:** Authoritative reference for refactor agents. Read this before touching any component.
 > Do NOT modify `globals.css`, `tailwind.config.ts`, or this file. All agents consume this contract.
 
-## Design Intent
+## Design Intent — v0.2.1 refresh
 
-**Minimal + warm + quietly colorful.** Think Linear × Vercel × Raycast. The previous UI was colorless
-gray-on-gray; the refactor keeps the same calm, spacious feel but introduces a single brand hue
-(indigo-violet) and a sparse accent palette used only for meaning (status, priority, highlights).
+**Square-ish, modern, quietly colorful, minimal.** Think Linear × Vercel × Raycast × Arc.
+Key change from v0.2.0: radii are now **near-sharp** (2/4/6 px). The UI should read as
+precise and architectural — flat planes with soft motion, never candy-ish.
+
+1. **Radii are tight.** Default = 4px. Cards = 6px. Pills = 2px. Never use `rounded-xl/2xl`
+   on new markup; keep only for hero surfaces that already use it.
+2. **Color appears for meaning, not decoration.** Use `primary` for action intent and the
+   `accent-*` family only for semantic categories (live, warning, destructive, data).
+3. **Less chrome. More signal.** Consolidate section headers, trim nested cards, reduce
+   chevrons/icons. If a row has >4 visual elements, drop the lowest-value.
+4. **Motion is soft + snappy.** Use `duration-150` with `ease-snap` for interactives; use
+   `animate-blur-in` / `animate-pop-in` / `animate-fade-up` for entrances. Reserve
+   `animate-aurora` for hero backgrounds only.
+5. **Realtime is visible.** Use `.live-pill` or `.realtime-ping` wrapping a status dot for
+   anything that updates in realtime (presence, notifications, websocket state).
 
 ### Non-negotiable principles
 
@@ -76,14 +88,18 @@ gray-on-gray; the refactor keeps the same calm, spacious feel but introduces a s
 | `shadow-lg` | Dialogs, floating panels |
 | `shadow-glow` / `shadow-glow-primary` | Brand emphasis (rare) |
 
-### Radius
-| Token | Use |
-|---|---|
-| `rounded-sm` (6px) | Pills, small chips |
-| `rounded-md` (10px) | Buttons, inputs |
-| `rounded-lg` (14px) | Cards, modals |
-| `rounded-xl` / `rounded-2xl` | Hero surfaces |
-| `rounded-full` | Avatars, dots |
+### Radius (v0.2.1 — square-ish)
+| Token | Pixels | Use |
+|---|---|---|
+| `rounded-sm` | 2px | Pills, tiny chips, tags |
+| `rounded-md` | 4px | Buttons, inputs, menus, dropdowns |
+| `rounded-lg` | 6px | Cards, modals, dialogs |
+| `rounded-xl` | 10px | Large panels / hero surfaces only |
+| `rounded-2xl` | 16px | Reserve for showcase hero only |
+| `rounded-full` | — | Avatars, dots, status indicators |
+
+**Rule:** prefer `rounded-md` (4px) as default for anything interactive. Do not add
+`rounded-xl`/`rounded-2xl` to new markup unless the element is a hero.
 
 ### Gradients (for hero / emphasis only, not everywhere)
 - `bg-gradient-primary` (indigo → violet)
@@ -93,10 +109,17 @@ gray-on-gray; the refactor keeps the same calm, spacious feel but introduces a s
 - `text-gradient-primary`, `text-gradient-accent` (on display headings)
 
 ### Helper utilities (in globals.css)
-- `.surface-card` / `.surface-card-hover` — pre-made card
+- `.surface-card` / `.surface-card-hover` — pre-made card (now 6px radius)
 - `.surface-inset` — inset muted surface
 - `.surface-glass` — translucent blur panel
-- `.chip` / `.chip-accent` — badge system
+- `.chip` / `.chip-accent` — neutral / primary badge
+- **`.chip-blue` / `.chip-violet` / `.chip-cyan` / `.chip-emerald` / `.chip-amber` / `.chip-rose`** — semantic chips (v0.2.1)
+- **`.panel-info` / `.panel-success` / `.panel-warn` / `.panel-danger`** — soft accent alert panels (v0.2.1)
+- **`.row-interactive`** — hoverable list row, supports `data-active="true"` (v0.2.1)
+- **`.icon-tile`** + `.icon-tile-accent-{blue|violet|emerald|amber|rose|cyan}` — small square-ish icon tile (v0.2.1)
+- **`.live-pill`** — emerald realtime pill with breathing dot (v0.2.1)
+- **`.realtime-ping`** — wrap a dot with this to add an outward ping (v0.2.1)
+- **`.progress-bar-indeterminate`** — looping sweep progress (v0.2.1)
 - `.kicker` — small uppercase label (sections)
 - `.dot-grid`, `.dot-grid-dense` — subtle bg pattern
 - `.bg-aurora` — hero background glow
@@ -117,6 +140,11 @@ Entrance:
 - `animate-fade-down` — from above
 - `animate-scale-in` — 96% → 100%
 - `animate-slide-in-from-*` — directional
+- **`animate-blur-in`** — blur(8px)+fade, 550ms spring (v0.2.1 — for panels/heroes)
+- **`animate-pop-in`** — 92%→100% with bounce-soft (v0.2.1 — for toasts, modals)
+- **`animate-alert-in`** — top-down snap for alerts (v0.2.1)
+- **`animate-toast-in`** — bottom-up pop for toasts (v0.2.1)
+- **`animate-page-enter`** — blur+translate for route transitions (v0.2.1)
 - `.stagger > *` — auto-delay children
 
 Ambient (sparingly):
@@ -124,11 +152,13 @@ Ambient (sparingly):
 - `animate-pulse-ring` — focus ring pulse
 - `animate-gradient-pan` — moving gradient (with `bg-gradient-*`)
 - `animate-aurora` — hero mesh drift
+- **`animate-dot-breathe`** — 2.4s status dot breath (v0.2.1)
 
-Transitions:
-- `transition-all duration-200 ease-smooth` — default for interactive
-- `transition-colors duration-200` — color-only changes
-- Hover scale: `hover:-translate-y-0.5` (not `active:scale-95`)
+Transitions (v0.2.1 snappier defaults):
+- `transition-all duration-150 ease-snap` — default for interactive (buttons, rows, chips)
+- `transition-all duration-200 ease-smooth` — for larger surfaces (cards)
+- `transition-colors duration-150` — color-only changes
+- Hover lift: `hover:-translate-y-0.5` (not `active:scale-95`)
 
 **Reduced motion:** all animations auto-disable via `@media (prefers-reduced-motion)`. Don't guard manually.
 
@@ -191,6 +221,8 @@ When you encounter these patterns, clean them up:
 | Raw `animate-bounce` / `animate-ping` for decoration | `animate-pulse-subtle` or remove |
 | `active:scale-95` stale click effect | remove (use subtle color change or keep default) |
 | `rounded-full` on non-circular buttons | `rounded-md` |
+| **`rounded-xl` / `rounded-2xl` on generic cards** | `rounded-lg` (6px) — v0.2.1 |
+| **`rounded-xl` on buttons/inputs** | `rounded-md` (4px) — v0.2.1 |
 | Mixed icon sizes on one row | uniform `h-4 w-4` |
 | "icon + label + chevron + badge + kbd" crammed rows | pick 2–3 max |
 | Empty states with icon + heading + body + 2 buttons | icon + one line + one button |

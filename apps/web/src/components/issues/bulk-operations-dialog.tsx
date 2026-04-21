@@ -180,7 +180,7 @@ export function BulkOperationsDialog({
           )}
 
           {operation === 'delete' && (
-            <div className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
+            <div className="panel-danger rounded-md p-4 text-sm">
               <strong>Warning:</strong> This action cannot be undone. This will permanently delete{' '}
               {selectedIssueIds.length} issue(s).
             </div>

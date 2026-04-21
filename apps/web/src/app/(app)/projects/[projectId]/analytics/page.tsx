@@ -52,8 +52,8 @@ export default function ProjectAnalyticsPage({
 
         {/* Stats Grid */}
         {healthData && (
-          <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-            <div className="surface-card p-4">
+          <div className="stagger grid gap-4 grid-cols-2 lg:grid-cols-4">
+            <div className="surface-card surface-card-hover rounded-lg p-4 transition-all duration-150 ease-snap">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-muted-foreground">Total Issues</span>
                 <TrendingUp className="h-4 w-4 text-muted-foreground/50" />
@@ -61,7 +61,7 @@ export default function ProjectAnalyticsPage({
               <div className="text-2xl font-semibold">{healthData.overview.totalIssues}</div>
             </div>
 
-            <div className="surface-card p-4">
+            <div className="surface-card surface-card-hover rounded-lg p-4 transition-all duration-150 ease-snap">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-muted-foreground">Overdue</span>
                 <AlertCircle className="h-4 w-4 text-destructive/50" />
@@ -71,7 +71,7 @@ export default function ProjectAnalyticsPage({
               </div>
             </div>
 
-            <div className="surface-card p-4">
+            <div className="surface-card surface-card-hover rounded-lg p-4 transition-all duration-150 ease-snap">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-muted-foreground">Unassigned</span>
                 <Users className="h-4 w-4 text-muted-foreground/50" />
@@ -79,7 +79,7 @@ export default function ProjectAnalyticsPage({
               <div className="text-2xl font-semibold">{healthData.overview.unassignedIssues}</div>
             </div>
 
-            <div className="surface-card p-4">
+            <div className="surface-card surface-card-hover rounded-lg p-4 transition-all duration-150 ease-snap">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-muted-foreground">Sprints</span>
                 <Calendar className="h-4 w-4 text-muted-foreground/50" />
@@ -94,7 +94,7 @@ export default function ProjectAnalyticsPage({
 
         {/* Velocity Chart */}
         {velocityData && velocityData.sprints.length > 0 && (
-          <div className="surface-card p-5">
+          <div className="surface-card rounded-lg p-5">
             <div className="mb-4">
               <p className="text-sm font-semibold">Sprint Velocity</p>
               <p className="text-xs text-muted-foreground">

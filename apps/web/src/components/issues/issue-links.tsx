@@ -63,42 +63,49 @@ export function IssueLinks({ issueId, projectId }: IssueLinksProps) {
           </p>
         ) : (
           <div className="space-y-1">
-            {allLinks.map((link) => (
-              <div
-                key={link.id}
-                className="group flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-accent transition-colors duration-200"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-[11px] text-muted-foreground shrink-0">
-                    {getLinkTypeLabel(link.type, link.direction)}
-                  </span>
-                  <Link
-                    href={`/issues/${link.issue.id}`}
-                    className="flex items-center gap-1.5 text-sm hover:text-primary transition-colors duration-200 min-w-0"
-                  >
-                    <span className="chip font-mono text-[11px] shrink-0">{link.issue.key}</span>
-                    <span className="truncate">{link.issue.title}</span>
-                    <ExternalLink className="h-3 w-3 opacity-50 shrink-0" />
-                  </Link>
-                  <span className={`chip shrink-0 text-[11px] ${
-                    link.issue.priority === 'critical' ? 'bg-accent-rose/10 text-accent-rose border-accent-rose/20' :
-                    link.issue.priority === 'high' ? 'bg-accent-amber/10 text-accent-amber border-accent-amber/20' : ''
-                  }`}>
-                    {link.issue.priority}
-                  </span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                  onClick={() => handleDeleteLink(link.id)}
-                  disabled={deleteLink.isPending}
-                  aria-label="Remove link"
+            {allLinks.map((link) => {
+              const priorityChip =
+                link.issue.priority === 'critical'
+                  ? 'chip-rose'
+                  : link.issue.priority === 'high'
+                    ? 'chip-amber'
+                    : link.issue.priority === 'medium'
+                      ? 'chip-blue'
+                      : 'chip';
+              return (
+                <div
+                  key={link.id}
+                  className="row-interactive group flex items-center justify-between gap-2 rounded-md px-2 py-1.5"
                 >
-                  <X className="h-3 w-3" />
-                </Button>
-              </div>
-            ))}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-[11px] text-muted-foreground shrink-0">
+                      {getLinkTypeLabel(link.type, link.direction)}
+                    </span>
+                    <Link
+                      href={`/issues/${link.issue.id}`}
+                      className="flex items-center gap-1.5 text-sm hover:text-primary transition-colors duration-150 ease-snap min-w-0"
+                    >
+                      <span className="chip font-mono text-[11px] rounded-sm shrink-0">{link.issue.key}</span>
+                      <span className="truncate">{link.issue.title}</span>
+                      <ExternalLink className="h-3 w-3 opacity-50 shrink-0" />
+                    </Link>
+                    <span className={`${priorityChip} shrink-0 text-[11px] capitalize`}>
+                      {link.issue.priority}
+                    </span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                    onClick={() => handleDeleteLink(link.id)}
+                    disabled={deleteLink.isPending}
+                    aria-label="Remove link"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

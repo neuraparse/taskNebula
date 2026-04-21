@@ -106,19 +106,19 @@ export function SwipeableItem({
 // Predefined actions using design token colors
 export const swipeActions = {
   delete: (onClick: () => void): SwipeAction => ({
-    icon: <Trash2 className="h-5 w-5 text-white" />,
+    icon: <Trash2 className="h-4 w-4 text-destructive-foreground" />,
     label: 'Delete',
     color: 'bg-destructive',
     onClick,
   }),
   archive: (onClick: () => void): SwipeAction => ({
-    icon: <Archive className="h-5 w-5 text-white" />,
+    icon: <Archive className="h-4 w-4 text-background" />,
     label: 'Archive',
     color: 'bg-accent-amber',
     onClick,
   }),
   complete: (onClick: () => void): SwipeAction => ({
-    icon: <Check className="h-5 w-5 text-white" />,
+    icon: <Check className="h-4 w-4 text-background" />,
     label: 'Complete',
     color: 'bg-accent-emerald',
     onClick,

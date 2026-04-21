@@ -142,7 +142,7 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
         <WatchersList issueId={issue.id} />
       </section>
 
-      <section className="space-y-1 pt-2 border-t border-border">
+      <section className="space-y-1 pt-3 border-t border-border/60">
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>Created</span>
           <span>{formatDate(issue.createdAt)}</span>

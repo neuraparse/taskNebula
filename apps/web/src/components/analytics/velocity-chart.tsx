@@ -1,6 +1,7 @@
 'use client';
 
 import { VelocityData } from '@/lib/hooks/use-analytics';
+import { Hash, Sparkles, TrendingUp, Zap } from 'lucide-react';
 import {
   Bar,
   XAxis,
@@ -45,6 +46,39 @@ function LegendChip({ color, label }: { color: string; label: string }) {
   );
 }
 
+type Tone = 'blue' | 'emerald' | 'amber' | 'violet' | 'cyan' | 'rose';
+
+function StatTile({
+  tone,
+  icon,
+  label,
+  value,
+  trend,
+}: {
+  tone: Tone;
+  icon: React.ReactNode;
+  label: string;
+  value: number | string;
+  trend?: { value: string; tone: Tone };
+}) {
+  return (
+    <div className="animate-scale-in flex items-start gap-2.5">
+      <span className={`icon-tile icon-tile-accent-${tone}`}>{icon}</span>
+      <div className="min-w-0 flex-1">
+        <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </div>
+        <div className="mt-0.5 flex items-baseline gap-1.5">
+          <span className="text-xl font-semibold tabular-nums text-foreground">{value}</span>
+          {trend ? (
+            <span className={`chip-${trend.tone} text-[10px]`}>{trend.value}</span>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function VelocityChart({ data }: VelocityChartProps) {
   const chartData = data.sprints.map((sprint) => ({
     name: sprint.sprintName,
@@ -55,6 +89,11 @@ export function VelocityChart({ data }: VelocityChartProps) {
   // Add average lines
   const avgIssues = data.averageVelocity.issues;
   const avgPoints = data.averageVelocity.points;
+  const latest = data.sprints[data.sprints.length - 1];
+  const latestIssues = latest?.completedIssues ?? 0;
+  const latestPoints = latest?.completedPoints ?? 0;
+  const issuesDelta = latestIssues - avgIssues;
+  const pointsDelta = latestPoints - avgPoints;
 
   return (
     <div className="surface-card animate-fade-up p-5 space-y-3">
@@ -65,6 +104,50 @@ export function VelocityChart({ data }: VelocityChartProps) {
         <p className="text-sm text-muted-foreground">
           Completed issues and story points across recent sprints.
         </p>
+      </div>
+
+      {/* Stat tiles */}
+      <div className="stagger grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatTile
+          tone="blue"
+          icon={<Hash className="h-3.5 w-3.5" />}
+          label="Last Issues"
+          value={latestIssues}
+          trend={
+            Number.isFinite(issuesDelta)
+              ? {
+                  value: `${issuesDelta >= 0 ? '+' : ''}${issuesDelta.toFixed(0)} vs avg`,
+                  tone: issuesDelta >= 0 ? 'emerald' : 'rose',
+                }
+              : undefined
+          }
+        />
+        <StatTile
+          tone="cyan"
+          icon={<Zap className="h-3.5 w-3.5" />}
+          label="Last Points"
+          value={latestPoints}
+          trend={
+            Number.isFinite(pointsDelta)
+              ? {
+                  value: `${pointsDelta >= 0 ? '+' : ''}${pointsDelta.toFixed(0)} vs avg`,
+                  tone: pointsDelta >= 0 ? 'emerald' : 'rose',
+                }
+              : undefined
+          }
+        />
+        <StatTile
+          tone="emerald"
+          icon={<TrendingUp className="h-3.5 w-3.5" />}
+          label="Avg Issues"
+          value={avgIssues.toFixed(1)}
+        />
+        <StatTile
+          tone="amber"
+          icon={<Sparkles className="h-3.5 w-3.5" />}
+          label="Avg Points"
+          value={avgPoints.toFixed(1)}
+        />
       </div>
 
       {/* Legend */}

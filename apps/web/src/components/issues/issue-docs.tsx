@@ -105,7 +105,7 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
   const visibleDocs = showAll ? (docs || []) : (docs || []).slice(0, SHOW_LIMIT);
 
   return (
-    <div className="space-y-3 animate-fade-in">
+    <div className="space-y-3 animate-fade-up">
       <div className="flex items-center justify-between">
         <Button
           variant="ghost"
@@ -133,11 +133,11 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
               <button
                 key={doc.id}
                 type="button"
-                className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left transition-colors duration-200 hover:bg-accent"
+                className="row-interactive flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left"
                 onClick={() => void handleAttachExisting(doc.id, doc.title)}
               >
                 <div className="flex min-w-0 items-center gap-2">
-                  <DocumentIcon icon={doc.icon} className="h-7 w-7 rounded-lg text-sm shrink-0" />
+                  <DocumentIcon icon={doc.icon} className="h-7 w-7 rounded-md text-sm shrink-0" />
                   <span className="truncate text-sm font-medium">{doc.title}</span>
                 </div>
                 <Link2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -159,10 +159,10 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
           {visibleDocs.map((doc) => (
             <div
               key={doc.id}
-              className="group flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-accent transition-colors duration-200"
+              className="row-interactive group flex items-center justify-between gap-2 rounded-md px-2 py-1.5"
             >
               <div className="flex min-w-0 items-center gap-2">
-                <DocumentIcon icon={doc.icon} className="h-7 w-7 rounded-lg text-sm shrink-0" />
+                <DocumentIcon icon={doc.icon} className="h-7 w-7 rounded-md text-sm shrink-0" />
                 <div className="min-w-0">
                   <Link
                     href={createDocumentAppHref({

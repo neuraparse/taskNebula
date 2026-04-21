@@ -63,7 +63,7 @@ export function AppearanceSettings() {
             Choose between light, dark, or match system preference.
           </p>
         </div>
-        <div className="surface-card p-5">
+        <div className="surface-card rounded-lg p-6">
           <div
             role="group"
             aria-labelledby="color-mode-heading"
@@ -81,7 +81,7 @@ export function AppearanceSettings() {
                   aria-pressed={isActive}
                   onClick={() => setTheme(mode.value)}
                   className={cn(
-                    'flex items-center justify-center gap-2 rounded-md border px-3 py-2.5 text-sm transition-colors duration-150',
+                    'flex items-center justify-center gap-2 rounded-md border px-3 py-2.5 text-sm transition-all duration-150 ease-snap',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                     isActive
                       ? 'border-primary bg-primary/10 text-primary font-medium'
@@ -106,7 +106,7 @@ export function AppearanceSettings() {
             Primary hue used for interactive and brand accents.
           </p>
         </div>
-        <div className="surface-card p-5">
+        <div className="surface-card rounded-lg p-6">
           <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
             <div className="space-y-1">
               <Label className="text-sm font-medium">Accent</Label>
@@ -135,7 +135,7 @@ export function AppearanceSettings() {
                     data-theme={t}
                     onClick={() => setColorTheme(t)}
                     className={cn(
-                      'relative h-10 w-10 rounded-md border border-border transition-all duration-150',
+                      'relative h-10 w-10 rounded-md border border-border transition-all duration-150 ease-snap',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                       isActive &&
                         'ring-2 ring-ring ring-offset-2 ring-offset-background'
@@ -162,7 +162,7 @@ export function AppearanceSettings() {
             Overall surface treatment across the workspace.
           </p>
         </div>
-        <div className="surface-card p-5">
+        <div className="surface-card rounded-lg p-6">
           <div
             role="group"
             aria-labelledby="visual-style-heading"
@@ -180,7 +180,7 @@ export function AppearanceSettings() {
                   aria-pressed={isActive}
                   onClick={() => setVisualStyle(style.value)}
                   className={cn(
-                    'flex items-center justify-center rounded-md border px-3 py-2.5 text-sm transition-colors duration-150',
+                    'flex items-center justify-center rounded-md border px-3 py-2.5 text-sm transition-all duration-150 ease-snap',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                     isActive
                       ? 'border-primary bg-primary/10 text-primary font-medium'
@@ -204,16 +204,11 @@ export function AppearanceSettings() {
             Toggle ambient animation and gradient surfaces.
           </p>
         </div>
-        <div className="surface-card p-5 space-y-5">
+        <div className="surface-card rounded-lg p-6 space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
-            <div className="space-y-1">
-              <Label htmlFor="animations" className="text-sm font-medium">
-                Animations
-              </Label>
-              <p className="text-xs text-muted-foreground mt-1">
-                Smooth transitions and entrance motion.
-              </p>
-            </div>
+            <Label htmlFor="animations" className="text-sm font-medium">
+              Animations
+            </Label>
             <div className="flex md:justify-end">
               <Switch
                 id="animations"
@@ -223,14 +218,9 @@ export function AppearanceSettings() {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
-            <div className="space-y-1">
-              <Label htmlFor="gradients" className="text-sm font-medium">
-                Gradients
-              </Label>
-              <p className="text-xs text-muted-foreground mt-1">
-                Gradient accents on hero surfaces.
-              </p>
-            </div>
+            <Label htmlFor="gradients" className="text-sm font-medium">
+              Gradients
+            </Label>
             <div className="flex md:justify-end">
               <Switch
                 id="gradients"

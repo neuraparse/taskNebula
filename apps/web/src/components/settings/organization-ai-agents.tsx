@@ -828,8 +828,8 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                 ) : null}
 
                 {!canManage ? (
-                  <div className="rounded-lg border border-warning/30 bg-warning/5 p-4 text-sm text-muted-foreground">
-                    Workspace owners and admins can update AI agent policy. You currently have read-only access.
+                  <div className="panel-warn text-sm">
+                    Read-only access — owners and admins can update AI policy.
                   </div>
                 ) : null}
               </CardContent>

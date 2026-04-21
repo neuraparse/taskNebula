@@ -13,10 +13,15 @@ import {
   Inbox,
   TrendingUp,
   TrendingDown,
+  Activity,
+  CheckCircle2,
+  AlertOctagon,
+  Gauge,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
+import type { LucideIcon } from 'lucide-react';
 
 interface Issue {
   id: string;
@@ -38,6 +43,8 @@ interface Issue {
     name: string;
   };
 }
+
+type AccentHue = 'blue' | 'violet' | 'emerald' | 'amber' | 'rose' | 'cyan';
 
 export function DashboardClient() {
   const { data: session } = useSession();
@@ -110,14 +117,17 @@ export function DashboardClient() {
 
   return (
     <>
-      <div className="flex h-full flex-col bg-background">
-        <div className="flex-1 overflow-auto">
-          <div className="max-w-[1400px] mx-auto p-6 space-y-8">
+      <div className="flex h-full min-h-0 flex-col bg-background">
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="p-6 space-y-8">
 
             {/* Greeting */}
             <div className="flex items-end justify-between gap-4 animate-fade-up">
               <div className="space-y-1">
-                <span className="kicker">Dashboard</span>
+                <div className="flex items-center gap-2">
+                  <span className="kicker">Dashboard</span>
+                  <span className="live-pill">Live</span>
+                </div>
                 <h1 className="text-2xl font-semibold tracking-tight text-foreground text-balance">
                   Welcome back, {firstName}
                 </h1>
@@ -142,32 +152,39 @@ export function DashboardClient() {
                 value={stats.active}
                 trend={12}
                 trendUp
-                emphasized
+                hue="blue"
+                icon={Activity}
               />
               <StatTile
                 label="Completed"
                 value={stats.completed}
                 trend={8}
                 trendUp
+                hue="emerald"
+                icon={CheckCircle2}
               />
               <StatTile
                 label="Blocked"
                 value={stats.blocked}
                 trend={2}
                 trendUp={false}
+                hue="rose"
+                icon={AlertOctagon}
               />
               <StatTile
                 label="Story Points"
                 value={stats.points}
                 trend={15}
                 trendUp
+                hue="violet"
+                icon={Gauge}
               />
             </div>
 
             {/* Main Content */}
             <div className="stagger grid gap-6 lg:grid-cols-3">
               {/* My Issues */}
-              <div className="surface-card p-6 lg:col-span-2">
+              <div className="surface-card p-6 lg:col-span-2 animate-fade-up">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <Inbox className="h-4 w-4 text-muted-foreground" />
@@ -175,7 +192,7 @@ export function DashboardClient() {
                   </div>
                   <Link
                     href="/my-issues"
-                    className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors duration-200"
+                    className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-all duration-150 ease-snap"
                   >
                     View all
                     <ArrowUpRight className="h-3 w-3" />
@@ -184,9 +201,9 @@ export function DashboardClient() {
 
                 {!myIssues || myIssues.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <Inbox className="h-10 w-10 text-muted-foreground mb-3" />
+                    <Inbox className="h-8 w-8 text-muted-foreground mb-3" />
                     <p className="text-sm text-muted-foreground mb-4">
-                      You&apos;re all caught up — nothing assigned right now.
+                      You&apos;re all caught up.
                     </p>
                     <Link href="/my-issues">
                       <Button variant="outline" size="sm">
@@ -209,7 +226,7 @@ export function DashboardClient() {
 
               {/* Recent Activity */}
               {currentOrganizationId && (
-                <div className="surface-card p-6">
+                <div className="surface-card p-6 animate-fade-up">
                   <ActivityFeed organizationId={currentOrganizationId} limit={5} />
                 </div>
               )}
@@ -234,25 +251,22 @@ function StatTile({
   value,
   trend,
   trendUp,
-  emphasized = false,
+  hue,
+  icon: Icon,
 }: {
   label: string;
   value: number;
   trend: number;
   trendUp: boolean;
-  emphasized?: boolean;
+  hue: AccentHue;
+  icon: LucideIcon;
 }) {
   return (
-    <div className="surface-card surface-card-hover p-5 transition-all duration-200 ease-smooth hover:-translate-y-0.5 hover:shadow-md">
-      <div className="flex items-baseline justify-between gap-2">
-        <p
-          className={cn(
-            'text-3xl font-semibold tracking-tight',
-            emphasized ? 'text-gradient-primary' : 'text-foreground'
-          )}
-        >
-          {value}
-        </p>
+    <div className="surface-card surface-card-hover p-4 max-h-[140px] transition-all duration-150 ease-snap hover:-translate-y-0.5 hover:shadow-md">
+      <div className="flex items-start justify-between gap-2">
+        <span className={cn('icon-tile', `icon-tile-accent-${hue}`)}>
+          <Icon className="h-4 w-4" />
+        </span>
         <span
           className={cn(
             'inline-flex items-center gap-0.5 text-xs font-medium',
@@ -267,7 +281,10 @@ function StatTile({
           {trend}%
         </span>
       </div>
-      <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
+      <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground tabular-nums">
+        {value}
+      </p>
+      <p className="mt-0.5 text-[11px] uppercase tracking-wide text-muted-foreground">
         {label}
       </p>
     </div>
@@ -296,7 +313,7 @@ function IssueRow({ issue, onClick }: { issue: Issue; onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex items-center gap-3 rounded-md pl-2 pr-3 py-2.5 min-h-[40px] text-left transition-all duration-200 ease-smooth cursor-pointer hover:bg-accent/50"
+      className="row-interactive w-full flex items-center gap-3 rounded-md pl-2 pr-3 py-2.5 min-h-[40px] text-left transition-all duration-150 ease-snap cursor-pointer"
     >
       <span className={cn('priority-indicator h-6 shrink-0', priorityCls)} />
 

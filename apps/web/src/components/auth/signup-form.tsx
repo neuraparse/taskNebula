@@ -97,7 +97,7 @@ export function SignUpForm() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 stagger">
       {/* Header */}
       <div className="text-center space-y-1.5">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Create your account</h1>
@@ -110,7 +110,7 @@ export function SignUpForm() {
           variant="outline"
           onClick={handleGitHubSignIn}
           type="button"
-          className="w-full"
+          className="w-full transition-all duration-150 ease-snap"
           size="lg"
         >
           <Github className="mr-2 h-4 w-4" />
@@ -120,7 +120,7 @@ export function SignUpForm() {
           variant="outline"
           onClick={handleGoogleSignIn}
           type="button"
-          className="w-full"
+          className="w-full transition-all duration-150 ease-snap"
           size="lg"
         >
           <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
@@ -198,29 +198,46 @@ export function SignUpForm() {
         </div>
 
         {error && (
-          <p className="text-sm text-destructive" role="alert">{error}</p>
+          <div className="panel-danger animate-alert-in text-sm" role="alert">
+            {error}
+          </div>
         )}
 
-        <Button type="submit" className="w-full" size="lg" disabled={loading}>
+        <Button
+          type="submit"
+          className="w-full transition-all duration-150 ease-snap"
+          size="lg"
+          disabled={loading}
+        >
           {loading ? 'Creating account...' : 'Create account'}
         </Button>
 
         <p className="text-center text-xs text-muted-foreground">
           By creating an account, you agree to our{' '}
-          <Link href="/terms" className="underline hover:text-foreground transition-colors duration-200">
-            Terms of Service
+          <Link
+            href="/terms"
+            className="underline hover:text-foreground transition-colors duration-150 ease-snap"
+          >
+            Terms
           </Link>{' '}
           and{' '}
-          <Link href="/privacy" className="underline hover:text-foreground transition-colors duration-200">
-            Privacy Policy
+          <Link
+            href="/privacy"
+            className="underline hover:text-foreground transition-colors duration-150 ease-snap"
+          >
+            Privacy
           </Link>
+          .
         </p>
       </form>
 
       {/* Sign In Link */}
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{' '}
-        <Link href="/auth/signin" className="font-medium text-foreground hover:text-primary transition-colors duration-200">
+        <Link
+          href="/auth/signin"
+          className="font-medium text-foreground hover:text-primary transition-colors duration-150 ease-snap"
+        >
           Sign in
         </Link>
       </p>

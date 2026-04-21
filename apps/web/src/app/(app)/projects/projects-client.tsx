@@ -33,35 +33,13 @@ interface Organization {
 
 // Deterministic accent hue per project id (stable across renders)
 // Using full class names so Tailwind JIT picks them up.
-const ACCENT_VARIANTS = [
-  {
-    stripe: 'bg-gradient-to-r from-accent-blue/40 to-transparent',
-    avatar: 'bg-accent-blue/10 text-accent-blue',
-  },
-  {
-    stripe: 'bg-gradient-to-r from-accent-violet/40 to-transparent',
-    avatar: 'bg-accent-violet/10 text-accent-violet',
-  },
-  {
-    stripe: 'bg-gradient-to-r from-accent-cyan/40 to-transparent',
-    avatar: 'bg-accent-cyan/10 text-accent-cyan',
-  },
-  {
-    stripe: 'bg-gradient-to-r from-accent-emerald/40 to-transparent',
-    avatar: 'bg-accent-emerald/10 text-accent-emerald',
-  },
-  {
-    stripe: 'bg-gradient-to-r from-accent-amber/40 to-transparent',
-    avatar: 'bg-accent-amber/10 text-accent-amber',
-  },
-  {
-    stripe: 'bg-gradient-to-r from-accent-rose/40 to-transparent',
-    avatar: 'bg-accent-rose/10 text-accent-rose',
-  },
-  {
-    stripe: 'bg-gradient-to-r from-accent-indigo/40 to-transparent',
-    avatar: 'bg-accent-indigo/10 text-accent-indigo',
-  },
+const ICON_TILE_VARIANTS = [
+  'icon-tile icon-tile-accent-blue',
+  'icon-tile icon-tile-accent-violet',
+  'icon-tile icon-tile-accent-cyan',
+  'icon-tile icon-tile-accent-emerald',
+  'icon-tile icon-tile-accent-amber',
+  'icon-tile icon-tile-accent-rose',
 ] as const;
 
 function hashString(input: string): number {
@@ -72,9 +50,9 @@ function hashString(input: string): number {
   return Math.abs(hash);
 }
 
-function accentFor(id: string): (typeof ACCENT_VARIANTS)[number] {
-  const index = hashString(id) % ACCENT_VARIANTS.length;
-  return ACCENT_VARIANTS[index] ?? ACCENT_VARIANTS[0]!;
+function iconTileFor(id: string): string {
+  const index = hashString(id) % ICON_TILE_VARIANTS.length;
+  return ICON_TILE_VARIANTS[index] ?? ICON_TILE_VARIANTS[0]!;
 }
 
 export function ProjectsClient() {
@@ -132,14 +110,14 @@ export function ProjectsClient() {
 
       <div className="flex-1 overflow-auto p-6">
         {projects.length === 0 && !isLoading ? (
-          <div className="mx-auto max-w-md animate-fade-up rounded-lg border border-dashed border-border p-8 text-center">
-            <FolderKanban className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+          <div className="mx-auto flex max-w-md animate-fade-up flex-col items-center gap-3 rounded-lg border border-dashed border-border p-8 text-center">
+            <FolderKanban className="h-8 w-8 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
               {activeTeamspace
                 ? `No projects in ${activeTeamspace.name} yet.`
                 : 'No projects yet. Create your first to get started.'}
             </p>
-            <Button className="mt-4" onClick={() => setShowDialog(true)}>
+            <Button onClick={() => setShowDialog(true)}>
               <Plus className="mr-1.5 h-4 w-4" />
               Create Project
             </Button>
@@ -153,24 +131,18 @@ export function ProjectsClient() {
                 .map((w: string) => w[0])
                 .join('')
                 .toUpperCase();
-              const accent = accentFor(project.id);
+              const tileClass = iconTileFor(project.id);
               const issueCount = project.issueCount ?? 0;
               const sprintCount = project.sprintCount ?? 0;
               return (
                 <Link
                   key={project.id}
                   href={`/projects/${project.key.toLowerCase()}/views`}
-                  className="surface-card surface-card-hover group relative flex flex-col gap-4 overflow-hidden p-5 transition-all duration-200 ease-smooth hover:-translate-y-0.5"
+                  className="surface-card surface-card-hover group flex flex-col gap-3 rounded-lg p-5 transition-all duration-150 ease-snap hover:-translate-y-0.5"
                 >
-                  {/* Accent stripe (top) */}
-                  <span
-                    aria-hidden
-                    className={`pointer-events-none absolute inset-x-0 top-0 h-0.5 ${accent.stripe}`}
-                  />
-
                   <div className="flex items-start gap-3">
                     <span
-                      className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md font-mono text-xs font-semibold ${accent.avatar}`}
+                      className={`${tileClass} h-9 w-9 shrink-0 font-mono text-xs font-semibold`}
                     >
                       {initials}
                     </span>
@@ -197,11 +169,7 @@ export function ProjectsClient() {
                     <p className="line-clamp-2 text-sm text-muted-foreground">
                       {project.description}
                     </p>
-                  ) : (
-                    <p className="line-clamp-2 text-sm text-muted-foreground/60 italic">
-                      No description
-                    </p>
-                  )}
+                  ) : null}
 
                   <div className="mt-auto flex items-center gap-1.5 text-xs text-muted-foreground">
                     <span className="font-medium text-foreground">{issueCount}</span>
@@ -299,7 +267,7 @@ function CreateProjectDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[460px] border border-border bg-background p-6 shadow-md">
+      <DialogContent className="w-full max-w-[460px] rounded-lg border border-border bg-background p-6 shadow-md">
         <div className="mb-5 flex items-center justify-between">
           <div>
             <DialogTitle className="text-lg font-semibold">Create Project</DialogTitle>

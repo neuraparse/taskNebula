@@ -582,16 +582,21 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
                 key={workflow.id}
                 variant={selectedWorkflow?.id === workflow.id ? 'default' : 'outline'}
                 onClick={() => void loadWorkflowDetails(workflow.id)}
-                className="h-auto justify-start py-3"
+                className="h-auto justify-start rounded-md py-3"
               >
-                <div className="flex w-full flex-col items-start gap-1">
-                  <div className="flex w-full items-center gap-2">
-                    <span className="font-medium">{workflow.name}</span>
-                    {workflow.isDefault ? <span className="chip ml-auto">Default</span> : null}
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {workflow.statuses?.length || 0} statuses
+                <div className="flex w-full items-center gap-2.5">
+                  <span className="icon-tile icon-tile-accent-violet shrink-0">
+                    <GitBranch className="h-3.5 w-3.5" aria-hidden="true" />
                   </span>
+                  <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
+                    <div className="flex w-full items-center gap-2">
+                      <span className="truncate font-medium">{workflow.name}</span>
+                      {workflow.isDefault ? <span className="chip ml-auto">Default</span> : null}
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {workflow.statuses?.length || 0} statuses
+                    </span>
+                  </div>
                 </div>
               </Button>
             ))}

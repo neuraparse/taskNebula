@@ -39,8 +39,25 @@ export function SprintStats({ sprint, issues }: SprintStatsProps) {
     .reduce((sum, issue) => sum + (issue.estimate || 0), 0);
   const pointsPercentage = totalPoints > 0 ? (completedPoints / totalPoints) * 100 : 0;
 
+  const statusChipClass =
+    sprint.status === 'active'
+      ? 'chip-blue'
+      : sprint.status === 'completed'
+      ? 'chip-emerald'
+      : 'chip-amber';
+  const statusLabel =
+    sprint.status === 'active' ? 'Active' : sprint.status === 'completed' ? 'Completed' : 'Planned';
+
   return (
-    <div className="stagger grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0 space-y-0.5">
+          <span className="kicker">Sprint</span>
+          <h3 className="truncate text-sm font-semibold tracking-tight">{sprint.name}</h3>
+        </div>
+        <span className={statusChipClass}>{statusLabel}</span>
+      </div>
+      <div className="stagger grid gap-3 md:grid-cols-2 lg:grid-cols-4">
       {/* Completion */}
       <div className="surface-card animate-scale-in p-4 space-y-2">
         <div className="flex items-center justify-between">
@@ -114,6 +131,7 @@ export function SprintStats({ sprint, issues }: SprintStatsProps) {
             <span className="font-semibold tabular-nums">{todoIssues}</span>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

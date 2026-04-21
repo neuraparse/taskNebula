@@ -10,12 +10,12 @@ export default function SignInPage() {
         className="bg-aurora absolute inset-0 pointer-events-none blur-3xl opacity-60 -z-10"
       />
 
-      <div className="relative w-full max-w-sm animate-scale-in">
+      <div className="relative w-full max-w-sm animate-blur-in">
         {/* Brand mark */}
         <div className="mb-5 flex justify-center">
           <Link
             href="/"
-            className="flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="flex items-center gap-2 rounded-md transition-all duration-150 ease-snap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <div className="flex h-7 w-7 items-center justify-center rounded-md bg-foreground">
               <span className="text-[11px] font-semibold tracking-tight text-background">TN</span>

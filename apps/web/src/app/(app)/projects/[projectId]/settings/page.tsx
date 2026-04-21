@@ -59,7 +59,7 @@ export default function ProjectSettingsPage({
   if (!permissions.canBrowseProject && !permissions.isSuperAdmin && !permissions.isOrgOwner) {
     return (
       <div className="p-6">
-        <div className="surface-card p-8 text-center border-destructive/30 bg-destructive/5">
+        <div className="panel-danger rounded-lg p-8 text-center">
           <p className="text-sm text-destructive">You don&apos;t have permission to access project settings.</p>
         </div>
       </div>

@@ -122,7 +122,7 @@ export default function SprintDetailPage({
   return (
     <div className="flex h-full flex-col overflow-hidden animate-fade-in">
       {/* Sprint Header */}
-      <div className="border-b border-border bg-background px-6 py-4 shrink-0">
+      <div className="animate-blur-in border-b border-border bg-background px-6 py-4 shrink-0">
         <div className="space-y-3">
           {/* Back Button */}
           <Link href={`/projects/${projectId}/sprints`}>
@@ -223,7 +223,7 @@ export default function SprintDetailPage({
 
           {/* Burndown Chart */}
           {burndownData && sprint.status === 'active' && (
-            <div className="surface-card p-5">
+            <div className="surface-card rounded-lg p-5">
               <h2 className="mb-4 text-sm font-semibold">Sprint Burndown</h2>
               <BurndownChart data={burndownData} />
             </div>

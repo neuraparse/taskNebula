@@ -591,7 +591,7 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
         </div>
 
         {!canManage && (
-          <div className="rounded-lg border border-accent-amber/20 bg-accent-amber/10 px-4 py-3 text-sm text-accent-amber">
+          <div className="panel-warn text-sm">
             Browse only — owners and admins can change the structure.
           </div>
         )}
@@ -610,7 +610,7 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                 <div
                   key={teamspace.id}
                   className={cn(
-                    'animate-fade-up surface-card p-5 transition-all duration-200',
+                    'animate-fade-up surface-card rounded-lg p-6 transition-all duration-200 ease-smooth',
                     isActive && 'border-primary/20 bg-primary/5'
                   )}
                 >

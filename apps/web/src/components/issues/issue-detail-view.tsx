@@ -5,17 +5,62 @@ import { IssueContent } from './issue-content';
 import { IssueActivity } from './issue-activity';
 import { IssueSidebar } from './issue-sidebar';
 import { useIssue } from '@/lib/hooks/use-issues';
-import { Loader2, FileText, AlertCircle } from 'lucide-react';
+import { FileText, AlertCircle } from 'lucide-react';
 
 export function IssueDetailView({ issueId }: { issueId: string }) {
   const { data: issue, isLoading, error } = useIssue(issueId);
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Loading issue...</p>
+      <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
+        {/* Header skeleton */}
+        <div className="shrink-0 border-b border-border bg-background px-6 py-4">
+          <div className="space-y-2">
+            <div className="shimmer h-3 w-24 rounded-sm" />
+            <div className="shimmer h-6 w-2/3 rounded-md" />
+            <div className="flex items-center gap-2 pt-1">
+              <div className="shimmer h-5 w-16 rounded-sm" />
+              <div className="shimmer h-5 w-20 rounded-sm" />
+              <div className="shimmer h-5 w-14 rounded-sm" />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-hidden">
+          <div className="grid h-full grid-cols-1 lg:grid-cols-[1fr_320px]">
+            {/* Main content skeleton */}
+            <div className="overflow-y-auto custom-scrollbar">
+              <div className="space-y-6 px-5 py-6 lg:px-8">
+                <div className="space-y-3">
+                  <div className="shimmer h-4 w-full rounded-sm" />
+                  <div className="shimmer h-4 w-11/12 rounded-sm" />
+                  <div className="shimmer h-4 w-4/5 rounded-sm" />
+                  <div className="shimmer h-4 w-3/4 rounded-sm" />
+                </div>
+                <div className="space-y-3">
+                  <div className="shimmer h-4 w-5/6 rounded-sm" />
+                  <div className="shimmer h-4 w-2/3 rounded-sm" />
+                </div>
+                <div className="space-y-2 pt-4">
+                  <div className="shimmer h-3 w-20 rounded-sm" />
+                  <div className="shimmer h-16 w-full rounded-md" />
+                  <div className="shimmer h-16 w-full rounded-md" />
+                </div>
+              </div>
+            </div>
+
+            {/* Sidebar skeleton */}
+            <div className="hidden overflow-y-auto border-l border-border custom-scrollbar lg:block">
+              <div className="space-y-5 px-5 py-5">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="shimmer h-3 w-16 rounded-sm" />
+                    <div className="shimmer h-8 w-full rounded-md" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -24,8 +69,8 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
   if (error) {
     return (
       <div className="flex h-full items-center justify-center bg-background">
-        <div className="text-center max-w-sm px-4 animate-fade-in">
-          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10">
+        <div className="text-center max-w-sm px-4 animate-fade-up">
+          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-md bg-destructive/10">
             <AlertCircle className="h-5 w-5 text-destructive" />
           </div>
           <p className="font-medium text-foreground">Failed to load issue</p>
@@ -38,8 +83,8 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
   if (!issue) {
     return (
       <div className="flex h-full items-center justify-center bg-background">
-        <div className="text-center max-w-sm px-4 animate-fade-in">
-          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+        <div className="text-center max-w-sm px-4 animate-fade-up">
+          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-md bg-muted">
             <FileText className="h-5 w-5 text-muted-foreground" />
           </div>
           <p className="font-medium text-foreground">Issue not found</p>
@@ -52,15 +97,15 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-background animate-fade-in">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background animate-fade-up">
       <div className="shrink-0 border-b border-border bg-background px-6 py-4">
         <IssueHeader issue={issue} />
       </div>
 
       <div className="flex-1 overflow-hidden">
-        <div className="grid h-full grid-cols-[1fr_300px]">
+        <div className="grid h-full grid-cols-1 lg:grid-cols-[1fr_320px]">
           <div className="overflow-y-auto custom-scrollbar">
-            <div className="space-y-8 px-8 py-6">
+            <div className="space-y-8 px-5 py-6 lg:px-8">
               <IssueContent issue={issue} />
               <IssueActivity issueId={issue.id} />
             </div>

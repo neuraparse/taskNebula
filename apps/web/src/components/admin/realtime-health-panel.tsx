@@ -52,10 +52,10 @@ export function RealtimeHealthPanel() {
     <div className="animate-fade-up space-y-6">
       {/* KPI tiles */}
       <div className="stagger grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <HealthTile label="Channels" value={data.stats.channels} icon={MessagesSquare} />
-        <HealthTile label="Rooms" value={data.stats.rooms} icon={Users} />
-        <HealthTile label="Active calls" value={data.stats.activeCalls} icon={Radio} live />
-        <HealthTile label="Read states" value={data.stats.readStates} icon={Activity} />
+        <HealthTile label="Channels" value={data.stats.channels} icon={MessagesSquare} tone="blue" />
+        <HealthTile label="Rooms" value={data.stats.rooms} icon={Users} tone="violet" />
+        <HealthTile label="Active calls" value={data.stats.activeCalls} icon={Radio} tone="emerald" live />
+        <HealthTile label="Read states" value={data.stats.readStates} icon={Activity} tone="cyan" />
       </div>
 
       {/* Service status grid */}
@@ -76,23 +76,29 @@ function HealthTile({
   value,
   icon: Icon,
   live,
+  tone = 'blue',
 }: {
   label: string;
   value: number;
   icon: ComponentType<{ className?: string }>;
   live?: boolean;
+  tone?: 'blue' | 'violet' | 'emerald' | 'amber' | 'rose' | 'cyan';
 }) {
   return (
-    <div className="surface-card flex flex-col justify-between gap-2 p-4">
-      <div className="flex items-center justify-between">
-        <p className="kicker">{label}</p>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+    <div className="surface-card flex max-h-[140px] flex-col justify-between gap-2 p-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="kicker truncate">{label}</p>
+        <span className={cn('icon-tile', `icon-tile-accent-${tone}`)}>
+          <Icon className="h-3.5 w-3.5" />
+        </span>
       </div>
       <div className="flex items-end justify-between gap-2">
         <p className="text-2xl font-semibold tabular-nums">{value}</p>
         {live && value > 0 ? (
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="status-dot status-live animate-pulse-subtle" />
+            <span className="realtime-ping">
+              <span className="status-dot status-live" />
+            </span>
             Live
           </span>
         ) : null}
@@ -120,11 +126,18 @@ function ServiceCard({
       : tone === 'warn'
         ? 'text-accent-amber'
         : 'text-accent-rose';
+  const containerClass = tone === 'danger' ? 'panel-danger p-4 space-y-2' : 'surface-card p-4 space-y-2';
   return (
-    <div className="surface-card p-4 space-y-2">
+    <div className={containerClass}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <span className={cn('status-dot shrink-0', dotClass, tone === 'live' && 'animate-pulse-subtle')} />
+          {tone === 'danger' ? (
+            <span className="realtime-ping shrink-0">
+              <span className={cn('status-dot', dotClass)} />
+            </span>
+          ) : (
+            <span className={cn('status-dot shrink-0', dotClass, tone === 'live' && 'animate-dot-breathe')} />
+          )}
           <span className="text-sm font-medium truncate">{name}</span>
         </div>
         <span className={cn('text-xs font-medium', textClass)}>{metric}</span>

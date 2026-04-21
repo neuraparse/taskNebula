@@ -99,11 +99,12 @@ export function TimeTrackingPanel({ issueId, canLog, canDelete }: TimeTrackingPa
       <div className="space-y-3 animate-fade-up">
         {/* Compact timer/summary bar */}
         <div className="surface-card flex items-center gap-3 px-3 py-2">
-          <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <Clock className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
           <span className="text-sm font-medium">Time tracking</span>
-          {totalTime > 0 ? (
-            <span className="font-mono text-xs text-muted-foreground">{formatTime(totalTime)} total</span>
-          ) : null}
+          <span className="chip text-[11px]">Paused</span>
+          <span className="font-mono text-xs tabular-nums text-muted-foreground">
+            {formatTime(totalTime)}
+          </span>
           {canLog ? (
             <Button size="sm" variant="ghost" className="ml-auto h-7" onClick={() => setShowLogDialog(true)}>
               <Plus className="mr-1 h-3.5 w-3.5" />
@@ -123,7 +124,7 @@ export function TimeTrackingPanel({ issueId, canLog, canDelete }: TimeTrackingPa
             {worklogs.map((log) => (
               <div
                 key={log.id}
-                className="flex items-center gap-3 px-4 py-2.5 transition-colors duration-150 hover:bg-accent/40"
+                className="row-interactive flex items-center gap-3 px-4 py-2.5"
               >
                 <span className="chip-accent shrink-0 font-mono text-[11px]">{formatTime(log.timeSpent)}</span>
                 <div className="min-w-0 flex-1">

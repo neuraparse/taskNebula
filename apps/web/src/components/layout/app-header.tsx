@@ -18,14 +18,14 @@ export function AppHeader() {
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/80 px-6 backdrop-blur">
-      {/* Breadcrumb / workspace + search trigger */}
+      {/* Workspace + search trigger */}
       <div className="flex flex-1 items-center gap-4">
         <OrganizationSwitcher />
         <button
           type="button"
           onClick={openPalette}
           aria-label="Open command palette"
-          className="group relative flex h-9 w-full max-w-md items-center rounded-md border border-border bg-surface pl-9 pr-2 text-left text-sm text-muted-foreground transition-all duration-200 ease-smooth hover:border-primary/30 hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="group relative flex h-9 w-full max-w-md items-center rounded-md border border-border bg-surface pl-9 pr-2 text-left text-sm text-muted-foreground transition-all duration-150 ease-snap hover:border-primary/30 hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <span className="truncate">Search issues, projects, docs…</span>
@@ -38,7 +38,12 @@ export function AppHeader() {
       {/* Quick actions */}
       <div className="flex items-center gap-1">
         <NotificationBell />
-        <Button variant="ghost" size="icon" aria-label="Help">
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Help"
+          className="transition-all duration-150 ease-snap"
+        >
           <HelpCircle className="h-4 w-4" />
         </Button>
         <UserProfileDropdown />

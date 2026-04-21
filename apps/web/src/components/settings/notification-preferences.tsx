@@ -159,7 +159,7 @@ export function NotificationPreferences() {
 
   if (isLoading || !preferences) {
     return (
-      <div className="surface-card p-6">
+      <div className="surface-card rounded-lg p-6">
         <p className="text-sm text-muted-foreground">Loading notification settings...</p>
       </div>
     );
@@ -167,7 +167,7 @@ export function NotificationPreferences() {
 
   if (error) {
     return (
-      <div className="surface-card p-6 text-sm text-destructive">
+      <div className="panel-danger animate-alert-in text-sm">
         {error instanceof Error ? error.message : 'Notification preferences could not be loaded.'}
       </div>
     );
@@ -187,14 +187,9 @@ export function NotificationPreferences() {
             Control how activity reaches you across in-app, email, and digest channels.
           </p>
         </div>
-        <div className="surface-card p-5 space-y-5">
+        <div className="surface-card rounded-lg p-6 space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
-            <div className="space-y-1">
-              <Label className="text-sm font-medium">In-app notifications</Label>
-              <p className="text-xs text-muted-foreground mt-1">
-                Show updates in the notification bell.
-              </p>
-            </div>
+            <Label className="text-sm font-medium">In-app notifications</Label>
             <div className="flex md:justify-end">
               <Switch
                 checked={preferences.enableInApp}
@@ -203,12 +198,7 @@ export function NotificationPreferences() {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
-            <div className="space-y-1">
-              <Label className="text-sm font-medium">Email notifications</Label>
-              <p className="text-xs text-muted-foreground mt-1">
-                Send important updates to your inbox.
-              </p>
-            </div>
+            <Label className="text-sm font-medium">Email notifications</Label>
             <div className="flex md:justify-end">
               <Switch
                 checked={preferences.enableEmail}
@@ -219,9 +209,7 @@ export function NotificationPreferences() {
           <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
             <div className="space-y-1">
               <Label className="text-sm font-medium">Digest frequency</Label>
-              <p className="text-xs text-muted-foreground mt-1">
-                Bundle activity into a scheduled summary.
-              </p>
+              <p className="text-xs text-muted-foreground">Scheduled activity summary.</p>
             </div>
             <Select
               value={preferences.digestFrequency}
@@ -254,7 +242,7 @@ export function NotificationPreferences() {
             Choose which events trigger email delivery.
           </p>
         </div>
-        <div className="surface-card p-5 divide-y divide-border/60">
+        <div className="surface-card rounded-lg p-6 divide-y divide-border/60">
           {EMAIL_EVENT_FIELDS.map((field) => (
             <div
               key={field.key}
@@ -283,7 +271,7 @@ export function NotificationPreferences() {
             Control what appears in your notification feed.
           </p>
         </div>
-        <div className="surface-card p-5 divide-y divide-border/60">
+        <div className="surface-card rounded-lg p-6 divide-y divide-border/60">
           {IN_APP_EVENT_FIELDS.map((field) => (
             <div
               key={field.key}
@@ -312,14 +300,9 @@ export function NotificationPreferences() {
             Pause delivery during quiet hours.
           </p>
         </div>
-        <div className="surface-card p-5 space-y-5">
+        <div className="surface-card rounded-lg p-6 space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
-            <div className="space-y-1">
-              <Label className="text-sm font-medium">Enable quiet hours</Label>
-              <p className="text-xs text-muted-foreground mt-1">
-                Mute notifications during the selected window.
-              </p>
-            </div>
+            <Label className="text-sm font-medium">Enable quiet hours</Label>
             <div className="flex md:justify-end">
               <Switch
                 checked={preferences.doNotDisturb}

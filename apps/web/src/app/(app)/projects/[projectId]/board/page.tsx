@@ -64,7 +64,7 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
   return (
     <div className="flex h-full flex-col">
       {/* Board Header - single compact row */}
-      <div className="shrink-0 border-b border-border bg-background/95 px-5 py-3 backdrop-blur">
+      <div className="shrink-0 border-b border-border bg-background/95 px-4 py-2 backdrop-blur">
         <div className="flex items-center gap-3">
           {/* Sprint selector */}
           <Select

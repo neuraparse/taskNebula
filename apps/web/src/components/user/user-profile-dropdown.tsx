@@ -50,7 +50,7 @@ export function UserProfileDropdown() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-60 shadow-sm data-[state=open]:animate-scale-in"
+        className="w-60 rounded-lg shadow-sm data-[state=open]:animate-pop-in"
         align="end"
         sideOffset={8}
         forceMount
@@ -71,13 +71,13 @@ export function UserProfileDropdown() {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem className="gap-2 px-3 transition-colors duration-150" asChild>
+        <DropdownMenuItem className="gap-2 px-3 transition-all duration-150 ease-snap" asChild>
           <a href="/settings/profile">
             <User className="h-4 w-4 shrink-0 text-muted-foreground" />
             Profile
           </a>
         </DropdownMenuItem>
-        <DropdownMenuItem className="gap-2 px-3 transition-colors duration-150" asChild>
+        <DropdownMenuItem className="gap-2 px-3 transition-all duration-150 ease-snap" asChild>
           <a href="/settings">
             <Settings className="h-4 w-4 shrink-0 text-muted-foreground" />
             Settings
@@ -87,7 +87,7 @@ export function UserProfileDropdown() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
-          className="gap-2 px-3 text-destructive transition-colors duration-150 focus:bg-destructive/10 focus:text-destructive"
+          className="gap-2 px-3 text-destructive transition-all duration-150 ease-snap focus:bg-destructive/10 focus:text-destructive"
           onClick={() => signOut({ callbackUrl: '/auth/signin' })}
         >
           <LogOut className="h-4 w-4 shrink-0" />

@@ -1,6 +1,7 @@
 'use client';
 
 import { BurndownData } from '@/lib/hooks/use-analytics';
+import { CheckCircle2, Clock, Hash, Target } from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -35,6 +36,39 @@ function BurndownTooltip({ active, payload, label }: any) {
   );
 }
 
+type Tone = 'blue' | 'emerald' | 'amber' | 'violet' | 'cyan' | 'rose';
+
+function StatTile({
+  tone,
+  icon,
+  label,
+  value,
+  trend,
+}: {
+  tone: Tone;
+  icon: React.ReactNode;
+  label: string;
+  value: number | string;
+  trend?: { value: string; tone: Tone };
+}) {
+  return (
+    <div className="animate-scale-in flex items-start gap-2.5">
+      <span className={`icon-tile icon-tile-accent-${tone}`}>{icon}</span>
+      <div className="min-w-0 flex-1">
+        <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </div>
+        <div className="mt-0.5 flex items-baseline gap-1.5">
+          <span className="text-xl font-semibold tabular-nums text-foreground">{value}</span>
+          {trend ? (
+            <span className={`chip-${trend.tone} text-[10px]`}>{trend.value}</span>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LegendChip({ color, label }: { color: string; label: string }) {
   return (
     <span className="chip inline-flex items-center gap-1.5">
@@ -56,28 +90,32 @@ export function BurndownChart({ data }: BurndownChartProps) {
         </p>
       </div>
 
-      {/* Stats */}
-      <div className="stagger grid grid-cols-4 gap-4 text-sm">
-        <div className="animate-scale-in">
-          <div className="text-muted-foreground text-xs">Total Points</div>
-          <div className="text-xl font-semibold tabular-nums">{data.totalPoints}</div>
-        </div>
-        <div className="animate-scale-in">
-          <div className="text-muted-foreground text-xs">Completed</div>
-          <div className="text-xl font-semibold tabular-nums text-accent-emerald">
-            {data.completedPoints}
-          </div>
-        </div>
-        <div className="animate-scale-in">
-          <div className="text-muted-foreground text-xs">Remaining</div>
-          <div className="text-xl font-semibold tabular-nums text-accent-amber">
-            {data.remainingPoints}
-          </div>
-        </div>
-        <div className="animate-scale-in">
-          <div className="text-muted-foreground text-xs">Total Issues</div>
-          <div className="text-xl font-semibold tabular-nums">{data.totalIssues}</div>
-        </div>
+      {/* Stat tiles */}
+      <div className="stagger grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatTile
+          tone="blue"
+          icon={<Target className="h-3.5 w-3.5" />}
+          label="Total Points"
+          value={data.totalPoints}
+        />
+        <StatTile
+          tone="emerald"
+          icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+          label="Completed"
+          value={data.completedPoints}
+        />
+        <StatTile
+          tone="amber"
+          icon={<Clock className="h-3.5 w-3.5" />}
+          label="Remaining"
+          value={data.remainingPoints}
+        />
+        <StatTile
+          tone="violet"
+          icon={<Hash className="h-3.5 w-3.5" />}
+          label="Total Issues"
+          value={data.totalIssues}
+        />
       </div>
 
       {/* Legend */}

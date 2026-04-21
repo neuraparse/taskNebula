@@ -43,79 +43,78 @@ export function CommandPalette() {
     command();
   }, []);
 
+  const itemClass =
+    'rounded-md transition-all duration-150 ease-snap aria-selected:bg-primary/10 aria-selected:text-primary';
+
   return (
     <CommandDialog
       open={open}
       onOpenChange={setOpen}
-      contentClassName="animate-scale-in rounded-xl shadow-lg"
+      contentClassName="animate-pop-in rounded-lg shadow-lg"
     >
       <CommandInput placeholder="Type a command or search..." value={query} onValueChange={setQuery} />
-      <CommandList>
+      <CommandList className="stagger">
         <CommandEmpty>
           <div className="flex flex-col items-center gap-2 py-6 text-center">
-            <Search className="h-5 w-5 text-muted-foreground" />
+            <Search className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">No results found.</span>
           </div>
         </CommandEmpty>
 
-        <CommandGroup
-          heading={<span className="kicker">Quick Actions</span>}
-        >
+        <CommandGroup heading={<span className="kicker">Quick Actions</span>}>
           <CommandItem
             onSelect={() => runCommand(() => router.push('/projects'))}
-            className="transition-colors duration-200 aria-selected:bg-primary/10 aria-selected:text-primary"
+            className={itemClass}
           >
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 h-4 w-4 shrink-0" />
             <span>Create Issue</span>
-            <kbd className="ml-auto inline-flex h-5 select-none items-center rounded bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+            <kbd className="chip pointer-events-none ml-auto inline-flex select-none items-center font-mono text-[10px]">
               C
             </kbd>
           </CommandItem>
           <CommandItem
             onSelect={() => runCommand(() => router.push('/projects'))}
-            className="transition-colors duration-200 aria-selected:bg-primary/10 aria-selected:text-primary"
+            className={itemClass}
           >
-            <FolderKanban className="mr-2 h-4 w-4" />
+            <FolderKanban className="mr-2 h-4 w-4 shrink-0" />
             <span>Create Project</span>
           </CommandItem>
         </CommandGroup>
 
-        <CommandGroup
-          heading={<span className="kicker">Navigation</span>}
-        >
+        <CommandGroup heading={<span className="kicker">Navigation</span>}>
           <CommandItem
             onSelect={() => runCommand(() => router.push('/dashboard'))}
-            className="transition-colors duration-200 aria-selected:bg-primary/10 aria-selected:text-primary"
+            className={itemClass}
           >
-            <Search className="mr-2 h-4 w-4" />
+            <Search className="mr-2 h-4 w-4 shrink-0" />
             <span>Dashboard</span>
           </CommandItem>
           <CommandItem
             onSelect={() => runCommand(() => router.push('/projects'))}
-            className="transition-colors duration-200 aria-selected:bg-primary/10 aria-selected:text-primary"
+            className={itemClass}
           >
-            <FolderKanban className="mr-2 h-4 w-4" />
+            <FolderKanban className="mr-2 h-4 w-4 shrink-0" />
             <span>Projects</span>
           </CommandItem>
           <CommandItem
             onSelect={() => runCommand(() => router.push('/docs'))}
-            className="transition-colors duration-200 aria-selected:bg-primary/10 aria-selected:text-primary"
+            className={itemClass}
           >
-            <BookOpenText className="mr-2 h-4 w-4" />
+            <BookOpenText className="mr-2 h-4 w-4 shrink-0" />
             <span>Docs</span>
           </CommandItem>
           <CommandItem
             onSelect={() => runCommand(() => router.push('/team'))}
-            className="transition-colors duration-200 aria-selected:bg-primary/10 aria-selected:text-primary"
+            className={itemClass}
           >
-            <Users className="mr-2 h-4 w-4" />
+            <Users className="mr-2 h-4 w-4 shrink-0" />
             <span>Team</span>
           </CommandItem>
           <CommandItem
             onSelect={() => runCommand(() => router.push('/settings'))}
-            className="transition-colors duration-200 aria-selected:bg-primary/10 aria-selected:text-primary"
+            className={itemClass}
           >
-            <Settings className="mr-2 h-4 w-4" />
+            <Settings className="mr-2 h-4 w-4 shrink-0" />
             <span>Settings</span>
           </CommandItem>
         </CommandGroup>
@@ -126,7 +125,7 @@ export function CommandPalette() {
               <CommandItem
                 key={doc.id}
                 onSelect={() => runCommand(() => router.push(`/docs?pageId=${doc.id}&spaceId=${doc.spaceId}`))}
-                className="transition-colors duration-200 aria-selected:bg-primary/10 aria-selected:text-primary"
+                className={itemClass}
               >
                 <BookOpenText className="mr-2 h-4 w-4 shrink-0" />
                 <div className="flex min-w-0 flex-col">

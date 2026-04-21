@@ -167,7 +167,10 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
 
   return (
     <>
-      <div className="dot-grid flex h-full flex-col bg-background">
+      <div
+        className="dot-grid flex h-full flex-col bg-background"
+        data-dragging-active={activeId ? 'true' : undefined}
+      >
         <DndContext
           sensors={sensors}
           onDragStart={handleDragStart}
@@ -176,7 +179,7 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
           accessibility={{ announcements }}
           measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
         >
-          <div className="stagger flex flex-1 gap-3 overflow-x-auto px-4 py-4 custom-scrollbar">
+          <div className="flex flex-1 items-stretch gap-3 overflow-x-auto px-4 py-4 custom-scrollbar">
             {workflowStatuses.map((status) => {
               const columnIssues = filteredIssues.filter((issue) => issue.statusId === status.id);
               return (
@@ -200,7 +203,8 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
                       statusId={status.id}
                       issueId={issue.id}
                       issue={{
-                        id: issue.key,
+                        id: issue.id,
+                        key: issue.key,
                         title: issue.title,
                         priority: issue.priority as 'low' | 'medium' | 'high' | 'critical',
                         type: issue.type as 'task' | 'bug' | 'story' | 'epic',
@@ -215,7 +219,8 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
                                   .toUpperCase() || issue.assignee.email?.[0]?.toUpperCase() || '?',
                             }
                           : undefined,
-                        labels: [],
+                        labels: issue.labels ?? [],
+                        dueDate: issue.dueDate,
                       }}
                       onClick={() => setSelectedIssueId(issue.id)}
                     />
@@ -224,10 +229,10 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
               );
             })}
 
-            <div className="w-[280px] flex-shrink-0 self-start">
+            <div className="w-[320px] flex-shrink-0 self-start">
               <Button
                 variant="ghost"
-                className="h-10 w-full rounded-lg border border-dashed border-border text-sm text-muted-foreground transition-all duration-200 ease-smooth hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                className="h-10 w-full rounded-md border border-dashed border-border text-sm text-muted-foreground transition-all duration-150 ease-snap hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
                 onClick={() => setAddColumnOpen(true)}
               >
                 <Plus className="mr-1.5 h-4 w-4" />
@@ -239,14 +244,15 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
           <DragOverlay
             dropAnimation={{
               duration: 200,
-              easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+              easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           >
             {activeIssue ? (
-              <div className="w-[288px] rotate-[0.8deg] shadow-md">
+              <div className="w-[300px] rotate-[1.2deg] shadow-lg">
                 <KanbanCard
                   issue={{
-                    id: activeIssue.key,
+                    id: activeIssue.id,
+                    key: activeIssue.key,
                     title: activeIssue.title,
                     priority: activeIssue.priority as 'low' | 'medium' | 'high' | 'critical',
                     type: activeIssue.type as 'task' | 'bug' | 'story' | 'epic',
@@ -261,7 +267,8 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
                               .toUpperCase() || activeIssue.assignee.email?.[0]?.toUpperCase() || '?',
                         }
                       : undefined,
-                    labels: [],
+                    labels: activeIssue.labels ?? [],
+                    dueDate: activeIssue.dueDate,
                   }}
                 />
               </div>

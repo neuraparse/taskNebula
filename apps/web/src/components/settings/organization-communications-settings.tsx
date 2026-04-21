@@ -46,7 +46,7 @@ export function OrganizationCommunicationsSettings({ organizationId }: { organiz
 
   if (error || !data) {
     return (
-      <div className="surface-card p-6 text-sm text-destructive">
+      <div className="panel-danger animate-alert-in text-sm">
         {error instanceof Error ? error.message : 'Failed to load communications settings.'}
       </div>
     );
@@ -82,7 +82,7 @@ export function OrganizationCommunicationsSettings({ organizationId }: { organiz
             </span>
           </div>
         </div>
-        <div className="surface-card p-5 divide-y divide-border/60">
+        <div className="surface-card rounded-lg p-6 divide-y divide-border/60">
           {TOGGLES.map((toggle) => (
             <div
               key={toggle.key}
@@ -113,7 +113,7 @@ export function OrganizationCommunicationsSettings({ organizationId }: { organiz
           </p>
         </div>
         <div className="grid gap-3 md:grid-cols-2">
-          <div className="surface-card p-4 space-y-1.5">
+          <div className="surface-card rounded-lg p-5 space-y-1.5">
             <div className="flex items-center gap-2 font-medium text-sm">
               {data.serviceStatus.redisReady ? (
                 <Wifi className="h-4 w-4 text-accent-emerald" />
@@ -128,7 +128,7 @@ export function OrganizationCommunicationsSettings({ organizationId }: { organiz
                 : 'Redis is missing. Falling back to single-instance in-memory fanout.'}
             </p>
           </div>
-          <div className="surface-card p-4 space-y-1.5">
+          <div className="surface-card rounded-lg p-5 space-y-1.5">
             <div className="flex items-center gap-2 font-medium text-sm">
               <Radio
                 className={cn(

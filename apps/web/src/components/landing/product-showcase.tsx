@@ -345,7 +345,7 @@ export function HeroShowcase() {
           </p>
         </div>
 
-        <div className="overflow-hidden rounded-lg border border-[var(--landing-border)] bg-[var(--landing-bg-card)]">
+        <div className="animate-blur-in overflow-hidden rounded-lg border border-[var(--landing-border)] bg-[var(--landing-bg-card)]">
           <ShowcaseHeader title="Board" url={`${activeBoard.label} / Current sprint`} />
 
           <div className="border-b border-[var(--landing-border)] px-4 py-3">
@@ -355,7 +355,7 @@ export function HeroShowcase() {
                   key={board.id}
                   type="button"
                   onClick={() => setActiveBoardId(board.id)}
-                  className={`rounded-sm border px-3 py-1.5 text-[11px] transition-all duration-200 ease-smooth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] ${
+                  className={`rounded-sm border px-3 py-1.5 text-[11px] transition-all duration-150 ease-snap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] ${
                     board.id === activeBoard.id
                       ? 'border-[var(--landing-border-strong)] bg-[var(--landing-bg)] text-[var(--landing-text-dark)]'
                       : 'border-[var(--landing-border)] text-[var(--landing-text-muted)] hover:bg-[var(--landing-bg-surface)]'
@@ -469,7 +469,7 @@ export function HeroShowcase() {
                         type="button"
                         onClick={() => moveIssueToColumn(selectedIssue.key, selectedIssue.col - 1)}
                         disabled={selectedIssue.col === 0}
-                        className="inline-flex h-9 items-center rounded-sm border border-[var(--landing-border)] px-3 text-[12px] text-[var(--landing-text)] transition-all duration-200 ease-smooth hover:bg-[var(--landing-bg)] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
+                        className="inline-flex h-9 items-center rounded-sm border border-[var(--landing-border)] px-3 text-[12px] text-[var(--landing-text)] transition-all duration-150 ease-snap hover:bg-[var(--landing-bg)] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
                       >
                         Move back
                       </button>
@@ -477,7 +477,7 @@ export function HeroShowcase() {
                         type="button"
                         onClick={() => moveIssueToColumn(selectedIssue.key, selectedIssue.col + 1)}
                         disabled={selectedIssue.col === columns.length - 1}
-                        className="inline-flex h-9 items-center rounded-sm border border-[var(--landing-border-strong)] bg-[var(--landing-bg)] px-3 text-[12px] text-[var(--landing-text-dark)] transition-all duration-200 ease-smooth hover:bg-[var(--landing-bg-elevated)] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
+                        className="inline-flex h-9 items-center rounded-sm border border-[var(--landing-border-strong)] bg-[var(--landing-bg)] px-3 text-[12px] text-[var(--landing-text-dark)] transition-all duration-150 ease-snap hover:bg-[var(--landing-bg-elevated)] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
                       >
                         Move forward
                       </button>
@@ -536,7 +536,7 @@ function MiniCard({
         onDragStart();
       }}
       onDragEnd={onDragEnd}
-      className={`relative w-full cursor-grab overflow-hidden rounded-sm border bg-[var(--landing-bg)] p-2.5 text-left transition-all duration-200 ease-smooth active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] ${
+      className={`relative w-full cursor-grab overflow-hidden rounded-sm border bg-[var(--landing-bg)] p-2.5 text-left transition-all duration-150 ease-snap active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] ${
         isSelected
           ? 'border-[var(--landing-border-strong)] bg-[var(--landing-bg-elevated)]'
           : 'border-[var(--landing-border)] hover:border-[var(--landing-border-strong)]'
@@ -731,17 +731,7 @@ export function SprintShowcase() {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[14px] font-[500] text-[var(--landing-text-dark)]">Sprint 4 — Auth &amp; Notifications</span>
-              <span
-                className="flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[9px]"
-                style={{
-                  borderColor: 'color-mix(in srgb, var(--landing-accent-green) 20%, transparent)',
-                  backgroundColor: 'color-mix(in srgb, var(--landing-accent-green) 10%, transparent)',
-                  color: 'var(--landing-accent-green)',
-                }}
-              >
-                <div className="h-1 w-1 rounded-full bg-[var(--landing-accent-green)]" />
-                Active
-              </span>
+              <span className="live-pill">Active</span>
             </div>
             <p className="mt-1 text-[11px] text-[var(--landing-text-muted)]">14 days · 18 issues</p>
           </div>
@@ -885,9 +875,11 @@ function ShowcaseHeader({ title, url }: { title: string; url: string }) {
           <p className="text-[10px] text-[var(--landing-text-muted)]">Workspace preview</p>
         </div>
       </div>
-      <div className="inline-flex items-center gap-2 rounded-sm border border-[var(--landing-border)] bg-[var(--landing-bg)] px-3 py-1 text-[10px] text-[var(--landing-text-muted)]">
-        <span className="h-1.5 w-1.5 rounded-full bg-[var(--landing-accent-green)]" />
-        {url}
+      <div className="inline-flex items-center gap-2">
+        <span className="live-pill">Live</span>
+        <span className="rounded-sm border border-[var(--landing-border)] bg-[var(--landing-bg)] px-3 py-1 text-[10px] text-[var(--landing-text-muted)]">
+          {url}
+        </span>
       </div>
     </div>
   );

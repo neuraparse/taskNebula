@@ -176,7 +176,7 @@ export function OrganizationSettingsClient() {
 
   if (!currentOrganizationId) {
     return (
-      <div className="surface-card p-6 text-sm text-muted-foreground">
+      <div className="surface-card rounded-lg p-6 text-sm text-muted-foreground">
         Select an organization to load settings.
       </div>
     );
@@ -192,7 +192,7 @@ export function OrganizationSettingsClient() {
 
   if (error || !org) {
     return (
-      <div className="surface-card p-6 text-sm text-destructive">
+      <div className="panel-danger animate-alert-in text-sm">
         {error instanceof Error ? error.message : 'Failed to load organization settings.'}
       </div>
     );
@@ -332,22 +332,17 @@ export function OrganizationSettingsClient() {
               </div>
 
               {!canManageSettings ? (
-                <div className="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-muted-foreground">
+                <div className="panel-warn text-sm">
                   Only owners and admins can update organization settings.
                 </div>
               ) : null}
 
-              <div className="surface-card p-5 space-y-6">
+              <div className="surface-card rounded-lg p-6 space-y-6">
                 {/* Logo preview tile + URL */}
                 <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
-                  <div className="space-y-1">
-                    <Label htmlFor="org-logo-url" className="text-sm font-medium">
-                      Logo
-                    </Label>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Square image URL, 128px or larger.
-                    </p>
-                  </div>
+                  <Label htmlFor="org-logo-url" className="text-sm font-medium">
+                    Logo
+                  </Label>
                   <div className="flex items-start gap-3">
                     <div
                       className="h-16 w-16 shrink-0 rounded-md border border-border bg-cover bg-center bg-muted"
@@ -372,19 +367,15 @@ export function OrganizationSettingsClient() {
                         setFormData((current) => ({ ...current, logoUrl: event.target.value }))
                       }
                       disabled={!canManageSettings}
+                      className="transition-all duration-150 ease-snap"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
-                  <div className="space-y-1">
-                    <Label htmlFor="org-name" className="text-sm font-medium">
-                      Organization name
-                    </Label>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Shown throughout TaskNebula.
-                    </p>
-                  </div>
+                  <Label htmlFor="org-name" className="text-sm font-medium">
+                    Organization name
+                  </Label>
                   <Input
                     id="org-name"
                     value={formData.name}
@@ -392,6 +383,7 @@ export function OrganizationSettingsClient() {
                       setFormData((current) => ({ ...current, name: event.target.value }))
                     }
                     disabled={!canManageSettings}
+                    className="transition-all duration-150 ease-snap"
                   />
                 </div>
 
@@ -400,9 +392,7 @@ export function OrganizationSettingsClient() {
                     <Label htmlFor="org-slug" className="text-sm font-medium">
                       Workspace slug
                     </Label>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Used in URLs. Super admins can change it.
-                    </p>
+                    <p className="text-xs text-muted-foreground">Super admins can change it.</p>
                   </div>
                   <Input id="org-slug" value={formData.slug} disabled />
                 </div>
@@ -412,15 +402,13 @@ export function OrganizationSettingsClient() {
                     <Label htmlFor="org-domain" className="text-sm font-medium">
                       Verified domain
                     </Label>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Auto-join members with this email domain.
-                    </p>
+                    <p className="text-xs text-muted-foreground">Auto-join matching emails.</p>
                   </div>
                   <div className="relative">
                     <Globe className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       id="org-domain"
-                      className="pl-9"
+                      className="pl-9 transition-all duration-150 ease-snap"
                       placeholder="company.com"
                       value={formData.domain}
                       onChange={(event) =>
@@ -466,7 +454,7 @@ export function OrganizationSettingsClient() {
           </TabsContent>
 
           <TabsContent value="danger">
-            <section className="space-y-4">
+            <section className="animate-fade-up space-y-4">
               <div className="space-y-1">
                 <span className="kicker text-destructive">Danger zone</span>
                 <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
@@ -474,14 +462,11 @@ export function OrganizationSettingsClient() {
                   Delete organization
                 </h2>
                 <p className="text-sm text-muted-foreground max-w-prose">
-                  Permanently removes this workspace and every project, issue, document, webhook,
-                  and member under it. Owner access required.
+                  Permanently removes this workspace and everything under it. Owner access required.
                 </p>
               </div>
-              <div className="surface-card border-destructive/30 p-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <p className="text-sm text-muted-foreground">
-                  Deleted organizations cannot be restored.
-                </p>
+              <div className="panel-danger animate-alert-in flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <p className="text-sm">Deleted organizations cannot be restored.</p>
                 <Button
                   variant="destructive"
                   disabled={!canDeleteOrg}

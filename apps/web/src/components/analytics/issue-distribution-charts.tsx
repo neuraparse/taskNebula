@@ -1,5 +1,6 @@
 'use client';
 
+import { AlertTriangle, Layers, ListTodo } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface IssueDistributionChartsProps {
@@ -44,6 +45,8 @@ function DistributionTooltip({ active, payload }: any) {
   );
 }
 
+type Tone = 'blue' | 'emerald' | 'amber' | 'violet' | 'cyan' | 'rose';
+
 interface PieCardProps {
   kicker: string;
   title: string;
@@ -51,15 +54,25 @@ interface PieCardProps {
   data: { name: string; value: number }[];
   colorMap: Record<string, string>;
   fallbackColor: string;
+  tone: Tone;
+  icon: React.ReactNode;
 }
 
-function PieCard({ kicker, title, subtitle, data, colorMap, fallbackColor }: PieCardProps) {
+function PieCard({ kicker, title, subtitle, data, colorMap, fallbackColor, tone, icon }: PieCardProps) {
+  const total = data.reduce((sum, d) => sum + d.value, 0);
   return (
     <div className="surface-card animate-fade-up p-5 space-y-3">
-      <div className="space-y-1">
-        <span className="kicker">{kicker}</span>
-        <h3 className="text-base font-semibold tracking-tight text-foreground">{title}</h3>
-        {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+      <div className="flex items-start gap-3">
+        <span className={`icon-tile icon-tile-accent-${tone} shrink-0`}>{icon}</span>
+        <div className="min-w-0 flex-1 space-y-0.5">
+          <span className="kicker">{kicker}</span>
+          <h3 className="text-base font-semibold tracking-tight text-foreground">{title}</h3>
+          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+        </div>
+        <div className="text-right">
+          <div className="text-xl font-semibold tabular-nums text-foreground">{total}</div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Total</div>
+        </div>
       </div>
 
       {/* Legend chips */}
@@ -134,6 +147,8 @@ export function IssueDistributionCharts({
         data={statusData}
         colorMap={STATUS_COLORS}
         fallbackColor="hsl(var(--muted-foreground))"
+        tone="blue"
+        icon={<ListTodo className="h-3.5 w-3.5" />}
       />
       <PieCard
         kicker="Distribution"
@@ -142,6 +157,8 @@ export function IssueDistributionCharts({
         data={priorityData}
         colorMap={PRIORITY_COLORS}
         fallbackColor="hsl(var(--muted-foreground))"
+        tone="amber"
+        icon={<AlertTriangle className="h-3.5 w-3.5" />}
       />
       <PieCard
         kicker="Distribution"
@@ -150,6 +167,8 @@ export function IssueDistributionCharts({
         data={typeData}
         colorMap={TYPE_COLORS}
         fallbackColor="hsl(var(--muted-foreground))"
+        tone="violet"
+        icon={<Layers className="h-3.5 w-3.5" />}
       />
     </div>
   );

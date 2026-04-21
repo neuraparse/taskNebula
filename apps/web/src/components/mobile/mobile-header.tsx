@@ -24,13 +24,18 @@ export function MobileHeader({
         {/* Left: Menu */}
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Open menu">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 transition-all duration-150 ease-snap"
+              aria-label="Open menu"
+            >
               <Menu className="h-4 w-4" />
             </Button>
           </SheetTrigger>
           <SheetContent
             side="left"
-            className="w-72 animate-slide-in-from-left border-r border-border bg-surface"
+            className="w-72 animate-slide-in-from-left rounded-r-lg border-r border-border bg-surface"
           >
             <div className="space-y-4 py-4">
               <div className="px-2">
@@ -49,7 +54,7 @@ export function MobileHeader({
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9"
+              className="h-9 w-9 transition-all duration-150 ease-snap"
               onClick={onSearchClick}
               aria-label="Search"
             >

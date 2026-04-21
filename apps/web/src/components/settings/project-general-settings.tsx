@@ -128,19 +128,17 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
             Update the core project details your team sees across TaskNebula.
           </p>
         </div>
-        <div className="surface-card p-5 space-y-6">
+        <div className="surface-card rounded-lg p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
-            <div className="space-y-1">
-              <Label htmlFor="project-name" className="text-sm font-medium">
-                Project name
-              </Label>
-              <p className="text-xs text-muted-foreground mt-1">Shown throughout TaskNebula.</p>
-            </div>
+            <Label htmlFor="project-name" className="text-sm font-medium">
+              Project name
+            </Label>
             <Input
               id="project-name"
               value={formData.name}
               onChange={(event) => setFormData((current) => ({ ...current, name: event.target.value }))}
               placeholder="Website Redesign"
+              className="transition-all duration-150 ease-snap"
             />
           </div>
 
@@ -149,7 +147,7 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
               <Label htmlFor="project-key" className="text-sm font-medium">
                 Project key
               </Label>
-              <p className="text-xs text-muted-foreground mt-1">Uppercase letters, digits, dashes.</p>
+              <p className="text-xs text-muted-foreground">Uppercase, digits, dashes.</p>
             </div>
             <Input
               id="project-key"
@@ -162,16 +160,14 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
               }
               maxLength={20}
               placeholder="WEB"
+              className="transition-all duration-150 ease-snap"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
-            <div className="space-y-1">
-              <Label htmlFor="project-description" className="text-sm font-medium">
-                Description
-              </Label>
-              <p className="text-xs text-muted-foreground mt-1">Goal, scope, and audience.</p>
-            </div>
+            <Label htmlFor="project-description" className="text-sm font-medium">
+              Description
+            </Label>
             <Textarea
               id="project-description"
               rows={4}
@@ -180,14 +176,12 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
                 setFormData((current) => ({ ...current, description: event.target.value }))
               }
               placeholder="Summarize the goal, scope, and audience for this project."
+              className="transition-all duration-150 ease-snap"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
-            <div className="space-y-1">
-              <Label className="text-sm font-medium">Status</Label>
-              <p className="text-xs text-muted-foreground mt-1">Current project lifecycle.</p>
-            </div>
+            <Label className="text-sm font-medium">Status</Label>
             <Select
               value={formData.status}
               onValueChange={(value) => setFormData((current) => ({ ...current, status: value }))}
@@ -206,10 +200,7 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
-            <div className="space-y-1">
-              <Label className="text-sm font-medium">Visibility</Label>
-              <p className="text-xs text-muted-foreground mt-1">Who can discover this project.</p>
-            </div>
+            <Label className="text-sm font-medium">Visibility</Label>
             <Select
               value={formData.visibility}
               onValueChange={(value) => setFormData((current) => ({ ...current, visibility: value }))}
@@ -269,7 +260,7 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
         </div>
       </section>
 
-      <section className="space-y-4">
+      <section className="animate-fade-up space-y-4">
         <div className="space-y-1">
           <span className="kicker text-destructive">Danger zone</span>
           <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
@@ -277,14 +268,11 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
             Delete project
           </h2>
           <p className="text-sm text-muted-foreground max-w-prose">
-            Archive or remove the project once you are sure the team no longer needs it.
-            This action is blocked while the project still has issues.
+            Blocked while the project still has issues.
           </p>
         </div>
-        <div className="surface-card border-destructive/30 p-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <p className="text-sm text-muted-foreground">
-            Deleted projects cannot be restored.
-          </p>
+        <div className="panel-danger animate-alert-in flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <p className="text-sm">Deleted projects cannot be restored.</p>
           <Button
             variant="destructive"
             onClick={handleDelete}

@@ -52,7 +52,7 @@ export function PresenceAvatars({ issueId }: PresenceAvatarsProps) {
                   <span className="relative -ml-1.5 first:ml-0 inline-flex">
                     <Avatar
                       className={cn(
-                        'h-6 w-6 ring-2 ring-background transition-colors duration-200',
+                        'h-6 w-6 ring-2 ring-background transition-all duration-150 ease-snap',
                         isActive || isSpeaking
                           ? 'ring-accent-emerald/70'
                           : 'ring-background'
@@ -66,13 +66,16 @@ export function PresenceAvatars({ issueId }: PresenceAvatarsProps) {
                         {initials}
                       </AvatarFallback>
                     </Avatar>
-                    <span
-                      className={cn(
-                        'status-dot absolute -bottom-0.5 -right-0.5 ring-2 ring-background',
-                        isSpeaking || isActive ? 'status-live' : 'status-idle'
-                      )}
-                      aria-hidden
-                    />
+                    {isSpeaking || isActive ? (
+                      <span className="realtime-ping absolute -bottom-0.5 -right-0.5 text-accent-emerald">
+                        <span className="status-dot status-live ring-2 ring-background" aria-hidden />
+                      </span>
+                    ) : (
+                      <span
+                        className="status-dot status-idle absolute -bottom-0.5 -right-0.5 ring-2 ring-background"
+                        aria-hidden
+                      />
+                    )}
                   </span>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">

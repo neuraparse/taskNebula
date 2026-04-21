@@ -384,10 +384,13 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
             return (
               <div
                 key={rule.id}
-                className={`flex items-center gap-4 px-4 py-2.5 transition-colors duration-150 hover:bg-accent/40 ${
+                className={`row-interactive flex items-center gap-3 px-4 py-2.5 ${
                   rule.enabled ? '' : 'opacity-60'
                 }`}
               >
+                <span className="icon-tile icon-tile-accent-violet shrink-0" aria-hidden="true">
+                  <Zap className="h-3.5 w-3.5" />
+                </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{rule.name}</p>
                   {rule.description ? (
@@ -396,7 +399,7 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
                 </div>
 
                 <div className="hidden shrink-0 items-center gap-1.5 md:flex">
-                  <span className="chip-accent text-[11px]">{triggerLabel}</span>
+                  <span className="chip-violet text-[11px]">{triggerLabel}</span>
                   <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   {rule.actions.slice(0, 1).map((action, index) => (
                     <span key={`${action.type}-${index}`} className="chip text-[11px]">

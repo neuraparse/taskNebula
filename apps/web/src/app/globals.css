@@ -102,10 +102,10 @@
     --input: 220 14% 90%;
     --ring: 217 91% 60%;
 
-    /* Radius */
-    --radius: 0.625rem;
-    --radius-sm: 0.375rem;
-    --radius-lg: 0.875rem;
+    /* Radius — square-ish (v0.2.1): near-sharp edges, still modern */
+    --radius: 0.25rem;        /* 4px  — buttons, inputs, menus */
+    --radius-sm: 0.125rem;    /* 2px  — pills, chips, small tags */
+    --radius-lg: 0.375rem;    /* 6px  — cards, modals */
 
     /* Shadows (tinted, soft) */
     --shadow-xs: 0 1px 2px 0 hsl(224 22% 10% / 0.04);
@@ -287,13 +287,15 @@
    Visual mode scopes — respond to data-visual attribute
    ---------------------------------------------------------------------------- */
 
-/* minimal — flatten shadows, tighten radius */
+/* minimal — flatten shadows, nearly square */
 [data-visual="minimal"] {
   --shadow-xs: 0 1px 2px 0 hsl(224 22% 10% / 0.02);
   --shadow-sm: 0 1px 2px 0 hsl(224 22% 10% / 0.03);
   --shadow-md: 0 2px 4px 0 hsl(224 22% 10% / 0.04);
   --shadow-lg: 0 4px 8px -2px hsl(224 22% 10% / 0.05);
-  --radius: 0.5rem;
+  --radius: 0.125rem;
+  --radius-sm: 0.0625rem;
+  --radius-lg: 0.1875rem;
 }
 
 /* glass — surface-card becomes translucent with backdrop-filter */
@@ -384,18 +386,23 @@
     border-radius: var(--radius-lg);
   }
 
-  /* Kanban */
+  /* Kanban — NEVER animate `transform` here. dnd-kit owns transform during drag;
+     any CSS transform transition (including :hover translateY) fights the sortable
+     reorder animation and makes cards snap to wrong positions. */
   .kanban-card {
     @apply relative overflow-hidden rounded-lg border border-border bg-card px-3.5 py-3;
     box-shadow: var(--shadow-xs);
-    transition: box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-                border-color 0.2s ease,
-                transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.15s ease;
   }
   .kanban-card:hover {
     border-color: hsl(var(--border-strong));
     box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
+  }
+  .kanban-card[data-dragging="true"] {
+    cursor: grabbing;
+    box-shadow: var(--shadow-lg);
+    border-color: hsl(var(--primary) / 0.45);
   }
   .kanban-column {
     @apply rounded-xl border border-border bg-surface/60;
@@ -428,6 +435,121 @@
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: hsl(var(--muted-foreground));
+  }
+
+  /* v0.2.1 — Semantic accent chips (one-class shortcuts) */
+  .chip-blue {
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium;
+    background: hsl(var(--accent-blue) / 0.12);
+    color: hsl(var(--accent-blue));
+    border: 1px solid hsl(var(--accent-blue) / 0.22);
+    border-radius: var(--radius-sm);
+  }
+  .chip-violet {
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium;
+    background: hsl(var(--accent-violet) / 0.12);
+    color: hsl(var(--accent-violet));
+    border: 1px solid hsl(var(--accent-violet) / 0.22);
+    border-radius: var(--radius-sm);
+  }
+  .chip-cyan {
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium;
+    background: hsl(var(--accent-cyan) / 0.12);
+    color: hsl(var(--accent-cyan));
+    border: 1px solid hsl(var(--accent-cyan) / 0.22);
+    border-radius: var(--radius-sm);
+  }
+  .chip-emerald {
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium;
+    background: hsl(var(--accent-emerald) / 0.12);
+    color: hsl(var(--accent-emerald));
+    border: 1px solid hsl(var(--accent-emerald) / 0.22);
+    border-radius: var(--radius-sm);
+  }
+  .chip-amber {
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium;
+    background: hsl(var(--accent-amber) / 0.12);
+    color: hsl(var(--accent-amber));
+    border: 1px solid hsl(var(--accent-amber) / 0.22);
+    border-radius: var(--radius-sm);
+  }
+  .chip-rose {
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium;
+    background: hsl(var(--accent-rose) / 0.12);
+    color: hsl(var(--accent-rose));
+    border: 1px solid hsl(var(--accent-rose) / 0.22);
+    border-radius: var(--radius-sm);
+  }
+
+  /* v0.2.1 — Accent soft panels: colored inset surfaces (alerts / callouts) */
+  .panel-info {
+    background: hsl(var(--accent-blue) / 0.08);
+    border: 1px solid hsl(var(--accent-blue) / 0.22);
+    border-radius: var(--radius-lg);
+  }
+  .panel-success {
+    background: hsl(var(--accent-emerald) / 0.08);
+    border: 1px solid hsl(var(--accent-emerald) / 0.22);
+    border-radius: var(--radius-lg);
+  }
+  .panel-warn {
+    background: hsl(var(--accent-amber) / 0.1);
+    border: 1px solid hsl(var(--accent-amber) / 0.24);
+    border-radius: var(--radius-lg);
+  }
+  .panel-danger {
+    background: hsl(var(--accent-rose) / 0.08);
+    border: 1px solid hsl(var(--accent-rose) / 0.24);
+    border-radius: var(--radius-lg);
+  }
+
+  /* v0.2.1 — Interactive row (hover-emphasized list item) */
+  .row-interactive {
+    @apply flex items-center gap-3 px-3 py-2 cursor-pointer;
+    border-radius: var(--radius);
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+  .row-interactive:hover {
+    background: hsl(var(--accent) / 0.6);
+  }
+  .row-interactive[data-active="true"] {
+    background: hsl(var(--primary) / 0.1);
+    color: hsl(var(--primary));
+  }
+
+  /* v0.2.1 — Icon tile (small square-ish brand accent behind an icon) */
+  .icon-tile {
+    @apply inline-flex items-center justify-center;
+    width: 2rem; height: 2rem;
+    border-radius: var(--radius);
+    background: hsl(var(--primary) / 0.1);
+    color: hsl(var(--primary));
+    border: 1px solid hsl(var(--primary) / 0.18);
+  }
+  .icon-tile-accent-blue { background: hsl(var(--accent-blue) / 0.1); color: hsl(var(--accent-blue)); border-color: hsl(var(--accent-blue) / 0.2); }
+  .icon-tile-accent-violet { background: hsl(var(--accent-violet) / 0.1); color: hsl(var(--accent-violet)); border-color: hsl(var(--accent-violet) / 0.2); }
+  .icon-tile-accent-emerald { background: hsl(var(--accent-emerald) / 0.1); color: hsl(var(--accent-emerald)); border-color: hsl(var(--accent-emerald) / 0.2); }
+  .icon-tile-accent-amber { background: hsl(var(--accent-amber) / 0.1); color: hsl(var(--accent-amber)); border-color: hsl(var(--accent-amber) / 0.2); }
+  .icon-tile-accent-rose { background: hsl(var(--accent-rose) / 0.1); color: hsl(var(--accent-rose)); border-color: hsl(var(--accent-rose) / 0.2); }
+  .icon-tile-accent-cyan { background: hsl(var(--accent-cyan) / 0.1); color: hsl(var(--accent-cyan)); border-color: hsl(var(--accent-cyan) / 0.2); }
+
+  /* v0.2.1 — Live status pill (realtime indicator with breathing dot) */
+  .live-pill {
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium;
+    background: hsl(var(--accent-emerald) / 0.1);
+    color: hsl(var(--accent-emerald));
+    border: 1px solid hsl(var(--accent-emerald) / 0.22);
+    border-radius: var(--radius-sm);
+  }
+  .live-pill::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 9999px;
+    background: currentColor;
+    animation: dot-breathe 2.2s ease-in-out infinite;
+    box-shadow: 0 0 0 3px currentColor;
+    box-shadow: 0 0 0 3px hsl(var(--accent-emerald) / 0.18);
   }
 }
 
@@ -625,6 +747,48 @@
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
+/* v0.2.1 — modern motion primitives */
+@keyframes blur-in {
+  from { opacity: 0; filter: blur(8px); transform: translateY(6px); }
+  to { opacity: 1; filter: blur(0); transform: translateY(0); }
+}
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.92); }
+  60% { opacity: 1; transform: scale(1.015); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes alert-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translate3d(0, 24px, 0) scale(0.96); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes realtime-ping {
+  0% { transform: scale(1); opacity: 0.7; }
+  80%, 100% { transform: scale(2.2); opacity: 0; }
+}
+@keyframes dot-breathe {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.92); }
+}
+@keyframes progress-indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+/* Page-level wrapper animation: MUST be opacity-only. A lingering `transform`
+   (even translateY(0)) on an ancestor creates a containing block that breaks
+   `position: fixed` for descendants like @dnd-kit's DragOverlay, causing the
+   drag ghost to mis-position. Keep this strictly opacity. */
+@keyframes page-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes caret-blink {
+  0%, 60% { opacity: 1; }
+  61%, 100% { opacity: 0; }
+}
 
 .animate-fade-in { animation: fade-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 .animate-fade-up { animation: fade-up 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
@@ -636,6 +800,43 @@
 .animate-gradient-pan {
   background-size: 200% 200%;
   animation: gradient-pan 10s ease-in-out infinite;
+}
+/* v0.2.1 — modern utility animations */
+.animate-blur-in { animation: blur-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-pop-in { animation: pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.animate-alert-in { animation: alert-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-toast-in { animation: toast-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-dot-breathe { animation: dot-breathe 2.4s ease-in-out infinite; }
+.animate-page-enter { animation: page-enter 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+/* Realtime indicator: use as span wrapper around a status dot */
+.realtime-ping {
+  position: relative;
+  display: inline-flex;
+}
+.realtime-ping::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  background: currentColor;
+  opacity: 0.6;
+  animation: realtime-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Indeterminate progress bar track (1px accent sweep) */
+.progress-bar-indeterminate {
+  position: relative;
+  overflow: hidden;
+  background: hsl(var(--muted));
+}
+.progress-bar-indeterminate::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.7), transparent);
+  animation: progress-indeterminate 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 .landing-marquee-track {

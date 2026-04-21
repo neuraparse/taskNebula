@@ -35,7 +35,7 @@ export function MobileIssueDetail({ issue, onBack }: MobileIssueDetailProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9"
+            className="h-9 w-9 transition-all duration-150 ease-snap"
             onClick={onBack}
             asChild={!onBack}
             aria-label="Go back"
@@ -53,7 +53,12 @@ export function MobileIssueDetail({ issue, onBack }: MobileIssueDetailProps) {
 
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="More actions">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 transition-all duration-150 ease-snap"
+                aria-label="More actions"
+              >
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </SheetTrigger>

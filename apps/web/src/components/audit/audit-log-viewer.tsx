@@ -145,7 +145,7 @@ export function AuditLogViewer({
             key={f.key}
             onClick={() => setActiveFilter(f.key)}
             className={cn(
-              'rounded-full px-2.5 py-0.5 text-[11px] font-medium border transition-colors duration-150',
+              'rounded-sm px-2.5 py-0.5 text-[11px] font-medium border transition-colors duration-150',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
               activeFilter === f.key ? 'chip-accent' : 'chip hover:border-border-strong'
             )}
@@ -162,20 +162,22 @@ export function AuditLogViewer({
           <p className="text-sm text-muted-foreground">No events found</p>
         </div>
       ) : (
-        <div className="max-h-[560px] divide-y divide-border/60 overflow-y-auto custom-scrollbar -mr-2 pr-2">
+        <div className="max-h-[560px] divide-y divide-border/60 overflow-y-auto custom-scrollbar -mr-2 pr-2 stagger">
           {filteredLogs.map((log) => {
             const Icon = getActionIcon(log.action);
             const isExpanded = expandedId === log.id;
             const hasChanges = log.changes && Object.keys(log.changes).length > 0;
 
             return (
-              <div key={log.id} className={cn('border-l-2', severityBorder(log.action))}>
+              <div
+                key={log.id}
+                className={cn('border-l-2 animate-fade-down', severityBorder(log.action))}
+              >
                 <button
                   aria-expanded={isExpanded}
                   onClick={() => setExpandedId(isExpanded ? null : log.id)}
                   className={cn(
-                    'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors duration-150',
-                    'hover:bg-accent/40',
+                    'row-interactive w-full flex items-center gap-3 px-4 py-2.5 text-left',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
                     isExpanded && 'bg-accent/30'
                   )}

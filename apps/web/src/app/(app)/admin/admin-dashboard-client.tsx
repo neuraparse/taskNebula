@@ -47,8 +47,6 @@ import {
   BarChart3,
   Bot,
   Building2,
-  ChevronDown,
-  ChevronRight,
   Crown,
   Edit,
   Flag,
@@ -128,19 +126,19 @@ const NAV: NavItem[] = [
   { key: 'audit', label: 'Audit logs', icon: Scroll },
 ];
 
-const DEFAULT_CHIP = 'bg-muted text-muted-foreground border-border';
+const DEFAULT_CHIP_CLASS = 'chip';
 
-const orgStatusChip: Record<string, string> = {
-  active: 'bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20',
-  trial: 'bg-accent-amber/10 text-accent-amber border-accent-amber/20',
-  suspended: 'bg-accent-rose/10 text-accent-rose border-accent-rose/20',
+const orgStatusChipClass: Record<string, string> = {
+  active: 'chip-emerald',
+  trial: 'chip-amber',
+  suspended: 'chip-rose',
 };
 
-const userStatusChip: Record<string, string> = {
-  active: 'bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20',
-  invited: 'bg-accent-amber/10 text-accent-amber border-accent-amber/20',
-  inactive: 'bg-muted text-muted-foreground border-border',
-  suspended: 'bg-accent-rose/10 text-accent-rose border-accent-rose/20',
+const userStatusChipClass: Record<string, string> = {
+  active: 'chip-emerald',
+  invited: 'chip-amber',
+  inactive: 'chip',
+  suspended: 'chip-rose',
 };
 
 const auditSeverity = (action: string): 'critical' | 'high' | 'medium' | 'low' => {
@@ -163,7 +161,6 @@ export function AdminDashboardClient() {
   const [editFlagId, setEditFlagId] = useState<string | null>(null);
   const [deleteOrg, setDeleteOrg] = useState<OrganizationItem | null>(null);
   const [deleteFlag, setDeleteFlag] = useState<{ id: string; name: string } | null>(null);
-  const [expandedAuditId, setExpandedAuditId] = useState<string | null>(null);
 
   const [orgSearch, setOrgSearch] = useState('');
   const [orgStatus, setOrgStatus] = useState('all');
@@ -377,7 +374,7 @@ export function AdminDashboardClient() {
         onConfirm={handleConfirmDeleteFlag}
       />
 
-      <div className="flex min-h-[calc(100vh-4rem)]">
+      <div className="flex h-full min-h-0">
         {/* Sidebar */}
         <aside className="hidden w-56 shrink-0 border-r border-border lg:block">
           <div className="sticky top-0 space-y-4 p-4">
@@ -411,7 +408,7 @@ export function AdminDashboardClient() {
           </div>
         </aside>
 
-        <div className="flex-1 animate-fade-up space-y-6 p-6">
+        <div className="flex-1 min-w-0 animate-fade-up space-y-6 overflow-y-auto p-6">
           {/* Mobile nav */}
           <div className="lg:hidden">
             <Select value={activeTab} onValueChange={handleTabChange}>
@@ -500,8 +497,6 @@ export function AdminDashboardClient() {
               setSearch={setAuditSearch}
               resourceType={auditResourceType}
               setResourceType={setAuditResourceType}
-              expandedId={expandedAuditId}
-              setExpandedId={setExpandedAuditId}
             />
           )}
         </div>
@@ -519,18 +514,23 @@ function OverviewSection({
   stats: StatsResponse | undefined;
   loading: boolean;
 }) {
-  const tiles: Array<{ label: string; value: number | string; icon: ComponentType<{ className?: string }> }> = [
-    { label: 'Organizations', value: loading ? '—' : stats?.overview?.totalOrganizations ?? 0, icon: Building2 },
-    { label: 'Users', value: loading ? '—' : stats?.overview?.totalUsers ?? 0, icon: Users },
-    { label: 'Active users', value: loading ? '—' : stats?.overview?.activeUsers ?? 0, icon: Activity },
-    { label: 'Super admins', value: loading ? '—' : stats?.overview?.superAdmins ?? 0, icon: Crown },
+  const tiles: Array<{
+    label: string;
+    value: number | string;
+    icon: ComponentType<{ className?: string }>;
+    tone: 'blue' | 'violet' | 'emerald' | 'amber';
+  }> = [
+    { label: 'Organizations', value: loading ? '—' : stats?.overview?.totalOrganizations ?? 0, icon: Building2, tone: 'blue' },
+    { label: 'Users', value: loading ? '—' : stats?.overview?.totalUsers ?? 0, icon: Users, tone: 'violet' },
+    { label: 'Active users', value: loading ? '—' : stats?.overview?.activeUsers ?? 0, icon: Activity, tone: 'emerald' },
+    { label: 'Super admins', value: loading ? '—' : stats?.overview?.superAdmins ?? 0, icon: Crown, tone: 'amber' },
   ];
 
   return (
     <div className="space-y-6">
       <div className="stagger grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {tiles.map(({ label, value, icon: Icon }) => (
-          <KpiTile key={label} label={label} value={value} icon={Icon} />
+        {tiles.map(({ label, value, icon: Icon, tone }) => (
+          <KpiTile key={label} label={label} value={value} icon={Icon} tone={tone} />
         ))}
       </div>
 
@@ -606,7 +606,7 @@ function OrganizationsSection({
         <CreateOrganizationAdminDialog />
       </div>
 
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_180px]">
+      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_180px] animate-blur-in">
         <SearchInput value={orgSearch} onChange={setOrgSearch} placeholder="Search organizations" />
         <Select value={orgStatus} onValueChange={setOrgStatus}>
           <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
@@ -652,7 +652,7 @@ function OrganizationsSection({
               {orgs.map((org) => (
                 <tr
                   key={org.id}
-                  className="border-b border-border/50 last:border-b-0 transition-colors hover:bg-accent/40"
+                  className="row-interactive border-b border-border/50 last:border-b-0"
                 >
                   <td className="px-4 py-3">
                     <div className="min-w-0">
@@ -661,9 +661,9 @@ function OrganizationsSection({
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <SemanticChip tone={orgStatusChip[org.status] ?? DEFAULT_CHIP}>
+                    <span className={cn(orgStatusChipClass[org.status] ?? DEFAULT_CHIP_CLASS, 'capitalize')}>
                       {org.status}
-                    </SemanticChip>
+                    </span>
                   </td>
                   <td className="px-4 py-3">
                     <span className="chip capitalize">{org.plan}</span>
@@ -744,7 +744,7 @@ function UsersSection({
         <CreateUserDialog />
       </div>
 
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px]">
+      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px] animate-blur-in">
         <SearchInput value={userSearch} onChange={setUserSearch} placeholder="Search users" />
         <Select value={userStatus} onValueChange={setUserStatus}>
           <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
@@ -778,10 +778,11 @@ function UsersSection({
             <tbody className="stagger">
               {users.map((user) => {
                 const isSuspended = user.status === 'suspended' || user.status === 'inactive';
+                const isInvited = user.status === 'invited';
                 return (
                   <tr
                     key={user.id}
-                    className="border-b border-border/50 last:border-b-0 transition-colors hover:bg-accent/40"
+                    className="row-interactive border-b border-border/50 last:border-b-0"
                   >
                     <td className="px-4 py-3">
                       <div className="min-w-0">
@@ -791,22 +792,22 @@ function UsersSection({
                     </td>
                     <td className="px-4 py-3">
                       {user.isSuperAdmin ? (
-                        <span className="chip-accent inline-flex items-center gap-1">
+                        <span className="chip-rose inline-flex items-center gap-1">
                           <Crown className="h-3 w-3" />
                           Admin
                         </span>
                       ) : isSuspended ? (
-                        <SemanticChip tone="bg-accent-rose/10 text-accent-rose border-accent-rose/20">
-                          Suspended
-                        </SemanticChip>
+                        <span className="chip-rose">Suspended</span>
+                      ) : isInvited ? (
+                        <span className="chip-amber">Pending</span>
                       ) : (
-                        <span className="chip">Member</span>
+                        <span className="chip-blue">Member</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <SemanticChip tone={userStatusChip[user.status] ?? DEFAULT_CHIP}>
+                      <span className={cn(userStatusChipClass[user.status] ?? DEFAULT_CHIP_CLASS, 'capitalize')}>
                         {user.status}
-                      </SemanticChip>
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-right text-sm tabular-nums">
                       {(user.organizations || []).length}
@@ -873,7 +874,7 @@ function FeatureFlagsSection({
         <CreateFeatureFlagDialog />
       </div>
 
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px]">
+      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px] animate-blur-in">
         <SearchInput value={search} onChange={setSearch} placeholder="Search feature flags" />
         <Select value={state} onValueChange={setState}>
           <SelectTrigger><SelectValue placeholder="State" /></SelectTrigger>
@@ -897,7 +898,7 @@ function FeatureFlagsSection({
             {flags.map((flag: any) => (
               <li
                 key={flag.id}
-                className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-accent/40"
+                className="row-interactive flex items-center gap-4 px-4 py-3"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -961,8 +962,6 @@ function AuditSection({
   setSearch,
   resourceType,
   setResourceType,
-  expandedId,
-  setExpandedId,
 }: {
   logs: AdminAuditLog[];
   loading: boolean;
@@ -971,12 +970,10 @@ function AuditSection({
   setSearch: (v: string) => void;
   resourceType: string;
   setResourceType: (v: string) => void;
-  expandedId: string | null;
-  setExpandedId: (id: string | null) => void;
 }) {
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
+      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px] animate-blur-in">
         <SearchInput value={search} onChange={setSearch} placeholder="Search by action, resource, or user" />
         <Select value={resourceType} onValueChange={setResourceType}>
           <SelectTrigger><SelectValue placeholder="Resource type" /></SelectTrigger>
@@ -1000,70 +997,32 @@ function AuditSection({
           <ul className="stagger divide-y divide-border/50">
             {logs.map((log) => {
               const severity = auditSeverity(log.action);
-              const isOpen = expandedId === log.id;
-              const hasChanges = log.changes && Object.keys(log.changes).length > 0;
               return (
-                <li key={log.id} className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setExpandedId(isOpen ? null : log.id)}
-                    className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    aria-expanded={isOpen}
-                  >
-                    <span
-                      className={cn(
-                        'priority-indicator self-stretch min-h-[2.5rem] shrink-0',
-                        severity === 'critical' && 'priority-critical',
-                        severity === 'high' && 'priority-high',
-                        severity === 'medium' && 'priority-medium',
-                        severity === 'low' && 'priority-low'
-                      )}
-                      aria-hidden="true"
-                    />
-                    <div className="min-w-0 flex-1 space-y-0.5">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs text-muted-foreground font-mono">
-                          {new Date(log.createdAt).toLocaleTimeString()}
-                        </span>
-                        <span className="text-sm font-medium">{formatAdminAction(log.action)}</span>
-                        <span className="chip capitalize">{log.resourceType}</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground truncate">
-                        <span className="text-foreground/80">
-                          {log.user?.name || log.user?.email || 'Unknown user'}
-                        </span>
-                        {log.resourceId ? (
-                          <>
-                            {' · '}
-                            <span className="font-mono">{log.resourceId.slice(0, 8)}</span>
-                          </>
-                        ) : null}
-                        {' · '}
-                        {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
-                      </p>
-                    </div>
-                    {hasChanges ? (
-                      isOpen ? (
-                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
-                      )
-                    ) : null}
-                  </button>
-                  {isOpen && hasChanges && log.changes ? (
-                    <div className="bg-surface px-4 pb-3 pl-10 text-xs text-muted-foreground animate-fade-in">
-                      <div className="grid gap-1">
-                        {Object.entries(log.changes).map(([field, change]) => (
-                          <div key={field} className="flex flex-wrap items-center gap-2">
-                            <span className="font-medium text-foreground">{field}</span>
-                            <span className="line-through">{String(change.from ?? 'null')}</span>
-                            <span>→</span>
-                            <span className="text-foreground">{String(change.to ?? 'null')}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
+                <li
+                  key={log.id}
+                  className="row-interactive flex items-center gap-3 px-4 py-3"
+                >
+                  <span
+                    className={cn(
+                      'priority-indicator self-stretch min-h-[1.75rem] shrink-0',
+                      severity === 'critical' && 'priority-critical',
+                      severity === 'high' && 'priority-high',
+                      severity === 'medium' && 'priority-medium',
+                      severity === 'low' && 'priority-low'
+                    )}
+                    aria-hidden="true"
+                  />
+                  <div className="min-w-0 flex-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                    <span className="text-sm font-medium text-foreground truncate">
+                      {log.user?.name || log.user?.email || 'Unknown user'}
+                    </span>
+                    <span className="text-sm text-muted-foreground truncate">
+                      {formatAdminAction(log.action)}
+                    </span>
+                  </div>
+                  <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                    {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
+                  </span>
                 </li>
               );
             })}
@@ -1081,17 +1040,21 @@ function KpiTile({
   value,
   icon: Icon,
   trend,
+  tone = 'blue',
 }: {
   label: string;
   value: string | number;
   icon: ComponentType<{ className?: string }>;
   trend?: { direction: 'up' | 'down'; value: string };
+  tone?: 'blue' | 'violet' | 'emerald' | 'amber' | 'rose' | 'cyan';
 }) {
   return (
-    <div className="surface-card flex flex-col justify-between gap-2 p-4">
-      <div className="flex items-center justify-between">
-        <p className="kicker">{label}</p>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+    <div className="surface-card flex max-h-[140px] flex-col justify-between gap-2 p-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="kicker truncate">{label}</p>
+        <span className={cn('icon-tile', `icon-tile-accent-${tone}`)}>
+          <Icon className="h-3.5 w-3.5" />
+        </span>
       </div>
       <div className="flex items-end justify-between gap-2">
         <p className="text-2xl font-semibold tabular-nums">{value}</p>
@@ -1138,19 +1101,6 @@ function SearchInput({
         onChange={(event) => onChange(event.target.value)}
       />
     </div>
-  );
-}
-
-function SemanticChip({ tone, children }: { tone: string; children: React.ReactNode }) {
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium capitalize',
-        tone
-      )}
-    >
-      {children}
-    </span>
   );
 }
 
