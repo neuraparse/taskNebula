@@ -1,6 +1,6 @@
 {
   "name": "tasknebula",
-  "version": "0.2.0",
+  "version": "0.12.0",
   "private": true,
   "description": "AI-native, real-time, keyboard-first project management platform",
   "author": "Neura Parse <hello@neuraparse.com>",
