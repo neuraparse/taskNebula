@@ -2,6 +2,7 @@
 
 import { formatDistanceToNow } from 'date-fns';
 import {
+  AlertCircle,
   ArrowUpRight,
   CheckSquare,
   FileText,
@@ -47,7 +48,15 @@ function truncate(text: string | undefined, max: number): string {
 }
 
 export function DraftsList() {
-  const { drafts, updateDraft, removeDraft, promoteDraft } = useDrafts();
+  const {
+    drafts,
+    updateDraft,
+    removeDraft,
+    promoteDraft,
+    isLoading,
+    isError,
+    error,
+  } = useDrafts();
   const [filter, setFilter] = useState<DraftFilter>('all');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortKey>('updated');
@@ -84,7 +93,9 @@ export function DraftsList() {
 
   const commitEdit = () => {
     if (editingId) {
-      updateDraft(editingId, { title: editTitle.trim() || 'Untitled draft' });
+      void updateDraft(editingId, {
+        title: editTitle.trim() || 'Untitled draft',
+      });
     }
     setEditingId(null);
     setEditTitle('');
@@ -149,7 +160,11 @@ export function DraftsList() {
         </div>
       </div>
 
-      {visible.length === 0 ? (
+      {isLoading ? (
+        <LoadingState />
+      ) : isError ? (
+        <ErrorState message={error?.message ?? 'Could not load drafts.'} />
+      ) : visible.length === 0 ? (
         <EmptyState hasAny={drafts.length > 0} />
       ) : (
         <ul className="divide-y rounded-md border bg-card">
@@ -237,7 +252,9 @@ export function DraftsList() {
                     variant="ghost"
                     size="icon"
                     className="size-8 text-destructive hover:text-destructive"
-                    onClick={() => removeDraft(draft.id)}
+                    onClick={() => {
+                      void removeDraft(draft.id);
+                    }}
                     aria-label="Delete draft"
                     title="Delete"
                   >
@@ -253,6 +270,38 @@ export function DraftsList() {
   );
 }
 
+function LoadingState() {
+  return (
+    <ul
+      className="divide-y rounded-md border bg-card"
+      aria-busy="true"
+      aria-label="Loading drafts"
+    >
+      {Array.from({ length: 4 }).map((_, i) => (
+        <li key={i} className="flex items-start gap-3 p-3">
+          <div className="mt-0.5 size-8 shrink-0 animate-pulse rounded-md bg-muted" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+            <div className="h-3 w-2/3 animate-pulse rounded bg-muted" />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function ErrorState({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-destructive/40 bg-destructive/5 px-6 py-16 text-center">
+      <div className="flex size-14 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+        <AlertCircle className="size-7" />
+      </div>
+      <h2 className="mt-4 text-base font-semibold">Could not load drafts</h2>
+      <p className="mt-1 max-w-sm text-sm text-muted-foreground">{message}</p>
+    </div>
+  );
+}
+
 function EmptyState({ hasAny }: { hasAny: boolean }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card/50 px-6 py-16 text-center">
@@ -263,7 +312,7 @@ function EmptyState({ hasAny }: { hasAny: boolean }) {
       <p className="mt-1 max-w-sm text-sm text-muted-foreground">
         {hasAny
           ? 'Nothing matches your current filter or search. Try clearing them to see your other drafts.'
-          : 'Stash unfinished work items, pages, and comments here. They stay on this device until you promote them.'}
+          : 'Stash unfinished work items, pages, and comments here. They sync across your devices until you promote them.'}
       </p>
       <div className="mt-5">
         <Button asChild>
