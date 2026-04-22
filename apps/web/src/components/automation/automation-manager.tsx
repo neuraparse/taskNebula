@@ -583,7 +583,7 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
               <div className="surface-inset flex items-start gap-2 rounded-md p-4 text-sm text-destructive">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 <div>
-                  <p className="font-medium">Couldn't load executions</p>
+                  <p className="font-medium">Couldn&apos;t load executions</p>
                   <p className="text-xs text-muted-foreground">{executionsError}</p>
                 </div>
               </div>
