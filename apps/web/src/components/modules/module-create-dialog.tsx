@@ -73,7 +73,7 @@ export function ModuleCreateDialog({
     }
   }, [open]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -97,21 +97,25 @@ export function ModuleCreateDialog({
       .map((m) => m.trim())
       .filter((m) => m.length > 0);
 
-    const created = createModule({
-      name: trimmedName,
-      description: description.trim() || undefined,
-      status,
-      leadName: leadName.trim() || undefined,
-      leadId: undefined,
-      startDate: startDate || undefined,
-      targetDate: targetDate || undefined,
-      memberIds,
-      totalIssues: 0,
-      completedIssues: 0,
-    });
+    try {
+      const created = await createModule({
+        name: trimmedName,
+        description: description.trim() || undefined,
+        status,
+        leadName: leadName.trim() || undefined,
+        leadId: undefined,
+        startDate: startDate || undefined,
+        targetDate: targetDate || undefined,
+        memberIds,
+        totalIssues: 0,
+        completedIssues: 0,
+      });
 
-    onCreated?.(created);
-    onOpenChange(false);
+      onCreated?.(created);
+      onOpenChange(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create module');
+    }
   };
 
   return (

@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export type ModuleStatus =
   | 'backlog'
@@ -10,165 +11,258 @@ export type ModuleStatus =
   | 'completed'
   | 'cancelled';
 
+/**
+ * Client-facing module shape.
+ *
+ * Persisted fields (round-trip to the DB): id, projectId, name, description,
+ * status, ownerId, memberIds, targetDate, createdAt, updatedAt.
+ *
+ * Non-persisted / derived fields (kept for UI compatibility): leadId (alias of
+ * ownerId), leadName, startDate, totalIssues, completedIssues. These exist so
+ * the existing dialogs and cards continue to compile — they are ignored when
+ * talking to the server.
+ */
 export interface ProjectModule {
   id: string;
   projectId: string;
   name: string;
-  description?: string;
+  description?: string | null;
   status: ModuleStatus;
+  ownerId?: string | null;
+  memberIds: string[];
+  targetDate?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+
+  // Compatibility fields (client-only, not stored server-side yet).
   leadId?: string;
   leadName?: string;
   startDate?: string;
-  targetDate?: string;
-  memberIds: string[];
-  // Computed:
   totalIssues?: number;
   completedIssues?: number;
+}
+
+export interface CreateModuleInput {
+  name: string;
+  description?: string | null;
+  status?: ModuleStatus;
+  ownerId?: string | null;
+  memberIds?: string[];
+  targetDate?: string | null;
+
+  // Accepted but ignored by the server (kept for caller compatibility).
+  leadId?: string;
+  leadName?: string;
+  startDate?: string;
+  totalIssues?: number;
+  completedIssues?: number;
+}
+
+export interface UpdateModuleInput {
+  name?: string;
+  description?: string | null;
+  status?: ModuleStatus;
+  ownerId?: string | null;
+  memberIds?: string[];
+  targetDate?: string | null;
 }
 
 export interface UseModulesResult {
   modules: ProjectModule[];
   isLoading: boolean;
-  createModule: (input: Omit<ProjectModule, 'id' | 'projectId'>) => ProjectModule;
-  updateModule: (id: string, patch: Partial<ProjectModule>) => void;
-  removeModule: (id: string) => void;
+  createModule: (input: CreateModuleInput) => Promise<ProjectModule>;
+  updateModule: (id: string, patch: UpdateModuleInput) => Promise<ProjectModule>;
+  removeModule: (id: string) => Promise<void>;
 }
 
-const MODULE_STATUSES: readonly ModuleStatus[] = [
-  'backlog',
-  'planned',
-  'in_progress',
-  'paused',
-  'completed',
-  'cancelled',
-] as const;
-
-function storageKey(projectId: string): string {
-  return `tn:modules:${projectId}`;
+interface ServerModule {
+  id: string;
+  projectId: string;
+  name: string;
+  description: string | null;
+  status: ModuleStatus;
+  ownerId: string | null;
+  memberIds: string[];
+  targetDate: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
-function isModuleStatus(value: unknown): value is ModuleStatus {
-  return typeof value === 'string' && (MODULE_STATUSES as readonly string[]).includes(value);
+function toClientModule(m: ServerModule): ProjectModule {
+  return {
+    id: m.id,
+    projectId: m.projectId,
+    name: m.name,
+    description: m.description,
+    status: m.status,
+    ownerId: m.ownerId,
+    memberIds: m.memberIds ?? [],
+    targetDate: m.targetDate,
+    createdAt: m.createdAt,
+    updatedAt: m.updatedAt,
+    leadId: m.ownerId ?? undefined,
+  };
 }
 
-function isProjectModule(value: unknown): value is ProjectModule {
-  if (typeof value !== 'object' || value === null) return false;
-  const v = value as Partial<ProjectModule>;
-  return (
-    typeof v.id === 'string' &&
-    typeof v.projectId === 'string' &&
-    typeof v.name === 'string' &&
-    isModuleStatus(v.status) &&
-    Array.isArray(v.memberIds) &&
-    v.memberIds.every((m) => typeof m === 'string')
-  );
+function toTargetDateIso(value: string | null | undefined): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null || value === '') return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString();
 }
 
-function readFromStorage(projectId: string): ProjectModule[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = window.localStorage.getItem(storageKey(projectId));
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isProjectModule);
-  } catch {
-    return [];
-  }
+export const modulesQueryKey = (projectId: string) =>
+  ['project-modules', projectId] as const;
+
+async function fetchModules(projectId: string): Promise<ProjectModule[]> {
+  const res = await fetch(`/api/projects/${projectId}/modules`, {
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error('Failed to fetch modules');
+  const data = (await res.json()) as { modules: ServerModule[] };
+  return (data.modules ?? []).map(toClientModule);
 }
 
-function writeToStorage(projectId: string, modules: ProjectModule[]): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(storageKey(projectId), JSON.stringify(modules));
-  } catch {
-    // Quota / serialization error — ignore silently.
-  }
+async function postModule(
+  projectId: string,
+  input: CreateModuleInput,
+): Promise<ProjectModule> {
+  const res = await fetch(`/api/projects/${projectId}/modules`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: input.name,
+      description: input.description ?? null,
+      status: input.status,
+      ownerId: input.ownerId ?? input.leadId ?? null,
+      memberIds: input.memberIds ?? [],
+      targetDate: toTargetDateIso(input.targetDate),
+    }),
+  });
+  if (!res.ok) throw new Error('Failed to create module');
+  const data = (await res.json()) as { module: ServerModule };
+  return toClientModule(data.module);
 }
 
-function generateId(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID();
-  }
-  return `mod_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+async function patchModule(
+  projectId: string,
+  id: string,
+  patch: UpdateModuleInput,
+): Promise<ProjectModule> {
+  const body: Record<string, unknown> = {};
+  if (patch.name !== undefined) body.name = patch.name;
+  if (patch.description !== undefined) body.description = patch.description;
+  if (patch.status !== undefined) body.status = patch.status;
+  if (patch.ownerId !== undefined) body.ownerId = patch.ownerId;
+  if (patch.memberIds !== undefined) body.memberIds = patch.memberIds;
+  if (patch.targetDate !== undefined) body.targetDate = toTargetDateIso(patch.targetDate);
+
+  const res = await fetch(`/api/projects/${projectId}/modules/${id}`, {
+    method: 'PATCH',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error('Failed to update module');
+  const data = (await res.json()) as { module: ServerModule };
+  return toClientModule(data.module);
+}
+
+async function deleteModule(projectId: string, id: string): Promise<void> {
+  const res = await fetch(`/api/projects/${projectId}/modules/${id}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error('Failed to delete module');
 }
 
 export function useModules(projectId: string): UseModulesResult {
-  const [modules, setModules] = useState<ProjectModule[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const hydratedRef = useRef(false);
+  const queryClient = useQueryClient();
+  const queryKey = modulesQueryKey(projectId);
 
-  // Hydrate from localStorage on mount / projectId change (SSR-safe).
-  useEffect(() => {
-    hydratedRef.current = false;
-    setIsLoading(true);
-    setModules(readFromStorage(projectId));
-    hydratedRef.current = true;
-    setIsLoading(false);
-  }, [projectId]);
+  const query = useQuery({
+    queryKey,
+    queryFn: () => fetchModules(projectId),
+    enabled: Boolean(projectId),
+  });
 
-  // Persist on change after hydration.
-  useEffect(() => {
-    if (!hydratedRef.current) return;
-    writeToStorage(projectId, modules);
-  }, [projectId, modules]);
+  const createMutation = useMutation({
+    mutationFn: (input: CreateModuleInput) => postModule(projectId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+    },
+  });
 
-  // Cross-tab sync.
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const key = storageKey(projectId);
-    const onStorage = (e: StorageEvent) => {
-      if (e.key !== key) return;
-      setModules(readFromStorage(projectId));
-    };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, [projectId]);
+  const updateMutation = useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: UpdateModuleInput }) =>
+      patchModule(projectId, id, patch),
+    onMutate: async ({ id, patch }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<ProjectModule[]>(queryKey);
+      if (previous) {
+        queryClient.setQueryData<ProjectModule[]>(
+          queryKey,
+          previous.map((m) => (m.id === id ? { ...m, ...patch } : m)),
+        );
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(queryKey, ctx.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteModule(projectId, id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<ProjectModule[]>(queryKey);
+      if (previous) {
+        queryClient.setQueryData<ProjectModule[]>(
+          queryKey,
+          previous.filter((m) => m.id !== id),
+        );
+      }
+      return { previous };
+    },
+    onError: (_err, _id, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(queryKey, ctx.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
+    },
+  });
 
   const createModule = useCallback<UseModulesResult['createModule']>(
-    (input) => {
-      const created: ProjectModule = {
-        id: generateId(),
-        projectId,
-        name: input.name,
-        description: input.description,
-        status: input.status,
-        leadId: input.leadId,
-        leadName: input.leadName,
-        startDate: input.startDate,
-        targetDate: input.targetDate,
-        memberIds: input.memberIds ?? [],
-        totalIssues: input.totalIssues,
-        completedIssues: input.completedIssues,
-      };
-      setModules((prev) => [created, ...prev]);
-      return created;
-    },
-    [projectId],
+    (input) => createMutation.mutateAsync(input),
+    [createMutation],
   );
 
-  const updateModule = useCallback<UseModulesResult['updateModule']>((id, patch) => {
-    setModules((prev) =>
-      prev.map((m) =>
-        m.id === id
-          ? {
-              ...m,
-              ...patch,
-              id: m.id,
-              projectId: m.projectId,
-              memberIds: patch.memberIds ?? m.memberIds,
-            }
-          : m,
-      ),
-    );
-  }, []);
+  const updateModule = useCallback<UseModulesResult['updateModule']>(
+    (id, patch) => updateMutation.mutateAsync({ id, patch }),
+    [updateMutation],
+  );
 
-  const removeModule = useCallback<UseModulesResult['removeModule']>((id) => {
-    setModules((prev) => prev.filter((m) => m.id !== id));
-  }, []);
+  const removeModule = useCallback<UseModulesResult['removeModule']>(
+    (id) => deleteMutation.mutateAsync(id),
+    [deleteMutation],
+  );
+
+  const modules = query.data ?? [];
 
   return useMemo(
-    () => ({ modules, isLoading, createModule, updateModule, removeModule }),
-    [modules, isLoading, createModule, updateModule, removeModule],
+    () => ({
+      modules,
+      isLoading: query.isLoading,
+      createModule,
+      updateModule,
+      removeModule,
+    }),
+    [modules, query.isLoading, createModule, updateModule, removeModule],
   );
 }
