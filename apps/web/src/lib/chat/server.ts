@@ -1363,6 +1363,23 @@ type ActiveCallState = typeof callSessions.$inferSelect & {
   freshHeartbeatCount: number;
 };
 
+/**
+ * Collapses rows belonging to the same user down to their most recent join.
+ * Exported so tests can exercise the dedupe rule without touching the DB.
+ */
+export function dedupeActiveParticipantsByUserId<
+  T extends { userId: string; joinedAt: Date },
+>(participants: T[]): T[] {
+  const newestByUser = new Map<string, T>();
+  for (const participant of participants) {
+    const existing = newestByUser.get(participant.userId);
+    if (!existing || participant.joinedAt.getTime() > existing.joinedAt.getTime()) {
+      newestByUser.set(participant.userId, participant);
+    }
+  }
+  return Array.from(newestByUser.values());
+}
+
 function parseParticipantHeartbeat(metadata: unknown, joinedAt: Date) {
   if (!metadata || typeof metadata !== 'object' || !('lastSeenAt' in metadata)) {
     return joinedAt;
@@ -1391,6 +1408,7 @@ async function getActiveCallState(roomId: string): Promise<ActiveCallState | nul
 
   const participants = await db
     .select({
+      userId: callParticipants.userId,
       joinedAt: callParticipants.joinedAt,
       metadata: callParticipants.metadata,
     })
@@ -1398,14 +1416,15 @@ async function getActiveCallState(roomId: string): Promise<ActiveCallState | nul
     .where(and(eq(callParticipants.callSessionId, call.id), isNull(callParticipants.leftAt)));
 
   const now = new Date();
-  const freshHeartbeatCount = participants.filter((participant) => {
+  const uniqueParticipants = dedupeActiveParticipantsByUserId(participants);
+  const freshHeartbeatCount = uniqueParticipants.filter((participant) => {
     const lastSeenAt = parseParticipantHeartbeat(participant.metadata, participant.joinedAt);
     return now.getTime() - lastSeenAt.getTime() <= ACTIVE_CALL_HEARTBEAT_STALE_MS;
   }).length;
 
   return {
     ...call,
-    databaseParticipantCount: participants.length,
+    databaseParticipantCount: uniqueParticipants.length,
     freshHeartbeatCount,
   };
 }
@@ -1426,6 +1445,7 @@ async function getActiveCallStateByLivekitRoomName(
 
   const participants = await db
     .select({
+      userId: callParticipants.userId,
       joinedAt: callParticipants.joinedAt,
       metadata: callParticipants.metadata,
     })
@@ -1433,14 +1453,15 @@ async function getActiveCallStateByLivekitRoomName(
     .where(and(eq(callParticipants.callSessionId, call.id), isNull(callParticipants.leftAt)));
 
   const now = new Date();
-  const freshHeartbeatCount = participants.filter((participant) => {
+  const uniqueParticipants = dedupeActiveParticipantsByUserId(participants);
+  const freshHeartbeatCount = uniqueParticipants.filter((participant) => {
     const lastSeenAt = parseParticipantHeartbeat(participant.metadata, participant.joinedAt);
     return now.getTime() - lastSeenAt.getTime() <= ACTIVE_CALL_HEARTBEAT_STALE_MS;
   }).length;
 
   return {
     ...call,
-    databaseParticipantCount: participants.length,
+    databaseParticipantCount: uniqueParticipants.length,
     freshHeartbeatCount,
   };
 }
@@ -2422,6 +2443,20 @@ export async function createConversationCallToken(
   if (!existingParticipant) {
     const now = new Date();
     await db.transaction(async (tx) => {
+      // A rejoin with a new clientSessionId produces a new participantIdentity,
+      // which the participant-left webhook will never match — so without this
+      // sweep the old row sits with leftAt=null and inflates the count.
+      await tx
+        .update(callParticipants)
+        .set({ leftAt: now })
+        .where(
+          and(
+            eq(callParticipants.callSessionId, call.id),
+            eq(callParticipants.userId, userId),
+            isNull(callParticipants.leftAt)
+          )
+        );
+
       await tx.insert(callParticipants).values({
         id: createId(),
         callSessionId: call.id,
