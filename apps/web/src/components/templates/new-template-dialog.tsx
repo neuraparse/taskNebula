@@ -175,7 +175,7 @@ export function NewTemplateDialog({ trigger }: NewTemplateDialogProps) {
             <DialogDescription>
               Templates let your team spin up projects, issues, or docs with one
               click. Payload is stored as JSON and used when someone presses
-              "Use template".
+              &ldquo;Use template&rdquo;.
             </DialogDescription>
           </DialogHeader>
 
