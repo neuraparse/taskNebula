@@ -7,6 +7,7 @@ import { GlobalVoiceProvider } from '@/components/chat/global-voice-provider';
 import { CommandPaletteProvider } from '@/components/command/command-palette-provider';
 import { KeyboardShortcutsProvider } from '@/components/help/keyboard-shortcuts-provider';
 import { AiSidecarProvider } from '@/components/ai/ai-sidecar-provider';
+import { EmailVerificationBanner } from '@/components/auth/email-verification-banner';
 
 // Force dynamic rendering for authenticated routes
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <AppSidebar />
 
                 <div className="flex flex-1 flex-col overflow-hidden">
+                  {/* Rendered async; returns null when the user is verified. */}
+                  <EmailVerificationBanner />
                   <AppHeader />
 
                   <main className="flex-1 overflow-auto">
