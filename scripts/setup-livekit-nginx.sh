@@ -44,24 +44,27 @@ if [ ! -f "${TEMPLATE}" ]; then
   exit 1
 fi
 
-echo "▶ Writing nginx vhost to ${SITES_AVAILABLE}"
-sed "s/livekit.your-domain.example.com/${LIVEKIT_HOST}/g" "${TEMPLATE}" > "${SITES_AVAILABLE}"
-ln -sf "${SITES_AVAILABLE}" "${SITES_ENABLED}"
+echo "▶ Writing HTTP-only bootstrap vhost so certbot can answer the ACME challenge"
+# Minimal HTTP-only vhost; certbot --nginx will extend it with a TLS
+# server block after the cert is issued, and we then overwrite the
+# whole file with the full proxy template below.
+cat > "${SITES_AVAILABLE}" <<EOF
+server {
+    listen 80;
+    server_name ${LIVEKIT_HOST};
 
-echo "▶ Bootstrapping plain-HTTP vhost so certbot can answer the ACME challenge"
-nginx -t >/dev/null 2>&1 || {
-  # Temporarily drop the TLS server block until we have the cert.
-  awk '
-    /^server \{/ { inside=1; skip_tls=0 }
-    /listen 443 ssl/ { skip_tls=1 }
-    inside && /^}/ && skip_tls { inside=0; skip_tls=0; next }
-    !skip_tls { print }
-    !inside { print }
-  ' "${SITES_AVAILABLE}" > "${SITES_AVAILABLE}.bootstrap"
-  mv "${SITES_AVAILABLE}.bootstrap" "${SITES_AVAILABLE}"
-  nginx -t
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 200 'livekit-bootstrap';
+        add_header Content-Type text/plain;
+    }
 }
-
+EOF
+ln -sf "${SITES_AVAILABLE}" "${SITES_ENABLED}"
+nginx -t
 nginx -s reload
 
 echo "▶ Requesting Let's Encrypt cert for ${LIVEKIT_HOST}"
