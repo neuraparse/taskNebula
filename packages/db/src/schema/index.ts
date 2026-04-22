@@ -26,3 +26,4 @@ export * from './agents';
 export * from './project-templates';
 export * from './semantic-search';
 export * from './resource-management';
+export * from './integration-connections';

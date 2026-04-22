@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { useOrganization } from '@/lib/hooks/use-organization';
 import { cn } from '@/lib/utils';
 import { useOrganization } from '@/lib/hooks/use-organization';
 
@@ -243,7 +247,7 @@ export const INTEGRATIONS: IntegrationDefinition[] = [
     id: 'jira',
     name: 'Jira',
     description: 'Migrate projects and issues to TaskNebula',
-    status: 'coming_soon',
+    status: 'available',
     category: 'productivity',
     brandColor: '#2684FF',
     Icon: JiraIcon,
@@ -308,6 +312,9 @@ interface IntegrationCardProps {
 function IntegrationCard({ integration, footer, accountLabel }: IntegrationCardProps) {
   if (integration.id === 'gitlab') {
     return <GitLabIntegrationCard integration={integration} />;
+  }
+  if (integration.id === 'jira') {
+    return <JiraIntegrationCard integration={integration} />;
   }
 
   const { name, description, status, href, Icon } = integration;
@@ -544,6 +551,154 @@ function GitLabIntegrationCard({ integration }: IntegrationCardProps) {
                 )}
               >
                 {loading ? 'Checking...' : 'Connect'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+      {connected && (
+        <Badge variant="success" className="absolute right-4 top-4">
+          Connected
+        </Badge>
+      )}
+    </article>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Jira card — OAuth connect / disconnect via /api/integrations/jira.
+// ---------------------------------------------------------------------------
+
+interface JiraStatusResponse {
+  connected: boolean;
+  connection?: {
+    externalAccountLabel?: string | null;
+    metadata?: { siteUrl?: string | null } | null;
+  };
+}
+
+function JiraIntegrationCard({ integration }: IntegrationCardProps) {
+  const { name, description, Icon } = integration;
+  const currentOrganizationId = useOrganization((s) => s.currentOrganizationId);
+
+  const [connected, setConnected] = useState(false);
+  const [accountLabel, setAccountLabel] = useState<string | null>(null);
+  const [siteUrl, setSiteUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    if (!currentOrganizationId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/integrations/jira?organizationId=${encodeURIComponent(currentOrganizationId)}`,
+        { cache: 'no-store' }
+      );
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      const json = (await res.json()) as JiraStatusResponse;
+      setConnected(Boolean(json.connected));
+      setAccountLabel(json.connection?.externalAccountLabel ?? null);
+      setSiteUrl(json.connection?.metadata?.siteUrl ?? null);
+    } catch (err) {
+      console.error('Jira status check failed', err);
+      setConnected(false);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentOrganizationId]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  const handleConnect = () => {
+    if (!currentOrganizationId) {
+      setError('Select an organization first');
+      return;
+    }
+    window.location.href = `/api/integrations/jira/authorize?organizationId=${encodeURIComponent(currentOrganizationId)}`;
+  };
+
+  const handleDisconnect = async () => {
+    if (!currentOrganizationId) return;
+    const ok = window.confirm('Disconnect Jira from this workspace?');
+    if (!ok) return;
+    setDisconnecting(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/integrations/jira?organizationId=${encodeURIComponent(currentOrganizationId)}`,
+        { method: 'DELETE' }
+      );
+      if (!res.ok) throw new Error(`DELETE failed with ${res.status}`);
+      setConnected(false);
+      setAccountLabel(null);
+      setSiteUrl(null);
+    } catch (err) {
+      console.error('Jira disconnect failed', err);
+      setError('Failed to disconnect. Please try again.');
+    } finally {
+      setDisconnecting(false);
+    }
+  };
+
+  return (
+    <article className="group relative rounded-xl border border-border bg-card p-5 transition-all hover:border-foreground/20 hover:shadow-sm">
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted/50">
+          <Icon className="h-6 w-6" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
+          <p className="mt-1 text-[12.5px] text-muted-foreground leading-snug">{description}</p>
+          {connected && accountLabel && (
+            <p className="mt-1 text-[11.5px] text-muted-foreground">
+              Site: {accountLabel}
+              {siteUrl && (
+                <>
+                  {' · '}
+                  <a
+                    href={siteUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline-offset-2 hover:underline"
+                  >
+                    Open
+                  </a>
+                </>
+              )}
+            </p>
+          )}
+          {error && (
+            <p className="mt-1 text-[11.5px] text-destructive">{error}</p>
+          )}
+          <div className="mt-3 flex items-center gap-2">
+            {connected ? (
+              <button
+                type="button"
+                onClick={handleDisconnect}
+                disabled={disconnecting}
+                className={cn(
+                  'rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium',
+                  'hover:border-foreground/30 disabled:opacity-60'
+                )}
+              >
+                {disconnecting ? 'Disconnecting...' : 'Disconnect'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleConnect}
+                disabled={!currentOrganizationId || loading}
+                className={cn(
+                  'rounded-md border border-foreground bg-foreground px-2.5 py-1 text-xs font-medium text-background',
+                  'hover:opacity-90 disabled:opacity-60'
+                )}
+              >
+                {loading ? 'Checking...' : 'Connect Jira'}
               </button>
             )}
           </div>
