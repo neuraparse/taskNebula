@@ -28,8 +28,21 @@ export default function ProjectSettingsPage({
   const searchParams = useSearchParams();
   const { currentOrganizationId } = useOrganization();
   const { permissions, isLoading: permissionsLoading } = useProjectPermissions(projectId);
+  // Tabs are always visible so project admins can find AI settings.
+  // The AI & Agents tab body surfaces a notice when the platform has AI off.
   const validTabs = useMemo(
-    () => ['permissions', 'schemes', 'security', 'custom-fields', 'workflows', 'automation', 'ai-agents', 'chat-calls', 'webhooks', 'general'],
+    () => [
+      'permissions',
+      'schemes',
+      'security',
+      'custom-fields',
+      'workflows',
+      'automation',
+      'ai-agents',
+      'chat-calls',
+      'webhooks',
+      'general',
+    ],
     []
   );
   const requestedTab = searchParams.get('tab');

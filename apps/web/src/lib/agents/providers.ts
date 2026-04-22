@@ -548,17 +548,116 @@ export function normalizeAgentLabels(labels: string[]) {
   return normalized;
 }
 
+async function generateAnthropicPlan(params: ProviderParams): Promise<AgentProviderPlan> {
+  const apiKey = params.apiKey || process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new AgentExecutionError(
+      'Anthropic is selected but no workspace credential or ANTHROPIC_API_KEY server variable is configured.',
+      'provider_not_configured',
+      503
+    );
+  }
+
+  if (!params.model.trim() || params.model.startsWith('tasknebula-')) {
+    throw new AgentExecutionError(
+      'Anthropic is selected but the configured model is still a native placeholder. Pick a Claude model such as claude-sonnet-4-6.',
+      'provider_model_invalid',
+      422
+    );
+  }
+
+  const prompt = buildPrompt(params);
+  const systemPrompt = [
+    `${prompt.instructions} Requested flow: ${getRunKindSummary(params.kind)}.`,
+    'Respond with a single JSON object that matches this schema exactly — no prose, no markdown fences:',
+    JSON.stringify(prompt.schema),
+  ].join('\n\n');
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: params.model,
+      max_tokens: params.modelTuning?.maxOutputTokens || 4096,
+      system: systemPrompt,
+      messages: [
+        {
+          role: 'user',
+          content: JSON.stringify(prompt.input, null, 2),
+        },
+      ],
+      ...(params.modelTuning?.temperature !== null && params.modelTuning?.temperature !== undefined
+        ? { temperature: params.modelTuning.temperature }
+        : {}),
+    }),
+  });
+
+  const payload = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!response.ok) {
+    const error = (payload as { error?: { message?: string; type?: string } }).error;
+    const code =
+      response.status === 401 || response.status === 403
+        ? 'provider_auth_failed'
+        : response.status === 429
+          ? 'provider_rate_limited'
+          : 'anthropic_error';
+    throw new AgentExecutionError(
+      error?.message || `Anthropic request failed (${response.status})`,
+      code,
+      response.status === 429 ? 429 : 502
+    );
+  }
+
+  const content = Array.isArray((payload as { content?: unknown }).content)
+    ? ((payload as { content: Array<{ type?: string; text?: string }> }).content)
+    : [];
+  const textBlock = content.find((block) => block.type === 'text' && typeof block.text === 'string');
+  const rawText = textBlock?.text ?? '';
+
+  // Strip optional fenced ```json ... ``` wrappers Claude sometimes emits.
+  const cleaned = rawText
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/```\s*$/i, '')
+    .trim();
+
+  let parsedJson: unknown;
+  try {
+    parsedJson = JSON.parse(cleaned);
+  } catch {
+    throw new AgentExecutionError(
+      'Anthropic returned invalid JSON for the structured agent response.',
+      'provider_invalid_output',
+      502
+    );
+  }
+
+  try {
+    return prompt.parser(parsedJson);
+  } catch {
+    throw new AgentExecutionError(
+      'Anthropic returned structured output that does not match the TaskNebula agent schema.',
+      'provider_invalid_output',
+      502
+    );
+  }
+}
+
 export async function generateAgentPlan(params: ProviderParams): Promise<AgentProviderPlan> {
   switch (params.effectiveSettings.provider) {
     case 'openai':
       return generateOpenAiPlan(params);
+    case 'anthropic':
+      return generateAnthropicPlan(params);
     case 'native':
       throw new AgentExecutionError(
         'Native provider plans are generated directly inside the TaskNebula engine.',
         'provider_not_needed',
         400
       );
-    case 'anthropic':
     case 'azure':
     case 'custom':
       throw new AgentExecutionError(

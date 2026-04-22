@@ -9,23 +9,40 @@ import {
 } from '@/lib/agents/config';
 
 describe('agent config', () => {
-  it('normalizes workspace settings safely', () => {
+  it('normalizes workspace settings safely — capabilities default OFF (opt-in)', () => {
     const settings = normalizeWorkspaceAgentSettings({
       enabled: true,
       modelConfigId: 'config_123',
       provider: 'openai',
       model: 'gpt-5.4',
       capabilities: {
-        sprint_planning: false,
+        // Admin explicitly opts into backlog_triage; other capabilities
+        // stay false because the safe default is "nothing runs unless I
+        // turn it on".
+        backlog_triage: true,
       },
     });
 
     expect(settings.enabled).toBe(true);
+    expect(settings.assistantEnabled).toBe(false);
     expect(settings.modelConfigId).toBe('config_123');
     expect(settings.provider).toBe('openai');
     expect(settings.model).toBe('gpt-5.4');
-    expect(settings.capabilities.project_tracking).toBe(true);
+    expect(settings.capabilities.backlog_triage).toBe(true);
+    expect(settings.capabilities.project_tracking).toBe(false);
     expect(settings.capabilities.sprint_planning).toBe(false);
+    expect(settings.capabilities.bulk_sprint_creation).toBe(false);
+  });
+
+  it('keeps assistantEnabled independent from agents enabled', () => {
+    const settings = normalizeWorkspaceAgentSettings({
+      enabled: false,
+      assistantEnabled: true,
+      provider: 'anthropic',
+      model: 'claude-sonnet-4-6',
+    });
+    expect(settings.assistantEnabled).toBe(true);
+    expect(settings.enabled).toBe(false);
   });
 
   it('resolves effective project settings by intersecting workspace and project safety rules', () => {
@@ -50,7 +67,7 @@ describe('agent config', () => {
     const effective = resolveEffectiveProjectAgentSettings(
       workspace,
       project,
-      DEFAULT_SYSTEM_AGENT_CONTROL_SETTINGS
+      { ...DEFAULT_SYSTEM_AGENT_CONTROL_SETTINGS, globalEnabled: true }
     );
 
     expect(effective.enabled).toBe(true);
@@ -97,11 +114,8 @@ describe('agent config', () => {
     const project = normalizeProjectAgentSettings({
       enabled: true,
     });
-    const effective = resolveEffectiveProjectAgentSettings(
-      workspace,
-      project,
-      DEFAULT_SYSTEM_AGENT_CONTROL_SETTINGS
-    );
+    const platformOn = { ...DEFAULT_SYSTEM_AGENT_CONTROL_SETTINGS, globalEnabled: true };
+    const effective = resolveEffectiveProjectAgentSettings(workspace, project, platformOn);
     const providerStatus = getAgentProviderReadiness('openai', 'gpt-5', {
       configured: false,
       source: null,
@@ -114,7 +128,7 @@ describe('agent config', () => {
       projectSettings: project,
       effectiveSettings: effective,
       providerStatus,
-      systemControl: DEFAULT_SYSTEM_AGENT_CONTROL_SETTINGS,
+      systemControl: platformOn,
     });
 
     expect(availability.canRun).toBe(false);

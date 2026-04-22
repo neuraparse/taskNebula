@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/auth';
-import { createAuditLog, db, eq, organizations, projects } from '@tasknebula/db';
+import { createAuditLog, db, eq, notifications, organizations, projects } from '@tasknebula/db';
 import { getProjectAgentAccess } from '@/lib/agents/access';
 import {
   AGENT_RUN_KINDS,
@@ -22,6 +22,7 @@ import {
   runProjectAgent,
 } from '@/lib/agents/engine';
 import { getSystemAgentControlSettingsFromDb } from '@/lib/agents/system';
+import { aiDisabledResponse, isAiFeatureEnabled } from '@/lib/ai/feature-gate';
 
 const runAgentSchema = z.object({
   kind: z.enum(AGENT_RUN_KINDS),
@@ -32,6 +33,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
+  if (!(await isAiFeatureEnabled())) return aiDisabledResponse();
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -178,6 +180,18 @@ export async function POST(
     });
 
     if (result.run.status === 'failed') {
+      try {
+        await db.insert(notifications).values({
+          userId: session.user.id,
+          type: 'agent_run_failed',
+          title: `Agent run failed · ${kind}`,
+          message: (result.run.error || 'Agent run failed').slice(0, 240),
+          projectId: access.project.id,
+        });
+      } catch (notifyErr) {
+        console.warn('Failed to record agent_run_failed notification', notifyErr);
+      }
+
       return NextResponse.json(
         {
           ...result,

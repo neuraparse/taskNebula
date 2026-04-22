@@ -12,6 +12,7 @@ import { OrganizationCommunicationsSettings } from '@/components/settings/organi
 import { MembersPageClient } from './members/members-page-client';
 import { OrganizationSettingsClient } from './organization/organization-settings-client';
 import { useOrganization } from '@/lib/hooks/use-organization';
+import { useAiFeature } from '@/lib/hooks/use-ai-feature';
 import {
   Palette,
   Building2,
@@ -40,10 +41,14 @@ type TabValue = (typeof NAV_ITEMS)[number]['value'];
 
 export default function SettingsPage() {
   const { currentOrganizationId } = useOrganization();
+  const { aiEnabled } = useAiFeature();
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const validTabs = useMemo(() => NAV_ITEMS.map((item) => item.value), []);
+  // AI & Agents tab is always visible so org admins can see + configure it.
+  // The tab body shows an informational notice when the platform has AI off.
+  const visibleNavItems = NAV_ITEMS;
+  const validTabs = useMemo(() => visibleNavItems.map((item) => item.value), [visibleNavItems]);
   const requestedTab = searchParams.get('tab') as TabValue | null;
   const initialTab: TabValue =
     requestedTab && (validTabs as readonly string[]).includes(requestedTab)
@@ -78,7 +83,7 @@ export default function SettingsPage() {
           <span className="kicker">Settings</span>
         </div>
         <ul className="space-y-0.5 px-2">
-          {NAV_ITEMS.map(({ value, label, icon: Icon }) => (
+          {visibleNavItems.map(({ value, label, icon: Icon }) => (
             <li key={value}>
               <button
                 type="button"
@@ -97,7 +102,7 @@ export default function SettingsPage() {
       {/* Mobile tab bar */}
       <div className="flex w-full flex-col lg:hidden">
         <div className="flex gap-1 overflow-x-auto border-b border-border px-4 py-2">
-          {NAV_ITEMS.map(({ value, label, icon: Icon }) => (
+          {visibleNavItems.map(({ value, label, icon: Icon }) => (
             <button
               key={value}
               type="button"
@@ -111,20 +116,20 @@ export default function SettingsPage() {
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 animate-fade-up">{renderContent(activeTab, currentOrganizationId)}</div>
+        <div className="flex-1 overflow-y-auto p-6 animate-fade-up">{renderContent(activeTab, currentOrganizationId, aiEnabled)}</div>
       </div>
 
       {/* Right content */}
       <div className="hidden flex-1 overflow-y-auto p-8 lg:block">
         <div className="mx-auto max-w-3xl animate-fade-up">
-          {renderContent(activeTab, currentOrganizationId)}
+          {renderContent(activeTab, currentOrganizationId, aiEnabled)}
         </div>
       </div>
     </div>
   );
 }
 
-function renderContent(tab: TabValue, organizationId: string) {
+function renderContent(tab: TabValue, organizationId: string, aiEnabled: boolean) {
   switch (tab) {
     case 'appearance':
       return <AppearanceSettings />;
@@ -133,6 +138,7 @@ function renderContent(tab: TabValue, organizationId: string) {
     case 'members':
       return <MembersPageClient />;
     case 'ai-agents':
+      if (!aiEnabled) return <AiDisabledNotice />;
       return <OrganizationAiAgentsSettings organizationId={organizationId} />;
     case 'communications':
       return <OrganizationCommunicationsSettings organizationId={organizationId} />;
@@ -147,4 +153,17 @@ function renderContent(tab: TabValue, organizationId: string) {
     default:
       return null;
   }
+}
+
+function AiDisabledNotice() {
+  return (
+    <div className="surface-card p-8 text-center space-y-2">
+      <p className="text-sm font-medium text-foreground">AI features are paused platform-wide</p>
+      <p className="text-sm text-muted-foreground">
+        A super-admin has to flip the master toggle in{' '}
+        <strong>Admin → Agent control → Global enablement</strong> to expose the agent runtime,
+        model registry, and AI-assisted task drafting to this workspace.
+      </p>
+    </div>
+  );
 }

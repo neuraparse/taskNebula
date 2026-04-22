@@ -16,6 +16,7 @@ import { applyWorkspaceModelConfig } from '@/lib/agents/model-configs';
 import { listProjectAgentRuns } from '@/lib/agents/engine';
 import { getSystemAgentControlSettingsFromDb } from '@/lib/agents/system';
 import { and, count } from 'drizzle-orm';
+import { aiDisabledResponse, isAiFeatureEnabled } from '@/lib/ai/feature-gate';
 
 const capabilitySchema = z.object({
   project_tracking: z.boolean().optional(),
@@ -50,6 +51,7 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
+  if (!(await isAiFeatureEnabled())) return aiDisabledResponse();
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -203,6 +205,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
+  if (!(await isAiFeatureEnabled())) return aiDisabledResponse();
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

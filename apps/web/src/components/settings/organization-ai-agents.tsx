@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { AiQuickSetup } from './ai-quick-setup';
 import {
   useArchiveOrganizationAgentModelConfig,
   useCreateOrganizationAgentModelConfig,
@@ -61,19 +62,20 @@ import {
 } from 'lucide-react';
 
 const EMPTY_SETTINGS: WorkspaceAgentSettings = {
-  enabled: false,
-  modelConfigId: null,
   provider: 'native',
   model: 'tasknebula-planner-v1',
-  executionMode: 'assistive',
+  modelConfigId: null,
+  assistantEnabled: false,
+  enabled: false,
+  executionMode: 'manual',
   allowWriteActions: false,
   requireApprovalForWrites: true,
   dailyRunLimit: 20,
   capabilities: {
-    project_tracking: true,
-    backlog_triage: true,
-    sprint_planning: true,
-    bulk_sprint_creation: true,
+    project_tracking: false,
+    backlog_triage: false,
+    sprint_planning: false,
+    bulk_sprint_creation: false,
   },
 };
 
@@ -296,15 +298,15 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
     try {
       const payload: Record<string, unknown> = { ...formState };
 
-      if (formState.provider === 'openai') {
+      if (formState.provider === 'openai' || formState.provider === 'anthropic') {
         if (credentialInput.trim()) {
           payload.credential = {
-            provider: 'openai',
+            provider: formState.provider,
             apiKey: credentialInput.trim(),
           };
         } else if (removeStoredCredential) {
           payload.credential = {
-            provider: 'openai',
+            provider: formState.provider,
             remove: true,
           };
         }
@@ -393,10 +395,13 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
         });
       }
 
-      if (modelConfigForm.provider === 'openai' && modelConfigForm.workspaceApiKey.trim()) {
+      if (
+        (modelConfigForm.provider === 'openai' || modelConfigForm.provider === 'anthropic') &&
+        modelConfigForm.workspaceApiKey.trim()
+      ) {
         await updateSettings.mutateAsync({
           credential: {
-            provider: 'openai',
+            provider: modelConfigForm.provider,
             apiKey: modelConfigForm.workspaceApiKey.trim(),
           },
         });
@@ -475,6 +480,25 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          <AiQuickSetup
+            organizationId={data.organizationId}
+            workspaceSettings={formState}
+            providerConfigured={data.providerStatus.configured === true}
+            providerSource={data.providerStatus.source}
+            canManage={canManage}
+            savedProfiles={data.modelConfigs.map((c) => ({
+              id: c.id,
+              name: c.name,
+              provider: c.provider,
+              model: c.model,
+            }))}
+            onManageProfiles={() => {
+              document
+                .getElementById('workspace-model-profiles')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
+          />
+
           <Card className="border-border/60">
             <CardHeader>
               <CardTitle className="text-base">Setup checklist</CardTitle>
@@ -518,17 +542,29 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
             </CardContent>
           </Card>
 
+          {/* AI Assistant toggle lives inside the Quick Setup card above —
+               rendering it again here created a "did I set this up twice?"
+               moment for admins. Quick Setup owns both the toggle and the
+               provider/model/key trio in a single "Enable AI Assistant"
+               button, so this card is redundant. */}
+
           <div className="grid gap-4 lg:grid-cols-2">
             <Card id="workspace-ai-policy" className="border-border/60">
               <CardHeader>
-                <CardTitle className="text-base">Execution policy</CardTitle>
-                <CardDescription>Control how much autonomy the workspace can give agents.</CardDescription>
+                <CardTitle className="text-base">Agents · execution policy</CardTitle>
+                <CardDescription>
+                  Autonomous/semi-autonomous run kinds (project tracking, backlog triage, sprint
+                  planning). Each capability is <strong>off</strong> until you turn it on below.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
                 <div className="flex items-center justify-between gap-4 rounded-lg border border-border/60 p-4">
                   <div className="space-y-1">
                     <div className="font-medium">Workspace agents</div>
-                    <p className="text-sm text-muted-foreground">Pause or enable all project agent flows in this workspace.</p>
+                    <p className="text-sm text-muted-foreground">
+                      Master switch for agent run kinds. Leave off unless you explicitly want
+                      automations.
+                    </p>
                   </div>
                   <Switch
                     checked={formState.enabled}
@@ -537,83 +573,19 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                   />
                 </div>
 
+                <div className="rounded-lg border border-border/60 bg-muted/10 p-3 text-xs text-muted-foreground">
+                  Provider, model, and API key are managed in the <strong>Quick setup</strong> card
+                  above. Agents inherit whichever provider + model you picked there, so there&apos;s
+                  nothing to re-enter here.
+                  {activeModelConfig && (
+                    <span className="ml-1">
+                      Currently locked to the saved profile{' '}
+                      <span className="font-medium text-foreground">{activeModelConfig.name}</span>.
+                    </span>
+                  )}
+                </div>
+
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Model source</Label>
-                    <Select
-                      value={formState.modelConfigId || 'manual'}
-                      onValueChange={handleModelSourceChange}
-                      disabled={!canManage}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="manual">Manual provider + model</SelectItem>
-                        {data.modelConfigs.map((config) => (
-                          <SelectItem key={config.id} value={config.id}>
-                            {config.name} · {config.provider} · {config.model}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {activeModelConfig ? (
-                      <div className="rounded-lg border border-border/60 bg-muted/10 px-3 py-2 text-xs text-muted-foreground">
-                        Workspace policy is locked to the saved profile <span className="font-medium text-foreground">{activeModelConfig.name}</span>.
-                        Provider, model, and tuning come from the DB-backed registry.
-                      </div>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">
-                        Manual mode keeps provider and model editable directly in workspace policy.
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Provider</Label>
-                    <Select
-                      value={formState.provider}
-                      onValueChange={(value) =>
-                        {
-                          const nextProvider = value as WorkspaceAgentSettings['provider'];
-                          if (nextProvider !== 'openai') {
-                            setCredentialInput('');
-                            setRemoveStoredCredential(false);
-                          }
-
-                          setFormState((current) => {
-                            const nextSuggestedModel = getSuggestedModelForProvider(nextProvider);
-                            const shouldReplaceModel =
-                              !!nextSuggestedModel
-                              && (
-                                !current.model
-                                || current.model === getSuggestedModelForProvider(current.provider)
-                              );
-
-                            return {
-                              ...current,
-                              modelConfigId: null,
-                              provider: nextProvider,
-                              model: shouldReplaceModel ? nextSuggestedModel : current.model,
-                            };
-                          });
-                        }
-                      }
-                      disabled={!canManage || Boolean(activeModelConfig)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="native">TaskNebula native</SelectItem>
-                        <SelectItem value="openai">OpenAI</SelectItem>
-                        <SelectItem value="anthropic">Anthropic (adapter pending)</SelectItem>
-                        <SelectItem value="azure">Azure OpenAI (adapter pending)</SelectItem>
-                        <SelectItem value="custom">Custom adapter (server work required)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
                   <div className="space-y-2">
                     <Label>Execution mode</Label>
                     <Select
@@ -632,24 +604,6 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                         <SelectItem value="auto">Autonomous</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="workspace-agent-model">Model</Label>
-                    <Input
-                      id="workspace-agent-model"
-                      value={formState.model}
-                      onChange={(event) =>
-                        setFormState((current) => ({
-                          ...current,
-                          modelConfigId: null,
-                          model: event.target.value,
-                        }))
-                      }
-                      disabled={!canManage || Boolean(activeModelConfig)}
-                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="workspace-daily-run-limit">Daily run limit</Label>
@@ -759,74 +713,6 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                   </div>
                 </div>
 
-                {formState.provider === 'openai' ? (
-                  <div className="rounded-lg border border-border/60 p-4">
-                    <div className="space-y-1">
-                      <div className="font-medium">OpenAI API key</div>
-                      <p className="text-sm text-muted-foreground">
-                        Stored server-side and encrypted. If empty, TaskNebula falls back to `OPENAI_API_KEY`.
-                      </p>
-                    </div>
-
-                    {!data.providerStatus.configured ? (
-                      <div className="mt-4 rounded-lg border border-accent-amber/30 bg-accent-amber/10 px-3 py-2 text-xs text-accent-amber">
-                        Runs are blocked until you add a workspace key here or expose `OPENAI_API_KEY` on the server.
-                      </div>
-                    ) : null}
-
-                    <div className="mt-4 grid gap-3">
-                      <div className="space-y-2">
-                        <Label htmlFor="workspace-openai-key">Workspace credential</Label>
-                        <Input
-                          id="workspace-openai-key"
-                          type="password"
-                          placeholder={data.providerStatus.source === 'workspace' ? 'Replace stored key' : 'sk-...'}
-                          value={credentialInput}
-                          onChange={(event) => {
-                            setCredentialInput(event.target.value);
-                            if (removeStoredCredential) {
-                              setRemoveStoredCredential(false);
-                            }
-                          }}
-                          disabled={!canManage}
-                          autoComplete="off"
-                        />
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-                        {data.providerStatus.source === 'workspace' ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setRemoveStoredCredential((current) => !current)}
-                            disabled={!canManage}
-                          >
-                            {removeStoredCredential ? 'Keep stored key' : 'Remove stored key'}
-                          </Button>
-                        ) : null}
-                        {credentialInput ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setCredentialInput('')}
-                            disabled={!canManage}
-                          >
-                            Clear typed key
-                          </Button>
-                        ) : null}
-                      </div>
-
-                      {removeStoredCredential ? (
-                        <div className="rounded-lg border border-accent-amber/30 bg-accent-amber/10 px-3 py-2 text-xs text-accent-amber">
-                          The stored workspace key will be removed on save. A server env key, if present, will still keep OpenAI ready.
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                ) : null}
-
                 {!canManage ? (
                   <div className="panel-warn text-sm">
                     Read-only access — owners and admins can update AI policy.
@@ -836,19 +722,22 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
             </Card>
           </div>
 
-          <Card className="border-border/60">
+          <Card id="workspace-model-profiles" className="border-border/60">
             <CardHeader>
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2 text-base">
                     <Database className="h-4 w-4" />
-                    Model registry
+                    Your model profiles
                   </CardTitle>
                   <CardDescription>
-                    Save reusable provider profiles in the database, keep revision history, and apply one profile to workspace policy.
+                    Custom model + tuning combinations saved for reuse. Any profile saved here
+                    also appears in the Quick setup model dropdown above. Use this to pin a model
+                    with specific temperature / token / reasoning-effort settings, or to try a
+                    model that is not in the built-in catalog.
                   </CardDescription>
                 </div>
-                <Button type="button" variant="outline" size="sm" onClick={openCreateModelConfigDialog} disabled={!canManage}>
+                <Button type="button" size="sm" onClick={openCreateModelConfigDialog} disabled={!canManage}>
                   <Plus className="mr-2 h-4 w-4" />
                   Create profile
                 </Button>
@@ -1342,32 +1231,48 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                     />
                   </div>
 
-                  {modelConfigForm.provider === 'openai' ? (
-                    <div className="space-y-2 rounded-lg border border-border/60 px-4 py-3">
-                      <Label htmlFor="model-config-openai-key">Workspace OpenAI API key</Label>
-                      <Input
-                        id="model-config-openai-key"
-                        type="password"
-                        value={modelConfigForm.workspaceApiKey}
-                        onChange={(event) =>
-                          setModelConfigForm((current) => ({ ...current, workspaceApiKey: event.target.value }))
-                        }
-                        placeholder={
-                          data.providerStatus.source === 'workspace'
-                            ? 'Leave empty to keep current stored key'
-                            : 'sk-...'
-                        }
-                        autoComplete="off"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Optional. Save or rotate the workspace OpenAI key while creating the profile.
-                      </p>
-                      {formState.provider === 'openai' && !data.providerStatus.configured ? (
-                        <div className="rounded-lg border border-accent-amber/30 bg-accent-amber/10 px-3 py-2 text-xs text-accent-amber">
-                          No runnable OpenAI key is configured right now. Add one here or provide `OPENAI_API_KEY` on the server.
+                  {(modelConfigForm.provider === 'openai' || modelConfigForm.provider === 'anthropic') ? (
+                    (() => {
+                      const label = modelConfigForm.provider === 'openai' ? 'OpenAI' : 'Anthropic';
+                      const placeholder =
+                        modelConfigForm.provider === 'openai' ? 'sk-...' : 'sk-ant-...';
+                      const envVar =
+                        modelConfigForm.provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY';
+                      return (
+                        <div className="space-y-2 rounded-lg border border-border/60 px-4 py-3">
+                          <Label htmlFor="model-config-provider-key">
+                            Workspace {label} API key
+                          </Label>
+                          <Input
+                            id="model-config-provider-key"
+                            type="password"
+                            value={modelConfigForm.workspaceApiKey}
+                            onChange={(event) =>
+                              setModelConfigForm((current) => ({
+                                ...current,
+                                workspaceApiKey: event.target.value,
+                              }))
+                            }
+                            placeholder={
+                              data.providerStatus.source === 'workspace'
+                                ? 'Leave empty to keep current stored key'
+                                : placeholder
+                            }
+                            autoComplete="off"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Optional. Save or rotate the workspace {label} key while creating the
+                            profile.
+                          </p>
+                          {formState.provider === modelConfigForm.provider && !data.providerStatus.configured ? (
+                            <div className="rounded-lg border border-accent-amber/30 bg-accent-amber/10 px-3 py-2 text-xs text-accent-amber">
+                              No runnable {label} key is configured right now. Add one here, use the
+                              platform default, or provide <code>{envVar}</code> on the server.
+                            </div>
+                          ) : null}
                         </div>
-                      ) : null}
-                    </div>
+                      );
+                    })()
                   ) : null}
                 </div>
 

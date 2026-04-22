@@ -4,6 +4,7 @@ import { auth } from '@/auth';
 import { createAuditLog, db, eq, organizations } from '@tasknebula/db';
 import { getOrgAgentAccess } from '@/lib/agents/access';
 import { getAgentModelConfigById, updateAgentModelConfig } from '@/lib/agents/model-configs';
+import { aiDisabledResponse, isAiFeatureEnabled } from '@/lib/ai/feature-gate';
 
 const settingsSchema = z.object({
   temperature: z.number().min(0).max(2).nullable().optional(),
@@ -36,6 +37,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ organizationId: string; configId: string }> }
 ) {
+  if (!(await isAiFeatureEnabled())) return aiDisabledResponse();
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -101,6 +103,7 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ organizationId: string; configId: string }> }
 ) {
+  if (!(await isAiFeatureEnabled())) return aiDisabledResponse();
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

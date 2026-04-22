@@ -37,9 +37,13 @@ function formatRunKind(kind: string) {
   return kind.replaceAll('_', ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function formatCredentialSource(source: 'workspace' | 'server_env' | null) {
+function formatCredentialSource(source: 'workspace' | 'platform' | 'server_env' | null) {
   if (source === 'workspace') {
     return 'Workspace secret';
+  }
+
+  if (source === 'platform') {
+    return 'Platform default';
   }
 
   if (source === 'server_env') {

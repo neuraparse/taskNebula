@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { db, eq, organizations } from '@tasknebula/db';
 import type { AgentProvider } from './config';
 
-type SecretEnvelope = {
+export type SecretEnvelope = {
   iv: string;
   authTag: string;
   ciphertext: string;
@@ -11,11 +11,13 @@ type SecretEnvelope = {
   updatedBy: string;
 };
 
-type AgentSecretStore = Partial<Record<'openai', SecretEnvelope>>;
+type CredentialKey = 'openai' | 'anthropic';
+
+export type AgentSecretStore = Partial<Record<CredentialKey, SecretEnvelope>>;
 
 export type AgentProviderCredentialStatus = {
   configured: boolean;
-  source: 'workspace' | 'server_env' | null;
+  source: 'workspace' | 'platform' | 'server_env' | null;
   label: string | null;
   updatedAt: string | null;
 };
@@ -26,12 +28,16 @@ const PROVIDER_ENV_KEYS: Partial<Record<AgentProvider, string>> = {
   azure: 'AZURE_OPENAI_API_KEY',
 };
 
+const CREDENTIAL_KEY_FOR_PROVIDER: Partial<Record<AgentProvider, CredentialKey>> = {
+  openai: 'openai',
+  anthropic: 'anthropic',
+};
+
 function getSecretKey() {
   const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
   if (!secret || secret.length < 16) {
-    throw new Error('AUTH_SECRET is required to encrypt workspace AI provider credentials.');
+    throw new Error('AUTH_SECRET is required to encrypt AI provider credentials.');
   }
-
   return crypto.createHash('sha256').update(secret).digest();
 }
 
@@ -40,7 +46,6 @@ function encryptSecret(value: string) {
   const cipher = crypto.createCipheriv('aes-256-gcm', getSecretKey(), iv);
   const ciphertext = Buffer.concat([cipher.update(value, 'utf8'), cipher.final()]);
   const authTag = cipher.getAuthTag();
-
   return {
     iv: iv.toString('base64'),
     authTag: authTag.toString('base64'),
@@ -55,12 +60,10 @@ function decryptSecret(envelope: SecretEnvelope) {
     Buffer.from(envelope.iv, 'base64')
   );
   decipher.setAuthTag(Buffer.from(envelope.authTag, 'base64'));
-
   const plaintext = Buffer.concat([
     decipher.update(Buffer.from(envelope.ciphertext, 'base64')),
     decipher.final(),
   ]);
-
   return plaintext.toString('utf8');
 }
 
@@ -70,18 +73,24 @@ function toPreview(value: string) {
   return last4 ? `••••${last4}` : 'Configured';
 }
 
-function getSecretStore(settings: Record<string, unknown> | null | undefined) {
+function getWorkspaceSecretStore(settings: Record<string, unknown> | null | undefined) {
   const store = settings?.aiAgentSecrets;
   return typeof store === 'object' && store !== null ? (store as AgentSecretStore) : {};
 }
 
+/**
+ * Credential resolution chain (in priority order):
+ *   1. Workspace-scoped (this org entered its own key in Settings → AI & Agents)
+ *   2. Platform-scoped (super-admin entered a default key in Admin → Agent control)
+ *   3. Server env var (legacy fallback for dev — OPENAI_API_KEY / ANTHROPIC_API_KEY)
+ *
+ * Returns null when no credential is configured at any layer.
+ */
 export function getProviderCredentialStatusFromSettings(
   settings: Record<string, unknown> | null | undefined,
-  provider: AgentProvider
+  provider: AgentProvider,
+  platformStore?: AgentSecretStore | null
 ): AgentProviderCredentialStatus {
-  const envKey = PROVIDER_ENV_KEYS[provider];
-  const envValue = envKey ? process.env[envKey] : null;
-
   if (provider === 'native') {
     return {
       configured: true,
@@ -91,16 +100,31 @@ export function getProviderCredentialStatusFromSettings(
     };
   }
 
-  const secrets = getSecretStore(settings);
-  if (provider === 'openai' && secrets.openai) {
+  const credKey = CREDENTIAL_KEY_FOR_PROVIDER[provider];
+  const workspaceSecrets = getWorkspaceSecretStore(settings);
+
+  if (credKey && workspaceSecrets[credKey]) {
+    const envelope = workspaceSecrets[credKey]!;
     return {
       configured: true,
       source: 'workspace',
-      label: secrets.openai.preview,
-      updatedAt: secrets.openai.updatedAt,
+      label: envelope.preview,
+      updatedAt: envelope.updatedAt,
     };
   }
 
+  if (credKey && platformStore?.[credKey]) {
+    const envelope = platformStore[credKey]!;
+    return {
+      configured: true,
+      source: 'platform',
+      label: `Platform default · ${envelope.preview}`,
+      updatedAt: envelope.updatedAt,
+    };
+  }
+
+  const envKey = PROVIDER_ENV_KEYS[provider];
+  const envValue = envKey ? process.env[envKey] : null;
   if (envKey && envValue) {
     return {
       configured: true,
@@ -120,18 +144,23 @@ export function getProviderCredentialStatusFromSettings(
 
 export function resolveProviderApiKeyFromSettings(
   settings: Record<string, unknown> | null | undefined,
-  provider: AgentProvider
+  provider: AgentProvider,
+  platformStore?: AgentSecretStore | null
 ) {
-  if (provider !== 'openai') {
-    return null;
+  const credKey = CREDENTIAL_KEY_FOR_PROVIDER[provider];
+  if (!credKey) return null;
+
+  const workspaceSecrets = getWorkspaceSecretStore(settings);
+  if (workspaceSecrets[credKey]) {
+    return decryptSecret(workspaceSecrets[credKey]!);
   }
 
-  const secrets = getSecretStore(settings);
-  if (secrets.openai) {
-    return decryptSecret(secrets.openai);
+  if (platformStore?.[credKey]) {
+    return decryptSecret(platformStore[credKey]!);
   }
 
-  return process.env.OPENAI_API_KEY || null;
+  const envKey = PROVIDER_ENV_KEYS[provider];
+  return (envKey && process.env[envKey]) || null;
 }
 
 export function upsertProviderSecretInSettings(params: {
@@ -140,18 +169,21 @@ export function upsertProviderSecretInSettings(params: {
   apiKey: string;
   userId: string;
 }) {
+  const credKey = CREDENTIAL_KEY_FOR_PROVIDER[params.provider];
+  if (!credKey) {
+    throw new Error(`Provider "${params.provider}" does not support stored credentials.`);
+  }
+
   const currentSettings = { ...(params.settings || {}) };
-  const secretStore = { ...getSecretStore(params.settings) };
+  const secretStore = { ...getWorkspaceSecretStore(params.settings) };
   const encrypted = encryptSecret(params.apiKey.trim());
 
-  if (params.provider === 'openai') {
-    secretStore.openai = {
-      ...encrypted,
-      preview: toPreview(params.apiKey),
-      updatedAt: new Date().toISOString(),
-      updatedBy: params.userId,
-    };
-  }
+  secretStore[credKey] = {
+    ...encrypted,
+    preview: toPreview(params.apiKey),
+    updatedAt: new Date().toISOString(),
+    updatedBy: params.userId,
+  };
 
   currentSettings.aiAgentSecrets = secretStore;
   return currentSettings;
@@ -161,11 +193,12 @@ export function removeProviderSecretFromSettings(params: {
   settings: Record<string, unknown> | null | undefined;
   provider: AgentProvider;
 }) {
+  const credKey = CREDENTIAL_KEY_FOR_PROVIDER[params.provider];
   const currentSettings = { ...(params.settings || {}) };
-  const secretStore = { ...getSecretStore(params.settings) };
+  const secretStore = { ...getWorkspaceSecretStore(params.settings) };
 
-  if (params.provider === 'openai') {
-    delete secretStore.openai;
+  if (credKey && secretStore[credKey]) {
+    delete secretStore[credKey];
   }
 
   currentSettings.aiAgentSecrets = secretStore;
@@ -182,4 +215,61 @@ export async function getOrganizationSettingsForAgentCredentials(organizationId:
     .limit(1);
 
   return (organization?.settings as Record<string, unknown> | null | undefined) || null;
+}
+
+/**
+ * Platform-level credential management — admin-set defaults that all orgs
+ * fall back to when they haven't configured their own key.
+ * Stored in systemSettings.value.providerCredentials (the same JSONB that
+ * holds globalEnabled / allowWriteActions etc.).
+ */
+export function upsertPlatformSecretInStore(params: {
+  store: AgentSecretStore | undefined | null;
+  provider: AgentProvider;
+  apiKey: string;
+  userId: string;
+}): AgentSecretStore {
+  const credKey = CREDENTIAL_KEY_FOR_PROVIDER[params.provider];
+  if (!credKey) {
+    throw new Error(`Provider "${params.provider}" cannot be stored as a platform credential.`);
+  }
+  const next: AgentSecretStore = { ...(params.store || {}) };
+  const encrypted = encryptSecret(params.apiKey.trim());
+  next[credKey] = {
+    ...encrypted,
+    preview: toPreview(params.apiKey),
+    updatedAt: new Date().toISOString(),
+    updatedBy: params.userId,
+  };
+  return next;
+}
+
+export function removePlatformSecretFromStore(params: {
+  store: AgentSecretStore | undefined | null;
+  provider: AgentProvider;
+}): AgentSecretStore {
+  const credKey = CREDENTIAL_KEY_FOR_PROVIDER[params.provider];
+  const next: AgentSecretStore = { ...(params.store || {}) };
+  if (credKey && next[credKey]) {
+    delete next[credKey];
+  }
+  return next;
+}
+
+export function sanitizePlatformSecretStore(store: AgentSecretStore | undefined | null) {
+  const out: Record<CredentialKey, { preview: string; updatedAt: string; updatedBy: string } | null> = {
+    openai: null,
+    anthropic: null,
+  };
+  for (const key of ['openai', 'anthropic'] as const) {
+    const envelope = store?.[key];
+    if (envelope) {
+      out[key] = {
+        preview: envelope.preview,
+        updatedAt: envelope.updatedAt,
+        updatedBy: envelope.updatedBy,
+      };
+    }
+  }
+  return out;
 }
