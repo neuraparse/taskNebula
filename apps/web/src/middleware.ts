@@ -37,7 +37,15 @@ export default auth((req) => {
   }
 
   // Public auth routes
-  const publicRoutes = ['/auth/signin', '/auth/signup', '/auth/error', '/auth/verify-request'];
+  const publicRoutes = [
+    '/auth/signin',
+    '/auth/signup',
+    '/auth/error',
+    '/auth/verify-request',
+    '/auth/verify-email',
+    '/auth/forgot-password',
+    '/auth/reset-password',
+  ];
   const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith('/share/');
 
   // Redirect to signin if not logged in and trying to access protected route
