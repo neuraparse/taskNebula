@@ -7,7 +7,6 @@ import {
   Loader2,
   Wand2,
   AlertCircle,
-  List,
   CheckSquare,
   Square,
   X,
@@ -24,7 +23,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -48,22 +46,6 @@ interface AiDraftIssueDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: string;
-}
-
-async function draftOne(projectId: string, prompt: string): Promise<{
-  draft: IssueDraft;
-  provider: string;
-}> {
-  const r = await fetch('/api/ai/draft-issue', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ projectId, prompt }),
-  });
-  if (!r.ok) {
-    const err = (await r.json().catch(() => ({}))) as { error?: string };
-    throw new Error(err.error || `Draft failed (${r.status})`);
-  }
-  return r.json();
 }
 
 async function draftMany(
@@ -114,34 +96,22 @@ export function AiDraftIssueDialog({
   const { canDraft } = useAiCapability();
 
   const [prompt, setPrompt] = useState('');
-  const [multiMode, setMultiMode] = useState(false);
-  const [maxCount, setMaxCount] = useState(5);
   const [drafts, setDrafts] = useState<IssueDraft[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [provider, setProvider] = useState<string | null>(null);
   const [creatingIndex, setCreatingIndex] = useState<number | null>(null);
 
-  const draftOneMutation = useMutation({
-    mutationFn: () => draftOne(projectId, prompt),
-    onSuccess: ({ draft, provider: p }) => {
-      setDrafts([draft]);
-      setSelected(new Set([0]));
-      setProvider(p);
-    },
-    onError: (err: Error) => {
-      toast({ title: 'Drafting failed', description: err.message, variant: 'destructive' });
-    },
-  });
-
-  const draftManyMutation = useMutation({
-    mutationFn: () => draftMany(projectId, prompt, maxCount),
+  // Single smart mutation — the LLM decides whether the prompt describes
+  // one ticket or several. UI renders whatever count comes back.
+  const draftMutation = useMutation({
+    mutationFn: () => draftMany(projectId, prompt, 10),
     onSuccess: ({ drafts: ds, provider: p }) => {
       setDrafts(ds);
       setSelected(new Set(ds.map((_, i) => i)));
       setProvider(p);
     },
     onError: (err: Error) => {
-      toast({ title: 'Multi-drafting failed', description: err.message, variant: 'destructive' });
+      toast({ title: 'Drafting failed', description: err.message, variant: 'destructive' });
     },
   });
 
@@ -185,8 +155,7 @@ export function AiDraftIssueDialog({
     setSelected(new Set());
     setProvider(null);
     setCreatingIndex(null);
-    draftOneMutation.reset();
-    draftManyMutation.reset();
+    draftMutation.reset();
     bulkCreateMutation.reset();
   }
 
@@ -222,7 +191,7 @@ export function AiDraftIssueDialog({
 
   if (!canDraft) return null;
 
-  const isDrafting = draftOneMutation.isPending || draftManyMutation.isPending;
+  const isDrafting = draftMutation.isPending;
   const isCreating = bulkCreateMutation.isPending;
   const canSubmitPrompt = prompt.trim().length >= 3 && !isDrafting;
 
@@ -235,64 +204,28 @@ export function AiDraftIssueDialog({
             Draft issues with AI
           </DialogTitle>
           <DialogDescription>
-            Describe what you need. Toggle multi-task to split one prompt into several separate
-            issues.
+            Describe what you need in plain language. AI reads the prompt, decides whether it&apos;s
+            one ticket or several, and returns editable drafts. Nothing is saved until you hit
+            Create.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           {drafts.length === 0 && (
-            <>
-              <div className="flex items-center justify-between gap-4 rounded-md border border-border/60 bg-muted/10 px-3 py-2">
-                <div className="flex items-center gap-2">
-                  <List className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Multi-task mode</span>
-                </div>
-                <Switch
-                  checked={multiMode}
-                  onCheckedChange={setMultiMode}
-                  disabled={isDrafting}
-                />
-              </div>
-
-              {multiMode && (
-                <div className="grid grid-cols-[1fr_auto] items-end gap-3">
-                  <p className="text-xs text-muted-foreground">
-                    The LLM will split your prompt into up to N separate issues. Review each, edit
-                    if needed, then create all or just the ones you pick.
-                  </p>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Max</Label>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={20}
-                      value={maxCount}
-                      onChange={(e) => setMaxCount(Math.min(20, Math.max(1, Number(e.target.value) || 1)))}
-                      className="w-20"
-                      disabled={isDrafting}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="ai-prompt">Prompt</Label>
-                <Textarea
-                  id="ai-prompt"
-                  placeholder={
-                    multiMode
-                      ? 'e.g. Ship the mobile app:\n- add offline mode\n- fix push-notification delivery\n- update onboarding copy'
-                      : 'e.g. Navbar dropdown flickers on Safari when viewport is narrower than 640px.'
-                  }
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  rows={multiMode ? 8 : 5}
-                  disabled={isDrafting || isCreating}
-                />
-                <p className="text-xs text-muted-foreground">{prompt.length}/6000</p>
-              </div>
-            </>
+            <div className="space-y-2">
+              <Label htmlFor="ai-prompt">Prompt</Label>
+              <Textarea
+                id="ai-prompt"
+                placeholder={
+                  'One prompt can describe a single bug OR a whole checklist — AI splits on its own.\n\nExamples:\n• Navbar dropdown flickers on Safari below 640px.\n• Ship the mobile app: add offline mode, fix push delivery, refresh onboarding copy.'
+                }
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                rows={6}
+                disabled={isDrafting || isCreating}
+              />
+              <p className="text-xs text-muted-foreground">{prompt.length}/6000</p>
+            </div>
           )}
 
           {drafts.length > 0 && (
@@ -316,9 +249,7 @@ export function AiDraftIssueDialog({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() =>
-                      multiMode ? draftManyMutation.mutate() : draftOneMutation.mutate()
-                    }
+                    onClick={() => draftMutation.mutate()}
                     disabled={isCreating || !canSubmitPrompt}
                   >
                     <Wand2 className="mr-1.5 h-3.5 w-3.5" />
@@ -332,7 +263,7 @@ export function AiDraftIssueDialog({
                   key={idx}
                   index={idx}
                   draft={draft}
-                  multi={multiMode && drafts.length > 1}
+                  multi={drafts.length > 1}
                   selected={selected.has(idx)}
                   creating={creatingIndex === idx}
                   onToggle={() => toggleSelected(idx)}
@@ -343,16 +274,10 @@ export function AiDraftIssueDialog({
             </div>
           )}
 
-          {draftOneMutation.isError && drafts.length === 0 ? (
+          {draftMutation.isError && drafts.length === 0 ? (
             <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{(draftOneMutation.error as Error).message}</span>
-            </div>
-          ) : null}
-          {draftManyMutation.isError && drafts.length === 0 ? (
-            <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{(draftManyMutation.error as Error).message}</span>
+              <span>{(draftMutation.error as Error).message}</span>
             </div>
           ) : null}
         </div>
@@ -362,13 +287,10 @@ export function AiDraftIssueDialog({
             Cancel
           </Button>
           {drafts.length === 0 ? (
-            <Button
-              onClick={() => (multiMode ? draftManyMutation.mutate() : draftOneMutation.mutate())}
-              disabled={!canSubmitPrompt}
-            >
+            <Button onClick={() => draftMutation.mutate()} disabled={!canSubmitPrompt}>
               {isDrafting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               <Sparkles className="mr-1.5 h-4 w-4" />
-              {multiMode ? 'Draft tasks' : 'Draft'}
+              Draft
             </Button>
           ) : (
             <Button
