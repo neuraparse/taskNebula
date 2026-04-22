@@ -251,6 +251,60 @@ const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; text: s
       "You're receiving this because you're a member of {{organizationName}}.",
   },
 
+  project_created: {
+    subject: 'New project {{projectName}} in {{organizationName}}',
+    html: renderShell({
+      kicker: 'NEW PROJECT',
+      heading: '{{projectName}}',
+      body:
+        `<p style="margin:0;font-family:${EMAIL_FONT};font-size:14px;line-height:1.6;color:#374151;">{{actorName}} created a new project in <strong style="color:#111827;">{{organizationName}}</strong>.</p>` +
+        `<p style="margin:12px 0 0 0;font-family:${EMAIL_FONT};font-size:14px;line-height:1.6;color:#374151;">{{projectDescription}}</p>` +
+        metaTable(
+          metaRow('Project', '<strong style="color:#111827;">{{projectName}}</strong>') +
+            metaRow('Key', '{{projectKey}}') +
+            metaRow('Created by', '{{actorName}}') +
+            metaRow('Organization', '{{organizationName}}'),
+        ),
+      ctaLabel: 'Open project',
+      ctaUrl: '{{projectUrl}}',
+    }),
+    text:
+      '{{actorName}} created a new project: {{projectName}}\n\n' +
+      '{{projectDescription}}\n\n' +
+      'Key: {{projectKey}}\n' +
+      'Organization: {{organizationName}}\n\n' +
+      'Open: {{projectUrl}}\n\n' +
+      '---\n' +
+      'Manage notifications: {{unsubscribeUrl}}\n' +
+      "You're receiving this because you're a member of {{organizationName}}.",
+  },
+
+  project_archived: {
+    subject: 'Project {{projectName}} archived',
+    html: renderShell({
+      kicker: 'PROJECT ARCHIVED',
+      heading: '{{projectName}}',
+      body:
+        `<p style="margin:0;font-family:${EMAIL_FONT};font-size:14px;line-height:1.6;color:#374151;">{{actorName}} archived <strong style="color:#111827;">{{projectName}}</strong> on {{archivedAt}}.</p>` +
+        `<p style="margin:12px 0 0 0;font-family:${EMAIL_FONT};font-size:13px;line-height:1.6;color:#6b7280;">The project is now read-only for most members. Reach out to an admin if this was unexpected.</p>` +
+        metaTable(
+          metaRow('Project', '<strong style="color:#111827;">{{projectName}}</strong>') +
+            metaRow('Archived by', '{{actorName}}') +
+            metaRow('Archived on', '{{archivedAt}}') +
+            metaRow('Organization', '{{organizationName}}'),
+        ),
+      ctaLabel: 'View project',
+      ctaUrl: '{{projectUrl}}',
+    }),
+    text:
+      '{{actorName}} archived the project {{projectName}} on {{archivedAt}}.\n\n' +
+      'Organization: {{organizationName}}\n\n' +
+      'View: {{projectUrl}}\n\n' +
+      '---\n' +
+      'Manage notifications: {{unsubscribeUrl}}\n' +
+      "You're receiving this because you're a member of {{organizationName}}.",
+  },
+
   sprint_completed: {
     subject: '[{{projectName}}] Sprint completed — {{sprintName}}',
     html: renderShell({
@@ -367,6 +421,8 @@ async function shouldSendEmail(
       issue_created: false,
       sprint_started: false,
       sprint_completed: false,
+      project_created: false,
+      project_archived: false,
       daily_digest: false,
       weekly_digest: false,
     };
@@ -399,6 +455,8 @@ async function shouldSendEmail(
       issue_created: prefs.emailOnIssueCreated,
       sprint_started: prefs.emailOnSprintStarted,
       sprint_completed: prefs.emailOnSprintCompleted,
+      project_created: prefs.emailOnProjectCreated,
+      project_archived: prefs.emailOnProjectArchived,
     };
 
     // If the event isn't in the map, fall back to the quiet policy.
@@ -580,5 +638,81 @@ export async function sendIssueNotificationEmail(params: {
     organizationId: params.organizationId,
     userId: params.userId,
   });
+}
+
+/**
+ * Recipient for a project lifecycle notification email.
+ * `userId` is required so we can gate by the recipient's preferences.
+ */
+export interface ProjectNotificationRecipient {
+  userId: string;
+  email: string;
+  name?: string | null;
+}
+
+/**
+ * Send project-lifecycle notification emails (`project.created`,
+ * `project.archived`) to a list of recipients, gating each one by their
+ * stored notification preferences.
+ *
+ * This helper is intentionally resilient: it never throws. Individual send
+ * failures are logged and returned in the results array so callers can
+ * fire-and-forget without handling per-recipient errors.
+ */
+export async function sendProjectNotificationEmail(params: {
+  project: {
+    id: string;
+    name: string;
+    key?: string | null;
+    description?: string | null;
+  };
+  organization: {
+    id: string;
+    name: string;
+  };
+  eventType: 'project.created' | 'project.archived';
+  actorName: string;
+  archivedAt?: string; // ISO date for project.archived
+  recipients: ReadonlyArray<ProjectNotificationRecipient>;
+}): Promise<SendEmailResult[]> {
+  const templateType =
+    params.eventType === 'project.created' ? 'project_created' : 'project_archived';
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  const projectUrl = `${appUrl}/projects/${params.project.key || params.project.id}`;
+  const unsubscribeUrl = `${appUrl}/settings/notifications`;
+  const archivedAt =
+    params.archivedAt || new Date().toISOString().slice(0, 10); // YYYY-MM-DD fallback
+
+  const results = await Promise.all(
+    params.recipients.map(async (recipient): Promise<SendEmailResult> => {
+      try {
+        return await sendEmail({
+          to: recipient.email,
+          templateType,
+          organizationId: params.organization.id,
+          userId: recipient.userId,
+          variables: {
+            userName: recipient.name || recipient.email.split('@')[0] || 'there',
+            projectName: params.project.name,
+            projectKey: params.project.key || '',
+            projectDescription:
+              params.project.description || 'No description provided yet.',
+            projectUrl,
+            organizationName: params.organization.name,
+            actorName: params.actorName,
+            archivedAt,
+            appUrl,
+            unsubscribeUrl,
+          },
+        });
+      } catch (error) {
+        console.error('sendProjectNotificationEmail recipient failed:', error);
+        return { success: false, error: String(error) };
+      }
+    }),
+  );
+
+  return results;
 }
 

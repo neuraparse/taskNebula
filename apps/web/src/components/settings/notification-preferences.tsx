@@ -29,6 +29,8 @@ type Preferences = {
   emailOnIssueCreated: boolean;
   emailOnSprintStarted: boolean;
   emailOnSprintCompleted: boolean;
+  emailOnProjectCreated: boolean;
+  emailOnProjectArchived: boolean;
   inAppOnAssigned: boolean;
   inAppOnMentioned: boolean;
   inAppOnCommented: boolean;
@@ -36,6 +38,8 @@ type Preferences = {
   inAppOnIssueCreated: boolean;
   inAppOnSprintStarted: boolean;
   inAppOnSprintCompleted: boolean;
+  inAppOnProjectCreated: boolean;
+  inAppOnProjectArchived: boolean;
   doNotDisturb: boolean;
   doNotDisturbStart: string | null;
   doNotDisturbEnd: string | null;
@@ -52,6 +56,8 @@ const DEFAULTS: Omit<Preferences, 'organizationId'> = {
   emailOnIssueCreated: false,
   emailOnSprintStarted: false,
   emailOnSprintCompleted: false,
+  emailOnProjectCreated: false,
+  emailOnProjectArchived: false,
   inAppOnAssigned: true,
   inAppOnMentioned: true,
   inAppOnCommented: true,
@@ -59,6 +65,8 @@ const DEFAULTS: Omit<Preferences, 'organizationId'> = {
   inAppOnIssueCreated: true,
   inAppOnSprintStarted: true,
   inAppOnSprintCompleted: true,
+  inAppOnProjectCreated: true,
+  inAppOnProjectArchived: true,
   doNotDisturb: false,
   doNotDisturbStart: null,
   doNotDisturbEnd: null,
@@ -167,6 +175,33 @@ const EVENT_GROUPS: ReadonlyArray<EventGroup> = [
         key: 'inAppOnSprintCompleted',
         label: 'Sprint completes',
         description: "A sprint you're in ends.",
+      },
+    ],
+  },
+  {
+    heading: 'Project lifecycle',
+    email: [
+      {
+        key: 'emailOnProjectCreated',
+        label: 'New projects in your organization',
+        description: 'Someone creates a new project in an organization you belong to.',
+      },
+      {
+        key: 'emailOnProjectArchived',
+        label: 'Project archived',
+        description: "A project you're a member of is archived.",
+      },
+    ],
+    inApp: [
+      {
+        key: 'inAppOnProjectCreated',
+        label: 'New projects in your organization',
+        description: 'Someone creates a new project in an organization you belong to.',
+      },
+      {
+        key: 'inAppOnProjectArchived',
+        label: 'Project archived',
+        description: "A project you're a member of is archived.",
       },
     ],
   },
