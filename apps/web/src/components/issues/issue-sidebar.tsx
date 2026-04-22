@@ -7,6 +7,7 @@ import { StatusPicker } from './status-picker';
 import { LabelPicker } from './label-picker';
 import { IssueCustomFields } from '@/components/custom-fields/issue-custom-fields';
 import { WatchersList } from '@/components/watchers/watchers-list';
+import { AiIssueAssistPanel } from '@/components/ai/ai-issue-assist-panel';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useUpdateIssue } from '@/lib/hooks/use-issues';
 
@@ -140,6 +141,18 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
 
       <section className="space-y-3">
         <WatchersList issueId={issue.id} />
+      </section>
+
+      <section className="space-y-3">
+        <AiIssueAssistPanel
+          issueId={issue.id}
+          onApplyDescription={(text) =>
+            updateIssue
+              .mutateAsync({ issueId: issue.id, data: { description: text } })
+              .catch(() => {})
+          }
+          onApplyLabels={(labels) => handleLabelsChange(labels)}
+        />
       </section>
 
       <section className="space-y-1 pt-3 border-t border-border/60">

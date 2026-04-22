@@ -2,7 +2,16 @@
 
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Sparkles, Loader2, Wand2, AlertCircle } from 'lucide-react';
+import {
+  Sparkles,
+  Loader2,
+  Wand2,
+  AlertCircle,
+  List,
+  CheckSquare,
+  Square,
+  X,
+} from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -15,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -40,27 +50,41 @@ interface AiDraftIssueDialogProps {
   projectId: string;
 }
 
-async function draftIssueRequest(projectId: string, prompt: string): Promise<{
+async function draftOne(projectId: string, prompt: string): Promise<{
   draft: IssueDraft;
   provider: string;
 }> {
-  const response = await fetch('/api/ai/draft-issue', {
+  const r = await fetch('/api/ai/draft-issue', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ projectId, prompt }),
   });
-  if (!response.ok) {
-    const error = (await response.json().catch(() => ({}))) as {
-      error?: string;
-      code?: string;
-    };
-    throw new Error(error.error || `Draft failed (${response.status})`);
+  if (!r.ok) {
+    const err = (await r.json().catch(() => ({}))) as { error?: string };
+    throw new Error(err.error || `Draft failed (${r.status})`);
   }
-  return response.json();
+  return r.json();
 }
 
-async function createIssueRequest(projectId: string, draft: IssueDraft) {
-  const response = await fetch('/api/issues', {
+async function draftMany(
+  projectId: string,
+  prompt: string,
+  maxCount: number
+): Promise<{ drafts: IssueDraft[]; provider: string }> {
+  const r = await fetch('/api/ai/draft-issues', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ projectId, prompt, maxCount }),
+  });
+  if (!r.ok) {
+    const err = (await r.json().catch(() => ({}))) as { error?: string };
+    throw new Error(err.error || `Multi-draft failed (${r.status})`);
+  }
+  return r.json();
+}
+
+async function createIssue(projectId: string, draft: IssueDraft) {
+  const r = await fetch('/api/issues', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -73,11 +97,11 @@ async function createIssueRequest(projectId: string, draft: IssueDraft) {
       estimate: draft.estimate ?? undefined,
     }),
   });
-  if (!response.ok) {
-    const error = (await response.json().catch(() => ({}))) as { error?: string };
-    throw new Error(error.error || 'Failed to create issue');
+  if (!r.ok) {
+    const err = (await r.json().catch(() => ({}))) as { error?: string };
+    throw new Error(err.error || 'Failed to create issue');
   }
-  return response.json();
+  return r.json();
 }
 
 export function AiDraftIssueDialog({
@@ -90,30 +114,51 @@ export function AiDraftIssueDialog({
   const { canDraft } = useAiCapability();
 
   const [prompt, setPrompt] = useState('');
-  const [draft, setDraft] = useState<IssueDraft | null>(null);
+  const [multiMode, setMultiMode] = useState(false);
+  const [maxCount, setMaxCount] = useState(5);
+  const [drafts, setDrafts] = useState<IssueDraft[]>([]);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
   const [provider, setProvider] = useState<string | null>(null);
+  const [creatingIndex, setCreatingIndex] = useState<number | null>(null);
 
-  const draftMutation = useMutation({
-    mutationFn: () => draftIssueRequest(projectId, prompt),
-    onSuccess: (data) => {
-      setDraft(data.draft);
-      setProvider(data.provider);
+  const draftOneMutation = useMutation({
+    mutationFn: () => draftOne(projectId, prompt),
+    onSuccess: ({ draft, provider: p }) => {
+      setDrafts([draft]);
+      setSelected(new Set([0]));
+      setProvider(p);
     },
     onError: (err: Error) => {
-      toast({
-        title: 'Drafting failed',
-        description: err.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Drafting failed', description: err.message, variant: 'destructive' });
     },
   });
 
-  const createMutation = useMutation({
-    mutationFn: () => {
-      if (!draft) throw new Error('No draft available');
-      return createIssueRequest(projectId, draft);
+  const draftManyMutation = useMutation({
+    mutationFn: () => draftMany(projectId, prompt, maxCount),
+    onSuccess: ({ drafts: ds, provider: p }) => {
+      setDrafts(ds);
+      setSelected(new Set(ds.map((_, i) => i)));
+      setProvider(p);
     },
-    onSuccess: () => {
+    onError: (err: Error) => {
+      toast({ title: 'Multi-drafting failed', description: err.message, variant: 'destructive' });
+    },
+  });
+
+  const bulkCreateMutation = useMutation({
+    mutationFn: async () => {
+      const created: Array<{ title: string; key?: string }> = [];
+      for (const idx of Array.from(selected).sort((a, b) => a - b)) {
+        const draft = drafts[idx];
+        if (!draft) continue;
+        setCreatingIndex(idx);
+        const issue = await createIssue(projectId, draft);
+        created.push({ title: draft.title, key: issue?.key });
+      }
+      setCreatingIndex(null);
+      return created;
+    },
+    onSuccess: (created) => {
       queryClient.invalidateQueries({
         queryKey: ['issues'],
         predicate: (query) => {
@@ -122,179 +167,192 @@ export function AiDraftIssueDialog({
         },
       });
       toast({
-        title: 'Issue created',
-        description: draft?.title ?? 'AI-drafted issue created.',
+        title: `${created.length} issue${created.length === 1 ? '' : 's'} created`,
+        description: created.map((c) => c.key || c.title).slice(0, 3).join(', '),
       });
       reset();
       onOpenChange(false);
     },
     onError: (err: Error) => {
-      toast({
-        title: 'Create failed',
-        description: err.message,
-        variant: 'destructive',
-      });
+      setCreatingIndex(null);
+      toast({ title: 'Create failed', description: err.message, variant: 'destructive' });
     },
   });
 
   function reset() {
     setPrompt('');
-    setDraft(null);
+    setDrafts([]);
+    setSelected(new Set());
     setProvider(null);
-    draftMutation.reset();
-    createMutation.reset();
+    setCreatingIndex(null);
+    draftOneMutation.reset();
+    draftManyMutation.reset();
+    bulkCreateMutation.reset();
   }
 
-  function handleClose(nextOpen: boolean) {
-    if (!nextOpen) reset();
-    onOpenChange(nextOpen);
+  function handleClose(next: boolean) {
+    if (!next) reset();
+    onOpenChange(next);
+  }
+
+  function updateDraft(idx: number, patch: Partial<IssueDraft>) {
+    setDrafts((current) => current.map((d, i) => (i === idx ? { ...d, ...patch } : d)));
+  }
+
+  function removeDraft(idx: number) {
+    setDrafts((current) => current.filter((_, i) => i !== idx));
+    setSelected((current) => {
+      const next = new Set<number>();
+      for (const s of current) {
+        if (s === idx) continue;
+        next.add(s > idx ? s - 1 : s);
+      }
+      return next;
+    });
+  }
+
+  function toggleSelected(idx: number) {
+    setSelected((current) => {
+      const next = new Set(current);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
   }
 
   if (!canDraft) return null;
 
-  const isDrafting = draftMutation.isPending;
-  const isCreating = createMutation.isPending;
-  const canSubmit = prompt.trim().length >= 3 && !isDrafting;
+  const isDrafting = draftOneMutation.isPending || draftManyMutation.isPending;
+  const isCreating = bulkCreateMutation.isPending;
+  const canSubmitPrompt = prompt.trim().length >= 3 && !isDrafting;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
-            Draft an issue with AI
+            Draft issues with AI
           </DialogTitle>
           <DialogDescription>
-            Describe what you need in plain language. AI returns a structured draft you can edit
-            before creating.
+            Describe what you need. Toggle multi-task to split one prompt into several separate
+            issues.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="ai-prompt">Prompt</Label>
-            <Textarea
-              id="ai-prompt"
-              placeholder="e.g. Navbar dropdown flickers on Safari when the viewport is narrower than 640px. Users report it on iOS 17+. Needs a fix before Friday."
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              rows={5}
-              disabled={isDrafting || isCreating}
-            />
-            <p className="text-xs text-muted-foreground">
-              {prompt.length}/4000 characters
-            </p>
-          </div>
+          {drafts.length === 0 && (
+            <>
+              <div className="flex items-center justify-between gap-4 rounded-md border border-border/60 bg-muted/10 px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <List className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Multi-task mode</span>
+                </div>
+                <Switch
+                  checked={multiMode}
+                  onCheckedChange={setMultiMode}
+                  disabled={isDrafting}
+                />
+              </div>
 
-          {draft ? (
-            <div className="space-y-3 rounded-md border border-border bg-muted/20 p-3">
+              {multiMode && (
+                <div className="grid grid-cols-[1fr_auto] items-end gap-3">
+                  <p className="text-xs text-muted-foreground">
+                    The LLM will split your prompt into up to N separate issues. Review each, edit
+                    if needed, then create all or just the ones you pick.
+                  </p>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Max</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={maxCount}
+                      onChange={(e) => setMaxCount(Math.min(20, Math.max(1, Number(e.target.value) || 1)))}
+                      className="w-20"
+                      disabled={isDrafting}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="ai-prompt">Prompt</Label>
+                <Textarea
+                  id="ai-prompt"
+                  placeholder={
+                    multiMode
+                      ? 'e.g. Ship the mobile app:\n- add offline mode\n- fix push-notification delivery\n- update onboarding copy'
+                      : 'e.g. Navbar dropdown flickers on Safari when viewport is narrower than 640px.'
+                  }
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  rows={multiMode ? 8 : 5}
+                  disabled={isDrafting || isCreating}
+                />
+                <p className="text-xs text-muted-foreground">{prompt.length}/6000</p>
+              </div>
+            </>
+          )}
+
+          {drafts.length > 0 && (
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Draft{provider ? ` · ${provider}` : ''}
+                  {drafts.length === 1 ? 'Draft' : `${drafts.length} drafts`}
+                  {provider ? ` · ${provider}` : ''}
                 </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => draftMutation.mutate()}
-                  disabled={isDrafting || !canSubmit}
-                >
-                  <Wand2 className="mr-1.5 h-3.5 w-3.5" />
-                  Re-draft
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">Type</Label>
-                  <Select
-                    value={draft.type}
-                    onValueChange={(value) =>
-                      setDraft({ ...draft, type: value as IssueDraft['type'] })
-                    }
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setDrafts([])}
+                    disabled={isCreating}
                   >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="task">Task</SelectItem>
-                      <SelectItem value="story">Story</SelectItem>
-                      <SelectItem value="bug">Bug</SelectItem>
-                      <SelectItem value="epic">Epic</SelectItem>
-                      <SelectItem value="subtask">Subtask</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Priority</Label>
-                  <Select
-                    value={draft.priority}
-                    onValueChange={(value) =>
-                      setDraft({ ...draft, priority: value as IssueDraft['priority'] })
+                    Back
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      multiMode ? draftManyMutation.mutate() : draftOneMutation.mutate()
                     }
+                    disabled={isCreating || !canSubmitPrompt}
                   >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="critical">Critical</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="none">None</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <Wand2 className="mr-1.5 h-3.5 w-3.5" />
+                    Re-draft
+                  </Button>
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs" htmlFor="ai-draft-title">
-                  Title
-                </Label>
-                <Input
-                  id="ai-draft-title"
-                  value={draft.title}
-                  onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-                  maxLength={500}
+              {drafts.map((draft, idx) => (
+                <DraftCard
+                  key={idx}
+                  index={idx}
+                  draft={draft}
+                  multi={multiMode && drafts.length > 1}
+                  selected={selected.has(idx)}
+                  creating={creatingIndex === idx}
+                  onToggle={() => toggleSelected(idx)}
+                  onRemove={() => removeDraft(idx)}
+                  onChange={(patch) => updateDraft(idx, patch)}
                 />
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs" htmlFor="ai-draft-desc">
-                  Description
-                </Label>
-                <Textarea
-                  id="ai-draft-desc"
-                  value={draft.description ?? ''}
-                  onChange={(e) =>
-                    setDraft({ ...draft, description: e.target.value || null })
-                  }
-                  rows={4}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs">Labels</Label>
-                <Input
-                  value={draft.labels.join(', ')}
-                  onChange={(e) =>
-                    setDraft({
-                      ...draft,
-                      labels: e.target.value
-                        .split(',')
-                        .map((s) => s.trim())
-                        .filter(Boolean)
-                        .slice(0, 8),
-                    })
-                  }
-                  placeholder="comma-separated"
-                />
-              </div>
+              ))}
             </div>
-          ) : draftMutation.isError ? (
+          )}
+
+          {draftOneMutation.isError && drafts.length === 0 ? (
             <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{(draftMutation.error as Error).message}</span>
+              <span>{(draftOneMutation.error as Error).message}</span>
+            </div>
+          ) : null}
+          {draftManyMutation.isError && drafts.length === 0 ? (
+            <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{(draftManyMutation.error as Error).message}</span>
             </div>
           ) : null}
         </div>
@@ -303,23 +361,159 @@ export function AiDraftIssueDialog({
           <Button variant="outline" onClick={() => handleClose(false)} disabled={isCreating}>
             Cancel
           </Button>
-          {draft ? (
+          {drafts.length === 0 ? (
             <Button
-              onClick={() => createMutation.mutate()}
-              disabled={isCreating || !draft.title.trim()}
+              onClick={() => (multiMode ? draftManyMutation.mutate() : draftOneMutation.mutate())}
+              disabled={!canSubmitPrompt}
             >
-              {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create issue
-            </Button>
-          ) : (
-            <Button onClick={() => draftMutation.mutate()} disabled={!canSubmit}>
               {isDrafting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               <Sparkles className="mr-1.5 h-4 w-4" />
-              Draft
+              {multiMode ? 'Draft tasks' : 'Draft'}
+            </Button>
+          ) : (
+            <Button
+              onClick={() => bulkCreateMutation.mutate()}
+              disabled={isCreating || selected.size === 0}
+            >
+              {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Create {selected.size === drafts.length ? 'all' : `${selected.size} of ${drafts.length}`}
             </Button>
           )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function DraftCard({
+  index,
+  draft,
+  multi,
+  selected,
+  creating,
+  onToggle,
+  onRemove,
+  onChange,
+}: {
+  index: number;
+  draft: IssueDraft;
+  multi: boolean;
+  selected: boolean;
+  creating: boolean;
+  onToggle: () => void;
+  onRemove: () => void;
+  onChange: (patch: Partial<IssueDraft>) => void;
+}) {
+  return (
+    <div className="rounded-md border border-border bg-muted/20 p-3 space-y-3">
+      <div className="flex items-start gap-3">
+        {multi && (
+          <button
+            type="button"
+            onClick={onToggle}
+            className="mt-1 shrink-0 text-muted-foreground hover:text-foreground"
+            aria-label={selected ? 'Deselect' : 'Select'}
+          >
+            {selected ? (
+              <CheckSquare className="h-4 w-4 text-primary" />
+            ) : (
+              <Square className="h-4 w-4" />
+            )}
+          </button>
+        )}
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono text-muted-foreground">#{index + 1}</span>
+            <Input
+              value={draft.title}
+              onChange={(e) => onChange({ title: e.target.value })}
+              maxLength={500}
+              className="flex-1"
+            />
+          </div>
+        </div>
+        {multi && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="shrink-0 text-muted-foreground hover:text-destructive"
+            aria-label="Remove draft"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <Label className="text-xs">Type</Label>
+          <Select
+            value={draft.type}
+            onValueChange={(value) => onChange({ type: value as IssueDraft['type'] })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="task">Task</SelectItem>
+              <SelectItem value="story">Story</SelectItem>
+              <SelectItem value="bug">Bug</SelectItem>
+              <SelectItem value="epic">Epic</SelectItem>
+              <SelectItem value="subtask">Subtask</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Priority</Label>
+          <Select
+            value={draft.priority}
+            onValueChange={(value) => onChange({ priority: value as IssueDraft['priority'] })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="critical">Critical</SelectItem>
+              <SelectItem value="high">High</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="low">Low</SelectItem>
+              <SelectItem value="none">None</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <Label className="text-xs">Description</Label>
+        <Textarea
+          value={draft.description ?? ''}
+          onChange={(e) => onChange({ description: e.target.value || null })}
+          rows={3}
+        />
+      </div>
+
+      <div className="space-y-1">
+        <Label className="text-xs">Labels (comma-separated)</Label>
+        <Input
+          value={draft.labels.join(', ')}
+          onChange={(e) =>
+            onChange({
+              labels: e.target.value
+                .split(',')
+                .map((s) => s.trim())
+                .filter(Boolean)
+                .slice(0, 8),
+            })
+          }
+        />
+      </div>
+
+      {creating && (
+        <div className="flex items-center gap-2 text-xs text-primary">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          Creating…
+        </div>
+      )}
+    </div>
   );
 }
