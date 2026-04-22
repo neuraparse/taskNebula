@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db, sprints, issues, workflowStatuses, projects, projectMembers, organizationMembers, users, ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from '@tasknebula/db';
 import { eq, count, and, ne } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
+import { runAutomations } from '@/lib/automation/evaluator';
 
 // Granular permission check helper
 async function checkSprintPermission(
@@ -315,6 +316,45 @@ export async function PATCH(
       projectId: currentSprint.projectId,
       sprintId,
     });
+
+    // Fire automation triggers (fire-and-forget) on status transitions.
+    const transitionedToActive =
+      status === 'active' && currentSprint.status === 'planned';
+    const transitionedToCompleted =
+      status === 'completed' && currentSprint.status === 'active';
+
+    if ((transitionedToActive || transitionedToCompleted) && updatedSprint) {
+      const [projectForAutomation] = await db
+        .select({
+          id: projects.id,
+          organizationId: projects.organizationId,
+        })
+        .from(projects)
+        .where(eq(projects.id, currentSprint.projectId))
+        .limit(1);
+
+      if (projectForAutomation) {
+        const trigger = transitionedToActive
+          ? 'sprint.started'
+          : 'sprint.completed';
+
+        void runAutomations({
+          trigger,
+          organizationId: projectForAutomation.organizationId,
+          projectId: projectForAutomation.id,
+          payload: {
+            sprint: updatedSprint,
+            project: {
+              id: projectForAutomation.id,
+              organizationId: projectForAutomation.organizationId,
+            },
+          },
+          actorUserId: session.user.id,
+        }).catch((err) =>
+          console.error(`Failed to run ${trigger} automations:`, err)
+        );
+      }
+    }
 
     return NextResponse.json(response);
   } catch (error) {
