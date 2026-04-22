@@ -223,7 +223,7 @@ const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; text: s
   },
 
   sprint_started: {
-    subject: '[{{projectName}}] Sprint started — {{sprintName}}',
+    subject: 'Sprint {{sprintName}} started in {{projectName}}',
     html: renderShell({
       kicker: 'SPRINT STARTED',
       heading: '{{sprintName}}',
@@ -306,7 +306,7 @@ const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; text: s
   },
 
   sprint_completed: {
-    subject: '[{{projectName}}] Sprint completed — {{sprintName}}',
+    subject: 'Sprint {{sprintName}} completed',
     html: renderShell({
       kicker: 'SPRINT COMPLETED',
       heading: '{{sprintName}}',
@@ -316,7 +316,9 @@ const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; text: s
           metaRow('Sprint', '<strong style="color:#111827;">{{sprintName}}</strong>') +
             metaRow('Project', '{{projectName}}') +
             metaRow('Dates', '{{sprintStartDate}} &rarr; {{sprintEndDate}}') +
-            metaRow('Issues', '{{issueCount}}'),
+            metaRow('Total issues', '{{issueCount}}') +
+            metaRow('Completed', '{{completedCount}}') +
+            metaRow('Carried over', '{{carriedOverCount}}'),
         ),
       ctaLabel: 'View retrospective',
       ctaUrl: '{{issueUrl}}',
@@ -324,7 +326,9 @@ const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; text: s
     text:
       'Sprint completed: {{sprintName}}\n\n' +
       'Dates: {{sprintStartDate}} -> {{sprintEndDate}}\n' +
-      'Issues: {{issueCount}}\n' +
+      'Total issues: {{issueCount}}\n' +
+      'Completed: {{completedCount}}\n' +
+      'Carried over: {{carriedOverCount}}\n' +
       'Project: {{projectName}}\n\n' +
       'Retrospective: {{issueUrl}}\n\n' +
       '---\n' +
@@ -412,6 +416,7 @@ async function shouldSendEmail(
       );
 
     // Quiet-by-default policy: critical events (assigned, mentioned) are on;
+    // sprint lifecycle milestones default on (low-frequency, high-signal);
     // everything else is off until the user opts in.
     const DEFAULT_EVENT_POLICY: Record<string, boolean> = {
       issue_assigned: true,
@@ -419,8 +424,8 @@ async function shouldSendEmail(
       issue_commented: false,
       issue_status_changed: false,
       issue_created: false,
-      sprint_started: false,
-      sprint_completed: false,
+      sprint_started: true,
+      sprint_completed: true,
       project_created: false,
       project_archived: false,
       daily_digest: false,
@@ -651,6 +656,12 @@ export interface ProjectNotificationRecipient {
 }
 
 /**
+ * Sprint lifecycle recipient input. Same shape as ProjectNotificationRecipient —
+ * kept as a separate alias so call-sites remain readable.
+ */
+export type SprintNotificationRecipient = ProjectNotificationRecipient;
+
+/**
  * Send project-lifecycle notification emails (`project.created`,
  * `project.archived`) to a list of recipients, gating each one by their
  * stored notification preferences.
@@ -672,7 +683,7 @@ export async function sendProjectNotificationEmail(params: {
   };
   eventType: 'project.created' | 'project.archived';
   actorName: string;
-  archivedAt?: string; // ISO date for project.archived
+  archivedAt?: string;
   recipients: ReadonlyArray<ProjectNotificationRecipient>;
 }): Promise<SendEmailResult[]> {
   const templateType =
@@ -682,7 +693,7 @@ export async function sendProjectNotificationEmail(params: {
   const projectUrl = `${appUrl}/projects/${params.project.key || params.project.id}`;
   const unsubscribeUrl = `${appUrl}/settings/notifications`;
   const archivedAt =
-    params.archivedAt || new Date().toISOString().slice(0, 10); // YYYY-MM-DD fallback
+    params.archivedAt || new Date().toISOString().slice(0, 10);
 
   const results = await Promise.all(
     params.recipients.map(async (recipient): Promise<SendEmailResult> => {
@@ -713,6 +724,89 @@ export async function sendProjectNotificationEmail(params: {
     }),
   );
 
+  return results;
+}
+
+/**
+ * Send notification emails for a sprint lifecycle event to many recipients.
+ * Individual failures are logged and captured in the results array so callers
+ * can fire-and-forget without handling per-recipient errors.
+ */
+export async function sendSprintNotificationEmail(params: {
+  sprint: {
+    id: string;
+    name: string;
+    goal?: string | null;
+    startDate: Date | string;
+    endDate: Date | string;
+  };
+  project: {
+    id: string;
+    key: string;
+    name: string;
+    organizationId: string;
+  };
+  eventType: 'sprint.started' | 'sprint.completed';
+  recipients: ReadonlyArray<SprintNotificationRecipient>;
+  actorName?: string;
+  stats?: {
+    issueCount?: number;
+    completedCount?: number;
+    carriedOverCount?: number;
+  };
+  sprintUrl?: string;
+}): Promise<SendEmailResult[]> {
+  const templateType =
+    params.eventType === 'sprint.started' ? 'sprint_started' : 'sprint_completed';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  const sprintUrl =
+    params.sprintUrl ||
+    `${appUrl}/projects/${params.project.key}/sprints/${params.sprint.id}`;
+
+  const fmtDate = (d: Date | string): string => {
+    const date = typeof d === 'string' ? new Date(d) : d;
+    if (isNaN(date.getTime())) return '';
+    return date.toISOString().slice(0, 10);
+  };
+
+  const baseVariables: Record<string, string> = {
+    sprintName: params.sprint.name,
+    sprintGoal: params.sprint.goal || '',
+    sprintStartDate: fmtDate(params.sprint.startDate),
+    sprintEndDate: fmtDate(params.sprint.endDate),
+    projectName: params.project.name,
+    projectKey: params.project.key,
+    actorName: params.actorName || 'A teammate',
+    issueCount: String(params.stats?.issueCount ?? 0),
+    completedCount: String(params.stats?.completedCount ?? 0),
+    carriedOverCount: String(params.stats?.carriedOverCount ?? 0),
+    issueUrl: sprintUrl,
+    organizationName: params.project.organizationId,
+    appUrl,
+    unsubscribeUrl: `${appUrl}/settings/notifications`,
+  };
+
+  const results: SendEmailResult[] = [];
+  for (const recipient of params.recipients) {
+    const variables: Record<string, string> = {
+      ...baseVariables,
+      recipientName:
+        recipient.name || recipient.email.split('@')[0] || recipient.email,
+    };
+    try {
+      const result = await sendEmail({
+        to: recipient.email,
+        templateType,
+        variables,
+        organizationId: params.project.organizationId,
+        userId: recipient.userId,
+      });
+      results.push(result);
+    } catch (error) {
+      console.error('sendSprintNotificationEmail error for recipient:', recipient.userId, error);
+      results.push({ success: false, error: String(error) });
+    }
+  }
   return results;
 }
 

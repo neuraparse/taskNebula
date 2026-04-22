@@ -4,6 +4,7 @@ import { db, sprints, issues, workflowStatuses, projects, projectMembers, organi
 import { eq, count, and, ne } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
 import { runAutomations } from '@/lib/automation/evaluator';
+import { notifySprintEvent } from '@/lib/notifications/send-sprint-notification';
 
 // Granular permission check helper
 async function checkSprintPermission(
@@ -317,42 +318,71 @@ export async function PATCH(
       sprintId,
     });
 
-    // Fire automation triggers (fire-and-forget) on status transitions.
+    // Fire automation triggers + notifications on status transitions.
     const transitionedToActive =
       status === 'active' && currentSprint.status === 'planned';
     const transitionedToCompleted =
       status === 'completed' && currentSprint.status === 'active';
 
     if ((transitionedToActive || transitionedToCompleted) && updatedSprint) {
-      const [projectForAutomation] = await db
+      const [projectForEvents] = await db
         .select({
           id: projects.id,
+          key: projects.key,
+          name: projects.name,
           organizationId: projects.organizationId,
         })
         .from(projects)
         .where(eq(projects.id, currentSprint.projectId))
         .limit(1);
 
-      if (projectForAutomation) {
+      if (projectForEvents) {
         const trigger = transitionedToActive
           ? 'sprint.started'
           : 'sprint.completed';
 
         void runAutomations({
           trigger,
-          organizationId: projectForAutomation.organizationId,
-          projectId: projectForAutomation.id,
+          organizationId: projectForEvents.organizationId,
+          projectId: projectForEvents.id,
           payload: {
             sprint: updatedSprint,
             project: {
-              id: projectForAutomation.id,
-              organizationId: projectForAutomation.organizationId,
+              id: projectForEvents.id,
+              organizationId: projectForEvents.organizationId,
             },
           },
           actorUserId: session.user.id,
         }).catch((err) =>
           console.error(`Failed to run ${trigger} automations:`, err)
         );
+
+        try {
+          const stats = transitionedToCompleted
+            ? {
+                issueCount:
+                  Number(response.completedIssuesCount ?? 0) + movedToBacklogCount,
+                completedCount: Number(response.completedIssuesCount ?? 0),
+                carriedOverCount: movedToBacklogCount,
+              }
+            : undefined;
+
+          notifySprintEvent({
+            eventType: trigger,
+            sprint: {
+              id: updatedSprint.id,
+              name: updatedSprint.name,
+              goal: updatedSprint.goal,
+              startDate: updatedSprint.startDate,
+              endDate: updatedSprint.endDate,
+            },
+            project: projectForEvents,
+            actorUserId: session.user.id,
+            stats,
+          });
+        } catch (notifyError) {
+          console.error('Sprint notification dispatch failed:', notifyError);
+        }
       }
     }
 
