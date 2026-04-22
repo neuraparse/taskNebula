@@ -200,10 +200,13 @@ export const INTEGRATIONS: IntegrationDefinition[] = [
     Icon: GitHubIcon,
   },
   {
+    // Status is resolved at runtime via /api/integrations/gitlab/status.
+    // The initial 'available' value is a placeholder for the non-hook case
+    // (e.g. if this registry is consumed outside the IntegrationsGrid).
     id: 'gitlab',
     name: 'GitLab',
     description: 'Sync issues, merge requests, and commits',
-    status: 'coming_soon',
+    status: 'available',
     category: 'source-control',
     brandColor: '#FC6D26',
     Icon: GitLabIcon,
@@ -303,6 +306,10 @@ interface IntegrationCardProps {
 }
 
 function IntegrationCard({ integration, footer, accountLabel }: IntegrationCardProps) {
+  if (integration.id === 'gitlab') {
+    return <GitLabIntegrationCard integration={integration} />;
+  }
+
   const { name, description, status, href, Icon } = integration;
   const isInteractive = href && status !== 'coming_soon' && !footer;
 
@@ -419,6 +426,136 @@ function useSlackConnection(organizationId: string | null) {
   }, [organizationId, load]);
 
   return { status, loading, disconnecting, disconnect, refresh: load };
+}
+
+// ---------------------------------------------------------------------------
+// GitLab card — OAuth connect / disconnect wired against
+// /api/integrations/gitlab/(authorize|callback|status) + DELETE /api/integrations/gitlab.
+// ---------------------------------------------------------------------------
+
+interface GitLabStatusResponse {
+  connected: boolean;
+  connection?: {
+    externalAccountLabel?: string | null;
+  };
+}
+
+function GitLabIntegrationCard({ integration }: IntegrationCardProps) {
+  const { name, description, Icon } = integration;
+  const currentOrganizationId = useOrganization((state) => state.currentOrganizationId);
+
+  const [connected, setConnected] = useState(false);
+  const [accountLabel, setAccountLabel] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    if (!currentOrganizationId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/integrations/gitlab/status?organizationId=${encodeURIComponent(currentOrganizationId)}`,
+        { cache: 'no-store' }
+      );
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      const json = (await res.json()) as GitLabStatusResponse;
+      setConnected(Boolean(json.connected));
+      setAccountLabel(json.connection?.externalAccountLabel ?? null);
+    } catch (err) {
+      console.error('GitLab status check failed', err);
+      setConnected(false);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentOrganizationId]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  const handleConnect = () => {
+    if (!currentOrganizationId) {
+      setError('Select an organization first');
+      return;
+    }
+    window.location.href = `/api/integrations/gitlab/authorize?organizationId=${encodeURIComponent(currentOrganizationId)}`;
+  };
+
+  const handleDisconnect = async () => {
+    if (!currentOrganizationId) return;
+    const ok = window.confirm('Disconnect GitLab from this workspace? TaskNebula will stop syncing issues and merge requests.');
+    if (!ok) return;
+    setDisconnecting(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/integrations/gitlab?organizationId=${encodeURIComponent(currentOrganizationId)}`,
+        { method: 'DELETE' }
+      );
+      if (!res.ok) throw new Error(`DELETE failed with ${res.status}`);
+      setConnected(false);
+      setAccountLabel(null);
+    } catch (err) {
+      console.error('GitLab disconnect failed', err);
+      setError('Failed to disconnect. Please try again.');
+    } finally {
+      setDisconnecting(false);
+    }
+  };
+
+  return (
+    <article className="group relative rounded-xl border border-border bg-card p-5 transition-all hover:border-foreground/20 hover:shadow-sm">
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted/50">
+          <Icon className="h-6 w-6" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
+          <p className="mt-1 text-[12.5px] text-muted-foreground leading-snug">{description}</p>
+          {connected && accountLabel && (
+            <p className="mt-1 text-[11.5px] text-muted-foreground">Account: {accountLabel}</p>
+          )}
+          {error && (
+            <p className="mt-1 text-[11.5px] text-destructive">{error}</p>
+          )}
+          <div className="mt-3 flex items-center gap-2">
+            {connected ? (
+              <button
+                type="button"
+                onClick={handleDisconnect}
+                disabled={disconnecting}
+                className={cn(
+                  'rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium',
+                  'hover:border-foreground/30 disabled:opacity-60'
+                )}
+              >
+                {disconnecting ? 'Disconnecting...' : 'Disconnect'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleConnect}
+                disabled={!currentOrganizationId || loading}
+                className={cn(
+                  'rounded-md border border-foreground bg-foreground px-2.5 py-1 text-xs font-medium text-background',
+                  'hover:opacity-90 disabled:opacity-60'
+                )}
+              >
+                {loading ? 'Checking...' : 'Connect'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+      {connected && (
+        <Badge variant="success" className="absolute right-4 top-4">
+          Connected
+        </Badge>
+      )}
+    </article>
+  );
 }
 
 // ---------------------------------------------------------------------------
