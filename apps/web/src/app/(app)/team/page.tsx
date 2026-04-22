@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import { auth } from '@/auth';
 import { db, organizationMembers, users as usersTable } from '@tasknebula/db';
 import { eq, inArray } from 'drizzle-orm';
@@ -37,9 +38,9 @@ export default async function TeamPage() {
             <p className="text-sm text-muted-foreground">
               You are not a member of any organization yet.
             </p>
-            <a href="/settings">
+            <Link href="/settings?tab=organization">
               <Button size="sm">Create organization</Button>
-            </a>
+            </Link>
           </div>
         </div>
       </div>
@@ -87,9 +88,9 @@ export default async function TeamPage() {
               {plainMembers.length} member{plainMembers.length !== 1 ? 's' : ''}
             </p>
           </div>
-          <a href="/settings/members">
+          <Link href="/settings?tab=members">
             <Button size="sm">Invite member</Button>
-          </a>
+          </Link>
         </div>
       </div>
 

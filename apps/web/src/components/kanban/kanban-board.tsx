@@ -7,8 +7,9 @@ import { DEFAULT_BOARD_FILTERS, type BoardFilters } from './board-filters';
 import { useIssues, useUpdateIssue } from '@/lib/hooks/use-issues';
 import { useWorkflowStatuses } from '@/lib/hooks/use-workflow-statuses';
 import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
-import { Loader2, Plus, Kanban as LayoutKanban } from 'lucide-react';
+import { Plus, Kanban as LayoutKanban } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SkeletonKanbanColumn } from '@/components/ui/skeleton';
 import {
   DndContext,
   DragEndEvent,
@@ -129,8 +130,14 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex h-full overflow-x-auto overflow-y-hidden px-4 py-4">
+        <div className="flex h-full gap-3">
+          <SkeletonKanbanColumn title="Backlog" cards={3} />
+          <SkeletonKanbanColumn title="To Do" cards={4} />
+          <SkeletonKanbanColumn title="In Progress" cards={2} />
+          <SkeletonKanbanColumn title="In Review" cards={2} />
+          <SkeletonKanbanColumn title="Done" cards={3} />
+        </div>
       </div>
     );
   }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Search, Users } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -57,9 +58,9 @@ export function TeamMembersList({ members }: TeamMembersListProps) {
         <p className="text-sm text-muted-foreground">
           Invite team members to collaborate on projects.
         </p>
-        <a href="/settings/members">
+        <Link href="/settings?tab=members">
           <Button size="sm">Invite member</Button>
-        </a>
+        </Link>
       </div>
     );
   }

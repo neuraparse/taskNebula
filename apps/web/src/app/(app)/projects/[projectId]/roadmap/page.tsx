@@ -201,7 +201,7 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
                       <div
                         className="h-full rounded-sm bg-primary transition-all duration-150 ease-snap"
                         style={{
-                          width: `${(epic.progress / 12) * duration.span * 100}%`,
+                          width: `${(epic.progress * duration.span) / 12}%`,
                           marginLeft: `${(duration.start / 12) * 100}%`
                         }}
                       />
