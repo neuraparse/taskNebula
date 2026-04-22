@@ -2,7 +2,11 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { useOrganization } from '@/lib/hooks/use-organization';
 import { cn } from '@/lib/utils';
 
 // ---------------------------------------------------------------------------
@@ -239,7 +243,7 @@ export const INTEGRATIONS: IntegrationDefinition[] = [
     id: 'jira',
     name: 'Jira',
     description: 'Migrate projects and issues to TaskNebula',
-    status: 'coming_soon',
+    status: 'available',
     category: 'productivity',
     brandColor: '#2684FF',
     Icon: JiraIcon,
@@ -300,6 +304,10 @@ interface IntegrationCardProps {
 }
 
 function IntegrationCard({ integration }: IntegrationCardProps) {
+  if (integration.id === 'jira') {
+    return <JiraIntegrationCard integration={integration} />;
+  }
+
   const { name, description, status, href, Icon } = integration;
   const isInteractive = href && status !== 'coming_soon';
 
@@ -343,6 +351,153 @@ function IntegrationCard({ integration }: IntegrationCardProps) {
     );
   }
   return card;
+}
+
+// ---------------------------------------------------------------------------
+// Jira-specific card: Connect / Disconnect with live connection status.
+// ---------------------------------------------------------------------------
+
+type JiraConnectionSummary = {
+  connected: boolean;
+  externalAccountLabel?: string | null;
+  siteUrl?: string | null;
+  siteName?: string | null;
+};
+
+function JiraIntegrationCard({ integration }: IntegrationCardProps) {
+  const { name, description, Icon } = integration;
+  const currentOrganizationId = useOrganization((s) => s.currentOrganizationId);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const queryKey = ['integrations', 'jira', currentOrganizationId] as const;
+
+  const { data, isLoading } = useQuery<JiraConnectionSummary>({
+    queryKey,
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/integrations/jira?organizationId=${currentOrganizationId}`
+      );
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || 'Failed to load Jira status');
+      }
+      return (await response.json()) as JiraConnectionSummary;
+    },
+    enabled: !!currentOrganizationId,
+  });
+
+  const disconnect = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(
+        `/api/integrations/jira?organizationId=${currentOrganizationId}`,
+        { method: 'DELETE' }
+      );
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || 'Failed to disconnect Jira');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      toast({
+        title: 'Jira disconnected',
+        description: 'The Jira integration has been removed from this workspace.',
+      });
+    },
+    onError: (err: Error) => {
+      toast({
+        title: 'Could not disconnect Jira',
+        description: err.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const isConnected = !!data?.connected;
+  const siteLabel = data?.siteName || data?.externalAccountLabel || null;
+  const siteUrl = data?.siteUrl || null;
+
+  function handleConnect() {
+    if (!currentOrganizationId) {
+      toast({
+        title: 'Select a workspace first',
+        description: 'Pick an organization before connecting Jira.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    window.location.href = `/api/integrations/jira/authorize?organizationId=${currentOrganizationId}`;
+  }
+
+  return (
+    <article
+      className={cn(
+        'group relative rounded-xl border border-border bg-card p-5 transition-all',
+        'hover:border-foreground/20 hover:shadow-sm'
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted/50">
+          <Icon className="h-6 w-6" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
+          <p className="mt-1 text-[12.5px] text-muted-foreground leading-snug">
+            {description}
+          </p>
+          {isConnected && siteLabel && (
+            <p className="mt-2 text-[12px] text-muted-foreground truncate">
+              Site: <span className="text-foreground font-medium">{siteLabel}</span>
+              {siteUrl && (
+                <>
+                  {' · '}
+                  <a
+                    href={siteUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-foreground/80 underline-offset-2 hover:underline"
+                  >
+                    Open
+                  </a>
+                </>
+              )}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {isConnected && (
+        <Badge variant="success" className="absolute right-4 top-4">
+          Connected
+        </Badge>
+      )}
+
+      <div className="mt-4 flex items-center gap-2">
+        {isConnected ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => disconnect.mutate()}
+            disabled={disconnect.isPending}
+          >
+            {disconnect.isPending ? 'Disconnecting…' : 'Disconnect'}
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleConnect}
+            disabled={isLoading || !currentOrganizationId}
+          >
+            Connect Jira
+          </Button>
+        )}
+      </div>
+    </article>
+  );
 }
 
 // ---------------------------------------------------------------------------
