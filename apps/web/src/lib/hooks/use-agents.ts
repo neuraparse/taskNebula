@@ -51,7 +51,7 @@ type WorkspaceAgentResponse = {
     ready: boolean;
     summary: string;
     configured: boolean;
-    source: 'workspace' | 'server_env' | null;
+    source: 'workspace' | 'platform' | 'server_env' | null;
     label: string | null;
     updatedAt: string | null;
   };
@@ -141,7 +141,7 @@ type ProjectAgentsResponse = {
     ready: boolean;
     summary: string;
     configured: boolean;
-    source: 'workspace' | 'server_env' | null;
+    source: 'workspace' | 'platform' | 'server_env' | null;
     label: string | null;
     updatedAt: string | null;
   };
@@ -250,7 +250,7 @@ type AdminAgentControlResponse = {
       ready: boolean;
       summary: string;
       configured: boolean;
-      source: 'workspace' | 'server_env' | null;
+      source: 'workspace' | 'platform' | 'server_env' | null;
       label: string | null;
       updatedAt: string | null;
     };

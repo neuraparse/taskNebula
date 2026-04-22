@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminAgentControl, useAdminAgentStream, useUpdateAdminAgentControl } from '@/lib/hooks/use-agents';
+import { PlatformAiCredentials } from './platform-ai-credentials';
 import { cn } from '@/lib/utils';
 import type { ComponentType } from 'react';
 import {
@@ -49,8 +50,9 @@ function serviceStatusDot(state: 'ready' | 'blocked' | 'disabled' | 'preview') {
   return 'status-warn';
 }
 
-function formatCredentialSource(source: 'workspace' | 'server_env' | null) {
+function formatCredentialSource(source: 'workspace' | 'platform' | 'server_env' | null) {
   if (source === 'workspace') return 'Workspace secret';
+  if (source === 'platform') return 'Platform default';
   if (source === 'server_env') return 'Server env';
   return 'Not configured';
 }
@@ -215,6 +217,11 @@ export function AgentOpsPanel() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* Platform-default provider keys */}
+      <section>
+        <PlatformAiCredentials />
       </section>
 
       {/* Service status + Provider coverage */}

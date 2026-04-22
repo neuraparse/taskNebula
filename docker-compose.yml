@@ -110,6 +110,11 @@ services:
       SMTP_SECURE: ${SMTP_SECURE:-false}
       EMAIL_FROM: ${EMAIL_FROM:-}
       FEATURE_EMAIL_ENABLED: ${FEATURE_EMAIL_ENABLED:-false}
+      # AI / agents / bots — enabled from Admin → Agent control (DB-backed).
+      # These env vars are an optional last-resort credential fallback for
+      # dev; prod should enter keys through the admin/workspace config UI.
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     ports:
       - '127.0.0.1:${PORT:-3000}:3000'
     volumes:

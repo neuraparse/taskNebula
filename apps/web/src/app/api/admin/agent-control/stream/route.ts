@@ -2,7 +2,6 @@ import { auth } from '@/auth';
 import { isSuperAdmin } from '@/lib/auth/permissions';
 import { createAgentStreamResponse } from '@/lib/agents/stream-response';
 import { agentEventStream } from '@/lib/websocket/server';
-
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {

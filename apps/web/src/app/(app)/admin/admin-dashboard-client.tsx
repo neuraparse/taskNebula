@@ -152,7 +152,11 @@ export function AdminDashboardClient() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const validTabs = useMemo(() => NAV.map((item) => item.key), []);
+  // Admin's Agent control tab is always visible to super-admins — this is
+  // where the platform master toggle lives, so hiding it would create a
+  // chicken-and-egg (can't enable AI because the toggle is hidden).
+  const visibleNav = NAV;
+  const validTabs = useMemo(() => visibleNav.map((item) => item.key), [visibleNav]);
   const requestedTab = searchParams.get('tab');
   const initialTab = requestedTab && validTabs.includes(requestedTab) ? requestedTab : 'overview';
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -320,7 +324,7 @@ export function AdminDashboardClient() {
     }
   }
 
-  const currentNav = NAV.find((item) => item.key === activeTab) ?? NAV[0]!;
+  const currentNav = visibleNav.find((item) => item.key === activeTab) ?? visibleNav[0]!;
 
   return (
     <>
@@ -383,7 +387,7 @@ export function AdminDashboardClient() {
               <span className="text-sm font-semibold tracking-tight">Admin</span>
             </div>
             <nav className="space-y-0.5">
-              {NAV.map((item) => {
+              {visibleNav.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.key;
                 return (
@@ -416,7 +420,7 @@ export function AdminDashboardClient() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {NAV.map((item) => (
+                {visibleNav.map((item) => (
                   <SelectItem key={item.key} value={item.key}>
                     {item.label}
                   </SelectItem>

@@ -22,6 +22,7 @@ import {
 } from '@/lib/agents/model-configs';
 import { getSystemAgentControlSettingsFromDb } from '@/lib/agents/system';
 import { and, count, desc } from 'drizzle-orm';
+import { aiDisabledResponse, isAiFeatureEnabled } from '@/lib/ai/feature-gate';
 
 const capabilitySchema = z.object({
   project_tracking: z.boolean().optional(),
@@ -31,6 +32,7 @@ const capabilitySchema = z.object({
 });
 
 const workspaceAgentSettingsSchema = z.object({
+  assistantEnabled: z.boolean().optional(),
   enabled: z.boolean().optional(),
   modelConfigId: z.string().min(1).max(255).nullable().optional(),
   provider: z.enum(['native', 'openai', 'anthropic', 'azure', 'custom']).optional(),
@@ -41,7 +43,7 @@ const workspaceAgentSettingsSchema = z.object({
   dailyRunLimit: z.number().min(1).max(500).optional(),
   capabilities: capabilitySchema.optional(),
   credential: z.object({
-    provider: z.enum(['openai']).default('openai'),
+    provider: z.enum(['openai', 'anthropic']).default('openai'),
     apiKey: z.string().min(20).max(500).optional(),
     remove: z.boolean().optional(),
   }).optional(),
@@ -61,6 +63,7 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ organizationId: string }> }
 ) {
+  if (!(await isAiFeatureEnabled())) return aiDisabledResponse();
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -232,6 +235,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ organizationId: string }> }
 ) {
+  if (!(await isAiFeatureEnabled())) return aiDisabledResponse();
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

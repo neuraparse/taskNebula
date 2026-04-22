@@ -9,7 +9,9 @@ export type NotificationType =
   | 'issue_updated'
   | 'issue_linked'
   | 'sprint_started'
-  | 'sprint_completed';
+  | 'sprint_completed'
+  | 'ai_draft_failed'
+  | 'agent_run_failed';
 
 export interface NotificationActor {
   id: string;

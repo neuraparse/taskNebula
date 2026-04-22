@@ -24,19 +24,25 @@ export type AgentProvider = (typeof AGENT_PROVIDERS)[number];
 
 export const AGENT_PROVIDER_DEFAULT_MODELS: Record<AgentProvider, string> = {
   native: 'tasknebula-planner-v1',
-  openai: 'gpt-5.4',
-  anthropic: '',
-  azure: 'gpt-5.4',
+  openai: 'gpt-4o-mini',
+  anthropic: 'claude-sonnet-4-6',
+  azure: 'gpt-4o',
   custom: '',
 };
 
 export type AgentCapabilityMap = Record<AgentCapabilityKey, boolean>;
 
 export type WorkspaceAgentSettings = {
-  enabled: boolean;
-  modelConfigId?: string | null;
+  // LLM Provider (shared by AI Assistant + Agents)
   provider: AgentProvider;
   model: string;
+  modelConfigId?: string | null;
+
+  // AI Assistant — on-demand LLM features (draft issue, suggestions)
+  assistantEnabled: boolean;
+
+  // Agents — automated/semi-automated run kinds (tracking, triage, planning)
+  enabled: boolean;
   executionMode: AgentExecutionMode;
   allowWriteActions: boolean;
   requireApprovalForWrites: boolean;
@@ -64,18 +70,38 @@ export type EffectiveProjectAgentSettings = ProjectAgentSettings & {
   dailyRunLimit: number;
 };
 
+export type PlatformProviderCredentialStore = {
+  openai?: {
+    iv: string;
+    authTag: string;
+    ciphertext: string;
+    preview: string;
+    updatedAt: string;
+    updatedBy: string;
+  };
+  anthropic?: {
+    iv: string;
+    authTag: string;
+    ciphertext: string;
+    preview: string;
+    updatedAt: string;
+    updatedBy: string;
+  };
+};
+
 export type SystemAgentControlSettings = {
   globalEnabled: boolean;
   allowWriteActions: boolean;
   requireSupervisionForAutoMode: boolean;
   maxConcurrentRuns: number;
+  providerCredentials?: PlatformProviderCredentialStore;
 };
 
 export type AgentProviderReadiness = {
   ready: boolean;
   summary: string;
   configured: boolean;
-  source: 'workspace' | 'server_env' | null;
+  source: 'workspace' | 'platform' | 'server_env' | null;
   label: string | null;
   updatedAt: string | null;
 };
@@ -133,19 +159,27 @@ export const AGENT_CAPABILITY_DETAILS: Record<
 };
 
 export const DEFAULT_WORKSPACE_AGENT_SETTINGS: WorkspaceAgentSettings = {
-  enabled: false,
-  modelConfigId: null,
+  // LLM Provider defaults — unconfigured; admins pick a provider + model.
   provider: 'native',
   model: AGENT_PROVIDER_DEFAULT_MODELS.native,
-  executionMode: 'assistive',
+  modelConfigId: null,
+
+  // AI Assistant: off until explicitly enabled. Needs a credential to work.
+  assistantEnabled: false,
+
+  // Agents: fully locked down by default. Every capability is opt-in
+  // (configure each one + pick a trigger), writes require approval, and
+  // the execution mode is manual so nothing runs without a human click.
+  enabled: false,
+  executionMode: 'manual',
   allowWriteActions: false,
   requireApprovalForWrites: true,
   dailyRunLimit: 20,
   capabilities: {
-    project_tracking: true,
-    backlog_triage: true,
-    sprint_planning: true,
-    bulk_sprint_creation: true,
+    project_tracking: false,
+    backlog_triage: false,
+    sprint_planning: false,
+    bulk_sprint_creation: false,
   },
 };
 
@@ -167,7 +201,9 @@ export const DEFAULT_PROJECT_AGENT_SETTINGS: ProjectAgentSettings = {
 };
 
 export const DEFAULT_SYSTEM_AGENT_CONTROL_SETTINGS: SystemAgentControlSettings = {
-  globalEnabled: true,
+  // Platform master switch — AI is OFF until an operator opts in via the
+  // Admin → Agent control page. Every AI route gates on this flag.
+  globalEnabled: false,
   allowWriteActions: true,
   requireSupervisionForAutoMode: true,
   maxConcurrentRuns: 6,
@@ -206,14 +242,23 @@ export function normalizeWorkspaceAgentSettings(input: unknown): WorkspaceAgentS
   const source = isObject(input) ? input : {};
 
   return {
-    enabled: asBool(source.enabled, DEFAULT_WORKSPACE_AGENT_SETTINGS.enabled),
-    modelConfigId: typeof source.modelConfigId === 'string' && source.modelConfigId.trim()
-      ? source.modelConfigId.trim()
-      : DEFAULT_WORKSPACE_AGENT_SETTINGS.modelConfigId,
+    // LLM Provider (shared)
     provider: (AGENT_PROVIDERS.includes(source.provider as AgentProvider)
       ? source.provider
       : DEFAULT_WORKSPACE_AGENT_SETTINGS.provider) as AgentProvider,
     model: asString(source.model, DEFAULT_WORKSPACE_AGENT_SETTINGS.model),
+    modelConfigId: typeof source.modelConfigId === 'string' && source.modelConfigId.trim()
+      ? source.modelConfigId.trim()
+      : DEFAULT_WORKSPACE_AGENT_SETTINGS.modelConfigId,
+
+    // AI Assistant toggle
+    assistantEnabled: asBool(
+      source.assistantEnabled,
+      DEFAULT_WORKSPACE_AGENT_SETTINGS.assistantEnabled
+    ),
+
+    // Agents
+    enabled: asBool(source.enabled, DEFAULT_WORKSPACE_AGENT_SETTINGS.enabled),
     executionMode: (AGENT_EXECUTION_MODES.includes(source.executionMode as AgentExecutionMode)
       ? source.executionMode
       : DEFAULT_WORKSPACE_AGENT_SETTINGS.executionMode) as AgentExecutionMode,
@@ -256,10 +301,37 @@ export function normalizeProjectAgentSettings(input: unknown): ProjectAgentSetti
   };
 }
 
+function normalizePlatformProviderCredentials(
+  input: unknown
+): PlatformProviderCredentialStore | undefined {
+  if (!isObject(input)) return undefined;
+  const store: PlatformProviderCredentialStore = {};
+  for (const key of ['openai', 'anthropic'] as const) {
+    const envelope = (input as Record<string, unknown>)[key];
+    if (!isObject(envelope)) continue;
+    if (
+      typeof envelope.iv === 'string' &&
+      typeof envelope.authTag === 'string' &&
+      typeof envelope.ciphertext === 'string' &&
+      typeof envelope.preview === 'string'
+    ) {
+      store[key] = {
+        iv: envelope.iv,
+        authTag: envelope.authTag,
+        ciphertext: envelope.ciphertext,
+        preview: envelope.preview,
+        updatedAt: typeof envelope.updatedAt === 'string' ? envelope.updatedAt : new Date().toISOString(),
+        updatedBy: typeof envelope.updatedBy === 'string' ? envelope.updatedBy : '',
+      };
+    }
+  }
+  return Object.keys(store).length > 0 ? store : undefined;
+}
+
 export function normalizeSystemAgentControlSettings(input: unknown): SystemAgentControlSettings {
   const source = isObject(input) ? input : {};
 
-  return {
+  const normalized: SystemAgentControlSettings = {
     globalEnabled: asBool(source.globalEnabled, DEFAULT_SYSTEM_AGENT_CONTROL_SETTINGS.globalEnabled),
     allowWriteActions: asBool(source.allowWriteActions, DEFAULT_SYSTEM_AGENT_CONTROL_SETTINGS.allowWriteActions),
     requireSupervisionForAutoMode: asBool(
@@ -273,6 +345,11 @@ export function normalizeSystemAgentControlSettings(input: unknown): SystemAgent
       50
     ),
   };
+
+  const credentials = normalizePlatformProviderCredentials(source.providerCredentials);
+  if (credentials) normalized.providerCredentials = credentials;
+
+  return normalized;
 }
 
 export function resolveEffectiveProjectAgentSettings(
@@ -314,7 +391,7 @@ export function getAgentProviderReadiness(
   model?: string,
   credential?: {
     configured: boolean;
-    source: 'workspace' | 'server_env' | null;
+    source: 'workspace' | 'platform' | 'server_env' | null;
     label: string | null;
     updatedAt: string | null;
   }

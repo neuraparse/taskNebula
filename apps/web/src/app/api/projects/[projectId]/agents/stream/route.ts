@@ -2,6 +2,7 @@ import { auth } from '@/auth';
 import { getProjectAgentAccess } from '@/lib/agents/access';
 import { createAgentStreamResponse } from '@/lib/agents/stream-response';
 import { agentEventStream } from '@/lib/websocket/server';
+import { isAiFeatureEnabled } from '@/lib/ai/feature-gate';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +10,7 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
+  if (!(await isAiFeatureEnabled())) return new Response('Not found', { status: 404 });
   const session = await auth();
   if (!session?.user?.id) {
     return new Response('Unauthorized', { status: 401 });

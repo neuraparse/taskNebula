@@ -27,6 +27,7 @@ const envSchema = z.object({
   
   // AI
   OPENAI_API_KEY: z.string().optional(),
+  ANTHROPIC_API_KEY: z.string().optional(),
   LIVEKIT_URL: z.string().optional(),
   LIVEKIT_API_KEY: z.string().optional(),
   LIVEKIT_API_SECRET: z.string().optional(),
@@ -43,7 +44,13 @@ const envSchema = z.object({
 
   // Email / SMTP
   SMTP_HOST: z.string().optional(),
-  SMTP_PORT: z.coerce.number().int().positive().optional(),
+  SMTP_PORT: z
+    .preprocess((v) => {
+      if (v === '' || v === undefined || v === null) return undefined;
+      const n = typeof v === 'number' ? v : Number(v);
+      return Number.isFinite(n) && n > 0 ? n : undefined;
+    }, z.number().int().positive().optional())
+    .optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASSWORD: z.string().optional(),
   SMTP_SECURE: z.string().optional(),
@@ -74,7 +81,8 @@ const envSchema = z.object({
   VAPID_SUBJECT: z.string().email().optional(),
   
   // Feature Flags
-  FEATURE_AI_ENABLED: z.string().transform(val => val === 'true').default('true'),
+  // AI on/off is managed in DB (systemSettings.agent_control_center.globalEnabled,
+  // toggled from Admin → Agent control), not via env. No FEATURE_AI_ENABLED here.
   FEATURE_WEBHOOKS_ENABLED: z.string().transform(val => val === 'true').default('true'),
   FEATURE_EMAIL_ENABLED: z.string().transform(val => val === 'true').default('false'),
   FEATURE_PUSH_NOTIFICATIONS_ENABLED: z.string().transform(val => val === 'true').default('false'),
@@ -119,9 +127,8 @@ export const isDevelopment = env.NODE_ENV === 'development';
 export const isProduction = env.NODE_ENV === 'production';
 export const isTest = env.NODE_ENV === 'test';
 
-// Feature flags
+// Feature flags (env-sourced flags only — AI toggle lives in DB)
 export const features = {
-  ai: env.FEATURE_AI_ENABLED,
   webhooks: env.FEATURE_WEBHOOKS_ENABLED,
   email: env.FEATURE_EMAIL_ENABLED,
   pushNotifications: env.FEATURE_PUSH_NOTIFICATIONS_ENABLED,

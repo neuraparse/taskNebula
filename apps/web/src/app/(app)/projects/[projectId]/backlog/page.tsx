@@ -5,6 +5,8 @@ import { useIssues, useUpdateIssue } from '@/lib/hooks/use-issues';
 import { useSprints, useAssignIssueToSprint } from '@/lib/hooks/use-sprints';
 import { CreateIssueModal } from '@/components/issues/create-issue-modal';
 import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
+import { AiDraftIssueDialog } from '@/components/ai/ai-draft-issue-dialog';
+import { useAiCapability } from '@/lib/hooks/use-ai-capability';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -38,6 +40,7 @@ import {
   FileText,
   Loader2,
   Inbox,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -51,8 +54,10 @@ const typeConfig: Record<string, { icon: React.ElementType; color: string }> = {
 export default function BacklogPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [aiDraftOpen, setAiDraftOpen] = useState(false);
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
+  const { canDraft } = useAiCapability();
 
   const { data: allIssues, isLoading: issuesLoading } = useIssues({ projectId });
   const { data: sprints, isLoading: sprintsLoading } = useSprints(projectId);
@@ -145,6 +150,18 @@ export default function BacklogPage({ params }: { params: Promise<{ projectId: s
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+            )}
+
+            {canDraft && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => setAiDraftOpen(true)}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Draft with AI
+              </Button>
             )}
 
             <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => setCreateModalOpen(true)}>
@@ -286,6 +303,12 @@ export default function BacklogPage({ params }: { params: Promise<{ projectId: s
       <CreateIssueModal
         open={createModalOpen}
         onOpenChange={setCreateModalOpen}
+        projectId={projectId}
+      />
+
+      <AiDraftIssueDialog
+        open={aiDraftOpen}
+        onOpenChange={setAiDraftOpen}
         projectId={projectId}
       />
 

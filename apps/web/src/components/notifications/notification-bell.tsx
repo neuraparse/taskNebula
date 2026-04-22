@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Bell, BellOff, CheckCheck } from 'lucide-react';
+import { Bell, BellOff, CheckCheck, Sparkles, Bot, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -48,9 +48,13 @@ function NotificationRow({
   onMarkRead: (id: string) => void;
 }) {
   const actorName =
-    notification.actor?.name ||
-    notification.actor?.email?.split('@')[0] ||
-    'Someone';
+    notification.type === 'ai_draft_failed'
+      ? 'AI draft'
+      : notification.type === 'agent_run_failed'
+        ? 'Agent run'
+        : notification.actor?.name ||
+          notification.actor?.email?.split('@')[0] ||
+          'Someone';
   const initial =
     (notification.actor?.name || notification.actor?.email || '?')[0]?.toUpperCase() ??
     '?';
@@ -70,10 +74,20 @@ function NotificationRow({
       )}
 
       <div className={cn('relative shrink-0', !notification.isRead && 'realtime-ping')}>
-        <Avatar className="h-7 w-7 ring-1 ring-border">
-          <AvatarImage src={notification.actor?.image || undefined} alt="" />
-          <AvatarFallback className="text-[10px] font-semibold">{initial}</AvatarFallback>
-        </Avatar>
+        {notification.type === 'ai_draft_failed' ? (
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-destructive/10 text-destructive ring-1 ring-destructive/30">
+            <Sparkles className="h-3.5 w-3.5" />
+          </span>
+        ) : notification.type === 'agent_run_failed' ? (
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-destructive/10 text-destructive ring-1 ring-destructive/30">
+            <Bot className="h-3.5 w-3.5" />
+          </span>
+        ) : (
+          <Avatar className="h-7 w-7 ring-1 ring-border">
+            <AvatarImage src={notification.actor?.image || undefined} alt="" />
+            <AvatarFallback className="text-[10px] font-semibold">{initial}</AvatarFallback>
+          </Avatar>
+        )}
       </div>
 
       <div className="min-w-0 flex-1">
@@ -103,6 +117,23 @@ function NotificationRow({
     return (
       <Link
         href={`/issues/${notification.issueId}`}
+        onClick={handleClick}
+        className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        {body}
+      </Link>
+    );
+  }
+
+  // AI/agent failure notifications deep-link to the project AI settings
+  // so the reader can inspect/fix the config that caused the failure.
+  if (
+    (notification.type === 'ai_draft_failed' || notification.type === 'agent_run_failed') &&
+    notification.projectId
+  ) {
+    return (
+      <Link
+        href={`/projects/${notification.projectId}/settings?tab=ai-agents`}
         onClick={handleClick}
         className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >

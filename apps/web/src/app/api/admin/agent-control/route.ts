@@ -9,6 +9,7 @@ import { extractWorkspaceModelConfigId, listAgentModelConfigsByIds } from '@/lib
 import { db, agentRuns, organizations, projects, systemAuditLogs, users } from '@tasknebula/db';
 import { and, desc, eq } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { invalidateAiFeatureCache } from '@/lib/ai/feature-gate';
 
 const agentControlSchema = z.object({
   globalEnabled: z.boolean().optional(),
@@ -18,6 +19,8 @@ const agentControlSchema = z.object({
 });
 
 export async function GET() {
+  // No feature-gate check here — this is where super-admins flip the flag.
+  // The super-admin guard below is sufficient for auth.
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -222,6 +225,8 @@ export async function GET() {
 }
 
 export async function PATCH(request: NextRequest) {
+  // No feature-gate check here — this is where super-admins flip the flag.
+  // The super-admin guard below is sufficient for auth.
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -242,6 +247,7 @@ export async function PATCH(request: NextRequest) {
     };
 
     await upsertSystemAgentControlSettings(nextSettings, session.user.id);
+    invalidateAiFeatureCache();
 
     await db.insert(systemAuditLogs).values({
       id: createId(),

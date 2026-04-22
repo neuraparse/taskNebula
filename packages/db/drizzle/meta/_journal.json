@@ -127,6 +127,13 @@
       "when": 1776800000000,
       "tag": "0017_quiet_email_defaults",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1777200000000,
+      "tag": "0018_ai_failure_notifications",
+      "breakpoints": true
     }
   ]
 }
