@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    getJiraClientCredentials();
+    await getJiraClientCredentials();
   } catch {
     return NextResponse.json(
       { error: 'Jira integration is not configured on this server.' },
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
   };
   const state = Buffer.from(JSON.stringify(statePayload)).toString('base64url');
 
-  const authorizeUrl = buildJiraAuthorizeUrl({ state });
+  const authorizeUrl = await buildJiraAuthorizeUrl({ state });
 
   const response = NextResponse.redirect(authorizeUrl);
   response.cookies.set(JIRA_STATE_COOKIE, nonce, {

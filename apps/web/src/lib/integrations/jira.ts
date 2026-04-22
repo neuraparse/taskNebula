@@ -7,6 +7,8 @@
  * Docs: https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/
  */
 
+import { getClientCredentials } from './client-credentials';
+
 export const JIRA_PROVIDER = 'jira';
 export const JIRA_STATE_COOKIE = 'tn_jira_state';
 
@@ -16,6 +18,8 @@ export const JIRA_SCOPES = [
   'write:jira-work',
   'offline_access',
 ] as const;
+
+export const JIRA_DEFAULT_SCOPE = JIRA_SCOPES.join(' ');
 
 export const JIRA_AUTHORIZE_URL = 'https://auth.atlassian.com/authorize';
 export const JIRA_TOKEN_URL = 'https://auth.atlassian.com/oauth/token';
@@ -38,20 +42,14 @@ export type JiraTokenResponse = {
   token_type?: string;
 };
 
-export function getJiraClientCredentials() {
-  const clientId = process.env.JIRA_CLIENT_ID;
-  const clientSecret = process.env.JIRA_CLIENT_SECRET;
-  if (!clientId || !clientSecret) {
-    throw new Error(
-      'Jira integration is not configured. Set JIRA_CLIENT_ID and JIRA_CLIENT_SECRET.'
-    );
-  }
-  return { clientId, clientSecret };
-}
+type ResolvedJiraCredentials = {
+  clientId: string;
+  clientSecret: string;
+  redirectUri: string;
+  scope: string;
+};
 
-export function getJiraRedirectUri() {
-  const explicit = process.env.JIRA_REDIRECT_URI;
-  if (explicit) return explicit;
+function defaultJiraRedirectUri() {
   const base =
     process.env.NEXT_PUBLIC_APP_URL ||
     process.env.AUTH_URL ||
@@ -60,13 +58,38 @@ export function getJiraRedirectUri() {
   return `${base.replace(/\/$/, '')}/api/integrations/jira/callback`;
 }
 
-export function buildJiraAuthorizeUrl(params: { state: string }) {
-  const { clientId } = getJiraClientCredentials();
+/**
+ * Resolve Jira OAuth client credentials. DB (admin form) first, env vars
+ * second — mirroring `getClientCredentials('jira')` but also filling in the
+ * redirect uri / scope defaults that are specific to Atlassian 3LO.
+ */
+export async function getJiraClientCredentials(): Promise<ResolvedJiraCredentials> {
+  const credentials = await getClientCredentials('jira');
+  if (!credentials) {
+    throw new Error(
+      'Jira integration is not configured. Add credentials in Admin → Integrations, or set JIRA_CLIENT_ID / JIRA_CLIENT_SECRET.'
+    );
+  }
+  return {
+    clientId: credentials.clientId,
+    clientSecret: credentials.clientSecret,
+    redirectUri: credentials.redirectUri ?? defaultJiraRedirectUri(),
+    scope: credentials.scope ?? JIRA_DEFAULT_SCOPE,
+  };
+}
+
+export async function getJiraRedirectUri(): Promise<string> {
+  const credentials = await getClientCredentials('jira');
+  return credentials?.redirectUri ?? defaultJiraRedirectUri();
+}
+
+export async function buildJiraAuthorizeUrl(params: { state: string }): Promise<string> {
+  const { clientId, redirectUri, scope } = await getJiraClientCredentials();
   const url = new URL(JIRA_AUTHORIZE_URL);
   url.searchParams.set('audience', 'api.atlassian.com');
   url.searchParams.set('client_id', clientId);
-  url.searchParams.set('scope', JIRA_SCOPES.join(' '));
-  url.searchParams.set('redirect_uri', getJiraRedirectUri());
+  url.searchParams.set('scope', scope);
+  url.searchParams.set('redirect_uri', redirectUri);
   url.searchParams.set('state', params.state);
   url.searchParams.set('response_type', 'code');
   url.searchParams.set('prompt', 'consent');
@@ -74,7 +97,7 @@ export function buildJiraAuthorizeUrl(params: { state: string }) {
 }
 
 export async function exchangeJiraCode(code: string): Promise<JiraTokenResponse> {
-  const { clientId, clientSecret } = getJiraClientCredentials();
+  const { clientId, clientSecret, redirectUri } = await getJiraClientCredentials();
   const response = await fetch(JIRA_TOKEN_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -83,7 +106,7 @@ export async function exchangeJiraCode(code: string): Promise<JiraTokenResponse>
       client_id: clientId,
       client_secret: clientSecret,
       code,
-      redirect_uri: getJiraRedirectUri(),
+      redirect_uri: redirectUri,
     }),
   });
   if (!response.ok) {

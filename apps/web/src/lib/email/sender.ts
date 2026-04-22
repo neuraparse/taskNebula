@@ -1,14 +1,17 @@
 /**
  * Shared nodemailer helper.
  *
- * Reads SMTP settings from environment variables (same pattern as the org
- * invite route). The transporter is built lazily so importing this module
- * never forces a `nodemailer` require at module-load time. When `SMTP_HOST`
- * is unset we silently no-op — useful for local dev and CI.
+ * Resolution order:
+ *   1. DB-stored SMTP config (Admin → System → SMTP)
+ *   2. Environment variables (SMTP_HOST, SMTP_PORT, SMTP_SECURE,
+ *      SMTP_USER, SMTP_PASSWORD, EMAIL_FROM)
  *
- * Env vars: SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASSWORD,
- * EMAIL_FROM.
+ * When neither layer is configured we silently no-op so local/CI runs
+ * behave like a "soft success" (useful so invite/signup flows don't fail
+ * just because SMTP isn't wired up).
  */
+
+import { resolveSmtpConfig, type ResolvedSmtpConfig } from '@/lib/admin/system-settings';
 
 export interface SendEmailParams {
   to: string;
@@ -27,30 +30,56 @@ export interface SendEmailResult {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Transport = { sendMail: (opts: any) => Promise<{ messageId?: string }> };
 
-let cachedTransport: Transport | null = null;
+type CachedTransport = {
+  transport: Transport;
+  signature: string;
+  emailFrom: string;
+};
 
-async function getTransport(): Promise<Transport | null> {
-  if (!process.env.SMTP_HOST) return null;
-  if (cachedTransport) return cachedTransport;
+let cachedTransport: CachedTransport | null = null;
 
+function signatureFor(cfg: ResolvedSmtpConfig) {
+  return [
+    cfg.source,
+    cfg.host,
+    cfg.port,
+    cfg.secure ? '1' : '0',
+    cfg.user,
+    // hash-like shortener — avoids holding the raw password in memory as a
+    // cache key. Length + last4 is enough to detect rotation.
+    `${cfg.password.length}:${cfg.password.slice(-4)}`,
+  ].join('|');
+}
+
+async function buildTransport(cfg: ResolvedSmtpConfig): Promise<Transport> {
   const nodemailer = await import('nodemailer');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const transportOptions: Record<string, any> = {
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '25', 10),
-    secure: process.env.SMTP_SECURE === 'true',
+    host: cfg.host,
+    port: cfg.port,
+    secure: cfg.secure,
     tls: { rejectUnauthorized: false },
   };
 
-  if (process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
-    transportOptions.auth = {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
-    };
+  if (cfg.user && cfg.password) {
+    transportOptions.auth = { user: cfg.user, pass: cfg.password };
   }
 
-  cachedTransport = nodemailer.default.createTransport(transportOptions) as Transport;
-  return cachedTransport;
+  return nodemailer.default.createTransport(transportOptions) as Transport;
+}
+
+async function getTransport(): Promise<{ transport: Transport; emailFrom: string } | null> {
+  const cfg = await resolveSmtpConfig();
+  if (!cfg) return null;
+
+  const signature = signatureFor(cfg);
+  if (cachedTransport && cachedTransport.signature === signature) {
+    return { transport: cachedTransport.transport, emailFrom: cachedTransport.emailFrom };
+  }
+
+  const transport = await buildTransport(cfg);
+  cachedTransport = { transport, signature, emailFrom: cfg.emailFrom };
+  return { transport, emailFrom: cfg.emailFrom };
 }
 
 /**
@@ -59,13 +88,13 @@ async function getTransport(): Promise<Transport | null> {
  */
 export async function sendEmail(params: SendEmailParams): Promise<SendEmailResult> {
   try {
-    const transport = await getTransport();
-    if (!transport) {
+    const resolved = await getTransport();
+    if (!resolved) {
       return { sent: false, skipped: true };
     }
 
-    const info = await transport.sendMail({
-      from: process.env.EMAIL_FROM || 'TaskNebula <noreply@localhost>',
+    const info = await resolved.transport.sendMail({
+      from: resolved.emailFrom,
       to: params.to,
       subject: params.subject,
       html: params.html,
@@ -78,4 +107,13 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
     console.error('[email/sender] failed to send email:', message);
     return { sent: false, error: message };
   }
+}
+
+/**
+ * Reset the cached transporter — useful after an admin rotates the SMTP
+ * password so the next send picks up fresh credentials without a server
+ * restart.
+ */
+export function resetEmailTransportCache() {
+  cachedTransport = null;
 }

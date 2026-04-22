@@ -1485,7 +1485,7 @@ async function getLivekitRoomOccupancy(livekitRoomName: string) {
     };
   }
 
-  const roomService = createLivekitRoomService();
+  const roomService = await createLivekitRoomService();
   if (!roomService) {
     return {
       roomExists: null as boolean | null,
@@ -1576,8 +1576,9 @@ async function finalizeActiveCallSession(
   }
 
   const livekitServerUrl = process.env.LIVEKIT_URL || '';
-  const roomService =
-    livekitServerUrl.includes('host.docker.internal') ? null : createLivekitRoomService();
+  const roomService = livekitServerUrl.includes('host.docker.internal')
+    ? null
+    : await createLivekitRoomService();
   if (roomService) {
     void roomService.deleteRoom(finalizedCall.livekitRoomName).catch((error) => {
       const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();

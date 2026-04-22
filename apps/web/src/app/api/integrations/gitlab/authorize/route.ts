@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { auth } from '@/auth';
+import { getClientCredentials } from '@/lib/integrations/client-credentials';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,16 +29,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
   }
 
-  const clientId = process.env.GITLAB_CLIENT_ID;
-  const redirectUri = process.env.GITLAB_REDIRECT_URI;
-  if (!clientId || !redirectUri) {
+  // Prefer admin-managed credentials (DB) with env vars as fallback.
+  const credentials = await getClientCredentials('gitlab');
+  if (!credentials || !credentials.redirectUri) {
     return NextResponse.json(
-      { error: 'GitLab OAuth is not configured (missing GITLAB_CLIENT_ID / GITLAB_REDIRECT_URI)' },
+      {
+        error:
+          'GitLab OAuth is not configured. Add client id / secret / redirect URI in Admin → Integrations, or set GITLAB_CLIENT_ID / GITLAB_CLIENT_SECRET / GITLAB_REDIRECT_URI.',
+      },
       { status: 500 }
     );
   }
-
-  const scope = process.env.GITLAB_OAUTH_SCOPE || DEFAULT_SCOPE;
+  const { clientId, redirectUri } = credentials;
+  const scope = credentials.scope || DEFAULT_SCOPE;
 
   // State is random + embeds organizationId so the callback can validate both
   // integrity (via cookie match) and target org.

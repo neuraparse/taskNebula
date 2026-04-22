@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { auth } from '@/auth';
 import { db, organizationMembers, and, eq } from '@tasknebula/db';
+import { getClientCredentials } from '@/lib/integrations/client-credentials';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,17 +27,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const clientId = process.env.SLACK_CLIENT_ID;
-  const redirectUri = process.env.SLACK_REDIRECT_URI;
-  if (!clientId || !redirectUri) {
+  // Prefer admin-managed credentials stored in the DB; fall back to env vars.
+  const credentials = await getClientCredentials('slack');
+  if (!credentials || !credentials.redirectUri) {
     return NextResponse.json(
       {
         error:
-          'Slack OAuth is not configured. Set SLACK_CLIENT_ID and SLACK_REDIRECT_URI.',
+          'Slack OAuth is not configured. Add a client id, secret, and redirect URI in Admin → Integrations, or set SLACK_CLIENT_ID / SLACK_CLIENT_SECRET / SLACK_REDIRECT_URI.',
       },
       { status: 500 }
     );
   }
+  const { clientId, redirectUri } = credentials;
+  const scope = credentials.scope || SLACK_DEFAULT_BOT_SCOPES;
 
   const { searchParams } = new URL(request.url);
   const organizationId = searchParams.get('organizationId');
@@ -71,7 +74,7 @@ export async function GET(request: NextRequest) {
 
   const authorizeUrl = new URL(SLACK_AUTHORIZE_URL);
   authorizeUrl.searchParams.set('client_id', clientId);
-  authorizeUrl.searchParams.set('scope', SLACK_DEFAULT_BOT_SCOPES);
+  authorizeUrl.searchParams.set('scope', scope);
   authorizeUrl.searchParams.set('redirect_uri', redirectUri);
   authorizeUrl.searchParams.set('state', state);
 

@@ -40,7 +40,9 @@ import { FeatureFlagRuntimeTest } from '@/components/admin/feature-flag-runtime-
 import { EditOrganizationDialog } from '@/components/admin/edit-organization-dialog';
 import { EditUserDialog } from '@/components/admin/edit-user-dialog';
 import { AgentOpsPanel } from '@/components/admin/agent-ops-panel';
+import { IntegrationsAdminPanel } from '@/components/admin/integrations-admin-panel';
 import { RealtimeHealthPanel } from '@/components/admin/realtime-health-panel';
+import { SystemCredentialsPanel } from '@/components/admin/system-credentials-panel';
 import { useDeleteFeatureFlag, useFeatureFlags, useUpdateFeatureFlag } from '@/lib/hooks/use-feature-flags';
 import { cn } from '@/lib/utils';
 import {
@@ -53,8 +55,10 @@ import {
   Flag,
   Gauge,
   MoreVertical,
+  Plug,
   Radio,
   Scroll,
+  ShieldCheck,
   Search,
   Trash2,
   Users,
@@ -122,6 +126,8 @@ const NAV: NavItem[] = [
   { key: 'users', label: 'Users', icon: Users },
   { key: 'feature-flags', label: 'Feature flags', icon: Flag },
   { key: 'agents', label: 'Agent control', icon: Bot },
+  { key: 'integrations', label: 'Integrations', icon: Plug },
+  { key: 'system', label: 'System', icon: ShieldCheck },
   { key: 'realtime', label: 'Realtime health', icon: Radio },
   { key: 'audit', label: 'Audit logs', icon: Scroll },
 ];
@@ -456,6 +462,10 @@ export function AdminDashboardClient() {
           )}
 
           {activeTab === 'agents' && <AgentOpsPanel />}
+
+          {activeTab === 'integrations' && <IntegrationsAdminPanel />}
+
+          {activeTab === 'system' && <SystemCredentialsPanel />}
 
           {activeTab === 'realtime' && <RealtimeHealthPanel />}
 
