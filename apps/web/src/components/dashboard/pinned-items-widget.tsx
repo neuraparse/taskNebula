@@ -1,92 +1,68 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowUpRight,
   FileText,
   FolderKanban,
   Inbox,
+  MessageSquare,
   Pin,
   PinOff,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-const STORAGE_KEY = 'tn:pinned-items:v1';
-
-export type PinnedType = 'project' | 'doc' | 'view' | 'issue';
+export type PinnedKind = 'issue' | 'doc' | 'project' | 'chat' | 'custom';
 
 export interface PinnedItem {
   id: string;
-  type: PinnedType;
+  userId: string;
+  kind: PinnedKind | string;
+  entityId: string | null;
   title: string;
   href: string;
   pinnedAt: string;
 }
 
-function readStorage(): PinnedItem[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (x): x is PinnedItem =>
-        !!x &&
-        typeof x === 'object' &&
-        typeof (x as PinnedItem).id === 'string' &&
-        typeof (x as PinnedItem).title === 'string' &&
-        typeof (x as PinnedItem).href === 'string'
-    );
-  } catch {
-    return [];
-  }
+async function fetchPinnedItems(): Promise<PinnedItem[]> {
+  const res = await fetch('/api/pinned-items');
+  if (!res.ok) throw new Error('Failed to load pinned items');
+  const json = (await res.json()) as { items: PinnedItem[] };
+  return json.items ?? [];
 }
 
-function writeStorage(items: PinnedItem[]): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  } catch {
-    // ignore quota / access errors
-  }
+async function deletePinnedItem(id: string): Promise<void> {
+  const res = await fetch(`/api/pinned-items/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to unpin item');
 }
 
-function usePinnedItems() {
-  const [items, setItems] = useState<PinnedItem[]>([]);
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    setItems(readStorage());
-    setHydrated(true);
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY) setItems(readStorage());
-    };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
-
-  const unpin = useCallback((id: string) => {
-    setItems((prev) => {
-      const next = prev.filter((i) => i.id !== id);
-      writeStorage(next);
-      return next;
-    });
-  }, []);
-
-  return { items, hydrated, unpin };
-}
-
-const TYPE_ICON: Record<PinnedType, LucideIcon> = {
+const KIND_ICON: Record<string, LucideIcon> = {
   project: FolderKanban,
   doc: FileText,
-  view: Inbox,
   issue: FileText,
+  chat: MessageSquare,
+  custom: Inbox,
+  // Legacy value retained so pins created before the schema change still render.
+  view: Inbox,
 };
 
 export function PinnedItemsWidget() {
-  const { items, hydrated, unpin } = usePinnedItems();
+  const queryClient = useQueryClient();
+
+  const { data, isLoading } = useQuery<PinnedItem[]>({
+    queryKey: ['pinned-items'],
+    queryFn: fetchPinnedItems,
+  });
+
+  const unpinMutation = useMutation({
+    mutationFn: deletePinnedItem,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pinned-items'] });
+    },
+  });
+
+  const items = data ?? [];
   const visible = items.slice(0, 7);
 
   return (
@@ -104,7 +80,7 @@ export function PinnedItemsWidget() {
         </Link>
       </div>
 
-      {!hydrated ? (
+      {isLoading ? (
         <div className="space-y-2" aria-hidden>
           {Array.from({ length: 4 }).map((_, i) => (
             <div
@@ -127,7 +103,7 @@ export function PinnedItemsWidget() {
       ) : (
         <ul className="space-y-0.5">
           {visible.map((item) => {
-            const Icon = TYPE_ICON[item.type] ?? FileText;
+            const Icon = KIND_ICON[item.kind] ?? FileText;
             return (
               <li
                 key={item.id}
@@ -143,8 +119,9 @@ export function PinnedItemsWidget() {
                 <button
                   type="button"
                   aria-label={`Unpin ${item.title}`}
-                  onClick={() => unpin(item.id)}
-                  className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-opacity duration-150"
+                  onClick={() => unpinMutation.mutate(item.id)}
+                  disabled={unpinMutation.isPending}
+                  className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-opacity duration-150 disabled:opacity-50"
                 >
                   <PinOff className="h-3.5 w-3.5" />
                   Unpin
