@@ -8,7 +8,6 @@ import {
   endOfMonth,
   endOfWeek,
   format,
-  isSameDay,
   isSameMonth,
   isToday,
   parseISO,
@@ -27,7 +26,6 @@ import {
   MoreHorizontal,
   Plus,
   Save,
-  Settings2,
   Star,
   Target,
   Trash2,
@@ -520,62 +518,29 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
   return (
     <>
       <div className="flex h-full flex-col bg-background">
-        <div className="shrink-0 border-b border-border bg-background px-5 py-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2 min-w-0">
-              <h1 className="text-2xl font-semibold tracking-tight truncate">
-                {viewsData?.project.name || projectId}
-              </h1>
-              {activeTeamspace ? (
-                <span className="chip gap-1">
-                  <Settings2 className="h-3 w-3" />
-                  {activeTeamspace.name}
-                </span>
-              ) : null}
-              {defaultView ? (
-                <span className="chip">Default: {defaultView.name}</span>
-              ) : null}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSaveViewOpen(true)}
-              >
-                <Save className="mr-1.5 h-3.5 w-3.5" />
-                Save view
-              </Button>
-              <Button size="sm" onClick={() => setCreateIssueOpen(true)}>
-                <Plus className="mr-1.5 h-3.5 w-3.5" />
-                New Issue
-              </Button>
-            </div>
-          </div>
-
-          <div className="mt-3 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="shrink-0 border-b border-border bg-background px-4 py-1.5">
+          {/* Compact toolbar: view-mode icons + filters + actions (icon-only) */}
+          <div className="flex items-center gap-2">
             <Tabs value={activeViewType} onValueChange={(value) => setActiveViewType(value as ViewType)}>
-              <TabsList className="h-8 bg-muted/30 p-0.5 rounded-md">
-                <TabsTrigger value="list" className="gap-1.5 h-7 rounded-sm text-xs data-[state=active]:bg-card data-[state=active]:shadow-xs">
+              <TabsList className="h-7 gap-0.5 rounded-md bg-muted/30 p-0.5">
+                <TabsTrigger value="list" aria-label="List" className="h-6 w-6 rounded-sm px-0 data-[state=active]:bg-card data-[state=active]:shadow-xs">
                   <LayoutList className="h-3.5 w-3.5" />
-                  List
                 </TabsTrigger>
-                <TabsTrigger value="board" className="gap-1.5 h-7 rounded-sm text-xs data-[state=active]:bg-card data-[state=active]:shadow-xs">
+                <TabsTrigger value="board" aria-label="Board" className="h-6 w-6 rounded-sm px-0 data-[state=active]:bg-card data-[state=active]:shadow-xs">
                   <FolderKanban className="h-3.5 w-3.5" />
-                  Board
                 </TabsTrigger>
-                <TabsTrigger value="timeline" className="gap-1.5 h-7 rounded-sm text-xs data-[state=active]:bg-card data-[state=active]:shadow-xs">
+                <TabsTrigger value="timeline" aria-label="Timeline" className="h-6 w-6 rounded-sm px-0 data-[state=active]:bg-card data-[state=active]:shadow-xs">
                   <GanttChartSquare className="h-3.5 w-3.5" />
-                  Timeline
                 </TabsTrigger>
-                <TabsTrigger value="calendar" className="gap-1.5 h-7 rounded-sm text-xs data-[state=active]:bg-card data-[state=active]:shadow-xs">
+                <TabsTrigger value="calendar" aria-label="Calendar" className="h-6 w-6 rounded-sm px-0 data-[state=active]:bg-card data-[state=active]:shadow-xs">
                   <CalendarDays className="h-3.5 w-3.5" />
-                  Calendar
                 </TabsTrigger>
               </TabsList>
             </Tabs>
 
-            <div className="min-w-0 flex-1 xl:max-w-3xl">
+            <div className="h-4 w-px shrink-0 bg-border/70" aria-hidden="true" />
+
+            <div className="min-w-0 flex-1">
               <BoardFiltersBar
                 filters={filters}
                 onFiltersChange={setFilters}
@@ -583,12 +548,37 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                 filteredCount={filteredIssues.length}
               />
             </div>
+
+            <div className="flex items-center gap-1">
+              {(activeViewType === 'list' || activeViewType === 'board') ? (
+                <ViewDisplayOptions options={displayOptions} onChange={setDisplayOptions} />
+              ) : null}
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Save view"
+                title="Save view"
+                onClick={() => setSaveViewOpen(true)}
+                className="h-7 w-7"
+              >
+                <Save className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="default"
+                size="icon"
+                aria-label="New issue"
+                title="New issue"
+                onClick={() => setCreateIssueOpen(true)}
+                className="h-7 w-7"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {(activeViewType === 'list' || activeViewType === 'board') ? (
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="mt-1 flex flex-wrap items-center gap-2">
               <ViewFilterBar filters={viewFilters} onChange={setViewFilters} />
-              <ViewDisplayOptions options={displayOptions} onChange={setDisplayOptions} />
             </div>
           ) : null}
 
