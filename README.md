@@ -2,33 +2,48 @@
 
 # TaskNebula
 
-### Open-Source, Self-Hosted Project Management
+### The open-source project management system with a real AI copilot
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/neuraparse/tasknebula?style=for-the-badge&logo=docker&color=2496ED)](https://hub.docker.com/r/neuraparse/tasknebula)
-[![Docker Image Version](https://img.shields.io/docker/v/neuraparse/tasknebula/latest?style=for-the-badge&logo=docker&label=image&color=2496ED)](https://hub.docker.com/r/neuraparse/tasknebula/tags)
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![Latest Image](https://img.shields.io/docker/v/neuraparse/tasknebula/latest?style=for-the-badge&logo=docker&label=image&color=2496ED)](https://hub.docker.com/r/neuraparse/tasknebula/tags)
+[![Next.js 15](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
-[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
+[![License MIT](https://img.shields.io/badge/License-MIT-16a34a?style=for-the-badge)](LICENSE)
 
-The power of Jira, the speed of Linear, the flexibility of Notion.
-Self-hosted and production-ready in one command.
+A self-hosted issue tracker that feels like Linear, scales like Jira, and
+drafts work with you like a pair programmer. Bring your own OpenAI /
+Anthropic key — or run fully offline with the native planner.
 
-[Docker Hub](https://hub.docker.com/r/neuraparse/tasknebula) · [Report Bug](https://github.com/neuraparse/tasknebula/issues) · Latest: **v0.2.4**
+[Docker Hub](https://hub.docker.com/r/neuraparse/tasknebula) ·
+[Quick start](#-quick-start) ·
+[AI](#-ai-assistant--agents) ·
+[Features](#-features) ·
+[Report a bug](https://github.com/neuraparse/tasknebula/issues)
 
 <br/>
 
-<img src="images/home-page.png" alt="TaskNebula" width="100%"/>
+<img src="images/home-page.png" alt="TaskNebula home" width="100%"/>
 
 <table>
 <tr>
 <td width="50%">
-<img src="images/new-issue.png" alt="Kanban Board" width="100%"/>
-<p align="center"><b>Kanban Board</b></p>
+<img src="images/new-issue.png" alt="Draft issues from a prompt" width="100%"/>
+<p align="center"><b>Draft issues from a prompt</b></p>
 </td>
 <td width="50%">
-<img src="images/new-issue-detail.png" alt="Issue Detail" width="100%"/>
-<p align="center"><b>Issue Detail</b></p>
+<img src="images/new-issue-detail.png" alt="Per-issue AI assist" width="100%"/>
+<p align="center"><b>Per-issue AI assist</b></p>
+</td>
+</tr>
+<tr>
+<td width="50%">
+<img src="images/project-board.png" alt="Kanban board" width="100%"/>
+<p align="center"><b>Real-time Kanban board</b></p>
+</td>
+<td width="50%">
+<img src="images/dashboard.png" alt="Dashboard" width="100%"/>
+<p align="center"><b>Workspace dashboard</b></p>
 </td>
 </tr>
 </table>
@@ -37,109 +52,228 @@ Self-hosted and production-ready in one command.
 
 ---
 
-## Quick Start
+## ⚡ Quick start
 
-### One-command run (prebuilt image, zero build time)
+One curl, then open your browser:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/neuraparse/tasknebula/main/scripts/quickstart.sh | bash
 ```
 
-Pulls the latest `neuraparse/tasknebula` image from Docker Hub, provisions
-Postgres + Redis + LiveKit via Docker Compose, generates a secure
-`AUTH_SECRET` for you, and opens at http://localhost:3000.
+The script pulls `neuraparse/tasknebula:latest`, spins up Postgres + Redis
++ LiveKit via Docker Compose, generates a strong `AUTH_SECRET`, and opens
+**http://localhost:3000**. First-run wizard creates your admin account.
 
-### Build from source
+<details>
+<summary>Build from source instead</summary>
 
 ```bash
 git clone https://github.com/neuraparse/tasknebula.git
 cd tasknebula
 cp .env.example .env
 echo "AUTH_SECRET=$(openssl rand -base64 32)" >> .env
-docker compose up -d
+docker compose up -d --build
 ```
 
-Open **http://localhost:3000** — setup wizard creates your admin account.
+</details>
 
-### Pinned version
+<details>
+<summary>Pin a specific version</summary>
 
 ```bash
-docker pull neuraparse/tasknebula:0.2.4
-# or always-latest
-docker pull neuraparse/tasknebula:latest
+# default is :latest
+TASKNEBULA_IMAGE=neuraparse/tasknebula:0.2.4 docker compose up -d
 ```
 
-See [docker-compose.yml](docker-compose.yml) for the full stack.
-Release notes for each tag live on the [GitHub releases page](https://github.com/neuraparse/tasknebula/releases).
+Release notes live on the [GitHub releases page](https://github.com/neuraparse/tasknebula/releases).
+
+</details>
 
 ---
 
-## Features
+## 🧠 AI Assistant & Agents
 
-| Category | What you get |
-|----------|-------------|
-| **Board** | Kanban drag-and-drop, custom columns, priority accent bars, type icons |
-| **Issues** | Stories, Tasks, Bugs, Epics, Subtasks, Custom Fields, Links, Attachments |
-| **Sprints** | Sprint planning, burndown charts, velocity tracking, backlog grooming |
-| **Workflows** | Custom statuses, transition rules, auto-move on conditions |
-| **Team** | Real-time presence, live activity feed, @mentions, watchers |
-| **Permissions** | 30+ permission types, role-based access, issue security levels |
-| **Analytics** | Burndown, velocity, cycle time, throughput, CSV/JSON export |
-| **Security** | Audit logs (63+ actions), API keys, webhooks, OAuth (GitHub/Google) |
-| **Admin** | Multi-org, user management, feature flags, email templates |
-| **DX** | `Cmd+K` palette, keyboard shortcuts, dark mode, mobile responsive |
+AI is **off by default**. Enable it per workspace from Settings → AI &
+Agents in under 30 seconds. Everything is DB-managed — no env vars to
+redeploy when you rotate a key.
+
+### What you can do
+
+| Feature | Where | What it does |
+|---|---|---|
+| **Draft-with-AI** | Backlog → *Draft with AI* | Type one prompt, the LLM decides whether it's one ticket or a whole checklist and returns structured, editable drafts. Select which to create in bulk. |
+| **Per-issue assist** | Issue detail sidebar → *AI assist* | Summarise an issue with its comments, rewrite the description, suggest next steps, or propose labels. One click to Apply — no copy-paste. |
+| **Native fallback** | Built-in | If no LLM credential is configured, TaskNebula still ships a deterministic heuristic planner so the buttons are never dead. |
+| **Platform keys** | Admin → Agent control | Super-admins drop in an OpenAI / Anthropic key that all workspaces fall back to. AES-256-GCM encrypted, redacted previews, audit-logged rotations. |
+| **Workspace keys** | Settings → AI & Agents → Quick setup | Each workspace can override the platform default with its own key. Single Quick-Setup button writes provider + model + key + toggle in one transaction. |
+| **Model profiles** | Settings → AI & Agents → Your model profiles | Save reusable provider+model+tuning combos (temperature, max tokens, reasoning effort) with full revision history. Saved profiles appear inline in the Quick Setup dropdown. |
+
+### Supported providers & models
+
+| Provider | Models out of the box |
+|---|---|
+| **OpenAI** | `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-4`, `gpt-3.5-turbo`, `o1`, `o1-mini`, plus the speculative `gpt-5.x` family |
+| **Anthropic** | `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5`, plus `claude-3-5-sonnet`, `claude-3-5-haiku`, `claude-3-opus` |
+| **Native** | Built-in heuristic planner (no API calls) |
+
+### Fails gracefully
+
+Every failure — bad key, rate limit, model not available — becomes an
+**in-app notification** with a Sparkles/Bot icon, a one-line action hint
+("Open Settings → AI & Agents to add a key"), and a deep-link straight to
+the relevant project AI settings. Full audit trail in
+`Admin → Audit logs`.
 
 ---
 
-## Tech Stack
+## 📦 Features
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js 15, React 19, Tailwind CSS, shadcn/ui |
-| Backend | Next.js API Routes, Drizzle ORM |
-| Database | PostgreSQL 16 + pgvector |
-| Cache | Redis 7 |
-| Auth | Auth.js v5 (NextAuth) |
-| Deploy | Docker Compose |
+<table>
+<tr>
+<td width="33%" valign="top">
+
+### Project management
+- Kanban board with drag-and-drop
+- Stories, tasks, bugs, epics, subtasks
+- Sprints, burndown, velocity
+- Custom fields, issue links, attachments
+- Custom workflows, transition rules
+- Backlog grooming + roadmap view
+
+</td>
+<td width="33%" valign="top">
+
+### Collaboration
+- Real-time presence & live activity feed
+- @mentions, watchers, reactions
+- Threaded comments, email digests
+- LiveKit voice rooms for ad-hoc calls
+- Project-scoped chat + issue threads
+- In-app notification bell with deep-links
+
+</td>
+<td width="33%" valign="top">
+
+### Admin & governance
+- 30+ granular permission types
+- Role-based access + issue security levels
+- 63+ audit-log action types
+- API keys + signed webhooks
+- OAuth (GitHub / Google / custom)
+- Multi-org, per-org plan + feature flags
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### AI (opt-in)
+- Draft-with-AI (auto single/multi)
+- Per-issue summarise / rewrite / suggest
+- Platform + workspace credential chain
+- Saved model profiles w/ revisions
+- OpenAI + Anthropic first-class
+- Failure → notification w/ action hint
+
+</td>
+<td valign="top">
+
+### Analytics
+- Burndown, velocity, cycle time
+- Throughput + lead-time distributions
+- Project health scorecard
+- CSV / JSON export
+- Sprint retrospectives view
+- Cross-project rollups
+
+</td>
+<td valign="top">
+
+### Developer experience
+- `Cmd+K` command palette
+- Keyboard shortcuts everywhere
+- Dark mode + mobile responsive
+- Route-level skeletons (no blank loads)
+- SSE-based real-time sync
+- One-command production deploy
+
+</td>
+</tr>
+</table>
 
 ---
 
-## Production
+## 🛠 Tech stack
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**Frontend**
+- Next.js 15 (App Router, RSC)
+- React 19
+- Tailwind CSS + shadcn/ui
+- TanStack Query for client state
+- SSE for realtime fan-out
+
+</td>
+<td width="50%" valign="top">
+
+**Backend**
+- Next.js API routes
+- Drizzle ORM
+- PostgreSQL 16 + `pgvector`
+- Redis 7 for cache + presence
+- LiveKit for voice rooms
+- Auth.js v5 (NextAuth)
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🚢 Production
 
 ```env
+# .env
 APP_URL=https://tasks.yourcompany.com
-AUTH_SECRET=your-secret-here
+AUTH_SECRET=your-secret-here   # openssl rand -base64 32
 ```
 
-Put a reverse proxy in front for SSL — [Caddy](https://caddyserver.com) is the easiest:
+Put any reverse proxy in front for SSL. Caddy is the easiest:
 
-```
+```caddy
 tasks.yourcompany.com {
     reverse_proxy localhost:3000
 }
 ```
 
-See [.env.example](.env.example) for all configuration options.
+See [.env.example](.env.example) for the full list — SMTP, OAuth, LiveKit
+tuning, optional platform LLM keys, etc. Everything AI-related can be
+configured through the UI **after** first boot; env vars are only a
+fallback for dev.
 
 ---
 
-## Commands
+## 🧰 Commands
 
 ```bash
-docker compose up -d                       # Start (pulls neuraparse/tasknebula:latest)
-docker compose down                        # Stop
-docker compose logs -f web                 # Logs
-docker compose pull web && docker compose up -d     # Update to latest prebuilt image
-docker compose up -d --build               # Rebuild from source (uses local Dockerfile)
-git pull && docker compose up -d --build   # Pull source + rebuild
+docker compose up -d                  # Start (pulls :latest)
+docker compose down                   # Stop
+docker compose logs -f web            # Tail the web service
+docker compose pull web && \
+  docker compose up -d                # Update to the newest image
+docker compose up -d --build          # Rebuild from local source
+git pull && docker compose up -d --build   # Pull + rebuild
 ```
 
 > `docker-compose.yml` defaults to `image: neuraparse/tasknebula:latest`.
-> Pin a version by setting `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.2.4` in your `.env`.
+> Set `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.2.4` in `.env` to pin.
 
 ---
 
-## Development
+## 👩‍💻 Development
 
 ```bash
 pnpm install
@@ -150,13 +284,25 @@ cd packages/db && pnpm tsx scripts/migrate.ts && cd ../..
 pnpm dev
 ```
 
+Run the full test suite:
+
+```bash
+pnpm --filter @tasknebula/web exec jest
+```
+
+AI-related tests live under `apps/web/src/lib/ai/__tests__`,
+`apps/web/src/lib/agents/__tests__`, and
+`apps/web/src/app/api/ai/**/__tests__`.
+
 ---
 
-## Contributing
+## 🤝 Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+Pull requests welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the
+branch model, commit conventions, and how to run the linter + tests
+locally before pushing.
 
-## License
+## 📄 License
 
 MIT — see [LICENSE](LICENSE).
 
@@ -164,6 +310,6 @@ MIT — see [LICENSE](LICENSE).
 
 <div align="center">
 
-Built by [Neura Parse](https://neuraparse.com)
+Built by [Neura Parse](https://neuraparse.com) · Powered by open source
 
 </div>
