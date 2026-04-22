@@ -66,8 +66,12 @@ export const notificationPreferences = pgTable('notification_preferences', {
   emailOnCommented: boolean('email_on_commented').notNull().default(false),
   emailOnStatusChanged: boolean('email_on_status_changed').notNull().default(false),
   emailOnIssueCreated: boolean('email_on_issue_created').notNull().default(false),
-  emailOnSprintStarted: boolean('email_on_sprint_started').notNull().default(false),
-  emailOnSprintCompleted: boolean('email_on_sprint_completed').notNull().default(false),
+  // Sprint & project lifecycle events. These ship ON by default because they're
+  // low-frequency, high-signal milestones (e.g. sprint boundaries, project archives).
+  emailOnSprintStarted: boolean('email_on_sprint_started').notNull().default(true),
+  emailOnSprintCompleted: boolean('email_on_sprint_completed').notNull().default(true),
+  emailOnProjectCreated: boolean('email_on_project_created').notNull().default(false),
+  emailOnProjectArchived: boolean('email_on_project_archived').notNull().default(false),
 
   // Event-specific settings (in-app)
   inAppOnAssigned: boolean('in_app_on_assigned').notNull().default(true),
@@ -77,6 +81,8 @@ export const notificationPreferences = pgTable('notification_preferences', {
   inAppOnIssueCreated: boolean('in_app_on_issue_created').notNull().default(true),
   inAppOnSprintStarted: boolean('in_app_on_sprint_started').notNull().default(true),
   inAppOnSprintCompleted: boolean('in_app_on_sprint_completed').notNull().default(true),
+  inAppOnProjectCreated: boolean('in_app_on_project_created').notNull().default(true),
+  inAppOnProjectArchived: boolean('in_app_on_project_archived').notNull().default(true),
 
   // Do not disturb
   doNotDisturb: boolean('do_not_disturb').notNull().default(false),

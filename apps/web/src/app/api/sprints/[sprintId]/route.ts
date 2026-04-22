@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db, sprints, issues, workflowStatuses, projects, projectMembers, organizationMembers, users, ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from '@tasknebula/db';
 import { eq, count, and, ne } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
+import { notifySprintEvent } from '@/lib/notifications/send-sprint-notification';
 
 // Granular permission check helper
 async function checkSprintPermission(
@@ -315,6 +316,56 @@ export async function PATCH(
       projectId: currentSprint.projectId,
       sprintId,
     });
+
+    // Fan out sprint lifecycle notifications (email + in-app) to project
+    // members when the sprint transitions into active or completed. Wrapped
+    // in try/catch so notification failures never block the API response.
+    try {
+      const startedTransition = status === 'active' && currentSprint.status !== 'active';
+      const completedTransition = status === 'completed' && currentSprint.status === 'active';
+      if (updatedSprint && (startedTransition || completedTransition)) {
+        const [projectRow] = await db
+          .select({
+            id: projects.id,
+            key: projects.key,
+            name: projects.name,
+            organizationId: projects.organizationId,
+          })
+          .from(projects)
+          .where(eq(projects.id, currentSprint.projectId))
+          .limit(1);
+
+        if (projectRow) {
+          const eventType = startedTransition ? 'sprint.started' : 'sprint.completed';
+          const stats = completedTransition
+            ? {
+                issueCount: Number(response.completedIssuesCount ?? 0) + movedToBacklogCount,
+                completedCount: Number(response.completedIssuesCount ?? 0),
+                carriedOverCount: movedToBacklogCount,
+              }
+            : undefined;
+
+          // Fire-and-forget inside fire-and-forget — notifySprintEvent already
+          // swallows errors, but the outer try/catch protects us if the import
+          // itself ever becomes problematic.
+          notifySprintEvent({
+            eventType,
+            sprint: {
+              id: updatedSprint.id,
+              name: updatedSprint.name,
+              goal: updatedSprint.goal,
+              startDate: updatedSprint.startDate,
+              endDate: updatedSprint.endDate,
+            },
+            project: projectRow,
+            actorUserId: session.user.id,
+            stats,
+          });
+        }
+      }
+    } catch (notifyError) {
+      console.error('Sprint notification dispatch failed:', notifyError);
+    }
 
     return NextResponse.json(response);
   } catch (error) {

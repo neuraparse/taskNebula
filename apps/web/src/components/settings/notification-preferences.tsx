@@ -29,6 +29,8 @@ type Preferences = {
   emailOnIssueCreated: boolean;
   emailOnSprintStarted: boolean;
   emailOnSprintCompleted: boolean;
+  emailOnProjectCreated: boolean;
+  emailOnProjectArchived: boolean;
   inAppOnAssigned: boolean;
   inAppOnMentioned: boolean;
   inAppOnCommented: boolean;
@@ -36,6 +38,8 @@ type Preferences = {
   inAppOnIssueCreated: boolean;
   inAppOnSprintStarted: boolean;
   inAppOnSprintCompleted: boolean;
+  inAppOnProjectCreated: boolean;
+  inAppOnProjectArchived: boolean;
   doNotDisturb: boolean;
   doNotDisturbStart: string | null;
   doNotDisturbEnd: string | null;
@@ -50,8 +54,10 @@ const DEFAULTS: Omit<Preferences, 'organizationId'> = {
   emailOnCommented: false,
   emailOnStatusChanged: false,
   emailOnIssueCreated: false,
-  emailOnSprintStarted: false,
-  emailOnSprintCompleted: false,
+  emailOnSprintStarted: true,
+  emailOnSprintCompleted: true,
+  emailOnProjectCreated: false,
+  emailOnProjectArchived: false,
   inAppOnAssigned: true,
   inAppOnMentioned: true,
   inAppOnCommented: true,
@@ -59,6 +65,8 @@ const DEFAULTS: Omit<Preferences, 'organizationId'> = {
   inAppOnIssueCreated: true,
   inAppOnSprintStarted: true,
   inAppOnSprintCompleted: true,
+  inAppOnProjectCreated: true,
+  inAppOnProjectArchived: true,
   doNotDisturb: false,
   doNotDisturbStart: null,
   doNotDisturbEnd: null,
@@ -144,7 +152,7 @@ const EVENT_GROUPS: ReadonlyArray<EventGroup> = [
     ],
   },
   {
-    heading: 'Sprint updates',
+    heading: 'Sprint & Project',
     email: [
       {
         key: 'emailOnSprintStarted',
@@ -155,6 +163,16 @@ const EVENT_GROUPS: ReadonlyArray<EventGroup> = [
         key: 'emailOnSprintCompleted',
         label: 'Sprint completes',
         description: "A sprint you're in ends.",
+      },
+      {
+        key: 'emailOnProjectCreated',
+        label: 'Project created',
+        description: 'A new project is created in your organization.',
+      },
+      {
+        key: 'emailOnProjectArchived',
+        label: 'Project archived',
+        description: "A project you're in is archived.",
       },
     ],
     inApp: [
@@ -167,6 +185,16 @@ const EVENT_GROUPS: ReadonlyArray<EventGroup> = [
         key: 'inAppOnSprintCompleted',
         label: 'Sprint completes',
         description: "A sprint you're in ends.",
+      },
+      {
+        key: 'inAppOnProjectCreated',
+        label: 'Project created',
+        description: 'A new project is created in your organization.',
+      },
+      {
+        key: 'inAppOnProjectArchived',
+        label: 'Project archived',
+        description: "A project you're in is archived.",
       },
     ],
   },
