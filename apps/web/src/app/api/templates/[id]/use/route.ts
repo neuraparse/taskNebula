@@ -20,7 +20,7 @@ import {
 import { createId } from '@paralleldrive/cuid2';
 import { auth } from '@/auth';
 import { sql } from 'drizzle-orm';
-import { getTemplateAuthz } from '../../route';
+import { getTemplateAuthz } from '@/lib/templates/authz';
 
 export const dynamic = 'force-dynamic';
 
