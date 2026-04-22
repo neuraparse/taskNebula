@@ -5,6 +5,7 @@ import { eq, and, count } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
 import { resolveProjectByIdOrKey } from '@/lib/projects/server';
 import { notifyProjectArchived } from '@/lib/notifications/project-events';
+import { runAutomations } from '@/lib/automation/evaluator';
 
 // GET /api/projects/[projectId] - Get single project
 export async function GET(
@@ -146,6 +147,16 @@ export async function PATCH(
       } catch (err) {
         console.error('notifyProjectArchived dispatch failed:', err);
       }
+
+      void runAutomations({
+        trigger: 'project.archived',
+        organizationId: project.organizationId,
+        projectId: project.id,
+        payload: { project: updatedProject },
+        actorUserId: session.user.id,
+      }).catch((err) =>
+        console.error('Failed to run project.archived automations:', err)
+      );
     }
 
     return NextResponse.json(updatedProject);

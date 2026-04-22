@@ -16,6 +16,7 @@ import { eq, and, inArray, desc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { publishEvent } from '@/lib/realtime/events';
 import { notifyProjectCreated } from '@/lib/notifications/project-events';
+import { runAutomations } from '@/lib/automation/evaluator';
 
 // GET /api/projects - List all projects for the current user
 export async function GET(request: NextRequest) {
@@ -295,6 +296,16 @@ export async function POST(request: NextRequest) {
     } catch (err) {
       console.error('notifyProjectCreated dispatch failed:', err);
     }
+
+    void runAutomations({
+      trigger: 'project.created',
+      organizationId: orgId,
+      projectId: createdProject.id,
+      payload: { project: createdProject },
+      actorUserId: session.user.id,
+    }).catch((err) =>
+      console.error('Failed to run project.created automations:', err)
+    );
 
     return NextResponse.json(createdProject, { status: 201 });
   } catch (error) {
