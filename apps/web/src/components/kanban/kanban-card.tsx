@@ -4,15 +4,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { CalendarDays, MessageCircle, Paperclip, GitBranch } from 'lucide-react';
+import { AlertCircle, CalendarDays, MessageCircle, Paperclip, GitBranch } from 'lucide-react';
 
 interface KanbanCardProps {
   issue: {
     id: string;
     key?: string;
     title: string;
-    priority: 'low' | 'medium' | 'high' | 'critical';
+    priority: 'low' | 'medium' | 'high' | 'critical' | 'urgent';
     type?: 'task' | 'bug' | 'story' | 'epic';
+    status?: string;
     assignee?: {
       name: string;
       avatar: string;
@@ -29,6 +30,82 @@ interface KanbanCardProps {
   statusId?: string;
   issueId?: string;
   onClick?: () => void;
+}
+
+// --- Inline StatusIcon (self-contained fallback) ---
+type StatusKind = 'backlog' | 'todo' | 'in_progress' | 'done' | 'cancelled';
+
+function mapToKind(status?: string): StatusKind {
+  const s = (status ?? '').toLowerCase().trim();
+  if (s === 'backlog') return 'backlog';
+  if (s === 'todo' || s === 'to do' || s === 'to-do') return 'todo';
+  if (s === 'in progress' || s === 'in-progress' || s === 'inprogress' || s === 'doing')
+    return 'in_progress';
+  if (s === 'done' || s === 'completed' || s === 'complete') return 'done';
+  if (s === 'cancelled' || s === 'canceled') return 'cancelled';
+  return 'todo';
+}
+
+const STATUS_COLOR: Record<StatusKind, string> = {
+  backlog: 'text-muted-foreground',
+  todo: 'text-muted-foreground',
+  in_progress: 'text-amber-500',
+  done: 'text-emerald-500',
+  cancelled: 'text-rose-500',
+};
+
+function InlineStatusIcon({ kind, size = 12 }: { kind: StatusKind; size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 12 12"
+      aria-hidden="true"
+      className={cn('shrink-0', STATUS_COLOR[kind])}
+    >
+      <circle
+        cx="6"
+        cy="6"
+        r="5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        fill={kind === 'done' ? 'currentColor' : 'none'}
+      />
+    </svg>
+  );
+}
+
+// --- Inline LabelPill (self-contained fallback) ---
+const LABEL_PALETTE = [
+  'bg-orange-500/15 text-orange-700 dark:text-orange-300 ring-1 ring-orange-500/20',
+  'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/20',
+  'bg-blue-500/15 text-blue-700 dark:text-blue-300 ring-1 ring-blue-500/20',
+  'bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-1 ring-amber-500/20',
+  'bg-rose-500/15 text-rose-700 dark:text-rose-300 ring-1 ring-rose-500/20',
+  'bg-violet-500/15 text-violet-700 dark:text-violet-300 ring-1 ring-violet-500/20',
+];
+
+function hashString(input: string): number {
+  let h = 0;
+  for (let i = 0; i < input.length; i += 1) {
+    h = (h << 5) - h + input.charCodeAt(i);
+    h |= 0;
+  }
+  return Math.abs(h);
+}
+
+function InlineLabelPill({ label, hashSeed }: { label: string; hashSeed?: string }) {
+  const color = LABEL_PALETTE[hashString(hashSeed ?? label) % LABEL_PALETTE.length];
+  return (
+    <span
+      className={cn(
+        'inline-flex max-w-[140px] items-center truncate rounded-full px-2 py-0.5 text-[11.5px] font-medium',
+        color
+      )}
+    >
+      {label}
+    </span>
+  );
 }
 
 const TYPE_CHIP: Record<NonNullable<KanbanCardProps['issue']['type']>, string> = {
@@ -104,8 +181,10 @@ export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: K
   const attachments = issue.attachmentCount ?? 0;
   const typeChip = issue.type ? TYPE_CHIP[issue.type] : null;
   const keyChip = issue.key ?? (draggableId ? null : issue.id);
+  const statusKind = mapToKind(issue.status);
+  const isUrgent = issue.priority === 'urgent' || issue.priority === 'critical';
 
-  const hasTopRow = Boolean(keyChip || typeChip);
+  const hasTopRow = Boolean(keyChip || typeChip || issue.status);
   const hasLabels = visibleLabels.length > 0;
   const hasFooter =
     visibleAssignees.length > 0 || due || subtasks || comments > 0 || attachments > 0;
@@ -127,16 +206,25 @@ export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: K
       <div
         className={cn(
           'priority-indicator absolute left-0 top-0 bottom-0 w-1',
-          issue.priority === 'critical' && 'priority-critical',
+          (issue.priority === 'critical' || issue.priority === 'urgent') && 'priority-critical',
           issue.priority === 'high' && 'priority-high',
           issue.priority === 'medium' && 'priority-medium',
           issue.priority === 'low' && 'priority-low'
         )}
       />
 
-      {/* Top row: issue key + type */}
+      {/* Urgent priority indicator — top-right corner */}
+      {isUrgent && (
+        <AlertCircle
+          className="absolute right-2 top-2 h-3.5 w-3.5 text-red-500"
+          aria-label="Urgent priority"
+        />
+      )}
+
+      {/* Top row: status icon + issue key + type */}
       {hasTopRow && (
-        <div className="mb-2 flex items-center gap-1.5">
+        <div className={cn('mb-2 flex items-center gap-1.5', isUrgent && 'pr-5')}>
+          <InlineStatusIcon kind={statusKind} size={12} />
           {keyChip && (
             <span className="chip font-mono tracking-tight !text-[10px]">{keyChip}</span>
           )}
@@ -147,7 +235,12 @@ export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: K
       )}
 
       {/* Title */}
-      <h4 className="text-sm font-medium leading-snug text-foreground line-clamp-2">
+      <h4
+        className={cn(
+          'text-[13.5px] font-medium leading-snug text-foreground line-clamp-2',
+          !hasTopRow && isUrgent && 'pr-5'
+        )}
+      >
         {issue.title}
       </h4>
 
@@ -155,12 +248,12 @@ export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: K
       {hasLabels && (
         <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
           {visibleLabels.map((label) => (
-            <span key={label} className="chip max-w-[140px] truncate">
-              {label}
-            </span>
+            <InlineLabelPill key={label} label={label} hashSeed={label} />
           ))}
           {extraLabels > 0 && (
-            <span className="chip tabular-nums">+{extraLabels}</span>
+            <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11.5px] font-medium text-muted-foreground tabular-nums">
+              +{extraLabels}
+            </span>
           )}
         </div>
       )}
@@ -168,7 +261,7 @@ export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: K
       {/* Footer: due + subtasks + comments + attachments + assignees */}
       {hasFooter && (
         <div className="mt-3 flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2.5 text-[11px] text-muted-foreground">
+          <div className="flex min-w-0 items-center gap-2 text-[11.5px] text-muted-foreground">
             {due && (
               <span
                 className={cn(

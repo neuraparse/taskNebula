@@ -45,6 +45,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { PageSidebarContent } from '@/components/layout/page-sidebar-slot';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { ChatBootstrapResponse, ConversationMessage } from '@/lib/hooks/use-chat';
@@ -984,9 +985,11 @@ export function ChatShell({ projectId }: { projectId: string }) {
         </SheetContent>
       </Sheet>
 
-      <div className="flex h-full min-h-0 bg-background">
-        <aside className="hidden h-full w-[272px] shrink-0 border-r bg-background lg:flex">{sidebar}</aside>
+      <PageSidebarContent>
+        <div className="flex h-full min-h-0 flex-col bg-background">{sidebar}</div>
+      </PageSidebarContent>
 
+      <div className="flex h-full min-h-0 bg-background">
         <main className="flex min-h-0 min-w-0 flex-1">
           {selectedRoomMeta ? (
             <>

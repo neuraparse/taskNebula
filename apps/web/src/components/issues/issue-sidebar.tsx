@@ -1,6 +1,16 @@
 'use client';
 
+import {
+  Calendar,
+  CalendarClock,
+  CircleDot,
+  Gauge,
+  Tag,
+  User,
+  UserCircle2,
+} from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { PriorityBars, type PriorityLevel } from '@/components/ui/priority-bars';
 import { AssigneePicker } from './assignee-picker';
 import { PriorityPicker } from './priority-picker';
 import { StatusPicker } from './status-picker';
@@ -10,6 +20,9 @@ import { WatchersList } from '@/components/watchers/watchers-list';
 import { AiIssueAssistPanel } from '@/components/ai/ai-issue-assist-panel';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useUpdateIssue } from '@/lib/hooks/use-issues';
+
+// Reserved for future fields (not yet rendered but part of the design vocabulary):
+// CalendarPlus (Start date), GitBranch (Parent), RefreshCw (Cycle / Sprint), Users (multi-assignee)
 
 interface IssueSidebarProps {
   issue: {
@@ -64,75 +77,107 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
     }
   };
 
+  const priorityLevel = toPriorityLevel(issue.priority);
+
   return (
     <div className="space-y-6">
-      <section className="space-y-3">
+      <section className="space-y-2">
         <span className="kicker">Details</span>
-        <dl className="grid grid-cols-[80px_1fr] gap-y-2 text-sm items-center">
-          <dt className="text-muted-foreground">Status</dt>
-          <dd>
+
+        {/* Group 1: Status & Priority */}
+        <div>
+          <PropertyRow icon={<CircleDot className="h-3.5 w-3.5" />} label="State">
             <StatusPicker
               projectId={issue.projectId}
               value={issue.statusId}
               onChange={handleStatusChange}
               disabled={updateIssue.isPending}
             />
-          </dd>
+          </PropertyRow>
 
-          <dt className="text-muted-foreground">Priority</dt>
-          <dd>
+          <PropertyRow
+            icon={<PriorityBars level={priorityLevel} size={14} className="shrink-0" />}
+            label="Priority"
+          >
             <PriorityPicker
               value={issue.priority}
               onChange={handlePriorityChange}
               disabled={updateIssue.isPending}
             />
-          </dd>
+          </PropertyRow>
 
-          <dt className="text-muted-foreground">Assignee</dt>
-          <dd>
+          <PropertyRow icon={<Tag className="h-3.5 w-3.5" />} label="Labels">
+            <LabelPicker
+              value={issue.labels}
+              onChange={handleLabelsChange}
+              disabled={updateIssue.isPending}
+            />
+          </PropertyRow>
+        </div>
+
+        {/* Group 2: People */}
+        <div className="border-t border-border/50 mt-3 pt-3">
+          <PropertyRow
+            icon={<User className="h-3.5 w-3.5" />}
+            label="Assignee"
+          >
             <AssigneePicker
               organizationId={currentOrganizationId}
               value={issue.assigneeId || null}
               onChange={handleAssigneeChange}
               disabled={updateIssue.isPending}
             />
-          </dd>
+          </PropertyRow>
 
-          <dt className="text-muted-foreground">Reporter</dt>
-          <dd className="flex items-center gap-2">
-            <Avatar className="h-5 w-5">
-              <AvatarImage src="https://avatar.vercel.sh/reporter" />
-              <AvatarFallback className="text-[9px] font-medium bg-muted">R</AvatarFallback>
-            </Avatar>
-            <span className="text-foreground">Reporter</span>
-          </dd>
+          <PropertyRow
+            icon={<UserCircle2 className="h-3.5 w-3.5" />}
+            label="Reporter"
+          >
+            <div className="flex items-center gap-2">
+              <Avatar className="h-5 w-5">
+                <AvatarImage src="https://avatar.vercel.sh/reporter" />
+                <AvatarFallback className="text-[9px] font-medium bg-muted">R</AvatarFallback>
+              </Avatar>
+              <span className="text-foreground">Reporter</span>
+            </div>
+          </PropertyRow>
+        </div>
 
-          <dt className="text-muted-foreground">Estimate</dt>
-          <dd className="text-foreground">
-            {issue.estimate ? `${issue.estimate}h` : <span className="text-muted-foreground">None</span>}
-          </dd>
+        {/* Group 3: Dates & Hierarchy */}
+        <div className="border-t border-border/50 mt-3 pt-3">
+          <PropertyRow
+            icon={<CalendarClock className="h-3.5 w-3.5" />}
+            label="Due date"
+          >
+            <span className="text-foreground">
+              {issue.dueDate ? (
+                new Date(issue.dueDate).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                })
+              ) : (
+                <span className="text-muted-foreground">None</span>
+              )}
+            </span>
+          </PropertyRow>
 
-          <dt className="text-muted-foreground">Due date</dt>
-          <dd className="text-foreground">
-            {issue.dueDate ? (
-              new Date(issue.dueDate).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-              })
-            ) : (
-              <span className="text-muted-foreground">None</span>
-            )}
-          </dd>
-        </dl>
-      </section>
+          <PropertyRow
+            icon={<Calendar className="h-3.5 w-3.5" />}
+            label="Created on"
+          >
+            <span className="text-foreground">{formatDate(issue.createdAt)}</span>
+          </PropertyRow>
 
-      <section className="space-y-3">
-        <span className="kicker">Labels</span>
-        <LabelPicker
-          value={issue.labels}
-          onChange={handleLabelsChange}
-          disabled={updateIssue.isPending}
-        />
+          <PropertyRow icon={<Gauge className="h-3.5 w-3.5" />} label="Estimate">
+            <span className="text-foreground">
+              {issue.estimate ? (
+                `${issue.estimate}h`
+              ) : (
+                <span className="text-muted-foreground">None</span>
+              )}
+            </span>
+          </PropertyRow>
+        </div>
       </section>
 
       <section className="space-y-3">
@@ -167,6 +212,33 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
       </section>
     </div>
   );
+}
+
+interface PropertyRowProps {
+  icon: React.ReactNode;
+  label: string;
+  children: React.ReactNode;
+}
+
+function PropertyRow({ icon, label, children }: PropertyRowProps) {
+  return (
+    <div className="flex items-center gap-3 py-1.5 text-[12.5px]">
+      <div className="flex items-center gap-2 w-24 text-muted-foreground shrink-0">
+        {icon}
+        <span>{label}</span>
+      </div>
+      <div className="flex-1 min-w-0">{children}</div>
+    </div>
+  );
+}
+
+const PRIORITY_LEVELS: ReadonlyArray<PriorityLevel> = ['urgent', 'high', 'medium', 'low', 'none'];
+
+function toPriorityLevel(value: string): PriorityLevel {
+  const normalized = value?.toLowerCase?.() ?? '';
+  return (PRIORITY_LEVELS as ReadonlyArray<string>).includes(normalized)
+    ? (normalized as PriorityLevel)
+    : 'none';
 }
 
 function formatDate(date: string | Date): string {

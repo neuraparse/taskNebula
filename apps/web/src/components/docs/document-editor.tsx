@@ -1138,11 +1138,17 @@ export function DocumentEditor({
 
           <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1 space-y-2">
-              {breadcrumbPages.length > 0 ? (
-                <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                  {breadcrumbPages.map((breadcrumb, index) => (
+              <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                <Link
+                  href="/docs"
+                  className="inline-flex items-center gap-1.5 rounded-sm px-1 py-0.5 transition-colors duration-150 hover:bg-accent/60 hover:text-foreground"
+                >
+                  <span>Pages</span>
+                </Link>
+                {breadcrumbPages.length > 0 ? (
+                  breadcrumbPages.map((breadcrumb) => (
                     <div key={breadcrumb.id} className="flex items-center gap-1.5">
-                      {index > 0 && <span className="text-muted-foreground/50">/</span>}
+                      <span className="text-muted-foreground/50">/</span>
                       <Link
                         href={createDocumentAppHref({
                           id: breadcrumb.id,
@@ -1154,11 +1160,14 @@ export function DocumentEditor({
                         <span className="max-w-[180px] truncate">{breadcrumb.title}</span>
                       </Link>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <span className="kicker">{documentScopeLabel}</span>
-              )}
+                  ))
+                ) : (
+                  <>
+                    <span className="text-muted-foreground/50">/</span>
+                    <span className="kicker">{documentScopeLabel}</span>
+                  </>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center gap-2">
@@ -1304,6 +1313,16 @@ export function DocumentEditor({
           </div>
 
           <div>
+            {page.icon && (
+              <div className="mb-3">
+                <span
+                  aria-label="Page icon"
+                  className="inline-flex select-none items-center justify-center rounded-lg p-1 text-[56px] leading-none transition-colors"
+                >
+                  {page.icon}
+                </span>
+              </div>
+            )}
             {canEdit ? (
               <Input
                 value={title}

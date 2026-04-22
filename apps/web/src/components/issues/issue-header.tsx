@@ -1,7 +1,20 @@
 'use client';
 
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Star, Bell, BookOpen, CheckSquare, Bug, Zap, FileText, Copy, Check } from 'lucide-react';
+import {
+  Star,
+  Bell,
+  BookOpen,
+  CheckSquare,
+  Bug,
+  Zap,
+  FileText,
+  Copy,
+  Check,
+  Inbox,
+  ChevronRight,
+} from 'lucide-react';
 import { PresenceAvatars } from '@/components/presence/presence-avatars';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -13,7 +26,17 @@ interface IssueHeaderProps {
     type: string;
     title: string;
     status: string;
+    number?: number;
+    projectKey?: string;
   };
+}
+
+// Derive the "PROJ" prefix and the numeric/identifier suffix from whatever
+// fields are present on the issue. The canonical key looks like "ACME-23".
+function splitIssueKey(key: string): { prefix: string | null; suffix: string } {
+  const dashIdx = key.lastIndexOf('-');
+  if (dashIdx <= 0) return { prefix: null, suffix: key };
+  return { prefix: key.slice(0, dashIdx), suffix: key.slice(dashIdx + 1) };
 }
 
 const typeConfig: Record<string, { icon: React.ElementType; color: string; label: string }> = {
@@ -41,14 +64,29 @@ export function IssueHeader({ issue }: IssueHeaderProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const { prefix: derivedPrefix, suffix: derivedSuffix } = splitIssueKey(issue.key ?? '');
+  const projectPrefix = issue.projectKey ?? derivedPrefix ?? 'XXX';
+  const issueSuffix =
+    issue.number !== undefined && issue.number !== null
+      ? String(issue.number)
+      : derivedSuffix || issue.key;
+
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="flex-1 min-w-0 space-y-1">
+        <nav className="flex items-center gap-1.5 text-[12px] text-muted-foreground mb-2">
+          <Inbox className="h-3.5 w-3.5" />
+          <Link href="/issues" className="hover:text-foreground">
+            Work items
+          </Link>
+          <ChevronRight className="h-3 w-3 opacity-60" />
+          <span className="font-mono text-foreground">
+            #{projectPrefix}-{issueSuffix}
+          </span>
+        </nav>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <TypeIcon className={cn('h-3.5 w-3.5 shrink-0', config.color)} />
           <span>{config.label}</span>
-          <span className="text-muted-foreground/40">/</span>
-          <span className="font-mono">{issue.key}</span>
         </div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground text-balance">
           {issue.title}

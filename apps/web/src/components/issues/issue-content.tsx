@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Pencil, Loader2 } from 'lucide-react';
+import { Pencil, Loader2, Clock } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 import { useUpdateIssue } from '@/lib/hooks/use-issues';
 import { IssueAttachments } from './issue-attachments';
 import { IssueDocs } from './issue-docs';
@@ -17,7 +18,21 @@ interface IssueContentProps {
     title: string;
     projectId: string;
     description: string | null;
+    updatedAt?: string | Date | null;
+    updatedBy?: { name?: string | null; email?: string | null } | null;
+    updater?: { name?: string | null; email?: string | null } | null;
+    reporter?: { name?: string | null; email?: string | null } | null;
   };
+}
+
+function formatRelativeTime(value: string | Date): string {
+  const date = typeof value === 'string' ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) return '';
+  try {
+    return formatDistanceToNow(date, { addSuffix: true });
+  } catch {
+    return '';
+  }
 }
 
 export function IssueContent({ issue }: IssueContentProps) {
@@ -95,6 +110,22 @@ export function IssueContent({ issue }: IssueContentProps) {
             )}
           </div>
         )}
+
+        {(() => {
+          const editor = issue.updatedBy ?? issue.updater ?? issue.reporter ?? null;
+          const editorName = editor?.name ?? editor?.email ?? null;
+          if (!issue.updatedAt || !editorName) return null;
+          const relative = formatRelativeTime(issue.updatedAt);
+          if (!relative) return null;
+          return (
+            <div className="flex items-center gap-1.5 text-[11.5px] text-muted-foreground mt-3">
+              <Clock className="h-3 w-3" />
+              <span>Last edited by</span>
+              <span className="font-medium text-foreground">{editorName}</span>
+              <span>{relative}</span>
+            </div>
+          );
+        })()}
       </section>
 
       {/* Subtasks */}

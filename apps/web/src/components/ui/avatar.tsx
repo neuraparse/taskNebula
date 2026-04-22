@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as AvatarPrimitive from '@radix-ui/react-avatar';
+import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 function isSafeAvatarSrc(src: string | undefined) {
@@ -21,16 +22,35 @@ function isSafeAvatarSrc(src: string | undefined) {
   );
 }
 
-const Avatar = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Root
-    ref={ref}
-    className={cn('relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full', className)}
-    {...props}
-  />
-));
+const avatarVariants = cva('relative flex shrink-0 overflow-hidden rounded-full', {
+  variants: {
+    size: {
+      xs: 'h-4 w-4 text-[8px]',
+      sm: 'h-5 w-5 text-[10px]',
+      md: 'h-6 w-6 text-[11px]',
+      lg: 'h-8 w-8 text-xs',
+      xl: 'h-10 w-10 text-sm',
+      '2xl': 'h-14 w-14 text-base',
+    },
+  },
+  defaultVariants: {
+    size: 'xl',
+  },
+});
+
+export interface AvatarProps
+  extends React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>,
+    VariantProps<typeof avatarVariants> {}
+
+const Avatar = React.forwardRef<React.ElementRef<typeof AvatarPrimitive.Root>, AvatarProps>(
+  ({ className, size, ...props }, ref) => (
+    <AvatarPrimitive.Root
+      ref={ref}
+      className={cn(avatarVariants({ size }), className)}
+      {...props}
+    />
+  ),
+);
 Avatar.displayName = AvatarPrimitive.Root.displayName;
 
 const AvatarImage = React.forwardRef<
@@ -64,4 +84,51 @@ const AvatarFallback = React.forwardRef<
 ));
 AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName;
 
-export { Avatar, AvatarImage, AvatarFallback };
+export interface AvatarStackProps {
+  children: React.ReactNode;
+  size?: VariantProps<typeof avatarVariants>['size'];
+  max?: number;
+  className?: string;
+}
+
+const AvatarStack = React.forwardRef<HTMLDivElement, AvatarStackProps>(
+  ({ children, size, max = 3, className }, ref) => {
+    const items = React.Children.toArray(children).filter(React.isValidElement);
+    const visible = items.slice(0, max);
+    const overflow = items.length - visible.length;
+
+    return (
+      <div ref={ref} className={cn('flex items-center', className)}>
+        {visible.map((child, index) => {
+          const element = child as React.ReactElement<{
+            className?: string;
+            size?: VariantProps<typeof avatarVariants>['size'];
+          }>;
+          return React.cloneElement(element, {
+            key: element.key ?? index,
+            size: element.props.size ?? size,
+            className: cn(
+              'ring-2 ring-background',
+              index > 0 && '-ml-1.5',
+              element.props.className,
+            ),
+          });
+        })}
+        {overflow > 0 && (
+          <div
+            className={cn(
+              avatarVariants({ size }),
+              'ring-2 ring-background -ml-1.5 flex items-center justify-center bg-muted text-muted-foreground font-medium',
+            )}
+            aria-label={`${overflow} more`}
+          >
+            +{overflow}
+          </div>
+        )}
+      </div>
+    );
+  },
+);
+AvatarStack.displayName = 'AvatarStack';
+
+export { Avatar, AvatarImage, AvatarFallback, AvatarStack, avatarVariants };

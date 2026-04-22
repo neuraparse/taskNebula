@@ -5,6 +5,10 @@ import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
 import { ActivityFeed } from '@/components/activity/activity-feed';
+import { YourWorkWidget } from '@/components/dashboard/your-work-widget';
+import { UpcomingDeadlinesWidget } from '@/components/dashboard/upcoming-deadlines-widget';
+import { RecentActivityWidget } from '@/components/dashboard/recent-activity-widget';
+import { PinnedItemsWidget } from '@/components/dashboard/pinned-items-widget';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import {
   ArrowUpRight,
@@ -231,6 +235,14 @@ export function DashboardClient() {
                   <ActivityFeed organizationId={currentOrganizationId} limit={5} />
                 </div>
               )}
+            </div>
+
+            {/* Workspace widgets */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
+              <YourWorkWidget />
+              <UpcomingDeadlinesWidget />
+              <RecentActivityWidget />
+              <PinnedItemsWidget />
             </div>
           </div>
         </div>

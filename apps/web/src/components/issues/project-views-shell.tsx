@@ -18,6 +18,7 @@ import {
 } from 'date-fns';
 import {
   CalendarDays,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   FolderKanban,
@@ -35,6 +36,9 @@ import { BoardFiltersBar, DEFAULT_BOARD_FILTERS, type BoardFilters } from '@/com
 import { KanbanBoard } from '@/components/kanban/kanban-board';
 import { CreateIssueModal } from '@/components/issues/create-issue-modal';
 import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
+import { ViewFilterBar } from '@/components/issues/view-filter-bar';
+import { ViewDisplayOptions } from '@/components/issues/view-display-options';
+import { DEFAULT_DISPLAY_OPTIONS, defaultFilters, type DisplayOptions, type ViewFilter } from '@/lib/issues/view-state';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -56,9 +60,11 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage, AvatarStack } from '@/components/ui/avatar';
 import { useIssues, type Issue } from '@/lib/hooks/use-issues';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useTeamspaces } from '@/lib/hooks/use-teamspaces';
+import { useWorkflowStatuses, type WorkflowStatus } from '@/lib/hooks/use-workflow-statuses';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -174,6 +180,8 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
   const { data: teamspaces = [] } = useTeamspaces(currentOrganizationId);
   const [activeViewType, setActiveViewType] = useState<ViewType>('list');
   const [filters, setFilters] = useState<BoardFilters>(DEFAULT_BOARD_FILTERS);
+  const [viewFilters, setViewFilters] = useState<ViewFilter[]>(() => defaultFilters());
+  const [displayOptions, setDisplayOptions] = useState<DisplayOptions>(DEFAULT_DISPLAY_OPTIONS);
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [createIssueOpen, setCreateIssueOpen] = useState(false);
   const [saveViewOpen, setSaveViewOpen] = useState(false);
@@ -186,6 +194,8 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
   const hasAutoAppliedDefaultViewRef = useRef(false);
 
   const { data: issues = [], isLoading } = useIssues({ projectId });
+  const { data: workflowStatuses = [] } = useWorkflowStatuses(projectId);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const { data: viewsData, isLoading: viewsLoading } = useQuery<ProjectViewsResponse>({
     queryKey: ['project-views', projectId, currentTeamId],
     queryFn: async () => {
@@ -442,6 +452,51 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
     [filteredIssues]
   );
 
+  const TRIAGE_GROUP_ID = '__triage__';
+
+  const groupedListIssues = useMemo(() => {
+    const orderedStatuses: Array<Pick<WorkflowStatus, 'id' | 'name' | 'color'>> = [];
+    const seen = new Set<string>();
+
+    // Triage group sits at the top for any issue without a workflow status mapping.
+    orderedStatuses.push({ id: TRIAGE_GROUP_ID, name: 'Triage', color: '#94a3b8' });
+    seen.add(TRIAGE_GROUP_ID);
+
+    for (const status of workflowStatuses) {
+      if (!seen.has(status.id)) {
+        orderedStatuses.push({ id: status.id, name: status.name, color: status.color });
+        seen.add(status.id);
+      }
+    }
+
+    const buckets = new Map<string, Issue[]>();
+    for (const status of orderedStatuses) {
+      buckets.set(status.id, []);
+    }
+
+    for (const issue of filteredIssues) {
+      const key = issue.statusId && buckets.has(issue.statusId) ? issue.statusId : TRIAGE_GROUP_ID;
+      buckets.get(key)!.push(issue);
+    }
+
+    // Sort each bucket using the active list sort field (updatedAt desc, matching buildCriteria default).
+    for (const [key, bucket] of buckets) {
+      bucket.sort(
+        (left, right) => new Date(right.updatedAt || 0).getTime() - new Date(left.updatedAt || 0).getTime()
+      );
+      buckets.set(key, bucket);
+    }
+
+    return orderedStatuses
+      .map((status) => ({ status, issues: buckets.get(status.id) ?? [] }))
+      // Keep the Triage group only when it has items to avoid empty noise at the top of mature projects.
+      .filter((group) => group.status.id !== TRIAGE_GROUP_ID || group.issues.length > 0);
+  }, [filteredIssues, workflowStatuses]);
+
+  const toggleGroup = (groupId: string) => {
+    setCollapsedGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
+  };
+
   const calendarDays = useMemo(() => {
     const monthStart = startOfMonth(calendarMonth);
     const monthEnd = endOfMonth(calendarMonth);
@@ -530,6 +585,13 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
             </div>
           </div>
 
+          {(activeViewType === 'list' || activeViewType === 'board') ? (
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+              <ViewFilterBar filters={viewFilters} onChange={setViewFilters} />
+              <ViewDisplayOptions options={displayOptions} onChange={setDisplayOptions} />
+            </div>
+          ) : null}
+
           <div className="mt-2">
             <ScrollArea className="w-full whitespace-nowrap">
               <div className="flex items-center gap-1.5 pb-1">
@@ -616,63 +678,141 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                     </Button>
                   </div>
                 ) : (
-                  <ul className="stagger divide-y divide-border/60">
-                    {filteredIssues.map((issue) => {
-                      const priorityKey = ['critical', 'high', 'medium', 'low'].includes(issue.priority)
-                        ? issue.priority
-                        : 'low';
-                      const statusLabel = issue.statusName || issue.status;
-                      const status = (statusLabel || '').toLowerCase();
-                      const statusChip = /progress/.test(status)
-                        ? 'chip-blue'
-                        : /block/.test(status)
-                          ? 'chip-rose'
-                          : /done|complete/.test(status)
-                            ? 'chip-emerald'
-                            : /pending|todo|backlog/.test(status)
-                              ? 'chip'
-                              : /review/.test(status)
-                                ? 'chip-violet'
-                                : 'chip';
-                      const dueLabel = issue.dueDate ? format(parseISO(issue.dueDate), 'MMM d') : null;
-                      const assigneeLabel =
-                        issue.assignee?.name || issue.assignee?.email || null;
+                  <div className="stagger">
+                    {groupedListIssues.map((group) => {
+                      const isCollapsed = !!collapsedGroups[group.status.id];
+                      const groupColor = group.status.color || '#94a3b8';
 
                       return (
-                        <li key={issue.id} className="relative">
-                          <span
-                            aria-hidden="true"
-                            className={cn(
-                              'priority-indicator absolute left-0 top-0 bottom-0 h-full',
-                              `priority-${priorityKey}`
-                            )}
-                          />
+                        <section key={group.status.id} className="border-b border-border/60 last:border-b-0">
                           <button
-                            onClick={() => setSelectedIssueId(issue.id)}
-                            className="row-interactive group flex w-full items-center gap-3 rounded-md pl-4 pr-4 py-2.5 text-left"
+                            type="button"
+                            onClick={() => toggleGroup(group.status.id)}
+                            className={cn(
+                              'sticky top-0 z-10 flex w-full items-center gap-2 border-b border-border/60 bg-background px-4 py-2 text-left',
+                              'hover:bg-accent/40 transition-colors duration-150 ease-snap'
+                            )}
+                            aria-expanded={!isCollapsed}
                           >
-                            <span className="font-mono text-[11px] text-muted-foreground shrink-0 w-[72px]">
-                              {issue.key}
+                            {isCollapsed ? (
+                              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                            ) : (
+                              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                            )}
+                            <span
+                              aria-hidden="true"
+                              className="inline-block h-2.5 w-2.5 rounded-full border"
+                              style={{ backgroundColor: groupColor, borderColor: groupColor }}
+                            />
+                            <span className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                              {group.status.name}
                             </span>
-                            <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
-                              {issue.title}
-                            </span>
-                            <span className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground shrink-0">
-                              {assigneeLabel ? (
-                                <span className="truncate max-w-[140px]">{assigneeLabel}</span>
-                              ) : null}
-                              {dueLabel ? <span>{dueLabel}</span> : null}
-                            </span>
-                            {statusLabel ? (
-                              <span className={cn('shrink-0', statusChip)}>
-                                {statusLabel}
-                              </span>
-                            ) : null}
+                            <span className="text-xs text-muted-foreground">{group.issues.length}</span>
                           </button>
-                        </li>
+
+                          {!isCollapsed ? (
+                            group.issues.length === 0 ? (
+                              <div className="px-4 py-3 text-xs text-muted-foreground">No items</div>
+                            ) : (
+                              <ul className="divide-y divide-border/60">
+                                {group.issues.map((issue) => {
+                                  const priorityKey = ['critical', 'high', 'medium', 'low'].includes(issue.priority)
+                                    ? issue.priority
+                                    : 'low';
+                                  const dotColor = issue.statusColor || groupColor;
+                                  const dueLabel = issue.dueDate ? format(parseISO(issue.dueDate), 'MMM d') : null;
+                                  const assignees = issue.assignee ? [issue.assignee] : [];
+                                  const labels = Array.isArray(issue.labels) ? issue.labels : [];
+
+                                  return (
+                                    <li key={issue.id} className="relative">
+                                      <span
+                                        aria-hidden="true"
+                                        className={cn(
+                                          'priority-indicator absolute left-0 top-0 bottom-0 h-full',
+                                          `priority-${priorityKey}`
+                                        )}
+                                      />
+                                      <button
+                                        onClick={() => setSelectedIssueId(issue.id)}
+                                        className="group flex h-9 w-full items-center gap-3 rounded-md pl-4 pr-4 text-left transition-colors duration-150 ease-snap hover:bg-accent/50"
+                                      >
+                                        <span
+                                          aria-hidden="true"
+                                          className="inline-block h-2 w-2 shrink-0 rounded-full border"
+                                          style={{ backgroundColor: dotColor, borderColor: dotColor }}
+                                        />
+                                        <span className="w-16 shrink-0 truncate font-mono text-[11px] text-muted-foreground">
+                                          {issue.key}
+                                        </span>
+                                        <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                                          {issue.title}
+                                        </span>
+
+                                        <span className="ml-auto flex shrink-0 items-center gap-2">
+                                          {labels.length > 0 ? (
+                                            <span className="hidden md:flex items-center gap-1">
+                                              {labels.slice(0, 2).map((label) => (
+                                                <span
+                                                  key={label}
+                                                  className="rounded-full bg-muted/50 px-2 py-0.5 text-xs text-muted-foreground"
+                                                >
+                                                  {label}
+                                                </span>
+                                              ))}
+                                              {labels.length > 2 ? (
+                                                <span className="rounded-full bg-muted/50 px-2 py-0.5 text-xs text-muted-foreground">
+                                                  +{labels.length - 2}
+                                                </span>
+                                              ) : null}
+                                            </span>
+                                          ) : null}
+
+                                          {dueLabel ? (
+                                            <span className="hidden sm:inline-flex items-center gap-1 text-xs text-muted-foreground">
+                                              <CalendarDays className="h-3 w-3" />
+                                              {dueLabel}
+                                            </span>
+                                          ) : null}
+
+                                          <span
+                                            aria-hidden="true"
+                                            className={cn(
+                                              'h-2 w-2 rounded-full',
+                                              priorityKey === 'critical' && 'bg-rose-500',
+                                              priorityKey === 'high' && 'bg-orange-500',
+                                              priorityKey === 'medium' && 'bg-amber-400',
+                                              priorityKey === 'low' && 'bg-muted-foreground/40'
+                                            )}
+                                            title={`Priority: ${priorityKey}`}
+                                          />
+
+                                          {assignees.length > 0 ? (
+                                            <AvatarStack max={3} size="xs">
+                                              {assignees.map((person) => (
+                                                <Avatar key={person.id} size="xs">
+                                                  {person.image ? (
+                                                    <AvatarImage src={person.image} alt={person.name || person.email} />
+                                                  ) : null}
+                                                  <AvatarFallback>
+                                                    {(person.name || person.email || '?').charAt(0).toUpperCase()}
+                                                  </AvatarFallback>
+                                                </Avatar>
+                                              ))}
+                                            </AvatarStack>
+                                          ) : null}
+                                        </span>
+                                      </button>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            )
+                          ) : null}
+                        </section>
                       );
                     })}
-                  </ul>
+                  </div>
                 )}
               </div>
             </div>

@@ -22,6 +22,7 @@ import {
   Users,
   Settings,
   ChevronDown,
+  ChevronRight,
   Plus,
   Shield,
   Loader2,
@@ -34,11 +35,32 @@ import {
   SlidersHorizontal,
   Users2,
   Volume2,
+  Activity,
+  Bell,
+  Building2,
+  Eye,
+  FileText,
+  KeyRound,
+  Palette,
+  Pin,
+  Plug,
+  Sparkles,
+  Star,
+  UserCog,
+  UserPlus,
+  Webhook,
+  Workflow,
 } from 'lucide-react';
+import { Bot, Flag, Gauge, MessageSquareText, Scroll, ScrollText } from 'lucide-react';
 import { TaskNebulaLogo } from '@/components/branding/tasknebula-logo';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TeamspaceSwitcher } from '@/components/organization/teamspace-switcher';
+import { AppRail } from '@/components/layout/app-rail';
+import {
+  PageSidebarSlotTarget,
+  usePageSidebarHasContent,
+} from '@/components/layout/page-sidebar-slot';
 import {
   Dialog,
   DialogContent,
@@ -67,20 +89,112 @@ import {
 } from '@/lib/chat/microphone';
 import { useStoredVoicePreferences } from '@/lib/chat/voice-preferences';
 
-const navigation = [
-  { name: 'Home', href: '/dashboard', icon: Home },
-  { name: 'My Issues', href: '/my-issues', icon: Inbox },
-  { name: 'Projects', href: '/projects', icon: FolderKanban },
-  { name: 'Docs', href: '/docs', icon: BookOpenText },
-  { name: 'Team', href: '/team', icon: Users },
+const MY_ISSUES_VIEWS = [
+  { value: 'assigned', label: 'Assigned to me', icon: Inbox },
+  { value: 'created', label: 'Created by me', icon: UserPlus },
+  { value: 'subscribed', label: 'Subscribed', icon: Eye },
+  { value: 'mentioned', label: 'Mentioned', icon: Sparkles },
 ];
 
-export function AppSidebar() {
+const DASHBOARD_LINKS = [
+  { href: '/dashboard', label: 'Overview', icon: Home },
+  { href: '/dashboard?tab=activity', label: 'Recent activity', icon: Activity },
+  { href: '/dashboard?tab=pinned', label: 'Pinned', icon: Pin },
+  { href: '/dashboard?tab=drafts', label: 'Drafts', icon: FileText },
+];
+
+const TEAM_LINKS = [
+  { href: '/team', label: 'Members', icon: Users },
+  { href: '/team?tab=teamspaces', label: 'Teamspaces', icon: Building2 },
+  { href: '/team?tab=invites', label: 'Pending invites', icon: UserPlus },
+];
+
+const SETTINGS_LINKS = [
+  { href: '/settings?tab=organization', label: 'Organization', icon: Building2, match: { path: '/settings', tab: 'organization' } },
+  { href: '/settings?tab=members', label: 'Members', icon: Users, match: { path: '/settings', tab: 'members' } },
+  { href: '/settings?tab=api-keys', label: 'API Keys', icon: KeyRound, match: { path: '/settings', tab: 'api-keys' } },
+  { href: '/settings?tab=webhooks', label: 'Webhooks', icon: Webhook, match: { path: '/settings', tab: 'webhooks' } },
+  { href: '/settings/integrations', label: 'Integrations', icon: Plug, match: { path: '/settings/integrations' } },
+  { href: '/settings?tab=ai-agents', label: 'AI & Agents', icon: Bot, match: { path: '/settings', tab: 'ai-agents' } },
+  { href: '/settings?tab=communications', label: 'Communications', icon: MessageSquareText, match: { path: '/settings', tab: 'communications' } },
+  { href: '/settings?tab=notifications', label: 'Notifications', icon: Bell, match: { path: '/settings', tab: 'notifications' } },
+  { href: '/settings?tab=appearance', label: 'Appearance', icon: Palette, match: { path: '/settings', tab: 'appearance' } },
+  { href: '/settings?tab=audit-log', label: 'Activity', icon: ScrollText, match: { path: '/settings', tab: 'audit-log' } },
+];
+
+const ADMIN_LINKS = [
+  { href: '/admin?tab=overview', label: 'Overview', icon: Gauge, match: { path: '/admin', tab: 'overview' } },
+  { href: '/admin?tab=organizations', label: 'Organizations', icon: Building2, match: { path: '/admin', tab: 'organizations' } },
+  { href: '/admin?tab=users', label: 'Users', icon: UserCog, match: { path: '/admin', tab: 'users' } },
+  { href: '/admin?tab=feature-flags', label: 'Feature flags', icon: Flag, match: { path: '/admin', tab: 'feature-flags' } },
+  { href: '/admin?tab=agents', label: 'Agent control', icon: Bot, match: { path: '/admin', tab: 'agents' } },
+  { href: '/admin?tab=realtime', label: 'Realtime health', icon: Radio, match: { path: '/admin', tab: 'realtime' } },
+  { href: '/admin?tab=audit', label: 'Audit logs', icon: Scroll, match: { path: '/admin', tab: 'audit' } },
+];
+
+type NavLink = {
+  href: string;
+  label: string;
+  icon: typeof Settings;
+  match?: { path: string; tab?: string };
+};
+
+const DEFAULT_TAB_BY_PATH: Record<string, string> = {
+  '/settings': 'organization',
+  '/admin': 'overview',
+};
+
+function isNavLinkActive(
+  link: NavLink,
+  pathname: string | null | undefined,
+  activeTab: string | null | undefined
+): boolean {
+  if (!link.match) return pathname === link.href;
+  if (pathname !== link.match.path) return false;
+  if (!link.match.tab) return !activeTab;
+  const defaultTab = DEFAULT_TAB_BY_PATH[link.match.path];
+  if (link.match.tab === defaultTab) {
+    return !activeTab || activeTab === defaultTab;
+  }
+  return activeTab === link.match.tab;
+}
+
+function getSectionLabel(pathname: string | null | undefined): string {
+  if (!pathname) return 'Workspace';
+  if (pathname === '/' || pathname.startsWith('/dashboard')) return 'Home';
+  if (pathname.startsWith('/my-issues')) return 'My Issues';
+  if (pathname.startsWith('/projects')) return 'Projects';
+  if (pathname.startsWith('/docs')) return 'Docs';
+  if (pathname.startsWith('/team')) return 'Team';
+  if (pathname.startsWith('/admin')) return 'Admin';
+  if (pathname.startsWith('/settings')) return 'Settings';
+  return 'Workspace';
+}
+
+interface AppSidebarProps {
+  onCreateIssue?: () => void;
+}
+
+export function AppSidebar({ onCreateIssue }: AppSidebarProps = {}) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   const { currentOrganizationId, currentTeamId } = useOrganization();
   const { data: liveCalls, isLoading: liveCallsLoading } = useLiveCalls();
+  const hasPageSidebar = usePageSidebarHasContent();
+  const [isTeamspacesOpen, setIsTeamspacesOpen] = useState(true);
+  const [isProjectsOpen, setIsProjectsOpen] = useState(true);
+  const [isLiveCallsOpen, setIsLiveCallsOpen] = useState(true);
+
+  const handleCreateIssue = useCallback(() => {
+    if (onCreateIssue) {
+      onCreateIssue();
+      return;
+    }
+    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      console.info('[AppSidebar] onCreateIssue not provided — wire a handler to open the create issue modal.');
+    }
+  }, [onCreateIssue]);
   const {
     connectionState,
     currentSession,
@@ -172,7 +286,9 @@ export function AppSidebar() {
   );
 
   return (
-    <aside className="flex w-60 flex-col border-r border-border bg-surface">
+    <div className="flex h-screen">
+      <AppRail />
+      <aside className="flex w-60 flex-col border-r border-border bg-card">
       <div className="flex h-14 items-center px-4">
         <button
           className="flex w-full items-center justify-between rounded-md py-1.5 text-sm font-medium transition-all duration-150 ease-snap hover:bg-accent/60"
@@ -188,32 +304,163 @@ export function AppSidebar() {
         </button>
       </div>
 
-      <nav aria-label="Primary" className="custom-scrollbar flex-1 overflow-y-auto px-3 pb-3">
-        <div className="space-y-0.5">
-          {navigation.map((item) => {
-            const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                data-active={isActive ? 'true' : undefined}
-                className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
-              >
-                <item.icon className="h-4 w-4 shrink-0" />
-                <span>{item.name}</span>
-              </Link>
-            );
-          })}
-        </div>
+      <div className="px-3 pb-2">
+        <Button
+          type="button"
+          variant="default"
+          size="sm"
+          className="h-8 w-full justify-start gap-2 rounded-md text-sm font-medium"
+          onClick={handleCreateIssue}
+          aria-label="Create new work item"
+        >
+          <Plus className="h-4 w-4 shrink-0" />
+          <span>New work item</span>
+        </Button>
+      </div>
 
-        <div>
-          <span className="kicker mb-1 mt-4 block px-3">Teamspaces</span>
-          <div className="px-1 pb-2">
-            <TeamspaceSwitcher />
+      <nav aria-label="Section" className="custom-scrollbar flex-1 overflow-y-auto pb-3">
+        <PageSidebarSlotTarget className={cn('flex min-h-0 flex-col', !hasPageSidebar && 'hidden')} />
+
+        <div className={cn('px-3', hasPageSidebar && 'hidden')}>
+        {pathname?.startsWith('/settings') || pathname?.startsWith('/admin') ? null : (
+          <div className="mb-3 mt-1 px-3">
+            <div className="kicker">{getSectionLabel(pathname)}</div>
           </div>
+        )}
+
+        {pathname?.startsWith('/my-issues') ? (
+          <div className="space-y-0.5">
+            {MY_ISSUES_VIEWS.map((view) => {
+              const isActive = (searchParams?.get('view') ?? 'assigned') === view.value;
+              return (
+                <Link
+                  key={view.value}
+                  href={`/my-issues?view=${view.value}`}
+                  data-active={isActive ? 'true' : undefined}
+                  className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
+                >
+                  <view.icon className="h-4 w-4 shrink-0" />
+                  <span>{view.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {pathname === '/dashboard' || pathname === '/' ? (
+          <div className="space-y-0.5">
+            {DASHBOARD_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground"
+              >
+                <link.icon className="h-4 w-4 shrink-0" />
+                <span>{link.label}</span>
+              </Link>
+            ))}
+          </div>
+        ) : null}
+
+        {pathname?.startsWith('/team') ? (
+          <div className="space-y-0.5">
+            {TEAM_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground"
+              >
+                <link.icon className="h-4 w-4 shrink-0" />
+                <span>{link.label}</span>
+              </Link>
+            ))}
+          </div>
+        ) : null}
+
+        {pathname?.startsWith('/settings') || pathname?.startsWith('/admin') ? (
+          <>
+            <div className="mb-1 flex items-center gap-2 px-3">
+              <Settings className="h-3 w-3 text-muted-foreground" />
+              <span className="kicker">Settings</span>
+            </div>
+            <div className="space-y-0.5">
+              {SETTINGS_LINKS.map((link) => {
+                const isActive = isNavLinkActive(link, pathname, searchParams?.get('tab'));
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    data-active={isActive ? 'true' : undefined}
+                    className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
+                  >
+                    <link.icon className="h-4 w-4 shrink-0" />
+                    <span>{link.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {isSuperAdmin ? (
+              <>
+                <div className="mb-1 mt-4 flex items-center gap-2 px-3">
+                  <Shield className="h-3 w-3 text-muted-foreground" />
+                  <span className="kicker">Admin</span>
+                </div>
+                <div className="space-y-0.5">
+                  {ADMIN_LINKS.map((link) => {
+                    const isActive = isNavLinkActive(link, pathname, searchParams?.get('tab'));
+                    return (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        data-active={isActive ? 'true' : undefined}
+                        className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
+                      >
+                        <link.icon className="h-4 w-4 shrink-0" />
+                        <span>{link.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </>
+            ) : null}
+          </>
+        ) : null}
+
+        <div hidden={!(pathname?.startsWith('/projects') || pathname?.startsWith('/dashboard') || pathname === '/')}>
+          <button
+            type="button"
+            onClick={() => setIsTeamspacesOpen((open) => !open)}
+            aria-expanded={isTeamspacesOpen}
+            className="mb-1 mt-4 flex w-full items-center gap-1 px-3 text-left transition-colors duration-150 hover:text-foreground"
+          >
+            {isTeamspacesOpen ? (
+              <ChevronDown className="h-3 w-3 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="h-3 w-3 text-muted-foreground" />
+            )}
+            <span className="kicker">Teamspaces</span>
+          </button>
+          {isTeamspacesOpen ? (
+            <div className="px-1 pb-2">
+              <TeamspaceSwitcher />
+            </div>
+          ) : null}
 
           <div className="mb-1 mt-4 flex items-center justify-between px-3">
-            <span className="kicker">Projects</span>
+            <button
+              type="button"
+              onClick={() => setIsProjectsOpen((open) => !open)}
+              aria-expanded={isProjectsOpen}
+              className="flex flex-1 items-center gap-1 text-left transition-colors duration-150 hover:text-foreground"
+            >
+              {isProjectsOpen ? (
+                <ChevronDown className="h-3 w-3 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-3 w-3 text-muted-foreground" />
+              )}
+              <span className="kicker">Projects</span>
+            </button>
             <Link href="/projects">
               <Button
                 variant="ghost"
@@ -225,59 +472,81 @@ export function AppSidebar() {
               </Button>
             </Link>
           </div>
-          <div className="space-y-0.5">
-            {projectsLoading ? (
-              <div className="flex items-center justify-center py-4">
-                <span role="status" aria-live="polite" aria-busy="true">
-                  <span className="sr-only">Loading…</span>
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                </span>
-              </div>
-            ) : projects && projects.length > 0 ? (
-              projects.slice(0, 5).map((project) => {
-                const projectPath = project.key?.toLowerCase() || project.id;
-                const isActive = pathname?.includes(`/projects/${projectPath}`);
-                return (
-                  <Link
-                    key={project.id}
-                    href={`/projects/${projectPath}/views`}
-                    data-active={isActive ? 'true' : undefined}
-                    className="row-interactive group rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
-                  >
-                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-sm bg-muted">
-                      <span className="text-[9px] font-bold text-muted-foreground">
-                        {project.name.substring(0, 2).toUpperCase()}
+          {isProjectsOpen ? (
+            <div className="space-y-0.5">
+              {projectsLoading ? (
+                <div className="flex items-center justify-center py-4">
+                  <span role="status" aria-live="polite" aria-busy="true">
+                    <span className="sr-only">Loading…</span>
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </span>
+                </div>
+              ) : projects && projects.length > 0 ? (
+                projects.slice(0, 5).map((project) => {
+                  const projectPath = project.key?.toLowerCase() || project.id;
+                  const isActive = pathname?.includes(`/projects/${projectPath}`);
+                  const projectIcon = (project as { icon?: string | null }).icon;
+                  return (
+                    <Link
+                      key={project.id}
+                      href={`/projects/${projectPath}/views`}
+                      data-active={isActive ? 'true' : undefined}
+                      className="row-interactive group rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
+                    >
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-sm bg-muted">
+                        {projectIcon ? (
+                          <span className="text-xs leading-none" aria-hidden="true">
+                            {projectIcon}
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-bold text-muted-foreground">
+                            {project.name.substring(0, 2).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <span className="flex-1 truncate">{project.name}</span>
+                      <span className="font-mono text-[10px] text-muted-foreground opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                        {project.key}
                       </span>
-                    </div>
-                    <span className="flex-1 truncate">{project.name}</span>
-                    <span className="font-mono text-[10px] text-muted-foreground opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                      {project.key}
-                    </span>
-                  </Link>
-                );
-              })
-            ) : (
-              <div className="px-3 py-4 text-center">
-                <p className="text-xs text-muted-foreground">No projects yet</p>
-              </div>
-            )}
-            {projects && projects.length > 5 ? (
-              <Link
-                href="/projects"
-                className="row-interactive rounded-md text-xs text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground"
-              >
-                View all {projects.length} projects
-              </Link>
-            ) : null}
-          </div>
+                    </Link>
+                  );
+                })
+              ) : (
+                <div className="px-3 py-4 text-center">
+                  <p className="text-xs text-muted-foreground">No projects yet</p>
+                </div>
+              )}
+              {projects && projects.length > 5 ? (
+                <Link
+                  href="/projects"
+                  className="row-interactive rounded-md text-xs text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground"
+                >
+                  View all {projects.length} projects
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
         </div>
       </nav>
 
       {currentTarget || otherActiveCalls.length > 0 || sidebarRuntimeError ? (
         <div className="space-y-1.5 px-3 py-3">
-          <span className="kicker px-0">Live Calls</span>
+          <button
+            type="button"
+            onClick={() => setIsLiveCallsOpen((open) => !open)}
+            aria-expanded={isLiveCallsOpen}
+            className="flex w-full items-center gap-1 text-left transition-colors duration-150 hover:text-foreground"
+          >
+            {isLiveCallsOpen ? (
+              <ChevronDown className="h-3 w-3 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="h-3 w-3 text-muted-foreground" />
+            )}
+            <span className="kicker px-0">Live Calls</span>
+          </button>
 
-          {currentTarget && currentSession ? (
+          {isLiveCallsOpen && currentTarget && currentSession ? (
             room ? (
               <RoomContext.Provider value={room}>
                 <SidebarVoiceWorkspace
@@ -318,86 +587,42 @@ export function AppSidebar() {
             )
           ) : null}
 
-          {liveCallsLoading ? (
+          {isLiveCallsOpen && liveCallsLoading ? (
             <div className="flex items-center gap-2 px-2 py-2 text-xs text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
               Checking active calls…
             </div>
           ) : null}
 
-          {otherActiveCalls.map((call) => (
-            <Link
-              key={call.id}
-              href={call.room.href}
-              className="flex items-center gap-1.5 rounded-md bg-surface-2 px-2 py-1.5 text-left transition-all duration-150 ease-snap hover:bg-accent/60"
-            >
-              <span className="realtime-ping shrink-0">
-                <span className="status-dot status-live" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[11px] font-medium text-foreground">{call.room.title}</div>
-                <div className="truncate text-[10px] text-muted-foreground">
-                  {call.project.key} · {call.participantCount}
-                  {call.isParticipant ? ' · joined' : ''}
-                </div>
-              </div>
-              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                <Users2 className="h-3 w-3 shrink-0" />
-                <span>{call.participantCount}</span>
-              </div>
-            </Link>
-          ))}
+          {isLiveCallsOpen
+            ? otherActiveCalls.map((call) => (
+                <Link
+                  key={call.id}
+                  href={call.room.href}
+                  className="flex items-center gap-1.5 rounded-md bg-surface-2 px-2 py-1.5 text-left transition-all duration-150 ease-snap hover:bg-accent/60"
+                >
+                  <span className="realtime-ping shrink-0">
+                    <span className="status-dot status-live" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[11px] font-medium text-foreground">{call.room.title}</div>
+                    <div className="truncate text-[10px] text-muted-foreground">
+                      {call.project.key} · {call.participantCount}
+                      {call.isParticipant ? ' · joined' : ''}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <Users2 className="h-3 w-3 shrink-0" />
+                    <span>{call.participantCount}</span>
+                  </div>
+                </Link>
+              ))
+            : null}
         </div>
       ) : null}
 
-      <div className="space-y-0.5 px-3 pb-2 pt-1">
-        {isSuperAdmin ? (
-          <Link
-            href="/admin"
-            data-active={pathname === '/admin' ? 'true' : undefined}
-            className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
-          >
-            <Shield className="h-4 w-4 shrink-0" />
-            <span>Admin</span>
-          </Link>
-        ) : null}
-
-        <Link
-          href="/settings"
-          data-active={pathname === '/settings' ? 'true' : undefined}
-          className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
-        >
-          <Settings className="h-4 w-4 shrink-0" />
-          <span>Settings</span>
-        </Link>
-      </div>
-
-      <div className="px-3 pb-3">
-        <button
-          type="button"
-          className="surface-inset flex w-full items-center gap-2.5 p-3 text-left transition-all duration-150 ease-snap hover:bg-accent/60"
-          aria-label="Open account menu"
-        >
-          <Avatar className="h-7 w-7">
-            {session?.user?.image ? (
-              <AvatarImage src={session.user.image} alt={session.user.name ?? 'User avatar'} />
-            ) : null}
-            <AvatarFallback className="bg-muted text-[10px] font-medium text-muted-foreground">
-              {session?.user?.name?.split(' ').map((part) => part[0]).join('').toUpperCase() || 'U'}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-foreground">
-              {session?.user?.name || 'User'}
-            </p>
-            <p className="truncate text-[11px] text-muted-foreground">
-              {session?.user?.email || 'Workspace'}
-            </p>
-          </div>
-          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-        </button>
-      </div>
-    </aside>
+      </aside>
+    </div>
   );
 }
 

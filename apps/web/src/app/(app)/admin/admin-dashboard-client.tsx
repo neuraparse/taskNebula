@@ -55,7 +55,6 @@ import {
   Radio,
   Scroll,
   Search,
-  Shield,
   Trash2,
   Users,
 } from 'lucide-react';
@@ -379,39 +378,6 @@ export function AdminDashboardClient() {
       />
 
       <div className="flex h-full min-h-0">
-        {/* Sidebar */}
-        <aside className="hidden w-56 shrink-0 border-r border-border lg:block">
-          <div className="sticky top-0 space-y-4 p-4">
-            <div className="flex items-center gap-2 px-2 py-1">
-              <Shield className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold tracking-tight">Admin</span>
-            </div>
-            <nav className="space-y-0.5">
-              {visibleNav.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.key;
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => handleTabChange(item.key)}
-                    className={cn(
-                      'group flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors duration-200 ease-smooth',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                      isActive
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="truncate">{item.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-        </aside>
-
         <div className="flex-1 min-w-0 animate-fade-up space-y-6 overflow-y-auto p-6">
           {/* Mobile nav */}
           <div className="lg:hidden">
