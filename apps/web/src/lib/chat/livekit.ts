@@ -15,18 +15,31 @@ function stripPort(host: string) {
 export function resolveLivekitPublicUrl(request?: Request) {
   const configuredPublicHost = process.env.LIVEKIT_PUBLIC_HOST?.trim();
   const configuredPort = process.env.LIVEKIT_PORT || '7880';
-  const configuredPublicUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL || process.env.LIVEKIT_URL || '';
+  const configuredPublicUrl = (process.env.NEXT_PUBLIC_LIVEKIT_URL || process.env.LIVEKIT_URL || '').trim();
 
   const buildSocketUrl = (host: string, protocolHint?: string) => {
     const socketProtocol = protocolHint === 'https' || protocolHint === 'wss' ? 'wss' : 'ws';
     return `${socketProtocol}://${host}:${configuredPort}`;
   };
 
+  // If NEXT_PUBLIC_LIVEKIT_URL is a fully-qualified ws:// / wss:// URL it
+  // wins outright — this is the production path where an nginx proxy
+  // terminates TLS on a dedicated subdomain (e.g. wss://livekit.example.com)
+  // and the port is 443, not 7880. Falling through to LIVEKIT_PUBLIC_HOST
+  // here would silently replace that with a port-7880 URL that the
+  // browser can't reach.
+  if (
+    configuredPublicUrl.startsWith('wss://') ||
+    configuredPublicUrl.startsWith('ws://')
+  ) {
+    return configuredPublicUrl.replace(/\/+$/, '');
+  }
+
   if (configuredPublicHost) {
     const protocolHint =
-      configuredPublicUrl.startsWith('wss://') || configuredPublicUrl.startsWith('https://')
+      configuredPublicUrl.startsWith('https://') || configuredPublicUrl.startsWith('wss://')
         ? 'https'
-        : configuredPublicUrl.startsWith('ws://') || configuredPublicUrl.startsWith('http://')
+        : configuredPublicUrl.startsWith('http://') || configuredPublicUrl.startsWith('ws://')
           ? 'http'
           : undefined;
     return buildSocketUrl(configuredPublicHost, protocolHint);

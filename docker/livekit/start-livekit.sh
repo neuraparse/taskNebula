@@ -69,7 +69,11 @@ rtc:
   enable_loopback_candidate: false
 ${INTERFACE_BLOCK}
 redis:
-  address: 127.0.0.1:${REDIS_PORT:-6379}
+  address: 127.0.0.1:${REDIS_PORT:-6379}$(
+    if [ -n "${REDIS_PASSWORD:-}" ]; then
+      printf '\n  password: %s' "$REDIS_PASSWORD"
+    fi
+  )
 turn:
   enabled: true
   udp_port: ${LIVEKIT_TURN_UDP_PORT:-3478}

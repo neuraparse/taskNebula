@@ -109,7 +109,12 @@ import { useGlobalVoice } from '@/components/chat/global-voice-provider';
 
 const QUICK_REACTIONS = ['👍', '👀', '🚀'];
 const VOICE_CLIENT_SESSION_STORAGE_KEY = 'tasknebula.voice-client-session';
-const JOIN_PREFLIGHT_MICROPHONE_TIMEOUT_MS = 1_500;
+// Previously 1_500ms, which fired before most users could even click "Allow"
+// on Safari / Firefox — the app then fell back to "muted join + pending
+// promise" and the mic never came back. 8s is long enough to cover normal
+// human reaction time on the browser permission popup without making the
+// Join button feel unresponsive.
+const JOIN_PREFLIGHT_MICROPHONE_TIMEOUT_MS = 8_000;
 const JOIN_PENDING_MICROPHONE_REQUEST_TIMEOUT_MS = 60_000;
 const MICROPHONE_TEST_TIMEOUT_MS = 2_000;
 
@@ -2159,11 +2164,20 @@ export function VoiceJoinSetupPanel({
       const browserFamily = detectMicrophoneBrowserFamily(userAgent);
       const shouldUseExtendedPromptWait =
         browserFamily === 'chromium' || browserFamily === 'edge' || browserFamily === 'safari';
+      // Re-query the Permissions API at click time — the cached
+      // `microphonePermissionState` updates only on window focus /
+      // visibilitychange / devicechange, so it can still say "prompt"
+      // even after the user just clicked "Allow" inside the Test mic
+      // step. Stale state here causes Chromium to force the
+      // browser-stability fallback path unnecessarily.
+      const freshPermissionState = await getMicrophonePermissionState({ silent: true }).catch(
+        () => microphonePermissionState
+      );
       const joinAudioResolution = startWithMicrophone
         ? await resolveJoinAudioInputDeviceId(storedAudioDeviceId || 'default', {
             preferBrowserStability: true,
             userAgent,
-            microphonePermissionState,
+            microphonePermissionState: freshPermissionState,
             microphoneRequestOptions: {
               interactive: true,
               preferredDeviceGroupId: storedAudioDeviceGroupId,
@@ -3230,6 +3244,18 @@ function formatConnectionStateLabel(state: string) {
 
 function formatLivekitRuntimeError(error: Error) {
   const message = error.message.toLowerCase();
+  // ICE / PeerConnection failure surfaces as a "client initiated" disconnect
+  // from the SDK, so we disambiguate those before falling through to the
+  // user-initiated path that is intentionally silent.
+  if (
+    message.includes('could not establish pc connection') ||
+    message.includes('ice failed') ||
+    message.includes('peerconnection failed') ||
+    message.includes('pc connection failed') ||
+    message.includes('ice connection failed')
+  ) {
+    return 'Voice server is unreachable on the media ports (UDP 50000-50020 / 3478, TCP 7881). Check firewall / NAT and try again.';
+  }
   if (
     message.includes('client initiated disconnect') ||
     message.includes('closed peer connection') ||
