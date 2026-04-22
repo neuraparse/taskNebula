@@ -1070,39 +1070,47 @@ export function DocsShell({ projectId }: DocsShellProps) {
           <div className="flex h-full min-h-0 flex-col bg-surface">{navigationPane}</div>
         </PageSidebarContent>
 
-        <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
-          {isLoading ? (
-            <DocsShellSkeleton />
-          ) : currentPage ? (
-            <DocumentEditor
-              page={currentPage}
-              allPages={allPages}
-              canEdit={canEditCurrentPage}
-              saveError={saveError}
-              onSave={handleSavePage}
-              onUpdateShare={handleUpdateShare}
-              onUploadImage={handleUploadImage}
-              onCreateChild={
-                canCreateChildPages
-                  ? () => {
-                      openCreateDialog(currentPage.id);
-                    }
-                  : undefined
-              }
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center">
-              <div className="mx-auto max-w-xl px-6">
-                <DocsGettingStarted
-                  canCreate={canCreateInContext}
-                  hasPages={allPages.length > 0}
-                  scopeLabel={scopeLabel}
-                  spaceName={createTargetSpace?.name}
-                  onCreatePage={() => openCreateDialog(null)}
-                />
+        <div className="grid h-full min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_22rem]">
+          <div className="min-h-0 min-w-0 overflow-hidden">
+            {isLoading ? (
+              <DocsShellSkeleton />
+            ) : currentPage ? (
+              <DocumentEditor
+                page={currentPage}
+                allPages={allPages}
+                canEdit={canEditCurrentPage}
+                saveError={saveError}
+                onSave={handleSavePage}
+                onUpdateShare={handleUpdateShare}
+                onUploadImage={handleUploadImage}
+                onCreateChild={
+                  canCreateChildPages
+                    ? () => {
+                        openCreateDialog(currentPage.id);
+                      }
+                    : undefined
+                }
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <div className="mx-auto max-w-xl px-6">
+                  <DocsGettingStarted
+                    canCreate={canCreateInContext}
+                    hasPages={allPages.length > 0}
+                    scopeLabel={scopeLabel}
+                    spaceName={createTargetSpace?.name}
+                    onCreatePage={() => openCreateDialog(null)}
+                  />
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+
+          {currentPage ? (
+            <aside className="hidden h-full min-h-0 overflow-y-auto overscroll-contain border-l border-border bg-background lg:block">
+              {detailsPane}
+            </aside>
+          ) : null}
         </div>
       </div>
 

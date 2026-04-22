@@ -318,8 +318,8 @@ export function AppSidebar({ onCreateIssue }: AppSidebarProps = {}) {
         </Button>
       </div>
 
-      <nav aria-label="Section" className="custom-scrollbar flex-1 overflow-y-auto pb-3">
-        <PageSidebarSlotTarget className={cn('flex min-h-0 flex-col', !hasPageSidebar && 'hidden')} />
+      <nav aria-label="Section" className={cn('flex-1 min-h-0', hasPageSidebar ? 'flex flex-col overflow-hidden' : 'custom-scrollbar overflow-y-auto pb-3')}>
+        <PageSidebarSlotTarget className={cn('flex min-h-0 flex-1 flex-col overflow-hidden', !hasPageSidebar && 'hidden')} />
 
         <div className={cn('px-3', hasPageSidebar && 'hidden')}>
         {pathname?.startsWith('/settings') || pathname?.startsWith('/admin') ? null : (

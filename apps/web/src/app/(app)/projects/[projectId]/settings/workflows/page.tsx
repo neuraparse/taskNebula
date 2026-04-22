@@ -11,7 +11,7 @@ export default function ProjectWorkflowsSettingsPage({
   const { projectId } = use(params);
 
   return (
-    <div className="container mx-auto max-w-6xl py-8">
+    <div className="mx-auto w-full max-w-7xl px-6 py-8 lg:px-8">
       <WorkflowBuilder projectId={projectId} />
     </div>
   );
