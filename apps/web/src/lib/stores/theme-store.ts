@@ -13,6 +13,13 @@ export type ColorTheme =
 
 export type VisualStyle = 'modern' | 'minimal' | 'glass';
 
+export interface ServerAppearanceSettings {
+  colorTheme?: ColorTheme | string | null;
+  visualStyle?: VisualStyle | string | null;
+  animationsEnabled?: boolean | null;
+  gradientsEnabled?: boolean | null;
+}
+
 interface ThemeState {
   colorTheme: ColorTheme;
   visualStyle: VisualStyle;
@@ -24,8 +31,19 @@ interface ThemeState {
   setEnableAnimations: (enabled: boolean) => void;
   setEnableGradients: (enabled: boolean) => void;
   setHydrated: (hydrated: boolean) => void;
+  hydrateFromServer: (settings: ServerAppearanceSettings) => void;
   reset: () => void;
 }
+
+const VALID_COLOR_THEMES: ColorTheme[] = [
+  'default',
+  'ocean',
+  'forest',
+  'sunset',
+  'purple',
+  'rose',
+];
+const VALID_VISUAL_STYLES: VisualStyle[] = ['modern', 'minimal', 'glass'];
 
 const defaultState = {
   colorTheme: 'default' as ColorTheme,
@@ -44,6 +62,31 @@ export const useThemeStore = create<ThemeState>()(
       setEnableAnimations: (enabled) => set({ enableAnimations: enabled }),
       setEnableGradients: (enabled) => set({ enableGradients: enabled }),
       setHydrated: (hydrated) => set({ hydrated }),
+      hydrateFromServer: (settings) => {
+        // Server wins on load, but only apply fields that are actually present
+        // and valid — unknown/null fields leave the existing local value alone
+        // so a partial server row doesn't wipe user choices.
+        const patch: Partial<ThemeState> = {};
+        if (
+          typeof settings.colorTheme === 'string' &&
+          (VALID_COLOR_THEMES as string[]).includes(settings.colorTheme)
+        ) {
+          patch.colorTheme = settings.colorTheme as ColorTheme;
+        }
+        if (
+          typeof settings.visualStyle === 'string' &&
+          (VALID_VISUAL_STYLES as string[]).includes(settings.visualStyle)
+        ) {
+          patch.visualStyle = settings.visualStyle as VisualStyle;
+        }
+        if (typeof settings.animationsEnabled === 'boolean') {
+          patch.enableAnimations = settings.animationsEnabled;
+        }
+        if (typeof settings.gradientsEnabled === 'boolean') {
+          patch.enableGradients = settings.gradientsEnabled;
+        }
+        set(patch);
+      },
       reset: () => set({ ...defaultState, hydrated: true }),
     }),
     {
