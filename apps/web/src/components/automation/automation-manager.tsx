@@ -1,13 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Edit, Zap, ArrowRight } from 'lucide-react';
+import { Plus, Trash2, Edit, Zap, ArrowRight, History, ChevronRight, AlertCircle } from 'lucide-react';
 
 interface AutomationRule {
   id: string;
@@ -21,6 +29,61 @@ interface AutomationRule {
   };
   conditions: Array<Record<string, unknown>>;
   actions: Array<{ type: string }>;
+}
+
+interface AutomationExecution {
+  id: string;
+  ruleId: string;
+  triggeredAt: string;
+  triggerPayload: unknown;
+  status: string;
+  actionResults: unknown;
+  durationMs: number | null;
+  error: string | null;
+}
+
+type ExecutionStatusVariant = 'success' | 'destructive' | 'warning' | 'info' | 'muted';
+
+function executionStatusVariant(status: string): ExecutionStatusVariant {
+  switch (status) {
+    case 'success':
+      return 'success';
+    case 'failed':
+      return 'destructive';
+    case 'skipped':
+      return 'muted';
+    case 'matched':
+      return 'info';
+    default:
+      return 'warning';
+  }
+}
+
+function executionActionCount(actionResults: unknown): number {
+  return Array.isArray(actionResults) ? actionResults.length : 0;
+}
+
+function formatDuration(durationMs: number | null): string {
+  if (durationMs == null) return '—';
+  if (durationMs < 1000) return `${durationMs}ms`;
+  return `${(durationMs / 1000).toFixed(2)}s`;
+}
+
+function formatTimestamp(iso: string): string {
+  try {
+    const date = new Date(iso);
+    return date.toLocaleString();
+  } catch {
+    return iso;
+  }
+}
+
+function prettyJson(value: unknown): string {
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
 }
 
 const TRIGGER_TYPES = [
@@ -87,6 +150,11 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
   const [formMode, setFormMode] = useState<'create' | 'edit' | null>(null);
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
+  const [executionsRule, setExecutionsRule] = useState<AutomationRule | null>(null);
+  const [executions, setExecutions] = useState<AutomationExecution[]>([]);
+  const [executionsLoading, setExecutionsLoading] = useState(false);
+  const [executionsError, setExecutionsError] = useState<string | null>(null);
+  const [expandedExecutionId, setExpandedExecutionId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -249,6 +317,40 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
         variant: 'destructive',
       });
     }
+  }
+
+  const fetchExecutions = useCallback(async (ruleId: string) => {
+    setExecutionsLoading(true);
+    setExecutionsError(null);
+    try {
+      const response = await fetch(`/api/automation-rules/${ruleId}/executions?limit=50`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch executions');
+      }
+      const data: AutomationExecution[] = await response.json();
+      setExecutions(data);
+    } catch (error) {
+      setExecutions([]);
+      setExecutionsError(
+        error instanceof Error ? error.message : 'Failed to load executions'
+      );
+    } finally {
+      setExecutionsLoading(false);
+    }
+  }, []);
+
+  function openExecutions(rule: AutomationRule) {
+    setExecutionsRule(rule);
+    setExecutions([]);
+    setExpandedExecutionId(null);
+    void fetchExecutions(rule.id);
+  }
+
+  function closeExecutions() {
+    setExecutionsRule(null);
+    setExecutions([]);
+    setExpandedExecutionId(null);
+    setExecutionsError(null);
   }
 
   if (isLoading) {
@@ -418,6 +520,16 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
                     size="icon"
                     variant="ghost"
                     className="h-7 w-7"
+                    onClick={() => openExecutions(rule)}
+                    aria-label="View executions"
+                    title="View executions"
+                  >
+                    <History className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7"
                     onClick={() => openEditForm(rule)}
                     aria-label="Edit rule"
                   >
@@ -438,6 +550,128 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
           })}
         </div>
       ) : null}
+
+      <Dialog
+        open={executionsRule !== null}
+        onOpenChange={(open) => {
+          if (!open) closeExecutions();
+        }}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-4 w-4 text-muted-foreground" />
+              Executions
+              {executionsRule ? (
+                <span className="text-sm font-normal text-muted-foreground truncate">
+                  · {executionsRule.name}
+                </span>
+              ) : null}
+            </DialogTitle>
+            <DialogDescription>
+              Recent runs of this rule, newest first. Click a row to inspect the trigger payload and
+              per-action results.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            {executionsLoading ? (
+              <div className="p-6 text-center text-sm text-muted-foreground">
+                Loading executions…
+              </div>
+            ) : executionsError ? (
+              <div className="surface-inset flex items-start gap-2 rounded-md p-4 text-sm text-destructive">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <div>
+                  <p className="font-medium">Couldn't load executions</p>
+                  <p className="text-xs text-muted-foreground">{executionsError}</p>
+                </div>
+              </div>
+            ) : executions.length === 0 && executionsRule ? (
+              <div className="surface-inset rounded-md p-6 text-center space-y-2">
+                <Zap className="mx-auto h-6 w-6 text-muted-foreground/50" />
+                <p className="text-sm text-muted-foreground">
+                  No executions yet. This rule will run when{' '}
+                  <span className="font-medium text-foreground">
+                    {TRIGGER_TYPES.find((t) => t.value === executionsRule.trigger.type)?.label ||
+                      executionsRule.trigger.type}
+                  </span>{' '}
+                  events happen on this project.
+                </p>
+              </div>
+            ) : (
+              <div className="surface-card divide-y divide-border/60 max-h-[60vh] overflow-y-auto">
+                {executions.map((execution) => {
+                  const isExpanded = expandedExecutionId === execution.id;
+                  return (
+                    <div key={execution.id} className="flex flex-col">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedExecutionId(isExpanded ? null : execution.id)
+                        }
+                        className="row-interactive flex items-center gap-3 px-3 py-2.5 text-left"
+                        aria-expanded={isExpanded}
+                      >
+                        <ChevronRight
+                          className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${
+                            isExpanded ? 'rotate-90' : ''
+                          }`}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">
+                            {formatTimestamp(execution.triggeredAt)}
+                          </p>
+                          {execution.error ? (
+                            <p className="truncate text-xs text-destructive">{execution.error}</p>
+                          ) : null}
+                        </div>
+                        <Badge variant={executionStatusVariant(execution.status)}>
+                          {execution.status}
+                        </Badge>
+                        <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">
+                          {executionActionCount(execution.actionResults)}{' '}
+                          {executionActionCount(execution.actionResults) === 1
+                            ? 'action'
+                            : 'actions'}
+                        </span>
+                        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                          {formatDuration(execution.durationMs)}
+                        </span>
+                      </button>
+
+                      {isExpanded ? (
+                        <div className="surface-inset grid gap-3 border-t border-border/60 p-3 text-xs">
+                          <div>
+                            <p className="kicker mb-1">Trigger payload</p>
+                            <pre className="max-h-64 overflow-auto rounded-md bg-background/70 p-2 font-mono text-[11px] leading-snug">
+                              {prettyJson(execution.triggerPayload)}
+                            </pre>
+                          </div>
+                          <div>
+                            <p className="kicker mb-1">Action results</p>
+                            <pre className="max-h-64 overflow-auto rounded-md bg-background/70 p-2 font-mono text-[11px] leading-snug">
+                              {prettyJson(execution.actionResults)}
+                            </pre>
+                          </div>
+                          {execution.error ? (
+                            <div>
+                              <p className="kicker mb-1">Error</p>
+                              <pre className="overflow-auto rounded-md bg-destructive/5 p-2 font-mono text-[11px] leading-snug text-destructive">
+                                {execution.error}
+                              </pre>
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
