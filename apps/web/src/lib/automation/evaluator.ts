@@ -47,7 +47,8 @@ export type AutomationTrigger =
   | 'issue.assigned'
   | 'sprint.started'
   | 'sprint.completed'
-  | 'project.created';
+  | 'project.created'
+  | 'project.archived';
 
 export interface AutomationAction {
   type: string;

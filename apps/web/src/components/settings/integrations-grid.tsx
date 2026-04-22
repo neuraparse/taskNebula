@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { cn } from '@/lib/utils';
-import { useOrganization } from '@/lib/hooks/use-organization';
 
 // ---------------------------------------------------------------------------
 // Types
