@@ -3244,6 +3244,18 @@ function formatConnectionStateLabel(state: string) {
 
 function formatLivekitRuntimeError(error: Error) {
   const message = error.message.toLowerCase();
+  // ICE / PeerConnection failure surfaces as a "client initiated" disconnect
+  // from the SDK, so we disambiguate those before falling through to the
+  // user-initiated path that is intentionally silent.
+  if (
+    message.includes('could not establish pc connection') ||
+    message.includes('ice failed') ||
+    message.includes('peerconnection failed') ||
+    message.includes('pc connection failed') ||
+    message.includes('ice connection failed')
+  ) {
+    return 'Voice server is unreachable on the media ports (UDP 50000-50020 / 3478, TCP 7881). Check firewall / NAT and try again.';
+  }
   if (
     message.includes('client initiated disconnect') ||
     message.includes('closed peer connection') ||
