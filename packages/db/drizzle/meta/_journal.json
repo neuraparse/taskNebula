@@ -204,6 +204,20 @@
       "when": 1778700000000,
       "tag": "0025_drafts",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1778700000000,
+      "tag": "0026_integration_client_credentials",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1778700100000,
+      "tag": "0026_templates_kind_payload",
+      "breakpoints": true
     }
   ]
 }

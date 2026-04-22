@@ -33,3 +33,5 @@ export * from './user-appearance';
 export * from './project-modules';
 export * from './pinned-items';
 export * from './automation-executions';
+export * from './drafts';
+export * from './integration-client-credentials';

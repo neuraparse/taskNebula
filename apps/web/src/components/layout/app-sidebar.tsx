@@ -170,11 +170,7 @@ function getSectionLabel(pathname: string | null | undefined): string {
   return 'Workspace';
 }
 
-interface AppSidebarProps {
-  onCreateIssue?: () => void;
-}
-
-export function AppSidebar({ onCreateIssue }: AppSidebarProps = {}) {
+export function AppSidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
@@ -184,16 +180,6 @@ export function AppSidebar({ onCreateIssue }: AppSidebarProps = {}) {
   const [isTeamspacesOpen, setIsTeamspacesOpen] = useState(true);
   const [isProjectsOpen, setIsProjectsOpen] = useState(true);
   const [isLiveCallsOpen, setIsLiveCallsOpen] = useState(true);
-
-  const handleCreateIssue = useCallback(() => {
-    if (onCreateIssue) {
-      onCreateIssue();
-      return;
-    }
-    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
-      console.info('[AppSidebar] onCreateIssue not provided — wire a handler to open the create issue modal.');
-    }
-  }, [onCreateIssue]);
   const {
     connectionState,
     currentSession,
@@ -301,20 +287,6 @@ export function AppSidebar({ onCreateIssue }: AppSidebarProps = {}) {
           </div>
           <ChevronDown className="h-4 w-4 text-muted-foreground" />
         </button>
-      </div>
-
-      <div className="px-3 pb-2">
-        <Button
-          type="button"
-          variant="default"
-          size="sm"
-          className="h-8 w-full justify-start gap-2 rounded-md text-sm font-medium"
-          onClick={handleCreateIssue}
-          aria-label="Create new work item"
-        >
-          <Plus className="h-4 w-4 shrink-0" />
-          <span>New work item</span>
-        </Button>
       </div>
 
       <nav aria-label="Section" className={cn('flex-1 min-h-0', hasPageSidebar ? 'flex flex-col overflow-hidden' : 'custom-scrollbar overflow-y-auto pb-3')}>
