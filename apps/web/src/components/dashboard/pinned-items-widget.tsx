@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  ArrowUpRight,
   FileText,
   FolderKanban,
   Inbox,
@@ -71,13 +70,11 @@ export function PinnedItemsWidget() {
         <span className="text-sm font-medium text-foreground">
           Pinned items
         </span>
-        <Link
-          href="/pinned"
-          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-all duration-150 ease-snap"
-        >
-          View all
-          <ArrowUpRight className="h-3 w-3" />
-        </Link>
+        {items.length > visible.length ? (
+          <span className="text-xs text-muted-foreground">
+            {items.length} pinned
+          </span>
+        ) : null}
       </div>
 
       {isLoading ? (

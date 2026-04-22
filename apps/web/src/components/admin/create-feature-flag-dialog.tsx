@@ -19,6 +19,7 @@ import { Plus } from 'lucide-react';
 import { useCreateFeatureFlag } from '@/lib/hooks/use-feature-flags';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
+import { OrganizationMultiSelect } from '@/components/admin/organization-multi-select';
 
 const PLANS = ['free', 'starter', 'growth', 'enterprise'] as const;
 
@@ -29,6 +30,7 @@ export function CreateFeatureFlagDialog() {
   const [description, setDescription] = useState('');
   const [isEnabled, setIsEnabled] = useState(false);
   const [enabledForPlans, setEnabledForPlans] = useState<string[]>([]);
+  const [enabledForOrganizations, setEnabledForOrganizations] = useState<string[]>([]);
   const [rolloutPercentage, setRolloutPercentage] = useState(0);
 
   const { toast } = useToast();
@@ -43,6 +45,7 @@ export function CreateFeatureFlagDialog() {
         description: description || undefined,
         isEnabled,
         enabledForPlans,
+        enabledForOrganizations,
         rolloutPercentage,
       });
       toast({ title: 'Feature flag created', description: `"${name}" was created successfully.` });
@@ -51,6 +54,7 @@ export function CreateFeatureFlagDialog() {
       setDescription('');
       setIsEnabled(false);
       setEnabledForPlans([]);
+      setEnabledForOrganizations([]);
       setRolloutPercentage(0);
       setOpen(false);
     } catch (error: any) {
@@ -144,6 +148,17 @@ export function CreateFeatureFlagDialog() {
                 ))}
               </div>
               <p className="text-xs text-muted-foreground">Leave empty to enable for all plans.</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Target organizations</Label>
+              <OrganizationMultiSelect
+                value={enabledForOrganizations}
+                onChange={setEnabledForOrganizations}
+              />
+              <p className="text-xs text-muted-foreground">
+                Leave empty to enable for all organizations matching the plan + rollout.
+              </p>
             </div>
 
             <div className="space-y-2">

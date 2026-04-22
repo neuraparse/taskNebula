@@ -36,6 +36,7 @@ import { CreateFeatureFlagDialog } from '@/components/admin/create-feature-flag-
 import { CreateOrganizationAdminDialog } from '@/components/admin/create-organization-admin-dialog';
 import { CreateUserDialog } from '@/components/admin/create-user-dialog';
 import { EditFeatureFlagDialog } from '@/components/admin/edit-feature-flag-dialog';
+import { FeatureFlagRuntimeTest } from '@/components/admin/feature-flag-runtime-test';
 import { EditOrganizationDialog } from '@/components/admin/edit-organization-dialog';
 import { EditUserDialog } from '@/components/admin/edit-user-dialog';
 import { AgentOpsPanel } from '@/components/admin/agent-ops-panel';
@@ -841,7 +842,10 @@ function FeatureFlagsSection({
     <div className="space-y-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <p className="text-xs text-muted-foreground">{flags.length} matching flags</p>
-        <CreateFeatureFlagDialog />
+        <div className="flex items-center gap-2">
+          <FeatureFlagRuntimeTest />
+          <CreateFeatureFlagDialog />
+        </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px] animate-blur-in">

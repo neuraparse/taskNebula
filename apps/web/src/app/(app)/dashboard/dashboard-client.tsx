@@ -4,11 +4,13 @@ import { useState, useMemo, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
+import { CreateIssueModal } from '@/components/issues/create-issue-modal';
 import { ActivityFeed } from '@/components/activity/activity-feed';
 import { YourWorkWidget } from '@/components/dashboard/your-work-widget';
 import { UpcomingDeadlinesWidget } from '@/components/dashboard/upcoming-deadlines-widget';
 import { PinnedItemsWidget } from '@/components/dashboard/pinned-items-widget';
 import { useOrganization } from '@/lib/hooks/use-organization';
+import { useProjects } from '@/lib/hooks/use-projects';
 import {
   ArrowUpRight,
   Loader2,
@@ -50,7 +52,13 @@ type AccentHue = 'blue' | 'violet' | 'emerald' | 'amber' | 'rose' | 'cyan';
 export function DashboardClient() {
   const { data: session } = useSession();
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [isCreateIssueOpen, setIsCreateIssueOpen] = useState(false);
   const { currentOrganizationId, currentTeamId } = useOrganization();
+  const { data: projectsForCreate } = useProjects({
+    organizationId: currentOrganizationId,
+    teamId: currentTeamId,
+  });
+  const firstProjectId = projectsForCreate?.[0]?.id ?? null;
 
   const { data: orgsData } = useQuery({
     queryKey: ['organizations'],
@@ -179,11 +187,21 @@ export function DashboardClient() {
                     <p className="text-sm text-muted-foreground mb-4">
                       You&apos;re all caught up.
                     </p>
-                    <Link href="/my-issues">
-                      <Button variant="outline" size="sm">
+                    {firstProjectId ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsCreateIssueOpen(true)}
+                      >
                         Create issue
                       </Button>
-                    </Link>
+                    ) : (
+                      <Link href="/projects">
+                        <Button variant="outline" size="sm">
+                          Create a project first
+                        </Button>
+                      </Link>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-0.5">
@@ -221,6 +239,14 @@ export function DashboardClient() {
           issueId={selectedIssueId}
           open={!!selectedIssueId}
           onOpenChange={(open) => !open && setSelectedIssueId(null)}
+        />
+      )}
+
+      {firstProjectId && (
+        <CreateIssueModal
+          open={isCreateIssueOpen}
+          onOpenChange={setIsCreateIssueOpen}
+          projectId={firstProjectId}
         />
       )}
     </>

@@ -17,6 +17,7 @@ import { Switch } from '@/components/ui/switch';
 import { useUpdateFeatureFlag } from '@/lib/hooks/use-feature-flags';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
+import { OrganizationMultiSelect } from '@/components/admin/organization-multi-select';
 
 const PLANS = ['free', 'starter', 'growth', 'enterprise'] as const;
 
@@ -44,6 +45,9 @@ export function EditFeatureFlagDialog({ flag, open, onOpenChange }: EditFeatureF
   const [description, setDescription] = useState(flag.description || '');
   const [isEnabled, setIsEnabled] = useState(flag.isEnabled);
   const [enabledForPlans, setEnabledForPlans] = useState<string[]>(flag.enabledForPlans || []);
+  const [enabledForOrganizations, setEnabledForOrganizations] = useState<string[]>(
+    flag.enabledForOrganizations || []
+  );
   const [rolloutPercentage, setRolloutPercentage] = useState(flag.rolloutPercentage);
 
   const { toast } = useToast();
@@ -55,6 +59,7 @@ export function EditFeatureFlagDialog({ flag, open, onOpenChange }: EditFeatureF
     setDescription(flag.description || '');
     setIsEnabled(flag.isEnabled);
     setEnabledForPlans(flag.enabledForPlans || []);
+    setEnabledForOrganizations(flag.enabledForOrganizations || []);
     setRolloutPercentage(flag.rolloutPercentage);
   }, [flag]);
 
@@ -69,6 +74,7 @@ export function EditFeatureFlagDialog({ flag, open, onOpenChange }: EditFeatureF
           description: description || undefined,
           isEnabled,
           enabledForPlans,
+          enabledForOrganizations,
           rolloutPercentage,
         },
       });
@@ -154,6 +160,17 @@ export function EditFeatureFlagDialog({ flag, open, onOpenChange }: EditFeatureF
                 ))}
               </div>
               <p className="text-xs text-muted-foreground">Leave empty to enable for all plans.</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Target organizations</Label>
+              <OrganizationMultiSelect
+                value={enabledForOrganizations}
+                onChange={setEnabledForOrganizations}
+              />
+              <p className="text-xs text-muted-foreground">
+                Leave empty to enable for all organizations matching the plan + rollout.
+              </p>
             </div>
 
             <div className="space-y-2">

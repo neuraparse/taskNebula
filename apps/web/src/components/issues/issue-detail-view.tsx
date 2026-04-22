@@ -16,6 +16,8 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
     refetch();
     queryClient.invalidateQueries({ queryKey: ['issues'] });
     queryClient.invalidateQueries({ queryKey: ['my-issues'] });
+    queryClient.invalidateQueries({ queryKey: ['your-work'] });
+    queryClient.invalidateQueries({ queryKey: ['recent-activities'] });
   };
 
   if (isLoading) {

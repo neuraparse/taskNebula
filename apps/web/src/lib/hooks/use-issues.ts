@@ -129,6 +129,10 @@ export function useCreateIssue() {
       if (variables.parentId) {
         queryClient.invalidateQueries({ queryKey: ['subtasks', variables.parentId] });
       }
+      // Dashboard/home widgets derived from the same data must reflect new work.
+      queryClient.invalidateQueries({ queryKey: ['my-issues'] });
+      queryClient.invalidateQueries({ queryKey: ['your-work'] });
+      queryClient.invalidateQueries({ queryKey: ['recent-activities'] });
     },
   });
 }
@@ -200,6 +204,10 @@ export function useUpdateIssue() {
       queryClient.invalidateQueries({ queryKey: ['sprints'] });
       queryClient.invalidateQueries({ queryKey: ['sprint-issues'] });
       queryClient.invalidateQueries({ queryKey: ['workflow-statuses'] });
+      // Dashboard/home widgets rely on these keys for live-looking data.
+      queryClient.invalidateQueries({ queryKey: ['my-issues'] });
+      queryClient.invalidateQueries({ queryKey: ['your-work'] });
+      queryClient.invalidateQueries({ queryKey: ['recent-activities'] });
     },
   });
 }
@@ -237,6 +245,10 @@ export function useDeleteIssue() {
       }
       queryClient.invalidateQueries({ queryKey: ['sprint-issues'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      // Keep dashboard/home widgets in sync after removals too.
+      queryClient.invalidateQueries({ queryKey: ['my-issues'] });
+      queryClient.invalidateQueries({ queryKey: ['your-work'] });
+      queryClient.invalidateQueries({ queryKey: ['recent-activities'] });
     },
   });
 }
