@@ -56,6 +56,7 @@ services:
       LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:?LIVEKIT_API_SECRET must be set}
       LIVEKIT_WEBHOOK_URL: ${LIVEKIT_WEBHOOK_URL:-http://127.0.0.1:${PORT:-3000}/api/chat/livekit/webhook}
       REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
     volumes:
       - ./docker/livekit/start-livekit.sh:/etc/livekit/start-livekit.sh:ro
 

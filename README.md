@@ -254,6 +254,32 @@ tuning, optional platform LLM keys, etc. Everything AI-related can be
 configured through the UI **after** first boot; env vars are only a
 fallback for dev.
 
+### Voice rooms behind HTTPS
+
+LiveKit ships plain `ws://` on port 7880. A production browser loading
+TaskNebula over `https://` refuses mixed-content `wss://` without TLS in
+front. Put nginx (or Caddy) on its own subdomain:
+
+1. **DNS**: add `livekit.your-domain.example.com` → same server IP as the app.
+2. **nginx**: copy the ready template at
+   [`nginx/tasknebula-livekit.conf`](nginx/tasknebula-livekit.conf),
+   replace the hostname, then:
+   ```bash
+   sudo certbot --nginx -d livekit.your-domain.example.com
+   sudo nginx -t && sudo nginx -s reload
+   ```
+3. **.env**:
+   ```env
+   NEXT_PUBLIC_LIVEKIT_URL=wss://livekit.your-domain.example.com
+   ```
+4. **Rebuild** so the build-time env is baked into the Next bundle:
+   ```bash
+   docker compose up -d --build web
+   ```
+
+The template terminates TLS, forwards to `127.0.0.1:7880`, and keeps the
+WebSocket upgrade headers + 24h idle timeout LiveKit needs.
+
 ---
 
 ## 🧰 Commands
