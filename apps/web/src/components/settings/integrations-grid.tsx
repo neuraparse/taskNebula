@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useOrganization } from '@/lib/hooks/use-organization';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -297,11 +298,13 @@ const CATEGORY_FILTERS: { value: IntegrationCategory | 'all'; label: string }[] 
 
 interface IntegrationCardProps {
   integration: IntegrationDefinition;
+  footer?: React.ReactNode;
+  accountLabel?: string | null;
 }
 
-function IntegrationCard({ integration }: IntegrationCardProps) {
+function IntegrationCard({ integration, footer, accountLabel }: IntegrationCardProps) {
   const { name, description, status, href, Icon } = integration;
-  const isInteractive = href && status !== 'coming_soon';
+  const isInteractive = href && status !== 'coming_soon' && !footer;
 
   const card = (
     <article
@@ -317,6 +320,11 @@ function IntegrationCard({ integration }: IntegrationCardProps) {
         <div className="min-w-0 flex-1">
           <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
           <p className="mt-1 text-[12.5px] text-muted-foreground leading-snug">{description}</p>
+          {accountLabel && (
+            <p className="mt-1 truncate text-[11.5px] font-medium text-foreground/80">
+              {accountLabel}
+            </p>
+          )}
         </div>
       </div>
       {status === 'connected' && (
@@ -329,6 +337,7 @@ function IntegrationCard({ integration }: IntegrationCardProps) {
           Coming soon
         </Badge>
       )}
+      {footer && <div className="mt-4 flex items-center gap-2">{footer}</div>}
     </article>
   );
 
@@ -346,6 +355,73 @@ function IntegrationCard({ integration }: IntegrationCardProps) {
 }
 
 // ---------------------------------------------------------------------------
+// Slack connection state hook — powers Connect / Disconnect buttons.
+// ---------------------------------------------------------------------------
+
+type SlackStatus = {
+  connected: boolean;
+  connection?: {
+    id: string;
+    externalAccountId: string | null;
+    externalAccountLabel: string | null;
+    scope: string | null;
+    connectedById: string | null;
+    createdAt: string | null;
+    updatedAt: string | null;
+  };
+};
+
+function useSlackConnection(organizationId: string | null) {
+  const [status, setStatus] = useState<SlackStatus | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+
+  const load = useCallback(async () => {
+    if (!organizationId) {
+      setStatus(null);
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `/api/integrations/slack/status?organizationId=${encodeURIComponent(organizationId)}`,
+        { credentials: 'same-origin' }
+      );
+      if (!res.ok) {
+        setStatus({ connected: false });
+        return;
+      }
+      const data = (await res.json()) as SlackStatus;
+      setStatus(data);
+    } catch {
+      setStatus({ connected: false });
+    } finally {
+      setLoading(false);
+    }
+  }, [organizationId]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const disconnect = useCallback(async () => {
+    if (!organizationId) return;
+    setDisconnecting(true);
+    try {
+      await fetch(
+        `/api/integrations/slack?organizationId=${encodeURIComponent(organizationId)}`,
+        { method: 'DELETE', credentials: 'same-origin' }
+      );
+      await load();
+    } finally {
+      setDisconnecting(false);
+    }
+  }, [organizationId, load]);
+
+  return { status, loading, disconnecting, disconnect, refresh: load };
+}
+
+// ---------------------------------------------------------------------------
 // Main grid
 // ---------------------------------------------------------------------------
 
@@ -356,10 +432,39 @@ export interface IntegrationsGridProps {
 export function IntegrationsGrid({ integrations = INTEGRATIONS }: IntegrationsGridProps) {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<IntegrationCategory | 'all'>('all');
+  const currentOrganizationId = useOrganization((s) => s.currentOrganizationId);
+  const slack = useSlackConnection(currentOrganizationId);
+
+  // When the user returns from Slack's OAuth redirect with `?connected=slack`,
+  // strip the query param and refresh status so the card flips to "Connected".
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('connected') === 'slack') {
+      params.delete('connected');
+      const qs = params.toString();
+      const next = `${window.location.pathname}${qs ? `?${qs}` : ''}`;
+      window.history.replaceState({}, '', next);
+      void slack.refresh();
+    }
+  }, [slack]);
+
+  // Apply dynamic status/href to the Slack tile so the card reflects live state.
+  const effectiveIntegrations = useMemo<IntegrationDefinition[]>(() => {
+    return integrations.map((item) => {
+      if (item.id !== 'slack') return item;
+      const connected = slack.status?.connected === true;
+      return {
+        ...item,
+        status: connected ? 'connected' : 'available',
+        href: undefined,
+      };
+    });
+  }, [integrations, slack.status]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return integrations.filter((item) => {
+    return effectiveIntegrations.filter((item) => {
       if (activeCategory !== 'all' && item.category !== activeCategory) return false;
       if (!q) return true;
       return (
@@ -367,7 +472,57 @@ export function IntegrationsGrid({ integrations = INTEGRATIONS }: IntegrationsGr
         item.description.toLowerCase().includes(q)
       );
     });
-  }, [integrations, search, activeCategory]);
+  }, [effectiveIntegrations, search, activeCategory]);
+
+  const renderCard = (integration: IntegrationDefinition) => {
+    if (integration.id === 'slack') {
+      const orgDisabled = !currentOrganizationId;
+      const connected = slack.status?.connected === true;
+      const label = slack.status?.connection?.externalAccountLabel || null;
+      const connectHref = orgDisabled
+        ? '#'
+        : `/api/integrations/slack/authorize?organizationId=${encodeURIComponent(currentOrganizationId!)}`;
+
+      const footer = connected ? (
+        <button
+          type="button"
+          onClick={() => void slack.disconnect()}
+          disabled={slack.disconnecting || orgDisabled}
+          className={cn(
+            'rounded-md border border-border px-3 py-1 text-xs font-medium',
+            'hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed'
+          )}
+        >
+          {slack.disconnecting ? 'Disconnecting…' : 'Disconnect'}
+        </button>
+      ) : (
+        <a
+          href={connectHref}
+          aria-disabled={orgDisabled}
+          onClick={(e) => {
+            if (orgDisabled) e.preventDefault();
+          }}
+          className={cn(
+            'rounded-md border border-border bg-foreground px-3 py-1 text-xs font-medium text-background',
+            'hover:opacity-90',
+            orgDisabled && 'pointer-events-none opacity-50'
+          )}
+        >
+          {slack.loading ? 'Checking…' : 'Connect'}
+        </a>
+      );
+
+      return (
+        <IntegrationCard
+          key={integration.id}
+          integration={integration}
+          footer={footer}
+          accountLabel={connected ? label : null}
+        />
+      );
+    }
+    return <IntegrationCard key={integration.id} integration={integration} />;
+  };
 
   return (
     <div className="space-y-4">
@@ -418,9 +573,7 @@ export function IntegrationsGrid({ integrations = INTEGRATIONS }: IntegrationsGr
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((integration) => (
-            <IntegrationCard key={integration.id} integration={integration} />
-          ))}
+          {filtered.map((integration) => renderCard(integration))}
         </div>
       )}
     </div>
