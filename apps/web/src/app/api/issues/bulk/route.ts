@@ -11,6 +11,7 @@ import {
 } from '@tasknebula/db';
 import { eq, inArray, and } from 'drizzle-orm';
 import { z } from 'zod';
+import { publishEvent } from '@/lib/realtime/events';
 
 export const dynamic = 'force-dynamic';
 
@@ -228,6 +229,7 @@ async function handleBulkUpdate(body: any, userId: string) {
     .returning();
 
   // Create audit logs for each updated issue
+  const affectedSprintIds = new Set<string>();
   for (const issue of updatedIssues) {
     const oldIssue = existingIssues.find(i => i.id === issue.id);
     if (oldIssue) {
@@ -258,6 +260,20 @@ async function handleBulkUpdate(body: any, userId: string) {
         console.error('Failed to create audit log:', error);
       }
     }
+
+    publishEvent('issue.updated', userId, {
+      issueId: issue.id,
+      projectId: issue.projectId,
+      organizationId: issue.organizationId,
+      sprintId: issue.sprintId ?? undefined,
+    });
+    if (issue.sprintId) affectedSprintIds.add(issue.sprintId);
+    const oldSprint = existingIssues.find(i => i.id === issue.id)?.sprintId;
+    if (oldSprint && oldSprint !== issue.sprintId) affectedSprintIds.add(oldSprint);
+  }
+
+  for (const sprintId of affectedSprintIds) {
+    publishEvent('sprint.issues.changed', userId, { sprintId });
   }
 
   return NextResponse.json({
@@ -296,6 +312,7 @@ async function handleBulkDelete(body: any, userId: string) {
   await db.delete(issues).where(inArray(issues.id, issueIds));
 
   // Create audit logs for each deleted issue
+  const affectedSprintIds = new Set<string>();
   for (const issue of existingIssues) {
     try {
       await createAuditLog({
@@ -312,6 +329,18 @@ async function handleBulkDelete(body: any, userId: string) {
     } catch (error) {
       console.error('Failed to create audit log:', error);
     }
+
+    publishEvent('issue.deleted', userId, {
+      issueId: issue.id,
+      projectId: issue.projectId,
+      organizationId: issue.organizationId,
+      sprintId: issue.sprintId ?? undefined,
+    });
+    if (issue.sprintId) affectedSprintIds.add(issue.sprintId);
+  }
+
+  for (const sprintId of affectedSprintIds) {
+    publishEvent('sprint.issues.changed', userId, { sprintId });
   }
 
   return NextResponse.json({

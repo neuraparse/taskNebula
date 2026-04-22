@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, use, useEffect } from 'react';
+import { useState, use, useEffect, useMemo } from 'react';
 import { KanbanBoard } from '@/components/kanban/kanban-board';
 import { BoardFiltersBar, BoardFilters } from '@/components/kanban/board-filters';
 import { CreateIssueModal } from '@/components/issues/create-issue-modal';
@@ -36,6 +36,24 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
 
   const effectiveSprintId = selectedSprintId === 'backlog' ? 'none' : selectedSprintId;
   const { data: issues } = useIssues({ projectId, sprintId: effectiveSprintId });
+
+  const filteredCount = useMemo(() => {
+    if (!issues) return 0;
+    return issues.filter((issue) => {
+      if (filters.search) {
+        const q = filters.search.toLowerCase();
+        const matches =
+          issue.title.toLowerCase().includes(q) ||
+          issue.key.toLowerCase().includes(q) ||
+          issue.description?.toLowerCase().includes(q);
+        if (!matches) return false;
+      }
+      if (filters.priority.length > 0 && !filters.priority.includes(issue.priority)) {
+        return false;
+      }
+      return true;
+    }).length;
+  }, [issues, filters]);
 
   useEffect(() => {
     if (!isInitialized && !sprintsLoading && sprints !== undefined) {
@@ -146,7 +164,7 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
               filters={filters}
               onFiltersChange={setFilters}
               issueCount={issues?.length || 0}
-              filteredCount={issues?.length || 0}
+              filteredCount={filteredCount}
             />
           </div>
 

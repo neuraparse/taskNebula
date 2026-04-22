@@ -1,8 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, customFieldValues, customFields } from '@tasknebula/db';
+import { db, customFieldValues, customFields, issues } from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
+import { publishEvent } from '@/lib/realtime/events';
+
+async function publishIssueUpdated(userId: string, issueId: string) {
+  try {
+    const [issue] = await db
+      .select({
+        id: issues.id,
+        projectId: issues.projectId,
+        organizationId: issues.organizationId,
+      })
+      .from(issues)
+      .where(eq(issues.id, issueId))
+      .limit(1);
+    if (issue) {
+      publishEvent('issue.updated', userId, {
+        issueId: issue.id,
+        projectId: issue.projectId,
+        organizationId: issue.organizationId,
+      });
+    }
+  } catch (err) {
+    console.warn('Failed to publish issue.updated event', err);
+  }
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -91,6 +115,7 @@ export async function POST(
         .where(eq(customFieldValues.id, existingValue.id))
         .returning();
 
+      await publishIssueUpdated(session.user.id, issueId);
       return NextResponse.json(updatedValue);
     } else {
       // Create new value
@@ -105,6 +130,7 @@ export async function POST(
         })
         .returning();
 
+      await publishIssueUpdated(session.user.id, issueId);
       return NextResponse.json(newValue, { status: 201 });
     }
   } catch (error) {
@@ -144,6 +170,7 @@ export async function DELETE(
         )
       );
 
+    await publishIssueUpdated(session.user.id, issueId);
     return NextResponse.json({ message: 'Custom field value deleted successfully' });
   } catch (error) {
     console.error('Error deleting custom field value:', error);

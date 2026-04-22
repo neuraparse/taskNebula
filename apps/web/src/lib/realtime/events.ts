@@ -8,6 +8,7 @@ export type RealtimeEventType =
   | 'issue.created'
   | 'issue.updated'
   | 'issue.deleted'
+  | 'issue.commented'
   | 'sprint.created'
   | 'sprint.updated'
   | 'sprint.deleted'

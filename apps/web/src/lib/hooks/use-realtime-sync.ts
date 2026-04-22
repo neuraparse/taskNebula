@@ -105,6 +105,14 @@ export function useRealtimeSync() {
           }
           break;
 
+        case 'issue.commented':
+          if (issueId) {
+            queryClient.invalidateQueries({ queryKey: ['issue', issueId] });
+            queryClient.invalidateQueries({ queryKey: ['comments', issueId] });
+            queryClient.invalidateQueries({ queryKey: ['activity', issueId] });
+          }
+          break;
+
         case 'sprint.created':
         case 'sprint.updated':
         case 'sprint.deleted':

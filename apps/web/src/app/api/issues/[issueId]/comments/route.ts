@@ -4,6 +4,7 @@ import { getIssueComments, createComment, createActivity, createAuditLog, getIss
 import { auth } from '@/auth';
 import { createId } from '@paralleldrive/cuid2';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
+import { publishEvent } from '@/lib/realtime/events';
 
 // Validation schema for creating a comment
 const createCommentSchema = z.object({
@@ -84,6 +85,12 @@ export async function POST(
         projectId: issue.projectId,
         issueId,
         metadata: { commentId: newComment.id },
+      });
+
+      publishEvent('issue.commented', session.user.id, {
+        issueId,
+        projectId: issue.projectId,
+        organizationId: issue.organizationId,
       });
 
       // Notify assignee about new comment
