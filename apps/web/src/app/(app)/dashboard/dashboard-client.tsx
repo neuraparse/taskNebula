@@ -7,7 +7,6 @@ import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
 import { ActivityFeed } from '@/components/activity/activity-feed';
 import { YourWorkWidget } from '@/components/dashboard/your-work-widget';
 import { UpcomingDeadlinesWidget } from '@/components/dashboard/upcoming-deadlines-widget';
-import { RecentActivityWidget } from '@/components/dashboard/recent-activity-widget';
 import { PinnedItemsWidget } from '@/components/dashboard/pinned-items-widget';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import {
@@ -15,8 +14,6 @@ import {
   Loader2,
   Target,
   Inbox,
-  TrendingUp,
-  TrendingDown,
   Activity,
   CheckCircle2,
   AlertOctagon,
@@ -152,38 +149,10 @@ export function DashboardClient() {
 
             {/* KPI Summary Row */}
             <div className="stagger grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <StatTile
-                label="Active"
-                value={stats.active}
-                trend={12}
-                trendUp
-                hue="blue"
-                icon={Activity}
-              />
-              <StatTile
-                label="Completed"
-                value={stats.completed}
-                trend={8}
-                trendUp
-                hue="emerald"
-                icon={CheckCircle2}
-              />
-              <StatTile
-                label="Blocked"
-                value={stats.blocked}
-                trend={2}
-                trendUp={false}
-                hue="rose"
-                icon={AlertOctagon}
-              />
-              <StatTile
-                label="Story Points"
-                value={stats.points}
-                trend={15}
-                trendUp
-                hue="violet"
-                icon={Gauge}
-              />
+              <StatTile label="Active" value={stats.active} hue="blue" icon={Activity} />
+              <StatTile label="Completed" value={stats.completed} hue="emerald" icon={CheckCircle2} />
+              <StatTile label="Blocked" value={stats.blocked} hue="rose" icon={AlertOctagon} />
+              <StatTile label="Story Points" value={stats.points} hue="violet" icon={Gauge} />
             </div>
 
             {/* Main Content */}
@@ -241,7 +210,6 @@ export function DashboardClient() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
               <YourWorkWidget />
               <UpcomingDeadlinesWidget />
-              <RecentActivityWidget />
               <PinnedItemsWidget />
             </div>
           </div>
@@ -262,38 +230,19 @@ export function DashboardClient() {
 function StatTile({
   label,
   value,
-  trend,
-  trendUp,
   hue,
   icon: Icon,
 }: {
   label: string;
   value: number;
-  trend: number;
-  trendUp: boolean;
   hue: AccentHue;
   icon: LucideIcon;
 }) {
   return (
     <div className="surface-card surface-card-hover p-4 max-h-[140px] transition-all duration-150 ease-snap hover:-translate-y-0.5 hover:shadow-md">
-      <div className="flex items-start justify-between gap-2">
-        <span className={cn('icon-tile', `icon-tile-accent-${hue}`)}>
-          <Icon className="h-4 w-4" />
-        </span>
-        <span
-          className={cn(
-            'inline-flex items-center gap-0.5 text-xs font-medium',
-            trendUp ? 'text-accent-emerald' : 'text-accent-rose'
-          )}
-        >
-          {trendUp ? (
-            <TrendingUp className="h-3 w-3" />
-          ) : (
-            <TrendingDown className="h-3 w-3" />
-          )}
-          {trend}%
-        </span>
-      </div>
+      <span className={cn('icon-tile', `icon-tile-accent-${hue}`)}>
+        <Icon className="h-4 w-4" />
+      </span>
       <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground tabular-nums">
         {value}
       </p>

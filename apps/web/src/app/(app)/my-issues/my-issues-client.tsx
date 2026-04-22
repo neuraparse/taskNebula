@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
@@ -47,13 +48,21 @@ const statusChipClass: Record<string, string> = {
   pending: 'chip-amber',
 };
 
-type ScopeFilter = 'assigned' | 'watching' | 'reporting';
+type ScopeFilter = 'assigned' | 'created' | 'subscribed' | 'mentioned';
 
 const scopeOptions: { value: ScopeFilter; label: string }[] = [
   { value: 'assigned', label: 'Assigned to me' },
-  { value: 'watching', label: 'Watching' },
-  { value: 'reporting', label: 'Reporting' },
+  { value: 'created', label: 'Created by me' },
+  { value: 'subscribed', label: 'Subscribed' },
+  { value: 'mentioned', label: 'Mentioned' },
 ];
+
+function parseScope(value: string | null): ScopeFilter {
+  if (value === 'created' || value === 'subscribed' || value === 'mentioned') {
+    return value;
+  }
+  return 'assigned';
+}
 
 function formatRelativeDate(input?: string): string {
   if (!input) return '';
@@ -78,17 +87,30 @@ function formatRelativeDate(input?: string): string {
 
 export function MyIssuesClient() {
   const { data: session } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const initialScope = parseScope(searchParams.get('view'));
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [scope, setScope] = useState<ScopeFilter>('assigned');
+  const [scope, setScope] = useState<ScopeFilter>(initialScope);
+
+  useEffect(() => {
+    setScope(parseScope(searchParams.get('view')));
+  }, [searchParams]);
+
+  const handleScopeChange = (next: ScopeFilter) => {
+    setScope(next);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('view', next);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   const { data: myIssues, isLoading } = useQuery<Issue[]>({
     queryKey: ['my-issues', session?.user?.id, scope],
     queryFn: async () => {
-      // NOTE: API filter by scope is out-of-scope for this refactor; for now
-      // Watching/Reporting reuse the same endpoint and are filtered client-side
-      // when fields become available. Keeps server contract untouched.
-      const response = await fetch('/api/issues/my-issues');
+      const params = new URLSearchParams({ view: scope });
+      const response = await fetch(`/api/issues/my-issues?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch issues');
       const data = await response.json();
       return data.issues || [];
@@ -145,7 +167,7 @@ export function MyIssuesClient() {
               <button
                 key={option.value}
                 type="button"
-                onClick={() => setScope(option.value)}
+                onClick={() => handleScopeChange(option.value)}
                 className={cn(
                   'shrink-0 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-150 ease-snap',
                   scope === option.value
@@ -170,9 +192,11 @@ export function MyIssuesClient() {
                     ? 'No issues match your search'
                     : scope === 'assigned'
                       ? 'No issues assigned to you yet'
-                      : scope === 'watching'
-                        ? 'You are not watching any issues'
-                        : 'You have not reported any issues'}
+                      : scope === 'created'
+                        ? 'You have not reported any issues'
+                        : scope === 'subscribed'
+                          ? 'You are not subscribed to any issues'
+                          : 'No mentions yet'}
                 </p>
                 {searchQuery && (
                   <Button

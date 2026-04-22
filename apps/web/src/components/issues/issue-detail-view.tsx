@@ -6,9 +6,17 @@ import { IssueActivity } from './issue-activity';
 import { IssueSidebar } from './issue-sidebar';
 import { useIssue } from '@/lib/hooks/use-issues';
 import { FileText, AlertCircle } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 export function IssueDetailView({ issueId }: { issueId: string }) {
-  const { data: issue, isLoading, error } = useIssue(issueId);
+  const { data: issue, isLoading, error, refetch } = useIssue(issueId);
+  const queryClient = useQueryClient();
+
+  const handleIssueUpdate = () => {
+    refetch();
+    queryClient.invalidateQueries({ queryKey: ['issues'] });
+    queryClient.invalidateQueries({ queryKey: ['my-issues'] });
+  };
 
   if (isLoading) {
     return (
@@ -127,7 +135,7 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
                   createdAt: issue.createdAt,
                   updatedAt: issue.updatedAt,
                 }}
-                onUpdate={() => {}}
+                onUpdate={handleIssueUpdate}
               />
             </div>
           </div>

@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, ShieldCheck, Workflow, XCircle } from 'lucide-react';
+import { CheckCircle2, Loader2, ShieldCheck, Workflow, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TransitionRuleRow } from '@/components/workflows/transition-rule-row';
+import { useToast } from '@/hooks/use-toast';
 import {
   useWorkflowBuilder,
   type ProjectState,
@@ -75,6 +76,8 @@ export function WorkflowBuilder({ projectId }: WorkflowBuilderProps) {
   const {
     states,
     transitions,
+    isLoading,
+    isSaving,
     findTransition,
     addTransition,
     updateTransition,
@@ -82,6 +85,7 @@ export function WorkflowBuilder({ projectId }: WorkflowBuilderProps) {
     save,
   } = useWorkflowBuilder(projectId);
 
+  const { toast } = useToast();
   const [selectedRuleId, setSelectedRuleId] = useState<string | null>(null);
 
   const selectedRule = useMemo(
@@ -108,8 +112,17 @@ export function WorkflowBuilder({ projectId }: WorkflowBuilderProps) {
     setSelectedRuleId(existing.id);
   }
 
-  function handleSave() {
-    save();
+  async function handleSave() {
+    try {
+      await save();
+      toast({ title: 'Workflow saved', description: 'Transition rules updated.' });
+    } catch (error) {
+      toast({
+        title: 'Save failed',
+        description: error instanceof Error ? error.message : 'Unable to save transitions.',
+        variant: 'destructive',
+      });
+    }
   }
 
   return (
@@ -135,8 +148,9 @@ export function WorkflowBuilder({ projectId }: WorkflowBuilderProps) {
             Define which state transitions are allowed, who can perform them, and whether approval is required.
           </p>
         </div>
-        <Button onClick={handleSave} type="button">
-          Save
+        <Button onClick={handleSave} type="button" disabled={isSaving || isLoading}>
+          {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          {isSaving ? 'Saving…' : 'Save'}
         </Button>
       </div>
 

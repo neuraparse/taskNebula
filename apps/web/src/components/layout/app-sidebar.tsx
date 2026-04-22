@@ -98,9 +98,8 @@ const MY_ISSUES_VIEWS = [
 
 const DASHBOARD_LINKS = [
   { href: '/dashboard', label: 'Overview', icon: Home },
-  { href: '/dashboard?tab=activity', label: 'Recent activity', icon: Activity },
-  { href: '/dashboard?tab=pinned', label: 'Pinned', icon: Pin },
-  { href: '/dashboard?tab=drafts', label: 'Drafts', icon: FileText },
+  { href: '/drafts', label: 'Drafts', icon: FileText },
+  { href: '/templates', label: 'Templates', icon: Pin },
 ];
 
 const TEAM_LINKS = [

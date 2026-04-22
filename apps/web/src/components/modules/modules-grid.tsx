@@ -17,7 +17,7 @@ import { useModules, type ModuleStatus } from '@/lib/modules/use-modules';
 import { ModuleCard, getModuleStatusPalette } from './module-card';
 import { ModuleCreateDialog } from './module-create-dialog';
 
-type ViewMode = 'gallery' | 'list' | 'timeline';
+type ViewMode = 'gallery' | 'list';
 type FilterChip = 'all' | 'in_progress' | 'completed' | 'backlog';
 
 interface ModulesGridProps {
@@ -27,7 +27,6 @@ interface ModulesGridProps {
 const VIEW_OPTIONS: { value: ViewMode; label: string; icon: typeof LayoutGrid }[] = [
   { value: 'gallery', label: 'Gallery', icon: LayoutGrid },
   { value: 'list', label: 'List', icon: List },
-  { value: 'timeline', label: 'Timeline', icon: CalendarClock },
 ];
 
 const FILTER_OPTIONS: { value: FilterChip; label: string }[] = [
@@ -127,11 +126,6 @@ export function ModulesGrid({ projectId }: ModulesGridProps) {
       {isLoading ? (
         <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
           Loading modules...
-        </div>
-      ) : view === 'timeline' ? (
-        <div className="flex h-48 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border text-center">
-          <CalendarClock className="h-8 w-8 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Timeline view — coming soon</p>
         </div>
       ) : filtered.length === 0 ? (
         <EmptyState onCreate={() => setCreateOpen(true)} hasAny={modules.length > 0} />

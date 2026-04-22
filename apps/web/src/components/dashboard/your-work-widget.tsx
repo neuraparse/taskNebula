@@ -1,16 +1,30 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowUpRight, Inbox, Loader2, Circle } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useIssues, type Issue } from '@/lib/hooks/use-issues';
+import { useOrganization } from '@/lib/hooks/use-organization';
 import { cn } from '@/lib/utils';
 
 type TabKey = 'assigned' | 'created' | 'subscribed';
+
+interface MyIssue {
+  id: string;
+  key: string;
+  title: string;
+  priority: string;
+  statusId: string;
+  projectId: string;
+  estimate?: number;
+  dueDate?: string | null;
+  status: { name: string; category: string; color: string };
+  project: { key: string; name: string };
+}
 
 const STATUS_COLOR: Record<string, string> = {
   backlog: 'text-muted-foreground',
@@ -27,8 +41,8 @@ function formatDue(due: string | null | undefined): string | null {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-function IssueLine({ issue }: { issue: Issue }) {
-  const statusCat = (issue.status ?? '').toString().toLowerCase();
+function IssueLine({ issue }: { issue: MyIssue }) {
+  const statusCat = (issue.status?.category ?? '').toString().toLowerCase();
   const color = STATUS_COLOR[statusCat] ?? 'text-muted-foreground';
   const due = formatDue(issue.dueDate);
   return (
@@ -47,57 +61,32 @@ function IssueLine({ issue }: { issue: Issue }) {
         </span>
       )}
       <Badge variant="outline" className="shrink-0 text-[10px]">
-        {issue.projectId ? issue.projectId.slice(0, 4).toUpperCase() : 'PRJ'}
+        {issue.project?.key ?? 'PRJ'}
       </Badge>
     </Link>
   );
 }
 
-const PLACEHOLDER_ISSUES: Issue[] = Array.from({ length: 5 }).map((_, i) => ({
-  id: `stub-${i}`,
-  key: `TN-${100 + i}`,
-  title: `Placeholder issue ${i + 1}`,
-  description: null,
-  type: 'task',
-  status: 'todo',
-  priority: 'medium',
-  assigneeId: null,
-  reporterId: 'stub',
-  organizationId: 'stub',
-  projectId: 'stub',
-  sprintId: null,
-  estimate: null,
-  dueDate: null,
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-}));
-
 export function YourWorkWidget() {
   const { data: session } = useSession();
+  const { currentOrganizationId, currentTeamId } = useOrganization();
   const [tab, setTab] = useState<TabKey>('assigned');
 
-  const assignedQ = useIssues({ assigneeId: session?.user?.id });
-  // Created/Subscribed not supported by hook — stubbed to same list filtered client-side.
-  const allQ = useIssues({});
+  const { data, isLoading } = useQuery<MyIssue[]>({
+    queryKey: ['your-work', session?.user?.id, currentOrganizationId, currentTeamId, tab],
+    queryFn: async () => {
+      const params = new URLSearchParams({ view: tab });
+      if (currentOrganizationId) params.set('organizationId', currentOrganizationId);
+      if (currentTeamId) params.set('teamId', currentTeamId);
+      const response = await fetch(`/api/issues/my-issues?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch issues');
+      const payload = await response.json();
+      return payload.issues || [];
+    },
+    enabled: !!session?.user?.id,
+  });
 
-  const list: Issue[] = useMemo(() => {
-    if (tab === 'assigned') {
-      if (assignedQ.data && assignedQ.data.length > 0) {
-        return assignedQ.data.slice(0, 7);
-      }
-      return assignedQ.isLoading ? [] : PLACEHOLDER_ISSUES;
-    }
-    if (tab === 'created') {
-      const mine = (allQ.data ?? []).filter(
-        (i) => i.reporterId === session?.user?.id
-      );
-      return mine.length > 0 ? mine.slice(0, 7) : PLACEHOLDER_ISSUES;
-    }
-    // subscribed: no backend, stub
-    return PLACEHOLDER_ISSUES;
-  }, [tab, assignedQ.data, assignedQ.isLoading, allQ.data, session?.user?.id]);
-
-  const loading = tab === 'assigned' ? assignedQ.isLoading : allQ.isLoading;
+  const list = (data ?? []).slice(0, 7);
 
   return (
     <div className="rounded-xl border bg-card p-5">
@@ -120,7 +109,7 @@ export function YourWorkWidget() {
         </TabsList>
 
         <TabsContent value={tab} className="mt-0">
-          {loading ? (
+          {isLoading ? (
             <div className="flex items-center justify-center py-10">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
@@ -128,9 +117,9 @@ export function YourWorkWidget() {
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <Inbox className="h-7 w-7 text-muted-foreground mb-2" />
               <p className="text-sm text-muted-foreground mb-3">No items</p>
-              <Link href="/my-issues">
+              <Link href={`/my-issues?view=${tab}`}>
                 <Button variant="outline" size="sm">
-                  Create issue
+                  Open my issues
                 </Button>
               </Link>
             </div>
