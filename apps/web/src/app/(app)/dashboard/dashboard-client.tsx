@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
 import { CreateIssueModal } from '@/components/issues/create-issue-modal';
@@ -54,6 +56,40 @@ export function DashboardClient() {
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [isCreateIssueOpen, setIsCreateIssueOpen] = useState(false);
   const { currentOrganizationId, currentTeamId } = useOrganization();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
+
+  // Surface server-side permission redirects (e.g. /settings/organization without perms)
+  // and the post-verify success landing (/dashboard?verified=1).
+  useEffect(() => {
+    const error = searchParams.get('error');
+    const verified = searchParams.get('verified');
+
+    if (error === 'insufficient-permission') {
+      toast({
+        title: 'Access denied',
+        description: "You don't have permission to view that page.",
+        variant: 'destructive',
+      });
+    } else if (verified === '1') {
+      toast({
+        title: 'Email verified',
+        description: 'Welcome aboard — your account is now active.',
+      });
+    } else {
+      return;
+    }
+
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete('error');
+    next.delete('verified');
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    router.refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
   const { data: projectsForCreate } = useProjects({
     organizationId: currentOrganizationId,
     teamId: currentTeamId,

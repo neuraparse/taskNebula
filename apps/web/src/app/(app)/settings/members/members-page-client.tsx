@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,15 +28,48 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/lib/hooks/use-organization';
+import { useProjects } from '@/lib/hooks/use-projects';
 import {
   Users,
   UserPlus,
   MoreHorizontal,
   Loader2,
+  Check,
+  ChevronsUpDown,
+  FolderKanban,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+type ProjectRole =
+  | 'developer'
+  | 'tech_lead'
+  | 'scrum_master'
+  | 'product_owner'
+  | 'qa_engineer'
+  | 'designer'
+  | 'viewer';
+
+const PROJECT_ROLE_OPTIONS: Array<{ value: ProjectRole; label: string }> = [
+  { value: 'developer', label: 'Developer' },
+  { value: 'tech_lead', label: 'Tech Lead' },
+  { value: 'scrum_master', label: 'Scrum Master' },
+  { value: 'product_owner', label: 'Product Owner' },
+  { value: 'qa_engineer', label: 'QA Engineer' },
+  { value: 'designer', label: 'Designer' },
+  { value: 'viewer', label: 'Viewer' },
+];
 
 type Member = {
   id: string;
@@ -65,6 +98,37 @@ export function MembersPageClient() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<Member['role']>('member');
+  const [projectsExpanded, setProjectsExpanded] = useState(false);
+  const [projectPickerOpen, setProjectPickerOpen] = useState(false);
+  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
+  const [projectRole, setProjectRole] = useState<ProjectRole>('developer');
+
+  const { data: orgProjects = [], isLoading: projectsLoading } = useProjects({
+    organizationId: currentOrganizationId ?? undefined,
+  });
+
+  const projectById = useMemo(() => {
+    const map = new Map<string, (typeof orgProjects)[number]>();
+    for (const p of orgProjects) map.set(p.id, p);
+    return map;
+  }, [orgProjects]);
+
+  const toggleProject = (id: string) => {
+    setSelectedProjectIds((prev) =>
+      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
+    );
+  };
+  const removeProject = (id: string) => {
+    setSelectedProjectIds((prev) => prev.filter((v) => v !== id));
+  };
+
+  const resetInviteForm = () => {
+    setInviteEmail('');
+    setInviteRole('member');
+    setSelectedProjectIds([]);
+    setProjectRole('developer');
+    setProjectsExpanded(false);
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ['organization-members', currentOrganizationId],
@@ -89,7 +153,12 @@ export function MembersPageClient() {
   const canRemove = userRole === 'owner' || userRole === 'admin' || isSuperAdmin;
 
   const inviteMutation = useMutation({
-    mutationFn: async (data: { email: string; role: Member['role'] }) => {
+    mutationFn: async (data: {
+      email: string;
+      role: Member['role'];
+      projectIds?: string[];
+      projectRole?: ProjectRole;
+    }) => {
       const response = await fetch(`/api/organizations/${currentOrganizationId}/members`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -99,19 +168,47 @@ export function MembersPageClient() {
         const error = await response.json();
         throw new Error(error.error || 'Failed to invite member');
       }
-      return response.json();
+      return response.json() as Promise<{
+        addedToProjects?: string[];
+        skippedProjects?: string[];
+      }>;
     },
-    onSuccess: () => {
+    onSuccess: (result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['organization-members', currentOrganizationId] });
-      toast({ title: 'Invitation sent', description: 'Member invited successfully.' });
+      const added = result?.addedToProjects?.length ?? 0;
+      const skipped = result?.skippedProjects?.length ?? 0;
+      const hasProjectSummary =
+        (result?.addedToProjects !== undefined || result?.skippedProjects !== undefined) &&
+        (variables.projectIds?.length ?? 0) > 0;
+      if (hasProjectSummary) {
+        const parts = [`Invited ${variables.email}.`];
+        if (added > 0) parts.push(`Added to ${added} project${added === 1 ? '' : 's'}.`);
+        if (skipped > 0) parts.push(`Skipped ${skipped}.`);
+        toast({ title: 'Invitation sent', description: parts.join(' ') });
+      } else {
+        toast({ title: 'Invitation sent', description: 'Member invited successfully.' });
+      }
       setInviteOpen(false);
-      setInviteEmail('');
-      setInviteRole('member');
+      resetInviteForm();
     },
     onError: (error: Error) => {
       toast({ title: 'Failed to invite member', description: error.message, variant: 'destructive' });
     },
   });
+
+  const handleSubmitInvite = () => {
+    const payload: {
+      email: string;
+      role: Member['role'];
+      projectIds?: string[];
+      projectRole?: ProjectRole;
+    } = { email: inviteEmail, role: inviteRole };
+    if (selectedProjectIds.length > 0) {
+      payload.projectIds = selectedProjectIds;
+      payload.projectRole = projectRole;
+    }
+    inviteMutation.mutate(payload);
+  };
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ memberId, role }: { memberId: string; role: Member['role'] }) => {
@@ -201,7 +298,13 @@ export function MembersPageClient() {
               </span>
             )}
 
-            <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+            <Dialog
+              open={inviteOpen}
+              onOpenChange={(open) => {
+                setInviteOpen(open);
+                if (!open) resetInviteForm();
+              }}
+            >
               <DialogTrigger asChild>
                 <Button size="sm" disabled={!canInvite}>
                   <UserPlus className="mr-1.5 h-4 w-4" />
@@ -210,7 +313,10 @@ export function MembersPageClient() {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Invite member</DialogTitle>
+                  <DialogTitle className="flex items-center gap-2">
+                    <UserPlus className="h-4 w-4 text-muted-foreground" />
+                    Invite member
+                  </DialogTitle>
                   <DialogDescription>
                     Send an invitation to join this organization.
                   </DialogDescription>
@@ -243,13 +349,154 @@ export function MembersPageClient() {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  <div className="space-y-2 rounded-md border border-border bg-muted/20 p-3">
+                    <button
+                      type="button"
+                      onClick={() => setProjectsExpanded((v) => !v)}
+                      className="flex w-full items-center justify-between text-left"
+                    >
+                      <span className="flex items-center gap-2 text-sm font-medium">
+                        <FolderKanban className="h-4 w-4 text-muted-foreground" />
+                        Add to projects (optional)
+                        {selectedProjectIds.length > 0 && (
+                          <span className="chip text-[11px]">
+                            {selectedProjectIds.length}
+                          </span>
+                        )}
+                      </span>
+                      <ChevronsUpDown
+                        className={cn(
+                          'h-4 w-4 text-muted-foreground transition-transform',
+                          projectsExpanded && 'rotate-180'
+                        )}
+                      />
+                    </button>
+
+                    {projectsExpanded && (
+                      <div className="space-y-3 pt-2">
+                        {projectsLoading ? (
+                          <div className="flex items-center justify-center py-4">
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                          </div>
+                        ) : orgProjects.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">
+                            No projects yet — invite this person and add them to a project later.
+                          </p>
+                        ) : (
+                          <>
+                            <Popover
+                              open={projectPickerOpen}
+                              onOpenChange={setProjectPickerOpen}
+                            >
+                              <PopoverTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  role="combobox"
+                                  aria-expanded={projectPickerOpen}
+                                  className="w-full justify-between font-normal"
+                                >
+                                  <span className="truncate text-sm">
+                                    {selectedProjectIds.length === 0
+                                      ? 'Select projects...'
+                                      : `${selectedProjectIds.length} selected`}
+                                  </span>
+                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                className="w-[--radix-popover-trigger-width] p-0"
+                                align="start"
+                              >
+                                <Command>
+                                  <CommandInput placeholder="Search projects..." />
+                                  <CommandList>
+                                    <CommandEmpty>No projects found.</CommandEmpty>
+                                    <CommandGroup>
+                                      {orgProjects.map((project) => {
+                                        const selected = selectedProjectIds.includes(project.id);
+                                        return (
+                                          <CommandItem
+                                            key={project.id}
+                                            value={`${project.name} ${project.key}`}
+                                            onSelect={() => toggleProject(project.id)}
+                                          >
+                                            <Check
+                                              className={cn(
+                                                'mr-2 h-4 w-4',
+                                                selected ? 'opacity-100' : 'opacity-0'
+                                              )}
+                                            />
+                                            <span className="truncate">{project.name}</span>
+                                            <span className="ml-2 truncate font-mono text-xs text-muted-foreground">
+                                              {project.key}
+                                            </span>
+                                          </CommandItem>
+                                        );
+                                      })}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+
+                            {selectedProjectIds.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {selectedProjectIds.map((id) => {
+                                  const project = projectById.get(id);
+                                  return (
+                                    <span
+                                      key={id}
+                                      className="chip flex items-center gap-1 text-xs"
+                                    >
+                                      {project?.name ?? id}
+                                      <button
+                                        type="button"
+                                        onClick={() => removeProject(id)}
+                                        className="rounded p-0.5 opacity-60 hover:opacity-100"
+                                        aria-label={`Remove ${project?.name ?? id}`}
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </button>
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {selectedProjectIds.length > 0 && (
+                              <div className="space-y-2">
+                                <Label htmlFor="project-role">Project role</Label>
+                                <Select
+                                  value={projectRole}
+                                  onValueChange={(value) => setProjectRole(value as ProjectRole)}
+                                >
+                                  <SelectTrigger id="project-role">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {PROJECT_ROLE_OPTIONS.map((opt) => (
+                                      <SelectItem key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setInviteOpen(false)}>
                     Cancel
                   </Button>
                   <Button
-                    onClick={() => inviteMutation.mutate({ email: inviteEmail, role: inviteRole })}
+                    onClick={handleSubmitInvite}
                     disabled={inviteMutation.isPending || !inviteEmail}
                   >
                     {inviteMutation.isPending && (

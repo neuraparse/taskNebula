@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, issues, sprints } from '@tasknebula/db';
+import { db, issues, sprints, workflowStatuses } from '@tasknebula/db';
 import { eq, and, count, sql } from 'drizzle-orm';
 
 // GET /api/analytics/project-health?projectId=xxx
@@ -73,14 +73,17 @@ export async function GET(request: NextRequest) {
       .where(and(eq(sprints.projectId, projectId), eq(sprints.status, 'completed')));
 
     // Overdue issues (issues with dueDate in the past and not done)
+    // statusId references workflowStatuses.id (cuid) — not a literal 'done'
+    // string — so we must join and filter by the status category.
     const [overdueIssuesData] = await db
       .select({ count: count() })
       .from(issues)
+      .leftJoin(workflowStatuses, eq(issues.statusId, workflowStatuses.id))
       .where(
         and(
           eq(issues.projectId, projectId),
           sql`${issues.dueDate} < NOW()`,
-          sql`${issues.statusId} != 'done'`
+          sql`(${workflowStatuses.category} IS NULL OR ${workflowStatuses.category} != 'done')`
         )
       );
 

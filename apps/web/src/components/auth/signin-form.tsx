@@ -1,21 +1,92 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useMemo, type ComponentType } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Github } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Github, KeyRound, MailCheck, X } from 'lucide-react';
 import Link from 'next/link';
+
+type BannerTone = 'success' | 'warn' | 'danger';
+
+type StatusBanner = {
+  key: string;
+  tone: BannerTone;
+  icon: ComponentType<{ className?: string }>;
+  message: string;
+};
+
+function resolveStatusBanner(params: URLSearchParams | null): StatusBanner | null {
+  if (!params) return null;
+
+  if (params.get('verified') === '1') {
+    return {
+      key: 'verified',
+      tone: 'success',
+      icon: MailCheck,
+      message: 'Email verified. Sign in to continue.',
+    };
+  }
+
+  if (params.get('reset') === '1') {
+    return {
+      key: 'reset',
+      tone: 'success',
+      icon: KeyRound,
+      message: 'Password updated. Sign in with your new password.',
+    };
+  }
+
+  const errorParam = params.get('error');
+  if (errorParam === 'CredentialsSignin') {
+    return {
+      key: 'error-credentials',
+      tone: 'danger',
+      icon: AlertCircle,
+      message: 'Incorrect email or password.',
+    };
+  }
+  if (errorParam === 'Verification') {
+    return {
+      key: 'error-verification',
+      tone: 'warn',
+      icon: AlertTriangle,
+      message: 'That verification link is no longer valid.',
+    };
+  }
+  if (errorParam) {
+    return {
+      key: `error-${errorParam}`,
+      tone: 'danger',
+      icon: AlertCircle,
+      message: 'Something went wrong while signing in.',
+    };
+  }
+
+  return null;
+}
+
+const BANNER_TONE_STYLES: Record<BannerTone, string> = {
+  success: 'panel-success text-accent-emerald',
+  warn: 'panel-warn text-accent-amber',
+  danger: 'panel-danger text-destructive',
+};
 
 export function SignInForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [checkingSetup, setCheckingSetup] = useState(true);
+  const [dismissedBannerKey, setDismissedBannerKey] = useState<string | null>(null);
+
+  const statusBanner = useMemo(() => resolveStatusBanner(searchParams), [searchParams]);
+  const activeBanner =
+    statusBanner && statusBanner.key !== dismissedBannerKey ? statusBanner : null;
 
   // Check if setup is needed — redirect before showing login
   useEffect(() => {
@@ -82,6 +153,26 @@ export function SignInForm() {
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Welcome back</h1>
         <p className="text-sm text-muted-foreground">Sign in to continue</p>
       </div>
+
+      {/* Status banner (verify / reset / error query params) */}
+      {activeBanner && (
+        <div
+          key={activeBanner.key}
+          role={activeBanner.tone === 'success' ? 'status' : 'alert'}
+          className={`${BANNER_TONE_STYLES[activeBanner.tone]} animate-alert-in flex items-start gap-3 px-3 py-2.5 text-sm`}
+        >
+          <activeBanner.icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <p className="flex-1 leading-snug text-foreground">{activeBanner.message}</p>
+          <button
+            type="button"
+            onClick={() => setDismissedBannerKey(activeBanner.key)}
+            className="shrink-0 rounded-sm p-0.5 text-muted-foreground transition-colors duration-150 ease-snap hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Dismiss notification"
+          >
+            <X className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        </div>
+      )}
 
       {/* OAuth Buttons */}
       <div className="space-y-2">

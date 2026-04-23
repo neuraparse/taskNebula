@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/auth';
-import { db, users, organizationMembers, organizations, auditLogs, sendEmail } from '@tasknebula/db';
+import {
+  db,
+  users,
+  organizationMembers,
+  organizations,
+  auditLogs,
+  projects,
+  projectMembers,
+} from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { hasPermission, getUserRole } from '@/lib/auth/permissions';
 import { publishEvent } from '@/lib/realtime/events';
+import { sendEmail } from '@/lib/email/sender';
+import { renderInvitationMessage } from '@/lib/email/templates';
 
 // GET /api/organizations/[organizationId]/members - List members
 export async function GET(
@@ -63,6 +73,18 @@ export async function GET(
 const inviteMemberSchema = z.object({
   email: z.string().email(),
   role: z.enum(['owner', 'admin', 'member', 'viewer', 'guest']).default('member'),
+  projectIds: z.array(z.string()).optional().default([]),
+  projectRole: z
+    .enum([
+      'product_owner',
+      'scrum_master',
+      'tech_lead',
+      'developer',
+      'qa_engineer',
+      'designer',
+      'viewer',
+    ])
+    .default('developer'),
 });
 
 export async function POST(
@@ -158,32 +180,138 @@ export async function POST(
 
     publishEvent('member.added', session.user.id, { organizationId });
 
-    // Send invite email (fire-and-forget)
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-    const [org] = await db.select({ name: organizations.name }).from(organizations).where(eq(organizations.id, organizationId)).limit(1);
-    const [inviter] = await db.select({ name: users.name }).from(users).where(eq(users.id, session.user.id)).limit(1);
+    // Optional: assign user to projects. Skip silently on errors — do not 500 the invite.
+    const addedToProjects: string[] = [];
+    const skippedProjects: Array<{ id: string; reason: string }> = [];
+    const addedProjectNames: string[] = [];
 
-    import('nodemailer').then(async (nodemailer) => {
-      const host = process.env.SMTP_HOST;
-      if (!host) return;
-      const transport = nodemailer.default.createTransport({
-        host,
-        port: parseInt(process.env.SMTP_PORT || '25'),
-        secure: process.env.SMTP_SECURE === 'true',
-        tls: { rejectUnauthorized: false },
-      });
-      await transport.sendMail({
-        from: process.env.EMAIL_FROM || 'TaskNebula <noreply@localhost>',
-        to: data.email,
-        subject: `You've been invited to ${org?.name || 'an organization'} on TaskNebula`,
-        html: `<h2>You're invited!</h2>
-<p><strong>${inviter?.name || 'A team member'}</strong> has invited you to join <strong>${org?.name || 'their organization'}</strong> on TaskNebula.</p>
-<p><a href="${appUrl}/auth/signup" style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">Accept Invitation</a></p>
-<p style="color:#666;font-size:13px;">Create your account with <strong>${data.email}</strong> to get started.</p>`,
-        text: `${inviter?.name || 'A team member'} invited you to ${org?.name || 'their organization'} on TaskNebula. Create your account at ${appUrl}/auth/signup`,
-      });
-      console.log('📧 Invite email sent to:', data.email);
-    }).catch(err => console.error('Invite email error:', err.message));
+    if (data.projectIds.length > 0) {
+      // Determine if caller broadly has project:manage for the org.
+      const canManageProjects = await hasPermission(organizationId, 'project:manage');
+
+      for (const projectId of data.projectIds) {
+        try {
+          // Verify project belongs to this organization.
+          const [project] = await db
+            .select({
+              id: projects.id,
+              name: projects.name,
+              leadId: projects.leadId,
+            })
+            .from(projects)
+            .where(
+              and(eq(projects.id, projectId), eq(projects.organizationId, organizationId)),
+            )
+            .limit(1);
+
+          if (!project) {
+            // Silently skip missing / cross-org projects.
+            skippedProjects.push({ id: projectId, reason: 'not_found' });
+            continue;
+          }
+
+          // Permission gate: either has org-wide project:manage, or is the project lead.
+          const isLead = project.leadId === session.user.id;
+          if (!canManageProjects && !isLead) {
+            skippedProjects.push({ id: projectId, reason: 'forbidden' });
+            continue;
+          }
+
+          // Skip if already a project member.
+          const [existingProjectMember] = await db
+            .select({ id: projectMembers.id })
+            .from(projectMembers)
+            .where(
+              and(
+                eq(projectMembers.projectId, projectId),
+                eq(projectMembers.userId, user.id),
+              ),
+            )
+            .limit(1);
+
+          if (existingProjectMember) {
+            skippedProjects.push({ id: projectId, reason: 'already_member' });
+            continue;
+          }
+
+          await db.insert(projectMembers).values({
+            id: createId(),
+            projectId,
+            userId: user.id,
+            role: data.projectRole,
+            canManageSprints: 'false',
+            canStartSprint: 'false',
+            canAssignIssues: 'false',
+            invitedBy: session.user.id,
+          });
+
+          await db.insert(auditLogs).values({
+            id: createId(),
+            organizationId,
+            userId: session.user.id,
+            action: 'organization.member_added_to_project',
+            resourceType: 'project_member',
+            resourceId: projectId,
+            metadata: {
+              projectId,
+              role: data.projectRole,
+            },
+          });
+
+          addedToProjects.push(projectId);
+          addedProjectNames.push(project.name);
+        } catch (err) {
+          console.error('Project assignment error for', projectId, err);
+          skippedProjects.push({ id: projectId, reason: 'error' });
+        }
+      }
+    }
+
+    // Send invite email (fire-and-forget) — uses shared renderShell + sendEmail
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:3000';
+    const [org] = await db
+      .select({ name: organizations.name })
+      .from(organizations)
+      .where(eq(organizations.id, organizationId))
+      .limit(1);
+    const [inviter] = await db
+      .select({ name: users.name })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1);
+
+    const orgName = org?.name || 'their organization';
+    const inviterName = inviter?.name || 'A team member';
+    const signupUrl = `${appUrl}/auth/signup?email=${encodeURIComponent(data.email)}`;
+
+    const { subject, html, text } = renderInvitationMessage({
+      inviteeEmail: data.email,
+      inviterName,
+      orgName,
+      role: data.role,
+      addedProjectNames,
+      signupUrl,
+    });
+
+    sendEmail({
+      to: data.email,
+      subject,
+      html,
+      text,
+    })
+      .then((result) => {
+        if (result.sent) {
+          console.log('Invite email sent to:', data.email, result.messageId);
+        } else if (result.skipped) {
+          console.log('Invite email skipped (SMTP not configured) for:', data.email);
+        } else if (result.error) {
+          console.error('Invite email error:', result.error);
+        }
+      })
+      .catch((err) =>
+        console.error('Invite email error:', err instanceof Error ? err.message : err),
+      );
 
     return NextResponse.json({
       member: {
@@ -196,6 +324,8 @@ export async function POST(
         memberStatus: newMember.status,
         joinedAt: newMember.createdAt,
       },
+      addedToProjects,
+      skippedProjects,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

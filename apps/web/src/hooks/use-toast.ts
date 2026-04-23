@@ -10,6 +10,7 @@ type ToasterToast = ToastProps & {
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  icon?: React.ReactNode
 }
 
 const actionTypes = {
@@ -134,7 +135,7 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">
 
-function toast({ ...props }: Toast) {
+function baseToast({ ...props }: Toast) {
   const id = genId()
 
   const update = (props: ToasterToast) =>
@@ -163,6 +164,32 @@ function toast({ ...props }: Toast) {
   }
 }
 
+type ToastVariant = NonNullable<ToastProps["variant"]>
+
+type ToastSugarFn = (
+  title?: Toast["title"],
+  description?: Toast["description"],
+  opts?: Omit<Toast, "title" | "description" | "variant">
+) => ReturnType<typeof baseToast>
+
+type ToastFn = typeof baseToast & {
+  success: ToastSugarFn
+  error: ToastSugarFn
+  warning: ToastSugarFn
+  info: ToastSugarFn
+}
+
+const makeSugar = (variant: ToastVariant): ToastSugarFn => {
+  return (title, description, opts) =>
+    baseToast({ ...(opts ?? {}), title, description, variant })
+}
+
+const toast = baseToast as ToastFn
+toast.success = makeSugar("success" as ToastVariant)
+toast.error = makeSugar("destructive" as ToastVariant)
+toast.warning = makeSugar("warning" as ToastVariant)
+toast.info = makeSugar("info" as ToastVariant)
+
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 
@@ -184,4 +211,4 @@ function useToast() {
 }
 
 export { useToast, toast }
-
+export type { ToasterToast }

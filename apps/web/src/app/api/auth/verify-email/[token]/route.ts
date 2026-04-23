@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/auth';
 import { consumeEmailVerificationToken } from '@/lib/auth/email-verification';
 
 function resolveAppUrl(): string {
@@ -13,10 +14,11 @@ function resolveAppUrl(): string {
  * GET /api/auth/verify-email/[token]
  *
  * Validates an email verification token. On success stamps
- * `users.emailVerified`, marks the token used, and redirects to the
- * sign-in page with `?verified=1`. On failure redirects to the
- * verify-email page with a `?error=<reason>` query string so the UI
- * can surface it.
+ * `users.emailVerified`, marks the token used, and redirects:
+ *   - authenticated users → /dashboard?verified=1
+ *   - signed-out users    → /auth/signin?verified=1
+ *
+ * On failure redirects to /auth/verify-email?error=<reason>.
  */
 export async function GET(
   _request: NextRequest,
@@ -26,10 +28,16 @@ export async function GET(
   const appUrl = resolveAppUrl().replace(/\/+$/, '');
 
   try {
-    const result = await consumeEmailVerificationToken(token);
+    const [result, session] = await Promise.all([
+      consumeEmailVerificationToken(token),
+      auth(),
+    ]);
 
     if (result.ok) {
-      return NextResponse.redirect(`${appUrl}/auth/signin?verified=1`);
+      const target = session?.user?.id
+        ? `${appUrl}/dashboard?verified=1`
+        : `${appUrl}/auth/signin?verified=1`;
+      return NextResponse.redirect(target);
     }
 
     const reason = result.reason || 'invalid';

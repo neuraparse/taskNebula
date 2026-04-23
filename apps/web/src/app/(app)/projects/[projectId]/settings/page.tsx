@@ -1,57 +1,39 @@
-'use client';
+import { redirect } from 'next/navigation';
+import { auth } from '@/auth';
+import { db, projects } from '@tasknebula/db';
+import { eq } from 'drizzle-orm';
+import { hasPermission } from '@/lib/auth/permissions';
+import { ProjectSettingsClient } from './project-settings-client';
 
-import { use, useCallback } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { ProjectSettingsContent } from '@/components/projects/project-settings-content';
-
-const VALID_TABS = [
-  'general',
-  'permissions',
-  'schemes',
-  'security',
-  'custom-fields',
-  'workflows',
-  'automation',
-  'ai-agents',
-  'chat-calls',
-  'webhooks',
-] as const;
-
-type TabValue = (typeof VALID_TABS)[number];
-
-function isTabValue(value: string | null): value is TabValue {
-  return Boolean(value) && (VALID_TABS as readonly string[]).includes(value ?? '');
-}
-
-export default function ProjectSettingsPage({
+export default async function ProjectSettingsPage({
   params,
 }: {
   params: Promise<{ projectId: string }>;
 }) {
-  const { projectId } = use(params);
-  const pathname = usePathname();
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const { projectId } = await params;
 
-  const requestedTab = searchParams.get('tab');
-  const initialTab: TabValue = isTabValue(requestedTab) ? requestedTab : 'general';
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect(`/auth/signin?callbackUrl=/projects/${projectId}/settings`);
+  }
 
-  const handleTabChange = useCallback(
-    (next: TabValue) => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set('tab', next);
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    },
-    [pathname, router, searchParams]
-  );
+  const [project] = await db
+    .select({ organizationId: projects.organizationId })
+    .from(projects)
+    .where(eq(projects.id, projectId))
+    .limit(1);
 
-  return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden animate-fade-in">
-      <ProjectSettingsContent
-        projectId={projectId}
-        initialTab={initialTab}
-        onTabChange={handleTabChange}
-      />
-    </div>
-  );
+  if (!project) {
+    redirect('/dashboard?error=insufficient-permission');
+  }
+
+  const canAccess =
+    (await hasPermission(project.organizationId, 'project:settings')) ||
+    (await hasPermission(project.organizationId, 'project:manage'));
+
+  if (!canAccess) {
+    redirect('/dashboard?error=insufficient-permission');
+  }
+
+  return <ProjectSettingsClient projectId={projectId} />;
 }

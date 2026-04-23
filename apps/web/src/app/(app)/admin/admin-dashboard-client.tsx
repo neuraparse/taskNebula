@@ -43,6 +43,7 @@ import { AgentOpsPanel } from '@/components/admin/agent-ops-panel';
 import { IntegrationsAdminPanel } from '@/components/admin/integrations-admin-panel';
 import { RealtimeHealthPanel } from '@/components/admin/realtime-health-panel';
 import { SystemCredentialsPanel } from '@/components/admin/system-credentials-panel';
+import { EmailPreviewPanel } from '@/components/admin/email-preview-panel';
 import { useDeleteFeatureFlag, useFeatureFlags, useUpdateFeatureFlag } from '@/lib/hooks/use-feature-flags';
 import { cn } from '@/lib/utils';
 import {
@@ -465,7 +466,12 @@ export function AdminDashboardClient() {
 
           {activeTab === 'integrations' && <IntegrationsAdminPanel />}
 
-          {activeTab === 'system' && <SystemCredentialsPanel />}
+          {activeTab === 'system' && (
+            <div className="space-y-6">
+              <SystemCredentialsPanel />
+              <EmailPreviewPanel />
+            </div>
+          )}
 
           {activeTab === 'realtime' && <RealtimeHealthPanel />}
 

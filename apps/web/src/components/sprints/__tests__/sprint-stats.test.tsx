@@ -53,9 +53,9 @@ describe('SprintStats', () => {
     render(<SprintStats sprint={makeSprint()} issues={[]} />);
 
     expect(screen.getByText('Completion')).toBeInTheDocument();
-    expect(screen.getByText('Time Progress')).toBeInTheDocument();
+    expect(screen.getByText('Time')).toBeInTheDocument();
     expect(screen.getByText('Story Points')).toBeInTheDocument();
-    expect(screen.getByText('Issue Status')).toBeInTheDocument();
+    expect(screen.getByText('Issues')).toBeInTheDocument();
   });
 
   it('computes completion percentage correctly (2 of 5 done => 40%)', () => {
@@ -107,7 +107,8 @@ describe('SprintStats', () => {
     render(<SprintStats sprint={makeSprint()} issues={issues} />);
 
     // totalPoints = 3 + 5 + 2 + 0 = 10, completed = 3 + 5 = 8
-    expect(screen.getByText('8 / 10')).toBeInTheDocument();
+    // Points are rendered as "8" followed by " / 10" in separate nodes
+    expect(screen.getByText((_, node) => node?.textContent === '8 / 10')).toBeInTheDocument();
     expect(screen.getByText('80% completed')).toBeInTheDocument();
   });
 
@@ -115,7 +116,7 @@ describe('SprintStats', () => {
     render(<SprintStats sprint={makeSprint()} issues={[]} />);
 
     expect(screen.getByText('0 of 0 issues')).toBeInTheDocument();
-    expect(screen.getByText('0 / 0')).toBeInTheDocument();
+    expect(screen.getByText((_, node) => node?.textContent === '0 / 0')).toBeInTheDocument();
     expect(screen.getByText('0% completed')).toBeInTheDocument();
     // Completion percentage also 0%
     const zeroPercents = screen.getAllByText('0%');

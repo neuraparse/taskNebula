@@ -73,6 +73,7 @@ export const auditLogActionEnum = pgEnum('audit_log_action', [
   'organization.created',
   'organization.updated',
   'organization.member_added',
+  'organization.member_added_to_project',
   'organization.member_removed',
   'organization.role_changed',
   

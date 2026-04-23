@@ -2,6 +2,19 @@ import { db } from '../index';
 import { emailTemplates, notificationPreferences } from '../schema';
 import { eq, and } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
+import {
+  quoteBlock,
+  infoCard,
+  chip,
+  actorRow,
+  statGrid,
+  divider,
+  sectionHeading,
+  bulletList,
+  EMAIL_COLORS,
+  paragraph,
+  textFooter,
+} from './email-layout';
 
 /**
  * Email Service
@@ -56,11 +69,17 @@ function renderShell(args: {
   body: string; // inner HTML after heading (paragraphs, meta rows, etc.)
   ctaLabel: string;
   ctaUrl: string;
+  /** Optional preview text shown by inbox clients before the user opens the email. */
+  preheader?: string;
 }): string {
-  const { kicker, heading, body, ctaLabel, ctaUrl } = args;
+  const { kicker, heading, body, ctaLabel, ctaUrl, preheader } = args;
+  const preheaderHtml = preheader
+    ? `<div style="display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0;mso-hide:all;">${preheader}</div>`
+    : '';
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="x-apple-disable-message-reformatting"/><title>TaskNebula</title></head>
 <body style="margin:0;padding:0;background-color:#f5f6fa;font-family:${EMAIL_FONT};color:#111827;-webkit-font-smoothing:antialiased;">
+${preheaderHtml}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f6fa;"><tr><td align="center" style="padding:32px 16px;">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
 <tr><td style="padding:0 4px 16px 4px;">
@@ -112,15 +131,21 @@ function metaTable(rows: string): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:16px 0 4px 0;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;">${rows}</table>`;
 }
 
-const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; text: string }> = {
+export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; text: string }> = {
   issue_assigned: {
     subject: '[{{projectName}}] {{issueKey}} assigned to you — {{issueTitle}}',
     html: renderShell({
+      preheader: '{{actorName}} assigned {{issueKey}} to you in {{projectName}}.',
       kicker: 'ASSIGNMENT',
       heading: '{{issueTitle}}',
       body:
-        `<p style="margin:0;font-family:${EMAIL_FONT};font-size:14px;line-height:1.6;color:#374151;">{{actorName}} assigned <strong style="color:#111827;">{{issueKey}}</strong> to you.</p>` +
-        metaTable(metaRow('Issue', '<strong style="color:#111827;">{{issueKey}}</strong>') + metaRow('Project', '{{projectName}}')),
+        paragraph(`{{actorName}} assigned <strong style="color:${EMAIL_COLORS.heading};">{{issueKey}}</strong> to you.`) +
+        actorRow({ name: '{{actorName}}', action: 'Assigned this issue to you' }) +
+        metaTable(
+          metaRow('Issue', '<strong style="color:#111827;">{{issueKey}}</strong>') +
+            metaRow('Project', '{{projectName}}') +
+            metaRow('Priority', chip('{{priority}}', { tone: 'warning' })),
+        ),
       ctaLabel: 'View issue',
       ctaUrl: '{{issueUrl}}',
     }),
@@ -128,41 +153,47 @@ const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; text: s
       '{{actorName}} assigned {{issueKey}} to you.\n\n' +
       '{{issueTitle}}\n' +
       'Project: {{projectName}}\n\n' +
-      'View: {{issueUrl}}\n\n' +
-      '---\n' +
-      'Manage notifications: {{unsubscribeUrl}}\n' +
-      "You're receiving this because you're a member of {{organizationName}}.",
+      'View: {{issueUrl}}' +
+      textFooter(),
   },
 
   issue_mentioned: {
     subject: '@mention: {{issueKey}} in {{projectName}}',
     html: renderShell({
+      preheader: '{{actorName}} mentioned you in {{issueKey}} — {{issueTitle}}.',
       kicker: 'MENTION',
       heading: '{{actorName}} mentioned you',
       body:
-        `<p style="margin:0;font-family:${EMAIL_FONT};font-size:14px;line-height:1.6;color:#374151;">You were mentioned in <strong style="color:#111827;">{{issueKey}}</strong> &mdash; {{issueTitle}}.</p>` +
-        metaTable(metaRow('Issue', '<strong style="color:#111827;">{{issueKey}}</strong>') + metaRow('Project', '{{projectName}}')),
+        paragraph(`You were mentioned in <strong style="color:${EMAIL_COLORS.heading};">{{issueKey}}</strong> &mdash; {{issueTitle}}.`) +
+        actorRow({ name: '{{actorName}}', action: 'Mentioned you in a thread' }) +
+        metaTable(
+          metaRow('Issue', '<strong style="color:#111827;">{{issueKey}}</strong>') +
+            metaRow('Project', '{{projectName}}'),
+        ),
       ctaLabel: 'Open thread',
       ctaUrl: '{{issueUrl}}',
     }),
     text:
       '{{actorName}} mentioned you in {{issueKey}}: {{issueTitle}}\n\n' +
       'Project: {{projectName}}\n\n' +
-      'Open: {{issueUrl}}\n\n' +
-      '---\n' +
-      'Manage notifications: {{unsubscribeUrl}}\n' +
-      "You're receiving this because you're a member of {{organizationName}}.",
+      'Open: {{issueUrl}}' +
+      textFooter(),
   },
 
   issue_commented: {
     subject: '{{actorName}} commented on {{issueKey}}',
     html: renderShell({
+      preheader: '{{actorName}} left a new comment on {{issueKey}}.',
       kicker: 'COMMENT',
       heading: '{{issueTitle}}',
       body:
-        `<p style="margin:0;font-family:${EMAIL_FONT};font-size:14px;line-height:1.6;color:#374151;">{{actorName}} commented on <strong style="color:#111827;">{{issueKey}}</strong>.</p>` +
-        `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:16px 0 4px 0;"><tr><td style="background:#f9fafb;border-left:3px solid #4f46e5;padding:12px 16px;font-family:${EMAIL_FONT};font-size:14px;line-height:1.6;color:#374151;">{{commentBody}}</td></tr></table>` +
-        metaTable(metaRow('Issue', '<strong style="color:#111827;">{{issueKey}}</strong>') + metaRow('Project', '{{projectName}}')),
+        paragraph(`{{actorName}} commented on <strong style="color:${EMAIL_COLORS.heading};">{{issueKey}}</strong>.`) +
+        actorRow({ name: '{{actorName}}', action: 'Added a new comment' }) +
+        quoteBlock('{{commentBody}}') +
+        metaTable(
+          metaRow('Issue', '<strong style="color:#111827;">{{issueKey}}</strong>') +
+            metaRow('Project', '{{projectName}}'),
+        ),
       ctaLabel: 'Reply in thread',
       ctaUrl: '{{issueUrl}}',
     }),
@@ -170,23 +201,27 @@ const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; text: s
       '{{actorName}} commented on {{issueKey}}: {{issueTitle}}\n\n' +
       '"{{commentBody}}"\n\n' +
       'Project: {{projectName}}\n\n' +
-      'Reply: {{issueUrl}}\n\n' +
-      '---\n' +
-      'Manage notifications: {{unsubscribeUrl}}\n' +
-      "You're receiving this because you're a member of {{organizationName}}.",
+      'Reply: {{issueUrl}}' +
+      textFooter(),
   },
 
   issue_status_changed: {
     subject: '[{{projectName}}] {{issueKey}} → {{newStatus}}',
     html: renderShell({
+      preheader: '{{actorName}} moved {{issueKey}} to {{newStatus}}.',
       kicker: 'STATUS CHANGE',
       heading: '{{issueTitle}}',
       body:
-        `<p style="margin:0;font-family:${EMAIL_FONT};font-size:14px;line-height:1.6;color:#374151;">{{actorName}} moved <strong style="color:#111827;">{{issueKey}}</strong> to <span style="display:inline-block;background:#f3f4f6;color:#374151;border-radius:2px;font-size:11px;padding:2px 8px;font-weight:500;letter-spacing:0.02em;">{{newStatus}}</span>.</p>` +
+        paragraph(
+          `{{actorName}} moved <strong style="color:${EMAIL_COLORS.heading};">{{issueKey}}</strong> to ` +
+            chip('{{newStatus}}', { tone: 'info' }) +
+            '.',
+        ) +
+        actorRow({ name: '{{actorName}}', action: 'Updated the issue status' }) +
         metaTable(
           metaRow('Issue', '<strong style="color:#111827;">{{issueKey}}</strong>') +
             metaRow('Project', '{{projectName}}') +
-            metaRow('New status', '{{newStatus}}'),
+            metaRow('New status', chip('{{newStatus}}', { tone: 'success' })),
         ),
       ctaLabel: 'View issue',
       ctaUrl: '{{issueUrl}}',
@@ -195,20 +230,24 @@ const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; text: s
       '{{actorName}} moved {{issueKey}} to {{newStatus}}.\n\n' +
       '{{issueTitle}}\n' +
       'Project: {{projectName}}\n\n' +
-      'View: {{issueUrl}}\n\n' +
-      '---\n' +
-      'Manage notifications: {{unsubscribeUrl}}\n' +
-      "You're receiving this because you're a member of {{organizationName}}.",
+      'View: {{issueUrl}}' +
+      textFooter(),
   },
 
   issue_created: {
     subject: '[{{projectName}}] New issue {{issueKey}} — {{issueTitle}}',
     html: renderShell({
+      preheader: 'New issue {{issueKey}} created in {{projectName}}.',
       kicker: 'NEW ISSUE',
       heading: '{{issueTitle}}',
       body:
-        `<p style="margin:0;font-family:${EMAIL_FONT};font-size:14px;line-height:1.6;color:#374151;">{{actorName}} created <strong style="color:#111827;">{{issueKey}}</strong> and assigned it to you.</p>` +
-        metaTable(metaRow('Issue', '<strong style="color:#111827;">{{issueKey}}</strong>') + metaRow('Project', '{{projectName}}')),
+        paragraph(`{{actorName}} created <strong style="color:${EMAIL_COLORS.heading};">{{issueKey}}</strong> and assigned it to you.`) +
+        actorRow({ name: '{{actorName}}', action: 'Created this issue' }) +
+        metaTable(
+          metaRow('Issue', '<strong style="color:#111827;">{{issueKey}}</strong>') +
+            metaRow('Project', '{{projectName}}') +
+            metaRow('Priority', chip('{{priority}}', { tone: 'warning' })),
+        ),
       ctaLabel: 'View issue',
       ctaUrl: '{{issueUrl}}',
     }),
@@ -216,20 +255,24 @@ const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; text: s
       '{{actorName}} created {{issueKey}} and assigned it to you.\n\n' +
       '{{issueTitle}}\n' +
       'Project: {{projectName}}\n\n' +
-      'View: {{issueUrl}}\n\n' +
-      '---\n' +
-      'Manage notifications: {{unsubscribeUrl}}\n' +
-      "You're receiving this because you're a member of {{organizationName}}.",
+      'View: {{issueUrl}}' +
+      textFooter(),
   },
 
   sprint_started: {
     subject: 'Sprint {{sprintName}} started in {{projectName}}',
     html: renderShell({
+      preheader: 'Sprint {{sprintName}} is now running in {{projectName}}.',
       kicker: 'SPRINT STARTED',
       heading: '{{sprintName}}',
       body:
-        `<p style="margin:0;font-family:${EMAIL_FONT};font-size:14px;line-height:1.6;color:#374151;">{{actorName}} started a new sprint in <strong style="color:#111827;">{{projectName}}</strong>.</p>` +
-        `<p style="margin:12px 0 0 0;font-family:${EMAIL_FONT};font-size:14px;line-height:1.6;color:#374151;">{{sprintGoal}}</p>` +
+        paragraph(`{{actorName}} started a new sprint in <strong style="color:${EMAIL_COLORS.heading};">{{projectName}}</strong>.`) +
+        paragraph('{{sprintGoal}}', { muted: true, spacingTop: 12 }) +
+        statGrid([
+          { value: '{{sprintStartDate}}', label: 'Starts', tone: 'brand' },
+          { value: '{{sprintEndDate}}', label: 'Ends' },
+          { value: '{{issueCount}}', label: 'Issues', tone: 'brand' },
+        ]) +
         metaTable(
           metaRow('Sprint', '<strong style="color:#111827;">{{sprintName}}</strong>') +
             metaRow('Project', '{{projectName}}') +
@@ -245,20 +288,19 @@ const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; text: s
       'Dates: {{sprintStartDate}} -> {{sprintEndDate}}\n' +
       'Issues: {{issueCount}}\n' +
       'Project: {{projectName}}\n\n' +
-      'Open: {{issueUrl}}\n\n' +
-      '---\n' +
-      'Manage notifications: {{unsubscribeUrl}}\n' +
-      "You're receiving this because you're a member of {{organizationName}}.",
+      'Open: {{issueUrl}}' +
+      textFooter(),
   },
 
   project_created: {
     subject: 'New project {{projectName}} in {{organizationName}}',
     html: renderShell({
+      preheader: '{{actorName}} created {{projectName}} in {{organizationName}}.',
       kicker: 'NEW PROJECT',
       heading: '{{projectName}}',
       body:
-        `<p style="margin:0;font-family:${EMAIL_FONT};font-size:14px;line-height:1.6;color:#374151;">{{actorName}} created a new project in <strong style="color:#111827;">{{organizationName}}</strong>.</p>` +
-        `<p style="margin:12px 0 0 0;font-family:${EMAIL_FONT};font-size:14px;line-height:1.6;color:#374151;">{{projectDescription}}</p>` +
+        paragraph(`{{actorName}} created a new project in <strong style="color:${EMAIL_COLORS.heading};">{{organizationName}}</strong>.`) +
+        infoCard({ tone: 'info', title: 'ABOUT THIS PROJECT', body: '{{projectDescription}}' }) +
         metaTable(
           metaRow('Project', '<strong style="color:#111827;">{{projectName}}</strong>') +
             metaRow('Key', '{{projectKey}}') +
@@ -273,20 +315,23 @@ const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; text: s
       '{{projectDescription}}\n\n' +
       'Key: {{projectKey}}\n' +
       'Organization: {{organizationName}}\n\n' +
-      'Open: {{projectUrl}}\n\n' +
-      '---\n' +
-      'Manage notifications: {{unsubscribeUrl}}\n' +
-      "You're receiving this because you're a member of {{organizationName}}.",
+      'Open: {{projectUrl}}' +
+      textFooter(),
   },
 
   project_archived: {
     subject: 'Project {{projectName}} archived',
     html: renderShell({
+      preheader: '{{projectName}} has been archived by {{actorName}}.',
       kicker: 'PROJECT ARCHIVED',
       heading: '{{projectName}}',
       body:
-        `<p style="margin:0;font-family:${EMAIL_FONT};font-size:14px;line-height:1.6;color:#374151;">{{actorName}} archived <strong style="color:#111827;">{{projectName}}</strong> on {{archivedAt}}.</p>` +
-        `<p style="margin:12px 0 0 0;font-family:${EMAIL_FONT};font-size:13px;line-height:1.6;color:#6b7280;">The project is now read-only for most members. Reach out to an admin if this was unexpected.</p>` +
+        paragraph(`{{actorName}} archived <strong style="color:${EMAIL_COLORS.heading};">{{projectName}}</strong> on {{archivedAt}}.`) +
+        infoCard({
+          tone: 'warning',
+          title: 'READ-ONLY NOTE',
+          body: 'The project is now read-only for most members. Reach out to an admin if this was unexpected.',
+        }) +
         metaTable(
           metaRow('Project', '<strong style="color:#111827;">{{projectName}}</strong>') +
             metaRow('Archived by', '{{actorName}}') +
@@ -299,19 +344,23 @@ const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; text: s
     text:
       '{{actorName}} archived the project {{projectName}} on {{archivedAt}}.\n\n' +
       'Organization: {{organizationName}}\n\n' +
-      'View: {{projectUrl}}\n\n' +
-      '---\n' +
-      'Manage notifications: {{unsubscribeUrl}}\n' +
-      "You're receiving this because you're a member of {{organizationName}}.",
+      'View: {{projectUrl}}' +
+      textFooter(),
   },
 
   sprint_completed: {
     subject: 'Sprint {{sprintName}} completed',
     html: renderShell({
+      preheader: 'Sprint {{sprintName}} wrapped up in {{projectName}}.',
       kicker: 'SPRINT COMPLETED',
       heading: '{{sprintName}}',
       body:
-        `<p style="margin:0;font-family:${EMAIL_FONT};font-size:14px;line-height:1.6;color:#374151;">{{actorName}} closed the sprint in <strong style="color:#111827;">{{projectName}}</strong>. Here's the recap.</p>` +
+        paragraph(`{{actorName}} closed the sprint in <strong style="color:${EMAIL_COLORS.heading};">{{projectName}}</strong>. Here's the recap.`) +
+        statGrid([
+          { value: '{{issueCount}}', label: 'Total' },
+          { value: '{{completedCount}}', label: 'Completed', tone: 'success' },
+          { value: '{{carriedOverCount}}', label: 'Carried over' },
+        ]) +
         metaTable(
           metaRow('Sprint', '<strong style="color:#111827;">{{sprintName}}</strong>') +
             metaRow('Project', '{{projectName}}') +
@@ -330,21 +379,27 @@ const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; text: s
       'Completed: {{completedCount}}\n' +
       'Carried over: {{carriedOverCount}}\n' +
       'Project: {{projectName}}\n\n' +
-      'Retrospective: {{issueUrl}}\n\n' +
-      '---\n' +
-      'Manage notifications: {{unsubscribeUrl}}\n' +
-      "You're receiving this because you're a member of {{organizationName}}.",
+      'Retrospective: {{issueUrl}}' +
+      textFooter(),
   },
 
   daily_digest: {
     subject: 'Your daily digest — {{period}}',
     html: renderShell({
+      preheader: 'Your {{period}} digest across {{organizationName}}.',
       kicker: 'DAILY DIGEST',
       heading: "Here's what happened today",
       body:
-        `<p style="margin:0;font-family:${EMAIL_FONT};font-size:14px;line-height:1.6;color:#374151;">A quick recap of activity across <strong style="color:#111827;">{{organizationName}}</strong> for {{period}}.</p>` +
-        `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:16px 0 4px 0;"><tr><td style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:16px;font-family:${EMAIL_FONT};font-size:13px;line-height:1.7;color:#374151;">{{activityList}}</td></tr></table>` +
-        `<p style="margin:12px 0 0 0;font-family:${EMAIL_FONT};font-size:13px;line-height:1.6;color:#6b7280;">{{issuesSummary}}</p>`,
+        paragraph(`A quick recap of activity across <strong style="color:${EMAIL_COLORS.heading};">{{organizationName}}</strong> for {{period}}.`) +
+        sectionHeading("Today's activity") +
+        statGrid([
+          { value: '{{issueCount}}', label: 'Issues', tone: 'brand' },
+          { value: '{{completedCount}}', label: 'Completed', tone: 'success' },
+          { value: '{{commentCount}}', label: 'Comments' },
+        ]) +
+        divider() +
+        infoCard({ tone: 'neutral', title: 'ACTIVITY', body: '{{activityList}}' }) +
+        bulletList(['{{issuesSummary}}']),
       ctaLabel: 'Open TaskNebula',
       ctaUrl: '{{appUrl}}',
     }),
@@ -352,21 +407,27 @@ const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; text: s
       'Daily digest — {{period}}\n\n' +
       '{{activityList}}\n\n' +
       '{{issuesSummary}}\n\n' +
-      'Open: {{appUrl}}\n\n' +
-      '---\n' +
-      'Manage notifications: {{unsubscribeUrl}}\n' +
-      "You're receiving this because you're a member of {{organizationName}}.",
+      'Open: {{appUrl}}' +
+      textFooter(),
   },
 
   weekly_digest: {
     subject: 'Your weekly digest — {{period}}',
     html: renderShell({
+      preheader: 'Your weekly summary for {{organizationName}} ({{period}}).',
       kicker: 'WEEKLY DIGEST',
       heading: 'This week in {{organizationName}}',
       body:
-        `<p style="margin:0;font-family:${EMAIL_FONT};font-size:14px;line-height:1.6;color:#374151;">A summary of activity for {{period}}.</p>` +
-        `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:16px 0 4px 0;"><tr><td style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:16px;font-family:${EMAIL_FONT};font-size:13px;line-height:1.7;color:#374151;">{{activityList}}</td></tr></table>` +
-        `<p style="margin:12px 0 0 0;font-family:${EMAIL_FONT};font-size:13px;line-height:1.6;color:#6b7280;">{{issuesSummary}}</p>`,
+        paragraph('A summary of activity for {{period}}.') +
+        sectionHeading('This week') +
+        statGrid([
+          { value: '{{issueCount}}', label: 'Issues', tone: 'brand' },
+          { value: '{{completedCount}}', label: 'Completed', tone: 'success' },
+          { value: '{{commentCount}}', label: 'Comments' },
+        ]) +
+        divider() +
+        infoCard({ tone: 'neutral', title: 'ACTIVITY', body: '{{activityList}}' }) +
+        bulletList(['{{issuesSummary}}']),
       ctaLabel: 'Open TaskNebula',
       ctaUrl: '{{appUrl}}',
     }),
@@ -374,10 +435,8 @@ const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; text: s
       'Weekly digest — {{period}}\n\n' +
       '{{activityList}}\n\n' +
       '{{issuesSummary}}\n\n' +
-      'Open: {{appUrl}}\n\n' +
-      '---\n' +
-      'Manage notifications: {{unsubscribeUrl}}\n' +
-      "You're receiving this because you're a member of {{organizationName}}.",
+      'Open: {{appUrl}}' +
+      textFooter(),
   },
 };
 
@@ -387,7 +446,7 @@ const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; text: s
  * Example:
  * replaceVariables("Hello {{userName}}", { userName: "John" }) => "Hello John"
  */
-function replaceVariables(template: string, variables: Record<string, string>): string {
+export function replaceVariables(template: string, variables: Record<string, string>): string {
   let result = template;
   for (const [key, value] of Object.entries(variables)) {
     const regex = new RegExp(`{{${key}}}`, 'g');

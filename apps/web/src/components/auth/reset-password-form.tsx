@@ -22,7 +22,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   useEffect(() => {
     if (!success) return;
     const timer = setTimeout(() => {
-      router.push('/auth/signin');
+      router.push('/auth/signin?reset=1');
     }, 2000);
     return () => clearTimeout(timer);
   }, [success, router]);

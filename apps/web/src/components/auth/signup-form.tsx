@@ -56,20 +56,24 @@ export function SignUpForm() {
         return;
       }
 
-      // Auto sign in after successful signup
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        // If auto-signin fails, redirect to signin page
-        router.push('/auth/signin?registered=true');
-      } else {
-        router.push('/dashboard');
-        router.refresh();
+      // Auto sign in after successful signup so the verify-request page
+      // can expose the resend button and show the user context. If that
+      // fails for any reason we still fall through to verify-request —
+      // the ?email= query param keeps the resend flow working.
+      try {
+        await signIn('credentials', {
+          email,
+          password,
+          redirect: false,
+        });
+      } catch {
+        // Ignore — we degrade to the email-query-param path below.
       }
+
+      router.push(
+        `/auth/verify-request?email=${encodeURIComponent(email)}`,
+      );
+      router.refresh();
     } catch {
       setError('An error occurred. Please try again.');
     } finally {

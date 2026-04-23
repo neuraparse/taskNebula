@@ -99,6 +99,42 @@ describe('use-issues hooks', () => {
 
       expect(fetchMock).toHaveBeenCalledWith('/api/issues/issue-1');
     });
+
+    it('returns null when the API responds with 404 (issue not found)', async () => {
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 404,
+        json: async () => ({ error: 'Issue not found' }),
+      });
+
+      const { result } = renderHook(() => useIssue('missing-id'), {
+        wrapper: createWrapper(createQueryClient()),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      expect(result.current.data).toBeNull();
+      expect(result.current.error).toBeNull();
+    });
+
+    it('surfaces an error for non-404 failures', async () => {
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 500,
+      });
+
+      const { result } = renderHook(() => useIssue('issue-1'), {
+        wrapper: createWrapper(createQueryClient()),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isError).toBe(true);
+      });
+
+      expect(result.current.error?.message).toBe('Failed to fetch issue');
+    });
   });
 
   describe('useCreateIssue', () => {
