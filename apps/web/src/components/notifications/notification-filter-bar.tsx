@@ -1,16 +1,17 @@
 'use client';
 
-import { CheckCheck, Filter, MoreHorizontal, RefreshCw } from 'lucide-react';
+import { useRef } from 'react';
+import { CheckCheck, RefreshCw, Search } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 export type InvolvementFilter =
@@ -22,12 +23,20 @@ export type InvolvementFilter =
 
 export type StatusFilter = 'inbox' | 'read' | 'unread' | 'archived' | 'snoozed';
 
+export type NotificationSort = 'newest' | 'oldest' | 'priority';
+
 export const INVOLVEMENT_FILTERS: { key: InvolvementFilter; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'assigned', label: 'Assigned' },
   { key: 'created', label: 'Created' },
   { key: 'subscribed', label: 'Subscribed' },
   { key: 'mentions', label: 'Mentions' },
+];
+
+const SORT_OPTIONS: { key: NotificationSort; label: string }[] = [
+  { key: 'newest', label: 'Newest first' },
+  { key: 'oldest', label: 'Oldest first' },
+  { key: 'priority', label: 'By priority' },
 ];
 
 export interface NotificationFilterBarProps {
@@ -40,125 +49,173 @@ export interface NotificationFilterBarProps {
   onMarkAllRead: () => void;
   isRefreshing?: boolean;
   markAllDisabled?: boolean;
+
+  // v0.2.7 — optional search + sort + results-counter integration. Callers
+  // that haven't wired these up yet continue to work; the bar simply omits
+  // the search box / counter / sort dropdown when the props are missing.
+  search?: string;
+  onSearchChange?: (value: string) => void;
+  sort?: NotificationSort;
+  onSortChange?: (value: NotificationSort) => void;
+  totalCount?: number;
 }
 
 /**
- * Filter chips bar that sits above the notification list.
+ * Compact filter + search bar for the notifications inbox.
  *
- * - Involvement chips (All / Assigned / Created / Subscribed / Mentions)
- *   isolate the stream. "Mentions" separates @-tag notifications from other
- *   activity.
- * - Top-right cluster: refresh, mark-all-read, and a 3-dot menu exposing the
- *   Read / Unread / Archived / Snoozed views.
+ * Layout (single row on wide screens, wraps on narrow):
+ *   [search] [chips: All / Assigned / Created / Subscribed / Mentions]  [sort] [mark-all] [refresh]
+ *
+ * The chip row becomes horizontally scrollable on narrow viewports so the
+ * segmented control never clips.
  */
 export function NotificationFilterBar({
   involvement,
   status,
   unreadCount,
   onInvolvementChange,
-  onStatusChange,
+  onStatusChange: _onStatusChange,
   onRefresh,
   onMarkAllRead,
   isRefreshing,
   markAllDisabled,
+  search,
+  onSearchChange,
+  sort,
+  onSortChange,
+  totalCount,
 }: NotificationFilterBarProps) {
+  // `status` is still consumed by the parent shell; we keep it in the props
+  // contract so the shell's filter state stays source-of-truth even though
+  // the redesigned bar no longer exposes the legacy status dropdown.
+  void status;
+  void _onStatusChange;
+
+  const searchRef = useRef<HTMLInputElement | null>(null);
+  const showSearch = typeof onSearchChange === 'function';
+  const showSort = typeof onSortChange === 'function' && sort !== undefined;
+  const hasSearch = typeof search === 'string' && search.trim().length > 0;
+  const filtersActive = involvement !== 'all' || hasSearch;
+  const showCounter =
+    filtersActive && typeof totalCount === 'number' && totalCount > 0;
+  const canMarkAllRead = !markAllDisabled && unreadCount > 0;
+
   return (
     <div className="flex flex-col gap-2 border-b border-border/60 bg-background/60 px-4 pb-2 pt-3">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-1.5">
-          {INVOLVEMENT_FILTERS.map((f) => {
-            const active = involvement === f.key;
-            return (
-              <button
-                key={f.key}
-                type="button"
-                data-active={active ? 'true' : undefined}
-                onClick={() => onInvolvementChange(f.key)}
-                className={cn(
-                  'rounded-sm px-2.5 py-1 text-[11px] font-medium transition-all duration-150 ease-snap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                  active
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground'
-                )}
-              >
-                {f.label}
-                {f.key === 'mentions' && active && (
-                  <span className="sr-only"> (isolates @-tag notifications)</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="flex shrink-0 items-center gap-0.5">
-          <Button
-            variant="ghost"
-            size="icon"
-            type="button"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-            aria-label="Refresh notifications"
-            title="Refresh"
-            onClick={onRefresh}
-            disabled={isRefreshing}
-          >
-            <RefreshCw
-              className={cn('h-3.5 w-3.5', isRefreshing && 'animate-spin')}
+      {/* Row 1 — search + actions */}
+      <div className="flex items-center gap-2">
+        {showSearch ? (
+          <div className="relative min-w-0 flex-1">
+            <Search
+              className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
             />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            type="button"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-            aria-label="Mark all as read"
-            title="Mark all as read"
-            onClick={onMarkAllRead}
-            disabled={markAllDisabled || unreadCount === 0}
+            <Input
+              ref={searchRef}
+              type="search"
+              value={search ?? ''}
+              onChange={(e) => onSearchChange?.(e.target.value)}
+              placeholder="Search notifications…"
+              aria-label="Search notifications"
+              className="h-8 rounded-sm bg-muted/40 pl-8 pr-2 text-[12px] placeholder:text-muted-foreground/70 focus-visible:bg-background"
+            />
+          </div>
+        ) : (
+          <div className="min-w-0 flex-1" />
+        )}
+
+        {showSort ? (
+          <Select
+            value={sort}
+            onValueChange={(v) => onSortChange?.(v as NotificationSort)}
           >
-            <CheckCheck className="h-3.5 w-3.5" />
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                type="button"
-                className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                aria-label="More filters"
-                title="Filters"
-              >
-                <MoreHorizontal className="h-3.5 w-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuLabel className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
-                <Filter className="h-3 w-3" />
-                View
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {(
-                [
-                  { key: 'inbox' as const, label: 'Inbox' },
-                  { key: 'read' as const, label: 'Read' },
-                  { key: 'unread' as const, label: 'Unread' },
-                  { key: 'archived' as const, label: 'Archived' },
-                  { key: 'snoozed' as const, label: 'Snoozed' },
-                ]
-              ).map((opt) => (
-                <DropdownMenuItem
+            <SelectTrigger
+              aria-label="Sort notifications"
+              className="h-8 w-[140px] rounded-sm bg-muted/40 px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground"
+            >
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent align="end" className="min-w-[160px]">
+              {SORT_OPTIONS.map((opt) => (
+                <SelectItem
                   key={opt.key}
-                  onSelect={() => onStatusChange(opt.key)}
-                  data-active={status === opt.key ? 'true' : undefined}
-                  className={cn(
-                    status === opt.key && 'bg-accent/60 text-foreground'
-                  )}
+                  value={opt.key}
+                  className="text-[12px]"
                 >
                   {opt.label}
-                </DropdownMenuItem>
+                </SelectItem>
               ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+            </SelectContent>
+          </Select>
+        ) : null}
+
+        {canMarkAllRead ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            type="button"
+            onClick={onMarkAllRead}
+            className="h-8 gap-1.5 rounded-sm px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground"
+            aria-label="Mark all as read"
+            title="Mark all as read"
+          >
+            <CheckCheck className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Mark all read</span>
+          </Button>
+        ) : null}
+
+        <Button
+          variant="ghost"
+          size="icon"
+          type="button"
+          className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+          aria-label="Refresh notifications"
+          title="Refresh"
+          onClick={onRefresh}
+          disabled={isRefreshing}
+        >
+          <RefreshCw
+            className={cn('h-3.5 w-3.5', isRefreshing && 'animate-spin')}
+          />
+        </Button>
+      </div>
+
+      {/* Row 2 — segmented chips (horizontally scrollable on narrow) */}
+      <div
+        role="tablist"
+        aria-label="Filter by involvement"
+        className="flex items-center gap-1.5 overflow-x-auto scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {INVOLVEMENT_FILTERS.map((f) => {
+          const active = involvement === f.key;
+          return (
+            <button
+              key={f.key}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              data-active={active ? 'true' : undefined}
+              onClick={() => onInvolvementChange(f.key)}
+              className={cn(
+                'shrink-0 rounded-sm px-2.5 py-1 text-[11px] font-medium transition-all duration-150 ease-snap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                active
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground'
+              )}
+            >
+              {f.label}
+              {f.key === 'mentions' && active && (
+                <span className="sr-only"> (isolates @-tag notifications)</span>
+              )}
+            </button>
+          );
+        })}
+
+        {showCounter ? (
+          <span className="ml-auto shrink-0 pl-2 text-[11px] text-muted-foreground">
+            {unreadCount} unread of {totalCount}
+          </span>
+        ) : null}
       </div>
     </div>
   );

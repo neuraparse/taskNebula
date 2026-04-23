@@ -6,7 +6,9 @@ import { eq, inArray } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 import { Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { TeamMembersList } from './team-members-list';
+import { hasPermission } from '@/lib/auth/permissions';
+import { TeamPageClient } from './team-page-client';
+import type { TeamMemberRow } from './team-members-list';
 
 export const metadata: Metadata = {
   title: 'Team | TaskNebula',
@@ -54,10 +56,10 @@ export default async function TeamPage() {
 
   const userIds = allMembers.map((m) => m.userId);
 
-  const users = await db
-    .select()
-    .from(usersTable)
-    .where(inArray(usersTable.id, userIds));
+  const users =
+    userIds.length > 0
+      ? await db.select().from(usersTable).where(inArray(usersTable.id, userIds))
+      : [];
 
   const membersWithUsers = allMembers
     .map((member) => {
@@ -66,7 +68,7 @@ export default async function TeamPage() {
     })
     .filter((m) => m.user);
 
-  const plainMembers = membersWithUsers.map((m) => ({
+  const plainMembers: TeamMemberRow[] = membersWithUsers.map((m) => ({
     id: m.id,
     role: m.role,
     user: {
@@ -78,25 +80,16 @@ export default async function TeamPage() {
     },
   }));
 
-  return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="border-b bg-background px-6 py-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">Team</h1>
-            <p className="text-sm text-muted-foreground">
-              {plainMembers.length} member{plainMembers.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-          <Link href="/settings?tab=members">
-            <Button size="sm">Invite member</Button>
-          </Link>
-        </div>
-      </div>
+  const canManageTeamspaces = await hasPermission(
+    primaryOrg.organizationId,
+    'org:settings'
+  );
 
-      <div className="min-h-0 flex-1 overflow-auto p-6">
-        <TeamMembersList members={plainMembers} />
-      </div>
-    </div>
+  return (
+    <TeamPageClient
+      organizationId={primaryOrg.organizationId}
+      canManageTeamspaces={canManageTeamspaces}
+      initialMembers={plainMembers}
+    />
   );
 }

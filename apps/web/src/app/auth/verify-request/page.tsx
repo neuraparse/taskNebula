@@ -4,16 +4,36 @@ import { VerifyRequestResendButton } from '@/components/auth/verify-request-rese
 
 export const dynamic = 'force-dynamic';
 
+interface VerifyRequestPageProps {
+  searchParams?: Promise<{ email?: string | string[] }>;
+}
+
 /**
  * /auth/verify-request
  *
  * Shown after signup or when NextAuth redirects an unverified user here.
- * Tells the user to check their inbox and (if authenticated) exposes a
- * resend button wired to POST /api/auth/send-verification.
+ * Tells the user to check their inbox and exposes a resend button wired
+ * to POST /api/auth/send-verification.
+ *
+ * The resend button is available when either:
+ *   - the visitor has an authenticated session (endpoint resolves the
+ *     user from the session cookie), OR
+ *   - an `?email=` query param is present (endpoint resolves the user
+ *     by email — used immediately after signup before session cookie
+ *     is established).
  */
-export default async function VerifyRequestPage() {
+export default async function VerifyRequestPage({
+  searchParams,
+}: VerifyRequestPageProps) {
   const session = await auth();
   const isAuthenticated = !!session?.user?.id;
+
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const rawEmail = resolvedSearchParams.email;
+  const emailParam = Array.isArray(rawEmail) ? rawEmail[0] : rawEmail;
+  const email = emailParam && emailParam.length > 0 ? emailParam : null;
+
+  const canResend = isAuthenticated || !!email;
 
   return (
     <div className="relative min-h-dvh grid place-items-center bg-background overflow-hidden px-4">
@@ -37,17 +57,32 @@ export default async function VerifyRequestPage() {
 
         <div className="surface-card rounded-lg p-6 sm:p-8 text-center">
           <h1 className="text-lg font-semibold text-foreground">Check your email</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            We sent you a verification link. Click it to confirm your email
-            address and continue. The link expires in 24 hours.
-          </p>
+          {email ? (
+            <p className="mt-2 text-sm text-muted-foreground">
+              We sent a verification email to{' '}
+              <span className="font-medium text-foreground break-all">{email}</span>.
+              Click the link to confirm your email address and continue. The link
+              expires in 24 hours.
+            </p>
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground">
+              We sent you a verification link. Click it to confirm your email
+              address and continue. The link expires in 24 hours.
+            </p>
+          )}
 
-          {isAuthenticated ? (
+          {canResend ? (
             <div className="mt-6 space-y-3">
-              <VerifyRequestResendButton />
+              <VerifyRequestResendButton email={email ?? undefined} />
               <p className="text-xs text-muted-foreground">
                 Didn&apos;t get the email? Check your spam folder or resend.
               </p>
+              <Link
+                href="/auth/signin"
+                className="inline-block text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Back to sign in
+              </Link>
             </div>
           ) : (
             <div className="mt-6 space-y-3">

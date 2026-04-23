@@ -1,69 +1,180 @@
 'use client';
 
-import { useState } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { MailCheck, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+
+const DISMISS_STORAGE_KEY = 'tn-verify-banner-dismissed-until';
+const DISMISS_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 /**
  * Client-side piece of the email verification banner. Owns the resend
- * request state. Kept separate so the parent server component can do
- * the "should we show this?" DB check without shipping JS for it.
+ * request state and the localStorage-backed dismiss state. Kept separate
+ * so the parent server component can do the "should we show this?" DB
+ * check without shipping JS for it.
  */
-export function EmailVerificationBannerClient({ email }: { email: string }) {
-  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
-  const [error, setError] = useState<string | null>(null);
+export function EmailVerificationBannerClient({ email: _email }: { email: string }) {
+  const router = useRouter();
+  // Start hidden so SSR markup matches the first client paint (we only
+  // know the dismissal state after reading localStorage on mount).
+  const [visible, setVisible] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(DISMISS_STORAGE_KEY);
+      const until = raw ? Number.parseInt(raw, 10) : 0;
+      if (!Number.isFinite(until) || Date.now() > until) {
+        setVisible(true);
+      }
+    } catch {
+      // localStorage unavailable (SSR, private mode) — show by default.
+      setVisible(true);
+    }
+  }, []);
 
   async function handleResend() {
-    setStatus('sending');
-    setError(null);
+    if (sending) return;
+    setSending(true);
     try {
       const res = await fetch('/api/auth/send-verification', { method: 'POST' });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data?.error || 'Failed to send verification email');
-        setStatus('error');
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        const message = data?.error || 'Failed to send verification email';
+        if (typeof toast.error === 'function') {
+          toast.error('Could not send email', message);
+        } else {
+          toast({ title: 'Could not send email', description: message });
+        }
         return;
       }
-      setStatus('sent');
+      if (typeof toast.success === 'function') {
+        toast.success('Verification email sent', 'Check your inbox for the confirmation link.');
+      } else {
+        toast({
+          title: 'Verification email sent',
+          description: 'Check your inbox for the confirmation link.',
+        });
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Network error');
-      setStatus('error');
+      const message = err instanceof Error ? err.message : 'Network error';
+      if (typeof toast.error === 'function') {
+        toast.error('Could not send email', message);
+      } else {
+        toast({ title: 'Could not send email', description: message });
+      }
+    } finally {
+      setSending(false);
     }
   }
+
+  async function handleAlreadyVerified() {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      const res = await fetch('/api/auth/verify-email/refresh', { method: 'POST' });
+      const data = (await res.json().catch(() => ({}))) as { verified?: boolean };
+      if (data.verified) {
+        if (typeof toast.success === 'function') {
+          toast.success('Email verified', 'Welcome aboard.');
+        } else {
+          toast({ title: 'Email verified', description: 'Welcome aboard.' });
+        }
+        setVisible(false);
+        router.refresh();
+        return;
+      }
+      const message = 'We couldn’t find a completed verification. Please click the link in your inbox or resend.';
+      if (typeof toast.warning === 'function') {
+        toast.warning('Still not verified', message);
+      } else {
+        toast({ title: 'Still not verified', description: message });
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Network error';
+      if (typeof toast.error === 'function') {
+        toast.error('Could not refresh status', message);
+      } else {
+        toast({ title: 'Could not refresh status', description: message });
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  function handleDismiss() {
+    try {
+      window.localStorage.setItem(
+        DISMISS_STORAGE_KEY,
+        String(Date.now() + DISMISS_TTL_MS)
+      );
+    } catch {
+      // Ignore storage failures — the banner will simply reappear next load.
+    }
+    setVisible(false);
+  }
+
+  if (!visible) return null;
 
   return (
     <div
       role="status"
-      className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-500/30 bg-amber-500/10 px-6 py-2 text-sm text-amber-900 dark:text-amber-100"
+      aria-live="polite"
+      className={cn(
+        'relative flex flex-wrap items-center justify-between gap-x-4 gap-y-2',
+        'border-b border-indigo-500/15 px-4 py-2 sm:px-6',
+        'bg-gradient-to-r from-indigo-500/[0.06] via-violet-500/[0.05] to-transparent',
+        'text-sm text-foreground'
+      )}
     >
-      <div className="flex items-center gap-2 min-w-0">
-        <AlertCircle className="h-4 w-4 shrink-0" />
-        <span className="truncate">
-          Please verify your email
-          {email ? (
-            <>
-              {' '}
-              (<span className="font-medium">{email}</span>)
-            </>
-          ) : null}
-          . Some features may be restricted until you do.
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <span
+          aria-hidden="true"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-300"
+        >
+          <MailCheck className="h-4 w-4" />
         </span>
+        <div className="min-w-0 leading-tight">
+          <p className="truncate font-medium text-foreground">Verify your email address</p>
+          <p className="truncate text-xs text-muted-foreground">
+            You&apos;ll need to verify to receive notifications and team invites.
+          </p>
+        </div>
       </div>
-      <div className="flex items-center gap-3">
-        {status === 'error' && error ? (
-          <span className="text-xs text-destructive">{error}</span>
-        ) : null}
-        {status === 'sent' ? (
-          <span className="text-xs font-medium">Email sent — check your inbox</span>
-        ) : (
-          <button
-            type="button"
-            onClick={handleResend}
-            disabled={status === 'sending'}
-            className="inline-flex items-center rounded-md border border-amber-500/50 bg-transparent px-3 py-1 text-xs font-medium transition-colors hover:bg-amber-500/20 disabled:pointer-events-none disabled:opacity-60"
-          >
-            {status === 'sending' ? 'Sending…' : 'Resend'}
-          </button>
-        )}
+      <div className="flex shrink-0 items-center gap-1.5">
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={handleAlreadyVerified}
+          disabled={refreshing}
+          aria-label="Check if email is already verified"
+        >
+          {refreshing ? 'Checking…' : 'I already verified'}
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          onClick={handleResend}
+          disabled={sending}
+          aria-label="Resend verification email"
+        >
+          {sending ? 'Sending…' : 'Resend email'}
+        </Button>
+        <Button
+          type="button"
+          size="icon-sm"
+          variant="ghost"
+          onClick={handleDismiss}
+          aria-label="Dismiss verification reminder"
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );

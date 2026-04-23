@@ -13,6 +13,8 @@ import { MembersPageClient } from './members/members-page-client';
 import { OrganizationSettingsClient } from './organization/organization-settings-client';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useAiFeature } from '@/lib/hooks/use-ai-feature';
+import { useOrganizationPermissions } from '@/lib/hooks/use-permissions';
+import type { Permission } from '@tasknebula/db';
 import {
   Palette,
   Building2,
@@ -25,35 +27,108 @@ import {
   MessageSquareText,
 } from 'lucide-react';
 
-const NAV_ITEMS = [
-  { value: 'organization', label: 'Organization', icon: Building2 },
-  { value: 'members', label: 'Members', icon: Users },
-  { value: 'api-keys', label: 'API Keys', icon: Key },
-  { value: 'webhooks', label: 'Webhooks', icon: Webhook },
+type NavItem = {
+  value:
+    | 'organization'
+    | 'members'
+    | 'api-keys'
+    | 'webhooks'
+    | 'notifications'
+    | 'appearance'
+    | 'ai-agents'
+    | 'communications'
+    | 'audit-log';
+  label: string;
+  icon: typeof Building2;
+  // Permission required to see this tab. `undefined` means every member sees it.
+  requiredPermissions?: Permission;
+};
+
+const NAV_ITEMS: readonly NavItem[] = [
+  {
+    value: 'organization',
+    label: 'Organization',
+    icon: Building2,
+    requiredPermissions: 'org:settings',
+  },
+  {
+    // Every member can view members; `member:invite` is enforced inside the manager.
+    value: 'members',
+    label: 'Members',
+    icon: Users,
+    requiredPermissions: 'member:view',
+  },
+  {
+    value: 'api-keys',
+    label: 'API Keys',
+    icon: Key,
+    requiredPermissions: 'api_key:view',
+  },
+  {
+    value: 'webhooks',
+    label: 'Webhooks',
+    icon: Webhook,
+    requiredPermissions: 'webhook:view',
+  },
   { value: 'notifications', label: 'Notifications', icon: Bell },
   { value: 'appearance', label: 'Appearance', icon: Palette },
-  { value: 'ai-agents', label: 'AI & Agents', icon: Bot },
-  { value: 'communications', label: 'Communications', icon: MessageSquareText },
-  { value: 'audit-log', label: 'Activity', icon: ScrollText },
+  {
+    value: 'ai-agents',
+    label: 'AI & Agents',
+    icon: Bot,
+    requiredPermissions: 'org:settings',
+  },
+  {
+    value: 'communications',
+    label: 'Communications',
+    icon: MessageSquareText,
+    requiredPermissions: 'org:settings',
+  },
+  {
+    value: 'audit-log',
+    label: 'Activity',
+    icon: ScrollText,
+    requiredPermissions: 'org:manage',
+  },
 ] as const;
 
-type TabValue = (typeof NAV_ITEMS)[number]['value'];
+type TabValue = NavItem['value'];
 
 export default function SettingsPage() {
   const { currentOrganizationId } = useOrganization();
   const { aiEnabled } = useAiFeature();
+  const perms = useOrganizationPermissions(currentOrganizationId ?? undefined);
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  // AI & Agents tab is always visible so org admins can see + configure it.
-  // The tab body shows an informational notice when the platform has AI off.
-  const visibleNavItems = NAV_ITEMS;
-  const validTabs = useMemo(() => visibleNavItems.map((item) => item.value), [visibleNavItems]);
+
+  // While permissions are loading we fall back to the full nav list so the UI
+  // doesn't flicker; once loaded we filter to only those the user can access.
+  const visibleNavItems = useMemo<readonly NavItem[]>(() => {
+    if (perms.isLoading) return NAV_ITEMS;
+    return NAV_ITEMS.filter((item) => {
+      if (!item.requiredPermissions) return true;
+      return perms.has(item.requiredPermissions);
+    });
+  }, [perms.isLoading, perms]);
+
+  const validTabs = useMemo(
+    () => visibleNavItems.map((item) => item.value),
+    [visibleNavItems]
+  );
+
   const requestedTab = searchParams.get('tab') as TabValue | null;
-  const initialTab: TabValue =
-    requestedTab && (validTabs as readonly string[]).includes(requestedTab)
-      ? requestedTab
-      : 'organization';
+  const initialTab: TabValue = useMemo(() => {
+    if (requestedTab && (validTabs as readonly string[]).includes(requestedTab)) {
+      return requestedTab;
+    }
+    // Fallback: prefer 'organization' when visible, otherwise the first tab.
+    if ((validTabs as readonly string[]).includes('organization')) {
+      return 'organization';
+    }
+    return (validTabs[0] ?? 'notifications') as TabValue;
+  }, [requestedTab, validTabs]);
+
   const [activeTab, setActiveTab] = useState<TabValue>(initialTab);
 
   useEffect(() => {
@@ -75,6 +150,15 @@ export default function SettingsPage() {
     );
   }
 
+  // Permission-aware content: a direct navigation to a gated tab that the user
+  // is not authorised for shows a friendly notice instead of the manager.
+  const activeNavItem = NAV_ITEMS.find((item) => item.value === activeTab);
+  const activeTabRequires = activeNavItem?.requiredPermissions;
+  const activeTabDenied =
+    !perms.isLoading &&
+    activeTabRequires !== undefined &&
+    !perms.has(activeTabRequires);
+
   return (
     <div className="animate-fade-in flex min-h-0 flex-1 flex-col">
       {/* Mobile tab bar — main sidebar already hosts the nav on desktop */}
@@ -95,7 +179,11 @@ export default function SettingsPage() {
 
       <div className="flex-1 overflow-y-auto p-6 animate-fade-up lg:p-8">
         <div className="mx-auto w-full max-w-5xl">
-          {renderContent(activeTab, currentOrganizationId, aiEnabled)}
+          {activeTabDenied ? (
+            <NoAccessNotice />
+          ) : (
+            renderContent(activeTab, currentOrganizationId, aiEnabled)
+          )}
         </div>
       </div>
     </div>
@@ -136,6 +224,19 @@ function AiDisabledNotice() {
         A super-admin has to flip the master toggle in{' '}
         <strong>Admin → Agent control → Global enablement</strong> to expose the agent runtime,
         model registry, and AI-assisted task drafting to this workspace.
+      </p>
+    </div>
+  );
+}
+
+function NoAccessNotice() {
+  return (
+    <div className="surface-card p-8 text-center space-y-2">
+      <p className="text-sm font-medium text-foreground">
+        You don&apos;t have access to this section.
+      </p>
+      <p className="text-sm text-muted-foreground">
+        Contact an org admin to request permissions.
       </p>
     </div>
   );

@@ -17,4 +17,5 @@ export * from './utils/jql-parser';
 export * from './utils/push-service';
 export * from './utils/cache';
 export * from './utils/permissions';
+export * from './utils/email-layout';
 

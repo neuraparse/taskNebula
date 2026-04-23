@@ -66,7 +66,7 @@ describe('CreateSprintModal', () => {
 
     expect(screen.getByRole('heading', { name: 'Create Sprint' })).toBeInTheDocument();
     expect(
-      screen.getByText('Create a new sprint to organize your work into time-boxed iterations.')
+      screen.getByText('Organize work into a time-boxed iteration.')
     ).toBeInTheDocument();
   });
 

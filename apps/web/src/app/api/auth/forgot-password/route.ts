@@ -5,6 +5,7 @@ import { passwordResetTokens } from '@tasknebula/db/src/schema/password-reset-to
 import { and, eq, isNull } from 'drizzle-orm';
 import { sendEmail } from '@/lib/email/sender';
 import { checkRateLimit, getClientIp } from '@/lib/auth/rate-limit';
+import { renderPasswordResetMessage } from '@/lib/email/templates';
 
 const TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 const RATE_LIMIT_PER_MIN = 5;
@@ -22,6 +23,7 @@ function resolveAppUrl(): string {
     'http://localhost:3000'
   );
 }
+
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
@@ -85,17 +87,18 @@ export async function POST(request: NextRequest) {
       const appUrl = resolveAppUrl().replace(/\/+$/, '');
       const resetUrl = `${appUrl}/auth/reset-password?token=${rawToken}`;
 
+      const { subject, html, text } = renderPasswordResetMessage({
+        resetUrl,
+        ip,
+      });
+
       // Fire-and-forget; still await so failures get logged, but never block
       // the response with email errors.
       sendEmail({
         to: user.email,
-        subject: 'Reset your TaskNebula password',
-        html: `<h2>Reset your password</h2>
-<p>We received a request to reset the password for your TaskNebula account.</p>
-<p><a href="${resetUrl}" style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">Reset password</a></p>
-<p>This link expires in 1 hour. If you didn’t request this, you can safely ignore this email.</p>
-<p style="color:#666;font-size:12px;">If the button doesn’t work, paste this URL into your browser:<br><span style="word-break:break-all;">${resetUrl}</span></p>`,
-        text: `Reset your TaskNebula password by visiting: ${resetUrl}\n\nThis link expires in 1 hour. If you didn't request this, ignore this email.`,
+        subject,
+        html,
+        text,
       }).catch((err) => {
         console.error('[forgot-password] email send failed:', err);
       });

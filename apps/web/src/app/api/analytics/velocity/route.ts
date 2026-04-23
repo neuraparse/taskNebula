@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, sprints, issues } from '@tasknebula/db';
+import { db, sprints, issues, workflowStatuses } from '@tasknebula/db';
 import { eq, and, sql } from 'drizzle-orm';
 
 // GET /api/analytics/velocity?projectId=xxx
@@ -18,18 +18,22 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Fetch completed sprints with aggregated issue metrics in a single query
+    // Fetch completed sprints with aggregated issue metrics in a single query.
+    // `statusId` is a reference to workflowStatuses.id (cuid), not a literal
+    // 'done' string — we must join to workflow_statuses and match on the
+    // `category` column.
     const rows = await db
       .select({
         id: sprints.id,
         name: sprints.name,
         startDate: sprints.startDate,
         endDate: sprints.endDate,
-        completedIssues: sql<number>`COALESCE(SUM(CASE WHEN ${issues.statusId} = 'done' THEN 1 ELSE 0 END), 0)`,
-        completedPoints: sql<number>`COALESCE(SUM(CASE WHEN ${issues.statusId} = 'done' THEN ${issues.estimate} ELSE 0 END), 0)`,
+        completedIssues: sql<number>`COALESCE(SUM(CASE WHEN ${workflowStatuses.category} = 'done' THEN 1 ELSE 0 END), 0)`,
+        completedPoints: sql<number>`COALESCE(SUM(CASE WHEN ${workflowStatuses.category} = 'done' THEN ${issues.estimate} ELSE 0 END), 0)`,
       })
       .from(sprints)
       .leftJoin(issues, eq(issues.sprintId, sprints.id))
+      .leftJoin(workflowStatuses, eq(issues.statusId, workflowStatuses.id))
       .where(and(eq(sprints.projectId, projectId), eq(sprints.status, 'completed')))
       .groupBy(sprints.id, sprints.name, sprints.startDate, sprints.endDate)
       .orderBy(sprints.startDate);

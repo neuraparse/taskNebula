@@ -73,6 +73,10 @@ import { useQuery } from '@tanstack/react-query';
 import { useProjects } from '@/lib/hooks/use-projects';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useLiveCalls } from '@/lib/hooks/use-chat';
+import {
+  useOrganizationPermissions,
+  type Permission,
+} from '@/lib/hooks/use-permissions';
 import { useGlobalVoice } from '@/components/chat/global-voice-provider';
 import {
   areMicrophoneDeviceLabelsVisible,
@@ -102,23 +106,23 @@ const DASHBOARD_LINKS = [
   { href: '/templates', label: 'Templates', icon: Pin },
 ];
 
-const TEAM_LINKS = [
+const TEAM_LINKS: NavLink[] = [
   { href: '/team', label: 'Members', icon: Users },
-  { href: '/team?tab=teamspaces', label: 'Teamspaces', icon: Building2 },
-  { href: '/team?tab=invites', label: 'Pending invites', icon: UserPlus },
+  { href: '/team?tab=teamspaces', label: 'Teamspaces', icon: Building2, requiredPermission: 'team:view' },
+  { href: '/team?tab=invites', label: 'Pending invites', icon: UserPlus, requiredPermission: 'member:view' },
 ];
 
-const SETTINGS_LINKS = [
-  { href: '/settings?tab=organization', label: 'Organization', icon: Building2, match: { path: '/settings', tab: 'organization' } },
-  { href: '/settings?tab=members', label: 'Members', icon: Users, match: { path: '/settings', tab: 'members' } },
-  { href: '/settings?tab=api-keys', label: 'API Keys', icon: KeyRound, match: { path: '/settings', tab: 'api-keys' } },
-  { href: '/settings?tab=webhooks', label: 'Webhooks', icon: Webhook, match: { path: '/settings', tab: 'webhooks' } },
-  { href: '/settings/integrations', label: 'Integrations', icon: Plug, match: { path: '/settings/integrations' } },
-  { href: '/settings?tab=ai-agents', label: 'AI & Agents', icon: Bot, match: { path: '/settings', tab: 'ai-agents' } },
-  { href: '/settings?tab=communications', label: 'Communications', icon: MessageSquareText, match: { path: '/settings', tab: 'communications' } },
+const SETTINGS_LINKS: NavLink[] = [
+  { href: '/settings?tab=organization', label: 'Organization', icon: Building2, match: { path: '/settings', tab: 'organization' }, requiredPermission: 'org:settings' },
+  { href: '/settings?tab=members', label: 'Members', icon: Users, match: { path: '/settings', tab: 'members' }, requiredPermission: 'member:view' },
+  { href: '/settings?tab=api-keys', label: 'API Keys', icon: KeyRound, match: { path: '/settings', tab: 'api-keys' }, requiredPermission: 'api_key:view' },
+  { href: '/settings?tab=webhooks', label: 'Webhooks', icon: Webhook, match: { path: '/settings', tab: 'webhooks' }, requiredPermission: 'webhook:view' },
+  { href: '/settings/integrations', label: 'Integrations', icon: Plug, match: { path: '/settings/integrations' }, requiredPermission: 'org:settings' },
+  { href: '/settings?tab=ai-agents', label: 'AI & Agents', icon: Bot, match: { path: '/settings', tab: 'ai-agents' }, requiredPermission: 'org:settings' },
+  { href: '/settings?tab=communications', label: 'Communications', icon: MessageSquareText, match: { path: '/settings', tab: 'communications' }, requiredPermission: 'org:settings' },
   { href: '/settings?tab=notifications', label: 'Notifications', icon: Bell, match: { path: '/settings', tab: 'notifications' } },
   { href: '/settings?tab=appearance', label: 'Appearance', icon: Palette, match: { path: '/settings', tab: 'appearance' } },
-  { href: '/settings?tab=audit-log', label: 'Activity', icon: ScrollText, match: { path: '/settings', tab: 'audit-log' } },
+  { href: '/settings?tab=audit-log', label: 'Activity', icon: ScrollText, match: { path: '/settings', tab: 'audit-log' }, requiredPermission: 'org:manage' },
 ];
 
 const ADMIN_LINKS = [
@@ -136,6 +140,7 @@ type NavLink = {
   label: string;
   icon: typeof Settings;
   match?: { path: string; tab?: string };
+  requiredPermission?: Permission;
 };
 
 const DEFAULT_TAB_BY_PATH: Record<string, string> = {
@@ -220,6 +225,26 @@ export function AppSidebar() {
   });
 
   const isSuperAdmin = userData?.isSuperAdmin || false;
+
+  const {
+    has: hasOrgPermission,
+    isLoading: isLoadingOrgPermissions,
+  } = useOrganizationPermissions(currentOrganizationId ?? undefined);
+
+  const visibleSettingsLinks = useMemo(() => {
+    // While loading, render the full list to avoid flicker.
+    if (isLoadingOrgPermissions) return SETTINGS_LINKS;
+    return SETTINGS_LINKS.filter(
+      (link) => !link.requiredPermission || hasOrgPermission(link.requiredPermission)
+    );
+  }, [hasOrgPermission, isLoadingOrgPermissions]);
+
+  const visibleTeamLinks = useMemo(() => {
+    if (isLoadingOrgPermissions) return TEAM_LINKS;
+    return TEAM_LINKS.filter(
+      (link) => !link.requiredPermission || hasOrgPermission(link.requiredPermission)
+    );
+  }, [hasOrgPermission, isLoadingOrgPermissions]);
   const pinnedCall = currentTarget
     ? liveCalls?.find((call) => call.roomId === currentTarget.roomId && call.participantCount > 0) || null
     : null;
@@ -335,7 +360,7 @@ export function AppSidebar() {
 
         {pathname?.startsWith('/team') ? (
           <div className="space-y-0.5">
-            {TEAM_LINKS.map((link) => (
+            {visibleTeamLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -350,26 +375,30 @@ export function AppSidebar() {
 
         {pathname?.startsWith('/settings') || pathname?.startsWith('/admin') ? (
           <>
-            <div className="mb-1 flex items-center gap-2 px-3">
-              <Settings className="h-3 w-3 text-muted-foreground" />
-              <span className="kicker">Settings</span>
-            </div>
-            <div className="space-y-0.5">
-              {SETTINGS_LINKS.map((link) => {
-                const isActive = isNavLinkActive(link, pathname, searchParams?.get('tab'));
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    data-active={isActive ? 'true' : undefined}
-                    className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
-                  >
-                    <link.icon className="h-4 w-4 shrink-0" />
-                    <span>{link.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
+            {visibleSettingsLinks.length > 0 ? (
+              <>
+                <div className="mb-1 flex items-center gap-2 px-3">
+                  <Settings className="h-3 w-3 text-muted-foreground" />
+                  <span className="kicker">Settings</span>
+                </div>
+                <div className="space-y-0.5">
+                  {visibleSettingsLinks.map((link) => {
+                    const isActive = isNavLinkActive(link, pathname, searchParams?.get('tab'));
+                    return (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        data-active={isActive ? 'true' : undefined}
+                        className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
+                      >
+                        <link.icon className="h-4 w-4 shrink-0" />
+                        <span>{link.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </>
+            ) : null}
 
             {isSuperAdmin ? (
               <>

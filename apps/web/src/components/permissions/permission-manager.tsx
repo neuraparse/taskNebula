@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Save, RotateCcw } from 'lucide-react';
+import { Shield, Save, RotateCcw, UserPlus } from 'lucide-react';
+import { AddProjectMemberDialog } from './add-project-member-dialog';
 
 // Role info using design token classes
 const ROLE_INFO: Record<ProjectRole, { label: string; tokenClass: string; description: string }> = {
@@ -170,10 +171,18 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
   const [editedPermissions, setEditedPermissions] = useState<Record<string, boolean>>({});
   const [editedRole, setEditedRole] = useState<ProjectRole | null>(null);
   const [saving, setSaving] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const { toast } = useToast();
 
   const canManage =
     currentUserPermissions.canChangeRoles || currentUserPermissions.isSuperAdmin || currentUserPermissions.isOrgOwner;
+  const canAdd =
+    canManage ||
+    currentUserPermissions.canInviteMembers ||
+    currentUserPermissions.canManageMembers;
+  const existingMemberUserIds = members
+    .map((m) => m.user?.id)
+    .filter((id): id is string => typeof id === 'string');
 
   const handleMemberSelect = (member: ProjectMember) => {
     setSelectedMember(member);
@@ -243,9 +252,22 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Members list */}
         <div className="surface-card p-0 lg:col-span-1">
-          <div className="border-b border-border/60 px-4 py-3">
-            <span className="kicker">Team members</span>
-            <p className="mt-1 text-xs text-muted-foreground">{members.length} members</p>
+          <div className="flex items-start justify-between gap-3 border-b border-border/60 px-4 py-3">
+            <div>
+              <span className="kicker">Team members</span>
+              <p className="mt-1 text-xs text-muted-foreground">{members.length} members</p>
+            </div>
+            {canAdd ? (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setAddOpen(true)}
+                className="shrink-0"
+              >
+                <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+                Add
+              </Button>
+            ) : null}
           </div>
           <ScrollArea className="h-[440px]">
             <div className="divide-y divide-border/60">
@@ -387,6 +409,16 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
           </div>
         </div>
       </div>
+
+      <AddProjectMemberDialog
+        projectId={projectId}
+        existingMemberUserIds={existingMemberUserIds}
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        onAdded={() => {
+          refetch();
+        }}
+      />
     </div>
   );
 }

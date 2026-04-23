@@ -15,6 +15,7 @@ import {
   getRolePermissions,
 } from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
+import { redirect } from 'next/navigation';
 
 /**
  * Get current user's organization role and super admin status
@@ -130,15 +131,20 @@ export async function requireSuperAdmin() {
 }
 
 /**
- * Require specific permission - throws error if not authorized
+ * Require specific permission in a server component — redirects to
+ * `/dashboard?error=insufficient-permission` if the current user does not
+ * have the given permission in the organization.
+ *
+ * Uses Next.js `redirect` (which throws), so callers do not need to handle
+ * the failure case — execution will not continue past this call on denial.
  */
 export async function requirePermission(
   organizationId: string,
   permission: Permission
-) {
+): Promise<void> {
   const hasAccess = await hasPermission(organizationId, permission);
   if (!hasAccess) {
-    throw new Error(`Permission denied: ${permission}`);
+    redirect('/dashboard?error=insufficient-permission');
   }
 }
 

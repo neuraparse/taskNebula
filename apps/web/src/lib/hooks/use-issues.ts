@@ -76,9 +76,12 @@ export function useIssues(filters?: IssueFilters) {
 export function useIssue(issueId: string | null) {
   return useQuery({
     queryKey: ['issue', issueId],
-    queryFn: async () => {
+    queryFn: async (): Promise<Issue | null> => {
       if (!issueId) throw new Error('Issue ID is required');
       const response = await fetch(`/api/issues/${issueId}`);
+      if (response.status === 404) {
+        return null;
+      }
       if (!response.ok) {
         throw new Error('Failed to fetch issue');
       }

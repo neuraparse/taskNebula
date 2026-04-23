@@ -10,7 +10,20 @@
  * Raw tokens never touch the database. Only SHA-256 hex digests do.
  */
 import crypto from 'node:crypto';
-import { db, users, eq, and, isNull } from '@tasknebula/db';
+import {
+  db,
+  users,
+  eq,
+  and,
+  isNull,
+  isNotNull,
+  gte,
+  renderShell,
+  paragraph,
+  infoCard,
+  bulletList,
+  textFooter,
+} from '@tasknebula/db';
 import { emailVerificationTokens } from '@tasknebula/db/src/schema/email-verification-tokens';
 import { sendEmail } from '@/lib/email/sender';
 
@@ -24,6 +37,64 @@ function hashToken(raw: string): string {
 function buildVerificationUrl(token: string): string {
   const base = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || '';
   return `${base}/auth/verify-email?token=${encodeURIComponent(token)}`;
+}
+
+/**
+ * Render the verify-email message (subject/html/text) with the given
+ * recipient display name and verify URL. Extracted so diagnostic tools
+ * (e.g. the admin email preview panel) can render an exact copy without
+ * duplicating the layout composition.
+ */
+export function renderVerifyEmailMessage(args: {
+  displayName: string;
+  verifyUrl: string;
+}): { subject: string; html: string; text: string } {
+  const { displayName, verifyUrl } = args;
+
+  const body = [
+    paragraph(
+      'Click the button below to verify the email associated with your TaskNebula account. This link expires in 24 hours.',
+    ),
+    infoCard({
+      title: 'Once verified',
+      tone: 'info',
+      body: bulletList([
+        'Log in and set your profile photo',
+        'Invite your team',
+        'Join a project',
+      ]),
+    }),
+  ].join('');
+
+  const fallback = [
+    paragraph(
+      `If the button doesn't work, paste this URL into your browser:<br/><span style="color:#374151;word-break:break-all;">${verifyUrl}</span>`,
+      { muted: true, spacingTop: 20 },
+    ),
+    paragraph(
+      "If you didn't create a TaskNebula account, you can safely ignore this message.",
+      { muted: true, spacingTop: 12 },
+    ),
+  ].join('');
+
+  const html = renderShell({
+    kicker: 'VERIFY EMAIL',
+    heading: 'Confirm your email address',
+    subheading: `Hi ${displayName}, one click and you're set.`,
+    preheader: 'Verify your TaskNebula email to access notifications and invites.',
+    body: body + fallback,
+    ctaLabel: 'Verify email',
+    ctaUrl: verifyUrl,
+  });
+
+  const text =
+    `Verify your TaskNebula email address\n\n` +
+    `Hi ${displayName}, one click and you're set.\n\n` +
+    `Confirm the email on your account by visiting:\n${verifyUrl}\n\n` +
+    `This link expires in 24 hours. If you didn't create an account, you can ignore this message.` +
+    textFooter();
+
+  return { subject: 'Verify your TaskNebula email address', html, text };
 }
 
 export interface IssueResult {
@@ -81,26 +152,13 @@ export async function issueEmailVerificationToken(userId: string): Promise<Issue
   const verifyUrl = buildVerificationUrl(rawToken);
   const displayName = user.name || user.email;
 
+  const { subject, html, text } = renderVerifyEmailMessage({ displayName, verifyUrl });
+
   const result = await sendEmail({
     to: user.email,
-    subject: 'Verify your TaskNebula email address',
-    html: `<!DOCTYPE html><html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:#f5f6fa;margin:0;padding:32px 16px;color:#111827;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center">
-<table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:32px;">
-<tr><td>
-<p style="margin:0 0 8px 0;color:#6b7280;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;font-weight:600;">VERIFY EMAIL</p>
-<h1 style="margin:0 0 12px 0;font-size:20px;font-weight:600;color:#111827;">Confirm your email address</h1>
-<p style="margin:0 0 16px 0;font-size:14px;line-height:1.6;color:#374151;">Hi ${displayName}, click the button below to verify the email address you used to sign up for TaskNebula. This link expires in 24 hours.</p>
-<p style="margin:24px 0;"><a href="${verifyUrl}" style="background:#4f46e5;color:#ffffff;display:inline-block;font-size:14px;font-weight:500;padding:12px 24px;text-decoration:none;border-radius:4px;">Verify email</a></p>
-<p style="margin:16px 0 0 0;font-size:12px;color:#6b7280;">If the button doesn't work, paste this URL into your browser:<br/><span style="color:#374151;word-break:break-all;">${verifyUrl}</span></p>
-<p style="margin:16px 0 0 0;font-size:12px;color:#9ca3af;">If you didn't create a TaskNebula account, you can safely ignore this message.</p>
-</td></tr></table>
-</td></tr></table>
-</body></html>`,
-    text:
-      `Verify your TaskNebula email address\n\n` +
-      `Hi ${displayName}, confirm your email by visiting:\n${verifyUrl}\n\n` +
-      `This link expires in 24 hours. If you didn't create an account, you can ignore this message.\n`,
+    subject,
+    html,
+    text,
   });
 
   return { issued: true, emailSent: result.sent };
@@ -114,8 +172,12 @@ export interface ConsumeResult {
 
 /**
  * Validate a raw token and — if it is live — mark it used and stamp
- * `users.emailVerified`. Idempotent: already-used tokens return
- * `{ ok: false, reason: 'already_used' }`.
+ * `users.emailVerified`.
+ *
+ * Gracefully handles re-clicks: if the token is already used but the
+ * user is now verified, we return `ok: true` so the UX lands on the
+ * success page instead of an error page. Same for expired tokens on a
+ * user whose email is already verified — no reason to nag them.
  */
 export async function consumeEmailVerificationToken(rawToken: string): Promise<ConsumeResult> {
   if (!rawToken || typeof rawToken !== 'string') {
@@ -134,22 +196,27 @@ export async function consumeEmailVerificationToken(rawToken: string): Promise<C
     return { ok: false, reason: 'invalid' };
   }
 
-  if (record.usedAt) {
-    return { ok: false, reason: 'already_used' };
-  }
-
-  if (record.expiresAt.getTime() < Date.now()) {
-    return { ok: false, reason: 'expired' };
-  }
-
   const [user] = await db
-    .select({ id: users.id })
+    .select({ id: users.id, emailVerified: users.emailVerified })
     .from(users)
     .where(eq(users.id, record.userId))
     .limit(1);
 
   if (!user) {
     return { ok: false, reason: 'user_missing' };
+  }
+
+  // Re-click of a verify link for an already-verified user: treat as success.
+  if (user.emailVerified && (record.usedAt || record.expiresAt.getTime() < Date.now())) {
+    return { ok: true, userId: record.userId };
+  }
+
+  if (record.usedAt) {
+    return { ok: false, reason: 'already_used' };
+  }
+
+  if (record.expiresAt.getTime() < Date.now()) {
+    return { ok: false, reason: 'expired' };
   }
 
   const now = new Date();
@@ -165,4 +232,50 @@ export async function consumeEmailVerificationToken(rawToken: string): Promise<C
     .where(eq(emailVerificationTokens.id, record.id));
 
   return { ok: true, userId: record.userId };
+}
+
+/**
+ * For authenticated users who claim they already verified — check their
+ * DB state and stamp `emailVerified` when there's evidence of a
+ * completed verification flow (a used token in the last 72h). Exists so
+ * the banner UX has a self-service escape hatch when the client/server
+ * JWT cache is out of sync with a successful DB update.
+ *
+ * Returns `{ verified: true }` when the user is (now) verified.
+ */
+export async function reconcileUserVerification(userId: string): Promise<{ verified: boolean }> {
+  const [user] = await db
+    .select({ id: users.id, emailVerified: users.emailVerified })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!user) return { verified: false };
+  if (user.emailVerified) return { verified: true };
+
+  // Any used token in the last 72h means they went through the flow.
+  const cutoff = new Date(Date.now() - 72 * 60 * 60 * 1000);
+  const [usedRecent] = await db
+    .select({ id: emailVerificationTokens.id })
+    .from(emailVerificationTokens)
+    .where(
+      and(
+        eq(emailVerificationTokens.userId, userId),
+        isNotNull(emailVerificationTokens.usedAt),
+        gte(emailVerificationTokens.usedAt, cutoff)
+      )
+    )
+    .limit(1);
+
+  if (!usedRecent) {
+    return { verified: false };
+  }
+
+  const now = new Date();
+  await db
+    .update(users)
+    .set({ emailVerified: now, updatedAt: now })
+    .where(eq(users.id, userId));
+
+  return { verified: true };
 }
