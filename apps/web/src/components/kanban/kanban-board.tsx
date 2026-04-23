@@ -63,6 +63,17 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
         if (!activeFilters.priority.includes(issue.priority)) return false;
       }
 
+      if (activeFilters.assignee.length > 0) {
+        if (!issue.assigneeId || !activeFilters.assignee.includes(issue.assigneeId)) return false;
+      }
+
+      if (activeFilters.labels.length > 0) {
+        const issueLabels = ((issue.labels ?? []) as Array<string | { id: string }>).map(
+          (l) => (typeof l === 'string' ? l : l.id)
+        );
+        if (!activeFilters.labels.some((id) => issueLabels.includes(id))) return false;
+      }
+
       return true;
     });
   }, [activeFilters, issues]);
@@ -129,14 +140,17 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
   const isLoading = issuesLoading || statusesLoading;
 
   if (isLoading) {
+    const columnCount = workflowStatuses.length > 0 ? workflowStatuses.length : 4;
     return (
       <div className="flex h-full overflow-x-auto overflow-y-hidden px-4 py-4">
         <div className="flex h-full gap-3">
-          <SkeletonKanbanColumn title="Backlog" cards={3} />
-          <SkeletonKanbanColumn title="To Do" cards={4} />
-          <SkeletonKanbanColumn title="In Progress" cards={2} />
-          <SkeletonKanbanColumn title="In Review" cards={2} />
-          <SkeletonKanbanColumn title="Done" cards={3} />
+          {Array.from({ length: columnCount }).map((_, idx) => (
+            <SkeletonKanbanColumn
+              key={idx}
+              title={workflowStatuses[idx]?.name ?? ''}
+              cards={3}
+            />
+          ))}
         </div>
       </div>
     );

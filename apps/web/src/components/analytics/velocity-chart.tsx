@@ -9,6 +9,7 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  ReferenceLine,
   ResponsiveContainer,
   Line,
   ComposedChart,
@@ -34,15 +35,6 @@ function VelocityTooltip({ active, payload, label }: any) {
         </div>
       ))}
     </div>
-  );
-}
-
-function LegendChip({ color, label }: { color: string; label: string }) {
-  return (
-    <span className="chip inline-flex items-center gap-1.5">
-      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />
-      {label}
-    </span>
   );
 }
 
@@ -94,6 +86,7 @@ export function VelocityChart({ data }: VelocityChartProps) {
   const latestPoints = latest?.completedPoints ?? 0;
   const issuesDelta = latestIssues - avgIssues;
   const pointsDelta = latestPoints - avgPoints;
+  const todayKey: string | null = latest?.sprintName ?? null;
 
   return (
     <div className="surface-card animate-fade-up p-5 space-y-3">
@@ -150,20 +143,12 @@ export function VelocityChart({ data }: VelocityChartProps) {
         />
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap items-center gap-2">
-        <LegendChip color="hsl(var(--primary))" label="Issues" />
-        <LegendChip color="hsl(var(--accent-cyan))" label="Points" />
-        <LegendChip color="hsl(var(--accent-emerald))" label="Avg Issues" />
-        <LegendChip color="hsl(var(--accent-amber))" label="Avg Points" />
-      </div>
-
       <ResponsiveContainer width="100%" height={280}>
         <ComposedChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
             dataKey="name"
-            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+            tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
             axisLine={false}
             tickLine={false}
           />
@@ -181,7 +166,25 @@ export function VelocityChart({ data }: VelocityChartProps) {
             tickLine={false}
           />
           <Tooltip content={<VelocityTooltip />} />
-          <Legend wrapperStyle={{ display: 'none' }} />
+          <Legend
+            wrapperStyle={{ paddingTop: 12, fontSize: 12 }}
+            iconType="circle"
+          />
+          {todayKey ? (
+            <ReferenceLine
+              yAxisId="left"
+              x={todayKey}
+              stroke="hsl(var(--muted-foreground))"
+              strokeDasharray="4 4"
+              strokeWidth={1}
+              label={{
+                value: 'Today',
+                position: 'top',
+                fontSize: 10,
+                fill: 'hsl(var(--muted-foreground))',
+              }}
+            />
+          ) : null}
           <Bar
             yAxisId="left"
             dataKey="issues"
@@ -202,8 +205,10 @@ export function VelocityChart({ data }: VelocityChartProps) {
             dataKey={() => avgIssues}
             stroke="hsl(var(--accent-emerald))"
             strokeDasharray="5 5"
+            strokeWidth={2}
             name="Avg Issues"
-            dot={false}
+            dot={{ r: 3, strokeWidth: 0 }}
+            activeDot={{ r: 5, strokeWidth: 2 }}
           />
           <Line
             yAxisId="right"
@@ -211,8 +216,10 @@ export function VelocityChart({ data }: VelocityChartProps) {
             dataKey={() => avgPoints}
             stroke="hsl(var(--accent-amber))"
             strokeDasharray="5 5"
+            strokeWidth={2}
             name="Avg Points"
-            dot={false}
+            dot={{ r: 3, strokeWidth: 0 }}
+            activeDot={{ r: 5, strokeWidth: 2 }}
           />
         </ComposedChart>
       </ResponsiveContainer>

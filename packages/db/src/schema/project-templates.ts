@@ -16,9 +16,24 @@ export const projectTemplates = pgTable('project_templates', {
   // Template metadata
   name: text('name').notNull(),
   description: text('description'),
-  category: text('category').notNull(), // 'software_development', 'marketing', 'hr', 'sales', 'design', 'custom'
+  category: text('category').notNull().default('custom'), // 'software_development', 'marketing', 'hr', 'sales', 'design', 'custom'
   icon: text('icon'), // Emoji or icon name
   color: text('color'), // Hex color for visual identification
+
+  /**
+   * Freeform template kind. Drives the "Use template" flow:
+   *  - 'project' → POST /api/projects with payload
+   *  - 'issue'   → POST /api/issues   with payload
+   *  - 'doc'     → POST /api/docs     with payload
+   * Defaults to 'project' to preserve legacy behaviour for pre-existing rows.
+   */
+  kind: text('kind').notNull().default('project'),
+
+  /**
+   * Arbitrary JSON describing the entity to create when the template is used.
+   * Shape depends on `kind`; validated at the API boundary.
+   */
+  payload: jsonb('payload').notNull().default('{}'),
 
   // Template configuration
   workflowId: text('workflow_id').references(() => workflows.id),

@@ -68,6 +68,9 @@ export const notificationPreferences = pgTable('notification_preferences', {
   emailOnIssueCreated: boolean('email_on_issue_created').notNull().default(false),
   emailOnSprintStarted: boolean('email_on_sprint_started').notNull().default(false),
   emailOnSprintCompleted: boolean('email_on_sprint_completed').notNull().default(false),
+  // Project lifecycle events — opt-in (quiet by default)
+  emailOnProjectCreated: boolean('email_on_project_created').notNull().default(false),
+  emailOnProjectArchived: boolean('email_on_project_archived').notNull().default(false),
 
   // Event-specific settings (in-app)
   inAppOnAssigned: boolean('in_app_on_assigned').notNull().default(true),
@@ -77,6 +80,8 @@ export const notificationPreferences = pgTable('notification_preferences', {
   inAppOnIssueCreated: boolean('in_app_on_issue_created').notNull().default(true),
   inAppOnSprintStarted: boolean('in_app_on_sprint_started').notNull().default(true),
   inAppOnSprintCompleted: boolean('in_app_on_sprint_completed').notNull().default(true),
+  inAppOnProjectCreated: boolean('in_app_on_project_created').notNull().default(true),
+  inAppOnProjectArchived: boolean('in_app_on_project_archived').notNull().default(true),
 
   // Do not disturb
   doNotDisturb: boolean('do_not_disturb').notNull().default(false),

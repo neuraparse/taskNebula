@@ -1,12 +1,15 @@
 'use client';
 
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTheme } from 'next-themes';
+import { useSession } from 'next-auth/react';
+import { useQuery } from '@tanstack/react-query';
 import { useThemeStore, themeInfo, type ColorTheme, type VisualStyle } from '@/lib/stores/theme-store';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Check, Moon, Sun, Monitor, RotateCcw } from 'lucide-react';
+import { Check, Moon, Sun, Monitor, RotateCcw, Cloud, CloudOff, Loader2 } from 'lucide-react';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -24,10 +27,27 @@ const VISUAL_STYLES: { value: VisualStyle; label: string }[] = [
 
 const COLOR_THEMES: ColorTheme[] = ['default', 'ocean', 'forest', 'sunset', 'purple', 'rose'];
 
+interface ServerAppearanceResponse {
+  settings: {
+    userId: string;
+    theme: 'light' | 'dark' | 'system' | null;
+    colorTheme: string | null;
+    visualStyle: string | null;
+    animationsEnabled: boolean;
+    gradientsEnabled: boolean;
+    updatedAt: string | null;
+  };
+}
+
+type SyncStatus = 'idle' | 'saving' | 'saved' | 'error';
+
 // ─── component ──────────────────────────────────────────────────────────────
 
 export function AppearanceSettings() {
   const { theme, setTheme } = useTheme();
+  const { status: authStatus } = useSession();
+  const isAuthenticated = authStatus === 'authenticated';
+
   const {
     colorTheme,
     visualStyle,
@@ -37,10 +57,109 @@ export function AppearanceSettings() {
     setVisualStyle,
     setEnableAnimations,
     setEnableGradients,
+    hydrateFromServer,
     reset,
   } = useThemeStore();
 
-  function handleReset() {
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
+
+  // Fetch server settings — only runs when a session exists, so the landing
+  // page / other unauthenticated surfaces never hit the authed API.
+  const { data: serverData } = useQuery<ServerAppearanceResponse>({
+    queryKey: ['user-appearance'],
+    queryFn: async () => {
+      const res = await fetch('/api/user/appearance');
+      if (!res.ok) throw new Error('Failed to load appearance settings');
+      return res.json();
+    },
+    enabled: isAuthenticated,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+
+  // Track whether we've already hydrated from server in this mount so we
+  // don't fight the user's ongoing edits if the query re-runs.
+  const hydratedRef = useRef(false);
+  useEffect(() => {
+    if (!serverData?.settings || hydratedRef.current) return;
+    const s = serverData.settings;
+    hydrateFromServer({
+      colorTheme: s.colorTheme,
+      visualStyle: s.visualStyle,
+      animationsEnabled: s.animationsEnabled,
+      gradientsEnabled: s.gradientsEnabled,
+    });
+    if (s.theme) {
+      // next-themes owns its own storage; align it with server-side value.
+      setTheme(s.theme);
+    }
+    hydratedRef.current = true;
+  }, [serverData, hydrateFromServer, setTheme]);
+
+  // Debounced PUT on any client-side change. Skip the very first render so we
+  // don't immediately write back the defaults before hydration completes.
+  const skipFirstSyncRef = useRef(true);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestPayloadRef = useRef<Record<string, unknown>>({});
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (skipFirstSyncRef.current) {
+      skipFirstSyncRef.current = false;
+      return;
+    }
+    // Wait until we've seen the server row before pushing updates, otherwise
+    // a fresh-page edit could race the initial GET and overwrite server state
+    // with not-yet-hydrated defaults.
+    if (!hydratedRef.current) return;
+
+    latestPayloadRef.current = {
+      theme,
+      colorTheme,
+      visualStyle,
+      animationsEnabled: enableAnimations,
+      gradientsEnabled: enableGradients,
+    };
+
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(async () => {
+      setSyncStatus('saving');
+      try {
+        const res = await fetch('/api/user/appearance', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(latestPayloadRef.current),
+        });
+        if (!res.ok) throw new Error('PUT failed');
+        setSyncStatus('saved');
+        if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+        savedTimerRef.current = setTimeout(() => setSyncStatus('idle'), 1500);
+      } catch (err) {
+        console.error('Failed to sync appearance settings', err);
+        setSyncStatus('error');
+      }
+    }, 400);
+
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, [
+    isAuthenticated,
+    theme,
+    colorTheme,
+    visualStyle,
+    enableAnimations,
+    enableGradients,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    };
+  }, []);
+
+  const handleReset = useCallback(() => {
     try {
       reset();
     } catch {
@@ -50,10 +169,50 @@ export function AppearanceSettings() {
       setEnableGradients(true);
     }
     setTheme('system');
-  }
+  }, [reset, setColorTheme, setVisualStyle, setEnableAnimations, setEnableGradients, setTheme]);
 
   return (
     <div className="animate-fade-up space-y-8 stagger">
+      {/* Sync indicator */}
+      {isAuthenticated && (
+        <div
+          aria-live="polite"
+          className={cn(
+            'flex items-center justify-end gap-1.5 text-xs transition-opacity duration-200',
+            syncStatus === 'idle'
+              ? 'text-muted-foreground/70'
+              : syncStatus === 'error'
+                ? 'text-destructive'
+                : 'text-muted-foreground'
+          )}
+        >
+          {syncStatus === 'saving' && (
+            <>
+              <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+              <span>Saving…</span>
+            </>
+          )}
+          {syncStatus === 'saved' && (
+            <>
+              <Cloud className="h-3 w-3" aria-hidden="true" />
+              <span>Synced</span>
+            </>
+          )}
+          {syncStatus === 'error' && (
+            <>
+              <CloudOff className="h-3 w-3" aria-hidden="true" />
+              <span>Sync failed — will retry on next change</span>
+            </>
+          )}
+          {syncStatus === 'idle' && (
+            <>
+              <Cloud className="h-3 w-3" aria-hidden="true" />
+              <span>Synced across devices</span>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Color Mode */}
       <section className="space-y-4">
         <div className="space-y-1">

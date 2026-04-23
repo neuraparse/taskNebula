@@ -76,52 +76,25 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="animate-fade-in flex min-h-0 flex-1 gap-0">
-      {/* Left nav */}
-      <nav className="hidden w-52 shrink-0 border-r border-border py-6 lg:flex lg:flex-col">
-        <div className="px-4 pb-4">
-          <span className="kicker">Settings</span>
-        </div>
-        <ul className="space-y-0.5 px-2">
-          {visibleNavItems.map(({ value, label, icon: Icon }) => (
-            <li key={value}>
-              <button
-                type="button"
-                onClick={() => handleTabChange(value)}
-                data-active={activeTab === value ? 'true' : undefined}
-                className="row-interactive w-full gap-2.5 px-3 py-2 text-sm"
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span>{label}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
-
-      {/* Mobile tab bar */}
-      <div className="flex w-full flex-col lg:hidden">
-        <div className="flex gap-1 overflow-x-auto border-b border-border px-4 py-2">
-          {visibleNavItems.map(({ value, label, icon: Icon }) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => handleTabChange(value)}
-              data-active={activeTab === value ? 'true' : undefined}
-              className="row-interactive shrink-0 gap-1.5 px-3 py-1.5 text-sm"
-            >
-              <Icon className="h-3.5 w-3.5" />
-              <span>{label}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6 animate-fade-up">{renderContent(activeTab, currentOrganizationId, aiEnabled)}</div>
+    <div className="animate-fade-in flex min-h-0 flex-1 flex-col">
+      {/* Mobile tab bar — main sidebar already hosts the nav on desktop */}
+      <div className="flex gap-1 overflow-x-auto border-b border-border px-4 py-2 lg:hidden">
+        {visibleNavItems.map(({ value, label, icon: Icon }) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => handleTabChange(value)}
+            data-active={activeTab === value ? 'true' : undefined}
+            className="row-interactive shrink-0 gap-1.5 px-3 py-1.5 text-sm"
+          >
+            <Icon className="h-3.5 w-3.5" />
+            <span>{label}</span>
+          </button>
+        ))}
       </div>
 
-      {/* Right content */}
-      <div className="hidden flex-1 overflow-y-auto p-8 lg:block">
-        <div className="mx-auto max-w-3xl animate-fade-up">
+      <div className="flex-1 overflow-y-auto p-6 animate-fade-up lg:p-8">
+        <div className="mx-auto w-full max-w-5xl">
           {renderContent(activeTab, currentOrganizationId, aiEnabled)}
         </div>
       </div>

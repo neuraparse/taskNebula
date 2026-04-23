@@ -10,12 +10,43 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  ReferenceLine,
   ResponsiveContainer,
 } from 'recharts';
 
 interface BurndownChartProps {
   data: BurndownData;
 }
+
+const formatMonthDay = (v: string): string => {
+  try {
+    const d = new Date(v);
+    if (Number.isNaN(d.getTime())) return v;
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  } catch {
+    return v;
+  }
+};
+
+const findTodayKey = (
+  points: BurndownData['burndown'],
+): string | null => {
+  if (!points.length) return null;
+  const todayMs = new Date().setHours(0, 0, 0, 0);
+  let bestKey: string | null = null;
+  let bestDelta = Number.POSITIVE_INFINITY;
+  for (const p of points) {
+    const t = new Date(p.date).setHours(0, 0, 0, 0);
+    if (Number.isNaN(t)) continue;
+    const delta = Math.abs(t - todayMs);
+    if (delta < bestDelta) {
+      bestDelta = delta;
+      bestKey = p.date;
+    }
+  }
+  // Only mark today if at least one data point is within ~1 day of today
+  return bestDelta <= 1000 * 60 * 60 * 24 ? bestKey : null;
+};
 
 function BurndownTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
@@ -79,6 +110,7 @@ function LegendChip({ color, label }: { color: string; label: string }) {
 }
 
 export function BurndownChart({ data }: BurndownChartProps) {
+  const todayKey = findTodayKey(data.burndown);
   return (
     <div className="surface-card animate-fade-up p-5 space-y-3">
       {/* Header */}
@@ -130,7 +162,8 @@ export function BurndownChart({ data }: BurndownChartProps) {
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
             dataKey="date"
-            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+            tickFormatter={(value) => formatMonthDay(value)}
+            tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
             axisLine={false}
             tickLine={false}
           />
@@ -148,13 +181,29 @@ export function BurndownChart({ data }: BurndownChartProps) {
           />
           <Tooltip content={<BurndownTooltip />} />
           <Legend wrapperStyle={{ display: 'none' }} />
+          {todayKey ? (
+            <ReferenceLine
+              x={todayKey}
+              stroke="hsl(var(--muted-foreground))"
+              strokeDasharray="4 4"
+              strokeWidth={1}
+              label={{
+                value: 'Today',
+                position: 'top',
+                fontSize: 10,
+                fill: 'hsl(var(--muted-foreground))',
+              }}
+            />
+          ) : null}
           <Line
             type="monotone"
             dataKey="ideal"
             stroke="hsl(var(--accent-emerald))"
             strokeDasharray="5 5"
+            strokeWidth={2}
             name="Ideal Burndown"
             dot={false}
+            activeDot={{ r: 5, strokeWidth: 2 }}
           />
           <Line
             type="monotone"
@@ -163,6 +212,8 @@ export function BurndownChart({ data }: BurndownChartProps) {
             strokeWidth={2}
             name="Actual Burndown"
             connectNulls={false}
+            dot={{ r: 3, strokeWidth: 0 }}
+            activeDot={{ r: 5, strokeWidth: 2 }}
           />
         </LineChart>
       </ResponsiveContainer>

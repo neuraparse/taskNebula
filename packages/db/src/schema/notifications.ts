@@ -17,6 +17,8 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'sprint_completed',
   'ai_draft_failed',
   'agent_run_failed',
+  'project_created',
+  'project_archived',
 ]);
 
 // Notifications table

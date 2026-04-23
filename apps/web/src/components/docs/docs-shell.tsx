@@ -37,6 +37,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { PageSidebarContent } from '@/components/layout/page-sidebar-slot';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -496,6 +497,12 @@ export function DocsShell({ projectId }: DocsShellProps) {
   }
 
   const isLoading = pagesLoading || (selectedPageId ? pageLoading : false);
+
+  // Group top-level tree nodes into "Collections" (have children) and
+  // "Workspace" (leaf pages). Search results bypass this grouping.
+  const collectionsNodes = tree.filter((node) => node.children.length > 0);
+  const workspaceNodes = tree.filter((node) => node.children.length === 0);
+
   const navigationPane = (
     <>
       <div className="border-b border-border px-3 py-3">
@@ -530,6 +537,18 @@ export function DocsShell({ projectId }: DocsShellProps) {
             </Select>
           )}
 
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => openCreateDialog(null)}
+            disabled={!canCreateInContext}
+            className="flex h-9 w-full items-center justify-center gap-2 border-dashed bg-accent/30 text-sm font-medium text-foreground transition-colors hover:bg-accent/60"
+            aria-label="Create new page"
+          >
+            <FilePlus2 className="h-4 w-4" />
+            <span>New page</span>
+          </Button>
+
           <div className="flex items-center gap-1.5">
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -540,16 +559,6 @@ export function DocsShell({ projectId }: DocsShellProps) {
                 className="h-8 pl-8 text-sm"
               />
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 w-8 shrink-0 px-0"
-              onClick={() => openCreateDialog(null)}
-              disabled={!canCreateInContext}
-              aria-label="Create new page"
-            >
-              <FilePlus2 className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       </div>
@@ -582,15 +591,45 @@ export function DocsShell({ projectId }: DocsShellProps) {
             )}
           </div>
         ) : tree.length > 0 ? (
-          <div className="stagger space-y-0.5">
-            {tree.map((node) => (
-              <TreeNode
-                key={node.id}
-                node={node}
-                activePageId={selectedPageId}
-                onSelect={(pageId) => updateQueryParams({ pageId, spaceId: activeSpace?.id || null })}
-              />
-            ))}
+          <div className="stagger space-y-3">
+            <SidebarSection title="Collections" defaultOpen count={collectionsNodes.length}>
+              {collectionsNodes.length > 0 ? (
+                <div className="space-y-0.5">
+                  {collectionsNodes.map((node) => (
+                    <TreeNode
+                      key={node.id}
+                      node={node}
+                      activePageId={selectedPageId}
+                      onSelect={(pageId) => updateQueryParams({ pageId, spaceId: activeSpace?.id || null })}
+                      isCollectionRoot
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="px-2 py-2 text-[11px] text-muted-foreground">
+                  No collections yet.
+                </div>
+              )}
+            </SidebarSection>
+
+            <SidebarSection title="Workspace" defaultOpen count={workspaceNodes.length}>
+              {workspaceNodes.length > 0 ? (
+                <div className="space-y-0.5">
+                  {workspaceNodes.map((node) => (
+                    <TreeNode
+                      key={node.id}
+                      node={node}
+                      activePageId={selectedPageId}
+                      onSelect={(pageId) => updateQueryParams({ pageId, spaceId: activeSpace?.id || null })}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="px-2 py-2 text-[11px] text-muted-foreground">
+                  No standalone pages.
+                </div>
+              )}
+            </SidebarSection>
           </div>
         ) : pagesLoading ? (
           <DocsTreeSkeleton />
@@ -1027,11 +1066,11 @@ export function DocsShell({ projectId }: DocsShellProps) {
           </div>
         </div>
 
-        <div className="grid h-full min-h-0 grid-cols-1 overflow-hidden lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[17rem_minmax(0,1fr)]">
-          <div className="hidden h-full min-h-0 flex-col border-r border-border bg-surface lg:flex">
-            {navigationPane}
-          </div>
+        <PageSidebarContent>
+          <div className="flex h-full min-h-0 flex-col bg-surface">{navigationPane}</div>
+        </PageSidebarContent>
 
+        <div className="grid h-full min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="min-h-0 min-w-0 overflow-hidden">
             {isLoading ? (
               <DocsShellSkeleton />
@@ -1066,6 +1105,12 @@ export function DocsShell({ projectId }: DocsShellProps) {
               </div>
             )}
           </div>
+
+          {currentPage ? (
+            <aside className="hidden h-full min-h-0 overflow-y-auto overscroll-contain border-l border-border bg-background lg:block">
+              {detailsPane}
+            </aside>
+          ) : null}
         </div>
       </div>
 
@@ -1138,16 +1183,74 @@ export function DocsShell({ projectId }: DocsShellProps) {
   );
 }
 
+function SidebarSection({
+  title,
+  count,
+  defaultOpen = true,
+  children,
+}: {
+  title: string;
+  count?: number;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-center gap-1.5 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+        aria-expanded={open}
+      >
+        <ChevronDown
+          className={cn(
+            'h-3 w-3 shrink-0 transition-transform duration-150',
+            !open && '-rotate-90'
+          )}
+        />
+        <span className="flex-1 truncate text-left">{title}</span>
+        {typeof count === 'number' && (
+          <span className="text-[10px] font-normal normal-case tracking-normal text-muted-foreground/70">
+            {count}
+          </span>
+        )}
+      </button>
+      {open && <div className="mt-1">{children}</div>}
+    </div>
+  );
+}
+
+const COLLECTION_TILE_PALETTE = [
+  'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-200',
+  'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200',
+  'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200',
+  'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-200',
+  'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-200',
+  'bg-cyan-100 text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-200',
+];
+
+function pickCollectionTone(seed: string) {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return COLLECTION_TILE_PALETTE[hash % COLLECTION_TILE_PALETTE.length];
+}
+
 function TreeNode({
   node,
   activePageId,
   depth = 0,
   onSelect,
+  isCollectionRoot = false,
 }: {
   node: DocumentTreeNode;
   activePageId: string | null;
   depth?: number;
   onSelect: (pageId: string) => void;
+  isCollectionRoot?: boolean;
 }) {
   const [open, setOpen] = useState(true);
   const isActive = node.id === activePageId;
@@ -1178,8 +1281,27 @@ function TreeNode({
         </button>
 
         <button type="button" className="flex min-w-0 flex-1 items-center gap-2 text-left" onClick={() => onSelect(node.id)}>
-          <DocumentIcon icon={node.icon} className="h-5 w-5 rounded-sm text-[10px]" />
-          <span className="min-w-0 flex-1 truncate text-sm">{node.title}</span>
+          {isCollectionRoot ? (
+            <span
+              aria-hidden="true"
+              className={cn(
+                'inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-sm leading-none',
+                pickCollectionTone(node.id)
+              )}
+            >
+              {node.icon || node.title.charAt(0).toUpperCase()}
+            </span>
+          ) : (
+            <DocumentIcon icon={node.icon} className="h-5 w-5 rounded-sm text-[10px]" />
+          )}
+          <span
+            className={cn(
+              'min-w-0 flex-1 truncate text-sm',
+              isCollectionRoot && 'font-medium'
+            )}
+          >
+            {node.title}
+          </span>
           {hasChildren && (
             <span className="text-[11px] text-muted-foreground">{node.children.length}</span>
           )}

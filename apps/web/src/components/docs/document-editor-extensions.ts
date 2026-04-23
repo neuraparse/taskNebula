@@ -75,7 +75,62 @@ export const InternalLink = Link.extend({
       },
     };
   },
+  renderHTML({ HTMLAttributes, mark }) {
+    const attrs = mark.attrs as { pageId?: string | null };
+    const isInternal = !!attrs.pageId;
+    const existingClass =
+      typeof HTMLAttributes.class === 'string' ? HTMLAttributes.class : '';
+    const mergedClass = [existingClass, isInternal ? 'tn-internal-link' : '']
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    const finalAttributes: Record<string, unknown> = {
+      ...HTMLAttributes,
+    };
+
+    if (mergedClass) {
+      finalAttributes.class = mergedClass;
+    }
+
+    if (isInternal) {
+      finalAttributes['data-internal'] = 'true';
+    }
+
+    return ['a', finalAttributes, 0];
+  },
 });
+
+/**
+ * CSS for Plane-style internal link decoration (file icon + underlined title).
+ *
+ * NOTE: This constant must be injected once into a global stylesheet
+ * (e.g. apps/web/src/app/globals.css) or appended to the editor's prose
+ * container via a <style> tag for the decoration to render. External links
+ * (without a `pageId`) are not affected by these rules.
+ */
+export const INTERNAL_LINK_DECORATION_CSS = `
+.tn-internal-link::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 14px;
+  vertical-align: -2px;
+  margin-right: 4px;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/></svg>") center/contain no-repeat;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/></svg>") center/contain no-repeat;
+}
+.tn-internal-link {
+  color: hsl(var(--foreground));
+  text-decoration: underline;
+  text-decoration-color: hsl(var(--border));
+  text-underline-offset: 2px;
+}
+.tn-internal-link:hover {
+  text-decoration-color: hsl(var(--foreground));
+}
+`;
 
 // Module-scope, pre-configured extensions. Every field here is option-independent, so
 // there is no reason to reconstruct them on every render of the editor component.

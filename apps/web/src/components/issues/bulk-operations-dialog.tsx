@@ -13,23 +13,16 @@ import {
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useWorkflowStatuses } from '@/lib/hooks/use-workflow-statuses';
 import { Loader2 } from 'lucide-react';
 
 interface BulkOperationsDialogProps {
   selectedIssueIds: string[];
+  projectId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
 }
-
-const STATUS_OPTIONS = [
-  { value: 'backlog', label: 'Backlog' },
-  { value: 'todo', label: 'To Do' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'in_review', label: 'In Review' },
-  { value: 'done', label: 'Done' },
-  { value: 'blocked', label: 'Blocked' },
-];
 
 const PRIORITY_OPTIONS = [
   { value: 'critical', label: 'Critical' },
@@ -40,15 +33,22 @@ const PRIORITY_OPTIONS = [
 
 export function BulkOperationsDialog({
   selectedIssueIds,
+  projectId,
   open,
   onOpenChange,
   onSuccess,
 }: BulkOperationsDialogProps) {
   const [operation, setOperation] = useState<'update' | 'delete'>('update');
-  const [updateField, setUpdateField] = useState<'status' | 'priority'>('status');
+  const [updateField, setUpdateField] = useState<'statusId' | 'priority'>('statusId');
   const [newValue, setNewValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { data: workflowStatuses = [] } = useWorkflowStatuses(projectId);
+
+  const statusOptions = workflowStatuses.map((status) => ({
+    value: status.id,
+    label: status.name,
+  }));
 
   const handleSubmit = async () => {
     if (operation === 'update' && !newValue) {
@@ -100,7 +100,7 @@ export function BulkOperationsDialog({
 
       // Reset form
       setOperation('update');
-      setUpdateField('status');
+      setUpdateField('statusId');
       setNewValue('');
     } catch (error: any) {
       toast({
@@ -146,7 +146,7 @@ export function BulkOperationsDialog({
                 <Label>Field to Update</Label>
                 <Select
                   value={updateField}
-                  onValueChange={(value: 'status' | 'priority') => {
+                  onValueChange={(value: 'statusId' | 'priority') => {
                     setUpdateField(value);
                     setNewValue('');
                   }}
@@ -155,7 +155,7 @@ export function BulkOperationsDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="status">Status</SelectItem>
+                    <SelectItem value="statusId">Status</SelectItem>
                     <SelectItem value="priority">Priority</SelectItem>
                   </SelectContent>
                 </Select>
@@ -168,7 +168,7 @@ export function BulkOperationsDialog({
                     <SelectValue placeholder="Select value" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(updateField === 'status' ? STATUS_OPTIONS : PRIORITY_OPTIONS).map((option) => (
+                    {(updateField === 'statusId' ? statusOptions : PRIORITY_OPTIONS).map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>

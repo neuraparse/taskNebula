@@ -63,3 +63,7 @@ docs
 .vercel
 uploads
 
+
+# Claude Code worktrees and caches
+.claude/
+

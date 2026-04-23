@@ -36,10 +36,13 @@ import { CreateFeatureFlagDialog } from '@/components/admin/create-feature-flag-
 import { CreateOrganizationAdminDialog } from '@/components/admin/create-organization-admin-dialog';
 import { CreateUserDialog } from '@/components/admin/create-user-dialog';
 import { EditFeatureFlagDialog } from '@/components/admin/edit-feature-flag-dialog';
+import { FeatureFlagRuntimeTest } from '@/components/admin/feature-flag-runtime-test';
 import { EditOrganizationDialog } from '@/components/admin/edit-organization-dialog';
 import { EditUserDialog } from '@/components/admin/edit-user-dialog';
 import { AgentOpsPanel } from '@/components/admin/agent-ops-panel';
+import { IntegrationsAdminPanel } from '@/components/admin/integrations-admin-panel';
 import { RealtimeHealthPanel } from '@/components/admin/realtime-health-panel';
+import { SystemCredentialsPanel } from '@/components/admin/system-credentials-panel';
 import { useDeleteFeatureFlag, useFeatureFlags, useUpdateFeatureFlag } from '@/lib/hooks/use-feature-flags';
 import { cn } from '@/lib/utils';
 import {
@@ -52,10 +55,11 @@ import {
   Flag,
   Gauge,
   MoreVertical,
+  Plug,
   Radio,
   Scroll,
+  ShieldCheck,
   Search,
-  Shield,
   Trash2,
   Users,
 } from 'lucide-react';
@@ -122,6 +126,8 @@ const NAV: NavItem[] = [
   { key: 'users', label: 'Users', icon: Users },
   { key: 'feature-flags', label: 'Feature flags', icon: Flag },
   { key: 'agents', label: 'Agent control', icon: Bot },
+  { key: 'integrations', label: 'Integrations', icon: Plug },
+  { key: 'system', label: 'System', icon: ShieldCheck },
   { key: 'realtime', label: 'Realtime health', icon: Radio },
   { key: 'audit', label: 'Audit logs', icon: Scroll },
 ];
@@ -379,39 +385,6 @@ export function AdminDashboardClient() {
       />
 
       <div className="flex h-full min-h-0">
-        {/* Sidebar */}
-        <aside className="hidden w-56 shrink-0 border-r border-border lg:block">
-          <div className="sticky top-0 space-y-4 p-4">
-            <div className="flex items-center gap-2 px-2 py-1">
-              <Shield className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold tracking-tight">Admin</span>
-            </div>
-            <nav className="space-y-0.5">
-              {visibleNav.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.key;
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => handleTabChange(item.key)}
-                    className={cn(
-                      'group flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors duration-200 ease-smooth',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                      isActive
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="truncate">{item.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-        </aside>
-
         <div className="flex-1 min-w-0 animate-fade-up space-y-6 overflow-y-auto p-6">
           {/* Mobile nav */}
           <div className="lg:hidden">
@@ -489,6 +462,10 @@ export function AdminDashboardClient() {
           )}
 
           {activeTab === 'agents' && <AgentOpsPanel />}
+
+          {activeTab === 'integrations' && <IntegrationsAdminPanel />}
+
+          {activeTab === 'system' && <SystemCredentialsPanel />}
 
           {activeTab === 'realtime' && <RealtimeHealthPanel />}
 
@@ -875,7 +852,10 @@ function FeatureFlagsSection({
     <div className="space-y-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <p className="text-xs text-muted-foreground">{flags.length} matching flags</p>
-        <CreateFeatureFlagDialog />
+        <div className="flex items-center gap-2">
+          <FeatureFlagRuntimeTest />
+          <CreateFeatureFlagDialog />
+        </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px] animate-blur-in">

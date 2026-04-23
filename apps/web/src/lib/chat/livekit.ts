@@ -1,5 +1,6 @@
 import { AccessToken, RoomServiceClient } from 'livekit-server-sdk';
 import { createId } from '@paralleldrive/cuid2';
+import { resolveLivekitConfig } from '@/lib/admin/system-settings';
 
 const PARTICIPANT_IDENTITY_PREFIX = 'tnp';
 
@@ -66,6 +67,35 @@ export function getLivekitConfig() {
   };
 }
 
+/**
+ * DB-first LiveKit config resolver. Prefers the Admin → System → LiveKit
+ * values when present, falls back to env vars. Use from async server code
+ * (API routes, server actions). The synchronous `getLivekitConfig()` above
+ * stays env-only — it's only used by code paths that need a sync read
+ * (status surface, webhook verification).
+ */
+export async function resolveLivekitConfigForServer() {
+  const db = await resolveLivekitConfig();
+  if (db) {
+    const publicUrl = resolveLivekitPublicUrl() || db.url;
+    return {
+      serverUrl: db.url,
+      publicUrl,
+      apiKey: db.apiKey,
+      apiSecret: db.apiSecret,
+      source: db.source,
+    };
+  }
+  const env = getLivekitConfig();
+  return {
+    serverUrl: env.serverUrl,
+    publicUrl: env.publicUrl,
+    apiKey: env.apiKey,
+    apiSecret: env.apiSecret,
+    source: 'env' as const,
+  };
+}
+
 export function getLivekitStatus() {
   const config = getLivekitConfig();
   const ready = Boolean(config.serverUrl && config.publicUrl && config.apiKey && config.apiSecret);
@@ -82,8 +112,8 @@ export function getLivekitStatus() {
   };
 }
 
-export function createLivekitRoomService() {
-  const config = getLivekitConfig();
+export async function createLivekitRoomService() {
+  const config = await resolveLivekitConfigForServer();
   if (!config.serverUrl || !config.apiKey || !config.apiSecret) {
     return null;
   }
@@ -134,7 +164,7 @@ export async function createLivekitToken(params: {
   metadata?: string;
   publicUrlOverride?: string;
 }) {
-  const config = getLivekitConfig();
+  const config = await resolveLivekitConfigForServer();
   const publicUrl = params.publicUrlOverride || config.publicUrl;
   if (!config.serverUrl || !publicUrl || !config.apiKey || !config.apiSecret) {
     throw new Error('LiveKit is not configured');

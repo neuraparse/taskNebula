@@ -5,6 +5,7 @@ import { auth } from '@/auth';
 import { eq, and } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
+import { runAutomations } from '@/lib/automation/evaluator';
 
 type IssueAction = 'view' | 'edit' | 'delete' | 'assign' | 'transition' | 'schedule' | 'close' | 'reopen';
 
@@ -445,6 +446,96 @@ export async function PATCH(
         issueTitle: currentIssue.title,
         projectName,
       });
+    }
+
+    // --- Automation triggers (fire-and-forget) ---
+    // Compute which fields changed between old and new so rules can match.
+    const changedFields: string[] = [];
+    const trackedFields: (keyof typeof updateData)[] = [
+      'title',
+      'description',
+      'statusId',
+      'priority',
+      'assigneeId',
+      'labels',
+      'sprintId',
+      'epicId',
+      'parentId',
+      'estimate',
+      'dueDate',
+      'customFields',
+    ];
+    for (const field of trackedFields) {
+      if (updateData[field] === undefined) continue;
+      const before = (currentIssue as Record<string, unknown>)[field];
+      const after = (updateData as Record<string, unknown>)[field];
+      if (before !== after) {
+        changedFields.push(field as string);
+      }
+    }
+
+    const statusChanged =
+      !!updateData.statusId && updateData.statusId !== currentIssue.statusId;
+    const assigneeChanged =
+      updateData.assigneeId !== undefined &&
+      updateData.assigneeId !== currentIssue.assigneeId;
+
+    // If status transitioned, look up the new status metadata so rule
+    // conditions can match on name/category (nice-to-have per spec).
+    let newStatus: { id: string; name: string; category: string } | null = null;
+    if (statusChanged && updateData.statusId) {
+      const [statusRow] = await db
+        .select({
+          id: workflowStatuses.id,
+          name: workflowStatuses.name,
+          category: workflowStatuses.category,
+        })
+        .from(workflowStatuses)
+        .where(eq(workflowStatuses.id, updateData.statusId))
+        .limit(1);
+      if (statusRow) {
+        newStatus = {
+          id: statusRow.id,
+          name: statusRow.name,
+          category: statusRow.category as string,
+        };
+      }
+    }
+
+    const automationPayload = {
+      before: currentIssue,
+      after: updatedIssueData,
+      changedFields,
+      ...(newStatus ? { newStatus } : {}),
+    };
+
+    // Always fire issue.updated
+    void runAutomations({
+      trigger: 'issue.updated',
+      organizationId: currentIssue.organizationId,
+      projectId: currentIssue.projectId,
+      payload: automationPayload,
+      actorUserId: session.user.id!,
+    }).catch((err) => console.error('automation failed', err));
+
+    if (statusChanged) {
+      void runAutomations({
+        trigger: 'issue.status_changed',
+        organizationId: currentIssue.organizationId,
+        projectId: currentIssue.projectId,
+        payload: automationPayload,
+        actorUserId: session.user.id!,
+      }).catch((err) => console.error('automation failed', err));
+    }
+
+    if (assigneeChanged) {
+      void runAutomations({
+        trigger: 'issue.assigned',
+        organizationId: currentIssue.organizationId,
+        projectId: currentIssue.projectId,
+        payload: automationPayload,
+        actorUserId: session.user.id!,
+      }).catch((err) => console.error('automation failed', err));
     }
 
     return NextResponse.json(updatedIssueData);

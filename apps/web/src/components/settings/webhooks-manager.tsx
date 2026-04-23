@@ -16,7 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Webhook as WebhookIcon, Pencil } from 'lucide-react';
+import { Plus, Trash2, Webhook as WebhookIcon, Pencil, Send } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface WebhooksManagerProps {
@@ -54,12 +54,21 @@ const EMPTY_FORM = {
   events: ['issue.created', 'issue.updated'],
 };
 
+interface LastTestResult {
+  success: boolean;
+  statusCode: number | null;
+  durationMs: number;
+  error?: string;
+}
+
 export function WebhooksManager({ organizationId, projectId }: WebhooksManagerProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingWebhook, setEditingWebhook] = useState<WebhookItem | null>(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
+  const [lastTestResults, setLastTestResults] = useState<Record<string, LastTestResult>>({});
+  const [testingId, setTestingId] = useState<string | null>(null);
 
   const queryKey = useMemo(() => ['webhooks', organizationId, projectId], [organizationId, projectId]);
 
@@ -130,6 +139,73 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
       setDialogOpen(false);
       setEditingWebhook(null);
       setFormData(EMPTY_FORM);
+    },
+  });
+
+  const sendTest = useMutation({
+    mutationFn: async (webhookId: string) => {
+      const response = await fetch(`/api/webhooks/${webhookId}/test`, {
+        method: 'POST',
+      });
+      const payload = (await response
+        .json()
+        .catch(() => ({ error: 'Failed to send test webhook' }))) as {
+        success?: boolean;
+        statusCode?: number | null;
+        responseSnippet?: string;
+        durationMs?: number;
+        error?: string;
+      };
+      if (!response.ok) {
+        throw new Error(payload.error || 'Failed to send test webhook');
+      }
+      return { webhookId, payload };
+    },
+    onMutate: (webhookId) => {
+      setTestingId(webhookId);
+    },
+    onSettled: () => {
+      setTestingId(null);
+    },
+    onSuccess: ({ webhookId, payload }) => {
+      const result: LastTestResult = {
+        success: !!payload.success,
+        statusCode: payload.statusCode ?? null,
+        durationMs: payload.durationMs ?? 0,
+        error: payload.error,
+      };
+      setLastTestResults((current) => ({ ...current, [webhookId]: result }));
+      if (result.success) {
+        toast({
+          title: 'Test delivered',
+          description: `HTTP ${result.statusCode ?? '—'} in ${result.durationMs}ms`,
+        });
+      } else {
+        toast({
+          title: 'Test failed',
+          description: result.statusCode
+            ? `HTTP ${result.statusCode} in ${result.durationMs}ms`
+            : result.error || 'Webhook endpoint did not respond successfully.',
+          variant: 'destructive',
+        });
+      }
+      queryClient.invalidateQueries({ queryKey });
+    },
+    onError: (err, webhookId) => {
+      setLastTestResults((current) => ({
+        ...current,
+        [webhookId]: {
+          success: false,
+          statusCode: null,
+          durationMs: 0,
+          error: err instanceof Error ? err.message : 'Failed to send test webhook',
+        },
+      }));
+      toast({
+        title: 'Test failed',
+        description: err instanceof Error ? err.message : 'Failed to send test webhook',
+        variant: 'destructive',
+      });
     },
   });
 
@@ -317,8 +393,37 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
                     </>
                   ) : null}
                 </p>
+                {lastTestResults[webhook.id] ? (
+                  <p
+                    className={`text-xs ${
+                      lastTestResults[webhook.id]!.success
+                        ? 'text-emerald-500'
+                        : 'text-destructive'
+                    }`}
+                  >
+                    Last test:{' '}
+                    {lastTestResults[webhook.id]!.statusCode
+                      ? `${lastTestResults[webhook.id]!.statusCode} ${
+                          lastTestResults[webhook.id]!.success ? 'OK' : 'ERR'
+                        }`
+                      : lastTestResults[webhook.id]!.error || 'failed'}
+                    {' · '}
+                    {lastTestResults[webhook.id]!.durationMs}ms
+                  </p>
+                ) : null}
               </div>
               <div className="flex shrink-0 items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs text-muted-foreground"
+                  onClick={() => sendTest.mutate(webhook.id)}
+                  disabled={testingId === webhook.id}
+                  aria-label="Send test webhook"
+                >
+                  <Send className="mr-1.5 h-3.5 w-3.5" />
+                  {testingId === webhook.id ? 'Sending...' : 'Send test'}
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"

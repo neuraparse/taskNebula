@@ -4,6 +4,8 @@ import { db, projects, sprints, issues } from '@tasknebula/db';
 import { eq, and, count } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
 import { resolveProjectByIdOrKey } from '@/lib/projects/server';
+import { notifyProjectArchived } from '@/lib/notifications/project-events';
+import { runAutomations } from '@/lib/automation/evaluator';
 
 // GET /api/projects/[projectId] - Get single project
 export async function GET(
@@ -126,6 +128,36 @@ export async function PATCH(
     }
 
     publishEvent('project.updated', session.user.id, { projectId: project.id });
+
+    // Fire-and-forget project.archived notifications to project members when
+    // status transitions into 'archived'. Guarded so SMTP/DB faults never
+    // fail the PATCH.
+    if (status === 'archived' && project.status !== 'archived') {
+      try {
+        notifyProjectArchived({
+          project: {
+            id: updatedProject.id,
+            name: updatedProject.name,
+            key: updatedProject.key,
+            description: updatedProject.description,
+            organizationId: updatedProject.organizationId,
+          },
+          actorUserId: session.user.id,
+        });
+      } catch (err) {
+        console.error('notifyProjectArchived dispatch failed:', err);
+      }
+
+      void runAutomations({
+        trigger: 'project.archived',
+        organizationId: project.organizationId,
+        projectId: project.id,
+        payload: { project: updatedProject },
+        actorUserId: session.user.id,
+      }).catch((err) =>
+        console.error('Failed to run project.archived automations:', err)
+      );
+    }
 
     return NextResponse.json(updatedProject);
   } catch (error) {

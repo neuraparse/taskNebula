@@ -6,6 +6,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { eq, and, desc, asc, sql, inArray } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
+import { runAutomations } from '@/lib/automation/evaluator';
 
 // Permission check helper for issues
 async function checkIssuePermission(
@@ -471,6 +472,17 @@ export async function POST(request: NextRequest) {
       console.error('Insert error details:', insertError);
       throw insertError;
     }
+
+    // Fire-and-forget: trigger automation rules for issue creation.
+    // Failures must not surface to the caller or change response codes.
+    void runAutomations({
+      trigger: 'issue.created',
+      organizationId: newIssue.organizationId,
+      projectId: newIssue.projectId,
+      payload: newIssue,
+      actorUserId: session.user.id!,
+    }).catch((err) => console.error('automation failed', err));
+
     return NextResponse.json(newIssue, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {

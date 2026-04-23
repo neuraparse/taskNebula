@@ -100,6 +100,17 @@ export async function POST(request: NextRequest) {
       throw new Error('Failed to create user');
     }
 
+    // Fire-and-forget verification email. Dynamic import keeps this path
+    // cheap when SMTP is unconfigured; errors are logged, not surfaced to
+    // the caller so signup always succeeds.
+    import('@/lib/auth/email-verification')
+      .then(({ issueEmailVerificationToken }) =>
+        issueEmailVerificationToken(newUser.id)
+      )
+      .catch((err) => {
+        console.error('[signup] verification email dispatch failed:', err);
+      });
+
     return NextResponse.json(
       {
         message: 'User created successfully',
