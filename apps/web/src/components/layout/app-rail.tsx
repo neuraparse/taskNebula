@@ -68,7 +68,13 @@ export function AppRail() {
         <ul className="flex flex-1 flex-col items-center gap-1">
           {railItems.map((item) => {
             const isActive =
-              pathname === item.href || pathname?.startsWith(item.href + '/');
+              pathname === item.href ||
+              pathname?.startsWith(item.href + '/') ||
+              (item.href === '/dashboard' &&
+                (pathname === '/' ||
+                  pathname?.startsWith('/drafts') ||
+                  pathname?.startsWith('/templates'))) ||
+              (item.href === '/my-issues' && pathname?.startsWith('/issues/'));
             const Icon = item.icon;
 
             return (

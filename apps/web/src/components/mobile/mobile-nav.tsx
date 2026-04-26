@@ -77,7 +77,7 @@ export function MobileNav() {
         className="fixed bottom-20 right-4 z-50 h-12 w-12 rounded-full shadow-md md:hidden"
         asChild
       >
-        <Link href="/issues/new" aria-label="Create new issue">
+        <Link href="/dashboard" aria-label="Create new issue">
           <Plus className="h-5 w-5" />
         </Link>
       </Button>

@@ -26,7 +26,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CreateIssueModal } from '@/components/issues/create-issue-modal';
 import { useDrafts, type Draft } from '@/lib/drafts/use-drafts';
+import { useProjects } from '@/lib/hooks/use-projects';
+import { useOrganization } from '@/lib/hooks/use-organization';
 import { cn } from '@/lib/utils';
 
 type DraftFilter = 'all' | Draft['type'];
@@ -62,6 +65,14 @@ export function DraftsList() {
   const [sort, setSort] = useState<SortKey>('updated');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+  const { currentOrganizationId, currentTeamId } = useOrganization();
+  const { data: projectsForCreate } = useProjects({
+    organizationId: currentOrganizationId,
+    teamId: currentTeamId,
+  });
+  const firstProjectId = projectsForCreate?.[0]?.id ?? null;
 
   const counts = useMemo(() => {
     const base = { all: drafts.length, work_item: 0, page: 0, comment: 0 };
@@ -165,7 +176,11 @@ export function DraftsList() {
       ) : isError ? (
         <ErrorState message={error?.message ?? 'Could not load drafts.'} />
       ) : visible.length === 0 ? (
-        <EmptyState hasAny={drafts.length > 0} />
+        <EmptyState
+          hasAny={drafts.length > 0}
+          firstProjectId={firstProjectId}
+          onCreate={() => setIsCreateOpen(true)}
+        />
       ) : (
         <ul className="divide-y rounded-md border bg-card">
           {visible.map((draft) => {
@@ -266,6 +281,14 @@ export function DraftsList() {
           })}
         </ul>
       )}
+
+      {firstProjectId ? (
+        <CreateIssueModal
+          open={isCreateOpen}
+          onOpenChange={setIsCreateOpen}
+          projectId={firstProjectId}
+        />
+      ) : null}
     </div>
   );
 }
@@ -302,7 +325,15 @@ function ErrorState({ message }: { message: string }) {
   );
 }
 
-function EmptyState({ hasAny }: { hasAny: boolean }) {
+function EmptyState({
+  hasAny,
+  firstProjectId,
+  onCreate,
+}: {
+  hasAny: boolean;
+  firstProjectId: string | null;
+  onCreate: () => void;
+}) {
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card/50 px-6 py-16 text-center">
       <div className="flex size-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
@@ -315,9 +346,13 @@ function EmptyState({ hasAny }: { hasAny: boolean }) {
           : 'Stash unfinished work items, pages, and comments here. They sync across your devices until you promote them.'}
       </p>
       <div className="mt-5">
-        <Button asChild>
-          <Link href="/issues?draft=new">Create work item</Link>
-        </Button>
+        {firstProjectId ? (
+          <Button onClick={onCreate}>Create work item</Button>
+        ) : (
+          <Button asChild variant="outline">
+            <Link href="/projects">Create a project first</Link>
+          </Button>
+        )}
       </div>
     </div>
   );

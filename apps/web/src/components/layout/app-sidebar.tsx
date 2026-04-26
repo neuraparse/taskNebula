@@ -165,14 +165,30 @@ function isNavLinkActive(
 
 function getSectionLabel(pathname: string | null | undefined): string {
   if (!pathname) return 'Workspace';
-  if (pathname === '/' || pathname.startsWith('/dashboard')) return 'Home';
-  if (pathname.startsWith('/my-issues')) return 'My Issues';
+  if (
+    pathname === '/' ||
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/drafts') ||
+    pathname.startsWith('/templates')
+  )
+    return 'Home';
+  if (pathname.startsWith('/my-issues') || pathname.startsWith('/issues')) return 'My Issues';
   if (pathname.startsWith('/projects')) return 'Projects';
   if (pathname.startsWith('/docs')) return 'Docs';
   if (pathname.startsWith('/team')) return 'Team';
   if (pathname.startsWith('/admin')) return 'Admin';
   if (pathname.startsWith('/settings')) return 'Settings';
   return 'Workspace';
+}
+
+function isHomeSectionPath(pathname: string | null | undefined): boolean {
+  if (!pathname) return false;
+  return (
+    pathname === '/' ||
+    pathname === '/dashboard' ||
+    pathname.startsWith('/drafts') ||
+    pathname.startsWith('/templates')
+  );
 }
 
 export function AppSidebar() {
@@ -324,10 +340,12 @@ export function AppSidebar() {
           </div>
         )}
 
-        {pathname?.startsWith('/my-issues') ? (
+        {pathname?.startsWith('/my-issues') || pathname?.startsWith('/issues') ? (
           <div className="space-y-0.5">
             {MY_ISSUES_VIEWS.map((view) => {
-              const isActive = (searchParams?.get('view') ?? 'assigned') === view.value;
+              const isActive =
+                pathname?.startsWith('/my-issues') &&
+                (searchParams?.get('view') ?? 'assigned') === view.value;
               return (
                 <Link
                   key={view.value}
@@ -343,18 +361,24 @@ export function AppSidebar() {
           </div>
         ) : null}
 
-        {pathname === '/dashboard' || pathname === '/' ? (
+        {isHomeSectionPath(pathname) ? (
           <div className="space-y-0.5">
-            {DASHBOARD_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground"
-              >
-                <link.icon className="h-4 w-4 shrink-0" />
-                <span>{link.label}</span>
-              </Link>
-            ))}
+            {DASHBOARD_LINKS.map((link) => {
+              const isActive =
+                link.href === pathname ||
+                (link.href === '/dashboard' && pathname === '/');
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  data-active={isActive ? 'true' : undefined}
+                  className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
+                >
+                  <link.icon className="h-4 w-4 shrink-0" />
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
           </div>
         ) : null}
 
@@ -427,7 +451,7 @@ export function AppSidebar() {
           </>
         ) : null}
 
-        <div hidden={!(pathname?.startsWith('/projects') || pathname?.startsWith('/dashboard') || pathname === '/')}>
+        <div hidden={!(pathname?.startsWith('/projects') || isHomeSectionPath(pathname))}>
           <button
             type="button"
             onClick={() => setIsTeamspacesOpen((open) => !open)}

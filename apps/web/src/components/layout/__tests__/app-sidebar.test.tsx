@@ -186,6 +186,53 @@ describe('AppSidebar', () => {
     expect(screen.getByRole('link', { name: /templates/i })).toHaveAttribute('href', '/templates');
   });
 
+  it('renders DASHBOARD_LINKS on /drafts (so users can navigate back home)', () => {
+    setPathname('/drafts');
+
+    render(
+      <Wrapper>
+        <AppSidebar />
+      </Wrapper>
+    );
+
+    expect(screen.getByRole('link', { name: /overview/i })).toHaveAttribute('href', '/dashboard');
+    expect(screen.getByRole('link', { name: /drafts/i })).toHaveAttribute('href', '/drafts');
+    expect(screen.getByRole('link', { name: /templates/i })).toHaveAttribute('href', '/templates');
+  });
+
+  it('renders DASHBOARD_LINKS on /templates', () => {
+    setPathname('/templates');
+
+    render(
+      <Wrapper>
+        <AppSidebar />
+      </Wrapper>
+    );
+
+    expect(screen.getByRole('link', { name: /overview/i })).toHaveAttribute('href', '/dashboard');
+    expect(screen.getByRole('link', { name: /drafts/i })).toHaveAttribute('href', '/drafts');
+    expect(screen.getByRole('link', { name: /templates/i })).toHaveAttribute('href', '/templates');
+  });
+
+  it('renders MY_ISSUES_VIEWS on /issues/[issueId] detail pages', () => {
+    setPathname('/issues/abc-123');
+
+    render(
+      <Wrapper>
+        <AppSidebar />
+      </Wrapper>
+    );
+
+    expect(screen.getByRole('link', { name: /assigned to me/i })).toHaveAttribute(
+      'href',
+      '/my-issues?view=assigned'
+    );
+    expect(screen.getByRole('link', { name: /created by me/i })).toHaveAttribute(
+      'href',
+      '/my-issues?view=created'
+    );
+  });
+
   it('renders SETTINGS_LINKS on /settings (Organization, Members, API Keys, Integrations, Activity)', () => {
     setPathname('/settings');
 
