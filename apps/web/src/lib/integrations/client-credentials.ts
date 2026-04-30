@@ -24,7 +24,8 @@ export type IntegrationProvider =
   | 'gitlab'
   | 'jira'
   | 'github'
-  | 'google';
+  | 'google'
+  | 'sentry';
 
 export const INTEGRATION_PROVIDERS: readonly IntegrationProvider[] = [
   'slack',
@@ -32,6 +33,7 @@ export const INTEGRATION_PROVIDERS: readonly IntegrationProvider[] = [
   'jira',
   'github',
   'google',
+  'sentry',
 ] as const;
 
 export type ClientCredentials = {
@@ -71,10 +73,18 @@ const ENV_FALLBACKS: Record<IntegrationProvider, EnvFallback> = {
   github: {
     clientIdEnv: 'GITHUB_CLIENT_ID',
     clientSecretEnv: 'GITHUB_CLIENT_SECRET',
+    redirectUriEnv: 'GITHUB_INTEGRATION_REDIRECT_URI',
+    scopeEnv: 'GITHUB_OAUTH_SCOPE',
   },
   google: {
     clientIdEnv: 'GOOGLE_CLIENT_ID',
     clientSecretEnv: 'GOOGLE_CLIENT_SECRET',
+  },
+  sentry: {
+    clientIdEnv: 'SENTRY_CLIENT_ID',
+    clientSecretEnv: 'SENTRY_CLIENT_SECRET',
+    redirectUriEnv: 'SENTRY_REDIRECT_URI',
+    scopeEnv: 'SENTRY_OAUTH_SCOPE',
   },
 };
 

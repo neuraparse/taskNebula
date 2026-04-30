@@ -31,7 +31,7 @@ import {
   Trash2,
 } from 'lucide-react';
 
-type Provider = 'slack' | 'gitlab' | 'jira' | 'github' | 'google';
+type Provider = 'slack' | 'gitlab' | 'jira' | 'github' | 'google' | 'sentry';
 
 type ProviderSummary = {
   provider: Provider;
@@ -73,13 +73,21 @@ const PROVIDER_META: Record<
   },
   github: {
     label: 'GitHub',
-    description: 'GitHub OAuth app used for sign-in and repo integrations.',
-    redirectHint: 'https://your-domain/api/auth/callback/github',
+    description:
+      'GitHub OAuth app for sign-in and repo / issue / pull request sync.',
+    scopeHint: 'repo read:user',
+    redirectHint: 'https://your-domain/api/integrations/github/callback',
   },
   google: {
     label: 'Google',
     description: 'Google OAuth client for sign-in and workspace integrations.',
     redirectHint: 'https://your-domain/api/auth/callback/google',
+  },
+  sentry: {
+    label: 'Sentry',
+    description: 'OAuth app for syncing Sentry issues with TaskNebula work items.',
+    scopeHint: 'org:read project:read event:read',
+    redirectHint: 'https://your-domain/api/integrations/sentry/callback',
   },
 };
 
