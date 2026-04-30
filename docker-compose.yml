@@ -59,6 +59,12 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     volumes:
       - ./docker/livekit/start-livekit.sh:/etc/livekit/start-livekit.sh:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:7880/ | grep -q OK || exit 1']
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
 
   web:
     # Pull the published image by default (instant start). Override via
@@ -123,7 +129,7 @@ services:
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     healthcheck:
-      test: ['CMD', 'node', '-e', "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test: ['CMD', 'node', '-e', "require('http').get('http://localhost:3000/api/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
       start_period: 60s
