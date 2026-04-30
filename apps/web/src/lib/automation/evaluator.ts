@@ -35,6 +35,11 @@ import {
 // password-reset-tokens / email-verification-tokens / project-modules.
 import { automationExecutions } from '@tasknebula/db/src/schema/automation-executions';
 import { evaluateConditions, type AutomationCondition } from './conditions';
+import {
+  triggerWebhooks,
+  WEBHOOK_EVENTS,
+  type WebhookEvent,
+} from '@/lib/webhooks/dispatcher';
 
 // --------------------------------------------------------------------------
 // Types
@@ -504,14 +509,58 @@ async function loadEnabledRules(
 }
 
 /**
- * Fire automation rules for a trigger. Non-blocking-safe: callers should
- * invoke as `void runAutomations(...)`. All errors are swallowed and logged;
- * the returned promise always resolves.
+ * Map an internal automation trigger to its public webhook event name. Most
+ * triggers are 1:1 with the `webhookEventEnum`; the only trigger that does
+ * not have a webhook counterpart today is `project.archived`, which we map
+ * to `project.updated` so subscribers still see the lifecycle change.
+ *
+ * Returns `null` when the trigger has no webhook surface (kept as a future-
+ * proofing escape hatch — currently never returned).
+ */
+function triggerToWebhookEvent(
+  trigger: AutomationTrigger
+): WebhookEvent | null {
+  if (trigger === 'project.archived') return 'project.updated';
+  // The remaining automation triggers are name-equal to webhook events.
+  return (WEBHOOK_EVENTS as readonly string[]).includes(trigger)
+    ? (trigger as WebhookEvent)
+    : null;
+}
+
+/**
+ * Fire automation rules for a trigger AND fan out the same trigger to any
+ * org/project-scoped webhook subscribers.
+ *
+ * Non-blocking-safe: callers should invoke as `void runAutomations(...)`. All
+ * errors are swallowed and logged; the returned promise always resolves. The
+ * webhook fan-out runs in the background and intentionally does not block the
+ * returned `ExecutionResult[]` so existing call sites keep their semantics.
  */
 export async function runAutomations(
   params: RunAutomationsParams
 ): Promise<ExecutionResult[]> {
   const results: ExecutionResult[] = [];
+
+  // Fan out to webhook subscribers in parallel with rule evaluation. This is
+  // the only cross-cutting side-effect added to the engine — it never reads
+  // automation state and never throws.
+  const webhookEvent = triggerToWebhookEvent(params.trigger);
+  if (webhookEvent) {
+    void triggerWebhooks({
+      organizationId: params.organizationId,
+      projectId: params.projectId ?? null,
+      event: webhookEvent,
+      payload: params.payload,
+      actorUserId: params.actorUserId ?? null,
+    }).catch((err) => {
+      // triggerWebhooks already swallows and logs internally; this catch is
+      // belt-and-braces so an unexpected throw never leaks into the caller.
+      console.error('[automation] triggerWebhooks crashed', {
+        event: webhookEvent,
+        err: err instanceof Error ? err.message : String(err),
+      });
+    });
+  }
 
   try {
     const rules = await loadEnabledRules(params.organizationId, params.projectId ?? null);

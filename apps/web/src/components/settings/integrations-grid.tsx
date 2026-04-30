@@ -188,16 +188,13 @@ function DrawioIcon({ className }: { className?: string }) {
 // Registry
 // ---------------------------------------------------------------------------
 
-const githubAvailable: IntegrationStatus =
-  typeof process !== 'undefined' && process.env.GITHUB_OAUTH ? 'available' : 'coming_soon';
-
 export const INTEGRATIONS: IntegrationDefinition[] = [
   {
+    // Status is resolved at runtime via /api/integrations/github/status.
     id: 'github',
     name: 'GitHub',
     description: 'Sync issues, PRs, and commits',
-    status: githubAvailable,
-    href: githubAvailable === 'available' ? '/settings/integrations/github' : undefined,
+    status: 'available',
     category: 'source-control',
     brandColor: '#181717',
     Icon: GitHubIcon,
@@ -224,10 +221,11 @@ export const INTEGRATIONS: IntegrationDefinition[] = [
     Icon: SlackIcon,
   },
   {
+    // Status is resolved at runtime via /api/integrations/sentry/status.
     id: 'sentry',
     name: 'Sentry',
     description: 'Sync Sentry issues with work items',
-    status: 'coming_soon',
+    status: 'available',
     category: 'monitoring',
     brandColor: '#362D59',
     Icon: SentryIcon,
@@ -314,6 +312,12 @@ function IntegrationCard({ integration, footer, accountLabel }: IntegrationCardP
   }
   if (integration.id === 'jira') {
     return <JiraIntegrationCard integration={integration} />;
+  }
+  if (integration.id === 'github') {
+    return <GitHubIntegrationCard integration={integration} />;
+  }
+  if (integration.id === 'sentry') {
+    return <SentryIntegrationCard integration={integration} />;
   }
 
   const { name, description, status, href, Icon } = integration;
@@ -698,6 +702,314 @@ function JiraIntegrationCard({ integration }: IntegrationCardProps) {
                 )}
               >
                 {loading ? 'Checking...' : 'Connect Jira'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+      {connected && (
+        <Badge variant="success" className="absolute right-4 top-4">
+          Connected
+        </Badge>
+      )}
+    </article>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// GitHub card — OAuth connect / disconnect via /api/integrations/github.
+// Mirrors GitLab/Jira: server-side state cookie + integration_connections row.
+// ---------------------------------------------------------------------------
+
+interface GitHubStatusResponse {
+  connected: boolean;
+  connection?: {
+    externalAccountLabel?: string | null;
+    metadata?: { avatarUrl?: string | null } | null;
+  };
+}
+
+function GitHubIntegrationCard({ integration }: IntegrationCardProps) {
+  const { name, description, Icon } = integration;
+  const currentOrganizationId = useOrganization((s) => s.currentOrganizationId);
+
+  const [connected, setConnected] = useState(false);
+  const [accountLabel, setAccountLabel] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    if (!currentOrganizationId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/integrations/github/status?organizationId=${encodeURIComponent(currentOrganizationId)}`,
+        { cache: 'no-store' }
+      );
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      const json = (await res.json()) as GitHubStatusResponse;
+      setConnected(Boolean(json.connected));
+      setAccountLabel(json.connection?.externalAccountLabel ?? null);
+    } catch (err) {
+      console.error('GitHub status check failed', err);
+      setConnected(false);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentOrganizationId]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  // After OAuth roundtrip, settings page lands with ?integration=github&connected=1.
+  // Strip those params and re-fetch status so the card flips state.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('integration') === 'github' && params.get('connected') === '1') {
+      params.delete('integration');
+      params.delete('connected');
+      const qs = params.toString();
+      const next = `${window.location.pathname}${qs ? `?${qs}` : ''}`;
+      window.history.replaceState({}, '', next);
+      void refresh();
+    }
+  }, [refresh]);
+
+  const handleConnect = () => {
+    if (!currentOrganizationId) {
+      setError('Select an organization first');
+      return;
+    }
+    window.location.href = `/api/integrations/github/authorize?organizationId=${encodeURIComponent(currentOrganizationId)}`;
+  };
+
+  const handleDisconnect = async () => {
+    if (!currentOrganizationId) return;
+    const ok = window.confirm(
+      'Disconnect GitHub from this workspace? TaskNebula will stop syncing issues and pull requests.'
+    );
+    if (!ok) return;
+    setDisconnecting(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/integrations/github?organizationId=${encodeURIComponent(currentOrganizationId)}`,
+        { method: 'DELETE' }
+      );
+      if (!res.ok) throw new Error(`DELETE failed with ${res.status}`);
+      setConnected(false);
+      setAccountLabel(null);
+    } catch (err) {
+      console.error('GitHub disconnect failed', err);
+      setError('Failed to disconnect. Please try again.');
+    } finally {
+      setDisconnecting(false);
+    }
+  };
+
+  return (
+    <article className="group relative rounded-xl border border-border bg-card p-5 transition-all hover:border-foreground/20 hover:shadow-sm">
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted/50">
+          <Icon className="h-6 w-6" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
+          <p className="mt-1 text-[12.5px] text-muted-foreground leading-snug">{description}</p>
+          {connected && accountLabel && (
+            <p className="mt-1 text-[11.5px] text-muted-foreground">Account: {accountLabel}</p>
+          )}
+          {error && <p className="mt-1 text-[11.5px] text-destructive">{error}</p>}
+          <div className="mt-3 flex items-center gap-2">
+            {connected ? (
+              <button
+                type="button"
+                onClick={handleDisconnect}
+                disabled={disconnecting}
+                className={cn(
+                  'rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium',
+                  'hover:border-foreground/30 disabled:opacity-60'
+                )}
+              >
+                {disconnecting ? 'Disconnecting…' : 'Disconnect'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleConnect}
+                disabled={!currentOrganizationId || loading}
+                className={cn(
+                  'rounded-md border border-foreground bg-foreground px-2.5 py-1 text-xs font-medium text-background',
+                  'hover:opacity-90 disabled:opacity-60'
+                )}
+              >
+                {loading ? 'Checking…' : 'Connect GitHub'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+      {connected && (
+        <Badge variant="success" className="absolute right-4 top-4">
+          Connected
+        </Badge>
+      )}
+    </article>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sentry card — OAuth connect / disconnect via /api/integrations/sentry.
+// ---------------------------------------------------------------------------
+
+interface SentryStatusResponse {
+  connected: boolean;
+  connection?: {
+    externalAccountLabel?: string | null;
+    metadata?: {
+      organizationSlug?: string | null;
+      organizationName?: string | null;
+    } | null;
+  };
+}
+
+function SentryIntegrationCard({ integration }: IntegrationCardProps) {
+  const { name, description, Icon } = integration;
+  const currentOrganizationId = useOrganization((s) => s.currentOrganizationId);
+
+  const [connected, setConnected] = useState(false);
+  const [accountLabel, setAccountLabel] = useState<string | null>(null);
+  const [orgSlug, setOrgSlug] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    if (!currentOrganizationId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/integrations/sentry/status?organizationId=${encodeURIComponent(currentOrganizationId)}`,
+        { cache: 'no-store' }
+      );
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      const json = (await res.json()) as SentryStatusResponse;
+      setConnected(Boolean(json.connected));
+      setAccountLabel(json.connection?.externalAccountLabel ?? null);
+      setOrgSlug(json.connection?.metadata?.organizationSlug ?? null);
+    } catch (err) {
+      console.error('Sentry status check failed', err);
+      setConnected(false);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentOrganizationId]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('integration') === 'sentry' && params.get('connected') === '1') {
+      params.delete('integration');
+      params.delete('connected');
+      const qs = params.toString();
+      const next = `${window.location.pathname}${qs ? `?${qs}` : ''}`;
+      window.history.replaceState({}, '', next);
+      void refresh();
+    }
+  }, [refresh]);
+
+  const handleConnect = () => {
+    if (!currentOrganizationId) {
+      setError('Select an organization first');
+      return;
+    }
+    window.location.href = `/api/integrations/sentry/authorize?organizationId=${encodeURIComponent(currentOrganizationId)}`;
+  };
+
+  const handleDisconnect = async () => {
+    if (!currentOrganizationId) return;
+    const ok = window.confirm('Disconnect Sentry from this workspace?');
+    if (!ok) return;
+    setDisconnecting(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/integrations/sentry?organizationId=${encodeURIComponent(currentOrganizationId)}`,
+        { method: 'DELETE' }
+      );
+      if (!res.ok) throw new Error(`DELETE failed with ${res.status}`);
+      setConnected(false);
+      setAccountLabel(null);
+      setOrgSlug(null);
+    } catch (err) {
+      console.error('Sentry disconnect failed', err);
+      setError('Failed to disconnect. Please try again.');
+    } finally {
+      setDisconnecting(false);
+    }
+  };
+
+  return (
+    <article className="group relative rounded-xl border border-border bg-card p-5 transition-all hover:border-foreground/20 hover:shadow-sm">
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted/50">
+          <Icon className="h-6 w-6" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
+          <p className="mt-1 text-[12.5px] text-muted-foreground leading-snug">{description}</p>
+          {connected && accountLabel && (
+            <p className="mt-1 text-[11.5px] text-muted-foreground">
+              Sentry org: {accountLabel}
+              {orgSlug && (
+                <>
+                  {' · '}
+                  <a
+                    href={`https://sentry.io/organizations/${encodeURIComponent(orgSlug)}/`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline-offset-2 hover:underline"
+                  >
+                    Open
+                  </a>
+                </>
+              )}
+            </p>
+          )}
+          {error && <p className="mt-1 text-[11.5px] text-destructive">{error}</p>}
+          <div className="mt-3 flex items-center gap-2">
+            {connected ? (
+              <button
+                type="button"
+                onClick={handleDisconnect}
+                disabled={disconnecting}
+                className={cn(
+                  'rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium',
+                  'hover:border-foreground/30 disabled:opacity-60'
+                )}
+              >
+                {disconnecting ? 'Disconnecting…' : 'Disconnect'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleConnect}
+                disabled={!currentOrganizationId || loading}
+                className={cn(
+                  'rounded-md border border-foreground bg-foreground px-2.5 py-1 text-xs font-medium text-background',
+                  'hover:opacity-90 disabled:opacity-60'
+                )}
+              >
+                {loading ? 'Checking…' : 'Connect Sentry'}
               </button>
             )}
           </div>
