@@ -5,6 +5,7 @@
  * Used by Docker, Kubernetes, and monitoring services.
  */
 
+import * as v8 from 'v8';
 import { NextResponse } from 'next/server';
 import { db } from '@tasknebula/db';
 import { sql } from 'drizzle-orm';
@@ -41,12 +42,13 @@ export async function GET() {
     status = 'unhealthy';
   }
 
-  // Check memory usage - use RSS (Resident Set Size) for more accurate container memory check
-  const memoryUsage = process.memoryUsage();
-  const heapUsedPercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
+  // V8 keeps heapTotal sized close to heapUsed by design, so heapUsed/heapTotal
+  // is not a useful saturation signal. Compare heapUsed against heap_size_limit
+  // (the V8 cap, ~1.7G default or --max-old-space-size) which is what actually
+  // triggers GC pressure / OOM.
+  const heapStats = v8.getHeapStatistics();
+  const heapUsedPercent = (heapStats.used_heap_size / heapStats.heap_size_limit) * 100;
 
-  // Only mark as error if heap is critically full (>95%)
-  // Warning at >85% to give time for scaling/investigation
   if (heapUsedPercent > 95) {
     checks.memory = 'error';
     status = 'unhealthy';
