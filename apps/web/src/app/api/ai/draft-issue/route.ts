@@ -109,19 +109,14 @@ async function resolveProviderAndKey(
 }
 
 export async function POST(request: NextRequest) {
-  console.log('[draft-issue] POST received');
-
   if (!(await isAiFeatureEnabled())) {
-    console.log('[draft-issue] gate closed → 404');
     return aiDisabledResponse();
   }
 
   const session = await auth();
   if (!session?.user?.id) {
-    console.log('[draft-issue] unauth → 401');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  console.log('[draft-issue] auth ok', { userId: session.user.id });
 
   let body: z.infer<typeof bodySchema>;
   try {
@@ -129,7 +124,6 @@ export async function POST(request: NextRequest) {
     body = bodySchema.parse(raw);
   } catch (err) {
     if (err instanceof z.ZodError) {
-      console.warn('[draft-issue] 400 invalid body', err.errors);
       return NextResponse.json(
         { error: 'Invalid input', details: err.errors },
         { status: 400 }
@@ -137,20 +131,16 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
-  console.log('[draft-issue] body ok', { projectId: body.projectId, promptLen: body.prompt.length });
 
   const hasAccess = await userHasProjectAccess(session.user.id, body.projectId);
   if (!hasAccess) {
-    console.warn('[draft-issue] 404 user has no project access');
     return NextResponse.json({ error: 'Project not found or access denied' }, { status: 404 });
   }
-  console.log('[draft-issue] access ok');
 
   // The URL segment can be either the project id or its key (e.g. "N" for
   // Nowflow). Resolve both so we never reject a legitimate Backlog-page click.
   const project = await resolveProjectByIdOrKey(body.projectId);
   if (!project) {
-    console.warn('[draft-issue] 404 project not found', { projectIdOrKey: body.projectId });
     return NextResponse.json(
       {
         error: `No project matching "${body.projectId}". Open the project from the Projects list and retry from its Backlog.`,
@@ -159,7 +149,6 @@ export async function POST(request: NextRequest) {
       { status: 404 }
     );
   }
-  console.log('[draft-issue] project ok', { id: project.id, key: project.key, name: project.name });
 
   // Reject upfront if the workspace's AI toggle is off — admins should
   // see a 412 rather than a drifting silent-fallback draft.
@@ -171,13 +160,7 @@ export async function POST(request: NextRequest) {
   const workspace = normalizeWorkspaceAgentSettings(
     ((org?.settings as { aiAgents?: unknown } | null) ?? {}).aiAgents
   );
-  console.log('[draft-issue] workspace', {
-    assistantEnabled: workspace.assistantEnabled,
-    provider: workspace.provider,
-    model: workspace.model,
-  });
   if (!workspace.assistantEnabled) {
-    console.warn('[draft-issue] 412 assistant_disabled');
     return NextResponse.json(
       {
         error:
@@ -206,11 +189,6 @@ export async function POST(request: NextRequest) {
     body.provider,
     project.organizationId
   );
-  console.log('[draft-issue] provider resolved', {
-    provider,
-    model: workspace.model,
-    hasKey: !!apiKey,
-  });
 
   // Respect the workspace-configured model when it's set; if the admin
   // picked, say, claude-opus-4-7, the draft should use that, not the
@@ -227,10 +205,6 @@ export async function POST(request: NextRequest) {
       provider,
       apiKey,
       model: modelToUse,
-    });
-    console.log('[draft-issue] draft ok', {
-      type: draft.type,
-      title: draft.title.slice(0, 60),
     });
 
     await createAuditLog({
@@ -250,7 +224,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ draft, provider });
   } catch (err) {
     if (err instanceof AiDraftError) {
-      console.warn('[draft-issue] AiDraftError', { code: err.code, message: err.message });
       await createAuditLog({
         userId: session.user.id,
         organizationId: project.organizationId,

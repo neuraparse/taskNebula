@@ -143,84 +143,84 @@
       "breakpoints": true
     },
     {
-      "idx": 19,
+      "idx": 20,
       "version": "7",
       "when": 1777900000000,
       "tag": "0019_user_appearance_settings",
       "breakpoints": true
     },
     {
-      "idx": 20,
+      "idx": 21,
       "version": "7",
       "when": 1778000000000,
       "tag": "0020_integration_connections",
       "breakpoints": true
     },
     {
-      "idx": 20,
+      "idx": 22,
       "version": "7",
       "when": 1778050000000,
       "tag": "0020_pinned_items",
       "breakpoints": true
     },
     {
-      "idx": 20,
+      "idx": 23,
       "version": "7",
       "when": 1778100000000,
       "tag": "0020_project_modules",
       "breakpoints": true
     },
     {
-      "idx": 21,
+      "idx": 24,
       "version": "7",
       "when": 1778200000000,
       "tag": "0021_password_reset_tokens",
       "breakpoints": true
     },
     {
-      "idx": 22,
+      "idx": 25,
       "version": "7",
       "when": 1778400000000,
       "tag": "0022_project_event_notifications",
       "breakpoints": true
     },
     {
-      "idx": 23,
+      "idx": 26,
       "version": "7",
       "when": 1778500000000,
       "tag": "0023_automation_executions",
       "breakpoints": true
     },
     {
-      "idx": 24,
+      "idx": 27,
       "version": "7",
       "when": 1778600000000,
       "tag": "0024_sprint_default_flip",
       "breakpoints": true
     },
     {
-      "idx": 25,
+      "idx": 28,
       "version": "7",
       "when": 1778700000000,
       "tag": "0025_drafts",
       "breakpoints": true
     },
     {
-      "idx": 26,
+      "idx": 29,
       "version": "7",
-      "when": 1778700000000,
+      "when": 1778700050000,
       "tag": "0026_integration_client_credentials",
       "breakpoints": true
     },
     {
-      "idx": 26,
+      "idx": 30,
       "version": "7",
       "when": 1778700100000,
       "tag": "0026_templates_kind_payload",
       "breakpoints": true
     },
     {
-      "idx": 27,
+      "idx": 31,
       "version": "7",
       "when": 1778800000000,
       "tag": "0027_audit_member_added_to_project",
