@@ -7,6 +7,7 @@ import { eq, and, desc, asc, sql, inArray } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { runAutomations } from '@/lib/automation/evaluator';
+import { withValidation } from '@/lib/api-validation';
 
 // Permission check helper for issues
 async function checkIssuePermission(
@@ -286,15 +287,18 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/issues - Create a new issue
-export async function POST(request: NextRequest) {
+// Migrated to withValidation (FEAT-29): the wrapper parses + types `body`
+// against `createIssueSchema` and short-circuits with a 400 envelope on
+// failure, so this handler only deals with the success path.
+export const POST = withValidation({ body: createIssueSchema })(async (
+  request,
+  { body: validatedData }
+) => {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const body = await request.json();
-    const validatedData = createIssueSchema.parse(body);
 
     // If projectId looks like a key (e.g., "demo", "PROJ"), convert to ID
     let actualProjectId = validatedData.projectId;
@@ -485,14 +489,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(newIssue, { status: 201 });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      console.error('Validation error:', error.errors);
-      return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
-        { status: 400 }
-      );
-    }
     console.error('Error creating issue:', error);
     return NextResponse.json({ error: 'Failed to create issue' }, { status: 500 });
   }
-}
+});

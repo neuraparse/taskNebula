@@ -5,6 +5,7 @@ import { auth } from '@/auth';
 import { createId } from '@paralleldrive/cuid2';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { publishEvent } from '@/lib/realtime/events';
+import { withValidation } from '@/lib/api-validation';
 
 // Validation schema for creating a comment
 const createCommentSchema = z.object({
@@ -13,6 +14,8 @@ const createCommentSchema = z.object({
   mentions: z.array(z.string()).default([]),
   isInternal: z.boolean().default(false),
 });
+
+const commentsParamsSchema = z.object({ issueId: z.string().min(1) });
 
 // GET /api/issues/[issueId]/comments - Get all comments for an issue
 export async function GET(
@@ -39,19 +42,18 @@ export async function GET(
 }
 
 // POST /api/issues/[issueId]/comments - Create a new comment
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ issueId: string }> }
-) {
+// Migrated to withValidation (FEAT-29). Body + params are parsed by the
+// wrapper; ZodError handling is no longer needed in the handler.
+export const POST = withValidation({
+  body: createCommentSchema,
+  params: commentsParamsSchema,
+})(async (request, { body: validatedData, params }) => {
+  const { issueId } = params;
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const { issueId } = await params;
-    const body = await request.json();
-    const validatedData = createCommentSchema.parse(body);
 
     const newComment = await createComment({
       id: createId(),
@@ -124,14 +126,8 @@ export async function POST(
 
     return NextResponse.json(newComment, { status: 201 });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
-        { status: 400 }
-      );
-    }
     console.error('Error creating comment:', error);
     return NextResponse.json({ error: 'Failed to create comment' }, { status: 500 });
   }
-}
+});
 
