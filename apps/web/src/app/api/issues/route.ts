@@ -7,6 +7,7 @@ import { eq, and, desc, asc, sql, inArray } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { runAutomations } from '@/lib/automation/evaluator';
+import { enqueueTriageOnCreate } from '@/lib/agents/triage-enqueue';
 
 // Permission check helper for issues
 async function checkIssuePermission(
@@ -482,6 +483,12 @@ export async function POST(request: NextRequest) {
       payload: newIssue,
       actorUserId: session.user.id!,
     }).catch((err) => console.error('automation failed', err));
+
+    // Fire-and-forget: run the Triage Intelligence agent so the issue
+    // shows up with suggested labels/priority/assignee in the panel
+    // without blocking the create response. Failures are swallowed and
+    // logged — triage is best-effort assistance, not a critical path.
+    enqueueTriageOnCreate(newIssue.id);
 
     return NextResponse.json(newIssue, { status: 201 });
   } catch (error) {
