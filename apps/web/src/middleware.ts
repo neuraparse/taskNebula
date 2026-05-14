@@ -31,6 +31,11 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
+  // EU AI Act Article 50 public disclosures must be reachable without auth.
+  if (pathname === '/ai-model-cards' || pathname.startsWith('/ai-model-cards/')) {
+    return NextResponse.next();
+  }
+
   // API routes are handled separately
   if (pathname.startsWith('/api')) {
     return NextResponse.next();

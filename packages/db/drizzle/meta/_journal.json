@@ -337,6 +337,13 @@
 			"when": 1778900000000,
 			"tag": "0047_search_history_pinned",
 			"breakpoints": true
+		},
+		{
+			"idx": 48,
+			"version": "7",
+			"when": 1778900000000,
+			"tag": "0048_ai_disclosures_acknowledged",
+			"breakpoints": true
 		}
 	]
 }

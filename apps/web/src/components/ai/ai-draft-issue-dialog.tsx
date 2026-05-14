@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAiCapability } from '@/lib/hooks/use-ai-capability';
+import { AiBadge } from '@/components/ai/AiBadge';
 
 type IssueDraft = {
   type: 'story' | 'task' | 'bug' | 'epic' | 'subtask';
@@ -339,10 +340,17 @@ export function AiDraftIssueDialog({
             {drafts.length > 0 && (
               <div className="space-y-2 pt-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {drafts.length === 1 ? 'Draft' : `${drafts.length} drafts`}
-                    {provider ? ` · ${provider}` : ''}
-                  </span>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <AiBadge
+                      feature="Draft Issue"
+                      model={provider ?? undefined}
+                      generatedAt={new Date()}
+                    />
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {drafts.length === 1 ? 'Draft' : `${drafts.length} drafts`}
+                      {provider ? ` · ${provider}` : ''}
+                    </span>
+                  </div>
                   <div className="flex items-center gap-2">
                     <Button
                       type="button"
@@ -429,8 +437,17 @@ export function AiDraftIssueDialog({
 
           {/* RIGHT — live preview */}
           <aside className="overflow-y-auto bg-muted/20 p-5">
-            <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-4">
-              Live preview
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                Live preview
+              </div>
+              {previewDraft && (
+                <AiBadge
+                  feature="Draft Issue"
+                  model={provider ?? undefined}
+                  generatedAt={new Date()}
+                />
+              )}
             </div>
             {previewDraft ? (
               <div className="space-y-4">

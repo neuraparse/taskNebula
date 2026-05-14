@@ -18,6 +18,7 @@ import {
   describeEntity,
 } from '@/lib/ai/sidecar-context';
 import { AiSidecar } from './ai-sidecar';
+import { AiDisclosureModal } from './ai-disclosure-modal';
 
 interface AiSidecarProviderProps {
   children: ReactNode;
@@ -155,6 +156,9 @@ export function AiSidecarProvider({ children }: AiSidecarProviderProps) {
     <SidecarContext.Provider value={value}>
       {children}
       <AiSidecar />
+      {/* EU AI Act Article 50 — first-time disclosure modal. Self-gates on
+          the current disclosure version + per-user acknowledgement. */}
+      <AiDisclosureModal />
     </SidecarContext.Provider>
   );
 }
