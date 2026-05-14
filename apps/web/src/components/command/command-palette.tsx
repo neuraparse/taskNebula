@@ -3,24 +3,27 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import {
+  ArrowRight,
   BarChart3,
-  Calendar,
+  BookOpenText,
   CircleDot,
   FileText,
   FolderKanban,
-  HelpCircle,
+  Hash,
   Home,
   Inbox,
-  Keyboard,
   Layers,
-  LayoutDashboard,
   Lightbulb,
-  LogOut,
   type LucideIcon,
-  Plus,
+  Pin,
+  PinOff,
   RefreshCw,
-  SunMoon,
+  Search,
+  Sparkles,
+  Tag,
+  User,
   Users,
+  X,
 } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
@@ -28,181 +31,276 @@ import {
   Command,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
   CommandSeparator,
-  CommandShortcut,
 } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
+import { useOrganization } from '@/lib/hooks/use-organization';
+import {
+  parseFacets,
+  activeFacetPicker,
+  removeFacet,
+  type Facet,
+  type FacetKey,
+} from '@/lib/command/facets';
+import { useOmnibarSearch, type OmnibarTab } from '@/lib/command/use-omnibar-search';
 
 /* -------------------------------------------------------------------------- */
 /* Types                                                                       */
 /* -------------------------------------------------------------------------- */
-
-type Leader = 'G' | 'O' | 'N';
-
-interface ChordAction {
-  /** Single uppercase letter pressed after the leader. */
-  key: string;
-  /** Visible label. */
-  label: string;
-  /** Lucide icon shown on the leading edge of the row. */
-  icon: LucideIcon;
-  /** Either a navigation href or a side-effect callback. */
-  href?: string;
-  onSelect?: () => void;
-  /** Optional hint shown right of label, e.g. "create". */
-  hint?: string;
-}
-
-interface RecentItem {
-  id: string;
-  label: string;
-  href: string;
-}
 
 export interface CommandPaletteProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Static chord definitions (Plane Power-K 2.0 grammar)                        */
-/* -------------------------------------------------------------------------- */
+interface HistoryEntry {
+  id: string;
+  query: string;
+  pinned: boolean;
+}
 
-const NAVIGATE_CHORDS: ChordAction[] = [
-  { key: 'I', label: 'Work items', icon: CircleDot, href: '/work-items' },
-  { key: 'P', label: 'Pages', icon: FileText, href: '/pages' },
-  { key: 'C', label: 'Cycles', icon: RefreshCw, href: '/cycles' },
-  { key: 'M', label: 'Modules', icon: Layers, href: '/modules' },
-  { key: 'N', label: 'Initiatives', icon: Lightbulb, href: '/initiatives' },
-  { key: 'D', label: 'Dashboards', icon: BarChart3, href: '/dashboards' },
-  { key: 'X', label: 'Inbox', icon: Inbox, href: '/inbox' },
-  { key: 'H', label: 'Home', icon: Home, href: '/' },
-  { key: 'T', label: 'Teamspaces', icon: Users, href: '/teamspaces' },
-];
-
-const CREATE_CHORDS: ChordAction[] = [
-  { key: 'I', label: 'New work item', icon: CircleDot, hint: 'Create' },
-  { key: 'D', label: 'New page', icon: FileText, hint: 'Create' },
-  { key: 'P', label: 'New project', icon: FolderKanban, hint: 'Create' },
-  { key: 'C', label: 'New cycle', icon: RefreshCw, hint: 'Create' },
-  { key: 'M', label: 'New module', icon: Layers, hint: 'Create' },
-  { key: 'V', label: 'New view', icon: LayoutDashboard, hint: 'Create' },
-  { key: 'B', label: 'New dashboard', icon: BarChart3, hint: 'Create' },
-];
-
-/** Open-specific-item leader (project picker placeholder). */
-const OPEN_CHORDS: ChordAction[] = [
-  { key: 'P', label: 'Open project…', icon: FolderKanban, hint: 'Open' },
-  { key: 'I', label: 'Open work item…', icon: CircleDot, hint: 'Open' },
-  { key: 'D', label: 'Open page…', icon: FileText, hint: 'Open' },
-];
-
-const HELP_ITEMS: ReadonlyArray<{
+interface NavShortcut {
   id: string;
   label: string;
   icon: LucideIcon;
-  shortcut?: string;
-  onSelect: () => void;
-}> = [
-  {
-    id: 'help.shortcuts',
-    label: 'Keyboard shortcuts',
-    icon: Keyboard,
-    shortcut: '⌘ + /',
-    onSelect: () => console.info('[command-palette] open keyboard shortcuts'),
-  },
-  {
-    id: 'help.theme',
-    label: 'Toggle theme',
-    icon: SunMoon,
-    onSelect: () => console.info('[command-palette] toggle theme'),
-  },
-  {
-    id: 'help.signout',
-    label: 'Sign out',
-    icon: LogOut,
-    onSelect: () => console.info('[command-palette] sign out'),
-  },
+  href: string;
+  hint?: string;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Static data                                                                 */
+/* -------------------------------------------------------------------------- */
+
+const TABS: ReadonlyArray<{ key: OmnibarTab; label: string; hotkey: string }> = [
+  { key: 'all', label: 'All', hotkey: '1' },
+  { key: 'issues', label: 'Issues', hotkey: '2' },
+  { key: 'docs', label: 'Docs', hotkey: '3' },
+  { key: 'people', label: 'People', hotkey: '4' },
+  { key: 'ask', label: 'Ask AI', hotkey: '5' },
 ];
 
-const LEADER_LABEL: Record<Leader, string> = {
-  G: 'Go to',
-  O: 'Open',
-  N: 'New',
+const QUICK_NAV: ReadonlyArray<NavShortcut> = [
+  { id: 'nav.home', label: 'Home', icon: Home, href: '/' },
+  { id: 'nav.inbox', label: 'Inbox', icon: Inbox, href: '/inbox' },
+  { id: 'nav.work-items', label: 'Work items', icon: CircleDot, href: '/work-items' },
+  { id: 'nav.docs', label: 'Docs', icon: BookOpenText, href: '/docs' },
+  { id: 'nav.dashboards', label: 'Dashboards', icon: BarChart3, href: '/dashboards' },
+  { id: 'nav.projects', label: 'Projects', icon: FolderKanban, href: '/projects' },
+  { id: 'nav.cycles', label: 'Cycles', icon: RefreshCw, href: '/cycles' },
+  { id: 'nav.modules', label: 'Modules', icon: Layers, href: '/modules' },
+  { id: 'nav.initiatives', label: 'Initiatives', icon: Lightbulb, href: '/initiatives' },
+  { id: 'nav.team', label: 'Team', icon: Users, href: '/team' },
+];
+
+const FACET_ICON: Record<FacetKey, LucideIcon> = {
+  status: Hash,
+  assignee: User,
+  project: FolderKanban,
+  label: Tag,
+  type: Hash,
+  priority: Hash,
 };
 
-const RECENTS_STORAGE_KEY = 'tn:command-recents';
-
 /* -------------------------------------------------------------------------- */
-/* Helpers                                                                     */
+/* Chip                                                                        */
 /* -------------------------------------------------------------------------- */
 
-function readRecentsSafely(): RecentItem[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = window.localStorage.getItem(RECENTS_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .filter(
-        (it): it is RecentItem =>
-          typeof it === 'object' &&
-          it !== null &&
-          typeof (it as { id?: unknown }).id === 'string' &&
-          typeof (it as { label?: unknown }).label === 'string' &&
-          typeof (it as { href?: unknown }).href === 'string'
-      )
-      .slice(0, 5);
-  } catch {
-    return [];
-  }
+interface FacetChipProps {
+  facet: Facet;
+  onRemove: () => void;
 }
 
-function isPrintableLetter(key: string): boolean {
-  return key.length === 1 && /^[a-zA-Z]$/.test(key);
-}
-
-function chordsForLeader(leader: Leader): ChordAction[] {
-  switch (leader) {
-    case 'G':
-      return NAVIGATE_CHORDS;
-    case 'O':
-      return OPEN_CHORDS;
-    case 'N':
-      return CREATE_CHORDS;
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-/* Row                                                                         */
-/* -------------------------------------------------------------------------- */
-
-interface PaletteRowProps {
-  icon: LucideIcon;
-  label: string;
-  shortcut?: string;
-  hint?: string;
-  value: string;
-  onSelect: () => void;
-}
-
-function PaletteRow({ icon: Icon, label, shortcut, hint, value, onSelect }: PaletteRowProps) {
+function FacetChip({ facet, onRemove }: FacetChipProps) {
+  const Icon = FACET_ICON[facet.key] ?? Hash;
   return (
-    <CommandItem value={value} onSelect={onSelect} className="gap-2">
-      <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-      <span className="flex-1 truncate">{label}</span>
-      {hint ? (
-        <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-          {hint}
-        </span>
-      ) : null}
-      {shortcut ? <CommandShortcut>{shortcut}</CommandShortcut> : null}
-    </CommandItem>
+    <span
+      className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 text-[11px] text-zinc-200 backdrop-blur"
+      data-testid={`facet-chip-${facet.key}`}
+    >
+      <Icon className="h-3 w-3 text-zinc-400" aria-hidden />
+      <span className="font-medium text-zinc-300">{facet.key}:</span>
+      <span className="truncate text-zinc-100">{facet.value}</span>
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={`Remove ${facet.key} filter`}
+        className="ml-0.5 rounded-sm p-0.5 text-zinc-400 hover:text-zinc-100"
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </span>
   );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Tabs                                                                        */
+/* -------------------------------------------------------------------------- */
+
+interface OmnibarTabsProps {
+  active: OmnibarTab;
+  onChange: (next: OmnibarTab) => void;
+}
+
+function OmnibarTabs({ active, onChange }: OmnibarTabsProps) {
+  return (
+    <div
+      role="tablist"
+      aria-label="Search scope"
+      className="flex items-center gap-1 border-b border-white/5 bg-zinc-900/40 px-3 py-2"
+    >
+      {TABS.map((tab) => {
+        const isActive = tab.key === active;
+        return (
+          <button
+            key={tab.key}
+            role="tab"
+            type="button"
+            aria-selected={isActive}
+            onClick={() => onChange(tab.key)}
+            className={cn(
+              'group inline-flex items-center gap-2 rounded-md px-2.5 py-1 text-xs font-medium transition-all duration-150 ease-snap',
+              isActive
+                ? 'bg-white/10 text-zinc-50 ring-1 ring-white/15'
+                : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
+            )}
+          >
+            {tab.label}
+            <kbd className="hidden rounded border border-white/10 bg-zinc-950/60 px-1 font-mono text-[10px] text-zinc-500 group-hover:inline-block">
+              {tab.hotkey}
+            </kbd>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Inline facet picker                                                         */
+/* -------------------------------------------------------------------------- */
+
+const FACET_PRESETS: Record<FacetKey, ReadonlyArray<string>> = {
+  status: ['todo', 'in_progress', 'review', 'done', 'blocked'],
+  priority: ['highest', 'high', 'medium', 'low', 'lowest'],
+  type: ['task', 'bug', 'story', 'epic', 'incident'],
+  label: ['frontend', 'backend', 'urgent', 'design', 'tech-debt'],
+  assignee: ['me', '@unassigned'],
+  project: [],
+};
+
+interface FacetPickerProps {
+  facetKey: FacetKey;
+  onPick: (value: string) => void;
+  onCancel: () => void;
+}
+
+function FacetPicker({ facetKey, onPick, onCancel }: FacetPickerProps) {
+  const presets = FACET_PRESETS[facetKey];
+  return (
+    <div
+      role="listbox"
+      aria-label={`${facetKey} values`}
+      className="mx-3 mt-1 mb-2 flex flex-wrap gap-1 rounded-md border border-white/10 bg-zinc-900/60 p-2 backdrop-blur-xl"
+    >
+      <span className="text-[10px] uppercase tracking-wider text-zinc-500">
+        {facetKey}:
+      </span>
+      {presets.length === 0 ? (
+        <span className="text-[11px] text-zinc-500">Type to filter…</span>
+      ) : (
+        presets.map((value) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => onPick(value)}
+            className="rounded-md border border-white/5 bg-white/5 px-1.5 py-0.5 text-[11px] text-zinc-200 transition hover:border-white/15 hover:bg-white/10"
+          >
+            {value}
+          </button>
+        ))
+      )}
+      <button
+        type="button"
+        onClick={onCancel}
+        className="ml-auto rounded-md p-1 text-zinc-500 hover:text-zinc-200"
+        aria-label="Close facet picker"
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* History (recents + pinned)                                                  */
+/* -------------------------------------------------------------------------- */
+
+function useHistory(organizationId: string | null, open: boolean) {
+  const [recents, setRecents] = React.useState<HistoryEntry[]>([]);
+  const [pinned, setPinned] = React.useState<HistoryEntry[]>([]);
+
+  React.useEffect(() => {
+    if (!open || !organizationId) return;
+    const controller = new AbortController();
+    const fetchList = async (pinnedOnly: boolean): Promise<HistoryEntry[]> => {
+      try {
+        const params = new URLSearchParams({
+          organizationId,
+          limit: pinnedOnly ? '10' : '8',
+        });
+        if (pinnedOnly) params.set('pinned', 'true');
+        const res = await fetch(`/api/search-history?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) return [];
+        const data = (await res.json()) as {
+          history?: Array<{ id: string; query: string; pinned?: boolean }>;
+        };
+        return (data.history ?? []).map((h) => ({
+          id: h.id,
+          query: h.query,
+          pinned: Boolean(h.pinned),
+        }));
+      } catch {
+        return [];
+      }
+    };
+
+    Promise.all([fetchList(true), fetchList(false)]).then(([p, r]) => {
+      setPinned(p);
+      setRecents(r.filter((entry) => !entry.pinned));
+    });
+
+    return () => controller.abort();
+  }, [open, organizationId]);
+
+  const togglePin = React.useCallback(
+    async (entry: HistoryEntry) => {
+      const next = !entry.pinned;
+      // Optimistic update.
+      if (next) {
+        setPinned((p) => [{ ...entry, pinned: true }, ...p.filter((x) => x.id !== entry.id)]);
+        setRecents((r) => r.filter((x) => x.id !== entry.id));
+      } else {
+        setPinned((p) => p.filter((x) => x.id !== entry.id));
+        setRecents((r) => [{ ...entry, pinned: false }, ...r]);
+      }
+      try {
+        await fetch('/api/search-history', {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ id: entry.id, pinned: next }),
+        });
+      } catch {
+        /* swallow — UI already reflects the intent */
+      }
+    },
+    []
+  );
+
+  return { recents, pinned, togglePin };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -211,36 +309,31 @@ function PaletteRow({ icon: Icon, label, shortcut, hint, value, onSelect }: Pale
 
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const router = useRouter();
-  const [query, setQuery] = React.useState('');
-  const [leader, setLeader] = React.useState<Leader | null>(null);
-  const [recents, setRecents] = React.useState<RecentItem[]>([]);
+  const { currentOrganizationId } = useOrganization();
+  const [rawInput, setRawInput] = React.useState('');
+  const [tab, setTab] = React.useState<OmnibarTab>('all');
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
-  // Reset transient state every time the dialog re-opens.
+  // Reset on every open.
   React.useEffect(() => {
     if (open) {
-      setQuery('');
-      setLeader(null);
-      setRecents(readRecentsSafely());
+      setRawInput('');
+      setTab('all');
     }
   }, [open]);
 
-  const close = React.useCallback(() => {
-    onOpenChange(false);
-  }, [onOpenChange]);
+  const { text: textQuery, facets } = React.useMemo(() => parseFacets(rawInput), [rawInput]);
+  const activePicker = React.useMemo(() => activeFacetPicker(rawInput), [rawInput]);
 
-  const runAction = React.useCallback(
-    (action: ChordAction) => {
-      if (action.href) {
-        router.push(action.href);
-      } else if (action.onSelect) {
-        action.onSelect();
-      } else {
-        console.info('[command-palette] action triggered (no handler)', action.label);
-      }
-      close();
-    },
-    [router, close]
-  );
+  const search = useOmnibarSearch({
+    query: textQuery,
+    tab,
+    organizationId: currentOrganizationId,
+  });
+
+  const history = useHistory(currentOrganizationId, open);
+
+  const close = React.useCallback(() => onOpenChange(false), [onOpenChange]);
 
   const navigate = React.useCallback(
     (href: string) => {
@@ -250,215 +343,320 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     [router, close]
   );
 
+  const askAi = React.useCallback(
+    (prompt: string) => {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('tasknebula:ask-ai', { detail: { prompt } })
+        );
+      }
+      // Optimistic fire-and-forget POST so /api/ask, once it lands
+      // (task #3), starts capturing palette-initiated prompts.
+      fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ prompt, source: 'command-palette' }),
+      }).catch(() => {
+        /* endpoint may not exist yet — silently ignore */
+      });
+      close();
+    },
+    [close]
+  );
+
+  const removeChip = React.useCallback((facet: Facet) => {
+    setRawInput((prev) => removeFacet(prev, facet));
+    inputRef.current?.focus();
+  }, []);
+
+  const appendFacetValue = React.useCallback((value: string) => {
+    setRawInput((prev) => `${prev}${value} `);
+    inputRef.current?.focus();
+  }, []);
+
   /* ------------------------------------------------------------------ */
-  /* Chord (leader -> letter) handling                                  */
+  /* Keyboard handlers                                                  */
   /* ------------------------------------------------------------------ */
   const onContentKeyDown = React.useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
-      // ESC: cancel leader first, then close.
-      if (event.key === 'Escape') {
-        if (leader) {
+      // Number keys 1–5 switch tabs when input is empty so the user can
+      // scope without taking their hands off the keyboard. We respect
+      // typing — once the input has content, digits go to the query.
+      if (
+        rawInput.length === 0 &&
+        /^[1-5]$/.test(event.key) &&
+        !event.metaKey &&
+        !event.ctrlKey
+      ) {
+        const idx = parseInt(event.key, 10) - 1;
+        const next = TABS[idx];
+        if (next) {
           event.preventDefault();
-          event.stopPropagation();
-          setLeader(null);
-          return;
+          setTab(next.key);
         }
         return;
       }
 
-      // Ignore key chords with modifiers (let cmdk / browser handle them).
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
-
-      // We only want to capture chords when the input is empty — once the
-      // user is actively searching, chord-mode would steal their letters.
-      if (query.length > 0) return;
-
-      const key = event.key;
-      if (!isPrintableLetter(key)) return;
-
-      const upper = key.toUpperCase();
-
-      if (!leader) {
-        if (upper === 'G' || upper === 'O' || upper === 'N') {
-          event.preventDefault();
-          setLeader(upper);
-        }
+      // Tab cycles through tabs.
+      if (event.key === 'Tab' && !event.metaKey && !event.ctrlKey) {
+        event.preventDefault();
+        const direction = event.shiftKey ? -1 : 1;
+        const idx = TABS.findIndex((t) => t.key === tab);
+        const nextIdx = (idx + direction + TABS.length) % TABS.length;
+        const target = TABS[nextIdx];
+        if (target) setTab(target.key);
         return;
-      }
-
-      // Leader is set — try to resolve the leaf.
-      const leaf = chordsForLeader(leader).find((c) => c.key === upper);
-      if (leaf) {
-        event.preventDefault();
-        setLeader(null);
-        runAction(leaf);
-      } else {
-        // Unknown leaf cancels the chord rather than swallowing the key.
-        event.preventDefault();
-        setLeader(null);
       }
     },
-    [leader, query, runAction]
+    [rawInput, tab]
   );
+
+  /* ------------------------------------------------------------------ */
+  /* Suggestions                                                        */
+  /* ------------------------------------------------------------------ */
+  const showRecents = rawInput.trim().length === 0;
+  const askPrompt = textQuery.trim();
+  // Heuristic: surface the Ask AI CTA when the user has typed a
+  // sentence-ish input (more than a single word OR ends with `?`).
+  const showAskCta =
+    askPrompt.length > 0 &&
+    (askPrompt.includes(' ') || askPrompt.endsWith('?') || tab === 'ask');
 
   /* ------------------------------------------------------------------ */
   /* Render                                                              */
   /* ------------------------------------------------------------------ */
-  const visibleNavigate = leader === 'G' ? NAVIGATE_CHORDS : NAVIGATE_CHORDS;
-  const visibleCreate = leader === 'N' ? CREATE_CHORDS : CREATE_CHORDS;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         onKeyDown={onContentKeyDown}
         className={cn(
-          'p-0 gap-0 max-w-xl w-[92vw] overflow-hidden',
-          // Override default centered position: anchor near the top.
-          'left-[50%] top-[20vh] translate-x-[-50%] translate-y-0'
+          'p-0 gap-0 max-w-2xl w-[92vw] overflow-hidden border-0',
+          'left-[50%] top-[18vh] translate-x-[-50%] translate-y-0',
+          // Dark glassmorphism per FEAT-25 spec.
+          'bg-zinc-900/70 backdrop-blur-xl ring-1 ring-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset,0_24px_48px_-12px_rgba(0,0,0,0.5)]'
         )}
       >
         <DialogTitle className="sr-only">Command palette</DialogTitle>
         <DialogDescription className="sr-only">
-          Search, navigate, and trigger quick actions across taskNebula.
+          Search across issues, docs, people, and ask the TaskNebula AI.
         </DialogDescription>
 
-        <Command
-          // Disable cmdk's own filtering when we're in chord mode so chord
-          // letters don't accidentally narrow the list.
-          shouldFilter={!leader}
-          className="bg-popover"
-        >
-          <CommandInput
-            placeholder="Search or jump to…"
-            value={query}
-            onValueChange={setQuery}
-            autoFocus
-          />
+        <OmnibarTabs active={tab} onChange={setTab} />
 
-          {leader ? (
-            <div
-              role="status"
-              className="flex items-center justify-between gap-2 border-b border-border bg-accent/30 px-3 py-2 text-xs text-muted-foreground"
-            >
-              <span>
-                Press a key for{' '}
-                <span className="font-semibold text-foreground">{LEADER_LABEL[leader]}</span> action
-              </span>
-              <span className="text-[10px] uppercase tracking-wider">Press ESC to cancel</span>
+        <Command shouldFilter={false} className="bg-transparent text-zinc-100">
+          {/* ---- Input row with inline chips ---- */}
+          <div
+            className="flex items-center gap-2 border-b border-white/5 px-3 py-2"
+            data-cmdk-input-wrapper=""
+          >
+            <Search className="h-4 w-4 shrink-0 text-zinc-400" aria-hidden />
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+              {facets.map((facet, index) => (
+                <FacetChip
+                  key={`${facet.key}:${facet.value}:${index}`}
+                  facet={facet}
+                  onRemove={() => removeChip(facet)}
+                />
+              ))}
+              <input
+                ref={inputRef}
+                type="text"
+                value={rawInput}
+                onChange={(event) => setRawInput(event.target.value)}
+                placeholder={
+                  tab === 'ask'
+                    ? 'Ask TaskNebula anything…'
+                    : 'Search or jump to… try status:in_progress'
+                }
+                autoFocus
+                aria-label="Command palette query"
+                className="min-w-[120px] flex-1 bg-transparent text-sm text-zinc-100 placeholder:text-zinc-500 outline-none"
+              />
             </div>
+            <kbd className="hidden rounded border border-white/10 bg-zinc-950/40 px-1 font-mono text-[10px] text-zinc-500 sm:inline-block">
+              esc
+            </kbd>
+          </div>
+
+          {activePicker ? (
+            <FacetPicker
+              facetKey={activePicker}
+              onPick={(value) => appendFacetValue(`"${value}" `)}
+              onCancel={() => setRawInput((prev) => prev.replace(/\w+:$/, '').trimEnd())}
+            />
           ) : null}
 
           <CommandList className="max-h-[480px]">
             <CommandEmpty>
-              <div className="flex flex-col items-center gap-1 py-6 text-center">
-                <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">No results found.</span>
+              <div className="flex flex-col items-center gap-1 py-8 text-center">
+                <span className="text-sm text-zinc-400">No results found.</span>
+                <span className="text-[11px] text-zinc-600">
+                  Try removing a filter, or press 5 to ask AI.
+                </span>
               </div>
             </CommandEmpty>
 
-            {/* Quick actions — surfaces top matches based on current query.
-                cmdk handles the actual fuzzy filtering automatically. */}
-            <CommandGroup heading="Quick actions">
-              <PaletteRow
-                value="quick.create.work-item"
-                icon={Plus}
-                label="Create work item"
-                shortcut="N I"
-                onSelect={() =>
-                  runAction({ key: 'I', label: 'New work item', icon: CircleDot })
+            {/* ---- Ask AI CTA ---- */}
+            {showAskCta ? (
+              <CommandGroup heading={<span className="kicker text-zinc-500">AI</span>}>
+                <CommandItem
+                  value={`ask:${askPrompt}`}
+                  onSelect={() => askAi(askPrompt)}
+                  className="group flex items-center gap-2 rounded-md text-zinc-100 data-[selected=true]:bg-violet-500/10 data-[selected=true]:text-violet-100"
+                >
+                  <Sparkles className="h-4 w-4 text-violet-400" aria-hidden />
+                  <span className="flex-1 truncate">
+                    Ask TaskNebula: <span className="text-zinc-300">&ldquo;{askPrompt}&rdquo;</span>
+                  </span>
+                  <ArrowRight className="h-3 w-3 text-zinc-500 group-data-[selected=true]:text-violet-300" />
+                </CommandItem>
+              </CommandGroup>
+            ) : null}
+
+            {/* ---- Pinned + recents when input is empty ---- */}
+            {showRecents && history.pinned.length > 0 ? (
+              <CommandGroup heading={<span className="kicker text-zinc-500">Pinned</span>}>
+                {history.pinned.map((entry) => (
+                  <CommandItem
+                    key={entry.id}
+                    value={`pinned:${entry.id}`}
+                    onSelect={() => setRawInput(entry.query)}
+                    className="group flex items-center gap-2 rounded-md text-zinc-100 data-[selected=true]:bg-white/5"
+                  >
+                    <Pin className="h-3.5 w-3.5 shrink-0 text-amber-400" aria-hidden />
+                    <span className="flex-1 truncate">{entry.query}</span>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        history.togglePin(entry);
+                      }}
+                      aria-label="Unpin query"
+                      className="opacity-0 transition group-data-[selected=true]:opacity-100 hover:opacity-100"
+                    >
+                      <PinOff className="h-3 w-3 text-zinc-400" />
+                    </button>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ) : null}
+
+            {showRecents && history.recents.length > 0 ? (
+              <>
+                <CommandSeparator className="bg-white/5" />
+                <CommandGroup heading={<span className="kicker text-zinc-500">Recents</span>}>
+                  {history.recents.map((entry) => (
+                    <CommandItem
+                      key={entry.id}
+                      value={`recent:${entry.id}`}
+                      onSelect={() => setRawInput(entry.query)}
+                      className="group flex items-center gap-2 rounded-md text-zinc-200 data-[selected=true]:bg-white/5"
+                    >
+                      <FileText className="h-3.5 w-3.5 shrink-0 text-zinc-500" aria-hidden />
+                      <span className="flex-1 truncate">{entry.query}</span>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          history.togglePin(entry);
+                        }}
+                        aria-label="Pin query"
+                        className="opacity-0 transition group-data-[selected=true]:opacity-100 hover:opacity-100"
+                      >
+                        <Pin className="h-3 w-3 text-zinc-400" />
+                      </button>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </>
+            ) : null}
+
+            {/* ---- Live search results ---- */}
+            {!showRecents && search.results.length > 0 ? (
+              <CommandGroup
+                heading={
+                  <span className="kicker flex items-center gap-2 text-zinc-500">
+                    Results
+                    {search.loading ? (
+                      <span className="text-[10px] text-zinc-600">searching…</span>
+                    ) : null}
+                  </span>
                 }
-              />
-              <PaletteRow
-                value="quick.go.inbox"
-                icon={Inbox}
-                label="Go to inbox"
-                shortcut="G X"
-                onSelect={() => navigate('/inbox')}
-              />
-              <PaletteRow
-                value="quick.go.dashboards"
-                icon={BarChart3}
-                label="Go to dashboards"
-                shortcut="G D"
-                onSelect={() => navigate('/dashboards')}
-              />
-            </CommandGroup>
+              >
+                {search.results.map((result) => (
+                  <CommandItem
+                    key={result.id}
+                    value={`result:${result.id}`}
+                    onSelect={() => navigate(result.href ?? '#')}
+                    className="flex items-center gap-2 rounded-md text-zinc-100 data-[selected=true]:bg-white/5"
+                  >
+                    <CircleDot className="h-3.5 w-3.5 shrink-0 text-blue-400" aria-hidden />
+                    <div className="flex min-w-0 flex-col">
+                      <span className="truncate">{result.title}</span>
+                      {result.subtitle ? (
+                        <span className="truncate text-[11px] text-zinc-500">
+                          {result.subtitle}
+                        </span>
+                      ) : null}
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ) : null}
 
-            <CommandSeparator />
-
-            <CommandGroup heading="Navigate">
-              {visibleNavigate.map((c) => (
-                <PaletteRow
-                  key={`nav.${c.key}`}
-                  value={`nav.${c.key}.${c.label}`}
-                  icon={c.icon}
-                  label={c.label}
-                  shortcut={`G ${c.key}`}
-                  onSelect={() => runAction(c)}
-                />
-              ))}
-            </CommandGroup>
-
-            <CommandSeparator />
-
-            <CommandGroup heading="Create">
-              {visibleCreate.map((c) => (
-                <PaletteRow
-                  key={`new.${c.key}`}
-                  value={`new.${c.key}.${c.label}`}
-                  icon={c.icon}
-                  label={c.label}
-                  shortcut={`N ${c.key}`}
-                  onSelect={() =>
-                    runAction({
-                      ...c,
-                      onSelect:
-                        c.onSelect ??
-                        (() => console.info(`[command-palette] create:${c.label}`)),
-                    })
-                  }
-                />
-              ))}
-            </CommandGroup>
-
-            <CommandSeparator />
-
-            <CommandGroup heading="Recent">
-              {recents.length === 0 ? (
-                <div className="px-3 py-2 text-xs text-muted-foreground">
-                  No recent items yet.
-                </div>
-              ) : (
-                recents.map((r) => (
-                  <PaletteRow
-                    key={`recent.${r.id}`}
-                    value={`recent.${r.id}.${r.label}`}
-                    icon={Calendar}
-                    label={r.label}
-                    onSelect={() => navigate(r.href)}
-                  />
-                ))
-              )}
-            </CommandGroup>
-
-            <CommandSeparator />
-
-            <CommandGroup heading="Help">
-              {HELP_ITEMS.map((h) => (
-                <PaletteRow
-                  key={h.id}
-                  value={h.id}
-                  icon={h.icon}
-                  label={h.label}
-                  shortcut={h.shortcut}
-                  onSelect={() => {
-                    h.onSelect();
-                    close();
-                  }}
-                />
-              ))}
-            </CommandGroup>
+            {/* ---- Quick navigation (always visible while empty) ---- */}
+            {showRecents ? (
+              <>
+                <CommandSeparator className="bg-white/5" />
+                <CommandGroup
+                  heading={<span className="kicker text-zinc-500">Navigate</span>}
+                >
+                  {QUICK_NAV.map((nav) => (
+                    <CommandItem
+                      key={nav.id}
+                      value={nav.id}
+                      onSelect={() => navigate(nav.href)}
+                      className="flex items-center gap-2 rounded-md text-zinc-200 data-[selected=true]:bg-white/5"
+                    >
+                      <nav.icon
+                        className="h-3.5 w-3.5 shrink-0 text-zinc-500"
+                        aria-hidden
+                      />
+                      <span className="flex-1 truncate">{nav.label}</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </>
+            ) : null}
           </CommandList>
+
+          {/* ---- Footer hint strip ---- */}
+          <div className="flex items-center justify-between gap-3 border-t border-white/5 bg-zinc-950/40 px-3 py-1.5 text-[10px] text-zinc-500">
+            <div className="flex items-center gap-3">
+              <span>
+                <kbd className="rounded border border-white/10 bg-zinc-900/70 px-1 font-mono">
+                  ↑
+                </kbd>{' '}
+                <kbd className="rounded border border-white/10 bg-zinc-900/70 px-1 font-mono">
+                  ↓
+                </kbd>{' '}
+                navigate
+              </span>
+              <span>
+                <kbd className="rounded border border-white/10 bg-zinc-900/70 px-1 font-mono">
+                  ⏎
+                </kbd>{' '}
+                open
+              </span>
+              <span>
+                <kbd className="rounded border border-white/10 bg-zinc-900/70 px-1 font-mono">
+                  tab
+                </kbd>{' '}
+                cycle tabs
+              </span>
+            </div>
+            <span>FEAT-25 omnibar</span>
+          </div>
         </Command>
       </DialogContent>
     </Dialog>

@@ -5,16 +5,11 @@ import { Button } from '@/components/ui/button';
 import { OrganizationSwitcher } from '@/components/organization/organization-switcher';
 import { UserProfileDropdown } from '@/components/user/user-profile-dropdown';
 import { NotificationBell } from '@/components/notifications/notification-bell';
+import { useCommandPalette } from '@/lib/command/use-command-palette';
 
 export function AppHeader() {
-  const openPalette = () => {
-    const event = new KeyboardEvent('keydown', {
-      key: 'k',
-      metaKey: true,
-      bubbles: true,
-    });
-    document.dispatchEvent(event);
-  };
+  const palette = useCommandPalette();
+  const openPalette = () => palette.open();
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/80 px-6 backdrop-blur">

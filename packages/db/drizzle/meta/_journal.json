@@ -330,6 +330,13 @@
 			"when": 1778900000000,
 			"tag": "0046_standups",
 			"breakpoints": true
+		},
+		{
+			"idx": 47,
+			"version": "7",
+			"when": 1778900000000,
+			"tag": "0047_search_history_pinned",
+			"breakpoints": true
 		}
 	]
 }
