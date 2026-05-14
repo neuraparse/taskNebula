@@ -11,7 +11,7 @@ import { ActivityFeed } from '@/components/activity/activity-feed';
 import { YourWorkWidget } from '@/components/dashboard/your-work-widget';
 import { UpcomingDeadlinesWidget } from '@/components/dashboard/upcoming-deadlines-widget';
 import { PinnedItemsWidget } from '@/components/dashboard/pinned-items-widget';
-import { StandupWidget } from '@/components/dashboard/standup-widget';
+import { AnalyticsBento } from '@/components/dashboard/analytics-bento';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useProjects } from '@/lib/hooks/use-projects';
 import {
@@ -261,11 +261,11 @@ export function DashboardClient() {
               )}
             </div>
 
-            {/* Standup digest — surfaced separately so it occupies the full
-                width when present and degrades to a small CTA when empty. */}
-            <div className="mt-6">
-              <StandupWidget />
-            </div>
+            {/* Analytics bento — native charts + DORA + AI insights */}
+            <AnalyticsBento
+              organizationId={currentOrganizationId}
+              projectId={firstProjectId}
+            />
 
             {/* Workspace widgets */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">

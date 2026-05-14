@@ -55,6 +55,7 @@
     "@tasknebula/db": "workspace:*",
     "@tasknebula/mcp-server": "workspace:*",
     "@tasknebula/types": "workspace:*",
+    "@tremor/react": "^3.18.7",
     "@tiptap/extension-code-block-lowlight": "^2.27.2",
     "@tiptap/extension-collaboration": "^2.27.2",
     "@tiptap/extension-collaboration-cursor": "^2.27.2",
