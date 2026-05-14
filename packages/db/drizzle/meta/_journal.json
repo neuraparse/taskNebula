@@ -274,6 +274,13 @@
 			"when": 1778900000000,
 			"tag": "0038_agent_as_assignee_linear_protocol",
 			"breakpoints": true
+		},
+		{
+			"idx": 39,
+			"version": "7",
+			"when": 1778900000000,
+			"tag": "0039_native_time_tracking",
+			"breakpoints": true
 		}
 	]
 }
