@@ -12,8 +12,14 @@
   ],
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "openapi:gen"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+    },
+    "openapi:gen": {
+      "outputs": ["public/openapi.json"]
+    },
+    "openapi:check": {
+      "cache": false
     },
     "dev": {
       "cache": false,
