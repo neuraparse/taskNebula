@@ -227,6 +227,13 @@
 			"breakpoints": true
 		},
 		{
+			"idx": 32,
+			"version": "7",
+			"when": 1778900000000,
+			"tag": "0032_create_content_embeddings",
+			"breakpoints": true
+		},
+		{
 			"idx": 33,
 			"version": "7",
 			"when": 1778900000000,
