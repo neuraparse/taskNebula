@@ -42,6 +42,10 @@ const envSchema = z.object({
   NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().optional(),
   NEXT_PUBLIC_CHAT_DEBUG: z.string().optional(),
 
+  // Collaboration (Hocuspocus / Yjs)
+  NEXT_PUBLIC_COLLAB_ENABLED: z.string().optional(),
+  NEXT_PUBLIC_HOCUSPOCUS_URL: z.string().optional(),
+
   // Email / SMTP
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z
