@@ -19,6 +19,21 @@ export type AgentCapabilityKey = (typeof AGENT_CAPABILITY_KEYS)[number];
 export const AGENT_EXECUTION_MODES = ['manual', 'assistive', 'auto'] as const;
 export type AgentExecutionMode = (typeof AGENT_EXECUTION_MODES)[number];
 
+/**
+ * Workspace-wide AI human-oversight posture (EU AI Act Article 50).
+ *
+ *  - "auto"             : AI outputs may be applied automatically by features
+ *                          that support it (triage low-confidence rules,
+ *                          summaries, etc.) once enabled.
+ *  - "review_required"  : Every AI output that would mutate workspace state
+ *                          must be confirmed by a human before being applied.
+ *
+ * Defaults to "review_required" — the most conservative posture, matching
+ * the regulation's preferred stance for human oversight.
+ */
+export const AI_OVERSIGHT_MODES = ['auto', 'review_required'] as const;
+export type AiOversightMode = (typeof AI_OVERSIGHT_MODES)[number];
+
 export const AGENT_PROVIDERS = ['native', 'openai', 'anthropic', 'azure', 'custom'] as const;
 export type AgentProvider = (typeof AGENT_PROVIDERS)[number];
 
@@ -48,6 +63,12 @@ export type WorkspaceAgentSettings = {
   requireApprovalForWrites: boolean;
   dailyRunLimit: number;
   capabilities: AgentCapabilityMap;
+  /**
+   * EU AI Act Article 50 human-oversight posture for AI outputs. When
+   * "review_required", features that could otherwise auto-apply must queue
+   * for explicit human approval. Defaults to "review_required".
+   */
+  aiOversight: AiOversightMode;
 };
 
 export type ProjectAgentSettings = {
@@ -181,6 +202,8 @@ export const DEFAULT_WORKSPACE_AGENT_SETTINGS: WorkspaceAgentSettings = {
     sprint_planning: false,
     bulk_sprint_creation: false,
   },
+  // Default conservative posture per EU AI Act Art. 50.
+  aiOversight: 'review_required',
 };
 
 export const DEFAULT_PROJECT_AGENT_SETTINGS: ProjectAgentSettings = {
@@ -269,6 +292,9 @@ export function normalizeWorkspaceAgentSettings(input: unknown): WorkspaceAgentS
     ),
     dailyRunLimit: asNumber(source.dailyRunLimit, DEFAULT_WORKSPACE_AGENT_SETTINGS.dailyRunLimit, 1, 500),
     capabilities: normalizeCapabilities(source.capabilities, DEFAULT_WORKSPACE_AGENT_SETTINGS.capabilities),
+    aiOversight: (AI_OVERSIGHT_MODES.includes(source.aiOversight as AiOversightMode)
+      ? source.aiOversight
+      : DEFAULT_WORKSPACE_AGENT_SETTINGS.aiOversight) as AiOversightMode,
   };
 }
 

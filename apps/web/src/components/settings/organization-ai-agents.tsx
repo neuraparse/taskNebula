@@ -77,6 +77,8 @@ const EMPTY_SETTINGS: WorkspaceAgentSettings = {
     sprint_planning: false,
     bulk_sprint_creation: false,
   },
+  // EU AI Act Article 50: conservative default for human-oversight posture.
+  aiOversight: 'review_required',
 };
 
 type ModelConfigFormState = {

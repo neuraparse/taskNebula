@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAiCapability } from '@/lib/hooks/use-ai-capability';
+import { AiBadge } from '@/components/ai/AiBadge';
 
 type IssueAssistAction =
   | 'summarize'
@@ -173,11 +174,17 @@ export function AiIssueAssistPanel({
 
       {result && (
         <div className="space-y-2 rounded-md border border-border bg-background p-2.5">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              {ACTIONS.find((a) => a.key === result.action)?.label ?? result.action} ·{' '}
-              {result.provider}
-            </span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <AiBadge
+                feature={`Issue Assist · ${ACTIONS.find((a) => a.key === result.action)?.label ?? result.action}`}
+                model={result.provider}
+                generatedAt={new Date()}
+              />
+              <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground truncate">
+                {ACTIONS.find((a) => a.key === result.action)?.label ?? result.action}
+              </span>
+            </div>
             <div className="flex items-center gap-1">
               {canApplyDescription && (
                 <Button
