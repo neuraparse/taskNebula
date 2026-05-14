@@ -3,7 +3,12 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "types": ["node", "jest"]
+    "types": ["node", "jest"],
+    // QUAL-21: opt out of exactOptionalPropertyTypes until mcp-server is
+    // migrated. The package was authored before the strict flag landed in
+    // the base config and uses several `field?: string` patterns where the
+    // runtime value can also be `undefined`. Tracked in docs/TS_STRICT_MIGRATION.md.
+    "exactOptionalPropertyTypes": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "src/**/__tests__/**"]
