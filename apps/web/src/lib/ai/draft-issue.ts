@@ -18,7 +18,11 @@
  */
 
 import { z } from 'zod';
-import { traceLlmCall } from './observability/langfuse';
+import {
+  estimatePromptTokens,
+  runWithBudget,
+  type LlmFeature,
+} from './budget';
 
 export const ISSUE_TYPES = ['story', 'task', 'bug', 'epic', 'subtask'] as const;
 export const ISSUE_PRIORITIES = ['critical', 'high', 'medium', 'low', 'none'] as const;
@@ -36,6 +40,12 @@ export type IssueDraft = z.infer<typeof issueDraftSchema>;
 
 export type DraftProvider = 'native' | 'openai' | 'anthropic';
 
+export interface BudgetContext {
+  organizationId: string;
+  userId?: string | null;
+  feature?: LlmFeature;
+}
+
 export interface DraftRequest {
   prompt: string;
   projectName: string;
@@ -44,6 +54,13 @@ export interface DraftRequest {
   provider: DraftProvider;
   apiKey?: string | null;
   model?: string | null;
+  /**
+   * When present, the LLM call is gated by AI Cost Guard: a reservation
+   * is taken against the org's token budget, an `llm_call_audit` row is
+   * appended, and the kill switch is honoured. Omit only from offline
+   * test harnesses.
+   */
+  budgetContext?: BudgetContext;
 }
 
 export class AiDraftError extends Error {
@@ -138,36 +155,63 @@ async function draftIssueOpenAi(request: DraftRequest): Promise<IssueDraft> {
     request.existingLabels ?? []
   );
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: request.prompt },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.2,
-    }),
-  });
+  const callOpenAi = async () => {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: request.prompt },
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.2,
+      }),
+    });
 
-  if (!response.ok) {
-    const detail = await response.text().catch(() => '');
-    throw new AiDraftError(
-      'provider_error',
-      `OpenAI returned ${response.status}: ${detail.slice(0, 200)}`
+    if (!response.ok) {
+      const detail = await response.text().catch(() => '');
+      throw new AiDraftError(
+        'provider_error',
+        `OpenAI returned ${response.status}: ${detail.slice(0, 200)}`
+      );
+    }
+
+    const payload = (await response.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+      usage?: { prompt_tokens?: number; completion_tokens?: number };
+    };
+    const raw = payload.choices?.[0]?.message?.content ?? '{}';
+    return {
+      value: parseAndValidate(raw),
+      usage: {
+        inputTokens: payload.usage?.prompt_tokens ?? estimatePromptTokens(system + request.prompt),
+        outputTokens: payload.usage?.completion_tokens ?? estimatePromptTokens(raw),
+      },
+    };
+  };
+
+  if (request.budgetContext) {
+    return runWithBudget(
+      {
+        organizationId: request.budgetContext.organizationId,
+        userId: request.budgetContext.userId,
+        provider: 'openai',
+        model,
+        feature: request.budgetContext.feature ?? 'draft',
+        prompt: request.prompt,
+        estimatedTokens:
+          estimatePromptTokens(system + request.prompt) + 512,
+      },
+      callOpenAi
     );
   }
 
-  const payload = (await response.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-  const raw = payload.choices?.[0]?.message?.content ?? '{}';
-  return parseAndValidate(raw);
+  return (await callOpenAi()).value;
 }
 
 async function draftIssueAnthropic(request: DraftRequest): Promise<IssueDraft> {
@@ -186,36 +230,63 @@ async function draftIssueAnthropic(request: DraftRequest): Promise<IssueDraft> {
     request.existingLabels ?? []
   );
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: 1024,
-      temperature: 0.2,
-      system,
-      messages: [{ role: 'user', content: request.prompt }],
-    }),
-  });
+  const callAnthropic = async () => {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 1024,
+        temperature: 0.2,
+        system,
+        messages: [{ role: 'user', content: request.prompt }],
+      }),
+    });
 
-  if (!response.ok) {
-    const detail = await response.text().catch(() => '');
-    throw new AiDraftError(
-      'provider_error',
-      `Anthropic returned ${response.status}: ${detail.slice(0, 200)}`
+    if (!response.ok) {
+      const detail = await response.text().catch(() => '');
+      throw new AiDraftError(
+        'provider_error',
+        `Anthropic returned ${response.status}: ${detail.slice(0, 200)}`
+      );
+    }
+
+    const payload = (await response.json()) as {
+      content?: Array<{ type: string; text?: string }>;
+      usage?: { input_tokens?: number; output_tokens?: number };
+    };
+    const text =
+      payload.content?.find((block) => block.type === 'text')?.text ?? '{}';
+    return {
+      value: parseAndValidate(text),
+      usage: {
+        inputTokens: payload.usage?.input_tokens ?? estimatePromptTokens(system + request.prompt),
+        outputTokens: payload.usage?.output_tokens ?? estimatePromptTokens(text),
+      },
+    };
+  };
+
+  if (request.budgetContext) {
+    return runWithBudget(
+      {
+        organizationId: request.budgetContext.organizationId,
+        userId: request.budgetContext.userId,
+        provider: 'anthropic',
+        model,
+        feature: request.budgetContext.feature ?? 'draft',
+        prompt: request.prompt,
+        estimatedTokens:
+          estimatePromptTokens(system + request.prompt) + 1024,
+      },
+      callAnthropic
     );
   }
 
-  const payload = (await response.json()) as {
-    content?: Array<{ type: string; text?: string }>;
-  };
-  const text =
-    payload.content?.find((block) => block.type === 'text')?.text ?? '{}';
-  return parseAndValidate(text);
+  return (await callAnthropic()).value;
 }
 
 function parseAndValidate(raw: string): IssueDraft {
@@ -242,7 +313,7 @@ function parseAndValidate(raw: string): IssueDraft {
   return result.data;
 }
 
-async function runDraft(request: DraftRequest): Promise<IssueDraft> {
+export async function draftIssue(request: DraftRequest): Promise<IssueDraft> {
   switch (request.provider) {
     case 'native':
       return draftIssueNative(request);
@@ -252,44 +323,5 @@ async function runDraft(request: DraftRequest): Promise<IssueDraft> {
       return draftIssueAnthropic(request);
     default:
       return draftIssueNative(request);
-  }
-}
-
-/**
- * Public entry point. Wraps {@link runDraft} with Langfuse tracing — the
- * trace lands in Langfuse only when `LANGFUSE_PUBLIC_KEY` is set, so
- * unconfigured dev installs incur zero cost.
- */
-export async function draftIssue(request: DraftRequest): Promise<IssueDraft> {
-  // Native provider has no LLM — emit traces only for openai/anthropic so the
-  // Langfuse dashboard doesn't get polluted with heuristic runs.
-  const isLlm = request.provider === 'openai' || request.provider === 'anthropic';
-  const started = Date.now();
-  try {
-    const draft = await runDraft(request);
-    if (isLlm) {
-      await traceLlmCall({
-        feature: 'issue.draft',
-        provider: request.provider,
-        model: request.model || 'default',
-        input: { prompt: request.prompt, projectKey: request.projectKey },
-        output: draft,
-        latencyMs: Date.now() - started,
-      });
-    }
-    return draft;
-  } catch (err) {
-    if (isLlm) {
-      await traceLlmCall({
-        feature: 'issue.draft',
-        provider: request.provider,
-        model: request.model || 'default',
-        input: { prompt: request.prompt, projectKey: request.projectKey },
-        output: null,
-        latencyMs: Date.now() - started,
-        errorMessage: err instanceof Error ? err.message : String(err),
-      });
-    }
-    throw err;
   }
 }

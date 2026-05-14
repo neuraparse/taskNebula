@@ -9,8 +9,8 @@
  */
 
 import { z } from 'zod';
-import { issueDraftSchema, type IssueDraft, type DraftProvider, AiDraftError } from './draft-issue';
-import { traceLlmCall } from './observability/langfuse';
+import { issueDraftSchema, type IssueDraft, type DraftProvider, AiDraftError, type BudgetContext } from './draft-issue';
+import { estimatePromptTokens, runWithBudget } from './budget';
 
 export const draftsResponseSchema = z.object({
   drafts: z.array(issueDraftSchema).min(1).max(20),
@@ -25,6 +25,7 @@ export interface DraftIssuesRequest {
   apiKey?: string | null;
   model?: string | null;
   maxCount?: number;
+  budgetContext?: BudgetContext;
 }
 
 function lineItems(raw: string): string[] {
@@ -104,45 +105,70 @@ async function draftIssuesOpenAi(request: DraftIssuesRequest): Promise<IssueDraf
   }
   const maxCount = Math.min(Math.max(request.maxCount ?? 5, 1), 20);
   const model = request.model || 'gpt-4o-mini';
+  const systemPrompt = buildSystemPrompt(
+    request.projectName,
+    request.projectKey,
+    request.existingLabels ?? [],
+    maxCount
+  );
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        {
-          role: 'system',
-          content: buildSystemPrompt(
-            request.projectName,
-            request.projectKey,
-            request.existingLabels ?? [],
-            maxCount
-          ),
-        },
-        { role: 'user', content: request.prompt },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.2,
-    }),
-  });
+  const call = async () => {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: request.prompt },
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.2,
+      }),
+    });
 
-  if (!response.ok) {
-    const detail = await response.text().catch(() => '');
-    throw new AiDraftError(
-      'provider_error',
-      `OpenAI returned ${response.status}: ${detail.slice(0, 200)}`
+    if (!response.ok) {
+      const detail = await response.text().catch(() => '');
+      throw new AiDraftError(
+        'provider_error',
+        `OpenAI returned ${response.status}: ${detail.slice(0, 200)}`
+      );
+    }
+
+    const payload = (await response.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+      usage?: { prompt_tokens?: number; completion_tokens?: number };
+    };
+    const raw = payload.choices?.[0]?.message?.content ?? '{}';
+    return {
+      value: parseAndValidate(raw, maxCount),
+      usage: {
+        inputTokens:
+          payload.usage?.prompt_tokens ?? estimatePromptTokens(systemPrompt + request.prompt),
+        outputTokens: payload.usage?.completion_tokens ?? estimatePromptTokens(raw),
+      },
+    };
+  };
+
+  if (request.budgetContext) {
+    return runWithBudget(
+      {
+        organizationId: request.budgetContext.organizationId,
+        userId: request.budgetContext.userId,
+        provider: 'openai',
+        model,
+        feature: request.budgetContext.feature ?? 'draft_multi',
+        prompt: request.prompt,
+        estimatedTokens:
+          estimatePromptTokens(systemPrompt + request.prompt) + 1024,
+      },
+      call
     );
   }
-
-  const payload = (await response.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-  const raw = payload.choices?.[0]?.message?.content ?? '{}';
-  return parseAndValidate(raw, maxCount);
+  return (await call()).value;
 }
 
 async function draftIssuesAnthropic(request: DraftIssuesRequest): Promise<IssueDraft[]> {
@@ -155,41 +181,70 @@ async function draftIssuesAnthropic(request: DraftIssuesRequest): Promise<IssueD
   }
   const maxCount = Math.min(Math.max(request.maxCount ?? 5, 1), 20);
   const model = request.model || 'claude-sonnet-4-6';
+  const systemPrompt = buildSystemPrompt(
+    request.projectName,
+    request.projectKey,
+    request.existingLabels ?? [],
+    maxCount
+  );
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: 2048,
-      temperature: 0.2,
-      system: buildSystemPrompt(
-        request.projectName,
-        request.projectKey,
-        request.existingLabels ?? [],
-        maxCount
-      ),
-      messages: [{ role: 'user', content: request.prompt }],
-    }),
-  });
+  const call = async () => {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 2048,
+        temperature: 0.2,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: request.prompt }],
+      }),
+    });
 
-  if (!response.ok) {
-    const detail = await response.text().catch(() => '');
-    throw new AiDraftError(
-      'provider_error',
-      `Anthropic returned ${response.status}: ${detail.slice(0, 200)}`
+    if (!response.ok) {
+      const detail = await response.text().catch(() => '');
+      throw new AiDraftError(
+        'provider_error',
+        `Anthropic returned ${response.status}: ${detail.slice(0, 200)}`
+      );
+    }
+
+    const payload = (await response.json()) as {
+      content?: Array<{ type: string; text?: string }>;
+      usage?: { input_tokens?: number; output_tokens?: number };
+    };
+    const text =
+      payload.content?.find((block) => block.type === 'text')?.text ?? '{}';
+    return {
+      value: parseAndValidate(text, maxCount),
+      usage: {
+        inputTokens:
+          payload.usage?.input_tokens ?? estimatePromptTokens(systemPrompt + request.prompt),
+        outputTokens: payload.usage?.output_tokens ?? estimatePromptTokens(text),
+      },
+    };
+  };
+
+  if (request.budgetContext) {
+    return runWithBudget(
+      {
+        organizationId: request.budgetContext.organizationId,
+        userId: request.budgetContext.userId,
+        provider: 'anthropic',
+        model,
+        feature: request.budgetContext.feature ?? 'draft_multi',
+        prompt: request.prompt,
+        estimatedTokens:
+          estimatePromptTokens(systemPrompt + request.prompt) + 2048,
+      },
+      call
     );
   }
-
-  const payload = (await response.json()) as {
-    content?: Array<{ type: string; text?: string }>;
-  };
-  const text = payload.content?.find((block) => block.type === 'text')?.text ?? '{}';
-  return parseAndValidate(text, maxCount);
+  return (await call()).value;
 }
 
 function parseAndValidate(raw: string, maxCount: number): IssueDraft[] {
@@ -216,7 +271,7 @@ function parseAndValidate(raw: string, maxCount: number): IssueDraft[] {
   return result.data.drafts.slice(0, maxCount);
 }
 
-async function runDraftIssuesMulti(request: DraftIssuesRequest): Promise<IssueDraft[]> {
+export async function draftIssuesMulti(request: DraftIssuesRequest): Promise<IssueDraft[]> {
   switch (request.provider) {
     case 'openai':
       return draftIssuesOpenAi(request);
@@ -225,38 +280,5 @@ async function runDraftIssuesMulti(request: DraftIssuesRequest): Promise<IssueDr
     case 'native':
     default:
       return draftIssuesNative(request);
-  }
-}
-
-export async function draftIssuesMulti(request: DraftIssuesRequest): Promise<IssueDraft[]> {
-  const isLlm = request.provider === 'openai' || request.provider === 'anthropic';
-  const started = Date.now();
-  try {
-    const drafts = await runDraftIssuesMulti(request);
-    if (isLlm) {
-      await traceLlmCall({
-        feature: 'issue.draft.multi',
-        provider: request.provider,
-        model: request.model || 'default',
-        input: { prompt: request.prompt, projectKey: request.projectKey, maxCount: request.maxCount ?? 5 },
-        output: drafts,
-        latencyMs: Date.now() - started,
-        metadata: { draftCount: drafts.length },
-      });
-    }
-    return drafts;
-  } catch (err) {
-    if (isLlm) {
-      await traceLlmCall({
-        feature: 'issue.draft.multi',
-        provider: request.provider,
-        model: request.model || 'default',
-        input: { prompt: request.prompt, projectKey: request.projectKey },
-        output: null,
-        latencyMs: Date.now() - started,
-        errorMessage: err instanceof Error ? err.message : String(err),
-      });
-    }
-    throw err;
   }
 }

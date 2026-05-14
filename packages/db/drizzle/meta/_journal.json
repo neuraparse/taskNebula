@@ -232,6 +232,13 @@
 			"when": 1778900000000,
 			"tag": "0032_pgvector_hnsw_content_embeddings",
 			"breakpoints": true
+		},
+		{
+			"idx": 33,
+			"version": "7",
+			"when": 1778900000000,
+			"tag": "0033_ai_cost_guard",
+			"breakpoints": true
 		}
 	]
 }
