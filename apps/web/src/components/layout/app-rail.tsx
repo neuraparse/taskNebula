@@ -7,6 +7,7 @@ import {
   BookOpenText,
   FolderKanban,
   Inbox,
+  Layers3,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -38,10 +39,19 @@ interface RailItem {
   icon: LucideIcon;
 }
 
+// Feature-flagged "Initiatives" entry. When the workspace hasn't opted in via
+// NEXT_PUBLIC_INITIATIVES_ENABLED the rail item is omitted entirely so we
+// don't surprise existing users with a new top-level nav item.
+const INITIATIVES_ENABLED =
+  process.env.NEXT_PUBLIC_INITIATIVES_ENABLED === 'true';
+
 const railItems: RailItem[] = [
   { name: 'Home', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Issues', href: '/my-issues', icon: Inbox },
   { name: 'Projects', href: '/projects', icon: FolderKanban },
+  ...(INITIATIVES_ENABLED
+    ? [{ name: 'Initiatives', href: '/initiatives', icon: Layers3 } as RailItem]
+    : []),
   { name: 'Docs', href: '/docs', icon: BookOpenText },
   { name: 'Team', href: '/team', icon: Users },
   { name: 'Settings', href: '/settings', icon: Settings },
