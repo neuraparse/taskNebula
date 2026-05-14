@@ -2,7 +2,13 @@
   "extends": "@tasknebula/config/tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    // QUAL-21: `exactOptionalPropertyTypes` is enabled in the base config as
+    // the next strict-mode migration target. drizzle-orm's insert types treat
+    // optional columns as `T | null`, not `T | undefined`, so this package
+    // opts out until audit-logger and friends are migrated.
+    // See docs/TS_STRICT_MIGRATION.md.
+    "exactOptionalPropertyTypes": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

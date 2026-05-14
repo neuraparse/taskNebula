@@ -101,7 +101,13 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
       text: params.text,
     });
 
-    return { sent: true, messageId: info.messageId };
+    // QUAL-21: under exactOptionalPropertyTypes, `messageId?: string` cannot
+    // accept `string | undefined`. nodemailer types `messageId` as optional,
+    // so spread it only when present.
+    return {
+      sent: true,
+      ...(info.messageId !== undefined ? { messageId: info.messageId } : {}),
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error('[email/sender] failed to send email:', message);

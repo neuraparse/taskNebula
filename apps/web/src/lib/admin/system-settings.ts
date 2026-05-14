@@ -1,3 +1,5 @@
+// QUAL-21 TS-strict-migration: file untouched intentionally; surfaces 3 errors
+// under `exactOptionalPropertyTypes`. See docs/TS_STRICT_MIGRATION.md.
 import { createId } from '@paralleldrive/cuid2';
 import { db, eq, systemSettings } from '@tasknebula/db';
 import {

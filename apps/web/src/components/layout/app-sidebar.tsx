@@ -1,5 +1,7 @@
 'use client';
 
+// QUAL-21 TS-strict-migration: file untouched intentionally; surfaces 5 errors
+// under `exactOptionalPropertyTypes`. See docs/TS_STRICT_MIGRATION.md.
 import type { Participant } from 'livekit-client';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
