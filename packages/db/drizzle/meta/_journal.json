@@ -227,13 +227,6 @@
 			"breakpoints": true
 		},
 		{
-			"idx": 32,
-			"version": "7",
-			"when": 1778900000000,
-			"tag": "0032_pgvector_hnsw_content_embeddings",
-			"breakpoints": true
-		},
-		{
 			"idx": 33,
 			"version": "7",
 			"when": 1778900000000,
@@ -357,6 +350,13 @@
 			"version": "7",
 			"when": 1778900000000,
 			"tag": "0050_audit_log_sinks",
+			"breakpoints": true
+		},
+		{
+			"idx": 51,
+			"version": "7",
+			"when": 1778900000000,
+			"tag": "0051_pgvector_hnsw_content_embeddings",
 			"breakpoints": true
 		}
 	]

@@ -100,11 +100,38 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 });
 
-// Parse and validate environment variables
+// Parse and validate environment variables.
+//
+// IMPORTANT: this used to throw at module-load time. That caused the Next 15
+// "Collecting page data" build stage to fail whenever AUTH_SECRET / AUTH_URL
+// were not available in the page-data subprocess (which happens during
+// `output: 'standalone'` builds and when Next probes dynamic routes). We
+// now treat the build phase as best-effort and fall back to safe stubs so
+// the build artifact can be produced; the real validation still runs the
+// first time `env` is accessed at runtime in the long-lived web server.
 function parseEnv() {
+  const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
   try {
     return envSchema.parse(process.env);
   } catch (error) {
+    // During build/page-data collection, return a permissive shape so route
+    // modules can be loaded without crashing. Real validation will run
+    // again at first request because Next re-evaluates env in the runtime
+    // server process.
+    if (isBuildPhase) {
+      const stub = {
+        ...process.env,
+        AUTH_SECRET: process.env.AUTH_SECRET || 'build-time-placeholder-secret-min-32-chars',
+        AUTH_URL: process.env.AUTH_URL || 'http://localhost:3000',
+        NEXT_PUBLIC_APP_URL:
+          process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+        DATABASE_URL:
+          process.env.DATABASE_URL || 'postgresql://build:build@localhost:5432/build',
+      } as Record<string, string>;
+      return envSchema.parse(stub);
+    }
+
+    // Real failure at runtime — surface every missing field, then throw.
     console.error('❌ Invalid environment variables:');
     if (error instanceof z.ZodError) {
       error.errors.forEach((err) => {

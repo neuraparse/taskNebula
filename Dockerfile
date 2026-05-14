@@ -28,6 +28,7 @@ COPY apps/web/package.json ./apps/web/
 COPY packages/db/package.json ./packages/db/
 COPY packages/types/package.json ./packages/types/
 COPY packages/config/package.json ./packages/config/
+COPY packages/mcp-server/package.json ./packages/mcp-server/
 
 # Install dependencies (lockfile will be updated if needed)
 RUN pnpm install --frozen-lockfile
@@ -43,6 +44,7 @@ COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY --from=deps /app/packages/db/node_modules ./packages/db/node_modules
 COPY --from=deps /app/packages/types/node_modules ./packages/types/node_modules
 COPY --from=deps /app/packages/config/node_modules ./packages/config/node_modules
+COPY --from=deps /app/packages/mcp-server/node_modules ./packages/mcp-server/node_modules
 
 # Copy source code
 COPY . .
