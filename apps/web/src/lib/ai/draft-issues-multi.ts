@@ -10,11 +10,7 @@
 
 import { z } from 'zod';
 import { issueDraftSchema, type IssueDraft, type DraftProvider, AiDraftError } from './draft-issue';
-import { redactPii, rehydrate } from './safety/redact';
-import {
-  UNTRUSTED_CONTENT_SYSTEM_PROMPT,
-  wrapUntrustedContent,
-} from './safety/sandbox';
+import { traceLlmCall } from './observability/langfuse';
 
 export const draftsResponseSchema = z.object({
   drafts: z.array(issueDraftSchema).min(1).max(20),
@@ -86,8 +82,6 @@ function buildSystemPrompt(
 
   return [
     `You break a single user prompt into a list of separate issues for the project "${projectName}" (key ${projectKey}).`,
-    // P1-16
-    UNTRUSTED_CONTENT_SYSTEM_PROMPT,
     `Rules:`,
     `  - Produce at most ${maxCount} drafts. Fewer is better when the prompt describes one thing.`,
     `  - Only split when the prompt genuinely describes multiple distinct tickets (bug list, feature checklist, multi-step plan).`,
@@ -110,8 +104,6 @@ async function draftIssuesOpenAi(request: DraftIssuesRequest): Promise<IssueDraf
   }
   const maxCount = Math.min(Math.max(request.maxCount ?? 5, 1), 20);
   const model = request.model || 'gpt-4o-mini';
-  const { redacted, replacements } = redactPii(request.prompt);
-  const safePrompt = wrapUntrustedContent(redacted);
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -131,7 +123,7 @@ async function draftIssuesOpenAi(request: DraftIssuesRequest): Promise<IssueDraf
             maxCount
           ),
         },
-        { role: 'user', content: safePrompt },
+        { role: 'user', content: request.prompt },
       ],
       response_format: { type: 'json_object' },
       temperature: 0.2,
@@ -150,8 +142,7 @@ async function draftIssuesOpenAi(request: DraftIssuesRequest): Promise<IssueDraf
     choices?: Array<{ message?: { content?: string } }>;
   };
   const raw = payload.choices?.[0]?.message?.content ?? '{}';
-  const drafts = parseAndValidate(raw, maxCount);
-  return drafts.map((d) => rehydrateDraft(d, replacements));
+  return parseAndValidate(raw, maxCount);
 }
 
 async function draftIssuesAnthropic(request: DraftIssuesRequest): Promise<IssueDraft[]> {
@@ -164,8 +155,6 @@ async function draftIssuesAnthropic(request: DraftIssuesRequest): Promise<IssueD
   }
   const maxCount = Math.min(Math.max(request.maxCount ?? 5, 1), 20);
   const model = request.model || 'claude-sonnet-4-6';
-  const { redacted, replacements } = redactPii(request.prompt);
-  const safePrompt = wrapUntrustedContent(redacted);
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -184,7 +173,7 @@ async function draftIssuesAnthropic(request: DraftIssuesRequest): Promise<IssueD
         request.existingLabels ?? [],
         maxCount
       ),
-      messages: [{ role: 'user', content: safePrompt }],
+      messages: [{ role: 'user', content: request.prompt }],
     }),
   });
 
@@ -200,18 +189,7 @@ async function draftIssuesAnthropic(request: DraftIssuesRequest): Promise<IssueD
     content?: Array<{ type: string; text?: string }>;
   };
   const text = payload.content?.find((block) => block.type === 'text')?.text ?? '{}';
-  const drafts = parseAndValidate(text, maxCount);
-  return drafts.map((d) => rehydrateDraft(d, replacements));
-}
-
-function rehydrateDraft(draft: IssueDraft, replacements: Map<string, string>): IssueDraft {
-  if (replacements.size === 0) return draft;
-  return {
-    ...draft,
-    title: rehydrate(draft.title, replacements),
-    description: draft.description ? rehydrate(draft.description, replacements) : draft.description,
-    labels: draft.labels.map((label) => rehydrate(label, replacements)),
-  };
+  return parseAndValidate(text, maxCount);
 }
 
 function parseAndValidate(raw: string, maxCount: number): IssueDraft[] {
@@ -238,7 +216,7 @@ function parseAndValidate(raw: string, maxCount: number): IssueDraft[] {
   return result.data.drafts.slice(0, maxCount);
 }
 
-export async function draftIssuesMulti(request: DraftIssuesRequest): Promise<IssueDraft[]> {
+async function runDraftIssuesMulti(request: DraftIssuesRequest): Promise<IssueDraft[]> {
   switch (request.provider) {
     case 'openai':
       return draftIssuesOpenAi(request);
@@ -247,5 +225,38 @@ export async function draftIssuesMulti(request: DraftIssuesRequest): Promise<Iss
     case 'native':
     default:
       return draftIssuesNative(request);
+  }
+}
+
+export async function draftIssuesMulti(request: DraftIssuesRequest): Promise<IssueDraft[]> {
+  const isLlm = request.provider === 'openai' || request.provider === 'anthropic';
+  const started = Date.now();
+  try {
+    const drafts = await runDraftIssuesMulti(request);
+    if (isLlm) {
+      await traceLlmCall({
+        feature: 'issue.draft.multi',
+        provider: request.provider,
+        model: request.model || 'default',
+        input: { prompt: request.prompt, projectKey: request.projectKey, maxCount: request.maxCount ?? 5 },
+        output: drafts,
+        latencyMs: Date.now() - started,
+        metadata: { draftCount: drafts.length },
+      });
+    }
+    return drafts;
+  } catch (err) {
+    if (isLlm) {
+      await traceLlmCall({
+        feature: 'issue.draft.multi',
+        provider: request.provider,
+        model: request.model || 'default',
+        input: { prompt: request.prompt, projectKey: request.projectKey },
+        output: null,
+        latencyMs: Date.now() - started,
+        errorMessage: err instanceof Error ? err.message : String(err),
+      });
+    }
+    throw err;
   }
 }

@@ -56,6 +56,17 @@ EOF
 )"
 fi
 
+# Prometheus exporter (OBS-35). When LIVEKIT_PROMETHEUS_PORT is set to a
+# non-zero port, LiveKit exposes /metrics on that port. Default 0 keeps
+# the exporter off so existing deployments don't gain an unexpected listener.
+PROMETHEUS_BLOCK=""
+if [ "${LIVEKIT_PROMETHEUS_PORT:-0}" != "0" ] && [ -n "${LIVEKIT_PROMETHEUS_PORT:-}" ]; then
+  PROMETHEUS_BLOCK="$(cat <<EOF
+prometheus_port: ${LIVEKIT_PROMETHEUS_PORT}
+EOF
+)"
+fi
+
 cat >/tmp/livekit.yaml <<EOF
 port: ${LIVEKIT_PORT:-7880}
 bind_addresses:
@@ -80,6 +91,7 @@ turn:
 keys:
   ${LIVEKIT_API_KEY:-tasknebula-dev}: ${LIVEKIT_API_SECRET:-tasknebula-livekit-secret-local-2026}
 ${WEBHOOK_BLOCK}
+${PROMETHEUS_BLOCK}
 EOF
 
 echo "Starting LiveKit with node IP: ${NODE_IP}"
