@@ -11,7 +11,7 @@ import { ActivityFeed } from '@/components/activity/activity-feed';
 import { YourWorkWidget } from '@/components/dashboard/your-work-widget';
 import { UpcomingDeadlinesWidget } from '@/components/dashboard/upcoming-deadlines-widget';
 import { PinnedItemsWidget } from '@/components/dashboard/pinned-items-widget';
-import { CatchMeUpBanner } from '@/components/dashboard/catch-me-up-banner';
+import { StandupWidget } from '@/components/dashboard/standup-widget';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useProjects } from '@/lib/hooks/use-projects';
 import {
@@ -168,9 +168,6 @@ export function DashboardClient() {
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <div className="p-6 space-y-8">
 
-            {/* Welcome back / Catch me up — only renders when last_seen_at > 4h ago */}
-            <CatchMeUpBanner />
-
             {/* Greeting */}
             <div className="flex items-end justify-between gap-4 animate-fade-up">
               <div className="space-y-1">
@@ -262,6 +259,12 @@ export function DashboardClient() {
                   <ActivityFeed organizationId={currentOrganizationId} limit={5} />
                 </div>
               )}
+            </div>
+
+            {/* Standup digest — surfaced separately so it occupies the full
+                width when present and degrades to a small CTA when empty. */}
+            <div className="mt-6">
+              <StandupWidget />
             </div>
 
             {/* Workspace widgets */}
