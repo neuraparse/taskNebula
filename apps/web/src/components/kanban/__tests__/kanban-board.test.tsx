@@ -131,8 +131,8 @@ describe('KanbanBoard', () => {
     expect(screen.getByRole('heading', { name: 'In Progress' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Done' })).toBeInTheDocument();
 
-    // Each column shows its "No issues" empty state.
-    expect(screen.getAllByText('No issues')).toHaveLength(mockStatuses.length);
+    // Each column shows its empty state (FEAT-31 reworded copy + CTAs).
+    expect(screen.getAllByText('No issues here yet')).toHaveLength(mockStatuses.length);
   });
 
   it('surfaces issue key fields on the rendered card', () => {

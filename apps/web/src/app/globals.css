@@ -386,6 +386,37 @@
     border-radius: var(--radius-lg);
   }
 
+  /* FEAT-31 — dark glassmorphism panel for modals, command palette, and
+     popovers. Renders the same in both themes (intentionally dark) so the
+     palette feels like a system-level surface floating above the app.
+
+     Layers:
+       1. zinc-900 @ 70% opacity background
+       2. saturated backdrop-blur for depth
+       3. 1px subtle white ring for edge definition
+       4. soft inner glow (top-edge highlight) for tactile feel
+       5. matching drop shadow that doesn't compete with the ring
+  */
+  .glass-panel {
+    background: rgb(24 24 27 / 0.70); /* zinc-900/70 */
+    backdrop-filter: saturate(160%) blur(20px);
+    -webkit-backdrop-filter: saturate(160%) blur(20px);
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.06),
+      0 0 0 1px rgb(255 255 255 / 0.08),
+      0 24px 48px -12px rgb(0 0 0 / 0.55),
+      0 8px 20px -8px rgb(0 0 0 / 0.40);
+    border-radius: var(--radius-lg);
+    color: rgb(244 244 245); /* zinc-100 — readable text on dark glass */
+  }
+  /* Fallback for browsers without backdrop-filter (Firefox in some
+     configurations): drop the translucency and lean on the solid surface. */
+  @supports not (backdrop-filter: blur(1px)) {
+    .glass-panel {
+      background: rgb(24 24 27 / 0.96);
+    }
+  }
+
   /* Kanban — NEVER animate `transform` here. dnd-kit owns transform during drag;
      any CSS transform transition (including :hover translateY) fights the sortable
      reorder animation and makes cards snap to wrong positions. */
