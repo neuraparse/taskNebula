@@ -97,6 +97,7 @@
     "react": "^19.0.3",
     "react-dom": "^19.0.3",
     "recharts": "^3.5.0",
+    "samlify": "^2.10.0",
     "swagger-ui-react": "^5.32.6",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",

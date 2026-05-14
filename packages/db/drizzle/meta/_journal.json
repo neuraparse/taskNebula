@@ -309,6 +309,13 @@
 			"when": 1779000000000,
 			"tag": "0043_slack_integration",
 			"breakpoints": true
+		},
+		{
+			"idx": 44,
+			"version": "7",
+			"when": 1778900000000,
+			"tag": "0044_sso_and_scim",
+			"breakpoints": true
 		}
 	]
 }

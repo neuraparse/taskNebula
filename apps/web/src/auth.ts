@@ -6,6 +6,7 @@ import { db, users } from '@tasknebula/db';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { authConfig } from './auth.config';
+import { consumeSamlExchangeToken } from '@/lib/sso/session';
 
 /**
  * Full auth configuration with database operations
@@ -43,6 +44,31 @@ const nextAuth = NextAuth({
           return null;
         }
 
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+        };
+      },
+    }),
+    // SAML bridge: redeems a one-shot exchange token minted by the ACS
+    // callback (see apps/web/src/lib/sso/session.ts) and signs the user in.
+    Credentials({
+      id: 'saml-bridge',
+      name: 'saml-bridge',
+      credentials: {
+        token: { label: 'SAML exchange token', type: 'text' },
+      },
+      async authorize(credentials) {
+        const token = credentials?.token;
+        if (typeof token !== 'string' || !token) return null;
+        const payload = await consumeSamlExchangeToken(token);
+        if (!payload) return null;
+        const user = await db.query.users.findFirst({
+          where: eq(users.id, payload.userId),
+        });
+        if (!user) return null;
         return {
           id: user.id,
           email: user.email,
