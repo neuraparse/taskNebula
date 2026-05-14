@@ -5,6 +5,7 @@ import { auth } from '@/auth';
 import { createId } from '@paralleldrive/cuid2';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { publishEvent } from '@/lib/realtime/events';
+import { postMirroredThreadReply } from '@/lib/integrations/slack-issue-bridge';
 
 // Validation schema for creating a comment
 const createCommentSchema = z.object({
@@ -106,6 +107,17 @@ export async function POST(
           extra: { commentBody: validatedData.content.substring(0, 200) },
         });
       }
+
+      // Mirror the comment back into the originating Slack thread when this
+      // issue was spawned from a Slack message. Silent no-op for non-Slack
+      // issues — see slack-issue-bridge.ts. Fire-and-forget so we never
+      // surface a Slack/network failure to the comment author.
+      void postMirroredThreadReply({
+        issueId,
+        text: `*New comment on ${issue.key}* by <${session.user.email ?? session.user.id}|${session.user.name ?? 'TaskNebula user'}>\n${validatedData.content.slice(0, 1000)}`,
+      }).catch((err) =>
+        console.warn('[slack-mirror] comment mirror failed', err)
+      );
 
       // Notify reporter about new comment (if different from assignee)
       if (issue.reporterId && issue.reporterId !== issue.assigneeId) {

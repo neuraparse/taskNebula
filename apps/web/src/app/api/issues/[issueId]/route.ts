@@ -6,6 +6,7 @@ import { eq, and } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { runAutomations } from '@/lib/automation/evaluator';
+import { postMirroredThreadReply } from '@/lib/integrations/slack-issue-bridge';
 
 type IssueAction = 'view' | 'edit' | 'delete' | 'assign' | 'transition' | 'schedule' | 'close' | 'reopen';
 
@@ -526,6 +527,15 @@ export async function PATCH(
         payload: automationPayload,
         actorUserId: session.user.id!,
       }).catch((err) => console.error('automation failed', err));
+
+      // Mirror the status change into the originating Slack thread when this
+      // issue was spawned from a Slack message. Silent no-op otherwise.
+      void postMirroredThreadReply({
+        issueId: currentIssue.id,
+        text: `*${currentIssue.key}* moved to *${newStatus?.name ?? 'a new status'}*`,
+      }).catch((err) =>
+        console.warn('[slack-mirror] status mirror failed', err)
+      );
     }
 
     if (assigneeChanged) {
