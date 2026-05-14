@@ -9,6 +9,16 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['@tasknebula/db', 'postgres', 'drizzle-orm'],
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    // React Compiler 1.0 — auto-memoizes components/hooks to cut re-renders.
+    // Requires babel-plugin-react-compiler (installed as devDependency).
+    reactCompiler: true,
+    // NOTE: `experimental.ppr` is intentionally NOT set. Next.js 15.1.11
+    // (stable) rejects the PPR flag — it only works on the canary channel.
+    // The dashboard and my-issues pages already render their static shell
+    // via a top-level <Suspense fallback>, so once we upgrade to a Next
+    // version that ships PPR on stable (16.x or canary), flipping
+    // `ppr: 'incremental'` here will start prerendering those shells.
+    // See: https://nextjs.org/docs/messages/ppr-preview
   },
   images: {
     formats: ['image/avif', 'image/webp'],

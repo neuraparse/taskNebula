@@ -103,6 +103,7 @@
     "@types/react-dom": "^19.0.2",
     "@types/swagger-ui-react": "^5.18.0",
     "autoprefixer": "^10.4.20",
+    "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^8.57.1",
     "eslint-config-next": "15.1.4",
     "jest": "^30.2.0",

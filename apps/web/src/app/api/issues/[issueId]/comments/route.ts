@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { z } from 'zod';
 import { getIssueComments, createComment, createActivity, createAuditLog, getIssueById } from '@tasknebula/db';
 import { auth } from '@/auth';
@@ -65,62 +65,87 @@ export async function POST(
       updatedBy: session.user.id,
     });
 
-    // Create activity log for comment
-    await createActivity({
-      issueId,
-      userId: session.user.id,
-      type: 'commented',
-      metadata: { commentId: newComment.id },
-    });
+    // Defer activity log, audit log, realtime publish, and notification
+    // emails until after the response ships. The caller only needs the
+    // newly-created comment payload to render optimistically.
+    const actorUserId = session.user.id!;
+    const commentSnippet = validatedData.content.substring(0, 200);
+    after(async () => {
+      try {
+        await createActivity({
+          issueId,
+          userId: actorUserId,
+          type: 'commented',
+          metadata: { commentId: newComment.id },
+        });
+      } catch (err) {
+        console.error('activity log failed', err);
+      }
 
-    // Get issue details for audit log and notifications
-    const issue = await getIssueById(issueId);
-    if (issue) {
-      await createAuditLog({
-        userId: session.user.id,
-        organizationId: issue.organizationId,
-        action: 'issue.commented',
-        resourceType: 'issue',
-        resourceId: issueId,
-        projectId: issue.projectId,
-        issueId,
-        metadata: { commentId: newComment.id },
-      });
+      const issue = await getIssueById(issueId).catch(() => null);
+      if (!issue) return;
 
-      publishEvent('issue.commented', session.user.id, {
-        issueId,
-        projectId: issue.projectId,
-        organizationId: issue.organizationId,
-      });
+      try {
+        await createAuditLog({
+          userId: actorUserId,
+          organizationId: issue.organizationId,
+          action: 'issue.commented',
+          resourceType: 'issue',
+          resourceId: issueId,
+          projectId: issue.projectId,
+          issueId,
+          metadata: { commentId: newComment.id },
+        });
+      } catch (err) {
+        console.error('audit log failed', err);
+      }
 
-      // Notify assignee about new comment
+      try {
+        publishEvent('issue.commented', actorUserId, {
+          issueId,
+          projectId: issue.projectId,
+          organizationId: issue.organizationId,
+        });
+      } catch (err) {
+        console.error('publishEvent failed', err);
+      }
+
+      const projectName = issue.key?.split('-')[0] || '';
+
       if (issue.assigneeId) {
-        notifyIssueEvent({
-          eventType: 'issue_commented',
-          recipientUserId: issue.assigneeId,
-          actorUserId: session.user.id!,
-          organizationId: issue.organizationId,
-          issueKey: issue.key,
-          issueTitle: issue.title,
-          projectName: issue.key?.split('-')[0] || '',
-          extra: { commentBody: validatedData.content.substring(0, 200) },
-        });
+        try {
+          await notifyIssueEvent({
+            eventType: 'issue_commented',
+            recipientUserId: issue.assigneeId,
+            actorUserId,
+            organizationId: issue.organizationId,
+            issueKey: issue.key,
+            issueTitle: issue.title,
+            projectName,
+            extra: { commentBody: commentSnippet },
+          });
+        } catch (err) {
+          console.error('comment notify (assignee) failed', err);
+        }
       }
 
-      // Notify reporter about new comment (if different from assignee)
       if (issue.reporterId && issue.reporterId !== issue.assigneeId) {
-        notifyIssueEvent({
-          eventType: 'issue_commented',
-          recipientUserId: issue.reporterId,
-          actorUserId: session.user.id!,
-          organizationId: issue.organizationId,
-          issueKey: issue.key,
-          issueTitle: issue.title,
-          projectName: issue.key?.split('-')[0] || '',
-          extra: { commentBody: validatedData.content.substring(0, 200) },
-        });
+        try {
+          await notifyIssueEvent({
+            eventType: 'issue_commented',
+            recipientUserId: issue.reporterId,
+            actorUserId,
+            organizationId: issue.organizationId,
+            issueKey: issue.key,
+            issueTitle: issue.title,
+            projectName,
+            extra: { commentBody: commentSnippet },
+          });
+        } catch (err) {
+          console.error('comment notify (reporter) failed', err);
+        }
       }
-    }
+    });
 
     return NextResponse.json(newComment, { status: 201 });
   } catch (error) {
