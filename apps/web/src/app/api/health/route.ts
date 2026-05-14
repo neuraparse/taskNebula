@@ -12,6 +12,14 @@
  *   - redis: pinged when REDIS_URL is set
  *   - livekit: marks degraded when env vars are configured but reachability fails
  *   - smtp: passive — only reports configuration state, not reachability
+ *
+ * MIGRATED (P0-06):
+ *   - Uses `withErrorHandler` so any unexpected exception (e.g. a sudden v8
+ *     module failure) becomes a standardised 500 envelope instead of an
+ *     unhandled rejection.
+ *   - Subsystem failures still return 200/503 *inside* the handler as before —
+ *     they are NOT exceptions, they are the documented health contract.
+ *   - `console.error` replaced with structured `log.error`.
  */
 
 import * as v8 from 'v8';
@@ -20,8 +28,12 @@ import { db } from '@tasknebula/db';
 import { sql } from 'drizzle-orm';
 import { getRedisClient, isRedisConfigured } from '@/lib/server/redis';
 import { getLivekitStatus } from '@/lib/chat/livekit';
+import { withErrorHandler } from '@/lib/api-handler';
+import { childLogger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
+
+const log = childLogger('api/health');
 
 type CheckState = 'ok' | 'warning' | 'error' | 'skipped';
 
@@ -71,91 +83,105 @@ async function pingRedis(): Promise<{ state: CheckState; detail?: string }> {
   }
 }
 
-export async function GET() {
-  const startTime = Date.now();
-  const checks: HealthStatus['checks'] = {
-    database: 'ok',
-    memory: 'ok',
-    redis: 'skipped',
-    livekit: 'skipped',
-    smtp: 'skipped',
-  };
-  const details: Record<string, string> = {};
+export const GET = withErrorHandler(
+  async () => {
+    const startTime = Date.now();
+    const checks: HealthStatus['checks'] = {
+      database: 'ok',
+      memory: 'ok',
+      redis: 'skipped',
+      livekit: 'skipped',
+      smtp: 'skipped',
+    };
+    const details: Record<string, string> = {};
 
-  let unhealthy = false;
-  let degraded = false;
+    let unhealthy = false;
+    let degraded = false;
 
-  // Database — required
-  try {
-    await db.execute(sql`SELECT 1`);
-  } catch (error) {
-    console.error('Database health check failed:', error);
-    checks.database = 'error';
-    details.database = error instanceof Error ? error.message : 'database unreachable';
-    unhealthy = true;
-  }
+    // Database — required
+    try {
+      await db.execute(sql`SELECT 1`);
+    } catch (error) {
+      log.error({ err: error }, 'database health check failed');
+      checks.database = 'error';
+      details.database = error instanceof Error ? error.message : 'database unreachable';
+      unhealthy = true;
+    }
 
-  // Memory — required. V8 keeps heapTotal sized close to heapUsed by design,
-  // so heapUsed/heapTotal is not a useful saturation signal. Compare against
-  // heap_size_limit (the V8 cap) which is what actually triggers GC pressure / OOM.
-  const heapStats = v8.getHeapStatistics();
-  const heapUsedPercent = (heapStats.used_heap_size / heapStats.heap_size_limit) * 100;
+    // Memory — required. V8 keeps heapTotal sized close to heapUsed by design,
+    // so heapUsed/heapTotal is not a useful saturation signal. Compare against
+    // heap_size_limit (the V8 cap) which is what actually triggers GC pressure / OOM.
+    const heapStats = v8.getHeapStatistics();
+    const heapUsedPercent = (heapStats.used_heap_size / heapStats.heap_size_limit) * 100;
 
-  if (heapUsedPercent > 95) {
-    checks.memory = 'error';
-    details.memory = `${heapUsedPercent.toFixed(1)}% of V8 heap limit`;
-    unhealthy = true;
-  } else if (heapUsedPercent > 85) {
-    checks.memory = 'warning';
-    details.memory = `${heapUsedPercent.toFixed(1)}% of V8 heap limit`;
-    degraded = true;
-  }
+    if (heapUsedPercent > 95) {
+      checks.memory = 'error';
+      details.memory = `${heapUsedPercent.toFixed(1)}% of V8 heap limit`;
+      unhealthy = true;
+    } else if (heapUsedPercent > 85) {
+      checks.memory = 'warning';
+      details.memory = `${heapUsedPercent.toFixed(1)}% of V8 heap limit`;
+      degraded = true;
+    }
 
-  // Redis — optional. Container healthcheck stays green even if Redis fails,
-  // but the response surfaces the degradation for monitoring/alerts.
-  const redisResult = await pingRedis();
-  checks.redis = redisResult.state;
-  if (redisResult.detail) details.redis = redisResult.detail;
-  if (redisResult.state === 'error') degraded = true;
+    // Redis — optional. Container healthcheck stays green even if Redis fails,
+    // but the response surfaces the degradation for monitoring/alerts.
+    const redisResult = await pingRedis();
+    checks.redis = redisResult.state;
+    if (redisResult.detail) details.redis = redisResult.detail;
+    if (redisResult.state === 'error') {
+      degraded = true;
+      log.warn({ detail: redisResult.detail }, 'redis ping failed');
+    }
 
-  // LiveKit — passive: env-config check only (avoids tying the API process
-  // healthcheck to LiveKit reachability, which has its own container probe).
-  const livekitStatus = getLivekitStatus();
-  if (livekitStatus.ready) {
-    checks.livekit = 'ok';
-  } else if (livekitStatus.missing.length > 0 && livekitStatus.missing.length < 4) {
-    checks.livekit = 'warning';
-    details.livekit = `partial config; missing: ${livekitStatus.missing.join(', ')}`;
-    degraded = true;
-  }
+    // LiveKit — passive: env-config check only (avoids tying the API process
+    // healthcheck to LiveKit reachability, which has its own container probe).
+    const livekitStatus = getLivekitStatus();
+    if (livekitStatus.ready) {
+      checks.livekit = 'ok';
+    } else if (livekitStatus.missing.length > 0 && livekitStatus.missing.length < 4) {
+      checks.livekit = 'warning';
+      details.livekit = `partial config; missing: ${livekitStatus.missing.join(', ')}`;
+      degraded = true;
+    }
 
-  // SMTP — passive: env-config check only.
-  if (process.env.SMTP_HOST) {
-    checks.smtp = 'ok';
-  }
+    // SMTP — passive: env-config check only.
+    if (process.env.SMTP_HOST) {
+      checks.smtp = 'ok';
+    }
 
-  const status: HealthStatus['status'] = unhealthy ? 'unhealthy' : degraded ? 'degraded' : 'healthy';
+    const status: HealthStatus['status'] = unhealthy ? 'unhealthy' : degraded ? 'degraded' : 'healthy';
 
-  const response: HealthStatus = {
-    status,
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    checks,
-    ...(Object.keys(details).length > 0 ? { details } : {}),
-    version: process.env.npm_package_version,
-  };
+    const response: HealthStatus = {
+      status,
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      checks,
+      ...(Object.keys(details).length > 0 ? { details } : {}),
+      version: process.env.npm_package_version,
+    };
 
-  // Container healthcheck contract: only return 503 when truly unhealthy.
-  // Degraded (Redis down, memory warn, partial LiveKit) still returns 200
-  // so containers don't restart for transient subsystem hiccups.
-  const statusCode = unhealthy ? 503 : 200;
-  const responseTime = Date.now() - startTime;
+    // Container healthcheck contract: only return 503 when truly unhealthy.
+    // Degraded (Redis down, memory warn, partial LiveKit) still returns 200
+    // so containers don't restart for transient subsystem hiccups.
+    const statusCode = unhealthy ? 503 : 200;
+    const responseTime = Date.now() - startTime;
 
-  return NextResponse.json(response, {
-    status: statusCode,
-    headers: {
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'X-Response-Time': `${responseTime}ms`,
-    },
-  });
-}
+    if (unhealthy) {
+      log.error({ checks, details, responseTime }, 'health check unhealthy');
+    } else if (degraded) {
+      log.warn({ checks, details, responseTime }, 'health check degraded');
+    } else {
+      log.debug({ responseTime }, 'health check ok');
+    }
+
+    return NextResponse.json(response, {
+      status: statusCode,
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'X-Response-Time': `${responseTime}ms`,
+      },
+    });
+  },
+  { scope: 'api/health' },
+);

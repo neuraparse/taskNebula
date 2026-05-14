@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse, after } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getIssueById, updateIssue, deleteIssue, createActivity, createAuditLog, db, issues, workflowStatuses, workflows, projects, projectMembers, organizationMembers, users, ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from '@tasknebula/db';
 import { auth } from '@/auth';
@@ -6,6 +6,17 @@ import { eq, and } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { runAutomations } from '@/lib/automation/evaluator';
+import { withErrorHandler } from '@/lib/api-handler';
+import {
+  ApiError,
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError,
+} from '@/lib/errors';
+import { childLogger } from '@/lib/logger';
+
+// MIGRATED (P0-06): see apps/web/src/lib/MIGRATION.md for the pattern.
+const log = childLogger('api/issues/[issueId]');
 
 type IssueAction = 'view' | 'edit' | 'delete' | 'assign' | 'transition' | 'schedule' | 'close' | 'reopen';
 
@@ -160,21 +171,21 @@ const updateIssueSchema = z.object({
 });
 
 // GET /api/issues/[issueId] - Get a single issue
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ issueId: string }> }
-) {
-  try {
+export const GET = withErrorHandler(
+  async (
+    _request: NextRequest,
+    { params }: { params: Promise<{ issueId: string }> },
+  ) => {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      throw new UnauthorizedError();
     }
 
     const { issueId } = await params;
     const issue = await getIssueById(issueId);
 
     if (!issue) {
-      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+      throw new NotFoundError('Issue not found');
     }
 
     // Permission check: ensure caller can view this issue
@@ -182,41 +193,38 @@ export async function GET(
       session.user.id,
       issue.projectId,
       'view',
-      issue.reporterId
+      issue.reporterId,
     );
     if (!permission.allowed) {
-      return NextResponse.json(
-        { error: permission.reason || 'Permission denied' },
-        { status: 403 }
-      );
+      throw new ForbiddenError(permission.reason || 'Permission denied');
     }
 
+    log.debug({ issueId, userId: session.user.id }, 'issue fetched');
     return NextResponse.json(issue);
-  } catch (error) {
-    console.error('Error fetching issue:', error);
-    return NextResponse.json({ error: 'Failed to fetch issue' }, { status: 500 });
-  }
-}
+  },
+  { scope: 'api/issues/[issueId]:GET' },
+);
 
 // PATCH /api/issues/[issueId] - Update an issue
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ issueId: string }> }
-) {
-  try {
+export const PATCH = withErrorHandler(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ issueId: string }> },
+  ) => {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      throw new UnauthorizedError();
     }
 
     const { issueId } = await params;
     const body = await request.json();
+    // Zod errors auto-converted to 400 by withErrorHandler.
     const validatedData = updateIssueSchema.parse(body);
 
     // Get current issue for comparison
     const currentIssue = await getIssueById(issueId);
     if (!currentIssue) {
-      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+      throw new NotFoundError('Issue not found');
     }
 
     // Determine required permissions based on what's being changed
@@ -251,13 +259,10 @@ export async function PATCH(
         session.user.id!,
         currentIssue.projectId,
         action,
-        currentIssue.reporterId
+        currentIssue.reporterId,
       );
       if (!permission.allowed) {
-        return NextResponse.json(
-          { error: permission.reason || 'Permission denied' },
-          { status: 403 }
-        );
+        throw new ForbiddenError(permission.reason || 'Permission denied');
       }
     }
 
@@ -278,7 +283,7 @@ export async function PATCH(
 
       const workflow = workflowResults[0];
       if (!workflow) {
-        return NextResponse.json({ error: 'No workflow found' }, { status: 500 });
+        throw new ApiError(500, 'WORKFLOW_NOT_FOUND', 'No workflow found');
       }
 
       // Get the first status with the matching category
@@ -293,7 +298,7 @@ export async function PATCH(
 
       const firstMatching = matchingStatuses[0];
       if (!firstMatching) {
-        return NextResponse.json({ error: 'Status not found' }, { status: 404 });
+        throw new NotFoundError('Status not found');
       }
 
       // Use the first matching status
@@ -304,7 +309,7 @@ export async function PATCH(
     const updatedIssueData = await updateIssue(issueId, updateData);
 
     if (!updatedIssueData) {
-      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+      throw new NotFoundError('Issue not found');
     }
 
     // Create activity logs for changed fields
@@ -391,7 +396,29 @@ export async function PATCH(
       changes.title = { from: currentIssue.title, to: updateData.title };
     }
 
-    // Publish realtime event synchronously (in-process bus, microseconds).
+    if (Object.keys(changes).length > 0) {
+      // Determine the most significant action
+      let action: 'issue.status_changed' | 'issue.assigned' | 'issue.priority_changed' | 'issue.updated' = 'issue.updated';
+      if (changes.status) {
+        action = 'issue.status_changed';
+      } else if (changes.assigneeId) {
+        action = 'issue.assigned';
+      } else if (changes.priority) {
+        action = 'issue.priority_changed';
+      }
+
+      await createAuditLog({
+        userId: session.user.id,
+        organizationId: currentIssue.organizationId,
+        action,
+        resourceType: 'issue',
+        resourceId: issueId,
+        projectId: currentIssue.projectId,
+        issueId,
+        changes,
+      });
+    }
+
     publishEvent('issue.updated', session.user.id!, {
       projectId: currentIssue.projectId,
       issueId,
@@ -399,79 +426,32 @@ export async function PATCH(
       organizationId: currentIssue.organizationId,
     });
 
-    // Defer audit log and notification emails to after the response is sent.
-    const actorUserId = session.user.id!;
+    // Email notifications (fire-and-forget)
     const projectName = currentIssue.key?.split('-')[0] || '';
-    const changesSnapshot = changes;
-    const newAssigneeId =
-      updateData.assigneeId && updateData.assigneeId !== currentIssue.assigneeId
-        ? updateData.assigneeId
-        : null;
-    const statusEmailRecipient =
-      updateData.statusId &&
-      updateData.statusId !== currentIssue.statusId &&
-      currentIssue.assigneeId
-        ? currentIssue.assigneeId
-        : null;
 
-    after(async () => {
-      if (Object.keys(changesSnapshot).length > 0) {
-        let action: 'issue.status_changed' | 'issue.assigned' | 'issue.priority_changed' | 'issue.updated' = 'issue.updated';
-        if (changesSnapshot.status) {
-          action = 'issue.status_changed';
-        } else if (changesSnapshot.assigneeId) {
-          action = 'issue.assigned';
-        } else if (changesSnapshot.priority) {
-          action = 'issue.priority_changed';
-        }
-        try {
-          await createAuditLog({
-            userId: actorUserId,
-            organizationId: currentIssue.organizationId,
-            action,
-            resourceType: 'issue',
-            resourceId: issueId,
-            projectId: currentIssue.projectId,
-            issueId,
-            changes: changesSnapshot,
-          });
-        } catch (err) {
-          console.error('audit log failed', err);
-        }
-      }
+    if (updateData.assigneeId && updateData.assigneeId !== currentIssue.assigneeId) {
+      notifyIssueEvent({
+        eventType: 'issue_assigned',
+        recipientUserId: updateData.assigneeId,
+        actorUserId: session.user.id!,
+        organizationId: currentIssue.organizationId,
+        issueKey: currentIssue.key,
+        issueTitle: currentIssue.title,
+        projectName,
+      });
+    }
 
-      if (newAssigneeId) {
-        try {
-          await notifyIssueEvent({
-            eventType: 'issue_assigned',
-            recipientUserId: newAssigneeId,
-            actorUserId,
-            organizationId: currentIssue.organizationId,
-            issueKey: currentIssue.key,
-            issueTitle: currentIssue.title,
-            projectName,
-          });
-        } catch (err) {
-          console.error('assignee notification failed', err);
-        }
-      }
-
-      if (statusEmailRecipient) {
-        try {
-          await notifyIssueEvent({
-            eventType: 'issue_status_changed',
-            recipientUserId: statusEmailRecipient,
-            actorUserId,
-            organizationId: currentIssue.organizationId,
-            issueKey: currentIssue.key,
-            issueTitle: currentIssue.title,
-            projectName,
-          });
-        } catch (err) {
-          console.error('status notification failed', err);
-        }
-      }
-    });
+    if (updateData.statusId && updateData.statusId !== currentIssue.statusId && currentIssue.assigneeId) {
+      notifyIssueEvent({
+        eventType: 'issue_status_changed',
+        recipientUserId: currentIssue.assigneeId,
+        actorUserId: session.user.id!,
+        organizationId: currentIssue.organizationId,
+        issueKey: currentIssue.key,
+        issueTitle: currentIssue.title,
+        projectName,
+      });
+    }
 
     // --- Automation triggers (fire-and-forget) ---
     // Compute which fields changed between old and new so rules can match.
@@ -534,71 +514,50 @@ export async function PATCH(
       ...(newStatus ? { newStatus } : {}),
     };
 
-    // Defer automation rule evaluation until after the response is sent.
-    after(async () => {
-      try {
-        await runAutomations({
-          trigger: 'issue.updated',
-          organizationId: currentIssue.organizationId,
-          projectId: currentIssue.projectId,
-          payload: automationPayload,
-          actorUserId,
-        });
-      } catch (err) {
-        console.error('automation failed', err);
-      }
+    // Always fire issue.updated
+    void runAutomations({
+      trigger: 'issue.updated',
+      organizationId: currentIssue.organizationId,
+      projectId: currentIssue.projectId,
+      payload: automationPayload,
+      actorUserId: session.user.id!,
+    }).catch((err) => log.error({ err }, 'automation failed'));
 
-      if (statusChanged) {
-        try {
-          await runAutomations({
-            trigger: 'issue.status_changed',
-            organizationId: currentIssue.organizationId,
-            projectId: currentIssue.projectId,
-            payload: automationPayload,
-            actorUserId,
-          });
-        } catch (err) {
-          console.error('automation failed', err);
-        }
-      }
-
-      if (assigneeChanged) {
-        try {
-          await runAutomations({
-            trigger: 'issue.assigned',
-            organizationId: currentIssue.organizationId,
-            projectId: currentIssue.projectId,
-            payload: automationPayload,
-            actorUserId,
-          });
-        } catch (err) {
-          console.error('automation failed', err);
-        }
-      }
-    });
-
-    return NextResponse.json(updatedIssueData);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
-        { status: 400 }
-      );
+    if (statusChanged) {
+      void runAutomations({
+        trigger: 'issue.status_changed',
+        organizationId: currentIssue.organizationId,
+        projectId: currentIssue.projectId,
+        payload: automationPayload,
+        actorUserId: session.user.id!,
+      }).catch((err) => log.error({ err }, 'automation failed'));
     }
-    console.error('Error updating issue:', error);
-    return NextResponse.json({ error: 'Failed to update issue' }, { status: 500 });
-  }
-}
+
+    if (assigneeChanged) {
+      void runAutomations({
+        trigger: 'issue.assigned',
+        organizationId: currentIssue.organizationId,
+        projectId: currentIssue.projectId,
+        payload: automationPayload,
+        actorUserId: session.user.id!,
+      }).catch((err) => log.error({ err }, 'automation failed'));
+    }
+
+    log.info({ issueId, changedFields }, 'issue updated');
+    return NextResponse.json(updatedIssueData);
+  },
+  { scope: 'api/issues/[issueId]:PATCH' },
+);
 
 // DELETE /api/issues/[issueId] - Delete an issue
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ issueId: string }> }
-) {
-  try {
+export const DELETE = withErrorHandler(
+  async (
+    _request: NextRequest,
+    { params }: { params: Promise<{ issueId: string }> },
+  ) => {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      throw new UnauthorizedError();
     }
 
     const { issueId } = await params;
@@ -606,7 +565,7 @@ export async function DELETE(
     // Get issue to check project and reporter
     const issue = await getIssueById(issueId);
     if (!issue) {
-      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+      throw new NotFoundError('Issue not found');
     }
 
     // Check permission to delete issues (with reporter check for own issues)
@@ -614,13 +573,10 @@ export async function DELETE(
       session.user.id!,
       issue.projectId,
       'delete',
-      issue.reporterId
+      issue.reporterId,
     );
     if (!permission.allowed) {
-      return NextResponse.json(
-        { error: permission.reason || 'Permission denied' },
-        { status: 403 }
-      );
+      throw new ForbiddenError(permission.reason || 'Permission denied');
     }
 
     await deleteIssue(issueId);
@@ -632,10 +588,9 @@ export async function DELETE(
       organizationId: issue.organizationId,
     });
 
+    log.info({ issueId, userId: session.user.id }, 'issue deleted');
     return NextResponse.json({ success: true, id: issueId });
-  } catch (error) {
-    console.error('Error deleting issue:', error);
-    return NextResponse.json({ error: 'Failed to delete issue' }, { status: 500 });
-  }
-}
+  },
+  { scope: 'api/issues/[issueId]:DELETE' },
+);
 

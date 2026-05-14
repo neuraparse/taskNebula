@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse, after } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getIssues, createIssue, createActivity, createAuditLog, db, projects, issues, workflowStatuses, workflows, users, projectMembers, organizationMembers } from '@tasknebula/db';
 import { auth } from '@/auth';
@@ -7,6 +7,17 @@ import { eq, and, desc, asc, sql, inArray } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { runAutomations } from '@/lib/automation/evaluator';
+import { withErrorHandler } from '@/lib/api-handler';
+import {
+  ApiError,
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError,
+} from '@/lib/errors';
+import { childLogger } from '@/lib/logger';
+
+// MIGRATED (P0-06): see apps/web/src/lib/MIGRATION.md for the pattern.
+const log = childLogger('api/issues');
 
 // Permission check helper for issues
 async function checkIssuePermission(
@@ -123,11 +134,11 @@ const createIssueSchema = z.object({
 });
 
 // GET /api/issues - List issues with filters
-export async function GET(request: NextRequest) {
-  try {
+export const GET = withErrorHandler(
+  async (request: NextRequest) => {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      throw new UnauthorizedError();
     }
 
     const searchParams = request.nextUrl.searchParams;
@@ -178,7 +189,7 @@ export async function GET(request: NextRequest) {
         .limit(1);
 
       if (!project) {
-        return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+        throw new NotFoundError('Project not found');
       }
 
       if (!isSuperAdmin && !accessibleOrgIds.includes(project.organizationId)) {
@@ -195,7 +206,7 @@ export async function GET(request: NextRequest) {
           .limit(1);
 
         if (!projectMember) {
-          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+          throw new ForbiddenError();
         }
       }
     } else if (!isSuperAdmin && accessibleOrgIds.length === 0) {
@@ -275,25 +286,28 @@ export async function GET(request: NextRequest) {
 
     const issuesData = await query;
 
+    log.debug(
+      { count: issuesData.length, projectId: actualProjectId },
+      'issues listed',
+    );
     return NextResponse.json({
       issues: issuesData,
       total: issuesData.length,
     });
-  } catch (error) {
-    console.error('Error fetching issues:', error);
-    return NextResponse.json({ error: 'Failed to fetch issues' }, { status: 500 });
-  }
-}
+  },
+  { scope: 'api/issues:GET' },
+);
 
 // POST /api/issues - Create a new issue
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withErrorHandler(
+  async (request: NextRequest) => {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      throw new UnauthorizedError();
     }
 
     const body = await request.json();
+    // Zod errors auto-converted to 400 by withErrorHandler.
     const validatedData = createIssueSchema.parse(body);
 
     // If projectId looks like a key (e.g., "demo", "PROJ"), convert to ID
@@ -321,16 +335,13 @@ export async function POST(request: NextRequest) {
 
     const project = projectResults[0];
     if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+      throw new NotFoundError('Project not found');
     }
 
     // Check permission to create issues
     const permission = await checkIssuePermission(session.user.id!, actualProjectId, 'create');
     if (!permission.allowed) {
-      return NextResponse.json(
-        { error: permission.reason || 'Permission denied' },
-        { status: 403 }
-      );
+      throw new ForbiddenError(permission.reason || 'Permission denied');
     }
 
     // Get the next issue number for this project
@@ -362,7 +373,7 @@ export async function POST(request: NextRequest) {
 
       const defaultWorkflow = defaultWorkflows[0];
       if (!defaultWorkflow) {
-        return NextResponse.json({ error: 'No workflow found for project' }, { status: 500 });
+        throw new ApiError(500, 'WORKFLOW_NOT_FOUND', 'No workflow found for project');
       }
 
       workflowId = defaultWorkflow.id;
@@ -391,7 +402,7 @@ export async function POST(request: NextRequest) {
         .sort((a, b) => a.position - b.position);
       const defaultStatus = backlogStatuses[0];
       if (!defaultStatus) {
-        return NextResponse.json({ error: 'No backlog status found in workflow' }, { status: 500 });
+        throw new ApiError(500, 'BACKLOG_STATUS_NOT_FOUND', 'No backlog status found in workflow');
       }
       finalStatusId = defaultStatus.id;
     }
@@ -428,94 +439,66 @@ export async function POST(request: NextRequest) {
         .returning();
       newIssue = newIssueResults[0];
       if (!newIssue) {
-        throw new Error('Failed to create issue');
+        throw new ApiError(500, 'ISSUE_INSERT_FAILED', 'Failed to create issue');
       }
 
-      // Publish realtime event synchronously so other clients see the new
-      // issue immediately (in-process bus, ~microseconds).
+      // Create activity log for issue creation
+      await createActivity({
+        issueId: newIssue.id,
+        userId: session.user.id,
+        type: 'created',
+      });
+
+      // Create audit log for issue creation
+      await createAuditLog({
+        userId: session.user.id,
+        organizationId: newIssue.organizationId,
+        action: 'issue.created',
+        resourceType: 'issue',
+        resourceId: newIssue.id,
+        projectId: newIssue.projectId,
+        issueId: newIssue.id,
+        metadata: { issueKey: newIssue.key, title: newIssue.title },
+      });
       publishEvent('issue.created', session.user.id!, {
         projectId: newIssue.projectId,
         issueId: newIssue.id,
         sprintId: newIssue.sprintId || undefined,
         organizationId: newIssue.organizationId,
       });
+
+      // Notify assignee if issue was assigned on creation
+      if (newIssue.assigneeId) {
+        notifyIssueEvent({
+          eventType: 'issue_assigned',
+          recipientUserId: newIssue.assigneeId,
+          actorUserId: session.user.id!,
+          organizationId: newIssue.organizationId,
+          issueKey: newIssue.key,
+          issueTitle: newIssue.title,
+          projectName: project.key,
+        });
+      }
     } catch (insertError) {
-      console.error('Insert error details:', insertError);
+      log.error({ err: insertError, projectId: actualProjectId }, 'issue insert failed');
       throw insertError;
     }
 
-    // Defer all post-response side-effects: activity log, audit log,
-    // assignee notification email, and automation rules. The response
-    // payload is finalised below — `after()` runs once it has been flushed
-    // to the client, so request latency reflects only the DB insert.
-    const actorUserId = session.user.id!;
-    const createdIssue = newIssue;
-    const projectKey = project.key;
-    after(async () => {
-      try {
-        await createActivity({
-          issueId: createdIssue.id,
-          userId: actorUserId,
-          type: 'created',
-        });
-      } catch (err) {
-        console.error('activity log failed', err);
-      }
+    // Fire-and-forget: trigger automation rules for issue creation.
+    // Failures must not surface to the caller or change response codes.
+    void runAutomations({
+      trigger: 'issue.created',
+      organizationId: newIssue.organizationId,
+      projectId: newIssue.projectId,
+      payload: newIssue,
+      actorUserId: session.user.id!,
+    }).catch((err) => log.error({ err }, 'automation failed'));
 
-      try {
-        await createAuditLog({
-          userId: actorUserId,
-          organizationId: createdIssue.organizationId,
-          action: 'issue.created',
-          resourceType: 'issue',
-          resourceId: createdIssue.id,
-          projectId: createdIssue.projectId,
-          issueId: createdIssue.id,
-          metadata: { issueKey: createdIssue.key, title: createdIssue.title },
-        });
-      } catch (err) {
-        console.error('audit log failed', err);
-      }
-
-      if (createdIssue.assigneeId) {
-        try {
-          await notifyIssueEvent({
-            eventType: 'issue_assigned',
-            recipientUserId: createdIssue.assigneeId,
-            actorUserId,
-            organizationId: createdIssue.organizationId,
-            issueKey: createdIssue.key,
-            issueTitle: createdIssue.title,
-            projectName: projectKey,
-          });
-        } catch (err) {
-          console.error('assignee notification failed', err);
-        }
-      }
-
-      try {
-        await runAutomations({
-          trigger: 'issue.created',
-          organizationId: createdIssue.organizationId,
-          projectId: createdIssue.projectId,
-          payload: createdIssue,
-          actorUserId,
-        });
-      } catch (err) {
-        console.error('automation failed', err);
-      }
-    });
-
+    log.info(
+      { issueId: newIssue.id, issueKey: newIssue.key, projectId: newIssue.projectId },
+      'issue created',
+    );
     return NextResponse.json(newIssue, { status: 201 });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      console.error('Validation error:', error.errors);
-      return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
-        { status: 400 }
-      );
-    }
-    console.error('Error creating issue:', error);
-    return NextResponse.json({ error: 'Failed to create issue' }, { status: 500 });
-  }
-}
+  },
+  { scope: 'api/issues:POST' },
+);
