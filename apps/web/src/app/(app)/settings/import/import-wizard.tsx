@@ -1,0 +1,468 @@
+'use client';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
+/**
+ * Source picker → adapter form → preview / mapping → run import flow.
+ *
+ * Polls `/api/import/jobs/[id]` every 2s while a job is running so the
+ * progress bar advances. Errors collected by the runner are surfaced
+ * inline so the user can decide whether to re-run or fix the source.
+ *
+ * Polling cadence is intentionally simple (no exponential backoff) —
+ * imports are short-lived enough that a fixed interval is fine. When
+ * a real queue + websocket push lands, swap polling for the realtime
+ * channel TaskNebula already runs.
+ */
+
+type SourceKey = 'csv' | 'linear' | 'jira' | 'github';
+
+type PreviewRecord = {
+  key: string;
+  title: string;
+  description: string | null;
+  status: string | null;
+  priority: string | null;
+  labels: string[];
+  assigneeEmail: string | null;
+};
+
+type JobStatusResponse = {
+  id: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  total: number;
+  processed: number;
+  errors: Array<{ key?: string; message: string }>;
+};
+
+const SOURCES: Array<{ key: SourceKey; label: string; description: string; ready: boolean }> = [
+  {
+    key: 'csv',
+    label: 'CSV file',
+    description: 'Upload a CSV exported from any tool. Map columns to TaskNebula fields.',
+    ready: true,
+  },
+  {
+    key: 'linear',
+    label: 'Linear',
+    description: 'Connect with a Linear personal API key. Basic metadata only.',
+    ready: false,
+  },
+  {
+    key: 'jira',
+    label: 'Jira',
+    description: 'Connect with an Atlassian email + API token. Sprints and attachments are not yet supported.',
+    ready: false,
+  },
+  {
+    key: 'github',
+    label: 'GitHub Issues',
+    description: 'Imports from a repo using the connected GitHub OAuth token.',
+    ready: false,
+  },
+];
+
+const MAPPABLE_FIELDS: Array<{ field: string; label: string }> = [
+  { field: 'title', label: 'Title' },
+  { field: 'description', label: 'Description' },
+  { field: 'status', label: 'Status' },
+  { field: 'priority', label: 'Priority' },
+  { field: 'labels', label: 'Labels' },
+  { field: 'assigneeEmail', label: 'Assignee email' },
+  { field: 'parentKey', label: 'Parent key' },
+  { field: 'createdAt', label: 'Created at' },
+  { field: 'key', label: 'Source key' },
+];
+
+export function ImportWizard({ workspaceId }: { workspaceId: string }) {
+  const [source, setSource] = useState<SourceKey | null>(null);
+  const [projectId, setProjectId] = useState('');
+  const [csvText, setCsvText] = useState('');
+  const [columns, setColumns] = useState<Record<string, string>>({});
+  const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
+
+  // Linear / Jira / GitHub creds
+  const [linearKey, setLinearKey] = useState('');
+  const [linearTeam, setLinearTeam] = useState('');
+  const [jiraSite, setJiraSite] = useState('');
+  const [jiraEmail, setJiraEmail] = useState('');
+  const [jiraToken, setJiraToken] = useState('');
+  const [ghToken, setGhToken] = useState('');
+  const [ghOwner, setGhOwner] = useState('');
+  const [ghRepo, setGhRepo] = useState('');
+
+  const [preview, setPreview] = useState<PreviewRecord[] | null>(null);
+  const [previewTotal, setPreviewTotal] = useState(0);
+  const [jobStatus, setJobStatus] = useState<JobStatusResponse | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleFile(file: File) {
+    const text = await file.text();
+    setCsvText(text);
+    const firstLine = text.split(/\r?\n/, 1)[0] ?? '';
+    // Very loose header preview — the server returns the authoritative
+    // suggested mapping when we hit /preview.
+    setCsvHeaders(firstLine.split(',').map((h) => h.trim()));
+  }
+
+  function buildPreviewBody(): Record<string, unknown> {
+    const base: Record<string, unknown> = { workspaceId };
+    switch (source) {
+      case 'csv':
+        return { ...base, csvText, columns };
+      case 'linear':
+        return { ...base, apiKey: linearKey, teamKey: linearTeam || undefined };
+      case 'jira':
+        return { ...base, site: jiraSite, email: jiraEmail, apiToken: jiraToken };
+      case 'github':
+        return { ...base, accessToken: ghToken, owner: ghOwner, repo: ghRepo };
+      default:
+        return base;
+    }
+  }
+
+  async function runPreview() {
+    if (!source) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/import/${source}/preview`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildPreviewBody()),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `Preview failed (${res.status})`);
+      }
+      const data = await res.json();
+      setPreview(data.sample ?? []);
+      setPreviewTotal(data.total ?? 0);
+      if (source === 'csv' && data.suggestedMapping) {
+        // Merge: only fill in fields the user hasn't already chosen.
+        setColumns((current) => ({ ...data.suggestedMapping, ...current }));
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function runImport() {
+    if (!source || !projectId) {
+      setError('A target project id is required.');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const body: Record<string, unknown> = {
+        workspaceId,
+        projectId,
+        mapping: {
+          columns,
+          config: buildPreviewBody(),
+        },
+        csvText: source === 'csv' ? csvText : undefined,
+      };
+      const res = await fetch(`/api/import/${source}/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error ?? `Import failed (${res.status})`);
+      }
+      const { jobId } = await res.json();
+      pollJob(jobId);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      setBusy(false);
+    }
+  }
+
+  function pollJob(jobId: string) {
+    const tick = async () => {
+      try {
+        const res = await fetch(`/api/import/jobs/${jobId}`);
+        if (!res.ok) throw new Error('Failed to fetch job status');
+        const data: JobStatusResponse = await res.json();
+        setJobStatus(data);
+        if (data.status === 'completed' || data.status === 'failed') {
+          setBusy(false);
+          return;
+        }
+        setTimeout(tick, 2000);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+        setBusy(false);
+      }
+    };
+    void tick();
+  }
+
+  if (!source) {
+    return (
+      <div className="grid gap-3 sm:grid-cols-2">
+        {SOURCES.map((s) => (
+          <button
+            type="button"
+            key={s.key}
+            onClick={() => setSource(s.key)}
+            className="rounded-lg border border-border bg-card p-4 text-left transition hover:border-foreground/30 hover:shadow-sm"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">{s.label}</span>
+              {!s.ready && (
+                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                  Preview
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">{s.description}</p>
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <Button variant="outline" size="sm" onClick={() => setSource(null)}>
+          ← Back
+        </Button>
+        <span className="text-sm font-medium">
+          Importing from {SOURCES.find((s) => s.key === source)?.label}
+        </span>
+      </div>
+
+      {/* Source-specific form */}
+      <div className="space-y-3 rounded-lg border border-border bg-card p-4">
+        <Label htmlFor="projectId">Target project id</Label>
+        <Input
+          id="projectId"
+          value={projectId}
+          onChange={(e) => setProjectId(e.target.value)}
+          placeholder="prj_xxx"
+        />
+
+        {source === 'csv' && (
+          <div className="space-y-2">
+            <Label htmlFor="csvFile">CSV file</Label>
+            <input
+              id="csvFile"
+              type="file"
+              accept=".csv,text/csv"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void handleFile(file);
+              }}
+              className="block w-full text-sm"
+            />
+          </div>
+        )}
+
+        {source === 'linear' && (
+          <div className="space-y-2">
+            <Label htmlFor="linearKey">Linear personal API key</Label>
+            <Input
+              id="linearKey"
+              type="password"
+              value={linearKey}
+              onChange={(e) => setLinearKey(e.target.value)}
+            />
+            <Label htmlFor="linearTeam">Team key (optional)</Label>
+            <Input
+              id="linearTeam"
+              value={linearTeam}
+              onChange={(e) => setLinearTeam(e.target.value)}
+              placeholder="ENG"
+            />
+          </div>
+        )}
+
+        {source === 'jira' && (
+          <div className="space-y-2">
+            <Label htmlFor="jiraSite">Atlassian site</Label>
+            <Input
+              id="jiraSite"
+              value={jiraSite}
+              onChange={(e) => setJiraSite(e.target.value)}
+              placeholder="acme.atlassian.net"
+            />
+            <Label htmlFor="jiraEmail">Email</Label>
+            <Input
+              id="jiraEmail"
+              type="email"
+              value={jiraEmail}
+              onChange={(e) => setJiraEmail(e.target.value)}
+            />
+            <Label htmlFor="jiraToken">API token</Label>
+            <Input
+              id="jiraToken"
+              type="password"
+              value={jiraToken}
+              onChange={(e) => setJiraToken(e.target.value)}
+            />
+          </div>
+        )}
+
+        {source === 'github' && (
+          <div className="space-y-2">
+            <Label htmlFor="ghToken">GitHub access token</Label>
+            <Input
+              id="ghToken"
+              type="password"
+              value={ghToken}
+              onChange={(e) => setGhToken(e.target.value)}
+            />
+            <Label htmlFor="ghOwner">Owner</Label>
+            <Input
+              id="ghOwner"
+              value={ghOwner}
+              onChange={(e) => setGhOwner(e.target.value)}
+            />
+            <Label htmlFor="ghRepo">Repo</Label>
+            <Input
+              id="ghRepo"
+              value={ghRepo}
+              onChange={(e) => setGhRepo(e.target.value)}
+            />
+          </div>
+        )}
+
+        <Button onClick={runPreview} disabled={busy} className="mt-2">
+          {busy ? 'Loading...' : 'Preview'}
+        </Button>
+      </div>
+
+      {/* Column mapping (CSV only) */}
+      {source === 'csv' && csvHeaders.length > 0 && (
+        <div className="space-y-2 rounded-lg border border-border bg-card p-4">
+          <div className="text-sm font-medium">Column mapping</div>
+          <p className="text-xs text-muted-foreground">
+            Pick the CSV column that backs each TaskNebula field. Leave blank to skip.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {MAPPABLE_FIELDS.map(({ field, label }) => (
+              <div key={field} className="space-y-1">
+                <Label htmlFor={`map-${field}`} className="text-xs">
+                  {label}
+                </Label>
+                <select
+                  id={`map-${field}`}
+                  value={columns[field] ?? ''}
+                  onChange={(e) =>
+                    setColumns((c) => ({ ...c, [field]: e.target.value }))
+                  }
+                  className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm"
+                >
+                  <option value="">— none —</option>
+                  {csvHeaders.map((h) => (
+                    <option key={h} value={h}>
+                      {h}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Preview */}
+      {preview && preview.length > 0 && (
+        <div className="space-y-2 rounded-lg border border-border bg-card p-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-medium">
+              Preview ({preview.length} of {previewTotal})
+            </div>
+            <Button onClick={runImport} disabled={busy || !projectId}>
+              Run import
+            </Button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead className="text-left text-muted-foreground">
+                <tr>
+                  <th className="py-1 pr-2">Key</th>
+                  <th className="py-1 pr-2">Title</th>
+                  <th className="py-1 pr-2">Status</th>
+                  <th className="py-1 pr-2">Priority</th>
+                  <th className="py-1 pr-2">Assignee</th>
+                </tr>
+              </thead>
+              <tbody>
+                {preview.map((r) => (
+                  <tr key={r.key} className="border-t border-border/60">
+                    <td className="py-1 pr-2 font-mono text-[11px]">{r.key}</td>
+                    <td className="py-1 pr-2">{r.title}</td>
+                    <td className="py-1 pr-2">{r.status ?? '—'}</td>
+                    <td className="py-1 pr-2">{r.priority ?? '—'}</td>
+                    <td className="py-1 pr-2">{r.assigneeEmail ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Progress */}
+      {jobStatus && (
+        <div className="space-y-2 rounded-lg border border-border bg-card p-4">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium">
+              {jobStatus.status === 'completed'
+                ? 'Import complete'
+                : jobStatus.status === 'failed'
+                  ? 'Import failed'
+                  : 'Importing…'}
+            </span>
+            <span className="text-muted-foreground">
+              {jobStatus.processed} / {jobStatus.total}
+            </span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded bg-muted">
+            <div
+              className="h-full bg-foreground transition-all"
+              style={{
+                width:
+                  jobStatus.total > 0
+                    ? `${Math.min(100, Math.round((jobStatus.processed / jobStatus.total) * 100))}%`
+                    : '0%',
+              }}
+            />
+          </div>
+          {jobStatus.errors.length > 0 && (
+            <div className="rounded border border-destructive/40 bg-destructive/5 p-2 text-xs text-destructive">
+              <div className="mb-1 font-medium">
+                {jobStatus.errors.length} record(s) failed:
+              </div>
+              <ul className="space-y-0.5">
+                {jobStatus.errors.slice(0, 5).map((e, i) => (
+                  <li key={i}>
+                    <span className="font-mono">{e.key ?? '?'}</span>: {e.message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {error && (
+        <div className="rounded border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+    </div>
+  );
+}
