@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: GitHub Discussions
+    url: https://github.com/neuraparse/tasknebula/discussions
+    about: Ask questions, share ideas, and get help from the community.
+  - name: Commercial support
+    url: mailto:hello@neuraparse.com
+    about: Reach out for paid support or partnership inquiries.
