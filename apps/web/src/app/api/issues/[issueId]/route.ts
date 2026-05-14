@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { z } from 'zod';
 import { getIssueById, updateIssue, deleteIssue, createActivity, createAuditLog, db, issues, workflowStatuses, workflows, projects, projectMembers, organizationMembers, users, ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from '@tasknebula/db';
 import { auth } from '@/auth';
@@ -391,29 +391,7 @@ export async function PATCH(
       changes.title = { from: currentIssue.title, to: updateData.title };
     }
 
-    if (Object.keys(changes).length > 0) {
-      // Determine the most significant action
-      let action: 'issue.status_changed' | 'issue.assigned' | 'issue.priority_changed' | 'issue.updated' = 'issue.updated';
-      if (changes.status) {
-        action = 'issue.status_changed';
-      } else if (changes.assigneeId) {
-        action = 'issue.assigned';
-      } else if (changes.priority) {
-        action = 'issue.priority_changed';
-      }
-
-      await createAuditLog({
-        userId: session.user.id,
-        organizationId: currentIssue.organizationId,
-        action,
-        resourceType: 'issue',
-        resourceId: issueId,
-        projectId: currentIssue.projectId,
-        issueId,
-        changes,
-      });
-    }
-
+    // Publish realtime event synchronously (in-process bus, microseconds).
     publishEvent('issue.updated', session.user.id!, {
       projectId: currentIssue.projectId,
       issueId,
@@ -421,32 +399,79 @@ export async function PATCH(
       organizationId: currentIssue.organizationId,
     });
 
-    // Email notifications (fire-and-forget)
+    // Defer audit log and notification emails to after the response is sent.
+    const actorUserId = session.user.id!;
     const projectName = currentIssue.key?.split('-')[0] || '';
+    const changesSnapshot = changes;
+    const newAssigneeId =
+      updateData.assigneeId && updateData.assigneeId !== currentIssue.assigneeId
+        ? updateData.assigneeId
+        : null;
+    const statusEmailRecipient =
+      updateData.statusId &&
+      updateData.statusId !== currentIssue.statusId &&
+      currentIssue.assigneeId
+        ? currentIssue.assigneeId
+        : null;
 
-    if (updateData.assigneeId && updateData.assigneeId !== currentIssue.assigneeId) {
-      notifyIssueEvent({
-        eventType: 'issue_assigned',
-        recipientUserId: updateData.assigneeId,
-        actorUserId: session.user.id!,
-        organizationId: currentIssue.organizationId,
-        issueKey: currentIssue.key,
-        issueTitle: currentIssue.title,
-        projectName,
-      });
-    }
+    after(async () => {
+      if (Object.keys(changesSnapshot).length > 0) {
+        let action: 'issue.status_changed' | 'issue.assigned' | 'issue.priority_changed' | 'issue.updated' = 'issue.updated';
+        if (changesSnapshot.status) {
+          action = 'issue.status_changed';
+        } else if (changesSnapshot.assigneeId) {
+          action = 'issue.assigned';
+        } else if (changesSnapshot.priority) {
+          action = 'issue.priority_changed';
+        }
+        try {
+          await createAuditLog({
+            userId: actorUserId,
+            organizationId: currentIssue.organizationId,
+            action,
+            resourceType: 'issue',
+            resourceId: issueId,
+            projectId: currentIssue.projectId,
+            issueId,
+            changes: changesSnapshot,
+          });
+        } catch (err) {
+          console.error('audit log failed', err);
+        }
+      }
 
-    if (updateData.statusId && updateData.statusId !== currentIssue.statusId && currentIssue.assigneeId) {
-      notifyIssueEvent({
-        eventType: 'issue_status_changed',
-        recipientUserId: currentIssue.assigneeId,
-        actorUserId: session.user.id!,
-        organizationId: currentIssue.organizationId,
-        issueKey: currentIssue.key,
-        issueTitle: currentIssue.title,
-        projectName,
-      });
-    }
+      if (newAssigneeId) {
+        try {
+          await notifyIssueEvent({
+            eventType: 'issue_assigned',
+            recipientUserId: newAssigneeId,
+            actorUserId,
+            organizationId: currentIssue.organizationId,
+            issueKey: currentIssue.key,
+            issueTitle: currentIssue.title,
+            projectName,
+          });
+        } catch (err) {
+          console.error('assignee notification failed', err);
+        }
+      }
+
+      if (statusEmailRecipient) {
+        try {
+          await notifyIssueEvent({
+            eventType: 'issue_status_changed',
+            recipientUserId: statusEmailRecipient,
+            actorUserId,
+            organizationId: currentIssue.organizationId,
+            issueKey: currentIssue.key,
+            issueTitle: currentIssue.title,
+            projectName,
+          });
+        } catch (err) {
+          console.error('status notification failed', err);
+        }
+      }
+    });
 
     // --- Automation triggers (fire-and-forget) ---
     // Compute which fields changed between old and new so rules can match.
@@ -509,34 +534,48 @@ export async function PATCH(
       ...(newStatus ? { newStatus } : {}),
     };
 
-    // Always fire issue.updated
-    void runAutomations({
-      trigger: 'issue.updated',
-      organizationId: currentIssue.organizationId,
-      projectId: currentIssue.projectId,
-      payload: automationPayload,
-      actorUserId: session.user.id!,
-    }).catch((err) => console.error('automation failed', err));
+    // Defer automation rule evaluation until after the response is sent.
+    after(async () => {
+      try {
+        await runAutomations({
+          trigger: 'issue.updated',
+          organizationId: currentIssue.organizationId,
+          projectId: currentIssue.projectId,
+          payload: automationPayload,
+          actorUserId,
+        });
+      } catch (err) {
+        console.error('automation failed', err);
+      }
 
-    if (statusChanged) {
-      void runAutomations({
-        trigger: 'issue.status_changed',
-        organizationId: currentIssue.organizationId,
-        projectId: currentIssue.projectId,
-        payload: automationPayload,
-        actorUserId: session.user.id!,
-      }).catch((err) => console.error('automation failed', err));
-    }
+      if (statusChanged) {
+        try {
+          await runAutomations({
+            trigger: 'issue.status_changed',
+            organizationId: currentIssue.organizationId,
+            projectId: currentIssue.projectId,
+            payload: automationPayload,
+            actorUserId,
+          });
+        } catch (err) {
+          console.error('automation failed', err);
+        }
+      }
 
-    if (assigneeChanged) {
-      void runAutomations({
-        trigger: 'issue.assigned',
-        organizationId: currentIssue.organizationId,
-        projectId: currentIssue.projectId,
-        payload: automationPayload,
-        actorUserId: session.user.id!,
-      }).catch((err) => console.error('automation failed', err));
-    }
+      if (assigneeChanged) {
+        try {
+          await runAutomations({
+            trigger: 'issue.assigned',
+            organizationId: currentIssue.organizationId,
+            projectId: currentIssue.projectId,
+            payload: automationPayload,
+            actorUserId,
+          });
+        } catch (err) {
+          console.error('automation failed', err);
+        }
+      }
+    });
 
     return NextResponse.json(updatedIssueData);
   } catch (error) {
