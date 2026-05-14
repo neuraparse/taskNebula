@@ -6,15 +6,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CheckCircle2 } from 'lucide-react';
+import { WorkspaceBootstrapStep } from './workspace-step';
 
 const STEP_LABELS = ['Admin', 'Workspace', 'Done'] as const;
+
+type Stage = 'admin' | 'workspace' | 'done';
 
 export default function SetupPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
+  const [stage, setStage] = useState<Stage>('admin');
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -72,8 +75,8 @@ export default function SetupPage() {
         return;
       }
 
-      setSuccess(true);
-      setTimeout(() => router.push('/auth/signin'), 2000);
+      // Admin created — now offer the AI bootstrapper step.
+      setStage('workspace');
     } catch {
       setError('Connection error. Please check your server.');
     } finally {
@@ -81,8 +84,8 @@ export default function SetupPage() {
     }
   };
 
-  // Progress driven by completion of the admin step (step 1 of 2)
-  const currentStep = success ? STEP_LABELS.length : 1;
+  const currentStep =
+    stage === 'done' ? STEP_LABELS.length : stage === 'workspace' ? 2 : 1;
 
   if (loading) {
     return (
@@ -99,7 +102,7 @@ export default function SetupPage() {
     );
   }
 
-  if (success) {
+  if (stage === 'done') {
     return (
       <div className="relative min-h-dvh grid place-items-center bg-background overflow-hidden px-4">
         <div
@@ -129,7 +132,7 @@ export default function SetupPage() {
         className="bg-aurora absolute inset-0 pointer-events-none blur-3xl opacity-60 -z-10"
       />
 
-      <div className="relative w-full max-w-md animate-fade-up">
+      <div className="relative w-full max-w-3xl animate-fade-up">
         {/* Brand + heading */}
         <div className="mb-6 text-center space-y-3">
           <div className="flex justify-center">
@@ -142,7 +145,9 @@ export default function SetupPage() {
               Welcome to TaskNebula
             </h1>
             <p className="text-sm text-muted-foreground">
-              Create your admin account to get started
+              {stage === 'admin'
+                ? 'Create your admin account to get started'
+                : 'Tell us about your project — we will draft a workspace for you'}
             </p>
           </div>
         </div>
@@ -174,84 +179,97 @@ export default function SetupPage() {
           })}
         </nav>
 
-        <div className="surface-card rounded-lg p-6 sm:p-8 animate-fade-up">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <p className="text-sm text-destructive" role="alert">{error}</p>
-            )}
+        {stage === 'admin' ? (
+          <div className="mx-auto max-w-md surface-card rounded-lg p-6 sm:p-8 animate-fade-up">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <p className="text-sm text-destructive" role="alert">{error}</p>
+              )}
 
-            <div className="space-y-1.5">
-              <Label htmlFor="name">Full name</Label>
-              <Input
-                id="name"
-                type="text"
-                required
-                placeholder="John Doe"
-                autoComplete="name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-            </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="name">Full name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  required
+                  placeholder="John Doe"
+                  autoComplete="name"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
+              </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="email">Email address</Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                placeholder="admin@company.com"
-                autoComplete="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
-            </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="email">Email address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  placeholder="admin@company.com"
+                  autoComplete="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+              </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                minLength={8}
-                placeholder="Min. 8 characters"
-                autoComplete="new-password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-              />
-            </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  minLength={8}
+                  placeholder="Min. 8 characters"
+                  autoComplete="new-password"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                />
+              </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="confirmPassword">Confirm password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                required
-                placeholder="Confirm your password"
-                autoComplete="new-password"
-                value={form.confirmPassword}
-                onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-              />
-            </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="confirmPassword">Confirm password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  required
+                  placeholder="Confirm your password"
+                  autoComplete="new-password"
+                  value={form.confirmPassword}
+                  onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+                />
+              </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="orgName">
-                Organization name{' '}
-                <span className="text-muted-foreground font-normal">(optional)</span>
-              </Label>
-              <Input
-                id="orgName"
-                type="text"
-                placeholder="My Company"
-                value={form.organizationName}
-                onChange={(e) => setForm({ ...form, organizationName: e.target.value })}
-              />
-            </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="orgName">
+                  Organization name{' '}
+                  <span className="text-muted-foreground font-normal">(optional)</span>
+                </Label>
+                <Input
+                  id="orgName"
+                  type="text"
+                  placeholder="My Company"
+                  value={form.organizationName}
+                  onChange={(e) => setForm({ ...form, organizationName: e.target.value })}
+                />
+              </div>
 
-            <Button type="submit" className="w-full" size="lg" disabled={submitting}>
-              {submitting ? 'Creating account…' : 'Create admin account'}
-            </Button>
-          </form>
-        </div>
+              <Button type="submit" className="w-full" size="lg" disabled={submitting}>
+                {submitting ? 'Creating account…' : 'Create admin account'}
+              </Button>
+            </form>
+          </div>
+        ) : (
+          <WorkspaceBootstrapStep
+            onSkip={() => {
+              setStage('done');
+              setTimeout(() => router.push('/auth/signin'), 1500);
+            }}
+            onDone={() => {
+              setStage('done');
+              setTimeout(() => router.push('/auth/signin'), 1500);
+            }}
+          />
+        )}
 
         <p className="mt-4 text-xs text-muted-foreground text-center">
           This page is only available when the database is empty.
