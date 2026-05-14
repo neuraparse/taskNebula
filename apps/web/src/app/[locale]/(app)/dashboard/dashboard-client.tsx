@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
@@ -60,6 +61,9 @@ export function DashboardClient() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const tDash = useTranslations('dashboard');
+  const tActions = useTranslations('actions');
+  const tNav = useTranslations('nav');
 
   // Surface server-side permission redirects (e.g. /settings/organization without perms)
   // and the post-verify success landing (/dashboard?verified=1).
@@ -171,32 +175,32 @@ export function DashboardClient() {
             <div className="flex items-end justify-between gap-4 animate-fade-up">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="kicker">Dashboard</span>
-                  <span className="live-pill">Live</span>
+                  <span className="kicker">{tDash('kicker')}</span>
+                  <span className="live-pill">{tDash('live')}</span>
                 </div>
                 <h1 className="text-2xl font-semibold tracking-tight text-foreground text-balance">
-                  Welcome back, {firstName}
+                  {tDash('welcome_back', { name: firstName })}
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   {currentTeamId
-                    ? 'Teamspace-scoped work and priorities for today.'
-                    : 'Your project overview for today.'}
+                    ? tDash('subtitle_team')
+                    : tDash('subtitle_personal')}
                 </p>
               </div>
               <Link href="/my-issues">
                 <Button size="sm" className="gap-2">
                   <Target className="h-4 w-4" />
-                  My Issues
+                  {tNav('my_issues')}
                 </Button>
               </Link>
             </div>
 
             {/* KPI Summary Row */}
             <div className="stagger grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <StatTile label="Active" value={stats.active} hue="blue" icon={Activity} />
-              <StatTile label="Completed" value={stats.completed} hue="emerald" icon={CheckCircle2} />
-              <StatTile label="Blocked" value={stats.blocked} hue="rose" icon={AlertOctagon} />
-              <StatTile label="Story Points" value={stats.points} hue="violet" icon={Gauge} />
+              <StatTile label={tDash('stat_active')} value={stats.active} hue="blue" icon={Activity} />
+              <StatTile label={tDash('stat_completed')} value={stats.completed} hue="emerald" icon={CheckCircle2} />
+              <StatTile label={tDash('stat_blocked')} value={stats.blocked} hue="rose" icon={AlertOctagon} />
+              <StatTile label={tDash('stat_story_points')} value={stats.points} hue="violet" icon={Gauge} />
             </div>
 
             {/* Main Content */}
@@ -206,13 +210,15 @@ export function DashboardClient() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <Inbox className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium text-foreground">My Issues</span>
+                    <span className="text-sm font-medium text-foreground">
+                      {tDash('my_issues_heading')}
+                    </span>
                   </div>
                   <Link
                     href="/my-issues"
                     className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-all duration-150 ease-snap"
                   >
-                    View all
+                    {tActions('view_all')}
                     <ArrowUpRight className="h-3 w-3" />
                   </Link>
                 </div>
@@ -221,7 +227,7 @@ export function DashboardClient() {
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <Inbox className="h-8 w-8 text-muted-foreground mb-3" />
                     <p className="text-sm text-muted-foreground mb-4">
-                      You&apos;re all caught up.
+                      {tDash('all_caught_up')}
                     </p>
                     {firstProjectId ? (
                       <Button
@@ -229,12 +235,12 @@ export function DashboardClient() {
                         size="sm"
                         onClick={() => setIsCreateIssueOpen(true)}
                       >
-                        Create issue
+                        {tActions('create_issue')}
                       </Button>
                     ) : (
                       <Link href="/projects">
                         <Button variant="outline" size="sm">
-                          Create a project first
+                          {tActions('create_project')}
                         </Button>
                       </Link>
                     )}

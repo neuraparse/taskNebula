@@ -215,7 +215,7 @@ describe('/admin route', () => {
 
       // Import after mocks are registered.
       const { default: AdminDashboardPage } = await import(
-        '@/app/(app)/admin/page'
+        '@/app/[locale]/(app)/admin/page'
       );
 
       await expect(AdminDashboardPage()).rejects.toThrow(
@@ -228,7 +228,7 @@ describe('/admin route', () => {
       isSuperAdminMock.mockResolvedValueOnce(true);
 
       const { default: AdminDashboardPage } = await import(
-        '@/app/(app)/admin/page'
+        '@/app/[locale]/(app)/admin/page'
       );
 
       const element = await AdminDashboardPage();
@@ -241,7 +241,7 @@ describe('/admin route', () => {
     it('renders the Overview section by default', async () => {
       currentSearchParams = new URLSearchParams();
       const { AdminDashboardClient } = await import(
-        '@/app/(app)/admin/admin-dashboard-client'
+        '@/app/[locale]/(app)/admin/admin-dashboard-client'
       );
 
       render(<AdminDashboardClient />);
@@ -259,7 +259,7 @@ describe('/admin route', () => {
     it('renders the Users section when ?tab=users is present', async () => {
       currentSearchParams = new URLSearchParams('tab=users');
       const { AdminDashboardClient } = await import(
-        '@/app/(app)/admin/admin-dashboard-client'
+        '@/app/[locale]/(app)/admin/admin-dashboard-client'
       );
 
       render(<AdminDashboardClient />);

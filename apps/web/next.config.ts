@@ -1,4 +1,9 @@
 import type { NextConfig } from 'next';
+import createNextIntlPlugin from 'next-intl/plugin';
+
+// Wires next-intl's request config so `getRequestConfig` runs for every
+// request that hits the App Router. Path is relative to this file.
+const withNextIntl = createNextIntlPlugin('./src/lib/i18n/request.ts');
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -35,5 +40,5 @@ const nextConfig: NextConfig = {
   compress: true,
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);
 

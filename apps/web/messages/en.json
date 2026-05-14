@@ -1,0 +1,71 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "overview": "Overview",
+    "drafts": "Drafts",
+    "templates": "Templates",
+    "my_issues": "My Issues",
+    "projects": "Projects",
+    "docs": "Docs",
+    "team": "Team",
+    "settings": "Settings",
+    "admin": "Admin",
+    "members": "Members",
+    "teamspaces": "Teamspaces",
+    "pending_invites": "Pending invites",
+    "live_calls": "Live Calls",
+    "assigned_to_me": "Assigned to me",
+    "created_by_me": "Created by me",
+    "subscribed": "Subscribed",
+    "mentioned": "Mentioned",
+    "search_placeholder": "Search issues, projects, docs…"
+  },
+  "actions": {
+    "create_issue": "Create issue",
+    "create_project": "Create a project first",
+    "view_all": "View all",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "open_command_palette": "Open command palette",
+    "help": "Help",
+    "switch_workspace": "Switch workspace",
+    "language": "Language"
+  },
+  "dashboard": {
+    "kicker": "Dashboard",
+    "live": "Live",
+    "welcome_back": "Welcome back, {name}",
+    "subtitle_team": "Teamspace-scoped work and priorities for today.",
+    "subtitle_personal": "Your project overview for today.",
+    "my_issues_heading": "My Issues",
+    "all_caught_up": "You're all caught up.",
+    "stat_active": "Active",
+    "stat_completed": "Completed",
+    "stat_blocked": "Blocked",
+    "stat_story_points": "Story Points"
+  },
+  "auth": {
+    "signin": "Sign in",
+    "signin_loading": "Signing in...",
+    "signup": "Sign up",
+    "welcome_back": "Welcome back",
+    "subtitle": "Sign in to continue",
+    "email_label": "Email address",
+    "email_placeholder": "name@example.com",
+    "password_label": "Password",
+    "password_placeholder": "Enter your password",
+    "forgot_password": "Forgot password?",
+    "no_account": "Don't have an account?",
+    "continue_with_github": "Continue with GitHub",
+    "continue_with_google": "Continue with Google",
+    "or_continue_with_email": "Or continue with email",
+    "invalid_credentials": "Invalid email or password",
+    "generic_error": "An error occurred. Please try again."
+  },
+  "common": {
+    "loading": "Loading…",
+    "no_projects": "No projects yet",
+    "view_all_projects": "View all {count} projects"
+  }
+}

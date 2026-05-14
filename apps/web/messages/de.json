@@ -1,0 +1,71 @@
+{
+  "nav": {
+    "dashboard": "Übersicht",
+    "overview": "Übersicht",
+    "drafts": "Entwürfe",
+    "templates": "Vorlagen",
+    "my_issues": "Meine Aufgaben",
+    "projects": "Projekte",
+    "docs": "Dokumente",
+    "team": "Team",
+    "settings": "Einstellungen",
+    "admin": "Verwaltung",
+    "members": "Mitglieder",
+    "teamspaces": "Teambereiche",
+    "pending_invites": "Offene Einladungen",
+    "live_calls": "Live-Anrufe",
+    "assigned_to_me": "Mir zugewiesen",
+    "created_by_me": "Von mir erstellt",
+    "subscribed": "Abonniert",
+    "mentioned": "Erwähnt",
+    "search_placeholder": "Aufgaben, Projekte, Dokumente suchen…"
+  },
+  "actions": {
+    "create_issue": "Aufgabe erstellen",
+    "create_project": "Erst ein Projekt anlegen",
+    "view_all": "Alle ansehen",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "open_command_palette": "Befehlspalette öffnen",
+    "help": "Hilfe",
+    "switch_workspace": "Arbeitsbereich wechseln",
+    "language": "Sprache"
+  },
+  "dashboard": {
+    "kicker": "Übersicht",
+    "live": "Live",
+    "welcome_back": "Willkommen zurück, {name}",
+    "subtitle_team": "Aufgaben und Prioritäten deines Teambereichs für heute.",
+    "subtitle_personal": "Dein Projektüberblick für heute.",
+    "my_issues_heading": "Meine Aufgaben",
+    "all_caught_up": "Alles erledigt.",
+    "stat_active": "Aktiv",
+    "stat_completed": "Erledigt",
+    "stat_blocked": "Blockiert",
+    "stat_story_points": "Story Points"
+  },
+  "auth": {
+    "signin": "Anmelden",
+    "signin_loading": "Anmelden...",
+    "signup": "Registrieren",
+    "welcome_back": "Willkommen zurück",
+    "subtitle": "Melde dich an, um fortzufahren",
+    "email_label": "E-Mail-Adresse",
+    "email_placeholder": "name@beispiel.com",
+    "password_label": "Passwort",
+    "password_placeholder": "Passwort eingeben",
+    "forgot_password": "Passwort vergessen?",
+    "no_account": "Noch kein Konto?",
+    "continue_with_github": "Mit GitHub fortfahren",
+    "continue_with_google": "Mit Google fortfahren",
+    "or_continue_with_email": "Oder mit E-Mail fortfahren",
+    "invalid_credentials": "Ungültige E-Mail oder Passwort",
+    "generic_error": "Ein Fehler ist aufgetreten. Bitte erneut versuchen."
+  },
+  "common": {
+    "loading": "Wird geladen…",
+    "no_projects": "Noch keine Projekte",
+    "view_all_projects": "Alle {count} Projekte ansehen"
+  }
+}
