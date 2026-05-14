@@ -7,17 +7,7 @@ import { eq, and, desc, asc, sql, inArray } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { runAutomations } from '@/lib/automation/evaluator';
-import { withErrorHandler } from '@/lib/api-handler';
-import {
-  ApiError,
-  ForbiddenError,
-  NotFoundError,
-  UnauthorizedError,
-} from '@/lib/errors';
-import { childLogger } from '@/lib/logger';
-
-// MIGRATED (P0-06): see apps/web/src/lib/MIGRATION.md for the pattern.
-const log = childLogger('api/issues');
+import { enqueueTriageOnCreate } from '@/lib/agents/triage-enqueue';
 
 // Permission check helper for issues
 async function checkIssuePermission(
@@ -134,11 +124,11 @@ const createIssueSchema = z.object({
 });
 
 // GET /api/issues - List issues with filters
-export const GET = withErrorHandler(
-  async (request: NextRequest) => {
+export async function GET(request: NextRequest) {
+  try {
     const session = await auth();
     if (!session?.user?.id) {
-      throw new UnauthorizedError();
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const searchParams = request.nextUrl.searchParams;
@@ -189,7 +179,7 @@ export const GET = withErrorHandler(
         .limit(1);
 
       if (!project) {
-        throw new NotFoundError('Project not found');
+        return NextResponse.json({ error: 'Project not found' }, { status: 404 });
       }
 
       if (!isSuperAdmin && !accessibleOrgIds.includes(project.organizationId)) {
@@ -206,7 +196,7 @@ export const GET = withErrorHandler(
           .limit(1);
 
         if (!projectMember) {
-          throw new ForbiddenError();
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
       }
     } else if (!isSuperAdmin && accessibleOrgIds.length === 0) {
@@ -286,28 +276,25 @@ export const GET = withErrorHandler(
 
     const issuesData = await query;
 
-    log.debug(
-      { count: issuesData.length, projectId: actualProjectId },
-      'issues listed',
-    );
     return NextResponse.json({
       issues: issuesData,
       total: issuesData.length,
     });
-  },
-  { scope: 'api/issues:GET' },
-);
+  } catch (error) {
+    console.error('Error fetching issues:', error);
+    return NextResponse.json({ error: 'Failed to fetch issues' }, { status: 500 });
+  }
+}
 
 // POST /api/issues - Create a new issue
-export const POST = withErrorHandler(
-  async (request: NextRequest) => {
+export async function POST(request: NextRequest) {
+  try {
     const session = await auth();
     if (!session?.user) {
-      throw new UnauthorizedError();
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
-    // Zod errors auto-converted to 400 by withErrorHandler.
     const validatedData = createIssueSchema.parse(body);
 
     // If projectId looks like a key (e.g., "demo", "PROJ"), convert to ID
@@ -335,13 +322,16 @@ export const POST = withErrorHandler(
 
     const project = projectResults[0];
     if (!project) {
-      throw new NotFoundError('Project not found');
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
     // Check permission to create issues
     const permission = await checkIssuePermission(session.user.id!, actualProjectId, 'create');
     if (!permission.allowed) {
-      throw new ForbiddenError(permission.reason || 'Permission denied');
+      return NextResponse.json(
+        { error: permission.reason || 'Permission denied' },
+        { status: 403 }
+      );
     }
 
     // Get the next issue number for this project
@@ -373,7 +363,7 @@ export const POST = withErrorHandler(
 
       const defaultWorkflow = defaultWorkflows[0];
       if (!defaultWorkflow) {
-        throw new ApiError(500, 'WORKFLOW_NOT_FOUND', 'No workflow found for project');
+        return NextResponse.json({ error: 'No workflow found for project' }, { status: 500 });
       }
 
       workflowId = defaultWorkflow.id;
@@ -402,7 +392,7 @@ export const POST = withErrorHandler(
         .sort((a, b) => a.position - b.position);
       const defaultStatus = backlogStatuses[0];
       if (!defaultStatus) {
-        throw new ApiError(500, 'BACKLOG_STATUS_NOT_FOUND', 'No backlog status found in workflow');
+        return NextResponse.json({ error: 'No backlog status found in workflow' }, { status: 500 });
       }
       finalStatusId = defaultStatus.id;
     }
@@ -439,7 +429,7 @@ export const POST = withErrorHandler(
         .returning();
       newIssue = newIssueResults[0];
       if (!newIssue) {
-        throw new ApiError(500, 'ISSUE_INSERT_FAILED', 'Failed to create issue');
+        throw new Error('Failed to create issue');
       }
 
       // Create activity log for issue creation
@@ -480,7 +470,7 @@ export const POST = withErrorHandler(
         });
       }
     } catch (insertError) {
-      log.error({ err: insertError, projectId: actualProjectId }, 'issue insert failed');
+      console.error('Insert error details:', insertError);
       throw insertError;
     }
 
@@ -492,13 +482,24 @@ export const POST = withErrorHandler(
       projectId: newIssue.projectId,
       payload: newIssue,
       actorUserId: session.user.id!,
-    }).catch((err) => log.error({ err }, 'automation failed'));
+    }).catch((err) => console.error('automation failed', err));
 
-    log.info(
-      { issueId: newIssue.id, issueKey: newIssue.key, projectId: newIssue.projectId },
-      'issue created',
-    );
+    // Fire-and-forget: run the Triage Intelligence agent so the issue
+    // shows up with suggested labels/priority/assignee in the panel
+    // without blocking the create response. Failures are swallowed and
+    // logged — triage is best-effort assistance, not a critical path.
+    enqueueTriageOnCreate(newIssue.id);
+
     return NextResponse.json(newIssue, { status: 201 });
-  },
-  { scope: 'api/issues:POST' },
-);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error('Validation error:', error.errors);
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.errors },
+        { status: 400 }
+      );
+    }
+    console.error('Error creating issue:', error);
+    return NextResponse.json({ error: 'Failed to create issue' }, { status: 500 });
+  }
+}
