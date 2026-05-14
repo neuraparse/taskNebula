@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import {
   db,
   issues,
+  issueStatusHistory,
   projects,
   projectMembers,
   organizationMembers,
@@ -227,6 +228,28 @@ async function handleBulkUpdate(body: any, userId: string) {
     .set(updateData)
     .where(inArray(issues.id, issueIds))
     .returning();
+
+  // FEAT-23: write issue_status_history rows for every status change in this
+  // bulk update. Best-effort: if the insert fails (e.g. dropped status id)
+  // we still want the bulk response to surface.
+  if (updates.statusId) {
+    const historyRows = existingIssues
+      .filter((oldIssue) => oldIssue.statusId !== updates.statusId)
+      .map((oldIssue) => ({
+        issueId: oldIssue.id,
+        fromStatus: oldIssue.statusId,
+        toStatus: updates.statusId!,
+        changedByUserId: userId,
+        reason: 'user_bulk',
+      }));
+    if (historyRows.length > 0) {
+      try {
+        await db.insert(issueStatusHistory).values(historyRows);
+      } catch (err) {
+        console.error('bulk issue_status_history insert failed', err);
+      }
+    }
+  }
 
   // Create audit logs for each updated issue
   const affectedSprintIds = new Set<string>();
