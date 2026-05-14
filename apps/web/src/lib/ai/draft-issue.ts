@@ -18,6 +18,11 @@
  */
 
 import { z } from 'zod';
+import { redactPii, rehydrate } from './safety/redact';
+import {
+  UNTRUSTED_CONTENT_SYSTEM_PROMPT,
+  wrapUntrustedContent,
+} from './safety/sandbox';
 
 export const ISSUE_TYPES = ['story', 'task', 'bug', 'epic', 'subtask'] as const;
 export const ISSUE_PRIORITIES = ['critical', 'high', 'medium', 'low', 'none'] as const;
@@ -112,13 +117,40 @@ function buildSystemPrompt(projectName: string, projectKey: string, existingLabe
 
   return [
     `You draft concise issue tickets for the project "${projectName}" (key: ${projectKey}).`,
+    // P1-16: anchor the untrusted-content rule at the top of the prompt.
+    UNTRUSTED_CONTENT_SYSTEM_PROMPT,
     `Rules:`,
     `  - Stay faithful to the user prompt; do not invent requirements.`,
     `  - Pick the smallest type that fits (task for ordinary work, bug only for defects, epic only when the scope spans multiple sprints).`,
     `  - Prefer medium priority unless the prompt is explicit about urgency.`,
+    `  - If the user prompt contains placeholders like [EMAIL_abcd] or [PHONE_abcd], keep them verbatim — they will be expanded after generation.`,
     labelsLine,
     JSON_INSTRUCTIONS,
   ].join('\n');
+}
+
+/**
+ * P1-16 helper: redact + wrap the user-supplied prompt before it reaches an
+ * LLM. Returns the safe payload and a `Map` callers must pass to
+ * {@link rehydrate} on the response so the original PII spans reappear in
+ * the UI exactly as the user typed them.
+ */
+function preparePromptForLlm(prompt: string): {
+  safePrompt: string;
+  replacements: Map<string, string>;
+} {
+  const { redacted, replacements } = redactPii(prompt);
+  return { safePrompt: wrapUntrustedContent(redacted), replacements };
+}
+
+function rehydrateDraft(draft: IssueDraft, replacements: Map<string, string>): IssueDraft {
+  if (replacements.size === 0) return draft;
+  return {
+    ...draft,
+    title: rehydrate(draft.title, replacements),
+    description: draft.description ? rehydrate(draft.description, replacements) : draft.description,
+    labels: draft.labels.map((label) => rehydrate(label, replacements)),
+  };
 }
 
 async function draftIssueOpenAi(request: DraftRequest): Promise<IssueDraft> {
@@ -136,6 +168,7 @@ async function draftIssueOpenAi(request: DraftRequest): Promise<IssueDraft> {
     request.projectKey,
     request.existingLabels ?? []
   );
+  const { safePrompt, replacements } = preparePromptForLlm(request.prompt);
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -147,7 +180,7 @@ async function draftIssueOpenAi(request: DraftRequest): Promise<IssueDraft> {
       model,
       messages: [
         { role: 'system', content: system },
-        { role: 'user', content: request.prompt },
+        { role: 'user', content: safePrompt },
       ],
       response_format: { type: 'json_object' },
       temperature: 0.2,
@@ -166,7 +199,7 @@ async function draftIssueOpenAi(request: DraftRequest): Promise<IssueDraft> {
     choices?: Array<{ message?: { content?: string } }>;
   };
   const raw = payload.choices?.[0]?.message?.content ?? '{}';
-  return parseAndValidate(raw);
+  return rehydrateDraft(parseAndValidate(raw), replacements);
 }
 
 async function draftIssueAnthropic(request: DraftRequest): Promise<IssueDraft> {
@@ -184,6 +217,7 @@ async function draftIssueAnthropic(request: DraftRequest): Promise<IssueDraft> {
     request.projectKey,
     request.existingLabels ?? []
   );
+  const { safePrompt, replacements } = preparePromptForLlm(request.prompt);
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -197,7 +231,7 @@ async function draftIssueAnthropic(request: DraftRequest): Promise<IssueDraft> {
       max_tokens: 1024,
       temperature: 0.2,
       system,
-      messages: [{ role: 'user', content: request.prompt }],
+      messages: [{ role: 'user', content: safePrompt }],
     }),
   });
 
@@ -214,7 +248,7 @@ async function draftIssueAnthropic(request: DraftRequest): Promise<IssueDraft> {
   };
   const text =
     payload.content?.find((block) => block.type === 'text')?.text ?? '{}';
-  return parseAndValidate(text);
+  return rehydrateDraft(parseAndValidate(text), replacements);
 }
 
 function parseAndValidate(raw: string): IssueDraft {

@@ -19,6 +19,7 @@ import { getSystemAgentControlSettingsFromDb } from '@/lib/agents/system';
 import { resolveProviderApiKeyFromSettings } from '@/lib/agents/credentials';
 import { normalizeWorkspaceAgentSettings } from '@/lib/agents/config';
 import { resolveProjectByIdOrKey } from '@/lib/projects/server';
+import { evaluateInjectionRisk } from '@/lib/ai/safety/sandbox';
 
 export const dynamic = 'force-dynamic';
 
@@ -160,6 +161,40 @@ export async function POST(request: NextRequest) {
     project.organizationId
   );
   const modelToUse = workspace.model?.trim() || null;
+
+  // P1-16
+  const safetyMode = workspace.aiSafetyMode ?? 'warn';
+  const verdict = await evaluateInjectionRisk(body.prompt, {
+    mode: safetyMode,
+    anthropicApiKey: provider === 'anthropic' ? apiKey : null,
+  });
+  if (verdict.flagged) {
+    await createAuditLog({
+      userId: session.user.id,
+      organizationId: project.organizationId,
+      action: 'agent.run_failed',
+      resourceType: 'project',
+      resourceId: project.id,
+      projectId: project.id,
+      metadata: {
+        kind: 'issue_drafts_multi',
+        reason: 'injection_suspected',
+        score: verdict.score,
+        mode: safetyMode,
+      },
+    }).catch(() => {});
+  }
+  if (verdict.refuse) {
+    return NextResponse.json(
+      {
+        error:
+          'The prompt looks like it might contain instructions aimed at the AI itself. The workspace is in strict safety mode, so the request was blocked.',
+        code: 'prompt_injection_suspected',
+        score: verdict.score,
+      },
+      { status: 422 }
+    );
+  }
 
   try {
     const drafts = await draftIssuesMulti({

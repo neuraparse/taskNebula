@@ -11,6 +11,11 @@
  */
 
 import { AiDraftError, type DraftProvider } from './draft-issue';
+import { redactPii, rehydrate } from './safety/redact';
+import {
+  UNTRUSTED_CONTENT_SYSTEM_PROMPT,
+  wrapUntrustedContent,
+} from './safety/sandbox';
 
 export const ISSUE_ASSIST_ACTIONS = [
   'summarize',
@@ -191,7 +196,7 @@ async function anthropicCompletion(apiKey: string, model: string, system: string
 
 export async function runIssueAssist(request: IssueAssistRequest): Promise<IssueAssistResult> {
   const { system, expects } = actionInstructions(request.action);
-  const user = request.customPrompt
+  const userRaw = request.customPrompt
     ? `${compactIssueBlock(request)}\n\nAdditional instruction: ${request.customPrompt}`
     : compactIssueBlock(request);
 
@@ -199,14 +204,20 @@ export async function runIssueAssist(request: IssueAssistRequest): Promise<Issue
     return nativeFallback(request);
   }
 
+  // P1-16: redact PII and wrap the issue body + comments as untrusted
+  // content before the LLM sees it. Rehydrate placeholders on the response.
+  const { redacted, replacements } = redactPii(userRaw);
+  const user = wrapUntrustedContent(redacted);
+  const sandboxedSystem = `${UNTRUSTED_CONTENT_SYSTEM_PROMPT}\n\n${system}`;
+
   const model =
     request.model ||
     (request.provider === 'openai' ? 'gpt-4o-mini' : 'claude-sonnet-4-6');
 
   const raw =
     request.provider === 'openai'
-      ? await openAiCompletion(request.apiKey, model, system, user, expects === 'json_labels')
-      : await anthropicCompletion(request.apiKey, model, system, user);
+      ? await openAiCompletion(request.apiKey, model, sandboxedSystem, user, expects === 'json_labels')
+      : await anthropicCompletion(request.apiKey, model, sandboxedSystem, user);
 
   if (expects === 'json_labels') {
     const cleaned = raw
@@ -222,7 +233,11 @@ export async function runIssueAssist(request: IssueAssistRequest): Promise<Issue
             .filter(Boolean)
             .slice(0, 6)
         : [];
-      return { action: request.action, text: labels.join(', '), labels };
+      return {
+        action: request.action,
+        text: rehydrate(labels.join(', '), replacements),
+        labels: labels.map((l) => rehydrate(l, replacements)),
+      };
     } catch {
       throw new AiDraftError(
         'invalid_json',
@@ -231,5 +246,5 @@ export async function runIssueAssist(request: IssueAssistRequest): Promise<Issue
     }
   }
 
-  return { action: request.action, text: raw.trim() };
+  return { action: request.action, text: rehydrate(raw.trim(), replacements) };
 }
