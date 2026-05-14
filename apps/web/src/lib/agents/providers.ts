@@ -9,7 +9,11 @@ import type {
 } from './config';
 import type { AgentModelConfigSettings } from './model-configs';
 import type { ProjectContext } from './types';
-import { estimatePromptTokens } from '@/lib/ai/budget';
+import {
+  buildCachedSystemPrompt,
+  extractAnthropicCacheUsage,
+  isPromptCacheEnabled,
+} from '../ai/cache-blocks';
 
 const PRIORITY_VALUES = ['critical', 'high', 'medium', 'low', 'none'] as const;
 
@@ -59,8 +63,6 @@ type ProviderParams = {
   modelConfigId?: string | null;
   modelConfigName?: string | null;
   modelTuning?: AgentModelConfigSettings | null;
-  /** When present, the call is metered + budget-checked. */
-  userId?: string | null;
 };
 
 type OpenAiErrorPayload = {
@@ -474,80 +476,64 @@ async function generateOpenAiPlan(params: ProviderParams): Promise<AgentProvider
   }
 
   const prompt = buildPrompt(params);
-  const promptString = JSON.stringify(prompt.input, null, 2);
-
-  const callOpenAi = async () => {
-    const response = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
+  const response = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: params.model,
+      store: false,
+      instructions: `${prompt.instructions} Requested flow: ${getRunKindSummary(params.kind)}.`,
+      input: JSON.stringify(prompt.input, null, 2),
+      ...(params.modelTuning?.temperature !== null && params.modelTuning?.temperature !== undefined
+        ? { temperature: params.modelTuning.temperature }
+        : {}),
+      ...(params.modelTuning?.maxOutputTokens
+        ? { max_output_tokens: params.modelTuning.maxOutputTokens }
+        : {}),
+      ...(params.modelTuning?.reasoningEffort
+        ? { reasoning: { effort: params.modelTuning.reasoningEffort } }
+        : {}),
+      text: {
+        format: {
+          type: 'json_schema',
+          name: prompt.schemaName,
+          strict: true,
+          schema: prompt.schema,
+        },
       },
-      body: JSON.stringify({
-        model: params.model,
-        store: false,
-        instructions: `${prompt.instructions} Requested flow: ${getRunKindSummary(params.kind)}.`,
-        input: promptString,
-        ...(params.modelTuning?.temperature !== null && params.modelTuning?.temperature !== undefined
-          ? { temperature: params.modelTuning.temperature }
-          : {}),
-        ...(params.modelTuning?.maxOutputTokens
-          ? { max_output_tokens: params.modelTuning.maxOutputTokens }
-          : {}),
-        ...(params.modelTuning?.reasoningEffort
-          ? { reasoning: { effort: params.modelTuning.reasoningEffort } }
-          : {}),
-        text: {
-          format: {
-            type: 'json_schema',
-            name: prompt.schemaName,
-            strict: true,
-            schema: prompt.schema,
-          },
-        },
-      }),
-    });
+    }),
+  });
 
-    const payload = (await response.json().catch(() => ({}))) as Record<string, unknown>;
-    if (!response.ok) {
-      throw createOpenAiError(response.status, payload as OpenAiErrorPayload, params.model);
-    }
+  const payload = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!response.ok) {
+    throw createOpenAiError(response.status, payload as OpenAiErrorPayload, params.model);
+  }
 
-    const structuredText = extractStructuredText(payload);
-    let parsedJson: unknown;
-    try {
-      parsedJson = JSON.parse(structuredText);
-    } catch {
-      throw new AgentExecutionError(
-        'OpenAI returned invalid JSON for the structured agent response.',
-        'provider_invalid_output',
-        502
-      );
-    }
-    try {
-      const usage = (payload as { usage?: { input_tokens?: number; output_tokens?: number } }).usage;
-      return {
-        value: prompt.parser(parsedJson),
-        usage: {
-          inputTokens: usage?.input_tokens ?? estimatePromptTokens(prompt.instructions + promptString),
-          outputTokens: usage?.output_tokens ?? estimatePromptTokens(structuredText),
-        },
-      };
-    } catch {
-      throw new AgentExecutionError(
-        'OpenAI returned structured output that does not match the TaskNebula agent schema.',
-        'provider_invalid_output',
-        502
-      );
-    }
-  };
+  const structuredText = extractStructuredText(payload);
 
-  // The agent engine is responsible for wrapping the provider call with
-  // budget metering (see runProjectAgent in engine.ts). Direct
-  // generateAgentPlan callers that skip the engine — chiefly the unit
-  // test harness — would otherwise need a live DB to satisfy the budget
-  // guard, so we leave the wrap to the orchestration layer.
-  return (await callOpenAi()).value;
+  let parsedJson: unknown;
+  try {
+    parsedJson = JSON.parse(structuredText);
+  } catch {
+    throw new AgentExecutionError(
+      'OpenAI returned invalid JSON for the structured agent response.',
+      'provider_invalid_output',
+      502
+    );
+  }
+
+  try {
+    return prompt.parser(parsedJson);
+  } catch {
+    throw new AgentExecutionError(
+      'OpenAI returned structured output that does not match the TaskNebula agent schema.',
+      'provider_invalid_output',
+      502
+    );
+  }
 }
 
 export function normalizeAgentLabels(labels: string[]) {
@@ -586,96 +572,120 @@ async function generateAnthropicPlan(params: ProviderParams): Promise<AgentProvi
   }
 
   const prompt = buildPrompt(params);
-  const systemPrompt = [
-    `${prompt.instructions} Requested flow: ${getRunKindSummary(params.kind)}.`,
+
+  // Split the system prompt into a stable instructions/schema prefix and
+  // attach ephemeral cache markers so Claude can reuse it across calls.
+  // The dynamic per-run input goes in `messages[0].content` and is NOT
+  // cached.
+  const stableInstructions = `${prompt.instructions} Requested flow: ${getRunKindSummary(params.kind)}.`;
+  const stableSchemaBlock = [
     'Respond with a single JSON object that matches this schema exactly — no prose, no markdown fences:',
     JSON.stringify(prompt.schema),
   ].join('\n\n');
-  const userPrompt = JSON.stringify(prompt.input, null, 2);
-  // Same as in generateOpenAiPlan: budget metering lives in the
-  // orchestration layer (engine.ts) so unit tests that hit
-  // generateAgentPlan directly don't require a live DB.
 
-  const callAnthropic = async () => {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: params.model,
-        max_tokens: params.modelTuning?.maxOutputTokens || 4096,
-        system: systemPrompt,
-        messages: [
-          {
-            role: 'user',
-            content: userPrompt,
-          },
-        ],
-        ...(params.modelTuning?.temperature !== null && params.modelTuning?.temperature !== undefined
-          ? { temperature: params.modelTuning.temperature }
-          : {}),
-      }),
-    });
+  const systemBlocks = buildCachedSystemPrompt({
+    instructions: stableInstructions,
+    toolSchemaBlock: stableSchemaBlock,
+  });
 
-    const payload = (await response.json().catch(() => ({}))) as Record<string, unknown>;
-    if (!response.ok) {
-      const error = (payload as { error?: { message?: string; type?: string } }).error;
-      const code =
-        response.status === 401 || response.status === 403
-          ? 'provider_auth_failed'
-          : response.status === 429
-            ? 'provider_rate_limited'
-            : 'anthropic_error';
-      throw new AgentExecutionError(
-        error?.message || `Anthropic request failed (${response.status})`,
-        code,
-        response.status === 429 ? 429 : 502
-      );
-    }
-
-    const content = Array.isArray((payload as { content?: unknown }).content)
-      ? ((payload as { content: Array<{ type?: string; text?: string }> }).content)
-      : [];
-    const textBlock = content.find((block) => block.type === 'text' && typeof block.text === 'string');
-    const rawText = textBlock?.text ?? '';
-
-    const cleaned = rawText
-      .replace(/^```(?:json)?\s*/i, '')
-      .replace(/```\s*$/i, '')
-      .trim();
-
-    let parsedJson: unknown;
-    try {
-      parsedJson = JSON.parse(cleaned);
-    } catch {
-      throw new AgentExecutionError(
-        'Anthropic returned invalid JSON for the structured agent response.',
-        'provider_invalid_output',
-        502
-      );
-    }
-    try {
-      const usage = (payload as { usage?: { input_tokens?: number; output_tokens?: number } }).usage;
-      return {
-        value: prompt.parser(parsedJson),
-        usage: {
-          inputTokens: usage?.input_tokens ?? estimatePromptTokens(systemPrompt + userPrompt),
-          outputTokens: usage?.output_tokens ?? estimatePromptTokens(rawText),
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      ...(isPromptCacheEnabled()
+        ? { 'anthropic-beta': 'prompt-caching-2024-07-31' }
+        : {}),
+    },
+    body: JSON.stringify({
+      model: params.model,
+      max_tokens: params.modelTuning?.maxOutputTokens || 4096,
+      system: systemBlocks,
+      messages: [
+        {
+          role: 'user',
+          content: JSON.stringify(prompt.input, null, 2),
         },
-      };
-    } catch {
-      throw new AgentExecutionError(
-        'Anthropic returned structured output that does not match the TaskNebula agent schema.',
-        'provider_invalid_output',
-        502
-      );
-    }
-  };
+      ],
+      ...(params.modelTuning?.temperature !== null && params.modelTuning?.temperature !== undefined
+        ? { temperature: params.modelTuning.temperature }
+        : {}),
+    }),
+  });
 
-  return (await callAnthropic()).value;
+  const payload = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!response.ok) {
+    const error = (payload as { error?: { message?: string; type?: string } }).error;
+    const code =
+      response.status === 401 || response.status === 403
+        ? 'provider_auth_failed'
+        : response.status === 429
+          ? 'provider_rate_limited'
+          : 'anthropic_error';
+    throw new AgentExecutionError(
+      error?.message || `Anthropic request failed (${response.status})`,
+      code,
+      response.status === 429 ? 429 : 502
+    );
+  }
+
+  const content = Array.isArray((payload as { content?: unknown }).content)
+    ? ((payload as { content: Array<{ type?: string; text?: string }> }).content)
+    : [];
+  const textBlock = content.find((block) => block.type === 'text' && typeof block.text === 'string');
+  const rawText = textBlock?.text ?? '';
+
+  // Record cache metrics for audit logging. The audit table from task #7 is
+  // optional — if it's not present we just drop the numbers. We still emit
+  // a structured log line so a dashboard/aggregator can scrape it.
+  try {
+    const usage = extractAnthropicCacheUsage(payload);
+    if (usage.cacheReadTokens > 0 || usage.cacheCreationTokens > 0) {
+      // Lazy require so this stays optional. The function is a no-op if the
+      // module hasn't been added yet (task #7 hook).
+      const auditMod = await import('../ai/audit-hook').catch(() => null);
+      if (auditMod && typeof auditMod.recordPromptCacheUsage === 'function') {
+        auditMod.recordPromptCacheUsage({
+          provider: 'anthropic',
+          model: params.model,
+          inputTokens: usage.inputTokens,
+          outputTokens: usage.outputTokens,
+          cachedTokens: usage.cacheReadTokens,
+          cacheCreationTokens: usage.cacheCreationTokens,
+        });
+      }
+    }
+  } catch {
+    // Audit failures must never break the agent path.
+  }
+
+  // Strip optional fenced ```json ... ``` wrappers Claude sometimes emits.
+  const cleaned = rawText
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/```\s*$/i, '')
+    .trim();
+
+  let parsedJson: unknown;
+  try {
+    parsedJson = JSON.parse(cleaned);
+  } catch {
+    throw new AgentExecutionError(
+      'Anthropic returned invalid JSON for the structured agent response.',
+      'provider_invalid_output',
+      502
+    );
+  }
+
+  try {
+    return prompt.parser(parsedJson);
+  } catch {
+    throw new AgentExecutionError(
+      'Anthropic returned structured output that does not match the TaskNebula agent schema.',
+      'provider_invalid_output',
+      502
+    );
+  }
 }
 
 export async function generateAgentPlan(params: ProviderParams): Promise<AgentProviderPlan> {
