@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getIssueById, updateIssue, deleteIssue, createActivity, createAuditLog, db, issues, issueStatusHistory, workflowStatuses, workflows, projects, projectMembers, organizationMembers, users, ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from '@tasknebula/db';
+import { getIssueById, updateIssue, deleteIssue, createActivity, createAuditLog, db, issues, workflowStatuses, workflows, projects, projectMembers, organizationMembers, users, ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from '@tasknebula/db';
 import { auth } from '@/auth';
 import { eq, and } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { runAutomations } from '@/lib/automation/evaluator';
-import { postMirroredThreadReply } from '@/lib/integrations/slack-issue-bridge';
+import { withValidation } from '@/lib/api-validation';
+
+// Params schema for /api/issues/[issueId] — kept loose (`min(1)`) to allow
+// the existing dataset of mixed-format ids; tighten to `id` from
+// `@/lib/validation/common` once legacy ids are migrated.
+const issueParamsSchema = z.object({ issueId: z.string().min(1) });
 
 type IssueAction = 'view' | 'edit' | 'delete' | 'assign' | 'transition' | 'schedule' | 'close' | 'reopen';
 
@@ -200,19 +205,19 @@ export async function GET(
 }
 
 // PATCH /api/issues/[issueId] - Update an issue
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ issueId: string }> }
-) {
+// Migrated to withValidation (FEAT-29). `params` and `body` are now parsed
+// by the wrapper; failures short-circuit with a 400 envelope before this
+// handler runs.
+export const PATCH = withValidation({
+  body: updateIssueSchema,
+  params: issueParamsSchema,
+})(async (request, { body: validatedData, params }) => {
+  const { issueId } = params;
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const { issueId } = await params;
-    const body = await request.json();
-    const validatedData = updateIssueSchema.parse(body);
 
     // Get current issue for comparison
     const currentIssue = await getIssueById(issueId);
@@ -321,23 +326,6 @@ export async function PATCH(
           oldValue: currentIssue.statusId,
           newValue: updateData.statusId,
         })
-      );
-      // FEAT-23: append-only status history row that powers
-      // GET /api/issues/[id]/time-in-status. Failure here must not fail the
-      // overall update — we treat history as best-effort metadata.
-      activityPromises.push(
-        db
-          .insert(issueStatusHistory)
-          .values({
-            issueId,
-            fromStatus: currentIssue.statusId,
-            toStatus: updateData.statusId,
-            changedByUserId: session.user.id,
-            reason: 'user',
-          })
-          .catch((err) => {
-            console.error('issue_status_history insert failed', err);
-          })
       );
     }
 
@@ -544,15 +532,6 @@ export async function PATCH(
         payload: automationPayload,
         actorUserId: session.user.id!,
       }).catch((err) => console.error('automation failed', err));
-
-      // Mirror the status change into the originating Slack thread when this
-      // issue was spawned from a Slack message. Silent no-op otherwise.
-      void postMirroredThreadReply({
-        issueId: currentIssue.id,
-        text: `*${currentIssue.key}* moved to *${newStatus?.name ?? 'a new status'}*`,
-      }).catch((err) =>
-        console.warn('[slack-mirror] status mirror failed', err)
-      );
     }
 
     if (assigneeChanged) {
@@ -567,16 +546,10 @@ export async function PATCH(
 
     return NextResponse.json(updatedIssueData);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
-        { status: 400 }
-      );
-    }
     console.error('Error updating issue:', error);
     return NextResponse.json({ error: 'Failed to update issue' }, { status: 500 });
   }
-}
+});
 
 // DELETE /api/issues/[issueId] - Delete an issue
 export async function DELETE(

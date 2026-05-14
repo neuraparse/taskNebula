@@ -1,11 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { auth } from '@/auth';
 import { db, issues, users, workflowStatuses, projects, sprints, searchHistory, parseJQL } from '@tasknebula/db';
 import { eq, and, or, inArray, gte, lte, like, desc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
-import { hybridSearch, looksLikeFreeText } from '@/lib/search/hybrid';
+import { withValidation } from '@/lib/api-validation';
 
 export const dynamic = 'force-dynamic';
+
+// FEAT-29: search route now declares its query shape up front. This replaces
+// the previous manual `searchParams.get('limit') || '100'` + `parseInt`
+// dance and validates numeric ranges.
+const searchQuerySchema = z.object({
+  q: z.string().min(1, 'q is required'),
+  organizationId: z.string().min(1, 'organizationId is required'),
+  projectId: z.string().optional(),
+  saveHistory: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((v) => v !== 'false'),
+  limit: z.coerce.number().int().min(1).max(500).default(100),
+  offset: z.coerce.number().int().min(0).default(0),
+});
 
 /**
  * Advanced Search API
@@ -20,67 +36,20 @@ export const dynamic = 'force-dynamic';
  * - limit: Max results (optional, default: 100)
  * - offset: Pagination offset (optional, default: 0)
  */
-export async function GET(request: NextRequest) {
+// Migrated to withValidation (FEAT-29). Query params are validated and
+// coerced by the wrapper, so manual `parseInt(... || '100')` and presence
+// checks are no longer needed here.
+export const GET = withValidation({ query: searchQuerySchema })(async (
+  request,
+  { query: q }
+) => {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const query = searchParams.get('q');
-    const organizationId = searchParams.get('organizationId');
-    const projectId = searchParams.get('projectId');
-    const saveHistory = searchParams.get('saveHistory') !== 'false';
-    const limit = parseInt(searchParams.get('limit') || '100');
-    const offset = parseInt(searchParams.get('offset') || '0');
-
-    if (!query) {
-      return NextResponse.json({ error: 'Query is required' }, { status: 400 });
-    }
-
-    if (!organizationId) {
-      return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
-    }
-
-    // Heuristic: free-text queries (no JQL operators) are routed to the
-    // hybrid path (BM25 + vector + RRF). JQL syntax with operators stays
-    // on the structured filter path for back-compat.
-    const wantsHybrid = searchParams.get('mode') === 'hybrid' || looksLikeFreeText(query);
-    if (wantsHybrid && searchParams.get('mode') !== 'jql') {
-      try {
-        const hybridResults = await hybridSearch({
-          query,
-          filters: { organizationId, projectId: projectId || null },
-          limit: Math.min(limit, 50),
-        });
-
-        if (saveHistory) {
-          try {
-            await db.insert(searchHistory).values({
-              userId: session.user.id,
-              organizationId,
-              projectId: projectId || null,
-              query,
-              criteria: { hybrid: true } as any,
-              resultCount: hybridResults.length.toString(),
-            });
-          } catch (error) {
-            console.error('Failed to save search history:', error);
-          }
-        }
-
-        return NextResponse.json({
-          results: hybridResults,
-          count: hybridResults.length,
-          query,
-          mode: 'hybrid',
-        });
-      } catch (error) {
-        console.error('Hybrid search failed, falling back to JQL parse:', error);
-        // fall through to JQL path so caller still gets *something*
-      }
-    }
+    const { q: query, organizationId, projectId, saveHistory, limit, offset } = q;
 
     // Parse JQL query
     const parseResult = parseJQL(query);
@@ -242,5 +211,5 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
