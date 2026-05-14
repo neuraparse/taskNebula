@@ -36,7 +36,10 @@ export async function GET(
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
-    // Get all members of the organization with role
+    // Get all members of the organization with role.
+    // `isAgent` / `agentProvider` are exposed so the UI can render virtual
+    // agent users (claude/cursor/devin/copilot) differently and show the
+    // Agent Activity panel when one is the assignee — see P0-04.
     const members = await db
       .select({
         id: users.id,
@@ -44,6 +47,8 @@ export async function GET(
         email: users.email,
         image: users.image,
         status: users.status,
+        isAgent: users.isAgent,
+        agentProvider: users.agentProvider,
         role: organizationMembers.role,
         memberStatus: organizationMembers.status,
         joinedAt: organizationMembers.createdAt,

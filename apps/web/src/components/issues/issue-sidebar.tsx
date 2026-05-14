@@ -18,7 +18,9 @@ import { LabelPicker } from './label-picker';
 import { IssueCustomFields } from '@/components/custom-fields/issue-custom-fields';
 import { WatchersList } from '@/components/watchers/watchers-list';
 import { AiIssueAssistPanel } from '@/components/ai/ai-issue-assist-panel';
+import { AgentActivityPanel } from './agent-activity-panel';
 import { useOrganization } from '@/lib/hooks/use-organization';
+import { useOrganizationMembers } from '@/lib/hooks/use-members';
 import { useUpdateIssue } from '@/lib/hooks/use-issues';
 
 // Reserved for future fields (not yet rendered but part of the design vocabulary):
@@ -44,6 +46,14 @@ interface IssueSidebarProps {
 export function IssueSidebar({ issue }: IssueSidebarProps) {
   const { currentOrganizationId } = useOrganization();
   const updateIssue = useUpdateIssue();
+  const { data: membersData } = useOrganizationMembers(currentOrganizationId);
+  const assignee = issue.assigneeId
+    ? membersData?.members.find((m) => m.id === issue.assigneeId)
+    : null;
+  const agentAssignee =
+    assignee && assignee.isAgent && assignee.agentProvider
+      ? assignee
+      : null;
 
   const handleAssigneeChange = async (assigneeId: string | null) => {
     try {
@@ -179,6 +189,14 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
           </PropertyRow>
         </div>
       </section>
+
+      {agentAssignee ? (
+        <AgentActivityPanel
+          issueId={issue.id}
+          agentProvider={agentAssignee.agentProvider!}
+          assigneeName={agentAssignee.name}
+        />
+      ) : null}
 
       <section className="space-y-3">
         <IssueCustomFields issueId={issue.id} />
