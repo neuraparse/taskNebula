@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, vector, jsonb, integer, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, vector, jsonb, integer, boolean, index } from 'drizzle-orm/pg-core';
 import { issues } from './issues';
 import { issueComments } from './issues';
 import { projects } from './projects';
@@ -42,7 +42,16 @@ export const contentEmbeddings = pgTable('content_embeddings', {
 
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => ({
+  // HNSW ANN index for cosine similarity over OpenAI-style embeddings.
+  // Tuned for 1536-dim vectors with balanced build/query cost — see
+  // packages/db/docs/PGVECTOR_TUNING.md for the recall/latency tradeoffs
+  // behind these parameters and guidance on tuning `hnsw.ef_search` at
+  // query time (see apps/web/src/lib/db/vector.ts::withEfSearch).
+  embeddingHnswIdx: index('content_embeddings_embedding_hnsw_idx')
+    .using('hnsw', table.embedding.op('vector_cosine_ops'))
+    .with({ m: 16, ef_construction: 64 }),
+}));
 
 /**
  * Search History - Track semantic searches for analytics
