@@ -15,6 +15,7 @@ import { auth } from '@/auth';
 import { aiDisabledResponse, isAiFeatureEnabled } from '@/lib/ai/feature-gate';
 import { AiDraftError, type DraftProvider } from '@/lib/ai/draft-issue';
 import { draftIssuesMulti } from '@/lib/ai/draft-issues-multi';
+import { BudgetExhaustedError } from '@/lib/ai/budget';
 import { getSystemAgentControlSettingsFromDb } from '@/lib/agents/system';
 import { resolveProviderApiKeyFromSettings } from '@/lib/agents/credentials';
 import { normalizeWorkspaceAgentSettings } from '@/lib/agents/config';
@@ -171,6 +172,11 @@ export async function POST(request: NextRequest) {
       apiKey,
       model: modelToUse,
       maxCount: body.maxCount ?? 5,
+      budgetContext: {
+        organizationId: project.organizationId,
+        userId: session.user.id,
+        feature: 'draft_multi',
+      },
     });
     console.log('[draft-issues] drafts ok', { count: drafts.length, provider });
 
@@ -191,6 +197,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ drafts, provider });
   } catch (err) {
+    if (err instanceof BudgetExhaustedError) {
+      return NextResponse.json(
+        { error: err.message, code: 'budget_exhausted', reason: err.code },
+        { status: 429 }
+      );
+    }
     if (err instanceof AiDraftError) {
       console.warn('[draft-issues] AiDraftError', { code: err.code, message: err.message });
       await createAuditLog({

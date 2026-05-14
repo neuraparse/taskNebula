@@ -19,6 +19,7 @@ import {
   runIssueAssist,
   type IssueAssistAction,
 } from '@/lib/ai/issue-assist';
+import { BudgetExhaustedError } from '@/lib/ai/budget';
 import { getSystemAgentControlSettingsFromDb } from '@/lib/agents/system';
 import { resolveProviderApiKeyFromSettings } from '@/lib/agents/credentials';
 import { normalizeWorkspaceAgentSettings } from '@/lib/agents/config';
@@ -199,6 +200,11 @@ export async function POST(request: NextRequest) {
         at: new Date(c.createdAt).toISOString(),
       })),
       customPrompt: body.customPrompt ?? null,
+      budgetContext: {
+        organizationId: issue.organizationId,
+        userId: session.user.id,
+        feature: `assist:${body.action}`,
+      },
     });
 
     await createAuditLog({
@@ -218,6 +224,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ...result, provider });
   } catch (err) {
+    if (err instanceof BudgetExhaustedError) {
+      return NextResponse.json(
+        { error: err.message, code: 'budget_exhausted', reason: err.code },
+        { status: 429 }
+      );
+    }
     if (err instanceof AiDraftError) {
       await createAuditLog({
         userId: session.user.id,

@@ -10,7 +10,8 @@
  * completely blank when no LLM is configured.
  */
 
-import { AiDraftError, type DraftProvider } from './draft-issue';
+import { AiDraftError, type DraftProvider, type BudgetContext } from './draft-issue';
+import { estimatePromptTokens, runWithBudget } from './budget';
 
 export const ISSUE_ASSIST_ACTIONS = [
   'summarize',
@@ -35,6 +36,7 @@ export interface IssueAssistRequest {
   };
   recentComments?: Array<{ author: string; body: string; at: string }>;
   customPrompt?: string | null;
+  budgetContext?: BudgetContext;
 }
 
 export interface IssueAssistResult {
@@ -137,7 +139,9 @@ function nativeFallback(request: IssueAssistRequest): IssueAssistResult {
   }
 }
 
-async function openAiCompletion(apiKey: string, model: string, system: string, user: string, json: boolean) {
+type CompletionResult = { text: string; inputTokens: number; outputTokens: number };
+
+async function openAiCompletion(apiKey: string, model: string, system: string, user: string, json: boolean): Promise<CompletionResult> {
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
@@ -158,11 +162,19 @@ async function openAiCompletion(apiKey: string, model: string, system: string, u
       `OpenAI returned ${response.status}: ${detail.slice(0, 200)}`
     );
   }
-  const payload = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
-  return payload.choices?.[0]?.message?.content ?? '';
+  const payload = (await response.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+    usage?: { prompt_tokens?: number; completion_tokens?: number };
+  };
+  const text = payload.choices?.[0]?.message?.content ?? '';
+  return {
+    text,
+    inputTokens: payload.usage?.prompt_tokens ?? estimatePromptTokens(system + user),
+    outputTokens: payload.usage?.completion_tokens ?? estimatePromptTokens(text),
+  };
 }
 
-async function anthropicCompletion(apiKey: string, model: string, system: string, user: string) {
+async function anthropicCompletion(apiKey: string, model: string, system: string, user: string): Promise<CompletionResult> {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -185,8 +197,16 @@ async function anthropicCompletion(apiKey: string, model: string, system: string
       `Anthropic returned ${response.status}: ${detail.slice(0, 200)}`
     );
   }
-  const payload = (await response.json()) as { content?: Array<{ type: string; text?: string }> };
-  return payload.content?.find((b) => b.type === 'text')?.text ?? '';
+  const payload = (await response.json()) as {
+    content?: Array<{ type: string; text?: string }>;
+    usage?: { input_tokens?: number; output_tokens?: number };
+  };
+  const text = payload.content?.find((b) => b.type === 'text')?.text ?? '';
+  return {
+    text,
+    inputTokens: payload.usage?.input_tokens ?? estimatePromptTokens(system + user),
+    outputTokens: payload.usage?.output_tokens ?? estimatePromptTokens(text),
+  };
 }
 
 export async function runIssueAssist(request: IssueAssistRequest): Promise<IssueAssistResult> {
@@ -203,10 +223,39 @@ export async function runIssueAssist(request: IssueAssistRequest): Promise<Issue
     request.model ||
     (request.provider === 'openai' ? 'gpt-4o-mini' : 'claude-sonnet-4-6');
 
-  const raw =
-    request.provider === 'openai'
-      ? await openAiCompletion(request.apiKey, model, system, user, expects === 'json_labels')
-      : await anthropicCompletion(request.apiKey, model, system, user);
+  const apiKey = request.apiKey;
+  const provider = request.provider;
+
+  const callProvider = async (): Promise<{
+    value: CompletionResult;
+    usage: { inputTokens: number; outputTokens: number };
+  }> => {
+    const out =
+      provider === 'openai'
+        ? await openAiCompletion(apiKey, model, system, user, expects === 'json_labels')
+        : await anthropicCompletion(apiKey, model, system, user);
+    return {
+      value: out,
+      usage: { inputTokens: out.inputTokens, outputTokens: out.outputTokens },
+    };
+  };
+
+  const completion = request.budgetContext
+    ? await runWithBudget(
+        {
+          organizationId: request.budgetContext.organizationId,
+          userId: request.budgetContext.userId,
+          provider: provider === 'openai' ? 'openai' : 'anthropic',
+          model,
+          feature: request.budgetContext.feature ?? 'assist',
+          prompt: user,
+          estimatedTokens: estimatePromptTokens(system + user) + 1024,
+        },
+        callProvider
+      )
+    : (await callProvider()).value;
+
+  const raw = completion.text;
 
   if (expects === 'json_labels') {
     const cleaned = raw
