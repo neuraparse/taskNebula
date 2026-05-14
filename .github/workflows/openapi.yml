@@ -1,0 +1,42 @@
+name: openapi
+
+# Ensures `apps/web/public/openapi.json` stays in sync with the registry under
+# `apps/web/src/lib/openapi/`. The jest snapshot test (`openapi.test.ts`) is
+# the source of truth — this workflow regenerates the file and then runs the
+# tests, so a stale spec fails the build twice (`git diff` here and the
+# in-test deep equality check).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  openapi:
+    name: generate + check OpenAPI spec
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Regenerate openapi.json
+        run: pnpm --filter @tasknebula/web openapi:gen
+
+      - name: Fail if openapi.json is stale (regen produced a diff)
+        run: git diff --exit-code -- apps/web/public/openapi.json
+
+      - name: Run OpenAPI tests (snapshot + 3.1 conformance)
+        run: pnpm --filter @tasknebula/web test -- --testPathPatterns=openapi

@@ -3,19 +3,22 @@
   "version": "0.2.6",
   "private": true,
   "scripts": {
-    "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "dev": "next dev",
     "lint": "next lint",
-    "type-check": "tsc --noEmit",
+    "openapi:check": "tsx scripts/generate-openapi.ts && git diff --exit-code -- public/openapi.json",
+    "openapi:gen": "tsx scripts/generate-openapi.ts",
+    "start": "next start",
     "test": "jest",
-    "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch",
     "tests:e2e": "playwright test",
+    "tests:e2e:install": "playwright install --with-deps",
     "tests:e2e:ui": "playwright test --ui",
-    "tests:e2e:install": "playwright install --with-deps"
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^7.3.0",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -81,12 +84,14 @@
     "react": "^19.0.3",
     "react-dom": "^19.0.3",
     "recharts": "^3.5.0",
+    "swagger-ui-react": "^5.32.6",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.24.1",
     "zustand": "^5.0.2"
   },
   "devDependencies": {
+    "@apidevtools/swagger-parser": "^12.1.0",
     "@playwright/test": "^1.49.1",
     "@tasknebula/config": "workspace:*",
     "@testing-library/jest-dom": "^6.9.1",
@@ -96,6 +101,7 @@
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.6",
     "@types/react-dom": "^19.0.2",
+    "@types/swagger-ui-react": "^5.18.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
     "eslint-config-next": "15.1.4",
@@ -104,6 +110,7 @@
     "postcss": "^8.4.49",
     "postgres": "^3.4.5",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }
 }
