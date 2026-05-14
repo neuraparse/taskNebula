@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, searchHistory } from '@tasknebula/db';
-import { eq, and, desc, lt } from 'drizzle-orm';
+import { eq, and, desc, lt, type SQL } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/search-history?organizationId=xxx&projectId=xxx&limit=10
- * 
- * Get recent search history for current user
+ * GET /api/search-history?organizationId=xxx&projectId=xxx&limit=10&pinned=true
+ *
+ * Get recent (or pinned) search history for current user. The Cmd+K
+ * omnibar (FEAT-25) calls this twice on open: once for `pinned=true`
+ * and once for plain recents.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -20,6 +22,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const organizationId = searchParams.get('organizationId');
     const projectId = searchParams.get('projectId');
+    const pinnedOnlyParam = searchParams.get('pinned');
     const limit = parseInt(searchParams.get('limit') || '10');
 
     if (!organizationId) {
@@ -27,13 +30,17 @@ export async function GET(request: NextRequest) {
     }
 
     // Build conditions
-    const conditions: any[] = [
+    const conditions: SQL[] = [
       eq(searchHistory.userId, session.user.id),
       eq(searchHistory.organizationId, organizationId),
     ];
 
     if (projectId) {
       conditions.push(eq(searchHistory.projectId, projectId));
+    }
+
+    if (pinnedOnlyParam === 'true') {
+      conditions.push(eq(searchHistory.pinned, true));
     }
 
     const history = await db
@@ -54,9 +61,61 @@ export async function GET(request: NextRequest) {
 }
 
 /**
+ * PATCH /api/search-history
+ *
+ * Body: { id: string, pinned: boolean }
+ *
+ * Pin or unpin a saved query (FEAT-25). We restrict updates to rows
+ * owned by the current user — no organization-wide pinning.
+ */
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = (await request.json().catch(() => null)) as
+      | { id?: string; pinned?: boolean }
+      | null;
+
+    if (!body || typeof body.id !== 'string' || typeof body.pinned !== 'boolean') {
+      return NextResponse.json(
+        { error: 'Body must include { id: string, pinned: boolean }' },
+        { status: 400 }
+      );
+    }
+
+    const updated = await db
+      .update(searchHistory)
+      .set({ pinned: body.pinned })
+      .where(
+        and(
+          eq(searchHistory.id, body.id),
+          eq(searchHistory.userId, session.user.id)
+        )
+      )
+      .returning();
+
+    if (updated.length === 0) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ item: updated[0] });
+  } catch (error) {
+    console.error('Update search history error:', error);
+    return NextResponse.json(
+      { error: 'Failed to update search history' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * DELETE /api/search-history?organizationId=xxx
- * 
- * Clear search history for current user
+ *
+ * Clear unpinned search history for current user. Pinned entries are
+ * preserved — call PATCH with `{ pinned: false }` first to drop them.
  */
 export async function DELETE(request: NextRequest) {
   try {
@@ -77,7 +136,8 @@ export async function DELETE(request: NextRequest) {
       .where(
         and(
           eq(searchHistory.userId, session.user.id),
-          eq(searchHistory.organizationId, organizationId)
+          eq(searchHistory.organizationId, organizationId),
+          eq(searchHistory.pinned, false)
         )
       );
 
@@ -92,25 +152,30 @@ export async function DELETE(request: NextRequest) {
 }
 
 /**
- * POST /api/search-history/cleanup
- * 
- * Clean up old search history (older than 30 days)
- * This should be called periodically by a cron job
+ * POST /api/search-history
+ *
+ * Clean up unpinned search history older than 30 days. Called by the
+ * scheduled cleanup job. Pinned rows are kept until the user explicitly
+ * removes them.
  */
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Delete entries older than 30 days
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     await db
       .delete(searchHistory)
-      .where(lt(searchHistory.createdAt, thirtyDaysAgo));
+      .where(
+        and(
+          lt(searchHistory.createdAt, thirtyDaysAgo),
+          eq(searchHistory.pinned, false)
+        )
+      );
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -121,4 +186,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
