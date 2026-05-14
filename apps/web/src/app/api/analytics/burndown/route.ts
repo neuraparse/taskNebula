@@ -4,7 +4,12 @@ import { db, sprints, issues, workflowStatuses } from '@tasknebula/db';
 import { eq } from 'drizzle-orm';
 import { differenceInDays, addDays, format } from 'date-fns';
 
-// GET /api/analytics/burndown?sprintId=xxx
+// GET /api/analytics/burndown?sprintId=xxx[&unit=points|hours]
+//
+// task #10: when `unit=hours` (or when the caller doesn't pass `unit` but the
+// sprint has *any* issue with a non-null `actual_hours`), we additionally
+// surface hour-denominated totals alongside the existing story-point numbers.
+// The default response shape is unchanged so existing chart code keeps working.
 export async function GET(request: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -13,6 +18,7 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const sprintId = searchParams.get('sprintId');
+  const unitParam = searchParams.get('unit'); // null | 'points' | 'hours'
 
   if (!sprintId) {
     return NextResponse.json({ error: 'Sprint ID is required' }, { status: 400 });
@@ -31,6 +37,8 @@ export async function GET(request: NextRequest) {
       .select({
         id: issues.id,
         estimate: issues.estimate,
+        estimateHours: issues.estimateHours,
+        actualHours: issues.actualHours,
         statusId: issues.statusId,
         updatedAt: issues.updatedAt,
         statusCategory: workflowStatuses.category,
@@ -41,6 +49,23 @@ export async function GET(request: NextRequest) {
 
     const totalPoints = sprintIssues.reduce((sum, issue) => sum + (issue.estimate || 0), 0);
     const totalIssues = sprintIssues.length;
+
+    // Hour-based totals (task #10). Only meaningful when the team has populated
+    // estimate_hours / actual_hours. We always compute these — the response
+    // includes them only when there's signal, so old clients don't see noise.
+    const totalEstimateHours = sprintIssues.reduce(
+      (sum, issue) => sum + Number(issue.estimateHours ?? 0),
+      0,
+    );
+    const totalActualHours = sprintIssues.reduce(
+      (sum, issue) => sum + Number(issue.actualHours ?? 0),
+      0,
+    );
+    const completedActualHours = sprintIssues
+      .filter((issue) => issue.statusCategory === 'done')
+      .reduce((sum, issue) => sum + Number(issue.actualHours ?? 0), 0);
+    const hasHourData =
+      totalEstimateHours > 0 || totalActualHours > 0;
 
     // Calculate ideal burndown
     const startDate = new Date(sprint.startDate);
@@ -88,7 +113,7 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json({
+    const responseBody: Record<string, unknown> = {
       sprintName: sprint.name,
       startDate: sprint.startDate,
       endDate: sprint.endDate,
@@ -99,7 +124,22 @@ export async function GET(request: NextRequest) {
       remainingPoints: totalPoints - completedPoints,
       remainingIssues: totalIssues - completedIssues,
       burndown: actualBurndown,
-    });
+    };
+
+    // Additive hour breakdown — only attached when the team is logging hours
+    // or when the caller explicitly asked for it. Existing point-only clients
+    // see no change.
+    if (hasHourData || unitParam === 'hours') {
+      responseBody.hours = {
+        totalEstimateHours: Math.round(totalEstimateHours * 100) / 100,
+        totalActualHours: Math.round(totalActualHours * 100) / 100,
+        completedActualHours: Math.round(completedActualHours * 100) / 100,
+        remainingEstimateHours:
+          Math.round((totalEstimateHours - completedActualHours) * 100) / 100,
+      };
+    }
+
+    return NextResponse.json(responseBody);
   } catch (error) {
     console.error('Error fetching burndown data:', error);
     return NextResponse.json({ error: 'Failed to fetch burndown data' }, { status: 500 });

@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, jsonb, varchar, integer, pgEnum, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, jsonb, varchar, integer, numeric, pgEnum, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { createId } from '@paralleldrive/cuid2';
 import { organizations } from './organizations';
 import { projects } from './projects';
@@ -49,6 +49,13 @@ export const issues: any = pgTable('issues', {
   parentId: text('parent_id').references((): any => issues.id, { onDelete: 'set null' }),
   securityLevelId: text('security_level_id').references(() => issueSecurityLevels.id, { onDelete: 'set null' }),
   estimate: integer('estimate'),
+  // Native time-tracking (task #10). estimate_hours / actual_hours are user-facing hour totals.
+  // story_points keeps the agile points number separate from hours; estimate_source records
+  // how estimate_hours was set (manual entry, AI suggestion, or computed from story_points).
+  estimateHours: numeric('estimate_hours', { precision: 8, scale: 2 }),
+  actualHours: numeric('actual_hours', { precision: 8, scale: 2 }).default('0'),
+  estimateSource: text('estimate_source'), // 'manual' | 'ai_suggest' | 'story_points'
+  storyPoints: integer('story_points'),
   dueDate: timestamp('due_date'),
   customFields: jsonb('custom_fields').notNull().default('{}'),
   metadata: jsonb('metadata').notNull().default('{}'),
