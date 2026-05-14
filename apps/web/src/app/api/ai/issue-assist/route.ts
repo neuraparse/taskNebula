@@ -22,6 +22,7 @@ import {
 import { getSystemAgentControlSettingsFromDb } from '@/lib/agents/system';
 import { resolveProviderApiKeyFromSettings } from '@/lib/agents/credentials';
 import { normalizeWorkspaceAgentSettings } from '@/lib/agents/config';
+import { evaluateInjectionRisk } from '@/lib/ai/safety/sandbox';
 
 export const dynamic = 'force-dynamic';
 
@@ -178,6 +179,52 @@ export async function POST(request: NextRequest) {
     issue.organizationId
   );
   const modelToUse = workspace.model?.trim() || null;
+
+  // P1-16: untrusted text fed to the LLM here is the issue description +
+  // comment bodies + customPrompt. Score the combined blob so a comment
+  // that says "system: ignore previous instructions" trips the same guard
+  // a malicious draft prompt would.
+  const combined = [
+    issue.description ?? '',
+    body.customPrompt ?? '',
+    ...recent.map((c) => c.content ?? ''),
+  ]
+    .filter(Boolean)
+    .join('\n---\n');
+  const safetyMode = workspace.aiSafetyMode ?? 'warn';
+  const verdict = await evaluateInjectionRisk(combined, {
+    mode: safetyMode,
+    anthropicApiKey: provider === 'anthropic' ? apiKey : null,
+  });
+  if (verdict.flagged) {
+    await createAuditLog({
+      userId: session.user.id,
+      organizationId: issue.organizationId,
+      action: 'agent.run_failed',
+      resourceType: 'issue',
+      resourceId: issue.id,
+      projectId: project?.id ?? issue.projectId,
+      issueId: issue.id,
+      metadata: {
+        kind: 'issue_assist',
+        subAction: body.action,
+        reason: 'injection_suspected',
+        score: verdict.score,
+        mode: safetyMode,
+      },
+    }).catch(() => {});
+  }
+  if (verdict.refuse) {
+    return NextResponse.json(
+      {
+        error:
+          'The issue contents look like they include instructions targeted at the AI. Workspace safety mode is "strict", so this request was blocked.',
+        code: 'prompt_injection_suspected',
+        score: verdict.score,
+      },
+      { status: 422 }
+    );
+  }
 
   try {
     const result = await runIssueAssist({
