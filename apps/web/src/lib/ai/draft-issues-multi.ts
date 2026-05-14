@@ -10,6 +10,7 @@
 
 import { z } from 'zod';
 import { issueDraftSchema, type IssueDraft, type DraftProvider, AiDraftError } from './draft-issue';
+import { traceLlmCall } from './observability/langfuse';
 
 export const draftsResponseSchema = z.object({
   drafts: z.array(issueDraftSchema).min(1).max(20),
@@ -215,7 +216,7 @@ function parseAndValidate(raw: string, maxCount: number): IssueDraft[] {
   return result.data.drafts.slice(0, maxCount);
 }
 
-export async function draftIssuesMulti(request: DraftIssuesRequest): Promise<IssueDraft[]> {
+async function runDraftIssuesMulti(request: DraftIssuesRequest): Promise<IssueDraft[]> {
   switch (request.provider) {
     case 'openai':
       return draftIssuesOpenAi(request);
@@ -224,5 +225,38 @@ export async function draftIssuesMulti(request: DraftIssuesRequest): Promise<Iss
     case 'native':
     default:
       return draftIssuesNative(request);
+  }
+}
+
+export async function draftIssuesMulti(request: DraftIssuesRequest): Promise<IssueDraft[]> {
+  const isLlm = request.provider === 'openai' || request.provider === 'anthropic';
+  const started = Date.now();
+  try {
+    const drafts = await runDraftIssuesMulti(request);
+    if (isLlm) {
+      await traceLlmCall({
+        feature: 'issue.draft.multi',
+        provider: request.provider,
+        model: request.model || 'default',
+        input: { prompt: request.prompt, projectKey: request.projectKey, maxCount: request.maxCount ?? 5 },
+        output: drafts,
+        latencyMs: Date.now() - started,
+        metadata: { draftCount: drafts.length },
+      });
+    }
+    return drafts;
+  } catch (err) {
+    if (isLlm) {
+      await traceLlmCall({
+        feature: 'issue.draft.multi',
+        provider: request.provider,
+        model: request.model || 'default',
+        input: { prompt: request.prompt, projectKey: request.projectKey },
+        output: null,
+        latencyMs: Date.now() - started,
+        errorMessage: err instanceof Error ? err.message : String(err),
+      });
+    }
+    throw err;
   }
 }

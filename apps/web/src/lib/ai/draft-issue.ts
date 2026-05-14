@@ -18,6 +18,7 @@
  */
 
 import { z } from 'zod';
+import { traceLlmCall } from './observability/langfuse';
 
 export const ISSUE_TYPES = ['story', 'task', 'bug', 'epic', 'subtask'] as const;
 export const ISSUE_PRIORITIES = ['critical', 'high', 'medium', 'low', 'none'] as const;
@@ -241,7 +242,7 @@ function parseAndValidate(raw: string): IssueDraft {
   return result.data;
 }
 
-export async function draftIssue(request: DraftRequest): Promise<IssueDraft> {
+async function runDraft(request: DraftRequest): Promise<IssueDraft> {
   switch (request.provider) {
     case 'native':
       return draftIssueNative(request);
@@ -251,5 +252,44 @@ export async function draftIssue(request: DraftRequest): Promise<IssueDraft> {
       return draftIssueAnthropic(request);
     default:
       return draftIssueNative(request);
+  }
+}
+
+/**
+ * Public entry point. Wraps {@link runDraft} with Langfuse tracing — the
+ * trace lands in Langfuse only when `LANGFUSE_PUBLIC_KEY` is set, so
+ * unconfigured dev installs incur zero cost.
+ */
+export async function draftIssue(request: DraftRequest): Promise<IssueDraft> {
+  // Native provider has no LLM — emit traces only for openai/anthropic so the
+  // Langfuse dashboard doesn't get polluted with heuristic runs.
+  const isLlm = request.provider === 'openai' || request.provider === 'anthropic';
+  const started = Date.now();
+  try {
+    const draft = await runDraft(request);
+    if (isLlm) {
+      await traceLlmCall({
+        feature: 'issue.draft',
+        provider: request.provider,
+        model: request.model || 'default',
+        input: { prompt: request.prompt, projectKey: request.projectKey },
+        output: draft,
+        latencyMs: Date.now() - started,
+      });
+    }
+    return draft;
+  } catch (err) {
+    if (isLlm) {
+      await traceLlmCall({
+        feature: 'issue.draft',
+        provider: request.provider,
+        model: request.model || 'default',
+        input: { prompt: request.prompt, projectKey: request.projectKey },
+        output: null,
+        latencyMs: Date.now() - started,
+        errorMessage: err instanceof Error ? err.message : String(err),
+      });
+    }
+    throw err;
   }
 }

@@ -5,6 +5,16 @@ services:
       dockerfile: Dockerfile
     container_name: tasknebula-postgres
     restart: unless-stopped
+    # Load pg_stat_statements at server start so the extension created in
+    # init.sql can actually record statements. See docs/OBSERVABILITY.md.
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - pg_stat_statements.track=all
+      - -c
+      - pg_stat_statements.max=10000
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
@@ -55,6 +65,9 @@ services:
       LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-tasknebula-dev}
       LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:?LIVEKIT_API_SECRET must be set}
       LIVEKIT_WEBHOOK_URL: ${LIVEKIT_WEBHOOK_URL:-http://127.0.0.1:${PORT:-3000}/api/chat/livekit/webhook}
+      # Prometheus exporter (OBS-35). Default 0 = disabled; set to e.g. 6789
+      # to expose http://<host>:6789/metrics. See docs/OBSERVABILITY.md.
+      LIVEKIT_PROMETHEUS_PORT: ${LIVEKIT_PROMETHEUS_PORT:-0}
       REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     volumes:
