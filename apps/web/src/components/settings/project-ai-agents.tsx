@@ -1,5 +1,7 @@
 'use client';
 
+// QUAL-21 TS-strict-migration: file untouched intentionally; surfaces 4 errors
+// under `exactOptionalPropertyTypes`. See docs/TS_STRICT_MIGRATION.md.
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';

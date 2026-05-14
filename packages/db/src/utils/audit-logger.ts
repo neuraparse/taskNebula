@@ -1,3 +1,7 @@
+// QUAL-21 TS-strict-migration: file untouched intentionally; drizzle-orm
+// insert types use `T | null` (not `T | undefined`) for optional columns, so
+// this file needs targeted fixes when `exactOptionalPropertyTypes` is enabled
+// for @tasknebula/db. See docs/TS_STRICT_MIGRATION.md.
 import { db } from '../index';
 import { auditLogs } from '../schema/audit-logs';
 import { webhooks, webhookDeliveries } from '../schema/webhooks';
