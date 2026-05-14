@@ -309,6 +309,7 @@ junit.xml
 test-results/
 playwright-report/
 playwright/.cache/
+apps/web/e2e/.auth/
 cypress/videos/
 cypress/screenshots/
 cypress/downloads/
