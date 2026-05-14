@@ -267,6 +267,13 @@
 			"when": 1778900000000,
 			"tag": "0037_llm_call_audit",
 			"breakpoints": true
+		},
+		{
+			"idx": 38,
+			"version": "7",
+			"when": 1778900000000,
+			"tag": "0038_agent_as_assignee_linear_protocol",
+			"breakpoints": true
 		}
 	]
 }

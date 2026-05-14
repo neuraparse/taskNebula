@@ -1,0 +1,109 @@
+'use client';
+
+/**
+ * Agent Activity panel (P0-04 placeholder).
+ *
+ * Rendered in the issue sidebar when the assignee is a virtual agent user
+ * (`users.is_agent = true`). Shows the live `agent_sessions` state for the
+ * current issue and exposes a dispatch action that POSTs to
+ * `/api/issues/[id]/dispatch-agent`.
+ *
+ * This file is intentionally minimal: the full UX (timeline, retry, prompt
+ * editor, PR preview) lands in a follow-up task. Today we wire up enough of a
+ * shell that QA can see sessions tick through `pending` → `active` →
+ * `complete` end-to-end.
+ *
+ * TODO(agent-ui): replace this placeholder with a streaming session timeline
+ * + prompt override editor + retry button, and pull live state from the
+ * /api/issues/[id]/agent-sessions endpoint (to be added in a follow-up).
+ */
+
+import { Bot, Loader2, RefreshCcw } from 'lucide-react';
+import { useState } from 'react';
+
+type AgentProviderKind =
+  | 'claude'
+  | 'cursor'
+  | 'devin'
+  | 'copilot'
+  | 'openhands'
+  | 'custom';
+
+interface AgentActivityPanelProps {
+  issueId: string;
+  agentProvider: AgentProviderKind | null;
+  assigneeName?: string | null;
+}
+
+export function AgentActivityPanel({
+  issueId,
+  agentProvider,
+  assigneeName,
+}: AgentActivityPanelProps) {
+  const [dispatching, setDispatching] = useState(false);
+  const [lastState, setLastState] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!agentProvider) return null;
+
+  const onDispatch = async () => {
+    setDispatching(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/issues/${issueId}/dispatch-agent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: agentProvider }),
+      });
+      const json = (await res.json()) as { state?: string; error?: string };
+      if (!res.ok) {
+        setError(json.error || `Dispatch failed (${res.status})`);
+      } else {
+        setLastState(json.state ?? 'active');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Dispatch failed');
+    } finally {
+      setDispatching(false);
+    }
+  };
+
+  return (
+    <section className="space-y-2 rounded-md border border-border/60 bg-muted/30 p-3">
+      <header className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+        <Bot className="h-3.5 w-3.5" />
+        <span>Agent activity</span>
+      </header>
+
+      <div className="flex items-center justify-between gap-2 text-sm">
+        <div className="flex flex-col">
+          <span className="font-medium">
+            {assigneeName ?? agentProvider}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {lastState ? `State: ${lastState}` : 'Idle — no session dispatched yet'}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={onDispatch}
+          disabled={dispatching}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium hover:bg-accent disabled:opacity-60"
+        >
+          {dispatching ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <RefreshCcw className="h-3.5 w-3.5" />
+          )}
+          Dispatch
+        </button>
+      </div>
+
+      {error ? (
+        <p className="text-xs text-destructive">{error}</p>
+      ) : null}
+
+      {/* TODO(agent-ui): live state subscription, session history, prompt override editor. */}
+    </section>
+  );
+}

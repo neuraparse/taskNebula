@@ -241,6 +241,13 @@ async function seed() {
     }));
     await db.insert(schema.organizationMembers).values(orgMembers);
 
+    // Seed virtual agent users (@claude, @cursor, @devin, @copilot) so the
+    // Linear Agent Protocol dispatcher has someone to attribute comments to
+    // and the assignee picker shows them as first-class users (P0-04).
+    console.log('Seeding virtual agent users...');
+    const { ensureVirtualAgentUsers } = await import('./utils/seed-agent-users');
+    await ensureVirtualAgentUsers(org.id);
+
     // Create teams
     const adminUser = seedData.users.find(u => u.isSuperAdmin)!;
     const scrumMaster = seedData.users.find(u => u.projectRole === 'scrum_master')!;
