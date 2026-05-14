@@ -6,6 +6,17 @@ import { eq, and } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { runAutomations } from '@/lib/automation/evaluator';
+import { withErrorHandler } from '@/lib/api-handler';
+import {
+  ApiError,
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError,
+} from '@/lib/errors';
+import { childLogger } from '@/lib/logger';
+
+// MIGRATED (P0-06): see apps/web/src/lib/MIGRATION.md for the pattern.
+const log = childLogger('api/issues/[issueId]');
 
 type IssueAction = 'view' | 'edit' | 'delete' | 'assign' | 'transition' | 'schedule' | 'close' | 'reopen';
 
@@ -160,21 +171,21 @@ const updateIssueSchema = z.object({
 });
 
 // GET /api/issues/[issueId] - Get a single issue
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ issueId: string }> }
-) {
-  try {
+export const GET = withErrorHandler(
+  async (
+    _request: NextRequest,
+    { params }: { params: Promise<{ issueId: string }> },
+  ) => {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      throw new UnauthorizedError();
     }
 
     const { issueId } = await params;
     const issue = await getIssueById(issueId);
 
     if (!issue) {
-      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+      throw new NotFoundError('Issue not found');
     }
 
     // Permission check: ensure caller can view this issue
@@ -182,41 +193,38 @@ export async function GET(
       session.user.id,
       issue.projectId,
       'view',
-      issue.reporterId
+      issue.reporterId,
     );
     if (!permission.allowed) {
-      return NextResponse.json(
-        { error: permission.reason || 'Permission denied' },
-        { status: 403 }
-      );
+      throw new ForbiddenError(permission.reason || 'Permission denied');
     }
 
+    log.debug({ issueId, userId: session.user.id }, 'issue fetched');
     return NextResponse.json(issue);
-  } catch (error) {
-    console.error('Error fetching issue:', error);
-    return NextResponse.json({ error: 'Failed to fetch issue' }, { status: 500 });
-  }
-}
+  },
+  { scope: 'api/issues/[issueId]:GET' },
+);
 
 // PATCH /api/issues/[issueId] - Update an issue
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ issueId: string }> }
-) {
-  try {
+export const PATCH = withErrorHandler(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ issueId: string }> },
+  ) => {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      throw new UnauthorizedError();
     }
 
     const { issueId } = await params;
     const body = await request.json();
+    // Zod errors auto-converted to 400 by withErrorHandler.
     const validatedData = updateIssueSchema.parse(body);
 
     // Get current issue for comparison
     const currentIssue = await getIssueById(issueId);
     if (!currentIssue) {
-      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+      throw new NotFoundError('Issue not found');
     }
 
     // Determine required permissions based on what's being changed
@@ -251,13 +259,10 @@ export async function PATCH(
         session.user.id!,
         currentIssue.projectId,
         action,
-        currentIssue.reporterId
+        currentIssue.reporterId,
       );
       if (!permission.allowed) {
-        return NextResponse.json(
-          { error: permission.reason || 'Permission denied' },
-          { status: 403 }
-        );
+        throw new ForbiddenError(permission.reason || 'Permission denied');
       }
     }
 
@@ -278,7 +283,7 @@ export async function PATCH(
 
       const workflow = workflowResults[0];
       if (!workflow) {
-        return NextResponse.json({ error: 'No workflow found' }, { status: 500 });
+        throw new ApiError(500, 'WORKFLOW_NOT_FOUND', 'No workflow found');
       }
 
       // Get the first status with the matching category
@@ -293,7 +298,7 @@ export async function PATCH(
 
       const firstMatching = matchingStatuses[0];
       if (!firstMatching) {
-        return NextResponse.json({ error: 'Status not found' }, { status: 404 });
+        throw new NotFoundError('Status not found');
       }
 
       // Use the first matching status
@@ -304,7 +309,7 @@ export async function PATCH(
     const updatedIssueData = await updateIssue(issueId, updateData);
 
     if (!updatedIssueData) {
-      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+      throw new NotFoundError('Issue not found');
     }
 
     // Create activity logs for changed fields
@@ -516,7 +521,7 @@ export async function PATCH(
       projectId: currentIssue.projectId,
       payload: automationPayload,
       actorUserId: session.user.id!,
-    }).catch((err) => console.error('automation failed', err));
+    }).catch((err) => log.error({ err }, 'automation failed'));
 
     if (statusChanged) {
       void runAutomations({
@@ -525,7 +530,7 @@ export async function PATCH(
         projectId: currentIssue.projectId,
         payload: automationPayload,
         actorUserId: session.user.id!,
-      }).catch((err) => console.error('automation failed', err));
+      }).catch((err) => log.error({ err }, 'automation failed'));
     }
 
     if (assigneeChanged) {
@@ -535,31 +540,24 @@ export async function PATCH(
         projectId: currentIssue.projectId,
         payload: automationPayload,
         actorUserId: session.user.id!,
-      }).catch((err) => console.error('automation failed', err));
+      }).catch((err) => log.error({ err }, 'automation failed'));
     }
 
+    log.info({ issueId, changedFields }, 'issue updated');
     return NextResponse.json(updatedIssueData);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
-        { status: 400 }
-      );
-    }
-    console.error('Error updating issue:', error);
-    return NextResponse.json({ error: 'Failed to update issue' }, { status: 500 });
-  }
-}
+  },
+  { scope: 'api/issues/[issueId]:PATCH' },
+);
 
 // DELETE /api/issues/[issueId] - Delete an issue
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ issueId: string }> }
-) {
-  try {
+export const DELETE = withErrorHandler(
+  async (
+    _request: NextRequest,
+    { params }: { params: Promise<{ issueId: string }> },
+  ) => {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      throw new UnauthorizedError();
     }
 
     const { issueId } = await params;
@@ -567,7 +565,7 @@ export async function DELETE(
     // Get issue to check project and reporter
     const issue = await getIssueById(issueId);
     if (!issue) {
-      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+      throw new NotFoundError('Issue not found');
     }
 
     // Check permission to delete issues (with reporter check for own issues)
@@ -575,13 +573,10 @@ export async function DELETE(
       session.user.id!,
       issue.projectId,
       'delete',
-      issue.reporterId
+      issue.reporterId,
     );
     if (!permission.allowed) {
-      return NextResponse.json(
-        { error: permission.reason || 'Permission denied' },
-        { status: 403 }
-      );
+      throw new ForbiddenError(permission.reason || 'Permission denied');
     }
 
     await deleteIssue(issueId);
@@ -593,10 +588,9 @@ export async function DELETE(
       organizationId: issue.organizationId,
     });
 
+    log.info({ issueId, userId: session.user.id }, 'issue deleted');
     return NextResponse.json({ success: true, id: issueId });
-  } catch (error) {
-    console.error('Error deleting issue:', error);
-    return NextResponse.json({ error: 'Failed to delete issue' }, { status: 500 });
-  }
-}
+  },
+  { scope: 'api/issues/[issueId]:DELETE' },
+);
 

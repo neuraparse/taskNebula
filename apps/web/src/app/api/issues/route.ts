@@ -7,6 +7,17 @@ import { eq, and, desc, asc, sql, inArray } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { runAutomations } from '@/lib/automation/evaluator';
+import { withErrorHandler } from '@/lib/api-handler';
+import {
+  ApiError,
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError,
+} from '@/lib/errors';
+import { childLogger } from '@/lib/logger';
+
+// MIGRATED (P0-06): see apps/web/src/lib/MIGRATION.md for the pattern.
+const log = childLogger('api/issues');
 
 // Permission check helper for issues
 async function checkIssuePermission(
@@ -123,11 +134,11 @@ const createIssueSchema = z.object({
 });
 
 // GET /api/issues - List issues with filters
-export async function GET(request: NextRequest) {
-  try {
+export const GET = withErrorHandler(
+  async (request: NextRequest) => {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      throw new UnauthorizedError();
     }
 
     const searchParams = request.nextUrl.searchParams;
@@ -178,7 +189,7 @@ export async function GET(request: NextRequest) {
         .limit(1);
 
       if (!project) {
-        return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+        throw new NotFoundError('Project not found');
       }
 
       if (!isSuperAdmin && !accessibleOrgIds.includes(project.organizationId)) {
@@ -195,7 +206,7 @@ export async function GET(request: NextRequest) {
           .limit(1);
 
         if (!projectMember) {
-          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+          throw new ForbiddenError();
         }
       }
     } else if (!isSuperAdmin && accessibleOrgIds.length === 0) {
@@ -275,25 +286,28 @@ export async function GET(request: NextRequest) {
 
     const issuesData = await query;
 
+    log.debug(
+      { count: issuesData.length, projectId: actualProjectId },
+      'issues listed',
+    );
     return NextResponse.json({
       issues: issuesData,
       total: issuesData.length,
     });
-  } catch (error) {
-    console.error('Error fetching issues:', error);
-    return NextResponse.json({ error: 'Failed to fetch issues' }, { status: 500 });
-  }
-}
+  },
+  { scope: 'api/issues:GET' },
+);
 
 // POST /api/issues - Create a new issue
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withErrorHandler(
+  async (request: NextRequest) => {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      throw new UnauthorizedError();
     }
 
     const body = await request.json();
+    // Zod errors auto-converted to 400 by withErrorHandler.
     const validatedData = createIssueSchema.parse(body);
 
     // If projectId looks like a key (e.g., "demo", "PROJ"), convert to ID
@@ -321,16 +335,13 @@ export async function POST(request: NextRequest) {
 
     const project = projectResults[0];
     if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+      throw new NotFoundError('Project not found');
     }
 
     // Check permission to create issues
     const permission = await checkIssuePermission(session.user.id!, actualProjectId, 'create');
     if (!permission.allowed) {
-      return NextResponse.json(
-        { error: permission.reason || 'Permission denied' },
-        { status: 403 }
-      );
+      throw new ForbiddenError(permission.reason || 'Permission denied');
     }
 
     // Get the next issue number for this project
@@ -362,7 +373,7 @@ export async function POST(request: NextRequest) {
 
       const defaultWorkflow = defaultWorkflows[0];
       if (!defaultWorkflow) {
-        return NextResponse.json({ error: 'No workflow found for project' }, { status: 500 });
+        throw new ApiError(500, 'WORKFLOW_NOT_FOUND', 'No workflow found for project');
       }
 
       workflowId = defaultWorkflow.id;
@@ -391,7 +402,7 @@ export async function POST(request: NextRequest) {
         .sort((a, b) => a.position - b.position);
       const defaultStatus = backlogStatuses[0];
       if (!defaultStatus) {
-        return NextResponse.json({ error: 'No backlog status found in workflow' }, { status: 500 });
+        throw new ApiError(500, 'BACKLOG_STATUS_NOT_FOUND', 'No backlog status found in workflow');
       }
       finalStatusId = defaultStatus.id;
     }
@@ -428,7 +439,7 @@ export async function POST(request: NextRequest) {
         .returning();
       newIssue = newIssueResults[0];
       if (!newIssue) {
-        throw new Error('Failed to create issue');
+        throw new ApiError(500, 'ISSUE_INSERT_FAILED', 'Failed to create issue');
       }
 
       // Create activity log for issue creation
@@ -469,7 +480,7 @@ export async function POST(request: NextRequest) {
         });
       }
     } catch (insertError) {
-      console.error('Insert error details:', insertError);
+      log.error({ err: insertError, projectId: actualProjectId }, 'issue insert failed');
       throw insertError;
     }
 
@@ -481,18 +492,13 @@ export async function POST(request: NextRequest) {
       projectId: newIssue.projectId,
       payload: newIssue,
       actorUserId: session.user.id!,
-    }).catch((err) => console.error('automation failed', err));
+    }).catch((err) => log.error({ err }, 'automation failed'));
 
+    log.info(
+      { issueId: newIssue.id, issueKey: newIssue.key, projectId: newIssue.projectId },
+      'issue created',
+    );
     return NextResponse.json(newIssue, { status: 201 });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      console.error('Validation error:', error.errors);
-      return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
-        { status: 400 }
-      );
-    }
-    console.error('Error creating issue:', error);
-    return NextResponse.json({ error: 'Failed to create issue' }, { status: 500 });
-  }
-}
+  },
+  { scope: 'api/issues:POST' },
+);
