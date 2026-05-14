@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, vector, jsonb, integer, boolean, index } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, vector, jsonb, integer, boolean, bigserial, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { issues } from './issues';
 import { issueComments } from './issues';
 import { projects } from './projects';
@@ -43,14 +43,30 @@ export const contentEmbeddings = pgTable('content_embeddings', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
-  // HNSW ANN index for cosine similarity over OpenAI-style embeddings.
-  // Tuned for 1536-dim vectors with balanced build/query cost — see
-  // packages/db/docs/PGVECTOR_TUNING.md for the recall/latency tradeoffs
-  // behind these parameters and guidance on tuning `hnsw.ef_search` at
-  // query time (see apps/web/src/lib/db/vector.ts::withEfSearch).
-  embeddingHnswIdx: index('content_embeddings_embedding_hnsw_idx')
-    .using('hnsw', table.embedding.op('vector_cosine_ops'))
-    .with({ m: 16, ef_construction: 64 }),
+  typeIdIdx: uniqueIndex('content_embeddings_type_id_idx').on(table.contentType, table.contentId),
+}));
+
+/**
+ * Durable queue for the embedding worker. Postgres triggers on
+ * issues/issue_comments insert into this table on relevant text changes
+ * and NOTIFY the `content_embeddings_jobs` channel; the worker picks rows
+ * up via LISTEN (or a polling fallback when Redis/LISTEN is unavailable).
+ */
+export const contentEmbeddingsQueue = pgTable('content_embeddings_queue', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  contentType: text('content_type').notNull(), // 'issue' | 'comment'
+  contentId: text('content_id').notNull(),
+  organizationId: text('organization_id'),
+  projectId: text('project_id'),
+  status: text('status').notNull().default('pending'), // 'pending' | 'running' | 'done' | 'failed'
+  attempts: integer('attempts').notNull().default(0),
+  lastError: text('last_error'),
+  enqueuedAt: timestamp('enqueued_at').defaultNow().notNull(),
+  startedAt: timestamp('started_at'),
+  completedAt: timestamp('completed_at'),
+}, (table) => ({
+  statusIdx: index('content_embeddings_queue_status_idx').on(table.status, table.enqueuedAt),
+  refIdx: index('content_embeddings_queue_ref_idx').on(table.contentType, table.contentId),
 }));
 
 /**

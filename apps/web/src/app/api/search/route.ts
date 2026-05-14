@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db, issues, users, workflowStatuses, projects, sprints, searchHistory, parseJQL } from '@tasknebula/db';
 import { eq, and, or, inArray, gte, lte, like, desc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { hybridSearch, looksLikeFreeText } from '@/lib/search/hybrid';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +41,45 @@ export async function GET(request: NextRequest) {
 
     if (!organizationId) {
       return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
+    }
+
+    // Heuristic: free-text queries (no JQL operators) are routed to the
+    // hybrid path (BM25 + vector + RRF). JQL syntax with operators stays
+    // on the structured filter path for back-compat.
+    const wantsHybrid = searchParams.get('mode') === 'hybrid' || looksLikeFreeText(query);
+    if (wantsHybrid && searchParams.get('mode') !== 'jql') {
+      try {
+        const hybridResults = await hybridSearch({
+          query,
+          filters: { organizationId, projectId: projectId || null },
+          limit: Math.min(limit, 50),
+        });
+
+        if (saveHistory) {
+          try {
+            await db.insert(searchHistory).values({
+              userId: session.user.id,
+              organizationId,
+              projectId: projectId || null,
+              query,
+              criteria: { hybrid: true } as any,
+              resultCount: hybridResults.length.toString(),
+            });
+          } catch (error) {
+            console.error('Failed to save search history:', error);
+          }
+        }
+
+        return NextResponse.json({
+          results: hybridResults,
+          count: hybridResults.length,
+          query,
+          mode: 'hybrid',
+        });
+      } catch (error) {
+        console.error('Hybrid search failed, falling back to JQL parse:', error);
+        // fall through to JQL path so caller still gets *something*
+      }
     }
 
     // Parse JQL query
