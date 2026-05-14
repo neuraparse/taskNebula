@@ -69,6 +69,12 @@ export type WorkspaceAgentSettings = {
    * for explicit human approval. Defaults to "review_required".
    */
   aiOversight: AiOversightMode;
+  /**
+   * Prompt-injection safety mode. "off" disables checks; "warn" logs
+   * suspicious inputs but still allows the call; "strict" rejects them.
+   * Defaults to "warn".
+   */
+  aiSafetyMode: 'off' | 'warn' | 'strict';
 };
 
 export type ProjectAgentSettings = {
@@ -204,6 +210,8 @@ export const DEFAULT_WORKSPACE_AGENT_SETTINGS: WorkspaceAgentSettings = {
   },
   // Default conservative posture per EU AI Act Art. 50.
   aiOversight: 'review_required',
+  // Default to "warn" — log suspicious inputs but don't block users.
+  aiSafetyMode: 'warn',
 };
 
 export const DEFAULT_PROJECT_AGENT_SETTINGS: ProjectAgentSettings = {
@@ -295,6 +303,11 @@ export function normalizeWorkspaceAgentSettings(input: unknown): WorkspaceAgentS
     aiOversight: (AI_OVERSIGHT_MODES.includes(source.aiOversight as AiOversightMode)
       ? source.aiOversight
       : DEFAULT_WORKSPACE_AGENT_SETTINGS.aiOversight) as AiOversightMode,
+    aiSafetyMode: ((['off', 'warn', 'strict'] as const).includes(
+      source.aiSafetyMode as 'off' | 'warn' | 'strict',
+    )
+      ? source.aiSafetyMode
+      : DEFAULT_WORKSPACE_AGENT_SETTINGS.aiSafetyMode) as 'off' | 'warn' | 'strict',
   };
 }
 

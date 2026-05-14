@@ -26,6 +26,10 @@ export const users = pgTable('users', {
   // visit was >4h ago). Nullable for users that haven't authenticated since
   // the column was introduced.
   lastSeenAt: timestamp('last_seen_at', { mode: 'date' }),
+  // Agent-as-assignee: virtual user representing an AI coding agent that can
+  // be assigned issues like a human (Linear Agent Protocol compatibility).
+  isAgent: boolean('is_agent').notNull().default(false),
+  agentProvider: text('agent_provider'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({

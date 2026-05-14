@@ -64,7 +64,9 @@ export async function onRequestError(
   try {
     const Sentry = await import('@sentry/nextjs').catch(() => null);
     if (!Sentry) return;
-    Sentry.captureRequestError(error, request, context);
+    // Cast: Sentry's RequestInfo requires `path` to be defined; we accept
+    // partial info from Next.js and let Sentry coerce.
+    Sentry.captureRequestError(error, request as Parameters<typeof Sentry.captureRequestError>[1], context);
   } catch (err) {
     // eslint-disable-next-line no-console
     console.warn('[instrumentation] Failed to forward error to Sentry:', err);

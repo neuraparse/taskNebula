@@ -79,6 +79,8 @@ const EMPTY_SETTINGS: WorkspaceAgentSettings = {
   },
   // EU AI Act Article 50: conservative default for human-oversight posture.
   aiOversight: 'review_required',
+  // P1-16 prompt-injection safety: default to warn.
+  aiSafetyMode: 'warn',
 };
 
 type ModelConfigFormState = {

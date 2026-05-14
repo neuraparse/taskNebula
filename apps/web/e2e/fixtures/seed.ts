@@ -150,7 +150,7 @@ export async function ensureSeed(): Promise<SeededIds> {
       await db
         .select()
         .from(schema.workflows)
-        .where(eq(schema.workflows.projectId, projectId))
+        .where(eq(schema.workflows.organizationId, organizationId))
         .limit(1)
     )[0];
     const workflowId = existingWorkflow?.id ?? createId();
@@ -159,10 +159,12 @@ export async function ensureSeed(): Promise<SeededIds> {
     let doneId: string;
 
     if (!existingWorkflow) {
+      // Workflows are now scoped at the organization (workspace) level rather
+      // than per-project — the project is linked via projectWorkflows or
+      // similar separate table in the canonical schema.
       await db.insert(schema.workflows).values({
         id: workflowId,
         organizationId,
-        projectId,
         name: 'Default Workflow',
         description: 'E2E default workflow',
         isDefault: true,

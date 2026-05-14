@@ -63,6 +63,8 @@ type ProviderParams = {
   modelConfigId?: string | null;
   modelConfigName?: string | null;
   modelTuning?: AgentModelConfigSettings | null;
+  // Passed by engine.ts for audit/budget attribution (P0-07 cost guard).
+  userId?: string | null;
 };
 
 type OpenAiErrorPayload = {

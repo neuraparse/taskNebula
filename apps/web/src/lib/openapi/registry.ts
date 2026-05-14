@@ -84,7 +84,8 @@ export function registerRoute(input: RegisterRouteInput) {
  * IMPORTANT: callers must have already imported `./routes` so that route
  * registrations have run as a side-effect.
  */
-export function buildOpenApiDocument(opts?: { version?: string }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function buildOpenApiDocument(opts?: { version?: string }): any {
   // Register the session cookie auth scheme once. registerComponent is
   // idempotent on identical inputs across hot reloads in dev.
   try {

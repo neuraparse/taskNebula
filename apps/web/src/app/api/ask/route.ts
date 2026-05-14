@@ -204,9 +204,10 @@ export async function POST(request: NextRequest) {
         // already received the answer.
         try {
           await db.insert(llmCallAudit).values({
-            orgId: organizationId,
+            organizationId,
             userId,
-            endpoint: 'ask',
+            feature: 'ask',
+            provider: 'anthropic',
             model: lastUsage.model || (process.env.CLAUDE_ASK_MODEL ?? 'claude-sonnet-4-7'),
             promptHash: lastUsage.promptHash || '',
             inputTokens: lastUsage.inputTokens || 0,
@@ -214,13 +215,7 @@ export async function POST(request: NextRequest) {
             costUsd: String(lastUsage.costUsd || 0),
             latencyMs: lastUsage.latencyMs || Date.now() - start,
             status,
-            metadata: {
-              scope: payload.scope ?? 'all',
-              projectId: payload.projectId ?? null,
-              reranked: lastUsage.reranked || false,
-              sourcesCount: bundle.sources.length,
-              error: errorMessage,
-            },
+            errorMessage: errorMessage ?? null,
           });
         } catch (err) {
           console.warn('llm_call_audit insert failed', err);
