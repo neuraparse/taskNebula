@@ -6,17 +6,7 @@ import { eq, and } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { runAutomations } from '@/lib/automation/evaluator';
-import { withErrorHandler } from '@/lib/api-handler';
-import {
-  ApiError,
-  ForbiddenError,
-  NotFoundError,
-  UnauthorizedError,
-} from '@/lib/errors';
-import { childLogger } from '@/lib/logger';
-
-// MIGRATED (P0-06): see apps/web/src/lib/MIGRATION.md for the pattern.
-const log = childLogger('api/issues/[issueId]');
+import { postMirroredThreadReply } from '@/lib/integrations/slack-issue-bridge';
 
 type IssueAction = 'view' | 'edit' | 'delete' | 'assign' | 'transition' | 'schedule' | 'close' | 'reopen';
 
@@ -171,21 +161,21 @@ const updateIssueSchema = z.object({
 });
 
 // GET /api/issues/[issueId] - Get a single issue
-export const GET = withErrorHandler(
-  async (
-    _request: NextRequest,
-    { params }: { params: Promise<{ issueId: string }> },
-  ) => {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ issueId: string }> }
+) {
+  try {
     const session = await auth();
     if (!session?.user?.id) {
-      throw new UnauthorizedError();
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { issueId } = await params;
     const issue = await getIssueById(issueId);
 
     if (!issue) {
-      throw new NotFoundError('Issue not found');
+      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
     }
 
     // Permission check: ensure caller can view this issue
@@ -193,38 +183,41 @@ export const GET = withErrorHandler(
       session.user.id,
       issue.projectId,
       'view',
-      issue.reporterId,
+      issue.reporterId
     );
     if (!permission.allowed) {
-      throw new ForbiddenError(permission.reason || 'Permission denied');
+      return NextResponse.json(
+        { error: permission.reason || 'Permission denied' },
+        { status: 403 }
+      );
     }
 
-    log.debug({ issueId, userId: session.user.id }, 'issue fetched');
     return NextResponse.json(issue);
-  },
-  { scope: 'api/issues/[issueId]:GET' },
-);
+  } catch (error) {
+    console.error('Error fetching issue:', error);
+    return NextResponse.json({ error: 'Failed to fetch issue' }, { status: 500 });
+  }
+}
 
 // PATCH /api/issues/[issueId] - Update an issue
-export const PATCH = withErrorHandler(
-  async (
-    request: NextRequest,
-    { params }: { params: Promise<{ issueId: string }> },
-  ) => {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ issueId: string }> }
+) {
+  try {
     const session = await auth();
     if (!session?.user?.id) {
-      throw new UnauthorizedError();
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { issueId } = await params;
     const body = await request.json();
-    // Zod errors auto-converted to 400 by withErrorHandler.
     const validatedData = updateIssueSchema.parse(body);
 
     // Get current issue for comparison
     const currentIssue = await getIssueById(issueId);
     if (!currentIssue) {
-      throw new NotFoundError('Issue not found');
+      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
     }
 
     // Determine required permissions based on what's being changed
@@ -259,10 +252,13 @@ export const PATCH = withErrorHandler(
         session.user.id!,
         currentIssue.projectId,
         action,
-        currentIssue.reporterId,
+        currentIssue.reporterId
       );
       if (!permission.allowed) {
-        throw new ForbiddenError(permission.reason || 'Permission denied');
+        return NextResponse.json(
+          { error: permission.reason || 'Permission denied' },
+          { status: 403 }
+        );
       }
     }
 
@@ -283,7 +279,7 @@ export const PATCH = withErrorHandler(
 
       const workflow = workflowResults[0];
       if (!workflow) {
-        throw new ApiError(500, 'WORKFLOW_NOT_FOUND', 'No workflow found');
+        return NextResponse.json({ error: 'No workflow found' }, { status: 500 });
       }
 
       // Get the first status with the matching category
@@ -298,7 +294,7 @@ export const PATCH = withErrorHandler(
 
       const firstMatching = matchingStatuses[0];
       if (!firstMatching) {
-        throw new NotFoundError('Status not found');
+        return NextResponse.json({ error: 'Status not found' }, { status: 404 });
       }
 
       // Use the first matching status
@@ -309,7 +305,7 @@ export const PATCH = withErrorHandler(
     const updatedIssueData = await updateIssue(issueId, updateData);
 
     if (!updatedIssueData) {
-      throw new NotFoundError('Issue not found');
+      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
     }
 
     // Create activity logs for changed fields
@@ -521,7 +517,7 @@ export const PATCH = withErrorHandler(
       projectId: currentIssue.projectId,
       payload: automationPayload,
       actorUserId: session.user.id!,
-    }).catch((err) => log.error({ err }, 'automation failed'));
+    }).catch((err) => console.error('automation failed', err));
 
     if (statusChanged) {
       void runAutomations({
@@ -530,7 +526,16 @@ export const PATCH = withErrorHandler(
         projectId: currentIssue.projectId,
         payload: automationPayload,
         actorUserId: session.user.id!,
-      }).catch((err) => log.error({ err }, 'automation failed'));
+      }).catch((err) => console.error('automation failed', err));
+
+      // Mirror the status change into the originating Slack thread when this
+      // issue was spawned from a Slack message. Silent no-op otherwise.
+      void postMirroredThreadReply({
+        issueId: currentIssue.id,
+        text: `*${currentIssue.key}* moved to *${newStatus?.name ?? 'a new status'}*`,
+      }).catch((err) =>
+        console.warn('[slack-mirror] status mirror failed', err)
+      );
     }
 
     if (assigneeChanged) {
@@ -540,24 +545,31 @@ export const PATCH = withErrorHandler(
         projectId: currentIssue.projectId,
         payload: automationPayload,
         actorUserId: session.user.id!,
-      }).catch((err) => log.error({ err }, 'automation failed'));
+      }).catch((err) => console.error('automation failed', err));
     }
 
-    log.info({ issueId, changedFields }, 'issue updated');
     return NextResponse.json(updatedIssueData);
-  },
-  { scope: 'api/issues/[issueId]:PATCH' },
-);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.errors },
+        { status: 400 }
+      );
+    }
+    console.error('Error updating issue:', error);
+    return NextResponse.json({ error: 'Failed to update issue' }, { status: 500 });
+  }
+}
 
 // DELETE /api/issues/[issueId] - Delete an issue
-export const DELETE = withErrorHandler(
-  async (
-    _request: NextRequest,
-    { params }: { params: Promise<{ issueId: string }> },
-  ) => {
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ issueId: string }> }
+) {
+  try {
     const session = await auth();
     if (!session?.user?.id) {
-      throw new UnauthorizedError();
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { issueId } = await params;
@@ -565,7 +577,7 @@ export const DELETE = withErrorHandler(
     // Get issue to check project and reporter
     const issue = await getIssueById(issueId);
     if (!issue) {
-      throw new NotFoundError('Issue not found');
+      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
     }
 
     // Check permission to delete issues (with reporter check for own issues)
@@ -573,10 +585,13 @@ export const DELETE = withErrorHandler(
       session.user.id!,
       issue.projectId,
       'delete',
-      issue.reporterId,
+      issue.reporterId
     );
     if (!permission.allowed) {
-      throw new ForbiddenError(permission.reason || 'Permission denied');
+      return NextResponse.json(
+        { error: permission.reason || 'Permission denied' },
+        { status: 403 }
+      );
     }
 
     await deleteIssue(issueId);
@@ -588,9 +603,10 @@ export const DELETE = withErrorHandler(
       organizationId: issue.organizationId,
     });
 
-    log.info({ issueId, userId: session.user.id }, 'issue deleted');
     return NextResponse.json({ success: true, id: issueId });
-  },
-  { scope: 'api/issues/[issueId]:DELETE' },
-);
+  } catch (error) {
+    console.error('Error deleting issue:', error);
+    return NextResponse.json({ error: 'Failed to delete issue' }, { status: 500 });
+  }
+}
 

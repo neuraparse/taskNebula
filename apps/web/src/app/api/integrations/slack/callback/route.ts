@@ -1,148 +1,122 @@
+/**
+ * GET /api/integrations/slack/callback?code=...&state=...
+ *
+ * Slack redirects here after the user approves the OAuth app. We:
+ *   1. validate the CSRF state cookie matches the state query param,
+ *   2. exchange the code for a bot token via oauth.v2.access,
+ *   3. upsert one row in `integration_connections` keyed on (org, 'slack'),
+ *      storing the bot token in `accessTokenEnc` (AES-256-GCM envelope) and
+ *      stashing workspace/app/bot ids in `metadata` for later API calls.
+ *
+ * Mirrors the GitHub callback shape — same state format (base64url JSON with
+ * `{n, o, u}`), same redirect targets (`/settings?tab=integrations&...`).
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, and, eq } from '@tasknebula/db';
 import { integrationConnections } from '@tasknebula/db/src/schema/integration-connections';
 import { encryptToken } from '@/lib/integrations/token-crypto';
+import {
+  SLACK_PROVIDER,
+  SLACK_STATE_COOKIE,
+  exchangeSlackCode,
+} from '@/lib/integrations/slack';
 
 export const dynamic = 'force-dynamic';
 
-const SLACK_TOKEN_URL = 'https://slack.com/api/oauth.v2.access';
-const STATE_COOKIE_NAME = 'tn_slack_state';
-const INTEGRATIONS_PAGE = '/settings/integrations';
+interface StatePayload {
+  n: string;
+  o: string;
+  u: string;
+}
 
-/**
- * Redirect helper that always clears the `tn_slack_state` cookie, regardless
- * of whether the flow succeeded or failed.
- */
-function redirectAndClearState(origin: string, target: string) {
-  const response = NextResponse.redirect(new URL(target, origin));
-  response.cookies.set(STATE_COOKIE_NAME, '', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 0,
-  });
+function decodeState(raw: string): StatePayload | null {
+  try {
+    const json = Buffer.from(raw, 'base64url').toString('utf8');
+    const parsed = JSON.parse(json);
+    if (
+      typeof parsed?.n === 'string' &&
+      typeof parsed?.o === 'string' &&
+      typeof parsed?.u === 'string'
+    ) {
+      return parsed as StatePayload;
+    }
+  } catch {
+    // fall through
+  }
+  return null;
+}
+
+function settingsRedirect(
+  request: NextRequest,
+  params: Record<string, string>
+): NextResponse {
+  const url = new URL('/settings', request.url);
+  url.searchParams.set('tab', 'integrations');
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+  const response = NextResponse.redirect(url.toString());
+  response.cookies.delete(SLACK_STATE_COOKIE);
   return response;
 }
 
-type SlackOauthAccessResponse = {
-  ok: boolean;
-  error?: string;
-  access_token?: string;
-  refresh_token?: string;
-  scope?: string;
-  token_type?: string;
-  bot_user_id?: string;
-  app_id?: string;
-  team?: { id?: string; name?: string };
-  enterprise?: { id?: string; name?: string } | null;
-  authed_user?: { id?: string; access_token?: string; scope?: string };
-  expires_in?: number;
-};
-
-/**
- * GET /api/integrations/slack/callback?code=...&state=...
- *
- * Slack redirects here after the user approves the OAuth app. We verify the
- * CSRF state, exchange the code for tokens, and upsert one row into
- * `integration_connections` keyed on (organization, 'slack').
- */
 export async function GET(request: NextRequest) {
-  const { origin, searchParams } = new URL(request.url);
-  const code = searchParams.get('code');
-  const state = searchParams.get('state');
-  const slackError = searchParams.get('error');
-
-  if (slackError) {
-    return redirectAndClearState(
-      origin,
-      `${INTEGRATIONS_PAGE}?error=${encodeURIComponent(slackError)}`
-    );
-  }
-
-  if (!code || !state) {
-    return redirectAndClearState(
-      origin,
-      `${INTEGRATIONS_PAGE}?error=missing_code_or_state`
-    );
-  }
-
   const session = await auth();
   if (!session?.user?.id) {
-    return redirectAndClearState(
-      origin,
-      `${INTEGRATIONS_PAGE}?error=unauthorized`
-    );
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const cookieValue = request.cookies.get(STATE_COOKIE_NAME)?.value;
-  if (!cookieValue) {
-    return redirectAndClearState(
-      origin,
-      `${INTEGRATIONS_PAGE}?error=state_expired`
-    );
-  }
+  const { searchParams } = new URL(request.url);
+  const code = searchParams.get('code');
+  const state = searchParams.get('state');
+  const errorParam = searchParams.get('error');
 
-  const firstDot = cookieValue.indexOf('.');
-  if (firstDot < 0) {
-    return redirectAndClearState(
-      origin,
-      `${INTEGRATIONS_PAGE}?error=state_malformed`
-    );
-  }
-  const expectedState = cookieValue.slice(0, firstDot);
-  const organizationId = cookieValue.slice(firstDot + 1);
-
-  if (expectedState !== state || !organizationId) {
-    return redirectAndClearState(
-      origin,
-      `${INTEGRATIONS_PAGE}?error=state_mismatch`
-    );
-  }
-
-  const clientId = process.env.SLACK_CLIENT_ID;
-  const clientSecret = process.env.SLACK_CLIENT_SECRET;
-  const redirectUri = process.env.SLACK_REDIRECT_URI;
-  if (!clientId || !clientSecret || !redirectUri) {
-    return redirectAndClearState(
-      origin,
-      `${INTEGRATIONS_PAGE}?error=not_configured`
-    );
-  }
-
-  // Exchange code for tokens.
-  const body = new URLSearchParams({
-    client_id: clientId,
-    client_secret: clientSecret,
-    code,
-    redirect_uri: redirectUri,
-  });
-  let payload: SlackOauthAccessResponse;
-  try {
-    const tokenResponse = await fetch(SLACK_TOKEN_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Accept: 'application/json',
-      },
-      body: body.toString(),
+  if (errorParam) {
+    return settingsRedirect(request, {
+      integration: SLACK_PROVIDER,
+      error: errorParam,
     });
-    payload = (await tokenResponse.json()) as SlackOauthAccessResponse;
+  }
+  if (!code || !state) {
+    return settingsRedirect(request, {
+      integration: SLACK_PROVIDER,
+      error: 'missing_code_or_state',
+    });
+  }
+
+  const cookieState = request.cookies.get(SLACK_STATE_COOKIE)?.value;
+  if (!cookieState || cookieState !== state) {
+    return settingsRedirect(request, {
+      integration: SLACK_PROVIDER,
+      error: 'invalid_state',
+    });
+  }
+
+  const decoded = decodeState(state);
+  if (!decoded || decoded.u !== session.user.id) {
+    return settingsRedirect(request, {
+      integration: SLACK_PROVIDER,
+      error: 'invalid_state',
+    });
+  }
+
+  let payload;
+  try {
+    payload = await exchangeSlackCode(code);
   } catch (err) {
-    console.error('Slack OAuth exchange failed', err);
-    return redirectAndClearState(
-      origin,
-      `${INTEGRATIONS_PAGE}?error=exchange_failed`
-    );
+    console.error('Slack token exchange threw', err);
+    return settingsRedirect(request, {
+      integration: SLACK_PROVIDER,
+      error: 'token_exchange_failed',
+    });
   }
 
   if (!payload.ok || !payload.access_token) {
     console.error('Slack OAuth rejected', payload.error);
-    return redirectAndClearState(
-      origin,
-      `${INTEGRATIONS_PAGE}?error=${encodeURIComponent(payload.error || 'oauth_failed')}`
-    );
+    return settingsRedirect(request, {
+      integration: SLACK_PROVIDER,
+      error: payload.error || 'no_access_token',
+    });
   }
 
   const accessTokenEnc = encryptToken(payload.access_token);
@@ -153,7 +127,10 @@ export async function GET(request: NextRequest) {
   const workspaceId = payload.team?.id || null;
   const workspaceLabel = payload.team?.name || null;
 
-  // Provider-specific extras we want to keep around for later API calls.
+  // Provider-specific extras we need to keep around. `botUserId` lets us
+  // filter our own bot's messages out of Events API handlers to avoid loops,
+  // and `authedUserId` is the installing user's Slack id (useful for /tn
+  // commands to scope "my issues").
   const metadata = {
     appId: payload.app_id || null,
     botUserId: payload.bot_user_id || null,
@@ -165,6 +142,9 @@ export async function GET(request: NextRequest) {
     connectedAt: new Date().toISOString(),
   };
 
+  const organizationId = decoded.o;
+  const now = new Date();
+
   try {
     const [existing] = await db
       .select({ id: integrationConnections.id })
@@ -172,7 +152,7 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(integrationConnections.organizationId, organizationId),
-          eq(integrationConnections.provider, 'slack')
+          eq(integrationConnections.provider, SLACK_PROVIDER)
         )
       )
       .limit(1);
@@ -188,13 +168,13 @@ export async function GET(request: NextRequest) {
           scope: payload.scope || null,
           metadata,
           connectedById: session.user.id,
-          updatedAt: new Date(),
+          updatedAt: now,
         })
         .where(eq(integrationConnections.id, existing.id));
     } else {
       await db.insert(integrationConnections).values({
         organizationId,
-        provider: 'slack',
+        provider: SLACK_PROVIDER,
         externalAccountId: workspaceId,
         externalAccountLabel: workspaceLabel,
         accessTokenEnc,
@@ -202,18 +182,20 @@ export async function GET(request: NextRequest) {
         scope: payload.scope || null,
         metadata,
         connectedById: session.user.id,
+        createdAt: now,
+        updatedAt: now,
       });
     }
   } catch (err) {
-    console.error('Failed to persist Slack integration connection', err);
-    return redirectAndClearState(
-      origin,
-      `${INTEGRATIONS_PAGE}?error=persist_failed`
-    );
+    console.error('Failed to persist Slack integration_connection', err);
+    return settingsRedirect(request, {
+      integration: SLACK_PROVIDER,
+      error: 'persist_failed',
+    });
   }
 
-  return redirectAndClearState(
-    origin,
-    `${INTEGRATIONS_PAGE}?connected=slack`
-  );
+  return settingsRedirect(request, {
+    integration: SLACK_PROVIDER,
+    connected: '1',
+  });
 }

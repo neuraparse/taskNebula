@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse, after } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getIssueComments, createComment, createActivity, createAuditLog, getIssueById } from '@tasknebula/db';
 import { auth } from '@/auth';
 import { createId } from '@paralleldrive/cuid2';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { publishEvent } from '@/lib/realtime/events';
+import { postMirroredThreadReply } from '@/lib/integrations/slack-issue-bridge';
 
 // Validation schema for creating a comment
 const createCommentSchema = z.object({
@@ -65,87 +66,73 @@ export async function POST(
       updatedBy: session.user.id,
     });
 
-    // Defer activity log, audit log, realtime publish, and notification
-    // emails until after the response ships. The caller only needs the
-    // newly-created comment payload to render optimistically.
-    const actorUserId = session.user.id!;
-    const commentSnippet = validatedData.content.substring(0, 200);
-    after(async () => {
-      try {
-        await createActivity({
-          issueId,
-          userId: actorUserId,
-          type: 'commented',
-          metadata: { commentId: newComment.id },
-        });
-      } catch (err) {
-        console.error('activity log failed', err);
-      }
-
-      const issue = await getIssueById(issueId).catch(() => null);
-      if (!issue) return;
-
-      try {
-        await createAuditLog({
-          userId: actorUserId,
-          organizationId: issue.organizationId,
-          action: 'issue.commented',
-          resourceType: 'issue',
-          resourceId: issueId,
-          projectId: issue.projectId,
-          issueId,
-          metadata: { commentId: newComment.id },
-        });
-      } catch (err) {
-        console.error('audit log failed', err);
-      }
-
-      try {
-        publishEvent('issue.commented', actorUserId, {
-          issueId,
-          projectId: issue.projectId,
-          organizationId: issue.organizationId,
-        });
-      } catch (err) {
-        console.error('publishEvent failed', err);
-      }
-
-      const projectName = issue.key?.split('-')[0] || '';
-
-      if (issue.assigneeId) {
-        try {
-          await notifyIssueEvent({
-            eventType: 'issue_commented',
-            recipientUserId: issue.assigneeId,
-            actorUserId,
-            organizationId: issue.organizationId,
-            issueKey: issue.key,
-            issueTitle: issue.title,
-            projectName,
-            extra: { commentBody: commentSnippet },
-          });
-        } catch (err) {
-          console.error('comment notify (assignee) failed', err);
-        }
-      }
-
-      if (issue.reporterId && issue.reporterId !== issue.assigneeId) {
-        try {
-          await notifyIssueEvent({
-            eventType: 'issue_commented',
-            recipientUserId: issue.reporterId,
-            actorUserId,
-            organizationId: issue.organizationId,
-            issueKey: issue.key,
-            issueTitle: issue.title,
-            projectName,
-            extra: { commentBody: commentSnippet },
-          });
-        } catch (err) {
-          console.error('comment notify (reporter) failed', err);
-        }
-      }
+    // Create activity log for comment
+    await createActivity({
+      issueId,
+      userId: session.user.id,
+      type: 'commented',
+      metadata: { commentId: newComment.id },
     });
+
+    // Get issue details for audit log and notifications
+    const issue = await getIssueById(issueId);
+    if (issue) {
+      await createAuditLog({
+        userId: session.user.id,
+        organizationId: issue.organizationId,
+        action: 'issue.commented',
+        resourceType: 'issue',
+        resourceId: issueId,
+        projectId: issue.projectId,
+        issueId,
+        metadata: { commentId: newComment.id },
+      });
+
+      publishEvent('issue.commented', session.user.id, {
+        issueId,
+        projectId: issue.projectId,
+        organizationId: issue.organizationId,
+      });
+
+      // Notify assignee about new comment
+      if (issue.assigneeId) {
+        notifyIssueEvent({
+          eventType: 'issue_commented',
+          recipientUserId: issue.assigneeId,
+          actorUserId: session.user.id!,
+          organizationId: issue.organizationId,
+          issueKey: issue.key,
+          issueTitle: issue.title,
+          projectName: issue.key?.split('-')[0] || '',
+          extra: { commentBody: validatedData.content.substring(0, 200) },
+        });
+      }
+
+      // Mirror the comment back into the originating Slack thread when this
+      // issue was spawned from a Slack message. Silent no-op for non-Slack
+      // issues — see slack-issue-bridge.ts. Fire-and-forget so we never
+      // surface a Slack/network failure to the comment author.
+      void postMirroredThreadReply({
+        issueId,
+        text: `*New comment on ${issue.key}* by <${session.user.email ?? session.user.id}|${session.user.name ?? 'TaskNebula user'}>\n${validatedData.content.slice(0, 1000)}`,
+      }).catch((err) =>
+        console.warn('[slack-mirror] comment mirror failed', err)
+      );
+
+      // Notify reporter about new comment (if different from assignee)
+      if (issue.reporterId && issue.reporterId !== issue.assigneeId) {
+        notifyIssueEvent({
+          eventType: 'issue_commented',
+          recipientUserId: issue.reporterId,
+          actorUserId: session.user.id!,
+          organizationId: issue.organizationId,
+          issueKey: issue.key,
+          issueTitle: issue.title,
+          projectName: issue.key?.split('-')[0] || '',
+          extra: { commentBody: validatedData.content.substring(0, 200) },
+        });
+      }
+    }
 
     return NextResponse.json(newComment, { status: 201 });
   } catch (error) {
