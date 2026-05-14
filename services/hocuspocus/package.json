@@ -1,0 +1,24 @@
+{
+  "name": "@tasknebula/hocuspocus",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Hocuspocus collaboration server for TaskNebula (Tiptap + Yjs).",
+  "main": "src/server.mjs",
+  "scripts": {
+    "start": "node src/server.mjs",
+    "dev": "node --watch src/server.mjs"
+  },
+  "dependencies": {
+    "@hocuspocus/extension-database": "^2.15.2",
+    "@hocuspocus/extension-logger": "^2.15.2",
+    "@hocuspocus/extension-redis": "^2.15.2",
+    "@hocuspocus/server": "^2.15.2",
+    "jose": "^5.10.0",
+    "pg": "^8.13.1",
+    "yjs": "^13.6.20"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
