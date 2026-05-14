@@ -120,6 +120,7 @@ const SETTINGS_LINKS: NavLink[] = [
   { href: '/settings?tab=api-keys', label: 'API Keys', icon: KeyRound, match: { path: '/settings', tab: 'api-keys' }, requiredPermission: 'api_key:view' },
   { href: '/settings?tab=webhooks', label: 'Webhooks', icon: Webhook, match: { path: '/settings', tab: 'webhooks' }, requiredPermission: 'webhook:view' },
   { href: '/settings/integrations', label: 'Integrations', icon: Plug, match: { path: '/settings/integrations' }, requiredPermission: 'org:settings' },
+  { href: '/settings/intake-forms', label: 'Intake forms', icon: Inbox, match: { path: '/settings/intake-forms' }, requiredPermission: 'org:settings' },
   { href: '/settings?tab=ai-agents', label: 'AI & Agents', icon: Bot, match: { path: '/settings', tab: 'ai-agents' }, requiredPermission: 'org:settings' },
   { href: '/settings?tab=communications', label: 'Communications', icon: MessageSquareText, match: { path: '/settings', tab: 'communications' }, requiredPermission: 'org:settings' },
   { href: '/settings?tab=notifications', label: 'Notifications', icon: Bell, match: { path: '/settings', tab: 'notifications' } },
