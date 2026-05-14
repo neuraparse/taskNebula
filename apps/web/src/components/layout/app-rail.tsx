@@ -7,7 +7,7 @@ import {
   BookOpenText,
   FolderKanban,
   Inbox,
-  Layers3,
+  Layers,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -32,26 +32,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useInbox } from '@/lib/hooks/use-inbox';
 
 interface RailItem {
   name: string;
   href: string;
   icon: LucideIcon;
+  showBadge?: boolean;
 }
-
-// Feature-flagged "Initiatives" entry. When the workspace hasn't opted in via
-// NEXT_PUBLIC_INITIATIVES_ENABLED the rail item is omitted entirely so we
-// don't surprise existing users with a new top-level nav item.
-const INITIATIVES_ENABLED =
-  process.env.NEXT_PUBLIC_INITIATIVES_ENABLED === 'true';
 
 const railItems: RailItem[] = [
   { name: 'Home', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Issues', href: '/my-issues', icon: Inbox },
+  { name: 'Inbox', href: '/inbox', icon: Inbox, showBadge: true },
+  { name: 'Issues', href: '/my-issues', icon: Layers },
   { name: 'Projects', href: '/projects', icon: FolderKanban },
-  ...(INITIATIVES_ENABLED
-    ? [{ name: 'Initiatives', href: '/initiatives', icon: Layers3 } as RailItem]
-    : []),
   { name: 'Docs', href: '/docs', icon: BookOpenText },
   { name: 'Team', href: '/team', icon: Users },
   { name: 'Settings', href: '/settings', icon: Settings },
@@ -61,6 +55,11 @@ export function AppRail() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const isSuperAdmin = (session?.user as { role?: string } | undefined)?.role === 'super_admin';
+  // Lightweight unread count — keys on { unread: true } so the response is
+  // small (just unread items, first page). Refetches every minute via the
+  // hook's `refetchInterval`.
+  const { data: inboxUnread } = useInbox({ unread: true, limit: 50 });
+  const unreadInboxCount = inboxUnread?.items?.length ?? 0;
 
   const initials =
     session?.user?.name
@@ -86,6 +85,7 @@ export function AppRail() {
                   pathname?.startsWith('/templates'))) ||
               (item.href === '/my-issues' && pathname?.startsWith('/issues/'));
             const Icon = item.icon;
+            const showInboxBadge = item.showBadge && unreadInboxCount > 0;
 
             return (
               <li key={item.name} className="w-full">
@@ -94,20 +94,36 @@ export function AppRail() {
                     <Link
                       href={item.href}
                       data-active={isActive ? 'true' : undefined}
-                      aria-label={item.name}
+                      aria-label={
+                        showInboxBadge
+                          ? `${item.name}, ${unreadInboxCount} unread`
+                          : item.name
+                      }
                       aria-current={isActive ? 'page' : undefined}
                       className={cn(
-                        'mx-auto flex w-12 flex-col items-center gap-0.5 rounded-md px-1 py-1.5 text-muted-foreground transition-all duration-150 ease-snap hover:bg-accent/60 hover:text-foreground',
+                        'relative mx-auto flex w-12 flex-col items-center gap-0.5 rounded-md px-1 py-1.5 text-muted-foreground transition-all duration-150 ease-snap hover:bg-accent/60 hover:text-foreground',
                         isActive && 'bg-accent text-foreground'
                       )}
                     >
                       <Icon className="h-4 w-4 shrink-0" />
+                      {showInboxBadge && (
+                        <span
+                          aria-hidden="true"
+                          data-testid="inbox-unread-badge"
+                          className="absolute right-1 top-0.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-semibold text-primary-foreground ring-1 ring-background"
+                        >
+                          {unreadInboxCount > 9 ? '9+' : unreadInboxCount}
+                        </span>
+                      )}
                       <span className="text-[10px] leading-tight text-muted-foreground">
                         {item.name}
                       </span>
                     </Link>
                   </TooltipTrigger>
-                  <TooltipContent side="right">{item.name}</TooltipContent>
+                  <TooltipContent side="right">
+                    {item.name}
+                    {showInboxBadge ? ` · ${unreadInboxCount} unread` : ''}
+                  </TooltipContent>
                 </Tooltip>
               </li>
             );

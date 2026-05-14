@@ -21,12 +21,11 @@ export const users = pgTable('users', {
   isSuperAdmin: boolean('is_super_admin').notNull().default(false),
   superAdminGrantedAt: timestamp('super_admin_granted_at', { mode: 'date' }),
   superAdminGrantedBy: text('super_admin_granted_by'), // User ID who granted super admin
-  // Virtual agent users (Linear Agent Protocol parity — claude / cursor / devin /
-  // copilot etc.). When `isAgent=true` the row is not a real human; it has no
-  // password / no Auth.js account, and exists so coding agents can be addressed
-  // as first-class assignees in the picker.
-  isAgent: boolean('is_agent').notNull().default(false),
-  agentProvider: text('agent_provider'), // matches agent_sessions.provider when isAgent=true
+  // Tracked at end of each authenticated request — drives the dashboard
+  // "Welcome back / Catch me up" banner heuristic (banner shows if last
+  // visit was >4h ago). Nullable for users that haven't authenticated since
+  // the column was introduced.
+  lastSeenAt: timestamp('last_seen_at', { mode: 'date' }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
