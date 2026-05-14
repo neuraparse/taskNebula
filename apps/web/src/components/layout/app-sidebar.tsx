@@ -4,6 +4,7 @@ import type { Participant } from 'livekit-client';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   RoomContext,
   useAudioPlayback,
@@ -93,28 +94,34 @@ import {
 } from '@/lib/chat/microphone';
 import { useStoredVoicePreferences } from '@/lib/chat/voice-preferences';
 
-const MY_ISSUES_VIEWS = [
-  { value: 'assigned', label: 'Assigned to me', icon: Inbox },
-  { value: 'created', label: 'Created by me', icon: UserPlus },
-  { value: 'subscribed', label: 'Subscribed', icon: Eye },
-  { value: 'mentioned', label: 'Mentioned', icon: Sparkles },
+// NOTE: high-traffic nav strings now come from next-intl. The `label`
+// fields below are kept as English fallback labels so this file still
+// compiles in isolation, but `i18nKey` is the source of truth at render
+// time (see `useTranslations('nav')` inside AppSidebar).
+const MY_ISSUES_VIEWS: Array<{ value: string; label: string; i18nKey: string; icon: typeof Inbox }> = [
+  { value: 'assigned', label: 'Assigned to me', i18nKey: 'assigned_to_me', icon: Inbox },
+  { value: 'created', label: 'Created by me', i18nKey: 'created_by_me', icon: UserPlus },
+  { value: 'subscribed', label: 'Subscribed', i18nKey: 'subscribed', icon: Eye },
+  { value: 'mentioned', label: 'Mentioned', i18nKey: 'mentioned', icon: Sparkles },
 ];
 
-const DASHBOARD_LINKS = [
-  { href: '/dashboard', label: 'Overview', icon: Home },
-  { href: '/drafts', label: 'Drafts', icon: FileText },
-  { href: '/templates', label: 'Templates', icon: Pin },
+const DASHBOARD_LINKS: Array<{ href: string; label: string; i18nKey: string; icon: typeof Home }> = [
+  { href: '/dashboard', label: 'Overview', i18nKey: 'overview', icon: Home },
+  { href: '/drafts', label: 'Drafts', i18nKey: 'drafts', icon: FileText },
+  { href: '/templates', label: 'Templates', i18nKey: 'templates', icon: Pin },
 ];
 
 const TEAM_LINKS: NavLink[] = [
-  { href: '/team', label: 'Members', icon: Users },
-  { href: '/team?tab=teamspaces', label: 'Teamspaces', icon: Building2, requiredPermission: 'team:view' },
-  { href: '/team?tab=invites', label: 'Pending invites', icon: UserPlus, requiredPermission: 'member:view' },
+  { href: '/team', label: 'Members', i18nKey: 'members', icon: Users },
+  { href: '/team?tab=teamspaces', label: 'Teamspaces', i18nKey: 'teamspaces', icon: Building2, requiredPermission: 'team:view' },
+  { href: '/team?tab=invites', label: 'Pending invites', i18nKey: 'pending_invites', icon: UserPlus, requiredPermission: 'member:view' },
 ];
 
+// TODO(i18n): translate the remaining settings + admin labels. Tracked in
+// apps/web/src/lib/i18n/MIGRATION.md.
 const SETTINGS_LINKS: NavLink[] = [
   { href: '/settings?tab=organization', label: 'Organization', icon: Building2, match: { path: '/settings', tab: 'organization' }, requiredPermission: 'org:settings' },
-  { href: '/settings?tab=members', label: 'Members', icon: Users, match: { path: '/settings', tab: 'members' }, requiredPermission: 'member:view' },
+  { href: '/settings?tab=members', label: 'Members', i18nKey: 'members', icon: Users, match: { path: '/settings', tab: 'members' }, requiredPermission: 'member:view' },
   { href: '/settings?tab=api-keys', label: 'API Keys', icon: KeyRound, match: { path: '/settings', tab: 'api-keys' }, requiredPermission: 'api_key:view' },
   { href: '/settings?tab=webhooks', label: 'Webhooks', icon: Webhook, match: { path: '/settings', tab: 'webhooks' }, requiredPermission: 'webhook:view' },
   { href: '/settings/integrations', label: 'Integrations', icon: Plug, match: { path: '/settings/integrations' }, requiredPermission: 'org:settings' },
@@ -126,7 +133,8 @@ const SETTINGS_LINKS: NavLink[] = [
   { href: '/settings?tab=audit-log', label: 'Activity', icon: ScrollText, match: { path: '/settings', tab: 'audit-log' }, requiredPermission: 'org:manage' },
 ];
 
-const ADMIN_LINKS = [
+// TODO(i18n): translate admin labels — out of scope for FEAT-34 scaffolding.
+const ADMIN_LINKS: Array<{ href: string; label: string; icon: typeof Gauge; match: { path: string; tab?: string } }> = [
   { href: '/admin?tab=overview', label: 'Overview', icon: Gauge, match: { path: '/admin', tab: 'overview' } },
   { href: '/admin?tab=organizations', label: 'Organizations', icon: Building2, match: { path: '/admin', tab: 'organizations' } },
   { href: '/admin?tab=users', label: 'Users', icon: UserCog, match: { path: '/admin', tab: 'users' } },
@@ -139,6 +147,9 @@ const ADMIN_LINKS = [
 type NavLink = {
   href: string;
   label: string;
+  /** Key under the `nav` namespace in messages/{locale}.json. Optional so
+   *  partially-migrated lists still type-check. */
+  i18nKey?: string;
   icon: typeof Settings;
   match?: { path: string; tab?: string };
   requiredPermission?: Permission;
@@ -164,22 +175,22 @@ function isNavLinkActive(
   return activeTab === link.match.tab;
 }
 
-function getSectionLabel(pathname: string | null | undefined): string {
-  if (!pathname) return 'Workspace';
+function getSectionKey(pathname: string | null | undefined): string {
+  if (!pathname) return 'dashboard';
   if (
     pathname === '/' ||
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/drafts') ||
     pathname.startsWith('/templates')
   )
-    return 'Home';
-  if (pathname.startsWith('/my-issues') || pathname.startsWith('/issues')) return 'My Issues';
-  if (pathname.startsWith('/projects')) return 'Projects';
-  if (pathname.startsWith('/docs')) return 'Docs';
-  if (pathname.startsWith('/team')) return 'Team';
-  if (pathname.startsWith('/admin')) return 'Admin';
-  if (pathname.startsWith('/settings')) return 'Settings';
-  return 'Workspace';
+    return 'dashboard';
+  if (pathname.startsWith('/my-issues') || pathname.startsWith('/issues')) return 'my_issues';
+  if (pathname.startsWith('/projects')) return 'projects';
+  if (pathname.startsWith('/docs')) return 'docs';
+  if (pathname.startsWith('/team')) return 'team';
+  if (pathname.startsWith('/admin')) return 'admin';
+  if (pathname.startsWith('/settings')) return 'settings';
+  return 'dashboard';
 }
 
 function isHomeSectionPath(pathname: string | null | undefined): boolean {
@@ -195,6 +206,9 @@ function isHomeSectionPath(pathname: string | null | undefined): boolean {
 export function AppSidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const tNav = useTranslations('nav');
+  const tActions = useTranslations('actions');
+  const tCommon = useTranslations('common');
   const { data: session } = useSession();
   const { currentOrganizationId, currentTeamId } = useOrganization();
   const { data: liveCalls, isLoading: liveCallsLoading } = useLiveCalls();
@@ -319,7 +333,7 @@ export function AppSidebar() {
       <div className="flex h-14 items-center px-4">
         <button
           className="flex w-full items-center justify-between rounded-md py-1.5 text-sm font-medium transition-all duration-150 ease-snap hover:bg-accent/60"
-          aria-label="Switch workspace"
+          aria-label={tActions('switch_workspace')}
         >
           <div className="flex items-center gap-2.5">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary">
@@ -337,7 +351,7 @@ export function AppSidebar() {
         <div className={cn('px-3', hasPageSidebar && 'hidden')}>
         {pathname?.startsWith('/settings') || pathname?.startsWith('/admin') ? null : (
           <div className="mb-3 mt-1 px-3">
-            <div className="kicker">{getSectionLabel(pathname)}</div>
+            <div className="kicker">{tNav(getSectionKey(pathname))}</div>
           </div>
         )}
 
@@ -355,7 +369,7 @@ export function AppSidebar() {
                   className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
                 >
                   <view.icon className="h-4 w-4 shrink-0" />
-                  <span>{view.label}</span>
+                  <span>{view.i18nKey ? tNav(view.i18nKey) : view.label}</span>
                 </Link>
               );
             })}
@@ -376,7 +390,7 @@ export function AppSidebar() {
                   className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
                 >
                   <link.icon className="h-4 w-4 shrink-0" />
-                  <span>{link.label}</span>
+                  <span>{link.i18nKey ? tNav(link.i18nKey) : link.label}</span>
                 </Link>
               );
             })}
@@ -392,7 +406,7 @@ export function AppSidebar() {
                 className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground"
               >
                 <link.icon className="h-4 w-4 shrink-0" />
-                <span>{link.label}</span>
+                <span>{link.i18nKey ? tNav(link.i18nKey) : link.label}</span>
               </Link>
             ))}
           </div>
@@ -404,7 +418,7 @@ export function AppSidebar() {
               <>
                 <div className="mb-1 flex items-center gap-2 px-3">
                   <Settings className="h-3 w-3 text-muted-foreground" />
-                  <span className="kicker">Settings</span>
+                  <span className="kicker">{tNav('settings')}</span>
                 </div>
                 <div className="space-y-0.5">
                   {visibleSettingsLinks.map((link) => {
@@ -417,7 +431,7 @@ export function AppSidebar() {
                         className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
                       >
                         <link.icon className="h-4 w-4 shrink-0" />
-                        <span>{link.label}</span>
+                        <span>{link.i18nKey ? tNav(link.i18nKey) : link.label}</span>
                       </Link>
                     );
                   })}
@@ -429,7 +443,7 @@ export function AppSidebar() {
               <>
                 <div className="mb-1 mt-4 flex items-center gap-2 px-3">
                   <Shield className="h-3 w-3 text-muted-foreground" />
-                  <span className="kicker">Admin</span>
+                  <span className="kicker">{tNav('admin')}</span>
                 </div>
                 <div className="space-y-0.5">
                   {ADMIN_LINKS.map((link) => {
@@ -457,14 +471,14 @@ export function AppSidebar() {
             type="button"
             onClick={() => setIsTeamspacesOpen((open) => !open)}
             aria-expanded={isTeamspacesOpen}
-            className="mb-1 mt-4 flex w-full items-center gap-1 px-3 text-left transition-colors duration-150 hover:text-foreground"
+            className="mb-1 mt-4 flex w-full items-center gap-1 px-3 text-start transition-colors duration-150 hover:text-foreground"
           >
             {isTeamspacesOpen ? (
               <ChevronDown className="h-3 w-3 text-muted-foreground" />
             ) : (
               <ChevronRight className="h-3 w-3 text-muted-foreground" />
             )}
-            <span className="kicker">Teamspaces</span>
+            <span className="kicker">{tNav('teamspaces')}</span>
           </button>
           {isTeamspacesOpen ? (
             <div className="px-1 pb-2">
@@ -477,21 +491,21 @@ export function AppSidebar() {
               type="button"
               onClick={() => setIsProjectsOpen((open) => !open)}
               aria-expanded={isProjectsOpen}
-              className="flex flex-1 items-center gap-1 text-left transition-colors duration-150 hover:text-foreground"
+              className="flex flex-1 items-center gap-1 text-start transition-colors duration-150 hover:text-foreground"
             >
               {isProjectsOpen ? (
                 <ChevronDown className="h-3 w-3 text-muted-foreground" />
               ) : (
                 <ChevronRight className="h-3 w-3 text-muted-foreground" />
               )}
-              <span className="kicker">Projects</span>
+              <span className="kicker">{tNav('projects')}</span>
             </button>
             <Link href="/projects">
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-5 w-5 text-muted-foreground hover:text-foreground"
-                aria-label="Create project"
+                aria-label={tNav('projects')}
               >
                 <Plus className="h-3 w-3" />
               </Button>
@@ -502,7 +516,7 @@ export function AppSidebar() {
               {projectsLoading ? (
                 <div className="flex items-center justify-center py-4">
                   <span role="status" aria-live="polite" aria-busy="true">
-                    <span className="sr-only">Loading…</span>
+                    <span className="sr-only">{tCommon('loading')}</span>
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                   </span>
                 </div>
@@ -538,7 +552,7 @@ export function AppSidebar() {
                 })
               ) : (
                 <div className="px-3 py-4 text-center">
-                  <p className="text-xs text-muted-foreground">No projects yet</p>
+                  <p className="text-xs text-muted-foreground">{tCommon('no_projects')}</p>
                 </div>
               )}
               {projects && projects.length > 5 ? (
@@ -546,7 +560,7 @@ export function AppSidebar() {
                   href="/projects"
                   className="row-interactive rounded-md text-xs text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground"
                 >
-                  View all {projects.length} projects
+                  {tCommon('view_all_projects', { count: projects.length })}
                 </Link>
               ) : null}
             </div>
@@ -561,14 +575,14 @@ export function AppSidebar() {
             type="button"
             onClick={() => setIsLiveCallsOpen((open) => !open)}
             aria-expanded={isLiveCallsOpen}
-            className="flex w-full items-center gap-1 text-left transition-colors duration-150 hover:text-foreground"
+            className="flex w-full items-center gap-1 text-start transition-colors duration-150 hover:text-foreground"
           >
             {isLiveCallsOpen ? (
               <ChevronDown className="h-3 w-3 text-muted-foreground" />
             ) : (
               <ChevronRight className="h-3 w-3 text-muted-foreground" />
             )}
-            <span className="kicker px-0">Live Calls</span>
+            <span className="kicker px-0">{tNav('live_calls')}</span>
           </button>
 
           {isLiveCallsOpen && currentTarget && currentSession ? (
@@ -624,7 +638,7 @@ export function AppSidebar() {
                 <Link
                   key={call.id}
                   href={call.room.href}
-                  className="flex items-center gap-1.5 rounded-md bg-surface-2 px-2 py-1.5 text-left transition-all duration-150 ease-snap hover:bg-accent/60"
+                  className="flex items-center gap-1.5 rounded-md bg-surface-2 px-2 py-1.5 text-start transition-all duration-150 ease-snap hover:bg-accent/60"
                 >
                   <span className="realtime-ping shrink-0">
                     <span className="status-dot status-live" />

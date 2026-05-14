@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
@@ -11,7 +12,6 @@ import { ActivityFeed } from '@/components/activity/activity-feed';
 import { YourWorkWidget } from '@/components/dashboard/your-work-widget';
 import { UpcomingDeadlinesWidget } from '@/components/dashboard/upcoming-deadlines-widget';
 import { PinnedItemsWidget } from '@/components/dashboard/pinned-items-widget';
-import { AnalyticsBento } from '@/components/dashboard/analytics-bento';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useProjects } from '@/lib/hooks/use-projects';
 import {
@@ -28,8 +28,6 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
-import { Sparkles } from 'lucide-react';
-import { ViewTransition } from '@/components/ui/view-transition';
 
 interface Issue {
   id: string;
@@ -63,6 +61,9 @@ export function DashboardClient() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const tDash = useTranslations('dashboard');
+  const tActions = useTranslations('actions');
+  const tNav = useTranslations('nav');
 
   // Surface server-side permission redirects (e.g. /settings/organization without perms)
   // and the post-verify success landing (/dashboard?verified=1).
@@ -174,32 +175,32 @@ export function DashboardClient() {
             <div className="flex items-end justify-between gap-4 animate-fade-up">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="kicker">Dashboard</span>
-                  <span className="live-pill">Live</span>
+                  <span className="kicker">{tDash('kicker')}</span>
+                  <span className="live-pill">{tDash('live')}</span>
                 </div>
                 <h1 className="text-2xl font-semibold tracking-tight text-foreground text-balance">
-                  Welcome back, {firstName}
+                  {tDash('welcome_back', { name: firstName })}
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   {currentTeamId
-                    ? 'Teamspace-scoped work and priorities for today.'
-                    : 'Your project overview for today.'}
+                    ? tDash('subtitle_team')
+                    : tDash('subtitle_personal')}
                 </p>
               </div>
               <Link href="/my-issues">
                 <Button size="sm" className="gap-2">
                   <Target className="h-4 w-4" />
-                  My Issues
+                  {tNav('my_issues')}
                 </Button>
               </Link>
             </div>
 
             {/* KPI Summary Row */}
             <div className="stagger grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <StatTile label="Active" value={stats.active} hue="blue" icon={Activity} />
-              <StatTile label="Completed" value={stats.completed} hue="emerald" icon={CheckCircle2} />
-              <StatTile label="Blocked" value={stats.blocked} hue="rose" icon={AlertOctagon} />
-              <StatTile label="Story Points" value={stats.points} hue="violet" icon={Gauge} />
+              <StatTile label={tDash('stat_active')} value={stats.active} hue="blue" icon={Activity} />
+              <StatTile label={tDash('stat_completed')} value={stats.completed} hue="emerald" icon={CheckCircle2} />
+              <StatTile label={tDash('stat_blocked')} value={stats.blocked} hue="rose" icon={AlertOctagon} />
+              <StatTile label={tDash('stat_story_points')} value={stats.points} hue="violet" icon={Gauge} />
             </div>
 
             {/* Main Content */}
@@ -209,66 +210,40 @@ export function DashboardClient() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <Inbox className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium text-foreground">My Issues</span>
+                    <span className="text-sm font-medium text-foreground">
+                      {tDash('my_issues_heading')}
+                    </span>
                   </div>
                   <Link
                     href="/my-issues"
                     className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-all duration-150 ease-snap"
                   >
-                    View all
+                    {tActions('view_all')}
                     <ArrowUpRight className="h-3 w-3" />
                   </Link>
                 </div>
 
                 {!myIssues || myIssues.length === 0 ? (
-                  /* FEAT-31 empty state — illustration + primary CTA +
-                     AI fallback. The AI CTA is intentionally a TODO that
-                     should call /api/ai/issues/suggest with the user's
-                     recent activity context. */
-                  <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-md bg-gradient-mesh">
-                      <Inbox className="h-6 w-6 text-foreground/80" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-semibold text-foreground">
-                        You&apos;re all caught up
-                      </p>
-                      <p className="text-xs text-muted-foreground max-w-xs">
-                        No assigned issues right now. Pull in your next task or let
-                        AI suggest one based on your recent work.
-                      </p>
-                    </div>
-                    <div className="flex flex-col gap-1.5 sm:flex-row">
-                      {firstProjectId ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setIsCreateIssueOpen(true)}
-                        >
-                          <Sparkles className="mr-1.5 h-3.5 w-3.5 opacity-0" aria-hidden />
-                          Create issue
-                        </Button>
-                      ) : (
-                        <Link href="/projects">
-                          <Button variant="outline" size="sm">
-                            Create a project first
-                          </Button>
-                        </Link>
-                      )}
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <Inbox className="h-8 w-8 text-muted-foreground mb-3" />
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {tDash('all_caught_up')}
+                    </p>
+                    {firstProjectId ? (
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        // TODO(ai): wire to /api/ai/issues/suggest using
-                        // {userId, currentOrganizationId, currentTeamId}
-                        onClick={() => {
-                          // eslint-disable-next-line no-console
-                          console.info('[ai-generate] dashboard empty state — TODO suggest flow');
-                        }}
+                        onClick={() => setIsCreateIssueOpen(true)}
                       >
-                        <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                        Generate with AI
+                        {tActions('create_issue')}
                       </Button>
-                    </div>
+                    ) : (
+                      <Link href="/projects">
+                        <Button variant="outline" size="sm">
+                          {tActions('create_project')}
+                        </Button>
+                      </Link>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-0.5">
@@ -290,12 +265,6 @@ export function DashboardClient() {
                 </div>
               )}
             </div>
-
-            {/* Analytics bento — native charts + DORA + AI insights */}
-            <AnalyticsBento
-              organizationId={currentOrganizationId}
-              projectId={firstProjectId}
-            />
 
             {/* Workspace widgets */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
@@ -338,12 +307,7 @@ function StatTile({
   icon: LucideIcon;
 }) {
   return (
-    /* FEAT-31 example surface: hairline border + low-key shadow replacing
-       the heavier surface-card defaults on KPI tiles. Stays within the
-       light/dark scope because `border-white/5` falls back gracefully on
-       light backgrounds where it's effectively invisible (still beats no
-       border at all). */
-    <div className="relative rounded-lg bg-card p-4 max-h-[140px] border border-white/5 shadow-[0_1px_0_rgba(255,255,255,0.04)] transition-all duration-150 ease-snap hover:-translate-y-0.5 hover:shadow-md">
+    <div className="surface-card surface-card-hover p-4 max-h-[140px] transition-all duration-150 ease-snap hover:-translate-y-0.5 hover:shadow-md">
       <span className={cn('icon-tile', `icon-tile-accent-${hue}`)}>
         <Icon className="h-4 w-4" />
       </span>
@@ -376,9 +340,6 @@ function IssueRow({ issue, onClick }: { issue: Issue; onClick: () => void }) {
   const statusCls = statusDotClass[issue.status.category] ?? 'status-idle';
 
   return (
-    // FEAT-31: dashboard row → issue detail morph (matches the kanban card
-    // `issue-${id}` name so navigating from any source uses the same hint).
-    <ViewTransition name={`issue-${issue.id}`}>
     <button
       type="button"
       onClick={onClick}
@@ -399,6 +360,5 @@ function IssueRow({ issue, onClick }: { issue: Issue; onClick: () => void }) {
         {issue.status.name}
       </span>
     </button>
-    </ViewTransition>
   );
 }

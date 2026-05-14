@@ -2,6 +2,53 @@
 import '@testing-library/jest-dom';
 import { TextDecoder, TextEncoder } from 'util';
 
+// Default `next-intl` mock — keeps tests that render translated components
+// from needing a `NextIntlClientProvider` wrapper. Individual tests can
+// still call `jest.mock('next-intl', …)` to override.
+const enMessages = require('./messages/en.json');
+
+function resolveByPath(messages, key) {
+  return key.split('.').reduce((acc, part) => {
+    if (acc && typeof acc === 'object' && part in acc) return acc[part];
+    return undefined;
+  }, messages);
+}
+
+function interpolate(value, values) {
+  if (typeof value !== 'string' || !values) return value;
+  let out = value;
+  for (const [k, v] of Object.entries(values)) {
+    out = out.replace(new RegExp(`{${k}}`, 'g'), String(v));
+  }
+  return out;
+}
+
+jest.mock('next-intl', () => {
+  return {
+    __esModule: true,
+    NextIntlClientProvider: ({ children }) => children,
+    useTranslations: (namespace) => (key, values) => {
+      const composite = namespace ? `${namespace}.${key}` : key;
+      const resolved = resolveByPath(enMessages, composite);
+      if (typeof resolved === 'string') return interpolate(resolved, values);
+      return key;
+    },
+    useLocale: () => 'en',
+    useFormatter: () => ({
+      dateTime: (value) => new Date(value).toString(),
+      number: (value) => String(value),
+      relativeTime: (value) => String(value),
+    }),
+  };
+});
+
+// Radix' DirectionProvider should not blow up in JSDOM. Mock to a passthrough.
+jest.mock('@radix-ui/react-direction', () => ({
+  __esModule: true,
+  DirectionProvider: ({ children }) => children,
+  useDirection: () => 'ltr',
+}));
+
 if (!global.TextEncoder) {
   global.TextEncoder = TextEncoder;
 }
