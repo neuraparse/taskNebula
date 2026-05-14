@@ -28,6 +28,8 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
+import { ViewTransition } from '@/components/ui/view-transition';
 
 interface Issue {
   id: string;
@@ -219,26 +221,54 @@ export function DashboardClient() {
                 </div>
 
                 {!myIssues || myIssues.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <Inbox className="h-8 w-8 text-muted-foreground mb-3" />
-                    <p className="text-sm text-muted-foreground mb-4">
-                      You&apos;re all caught up.
-                    </p>
-                    {firstProjectId ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsCreateIssueOpen(true)}
-                      >
-                        Create issue
-                      </Button>
-                    ) : (
-                      <Link href="/projects">
-                        <Button variant="outline" size="sm">
-                          Create a project first
+                  /* FEAT-31 empty state — illustration + primary CTA +
+                     AI fallback. The AI CTA is intentionally a TODO that
+                     should call /api/ai/issues/suggest with the user's
+                     recent activity context. */
+                  <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-md bg-gradient-mesh">
+                      <Inbox className="h-6 w-6 text-foreground/80" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-foreground">
+                        You&apos;re all caught up
+                      </p>
+                      <p className="text-xs text-muted-foreground max-w-xs">
+                        No assigned issues right now. Pull in your next task or let
+                        AI suggest one based on your recent work.
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-1.5 sm:flex-row">
+                      {firstProjectId ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsCreateIssueOpen(true)}
+                        >
+                          <Sparkles className="mr-1.5 h-3.5 w-3.5 opacity-0" aria-hidden />
+                          Create issue
                         </Button>
-                      </Link>
-                    )}
+                      ) : (
+                        <Link href="/projects">
+                          <Button variant="outline" size="sm">
+                            Create a project first
+                          </Button>
+                        </Link>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        // TODO(ai): wire to /api/ai/issues/suggest using
+                        // {userId, currentOrganizationId, currentTeamId}
+                        onClick={() => {
+                          // eslint-disable-next-line no-console
+                          console.info('[ai-generate] dashboard empty state — TODO suggest flow');
+                        }}
+                      >
+                        <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                        Generate with AI
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-0.5">
@@ -308,7 +338,12 @@ function StatTile({
   icon: LucideIcon;
 }) {
   return (
-    <div className="surface-card surface-card-hover p-4 max-h-[140px] transition-all duration-150 ease-snap hover:-translate-y-0.5 hover:shadow-md">
+    /* FEAT-31 example surface: hairline border + low-key shadow replacing
+       the heavier surface-card defaults on KPI tiles. Stays within the
+       light/dark scope because `border-white/5` falls back gracefully on
+       light backgrounds where it's effectively invisible (still beats no
+       border at all). */
+    <div className="relative rounded-lg bg-card p-4 max-h-[140px] border border-white/5 shadow-[0_1px_0_rgba(255,255,255,0.04)] transition-all duration-150 ease-snap hover:-translate-y-0.5 hover:shadow-md">
       <span className={cn('icon-tile', `icon-tile-accent-${hue}`)}>
         <Icon className="h-4 w-4" />
       </span>
@@ -341,6 +376,9 @@ function IssueRow({ issue, onClick }: { issue: Issue; onClick: () => void }) {
   const statusCls = statusDotClass[issue.status.category] ?? 'status-idle';
 
   return (
+    // FEAT-31: dashboard row → issue detail morph (matches the kanban card
+    // `issue-${id}` name so navigating from any source uses the same hint).
+    <ViewTransition name={`issue-${issue.id}`}>
     <button
       type="button"
       onClick={onClick}
@@ -361,5 +399,6 @@ function IssueRow({ issue, onClick }: { issue: Issue; onClick: () => void }) {
         {issue.status.name}
       </span>
     </button>
+    </ViewTransition>
   );
 }

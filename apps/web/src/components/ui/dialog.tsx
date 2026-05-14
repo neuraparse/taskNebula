@@ -32,7 +32,10 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'surface-card fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 p-6 rounded-lg shadow-lg max-h-[85vh] overflow-y-auto data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out',
+        // FEAT-31: dark glassmorphism replaces the old `surface-card` look on
+        // modal content. Keeps positioning + animation classes identical so
+        // existing callers don't visually shift.
+        'glass-panel fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 p-6 max-h-[85vh] overflow-y-auto data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out',
         className
       )}
       {...props}

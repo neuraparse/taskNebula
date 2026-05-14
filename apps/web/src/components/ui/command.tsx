@@ -19,7 +19,9 @@ const Command = React.forwardRef<
   <CommandPrimitive
     ref={ref}
     className={cn(
-      'flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground',
+      // Transparent base so the parent `.glass-panel` (Dialog) shows through.
+      // Standalone consumers can still pass `bg-popover` via className.
+      'flex h-full w-full flex-col overflow-hidden rounded-md text-popover-foreground',
       className
     )}
     {...props}
@@ -34,7 +36,10 @@ interface CommandDialogProps extends DialogProps {
 const CommandDialog = ({ children, contentClassName, ...props }: CommandDialogProps) => {
   return (
     <Dialog {...props}>
-      <DialogContent className={cn('overflow-hidden p-0 shadow-lg', contentClassName)}>
+      {/* FEAT-31: command palette inherits the new glass-panel base from
+          DialogContent. We just drop the redundant shadow and let the panel
+          glow speak. */}
+      <DialogContent className={cn('overflow-hidden p-0', contentClassName)}>
         <VisuallyHidden>
           <DialogTitle>Command menu</DialogTitle>
         </VisuallyHidden>

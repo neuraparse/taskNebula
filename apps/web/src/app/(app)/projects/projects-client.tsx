@@ -22,7 +22,8 @@ import {
 import { useCreateProject, useProjects } from '@/lib/hooks/use-projects';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useTeamspaces } from '@/lib/hooks/use-teamspaces';
-import { FolderKanban, Layers3, Plus, X } from 'lucide-react';
+import { FolderKanban, Layers3, Plus, X, Sparkles } from 'lucide-react';
+import { ViewTransition } from '@/components/ui/view-transition';
 
 interface Organization {
   id: string;
@@ -110,17 +111,44 @@ export function ProjectsClient() {
 
       <div className="flex-1 overflow-auto p-6">
         {projects.length === 0 && !isLoading ? (
-          <div className="mx-auto flex max-w-md animate-fade-up flex-col items-center gap-3 rounded-lg border border-dashed border-border p-8 text-center">
-            <FolderKanban className="h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              {activeTeamspace
-                ? `No projects in ${activeTeamspace.name} yet.`
-                : 'No projects yet. Create your first to get started.'}
-            </p>
-            <Button onClick={() => setShowDialog(true)}>
-              <Plus className="mr-1.5 h-4 w-4" />
-              Create Project
-            </Button>
+          /* FEAT-31 dashboard empty state. Illustration tile + primary CTA
+             + secondary AI CTA (TODO: route once /api/ai/projects/scaffold
+             lands; it should pre-fill the create-project dialog). */
+          <div className="mx-auto flex max-w-md animate-fade-up flex-col items-center gap-4 rounded-lg border border-dashed border-border p-10 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-md bg-gradient-mesh">
+              <FolderKanban className="h-7 w-7 text-foreground/80" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-base font-semibold text-foreground">
+                {activeTeamspace
+                  ? `No projects in ${activeTeamspace.name} yet`
+                  : 'Spin up your first project'}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Projects collect issues, sprints, docs, and automations. You can also
+                let AI scaffold one from a short description.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button onClick={() => setShowDialog(true)}>
+                <Plus className="mr-1.5 h-4 w-4" />
+                Create Project
+              </Button>
+              <Button
+                variant="outline"
+                // TODO(ai): hook into /api/ai/projects/scaffold once available.
+                // It should accept a 1-line goal and return a draft project
+                // (name, key, description, default columns).
+                onClick={() => {
+                  // eslint-disable-next-line no-console
+                  console.info('[ai-generate] projects empty state — TODO scaffold flow');
+                  setShowDialog(true);
+                }}
+              >
+                <Sparkles className="mr-1.5 h-4 w-4" />
+                Generate with AI
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -135,8 +163,11 @@ export function ProjectsClient() {
               const issueCount = project.issueCount ?? 0;
               const sprintCount = project.sprintCount ?? 0;
               return (
+                /* FEAT-31: tile → detail morph. Pair with a matching
+                   <ViewTransition name="project-${id}"> on the project home
+                   page header to enable a shared-element transition. */
+                <ViewTransition key={project.id} name={`project-${project.id}`}>
                 <Link
-                  key={project.id}
                   href={`/projects/${project.key.toLowerCase()}/views`}
                   className="surface-card surface-card-hover group flex flex-col gap-3 rounded-lg p-5 transition-all duration-150 ease-snap hover:-translate-y-0.5"
                 >
@@ -190,6 +221,7 @@ export function ProjectsClient() {
                     ) : null}
                   </div>
                 </Link>
+                </ViewTransition>
               );
             })}
           </div>
