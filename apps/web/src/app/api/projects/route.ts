@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { auth } from '@/auth';
 import {
   db,
@@ -17,6 +18,22 @@ import { createId } from '@paralleldrive/cuid2';
 import { publishEvent } from '@/lib/realtime/events';
 import { notifyProjectCreated } from '@/lib/notifications/project-events';
 import { runAutomations } from '@/lib/automation/evaluator';
+import { withValidation } from '@/lib/api-validation';
+
+// FEAT-29: replaces ad-hoc `if (!name || !key)` checks with a Zod schema.
+// `key` is uppercased downstream; we accept any case here and let the
+// handler normalize.
+const createProjectSchema = z.object({
+  name: z.string().min(1).max(120),
+  key: z
+    .string()
+    .min(2)
+    .max(10)
+    .regex(/^[A-Za-z][A-Za-z0-9]*$/, 'key must be alphanumeric, start with a letter'),
+  description: z.string().max(2000).nullable().optional(),
+  organizationId: z.string().optional(),
+  teamId: z.string().nullable().optional(),
+});
 
 // GET /api/projects - List all projects for the current user
 export async function GET(request: NextRequest) {
@@ -152,22 +169,19 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/projects - Create a new project
-export async function POST(request: NextRequest) {
+// Migrated to withValidation (FEAT-29). The wrapper enforces the schema
+// (replacing the manual `if (!name || !key)` check) before we touch the DB.
+export const POST = withValidation({ body: createProjectSchema })(async (
+  request,
+  { body }
+) => {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
-    const body = await request.json();
     const { name, key, description, organizationId, teamId } = body;
-
-    if (!name || !key) {
-      return NextResponse.json(
-        { error: 'Name and key are required' },
-        { status: 400 }
-      );
-    }
 
     // Get user's first organization if not specified
     let orgId = organizationId;
@@ -312,4 +326,4 @@ export async function POST(request: NextRequest) {
     console.error('Error creating project:', error);
     return NextResponse.json({ error: 'Failed to create project' }, { status: 500 });
   }
-}
+});

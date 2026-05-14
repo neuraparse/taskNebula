@@ -1,3 +1,5 @@
+// QUAL-21 TS-strict-migration: file untouched intentionally; surfaces 8 errors
+// under `exactOptionalPropertyTypes`. See docs/TS_STRICT_MIGRATION.md.
 import { createId } from '@paralleldrive/cuid2';
 import {
   agentRuns,
@@ -32,6 +34,11 @@ import {
   type TriageProviderPlan,
   type TrackingProviderPlan,
 } from './providers';
+import {
+  BudgetExhaustedError,
+  estimatePromptTokens,
+  runWithBudget,
+} from '@/lib/ai/budget';
 import type { AgentModelConfigRecord } from './model-configs';
 import type { ProjectContext, ProjectIssueRow, ProjectSprintRow } from './types';
 
@@ -918,16 +925,52 @@ export async function runProjectAgent(params: {
     if (effectiveSettings.provider !== 'native') {
       const plannerLog = nextLog(logs, 'Requesting a structured agent plan from the configured LLM provider.');
       emitLog(run.id, context.project.id, plannerLog);
-      generatedPlan = await generateAgentPlan({
+
+      // Run the provider call inside the AI Cost Guard reservation.
+      // The wrapper writes an llm_call_audit row, debits the running
+      // counters, and throws BudgetExhaustedError (mapped to 429 below)
+      // when the workspace is over budget or the kill switch is on.
+      const planJson = JSON.stringify({
         kind: params.kind,
+        projectKey: context.project.key,
         model: effectiveSettings.model,
-        effectiveSettings,
-        context,
-        apiKey: params.providerApiKey,
-        modelConfigId: params.selectedModelConfig?.id || null,
-        modelConfigName: params.selectedModelConfig?.name || null,
-        modelTuning: params.selectedModelConfig?.settings || null,
       });
+      generatedPlan = await runWithBudget(
+        {
+          organizationId: context.project.organizationId,
+          userId: params.userId,
+          provider: effectiveSettings.provider,
+          model: effectiveSettings.model || 'unknown',
+          feature: `agent_run:${params.kind}`,
+          prompt: planJson,
+          estimatedTokens:
+            estimatePromptTokens(planJson) +
+            (params.selectedModelConfig?.settings?.maxOutputTokens || 4096),
+        },
+        async () => {
+          const plan = await generateAgentPlan({
+            kind: params.kind,
+            model: effectiveSettings.model,
+            effectiveSettings,
+            context,
+            apiKey: params.providerApiKey,
+            modelConfigId: params.selectedModelConfig?.id || null,
+            modelConfigName: params.selectedModelConfig?.name || null,
+            modelTuning: params.selectedModelConfig?.settings || null,
+            userId: params.userId,
+          });
+          return {
+            value: plan,
+            // Without provider usage stats here, fall back to a coarse
+            // post-hoc estimate. The audit row will still record the
+            // call; the budget number is approximate.
+            usage: {
+              inputTokens: estimatePromptTokens(planJson),
+              outputTokens: estimatePromptTokens(JSON.stringify(plan)),
+            },
+          };
+        }
+      );
 
       const generatedLog = nextLog(logs, 'Structured provider plan generated successfully.');
       emitLog(run.id, context.project.id, generatedLog);
@@ -1025,8 +1068,18 @@ export async function runProjectAgent(params: {
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Agent run failed';
-    const errorCode = error instanceof AgentExecutionError ? error.code : 'agent_run_failed';
-    const httpStatus = error instanceof AgentExecutionError ? error.statusCode : 500;
+    const errorCode =
+      error instanceof BudgetExhaustedError
+        ? `budget_${error.code}`
+        : error instanceof AgentExecutionError
+          ? error.code
+          : 'agent_run_failed';
+    const httpStatus =
+      error instanceof BudgetExhaustedError
+        ? 429
+        : error instanceof AgentExecutionError
+          ? error.statusCode
+          : 500;
     const failureLog = nextLog(logs, message, 'stderr');
     emitLog(run.id, context.project.id, failureLog);
     emitAgentStatus(run.id, context.project.id, { status: 'failed', progress: 100, error: message });

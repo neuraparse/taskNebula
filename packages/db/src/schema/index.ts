@@ -35,3 +35,20 @@ export * from './pinned-items';
 export * from './automation-executions';
 export * from './drafts';
 export * from './integration-client-credentials';
+export * from './audit-log-sinks';
+
+// 2026 roadmap additions
+export * from './agent-sessions';
+export * from './ai-cost-guard';
+export * from './ai-disclosures';
+export * from './import-jobs';
+export * from './initiatives';
+export * from './intake-forms';
+export * from './issue-status-history';
+export * from './issue-triage-suggestions';
+export * from './llm-batch-jobs';
+// llm-call-audit table is defined in ./ai-cost-guard (consolidated)
+export * from './slack';
+export * from './sso';
+export * from './standups';
+export * from './time-entries';

@@ -1,6 +1,7 @@
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ViewTransition } from '@/components/ui/view-transition';
 import { cn } from '@/lib/utils';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -189,7 +190,13 @@ export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: K
   const hasFooter =
     visibleAssignees.length > 0 || due || subtasks || comments > 0 || attachments > 0;
 
+  // FEAT-31: name this card with a stable id so the browser can morph the
+  // card into the issue detail header on navigation. Only opt in for cards
+  // with a real issue id (skeleton drag overlays use placeholder ids).
+  const transitionName = issueId ? `issue-${issueId}` : undefined;
+
   return (
+    <ViewTransition name={transitionName}>
     <div
       ref={setNodeRef}
       style={style}
@@ -329,5 +336,6 @@ export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: K
         </div>
       )}
     </div>
+    </ViewTransition>
   );
 }

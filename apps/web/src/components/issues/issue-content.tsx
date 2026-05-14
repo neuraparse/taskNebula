@@ -10,6 +10,15 @@ import { IssueDocs } from './issue-docs';
 import { IssueLinks } from './issue-links';
 import { IssueSubtasks } from './issue-subtasks';
 import { IssueDiscussionCard } from '@/components/chat/issue-discussion-card';
+import { CollabDescriptionEditor } from './collab-description-editor';
+
+// Feature flag for the Tiptap + Yjs collaborative editor. When `false` (the
+// default) we render the legacy textarea; when `true` we mount the live
+// editor wired to the Hocuspocus server. See `services/hocuspocus/README.md`
+// for the matching server configuration.
+const COLLAB_ENABLED =
+  typeof process !== 'undefined' &&
+  process.env.NEXT_PUBLIC_COLLAB_ENABLED === 'true';
 
 interface IssueContentProps {
   issue: {
@@ -63,7 +72,7 @@ export function IssueContent({ issue }: IssueContentProps) {
       <section>
         <div className="flex items-center justify-between mb-2">
           <h3 className="kicker">Description</h3>
-          {!isEditing && (
+          {!isEditing && !COLLAB_ENABLED && (
             <Button
               variant="ghost"
               size="sm"
@@ -76,7 +85,21 @@ export function IssueContent({ issue }: IssueContentProps) {
           )}
         </div>
 
-        {isEditing ? (
+        {COLLAB_ENABLED ? (
+          <CollabDescriptionEditor
+            issueId={issue.id}
+            initialContent={issue.description || ''}
+            canEdit
+            isSaving={updateIssue.isPending}
+            onSave={async (next) => {
+              try {
+                await updateIssue.mutateAsync({ issueId: issue.id, data: { description: next } });
+              } catch (error) {
+                console.error('Error saving collaborative description:', error);
+              }
+            }}
+          />
+        ) : isEditing ? (
           <div className="space-y-2">
             <textarea
               className="min-h-[160px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"

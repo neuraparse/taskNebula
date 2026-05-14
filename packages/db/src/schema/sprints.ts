@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, pgEnum, index } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, pgEnum, index, boolean } from 'drizzle-orm/pg-core';
 import { createId } from '@paralleldrive/cuid2';
 import { projects } from './projects';
 import { users } from './users';
@@ -15,6 +15,14 @@ export const sprints = pgTable('sprints', {
   startDate: timestamp('start_date').notNull(),
   endDate: timestamp('end_date').notNull(),
   status: sprintStatusEnum('status').notNull().default('planned'),
+  // Cycles auto-rollover (FEAT-23): when true, any non-Done issues in this cycle
+  // are migrated into the next planned/active cycle of the same project after
+  // end_date elapses. Defaults to true so projects opt-in by simply enabling
+  // cycles. Set to false to keep issues attached past end_date.
+  enableAutoRollover: boolean('enable_auto_rollover').notNull().default(true),
+  // Timestamp of the most recent successful auto-rollover for this cycle so the
+  // cron / first-request-of-day check doesn't replay rollovers.
+  rolledOverAt: timestamp('rolled_over_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
   createdBy: text('created_by').notNull().references(() => users.id),

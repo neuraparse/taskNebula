@@ -74,7 +74,7 @@ Example: `feature/add-timeline-view`
 
 ### Commit Messages
 
-We follow [Conventional Commits](https://www.conventionalcommits.org/):
+We follow [Conventional Commits](https://www.conventionalcommits.org/) and enforce them via [commitlint](https://commitlint.js.org/) on every commit:
 
 ```
 <type>(<scope>): <description>
@@ -84,28 +84,51 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 [optional footer]
 ```
 
-Types:
+Allowed types:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
 - `style`: Code style changes (formatting, etc.)
 - `refactor`: Code refactoring
+- `perf`: Performance improvement
 - `test`: Adding or updating tests
+- `build`: Build system / dependency changes
+- `ci`: CI configuration changes
 - `chore`: Maintenance tasks
+- `revert`: Reverting a previous commit
+- `infra`: Infrastructure (Docker, Nginx, healthchecks, deploy)
+- `ai`: AI agents, prompts, model integration
+- `integrations`: Third-party integrations (GitHub, Slack, Sentry, webhooks, ...)
 
 Examples:
+
 ```
 feat(kanban): add drag and drop support
 fix(auth): resolve session timeout issue
 docs(readme): update installation instructions
+infra(docker): tighten container healthchecks
+integrations(github): add HMAC-signed webhook delivery
 ```
+
+### Git Hooks (Husky + lint-staged + commitlint)
+
+The repository ships with [Husky](https://typicode.github.io/husky/) hooks that run automatically after `pnpm install` (via the `prepare` script):
+
+- **`pre-commit`** runs [`lint-staged`](https://github.com/lint-staged/lint-staged):
+  - `*.{ts,tsx}` → `eslint --fix` + `prettier --write`
+  - `*.{js,cjs,mjs,jsx,json,md,yml,yaml}` → `prettier --write`
+- **`commit-msg`** runs `commitlint` against `commitlint.config.cjs` to enforce the conventional-commit format above.
+
+If a hook prevents your commit, fix the reported issue and re-stage; do not bypass with `--no-verify` unless you have a very good reason and call it out in the PR.
 
 ### Code Style
 
 - We use **Prettier** for code formatting
 - We use **ESLint** for linting
-- Run `pnpm format` before committing
-- Run `pnpm lint` to check for issues
+- Hooks auto-format staged files on commit; you can also run:
+  - `pnpm format` to format the whole repo
+  - `pnpm lint` to check for issues
 
 ### Type Checking
 

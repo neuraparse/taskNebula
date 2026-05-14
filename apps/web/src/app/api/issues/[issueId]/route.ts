@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { z } from 'zod';
 import { getIssueById, updateIssue, deleteIssue, createActivity, createAuditLog, db, issues, workflowStatuses, workflows, projects, projectMembers, organizationMembers, users, ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from '@tasknebula/db';
 import { auth } from '@/auth';
@@ -6,6 +6,12 @@ import { eq, and } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { runAutomations } from '@/lib/automation/evaluator';
+import { withValidation } from '@/lib/api-validation';
+
+// Params schema for /api/issues/[issueId] — kept loose (`min(1)`) to allow
+// the existing dataset of mixed-format ids; tighten to `id` from
+// `@/lib/validation/common` once legacy ids are migrated.
+const issueParamsSchema = z.object({ issueId: z.string().min(1) });
 
 type IssueAction = 'view' | 'edit' | 'delete' | 'assign' | 'transition' | 'schedule' | 'close' | 'reopen';
 
@@ -199,19 +205,19 @@ export async function GET(
 }
 
 // PATCH /api/issues/[issueId] - Update an issue
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ issueId: string }> }
-) {
+// Migrated to withValidation (FEAT-29). `params` and `body` are now parsed
+// by the wrapper; failures short-circuit with a 400 envelope before this
+// handler runs.
+export const PATCH = withValidation({
+  body: updateIssueSchema,
+  params: issueParamsSchema,
+})(async (request, { body: validatedData, params }) => {
+  const { issueId } = params;
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const { issueId } = await params;
-    const body = await request.json();
-    const validatedData = updateIssueSchema.parse(body);
 
     // Get current issue for comparison
     const currentIssue = await getIssueById(issueId);
@@ -391,29 +397,7 @@ export async function PATCH(
       changes.title = { from: currentIssue.title, to: updateData.title };
     }
 
-    if (Object.keys(changes).length > 0) {
-      // Determine the most significant action
-      let action: 'issue.status_changed' | 'issue.assigned' | 'issue.priority_changed' | 'issue.updated' = 'issue.updated';
-      if (changes.status) {
-        action = 'issue.status_changed';
-      } else if (changes.assigneeId) {
-        action = 'issue.assigned';
-      } else if (changes.priority) {
-        action = 'issue.priority_changed';
-      }
-
-      await createAuditLog({
-        userId: session.user.id,
-        organizationId: currentIssue.organizationId,
-        action,
-        resourceType: 'issue',
-        resourceId: issueId,
-        projectId: currentIssue.projectId,
-        issueId,
-        changes,
-      });
-    }
-
+    // Publish realtime event synchronously (in-process bus, microseconds).
     publishEvent('issue.updated', session.user.id!, {
       projectId: currentIssue.projectId,
       issueId,
@@ -421,32 +405,79 @@ export async function PATCH(
       organizationId: currentIssue.organizationId,
     });
 
-    // Email notifications (fire-and-forget)
+    // Defer audit log and notification emails to after the response is sent.
+    const actorUserId = session.user.id!;
     const projectName = currentIssue.key?.split('-')[0] || '';
+    const changesSnapshot = changes;
+    const newAssigneeId =
+      updateData.assigneeId && updateData.assigneeId !== currentIssue.assigneeId
+        ? updateData.assigneeId
+        : null;
+    const statusEmailRecipient =
+      updateData.statusId &&
+      updateData.statusId !== currentIssue.statusId &&
+      currentIssue.assigneeId
+        ? currentIssue.assigneeId
+        : null;
 
-    if (updateData.assigneeId && updateData.assigneeId !== currentIssue.assigneeId) {
-      notifyIssueEvent({
-        eventType: 'issue_assigned',
-        recipientUserId: updateData.assigneeId,
-        actorUserId: session.user.id!,
-        organizationId: currentIssue.organizationId,
-        issueKey: currentIssue.key,
-        issueTitle: currentIssue.title,
-        projectName,
-      });
-    }
+    after(async () => {
+      if (Object.keys(changesSnapshot).length > 0) {
+        let action: 'issue.status_changed' | 'issue.assigned' | 'issue.priority_changed' | 'issue.updated' = 'issue.updated';
+        if (changesSnapshot.status) {
+          action = 'issue.status_changed';
+        } else if (changesSnapshot.assigneeId) {
+          action = 'issue.assigned';
+        } else if (changesSnapshot.priority) {
+          action = 'issue.priority_changed';
+        }
+        try {
+          await createAuditLog({
+            userId: actorUserId,
+            organizationId: currentIssue.organizationId,
+            action,
+            resourceType: 'issue',
+            resourceId: issueId,
+            projectId: currentIssue.projectId,
+            issueId,
+            changes: changesSnapshot,
+          });
+        } catch (err) {
+          console.error('audit log failed', err);
+        }
+      }
 
-    if (updateData.statusId && updateData.statusId !== currentIssue.statusId && currentIssue.assigneeId) {
-      notifyIssueEvent({
-        eventType: 'issue_status_changed',
-        recipientUserId: currentIssue.assigneeId,
-        actorUserId: session.user.id!,
-        organizationId: currentIssue.organizationId,
-        issueKey: currentIssue.key,
-        issueTitle: currentIssue.title,
-        projectName,
-      });
-    }
+      if (newAssigneeId) {
+        try {
+          await notifyIssueEvent({
+            eventType: 'issue_assigned',
+            recipientUserId: newAssigneeId,
+            actorUserId,
+            organizationId: currentIssue.organizationId,
+            issueKey: currentIssue.key,
+            issueTitle: currentIssue.title,
+            projectName,
+          });
+        } catch (err) {
+          console.error('assignee notification failed', err);
+        }
+      }
+
+      if (statusEmailRecipient) {
+        try {
+          await notifyIssueEvent({
+            eventType: 'issue_status_changed',
+            recipientUserId: statusEmailRecipient,
+            actorUserId,
+            organizationId: currentIssue.organizationId,
+            issueKey: currentIssue.key,
+            issueTitle: currentIssue.title,
+            projectName,
+          });
+        } catch (err) {
+          console.error('status notification failed', err);
+        }
+      }
+    });
 
     // --- Automation triggers (fire-and-forget) ---
     // Compute which fields changed between old and new so rules can match.
@@ -509,47 +540,55 @@ export async function PATCH(
       ...(newStatus ? { newStatus } : {}),
     };
 
-    // Always fire issue.updated
-    void runAutomations({
-      trigger: 'issue.updated',
-      organizationId: currentIssue.organizationId,
-      projectId: currentIssue.projectId,
-      payload: automationPayload,
-      actorUserId: session.user.id!,
-    }).catch((err) => console.error('automation failed', err));
+    // Defer automation rule evaluation until after the response is sent.
+    after(async () => {
+      try {
+        await runAutomations({
+          trigger: 'issue.updated',
+          organizationId: currentIssue.organizationId,
+          projectId: currentIssue.projectId,
+          payload: automationPayload,
+          actorUserId,
+        });
+      } catch (err) {
+        console.error('automation failed', err);
+      }
 
-    if (statusChanged) {
-      void runAutomations({
-        trigger: 'issue.status_changed',
-        organizationId: currentIssue.organizationId,
-        projectId: currentIssue.projectId,
-        payload: automationPayload,
-        actorUserId: session.user.id!,
-      }).catch((err) => console.error('automation failed', err));
-    }
+      if (statusChanged) {
+        try {
+          await runAutomations({
+            trigger: 'issue.status_changed',
+            organizationId: currentIssue.organizationId,
+            projectId: currentIssue.projectId,
+            payload: automationPayload,
+            actorUserId,
+          });
+        } catch (err) {
+          console.error('automation failed', err);
+        }
+      }
 
-    if (assigneeChanged) {
-      void runAutomations({
-        trigger: 'issue.assigned',
-        organizationId: currentIssue.organizationId,
-        projectId: currentIssue.projectId,
-        payload: automationPayload,
-        actorUserId: session.user.id!,
-      }).catch((err) => console.error('automation failed', err));
-    }
+      if (assigneeChanged) {
+        try {
+          await runAutomations({
+            trigger: 'issue.assigned',
+            organizationId: currentIssue.organizationId,
+            projectId: currentIssue.projectId,
+            payload: automationPayload,
+            actorUserId,
+          });
+        } catch (err) {
+          console.error('automation failed', err);
+        }
+      }
+    });
 
     return NextResponse.json(updatedIssueData);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
-        { status: 400 }
-      );
-    }
     console.error('Error updating issue:', error);
     return NextResponse.json({ error: 'Failed to update issue' }, { status: 500 });
   }
-}
+});
 
 // DELETE /api/issues/[issueId] - Delete an issue
 export async function DELETE(

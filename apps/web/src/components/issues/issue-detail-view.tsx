@@ -4,9 +4,11 @@ import { IssueHeader } from './issue-header';
 import { IssueContent } from './issue-content';
 import { IssueActivity } from './issue-activity';
 import { IssueSidebar } from './issue-sidebar';
+import { TimeInStatusPanel } from './time-in-status-panel';
 import { useIssue } from '@/lib/hooks/use-issues';
 import { FileText, AlertCircle } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { ViewTransition } from '@/components/ui/view-transition';
 
 export function IssueDetailView({ issueId }: { issueId: string }) {
   const { data: issue, isLoading, error, refetch } = useIssue(issueId);
@@ -108,9 +110,13 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background animate-fade-up">
-      <div className="shrink-0 border-b border-border bg-background px-6 py-4">
-        <IssueHeader issue={issue} />
-      </div>
+      {/* FEAT-31: morph target — pairs with `issue-${id}` on the source card
+          (kanban / dashboard list) so navigation feels continuous. */}
+      <ViewTransition name={`issue-${issue.id}`}>
+        <div className="shrink-0 border-b border-border bg-background px-6 py-4">
+          <IssueHeader issue={issue} />
+        </div>
+      </ViewTransition>
 
       <div className="flex-1 overflow-hidden">
         <div className="grid h-full grid-cols-1 lg:grid-cols-[1fr_320px]">
@@ -139,6 +145,7 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
                 }}
                 onUpdate={handleIssueUpdate}
               />
+              <TimeInStatusPanel issueId={issue.id} />
             </div>
           </div>
         </div>

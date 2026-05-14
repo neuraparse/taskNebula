@@ -1,0 +1,76 @@
+{
+  "name": "@tasknebula/mcp-server",
+  "version": "0.1.0",
+  "description": "TaskNebula Model Context Protocol (MCP) server — exposes issues, projects, and workload tools to Claude / Cursor / Claude Code / Claude.ai.",
+  "license": "MIT",
+  "author": "Neura Parse <hello@neuraparse.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neuraparse/tasknebula.git",
+    "directory": "packages/mcp-server"
+  },
+  "homepage": "https://tasknebula.io",
+  "bugs": {
+    "url": "https://github.com/neuraparse/tasknebula/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "tasknebula",
+    "claude",
+    "cursor",
+    "ai-agents",
+    "project-management"
+  ],
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./tools": {
+      "types": "./src/tools/index.ts",
+      "default": "./src/tools/index.ts"
+    },
+    "./http": {
+      "types": "./src/http.ts",
+      "default": "./src/http.ts"
+    }
+  },
+  "bin": {
+    "tasknebula-mcp": "./bin/tasknebula-mcp.mjs"
+  },
+  "files": [
+    "src",
+    "bin",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src/",
+    "start": "node ./bin/tasknebula-mcp.mjs",
+    "test": "jest --passWithNoTests"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@tasknebula/config": "workspace:*",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.10.2",
+    "eslint": "^8.57.1",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "nav": {
+    "dashboard": "Panel",
+    "overview": "Resumen",
+    "drafts": "Borradores",
+    "templates": "Plantillas",
+    "my_issues": "Mis incidencias",
+    "projects": "Proyectos",
+    "docs": "Documentos",
+    "team": "Equipo",
+    "settings": "Ajustes",
+    "admin": "Administración",
+    "members": "Miembros",
+    "teamspaces": "Espacios de equipo",
+    "pending_invites": "Invitaciones pendientes",
+    "live_calls": "Llamadas en vivo",
+    "assigned_to_me": "Asignadas a mí",
+    "created_by_me": "Creadas por mí",
+    "subscribed": "Suscrito",
+    "mentioned": "Mencionado",
+    "search_placeholder": "Buscar incidencias, proyectos, documentos…"
+  },
+  "actions": {
+    "create_issue": "Crear incidencia",
+    "create_project": "Primero crea un proyecto",
+    "view_all": "Ver todo",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "open_command_palette": "Abrir paleta de comandos",
+    "help": "Ayuda",
+    "switch_workspace": "Cambiar de espacio",
+    "language": "Idioma"
+  },
+  "dashboard": {
+    "kicker": "Panel",
+    "live": "En vivo",
+    "welcome_back": "Bienvenido de nuevo, {name}",
+    "subtitle_team": "Trabajo y prioridades del espacio de equipo para hoy.",
+    "subtitle_personal": "Tu resumen de proyectos para hoy.",
+    "my_issues_heading": "Mis incidencias",
+    "all_caught_up": "Estás al día.",
+    "stat_active": "Activas",
+    "stat_completed": "Completadas",
+    "stat_blocked": "Bloqueadas",
+    "stat_story_points": "Puntos de historia"
+  },
+  "auth": {
+    "signin": "Iniciar sesión",
+    "signin_loading": "Iniciando sesión...",
+    "signup": "Registrarse",
+    "welcome_back": "Bienvenido de nuevo",
+    "subtitle": "Inicia sesión para continuar",
+    "email_label": "Correo electrónico",
+    "email_placeholder": "nombre@ejemplo.com",
+    "password_label": "Contraseña",
+    "password_placeholder": "Introduce tu contraseña",
+    "forgot_password": "¿Olvidaste tu contraseña?",
+    "no_account": "¿No tienes cuenta?",
+    "continue_with_github": "Continuar con GitHub",
+    "continue_with_google": "Continuar con Google",
+    "or_continue_with_email": "O continúa con tu correo",
+    "invalid_credentials": "Correo o contraseña no válidos",
+    "generic_error": "Se produjo un error. Inténtalo de nuevo."
+  },
+  "common": {
+    "loading": "Cargando…",
+    "no_projects": "Aún no hay proyectos",
+    "view_all_projects": "Ver los {count} proyectos"
+  }
+}

@@ -18,10 +18,12 @@ import {
   draftIssue,
   type DraftProvider,
 } from '@/lib/ai/draft-issue';
+import { BudgetExhaustedError } from '@/lib/ai/budget';
 import { getSystemAgentControlSettingsFromDb } from '@/lib/agents/system';
 import { resolveProviderApiKeyFromSettings } from '@/lib/agents/credentials';
 import { normalizeWorkspaceAgentSettings } from '@/lib/agents/config';
 import { resolveProjectByIdOrKey } from '@/lib/projects/server';
+import { evaluateInjectionRisk } from '@/lib/ai/safety/sandbox';
 
 export const dynamic = 'force-dynamic';
 
@@ -190,6 +192,42 @@ export async function POST(request: NextRequest) {
     project.organizationId
   );
 
+  // P1-16: run the prompt-injection sandbox before we forward the user's
+  // text to any provider. `warn` mode logs hits and continues; `strict`
+  // mode refuses with 422 so an attacker cannot reach the LLM at all.
+  const safetyMode = workspace.aiSafetyMode ?? 'warn';
+  const verdict = await evaluateInjectionRisk(body.prompt, {
+    mode: safetyMode,
+    anthropicApiKey: provider === 'anthropic' ? apiKey : null,
+  });
+  if (verdict.flagged) {
+    await createAuditLog({
+      userId: session.user.id,
+      organizationId: project.organizationId,
+      action: 'agent.run_failed',
+      resourceType: 'project',
+      resourceId: project.id,
+      projectId: project.id,
+      metadata: {
+        kind: 'issue_draft',
+        reason: 'injection_suspected',
+        score: verdict.score,
+        mode: safetyMode,
+      },
+    }).catch(() => {});
+  }
+  if (verdict.refuse) {
+    return NextResponse.json(
+      {
+        error:
+          'The prompt looks like it might contain instructions aimed at the AI itself. The workspace is in strict safety mode, so the request was blocked.',
+        code: 'prompt_injection_suspected',
+        score: verdict.score,
+      },
+      { status: 422 }
+    );
+  }
+
   // Respect the workspace-configured model when it's set; if the admin
   // picked, say, claude-opus-4-7, the draft should use that, not the
   // adapter's hardcoded fallback. Empty string → adapter falls back to a
@@ -205,6 +243,11 @@ export async function POST(request: NextRequest) {
       provider,
       apiKey,
       model: modelToUse,
+      budgetContext: {
+        organizationId: project.organizationId,
+        userId: session.user.id,
+        feature: 'draft',
+      },
     });
 
     await createAuditLog({
@@ -223,6 +266,16 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ draft, provider });
   } catch (err) {
+    if (err instanceof BudgetExhaustedError) {
+      return NextResponse.json(
+        {
+          error: err.message,
+          code: 'budget_exhausted',
+          reason: err.code,
+        },
+        { status: 429 }
+      );
+    }
     if (err instanceof AiDraftError) {
       await createAuditLog({
         userId: session.user.id,

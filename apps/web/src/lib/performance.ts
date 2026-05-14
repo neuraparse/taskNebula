@@ -22,11 +22,15 @@ export function recordMetric(
   value: number,
   metadata?: Record<string, any>
 ): void {
+  // QUAL-21: build the object conditionally to satisfy
+  // `exactOptionalPropertyTypes`. The interface says `metadata?` (omitted),
+  // not `metadata: Record<string, any> | undefined` (always present, maybe
+  // undefined). Spreading only when present keeps the runtime shape correct.
   const metric: PerformanceMetric = {
     name,
     value,
     timestamp: Date.now(),
-    metadata,
+    ...(metadata !== undefined ? { metadata } : {}),
   };
 
   metrics.push(metric);

@@ -22,6 +22,7 @@ import {
   type SidecarMode,
   useSidecar,
 } from '@/lib/ai/sidecar-context';
+import { AiBadge } from '@/components/ai/AiBadge';
 
 interface ModeOption {
   value: SidecarMode;
@@ -355,6 +356,13 @@ function MessageBubble({ message, showThinking }: MessageBubbleProps) {
       >
         {message.content}
       </div>
+      {isAssistant && (
+        <AiBadge
+          feature="Sidecar Ask"
+          generatedAt={new Date(message.createdAt)}
+          className="mt-0.5"
+        />
+      )}
     </div>
   );
 }

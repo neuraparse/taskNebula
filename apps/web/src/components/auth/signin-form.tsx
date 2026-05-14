@@ -3,6 +3,7 @@
 import { signIn } from 'next-auth/react';
 import { useState, useEffect, useMemo, type ComponentType } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -77,6 +78,7 @@ const BANNER_TONE_STYLES: Record<BannerTone, string> = {
 export function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const tAuth = useTranslations('auth');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -115,13 +117,13 @@ export function SignInForm() {
       });
 
       if (result?.error) {
-        setError('Invalid email or password');
+        setError(tAuth('invalid_credentials'));
       } else {
         router.push('/dashboard');
         router.refresh();
       }
     } catch {
-      setError('An error occurred. Please try again.');
+      setError(tAuth('generic_error'));
     } finally {
       setLoading(false);
     }
@@ -150,8 +152,10 @@ export function SignInForm() {
     <div className="space-y-6 stagger">
       {/* Header */}
       <div className="text-center space-y-1.5">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Welcome back</h1>
-        <p className="text-sm text-muted-foreground">Sign in to continue</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          {tAuth('welcome_back')}
+        </h1>
+        <p className="text-sm text-muted-foreground">{tAuth('subtitle')}</p>
       </div>
 
       {/* Status banner (verify / reset / error query params) */}
@@ -183,8 +187,8 @@ export function SignInForm() {
           className="w-full transition-all duration-150 ease-snap"
           size="lg"
         >
-          <Github className="mr-2 h-4 w-4" />
-          Continue with GitHub
+          <Github className="me-2 h-4 w-4" />
+          {tAuth('continue_with_github')}
         </Button>
         <Button
           variant="outline"
@@ -193,7 +197,7 @@ export function SignInForm() {
           className="w-full transition-all duration-150 ease-snap"
           size="lg"
         >
-          <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+          <svg className="me-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
             <path
               fill="currentColor"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -211,7 +215,7 @@ export function SignInForm() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          Continue with Google
+          {tAuth('continue_with_google')}
         </Button>
       </div>
 
@@ -221,18 +225,20 @@ export function SignInForm() {
           <span className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs">
-          <span className="bg-card px-2.5 text-muted-foreground">Or continue with email</span>
+          <span className="bg-card px-2.5 text-muted-foreground">
+            {tAuth('or_continue_with_email')}
+          </span>
         </div>
       </div>
 
       {/* Email/Password Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="email">Email address</Label>
+          <Label htmlFor="email">{tAuth('email_label')}</Label>
           <Input
             id="email"
             type="email"
-            placeholder="name@example.com"
+            placeholder={tAuth('email_placeholder')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -242,18 +248,18 @@ export function SignInForm() {
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{tAuth('password_label')}</Label>
             <Link
               href="/auth/forgot-password"
               className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-150 ease-snap"
             >
-              Forgot password?
+              {tAuth('forgot_password')}
             </Link>
           </div>
           <Input
             id="password"
             type="password"
-            placeholder="Enter your password"
+            placeholder={tAuth('password_placeholder')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -273,18 +279,18 @@ export function SignInForm() {
           size="lg"
           disabled={loading}
         >
-          {loading ? 'Signing in...' : 'Sign in'}
+          {loading ? tAuth('signin_loading') : tAuth('signin')}
         </Button>
       </form>
 
       {/* Sign Up Link */}
       <p className="text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{' '}
+        {tAuth('no_account')}{' '}
         <Link
           href="/auth/signup"
           className="font-medium text-foreground hover:text-primary transition-colors duration-150 ease-snap"
         >
-          Sign up
+          {tAuth('signup')}
         </Link>
       </p>
     </div>

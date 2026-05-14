@@ -15,10 +15,12 @@ import { auth } from '@/auth';
 import { aiDisabledResponse, isAiFeatureEnabled } from '@/lib/ai/feature-gate';
 import { AiDraftError, type DraftProvider } from '@/lib/ai/draft-issue';
 import { draftIssuesMulti } from '@/lib/ai/draft-issues-multi';
+import { BudgetExhaustedError } from '@/lib/ai/budget';
 import { getSystemAgentControlSettingsFromDb } from '@/lib/agents/system';
 import { resolveProviderApiKeyFromSettings } from '@/lib/agents/credentials';
 import { normalizeWorkspaceAgentSettings } from '@/lib/agents/config';
 import { resolveProjectByIdOrKey } from '@/lib/projects/server';
+import { evaluateInjectionRisk } from '@/lib/ai/safety/sandbox';
 
 export const dynamic = 'force-dynamic';
 
@@ -161,6 +163,40 @@ export async function POST(request: NextRequest) {
   );
   const modelToUse = workspace.model?.trim() || null;
 
+  // P1-16
+  const safetyMode = workspace.aiSafetyMode ?? 'warn';
+  const verdict = await evaluateInjectionRisk(body.prompt, {
+    mode: safetyMode,
+    anthropicApiKey: provider === 'anthropic' ? apiKey : null,
+  });
+  if (verdict.flagged) {
+    await createAuditLog({
+      userId: session.user.id,
+      organizationId: project.organizationId,
+      action: 'agent.run_failed',
+      resourceType: 'project',
+      resourceId: project.id,
+      projectId: project.id,
+      metadata: {
+        kind: 'issue_drafts_multi',
+        reason: 'injection_suspected',
+        score: verdict.score,
+        mode: safetyMode,
+      },
+    }).catch(() => {});
+  }
+  if (verdict.refuse) {
+    return NextResponse.json(
+      {
+        error:
+          'The prompt looks like it might contain instructions aimed at the AI itself. The workspace is in strict safety mode, so the request was blocked.',
+        code: 'prompt_injection_suspected',
+        score: verdict.score,
+      },
+      { status: 422 }
+    );
+  }
+
   try {
     const drafts = await draftIssuesMulti({
       prompt: body.prompt,
@@ -171,6 +207,11 @@ export async function POST(request: NextRequest) {
       apiKey,
       model: modelToUse,
       maxCount: body.maxCount ?? 5,
+      budgetContext: {
+        organizationId: project.organizationId,
+        userId: session.user.id,
+        feature: 'draft_multi',
+      },
     });
     console.log('[draft-issues] drafts ok', { count: drafts.length, provider });
 
@@ -191,6 +232,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ drafts, provider });
   } catch (err) {
+    if (err instanceof BudgetExhaustedError) {
+      return NextResponse.json(
+        { error: err.message, code: 'budget_exhausted', reason: err.code },
+        { status: 429 }
+      );
+    }
     if (err instanceof AiDraftError) {
       console.warn('[draft-issues] AiDraftError', { code: err.code, message: err.message });
       await createAuditLog({

@@ -1,4 +1,9 @@
 import type { NextConfig } from 'next';
+import createNextIntlPlugin from 'next-intl/plugin';
+
+// Wires next-intl's request config so `getRequestConfig` runs for every
+// request that hits the App Router. Path is relative to this file.
+const withNextIntl = createNextIntlPlugin('./src/lib/i18n/request.ts');
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -9,6 +14,13 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['@tasknebula/db', 'postgres', 'drizzle-orm'],
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    // React 19 + Next 15: opt into the <ViewTransition> component which
+    // wraps the browser View Transitions API for shared-element morphs
+    // between routes (e.g. issue card → issue detail page). This flag
+    // ships ahead of the published Next types in 15.1.x, so we silence
+    // the TS error explicitly; remove once @types/next exposes it.
+    // @ts-expect-error -- experimental flag not yet in NextConfig types
+    viewTransition: true,
   },
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -35,5 +47,5 @@ const nextConfig: NextConfig = {
   compress: true,
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);
 

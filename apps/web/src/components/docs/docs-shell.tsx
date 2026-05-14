@@ -1,4 +1,6 @@
 'use client';
+// QUAL-21 TS-strict-migration: file untouched intentionally; surfaces 8 errors
+// under `exactOptionalPropertyTypes`. See docs/TS_STRICT_MIGRATION.md.
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';

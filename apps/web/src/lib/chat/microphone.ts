@@ -1,3 +1,5 @@
+// QUAL-21 TS-strict-migration: file untouched intentionally; surfaces 4 errors
+// under `exactOptionalPropertyTypes`. See docs/TS_STRICT_MIGRATION.md.
 import { chatClientDebug, chatClientError } from '@/lib/chat/debug';
 
 export const DEFAULT_MIC_CAPTURE_OPTIONS = {

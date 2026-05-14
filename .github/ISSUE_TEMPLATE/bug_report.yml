@@ -1,0 +1,60 @@
+name: Bug report
+description: Report a problem you ran into
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: TaskNebula version
+      placeholder: 0.2.6
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: How are you running TaskNebula?
+      options:
+        - Docker (Docker Hub image)
+        - Docker (built from source)
+        - pnpm dev (local development)
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: Ubuntu 24.04 / macOS 15 / Windows 11
+  - type: input
+    id: browser
+    attributes:
+      label: Browser (if relevant)
+      placeholder: Chrome 138 / Firefox 142
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to '...'
+        2. Click '...'
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected to happen
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What actually happened
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and screenshots
+      description: Paste server logs, browser console output, or screenshots that help us diagnose.
+      render: shell

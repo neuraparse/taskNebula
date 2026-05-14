@@ -1,0 +1,71 @@
+{
+  "nav": {
+    "dashboard": "Panel",
+    "overview": "Genel bakış",
+    "drafts": "Taslaklar",
+    "templates": "Şablonlar",
+    "my_issues": "İşlerim",
+    "projects": "Projeler",
+    "docs": "Belgeler",
+    "team": "Ekip",
+    "settings": "Ayarlar",
+    "admin": "Yönetim",
+    "members": "Üyeler",
+    "teamspaces": "Ekip alanları",
+    "pending_invites": "Bekleyen davetler",
+    "live_calls": "Canlı görüşmeler",
+    "assigned_to_me": "Bana atanan",
+    "created_by_me": "Benim oluşturduğum",
+    "subscribed": "Takip ettiğim",
+    "mentioned": "Bahsedilen",
+    "search_placeholder": "Konu, proje veya belge ara…"
+  },
+  "actions": {
+    "create_issue": "Konu oluştur",
+    "create_project": "Önce bir proje oluştur",
+    "view_all": "Tümünü gör",
+    "cancel": "İptal",
+    "save": "Kaydet",
+    "delete": "Sil",
+    "open_command_palette": "Komut paletini aç",
+    "help": "Yardım",
+    "switch_workspace": "Çalışma alanı değiştir",
+    "language": "Dil"
+  },
+  "dashboard": {
+    "kicker": "Panel",
+    "live": "Canlı",
+    "welcome_back": "Tekrar hoş geldin, {name}",
+    "subtitle_team": "Bugüne ait ekip alanına özel işler ve öncelikler.",
+    "subtitle_personal": "Bugüne ait proje genel bakışın.",
+    "my_issues_heading": "İşlerim",
+    "all_caught_up": "Her şey yolunda. Bekleyen iş yok.",
+    "stat_active": "Aktif",
+    "stat_completed": "Tamamlanan",
+    "stat_blocked": "Engelli",
+    "stat_story_points": "Hikâye Puanı"
+  },
+  "auth": {
+    "signin": "Giriş yap",
+    "signin_loading": "Giriş yapılıyor...",
+    "signup": "Kayıt ol",
+    "welcome_back": "Tekrar hoş geldin",
+    "subtitle": "Devam etmek için giriş yap",
+    "email_label": "E-posta adresi",
+    "email_placeholder": "ad@ornek.com",
+    "password_label": "Parola",
+    "password_placeholder": "Parolanı gir",
+    "forgot_password": "Parolanı mı unuttun?",
+    "no_account": "Hesabın yok mu?",
+    "continue_with_github": "GitHub ile devam et",
+    "continue_with_google": "Google ile devam et",
+    "or_continue_with_email": "Ya da e-posta ile devam et",
+    "invalid_credentials": "Geçersiz e-posta veya parola",
+    "generic_error": "Bir hata oluştu. Lütfen tekrar dene."
+  },
+  "common": {
+    "loading": "Yükleniyor…",
+    "no_projects": "Henüz proje yok",
+    "view_all_projects": "Tüm {count} projeyi gör"
+  }
+}

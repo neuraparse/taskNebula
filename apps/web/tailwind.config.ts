@@ -28,6 +28,12 @@ const config: Config = {
       colors: {
         border: 'hsl(var(--border))',
         'border-strong': 'hsl(var(--border-strong))',
+        // Semantic dark surface tokens (FEAT-31). Resolve to literal RGB
+        // values rather than tokens so they look right regardless of the
+        // current `data-theme` / `.dark` scope. Kept additive — existing
+        // `surface` HSL tokens above are untouched for backward compat.
+        'border-subtle': 'rgb(255 255 255 / 0.05)',
+        'ring-focus': 'rgb(250 250 250 / 0.20)', // zinc-50/20
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
@@ -35,6 +41,11 @@ const config: Config = {
         surface: {
           DEFAULT: 'hsl(var(--surface))',
           2: 'hsl(var(--surface-2))',
+          // FEAT-31 dark surfaces — zinc-950 base, zinc-900 elevated. Used by
+          // glassmorphism panels + modernized cards. Light theme can still
+          // override via the existing `--surface` HSL token.
+          dark: 'rgb(9 9 11)',         // zinc-950
+          elevated: 'rgb(24 24 27)',   // zinc-900
         },
         primary: {
           DEFAULT: 'hsl(var(--primary))',

@@ -3,6 +3,11 @@
   "compilerOptions": {
     "baseUrl": ".",
     "skipLibCheck": true,
+    // QUAL-21: `exactOptionalPropertyTypes` is enabled in the base config as
+    // the next strict-mode migration target. This package has ~146 surfacing
+    // errors that need per-file remediation, so we opt out here for now.
+    // See docs/TS_STRICT_MIGRATION.md for the rollout plan.
+    "exactOptionalPropertyTypes": false,
     "paths": {
       "@/*": ["./src/*"],
       "@/components/*": ["./src/components/*"],

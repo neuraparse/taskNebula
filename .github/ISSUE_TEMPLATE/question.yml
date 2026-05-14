@@ -1,0 +1,18 @@
+name: Question
+description: Ask a question about using TaskNebula
+labels: [question]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For general "how do I…" questions please use [GitHub Discussions](https://github.com/neuraparse/tasknebula/discussions) — they are easier to search and reuse.
+  - type: textarea
+    id: question
+    attributes:
+      label: What would you like to know?
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you already tried?

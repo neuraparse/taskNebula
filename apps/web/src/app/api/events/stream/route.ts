@@ -2,6 +2,12 @@ import { auth } from '@/auth';
 import { eventBus, type RealtimeEvent } from '@/lib/realtime/events';
 
 export const dynamic = 'force-dynamic';
+// SSE keepalive: pure async iteration, no DB / fs / drizzle.
+// Auth happens via JWT (next-auth) which is edge-safe.
+// NOTE: kept on the Node runtime for now — `eventBus` is an in-process
+// EventEmitter, and on edge the route would not see events from Node
+// API routes. Once the bus is moved to Redis pub/sub we can flip this.
+// export const runtime = 'edge';
 
 export async function GET(request: Request) {
   const session = await auth();

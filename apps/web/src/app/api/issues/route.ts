@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { z } from 'zod';
 import { getIssues, createIssue, createActivity, createAuditLog, db, projects, issues, workflowStatuses, workflows, users, projectMembers, organizationMembers } from '@tasknebula/db';
 import { auth } from '@/auth';
@@ -7,6 +7,7 @@ import { eq, and, desc, asc, sql, inArray } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { runAutomations } from '@/lib/automation/evaluator';
+import { withValidation } from '@/lib/api-validation';
 
 // Permission check helper for issues
 async function checkIssuePermission(
@@ -286,15 +287,18 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/issues - Create a new issue
-export async function POST(request: NextRequest) {
+// Migrated to withValidation (FEAT-29): the wrapper parses + types `body`
+// against `createIssueSchema` and short-circuits with a 400 envelope on
+// failure, so this handler only deals with the success path.
+export const POST = withValidation({ body: createIssueSchema })(async (
+  request,
+  { body: validatedData }
+) => {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const body = await request.json();
-    const validatedData = createIssueSchema.parse(body);
 
     // If projectId looks like a key (e.g., "demo", "PROJ"), convert to ID
     let actualProjectId = validatedData.projectId;
@@ -431,68 +435,84 @@ export async function POST(request: NextRequest) {
         throw new Error('Failed to create issue');
       }
 
-      // Create activity log for issue creation
-      await createActivity({
-        issueId: newIssue.id,
-        userId: session.user.id,
-        type: 'created',
-      });
-
-      // Create audit log for issue creation
-      await createAuditLog({
-        userId: session.user.id,
-        organizationId: newIssue.organizationId,
-        action: 'issue.created',
-        resourceType: 'issue',
-        resourceId: newIssue.id,
-        projectId: newIssue.projectId,
-        issueId: newIssue.id,
-        metadata: { issueKey: newIssue.key, title: newIssue.title },
-      });
+      // Publish realtime event synchronously so other clients see the new
+      // issue immediately (in-process bus, ~microseconds).
       publishEvent('issue.created', session.user.id!, {
         projectId: newIssue.projectId,
         issueId: newIssue.id,
         sprintId: newIssue.sprintId || undefined,
         organizationId: newIssue.organizationId,
       });
-
-      // Notify assignee if issue was assigned on creation
-      if (newIssue.assigneeId) {
-        notifyIssueEvent({
-          eventType: 'issue_assigned',
-          recipientUserId: newIssue.assigneeId,
-          actorUserId: session.user.id!,
-          organizationId: newIssue.organizationId,
-          issueKey: newIssue.key,
-          issueTitle: newIssue.title,
-          projectName: project.key,
-        });
-      }
     } catch (insertError) {
       console.error('Insert error details:', insertError);
       throw insertError;
     }
 
-    // Fire-and-forget: trigger automation rules for issue creation.
-    // Failures must not surface to the caller or change response codes.
-    void runAutomations({
-      trigger: 'issue.created',
-      organizationId: newIssue.organizationId,
-      projectId: newIssue.projectId,
-      payload: newIssue,
-      actorUserId: session.user.id!,
-    }).catch((err) => console.error('automation failed', err));
+    // Defer all post-response side-effects: activity log, audit log,
+    // assignee notification email, and automation rules. The response
+    // payload is finalised below — `after()` runs once it has been flushed
+    // to the client, so request latency reflects only the DB insert.
+    const actorUserId = session.user.id!;
+    const createdIssue = newIssue;
+    const projectKey = project.key;
+    after(async () => {
+      try {
+        await createActivity({
+          issueId: createdIssue.id,
+          userId: actorUserId,
+          type: 'created',
+        });
+      } catch (err) {
+        console.error('activity log failed', err);
+      }
+
+      try {
+        await createAuditLog({
+          userId: actorUserId,
+          organizationId: createdIssue.organizationId,
+          action: 'issue.created',
+          resourceType: 'issue',
+          resourceId: createdIssue.id,
+          projectId: createdIssue.projectId,
+          issueId: createdIssue.id,
+          metadata: { issueKey: createdIssue.key, title: createdIssue.title },
+        });
+      } catch (err) {
+        console.error('audit log failed', err);
+      }
+
+      if (createdIssue.assigneeId) {
+        try {
+          await notifyIssueEvent({
+            eventType: 'issue_assigned',
+            recipientUserId: createdIssue.assigneeId,
+            actorUserId,
+            organizationId: createdIssue.organizationId,
+            issueKey: createdIssue.key,
+            issueTitle: createdIssue.title,
+            projectName: projectKey,
+          });
+        } catch (err) {
+          console.error('assignee notification failed', err);
+        }
+      }
+
+      try {
+        await runAutomations({
+          trigger: 'issue.created',
+          organizationId: createdIssue.organizationId,
+          projectId: createdIssue.projectId,
+          payload: createdIssue,
+          actorUserId,
+        });
+      } catch (err) {
+        console.error('automation failed', err);
+      }
+    });
 
     return NextResponse.json(newIssue, { status: 201 });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      console.error('Validation error:', error.errors);
-      return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
-        { status: 400 }
-      );
-    }
     console.error('Error creating issue:', error);
     return NextResponse.json({ error: 'Failed to create issue' }, { status: 500 });
   }
-}
+});
