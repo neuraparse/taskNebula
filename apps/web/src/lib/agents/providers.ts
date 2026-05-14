@@ -9,6 +9,11 @@ import type {
 } from './config';
 import type { AgentModelConfigSettings } from './model-configs';
 import type { ProjectContext } from './types';
+import {
+  buildCachedSystemPrompt,
+  extractAnthropicCacheUsage,
+  isPromptCacheEnabled,
+} from '../ai/cache-blocks';
 
 const PRIORITY_VALUES = ['critical', 'high', 'medium', 'low', 'none'] as const;
 
@@ -567,11 +572,21 @@ async function generateAnthropicPlan(params: ProviderParams): Promise<AgentProvi
   }
 
   const prompt = buildPrompt(params);
-  const systemPrompt = [
-    `${prompt.instructions} Requested flow: ${getRunKindSummary(params.kind)}.`,
+
+  // Split the system prompt into a stable instructions/schema prefix and
+  // attach ephemeral cache markers so Claude can reuse it across calls.
+  // The dynamic per-run input goes in `messages[0].content` and is NOT
+  // cached.
+  const stableInstructions = `${prompt.instructions} Requested flow: ${getRunKindSummary(params.kind)}.`;
+  const stableSchemaBlock = [
     'Respond with a single JSON object that matches this schema exactly — no prose, no markdown fences:',
     JSON.stringify(prompt.schema),
   ].join('\n\n');
+
+  const systemBlocks = buildCachedSystemPrompt({
+    instructions: stableInstructions,
+    toolSchemaBlock: stableSchemaBlock,
+  });
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -579,11 +594,14 @@ async function generateAnthropicPlan(params: ProviderParams): Promise<AgentProvi
       'Content-Type': 'application/json',
       'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
+      ...(isPromptCacheEnabled()
+        ? { 'anthropic-beta': 'prompt-caching-2024-07-31' }
+        : {}),
     },
     body: JSON.stringify({
       model: params.model,
       max_tokens: params.modelTuning?.maxOutputTokens || 4096,
-      system: systemPrompt,
+      system: systemBlocks,
       messages: [
         {
           role: 'user',
@@ -617,6 +635,30 @@ async function generateAnthropicPlan(params: ProviderParams): Promise<AgentProvi
     : [];
   const textBlock = content.find((block) => block.type === 'text' && typeof block.text === 'string');
   const rawText = textBlock?.text ?? '';
+
+  // Record cache metrics for audit logging. The audit table from task #7 is
+  // optional — if it's not present we just drop the numbers. We still emit
+  // a structured log line so a dashboard/aggregator can scrape it.
+  try {
+    const usage = extractAnthropicCacheUsage(payload);
+    if (usage.cacheReadTokens > 0 || usage.cacheCreationTokens > 0) {
+      // Lazy require so this stays optional. The function is a no-op if the
+      // module hasn't been added yet (task #7 hook).
+      const auditMod = await import('../ai/audit-hook').catch(() => null);
+      if (auditMod && typeof auditMod.recordPromptCacheUsage === 'function') {
+        auditMod.recordPromptCacheUsage({
+          provider: 'anthropic',
+          model: params.model,
+          inputTokens: usage.inputTokens,
+          outputTokens: usage.outputTokens,
+          cachedTokens: usage.cacheReadTokens,
+          cacheCreationTokens: usage.cacheCreationTokens,
+        });
+      }
+    }
+  } catch {
+    // Audit failures must never break the agent path.
+  }
 
   // Strip optional fenced ```json ... ``` wrappers Claude sometimes emits.
   const cleaned = rawText
