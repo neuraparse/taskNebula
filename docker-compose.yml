@@ -122,6 +122,12 @@ services:
       # dev; prod should enter keys through the admin/workspace config UI.
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Cron endpoints (POST /api/cron/{standup,janitor}) are guarded by a
+      # shared secret. Set CRON_SECRET to enable them. The optional
+      # JANITOR_SYSTEM_USER_ID is the user id used as the author for janitor
+      # comments and updates; without it the janitor runs in dry-run mode.
+      CRON_SECRET: ${CRON_SECRET:-}
+      JANITOR_SYSTEM_USER_ID: ${JANITOR_SYSTEM_USER_ID:-}
     ports:
       - '127.0.0.1:${PORT:-3000}:3000'
     volumes:
@@ -134,6 +140,29 @@ services:
       timeout: 10s
       start_period: 60s
       retries: 3
+
+  # Optional: lightweight cron sidecar that calls the standup + janitor
+  # endpoints on a schedule. Comment out if you prefer Vercel Cron, k8s
+  # CronJobs, or an external scheduler. The container uses busybox so the
+  # whole footprint is < 5 MB.
+  cron:
+    image: alpine:3.20
+    container_name: tasknebula-cron
+    restart: unless-stopped
+    depends_on:
+      web:
+        condition: service_started
+    environment:
+      CRON_SECRET: ${CRON_SECRET:?CRON_SECRET must be set to enable the cron sidecar}
+      WEB_BASE_URL: ${CRON_WEB_BASE_URL:-http://web:3000}
+    entrypoint: ['/bin/sh', '-c']
+    # Daily standup at 08:00 UTC, hourly janitor.
+    # busybox crond reads /etc/crontabs/root.
+    command:
+      - |
+        apk add --no-cache curl > /dev/null && \
+        printf '0 8 * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/standup" -o /dev/null\n0 * * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/janitor" -o /dev/null\n' > /etc/crontabs/root && \
+        crond -f -l 8
 
 volumes:
   postgres_data:

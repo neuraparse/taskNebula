@@ -11,6 +11,7 @@ import { ActivityFeed } from '@/components/activity/activity-feed';
 import { YourWorkWidget } from '@/components/dashboard/your-work-widget';
 import { UpcomingDeadlinesWidget } from '@/components/dashboard/upcoming-deadlines-widget';
 import { PinnedItemsWidget } from '@/components/dashboard/pinned-items-widget';
+import { StandupWidget } from '@/components/dashboard/standup-widget';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useProjects } from '@/lib/hooks/use-projects';
 import {
@@ -258,6 +259,12 @@ export function DashboardClient() {
                   <ActivityFeed organizationId={currentOrganizationId} limit={5} />
                 </div>
               )}
+            </div>
+
+            {/* Standup digest — surfaced separately so it occupies the full
+                width when present and degrades to a small CTA when empty. */}
+            <div className="mt-6">
+              <StandupWidget />
             </div>
 
             {/* Workspace widgets */}
