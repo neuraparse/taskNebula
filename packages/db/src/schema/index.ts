@@ -35,4 +35,4 @@ export * from './pinned-items';
 export * from './automation-executions';
 export * from './drafts';
 export * from './integration-client-credentials';
-export * from './time-entries';
+export * from './initiatives';
