@@ -4,6 +4,7 @@ import { IssueHeader } from './issue-header';
 import { IssueContent } from './issue-content';
 import { IssueActivity } from './issue-activity';
 import { IssueSidebar } from './issue-sidebar';
+import { TimeInStatusPanel } from './time-in-status-panel';
 import { useIssue } from '@/lib/hooks/use-issues';
 import { FileText, AlertCircle } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -139,6 +140,7 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
                 }}
                 onUpdate={handleIssueUpdate}
               />
+              <TimeInStatusPanel issueId={issue.id} />
             </div>
           </div>
         </div>

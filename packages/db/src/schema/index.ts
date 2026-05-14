@@ -5,6 +5,7 @@ export * from './projects';
 export * from './permission-schemes';
 export * from './issue-security';
 export * from './issues';
+export * from './issue-status-history';
 export * from './workflows';
 export * from './sprints';
 export * from './attachments';

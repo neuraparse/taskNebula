@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getIssueById, updateIssue, deleteIssue, createActivity, createAuditLog, db, issues, workflowStatuses, workflows, projects, projectMembers, organizationMembers, users, ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from '@tasknebula/db';
+import { getIssueById, updateIssue, deleteIssue, createActivity, createAuditLog, db, issues, issueStatusHistory, workflowStatuses, workflows, projects, projectMembers, organizationMembers, users, ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from '@tasknebula/db';
 import { auth } from '@/auth';
 import { eq, and } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
@@ -321,6 +321,23 @@ export async function PATCH(
           oldValue: currentIssue.statusId,
           newValue: updateData.statusId,
         })
+      );
+      // FEAT-23: append-only status history row that powers
+      // GET /api/issues/[id]/time-in-status. Failure here must not fail the
+      // overall update — we treat history as best-effort metadata.
+      activityPromises.push(
+        db
+          .insert(issueStatusHistory)
+          .values({
+            issueId,
+            fromStatus: currentIssue.statusId,
+            toStatus: updateData.statusId,
+            changedByUserId: session.user.id,
+            reason: 'user',
+          })
+          .catch((err) => {
+            console.error('issue_status_history insert failed', err);
+          })
       );
     }
 

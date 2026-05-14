@@ -17,6 +17,9 @@ jest.mock('../issue-activity', () => ({
 jest.mock('../issue-sidebar', () => ({
   IssueSidebar: () => <div data-testid="issue-sidebar" />,
 }));
+jest.mock('../time-in-status-panel', () => ({
+  TimeInStatusPanel: () => <div data-testid="time-in-status-panel" />,
+}));
 
 const useIssueMock = jest.fn();
 jest.mock('@/lib/hooks/use-issues', () => ({

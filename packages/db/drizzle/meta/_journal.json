@@ -316,6 +316,13 @@
 			"when": 1778900000000,
 			"tag": "0044_sso_and_scim",
 			"breakpoints": true
+		},
+		{
+			"idx": 45,
+			"version": "7",
+			"when": 1778900000000,
+			"tag": "0045_issue_status_history_and_rollover",
+			"breakpoints": true
 		}
 	]
 }
