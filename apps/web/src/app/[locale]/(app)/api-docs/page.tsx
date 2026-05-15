@@ -52,10 +52,10 @@ export default async function ApiDocsPage() {
   }
 
   return (
-    <div className="min-h-full bg-background">
-      <div className="border-b border-border bg-card px-6 py-4">
+    <div className="bg-background min-h-full">
+      <div className="border-border bg-card border-b px-6 py-4">
         <h1 className="text-2xl font-semibold">API Reference</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-sm">
           OpenAPI 3.1 documentation for the TaskNebula HTTP API. Spec source:{' '}
           <a href="/openapi.json" className="underline" target="_blank" rel="noreferrer">
             /openapi.json

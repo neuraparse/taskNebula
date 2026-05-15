@@ -7,22 +7,14 @@ import { IntakeFormEditor } from '@/components/intake/intake-form-editor';
 
 export const metadata = { title: 'Edit intake form · TaskNebula' };
 
-export default async function EditIntakeFormPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function EditIntakeFormPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await auth();
   if (!session?.user?.id) {
     redirect(`/auth/signin?callbackUrl=/settings/intake-forms/${id}/edit`);
   }
 
-  const [form] = await db
-    .select()
-    .from(intakeForms)
-    .where(eq(intakeForms.id, id))
-    .limit(1);
+  const [form] = await db.select().from(intakeForms).where(eq(intakeForms.id, id)).limit(1);
   if (!form) notFound();
 
   const [member] = await db
@@ -31,8 +23,8 @@ export default async function EditIntakeFormPage({
     .where(
       and(
         eq(organizationMembers.userId, session.user.id),
-        eq(organizationMembers.organizationId, form.workspaceId),
-      ),
+        eq(organizationMembers.organizationId, form.workspaceId)
+      )
     )
     .limit(1);
   if (!member) notFound();

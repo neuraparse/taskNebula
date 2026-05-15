@@ -54,7 +54,8 @@ const SOURCES: Array<{ key: SourceKey; label: string; description: string; ready
   {
     key: 'jira',
     label: 'Jira',
-    description: 'Connect with an Atlassian email + API token. Sprints and attachments are not yet supported.',
+    description:
+      'Connect with an Atlassian email + API token. Sprints and attachments are not yet supported.',
     ready: false,
   },
   {
@@ -215,17 +216,17 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
             type="button"
             key={s.key}
             onClick={() => setSource(s.key)}
-            className="rounded-lg border border-border bg-card p-4 text-left transition hover:border-foreground/30 hover:shadow-sm"
+            className="border-border bg-card hover:border-foreground/30 rounded-lg border p-4 text-left transition hover:shadow-sm"
           >
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">{s.label}</span>
               {!s.ready && (
-                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                <span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide">
                   Preview
                 </span>
               )}
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">{s.description}</p>
+            <p className="text-muted-foreground mt-1 text-sm">{s.description}</p>
           </button>
         ))}
       </div>
@@ -244,7 +245,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
       </div>
 
       {/* Source-specific form */}
-      <div className="space-y-3 rounded-lg border border-border bg-card p-4">
+      <div className="border-border bg-card space-y-3 rounded-lg border p-4">
         <Label htmlFor="projectId">Target project id</Label>
         <Input
           id="projectId"
@@ -324,17 +325,9 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
               onChange={(e) => setGhToken(e.target.value)}
             />
             <Label htmlFor="ghOwner">Owner</Label>
-            <Input
-              id="ghOwner"
-              value={ghOwner}
-              onChange={(e) => setGhOwner(e.target.value)}
-            />
+            <Input id="ghOwner" value={ghOwner} onChange={(e) => setGhOwner(e.target.value)} />
             <Label htmlFor="ghRepo">Repo</Label>
-            <Input
-              id="ghRepo"
-              value={ghRepo}
-              onChange={(e) => setGhRepo(e.target.value)}
-            />
+            <Input id="ghRepo" value={ghRepo} onChange={(e) => setGhRepo(e.target.value)} />
           </div>
         )}
 
@@ -345,9 +338,9 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
 
       {/* Column mapping (CSV only) */}
       {source === 'csv' && csvHeaders.length > 0 && (
-        <div className="space-y-2 rounded-lg border border-border bg-card p-4">
+        <div className="border-border bg-card space-y-2 rounded-lg border p-4">
           <div className="text-sm font-medium">Column mapping</div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Pick the CSV column that backs each TaskNebula field. Leave blank to skip.
           </p>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -359,10 +352,8 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
                 <select
                   id={`map-${field}`}
                   value={columns[field] ?? ''}
-                  onChange={(e) =>
-                    setColumns((c) => ({ ...c, [field]: e.target.value }))
-                  }
-                  className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm"
+                  onChange={(e) => setColumns((c) => ({ ...c, [field]: e.target.value }))}
+                  className="border-border bg-background w-full rounded border px-2 py-1.5 text-sm"
                 >
                   <option value="">— none —</option>
                   {csvHeaders.map((h) => (
@@ -379,7 +370,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
 
       {/* Preview */}
       {preview && preview.length > 0 && (
-        <div className="space-y-2 rounded-lg border border-border bg-card p-4">
+        <div className="border-border bg-card space-y-2 rounded-lg border p-4">
           <div className="flex items-center justify-between">
             <div className="text-sm font-medium">
               Preview ({preview.length} of {previewTotal})
@@ -390,7 +381,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
-              <thead className="text-left text-muted-foreground">
+              <thead className="text-muted-foreground text-left">
                 <tr>
                   <th className="py-1 pr-2">Key</th>
                   <th className="py-1 pr-2">Title</th>
@@ -401,7 +392,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
               </thead>
               <tbody>
                 {preview.map((r) => (
-                  <tr key={r.key} className="border-t border-border/60">
+                  <tr key={r.key} className="border-border/60 border-t">
                     <td className="py-1 pr-2 font-mono text-[11px]">{r.key}</td>
                     <td className="py-1 pr-2">{r.title}</td>
                     <td className="py-1 pr-2">{r.status ?? '—'}</td>
@@ -417,7 +408,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
 
       {/* Progress */}
       {jobStatus && (
-        <div className="space-y-2 rounded-lg border border-border bg-card p-4">
+        <div className="border-border bg-card space-y-2 rounded-lg border p-4">
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium">
               {jobStatus.status === 'completed'
@@ -430,9 +421,9 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
               {jobStatus.processed} / {jobStatus.total}
             </span>
           </div>
-          <div className="h-2 w-full overflow-hidden rounded bg-muted">
+          <div className="bg-muted h-2 w-full overflow-hidden rounded">
             <div
-              className="h-full bg-foreground transition-all"
+              className="bg-foreground h-full transition-all"
               style={{
                 width:
                   jobStatus.total > 0
@@ -442,10 +433,8 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
             />
           </div>
           {jobStatus.errors.length > 0 && (
-            <div className="rounded border border-destructive/40 bg-destructive/5 p-2 text-xs text-destructive">
-              <div className="mb-1 font-medium">
-                {jobStatus.errors.length} record(s) failed:
-              </div>
+            <div className="border-destructive/40 bg-destructive/5 text-destructive rounded border p-2 text-xs">
+              <div className="mb-1 font-medium">{jobStatus.errors.length} record(s) failed:</div>
               <ul className="space-y-0.5">
                 {jobStatus.errors.slice(0, 5).map((e, i) => (
                   <li key={i}>
@@ -459,7 +448,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
       )}
 
       {error && (
-        <div className="rounded border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+        <div className="border-destructive/40 bg-destructive/5 text-destructive rounded border p-3 text-sm">
           {error}
         </div>
       )}

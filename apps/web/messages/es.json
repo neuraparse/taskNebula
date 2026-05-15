@@ -61,7 +61,12 @@
     "continue_with_google": "Continuar con Google",
     "or_continue_with_email": "O continúa con tu correo",
     "invalid_credentials": "Correo o contraseña no válidos",
-    "generic_error": "Se produjo un error. Inténtalo de nuevo."
+    "generic_error": "Se produjo un error. Inténtalo de nuevo.",
+    "banner_email_verified": "Correo verificado. Inicia sesión para continuar.",
+    "banner_password_reset": "Contraseña actualizada. Inicia sesión con tu nueva contraseña.",
+    "banner_incorrect_credentials": "Correo o contraseña incorrectos.",
+    "banner_verification_invalid": "Ese enlace de verificación ya no es válido.",
+    "banner_generic_signin_error": "Algo salió mal al iniciar sesión."
   },
   "common": {
     "loading": "Cargando…",

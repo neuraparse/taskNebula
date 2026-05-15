@@ -2,12 +2,7 @@ import NextAuth from 'next-auth';
 import createIntlMiddleware from 'next-intl/middleware';
 import { NextResponse, type NextRequest } from 'next/server';
 import { authConfig } from './auth.config';
-import {
-  LOCALE_COOKIE,
-  defaultLocale,
-  isSupportedLocale,
-  locales,
-} from './lib/i18n/config';
+import { LOCALE_COOKIE, defaultLocale, isSupportedLocale, locales } from './lib/i18n/config';
 
 const { auth } = NextAuth(authConfig);
 
@@ -70,8 +65,12 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
-  // API routes never get locale handling.
-  if (pathname.startsWith('/api')) {
+  // API routes never get locale handling. Boundary check matters: a naive
+  // `startsWith('/api')` would also swallow `/api-docs`, `/api-keys`, etc.,
+  // sending them straight to the Next router without next-intl's rewrite —
+  // which then fails to match because those pages live under
+  // `[locale]/(app)/...`. Match only the actual `/api` segment.
+  if (pathname === '/api' || pathname.startsWith('/api/')) {
     return NextResponse.next();
   }
 
@@ -96,11 +95,7 @@ export default auth((req) => {
     ? pathname.slice(`/${firstSegment}`.length) || '/'
     : pathname;
 
-  if (
-    !isLoggedIn &&
-    !isPublicAuthRoute &&
-    !isUnLocalizedPath(pathWithoutLocale)
-  ) {
+  if (!isLoggedIn && !isPublicAuthRoute && !isUnLocalizedPath(pathWithoutLocale)) {
     const signInUrl = new URL('/auth/signin', request.url);
     signInUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(signInUrl);

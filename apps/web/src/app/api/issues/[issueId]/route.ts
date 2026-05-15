@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse, after } from 'next/server';
 import { z } from 'zod';
-import { getIssueById, updateIssue, deleteIssue, createActivity, createAuditLog, db, issues, workflowStatuses, workflows, projects, projectMembers, organizationMembers, users, ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from '@tasknebula/db';
+import {
+  getIssueById,
+  updateIssue,
+  deleteIssue,
+  createActivity,
+  createAuditLog,
+  db,
+  issues,
+  workflowStatuses,
+  workflows,
+  projects,
+  projectMembers,
+  organizationMembers,
+  users,
+  ROLE_DEFAULT_PERMISSIONS,
+  type ProjectRole,
+} from '@tasknebula/db';
 import { auth } from '@/auth';
 import { eq, and } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
@@ -13,7 +29,15 @@ import { withValidation } from '@/lib/api-validation';
 // `@/lib/validation/common` once legacy ids are migrated.
 const issueParamsSchema = z.object({ issueId: z.string().min(1) });
 
-type IssueAction = 'view' | 'edit' | 'delete' | 'assign' | 'transition' | 'schedule' | 'close' | 'reopen';
+type IssueAction =
+  | 'view'
+  | 'edit'
+  | 'delete'
+  | 'assign'
+  | 'transition'
+  | 'schedule'
+  | 'close'
+  | 'reopen';
 
 // Granular permission check helper for issues
 async function checkIssuePermission(
@@ -68,12 +92,7 @@ async function checkIssuePermission(
   const [projectMember] = await db
     .select()
     .from(projectMembers)
-    .where(
-      and(
-        eq(projectMembers.userId, userId),
-        eq(projectMembers.projectId, projectId)
-      )
-    )
+    .where(and(eq(projectMembers.userId, userId), eq(projectMembers.projectId, projectId)))
     .limit(1);
 
   if (!projectMember) {
@@ -84,7 +103,8 @@ async function checkIssuePermission(
   }
 
   // Get role defaults
-  const roleDefaults = ROLE_DEFAULT_PERMISSIONS[projectMember.role as ProjectRole] || ROLE_DEFAULT_PERMISSIONS.viewer;
+  const roleDefaults =
+    ROLE_DEFAULT_PERMISSIONS[projectMember.role as ProjectRole] || ROLE_DEFAULT_PERMISSIONS.viewer;
   const toBool = (val: string | null | undefined): boolean => val === 'true';
   const isOwnIssue = issueReporterId === userId;
 
@@ -108,7 +128,10 @@ async function checkIssuePermission(
       if (toBool(projectMember.canDeleteIssues) || roleDefaults.canDeleteIssues) {
         return { allowed: true };
       }
-      if (isOwnIssue && (toBool(projectMember.canDeleteOwnIssues) || roleDefaults.canDeleteOwnIssues)) {
+      if (
+        isOwnIssue &&
+        (toBool(projectMember.canDeleteOwnIssues) || roleDefaults.canDeleteOwnIssues)
+      ) {
         return { allowed: true };
       }
       return { allowed: false, reason: 'No permission to delete issues' };
@@ -161,6 +184,13 @@ const updateIssueSchema = z.object({
   epicId: z.string().nullable().optional(),
   parentId: z.string().nullable().optional(),
   estimate: z.number().nullable().optional(),
+  // Time-tracking estimate (in hours) and its provenance — `manual` when the
+  // user typed it, `ai_suggest` when the AI estimator wrote it. The
+  // TimeTrackingPanel posts both fields together; without them in the
+  // schema, Zod silently drops the keys and the panel's "Save estimate"
+  // button becomes a no-op.
+  estimateHours: z.number().nullable().optional(),
+  estimateSource: z.enum(['manual', 'ai_suggest']).nullable().optional(),
   dueDate: z.string().datetime().nullable().optional(),
   customFields: z.record(z.any()).optional(),
 });
@@ -229,20 +259,30 @@ export const PATCH = withValidation({
     const permissionChecks: IssueAction[] = [];
 
     // Basic edit permission for title, description, priority, labels, estimate, dueDate
-    if (validatedData.title || validatedData.description !== undefined ||
-        validatedData.priority || validatedData.labels ||
-        validatedData.estimate !== undefined || validatedData.dueDate !== undefined) {
+    if (
+      validatedData.title ||
+      validatedData.description !== undefined ||
+      validatedData.priority ||
+      validatedData.labels ||
+      validatedData.estimate !== undefined ||
+      validatedData.dueDate !== undefined
+    ) {
       permissionChecks.push('edit');
     }
 
     // Assign permission for assignee changes
-    if (validatedData.assigneeId !== undefined && validatedData.assigneeId !== currentIssue.assigneeId) {
+    if (
+      validatedData.assigneeId !== undefined &&
+      validatedData.assigneeId !== currentIssue.assigneeId
+    ) {
       permissionChecks.push('assign');
     }
 
     // Transition permission for status changes
-    if ((validatedData.status || validatedData.statusId) &&
-        validatedData.statusId !== currentIssue.statusId) {
+    if (
+      (validatedData.status || validatedData.statusId) &&
+      validatedData.statusId !== currentIssue.statusId
+    ) {
       permissionChecks.push('transition');
     }
 
@@ -294,7 +334,7 @@ export const PATCH = withValidation({
         .where(eq(workflowStatuses.workflowId, workflow.id));
 
       const matchingStatuses = statusResults
-        .filter(s => s.category === validatedData.status)
+        .filter((s) => s.category === validatedData.status)
         .sort((a, b) => a.position - b.position);
 
       const firstMatching = matchingStatuses[0];
@@ -368,7 +408,10 @@ export const PATCH = withValidation({
       );
     }
 
-    if (updateData.description !== undefined && updateData.description !== currentIssue.description) {
+    if (
+      updateData.description !== undefined &&
+      updateData.description !== currentIssue.description
+    ) {
       activityPromises.push(
         createActivity({
           issueId,
@@ -422,7 +465,11 @@ export const PATCH = withValidation({
 
     after(async () => {
       if (Object.keys(changesSnapshot).length > 0) {
-        let action: 'issue.status_changed' | 'issue.assigned' | 'issue.priority_changed' | 'issue.updated' = 'issue.updated';
+        let action:
+          | 'issue.status_changed'
+          | 'issue.assigned'
+          | 'issue.priority_changed'
+          | 'issue.updated' = 'issue.updated';
         if (changesSnapshot.status) {
           action = 'issue.status_changed';
         } else if (changesSnapshot.assigneeId) {
@@ -505,11 +552,9 @@ export const PATCH = withValidation({
       }
     }
 
-    const statusChanged =
-      !!updateData.statusId && updateData.statusId !== currentIssue.statusId;
+    const statusChanged = !!updateData.statusId && updateData.statusId !== currentIssue.statusId;
     const assigneeChanged =
-      updateData.assigneeId !== undefined &&
-      updateData.assigneeId !== currentIssue.assigneeId;
+      updateData.assigneeId !== undefined && updateData.assigneeId !== currentIssue.assigneeId;
 
     // If status transitioned, look up the new status metadata so rule
     // conditions can match on name/category (nice-to-have per spec).
@@ -638,4 +683,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Failed to delete issue' }, { status: 500 });
   }
 }
-

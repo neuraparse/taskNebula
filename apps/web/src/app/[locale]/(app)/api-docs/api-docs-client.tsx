@@ -13,9 +13,7 @@ import 'swagger-ui-react/swagger-ui.css';
 
 const SwaggerUI = dynamic(() => import('swagger-ui-react'), {
   ssr: false,
-  loading: () => (
-    <div className="p-6 text-sm text-muted-foreground">Loading API reference…</div>
-  ),
+  loading: () => <div className="text-muted-foreground p-6 text-sm">Loading API reference…</div>,
 });
 
 export function ApiDocsClient({ specUrl }: { specUrl: string }) {

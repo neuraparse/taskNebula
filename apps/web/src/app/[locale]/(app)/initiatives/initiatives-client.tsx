@@ -69,29 +69,25 @@ function InitiativeRow({ node, depth }: { node: InitiativeNode; depth: number })
   });
 
   return (
-    <div className="border-b border-border last:border-b-0">
+    <div className="border-border border-b last:border-b-0">
       <div
-        className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-accent/40"
+        className="hover:bg-accent/40 flex items-center gap-3 px-3 py-2.5 transition-colors"
         style={{ paddingLeft: `${depth * 20 + 12}px` }}
       >
         <button
           type="button"
           aria-label={expanded ? 'Collapse' : 'Expand'}
           onClick={() => setExpanded((v) => !v)}
-          className={cn('h-4 w-4 shrink-0 text-muted-foreground', !hasChildren && 'invisible')}
+          className={cn('text-muted-foreground h-4 w-4 shrink-0', !hasChildren && 'invisible')}
         >
-          {expanded ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
+          {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </button>
 
-        <Target className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <Target className="text-muted-foreground h-4 w-4 shrink-0" />
 
         <Link
           href={`/initiatives/${node.id}`}
-          className="min-w-0 flex-1 truncate text-sm font-medium text-foreground hover:text-primary"
+          className="text-foreground hover:text-primary min-w-0 flex-1 truncate text-sm font-medium"
         >
           {node.name}
         </Link>
@@ -101,10 +97,10 @@ function InitiativeRow({ node, depth }: { node: InitiativeNode; depth: number })
         <div className="w-40 shrink-0">
           <Progress value={rollup?.percent ?? 0} className="h-2" />
         </div>
-        <div className="w-12 shrink-0 text-right font-mono text-xs text-muted-foreground tabular-nums">
+        <div className="text-muted-foreground w-12 shrink-0 text-right font-mono text-xs tabular-nums">
           {rollup ? `${rollup.percent}%` : '—'}
         </div>
-        <div className="w-24 shrink-0 text-right text-xs text-muted-foreground">
+        <div className="text-muted-foreground w-24 shrink-0 text-right text-xs">
           {node.targetDate ?? '—'}
         </div>
       </div>
@@ -131,15 +127,15 @@ export function InitiativesClient() {
   });
 
   return (
-    <div className="flex h-full flex-col animate-fade-in">
-      <div className="border-b border-border bg-background px-6 py-5">
+    <div className="animate-fade-in flex h-full flex-col">
+      <div className="border-border bg-background border-b px-6 py-5">
         <div className="space-y-1">
           <span className="kicker">Workspace</span>
           <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-            <Layers3 className="h-5 w-5 text-muted-foreground" />
+            <Layers3 className="text-muted-foreground h-5 w-5" />
             Initiatives
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Multi-project workstreams. Initiatives can have sub-initiatives (up to 5 levels) and
             roll up progress from every linked project.
           </p>
@@ -153,17 +149,17 @@ export function InitiativesClient() {
           </CardHeader>
           <CardContent className="p-0">
             {isLoading ? (
-              <div className="flex items-center justify-center py-12 text-muted-foreground">
+              <div className="text-muted-foreground flex items-center justify-center py-12">
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Loading initiatives...
               </div>
             ) : !data?.initiatives || data.initiatives.length === 0 ? (
-              <div className="px-6 py-12 text-center text-sm text-muted-foreground">
+              <div className="text-muted-foreground px-6 py-12 text-center text-sm">
                 No initiatives yet. Create one via the API to get started.
               </div>
             ) : (
               <div>
-                <div className="flex items-center gap-3 border-b border-border bg-surface px-3 py-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                <div className="border-border bg-surface text-muted-foreground flex items-center gap-3 border-b px-3 py-2 text-[10px] font-medium uppercase tracking-wider">
                   <div className="h-4 w-4 shrink-0" />
                   <div className="h-4 w-4 shrink-0" />
                   <div className="flex-1">Name</div>

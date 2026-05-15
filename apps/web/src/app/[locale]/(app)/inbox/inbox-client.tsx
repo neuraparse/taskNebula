@@ -82,9 +82,11 @@ function InboxRow({
 }) {
   const [snoozeOpen, setSnoozeOpen] = useState(false);
   const actorName =
-    item.actor?.name || item.actor?.email?.split('@')[0] || actorTypeLabel(item.actorType) || 'Someone';
-  const isSnoozed =
-    !!item.snoozedUntil && new Date(item.snoozedUntil).getTime() > Date.now();
+    item.actor?.name ||
+    item.actor?.email?.split('@')[0] ||
+    actorTypeLabel(item.actorType) ||
+    'Someone';
+  const isSnoozed = !!item.snoozedUntil && new Date(item.snoozedUntil).getTime() > Date.now();
   const issueHref = item.issue ? `/issues/${item.issue.id}` : null;
 
   const handleSnoozeClick = (offsetMs: number) => {
@@ -96,7 +98,7 @@ function InboxRow({
   return (
     <div
       className={cn(
-        'group relative flex items-start gap-3 border-b border-border px-4 py-3 transition-colors',
+        'border-border group relative flex items-start gap-3 border-b px-4 py-3 transition-colors',
         !item.isRead && 'bg-primary/[0.03]',
         isSnoozed && 'opacity-60'
       )}
@@ -104,10 +106,7 @@ function InboxRow({
       data-unread={!item.isRead || undefined}
     >
       {!item.isRead && (
-        <span
-          aria-hidden="true"
-          className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary"
-        />
+        <span aria-hidden="true" className="bg-primary absolute bottom-0 left-0 top-0 w-[2px]" />
       )}
 
       <div className="shrink-0">
@@ -124,7 +123,7 @@ function InboxRow({
             <Zap className="h-4 w-4" />
           </span>
         ) : (
-          <Avatar className="h-8 w-8 ring-1 ring-border">
+          <Avatar className="ring-border h-8 w-8 ring-1">
             <AvatarImage src={item.actor?.image || undefined} alt="" />
             <AvatarFallback className="text-[10px] font-semibold">
               {getInitial(item.actor?.name, item.actor?.email)}
@@ -135,37 +134,37 @@ function InboxRow({
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 text-sm">
-          <span className="font-medium text-foreground">{actorName}</span>
+          <span className="text-foreground font-medium">{actorName}</span>
           {item.project && (
-            <span className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+            <span className="bg-muted text-muted-foreground rounded-sm px-1.5 py-0.5 font-mono text-[10px]">
               {item.project.key}
             </span>
           )}
           {item.issue && (
             <Link
               href={issueHref ?? '#'}
-              className="font-mono text-[11px] text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground font-mono text-[11px]"
             >
               {item.issue.key}
             </Link>
           )}
-          <span className="ml-auto text-[11px] text-muted-foreground">
+          <span className="text-muted-foreground ml-auto text-[11px]">
             {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
           </span>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{item.title}</p>
+        <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">{item.title}</p>
         {item.message && item.message !== item.title && (
-          <p className="mt-0.5 text-xs text-muted-foreground/80 line-clamp-2">{item.message}</p>
+          <p className="text-muted-foreground/80 mt-0.5 line-clamp-2 text-xs">{item.message}</p>
         )}
         {isSnoozed && (
-          <p className="mt-1 inline-flex items-center gap-1 rounded-sm bg-muted/60 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+          <p className="bg-muted/60 text-muted-foreground mt-1 inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[10px]">
             <Clock className="h-3 w-3" />
             Snoozed until {new Date(item.snoozedUntil!).toLocaleString()}
           </p>
         )}
       </div>
 
-      <div className="flex shrink-0 flex-col items-end gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+      <div className="flex shrink-0 flex-col items-end gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
         {!item.isRead && (
           <Button
             size="sm"
@@ -195,7 +194,7 @@ function InboxRow({
           {snoozeOpen && (
             <div
               role="menu"
-              className="absolute right-0 z-10 mt-1 w-36 rounded-md border border-border bg-popover p-1 shadow-md"
+              className="border-border bg-popover absolute right-0 z-10 mt-1 w-36 rounded-md border p-1 shadow-md"
             >
               {SNOOZE_PRESETS.map((preset) => (
                 <button
@@ -203,14 +202,14 @@ function InboxRow({
                   type="button"
                   role="menuitem"
                   onClick={() => handleSnoozeClick(preset.offsetMs)}
-                  className="block w-full rounded-sm px-2 py-1 text-left text-xs hover:bg-accent"
+                  className="hover:bg-accent block w-full rounded-sm px-2 py-1 text-left text-xs"
                 >
                   {preset.label}
                 </button>
               ))}
               {isSnoozed && (
                 <>
-                  <div className="my-1 h-px bg-border" />
+                  <div className="bg-border my-1 h-px" />
                   <button
                     type="button"
                     role="menuitem"
@@ -218,7 +217,7 @@ function InboxRow({
                       onSnooze(item.id, null);
                       setSnoozeOpen(false);
                     }}
-                    className="block w-full rounded-sm px-2 py-1 text-left text-xs hover:bg-accent"
+                    className="hover:bg-accent block w-full rounded-sm px-2 py-1 text-left text-xs"
                   >
                     Unsnooze
                   </button>
@@ -258,13 +257,13 @@ export function InboxPageClient() {
 
   return (
     <div className="mx-auto flex h-full max-w-4xl flex-col">
-      <div className="flex items-center justify-between border-b border-border px-6 py-4">
+      <div className="border-border flex items-center justify-between border-b px-6 py-4">
         <div>
-          <h1 className="flex items-center gap-2 text-xl font-semibold text-foreground">
+          <h1 className="text-foreground flex items-center gap-2 text-xl font-semibold">
             <InboxIcon className="h-5 w-5" />
             Inbox
           </h1>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Mentions, agent runs, webhooks and system events — unified.
           </p>
         </div>
@@ -279,7 +278,11 @@ export function InboxPageClient() {
         </Button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5 border-b border-border px-6 py-3" role="toolbar" aria-label="Filter chips">
+      <div
+        className="border-border flex flex-wrap items-center gap-1.5 border-b px-6 py-3"
+        role="toolbar"
+        aria-label="Filter chips"
+      >
         {ACTOR_CHIPS.map((chip) => {
           const Icon = chip.icon;
           const active = actorChip === chip.key;
@@ -293,7 +296,7 @@ export function InboxPageClient() {
               className={cn(
                 'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors',
                 active
-                  ? 'bg-primary/10 text-primary ring-1 ring-primary/30'
+                  ? 'bg-primary/10 text-primary ring-primary/30 ring-1'
                   : 'bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground'
               )}
               data-chip={chip.key}
@@ -304,7 +307,7 @@ export function InboxPageClient() {
             </button>
           );
         })}
-        <span className="mx-2 h-4 w-px bg-border" aria-hidden="true" />
+        <span className="bg-border mx-2 h-4 w-px" aria-hidden="true" />
         {TYPE_CHIPS.map((chip) => {
           const active = typeChip === chip.key;
           return (
@@ -317,7 +320,7 @@ export function InboxPageClient() {
               className={cn(
                 'rounded-full px-2.5 py-1 text-xs transition-colors',
                 active
-                  ? 'bg-primary/10 text-primary ring-1 ring-primary/30'
+                  ? 'bg-primary/10 text-primary ring-primary/30 ring-1'
                   : 'bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground'
               )}
               data-chip={`type-${chip.key}`}
@@ -327,7 +330,7 @@ export function InboxPageClient() {
             </button>
           );
         })}
-        <span className="mx-2 h-4 w-px bg-border" aria-hidden="true" />
+        <span className="bg-border mx-2 h-4 w-px" aria-hidden="true" />
         <button
           type="button"
           role="checkbox"
@@ -336,7 +339,7 @@ export function InboxPageClient() {
           className={cn(
             'rounded-full px-2.5 py-1 text-xs transition-colors',
             showUnreadOnly
-              ? 'bg-primary/10 text-primary ring-1 ring-primary/30'
+              ? 'bg-primary/10 text-primary ring-primary/30 ring-1'
               : 'bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground'
           )}
         >
@@ -350,7 +353,7 @@ export function InboxPageClient() {
           className={cn(
             'rounded-full px-2.5 py-1 text-xs transition-colors',
             showSnoozed
-              ? 'bg-primary/10 text-primary ring-1 ring-primary/30'
+              ? 'bg-primary/10 text-primary ring-primary/30 ring-1'
               : 'bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground'
           )}
         >
@@ -360,20 +363,21 @@ export function InboxPageClient() {
 
       <div className="flex-1 overflow-auto">
         {isLoading ? (
-          <div className="flex h-full items-center justify-center py-20 text-muted-foreground">
+          <div className="text-muted-foreground flex h-full items-center justify-center py-20">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Loading inbox…
           </div>
         ) : isError ? (
-          <div className="flex h-full items-center justify-center py-20 text-destructive">
+          <div className="text-destructive flex h-full items-center justify-center py-20">
             Failed to load inbox. Refresh to try again.
           </div>
         ) : items.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 py-20 text-center">
-            <Sparkles className="h-6 w-6 text-muted-foreground" />
-            <p className="text-sm font-medium text-foreground">Nothing here</p>
-            <p className="max-w-xs text-xs text-muted-foreground">
-              Adjust the filter chips above, or check back later — agent and webhook activity will land here as it happens.
+            <Sparkles className="text-muted-foreground h-6 w-6" />
+            <p className="text-foreground text-sm font-medium">Nothing here</p>
+            <p className="text-muted-foreground max-w-xs text-xs">
+              Adjust the filter chips above, or check back later — agent and webhook activity will
+              land here as it happens.
             </p>
           </div>
         ) : (

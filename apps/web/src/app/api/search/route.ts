@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/auth';
-import { db, issues, users, workflowStatuses, projects, sprints, searchHistory, parseJQL } from '@tasknebula/db';
+import {
+  db,
+  issues,
+  users,
+  workflowStatuses,
+  projects,
+  sprints,
+  searchHistory,
+  organizationMembers,
+  projectMembers,
+  parseJQL,
+} from '@tasknebula/db';
 import { eq, and, or, inArray, gte, lte, like, desc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { withValidation } from '@/lib/api-validation';
@@ -25,9 +36,9 @@ const searchQuerySchema = z.object({
 
 /**
  * Advanced Search API
- * 
+ *
  * GET /api/search?q=assignee%20%3D%20me%20AND%20status%20%3D%20%22In%20Progress%22&organizationId=xxx&projectId=xxx&saveHistory=true
- * 
+ *
  * Query parameters:
  * - q: JQL query string (required)
  * - organizationId: Organization ID (required)
@@ -39,10 +50,7 @@ const searchQuerySchema = z.object({
 // Migrated to withValidation (FEAT-29). Query params are validated and
 // coerced by the wrapper, so manual `parseInt(... || '100')` and presence
 // checks are no longer needed here.
-export const GET = withValidation({ query: searchQuerySchema })(async (
-  request,
-  { query: q }
-) => {
+export const GET = withValidation({ query: searchQuerySchema })(async (request, { query: q }) => {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -51,13 +59,47 @@ export const GET = withValidation({ query: searchQuerySchema })(async (
 
     const { q: query, organizationId, projectId, saveHistory, limit, offset } = q;
 
+    // Membership guard — the caller passes `organizationId` (and optionally
+    // `projectId`) as a query parameter, so without a server-side check
+    // anyone who can guess an org slug can probe its issue catalogue. Refuse
+    // unless the user is currently an org member, and (if narrowing to a
+    // project) a member of that project too.
+    const [orgMember] = await db
+      .select({ role: organizationMembers.role })
+      .from(organizationMembers)
+      .where(
+        and(
+          eq(organizationMembers.userId, session.user.id),
+          eq(organizationMembers.organizationId, organizationId)
+        )
+      )
+      .limit(1);
+    if (!orgMember) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    if (projectId) {
+      const [projMember] = await db
+        .select({ role: projectMembers.role })
+        .from(projectMembers)
+        .where(
+          and(eq(projectMembers.userId, session.user.id), eq(projectMembers.projectId, projectId))
+        )
+        .limit(1);
+      if (!projMember) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
+
     // Parse JQL query
     const parseResult = parseJQL(query);
     if (!parseResult.isValid) {
-      return NextResponse.json({ 
-        error: 'Invalid query syntax', 
-        details: parseResult.error 
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: 'Invalid query syntax',
+          details: parseResult.error,
+        },
+        { status: 400 }
+      );
     }
 
     const { criteria } = parseResult;
@@ -206,10 +248,6 @@ export const GET = withValidation({ query: searchQuerySchema })(async (
     });
   } catch (error) {
     console.error('Search error:', error);
-    return NextResponse.json(
-      { error: 'Failed to execute search' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to execute search' }, { status: 500 });
   }
 });
-

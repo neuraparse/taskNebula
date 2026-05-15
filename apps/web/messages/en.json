@@ -61,7 +61,12 @@
     "continue_with_google": "Continue with Google",
     "or_continue_with_email": "Or continue with email",
     "invalid_credentials": "Invalid email or password",
-    "generic_error": "An error occurred. Please try again."
+    "generic_error": "An error occurred. Please try again.",
+    "banner_email_verified": "Email verified. Sign in to continue.",
+    "banner_password_reset": "Password updated. Sign in with your new password.",
+    "banner_incorrect_credentials": "Incorrect email or password.",
+    "banner_verification_invalid": "That verification link is no longer valid.",
+    "banner_generic_signin_error": "Something went wrong while signing in."
   },
   "common": {
     "loading": "Loading…",

@@ -61,7 +61,12 @@
     "continue_with_google": "Google ile devam et",
     "or_continue_with_email": "Ya da e-posta ile devam et",
     "invalid_credentials": "Geçersiz e-posta veya parola",
-    "generic_error": "Bir hata oluştu. Lütfen tekrar dene."
+    "generic_error": "Bir hata oluştu. Lütfen tekrar dene.",
+    "banner_email_verified": "E-posta doğrulandı. Devam etmek için giriş yap.",
+    "banner_password_reset": "Parola güncellendi. Yeni parolanla giriş yap.",
+    "banner_incorrect_credentials": "E-posta veya parola hatalı.",
+    "banner_verification_invalid": "Doğrulama bağlantısı artık geçerli değil.",
+    "banner_generic_signin_error": "Giriş sırasında bir şeyler ters gitti."
   },
   "common": {
     "loading": "Yükleniyor…",

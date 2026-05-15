@@ -61,7 +61,12 @@
     "continue_with_google": "Mit Google fortfahren",
     "or_continue_with_email": "Oder mit E-Mail fortfahren",
     "invalid_credentials": "Ungültige E-Mail oder Passwort",
-    "generic_error": "Ein Fehler ist aufgetreten. Bitte erneut versuchen."
+    "generic_error": "Ein Fehler ist aufgetreten. Bitte erneut versuchen.",
+    "banner_email_verified": "E-Mail bestätigt. Bitte anmelden, um fortzufahren.",
+    "banner_password_reset": "Passwort aktualisiert. Bitte mit dem neuen Passwort anmelden.",
+    "banner_incorrect_credentials": "E-Mail oder Passwort ist falsch.",
+    "banner_verification_invalid": "Dieser Bestätigungslink ist nicht mehr gültig.",
+    "banner_generic_signin_error": "Beim Anmelden ist ein Fehler aufgetreten."
   },
   "common": {
     "loading": "Wird geladen…",

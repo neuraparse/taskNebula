@@ -36,10 +36,9 @@ export default async function ImportSettingsPage() {
     <div className="mx-auto w-full max-w-5xl px-6 py-8 lg:px-8">
       <header className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight">Import issues</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          Bring work into TaskNebula from a CSV file, Linear, Jira, or GitHub
-          Issues. CSV is fully supported today; the other sources are in
-          preview and may not import every field.
+        <p className="text-muted-foreground mt-1.5 text-sm">
+          Bring work into TaskNebula from a CSV file, Linear, Jira, or GitHub Issues. CSV is fully
+          supported today; the other sources are in preview and may not import every field.
         </p>
       </header>
       <ImportWizard workspaceId={primaryOrg.organizationId} />

@@ -30,12 +30,10 @@ export default async function SsoSettingsPage() {
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-8 lg:px-8">
       <header className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Single Sign-On & SCIM
-        </h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          Configure SAML 2.0 with your identity provider and issue SCIM 2.0
-          provisioning tokens for automated user lifecycle management.
+        <h1 className="text-2xl font-semibold tracking-tight">Single Sign-On & SCIM</h1>
+        <p className="text-muted-foreground mt-1.5 text-sm">
+          Configure SAML 2.0 with your identity provider and issue SCIM 2.0 provisioning tokens for
+          automated user lifecycle management.
         </p>
       </header>
       <SsoSettingsClient organizationId={primaryOrg.organizationId} />

@@ -74,10 +74,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useProjects } from '@/lib/hooks/use-projects';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useLiveCalls } from '@/lib/hooks/use-chat';
-import {
-  useOrganizationPermissions,
-  type Permission,
-} from '@/lib/hooks/use-permissions';
+import { useOrganizationPermissions, type Permission } from '@/lib/hooks/use-permissions';
 import { useGlobalVoice } from '@/components/chat/global-voice-provider';
 import {
   areMicrophoneDeviceLabelsVisible,
@@ -98,50 +95,173 @@ import { useStoredVoicePreferences } from '@/lib/chat/voice-preferences';
 // fields below are kept as English fallback labels so this file still
 // compiles in isolation, but `i18nKey` is the source of truth at render
 // time (see `useTranslations('nav')` inside AppSidebar).
-const MY_ISSUES_VIEWS: Array<{ value: string; label: string; i18nKey: string; icon: typeof Inbox }> = [
+const MY_ISSUES_VIEWS: Array<{
+  value: string;
+  label: string;
+  i18nKey: string;
+  icon: typeof Inbox;
+}> = [
   { value: 'assigned', label: 'Assigned to me', i18nKey: 'assigned_to_me', icon: Inbox },
   { value: 'created', label: 'Created by me', i18nKey: 'created_by_me', icon: UserPlus },
   { value: 'subscribed', label: 'Subscribed', i18nKey: 'subscribed', icon: Eye },
   { value: 'mentioned', label: 'Mentioned', i18nKey: 'mentioned', icon: Sparkles },
 ];
 
-const DASHBOARD_LINKS: Array<{ href: string; label: string; i18nKey: string; icon: typeof Home }> = [
-  { href: '/dashboard', label: 'Overview', i18nKey: 'overview', icon: Home },
-  { href: '/drafts', label: 'Drafts', i18nKey: 'drafts', icon: FileText },
-  { href: '/templates', label: 'Templates', i18nKey: 'templates', icon: Pin },
-];
+const DASHBOARD_LINKS: Array<{ href: string; label: string; i18nKey: string; icon: typeof Home }> =
+  [
+    { href: '/dashboard', label: 'Overview', i18nKey: 'overview', icon: Home },
+    { href: '/drafts', label: 'Drafts', i18nKey: 'drafts', icon: FileText },
+    { href: '/templates', label: 'Templates', i18nKey: 'templates', icon: Pin },
+  ];
 
 const TEAM_LINKS: NavLink[] = [
   { href: '/team', label: 'Members', i18nKey: 'members', icon: Users },
-  { href: '/team?tab=teamspaces', label: 'Teamspaces', i18nKey: 'teamspaces', icon: Building2, requiredPermission: 'team:view' },
-  { href: '/team?tab=invites', label: 'Pending invites', i18nKey: 'pending_invites', icon: UserPlus, requiredPermission: 'member:view' },
+  {
+    href: '/team?tab=teamspaces',
+    label: 'Teamspaces',
+    i18nKey: 'teamspaces',
+    icon: Building2,
+    requiredPermission: 'team:view',
+  },
+  {
+    href: '/team?tab=invites',
+    label: 'Pending invites',
+    i18nKey: 'pending_invites',
+    icon: UserPlus,
+    requiredPermission: 'member:view',
+  },
 ];
 
 // TODO(i18n): translate the remaining settings + admin labels. Tracked in
 // apps/web/src/lib/i18n/MIGRATION.md.
 const SETTINGS_LINKS: NavLink[] = [
-  { href: '/settings?tab=organization', label: 'Organization', icon: Building2, match: { path: '/settings', tab: 'organization' }, requiredPermission: 'org:settings' },
-  { href: '/settings?tab=members', label: 'Members', i18nKey: 'members', icon: Users, match: { path: '/settings', tab: 'members' }, requiredPermission: 'member:view' },
-  { href: '/settings?tab=api-keys', label: 'API Keys', icon: KeyRound, match: { path: '/settings', tab: 'api-keys' }, requiredPermission: 'api_key:view' },
-  { href: '/settings?tab=webhooks', label: 'Webhooks', icon: Webhook, match: { path: '/settings', tab: 'webhooks' }, requiredPermission: 'webhook:view' },
-  { href: '/settings/integrations', label: 'Integrations', icon: Plug, match: { path: '/settings/integrations' }, requiredPermission: 'org:settings' },
-  { href: '/settings/security/audit-log-streaming', label: 'Audit streaming', icon: Radio, match: { path: '/settings/security/audit-log-streaming' }, requiredPermission: 'org:settings' },
-  { href: '/settings?tab=ai-agents', label: 'AI & Agents', icon: Bot, match: { path: '/settings', tab: 'ai-agents' }, requiredPermission: 'org:settings' },
-  { href: '/settings?tab=communications', label: 'Communications', icon: MessageSquareText, match: { path: '/settings', tab: 'communications' }, requiredPermission: 'org:settings' },
-  { href: '/settings?tab=notifications', label: 'Notifications', icon: Bell, match: { path: '/settings', tab: 'notifications' } },
-  { href: '/settings?tab=appearance', label: 'Appearance', icon: Palette, match: { path: '/settings', tab: 'appearance' } },
-  { href: '/settings?tab=audit-log', label: 'Activity', icon: ScrollText, match: { path: '/settings', tab: 'audit-log' }, requiredPermission: 'org:manage' },
+  {
+    href: '/settings?tab=organization',
+    label: 'Organization',
+    icon: Building2,
+    match: { path: '/settings', tab: 'organization' },
+    requiredPermission: 'org:settings',
+  },
+  {
+    href: '/settings?tab=members',
+    label: 'Members',
+    i18nKey: 'members',
+    icon: Users,
+    match: { path: '/settings', tab: 'members' },
+    requiredPermission: 'member:view',
+  },
+  {
+    href: '/settings?tab=api-keys',
+    label: 'API Keys',
+    icon: KeyRound,
+    match: { path: '/settings', tab: 'api-keys' },
+    requiredPermission: 'api_key:view',
+  },
+  {
+    href: '/settings?tab=webhooks',
+    label: 'Webhooks',
+    icon: Webhook,
+    match: { path: '/settings', tab: 'webhooks' },
+    requiredPermission: 'webhook:view',
+  },
+  {
+    href: '/settings/integrations',
+    label: 'Integrations',
+    icon: Plug,
+    match: { path: '/settings/integrations' },
+    requiredPermission: 'org:settings',
+  },
+  {
+    href: '/settings/security/audit-log-streaming',
+    label: 'Audit streaming',
+    icon: Radio,
+    match: { path: '/settings/security/audit-log-streaming' },
+    requiredPermission: 'org:settings',
+  },
+  {
+    href: '/settings?tab=ai-agents',
+    label: 'AI & Agents',
+    icon: Bot,
+    match: { path: '/settings', tab: 'ai-agents' },
+    requiredPermission: 'org:settings',
+  },
+  {
+    href: '/settings?tab=communications',
+    label: 'Communications',
+    icon: MessageSquareText,
+    match: { path: '/settings', tab: 'communications' },
+    requiredPermission: 'org:settings',
+  },
+  {
+    href: '/settings?tab=notifications',
+    label: 'Notifications',
+    icon: Bell,
+    match: { path: '/settings', tab: 'notifications' },
+  },
+  {
+    href: '/settings?tab=appearance',
+    label: 'Appearance',
+    icon: Palette,
+    match: { path: '/settings', tab: 'appearance' },
+  },
+  {
+    href: '/settings?tab=audit-log',
+    label: 'Activity',
+    icon: ScrollText,
+    match: { path: '/settings', tab: 'audit-log' },
+    requiredPermission: 'org:manage',
+  },
 ];
 
 // TODO(i18n): translate admin labels — out of scope for FEAT-34 scaffolding.
-const ADMIN_LINKS: Array<{ href: string; label: string; icon: typeof Gauge; match: { path: string; tab?: string } }> = [
-  { href: '/admin?tab=overview', label: 'Overview', icon: Gauge, match: { path: '/admin', tab: 'overview' } },
-  { href: '/admin?tab=organizations', label: 'Organizations', icon: Building2, match: { path: '/admin', tab: 'organizations' } },
-  { href: '/admin?tab=users', label: 'Users', icon: UserCog, match: { path: '/admin', tab: 'users' } },
-  { href: '/admin?tab=feature-flags', label: 'Feature flags', icon: Flag, match: { path: '/admin', tab: 'feature-flags' } },
-  { href: '/admin?tab=agents', label: 'Agent control', icon: Bot, match: { path: '/admin', tab: 'agents' } },
-  { href: '/admin?tab=realtime', label: 'Realtime health', icon: Radio, match: { path: '/admin', tab: 'realtime' } },
-  { href: '/admin?tab=audit', label: 'Audit logs', icon: Scroll, match: { path: '/admin', tab: 'audit' } },
+const ADMIN_LINKS: Array<{
+  href: string;
+  label: string;
+  icon: typeof Gauge;
+  match: { path: string; tab?: string };
+}> = [
+  {
+    href: '/admin?tab=overview',
+    label: 'Overview',
+    icon: Gauge,
+    match: { path: '/admin', tab: 'overview' },
+  },
+  {
+    href: '/admin?tab=organizations',
+    label: 'Organizations',
+    icon: Building2,
+    match: { path: '/admin', tab: 'organizations' },
+  },
+  {
+    href: '/admin?tab=users',
+    label: 'Users',
+    icon: UserCog,
+    match: { path: '/admin', tab: 'users' },
+  },
+  {
+    href: '/admin?tab=feature-flags',
+    label: 'Feature flags',
+    icon: Flag,
+    match: { path: '/admin', tab: 'feature-flags' },
+  },
+  {
+    href: '/admin?tab=agents',
+    label: 'Agent control',
+    icon: Bot,
+    match: { path: '/admin', tab: 'agents' },
+  },
+  {
+    href: '/admin?tab=realtime',
+    label: 'Realtime health',
+    icon: Radio,
+    match: { path: '/admin', tab: 'realtime' },
+  },
+  {
+    href: '/admin?tab=audit',
+    label: 'Audit logs',
+    icon: Scroll,
+    match: { path: '/admin', tab: 'audit' },
+  },
 ];
 
 type NavLink = {
@@ -160,13 +280,25 @@ const DEFAULT_TAB_BY_PATH: Record<string, string> = {
   '/admin': 'overview',
 };
 
+// Strip a leading two-letter locale segment (e.g. `/tr/dashboard` → `/dashboard`)
+// so the section/active-link checks below stay locale-agnostic. next-intl
+// rewrites every non-default-locale request into `/[locale]/...`, and the
+// default locale's URLs may or may not carry the prefix depending on cookie
+// state — comparing the raw pathname would silently break highlighting for
+// any non-English user.
+function stripLocalePrefix(pathname: string | null | undefined): string {
+  if (!pathname) return '/';
+  return pathname.replace(/^\/[a-z]{2}(?=\/|$)/, '') || '/';
+}
+
 function isNavLinkActive(
   link: NavLink,
   pathname: string | null | undefined,
   activeTab: string | null | undefined
 ): boolean {
-  if (!link.match) return pathname === link.href;
-  if (pathname !== link.match.path) return false;
+  const path = stripLocalePrefix(pathname);
+  if (!link.match) return path === link.href;
+  if (path !== link.match.path) return false;
   if (!link.match.tab) return !activeTab;
   const defaultTab = DEFAULT_TAB_BY_PATH[link.match.path];
   if (link.match.tab === defaultTab) {
@@ -176,30 +308,32 @@ function isNavLinkActive(
 }
 
 function getSectionKey(pathname: string | null | undefined): string {
-  if (!pathname) return 'dashboard';
+  const path = stripLocalePrefix(pathname);
   if (
-    pathname === '/' ||
-    pathname.startsWith('/dashboard') ||
-    pathname.startsWith('/drafts') ||
-    pathname.startsWith('/templates')
+    path === '/' ||
+    path.startsWith('/dashboard') ||
+    path.startsWith('/drafts') ||
+    path.startsWith('/templates')
   )
     return 'dashboard';
-  if (pathname.startsWith('/my-issues') || pathname.startsWith('/issues')) return 'my_issues';
-  if (pathname.startsWith('/projects')) return 'projects';
-  if (pathname.startsWith('/docs')) return 'docs';
-  if (pathname.startsWith('/team')) return 'team';
-  if (pathname.startsWith('/admin')) return 'admin';
-  if (pathname.startsWith('/settings')) return 'settings';
+  if (path.startsWith('/my-issues') || path.startsWith('/issues')) return 'my_issues';
+  if (path.startsWith('/inbox')) return 'my_issues';
+  if (path.startsWith('/initiatives')) return 'projects';
+  if (path.startsWith('/projects')) return 'projects';
+  if (path.startsWith('/docs')) return 'docs';
+  if (path.startsWith('/team')) return 'team';
+  if (path.startsWith('/admin')) return 'admin';
+  if (path.startsWith('/settings')) return 'settings';
   return 'dashboard';
 }
 
 function isHomeSectionPath(pathname: string | null | undefined): boolean {
-  if (!pathname) return false;
+  const path = stripLocalePrefix(pathname);
   return (
-    pathname === '/' ||
-    pathname === '/dashboard' ||
-    pathname.startsWith('/drafts') ||
-    pathname.startsWith('/templates')
+    path === '/' ||
+    path === '/dashboard' ||
+    path.startsWith('/drafts') ||
+    path.startsWith('/templates')
   );
 }
 
@@ -257,10 +391,9 @@ export function AppSidebar() {
 
   const isSuperAdmin = userData?.isSuperAdmin || false;
 
-  const {
-    has: hasOrgPermission,
-    isLoading: isLoadingOrgPermissions,
-  } = useOrganizationPermissions(currentOrganizationId ?? undefined);
+  const { has: hasOrgPermission, isLoading: isLoadingOrgPermissions } = useOrganizationPermissions(
+    currentOrganizationId ?? undefined
+  );
 
   const visibleSettingsLinks = useMemo(() => {
     // While loading, render the full list to avoid flicker.
@@ -277,7 +410,9 @@ export function AppSidebar() {
     );
   }, [hasOrgPermission, isLoadingOrgPermissions]);
   const pinnedCall = currentTarget
-    ? liveCalls?.find((call) => call.roomId === currentTarget.roomId && call.participantCount > 0) || null
+    ? liveCalls?.find(
+        (call) => call.roomId === currentTarget.roomId && call.participantCount > 0
+      ) || null
     : null;
   const otherActiveCalls = (liveCalls || [])
     .filter((call) => call.roomId !== currentTarget?.roomId && call.participantCount > 0)
@@ -329,337 +464,350 @@ export function AppSidebar() {
   return (
     <div className="flex h-screen">
       <AppRail />
-      <aside className="flex w-60 flex-col border-r border-border bg-card">
-      <div className="flex h-14 items-center px-4">
-        <button
-          className="flex w-full items-center justify-between rounded-md py-1.5 text-sm font-medium transition-all duration-150 ease-snap hover:bg-accent/60"
-          aria-label={tActions('switch_workspace')}
-        >
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary">
-              <TaskNebulaLogo compact className="h-5 w-5" />
-            </div>
-            <span className="font-semibold tracking-tight text-foreground">TaskNebula</span>
-          </div>
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-        </button>
-      </div>
-
-      <nav aria-label="Section" className={cn('flex-1 min-h-0', hasPageSidebar ? 'flex flex-col overflow-hidden' : 'custom-scrollbar overflow-y-auto pb-3')}>
-        <PageSidebarSlotTarget className={cn('flex min-h-0 flex-1 flex-col overflow-hidden', !hasPageSidebar && 'hidden')} />
-
-        <div className={cn('px-3', hasPageSidebar && 'hidden')}>
-        {pathname?.startsWith('/settings') || pathname?.startsWith('/admin') ? null : (
-          <div className="mb-3 mt-1 px-3">
-            <div className="kicker">{tNav(getSectionKey(pathname))}</div>
-          </div>
-        )}
-
-        {pathname?.startsWith('/my-issues') || pathname?.startsWith('/issues') ? (
-          <div className="space-y-0.5">
-            {MY_ISSUES_VIEWS.map((view) => {
-              const isActive =
-                pathname?.startsWith('/my-issues') &&
-                (searchParams?.get('view') ?? 'assigned') === view.value;
-              return (
-                <Link
-                  key={view.value}
-                  href={`/my-issues?view=${view.value}`}
-                  data-active={isActive ? 'true' : undefined}
-                  className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
-                >
-                  <view.icon className="h-4 w-4 shrink-0" />
-                  <span>{view.i18nKey ? tNav(view.i18nKey) : view.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        ) : null}
-
-        {isHomeSectionPath(pathname) ? (
-          <div className="space-y-0.5">
-            {DASHBOARD_LINKS.map((link) => {
-              const isActive =
-                link.href === pathname ||
-                (link.href === '/dashboard' && pathname === '/');
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  data-active={isActive ? 'true' : undefined}
-                  className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
-                >
-                  <link.icon className="h-4 w-4 shrink-0" />
-                  <span>{link.i18nKey ? tNav(link.i18nKey) : link.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        ) : null}
-
-        {pathname?.startsWith('/team') ? (
-          <div className="space-y-0.5">
-            {visibleTeamLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground"
-              >
-                <link.icon className="h-4 w-4 shrink-0" />
-                <span>{link.i18nKey ? tNav(link.i18nKey) : link.label}</span>
-              </Link>
-            ))}
-          </div>
-        ) : null}
-
-        {pathname?.startsWith('/settings') || pathname?.startsWith('/admin') ? (
-          <>
-            {visibleSettingsLinks.length > 0 ? (
-              <>
-                <div className="mb-1 flex items-center gap-2 px-3">
-                  <Settings className="h-3 w-3 text-muted-foreground" />
-                  <span className="kicker">{tNav('settings')}</span>
-                </div>
-                <div className="space-y-0.5">
-                  {visibleSettingsLinks.map((link) => {
-                    const isActive = isNavLinkActive(link, pathname, searchParams?.get('tab'));
-                    return (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        data-active={isActive ? 'true' : undefined}
-                        className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
-                      >
-                        <link.icon className="h-4 w-4 shrink-0" />
-                        <span>{link.i18nKey ? tNav(link.i18nKey) : link.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </>
-            ) : null}
-
-            {isSuperAdmin ? (
-              <>
-                <div className="mb-1 mt-4 flex items-center gap-2 px-3">
-                  <Shield className="h-3 w-3 text-muted-foreground" />
-                  <span className="kicker">{tNav('admin')}</span>
-                </div>
-                <div className="space-y-0.5">
-                  {ADMIN_LINKS.map((link) => {
-                    const isActive = isNavLinkActive(link, pathname, searchParams?.get('tab'));
-                    return (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        data-active={isActive ? 'true' : undefined}
-                        className="row-interactive rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
-                      >
-                        <link.icon className="h-4 w-4 shrink-0" />
-                        <span>{link.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </>
-            ) : null}
-          </>
-        ) : null}
-
-        <div hidden={!(pathname?.startsWith('/projects') || isHomeSectionPath(pathname))}>
+      <aside className="border-border bg-card flex w-60 flex-col border-r">
+        <div className="flex h-14 items-center px-4">
           <button
-            type="button"
-            onClick={() => setIsTeamspacesOpen((open) => !open)}
-            aria-expanded={isTeamspacesOpen}
-            className="mb-1 mt-4 flex w-full items-center gap-1 px-3 text-start transition-colors duration-150 hover:text-foreground"
+            className="ease-snap hover:bg-accent/60 flex w-full items-center justify-between rounded-md py-1.5 text-sm font-medium transition-all duration-150"
+            aria-label={tActions('switch_workspace')}
           >
-            {isTeamspacesOpen ? (
-              <ChevronDown className="h-3 w-3 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="h-3 w-3 text-muted-foreground" />
-            )}
-            <span className="kicker">{tNav('teamspaces')}</span>
-          </button>
-          {isTeamspacesOpen ? (
-            <div className="px-1 pb-2">
-              <TeamspaceSwitcher />
+            <div className="flex items-center gap-2.5">
+              <div className="bg-primary flex h-7 w-7 shrink-0 items-center justify-center rounded-md">
+                <TaskNebulaLogo compact className="h-5 w-5" />
+              </div>
+              <span className="text-foreground font-semibold tracking-tight">TaskNebula</span>
             </div>
-          ) : null}
+            <ChevronDown className="text-muted-foreground h-4 w-4" />
+          </button>
+        </div>
 
-          <div className="mb-1 mt-4 flex items-center justify-between px-3">
-            <button
-              type="button"
-              onClick={() => setIsProjectsOpen((open) => !open)}
-              aria-expanded={isProjectsOpen}
-              className="flex flex-1 items-center gap-1 text-start transition-colors duration-150 hover:text-foreground"
-            >
-              {isProjectsOpen ? (
-                <ChevronDown className="h-3 w-3 text-muted-foreground" />
-              ) : (
-                <ChevronRight className="h-3 w-3 text-muted-foreground" />
-              )}
-              <span className="kicker">{tNav('projects')}</span>
-            </button>
-            <Link href="/projects">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 text-muted-foreground hover:text-foreground"
-                aria-label={tNav('projects')}
-              >
-                <Plus className="h-3 w-3" />
-              </Button>
-            </Link>
-          </div>
-          {isProjectsOpen ? (
-            <div className="space-y-0.5">
-              {projectsLoading ? (
-                <div className="flex items-center justify-center py-4">
-                  <span role="status" aria-live="polite" aria-busy="true">
-                    <span className="sr-only">{tCommon('loading')}</span>
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                  </span>
-                </div>
-              ) : projects && projects.length > 0 ? (
-                projects.slice(0, 5).map((project) => {
-                  const projectPath = project.key?.toLowerCase() || project.id;
-                  const isActive = pathname?.includes(`/projects/${projectPath}`);
-                  const projectIcon = (project as { icon?: string | null }).icon;
+        <nav
+          aria-label="Section"
+          className={cn(
+            'min-h-0 flex-1',
+            hasPageSidebar
+              ? 'flex flex-col overflow-hidden'
+              : 'custom-scrollbar overflow-y-auto pb-3'
+          )}
+        >
+          <PageSidebarSlotTarget
+            className={cn(
+              'flex min-h-0 flex-1 flex-col overflow-hidden',
+              !hasPageSidebar && 'hidden'
+            )}
+          />
+
+          <div className={cn('px-3', hasPageSidebar && 'hidden')}>
+            {pathname?.startsWith('/settings') || pathname?.startsWith('/admin') ? null : (
+              <div className="mb-3 mt-1 px-3">
+                <div className="kicker">{tNav(getSectionKey(pathname))}</div>
+              </div>
+            )}
+
+            {pathname?.startsWith('/my-issues') || pathname?.startsWith('/issues') ? (
+              <div className="space-y-0.5">
+                {MY_ISSUES_VIEWS.map((view) => {
+                  const isActive =
+                    pathname?.startsWith('/my-issues') &&
+                    (searchParams?.get('view') ?? 'assigned') === view.value;
                   return (
                     <Link
-                      key={project.id}
-                      href={`/projects/${projectPath}/views`}
+                      key={view.value}
+                      href={`/my-issues?view=${view.value}`}
                       data-active={isActive ? 'true' : undefined}
-                      className="row-interactive group rounded-md text-sm font-medium text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground data-[active=true]:text-primary"
+                      className="row-interactive text-muted-foreground ease-snap hover:text-foreground data-[active=true]:text-primary rounded-md text-sm font-medium transition-all duration-150"
                     >
-                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-sm bg-muted">
-                        {projectIcon ? (
-                          <span className="text-xs leading-none" aria-hidden="true">
-                            {projectIcon}
-                          </span>
-                        ) : (
-                          <span className="text-[9px] font-bold text-muted-foreground">
-                            {project.name.substring(0, 2).toUpperCase()}
-                          </span>
-                        )}
-                      </div>
-                      <span className="flex-1 truncate">{project.name}</span>
-                      <span className="font-mono text-[10px] text-muted-foreground opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                        {project.key}
-                      </span>
+                      <view.icon className="h-4 w-4 shrink-0" />
+                      <span>{view.i18nKey ? tNav(view.i18nKey) : view.label}</span>
                     </Link>
                   );
-                })
-              ) : (
-                <div className="px-3 py-4 text-center">
-                  <p className="text-xs text-muted-foreground">{tCommon('no_projects')}</p>
+                })}
+              </div>
+            ) : null}
+
+            {isHomeSectionPath(pathname) ? (
+              <div className="space-y-0.5">
+                {DASHBOARD_LINKS.map((link) => {
+                  const isActive =
+                    link.href === pathname || (link.href === '/dashboard' && pathname === '/');
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      data-active={isActive ? 'true' : undefined}
+                      className="row-interactive text-muted-foreground ease-snap hover:text-foreground data-[active=true]:text-primary rounded-md text-sm font-medium transition-all duration-150"
+                    >
+                      <link.icon className="h-4 w-4 shrink-0" />
+                      <span>{link.i18nKey ? tNav(link.i18nKey) : link.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            {pathname?.startsWith('/team') ? (
+              <div className="space-y-0.5">
+                {visibleTeamLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="row-interactive text-muted-foreground ease-snap hover:text-foreground rounded-md text-sm font-medium transition-all duration-150"
+                  >
+                    <link.icon className="h-4 w-4 shrink-0" />
+                    <span>{link.i18nKey ? tNav(link.i18nKey) : link.label}</span>
+                  </Link>
+                ))}
+              </div>
+            ) : null}
+
+            {pathname?.startsWith('/settings') || pathname?.startsWith('/admin') ? (
+              <>
+                {visibleSettingsLinks.length > 0 ? (
+                  <>
+                    <div className="mb-1 flex items-center gap-2 px-3">
+                      <Settings className="text-muted-foreground h-3 w-3" />
+                      <span className="kicker">{tNav('settings')}</span>
+                    </div>
+                    <div className="space-y-0.5">
+                      {visibleSettingsLinks.map((link) => {
+                        const isActive = isNavLinkActive(link, pathname, searchParams?.get('tab'));
+                        return (
+                          <Link
+                            key={link.href}
+                            href={link.href}
+                            data-active={isActive ? 'true' : undefined}
+                            className="row-interactive text-muted-foreground ease-snap hover:text-foreground data-[active=true]:text-primary rounded-md text-sm font-medium transition-all duration-150"
+                          >
+                            <link.icon className="h-4 w-4 shrink-0" />
+                            <span>{link.i18nKey ? tNav(link.i18nKey) : link.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : null}
+
+                {isSuperAdmin ? (
+                  <>
+                    <div className="mb-1 mt-4 flex items-center gap-2 px-3">
+                      <Shield className="text-muted-foreground h-3 w-3" />
+                      <span className="kicker">{tNav('admin')}</span>
+                    </div>
+                    <div className="space-y-0.5">
+                      {ADMIN_LINKS.map((link) => {
+                        const isActive = isNavLinkActive(link, pathname, searchParams?.get('tab'));
+                        return (
+                          <Link
+                            key={link.href}
+                            href={link.href}
+                            data-active={isActive ? 'true' : undefined}
+                            className="row-interactive text-muted-foreground ease-snap hover:text-foreground data-[active=true]:text-primary rounded-md text-sm font-medium transition-all duration-150"
+                          >
+                            <link.icon className="h-4 w-4 shrink-0" />
+                            <span>{link.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : null}
+              </>
+            ) : null}
+
+            <div hidden={!(pathname?.startsWith('/projects') || isHomeSectionPath(pathname))}>
+              <button
+                type="button"
+                onClick={() => setIsTeamspacesOpen((open) => !open)}
+                aria-expanded={isTeamspacesOpen}
+                className="hover:text-foreground mb-1 mt-4 flex w-full items-center gap-1 px-3 text-start transition-colors duration-150"
+              >
+                {isTeamspacesOpen ? (
+                  <ChevronDown className="text-muted-foreground h-3 w-3" />
+                ) : (
+                  <ChevronRight className="text-muted-foreground h-3 w-3" />
+                )}
+                <span className="kicker">{tNav('teamspaces')}</span>
+              </button>
+              {isTeamspacesOpen ? (
+                <div className="px-1 pb-2">
+                  <TeamspaceSwitcher />
                 </div>
-              )}
-              {projects && projects.length > 5 ? (
-                <Link
-                  href="/projects"
-                  className="row-interactive rounded-md text-xs text-muted-foreground transition-all duration-150 ease-snap hover:text-foreground"
+              ) : null}
+
+              <div className="mb-1 mt-4 flex items-center justify-between px-3">
+                <button
+                  type="button"
+                  onClick={() => setIsProjectsOpen((open) => !open)}
+                  aria-expanded={isProjectsOpen}
+                  className="hover:text-foreground flex flex-1 items-center gap-1 text-start transition-colors duration-150"
                 >
-                  {tCommon('view_all_projects', { count: projects.length })}
+                  {isProjectsOpen ? (
+                    <ChevronDown className="text-muted-foreground h-3 w-3" />
+                  ) : (
+                    <ChevronRight className="text-muted-foreground h-3 w-3" />
+                  )}
+                  <span className="kicker">{tNav('projects')}</span>
+                </button>
+                <Link href="/projects">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground hover:text-foreground h-5 w-5"
+                    aria-label={tNav('projects')}
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
                 </Link>
+              </div>
+              {isProjectsOpen ? (
+                <div className="space-y-0.5">
+                  {projectsLoading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <span role="status" aria-live="polite" aria-busy="true">
+                        <span className="sr-only">{tCommon('loading')}</span>
+                        <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+                      </span>
+                    </div>
+                  ) : projects && projects.length > 0 ? (
+                    projects.slice(0, 5).map((project) => {
+                      const projectPath = project.key?.toLowerCase() || project.id;
+                      const isActive = pathname?.includes(`/projects/${projectPath}`);
+                      const projectIcon = (project as { icon?: string | null }).icon;
+                      return (
+                        <Link
+                          key={project.id}
+                          href={`/projects/${projectPath}/views`}
+                          data-active={isActive ? 'true' : undefined}
+                          className="row-interactive text-muted-foreground ease-snap hover:text-foreground data-[active=true]:text-primary group rounded-md text-sm font-medium transition-all duration-150"
+                        >
+                          <div className="bg-muted flex h-5 w-5 shrink-0 items-center justify-center rounded-sm">
+                            {projectIcon ? (
+                              <span className="text-xs leading-none" aria-hidden="true">
+                                {projectIcon}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground text-[9px] font-bold">
+                                {project.name.substring(0, 2).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                          <span className="flex-1 truncate">{project.name}</span>
+                          <span className="text-muted-foreground font-mono text-[10px] opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                            {project.key}
+                          </span>
+                        </Link>
+                      );
+                    })
+                  ) : (
+                    <div className="px-3 py-4 text-center">
+                      <p className="text-muted-foreground text-xs">{tCommon('no_projects')}</p>
+                    </div>
+                  )}
+                  {projects && projects.length > 5 ? (
+                    <Link
+                      href="/projects"
+                      className="row-interactive text-muted-foreground ease-snap hover:text-foreground rounded-md text-xs transition-all duration-150"
+                    >
+                      {tCommon('view_all_projects', { count: projects.length })}
+                    </Link>
+                  ) : null}
+                </div>
               ) : null}
             </div>
-          ) : null}
-        </div>
-        </div>
-      </nav>
+          </div>
+        </nav>
 
-      {currentTarget || otherActiveCalls.length > 0 || sidebarRuntimeError ? (
-        <div className="space-y-1.5 px-3 py-3">
-          <button
-            type="button"
-            onClick={() => setIsLiveCallsOpen((open) => !open)}
-            aria-expanded={isLiveCallsOpen}
-            className="flex w-full items-center gap-1 text-start transition-colors duration-150 hover:text-foreground"
-          >
-            {isLiveCallsOpen ? (
-              <ChevronDown className="h-3 w-3 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="h-3 w-3 text-muted-foreground" />
-            )}
-            <span className="kicker px-0">{tNav('live_calls')}</span>
-          </button>
+        {currentTarget || otherActiveCalls.length > 0 || sidebarRuntimeError ? (
+          <div className="space-y-1.5 px-3 py-3">
+            <button
+              type="button"
+              onClick={() => setIsLiveCallsOpen((open) => !open)}
+              aria-expanded={isLiveCallsOpen}
+              className="hover:text-foreground flex w-full items-center gap-1 text-start transition-colors duration-150"
+            >
+              {isLiveCallsOpen ? (
+                <ChevronDown className="text-muted-foreground h-3 w-3" />
+              ) : (
+                <ChevronRight className="text-muted-foreground h-3 w-3" />
+              )}
+              <span className="kicker px-0">{tNav('live_calls')}</span>
+            </button>
 
-          {isLiveCallsOpen && currentTarget && currentSession ? (
-            room ? (
-              <RoomContext.Provider value={room}>
-                <SidebarVoiceWorkspace
+            {isLiveCallsOpen && currentTarget && currentSession ? (
+              room ? (
+                <RoomContext.Provider value={room}>
+                  <SidebarVoiceWorkspace
+                    connectionState={connectionState}
+                    currentTarget={currentTarget}
+                    effectiveParticipantCount={effectiveParticipantCount}
+                    isMicrophoneEnabled={isMicrophoneEnabled}
+                    isTogglingMicrophone={isTogglingMicrophone}
+                    isVoiceSettingsOpen={isVoiceSettingsOpen}
+                    runtimeError={sidebarRuntimeError}
+                    selectedAudioDeviceId={selectedAudioDeviceId}
+                    storedAudioDeviceGroupId={storedAudioDeviceGroupId}
+                    storedAudioDeviceLabel={storedAudioDeviceLabel}
+                    sessionUserImage={session?.user?.image}
+                    sessionUserName={session?.user?.name}
+                    onChangeAudioDevice={handleChangeAudioDevice}
+                    onStoreAudioDevicePreference={storeAudioDevicePreference}
+                    onVoiceSettingsOpenChange={setIsVoiceSettingsOpen}
+                    onEndCurrentCall={() => void endCurrentCall()}
+                    onLeaveCurrentCall={() => void leaveCurrentCall()}
+                    onOpenVoiceSettings={() => setIsVoiceSettingsOpen(true)}
+                    onToggleMicrophone={() => void toggleMicrophone()}
+                  />
+                </RoomContext.Provider>
+              ) : (
+                <SidebarVoiceFallbackCard
                   connectionState={connectionState}
                   currentTarget={currentTarget}
                   effectiveParticipantCount={effectiveParticipantCount}
                   isMicrophoneEnabled={isMicrophoneEnabled}
                   isTogglingMicrophone={isTogglingMicrophone}
-                  isVoiceSettingsOpen={isVoiceSettingsOpen}
                   runtimeError={sidebarRuntimeError}
-                  selectedAudioDeviceId={selectedAudioDeviceId}
-                  storedAudioDeviceGroupId={storedAudioDeviceGroupId}
-                  storedAudioDeviceLabel={storedAudioDeviceLabel}
-                  sessionUserImage={session?.user?.image}
-                  sessionUserName={session?.user?.name}
-                  onChangeAudioDevice={handleChangeAudioDevice}
-                  onStoreAudioDevicePreference={storeAudioDevicePreference}
-                  onVoiceSettingsOpenChange={setIsVoiceSettingsOpen}
                   onEndCurrentCall={() => void endCurrentCall()}
                   onLeaveCurrentCall={() => void leaveCurrentCall()}
                   onOpenVoiceSettings={() => setIsVoiceSettingsOpen(true)}
                   onToggleMicrophone={() => void toggleMicrophone()}
                 />
-              </RoomContext.Provider>
-            ) : (
-              <SidebarVoiceFallbackCard
-                connectionState={connectionState}
-                currentTarget={currentTarget}
-                effectiveParticipantCount={effectiveParticipantCount}
-                isMicrophoneEnabled={isMicrophoneEnabled}
-                isTogglingMicrophone={isTogglingMicrophone}
-                runtimeError={sidebarRuntimeError}
-                onEndCurrentCall={() => void endCurrentCall()}
-                onLeaveCurrentCall={() => void leaveCurrentCall()}
-                onOpenVoiceSettings={() => setIsVoiceSettingsOpen(true)}
-                onToggleMicrophone={() => void toggleMicrophone()}
-              />
-            )
-          ) : null}
+              )
+            ) : null}
 
-          {isLiveCallsOpen && liveCallsLoading ? (
-            <div className="flex items-center gap-2 px-2 py-2 text-xs text-muted-foreground">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Checking active calls…
-            </div>
-          ) : null}
+            {isLiveCallsOpen && liveCallsLoading ? (
+              <div className="text-muted-foreground flex items-center gap-2 px-2 py-2 text-xs">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Checking active calls…
+              </div>
+            ) : null}
 
-          {isLiveCallsOpen
-            ? otherActiveCalls.map((call) => (
-                <Link
-                  key={call.id}
-                  href={call.room.href}
-                  className="flex items-center gap-1.5 rounded-md bg-surface-2 px-2 py-1.5 text-start transition-all duration-150 ease-snap hover:bg-accent/60"
-                >
-                  <span className="realtime-ping shrink-0">
-                    <span className="status-dot status-live" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[11px] font-medium text-foreground">{call.room.title}</div>
-                    <div className="truncate text-[10px] text-muted-foreground">
-                      {call.project.key} · {call.participantCount}
-                      {call.isParticipant ? ' · joined' : ''}
+            {isLiveCallsOpen
+              ? otherActiveCalls.map((call) => (
+                  <Link
+                    key={call.id}
+                    href={call.room.href}
+                    className="bg-surface-2 ease-snap hover:bg-accent/60 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-start transition-all duration-150"
+                  >
+                    <span className="realtime-ping shrink-0">
+                      <span className="status-dot status-live" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-foreground truncate text-[11px] font-medium">
+                        {call.room.title}
+                      </div>
+                      <div className="text-muted-foreground truncate text-[10px]">
+                        {call.project.key} · {call.participantCount}
+                        {call.isParticipant ? ' · joined' : ''}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                    <Users2 className="h-3 w-3 shrink-0" />
-                    <span>{call.participantCount}</span>
-                  </div>
-                </Link>
-              ))
-            : null}
-        </div>
-      ) : null}
-
+                    <div className="text-muted-foreground flex items-center gap-1 text-[10px]">
+                      <Users2 className="h-3 w-3 shrink-0" />
+                      <span>{call.participantCount}</span>
+                    </div>
+                  </Link>
+                ))
+              : null}
+          </div>
+        ) : null}
       </aside>
     </div>
   );
@@ -733,21 +881,25 @@ function SidebarVoiceWorkspace({
   }, [localParticipant, participants]);
 
   const remoteParticipants = useMemo(
-    () => allParticipants.filter((participant) => participant.identity !== localParticipant.identity),
+    () =>
+      allParticipants.filter((participant) => participant.identity !== localParticipant.identity),
     [allParticipants, localParticipant.identity]
   );
   const participantDisplayCount = Math.max(effectiveParticipantCount, allParticipants.length || 1);
-  const localMicrophoneLevel = isMicrophoneEnabled ? Math.min(1, localParticipant.audioLevel * 1.85) : 0;
+  const localMicrophoneLevel = isMicrophoneEnabled
+    ? Math.min(1, localParticipant.audioLevel * 1.85)
+    : 0;
   const deferredMicrophoneLevel = useDeferredValue(localMicrophoneLevel);
   const isActivelySpeaking = isMicrophoneEnabled && deferredMicrophoneLevel > 0.08;
   const resolvedConnectionState = liveConnectionState || connectionState;
-  const microphoneStatusLabel = resolvedConnectionState !== 'connected'
-    ? 'Connecting…'
-    : isMicrophoneEnabled
-      ? isActivelySpeaking
-        ? 'Sending audio'
-        : 'Mic live'
-      : 'Muted';
+  const microphoneStatusLabel =
+    resolvedConnectionState !== 'connected'
+      ? 'Connecting…'
+      : isMicrophoneEnabled
+        ? isActivelySpeaking
+          ? 'Sending audio'
+          : 'Mic live'
+        : 'Muted';
   const deviceLabelsVisible = useMemo(
     () => areMicrophoneDeviceLabelsVisible(microphoneDevices),
     [microphoneDevices]
@@ -763,12 +915,7 @@ function SidebarVoiceWorkspace({
         ? 'System default microphone'
         : storedAudioDeviceLabel || 'Selected microphone unavailable')
     );
-  }, [
-    microphoneDevices,
-    selectedAudioDeviceId,
-    storedAudioDeviceGroupId,
-    storedAudioDeviceLabel,
-  ]);
+  }, [microphoneDevices, selectedAudioDeviceId, storedAudioDeviceGroupId, storedAudioDeviceLabel]);
   const microphonePermissionLabel = formatMicrophonePermissionStateLabel(microphonePermissionState);
   const microphonePermissionHelp = useMemo(
     () =>
@@ -896,7 +1043,12 @@ function SidebarVoiceWorkspace({
         setIsChangingAudioDevice(false);
       }
     },
-    [microphoneDevices, onChangeAudioDevice, onStoreAudioDevicePreference, refreshMicrophoneEnvironment]
+    [
+      microphoneDevices,
+      onChangeAudioDevice,
+      onStoreAudioDevicePreference,
+      refreshMicrophoneEnvironment,
+    ]
   );
 
   const handleRequestMicrophoneAccess = useCallback(async () => {
@@ -932,7 +1084,7 @@ function SidebarVoiceWorkspace({
 
   return (
     <>
-      <div className="space-y-2 rounded-sm bg-surface p-2">
+      <div className="bg-surface space-y-2 rounded-sm p-2">
         <div className="flex items-start gap-2">
           <span className="realtime-ping mt-1 shrink-0">
             <span
@@ -943,10 +1095,10 @@ function SidebarVoiceWorkspace({
             />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[11px] font-semibold text-foreground">
+            <div className="text-foreground truncate text-[11px] font-semibold">
               {currentTarget.roomTitle}
             </div>
-            <div className="truncate text-[10px] text-muted-foreground">
+            <div className="text-muted-foreground truncate text-[10px]">
               {currentTarget.projectName} · {participantDisplayCount} in call
             </div>
           </div>
@@ -959,7 +1111,7 @@ function SidebarVoiceWorkspace({
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 w-6 rounded-sm px-0 text-muted-foreground transition-all duration-150 ease-snap"
+              className="text-muted-foreground ease-snap h-6 w-6 rounded-sm px-0 transition-all duration-150"
               onClick={onOpenVoiceSettings}
               title="Open voice settings"
               aria-label="Open voice settings"
@@ -969,7 +1121,7 @@ function SidebarVoiceWorkspace({
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2 rounded-sm bg-surface-2 px-2 py-2">
+        <div className="bg-surface-2 flex items-center justify-between gap-2 rounded-sm px-2 py-2">
           <div className="flex min-w-0 flex-1 items-center">
             {participantsPreview.length > 0 ? (
               <div className="flex min-w-0 items-center">
@@ -984,31 +1136,35 @@ function SidebarVoiceWorkspace({
                   />
                 ))}
                 {participantDisplayCount > participantsPreview.length ? (
-                  <div className="-ml-2 flex h-7 w-7 items-center justify-center rounded-full border border-background bg-muted text-[10px] font-semibold text-muted-foreground">
+                  <div className="border-background bg-muted text-muted-foreground -ml-2 flex h-7 w-7 items-center justify-center rounded-full border text-[10px] font-semibold">
                     +{participantDisplayCount - participantsPreview.length}
                   </div>
                 ) : null}
               </div>
             ) : (
-              <div className="text-[10px] text-muted-foreground">Waiting for participant info…</div>
+              <div className="text-muted-foreground text-[10px]">Waiting for participant info…</div>
             )}
           </div>
           <div className="text-right">
-            <div className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+            <div className="text-muted-foreground text-[10px] font-medium uppercase tracking-[0.12em]">
               Voice
             </div>
-            <div className="pt-0.5 text-[11px] font-medium text-foreground">{microphoneStatusLabel}</div>
+            <div className="text-foreground pt-0.5 text-[11px] font-medium">
+              {microphoneStatusLabel}
+            </div>
           </div>
         </div>
 
-        <div className="space-y-1 rounded-sm bg-surface-2 px-2 py-2">
+        <div className="bg-surface-2 space-y-1 rounded-sm px-2 py-2">
           <div className="flex items-center justify-between gap-3 text-[10px]">
-            <span className="font-medium uppercase tracking-[0.12em] text-muted-foreground">
+            <span className="text-muted-foreground font-medium uppercase tracking-[0.12em]">
               Mic level
             </span>
-            <span className="text-muted-foreground">{Math.round(deferredMicrophoneLevel * 100)}%</span>
+            <span className="text-muted-foreground">
+              {Math.round(deferredMicrophoneLevel * 100)}%
+            </span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-muted/30">
+          <div className="bg-muted/30 h-2 overflow-hidden rounded-full">
             <div
               className={cn(
                 'h-full transition-[width] duration-150',
@@ -1017,7 +1173,9 @@ function SidebarVoiceWorkspace({
               style={{ width: `${Math.round(deferredMicrophoneLevel * 100)}%` }}
             />
           </div>
-          <div className="truncate text-[10px] text-muted-foreground">{selectedMicrophoneLabel}</div>
+          <div className="text-muted-foreground truncate text-[10px]">
+            {selectedMicrophoneLabel}
+          </div>
         </div>
 
         <div className="flex items-center gap-1">
@@ -1060,7 +1218,7 @@ function SidebarVoiceWorkspace({
           <Button
             size="sm"
             variant="ghost"
-            className="h-5 w-full rounded-sm px-1.5 text-[10px] text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground h-5 w-full rounded-sm px-1.5 text-[10px]"
             onClick={onEndCurrentCall}
           >
             End room for everyone
@@ -1068,7 +1226,7 @@ function SidebarVoiceWorkspace({
         ) : null}
 
         {combinedRuntimeError ? (
-          <div className="rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1.5 text-[11px] text-destructive">
+          <div className="border-destructive/30 bg-destructive/5 text-destructive rounded-md border px-2 py-1.5 text-[11px]">
             {combinedRuntimeError}
           </div>
         ) : null}
@@ -1079,12 +1237,13 @@ function SidebarVoiceWorkspace({
           <DialogHeader>
             <DialogTitle>Meeting settings</DialogTitle>
             <DialogDescription>
-              Manage your microphone, watch live audio activity, and keep an eye on who is speaking from anywhere in the app.
+              Manage your microphone, watch live audio activity, and keep an eye on who is speaking
+              from anywhere in the app.
             </DialogDescription>
           </DialogHeader>
 
           <div className="max-h-[75vh] space-y-4 overflow-y-auto pr-1">
-            <div className="rounded-md bg-surface p-4">
+            <div className="bg-surface rounded-md p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
@@ -1098,13 +1257,16 @@ function SidebarVoiceWorkspace({
                           : 'status-warn'
                       )}
                     />
-                    <div className="text-sm font-semibold text-foreground">{currentTarget.roomTitle}</div>
-                    <span className="rounded-md border px-2 py-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                    <div className="text-foreground text-sm font-semibold">
+                      {currentTarget.roomTitle}
+                    </div>
+                    <span className="text-muted-foreground rounded-md border px-2 py-1 text-[10px] uppercase tracking-[0.14em]">
                       {formatConnectionStateLabel(resolvedConnectionState)}
                     </span>
                   </div>
-                  <div className="pt-1 text-xs text-muted-foreground">
-                    {currentTarget.projectName} · {participantDisplayCount} in call · {microphoneStatusLabel}
+                  <div className="text-muted-foreground pt-1 text-xs">
+                    {currentTarget.projectName} · {participantDisplayCount} in call ·{' '}
+                    {microphoneStatusLabel}
                   </div>
                 </div>
 
@@ -1141,12 +1303,22 @@ function SidebarVoiceWorkspace({
                     )}
                     {isMicrophoneEnabled ? 'Mute' : 'Unmute'}
                   </Button>
-                  <Button size="sm" variant="outline" className="rounded-sm" onClick={onLeaveCurrentCall}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-sm"
+                    onClick={onLeaveCurrentCall}
+                  >
                     <PhoneOff className="mr-2 h-4 w-4" />
                     Leave
                   </Button>
                   {currentTarget.canManageCalls ? (
-                    <Button size="sm" variant="outline" className="rounded-sm" onClick={onEndCurrentCall}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-sm"
+                      onClick={onEndCurrentCall}
+                    >
                       End room
                     </Button>
                   ) : null}
@@ -1167,30 +1339,30 @@ function SidebarVoiceWorkspace({
             </div>
 
             {combinedRuntimeError ? (
-              <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+              <div className="border-destructive/30 bg-destructive/5 text-destructive rounded-md border px-3 py-2 text-xs">
                 {combinedRuntimeError}
               </div>
             ) : null}
 
-            <div className="rounded-md border bg-background p-4">
+            <div className="bg-background rounded-md border p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <div className="text-sm font-semibold text-foreground">Microphone</div>
-                  <div className="pt-1 text-xs text-muted-foreground">
+                  <div className="text-foreground text-sm font-semibold">Microphone</div>
+                  <div className="text-muted-foreground pt-1 text-xs">
                     Choose the input device you want TaskNebula to use for this call.
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                  <div className="text-muted-foreground text-[11px] font-medium uppercase tracking-[0.14em]">
                     Level
                   </div>
-                  <div className="pt-1 text-sm font-semibold tabular-nums text-foreground">
+                  <div className="text-foreground pt-1 text-sm font-semibold tabular-nums">
                     {Math.round(deferredMicrophoneLevel * 100)}%
                   </div>
                 </div>
               </div>
 
-              <div className="mt-4 h-3 overflow-hidden rounded-full bg-muted/25">
+              <div className="bg-muted/25 mt-4 h-3 overflow-hidden rounded-full">
                 <div
                   className={cn(
                     'h-full transition-[width] duration-150',
@@ -1201,11 +1373,11 @@ function SidebarVoiceWorkspace({
               </div>
 
               <div className="mt-4 space-y-2">
-                <label className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                <label className="text-muted-foreground text-[11px] font-medium uppercase tracking-[0.14em]">
                   Input device
                 </label>
                 <select
-                  className="flex h-10 w-full rounded-md border bg-background px-3 text-sm outline-none"
+                  className="bg-background flex h-10 w-full rounded-md border px-3 text-sm outline-none"
                   value={selectedAudioDeviceId}
                   onChange={(event) => {
                     void handleSelectMicrophone(event.target.value);
@@ -1219,14 +1391,16 @@ function SidebarVoiceWorkspace({
                     </option>
                   ))}
                 </select>
-                <div className="text-xs text-muted-foreground">
-                  Current selection: <span className="font-medium text-foreground">{selectedMicrophoneLabel}</span>
+                <div className="text-muted-foreground text-xs">
+                  Current selection:{' '}
+                  <span className="text-foreground font-medium">{selectedMicrophoneLabel}</span>
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-md bg-surface px-3 py-2 text-xs text-muted-foreground">
+              <div className="bg-surface text-muted-foreground mt-4 flex flex-wrap items-center justify-between gap-2 rounded-md px-3 py-2 text-xs">
                 <div>
-                  <span className="font-medium text-foreground">Permission:</span> {microphonePermissionLabel}
+                  <span className="text-foreground font-medium">Permission:</span>{' '}
+                  {microphonePermissionLabel}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {microphonePermissionState !== 'granted' ? (
@@ -1262,9 +1436,11 @@ function SidebarVoiceWorkspace({
                 </div>
               </div>
 
-              <div className="mt-3 rounded-md bg-surface px-3 py-2 text-xs text-muted-foreground">
+              <div className="bg-surface text-muted-foreground mt-3 rounded-md px-3 py-2 text-xs">
                 {microphonePermissionHelp}
-                {microphoneDevices.length === 0 ? ' No microphones are currently visible to the browser.' : ''}
+                {microphoneDevices.length === 0
+                  ? ' No microphones are currently visible to the browser.'
+                  : ''}
                 {microphonePermissionState === 'granted' && !deviceLabelsVisible
                   ? ' The browser still has not exposed microphone labels; refreshing after returning from browser settings usually fixes that.'
                   : ''}
@@ -1274,15 +1450,15 @@ function SidebarVoiceWorkspace({
               </div>
             </div>
 
-            <div className="rounded-md border bg-background p-4">
+            <div className="bg-background rounded-md border p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-sm font-semibold text-foreground">People in the call</div>
-                  <div className="pt-1 text-xs text-muted-foreground">
+                  <div className="text-foreground text-sm font-semibold">People in the call</div>
+                  <div className="text-muted-foreground pt-1 text-xs">
                     Speaking participants glow green. Quiet participants stay neutral.
                   </div>
                 </div>
-                <div className="rounded-md border px-2 py-1 text-[11px] font-medium text-muted-foreground">
+                <div className="text-muted-foreground rounded-md border px-2 py-1 text-[11px] font-medium">
                   {participantDisplayCount} total
                 </div>
               </div>
@@ -1330,31 +1506,37 @@ function SidebarVoiceFallbackCard({
   onToggleMicrophone: () => void;
 }) {
   const isConnecting = connectionState !== 'connected';
-  const voiceStatusLabel = isConnecting ? 'Connecting…' : isMicrophoneEnabled ? 'Mic live' : 'Muted';
+  const voiceStatusLabel = isConnecting
+    ? 'Connecting…'
+    : isMicrophoneEnabled
+      ? 'Mic live'
+      : 'Muted';
 
   return (
-    <div className="space-y-2 rounded-sm bg-surface p-2">
+    <div className="bg-surface space-y-2 rounded-sm p-2">
       <div className="flex items-start gap-2">
         <span className="realtime-ping mt-1 shrink-0">
           <span className={cn('status-dot', isConnecting ? 'status-warn' : 'status-live')} />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[11px] font-semibold text-foreground">{currentTarget.roomTitle}</div>
-          <div className="truncate text-[10px] text-muted-foreground">
+          <div className="text-foreground truncate text-[11px] font-semibold">
+            {currentTarget.roomTitle}
+          </div>
+          <div className="text-muted-foreground truncate text-[10px]">
             {currentTarget.projectName} · {effectiveParticipantCount} in call
           </div>
         </div>
         <Button
           size="sm"
           variant="ghost"
-          className="h-6 w-6 rounded-sm px-0 text-muted-foreground"
+          className="text-muted-foreground h-6 w-6 rounded-sm px-0"
           onClick={onOpenVoiceSettings}
         >
           <SlidersHorizontal className="h-3.5 w-3.5" />
         </Button>
       </div>
 
-      <div className="rounded-sm bg-surface-2 px-2 py-2 text-[10px] text-muted-foreground">
+      <div className="bg-surface-2 text-muted-foreground rounded-sm px-2 py-2 text-[10px]">
         Voice status: {voiceStatusLabel}
       </div>
 
@@ -1380,7 +1562,12 @@ function SidebarVoiceFallbackCard({
             <Mic className="h-3 w-3" />
           )}
         </Button>
-        <Button size="sm" variant="outline" className="h-6 w-6 rounded-sm px-0" onClick={onLeaveCurrentCall}>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-6 w-6 rounded-sm px-0"
+          onClick={onLeaveCurrentCall}
+        >
           <PhoneOff className="h-3 w-3" />
         </Button>
       </div>
@@ -1389,7 +1576,7 @@ function SidebarVoiceFallbackCard({
         <Button
           size="sm"
           variant="ghost"
-          className="h-5 w-full rounded-sm px-1.5 text-[10px] text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground h-5 w-full rounded-sm px-1.5 text-[10px]"
           onClick={onEndCurrentCall}
         >
           End room for everyone
@@ -1397,7 +1584,7 @@ function SidebarVoiceFallbackCard({
       ) : null}
 
       {runtimeError ? (
-        <div className="rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1.5 text-[11px] text-destructive">
+        <div className="border-destructive/30 bg-destructive/5 text-destructive rounded-md border px-2 py-1.5 text-[11px]">
           {runtimeError}
         </div>
       ) : null}
@@ -1421,14 +1608,17 @@ function SidebarVoiceParticipantAvatar({
   const isSpeaking = useIsSpeaking(participant);
   const isMicrophoneActive = participant.isMicrophoneEnabled;
   const displayName =
-    participant.name || (isCurrentUser ? sessionUserName : null) || participant.identity || 'Participant';
+    participant.name ||
+    (isCurrentUser ? sessionUserName : null) ||
+    participant.identity ||
+    'Participant';
 
   return (
     <Avatar
       className={cn(
-        'h-7 w-7 border border-background transition-[box-shadow,transform,background-color] duration-150',
+        'border-background h-7 w-7 border transition-[box-shadow,transform,background-color] duration-150',
         isSpeaking && isMicrophoneActive
-          ? 'ring-2 ring-accent-emerald/60 shadow-glow'
+          ? 'ring-accent-emerald/60 shadow-glow ring-2'
           : 'shadow-none',
         className
       )}
@@ -1463,7 +1653,10 @@ function SidebarVoiceParticipantRow({
 }) {
   const isSpeaking = useIsSpeaking(participant);
   const displayName =
-    participant.name || (isCurrentUser ? sessionUserName : null) || participant.identity || 'Participant';
+    participant.name ||
+    (isCurrentUser ? sessionUserName : null) ||
+    participant.identity ||
+    'Participant';
   const isMicrophoneActive = participant.isMicrophoneEnabled;
   const stateLabel = isMicrophoneActive
     ? isSpeaking
@@ -1480,7 +1673,7 @@ function SidebarVoiceParticipantRow({
       className={cn(
         'flex items-center gap-3 rounded-md px-3 py-2 transition-colors duration-150',
         isSpeaking && isMicrophoneActive
-          ? 'border border-accent-emerald/30 bg-accent-emerald/10'
+          ? 'border-accent-emerald/30 bg-accent-emerald/10 border'
           : 'bg-surface'
       )}
     >
@@ -1493,20 +1686,25 @@ function SidebarVoiceParticipantRow({
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <div className="truncate text-sm font-medium text-foreground">{displayName}</div>
+          <div className="text-foreground truncate text-sm font-medium">{displayName}</div>
           {isCurrentUser ? (
-            <span className="rounded-sm border px-1.5 py-0.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+            <span className="text-muted-foreground rounded-sm border px-1.5 py-0.5 text-[10px] uppercase tracking-[0.12em]">
               You
             </span>
           ) : null}
         </div>
-        <div className="pt-0.5 text-xs text-muted-foreground">{stateLabel}</div>
+        <div className="text-muted-foreground pt-0.5 text-xs">{stateLabel}</div>
       </div>
 
       {isMicrophoneActive ? (
-        <Mic className={cn('h-3.5 w-3.5', isSpeaking ? 'text-accent-emerald' : 'text-muted-foreground')} />
+        <Mic
+          className={cn(
+            'h-3.5 w-3.5',
+            isSpeaking ? 'text-accent-emerald' : 'text-muted-foreground'
+          )}
+        />
       ) : (
-        <MicOff className="h-3.5 w-3.5 text-muted-foreground" />
+        <MicOff className="text-muted-foreground h-3.5 w-3.5" />
       )}
     </div>
   );

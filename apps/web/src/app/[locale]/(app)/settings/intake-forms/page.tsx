@@ -42,12 +42,13 @@ export default async function IntakeFormsSettingsPage() {
   // Pull the small set of project labels we need so the list can show
   // "Project — Slug" without forcing an N+1 from the client.
   const projectIds = Array.from(new Set(forms.map((f) => f.projectId)));
-  const projectRows = orgIds.length && projectIds.length
-    ? await db
-        .select({ id: projects.id, name: projects.name, key: projects.key })
-        .from(projects)
-        .where(inArray(projects.id, projectIds))
-    : [];
+  const projectRows =
+    orgIds.length && projectIds.length
+      ? await db
+          .select({ id: projects.id, name: projects.name, key: projects.key })
+          .from(projects)
+          .where(inArray(projects.id, projectIds))
+      : [];
 
   const accessibleProjects = orgIds.length
     ? await db
@@ -60,7 +61,7 @@ export default async function IntakeFormsSettingsPage() {
     <div className="mx-auto w-full max-w-5xl px-6 py-8 lg:px-8">
       <header className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight">Intake forms</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">
+        <p className="text-muted-foreground mt-1.5 text-sm">
           Public web forms that turn submissions into issues in a project.
         </p>
       </header>

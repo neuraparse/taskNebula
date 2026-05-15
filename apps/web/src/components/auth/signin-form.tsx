@@ -12,11 +12,19 @@ import Link from 'next/link';
 
 type BannerTone = 'success' | 'warn' | 'danger';
 
+// Banner messages were previously hard-coded in English here. They now live
+// in `messages/{en,tr,de,es}.json` under `auth.banner_*`; this resolver
+// returns the translation key so the component can call `t()` itself.
 type StatusBanner = {
   key: string;
   tone: BannerTone;
   icon: ComponentType<{ className?: string }>;
-  message: string;
+  messageKey:
+    | 'banner_email_verified'
+    | 'banner_password_reset'
+    | 'banner_incorrect_credentials'
+    | 'banner_verification_invalid'
+    | 'banner_generic_signin_error';
 };
 
 function resolveStatusBanner(params: URLSearchParams | null): StatusBanner | null {
@@ -27,7 +35,7 @@ function resolveStatusBanner(params: URLSearchParams | null): StatusBanner | nul
       key: 'verified',
       tone: 'success',
       icon: MailCheck,
-      message: 'Email verified. Sign in to continue.',
+      messageKey: 'banner_email_verified',
     };
   }
 
@@ -36,7 +44,7 @@ function resolveStatusBanner(params: URLSearchParams | null): StatusBanner | nul
       key: 'reset',
       tone: 'success',
       icon: KeyRound,
-      message: 'Password updated. Sign in with your new password.',
+      messageKey: 'banner_password_reset',
     };
   }
 
@@ -46,7 +54,7 @@ function resolveStatusBanner(params: URLSearchParams | null): StatusBanner | nul
       key: 'error-credentials',
       tone: 'danger',
       icon: AlertCircle,
-      message: 'Incorrect email or password.',
+      messageKey: 'banner_incorrect_credentials',
     };
   }
   if (errorParam === 'Verification') {
@@ -54,7 +62,7 @@ function resolveStatusBanner(params: URLSearchParams | null): StatusBanner | nul
       key: 'error-verification',
       tone: 'warn',
       icon: AlertTriangle,
-      message: 'That verification link is no longer valid.',
+      messageKey: 'banner_verification_invalid',
     };
   }
   if (errorParam) {
@@ -62,7 +70,7 @@ function resolveStatusBanner(params: URLSearchParams | null): StatusBanner | nul
       key: `error-${errorParam}`,
       tone: 'danger',
       icon: AlertCircle,
-      message: 'Something went wrong while signing in.',
+      messageKey: 'banner_generic_signin_error',
     };
   }
 
@@ -141,7 +149,7 @@ export function SignInForm() {
     return (
       <div className="flex items-center justify-center py-12">
         <div
-          className="h-5 w-5 animate-spin rounded-full border-2 border-foreground border-t-transparent"
+          className="border-foreground h-5 w-5 animate-spin rounded-full border-2 border-t-transparent"
           aria-label="Loading"
         />
       </div>
@@ -149,13 +157,13 @@ export function SignInForm() {
   }
 
   return (
-    <div className="space-y-6 stagger">
+    <div className="stagger space-y-6">
       {/* Header */}
-      <div className="text-center space-y-1.5">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+      <div className="space-y-1.5 text-center">
+        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
           {tAuth('welcome_back')}
         </h1>
-        <p className="text-sm text-muted-foreground">{tAuth('subtitle')}</p>
+        <p className="text-muted-foreground text-sm">{tAuth('subtitle')}</p>
       </div>
 
       {/* Status banner (verify / reset / error query params) */}
@@ -166,11 +174,11 @@ export function SignInForm() {
           className={`${BANNER_TONE_STYLES[activeBanner.tone]} animate-alert-in flex items-start gap-3 px-3 py-2.5 text-sm`}
         >
           <activeBanner.icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-          <p className="flex-1 leading-snug text-foreground">{activeBanner.message}</p>
+          <p className="text-foreground flex-1 leading-snug">{tAuth(activeBanner.messageKey)}</p>
           <button
             type="button"
             onClick={() => setDismissedBannerKey(activeBanner.key)}
-            className="shrink-0 rounded-sm p-0.5 text-muted-foreground transition-colors duration-150 ease-snap hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="text-muted-foreground ease-snap hover:text-foreground focus-visible:ring-ring shrink-0 rounded-sm p-0.5 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2"
             aria-label="Dismiss notification"
           >
             <X className="h-3.5 w-3.5" aria-hidden="true" />
@@ -184,7 +192,7 @@ export function SignInForm() {
           variant="outline"
           onClick={handleGitHubSignIn}
           type="button"
-          className="w-full transition-all duration-150 ease-snap"
+          className="ease-snap w-full transition-all duration-150"
           size="lg"
         >
           <Github className="me-2 h-4 w-4" />
@@ -194,7 +202,7 @@ export function SignInForm() {
           variant="outline"
           onClick={handleGoogleSignIn}
           type="button"
-          className="w-full transition-all duration-150 ease-snap"
+          className="ease-snap w-full transition-all duration-150"
           size="lg"
         >
           <svg className="me-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
@@ -222,10 +230,10 @@ export function SignInForm() {
       {/* Divider */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-border" />
+          <span className="border-border w-full border-t" />
         </div>
         <div className="relative flex justify-center text-xs">
-          <span className="bg-card px-2.5 text-muted-foreground">
+          <span className="bg-card text-muted-foreground px-2.5">
             {tAuth('or_continue_with_email')}
           </span>
         </div>
@@ -251,7 +259,7 @@ export function SignInForm() {
             <Label htmlFor="password">{tAuth('password_label')}</Label>
             <Link
               href="/auth/forgot-password"
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-150 ease-snap"
+              className="text-muted-foreground hover:text-foreground ease-snap text-xs transition-colors duration-150"
             >
               {tAuth('forgot_password')}
             </Link>
@@ -275,7 +283,7 @@ export function SignInForm() {
 
         <Button
           type="submit"
-          className="w-full transition-all duration-150 ease-snap"
+          className="ease-snap w-full transition-all duration-150"
           size="lg"
           disabled={loading}
         >
@@ -284,11 +292,11 @@ export function SignInForm() {
       </form>
 
       {/* Sign Up Link */}
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-center text-sm">
         {tAuth('no_account')}{' '}
         <Link
           href="/auth/signup"
-          className="font-medium text-foreground hover:text-primary transition-colors duration-150 ease-snap"
+          className="text-foreground hover:text-primary ease-snap font-medium transition-colors duration-150"
         >
           {tAuth('signup')}
         </Link>

@@ -38,12 +38,10 @@ export default async function AuditLogStreamingPage() {
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-8 lg:px-8">
       <header className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Audit log streaming
-        </h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          Forward every audit event to your SIEM. Supports HMAC-signed webhooks,
-          Splunk HEC, Datadog Logs, and S3 (JSONL).
+        <h1 className="text-2xl font-semibold tracking-tight">Audit log streaming</h1>
+        <p className="text-muted-foreground mt-1.5 text-sm">
+          Forward every audit event to your SIEM. Supports HMAC-signed webhooks, Splunk HEC, Datadog
+          Logs, and S3 (JSONL).
         </p>
       </header>
       <AuditLogStreamingClient organizationId={primaryOrg.organizationId} />

@@ -120,7 +120,7 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
 
   if (isLoading || !detail) {
     return (
-      <div className="flex h-full items-center justify-center text-muted-foreground">
+      <div className="text-muted-foreground flex h-full items-center justify-center">
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         Loading initiative...
       </div>
@@ -128,11 +128,11 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
   }
 
   return (
-    <div className="flex h-full flex-col overflow-auto animate-fade-in">
-      <div className="border-b border-border bg-background px-6 py-5">
+    <div className="animate-fade-in flex h-full flex-col overflow-auto">
+      <div className="border-border bg-background border-b px-6 py-5">
         <Link
           href="/initiatives"
-          className="mb-2 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-1 text-xs"
         >
           <ChevronLeft className="h-3 w-3" />
           All initiatives
@@ -141,11 +141,11 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
           <div className="space-y-1">
             <span className="kicker">Initiative</span>
             <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-              <Target className="h-5 w-5 text-muted-foreground" />
+              <Target className="text-muted-foreground h-5 w-5" />
               {detail.initiative.name}
             </h1>
             {detail.initiative.description ? (
-              <p className="text-sm text-muted-foreground">{detail.initiative.description}</p>
+              <p className="text-muted-foreground text-sm">{detail.initiative.description}</p>
             ) : null}
           </div>
           <Badge variant="outline" className="uppercase tracking-wider">
@@ -168,7 +168,7 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
                   {rollup?.percent ?? 0}%
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 {rollup
                   ? `${rollup.done}/${rollup.total} issues complete across ${rollup.projectCount} project${rollup.projectCount === 1 ? '' : 's'}`
                   : 'No data yet'}
@@ -182,13 +182,13 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
             </CardHeader>
             <CardContent className="p-0">
               {detail.projects.length === 0 ? (
-                <div className="px-6 py-8 text-center text-sm text-muted-foreground">
+                <div className="text-muted-foreground px-6 py-8 text-center text-sm">
                   No projects linked yet.
                 </div>
               ) : (
                 <table className="w-full text-sm">
-                  <thead className="border-b border-border bg-surface">
-                    <tr className="text-left text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <thead className="border-border bg-surface border-b">
+                    <tr className="text-muted-foreground text-left text-[10px] uppercase tracking-wider">
                       <th className="px-4 py-2">Key</th>
                       <th className="px-4 py-2">Project</th>
                       <th className="px-4 py-2">Issues</th>
@@ -199,12 +199,12 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
                     {detail.projects.map((p) => {
                       const stats = rollup?.perProject.find((r) => r.projectId === p.projectId);
                       return (
-                        <tr key={p.projectId} className="border-b border-border last:border-b-0">
-                          <td className="px-4 py-2 font-mono text-xs text-muted-foreground">
+                        <tr key={p.projectId} className="border-border border-b last:border-b-0">
+                          <td className="text-muted-foreground px-4 py-2 font-mono text-xs">
                             {p.projectKey ?? '—'}
                           </td>
                           <td className="px-4 py-2">{p.projectName ?? p.projectId}</td>
-                          <td className="px-4 py-2 text-xs text-muted-foreground">
+                          <td className="text-muted-foreground px-4 py-2 text-xs">
                             {stats ? `${stats.done}/${stats.total}` : '—'}
                           </td>
                           <td className="px-4 py-2 text-right font-mono text-xs tabular-nums">
@@ -229,11 +229,11 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
                   {detail.children.map((child) => (
                     <li
                       key={child.id}
-                      className="flex items-center justify-between border-b border-border px-4 py-2 last:border-b-0"
+                      className="border-border flex items-center justify-between border-b px-4 py-2 last:border-b-0"
                     >
                       <Link
                         href={`/initiatives/${child.id}`}
-                        className="text-sm text-foreground hover:text-primary"
+                        className="text-foreground hover:text-primary text-sm"
                       >
                         {child.name}
                       </Link>
@@ -257,7 +257,10 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
             <CardContent className="space-y-3">
               <div className="space-y-1">
                 <label className="kicker text-[10px]">Status</label>
-                <Select value={status} onValueChange={(v) => setStatus(v as 'green' | 'yellow' | 'red')}>
+                <Select
+                  value={status}
+                  onValueChange={(v) => setStatus(v as 'green' | 'yellow' | 'red')}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -306,9 +309,7 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
                 Post update
               </Button>
               {postUpdate.error ? (
-                <p className="text-xs text-destructive">
-                  {(postUpdate.error as Error).message}
-                </p>
+                <p className="text-destructive text-xs">{(postUpdate.error as Error).message}</p>
               ) : null}
             </CardContent>
           </Card>
@@ -319,29 +320,29 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
             </CardHeader>
             <CardContent className="space-y-3 p-4">
               {!updates?.updates || updates.updates.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No updates yet.</p>
+                <p className="text-muted-foreground text-sm">No updates yet.</p>
               ) : (
                 updates.updates.map((u) => (
-                  <div key={u.id} className="rounded-md border border-border bg-surface p-3">
+                  <div key={u.id} className="border-border bg-surface rounded-md border p-3">
                     <div className="mb-1 flex items-center justify-between gap-2">
-                      <div className="text-xs font-medium text-foreground">
+                      <div className="text-foreground text-xs font-medium">
                         {u.authorName ?? 'Anonymous'}
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Badge variant="outline" className="uppercase tracking-wider">
                           {u.status}
                         </Badge>
-                        <span className="text-[10px] text-muted-foreground">{u.weekOf}</span>
+                        <span className="text-muted-foreground text-[10px]">{u.weekOf}</span>
                       </div>
                     </div>
                     <p className="text-sm">{u.summary}</p>
                     {u.blockers ? (
-                      <p className="mt-1 text-xs text-muted-foreground">
+                      <p className="text-muted-foreground mt-1 text-xs">
                         <span className="font-medium">Blockers:</span> {u.blockers}
                       </p>
                     ) : null}
                     {u.nextSteps ? (
-                      <p className="mt-1 text-xs text-muted-foreground">
+                      <p className="text-muted-foreground mt-1 text-xs">
                         <span className="font-medium">Next:</span> {u.nextSteps}
                       </p>
                     ) : null}

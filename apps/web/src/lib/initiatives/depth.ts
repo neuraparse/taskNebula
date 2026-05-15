@@ -47,9 +47,7 @@ export function getInitiativeDepth(
     depth += 1;
 
     if (depth > MAX_INITIATIVE_DEPTH + 10) {
-      throw new Error(
-        `Initiative depth exceeded sanity bound for ${initiativeId}`
-      );
+      throw new Error(`Initiative depth exceeded sanity bound for ${initiativeId}`);
     }
   }
   return depth;
@@ -81,12 +79,48 @@ export function validateInitiativeDepth(
 /**
  * Build a parent-id map suitable for {@link getInitiativeDepth}.
  */
-export function buildInitiativeIndex(
-  rows: Iterable<InitiativeNode>
-): Map<string, InitiativeNode> {
+export function buildInitiativeIndex(rows: Iterable<InitiativeNode>): Map<string, InitiativeNode> {
   const map = new Map<string, InitiativeNode>();
   for (const row of rows) {
     map.set(row.id, row);
   }
   return map;
+}
+
+/**
+ * Reject re-parenting that would create an indirect cycle.
+ *
+ * `validateInitiativeDepth` only inspects the *current* tree state. When a
+ * PATCH proposes to set `child.parentInitiativeId = newParentId`, the new
+ * edge is not yet in the index — so if `newParentId` is currently a
+ * *descendant* of `child` (i.e. `child` is in `newParentId`'s ancestor chain),
+ * the depth check passes silently and the resulting tree has a cycle that
+ * the existing `visited` guard only catches *after* it already exists in
+ * the DB.
+ *
+ * @param childId       the initiative being moved
+ * @param newParentId   the proposed parent (null/undefined => detaching is fine)
+ * @param byId          map of existing initiatives in the same workspace
+ * @returns             `true` if `childId` is found anywhere in the
+ *                      ancestor chain of `newParentId`
+ */
+export function wouldCreateInitiativeCycle(
+  childId: string,
+  newParentId: string | null | undefined,
+  byId: Map<string, InitiativeNode>
+): boolean {
+  if (!newParentId) return false;
+  if (newParentId === childId) return true;
+
+  let cursor: string | null = newParentId;
+  const visited = new Set<string>();
+  while (cursor) {
+    if (cursor === childId) return true;
+    if (visited.has(cursor)) return false; // pre-existing corruption — depth check will report
+    visited.add(cursor);
+    const node = byId.get(cursor);
+    if (!node) return false;
+    cursor = node.parentInitiativeId;
+  }
+  return false;
 }

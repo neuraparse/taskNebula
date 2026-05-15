@@ -67,15 +67,15 @@ export default function AiTransparencyPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
+        <h1 className="flex items-center gap-2 text-xl font-semibold">
+          <Sparkles className="text-primary h-5 w-5" />
           AI Transparency
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-muted-foreground mt-1 text-sm">
           Mandatory disclosures for every AI feature in this workspace. Required by{' '}
           <Link
             href="/ai-model-cards"
-            className="underline hover:text-foreground inline-flex items-center gap-0.5"
+            className="hover:text-foreground inline-flex items-center gap-0.5 underline"
             target="_blank"
           >
             EU AI Act Article 50
@@ -92,19 +92,17 @@ export default function AiTransparencyPage() {
             Human-oversight posture
           </CardTitle>
           <CardDescription>
-            Controls whether AI outputs can be applied automatically or must always
-            be reviewed by a human before being applied to workspace data.
+            Controls whether AI outputs can be applied automatically or must always be reviewed by a
+            human before being applied to workspace data.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
               <p className="text-sm font-medium">
-                {oversight === 'review_required'
-                  ? 'Review required (recommended)'
-                  : 'Auto-apply'}
+                {oversight === 'review_required' ? 'Review required (recommended)' : 'Auto-apply'}
               </p>
-              <p className="text-xs text-muted-foreground max-w-md">
+              <p className="text-muted-foreground max-w-md text-xs">
                 {oversight === 'review_required'
                   ? 'Every AI suggestion is queued for explicit human approval before any workspace data is mutated. Triage suggestions are previewed, never applied.'
                   : 'Features that support it may apply high-confidence AI outputs without explicit human review. Audit log still records every action.'}
@@ -112,9 +110,7 @@ export default function AiTransparencyPage() {
             </div>
             <Switch
               checked={oversight === 'auto'}
-              onCheckedChange={(v) =>
-                persistOversight(v ? 'auto' : 'review_required')
-              }
+              onCheckedChange={(v) => persistOversight(v ? 'auto' : 'review_required')}
               aria-label="Toggle human-oversight posture"
               data-testid="ai-oversight-toggle"
             />
@@ -123,7 +119,7 @@ export default function AiTransparencyPage() {
       </Card>
 
       <div>
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+        <h2 className="text-muted-foreground mb-3 text-sm font-semibold uppercase tracking-wide">
           AI features in this workspace
         </h2>
         <div className="space-y-3">
@@ -149,12 +145,10 @@ export default function AiTransparencyPage() {
                   />
                 </div>
               </CardHeader>
-              <CardContent className="grid gap-3 sm:grid-cols-2 text-xs">
+              <CardContent className="grid gap-3 text-xs sm:grid-cols-2">
                 <Field label="Model">
-                  <span className="font-mono text-foreground">{card.defaultModel}</span>{' '}
-                  <span className="text-muted-foreground">
-                    ({card.defaultProvider})
-                  </span>
+                  <span className="text-foreground font-mono">{card.defaultModel}</span>{' '}
+                  <span className="text-muted-foreground">({card.defaultProvider})</span>
                 </Field>
                 <Field label="Default oversight">
                   <Badge
@@ -167,7 +161,7 @@ export default function AiTransparencyPage() {
                   </Badge>
                 </Field>
                 <Field label="Data sent" className="sm:col-span-2">
-                  <ul className="list-disc pl-4 text-muted-foreground space-y-0.5">
+                  <ul className="text-muted-foreground list-disc space-y-0.5 pl-4">
                     {card.dataSent.map((d) => (
                       <li key={d}>{d}</li>
                     ))}
@@ -175,15 +169,15 @@ export default function AiTransparencyPage() {
                 </Field>
                 <Field label="Retention" className="sm:col-span-2">
                   <p className="text-muted-foreground inline-flex items-start gap-1.5">
-                    <Clock3 className="h-3 w-3 mt-0.5 shrink-0" />
+                    <Clock3 className="mt-0.5 h-3 w-3 shrink-0" />
                     {card.retention}
                   </p>
                 </Field>
-                <div className="sm:col-span-2 pt-1">
+                <div className="pt-1 sm:col-span-2">
                   <Link
                     href={`/ai-model-cards#${card.id}`}
                     target="_blank"
-                    className="text-xs underline hover:text-foreground inline-flex items-center gap-1"
+                    className="hover:text-foreground inline-flex items-center gap-1 text-xs underline"
                   >
                     Read full model card
                     <ExternalLink className="h-3 w-3" />
@@ -196,7 +190,7 @@ export default function AiTransparencyPage() {
       </div>
 
       <Card className="border-dashed">
-        <CardContent className="py-4 text-xs text-muted-foreground flex items-center gap-2">
+        <CardContent className="text-muted-foreground flex items-center gap-2 py-4 text-xs">
           <Database className="h-3.5 w-3.5" />
           <span>
             <strong className="text-foreground">{USER_FACING_AI_FEATURES.length}</strong> of{' '}
@@ -220,9 +214,7 @@ function Field({
 }) {
   return (
     <div className={className}>
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-        {label}
-      </p>
+      <p className="text-muted-foreground mb-1 text-[10px] uppercase tracking-wider">{label}</p>
       <div>{children}</div>
     </div>
   );

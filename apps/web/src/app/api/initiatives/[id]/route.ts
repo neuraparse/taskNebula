@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import {
-  db,
-  initiatives,
-  initiativeProjects,
-  organizationMembers,
-  projects,
-} from '@tasknebula/db';
+import { db, initiatives, initiativeProjects, organizationMembers, projects } from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
-import { buildInitiativeIndex, validateInitiativeDepth } from '@/lib/initiatives/depth';
+import {
+  buildInitiativeIndex,
+  validateInitiativeDepth,
+  wouldCreateInitiativeCycle,
+} from '@/lib/initiatives/depth';
 
 async function loadAndAuthorize(initiativeId: string, userId: string) {
   const [initiative] = await db
@@ -37,10 +35,7 @@ async function loadAndAuthorize(initiativeId: string, userId: string) {
 }
 
 // GET /api/initiatives/[id] — single initiative + linked projects + direct children.
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -71,10 +66,7 @@ export async function GET(
 }
 
 // PATCH /api/initiatives/[id]
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -106,7 +98,17 @@ export async function PATCH(
         })
         .from(initiatives)
         .where(eq(initiatives.workspaceId, initiative.workspaceId));
-      const verdict = validateInitiativeDepth(nextParent, buildInitiativeIndex(rows));
+      const index = buildInitiativeIndex(rows);
+      // Reject indirect cycles: setting `parentInitiativeId = descendant`
+      // forms a loop that the depth-walk alone can't detect (the new edge
+      // isn't in the index yet).
+      if (wouldCreateInitiativeCycle(id, nextParent, index)) {
+        return NextResponse.json(
+          { error: 'Cannot parent an initiative to one of its descendants' },
+          { status: 400 }
+        );
+      }
+      const verdict = validateInitiativeDepth(nextParent, index);
       if (!verdict.allowed) {
         return NextResponse.json(
           { error: `Initiative depth ${verdict.depth} exceeds max ${verdict.max}` },
@@ -139,8 +141,9 @@ export async function PATCH(
 
   // Replace project links if a `projectIds` array is provided.
   if (Array.isArray((patch as { projectIds?: unknown }).projectIds)) {
-    const projectIds = ((patch as { projectIds?: unknown }).projectIds as unknown[])
-      .filter((p): p is string => typeof p === 'string' && p.length > 0);
+    const projectIds = ((patch as { projectIds?: unknown }).projectIds as unknown[]).filter(
+      (p): p is string => typeof p === 'string' && p.length > 0
+    );
     await db.delete(initiativeProjects).where(eq(initiativeProjects.initiativeId, id));
     if (projectIds.length > 0) {
       await db
