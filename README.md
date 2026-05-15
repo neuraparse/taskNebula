@@ -16,9 +16,9 @@ drafts work with you like a pair programmer. Bring your own OpenAI /
 Anthropic key — or run fully offline with the native planner.
 
 [Docker Hub](https://hub.docker.com/r/neuraparse/tasknebula) ·
-[Quick start](#-quick-start) ·
-[AI](#-ai-assistant--agents) ·
-[Features](#-features) ·
+[Quick start](#quick-start) ·
+[AI](#ai-assistant-and-agents) ·
+[Features](#features) ·
 [Report a bug](https://github.com/neuraparse/tasknebula/issues)
 
 <br/>
@@ -52,7 +52,7 @@ Anthropic key — or run fully offline with the native planner.
 
 ---
 
-## ⚡ Quick start
+## Quick start
 
 One curl, then open your browser:
 
@@ -92,7 +92,7 @@ Release notes live on the [GitHub releases page](https://github.com/neuraparse/t
 
 ---
 
-## 🧠 AI Assistant & Agents
+## AI assistant and agents
 
 AI is **off by default**. Enable it per workspace from Settings → AI &
 Agents in under 30 seconds. Everything is DB-managed — no env vars to
@@ -127,34 +127,48 @@ the relevant project AI settings. Full audit trail in
 
 ---
 
-## ✨ Recently shipped — 2026-05 roadmap
+## What's new in May 2026
 
-The 2026 roadmap merge added **34 features** in one push. Highlights:
+The 2026.05 roadmap merge introduced 34 features in a single push.
 
-- 🌍 **i18n** — full Turkish, German, Spanish, English with `next-intl`
-- 💼 **Initiatives & sub-initiatives** — multi-project goals with rollup status
-- ⏱️ **Native time tracking** — estimate + actual + AI-suggested time
-- 📥 **Smart inbox + catch-me-up digest** — one place for everything that needs your attention
-- 📨 **Intake forms** — Linear-Asks-style public submission → triaged issues
-- 🤝 **Slack integration** — slash commands, emoji triage, thread sync
-- 🔐 **SAML SSO + SCIM 2.0** — enterprise identity scaffolding
-- 🤖 **Standup agent + stale-issue janitor** — recurring AI cron over your work
-- 🔁 **Cycle auto-rollover** — unfinished work flows to the next sprint
-- 📊 **Native charts dashboard** — Tremor + Recharts + AI-generated insights
-- 🛠️ **Importers** — Linear, Jira, GitHub Issues, CSV (no migration friction)
-- ⚖️ **EU AI Act Article 50** — disclosure UI + per-model cards
-- 🛡️ **Trust center + SIEM log streaming** — Splunk/Datadog/OpenSearch sinks
-- ✨ **Cmd+K omnibar** — facet chips + `Ask AI` tab; full search rebuild
-- 🎨 **View transitions + UI modernisation** — glass surfaces, zinc-950
-- 📝 **Tiptap + Yjs collaborative descriptions** — Google-Docs-style co-editing
-- 🧪 **Zod validator middleware** — typed request validation app-wide
-- 🪪 **Agent-as-assignee** — Linear Agent Protocol; agents own tickets
+**Localization and UX**
 
-Full list: [CHANGELOG](CHANGELOG.md).
+- Turkish, German, Spanish, and English locales via `next-intl`.
+- View transitions across route changes; glass surfaces on a zinc-950 base.
+- Cmd+K omnibar rebuilt with facet chips and an `Ask AI` tab.
+
+**Workflow**
+
+- Initiatives and sub-initiatives with rollup status.
+- Native time tracking — estimate, actual, and AI-suggested time.
+- Cycle auto-rollover for unfinished work.
+- Smart inbox and catch-me-up digest.
+- Public intake forms (Linear Asks pattern).
+- Importers for Linear, Jira, GitHub Issues, and CSV.
+
+**Collaboration**
+
+- Tiptap and Yjs collaborative issue descriptions.
+- Slack integration: slash commands, emoji triage, thread sync.
+
+**Identity and trust**
+
+- SAML SSO and SCIM 2.0 scaffolding.
+- Trust center with SIEM streaming (Splunk, Datadog, OpenSearch).
+- EU AI Act Article 50 disclosure UI and per-model cards.
+
+**AI and automation**
+
+- Agent-as-assignee with the Linear Agent Protocol.
+- Standup agent and stale-issue janitor (cron-driven AI).
+- Zod validator middleware for typed request handling.
+- Native charts dashboard (Tremor + Recharts) with AI-generated insights.
+
+See the [CHANGELOG](CHANGELOG.md) for the complete list.
 
 ---
 
-## 📦 Features
+## Features
 
 <table>
 <tr>
@@ -255,7 +269,7 @@ Full list: [CHANGELOG](CHANGELOG.md).
 
 ---
 
-## 📱 Mobile app (roadmap)
+## Mobile app (roadmap)
 
 A first-class mobile companion is on the roadmap. The plan is to **reuse
 the existing TaskNebula API surface** rather than fork it — so every
@@ -305,7 +319,7 @@ lead on M1, open a [discussion](https://github.com/neuraparse/tasknebula/discuss
 
 ---
 
-## 🛠 Tech stack
+## Tech stack
 
 <table>
 <tr>
@@ -337,7 +351,7 @@ lead on M1, open a [discussion](https://github.com/neuraparse/tasknebula/discuss
 
 ---
 
-## 🚢 Production
+## Production
 
 ```env
 # .env
@@ -386,7 +400,7 @@ WebSocket upgrade headers + 24h idle timeout LiveKit needs.
 
 ---
 
-## 🧰 Commands
+## Commands
 
 ```bash
 docker compose up -d                  # Start (pulls :latest)
@@ -403,7 +417,7 @@ git pull && docker compose up -d --build   # Pull + rebuild
 
 ---
 
-## 👩‍💻 Development
+## Development
 
 ```bash
 pnpm install
@@ -426,13 +440,13 @@ AI-related tests live under `apps/web/src/lib/ai/__tests__`,
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Pull requests welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the
 branch model, commit conventions, and how to run the linter + tests
 locally before pushing.
 
-## 📄 License
+## License
 
 MIT — see [LICENSE](LICENSE).
 
