@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
   // Build a nested tree client-side-friendly shape. Roots first, each node
   // carries a flat `children` array of *direct* children. The UI does the
   // rest of the walk (we cap depth at 5, so this is cheap).
-  type Row = typeof rows[number];
+  type Row = (typeof rows)[number];
   type Node = Row & { children: Node[] };
 
   const byId = new Map<string, Node>();
@@ -165,29 +165,43 @@ export async function POST(request: NextRequest) {
           .slice(0, 80) || createId().slice(0, 8);
 
   const id = createId();
-  const [created] = await db
-    .insert(initiatives)
-    .values({
-      id,
-      workspaceId,
-      parentInitiativeId: (parentInitiativeId as string | null) || null,
-      name,
-      slug: computedSlug,
-      description: typeof description === 'string' ? description : null,
-      status: (status as any) || 'planned',
-      ownerUserId: (ownerUserId as string | null) || null,
-      targetDate: (targetDate as string | null) || null,
-      color: (color as string | null) || null,
-      sortOrder: typeof sortOrder === 'number' ? sortOrder : 0,
-      createdBy: session.user.id,
-      updatedBy: session.user.id,
-    })
-    .returning();
+  let created;
+  try {
+    [created] = await db
+      .insert(initiatives)
+      .values({
+        id,
+        workspaceId,
+        parentInitiativeId: (parentInitiativeId as string | null) || null,
+        name,
+        slug: computedSlug,
+        description: typeof description === 'string' ? description : null,
+        status: (status as any) || 'planned',
+        ownerUserId: (ownerUserId as string | null) || null,
+        targetDate: (targetDate as string | null) || null,
+        color: (color as string | null) || null,
+        sortOrder: typeof sortOrder === 'number' ? sortOrder : 0,
+        createdBy: session.user.id,
+        updatedBy: session.user.id,
+      })
+      .returning();
+  } catch (err: unknown) {
+    // postgres-js surfaces unique-violation as `error.code === '23505'`.
+    // Translate to 409 Conflict instead of letting a 500 bubble up.
+    if (typeof err === 'object' && err !== null && (err as { code?: string }).code === '23505') {
+      return NextResponse.json(
+        { error: `Slug "${computedSlug}" is already in use in this workspace.` },
+        { status: 409 }
+      );
+    }
+    throw err;
+  }
 
   // Optionally link projects in the same call.
   if (Array.isArray((body as { projectIds?: unknown }).projectIds)) {
-    const projectIds = ((body as { projectIds?: unknown }).projectIds as unknown[])
-      .filter((p): p is string => typeof p === 'string' && p.length > 0);
+    const projectIds = ((body as { projectIds?: unknown }).projectIds as unknown[]).filter(
+      (p): p is string => typeof p === 'string' && p.length > 0
+    );
     if (projectIds.length > 0) {
       await db
         .insert(initiativeProjects)
@@ -196,5 +210,8 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ initiative: created, maxDepth: MAX_INITIATIVE_DEPTH }, { status: 201 });
+  return NextResponse.json(
+    { initiative: created, maxDepth: MAX_INITIATIVE_DEPTH },
+    { status: 201 }
+  );
 }

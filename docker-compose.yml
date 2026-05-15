@@ -148,7 +148,13 @@ services:
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     healthcheck:
-      test: ['CMD', 'node', '-e', "require('http').get('http://localhost:3000/api/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('http').get('http://localhost:3000/api/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))",
+        ]
       interval: 30s
       timeout: 10s
       start_period: 60s
@@ -169,12 +175,13 @@ services:
       CRON_SECRET: ${CRON_SECRET:?CRON_SECRET must be set to enable the cron sidecar}
       WEB_BASE_URL: ${CRON_WEB_BASE_URL:-http://web:3000}
     entrypoint: ['/bin/sh', '-c']
-    # Daily standup at 08:00 UTC, hourly janitor.
-    # busybox crond reads /etc/crontabs/root.
+    # Daily standup at 08:00 UTC, hourly janitor, daily cycle-rollover at
+    # 02:00 UTC (off-peak so any cross-cycle DB churn doesn't collide with
+    # the standup digest window). busybox crond reads /etc/crontabs/root.
     command:
       - |
         apk add --no-cache curl > /dev/null && \
-        printf '0 8 * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/standup" -o /dev/null\n0 * * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/janitor" -o /dev/null\n' > /etc/crontabs/root && \
+        printf '0 8 * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/standup" -o /dev/null\n0 * * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/janitor" -o /dev/null\n0 2 * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/cycle-rollover" -o /dev/null\n' > /etc/crontabs/root && \
         crond -f -l 8
 
 volumes:

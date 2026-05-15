@@ -18,7 +18,13 @@
     "created_by_me": "Benim oluşturduğum",
     "subscribed": "Takip ettiğim",
     "mentioned": "Bahsedilen",
-    "search_placeholder": "Konu, proje veya belge ara…"
+    "search_placeholder": "Konu, proje veya belge ara…",
+    "home": "Ana sayfa",
+    "inbox": "Gelen kutusu",
+    "inbox_unread": "{count} okunmamış",
+    "account_settings": "Hesap ayarları",
+    "sign_out": "Çıkış yap",
+    "account_menu": "Hesap menüsü"
   },
   "actions": {
     "create_issue": "Konu oluştur",

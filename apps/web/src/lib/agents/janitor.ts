@@ -18,12 +18,9 @@
 
 import { z } from 'zod';
 import { DEFAULT_HAIKU_MODEL } from './standup';
+import { commitUsage } from '@/lib/ai/budget';
 
-export const JANITOR_ACTIONS = [
-  'ping_assignee',
-  'snooze',
-  'auto_close_with_label',
-] as const;
+export const JANITOR_ACTIONS = ['ping_assignee', 'snooze', 'auto_close_with_label'] as const;
 
 export type JanitorAction = (typeof JANITOR_ACTIONS)[number];
 
@@ -232,11 +229,7 @@ async function decideViaHaiku(
  * Apply the confidence floor and normalize the LLM's decision into a
  * stored JanitorDecision row.
  */
-function finalizeDecision(
-  raw: DecisionShape,
-  issue: StaleIssue,
-  floor: number
-): JanitorDecision {
+function finalizeDecision(raw: DecisionShape, issue: StaleIssue, floor: number): JanitorDecision {
   if (raw.confidence < floor) {
     return {
       issueId: issue.id,
@@ -251,12 +244,8 @@ function finalizeDecision(
     issueKey: issue.key,
     action: raw.action,
     reason: raw.reason,
-    snoozeDays:
-      raw.action === 'snooze'
-        ? raw.snoozeDays ?? DEFAULT_SNOOZE_DAYS
-        : undefined,
-    label:
-      raw.action === 'auto_close_with_label' ? STALE_AUTO_LABEL : undefined,
+    snoozeDays: raw.action === 'snooze' ? (raw.snoozeDays ?? DEFAULT_SNOOZE_DAYS) : undefined,
+    label: raw.action === 'auto_close_with_label' ? STALE_AUTO_LABEL : undefined,
     confidence: raw.confidence,
   };
 }
@@ -268,6 +257,7 @@ function finalizeDecision(
  */
 export async function sweepStaleIssues(input: JanitorInput): Promise<JanitorDecision[]> {
   const floor = input.confidenceFloor ?? DEFAULT_CONFIDENCE_FLOOR;
+  const model = input.model ?? DEFAULT_HAIKU_MODEL;
   const decisions: JanitorDecision[] = [];
 
   for (const issue of input.issues) {
@@ -275,14 +265,41 @@ export async function sweepStaleIssues(input: JanitorInput): Promise<JanitorDeci
       decisions.push(decideJanitorActionHeuristic(issue));
       continue;
     }
+    const startedAt = Date.now();
+    const promptString = JSON.stringify({ issueKey: issue.key, staleDays: issue.staleDays });
     try {
-      const raw = await decideViaHaiku(
-        issue,
-        input.anthropicApiKey,
-        input.model ?? DEFAULT_HAIKU_MODEL
-      );
+      const raw = await decideViaHaiku(issue, input.anthropicApiKey, model);
+      // Best-effort audit so admin/usage dashboards reflect janitor activity.
+      // Token counts estimated (callsite doesn't surface provider usage yet).
+      commitUsage({
+        organizationId: input.workspaceId,
+        userId: null,
+        provider: 'anthropic',
+        model,
+        prompt: promptString,
+        inputTokens: Math.ceil(promptString.length / 4),
+        outputTokens: Math.ceil(JSON.stringify(raw).length / 4),
+        latencyMs: Date.now() - startedAt,
+        status: 'success',
+        feature: 'janitor',
+      }).catch((auditErr) => {
+        console.warn('[janitor] llm_call_audit insert failed', auditErr);
+      });
       decisions.push(finalizeDecision(raw, issue, floor));
     } catch (err) {
+      commitUsage({
+        organizationId: input.workspaceId,
+        userId: null,
+        provider: 'anthropic',
+        model,
+        prompt: promptString,
+        inputTokens: Math.ceil(promptString.length / 4),
+        outputTokens: 0,
+        latencyMs: Date.now() - startedAt,
+        status: 'error',
+        errorMessage: err instanceof Error ? err.message : String(err),
+        feature: 'janitor',
+      }).catch(() => {});
       console.warn('[janitor] Haiku call failed, falling back to heuristic', err);
       decisions.push(decideJanitorActionHeuristic(issue));
     }

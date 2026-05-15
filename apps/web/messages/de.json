@@ -18,7 +18,13 @@
     "created_by_me": "Von mir erstellt",
     "subscribed": "Abonniert",
     "mentioned": "Erwähnt",
-    "search_placeholder": "Aufgaben, Projekte, Dokumente suchen…"
+    "search_placeholder": "Aufgaben, Projekte, Dokumente suchen…",
+    "home": "Startseite",
+    "inbox": "Posteingang",
+    "inbox_unread": "{count} ungelesen",
+    "account_settings": "Kontoeinstellungen",
+    "sign_out": "Abmelden",
+    "account_menu": "Kontomenü"
   },
   "actions": {
     "create_issue": "Aufgabe erstellen",

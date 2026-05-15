@@ -133,11 +133,25 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (field in patch) updates[field] = patch[field];
   }
 
-  const [updated] = await db
-    .update(initiatives)
-    .set(updates as any)
-    .where(eq(initiatives.id, id))
-    .returning();
+  let updated;
+  try {
+    [updated] = await db
+      .update(initiatives)
+      .set(updates as any)
+      .where(eq(initiatives.id, id))
+      .returning();
+  } catch (err: unknown) {
+    // Same `23505` unique-violation translation as POST — a workspace-wide
+    // duplicate slug would otherwise surface as a 500.
+    if (typeof err === 'object' && err !== null && (err as { code?: string }).code === '23505') {
+      const slugValue = typeof updates.slug === 'string' ? updates.slug : (initiative.slug ?? '');
+      return NextResponse.json(
+        { error: `Slug "${slugValue}" is already in use in this workspace.` },
+        { status: 409 }
+      );
+    }
+    throw err;
+  }
 
   // Replace project links if a `projectIds` array is provided.
   if (Array.isArray((patch as { projectIds?: unknown }).projectIds)) {

@@ -18,7 +18,13 @@
     "created_by_me": "Creadas por mí",
     "subscribed": "Suscrito",
     "mentioned": "Mencionado",
-    "search_placeholder": "Buscar incidencias, proyectos, documentos…"
+    "search_placeholder": "Buscar incidencias, proyectos, documentos…",
+    "home": "Inicio",
+    "inbox": "Bandeja de entrada",
+    "inbox_unread": "{count} sin leer",
+    "account_settings": "Ajustes de cuenta",
+    "sign_out": "Cerrar sesión",
+    "account_menu": "Menú de cuenta"
   },
   "actions": {
     "create_issue": "Crear incidencia",

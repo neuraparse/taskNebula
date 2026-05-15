@@ -18,7 +18,13 @@
     "created_by_me": "Created by me",
     "subscribed": "Subscribed",
     "mentioned": "Mentioned",
-    "search_placeholder": "Search issues, projects, docs…"
+    "search_placeholder": "Search issues, projects, docs…",
+    "home": "Home",
+    "inbox": "Inbox",
+    "inbox_unread": "{count} unread",
+    "account_settings": "Account settings",
+    "sign_out": "Sign out",
+    "account_menu": "Account menu"
   },
   "actions": {
     "create_issue": "Create issue",

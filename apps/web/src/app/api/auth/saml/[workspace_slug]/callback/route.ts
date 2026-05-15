@@ -17,14 +17,11 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { loadSsoForSlug } from '@/lib/sso/workspace';
-import {
-  parseLoginResponse,
-  getBaseUrl,
-  type SamlContext,
-} from '@/lib/sso/saml';
+import { parseLoginResponse, getBaseUrl, type SamlContext } from '@/lib/sso/saml';
 import { resolveUserAttributes } from '@/lib/sso/attribute-map';
 import { jitProvisionUser } from '@/lib/sso/jit';
 import { mintSamlExchangeToken } from '@/lib/sso/session';
+import { verifyRelayState } from '@/lib/sso/relay-state';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,19 +38,37 @@ export async function POST(
 
   const workspace = await loadSsoForSlug(resolvedSlug);
   if (!workspace || !workspace.config.enabled) {
-    return NextResponse.json(
-      { error: 'SSO not configured for this workspace' },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: 'SSO not configured for this workspace' }, { status: 404 });
   }
 
   const formData = await request.formData();
   const samlResponse = formData.get('SAMLResponse');
   if (typeof samlResponse !== 'string' || !samlResponse) {
+    return NextResponse.json({ error: 'Missing SAMLResponse' }, { status: 400 });
+  }
+
+  // RelayState defence — verify the value the IdP echoed back was minted
+  // by us, has not expired, and addresses the same workspace slug as the
+  // cookie + URL. A missing RelayState is treated as an error so that
+  // upgrading from a no-RelayState build to this one forces the IdP-side
+  // metadata refresh to start carrying it.
+  const relayValue = formData.get('RelayState');
+  if (typeof relayValue !== 'string' || !relayValue) {
+    return NextResponse.json({ error: 'Missing RelayState' }, { status: 400 });
+  }
+  const relayResult = verifyRelayState(relayValue);
+  if (!relayResult.ok) {
+    console.warn('SAML RelayState rejected:', relayResult.reason);
     return NextResponse.json(
-      { error: 'Missing SAMLResponse' },
+      { error: `Invalid RelayState (${relayResult.reason})` },
       { status: 400 }
     );
+  }
+  if (relayResult.slug !== resolvedSlug) {
+    console.warn(
+      `SAML RelayState slug mismatch: relay=${relayResult.slug}, resolved=${resolvedSlug}`
+    );
+    return NextResponse.json({ error: 'RelayState workspace mismatch' }, { status: 400 });
   }
 
   const ctx: SamlContext = {
@@ -67,10 +82,7 @@ export async function POST(
     assertion = await parseLoginResponse(ctx, samlResponse);
   } catch (err) {
     console.error('SAML response verification failed:', err);
-    return NextResponse.json(
-      { error: 'Invalid SAML response' },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Invalid SAML response' }, { status: 401 });
   }
 
   let internalUser;

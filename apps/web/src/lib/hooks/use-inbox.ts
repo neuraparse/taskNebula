@@ -120,9 +120,42 @@ export function useInboxMarkRead() {
       if (!response.ok) throw new Error('Failed to mark inbox item as read');
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inbox'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    // Optimistic update: patch the affected item across *every* cached
+    // inbox view (the user may have multiple filters mounted in different
+    // tabs/panels). Without this, invalidateQueries refetches all views in
+    // parallel and the background view that the user is about to switch to
+    // briefly shows the item as unread before the refetch lands ("flash
+    // unsync").
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ['inbox'] });
+      const snapshots: Array<[readonly unknown[], unknown]> = [];
+      queryClient
+        .getQueriesData<{ items?: { id: string; readAt?: string | null }[] }>({
+          queryKey: ['inbox'],
+        })
+        .forEach(([key, data]) => {
+          if (!data?.items) return;
+          snapshots.push([key, data]);
+          queryClient.setQueryData(key, {
+            ...data,
+            items: data.items.map((it) =>
+              it.id === id ? { ...it, readAt: it.readAt ?? new Date().toISOString() } : it
+            ),
+          });
+        });
+      return { snapshots };
+    },
+    onError: (_err, _id, ctx) => {
+      // Roll back every snapshot we patched.
+      ctx?.snapshots.forEach(([key, prev]) => queryClient.setQueryData(key, prev));
+    },
+    onSettled: () => {
+      // `refetchType: 'active'` only refetches queries with mounted
+      // observers — background-cached views stay stale-marked until
+      // remount, which avoids hammering the server with parallel
+      // refetches when the user has multiple inbox lenses in cache.
+      queryClient.invalidateQueries({ queryKey: ['inbox'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['notifications'], refetchType: 'active' });
     },
   });
 }

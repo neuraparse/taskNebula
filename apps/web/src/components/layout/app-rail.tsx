@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import {
   BookOpenText,
   FolderKanban,
@@ -17,12 +18,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -41,19 +37,26 @@ interface RailItem {
   showBadge?: boolean;
 }
 
-const railItems: RailItem[] = [
-  { name: 'Home', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Inbox', href: '/inbox', icon: Inbox, showBadge: true },
-  { name: 'Issues', href: '/my-issues', icon: Layers },
-  { name: 'Projects', href: '/projects', icon: FolderKanban },
-  { name: 'Docs', href: '/docs', icon: BookOpenText },
-  { name: 'Team', href: '/team', icon: Users },
-  { name: 'Settings', href: '/settings', icon: Settings },
+// Rail items declare a translation key (resolved against `nav`) instead of
+// inline English so the rail respects the user's chosen locale. The
+// `href` stays language-agnostic; next-intl handles the `/[locale]` prefix
+// at render time via `useTranslations('nav')`.
+type RailItemKey = 'home' | 'inbox' | 'my_issues' | 'projects' | 'docs' | 'team' | 'settings';
+
+const railItems: (Omit<RailItem, 'name'> & { key: RailItemKey })[] = [
+  { key: 'home', href: '/dashboard', icon: LayoutDashboard },
+  { key: 'inbox', href: '/inbox', icon: Inbox, showBadge: true },
+  { key: 'my_issues', href: '/my-issues', icon: Layers },
+  { key: 'projects', href: '/projects', icon: FolderKanban },
+  { key: 'docs', href: '/docs', icon: BookOpenText },
+  { key: 'team', href: '/team', icon: Users },
+  { key: 'settings', href: '/settings', icon: Settings },
 ];
 
 export function AppRail() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const tNav = useTranslations('nav');
   const isSuperAdmin = (session?.user as { role?: string } | undefined)?.role === 'super_admin';
   // Lightweight unread count — keys on { unread: true } so the response is
   // small (just unread items, first page). Refetches every minute via the
@@ -72,10 +75,11 @@ export function AppRail() {
     <TooltipProvider delayDuration={150}>
       <nav
         aria-label="Workspace rail"
-        className="flex h-screen w-14 shrink-0 flex-col items-center border-r border-border bg-background py-2"
+        className="border-border bg-background flex h-screen w-14 shrink-0 flex-col items-center border-r py-2"
       >
         <ul className="flex flex-1 flex-col items-center gap-1">
           {railItems.map((item) => {
+            const label = tNav(item.key);
             const isActive =
               pathname === item.href ||
               pathname?.startsWith(item.href + '/') ||
@@ -86,22 +90,19 @@ export function AppRail() {
               (item.href === '/my-issues' && pathname?.startsWith('/issues/'));
             const Icon = item.icon;
             const showInboxBadge = item.showBadge && unreadInboxCount > 0;
+            const unreadLabel = tNav('inbox_unread', { count: unreadInboxCount });
 
             return (
-              <li key={item.name} className="w-full">
+              <li key={item.key} className="w-full">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Link
                       href={item.href}
                       data-active={isActive ? 'true' : undefined}
-                      aria-label={
-                        showInboxBadge
-                          ? `${item.name}, ${unreadInboxCount} unread`
-                          : item.name
-                      }
+                      aria-label={showInboxBadge ? `${label} · ${unreadLabel}` : label}
                       aria-current={isActive ? 'page' : undefined}
                       className={cn(
-                        'relative mx-auto flex w-12 flex-col items-center gap-0.5 rounded-md px-1 py-1.5 text-muted-foreground transition-all duration-150 ease-snap hover:bg-accent/60 hover:text-foreground',
+                        'text-muted-foreground ease-snap hover:bg-accent/60 hover:text-foreground relative mx-auto flex w-12 flex-col items-center gap-0.5 rounded-md px-1 py-1.5 transition-all duration-150',
                         isActive && 'bg-accent text-foreground'
                       )}
                     >
@@ -110,19 +111,19 @@ export function AppRail() {
                         <span
                           aria-hidden="true"
                           data-testid="inbox-unread-badge"
-                          className="absolute right-1 top-0.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-semibold text-primary-foreground ring-1 ring-background"
+                          className="bg-primary text-primary-foreground ring-background absolute right-1 top-0.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full px-1 text-[9px] font-semibold ring-1"
                         >
                           {unreadInboxCount > 9 ? '9+' : unreadInboxCount}
                         </span>
                       )}
-                      <span className="text-[10px] leading-tight text-muted-foreground">
-                        {item.name}
+                      <span className="text-muted-foreground text-[10px] leading-tight">
+                        {label}
                       </span>
                     </Link>
                   </TooltipTrigger>
                   <TooltipContent side="right">
-                    {item.name}
-                    {showInboxBadge ? ` · ${unreadInboxCount} unread` : ''}
+                    {label}
+                    {showInboxBadge ? ` · ${unreadLabel}` : ''}
                   </TooltipContent>
                 </Tooltip>
               </li>
@@ -136,17 +137,19 @@ export function AppRail() {
               <TooltipTrigger asChild>
                 <Link
                   href="/admin"
-                  aria-label="Admin"
+                  aria-label={tNav('admin')}
                   className={cn(
-                    'mx-auto flex w-12 flex-col items-center gap-0.5 rounded-md px-1 py-1.5 text-muted-foreground transition-all duration-150 ease-snap hover:bg-accent/60 hover:text-foreground',
+                    'text-muted-foreground ease-snap hover:bg-accent/60 hover:text-foreground mx-auto flex w-12 flex-col items-center gap-0.5 rounded-md px-1 py-1.5 transition-all duration-150',
                     pathname?.startsWith('/admin') && 'bg-accent text-foreground'
                   )}
                 >
                   <Shield className="h-4 w-4 shrink-0" />
-                  <span className="text-[10px] leading-tight text-muted-foreground">Admin</span>
+                  <span className="text-muted-foreground text-[10px] leading-tight">
+                    {tNav('admin')}
+                  </span>
                 </Link>
               </TooltipTrigger>
-              <TooltipContent side="right">Admin</TooltipContent>
+              <TooltipContent side="right">{tNav('admin')}</TooltipContent>
             </Tooltip>
           ) : null}
 
@@ -154,14 +157,14 @@ export function AppRail() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                aria-label="Account menu"
-                className="mx-auto flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-border transition-all duration-150 hover:ring-foreground/40"
+                aria-label={tNav('account_menu')}
+                className="ring-border hover:ring-foreground/40 mx-auto flex h-9 w-9 items-center justify-center rounded-full ring-1 transition-all duration-150"
               >
                 <Avatar size="lg">
                   {session?.user?.image ? (
                     <AvatarImage src={session.user.image} alt={session.user.name ?? 'User'} />
                   ) : null}
-                  <AvatarFallback className="bg-muted text-[11px] font-medium text-muted-foreground">
+                  <AvatarFallback className="bg-muted text-muted-foreground text-[11px] font-medium">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
@@ -170,10 +173,8 @@ export function AppRail() {
             <DropdownMenuContent side="right" align="end" className="w-60">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="truncate text-sm font-medium">
-                    {session?.user?.name ?? 'User'}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
+                  <p className="truncate text-sm font-medium">{session?.user?.name ?? 'User'}</p>
+                  <p className="text-muted-foreground truncate text-xs">
                     {session?.user?.email ?? 'Workspace'}
                   </p>
                 </div>
@@ -182,7 +183,7 @@ export function AppRail() {
               <DropdownMenuItem asChild>
                 <Link href="/settings" className="flex items-center gap-2">
                   <UserIcon className="h-4 w-4" />
-                  <span>Account settings</span>
+                  <span>{tNav('account_settings')}</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -190,7 +191,7 @@ export function AppRail() {
                 className="text-destructive focus:text-destructive"
               >
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Sign out</span>
+                <span>{tNav('sign_out')}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

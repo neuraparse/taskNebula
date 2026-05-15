@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.2.9] - 2026-05-15
+
+### Fixed
+
+- **Initiative slug conflict surfaced as 500.** `POST /api/initiatives` and `PATCH /api/initiatives/[id]` now catch Postgres's `23505` unique-violation and return `409 Conflict` with a human-readable message instead of letting the error bubble up.
+- **Inbox mark-read flash-unsync.** `useInboxMarkRead` now does an optimistic update across every cached `['inbox', filters]` view, snapshots state for rollback on error, and uses `refetchType: 'active'` so background lenses don't trigger parallel refetches. The "unread for a frame after viewing the snooze tab" race is gone.
+- **Locale switcher cookie race.** The switcher now reads back the cookie before reloading and yields a double-rAF so the browser has actually flushed the write. Slow networks (and Safari) no longer reload in the previous locale.
+
+### Security
+
+- **SAML callbacks now require a signed `RelayState`.** `/saml/[slug]/init` mints an HMAC-SHA256-signed token over `{slug, nonce, ts}` using `AUTH_SECRET` and appends it to the IdP redirect URL. `/saml/[slug]/callback` verifies the signature, enforces a 5-minute replay window, and rejects mismatched slugs. Defence-in-depth on top of the existing workspace-slug cookie.
+- **Hocuspocus per-document authorization.** The collaboration server's `onAuthenticate` hook now resolves the issue id embedded in the document name (`issue:<id>`) and requires the connecting user to be either a member of the issue's project or an `owner`/`admin` of the issue's organization. Previously a valid collaboration JWT for any user opened any issue document, regardless of project access.
+
+### Internationalisation
+
+- App-rail tooltips, nav labels ("Home", "Inbox", "Issues", "Projects", "Docs", "Team", "Settings", "Admin"), and the account menu ("Account settings", "Sign out") now read from `nav.*` translation keys instead of hard-coded English. Filled in for EN, TR, DE, ES.
+
+### Observability
+
+- **Cron-driven LLM calls now write `llm_call_audit`.** Standup and janitor agents call `commitUsage()` on every Anthropic invocation (success and error paths), so the admin spend dashboard reflects cron activity. Token counts are estimated from message length until the underlying `callHaiku()` exposes provider usage.
+- **Daily cycle-rollover cron scheduled.** The compose-side cron sidecar now also POSTs `/api/cron/cycle-rollover` at 02:00 UTC. Previously the endpoint existed but had no scheduler driving it.
+
+### Tests
+
+- 44 new Jest cases across five suites: initiative cycle detection, importer credential redaction, search org/project membership guard, sidebar locale-aware highlighting helpers, and SAML RelayState mint/verify (including tamper, expiry, and nonce-distinctness coverage).
+
 ## [0.2.8] - 2026-05-15
 
 ### Fixed

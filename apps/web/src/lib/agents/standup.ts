@@ -17,6 +17,7 @@
  */
 
 import { z } from 'zod';
+import { commitUsage } from '@/lib/ai/budget';
 
 export type StandupEventType =
   | 'issue_created'
@@ -29,9 +30,9 @@ export type StandupEventType =
 
 export interface StandupEvent {
   type: StandupEventType;
-  ref: string;            // e.g. "PROJ-123", commit sha, PR url
-  summary: string;        // short human description
-  at: string;             // ISO timestamp
+  ref: string; // e.g. "PROJ-123", commit sha, PR url
+  summary: string; // short human description
+  at: string; // ISO timestamp
   url?: string | null;
 }
 
@@ -57,6 +58,8 @@ export interface BuildStandupInput {
   anthropicApiKey?: string | null;
   /** Override the default Haiku model (e.g. for tests). */
   model?: string;
+  /** Required to attribute the LLM call in `llm_call_audit`. */
+  organizationId?: string;
 }
 
 export const DEFAULT_HAIKU_MODEL = 'claude-haiku-4-5';
@@ -270,12 +273,36 @@ export async function buildStandupDigest(input: BuildStandupInput): Promise<Stan
 
   const window = dateRangeLabel(input.windowStart, input.windowEnd);
   const name = input.userName ?? 'this engineer';
+  const model = input.model ?? DEFAULT_HAIKU_MODEL;
+  const startedAt = Date.now();
+  const userMessage = JSON.stringify({ events: input.events, userName: name, window });
   try {
-    const summary = await callHaiku(
-      input.anthropicApiKey,
-      input.model ?? DEFAULT_HAIKU_MODEL,
-      { events: input.events, userName: name, window }
-    );
+    const summary = await callHaiku(input.anthropicApiKey, model, {
+      events: input.events,
+      userName: name,
+      window,
+    });
+    // Best-effort audit. We don't have the provider's exact token counts
+    // from this minimal callHaiku() — estimate from message length so the
+    // admin spend dashboard reflects standup activity. A future revision
+    // should plumb the real usage block through callHaiku.
+    if (input.organizationId) {
+      await commitUsage({
+        organizationId: input.organizationId,
+        userId: input.userId,
+        provider: 'anthropic',
+        model,
+        prompt: userMessage,
+        inputTokens: Math.ceil(userMessage.length / 4),
+        outputTokens: Math.ceil(JSON.stringify(summary).length / 4),
+        latencyMs: Date.now() - startedAt,
+        status: 'success',
+        feature: 'standup',
+      }).catch((auditErr) => {
+        // Never let auditing break the cron run; just log.
+        console.warn('[standup] llm_call_audit insert failed', auditErr);
+      });
+    }
     return {
       yesterday: summary.yesterday,
       today: summary.today,
@@ -285,6 +312,21 @@ export async function buildStandupDigest(input: BuildStandupInput): Promise<Stan
       sourceEvents: input.events,
     };
   } catch (err) {
+    if (input.organizationId) {
+      await commitUsage({
+        organizationId: input.organizationId,
+        userId: input.userId,
+        provider: 'anthropic',
+        model,
+        prompt: userMessage,
+        inputTokens: Math.ceil(userMessage.length / 4),
+        outputTokens: 0,
+        latencyMs: Date.now() - startedAt,
+        status: 'error',
+        errorMessage: err instanceof Error ? err.message : String(err),
+        feature: 'standup',
+      }).catch(() => {});
+    }
     // Degrade to deterministic output instead of throwing — a missed
     // standup is better than a broken cron run.
     console.warn('[standup] Haiku call failed, falling back to heuristic', err);

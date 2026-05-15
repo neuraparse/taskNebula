@@ -43,17 +43,12 @@ function toDateKey(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-export async function runStandupForUser(
-  options: RunStandupOptions
-): Promise<RunStandupResult> {
+export async function runStandupForUser(options: RunStandupOptions): Promise<RunStandupResult> {
   const windowEnd = options.windowEnd ?? new Date();
-  const windowStart =
-    options.windowStart ?? new Date(windowEnd.getTime() - 24 * 60 * 60 * 1000);
+  const windowStart = options.windowStart ?? new Date(windowEnd.getTime() - 24 * 60 * 60 * 1000);
   const dateKey = toDateKey(windowEnd);
 
-  const settings = await getOrganizationSettingsForAgentCredentials(
-    options.organizationId
-  );
+  const settings = await getOrganizationSettingsForAgentCredentials(options.organizationId);
   const apiKey = resolveProviderApiKeyFromSettings(settings, 'anthropic');
 
   const [user] = await db
@@ -82,6 +77,7 @@ export async function runStandupForUser(
     windowStart,
     windowEnd,
     anthropicApiKey: apiKey,
+    organizationId: options.organizationId,
   });
 
   let recordId: string | null = null;
@@ -124,9 +120,7 @@ export async function runStandupForUser(
 }
 
 /** Resolve all active member IDs for an org. */
-export async function listOrgMemberIds(
-  organizationId: string
-): Promise<string[]> {
+export async function listOrgMemberIds(organizationId: string): Promise<string[]> {
   const rows = await db.execute<{ user_id: string }>(
     sql`SELECT user_id FROM organization_members
         WHERE organization_id = ${organizationId} AND status = 'active'`

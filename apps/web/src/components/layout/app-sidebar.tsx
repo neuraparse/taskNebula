@@ -1747,3 +1747,13 @@ function getInitials(value: string) {
       .join('') || 'TN'
   );
 }
+
+// Re-export locale-aware helpers for unit tests. These intentionally stay
+// non-exported in the public surface (the component is the only consumer at
+// runtime), but tests need to exercise the pure path-mapping logic directly.
+export const __test__ = {
+  stripLocalePrefix,
+  getSectionKey,
+  isHomeSectionPath,
+  isNavLinkActive,
+};
