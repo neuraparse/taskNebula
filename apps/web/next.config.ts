@@ -21,6 +21,15 @@ const nextConfig: NextConfig = {
     // the TS error explicitly; remove once @types/next exposes it.
     // @ts-expect-error -- experimental flag not yet in NextConfig types
     viewTransition: true,
+    // Behind a reverse proxy (nginx → container) the request's Host is the
+    // public host (tasknebula.nowflow.io). next-intl builds rewrite URLs
+    // from `request.url`, so the rewrite target carries that public host.
+    // Without trustHostHeader the standalone server's initUrl is
+    // http://localhost:3000/... — hosts mismatch, Next treats the rewrite
+    // as external, and proxies it (failing with ECONNREFUSED 127.0.0.2:443
+    // when the public host resolves to a loopback alias). Trusting the
+    // host header keeps the rewrite relative.
+    trustHostHeader: true,
   },
   // 2026-05 roadmap: 34 worktree-merged feature commits in a single push.
   // ESLint findings (mostly cosmetic — escaped chars, anchor-vs-Link, react/no-unescaped-entities,
@@ -61,4 +70,3 @@ const nextConfig: NextConfig = {
 };
 
 export default withNextIntl(nextConfig);
-
