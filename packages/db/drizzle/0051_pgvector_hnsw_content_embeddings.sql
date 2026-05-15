@@ -11,8 +11,11 @@
 -- The DROP IF EXISTS line removes any prior IVFFlat index (the legacy naming
 -- drizzle-kit would have used for the same column) so this migration is safe
 -- whether or not a previous ANN index exists.
-BEGIN;
-
+--
+-- No explicit BEGIN/COMMIT here: drizzle-kit's migrator already wraps each
+-- migration in a transaction. Nesting one manually produced the
+-- "there is already a transaction in progress" / "there is no transaction
+-- in progress" warnings logged by Postgres on every startup.
 DROP INDEX IF EXISTS "content_embeddings_embedding_ivfflat_idx";
 DROP INDEX IF EXISTS "content_embeddings_embedding_idx";
 
@@ -20,5 +23,3 @@ CREATE INDEX IF NOT EXISTS "content_embeddings_embedding_hnsw_idx"
   ON "content_embeddings"
   USING hnsw ("embedding" vector_cosine_ops)
   WITH (m = 16, ef_construction = 64);
-
-COMMIT;

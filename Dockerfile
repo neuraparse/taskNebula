@@ -104,6 +104,21 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 # Copy static files
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 
+# Force `experimental.trustHostHeader: true` in the standalone server.
+# Next.js hard-codes this to `false` at build time unless running on Vercel
+# (`build/index.js`: `trustHostHeader: _ciinfo.hasNextSupport`). Behind our
+# nginx reverse proxy the host header is the public domain, which differs
+# from the standalone server's bound address — so when next-intl emits an
+# absolute `x-middleware-rewrite` value, Next's `relativizeURL` sees a host
+# mismatch and falls through to `proxyRequest`. That proxy then tries to
+# loop back through DNS and fails with `ECONNREFUSED 127.0.0.2:443` on
+# every locale-rewritten route (`/dashboard` → `/en/dashboard`, causing a
+# 500 right after login). Patching the embedded config blob flips the flag
+# so the standalone server builds its `initUrl` from the same host header
+# next-intl uses, the rewrite stays internal, and the proxy path is never
+# entered. Idempotent: sed is a no-op if the substring is absent.
+RUN sed -i 's/"trustHostHeader":false/"trustHostHeader":true/g' ./apps/web/server.js
+
 # Copy database package with migrations and seed
 COPY --from=builder /app/packages/db/src ./packages/db/src
 COPY --from=builder /app/packages/db/scripts ./packages/db/scripts
