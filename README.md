@@ -60,10 +60,10 @@ One curl, then open your browser:
 curl -fsSL https://raw.githubusercontent.com/neuraparse/tasknebula/main/scripts/quickstart.sh | bash
 ```
 
-The script pulls `neuraparse/tasknebula:latest`, spins up Postgres + Redis
-
-- LiveKit via Docker Compose, generates a strong `AUTH_SECRET`, and opens
-  **http://localhost:3000**. First-run wizard creates your admin account.
+The script pulls `neuraparse/tasknebula:latest`, spins up Postgres, Redis
+and LiveKit via Docker Compose, generates a strong `AUTH_SECRET`, and
+opens **http://localhost:3000**. First-run wizard creates your admin
+account.
 
 <details>
 <summary>Build from source instead</summary>
