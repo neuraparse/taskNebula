@@ -6,12 +6,22 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.2.7] - 2026-05-15
+
+### Fixed
+
+- **Reverse-proxy 500 after login.** Behind nginx the host header is the public domain, which differs from the standalone server's bound address. next-intl emitted an absolute `x-middleware-rewrite` value, Next.js's `relativizeURL` detected the host mismatch, and fell through to `proxyRequest` — which then ECONNREFUSED'd against `127.0.0.2:443` (a loopback alias) on every locale-rewritten route (`/dashboard` → `/en/dashboard`). Authenticated users hit a 500 immediately after sign-in. Dockerfile now patches the standalone `server.js` to flip `experimental.trustHostHeader` to `true` (Next.js hard-codes this to false unless running on Vercel), so the rewrite stays internal.
+- **Migration transaction warnings.** Migration `0051_pgvector_hnsw_content_embeddings.sql` wrapped its body in a manual `BEGIN;` / `COMMIT;`. Drizzle's migrator already wraps each file in a transaction, so the nested control produced "there is already a transaction in progress" / "there is no transaction in progress" Postgres warnings on every startup. Removed the manual control; SQL stays idempotent (`DROP/CREATE INDEX IF [NOT] EXISTS`).
+
 ### Added
+
+- **Mobile app roadmap** — README now documents the phased mobile plan (React Native + Expo + Tamagui, M1–M5).
 - Governance documentation: `SECURITY.md`, `CODE_OF_CONDUCT.md`, `SUPPORT.md`, GitHub issue/PR templates, and `FUNDING.yml` placeholder.
 
 ## [0.2.6] - 2026-05-14
 
 ### Added
+
 - **Integrations:** GitHub and Sentry OAuth flows, plus HMAC-signed outbound webhook delivery (Plane parity).
 - **Admin:** Platform integration OAuth credentials form and feature-flag CRUD UI with runtime tests.
 - **Templates:** Admin CRUD for project templates plus a use-template onboarding flow.
@@ -19,10 +29,12 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 - **Invites & permissions:** New invite flow, refined permission model, and redesigned mail/notification surfaces.
 
 ### Changed
+
 - **Project UI:** Minimized top bar, settings moved into a modal, and an icon-only views toolbar.
 - **Schema:** Exposed new drafts and integration-client-credentials schemas in the barrel exports; consolidated journal entries.
 
 ### Fixed
+
 - **Infra:** Expanded health checks, repaired the migration journal, and reduced log noise.
 - **Infra:** More robust container healthchecks and a better memory-pressure signal.
 - **Auth:** Added `forgot-password`, `reset-password`, and `verify-email` to middleware public routes.
@@ -30,17 +42,20 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 - **Automation:** Escaped apostrophe in the automation manager toast.
 
 ### Removed
+
 - The standalone "New work item" button (superseded by inline creation affordances).
 
 ## [0.2.0] - 2026-03
 
 ### Added
+
 - Initial public preview of TaskNebula: kanban boards, real-time updates, and keyboard-first navigation.
 - [See git log] for the full list of pre-0.2.6 changes.
 
 ## [0.1.0] - 2026-01
 
 ### Added
+
 - Internal alpha release. [See git log] for details.
 
 [Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.2.6...HEAD

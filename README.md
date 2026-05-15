@@ -60,9 +60,10 @@ One curl, then open your browser:
 curl -fsSL https://raw.githubusercontent.com/neuraparse/tasknebula/main/scripts/quickstart.sh | bash
 ```
 
-The script pulls `neuraparse/tasknebula:latest`, spins up Postgres + Redis
-+ LiveKit via Docker Compose, generates a strong `AUTH_SECRET`, and opens
-**http://localhost:3000**. First-run wizard creates your admin account.
+The script pulls `neuraparse/tasknebula:latest`, spins up Postgres, Redis
+and LiveKit via Docker Compose, generates a strong `AUTH_SECRET`, and
+opens **http://localhost:3000**. First-run wizard creates your admin
+account.
 
 <details>
 <summary>Build from source instead</summary>
@@ -99,22 +100,22 @@ redeploy when you rotate a key.
 
 ### What you can do
 
-| Feature | Where | What it does |
-|---|---|---|
-| **Draft-with-AI** | Backlog → *Draft with AI* | Type one prompt, the LLM decides whether it's one ticket or a whole checklist and returns structured, editable drafts. Select which to create in bulk. |
-| **Per-issue assist** | Issue detail sidebar → *AI assist* | Summarise an issue with its comments, rewrite the description, suggest next steps, or propose labels. One click to Apply — no copy-paste. |
-| **Native fallback** | Built-in | If no LLM credential is configured, TaskNebula still ships a deterministic heuristic planner so the buttons are never dead. |
-| **Platform keys** | Admin → Agent control | Super-admins drop in an OpenAI / Anthropic key that all workspaces fall back to. AES-256-GCM encrypted, redacted previews, audit-logged rotations. |
-| **Workspace keys** | Settings → AI & Agents → Quick setup | Each workspace can override the platform default with its own key. Single Quick-Setup button writes provider + model + key + toggle in one transaction. |
-| **Model profiles** | Settings → AI & Agents → Your model profiles | Save reusable provider+model+tuning combos (temperature, max tokens, reasoning effort) with full revision history. Saved profiles appear inline in the Quick Setup dropdown. |
+| Feature              | Where                                        | What it does                                                                                                                                                                 |
+| -------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Draft-with-AI**    | Backlog → _Draft with AI_                    | Type one prompt, the LLM decides whether it's one ticket or a whole checklist and returns structured, editable drafts. Select which to create in bulk.                       |
+| **Per-issue assist** | Issue detail sidebar → _AI assist_           | Summarise an issue with its comments, rewrite the description, suggest next steps, or propose labels. One click to Apply — no copy-paste.                                    |
+| **Native fallback**  | Built-in                                     | If no LLM credential is configured, TaskNebula still ships a deterministic heuristic planner so the buttons are never dead.                                                  |
+| **Platform keys**    | Admin → Agent control                        | Super-admins drop in an OpenAI / Anthropic key that all workspaces fall back to. AES-256-GCM encrypted, redacted previews, audit-logged rotations.                           |
+| **Workspace keys**   | Settings → AI & Agents → Quick setup         | Each workspace can override the platform default with its own key. Single Quick-Setup button writes provider + model + key + toggle in one transaction.                      |
+| **Model profiles**   | Settings → AI & Agents → Your model profiles | Save reusable provider+model+tuning combos (temperature, max tokens, reasoning effort) with full revision history. Saved profiles appear inline in the Quick Setup dropdown. |
 
 ### Supported providers & models
 
-| Provider | Models out of the box |
-|---|---|
-| **OpenAI** | `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-4`, `gpt-3.5-turbo`, `o1`, `o1-mini`, plus the speculative `gpt-5.x` family |
+| Provider      | Models out of the box                                                                                                     |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **OpenAI**    | `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-4`, `gpt-3.5-turbo`, `o1`, `o1-mini`, plus the speculative `gpt-5.x` family  |
 | **Anthropic** | `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5`, plus `claude-3-5-sonnet`, `claude-3-5-haiku`, `claude-3-opus` |
-| **Native** | Built-in heuristic planner (no API calls) |
+| **Native**    | Built-in heuristic planner (no API calls)                                                                                 |
 
 ### Fails gracefully
 
@@ -126,6 +127,33 @@ the relevant project AI settings. Full audit trail in
 
 ---
 
+## ✨ Recently shipped — 2026-05 roadmap
+
+The 2026 roadmap merge added **34 features** in one push. Highlights:
+
+- 🌍 **i18n** — full Turkish, German, Spanish, English with `next-intl`
+- 💼 **Initiatives & sub-initiatives** — multi-project goals with rollup status
+- ⏱️ **Native time tracking** — estimate + actual + AI-suggested time
+- 📥 **Smart inbox + catch-me-up digest** — one place for everything that needs your attention
+- 📨 **Intake forms** — Linear-Asks-style public submission → triaged issues
+- 🤝 **Slack integration** — slash commands, emoji triage, thread sync
+- 🔐 **SAML SSO + SCIM 2.0** — enterprise identity scaffolding
+- 🤖 **Standup agent + stale-issue janitor** — recurring AI cron over your work
+- 🔁 **Cycle auto-rollover** — unfinished work flows to the next sprint
+- 📊 **Native charts dashboard** — Tremor + Recharts + AI-generated insights
+- 🛠️ **Importers** — Linear, Jira, GitHub Issues, CSV (no migration friction)
+- ⚖️ **EU AI Act Article 50** — disclosure UI + per-model cards
+- 🛡️ **Trust center + SIEM log streaming** — Splunk/Datadog/OpenSearch sinks
+- ✨ **Cmd+K omnibar** — facet chips + `Ask AI` tab; full search rebuild
+- 🎨 **View transitions + UI modernisation** — glass surfaces, zinc-950
+- 📝 **Tiptap + Yjs collaborative descriptions** — Google-Docs-style co-editing
+- 🧪 **Zod validator middleware** — typed request validation app-wide
+- 🪪 **Agent-as-assignee** — Linear Agent Protocol; agents own tickets
+
+Full list: [CHANGELOG](CHANGELOG.md).
+
+---
+
 ## 📦 Features
 
 <table>
@@ -133,33 +161,45 @@ the relevant project AI settings. Full audit trail in
 <td width="33%" valign="top">
 
 ### Project management
+
 - Kanban board with drag-and-drop
 - Stories, tasks, bugs, epics, subtasks
-- Sprints, burndown, velocity
+- Sprints, burndown, velocity, **auto-rollover**
 - Custom fields, issue links, attachments
 - Custom workflows, transition rules
 - Backlog grooming + roadmap view
+- **Initiatives** + sub-initiatives + updates
+- **Time tracking**: estimate + actual + AI-suggest
+- **Importers**: Linear · Jira · GitHub · CSV
 
 </td>
 <td width="33%" valign="top">
 
 ### Collaboration
+
 - Real-time presence & live activity feed
 - @mentions, watchers, reactions
+- **Tiptap + Yjs** collaborative editing
 - Threaded comments, email digests
 - LiveKit voice rooms for ad-hoc calls
 - Project-scoped chat + issue threads
 - In-app notification bell with deep-links
+- **Smart inbox** + catch-me-up digest
+- **Slack** integration (slash + emoji triage)
 
 </td>
 <td width="33%" valign="top">
 
 ### Admin & governance
+
 - 30+ granular permission types
 - Role-based access + issue security levels
 - 63+ audit-log action types
-- API keys + signed webhooks
+- API keys + signed webhooks (HMAC)
 - OAuth (GitHub / Google / custom)
+- **SAML SSO + SCIM 2.0** scaffolding
+- **Trust center** + SIEM streaming
+- **EU AI Act Article 50** disclosures
 - Multi-org, per-org plan + feature flags
 
 </td>
@@ -168,8 +208,12 @@ the relevant project AI settings. Full audit trail in
 <td valign="top">
 
 ### AI (opt-in)
+
 - Draft-with-AI (auto single/multi)
 - Per-issue summarise / rewrite / suggest
+- **Agent-as-assignee** (Linear Agent Protocol)
+- **Standup agent + janitor** (cron AI)
+- **AI workspace bootstrapper**
 - Platform + workspace credential chain
 - Saved model profiles w/ revisions
 - OpenAI + Anthropic first-class
@@ -179,9 +223,13 @@ the relevant project AI settings. Full audit trail in
 <td valign="top">
 
 ### Analytics
-- Burndown, velocity, cycle time
+
+- Burndown, velocity, **cycle time**
 - Throughput + lead-time distributions
 - Project health scorecard
+- **Native charts** (Tremor + Recharts)
+- **AI-generated insights** on dashboards
+- **Time-in-status** history per issue
 - CSV / JSON export
 - Sprint retrospectives view
 - Cross-project rollups
@@ -190,16 +238,70 @@ the relevant project AI settings. Full audit trail in
 <td valign="top">
 
 ### Developer experience
-- `Cmd+K` command palette
+
+- **Cmd+K omnibar** + facet chips + Ask AI
 - Keyboard shortcuts everywhere
 - Dark mode + mobile responsive
+- **i18n**: TR · DE · ES · EN
+- **View transitions** for route morphs
 - Route-level skeletons (no blank loads)
 - SSE-based real-time sync
 - One-command production deploy
+- **Reverse-proxy clean** out of the box
 
 </td>
 </tr>
 </table>
+
+---
+
+## 📱 Mobile app (roadmap)
+
+A first-class mobile companion is on the roadmap. The plan is to **reuse
+the existing TaskNebula API surface** rather than fork it — so every
+feature you ship on web instantly becomes available to the app.
+
+### Stack
+
+- **Runtime:** React Native + Expo SDK 52+ (managed workflow; bare only
+  if we need native bridges)
+- **UI:** Tamagui (atomic, shared theme tokens with Tailwind on web)
+- **State:** TanStack Query (same as web; cache mirroring just works)
+- **Realtime:** EventSource polyfill for SSE + LiveKit React-Native SDK
+  for voice rooms
+- **Storage:** MMKV for cache + secure-store for auth tokens
+- **Push:** Expo Push (APNs + FCM); server adds a `mobile_devices` table
+  and an opt-in toggle in Settings → Notifications
+
+### Phased scope
+
+| Phase                            | Surface                                                                       | Notes                                                                                                                          |
+| -------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **M1 — Read & Triage**           | Inbox · My issues · Issue detail · Comments                                   | Read-mostly first to validate the API + auth flow on device. Native swipe-to-archive maps to the existing smart-inbox actions. |
+| **M2 — Author**                  | New issue · Edit description · Attach photo/voice · Status & assignee changes | Reuses existing draft-with-AI endpoint; photo capture uploads to the same `/api/attachments`.                                  |
+| **M3 — Standup & notifications** | Push notifications · Standup card · Catch-me-up digest                        | Server-side templates already exist for digest emails; mobile reuses the JSON variant.                                         |
+| **M4 — Realtime collab**         | LiveKit calls · Yjs presence indicators                                       | Read-only Yjs presence in M3, full collaborative editing parity in M4 once the bridge stabilises.                              |
+| **M5 — Offline-first**           | Local-first cache with background sync · Conflict resolution                  | Drop the optimistic-update guards from web back into the shared TanStack layer.                                                |
+
+### Auth on device
+
+Mobile won't use cookie-based Auth.js sessions — instead the
+`/api/auth/mobile/exchange` endpoint (to be added) returns a long-lived
+**refresh token** + short-lived **access token** after the same
+credentials / OAuth / SAML flow. The web session remains the authoritative
+identity store; mobile devices show up in **Settings → Sessions** for
+remote revocation.
+
+### Repo layout
+
+A mobile app would live at `apps/mobile/` as a sibling to `apps/web/`,
+sharing types from `packages/types`. No code change is required to the
+existing Next.js app — every endpoint already returns clean JSON.
+
+### Help wanted
+
+Mobile development is community-driven for now. If you'd like to take the
+lead on M1, open a [discussion](https://github.com/neuraparse/tasknebula/discussions).
 
 ---
 
@@ -210,6 +312,7 @@ the relevant project AI settings. Full audit trail in
 <td width="50%" valign="top">
 
 **Frontend**
+
 - Next.js 15 (App Router, RSC)
 - React 19
 - Tailwind CSS + shadcn/ui
@@ -220,6 +323,7 @@ the relevant project AI settings. Full audit trail in
 <td width="50%" valign="top">
 
 **Backend**
+
 - Next.js API routes
 - Drizzle ORM
 - PostgreSQL 16 + `pgvector`
