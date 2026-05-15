@@ -175,6 +175,10 @@ async function checkIssuePermission(
 const updateIssueSchema = z.object({
   title: z.string().min(1).max(500).optional(),
   description: z.string().optional(),
+  // ProseMirror JSON snapshot from the collaborative editor
+  // (P1-09 follow-up). Persisted into `issues.description_rich` so the
+  // non-collab read path can rebuild lists / bold / links / code blocks.
+  descriptionRich: z.record(z.any()).nullable().optional(),
   status: z.string().optional(), // Status category (backlog, in_progress, etc.)
   statusId: z.string().optional(),
   priority: z.enum(['critical', 'high', 'medium', 'low', 'none']).optional(),

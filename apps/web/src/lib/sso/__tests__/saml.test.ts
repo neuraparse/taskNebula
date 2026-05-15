@@ -31,7 +31,11 @@ jest.mock('samlify', () => {
         createLoginRequest: () => ({
           context: 'https://idp.example.com/sso?SAMLRequest=mock',
         }),
-        parseLoginResponse: (_idp: unknown, _binding: string, req: { body: { SAMLResponse: string } }) => {
+        parseLoginResponse: (
+          _idp: unknown,
+          _binding: string,
+          req: { body: { SAMLResponse: string } }
+        ) => {
           if (req.body.SAMLResponse === 'TAMPERED') {
             return Promise.reject(new Error('signature mismatch'));
           }
@@ -47,6 +51,20 @@ jest.mock('samlify', () => {
                 surname: 'Liddell',
               },
               sessionIndex: 'session-123',
+              // The production `parseLoginResponse` now runs
+              // `verifyAssertionConstraints` after samlify's parse, so the
+              // mocked extract must satisfy Recipient + AudienceRestriction
+              // + clock-skew bounds. Dedicated tests for that helper live
+              // in saml-constraints.test.ts; here we just want the success
+              // path to flow through.
+              subjectConfirmation: {
+                recipient: 'https://app.example.com/api/auth/saml/acme/callback',
+              },
+              conditions: {
+                audience: 'https://app.example.com/api/auth/saml/acme/metadata.xml',
+                notBefore: new Date(Date.now() - 5_000).toISOString(),
+                notOnOrAfter: new Date(Date.now() + 60_000).toISOString(),
+              },
             },
           });
         },
@@ -101,9 +119,7 @@ describe('SAML wrapper', () => {
   it('builds SP with the expected entityID + ACS URL', () => {
     const ctx = makeCtx();
     getSpMetadataXml(ctx);
-    expect(samlifyMock.__recorded.lastSp.entityID).toBe(
-      spEntityId(ctx.baseUrl, ctx.workspaceSlug)
-    );
+    expect(samlifyMock.__recorded.lastSp.entityID).toBe(spEntityId(ctx.baseUrl, ctx.workspaceSlug));
     expect(samlifyMock.__recorded.lastSp.assertionConsumerService[0].Location).toBe(
       acsUrl(ctx.baseUrl, ctx.workspaceSlug)
     );
@@ -123,15 +139,11 @@ describe('SAML wrapper', () => {
   });
 
   it('rejects a tampered SAML response (signature mismatch)', async () => {
-    await expect(
-      parseLoginResponse(makeCtx(), 'TAMPERED')
-    ).rejects.toThrow(/signature/i);
+    await expect(parseLoginResponse(makeCtx(), 'TAMPERED')).rejects.toThrow(/signature/i);
   });
 
   it('rejects a SAML response missing the NameID', async () => {
-    await expect(
-      parseLoginResponse(makeCtx(), 'NO_NAME_ID')
-    ).rejects.toThrow(/NameID/i);
+    await expect(parseLoginResponse(makeCtx(), 'NO_NAME_ID')).rejects.toThrow(/NameID/i);
   });
 
   it('strips PEM BEGIN/END from the IdP signing cert', () => {

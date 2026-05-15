@@ -18,6 +18,7 @@
  *   https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-get
  */
 
+import { fetchWithBackoff } from './fetch-with-backoff';
 import {
   Importer,
   ImportMapping,
@@ -85,27 +86,20 @@ export const jiraImporter: Importer<JiraInput> = {
 
   async parseSource(input) {
     if (!input.site || !input.email || !input.apiToken) {
-      throw new Error(
-        'site, email, and apiToken are all required to import from Jira.'
-      );
+      throw new Error('site, email, and apiToken are all required to import from Jira.');
     }
 
     const base = input.site.replace(/^https?:\/\//, '').replace(/\/$/, '');
     const url = new URL(`https://${base}/rest/api/3/search`);
-    url.searchParams.set(
-      'jql',
-      input.jql ?? 'updated >= -90d ORDER BY updated DESC'
-    );
+    url.searchParams.set('jql', input.jql ?? 'updated >= -90d ORDER BY updated DESC');
     url.searchParams.set('maxResults', String(input.maxResults ?? 50));
     url.searchParams.set(
       'fields',
       'summary,description,issuetype,status,priority,labels,assignee,parent,created'
     );
 
-    const auth = Buffer.from(`${input.email}:${input.apiToken}`).toString(
-      'base64'
-    );
-    const response = await fetch(url, {
+    const auth = Buffer.from(`${input.email}:${input.apiToken}`).toString('base64');
+    const response = await fetchWithBackoff(url, {
       headers: {
         Authorization: `Basic ${auth}`,
         Accept: 'application/json',
@@ -120,19 +114,21 @@ export const jiraImporter: Importer<JiraInput> = {
     const payload = (await response.json()) as { issues?: JiraIssueRaw[] };
     const issues = payload.issues ?? [];
 
-    return issues.map((j): NormalizedRecord => ({
-      key: j.key,
-      title: j.fields?.summary ?? '',
-      description: adfToText(j.fields?.description),
-      status: j.fields?.status?.name ?? null,
-      priority: j.fields?.priority?.name ?? null,
-      labels: j.fields?.labels ?? [],
-      assigneeEmail: j.fields?.assignee?.emailAddress ?? null,
-      parentKey: j.fields?.parent?.key ?? null,
-      createdAt: j.fields?.created ?? null,
-      // TODO(stub): also fetch /rest/api/3/issue/{key}/comment for comments.
-      comments: [],
-    }));
+    return issues.map(
+      (j): NormalizedRecord => ({
+        key: j.key,
+        title: j.fields?.summary ?? '',
+        description: adfToText(j.fields?.description),
+        status: j.fields?.status?.name ?? null,
+        priority: j.fields?.priority?.name ?? null,
+        labels: j.fields?.labels ?? [],
+        assigneeEmail: j.fields?.assignee?.emailAddress ?? null,
+        parentKey: j.fields?.parent?.key ?? null,
+        createdAt: j.fields?.created ?? null,
+        // TODO(stub): also fetch /rest/api/3/issue/{key}/comment for comments.
+        comments: [],
+      })
+    );
   },
 
   mapRecord(rec, mapping: ImportMapping): TaskNebulaIssue {

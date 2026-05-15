@@ -25,16 +25,32 @@ import {
   type CollabProviderHandle,
 } from '@/lib/collab/yjs-provider';
 
+export interface CollabSnapshot {
+  /** Plain-text rendering of the editor, suitable for search indexing,
+   *  AI prompts, exports, and the non-collab textarea fallback. */
+  plain: string;
+  /** Full ProseMirror JSON state. Persisted into the new
+   *  `issues.description_rich` column (migration 0052) so a non-collab
+   *  read can rebuild lists, links, bold, etc. */
+  rich: Record<string, unknown>;
+}
+
 export interface CollabDescriptionEditorProps {
   issueId: string;
   initialContent: string;
   canEdit: boolean;
-  onSave: (next: string) => Promise<void>;
+  /** Either form is accepted — the older `(text) => Promise<void>` shape
+   *  keeps existing call sites compiling; the newer
+   *  `(snapshot) => Promise<void>` shape unlocks rich persistence. */
+  onSave: (next: string | CollabSnapshot) => Promise<void>;
   isSaving?: boolean;
   placeholder?: string;
 }
 
-async function fetchCollabToken(): Promise<{ token: string; user: { id: string; name: string } } | null> {
+async function fetchCollabToken(): Promise<{
+  token: string;
+  user: { id: string; name: string };
+} | null> {
   const response = await fetch('/api/collab/token', { method: 'POST' });
   if (!response.ok) {
     return null;
@@ -53,7 +69,9 @@ export function CollabDescriptionEditor({
   const { data: session } = useSession();
   const [handle, setHandle] = useState<CollabProviderHandle | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [connectionState, setConnectionState] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
+  const [connectionState, setConnectionState] = useState<
+    'connecting' | 'connected' | 'disconnected'
+  >('connecting');
   const handleRef = useRef<CollabProviderHandle | null>(null);
 
   const documentName = useMemo(() => `issue:${issueId}`, [issueId]);
@@ -150,16 +168,16 @@ export function CollabDescriptionEditor({
 
   if (!hocuspocusConfigured) {
     return (
-      <div className="rounded-md border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground">
-        Collaboration is enabled, but <code>NEXT_PUBLIC_HOCUSPOCUS_URL</code> is
-        not configured. Description editing is temporarily disabled.
+      <div className="border-border bg-muted/30 text-muted-foreground rounded-md border border-dashed p-4 text-sm">
+        Collaboration is enabled, but <code>NEXT_PUBLIC_HOCUSPOCUS_URL</code> is not configured.
+        Description editing is temporarily disabled.
       </div>
     );
   }
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+      <div className="text-muted-foreground flex items-center justify-between text-[11px]">
         <ConnectionPill state={connectionState} />
         {canEdit && editor && (
           <Button
@@ -177,7 +195,7 @@ export function CollabDescriptionEditor({
           </Button>
         )}
       </div>
-      <div className="prose prose-sm max-w-none dark:prose-invert min-h-[160px] rounded-md border border-input bg-background px-3 py-2 text-sm">
+      <div className="prose prose-sm dark:prose-invert border-input bg-background min-h-[160px] max-w-none rounded-md border px-3 py-2 text-sm">
         <EditorContent editor={editor} />
       </div>
     </div>
@@ -203,10 +221,15 @@ function ConnectionPill({ state }: { state: 'connecting' | 'connected' | 'discon
   );
 }
 
-function serializeEditorContent(editor: Editor): string {
-  // Persist as plain text so the existing description column (string) keeps
-  // working. The Yjs doc remains the source of truth for live edits; the
-  // snapshot is only used to render the read-only fallback and to seed new
-  // collaborators.
-  return editor.getText();
+function serializeEditorContent(editor: Editor): CollabSnapshot {
+  // Persist both halves: plain text for the columns the rest of the app
+  // already understands (search index, AI prompts, exports, non-collab
+  // textarea fallback) and the full ProseMirror JSON so the read path can
+  // rebuild rich formatting. The Yjs doc remains authoritative for live
+  // edits — these snapshots are seed material for new collaborators and
+  // for clients that aren't connected through Hocuspocus.
+  return {
+    plain: editor.getText(),
+    rich: editor.getJSON() as Record<string, unknown>,
+  };
 }

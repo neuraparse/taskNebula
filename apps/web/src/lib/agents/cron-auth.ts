@@ -30,19 +30,22 @@ export function requireCronAuth(request: NextRequest): NextResponse | null {
       { status: 503 }
     );
   }
+  // Accept any of: `x-cron-secret` header, `Authorization: Bearer …` (so
+  // schedulers that only allow a stock Authorization header still work),
+  // or `?secret=` on the URL for quick curl probes. The first non-empty
+  // value wins.
+  const bearer = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? '';
   const presented =
-    request.headers.get(CRON_SECRET_HEADER) ??
-    new URL(request.url).searchParams.get('secret') ??
+    request.headers.get(CRON_SECRET_HEADER) ||
+    (bearer.length > 0 ? bearer : null) ||
+    new URL(request.url).searchParams.get('secret') ||
     '';
 
   const a = Buffer.from(presented);
   const b = Buffer.from(secret);
   // `timingSafeEqual` requires equal-length buffers, so check length first.
   if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
-    return NextResponse.json(
-      { error: 'Invalid or missing cron secret.' },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Invalid or missing cron secret.' }, { status: 401 });
   }
   return null;
 }

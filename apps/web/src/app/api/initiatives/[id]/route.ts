@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, initiatives, initiativeProjects, organizationMembers, projects } from '@tasknebula/db';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import {
   buildInitiativeIndex,
   validateInitiativeDepth,
@@ -153,16 +153,35 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     throw err;
   }
 
-  // Replace project links if a `projectIds` array is provided.
+  // Replace project links if a `projectIds` array is provided. Validate
+  // every id belongs to this initiative's workspace before touching
+  // `initiative_projects` — otherwise a cross-workspace id would 500 on
+  // the FK after we'd already wiped the existing rows.
   if (Array.isArray((patch as { projectIds?: unknown }).projectIds)) {
-    const projectIds = ((patch as { projectIds?: unknown }).projectIds as unknown[]).filter(
+    const requested = ((patch as { projectIds?: unknown }).projectIds as unknown[]).filter(
       (p): p is string => typeof p === 'string' && p.length > 0
     );
+    if (requested.length > 0) {
+      const owned = await db
+        .select({ id: projects.id })
+        .from(projects)
+        .where(
+          and(eq(projects.organizationId, initiative.workspaceId), inArray(projects.id, requested))
+        );
+      const ownedIds = new Set(owned.map((row) => row.id));
+      const stranger = requested.find((projectId) => !ownedIds.has(projectId));
+      if (stranger) {
+        return NextResponse.json(
+          { error: `Project ${stranger} does not belong to this workspace` },
+          { status: 400 }
+        );
+      }
+    }
     await db.delete(initiativeProjects).where(eq(initiativeProjects.initiativeId, id));
-    if (projectIds.length > 0) {
+    if (requested.length > 0) {
       await db
         .insert(initiativeProjects)
-        .values(projectIds.map((projectId) => ({ initiativeId: id, projectId })));
+        .values(requested.map((projectId) => ({ initiativeId: id, projectId })));
     }
   }
 

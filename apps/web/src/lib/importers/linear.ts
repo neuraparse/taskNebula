@@ -25,6 +25,7 @@ import {
   normalizeType,
   safeParseDate,
 } from './types';
+import { fetchWithBackoff } from './fetch-with-backoff';
 
 export type LinearInput = {
   apiKey: string;
@@ -45,8 +46,8 @@ export const LINEAR_GRAPHQL_URL = 'https://api.linear.app/graphql';
  *  - fetch `parent { identifier }` to rebuild epic / sub-issue tree
  */
 const LINEAR_ISSUES_QUERY = `
-  query Issues($first: Int!, $filter: IssueFilter) {
-    issues(first: $first, filter: $filter) {
+  query Issues($first: Int!, $after: String, $filter: IssueFilter) {
+    issues(first: $first, after: $after, filter: $filter) {
       nodes {
         id
         identifier
@@ -64,6 +65,12 @@ const LINEAR_ISSUES_QUERY = `
     }
   }
 `;
+
+const LINEAR_PAGE_SIZE = 50;
+// Hard cap so a runaway Linear workspace can't blow up RAM or eat the
+// import job's time budget. 10 000 issues = ~5 minutes at 50/page over
+// a healthy connection, which matches our cron retry window.
+const LINEAR_MAX_PAGES = 200;
 
 type LinearIssueNode = {
   id: string;
@@ -109,50 +116,68 @@ export const linearImporter: Importer<LinearInput> = {
       throw new Error('A Linear personal API key is required.');
     }
 
-    const filter = input.teamKey
-      ? { team: { key: { eq: input.teamKey } } }
-      : undefined;
+    const filter = input.teamKey ? { team: { key: { eq: input.teamKey } } } : undefined;
 
-    const response = await fetch(LINEAR_GRAPHQL_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: input.apiKey,
-      },
-      body: JSON.stringify({
-        query: LINEAR_ISSUES_QUERY,
-        variables: { first: input.first ?? 50, filter },
-      }),
-    });
+    // Walk `pageInfo.hasNextPage` instead of capping at the first 50
+    // results. Each request goes through `fetchWithBackoff` so transient
+    // 429 / 5xx responses don't kill the entire import job.
+    const nodes: LinearIssueNode[] = [];
+    let cursor: string | undefined;
+    let pages = 0;
+    while (pages < LINEAR_MAX_PAGES) {
+      const response = await fetchWithBackoff(LINEAR_GRAPHQL_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: input.apiKey,
+        },
+        body: JSON.stringify({
+          query: LINEAR_ISSUES_QUERY,
+          variables: { first: input.first ?? LINEAR_PAGE_SIZE, after: cursor, filter },
+        }),
+      });
 
-    if (!response.ok) {
-      const text = await response.text().catch(() => '');
-      throw new Error(`Linear API error (${response.status}): ${text}`);
+      if (!response.ok) {
+        const text = await response.text().catch(() => '');
+        throw new Error(`Linear API error (${response.status}): ${text}`);
+      }
+
+      const payload = (await response.json()) as {
+        data?: {
+          issues?: {
+            nodes?: LinearIssueNode[];
+            pageInfo?: { hasNextPage?: boolean; endCursor?: string | null };
+          };
+        };
+        errors?: Array<{ message: string }>;
+      };
+      if (payload.errors?.length) {
+        const first = payload.errors[0]?.message ?? 'unknown';
+        throw new Error(`Linear GraphQL error: ${first}`);
+      }
+      const page = payload.data?.issues;
+      const pageNodes = page?.nodes ?? [];
+      nodes.push(...pageNodes);
+      pages += 1;
+      if (!page?.pageInfo?.hasNextPage || !page.pageInfo.endCursor) break;
+      cursor = page.pageInfo.endCursor;
     }
 
-    const payload = (await response.json()) as {
-      data?: { issues?: { nodes?: LinearIssueNode[] } };
-      errors?: Array<{ message: string }>;
-    };
-    if (payload.errors?.length) {
-      const first = payload.errors[0]?.message ?? 'unknown';
-      throw new Error(`Linear GraphQL error: ${first}`);
-    }
-    const nodes = payload.data?.issues?.nodes ?? [];
-
-    return nodes.map((n): NormalizedRecord => ({
-      key: n.identifier,
-      title: n.title,
-      description: n.description ?? null,
-      status: n.state?.name ?? null,
-      priority: mapLinearPriority(n.priority),
-      labels: n.labels?.nodes?.map((l) => l.name) ?? [],
-      assigneeEmail: n.assignee?.email ?? null,
-      parentKey: n.parent?.identifier ?? null,
-      createdAt: n.createdAt ?? null,
-      // TODO(stub): fetch issue comments via `comments(first:50)`.
-      comments: [],
-    }));
+    return nodes.map(
+      (n): NormalizedRecord => ({
+        key: n.identifier,
+        title: n.title,
+        description: n.description ?? null,
+        status: n.state?.name ?? null,
+        priority: mapLinearPriority(n.priority),
+        labels: n.labels?.nodes?.map((l) => l.name) ?? [],
+        assigneeEmail: n.assignee?.email ?? null,
+        parentKey: n.parent?.identifier ?? null,
+        createdAt: n.createdAt ?? null,
+        // TODO(stub): fetch issue comments via `comments(first:50)`.
+        comments: [],
+      })
+    );
   },
 
   mapRecord(rec, mapping: ImportMapping): TaskNebulaIssue {

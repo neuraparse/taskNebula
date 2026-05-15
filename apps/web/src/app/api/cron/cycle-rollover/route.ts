@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { rolloverAllOverdueCycles } from '@/lib/issues/cycle-rollover';
 import { db, users } from '@tasknebula/db';
 import { eq } from 'drizzle-orm';
+import { requireCronAuth } from '@/lib/agents/cron-auth';
 
 /**
  * POST /api/cron/cycle-rollover
@@ -23,19 +24,12 @@ import { eq } from 'drizzle-orm';
  * field — the FK is nullable for exactly this case.
  */
 export async function POST(request: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    return NextResponse.json(
-      { error: 'CRON_SECRET not configured' },
-      { status: 503 }
-    );
-  }
-
-  const bearer = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
-  const headerSecret = request.headers.get('x-cron-secret');
-  if (bearer !== secret && headerSecret !== secret) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  // Delegate to the shared helper so all cron routes (standup, janitor,
+  // cycle-rollover) share the same accepted-header set + timing-safe
+  // comparison. `requireCronAuth` returns null on success or a ready
+  // NextResponse to short-circuit.
+  const guard = requireCronAuth(request);
+  if (guard) return guard;
 
   const systemEmail = process.env.CRON_SYSTEM_USER_EMAIL || 'system@tasknebula.local';
   const [systemUser] = await db

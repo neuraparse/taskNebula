@@ -11,14 +11,14 @@ import { IssueLinks } from './issue-links';
 import { IssueSubtasks } from './issue-subtasks';
 import { IssueDiscussionCard } from '@/components/chat/issue-discussion-card';
 import { CollabDescriptionEditor } from './collab-description-editor';
+import { RichDescription } from './rich-description';
 
 // Feature flag for the Tiptap + Yjs collaborative editor. When `false` (the
 // default) we render the legacy textarea; when `true` we mount the live
 // editor wired to the Hocuspocus server. See `services/hocuspocus/README.md`
 // for the matching server configuration.
 const COLLAB_ENABLED =
-  typeof process !== 'undefined' &&
-  process.env.NEXT_PUBLIC_COLLAB_ENABLED === 'true';
+  typeof process !== 'undefined' && process.env.NEXT_PUBLIC_COLLAB_ENABLED === 'true';
 
 interface IssueContentProps {
   issue: {
@@ -27,6 +27,7 @@ interface IssueContentProps {
     title: string;
     projectId: string;
     description: string | null;
+    descriptionRich?: Record<string, unknown> | null;
     updatedAt?: string | Date | null;
     updatedBy?: { name?: string | null; email?: string | null } | null;
     updater?: { name?: string | null; email?: string | null } | null;
@@ -67,16 +68,16 @@ export function IssueContent({ issue }: IssueContentProps) {
   };
 
   return (
-    <div className="space-y-6 animate-fade-up">
+    <div className="animate-fade-up space-y-6">
       {/* Description */}
       <section>
-        <div className="flex items-center justify-between mb-2">
+        <div className="mb-2 flex items-center justify-between">
           <h3 className="kicker">Description</h3>
           {!isEditing && !COLLAB_ENABLED && (
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground h-6 px-2 text-xs"
               onClick={() => setIsEditing(true)}
             >
               <Pencil className="mr-1.5 h-3 w-3" />
@@ -92,8 +93,15 @@ export function IssueContent({ issue }: IssueContentProps) {
             canEdit
             isSaving={updateIssue.isPending}
             onSave={async (next) => {
+              // The collab editor now hands back `{ plain, rich }` so we
+              // persist both halves. The legacy string shape is still
+              // accepted for callers that haven't migrated.
+              const data =
+                typeof next === 'string'
+                  ? { description: next }
+                  : { description: next.plain, descriptionRich: next.rich };
               try {
-                await updateIssue.mutateAsync({ issueId: issue.id, data: { description: next } });
+                await updateIssue.mutateAsync({ issueId: issue.id, data });
               } catch (error) {
                 console.error('Error saving collaborative description:', error);
               }
@@ -102,25 +110,42 @@ export function IssueContent({ issue }: IssueContentProps) {
         ) : isEditing ? (
           <div className="space-y-2">
             <textarea
-              className="min-h-[160px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-[160px] w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add a description..."
               autoFocus
             />
             <div className="flex gap-2">
-              <Button size="sm" className="h-7 text-xs" onClick={handleSave} disabled={updateIssue.isPending}>
+              <Button
+                size="sm"
+                className="h-7 text-xs"
+                onClick={handleSave}
+                disabled={updateIssue.isPending}
+              >
                 {updateIssue.isPending && <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />}
                 Save
               </Button>
-              <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={handleCancel} disabled={updateIssue.isPending}>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-xs"
+                onClick={handleCancel}
+                disabled={updateIssue.isPending}
+              >
                 Cancel
               </Button>
             </div>
           </div>
         ) : (
-          <div className="prose prose-sm max-w-none dark:prose-invert text-sm leading-relaxed">
-            {issue.description ? (
+          <div className="prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed">
+            {issue.descriptionRich ? (
+              // Prefer the rich snapshot the collab editor wrote to
+              // `description_rich` — lists, bold, links round-trip even
+              // without a live Hocuspocus client. Falls back to plain
+              // text when the rich snapshot is missing.
+              <RichDescription doc={issue.descriptionRich} />
+            ) : issue.description ? (
               <div className="whitespace-pre-wrap">
                 {issue.description.split('\n').map((line, idx) => (
                   <p key={idx} className="min-h-[1em]">
@@ -141,10 +166,10 @@ export function IssueContent({ issue }: IssueContentProps) {
           const relative = formatRelativeTime(issue.updatedAt);
           if (!relative) return null;
           return (
-            <div className="flex items-center gap-1.5 text-[11.5px] text-muted-foreground mt-3">
+            <div className="text-muted-foreground mt-3 flex items-center gap-1.5 text-[11.5px]">
               <Clock className="h-3 w-3" />
               <span>Last edited by</span>
-              <span className="font-medium text-foreground">{editorName}</span>
+              <span className="text-foreground font-medium">{editorName}</span>
               <span>{relative}</span>
             </div>
           );
@@ -174,7 +199,12 @@ export function IssueContent({ issue }: IssueContentProps) {
       {/* Related Docs */}
       <section>
         <h3 className="kicker mb-2">Related Docs</h3>
-        <IssueDocs issueId={issue.id} issueKey={issue.key} issueTitle={issue.title} projectId={issue.projectId} />
+        <IssueDocs
+          issueId={issue.id}
+          issueKey={issue.key}
+          issueTitle={issue.title}
+          projectId={issue.projectId}
+        />
       </section>
 
       {/* Discussion */}

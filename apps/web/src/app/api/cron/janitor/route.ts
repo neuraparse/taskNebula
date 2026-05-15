@@ -50,6 +50,23 @@ export async function POST(request: NextRequest) {
   // a "TaskNebula Bot" account and pass its id.
   const systemUserId = body.systemUserId ?? process.env.JANITOR_SYSTEM_USER_ID ?? undefined;
 
+  // dry-run resolution: when the caller omits `dryRun`, fall back to
+  // "dry-run unless a system user is configured". When the caller
+  // explicitly passes `dryRun: false` but no system user is available,
+  // refuse with 412 instead of silently downgrading or crashing on the
+  // first comment insert (the previous behaviour was both — different
+  // call sites had different fallbacks).
+  const effectiveDryRun = body.dryRun === undefined ? !systemUserId : body.dryRun;
+  if (!effectiveDryRun && !systemUserId) {
+    return NextResponse.json(
+      {
+        error:
+          'Cannot run janitor live without a JANITOR_SYSTEM_USER_ID — set the env var or pass systemUserId in the request body.',
+      },
+      { status: 412 }
+    );
+  }
+
   let orgIds: string[];
   if (body.organizationId) {
     orgIds = [body.organizationId];
@@ -76,7 +93,7 @@ export async function POST(request: NextRequest) {
         organizationId,
         systemUserId,
         staleThresholdDays: body.staleThresholdDays,
-        dryRun: body.dryRun ?? !systemUserId,
+        dryRun: effectiveDryRun,
         limit: body.limit,
       });
       const counts = { ping_assignee: 0, snooze: 0, auto_close_with_label: 0 };
@@ -106,7 +123,7 @@ export async function POST(request: NextRequest) {
     ok: true,
     startedAt: startedAt.toISOString(),
     finishedAt: new Date().toISOString(),
-    dryRun: body.dryRun ?? !systemUserId,
+    dryRun: effectiveDryRun,
     orgsProcessed: orgIds.length,
     results,
   });

@@ -5,6 +5,7 @@ import {
   initiatives,
   initiativeProjects,
   organizationMembers,
+  projects,
   MAX_INITIATIVE_DEPTH,
 } from '@tasknebula/db';
 import { eq, and, inArray, asc } from 'drizzle-orm';
@@ -130,11 +131,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // Depth enforcement
+  // Depth enforcement + same-workspace check for the proposed parent.
+  // Without the workspace check the FK would catch a cross-workspace
+  // parent at INSERT time as a 500; better to reject explicitly with 400.
   if (parentInitiativeId) {
     if (typeof parentInitiativeId !== 'string') {
       return NextResponse.json({ error: 'parentInitiativeId must be string' }, { status: 400 });
     }
+    const [parentRow] = await db
+      .select({ id: initiatives.id, workspaceId: initiatives.workspaceId })
+      .from(initiatives)
+      .where(eq(initiatives.id, parentInitiativeId))
+      .limit(1);
+    if (!parentRow || parentRow.workspaceId !== workspaceId) {
+      return NextResponse.json(
+        { error: 'parentInitiativeId does not belong to this workspace' },
+        { status: 400 }
+      );
+    }
+
     const siblings = await db
       .select({
         id: initiatives.id,
@@ -152,6 +167,34 @@ export async function POST(request: NextRequest) {
         },
         { status: 400 }
       );
+    }
+  }
+
+  // Validate every `projectIds` entry belongs to this workspace before we
+  // insert the linking rows. The FK would otherwise reject the row with a
+  // 500-class error after the initiative was already created (partial
+  // state). Pulling the membership up front keeps the route atomic.
+  let validatedProjectIds: string[] | null = null;
+  if (Array.isArray((body as { projectIds?: unknown }).projectIds)) {
+    const requested = ((body as { projectIds?: unknown }).projectIds as unknown[]).filter(
+      (p): p is string => typeof p === 'string' && p.length > 0
+    );
+    if (requested.length > 0) {
+      const owned = await db
+        .select({ id: projects.id })
+        .from(projects)
+        .where(and(eq(projects.organizationId, workspaceId), inArray(projects.id, requested)));
+      const ownedIds = new Set(owned.map((row) => row.id));
+      const stranger = requested.find((id) => !ownedIds.has(id));
+      if (stranger) {
+        return NextResponse.json(
+          { error: `Project ${stranger} does not belong to this workspace` },
+          { status: 400 }
+        );
+      }
+      validatedProjectIds = requested;
+    } else {
+      validatedProjectIds = [];
     }
   }
 
@@ -197,17 +240,12 @@ export async function POST(request: NextRequest) {
     throw err;
   }
 
-  // Optionally link projects in the same call.
-  if (Array.isArray((body as { projectIds?: unknown }).projectIds)) {
-    const projectIds = ((body as { projectIds?: unknown }).projectIds as unknown[]).filter(
-      (p): p is string => typeof p === 'string' && p.length > 0
-    );
-    if (projectIds.length > 0) {
-      await db
-        .insert(initiativeProjects)
-        .values(projectIds.map((projectId) => ({ initiativeId: id, projectId })))
-        .onConflictDoNothing();
-    }
+  // Optionally link projects (already validated above).
+  if (validatedProjectIds && validatedProjectIds.length > 0) {
+    await db
+      .insert(initiativeProjects)
+      .values(validatedProjectIds.map((projectId) => ({ initiativeId: id, projectId })))
+      .onConflictDoNothing();
   }
 
   return NextResponse.json(

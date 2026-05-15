@@ -8,6 +8,10 @@ export interface Issue {
   number?: number;
   title: string;
   description: string | null;
+  /** ProseMirror JSON snapshot mirroring the collaborative editor state.
+   *  Set by the collab editor (P1-09 follow-up). When present the read
+   *  path renders this rich content; otherwise it falls back to `description`. */
+  descriptionRich?: Record<string, unknown> | null;
   type: string;
   status: string;
   statusId?: string;
@@ -112,8 +116,7 @@ export function useCreateIssue() {
     },
     onSuccess: (data, variables) => {
       // Scope invalidation to the affected project when possible
-      const createdProjectId =
-        (data as Issue | undefined)?.projectId || variables.projectId;
+      const createdProjectId = (data as Issue | undefined)?.projectId || variables.projectId;
       if (createdProjectId) {
         queryClient.invalidateQueries({
           queryKey: ['issues'],

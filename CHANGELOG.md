@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-15
+
+### Fixed
+
+- **Tiptap collaborative descriptions no longer lose formatting.** The collab editor used to snapshot `editor.getText()` to `issues.description`, so lists / bold / links / code blocks were discarded the moment the Yjs doc was dropped. A new `issues.description_rich` JSONB column (migration 0052) now carries the full ProseMirror state alongside the plain-text fallback, and the static read path mounts a non-editable Tiptap to rebuild the rich rendering.
+- **Initiative re-parent and project links now reject cross-workspace ids.** POST and PATCH `/api/initiatives` walk the proposed parent's `workspaceId` plus every `projectIds` entry and refuse with 400 (with the offending id) before touching the FK. The previous behaviour either 500'd on the FK or partially deleted the existing project links before failing.
+- **Cycle-rollover cron now uses the shared `requireCronAuth()` helper** so the secret accept-set matches standup and janitor (header, Bearer, `?secret=`) and benefits from the same timing-safe compare. The route's bespoke parser is gone.
+- **Janitor dry-run no longer silently ignores the caller.** When the request body has `dryRun: false` but no `systemUserId` is available (env or body), the route now returns `412 Precondition Failed` with an explanation instead of crashing on the first comment insert. Default behaviour (no `dryRun` field) is unchanged.
+- **Stale collab documents are cleaned up when an issue is deleted.** `deleteIssue()` now also removes the matching `collab_documents` row (`issue:<id>`) via a `to_regclass`-guarded query, so deployments that have never enabled Hocuspocus stay untouched while live-collab deployments don't accumulate orphan Y-state.
+
+### Security
+
+- **SAML response validator hardened.** The schema-validator callback now rejects `<!DOCTYPE …>` (XXE), `<!ENTITY …>` declarations, payloads larger than 3 MB, and the presence of multiple top-level `<Response>` / `<Assertion>` elements (signature-wrapping shape). A new `verifyAssertionConstraints` block runs after samlify's parse: it enforces an exact-match `Recipient`, requires AudienceRestriction membership for our SP entityID, and tightens the `NotBefore` / `NotOnOrAfter` window to ±30 s.
+- **Importer adapters now go through `fetchWithBackoff`.** Linear, Jira, and GitHub HTTP calls retry on 429 / 5xx / network error with exponential backoff and full jitter, honour `Retry-After` (seconds or HTTP-date), and cap at 4 retries. Previously a single transient response from any upstream killed the import job.
+
+### Reliability
+
+- **Linear importer paginates `pageInfo.hasNextPage`.** The previous adapter capped at the first 50 issues and silently truncated; large workspaces are now imported in full, with an upper bound of 200 pages × 50 = 10 000 issues per run.
+- **`cycle-rollover` cron is scheduled.** The compose sidecar now POSTs it daily at 02:00 UTC alongside the existing standup (08:00) and janitor (hourly) jobs.
+
+### Tests
+
+- **51 new Jest cases across 8 suites:**
+  - `lib/importers/__tests__/fetch-with-backoff.test.ts` (8) — retries, Retry-After, exhaustion, jitter overrides.
+  - `app/api/issues/[issueId]/__tests__/estimate-persistence.test.ts` (6) — `estimateHours`, `estimateSource`, `descriptionRich` end-to-end through the route.
+  - `lib/agents/__tests__/cron-auth-bearer.test.ts` (5) — `Authorization: Bearer` accept-path.
+  - `app/api/cron/janitor/__tests__/dry-run.test.ts` (4) — `effectiveDryRun` + 412 refusal.
+  - `lib/sso/__tests__/saml-constraints.test.ts` (15) — XXE / wrapping / Recipient / Audience / clock-skew. Plus `saml.test.ts` fixture catch-up.
+  - `app/api/initiatives/__tests__/workspace-validation.test.ts` (7) — cross-workspace parent + projectIds rejection.
+
 ## [0.2.9] - 2026-05-15
 
 ### Fixed

@@ -1,4 +1,4 @@
-import { eq, and, desc, inArray } from 'drizzle-orm';
+import { eq, and, desc, inArray, sql } from 'drizzle-orm';
 import { db } from '../client';
 import { issues, issueComments, issueActivities, users } from '../schema';
 import { createId } from '@paralleldrive/cuid2';
@@ -112,6 +112,28 @@ export async function updateIssue(issueId: string, data: Partial<typeof issues.$
 // Delete issue
 export async function deleteIssue(issueId: string) {
   await db.delete(issues).where(eq(issues.id, issueId));
+  // Drop the matching collaborative-edit doc, if Hocuspocus is in use.
+  // The `collab_documents` table is bootstrapped by the hocuspocus service
+  // on first start, so it may not exist in deployments that have never
+  // enabled live-collab. `to_regclass()` returns NULL when the table is
+  // absent, letting us issue the DELETE conditionally without raising
+  // "relation does not exist". Document names follow `issue:<id>`.
+  try {
+    await db.execute(sql`
+      DO $$
+      BEGIN
+        IF to_regclass('public.collab_documents') IS NOT NULL THEN
+          DELETE FROM collab_documents WHERE name = ${`issue:${issueId}`};
+        END IF;
+      END
+      $$;
+    `);
+  } catch (err) {
+    // Never let a stale-collab cleanup failure crash the issue delete —
+    // worst case is an orphan Y-state row that won't accept new edits
+    // (no parent issue, but `userCanAccessDocument` already returns false).
+    console.warn('[deleteIssue] failed to clean up collab_documents', err);
+  }
 }
 
 // Get comments for an issue
@@ -170,24 +192,34 @@ export async function getIssueActivities(issueId: string) {
 export async function createActivity(data: {
   issueId: string;
   userId: string;
-  type: 'created' | 'updated' | 'status_changed' | 'assigned' | 'commented' | 'linked' | 'mentioned';
+  type:
+    | 'created'
+    | 'updated'
+    | 'status_changed'
+    | 'assigned'
+    | 'commented'
+    | 'linked'
+    | 'mentioned';
   field?: string | null;
   oldValue?: string | null;
   newValue?: string | null;
   metadata?: any;
 }) {
-  const result = await db.insert(issueActivities).values({
-    id: createId(),
-    issueId: data.issueId,
-    userId: data.userId,
-    type: data.type,
-    field: data.field || null,
-    oldValue: data.oldValue || null,
-    newValue: data.newValue || null,
-    metadata: data.metadata || {},
-    createdBy: data.userId,
-    updatedBy: data.userId,
-  }).returning();
+  const result = await db
+    .insert(issueActivities)
+    .values({
+      id: createId(),
+      issueId: data.issueId,
+      userId: data.userId,
+      type: data.type,
+      field: data.field || null,
+      oldValue: data.oldValue || null,
+      newValue: data.newValue || null,
+      metadata: data.metadata || {},
+      createdBy: data.userId,
+      updatedBy: data.userId,
+    })
+    .returning();
 
   return result[0];
 }

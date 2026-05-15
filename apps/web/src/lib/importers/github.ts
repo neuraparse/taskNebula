@@ -17,6 +17,7 @@
  * so the runner can produce real TaskNebula issues for testing.
  */
 
+import { fetchWithBackoff } from './fetch-with-backoff';
 import {
   Importer,
   ImportMapping,
@@ -71,7 +72,7 @@ export const githubImporter: Importer<GithubInput> = {
     url.searchParams.set('state', 'all');
     url.searchParams.set('per_page', String(input.perPage ?? 50));
 
-    const response = await fetch(url, {
+    const response = await fetchWithBackoff(url, {
       headers: {
         Authorization: `Bearer ${input.accessToken}`,
         Accept: 'application/vnd.github+json',
@@ -87,33 +88,33 @@ export const githubImporter: Importer<GithubInput> = {
 
     const issues = (await response.json()) as GithubIssueRaw[];
 
-    return issues
-      // PRs surface on the issues endpoint — skip them.
-      .filter((i) => !i.pull_request)
-      .map((i): NormalizedRecord => {
-        const labels = (i.labels ?? [])
-          .map((l) =>
-            typeof l === 'string' ? l : typeof l?.name === 'string' ? l.name : ''
-          )
-          .filter(Boolean);
+    return (
+      issues
+        // PRs surface on the issues endpoint — skip them.
+        .filter((i) => !i.pull_request)
+        .map((i): NormalizedRecord => {
+          const labels = (i.labels ?? [])
+            .map((l) => (typeof l === 'string' ? l : typeof l?.name === 'string' ? l.name : ''))
+            .filter(Boolean);
 
-        return {
-          key: `#${i.number}`,
-          title: i.title,
-          description: i.body,
-          status: i.state, // 'open' | 'closed'
-          // GitHub doesn't ship a priority field — labels like 'P0' / 'high'
-          // get caught by `normalizePriority` if user maps that column.
-          // TODO(stub): scan labels for explicit priority markers.
-          priority: null,
-          labels,
-          assigneeEmail: i.assignee?.email ?? null,
-          parentKey: null,
-          createdAt: i.created_at,
-          // TODO(stub): fetch /repos/{o}/{r}/issues/{n}/comments per issue.
-          comments: [],
-        };
-      });
+          return {
+            key: `#${i.number}`,
+            title: i.title,
+            description: i.body,
+            status: i.state, // 'open' | 'closed'
+            // GitHub doesn't ship a priority field — labels like 'P0' / 'high'
+            // get caught by `normalizePriority` if user maps that column.
+            // TODO(stub): scan labels for explicit priority markers.
+            priority: null,
+            labels,
+            assigneeEmail: i.assignee?.email ?? null,
+            parentKey: null,
+            createdAt: i.created_at,
+            // TODO(stub): fetch /repos/{o}/{r}/issues/{n}/comments per issue.
+            comments: [],
+          };
+        })
+    );
   },
 
   mapRecord(rec, mapping: ImportMapping): TaskNebulaIssue {
