@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-05-19
+
+### Fixed
+
+- **App rail labels no longer shift when “My Issues” wraps.** Rail items now use a fixed-height, centered two-line label slot, so translated labels and two-word labels keep the icon grid aligned.
+- **Sidebar navigation respects locale-prefixed routes.** The rail and sidebar now strip `/tr`, `/de`, `/es`, and `/en` before matching active sections, so My Issues, issue detail, projects, settings, and admin navigation render consistently across locales.
+- **Long sidebar labels truncate inside their row.** Navigation rows now reserve stable icon/text space instead of letting longer translated labels push or overflow the menu.
+
 ## [0.3.0] - 2026-05-15
 
 ### Fixed

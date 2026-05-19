@@ -29,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useInbox } from '@/lib/hooks/use-inbox';
+import { stripLocalePrefix } from '@/components/layout/nav-paths';
 
 interface RailItem {
   name: string;
@@ -55,6 +56,7 @@ const railItems: (Omit<RailItem, 'name'> & { key: RailItemKey })[] = [
 
 export function AppRail() {
   const pathname = usePathname();
+  const normalizedPathname = stripLocalePrefix(pathname);
   const { data: session } = useSession();
   const tNav = useTranslations('nav');
   const isSuperAdmin = (session?.user as { role?: string } | undefined)?.role === 'super_admin';
@@ -81,13 +83,13 @@ export function AppRail() {
           {railItems.map((item) => {
             const label = tNav(item.key);
             const isActive =
-              pathname === item.href ||
-              pathname?.startsWith(item.href + '/') ||
+              normalizedPathname === item.href ||
+              normalizedPathname.startsWith(item.href + '/') ||
               (item.href === '/dashboard' &&
-                (pathname === '/' ||
-                  pathname?.startsWith('/drafts') ||
-                  pathname?.startsWith('/templates'))) ||
-              (item.href === '/my-issues' && pathname?.startsWith('/issues/'));
+                (normalizedPathname === '/' ||
+                  normalizedPathname.startsWith('/drafts') ||
+                  normalizedPathname.startsWith('/templates'))) ||
+              (item.href === '/my-issues' && normalizedPathname.startsWith('/issues/'));
             const Icon = item.icon;
             const showInboxBadge = item.showBadge && unreadInboxCount > 0;
             const unreadLabel = tNav('inbox_unread', { count: unreadInboxCount });
@@ -102,7 +104,7 @@ export function AppRail() {
                       aria-label={showInboxBadge ? `${label} · ${unreadLabel}` : label}
                       aria-current={isActive ? 'page' : undefined}
                       className={cn(
-                        'text-muted-foreground ease-snap hover:bg-accent/60 hover:text-foreground relative mx-auto flex w-12 flex-col items-center gap-0.5 rounded-md px-1 py-1.5 transition-all duration-150',
+                        'text-muted-foreground ease-snap hover:bg-accent/60 hover:text-foreground relative mx-auto flex h-[52px] w-12 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1.5 transition-all duration-150',
                         isActive && 'bg-accent text-foreground'
                       )}
                     >
@@ -116,7 +118,7 @@ export function AppRail() {
                           {unreadInboxCount > 9 ? '9+' : unreadInboxCount}
                         </span>
                       )}
-                      <span className="text-muted-foreground text-[10px] leading-tight">
+                      <span className="text-muted-foreground line-clamp-2 h-5 w-full text-center text-[10px] leading-[10px] [overflow-wrap:anywhere]">
                         {label}
                       </span>
                     </Link>
@@ -139,12 +141,12 @@ export function AppRail() {
                   href="/admin"
                   aria-label={tNav('admin')}
                   className={cn(
-                    'text-muted-foreground ease-snap hover:bg-accent/60 hover:text-foreground mx-auto flex w-12 flex-col items-center gap-0.5 rounded-md px-1 py-1.5 transition-all duration-150',
-                    pathname?.startsWith('/admin') && 'bg-accent text-foreground'
+                    'text-muted-foreground ease-snap hover:bg-accent/60 hover:text-foreground mx-auto flex h-[52px] w-12 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1.5 transition-all duration-150',
+                    normalizedPathname.startsWith('/admin') && 'bg-accent text-foreground'
                   )}
                 >
                   <Shield className="h-4 w-4 shrink-0" />
-                  <span className="text-muted-foreground text-[10px] leading-tight">
+                  <span className="text-muted-foreground line-clamp-2 h-5 w-full text-center text-[10px] leading-[10px] [overflow-wrap:anywhere]">
                     {tNav('admin')}
                   </span>
                 </Link>

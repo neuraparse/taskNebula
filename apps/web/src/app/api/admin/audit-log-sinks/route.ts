@@ -21,6 +21,7 @@ import { z } from 'zod';
 import { auth } from '@/auth';
 import { hasPermission } from '@/lib/auth/permissions';
 import { db, auditLogSinks, eq } from '@tasknebula/db';
+import { redactSinkConfig } from './utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,17 +51,11 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const organizationId = searchParams.get('organizationId');
   if (!organizationId) {
-    return NextResponse.json(
-      { error: 'organizationId is required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
   }
   const canView = await hasPermission(organizationId, 'org:settings');
   if (!canView) {
-    return NextResponse.json(
-      { error: 'Insufficient permissions' },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
   }
   const rows = await db
     .select({
@@ -112,10 +107,7 @@ export async function POST(request: NextRequest) {
   const data = parsed.data;
   const canManage = await hasPermission(data.organizationId, 'org:settings');
   if (!canManage) {
-    return NextResponse.json(
-      { error: 'Insufficient permissions' },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
   }
   const signingSecret = generateSigningSecret();
   const [created] = await db
@@ -131,10 +123,7 @@ export async function POST(request: NextRequest) {
     })
     .returning();
   if (!created) {
-    return NextResponse.json(
-      { error: 'Failed to create sink' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to create sink' }, { status: 500 });
   }
   return NextResponse.json(
     {
@@ -146,26 +135,4 @@ export async function POST(request: NextRequest) {
     },
     { status: 201 }
   );
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Hide auth tokens from the GET response so the page can never accidentally
- * leak them into the browser bundle/state.
- */
-export function redactSinkConfig(
-  type: string,
-  config: Record<string, unknown>
-): Record<string, unknown> {
-  const out = { ...config };
-  const SECRET_KEYS = ['token', 'apiKey', 'secret', 'password'];
-  for (const key of SECRET_KEYS) {
-    if (typeof out[key] === 'string' && (out[key] as string).length > 0) {
-      out[key] = '••••••••';
-    }
-  }
-  return out;
 }

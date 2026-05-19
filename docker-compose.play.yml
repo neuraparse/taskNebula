@@ -36,7 +36,7 @@ services:
       retries: 10
 
   web:
-    image: neuraparse/tasknebula:0.3.0
+    image: neuraparse/tasknebula:0.3.1
     restart: unless-stopped
     depends_on:
       postgres:

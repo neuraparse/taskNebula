@@ -18,8 +18,6 @@ import { cn } from '@/lib/utils';
 import {
   Home,
   Inbox,
-  FolderKanban,
-  BookOpenText,
   Users,
   Settings,
   ChevronDown,
@@ -36,7 +34,6 @@ import {
   SlidersHorizontal,
   Users2,
   Volume2,
-  Activity,
   Bell,
   Building2,
   Eye,
@@ -46,11 +43,9 @@ import {
   Pin,
   Plug,
   Sparkles,
-  Star,
   UserCog,
   UserPlus,
   Webhook,
-  Workflow,
 } from 'lucide-react';
 import { Bot, Flag, Gauge, MessageSquareText, Scroll, ScrollText } from 'lucide-react';
 import { TaskNebulaLogo } from '@/components/branding/tasknebula-logo';
@@ -58,6 +53,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TeamspaceSwitcher } from '@/components/organization/teamspace-switcher';
 import { AppRail } from '@/components/layout/app-rail';
+import { stripLocalePrefix } from '@/components/layout/nav-paths';
 import {
   PageSidebarSlotTarget,
   usePageSidebarHasContent,
@@ -280,17 +276,6 @@ const DEFAULT_TAB_BY_PATH: Record<string, string> = {
   '/admin': 'overview',
 };
 
-// Strip a leading two-letter locale segment (e.g. `/tr/dashboard` → `/dashboard`)
-// so the section/active-link checks below stay locale-agnostic. next-intl
-// rewrites every non-default-locale request into `/[locale]/...`, and the
-// default locale's URLs may or may not carry the prefix depending on cookie
-// state — comparing the raw pathname would silently break highlighting for
-// any non-English user.
-function stripLocalePrefix(pathname: string | null | undefined): string {
-  if (!pathname) return '/';
-  return pathname.replace(/^\/[a-z]{2}(?=\/|$)/, '') || '/';
-}
-
 function isNavLinkActive(
   link: NavLink,
   pathname: string | null | undefined,
@@ -337,9 +322,14 @@ function isHomeSectionPath(pathname: string | null | undefined): boolean {
   );
 }
 
+const SIDEBAR_NAV_LINK_CLASS =
+  'row-interactive text-muted-foreground ease-snap hover:text-foreground data-[active=true]:text-primary min-h-9 w-full min-w-0 rounded-md text-sm font-medium transition-all duration-150';
+const SIDEBAR_NAV_LABEL_CLASS = 'min-w-0 flex-1 truncate';
+
 export function AppSidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const normalizedPathname = stripLocalePrefix(pathname);
   const tNav = useTranslations('nav');
   const tActions = useTranslations('actions');
   const tCommon = useTranslations('common');
@@ -421,13 +411,12 @@ export function AppSidebar() {
     pinnedCall?.participantCount ?? 0,
     currentSession && connectionState === 'connected' ? Math.max(participantCount, 1) : 0
   );
-  const isCallConnecting = currentSession && connectionState !== 'connected';
   const selectedRoomId = searchParams.get('roomId');
   const currentCallRoomPath = currentTarget?.roomHref.split('?')[0] || null;
   const isViewingCurrentCallRoom = Boolean(
     currentTarget &&
       currentCallRoomPath &&
-      pathname === currentCallRoomPath &&
+      normalizedPathname === stripLocalePrefix(currentCallRoomPath) &&
       selectedRoomId === currentTarget.roomId
   );
   const sidebarRuntimeError = isViewingCurrentCallRoom ? null : runtimeError;
@@ -497,27 +486,31 @@ export function AppSidebar() {
           />
 
           <div className={cn('px-3', hasPageSidebar && 'hidden')}>
-            {pathname?.startsWith('/settings') || pathname?.startsWith('/admin') ? null : (
+            {normalizedPathname.startsWith('/settings') ||
+            normalizedPathname.startsWith('/admin') ? null : (
               <div className="mb-3 mt-1 px-3">
                 <div className="kicker">{tNav(getSectionKey(pathname))}</div>
               </div>
             )}
 
-            {pathname?.startsWith('/my-issues') || pathname?.startsWith('/issues') ? (
+            {normalizedPathname.startsWith('/my-issues') ||
+            normalizedPathname.startsWith('/issues') ? (
               <div className="space-y-0.5">
                 {MY_ISSUES_VIEWS.map((view) => {
                   const isActive =
-                    pathname?.startsWith('/my-issues') &&
+                    normalizedPathname.startsWith('/my-issues') &&
                     (searchParams?.get('view') ?? 'assigned') === view.value;
                   return (
                     <Link
                       key={view.value}
                       href={`/my-issues?view=${view.value}`}
                       data-active={isActive ? 'true' : undefined}
-                      className="row-interactive text-muted-foreground ease-snap hover:text-foreground data-[active=true]:text-primary rounded-md text-sm font-medium transition-all duration-150"
+                      className={SIDEBAR_NAV_LINK_CLASS}
                     >
                       <view.icon className="h-4 w-4 shrink-0" />
-                      <span>{view.i18nKey ? tNav(view.i18nKey) : view.label}</span>
+                      <span className={SIDEBAR_NAV_LABEL_CLASS}>
+                        {view.i18nKey ? tNav(view.i18nKey) : view.label}
+                      </span>
                     </Link>
                   );
                 })}
@@ -528,38 +521,40 @@ export function AppSidebar() {
               <div className="space-y-0.5">
                 {DASHBOARD_LINKS.map((link) => {
                   const isActive =
-                    link.href === pathname || (link.href === '/dashboard' && pathname === '/');
+                    link.href === normalizedPathname ||
+                    (link.href === '/dashboard' && normalizedPathname === '/');
                   return (
                     <Link
                       key={link.href}
                       href={link.href}
                       data-active={isActive ? 'true' : undefined}
-                      className="row-interactive text-muted-foreground ease-snap hover:text-foreground data-[active=true]:text-primary rounded-md text-sm font-medium transition-all duration-150"
+                      className={SIDEBAR_NAV_LINK_CLASS}
                     >
                       <link.icon className="h-4 w-4 shrink-0" />
-                      <span>{link.i18nKey ? tNav(link.i18nKey) : link.label}</span>
+                      <span className={SIDEBAR_NAV_LABEL_CLASS}>
+                        {link.i18nKey ? tNav(link.i18nKey) : link.label}
+                      </span>
                     </Link>
                   );
                 })}
               </div>
             ) : null}
 
-            {pathname?.startsWith('/team') ? (
+            {normalizedPathname.startsWith('/team') ? (
               <div className="space-y-0.5">
                 {visibleTeamLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="row-interactive text-muted-foreground ease-snap hover:text-foreground rounded-md text-sm font-medium transition-all duration-150"
-                  >
+                  <Link key={link.href} href={link.href} className={SIDEBAR_NAV_LINK_CLASS}>
                     <link.icon className="h-4 w-4 shrink-0" />
-                    <span>{link.i18nKey ? tNav(link.i18nKey) : link.label}</span>
+                    <span className={SIDEBAR_NAV_LABEL_CLASS}>
+                      {link.i18nKey ? tNav(link.i18nKey) : link.label}
+                    </span>
                   </Link>
                 ))}
               </div>
             ) : null}
 
-            {pathname?.startsWith('/settings') || pathname?.startsWith('/admin') ? (
+            {normalizedPathname.startsWith('/settings') ||
+            normalizedPathname.startsWith('/admin') ? (
               <>
                 {visibleSettingsLinks.length > 0 ? (
                   <>
@@ -575,10 +570,12 @@ export function AppSidebar() {
                             key={link.href}
                             href={link.href}
                             data-active={isActive ? 'true' : undefined}
-                            className="row-interactive text-muted-foreground ease-snap hover:text-foreground data-[active=true]:text-primary rounded-md text-sm font-medium transition-all duration-150"
+                            className={SIDEBAR_NAV_LINK_CLASS}
                           >
                             <link.icon className="h-4 w-4 shrink-0" />
-                            <span>{link.i18nKey ? tNav(link.i18nKey) : link.label}</span>
+                            <span className={SIDEBAR_NAV_LABEL_CLASS}>
+                              {link.i18nKey ? tNav(link.i18nKey) : link.label}
+                            </span>
                           </Link>
                         );
                       })}
@@ -600,10 +597,10 @@ export function AppSidebar() {
                             key={link.href}
                             href={link.href}
                             data-active={isActive ? 'true' : undefined}
-                            className="row-interactive text-muted-foreground ease-snap hover:text-foreground data-[active=true]:text-primary rounded-md text-sm font-medium transition-all duration-150"
+                            className={SIDEBAR_NAV_LINK_CLASS}
                           >
                             <link.icon className="h-4 w-4 shrink-0" />
-                            <span>{link.label}</span>
+                            <span className={SIDEBAR_NAV_LABEL_CLASS}>{link.label}</span>
                           </Link>
                         );
                       })}
@@ -613,7 +610,9 @@ export function AppSidebar() {
               </>
             ) : null}
 
-            <div hidden={!(pathname?.startsWith('/projects') || isHomeSectionPath(pathname))}>
+            <div
+              hidden={!(normalizedPathname.startsWith('/projects') || isHomeSectionPath(pathname))}
+            >
               <button
                 type="button"
                 onClick={() => setIsTeamspacesOpen((open) => !open)}
@@ -670,14 +669,14 @@ export function AppSidebar() {
                   ) : projects && projects.length > 0 ? (
                     projects.slice(0, 5).map((project) => {
                       const projectPath = project.key?.toLowerCase() || project.id;
-                      const isActive = pathname?.includes(`/projects/${projectPath}`);
+                      const isActive = normalizedPathname.includes(`/projects/${projectPath}`);
                       const projectIcon = (project as { icon?: string | null }).icon;
                       return (
                         <Link
                           key={project.id}
                           href={`/projects/${projectPath}/views`}
                           data-active={isActive ? 'true' : undefined}
-                          className="row-interactive text-muted-foreground ease-snap hover:text-foreground data-[active=true]:text-primary group rounded-md text-sm font-medium transition-all duration-150"
+                          className={cn(SIDEBAR_NAV_LINK_CLASS, 'group')}
                         >
                           <div className="bg-muted flex h-5 w-5 shrink-0 items-center justify-center rounded-sm">
                             {projectIcon ? (

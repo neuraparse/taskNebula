@@ -30,20 +30,14 @@ function modelLabelFromOutput(output: unknown): string {
   return 'Unknown model';
 }
 
-export async function GET(
-  _request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const [run] = await db
-    .select()
-    .from(agentRuns)
-    .where(eq(agentRuns.id, params.id))
-    .limit(1);
+  const { id } = await params;
+  const [run] = await db.select().from(agentRuns).where(eq(agentRuns.id, id)).limit(1);
 
   if (!run) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });

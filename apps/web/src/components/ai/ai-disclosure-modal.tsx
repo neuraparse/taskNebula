@@ -45,56 +45,64 @@ export function AiDisclosureModal() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={() => { /* modal is non-dismissable */ }}>
+    <Dialog
+      open={open}
+      onOpenChange={() => {
+        /* modal is non-dismissable */
+      }}
+    >
       <DialogContent
-        className="max-w-lg"
+        className="!flex max-h-[calc(100vh-2rem)] max-w-lg !grid-cols-none flex-col gap-0 overflow-hidden p-0 [&>button]:hidden"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
         data-testid="ai-disclosure-modal"
       >
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
+        <DialogHeader className="shrink-0 px-6 pb-3 pt-6">
+          <DialogTitle className="flex items-center gap-2 tracking-normal">
+            <Sparkles className="text-primary h-4 w-4" />
             You are about to interact with AI
           </DialogTitle>
-          <DialogDescription>
-            Some TaskNebula features use third-party AI models to generate text,
-            suggestions, and summaries. Before you continue, please read what
-            that means for you.
+          <DialogDescription className="text-zinc-300">
+            Some TaskNebula features use third-party AI models to generate text, suggestions, and
+            summaries. Before you continue, please read what that means for you.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3 text-sm">
-          <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2">
-            <p className="font-medium text-foreground">What runs in your workspace</p>
-            <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+        <div className="custom-scrollbar min-h-0 flex-1 space-y-3 overflow-y-auto px-6 py-2 text-sm">
+          <div className="space-y-2 rounded-md border border-white/10 bg-white/5 p-3">
+            <p className="font-medium text-zinc-100">What runs in your workspace</p>
+            <ul className="list-disc space-y-1 pl-5 text-zinc-300">
               {USER_FACING_AI_FEATURES.map((f) => (
                 <li key={f.id}>
-                  <span className="text-foreground">{f.name}</span> — {f.summary}
+                  <span className="text-zinc-100">{f.name}</span> — {f.summary}
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="rounded-md border border-border bg-muted/30 p-3 space-y-1">
-            <p className="font-medium text-foreground flex items-center gap-1.5">
+          <div className="space-y-1 rounded-md border border-white/10 bg-white/5 p-3">
+            <p className="flex items-center gap-1.5 font-medium text-zinc-100">
               <ShieldCheck className="h-3.5 w-3.5" />
               Your rights
             </p>
-            <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-              <li>Every AI output is labelled <em>Generated with AI</em>.</li>
+            <ul className="list-disc space-y-1 pl-5 text-zinc-300">
+              <li>
+                Every AI output is labelled <em>Generated with AI</em>.
+              </li>
               <li>You can review and reject any AI suggestion before it is applied.</li>
               <li>Workspace admins can disable any AI feature in Settings → AI Transparency.</li>
-              <li>Inputs/outputs are retained per the model card retention policy and never sold.</li>
+              <li>
+                Inputs/outputs are retained per the model card retention policy and never sold.
+              </li>
             </ul>
           </div>
 
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-zinc-300">
             Read the{' '}
             <Link
               href="/ai-model-cards"
               target="_blank"
-              className="underline inline-flex items-center gap-0.5 hover:text-foreground"
+              className="inline-flex items-center gap-0.5 underline hover:text-zinc-100"
             >
               full model cards
               <ExternalLink className="h-3 w-3" />
@@ -102,19 +110,14 @@ export function AiDisclosureModal() {
             for each feature, including model identity, data sent, and retention.
           </p>
 
-          <p className="text-[10px] text-muted-foreground/80">
+          <p className="text-[10px] text-zinc-400">
             Disclosure version {version}. Required by EU AI Act Article 50.
           </p>
         </div>
 
-        <div className="flex items-center justify-end gap-2 pt-2">
-          <Button
-            onClick={handleAck}
-            disabled={busy}
-            data-testid="ai-disclosure-ack"
-          >
-            {busy && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-            I understand, continue
+        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-white/10 bg-zinc-950/30 px-6 py-4">
+          <Button onClick={handleAck} disabled={busy} data-testid="ai-disclosure-ack">
+            {busy && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}I understand, continue
           </Button>
         </div>
       </DialogContent>

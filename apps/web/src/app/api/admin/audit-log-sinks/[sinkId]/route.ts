@@ -15,7 +15,7 @@ import { z } from 'zod';
 import { auth } from '@/auth';
 import { hasPermission } from '@/lib/auth/permissions';
 import { db, auditLogSinks, eq } from '@tasknebula/db';
-import { redactSinkConfig } from '../route';
+import { redactSinkConfig } from '../utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,11 +26,7 @@ const patchSchema = z.object({
 });
 
 async function loadSink(sinkId: string) {
-  const [row] = await db
-    .select()
-    .from(auditLogSinks)
-    .where(eq(auditLogSinks.id, sinkId))
-    .limit(1);
+  const [row] = await db.select().from(auditLogSinks).where(eq(auditLogSinks.id, sinkId)).limit(1);
   return row ?? null;
 }
 
@@ -49,10 +45,7 @@ export async function PATCH(
   }
   const canManage = await hasPermission(sink.workspaceId, 'org:settings');
   if (!canManage) {
-    return NextResponse.json(
-      { error: 'Insufficient permissions' },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
   }
   let body: unknown;
   try {
@@ -107,10 +100,7 @@ export async function DELETE(
   }
   const canManage = await hasPermission(sink.workspaceId, 'org:settings');
   if (!canManage) {
-    return NextResponse.json(
-      { error: 'Insufficient permissions' },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
   }
   await db.delete(auditLogSinks).where(eq(auditLogSinks.id, sinkId));
   return NextResponse.json({ ok: true });

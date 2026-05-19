@@ -9,6 +9,7 @@ import { useLiveCalls } from '@/lib/hooks/use-chat';
 import { useGlobalVoice } from '@/components/chat/global-voice-provider';
 import { useStoredVoicePreferences } from '@/lib/chat/voice-preferences';
 import { usePageSidebarHasContent } from '@/components/layout/page-sidebar-slot';
+import { useOrganizationPermissions } from '@/lib/hooks/use-permissions';
 import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
 
@@ -67,6 +68,10 @@ jest.mock('@/components/layout/page-sidebar-slot', () => ({
   usePageSidebarHasContent: jest.fn(),
 }));
 
+jest.mock('@/lib/hooks/use-permissions', () => ({
+  useOrganizationPermissions: jest.fn(),
+}));
+
 jest.mock('@/components/layout/app-rail', () => ({
   AppRail: () => <div data-testid="app-rail" />,
 }));
@@ -96,10 +101,15 @@ const mockUseOrganization = useOrganization as unknown as jest.Mock;
 const mockUseProjects = useProjects as jest.MockedFunction<typeof useProjects>;
 const mockUseLiveCalls = useLiveCalls as jest.MockedFunction<typeof useLiveCalls>;
 const mockUseGlobalVoice = useGlobalVoice as jest.MockedFunction<typeof useGlobalVoice>;
-const mockUseStoredVoicePreferences =
-  useStoredVoicePreferences as jest.MockedFunction<typeof useStoredVoicePreferences>;
-const mockUsePageSidebarHasContent =
-  usePageSidebarHasContent as jest.MockedFunction<typeof usePageSidebarHasContent>;
+const mockUseStoredVoicePreferences = useStoredVoicePreferences as jest.MockedFunction<
+  typeof useStoredVoicePreferences
+>;
+const mockUsePageSidebarHasContent = usePageSidebarHasContent as jest.MockedFunction<
+  typeof usePageSidebarHasContent
+>;
+const mockUseOrganizationPermissions = useOrganizationPermissions as jest.MockedFunction<
+  typeof useOrganizationPermissions
+>;
 
 function Wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({
@@ -168,6 +178,15 @@ describe('AppSidebar', () => {
     } as unknown as ReturnType<typeof useStoredVoicePreferences>);
 
     mockUsePageSidebarHasContent.mockReturnValue(false);
+    mockUseOrganizationPermissions.mockReturnValue({
+      permissions: [],
+      isSuperAdmin: false,
+      role: 'owner',
+      isLoading: false,
+      has: jest.fn(() => true),
+      hasAny: jest.fn(() => true),
+      hasAll: jest.fn(() => true),
+    });
 
     setIsSuperAdmin(false);
   });
@@ -216,6 +235,25 @@ describe('AppSidebar', () => {
 
   it('renders MY_ISSUES_VIEWS on /issues/[issueId] detail pages', () => {
     setPathname('/issues/abc-123');
+
+    render(
+      <Wrapper>
+        <AppSidebar />
+      </Wrapper>
+    );
+
+    expect(screen.getByRole('link', { name: /assigned to me/i })).toHaveAttribute(
+      'href',
+      '/my-issues?view=assigned'
+    );
+    expect(screen.getByRole('link', { name: /created by me/i })).toHaveAttribute(
+      'href',
+      '/my-issues?view=created'
+    );
+  });
+
+  it('renders MY_ISSUES_VIEWS when the route has a locale prefix', () => {
+    setPathname('/tr/my-issues');
 
     render(
       <Wrapper>

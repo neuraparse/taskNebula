@@ -131,9 +131,7 @@ function invalidJsonResponse(): NextResponse<ApiErrorEnvelope> {
  * `z.string()` per field as they expect. Use `z.coerce.number()` etc. to
  * coerce strings into numbers / booleans.
  */
-export function searchParamsToObject(
-  params: URLSearchParams
-): Record<string, string | string[]> {
+export function searchParamsToObject(params: URLSearchParams): Record<string, string | string[]> {
   const out: Record<string, string | string[]> = {};
   for (const key of new Set(params.keys())) {
     const all = params.getAll(key);
@@ -158,14 +156,15 @@ export function withValidation<
   return function wrap(handler: ValidatedHandler<TBody, TQuery, TParams>) {
     return async function handleRequest(
       request: NextRequest,
-      context?: RouteContext
+      context: RouteContext
     ): Promise<Response> {
+      const safeContext = context ?? { params: Promise.resolve({}) };
       const issues: ZodIssue[] = [];
 
       // --- Params validation -----------------------------------------
       let parsedParams: unknown = undefined;
       if (schemas.params) {
-        const rawParams = context ? await context.params : {};
+        const rawParams = await safeContext.params;
         const result = schemas.params.safeParse(rawParams);
         if (!result.success) {
           issues.push(...prefixPath(result.error.issues, 'params'));
@@ -253,10 +252,7 @@ function isJsonParseError(err: unknown): boolean {
     ) {
       return true;
     }
-    if (
-      typeof e.message === 'string' &&
-      /JSON|Unexpected token/i.test(e.message)
-    ) {
+    if (typeof e.message === 'string' && /JSON|Unexpected token/i.test(e.message)) {
       return true;
     }
   }
