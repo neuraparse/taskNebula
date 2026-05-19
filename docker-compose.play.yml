@@ -1,0 +1,75 @@
+# Play with Docker demo stack.
+# Ephemeral sandbox only: secrets here are public demo values and must never be
+# reused for production. Production deployments should use docker-compose.yml
+# with a generated .env file.
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+    environment:
+      POSTGRES_USER: tasknebula
+      POSTGRES_PASSWORD: tasknebula-pwd-postgres
+      POSTGRES_DB: tasknebula
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U tasknebula -d tasknebula']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass tasknebula-pwd-redis
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli --no-auth-warning -a tasknebula-pwd-redis ping | grep -q PONG']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    image: neuraparse/tasknebula:0.3.0
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://tasknebula:tasknebula-pwd-postgres@postgres:5432/tasknebula
+      AUTH_SECRET: tasknebula-play-with-docker-demo-secret-2026
+      AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_NAME: TaskNebula Demo
+      REDIS_URL: redis://:tasknebula-pwd-redis@redis:6379
+      SKIP_SEED: 'false'
+      NODE_ENV: production
+    ports:
+      - '${PORT:-3000}:3000'
+    volumes:
+      - uploads_data:/app/uploads
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('http').get('http://localhost:3000/api/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      start_period: 90s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads_data:

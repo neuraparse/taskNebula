@@ -2,23 +2,34 @@
 
 # TaskNebula
 
-### The open-source project management system with a real AI copilot
+### AI-native project management that you can run in one Docker command
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/neuraparse/tasknebula?style=for-the-badge&logo=docker&color=2496ED)](https://hub.docker.com/r/neuraparse/tasknebula)
-[![Latest Image](https://img.shields.io/docker/v/neuraparse/tasknebula/latest?style=for-the-badge&logo=docker&label=image&color=2496ED)](https://hub.docker.com/r/neuraparse/tasknebula/tags)
+[![Docker Image](https://img.shields.io/docker/v/neuraparse/tasknebula/latest?style=for-the-badge&logo=docker&label=image&color=2496ED)](https://hub.docker.com/r/neuraparse/tasknebula/tags)
+[![Image Size](https://img.shields.io/docker/image-size/neuraparse/tasknebula/latest?style=for-the-badge&logo=docker&label=size&color=0ea5e9)](https://hub.docker.com/r/neuraparse/tasknebula/tags)
+[![Platform](https://img.shields.io/badge/platform-linux%2Famd64-111827?style=for-the-badge&logo=linux)](#docker-image)
 [![Next.js 15](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
 [![License MIT](https://img.shields.io/badge/License-MIT-16a34a?style=for-the-badge)](LICENSE)
 
 A self-hosted issue tracker that feels like Linear, scales like Jira, and
-drafts work with you like a pair programmer. Bring your own OpenAI /
-Anthropic key — or run fully offline with the native planner.
+ships with a real AI copilot. Bring your own OpenAI / Anthropic key, keep
+AI disabled by default, or run fully offline with the native planner.
 
-[Docker Hub](https://hub.docker.com/r/neuraparse/tasknebula) ·
+<p>
+  <a href="#quick-start"><img src="https://img.shields.io/badge/Run%20with-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Run with Docker"/></a>
+  <a href="https://labs.play-with-docker.com/?stack=https://raw.githubusercontent.com/neuraparse/tasknebula/main/docker-compose.play.yml"><img src="https://raw.githubusercontent.com/play-with-docker/stacks/master/assets/images/button.png" alt="Try in Play with Docker" height="28"/></a>
+  <a href="https://hub.docker.com/r/neuraparse/tasknebula"><img src="https://img.shields.io/badge/Open-Docker%20Hub-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Open Docker Hub"/></a>
+  <a href="https://raw.githubusercontent.com/neuraparse/tasknebula/main/docker-compose.yml"><img src="https://img.shields.io/badge/View-compose.yml-111827?style=for-the-badge&logo=yaml&logoColor=white" alt="View compose file"/></a>
+</p>
+
 [Quick start](#quick-start) ·
+[Docker image](#docker-image) ·
+[Architecture](#architecture) ·
 [AI](#ai-assistant-and-agents) ·
 [Features](#features) ·
+[Production](#production) ·
 [Report a bug](https://github.com/neuraparse/tasknebula/issues)
 
 <br/>
@@ -54,19 +65,36 @@ Anthropic key — or run fully offline with the native planner.
 
 ## Quick start
 
-One curl, then open your browser:
+Pick the path that matches where you are deploying.
+
+| Path                   | Best for                        | Command / link                                                                                                                                                                                                                            |
+| ---------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **One-command Docker** | A fresh Linux VM or homelab box | `curl -fsSL https://raw.githubusercontent.com/neuraparse/tasknebula/main/scripts/quickstart.sh \| bash`                                                                                                                                   |
+| **Play with Docker**   | Browser-only demo, no install   | [![Try in PWD](https://raw.githubusercontent.com/play-with-docker/stacks/master/assets/images/button.png)](https://labs.play-with-docker.com/?stack=https://raw.githubusercontent.com/neuraparse/tasknebula/main/docker-compose.play.yml) |
+| **Pinned production**  | Repeatable self-hosted releases | `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.3.0 docker compose up -d`                                                                                                                                                                       |
+| **Source build**       | Local development or patching   | `docker compose up -d --build`                                                                                                                                                                                                            |
+
+### 1. One-command install
+
+The install script clones the repo if needed, provisions `.env`, generates
+strong `AUTH_SECRET` and `REDIS_PASSWORD` values, pulls the published image,
+and waits until the web container is healthy.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/neuraparse/tasknebula/main/scripts/quickstart.sh | bash
 ```
 
-The script pulls `neuraparse/tasknebula:latest`, spins up Postgres, Redis
-and LiveKit via Docker Compose, generates strong `AUTH_SECRET` and
-`REDIS_PASSWORD` values, and opens **http://localhost:3000**. First-run
-wizard creates your admin account.
+Open **http://localhost:3000** and finish the first-run admin wizard.
 
-<details>
-<summary>Build from source instead</summary>
+### 2. Browser sandbox
+
+The Play with Docker button imports
+[`docker-compose.play.yml`](docker-compose.play.yml), pulls
+`neuraparse/tasknebula:0.3.0`, and exposes port `3000` inside the sandbox.
+Use it for demos and reviews only; it contains public demo secrets and
+ephemeral volumes by design.
+
+### 3. Manual server install
 
 ```bash
 git clone https://github.com/neuraparse/tasknebula.git
@@ -76,22 +104,65 @@ AUTH_SECRET="$(openssl rand -base64 32)"
 REDIS_PASSWORD="$(openssl rand -hex 32)"
 sed -i "s|^AUTH_SECRET=.*|AUTH_SECRET=${AUTH_SECRET}|" .env
 sed -i "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=${REDIS_PASSWORD}|" .env
-docker compose up -d --build
+docker compose up -d
 ```
 
-</details>
-
-<details>
-<summary>Pin a specific version</summary>
+### Update, pin, or rebuild
 
 ```bash
-# default is :latest
-TASKNEBULA_IMAGE=neuraparse/tasknebula:0.2.4 docker compose up -d
+docker compose pull web && docker compose up -d    # update published image
+TASKNEBULA_IMAGE=neuraparse/tasknebula:0.3.0 \
+  docker compose up -d                             # pin a release
+docker compose up -d --build                       # build local source
+docker compose --profile cron up -d cron           # enable optional cron sidecar
 ```
 
-Release notes live on the [GitHub releases page](https://github.com/neuraparse/tasknebula/releases).
+Release notes live on the
+[GitHub releases page](https://github.com/neuraparse/tasknebula/releases).
 
-</details>
+---
+
+## Docker image
+
+| Item              | Value                                                                                                          |
+| ----------------- | -------------------------------------------------------------------------------------------------------------- |
+| Repository        | [`neuraparse/tasknebula`](https://hub.docker.com/r/neuraparse/tasknebula)                                      |
+| Recommended tag   | `0.3.0` for pinned installs, `latest` for quickstart demos                                                     |
+| Current platform  | `linux/amd64`                                                                                                  |
+| Runtime port      | `3000`                                                                                                         |
+| Health endpoint   | `GET /api/health`                                                                                              |
+| Required services | PostgreSQL 16 + `pgvector`, Redis 7                                                                            |
+| Optional services | LiveKit voice rooms, cron sidecar, SMTP, OAuth providers, OpenAI / Anthropic keys                              |
+| Immutable pulls   | Inspect the tag digest with `docker buildx imagetools inspect neuraparse/tasknebula:0.3.0` before pinning hard |
+
+The production Compose file keeps core services always-on and gates optional
+automation behind Docker Compose profiles. This keeps `docker compose up -d`
+safe for first-time users while still letting operators enable scheduled
+agents with `--profile cron`.
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+  Browser[Browser / PWA] --> Web[Next.js 15 standalone server]
+  Web --> Postgres[(PostgreSQL 16 + pgvector)]
+  Web --> Redis[(Redis 7)]
+  Web -. optional .-> LiveKit[LiveKit voice rooms]
+  Web -. optional .-> SMTP[SMTP / email]
+  Web -. opt-in .-> LLM[OpenAI / Anthropic]
+  Cron[Cron sidecar] -. profile: cron .-> Web
+```
+
+**2026 self-hosting defaults**
+
+- Published Docker image first; local source builds stay available.
+- Non-root runtime container with Next.js standalone output.
+- Healthchecks for web, Postgres, Redis, and LiveKit.
+- Localhost-bound ports by default in production Compose.
+- Optional cron and collaboration services are explicit, not surprise-on.
+- AI credentials are DB-managed from the admin UI; env vars are fallback only.
 
 ---
 
@@ -137,7 +208,7 @@ The 2026.05 roadmap merge introduced 34 features in a single push.
 **Localization and UX**
 
 - Turkish, German, Spanish, and English locales via `next-intl`.
-- View transitions across route changes; glass surfaces on a zinc-950 base.
+- Route-level skeletons and glass surfaces on a zinc-950 base.
 - Cmd+K omnibar rebuilt with facet chips and an `Ask AI` tab.
 
 **Workflow**
@@ -260,8 +331,7 @@ See the [CHANGELOG](CHANGELOG.md) for the complete list.
 - Keyboard shortcuts everywhere
 - Dark mode + mobile responsive
 - **i18n**: TR · DE · ES · EN
-- **View transitions** for route morphs
-- Route-level skeletons (no blank loads)
+- Route-level skeletons and polished loading states
 - SSE-based real-time sync
 - One-command production deploy
 - **Reverse-proxy clean** out of the box
@@ -356,13 +426,34 @@ lead on M1, open a [discussion](https://github.com/neuraparse/tasknebula/discuss
 
 ## Production
 
-```env
-# .env
-APP_URL=https://tasks.yourcompany.com
-AUTH_SECRET=your-secret-here   # openssl rand -base64 32
+TaskNebula is designed for a small, boring production surface: one web
+container, Postgres, Redis, optional LiveKit, and your reverse proxy.
+
+### Minimum production env
+
+```bash
+cp .env.example .env
+
+AUTH_SECRET="$(openssl rand -base64 32)"
+REDIS_PASSWORD="$(openssl rand -hex 32)"
+LIVEKIT_API_SECRET="$(openssl rand -hex 32)"
+
+sed -i "s|^APP_URL=.*|APP_URL=https://tasks.yourcompany.com|" .env
+sed -i "s|^AUTH_SECRET=.*|AUTH_SECRET=${AUTH_SECRET}|" .env
+sed -i "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=${REDIS_PASSWORD}|" .env
+sed -i "s|^LIVEKIT_API_SECRET=.*|LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}|" .env
 ```
 
-Put any reverse proxy in front for SSL. Caddy is the easiest:
+Then start the stack:
+
+```bash
+TASKNEBULA_IMAGE=neuraparse/tasknebula:0.3.0 docker compose up -d
+```
+
+### Reverse proxy
+
+Put TLS in front of the localhost-bound web port. Caddy is the smallest
+working example:
 
 ```caddy
 tasks.yourcompany.com {
@@ -374,6 +465,18 @@ See [.env.example](.env.example) for the full list — SMTP, OAuth, LiveKit
 tuning, optional platform LLM keys, etc. Everything AI-related can be
 configured through the UI **after** first boot; env vars are only a
 fallback for dev.
+
+### Production checklist
+
+| Area         | Recommendation                                                                  |
+| ------------ | ------------------------------------------------------------------------------- |
+| Image        | Pin `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.3.0`; use `latest` only for demos |
+| Secrets      | Generate `AUTH_SECRET`, `REDIS_PASSWORD`, and `LIVEKIT_API_SECRET` per install  |
+| Network      | Keep Compose ports bound to `127.0.0.1`; expose through your reverse proxy      |
+| Persistence  | Back up `postgres_data`, `redis_data`, and `uploads_data`                       |
+| Updates      | Pull, restart, then verify `/api/health`                                        |
+| Automation   | Enable scheduled agents only with `docker compose --profile cron up -d cron`    |
+| AI providers | Prefer Admin → Agent control over long-lived env keys                           |
 
 ### Voice rooms behind HTTPS
 
@@ -403,20 +506,22 @@ WebSocket upgrade headers + 24h idle timeout LiveKit needs.
 
 ---
 
-## Commands
+## Operations
 
-```bash
-docker compose up -d                  # Start (pulls :latest)
-docker compose down                   # Stop
-docker compose logs -f web            # Tail the web service
-docker compose pull web && \
-  docker compose up -d                # Update to the newest image
-docker compose up -d --build          # Rebuild from local source
-git pull && docker compose up -d --build   # Pull + rebuild
-```
+| Task                | Command                                                        |
+| ------------------- | -------------------------------------------------------------- |
+| Start               | `docker compose up -d`                                         |
+| Stop                | `docker compose down`                                          |
+| Tail web logs       | `docker compose logs -f web`                                   |
+| Update image        | `docker compose pull web && docker compose up -d`              |
+| Rebuild from source | `docker compose up -d --build`                                 |
+| Check containers    | `docker compose ps`                                            |
+| Check app health    | `curl -fsS http://localhost:3000/api/health`                   |
+| Enable cron sidecar | `docker compose --profile cron up -d cron`                     |
+| Inspect image tag   | `docker buildx imagetools inspect neuraparse/tasknebula:0.3.0` |
 
 > `docker-compose.yml` defaults to `image: neuraparse/tasknebula:latest`.
-> Set `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.2.4` in `.env` to pin.
+> Set `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.3.0` in `.env` to pin.
 
 ---
 
