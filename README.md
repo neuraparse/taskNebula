@@ -34,26 +34,26 @@ AI disabled by default, or run fully offline with the native planner.
 
 <br/>
 
-<img src="images/home-page.png" alt="TaskNebula home" width="100%"/>
+<img src="images/readme-home-2026-05-19.png" alt="TaskNebula home" width="100%"/>
 
 <table>
 <tr>
 <td width="50%">
-<img src="images/new-issue.png" alt="Draft issues from a prompt" width="100%"/>
+<img src="images/readme-ai-draft-2026-05-19.png" alt="Draft issues from a prompt" width="100%"/>
 <p align="center"><b>Draft issues from a prompt</b></p>
 </td>
 <td width="50%">
-<img src="images/new-issue-detail.png" alt="Per-issue AI assist" width="100%"/>
+<img src="images/readme-ai-assist-2026-05-19.png" alt="Per-issue AI assist" width="100%"/>
 <p align="center"><b>Per-issue AI assist</b></p>
 </td>
 </tr>
 <tr>
 <td width="50%">
-<img src="images/project-board.png" alt="Kanban board" width="100%"/>
+<img src="images/readme-board-2026-05-19.png" alt="Kanban board" width="100%"/>
 <p align="center"><b>Real-time Kanban board</b></p>
 </td>
 <td width="50%">
-<img src="images/dashboard.png" alt="Dashboard" width="100%"/>
+<img src="images/readme-dashboard-2026-05-19.png" alt="Dashboard" width="100%"/>
 <p align="center"><b>Workspace dashboard</b></p>
 </td>
 </tr>
