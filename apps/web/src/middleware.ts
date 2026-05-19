@@ -1,8 +1,7 @@
 import NextAuth from 'next-auth';
-import createIntlMiddleware from 'next-intl/middleware';
 import { NextResponse, type NextRequest } from 'next/server';
 import { authConfig } from './auth.config';
-import { LOCALE_COOKIE, defaultLocale, isSupportedLocale, locales } from './lib/i18n/config';
+import { LOCALE_COOKIE, defaultLocale, isSupportedLocale } from './lib/i18n/config';
 
 const { auth } = NextAuth(authConfig);
 
@@ -15,18 +14,6 @@ function isUnLocalizedPath(pathname: string): boolean {
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
 }
-
-const intlMiddleware = createIntlMiddleware({
-  locales: [...locales],
-  defaultLocale,
-  // Existing routes like `/dashboard` should keep working; next-intl will
-  // rewrite them to `/{defaultLocale}/dashboard` internally without changing
-  // the visible URL. Localized URLs (`/tr/dashboard`) still work explicitly.
-  localePrefix: 'as-needed',
-  localeCookie: {
-    name: LOCALE_COOKIE,
-  },
-});
 
 function applyHtmlAttrs(response: NextResponse, locale: string): NextResponse {
   // Surface the resolved locale to client/server components via a request
@@ -110,13 +97,20 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
-  // Everything else (dashboard, projects, settings, …) flows through the
-  // next-intl middleware so it can attach the proper locale to the request.
-  const intlResponse = intlMiddleware(request);
+  // Everything else (dashboard, projects, settings, …) lives under
+  // app/[locale]. Preserve unprefixed URLs such as /dashboard by rewriting
+  // them internally to the active locale route. Explicit localized URLs
+  // (/tr/dashboard, /de/projects, …) are already concrete app routes.
   const resolvedLocale = hasLocalePrefix
     ? firstSegment
     : request.cookies.get(LOCALE_COOKIE)?.value || defaultLocale;
-  return applyHtmlAttrs(intlResponse, resolvedLocale);
+  if (hasLocalePrefix) {
+    return applyHtmlAttrs(NextResponse.next(), resolvedLocale);
+  }
+
+  const rewriteUrl = request.nextUrl.clone();
+  rewriteUrl.pathname = `/${resolvedLocale}${pathWithoutLocale}`;
+  return applyHtmlAttrs(NextResponse.rewrite(rewriteUrl), resolvedLocale);
 });
 
 export const config = {
