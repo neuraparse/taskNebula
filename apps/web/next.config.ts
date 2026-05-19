@@ -14,13 +14,6 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['@tasknebula/db', 'postgres', 'drizzle-orm'],
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
-    // React 19 + Next 15: opt into the <ViewTransition> component which
-    // wraps the browser View Transitions API for shared-element morphs
-    // between routes (e.g. issue card → issue detail page). This flag
-    // ships ahead of the published Next types in 15.1.x, so we silence
-    // the TS error explicitly; remove once @types/next exposes it.
-    // @ts-expect-error -- experimental flag not yet in NextConfig types
-    viewTransition: true,
   },
   // 2026-05 roadmap: 34 worktree-merged feature commits in a single push.
   // ESLint findings (mostly cosmetic — escaped chars, anchor-vs-Link, react/no-unescaped-entities,

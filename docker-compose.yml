@@ -36,12 +36,14 @@ services:
     container_name: tasknebula-redis
     restart: unless-stopped
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
     ports:
       - '127.0.0.1:${REDIS_PORT:-6379}:6379'
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: ['CMD-SHELL', 'redis-cli --no-auth-warning -a "$$REDIS_PASSWORD" ping | grep -q PONG']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -167,12 +169,13 @@ services:
   cron:
     image: alpine:3.20
     container_name: tasknebula-cron
+    profiles: ['cron']
     restart: unless-stopped
     depends_on:
       web:
         condition: service_started
     environment:
-      CRON_SECRET: ${CRON_SECRET:?CRON_SECRET must be set to enable the cron sidecar}
+      CRON_SECRET: ${CRON_SECRET:-}
       WEB_BASE_URL: ${CRON_WEB_BASE_URL:-http://web:3000}
     entrypoint: ['/bin/sh', '-c']
     # Daily standup at 08:00 UTC, hourly janitor, daily cycle-rollover at
@@ -180,6 +183,10 @@ services:
     # the standup digest window). busybox crond reads /etc/crontabs/root.
     command:
       - |
+        if [ -z "$$CRON_SECRET" ]; then
+          echo "CRON_SECRET must be set to enable the cron sidecar" >&2
+          exit 1
+        fi
         apk add --no-cache curl > /dev/null && \
         printf '0 8 * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/standup" -o /dev/null\n0 * * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/janitor" -o /dev/null\n0 2 * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/cycle-rollover" -o /dev/null\n' > /etc/crontabs/root && \
         crond -f -l 8

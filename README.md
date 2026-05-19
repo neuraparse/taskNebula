@@ -61,9 +61,9 @@ curl -fsSL https://raw.githubusercontent.com/neuraparse/tasknebula/main/scripts/
 ```
 
 The script pulls `neuraparse/tasknebula:latest`, spins up Postgres, Redis
-and LiveKit via Docker Compose, generates a strong `AUTH_SECRET`, and
-opens **http://localhost:3000**. First-run wizard creates your admin
-account.
+and LiveKit via Docker Compose, generates strong `AUTH_SECRET` and
+`REDIS_PASSWORD` values, and opens **http://localhost:3000**. First-run
+wizard creates your admin account.
 
 <details>
 <summary>Build from source instead</summary>
@@ -72,7 +72,10 @@ account.
 git clone https://github.com/neuraparse/tasknebula.git
 cd tasknebula
 cp .env.example .env
-echo "AUTH_SECRET=$(openssl rand -base64 32)" >> .env
+AUTH_SECRET="$(openssl rand -base64 32)"
+REDIS_PASSWORD="$(openssl rand -hex 32)"
+sed -i "s|^AUTH_SECRET=.*|AUTH_SECRET=${AUTH_SECRET}|" .env
+sed -i "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=${REDIS_PASSWORD}|" .env
 docker compose up -d --build
 ```
 

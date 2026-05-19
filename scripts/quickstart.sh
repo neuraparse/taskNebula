@@ -16,6 +16,25 @@ command -v openssl >/dev/null 2>&1 || die "openssl is required to generate AUTH_
 
 TARGET_DIR="${TASKNEBULA_DIR:-$PWD/tasknebula}"
 
+set_env_var() {
+  local key="$1"
+  local value="$2"
+
+  if grep -q "^${key}=" .env; then
+    if [ "$(uname)" = "Darwin" ]; then
+      sed -i '' "s|^${key}=.*|${key}=${value}|" .env
+    else
+      sed -i "s|^${key}=.*|${key}=${value}|" .env
+    fi
+  else
+    printf "\n%s=%s\n" "$key" "$value" >> .env
+  fi
+}
+
+env_value() {
+  grep "^$1=" .env | tail -n 1 | cut -d= -f2- || true
+}
+
 if [ ! -d "$TARGET_DIR/.git" ]; then
   log "Cloning TaskNebula into $TARGET_DIR ..."
   command -v git >/dev/null 2>&1 || die "git is required for the first install."
@@ -30,16 +49,18 @@ cd "$TARGET_DIR"
 if [ ! -f .env ]; then
   log "Provisioning .env from .env.example ..."
   cp .env.example .env
-  SECRET="$(openssl rand -base64 32)"
-  # portable sed for macOS + Linux
-  if [ "$(uname)" = "Darwin" ]; then
-    sed -i '' "s|^AUTH_SECRET=.*|AUTH_SECRET=${SECRET}|" .env
-  else
-    sed -i "s|^AUTH_SECRET=.*|AUTH_SECRET=${SECRET}|" .env
-  fi
-  ok "Generated AUTH_SECRET (32-byte base64)."
 else
   warn ".env already exists — leaving it as-is."
+fi
+
+if [ -z "$(env_value AUTH_SECRET)" ]; then
+  set_env_var "AUTH_SECRET" "$(openssl rand -base64 32)"
+  ok "Generated AUTH_SECRET (32-byte base64)."
+fi
+
+if [ -z "$(env_value REDIS_PASSWORD)" ]; then
+  set_env_var "REDIS_PASSWORD" "$(openssl rand -hex 32)"
+  ok "Generated REDIS_PASSWORD (32-byte hex)."
 fi
 
 log "Pulling latest published image: neuraparse/tasknebula:latest ..."

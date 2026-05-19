@@ -29,6 +29,7 @@ COPY packages/db/package.json ./packages/db/
 COPY packages/types/package.json ./packages/types/
 COPY packages/config/package.json ./packages/config/
 COPY packages/mcp-server/package.json ./packages/mcp-server/
+COPY packages/mcp-server/bin ./packages/mcp-server/bin
 
 # Install dependencies (lockfile will be updated if needed)
 RUN pnpm install --frozen-lockfile
@@ -152,4 +153,3 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # Start with entrypoint script
 # This script will run migrations, seed database, and start the server
 ENTRYPOINT ["/docker-entrypoint.sh"]
-
