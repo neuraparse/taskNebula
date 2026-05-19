@@ -1,7 +1,13 @@
-# Play with Docker demo stack.
-# Ephemeral sandbox only: secrets here are public demo values and must never be
-# reused for production. Production deployments should use docker-compose.yml
-# with a generated .env file.
+# TaskNebula Docker Desktop stack.
+#
+# This file is meant for quick local evaluation on a Mac, Windows, or Linux
+# machine that already has Docker Desktop installed. It uses only published
+# images, so it can run without cloning this repository.
+#
+# The secrets below are local-only defaults. Do not expose this stack to the
+# internet; use docker-compose.yml plus a generated .env for production.
+
+name: tasknebula
 
 services:
   postgres:
@@ -13,7 +19,7 @@ services:
       - shared_preload_libraries=pg_stat_statements
     environment:
       POSTGRES_USER: tasknebula
-      POSTGRES_PASSWORD: tasknebula-pwd-postgres
+      POSTGRES_PASSWORD: tasknebula-desktop-postgres
       POSTGRES_DB: tasknebula
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -26,17 +32,18 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: redis-server --appendonly yes --requirepass tasknebula-pwd-redis
+    command: redis-server --appendonly yes --requirepass tasknebula-desktop-redis
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ['CMD-SHELL', 'redis-cli --no-auth-warning -a tasknebula-pwd-redis ping | grep -q PONG']
+      test:
+        ['CMD-SHELL', 'redis-cli --no-auth-warning -a tasknebula-desktop-redis ping | grep -q PONG']
       interval: 10s
       timeout: 5s
       retries: 10
 
   web:
-    image: neuraparse/tasknebula:0.3.1
+    image: ${TASKNEBULA_IMAGE:-neuraparse/tasknebula:0.3.1}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -44,16 +51,16 @@ services:
       redis:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://tasknebula:tasknebula-pwd-postgres@postgres:5432/tasknebula
-      AUTH_SECRET: tasknebula-play-with-docker-demo-secret-2026
+      DATABASE_URL: postgresql://tasknebula:tasknebula-desktop-postgres@postgres:5432/tasknebula
+      AUTH_SECRET: tasknebula-desktop-local-only-secret-2026-change-before-production
       AUTH_URL: http://localhost:3000
       NEXT_PUBLIC_APP_URL: http://localhost:3000
-      NEXT_PUBLIC_APP_NAME: TaskNebula Demo
-      REDIS_URL: redis://:tasknebula-pwd-redis@redis:6379
+      NEXT_PUBLIC_APP_NAME: TaskNebula
+      REDIS_URL: redis://:tasknebula-desktop-redis@redis:6379
       SKIP_SEED: 'false'
       NODE_ENV: production
     ports:
-      - '${PORT:-3000}:3000'
+      - '127.0.0.1:${PORT:-3000}:3000'
     volumes:
       - uploads_data:/app/uploads
     healthcheck:

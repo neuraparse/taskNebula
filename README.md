@@ -19,7 +19,7 @@ AI disabled by default, or run fully offline with the native planner.
 
 <p>
   <a href="#quick-start"><img src="https://img.shields.io/badge/Run%20with-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Run with Docker"/></a>
-  <a href="https://labs.play-with-docker.com/?stack=https://raw.githubusercontent.com/neuraparse/tasknebula/main/docker-compose.play.yml"><img src="https://raw.githubusercontent.com/play-with-docker/stacks/master/assets/images/button.png" alt="Try in Play with Docker" height="28"/></a>
+  <a href="#2-docker-desktop-local-install"><img src="https://img.shields.io/badge/Docker%20Desktop-local%20install-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Desktop local install"/></a>
   <a href="https://hub.docker.com/r/neuraparse/tasknebula"><img src="https://img.shields.io/badge/Open-Docker%20Hub-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Open Docker Hub"/></a>
   <a href="https://raw.githubusercontent.com/neuraparse/tasknebula/main/docker-compose.yml"><img src="https://img.shields.io/badge/View-compose.yml-111827?style=for-the-badge&logo=yaml&logoColor=white" alt="View compose file"/></a>
 </p>
@@ -67,12 +67,19 @@ AI disabled by default, or run fully offline with the native planner.
 
 Pick the path that matches where you are deploying.
 
-| Path                   | Best for                        | Command / link                                                                                                                                                                                                                            |
-| ---------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **One-command Docker** | A fresh Linux VM or homelab box | `curl -fsSL https://raw.githubusercontent.com/neuraparse/tasknebula/main/scripts/quickstart.sh \| bash`                                                                                                                                   |
-| **Play with Docker**   | Browser-only demo, no install   | [![Try in PWD](https://raw.githubusercontent.com/play-with-docker/stacks/master/assets/images/button.png)](https://labs.play-with-docker.com/?stack=https://raw.githubusercontent.com/neuraparse/tasknebula/main/docker-compose.play.yml) |
-| **Pinned production**  | Repeatable self-hosted releases | `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.3.1 docker compose up -d`                                                                                                                                                                       |
-| **Source build**       | Local development or patching   | `docker compose up -d --build`                                                                                                                                                                                                            |
+| Path                   | Best for                                            | Command / link                                                                                                                            |
+| ---------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **One-command Docker** | A fresh Linux VM or homelab box                     | `curl -fsSL https://raw.githubusercontent.com/neuraparse/tasknebula/main/scripts/quickstart.sh \| bash`                                   |
+| **Docker Desktop**     | Local Mac, Windows, or Linux PC with Docker Desktop | `curl -fsSLo compose.yml https://raw.githubusercontent.com/neuraparse/tasknebula/main/docker-compose.desktop.yml && docker compose up -d` |
+| **Pinned production**  | Repeatable self-hosted releases                     | `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.3.1 docker compose up -d`                                                                       |
+| **Source build**       | Local development or patching                       | `docker compose up -d --build`                                                                                                            |
+
+> 2026 note: Play with Docker is intentionally removed. Docker's
+> [community announcement](https://forums.docker.com/t/play-with-docker-is-deprecated-and-will-be-unavailable-starting-march-1-2026-learn-about-alternatives/151177)
+> says hosted Play with Docker was discontinued on March 1, 2026. Docker's
+> current [Compose install docs](https://docs.docker.com/compose/install/)
+> recommend Docker Desktop because it includes Docker Engine, Docker CLI, and
+> Docker Compose.
 
 ### 1. One-command install
 
@@ -86,13 +93,32 @@ curl -fsSL https://raw.githubusercontent.com/neuraparse/tasknebula/main/scripts/
 
 Open **http://localhost:3000** and finish the first-run admin wizard.
 
-### 2. Browser sandbox
+### 2. Docker Desktop local install
 
-The Play with Docker button imports
-[`docker-compose.play.yml`](docker-compose.play.yml), pulls
-`neuraparse/tasknebula:0.3.1`, and exposes port `3000` inside the sandbox.
-Use it for demos and reviews only; it contains public demo secrets and
-ephemeral volumes by design.
+Docker Desktop is the shortest path for a local PC demo in 2026. It ships
+Docker Engine, Docker CLI, and Docker Compose together, so you only need to
+download the standalone desktop Compose file and start it.
+
+macOS / Linux / WSL:
+
+```bash
+mkdir -p tasknebula && cd tasknebula
+curl -fsSLo compose.yml https://raw.githubusercontent.com/neuraparse/tasknebula/main/docker-compose.desktop.yml
+docker compose up -d
+```
+
+Windows PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Force tasknebula
+Set-Location tasknebula
+Invoke-WebRequest https://raw.githubusercontent.com/neuraparse/tasknebula/main/docker-compose.desktop.yml -OutFile compose.yml
+docker compose up -d
+```
+
+Open **http://localhost:3000** and finish the first-run admin wizard. This
+desktop file uses local-only demo secrets and binds the web app to
+`127.0.0.1:3000`; use the server install below for anything internet-facing.
 
 ### 3. Manual server install
 
