@@ -31,14 +31,11 @@ const nextAuth = NextAuth({
           where: eq(users.email, credentials.email as string),
         });
 
-        if (!user || !user.password) {
+        if (!user || !user.password || user.status !== 'active') {
           return null;
         }
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        );
+        const isPasswordValid = await bcrypt.compare(credentials.password as string, user.password);
 
         if (!isPasswordValid) {
           return null;
@@ -68,7 +65,7 @@ const nextAuth = NextAuth({
         const user = await db.query.users.findFirst({
           where: eq(users.id, payload.userId),
         });
-        if (!user) return null;
+        if (!user || user.status !== 'active') return null;
         return {
           id: user.id,
           email: user.email,
@@ -101,4 +98,3 @@ export const handlers = nextAuth.handlers;
 export const signIn: typeof nextAuth.signIn = nextAuth.signIn;
 export const signOut = nextAuth.signOut;
 export const auth = nextAuth.auth;
-

@@ -43,7 +43,7 @@ services:
       retries: 10
 
   web:
-    image: ${TASKNEBULA_IMAGE:-neuraparse/tasknebula:0.3.1}
+    image: ${TASKNEBULA_IMAGE:-neuraparse/tasknebula:0.3.2}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -57,7 +57,8 @@ services:
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       NEXT_PUBLIC_APP_NAME: TaskNebula
       REDIS_URL: redis://:tasknebula-desktop-redis@redis:6379
-      SKIP_SEED: 'false'
+      SKIP_SEED: 'true'
+      SEED_DEMO_DATA: 'false'
       NODE_ENV: production
     ports:
       - '127.0.0.1:${PORT:-3000}:3000'

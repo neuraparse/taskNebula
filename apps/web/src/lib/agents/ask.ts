@@ -68,7 +68,10 @@ export interface AskUsage {
 }
 
 export class AskError extends Error {
-  constructor(public code: string, message: string) {
+  constructor(
+    public code: string,
+    message: string
+  ) {
     super(message);
     this.name = 'AskError';
   }
@@ -97,9 +100,7 @@ const SNIPPET_CHARS = 480;
 function clipSnippet(value: string | null | undefined): string {
   if (!value) return '';
   const stripped = value.replace(/\s+/g, ' ').trim();
-  return stripped.length <= SNIPPET_CHARS
-    ? stripped
-    : `${stripped.slice(0, SNIPPET_CHARS - 1)}…`;
+  return stripped.length <= SNIPPET_CHARS ? stripped : `${stripped.slice(0, SNIPPET_CHARS - 1)}…`;
 }
 
 /**
@@ -149,17 +150,24 @@ async function retrieveIssuesBm25(
     limit ${TOP_K_RETRIEVE}
   `);
 
-  return (rows as unknown as Array<{ id: string; key: string; title: string; description: string | null; score: number }>)
-    .map((row) => ({
-      type: 'issue' as const,
-      id: row.id,
-      key: row.key,
-      title: row.title || row.key,
-      snippet: clipSnippet(`${row.title}. ${row.description ?? ''}`),
-      url: `/issues/${row.key}`,
-      score: Number(row.score) || 0,
-      signal: 'bm25' as const,
-    }));
+  return (
+    rows as unknown as Array<{
+      id: string;
+      key: string;
+      title: string;
+      description: string | null;
+      score: number;
+    }>
+  ).map((row) => ({
+    type: 'issue' as const,
+    id: row.id,
+    key: row.key,
+    title: row.title || row.key,
+    snippet: clipSnippet(`${row.title}. ${row.description ?? ''}`),
+    url: `/issues/${row.key}`,
+    score: Number(row.score) || 0,
+    signal: 'bm25' as const,
+  }));
 }
 
 /**
@@ -196,17 +204,24 @@ async function retrieveDocsBm25(
     limit ${TOP_K_RETRIEVE}
   `);
 
-  return (rows as unknown as Array<{ id: string; title: string; content_text: string; excerpt: string | null; score: number }>)
-    .map((row) => ({
-      type: 'doc' as const,
-      id: row.id,
-      key: row.id,
-      title: row.title,
-      snippet: clipSnippet(row.excerpt || row.content_text),
-      url: `/docs/${row.id}`,
-      score: Number(row.score) || 0,
-      signal: 'bm25' as const,
-    }));
+  return (
+    rows as unknown as Array<{
+      id: string;
+      title: string;
+      content_text: string;
+      excerpt: string | null;
+      score: number;
+    }>
+  ).map((row) => ({
+    type: 'doc' as const,
+    id: row.id,
+    key: row.id,
+    title: row.title,
+    snippet: clipSnippet(row.excerpt || row.content_text),
+    url: `/docs/${row.id}`,
+    score: Number(row.score) || 0,
+    signal: 'bm25' as const,
+  }));
 }
 
 /**
@@ -258,22 +273,30 @@ async function retrieveVectorContent(
       limit ${TOP_K_RETRIEVE}
     `);
 
-    return (rows as unknown as Array<{ content_type: string; content_id: string; issue_id: string | null; project_id: string | null; content_snippet: string | null; distance: number }>)
-      .map((row) => {
-        const isIssue = row.content_type === 'issue' || row.content_type === 'comment';
-        const distance = Number(row.distance) || 1;
-        return {
-          type: isIssue ? ('issue' as const) : ('doc' as const),
-          id: row.content_id,
-          key: row.content_id,
-          title: clipSnippet(row.content_snippet || '').slice(0, 80) || 'Untitled',
-          snippet: clipSnippet(row.content_snippet),
-          url: isIssue ? `/issues/${row.content_id}` : `/docs/${row.content_id}`,
-          // Cosine distance → similarity: 1 - d, capped at [0,1]
-          score: Math.max(0, 1 - distance),
-          signal: 'vector' as const,
-        };
-      });
+    return (
+      rows as unknown as Array<{
+        content_type: string;
+        content_id: string;
+        issue_id: string | null;
+        project_id: string | null;
+        content_snippet: string | null;
+        distance: number;
+      }>
+    ).map((row) => {
+      const isIssue = row.content_type === 'issue' || row.content_type === 'comment';
+      const distance = Number(row.distance) || 1;
+      return {
+        type: isIssue ? ('issue' as const) : ('doc' as const),
+        id: row.content_id,
+        key: row.content_id,
+        title: clipSnippet(row.content_snippet || '').slice(0, 80) || 'Untitled',
+        snippet: clipSnippet(row.content_snippet),
+        url: isIssue ? `/issues/${row.content_id}` : `/docs/${row.content_id}`,
+        // Cosine distance → similarity: 1 - d, capped at [0,1]
+        score: Math.max(0, 1 - distance),
+        signal: 'vector' as const,
+      };
+    });
   } catch {
     return [];
   }
@@ -285,9 +308,7 @@ async function retrieveVectorContent(
  * ranks well by both BM25 and vector wins over one that ranks well by
  * just one signal. Dupes (same type+id) are collapsed by max.
  */
-function mergeHybrid(
-  lists: RetrievedSnippet[][]
-): RetrievedSnippet[] {
+function mergeHybrid(lists: RetrievedSnippet[][]): RetrievedSnippet[] {
   const byKey = new Map<string, RetrievedSnippet>();
   for (const list of lists) {
     if (list.length === 0) continue;
@@ -303,7 +324,9 @@ function mergeHybrid(
       }
     }
   }
-  return Array.from(byKey.values()).sort((a, b) => b.score - a.score).slice(0, TOP_K_RETRIEVE);
+  return Array.from(byKey.values())
+    .sort((a, b) => b.score - a.score)
+    .slice(0, TOP_K_RETRIEVE);
 }
 
 // --- Cohere rerank ---------------------------------------------------------
@@ -363,9 +386,10 @@ function buildUserMessage(query: string, snippets: RetrievedSnippet[]): string {
   lines.push('');
   lines.push('Context:');
   for (const snippet of snippets) {
-    const marker = snippet.type === 'issue'
-      ? `[TN-${snippet.key ?? snippet.id}]`
-      : `[DOC-${snippet.key ?? snippet.id}]`;
+    const marker =
+      snippet.type === 'issue'
+        ? `[TN-${snippet.key ?? snippet.id}]`
+        : `[DOC-${snippet.key ?? snippet.id}]`;
     lines.push(`${marker} ${snippet.title}`);
     if (snippet.snippet) lines.push(snippet.snippet);
     lines.push('');
@@ -386,7 +410,12 @@ async function* streamClaude(
   model: string,
   apiKey: string,
   fetchImpl: typeof fetch
-): AsyncGenerator<{ kind: 'token' | 'usage'; text?: string; inputTokens?: number; outputTokens?: number }> {
+): AsyncGenerator<{
+  kind: 'token' | 'usage';
+  text?: string;
+  inputTokens?: number;
+  outputTokens?: number;
+}> {
   const response = await fetchImpl('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -411,7 +440,9 @@ async function* streamClaude(
       // ignore
     }
     throw new AskError(
-      response.status === 401 || response.status === 403 ? 'provider_auth_failed' : 'provider_error',
+      response.status === 401 || response.status === 403
+        ? 'provider_auth_failed'
+        : 'provider_error',
       `Anthropic request failed (${response.status}): ${detail.slice(0, 240)}`
     );
   }
@@ -443,13 +474,17 @@ async function* streamClaude(
             yield { kind: 'token', text: delta.text };
           }
         } else if (eventType === 'message_start') {
-          const usage = (parsed.message as { usage?: { input_tokens?: number; output_tokens?: number } } | undefined)?.usage;
+          const usage = (
+            parsed.message as
+              | { usage?: { input_tokens?: number; output_tokens?: number } }
+              | undefined
+          )?.usage;
           if (usage) {
             inputTokens = usage.input_tokens ?? 0;
             outputTokens = usage.output_tokens ?? 0;
           }
         } else if (eventType === 'message_delta') {
-          const usage = (parsed.usage as { output_tokens?: number } | undefined);
+          const usage = parsed.usage as { output_tokens?: number } | undefined;
           if (usage?.output_tokens != null) {
             outputTokens = usage.output_tokens;
           }
@@ -488,7 +523,9 @@ export async function runAsk(options: AskOptions): Promise<AskBundle> {
   // --- retrieve (parallel) -------------------------------------------------
   const tasks: Promise<RetrievedSnippet[]>[] = [];
   if (scope === 'all' || scope === 'issues') {
-    tasks.push(retrieveIssuesBm25(options.organizationId, options.projectId ?? null, options.query));
+    tasks.push(
+      retrieveIssuesBm25(options.organizationId, options.projectId ?? null, options.query)
+    );
   }
   if (scope === 'all' || scope === 'docs') {
     tasks.push(retrieveDocsBm25(options.organizationId, options.projectId ?? null, options.query));
@@ -496,19 +533,25 @@ export async function runAsk(options: AskOptions): Promise<AskBundle> {
   // Vector path is enabled only when an embedder is wired in. Today we
   // don't synchronously embed in-request (task #1 owns that), so this
   // returns [] until an embed function is supplied via env injection.
-  tasks.push(retrieveVectorContent(options.organizationId, options.projectId ?? null, options.query));
+  tasks.push(
+    retrieveVectorContent(options.organizationId, options.projectId ?? null, options.query)
+  );
 
   const settled = await Promise.allSettled(tasks);
   const lists = settled
-    .filter((result): result is PromiseFulfilledResult<RetrievedSnippet[]> => result.status === 'fulfilled')
+    .filter(
+      (result): result is PromiseFulfilledResult<RetrievedSnippet[]> =>
+        result.status === 'fulfilled'
+    )
     .map((result) => result.value);
   const merged = mergeHybrid(lists);
 
   // --- rerank --------------------------------------------------------------
   const cohereKey = process.env.COHERE_API_KEY;
-  const reranked = cohereKey && merged.length > 0
-    ? await cohereRerank(options.query, merged, cohereKey, fetchImpl)
-    : merged.slice(0, TOP_K_CONTEXT);
+  const reranked =
+    cohereKey && merged.length > 0
+      ? await cohereRerank(options.query, merged, cohereKey, fetchImpl)
+      : merged.slice(0, TOP_K_CONTEXT);
   const contextSnippets = reranked.slice(0, TOP_K_CONTEXT);
 
   const sources: CitationSource[] = contextSnippets.map((snippet) => ({
@@ -525,7 +568,7 @@ export async function runAsk(options: AskOptions): Promise<AskBundle> {
 
   // --- retrieval-only mode (tests / dry run) -------------------------------
   if (options.retrievalOnly) {
-    async function* retrievalEvents(): AsyncGenerator<AskEvent> {
+    const retrievalEvents = async function* (): AsyncGenerator<AskEvent> {
       yield { type: 'sources', sources };
       yield {
         type: 'done',
@@ -539,7 +582,7 @@ export async function runAsk(options: AskOptions): Promise<AskBundle> {
           promptHash,
         },
       };
-    }
+    };
     return { events: retrievalEvents(), sources };
   }
 
@@ -558,7 +601,13 @@ export async function runAsk(options: AskOptions): Promise<AskBundle> {
     let inputTokens = 0;
     let outputTokens = 0;
     try {
-      for await (const event of streamClaude(SYSTEM_PROMPT, userMessage, model, apiKey, fetchImpl)) {
+      for await (const event of streamClaude(
+        SYSTEM_PROMPT,
+        userMessage,
+        model,
+        apiKey,
+        fetchImpl
+      )) {
         if (event.kind === 'token' && event.text) {
           yield { type: 'token', text: event.text };
         } else if (event.kind === 'usage') {

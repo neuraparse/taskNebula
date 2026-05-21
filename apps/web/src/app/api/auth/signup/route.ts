@@ -2,21 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db, users, organizationMembers } from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
+import { createHash, timingSafeEqual } from 'crypto';
 
-const GENERIC_SIGNUP_MESSAGE =
-  'If that email is available, an account will be created';
+const GENERIC_SIGNUP_MESSAGE = 'If that email is available, an account will be created';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, password } = body;
+    const { name, email, password, inviteToken } = body;
 
     // Validate input
     if (!name || !email || !password) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     if (password.length < 8) {
@@ -34,6 +31,16 @@ export async function POST(request: NextRequest) {
     if (existingUser) {
       // Allow invited users to complete signup by setting their password
       if (existingUser.status === 'invited' && !existingUser.password) {
+        if (
+          !isValidInviteToken(
+            inviteToken,
+            existingUser.inviteTokenHash,
+            existingUser.inviteTokenExpiresAt
+          )
+        ) {
+          return NextResponse.json({ error: 'Invalid or expired invitation' }, { status: 400 });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
         const [updatedUser] = await db
           .update(users)
@@ -41,6 +48,8 @@ export async function POST(request: NextRequest) {
             name,
             password: hashedPassword,
             status: 'active',
+            inviteTokenHash: null,
+            inviteTokenExpiresAt: null,
           })
           .where(eq(users.id, existingUser.id))
           .returning();
@@ -76,10 +85,7 @@ export async function POST(request: NextRequest) {
       // Don't leak account existence to callers. Introduce a small random
       // delay so timing doesn't reveal the duplicate branch either.
       await new Promise((r) => setTimeout(r, 50 + Math.random() * 100));
-      return NextResponse.json(
-        { message: GENERIC_SIGNUP_MESSAGE },
-        { status: 200 }
-      );
+      return NextResponse.json({ message: GENERIC_SIGNUP_MESSAGE }, { status: 200 });
     }
 
     // Hash password
@@ -104,9 +110,7 @@ export async function POST(request: NextRequest) {
     // cheap when SMTP is unconfigured; errors are logged, not surfaced to
     // the caller so signup always succeeds.
     import('@/lib/auth/email-verification')
-      .then(({ issueEmailVerificationToken }) =>
-        issueEmailVerificationToken(newUser.id)
-      )
+      .then(({ issueEmailVerificationToken }) => issueEmailVerificationToken(newUser.id))
       .catch((err) => {
         console.error('[signup] verification email dispatch failed:', err);
       });
@@ -124,9 +128,30 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error('Signup error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
+}
+
+function hashInviteToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
+
+function isValidInviteToken(
+  token: unknown,
+  storedHash: string | null | undefined,
+  expiresAt: Date | string | null | undefined
+): boolean {
+  if (typeof token !== 'string' || !token || !storedHash || !expiresAt) {
+    return false;
+  }
+  if (new Date(expiresAt).getTime() <= Date.now()) {
+    return false;
+  }
+
+  const actual = Buffer.from(hashInviteToken(token), 'hex');
+  const expected = Buffer.from(storedHash, 'hex');
+  if (actual.length !== expected.length) {
+    return false;
+  }
+  return timingSafeEqual(actual, expected);
 }

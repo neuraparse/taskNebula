@@ -3,6 +3,9 @@ import { auth } from '@/auth';
 import { db, customFields } from '@tasknebula/db';
 import { eq, and, desc } from 'drizzle-orm';
 import { z } from 'zod';
+import { canManageProject, isActiveOrganizationMember } from '@/lib/auth/access-control';
+import { hasPermission } from '@/lib/auth/permissions';
+import { projects } from '@tasknebula/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +34,24 @@ export async function GET(request: NextRequest) {
 
     if (!organizationId) {
       return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
+    }
+
+    if (!(await isActiveOrganizationMember(session.user.id, organizationId))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    if (projectId) {
+      const [project] = await db
+        .select()
+        .from(projects)
+        .where(and(eq(projects.id, projectId), eq(projects.organizationId, organizationId)))
+        .limit(1);
+      if (!project) {
+        return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+      }
+      if (!(await canManageProject(session.user.id, project))) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
     }
 
     // Build query
@@ -67,6 +88,27 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = createCustomFieldSchema.parse(body);
 
+    if (validatedData.projectId) {
+      const [project] = await db
+        .select()
+        .from(projects)
+        .where(
+          and(
+            eq(projects.id, validatedData.projectId),
+            eq(projects.organizationId, validatedData.organizationId)
+          )
+        )
+        .limit(1);
+      if (!project) {
+        return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+      }
+      if (!(await canManageProject(session.user.id, project))) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } else if (!(await hasPermission(validatedData.organizationId, 'org:settings'))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const [newField] = await db
       .insert(customFields)
       .values({
@@ -79,10 +121,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(newField, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid request data', details: error.errors }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid request data', details: error.errors },
+        { status: 400 }
+      );
     }
     console.error('Error creating custom field:', error);
     return NextResponse.json({ error: 'Failed to create custom field' }, { status: 500 });
   }
 }
-

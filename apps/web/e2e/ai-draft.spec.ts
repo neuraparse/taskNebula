@@ -81,9 +81,12 @@ test.describe('ai draft', () => {
     await generateBtn.first().click();
 
     // The stubbed draft titles should appear in the dialog.
-    await expect(dialog.getByText(/stubbed ai draft: add login analytics/i)).toBeVisible({
-      timeout: 10_000,
-    });
-    await expect(dialog.getByText(/stubbed ai draft: fix sign-in retry/i)).toBeVisible();
+    await expect(dialog.getByRole('textbox', { name: /draft 1 title/i })).toHaveValue(
+      /stubbed ai draft: add login analytics/i,
+      { timeout: 10_000 }
+    );
+    await expect(dialog.getByRole('textbox', { name: /draft 2 title/i })).toHaveValue(
+      /stubbed ai draft: fix sign-in retry/i
+    );
   });
 });

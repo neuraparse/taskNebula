@@ -139,12 +139,14 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
       kicker: 'ASSIGNMENT',
       heading: '{{issueTitle}}',
       body:
-        paragraph(`{{actorName}} assigned <strong style="color:${EMAIL_COLORS.heading};">{{issueKey}}</strong> to you.`) +
+        paragraph(
+          `{{actorName}} assigned <strong style="color:${EMAIL_COLORS.heading};">{{issueKey}}</strong> to you.`
+        ) +
         actorRow({ name: '{{actorName}}', action: 'Assigned this issue to you' }) +
         metaTable(
           metaRow('Issue', '<strong style="color:#111827;">{{issueKey}}</strong>') +
             metaRow('Project', '{{projectName}}') +
-            metaRow('Priority', chip('{{priority}}', { tone: 'warning' })),
+            metaRow('Priority', chip('{{priority}}', { tone: 'warning' }))
         ),
       ctaLabel: 'View issue',
       ctaUrl: '{{issueUrl}}',
@@ -164,11 +166,13 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
       kicker: 'MENTION',
       heading: '{{actorName}} mentioned you',
       body:
-        paragraph(`You were mentioned in <strong style="color:${EMAIL_COLORS.heading};">{{issueKey}}</strong> &mdash; {{issueTitle}}.`) +
+        paragraph(
+          `You were mentioned in <strong style="color:${EMAIL_COLORS.heading};">{{issueKey}}</strong> &mdash; {{issueTitle}}.`
+        ) +
         actorRow({ name: '{{actorName}}', action: 'Mentioned you in a thread' }) +
         metaTable(
           metaRow('Issue', '<strong style="color:#111827;">{{issueKey}}</strong>') +
-            metaRow('Project', '{{projectName}}'),
+            metaRow('Project', '{{projectName}}')
         ),
       ctaLabel: 'Open thread',
       ctaUrl: '{{issueUrl}}',
@@ -187,12 +191,14 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
       kicker: 'COMMENT',
       heading: '{{issueTitle}}',
       body:
-        paragraph(`{{actorName}} commented on <strong style="color:${EMAIL_COLORS.heading};">{{issueKey}}</strong>.`) +
+        paragraph(
+          `{{actorName}} commented on <strong style="color:${EMAIL_COLORS.heading};">{{issueKey}}</strong>.`
+        ) +
         actorRow({ name: '{{actorName}}', action: 'Added a new comment' }) +
         quoteBlock('{{commentBody}}') +
         metaTable(
           metaRow('Issue', '<strong style="color:#111827;">{{issueKey}}</strong>') +
-            metaRow('Project', '{{projectName}}'),
+            metaRow('Project', '{{projectName}}')
         ),
       ctaLabel: 'Reply in thread',
       ctaUrl: '{{issueUrl}}',
@@ -215,13 +221,13 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
         paragraph(
           `{{actorName}} moved <strong style="color:${EMAIL_COLORS.heading};">{{issueKey}}</strong> to ` +
             chip('{{newStatus}}', { tone: 'info' }) +
-            '.',
+            '.'
         ) +
         actorRow({ name: '{{actorName}}', action: 'Updated the issue status' }) +
         metaTable(
           metaRow('Issue', '<strong style="color:#111827;">{{issueKey}}</strong>') +
             metaRow('Project', '{{projectName}}') +
-            metaRow('New status', chip('{{newStatus}}', { tone: 'success' })),
+            metaRow('New status', chip('{{newStatus}}', { tone: 'success' }))
         ),
       ctaLabel: 'View issue',
       ctaUrl: '{{issueUrl}}',
@@ -241,12 +247,14 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
       kicker: 'NEW ISSUE',
       heading: '{{issueTitle}}',
       body:
-        paragraph(`{{actorName}} created <strong style="color:${EMAIL_COLORS.heading};">{{issueKey}}</strong> and assigned it to you.`) +
+        paragraph(
+          `{{actorName}} created <strong style="color:${EMAIL_COLORS.heading};">{{issueKey}}</strong> and assigned it to you.`
+        ) +
         actorRow({ name: '{{actorName}}', action: 'Created this issue' }) +
         metaTable(
           metaRow('Issue', '<strong style="color:#111827;">{{issueKey}}</strong>') +
             metaRow('Project', '{{projectName}}') +
-            metaRow('Priority', chip('{{priority}}', { tone: 'warning' })),
+            metaRow('Priority', chip('{{priority}}', { tone: 'warning' }))
         ),
       ctaLabel: 'View issue',
       ctaUrl: '{{issueUrl}}',
@@ -266,7 +274,9 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
       kicker: 'SPRINT STARTED',
       heading: '{{sprintName}}',
       body:
-        paragraph(`{{actorName}} started a new sprint in <strong style="color:${EMAIL_COLORS.heading};">{{projectName}}</strong>.`) +
+        paragraph(
+          `{{actorName}} started a new sprint in <strong style="color:${EMAIL_COLORS.heading};">{{projectName}}</strong>.`
+        ) +
         paragraph('{{sprintGoal}}', { muted: true, spacingTop: 12 }) +
         statGrid([
           { value: '{{sprintStartDate}}', label: 'Starts', tone: 'brand' },
@@ -277,7 +287,7 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
           metaRow('Sprint', '<strong style="color:#111827;">{{sprintName}}</strong>') +
             metaRow('Project', '{{projectName}}') +
             metaRow('Dates', '{{sprintStartDate}} &rarr; {{sprintEndDate}}') +
-            metaRow('Issues', '{{issueCount}}'),
+            metaRow('Issues', '{{issueCount}}')
         ),
       ctaLabel: 'Open sprint',
       ctaUrl: '{{issueUrl}}',
@@ -299,13 +309,15 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
       kicker: 'NEW PROJECT',
       heading: '{{projectName}}',
       body:
-        paragraph(`{{actorName}} created a new project in <strong style="color:${EMAIL_COLORS.heading};">{{organizationName}}</strong>.`) +
+        paragraph(
+          `{{actorName}} created a new project in <strong style="color:${EMAIL_COLORS.heading};">{{organizationName}}</strong>.`
+        ) +
         infoCard({ tone: 'info', title: 'ABOUT THIS PROJECT', body: '{{projectDescription}}' }) +
         metaTable(
           metaRow('Project', '<strong style="color:#111827;">{{projectName}}</strong>') +
             metaRow('Key', '{{projectKey}}') +
             metaRow('Created by', '{{actorName}}') +
-            metaRow('Organization', '{{organizationName}}'),
+            metaRow('Organization', '{{organizationName}}')
         ),
       ctaLabel: 'Open project',
       ctaUrl: '{{projectUrl}}',
@@ -326,7 +338,9 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
       kicker: 'PROJECT ARCHIVED',
       heading: '{{projectName}}',
       body:
-        paragraph(`{{actorName}} archived <strong style="color:${EMAIL_COLORS.heading};">{{projectName}}</strong> on {{archivedAt}}.`) +
+        paragraph(
+          `{{actorName}} archived <strong style="color:${EMAIL_COLORS.heading};">{{projectName}}</strong> on {{archivedAt}}.`
+        ) +
         infoCard({
           tone: 'warning',
           title: 'READ-ONLY NOTE',
@@ -336,7 +350,7 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
           metaRow('Project', '<strong style="color:#111827;">{{projectName}}</strong>') +
             metaRow('Archived by', '{{actorName}}') +
             metaRow('Archived on', '{{archivedAt}}') +
-            metaRow('Organization', '{{organizationName}}'),
+            metaRow('Organization', '{{organizationName}}')
         ),
       ctaLabel: 'View project',
       ctaUrl: '{{projectUrl}}',
@@ -355,7 +369,9 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
       kicker: 'SPRINT COMPLETED',
       heading: '{{sprintName}}',
       body:
-        paragraph(`{{actorName}} closed the sprint in <strong style="color:${EMAIL_COLORS.heading};">{{projectName}}</strong>. Here's the recap.`) +
+        paragraph(
+          `{{actorName}} closed the sprint in <strong style="color:${EMAIL_COLORS.heading};">{{projectName}}</strong>. Here's the recap.`
+        ) +
         statGrid([
           { value: '{{issueCount}}', label: 'Total' },
           { value: '{{completedCount}}', label: 'Completed', tone: 'success' },
@@ -367,7 +383,7 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
             metaRow('Dates', '{{sprintStartDate}} &rarr; {{sprintEndDate}}') +
             metaRow('Total issues', '{{issueCount}}') +
             metaRow('Completed', '{{completedCount}}') +
-            metaRow('Carried over', '{{carriedOverCount}}'),
+            metaRow('Carried over', '{{carriedOverCount}}')
         ),
       ctaLabel: 'View retrospective',
       ctaUrl: '{{issueUrl}}',
@@ -390,7 +406,9 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
       kicker: 'DAILY DIGEST',
       heading: "Here's what happened today",
       body:
-        paragraph(`A quick recap of activity across <strong style="color:${EMAIL_COLORS.heading};">{{organizationName}}</strong> for {{period}}.`) +
+        paragraph(
+          `A quick recap of activity across <strong style="color:${EMAIL_COLORS.heading};">{{organizationName}}</strong> for {{period}}.`
+        ) +
         sectionHeading("Today's activity") +
         statGrid([
           { value: '{{issueCount}}', label: 'Issues', tone: 'brand' },
@@ -475,7 +493,6 @@ async function shouldSendEmail(
       );
 
     // Quiet-by-default policy: critical events (assigned, mentioned) are on;
-    // sprint lifecycle milestones default on (low-frequency, high-signal);
     // everything else is off until the user opts in.
     const DEFAULT_EVENT_POLICY: Record<string, boolean> = {
       issue_assigned: true,
@@ -483,8 +500,8 @@ async function shouldSendEmail(
       issue_commented: false,
       issue_status_changed: false,
       issue_created: false,
-      sprint_started: true,
-      sprint_completed: true,
+      sprint_started: false,
+      sprint_completed: false,
       project_created: false,
       project_archived: false,
       daily_digest: false,
@@ -534,7 +551,7 @@ async function shouldSendEmail(
 
 /**
  * Get email template by type
- * 
+ *
  * Tries to find organization-specific template first,
  * falls back to default template if not found.
  */
@@ -675,7 +692,12 @@ export async function sendIssueNotificationEmail(params: {
   to: string;
   userId: string;
   organizationId: string;
-  eventType: 'issue_assigned' | 'issue_mentioned' | 'issue_commented' | 'issue_status_changed' | 'issue_created';
+  eventType:
+    | 'issue_assigned'
+    | 'issue_mentioned'
+    | 'issue_commented'
+    | 'issue_status_changed'
+    | 'issue_created';
   issueKey: string;
   issueTitle: string;
   issueUrl: string;
@@ -751,8 +773,7 @@ export async function sendProjectNotificationEmail(params: {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
   const projectUrl = `${appUrl}/projects/${params.project.key || params.project.id}`;
   const unsubscribeUrl = `${appUrl}/settings/notifications`;
-  const archivedAt =
-    params.archivedAt || new Date().toISOString().slice(0, 10);
+  const archivedAt = params.archivedAt || new Date().toISOString().slice(0, 10);
 
   const results = await Promise.all(
     params.recipients.map(async (recipient): Promise<SendEmailResult> => {
@@ -766,8 +787,7 @@ export async function sendProjectNotificationEmail(params: {
             userName: recipient.name || recipient.email.split('@')[0] || 'there',
             projectName: params.project.name,
             projectKey: params.project.key || '',
-            projectDescription:
-              params.project.description || 'No description provided yet.',
+            projectDescription: params.project.description || 'No description provided yet.',
             projectUrl,
             organizationName: params.organization.name,
             actorName: params.actorName,
@@ -780,7 +800,7 @@ export async function sendProjectNotificationEmail(params: {
         console.error('sendProjectNotificationEmail recipient failed:', error);
         return { success: false, error: String(error) };
       }
-    }),
+    })
   );
 
   return results;
@@ -819,8 +839,7 @@ export async function sendSprintNotificationEmail(params: {
     params.eventType === 'sprint.started' ? 'sprint_started' : 'sprint_completed';
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
   const sprintUrl =
-    params.sprintUrl ||
-    `${appUrl}/projects/${params.project.key}/sprints/${params.sprint.id}`;
+    params.sprintUrl || `${appUrl}/projects/${params.project.key}/sprints/${params.sprint.id}`;
 
   const fmtDate = (d: Date | string): string => {
     const date = typeof d === 'string' ? new Date(d) : d;
@@ -849,8 +868,7 @@ export async function sendSprintNotificationEmail(params: {
   for (const recipient of params.recipients) {
     const variables: Record<string, string> = {
       ...baseVariables,
-      recipientName:
-        recipient.name || recipient.email.split('@')[0] || recipient.email,
+      recipientName: recipient.name || recipient.email.split('@')[0] || recipient.email,
     };
     try {
       const result = await sendEmail({
@@ -868,4 +886,3 @@ export async function sendSprintNotificationEmail(params: {
   }
   return results;
 }
-

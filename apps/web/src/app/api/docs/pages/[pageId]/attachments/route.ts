@@ -3,7 +3,7 @@ import { auth } from '@/auth';
 import { createId as cuid } from '@paralleldrive/cuid2';
 import { mkdir, writeFile } from 'fs/promises';
 import { join } from 'path';
-import { db, documentPageAttachments, eq } from '@tasknebula/db';
+import { and, db, documentPageAttachments, eq } from '@tasknebula/db';
 import { resolveDocumentPageAccess } from '@/lib/docs/server';
 
 const UPLOAD_DIR = join(process.cwd(), 'uploads');
@@ -54,7 +54,10 @@ export async function POST(
     const { pageId } = await params;
     const access = await resolveDocumentPageAccess(session.user.id, pageId);
     if (!access?.permissions.canEdit) {
-      return NextResponse.json({ error: 'You do not have permission to upload files to this page' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'You do not have permission to upload files to this page' },
+        { status: 403 }
+      );
     }
 
     const formData = await request.formData();
@@ -110,7 +113,10 @@ export async function DELETE(
     const { pageId } = await params;
     const access = await resolveDocumentPageAccess(session.user.id, pageId);
     if (!access?.permissions.canEdit && !access?.permissions.canDelete) {
-      return NextResponse.json({ error: 'You do not have permission to delete attachments from this page' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'You do not have permission to delete attachments from this page' },
+        { status: 403 }
+      );
     }
 
     const { searchParams } = new URL(request.url);
@@ -120,7 +126,14 @@ export async function DELETE(
       return NextResponse.json({ error: 'attachmentId is required' }, { status: 400 });
     }
 
-    await db.delete(documentPageAttachments).where(eq(documentPageAttachments.id, attachmentId));
+    await db
+      .delete(documentPageAttachments)
+      .where(
+        and(
+          eq(documentPageAttachments.id, attachmentId),
+          eq(documentPageAttachments.pageId, pageId)
+        )
+      );
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting document attachment:', error);

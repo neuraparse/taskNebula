@@ -122,8 +122,7 @@ export function AnalyticsBento({
           value={tpSpark[tpSpark.length - 1] ?? '—'}
           delta={
             tpSpark.length >= 2
-              ? (tpSpark[tpSpark.length - 1] ?? 0) -
-                (tpSpark[tpSpark.length - 2] ?? 0)
+              ? (tpSpark[tpSpark.length - 1] ?? 0) - (tpSpark[tpSpark.length - 2] ?? 0)
               : null
           }
           deltaSuffix=""
@@ -149,11 +148,11 @@ export function AnalyticsBento({
           <div className="flex items-center justify-between">
             <div>
               <p className="kicker">Delivery</p>
-              <h3 className="mt-1 text-base font-semibold tracking-tight text-foreground">
+              <h3 className="text-foreground mt-1 text-base font-semibold tracking-tight">
                 Velocity
               </h3>
             </div>
-            <Sparkles className="h-4 w-4 text-muted-foreground" />
+            <Sparkles className="text-muted-foreground h-4 w-4" />
           </div>
           <AiInsightCard metric="velocity" period="6-sprints" scopeId={projectId} />
           {velocity && velocity.sprints.length > 0 ? (
@@ -162,7 +161,7 @@ export function AnalyticsBento({
               averagePoints={velocity.averageVelocity.points}
             />
           ) : (
-            <p className="py-12 text-center text-sm text-muted-foreground">
+            <p className="text-muted-foreground py-12 text-center text-sm">
               No completed sprints yet.
             </p>
           )}
@@ -172,17 +171,17 @@ export function AnalyticsBento({
           <div className="flex items-center justify-between">
             <div>
               <p className="kicker">Flow</p>
-              <h3 className="mt-1 text-base font-semibold tracking-tight text-foreground">
+              <h3 className="text-foreground mt-1 text-base font-semibold tracking-tight">
                 Throughput
               </h3>
             </div>
-            <Sparkles className="h-4 w-4 text-muted-foreground" />
+            <Sparkles className="text-muted-foreground h-4 w-4" />
           </div>
           <AiInsightCard metric="throughput" period="30d" scopeId={projectId} />
           {throughput && throughput.data.length > 0 ? (
             <ThroughputChart data={throughput.data} />
           ) : (
-            <p className="py-12 text-center text-sm text-muted-foreground">
+            <p className="text-muted-foreground py-12 text-center text-sm">
               No completions in the last 60 days.
             </p>
           )}
@@ -195,31 +194,25 @@ export function AnalyticsBento({
           <div className="flex items-center justify-between">
             <div>
               <p className="kicker">Forecast</p>
-              <h3 className="mt-1 text-base font-semibold tracking-tight text-foreground">
+              <h3 className="text-foreground mt-1 text-base font-semibold tracking-tight">
                 Ship-date Monte Carlo
               </h3>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                1000 trajectories sampled from the last 6 sprints' throughput.
+              <p className="text-muted-foreground mt-0.5 text-xs">
+                1000 trajectories sampled from the last 6 sprints&apos; throughput.
               </p>
             </div>
             <div className="grid grid-cols-3 gap-2 text-right text-xs">
               <div>
                 <p className="text-muted-foreground">p50</p>
-                <p className="font-semibold tabular-nums text-foreground">
-                  {forecast.p50Date}
-                </p>
+                <p className="text-foreground font-semibold tabular-nums">{forecast.p50Date}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">p80</p>
-                <p className="font-semibold tabular-nums text-foreground">
-                  {forecast.p80Date}
-                </p>
+                <p className="text-foreground font-semibold tabular-nums">{forecast.p80Date}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">p95</p>
-                <p className="font-semibold tabular-nums text-foreground">
-                  {forecast.p95Date}
-                </p>
+                <p className="text-foreground font-semibold tabular-nums">{forecast.p95Date}</p>
               </div>
             </div>
           </div>

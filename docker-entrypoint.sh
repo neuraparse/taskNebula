@@ -5,11 +5,16 @@ echo "========================================="
 echo "  TaskNebula - Starting..."
 echo "========================================="
 
+PARSED_DB_HOST="$(node -e "try { const u = new URL(process.env.DATABASE_URL || ''); console.log(u.hostname || 'postgres') } catch { console.log('postgres') }")"
+PARSED_DB_PORT="$(node -e "try { const u = new URL(process.env.DATABASE_URL || ''); console.log(u.port || '5432') } catch { console.log('5432') }")"
+DB_HOST="${DB_WAIT_HOST:-$PARSED_DB_HOST}"
+DB_PORT="${DB_WAIT_PORT:-$PARSED_DB_PORT}"
+
 # Wait for database to be ready
-echo "[1/3] Waiting for PostgreSQL..."
+echo "[1/3] Waiting for PostgreSQL at ${DB_HOST}:${DB_PORT}..."
 max_attempts=30
 attempt=0
-while ! nc -z postgres 5432; do
+while ! nc -z "$DB_HOST" "$DB_PORT"; do
   attempt=$((attempt + 1))
   if [ $attempt -eq $max_attempts ]; then
     echo "FAILED: Could not connect to PostgreSQL after $max_attempts attempts"
@@ -26,18 +31,14 @@ sleep 3
 # Apply database migrations
 echo "[2/3] Applying database migrations..."
 cd /app/packages/db
-pnpm db:migrate:prod 2>&1 || {
-  echo "  Migration skipped or already applied"
-}
+pnpm db:migrate:prod
 
-# Seed database (demo data + default workflows)
-if [ "${SKIP_SEED:-}" = "true" ]; then
-  echo "[3/3] Skipping seed (SKIP_SEED=true) — use /setup for first-time setup"
+# Seed database (demo data) only when explicitly enabled.
+if [ "${SEED_DEMO_DATA:-false}" = "true" ] && [ "${SKIP_SEED:-true}" != "true" ]; then
+  echo "[3/3] Seeding demo database..."
+  pnpm db:seed:prod
 else
-  echo "[3/3] Seeding database..."
-  pnpm db:seed:prod 2>&1 || {
-    echo "  Seed skipped (database already seeded)"
-  }
+  echo "[3/3] Skipping demo seed. Use /setup for first-time setup."
 fi
 
 # Check SMTP connectivity (optional)

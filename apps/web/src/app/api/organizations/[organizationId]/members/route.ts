@@ -10,8 +10,9 @@ import {
   projects,
   projectMembers,
 } from '@tasknebula/db';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { createHash, randomBytes } from 'crypto';
 import { hasPermission, getUserRole } from '@/lib/auth/permissions';
 import { publishEvent } from '@/lib/realtime/events';
 import { sendEmail } from '@/lib/email/sender';
@@ -67,10 +68,7 @@ export async function GET(
     });
   } catch (error) {
     console.error('Error fetching organization members:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch members' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch members' }, { status: 500 });
   }
 }
 
@@ -112,13 +110,12 @@ export async function POST(
 
     const body = await request.json();
     const data = inviteMemberSchema.parse(body);
+    const inviteToken = randomBytes(32).toString('base64url');
+    const inviteTokenHash = createHash('sha256').update(inviteToken).digest('hex');
+    const inviteTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     // Find or create user
-    let [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, data.email))
-      .limit(1);
+    let [user] = await db.select().from(users).where(eq(users.email, data.email)).limit(1);
 
     if (!user) {
       // Create invited user
@@ -129,7 +126,18 @@ export async function POST(
           email: data.email,
           name: data.email.split('@')[0],
           status: 'invited',
+          inviteTokenHash,
+          inviteTokenExpiresAt,
         })
+        .returning();
+    } else if (user.status === 'invited' && !user.password) {
+      [user] = await db
+        .update(users)
+        .set({
+          inviteTokenHash,
+          inviteTokenExpiresAt,
+        })
+        .where(eq(users.id, user.id))
         .returning();
     }
 
@@ -187,55 +195,61 @@ export async function POST(
 
     // Optional: assign user to projects. Skip silently on errors — do not 500 the invite.
     const addedToProjects: string[] = [];
-    const skippedProjects: Array<{ id: string; reason: string }> = [];
+    const skippedProjects: string[] = [];
     const addedProjectNames: string[] = [];
 
     if (data.projectIds.length > 0) {
       // Determine if caller broadly has project:manage for the org.
       const canManageProjects = await hasPermission(organizationId, 'project:manage');
+      const projectsInOrg = await db
+        .select({
+          id: projects.id,
+          name: projects.name,
+          leadId: projects.leadId,
+        })
+        .from(projects)
+        .where(
+          and(inArray(projects.id, data.projectIds), eq(projects.organizationId, organizationId))
+        );
+      const validProjectById = new Map(projectsInOrg.map((project) => [project.id, project]));
+      const existingProjectMembers =
+        projectsInOrg.length > 0
+          ? await db
+              .select({
+                projectId: projectMembers.projectId,
+                userId: projectMembers.userId,
+              })
+              .from(projectMembers)
+              .where(
+                and(
+                  inArray(
+                    projectMembers.projectId,
+                    projectsInOrg.map((project) => project.id)
+                  ),
+                  eq(projectMembers.userId, user.id)
+                )
+              )
+          : [];
+      const existingProjectIds = new Set(existingProjectMembers.map((member) => member.projectId));
 
       for (const projectId of data.projectIds) {
         try {
-          // Verify project belongs to this organization.
-          const [project] = await db
-            .select({
-              id: projects.id,
-              name: projects.name,
-              leadId: projects.leadId,
-            })
-            .from(projects)
-            .where(
-              and(eq(projects.id, projectId), eq(projects.organizationId, organizationId)),
-            )
-            .limit(1);
-
+          const project = validProjectById.get(projectId);
           if (!project) {
             // Silently skip missing / cross-org projects.
-            skippedProjects.push({ id: projectId, reason: 'not_found' });
+            skippedProjects.push(projectId);
             continue;
           }
 
           // Permission gate: either has org-wide project:manage, or is the project lead.
           const isLead = project.leadId === session.user.id;
           if (!canManageProjects && !isLead) {
-            skippedProjects.push({ id: projectId, reason: 'forbidden' });
+            skippedProjects.push(projectId);
             continue;
           }
 
-          // Skip if already a project member.
-          const [existingProjectMember] = await db
-            .select({ id: projectMembers.id })
-            .from(projectMembers)
-            .where(
-              and(
-                eq(projectMembers.projectId, projectId),
-                eq(projectMembers.userId, user.id),
-              ),
-            )
-            .limit(1);
-
-          if (existingProjectMember) {
-            skippedProjects.push({ id: projectId, reason: 'already_member' });
+          if (existingProjectIds.has(projectId)) {
+            skippedProjects.push(projectId);
             continue;
           }
 
@@ -267,7 +281,7 @@ export async function POST(
           addedProjectNames.push(project.name);
         } catch (err) {
           console.error('Project assignment error for', projectId, err);
-          skippedProjects.push({ id: projectId, reason: 'error' });
+          skippedProjects.push(projectId);
         }
       }
     }
@@ -288,7 +302,10 @@ export async function POST(
 
     const orgName = org?.name || 'their organization';
     const inviterName = inviter?.name || 'A team member';
-    const signupUrl = `${appUrl}/auth/signup?email=${encodeURIComponent(data.email)}`;
+    const signupUrl =
+      user.status === 'invited'
+        ? `${appUrl}/auth/signup?email=${encodeURIComponent(data.email)}&token=${encodeURIComponent(inviteToken)}`
+        : `${appUrl}/auth/signin?email=${encodeURIComponent(data.email)}`;
 
     const { subject, html, text } = renderInvitationMessage({
       inviteeEmail: data.email,
@@ -315,7 +332,7 @@ export async function POST(
         }
       })
       .catch((err) =>
-        console.error('Invite email error:', err instanceof Error ? err.message : err),
+        console.error('Invite email error:', err instanceof Error ? err.message : err)
       );
 
     return NextResponse.json({
@@ -341,10 +358,6 @@ export async function POST(
     }
 
     console.error('Error inviting member:', error);
-    return NextResponse.json(
-      { error: 'Failed to invite member' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to invite member' }, { status: 500 });
   }
 }
-

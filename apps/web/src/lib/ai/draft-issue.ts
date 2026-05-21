@@ -18,11 +18,8 @@
  */
 
 import { z } from 'zod';
-import {
-  estimatePromptTokens,
-  runWithBudget,
-  type LlmFeature,
-} from './budget';
+import { estimatePromptTokens, runWithBudget, type LlmFeature } from './budget';
+import { traceLlmCall } from './observability/langfuse';
 
 export const ISSUE_TYPES = ['story', 'task', 'bug', 'epic', 'subtask'] as const;
 export const ISSUE_PRIORITIES = ['critical', 'high', 'medium', 'low', 'none'] as const;
@@ -64,7 +61,10 @@ export interface DraftRequest {
 }
 
 export class AiDraftError extends Error {
-  constructor(public code: string, message: string) {
+  constructor(
+    public code: string,
+    message: string
+  ) {
     super(message);
     this.name = 'AiDraftError';
   }
@@ -80,18 +80,23 @@ export function draftIssueNative(request: DraftRequest): IssueDraft {
   const firstLine = raw.split(/\n+/)[0] ?? raw;
   const lower = raw.toLowerCase();
 
-  const type: IssueDraft['type'] =
-    /\b(bug|crash|broken|fail(s|ed|ing)?|regression)\b/.test(lower) ? 'bug' :
-    /\b(epic|initiative|milestone)\b/.test(lower) ? 'epic' :
-    /\b(subtask|sub-?task|child)\b/.test(lower) ? 'subtask' :
-    /\b(story|user story|as a user)\b/.test(lower) ? 'story' :
-    'task';
+  const type: IssueDraft['type'] = /\b(bug|crash|broken|fail(s|ed|ing)?|regression)\b/.test(lower)
+    ? 'bug'
+    : /\b(epic|initiative|milestone)\b/.test(lower)
+      ? 'epic'
+      : /\b(subtask|sub-?task|child)\b/.test(lower)
+        ? 'subtask'
+        : /\b(story|user story|as a user)\b/.test(lower)
+          ? 'story'
+          : 'task';
 
-  const priority: IssueDraft['priority'] =
-    /\b(urgent|critical|blocker|asap|p0)\b/.test(lower) ? 'critical' :
-    /\b(high|important|p1)\b/.test(lower) ? 'high' :
-    /\b(low|minor|p3)\b/.test(lower) ? 'low' :
-    'medium';
+  const priority: IssueDraft['priority'] = /\b(urgent|critical|blocker|asap|p0)\b/.test(lower)
+    ? 'critical'
+    : /\b(high|important|p1)\b/.test(lower)
+      ? 'high'
+      : /\b(low|minor|p3)\b/.test(lower)
+        ? 'low'
+        : 'medium';
 
   const labels: string[] = [];
   if (/\b(ui|frontend|css)\b/.test(lower)) labels.push('frontend');
@@ -100,7 +105,11 @@ export function draftIssueNative(request: DraftRequest): IssueDraft {
   if (/\b(perf|performance|slow)\b/.test(lower)) labels.push('performance');
   if (/\b(security|auth|xss|csrf)\b/.test(lower)) labels.push('security');
 
-  const title = firstLine.replace(/^[-*]\s*/, '').slice(0, 140).trim() || 'Untitled task';
+  const title =
+    firstLine
+      .replace(/^[-*]\s*/, '')
+      .slice(0, 140)
+      .trim() || 'Untitled task';
   const description = raw.length > title.length ? raw : null;
 
   return {
@@ -204,8 +213,7 @@ async function draftIssueOpenAi(request: DraftRequest): Promise<IssueDraft> {
         model,
         feature: request.budgetContext.feature ?? 'draft',
         prompt: request.prompt,
-        estimatedTokens:
-          estimatePromptTokens(system + request.prompt) + 512,
+        estimatedTokens: estimatePromptTokens(system + request.prompt) + 512,
       },
       callOpenAi
     );
@@ -259,8 +267,7 @@ async function draftIssueAnthropic(request: DraftRequest): Promise<IssueDraft> {
       content?: Array<{ type: string; text?: string }>;
       usage?: { input_tokens?: number; output_tokens?: number };
     };
-    const text =
-      payload.content?.find((block) => block.type === 'text')?.text ?? '{}';
+    const text = payload.content?.find((block) => block.type === 'text')?.text ?? '{}';
     return {
       value: parseAndValidate(text),
       usage: {
@@ -279,8 +286,7 @@ async function draftIssueAnthropic(request: DraftRequest): Promise<IssueDraft> {
         model,
         feature: request.budgetContext.feature ?? 'draft',
         prompt: request.prompt,
-        estimatedTokens:
-          estimatePromptTokens(system + request.prompt) + 1024,
+        estimatedTokens: estimatePromptTokens(system + request.prompt) + 1024,
       },
       callAnthropic
     );
@@ -314,14 +320,51 @@ function parseAndValidate(raw: string): IssueDraft {
 }
 
 export async function draftIssue(request: DraftRequest): Promise<IssueDraft> {
-  switch (request.provider) {
-    case 'native':
-      return draftIssueNative(request);
-    case 'openai':
-      return draftIssueOpenAi(request);
-    case 'anthropic':
-      return draftIssueAnthropic(request);
-    default:
-      return draftIssueNative(request);
+  if (request.provider === 'native') {
+    return draftIssueNative(request);
+  }
+
+  const provider = request.provider;
+  const model = request.model || (provider === 'anthropic' ? 'claude-sonnet-4-6' : 'gpt-4o-mini');
+  const startedAt = Date.now();
+  const traceInput = {
+    prompt: request.prompt,
+    projectName: request.projectName,
+    projectKey: request.projectKey,
+    existingLabels: request.existingLabels ?? [],
+  };
+
+  try {
+    const result =
+      provider === 'anthropic'
+        ? await draftIssueAnthropic(request)
+        : await draftIssueOpenAi(request);
+
+    await traceLlmCall({
+      feature: 'issue.draft',
+      provider,
+      model,
+      input: traceInput,
+      output: result,
+      latencyMs: Date.now() - startedAt,
+      userId: request.budgetContext?.userId ?? undefined,
+      organizationId: request.budgetContext?.organizationId,
+    });
+
+    return result;
+  } catch (error) {
+    await traceLlmCall({
+      feature: 'issue.draft',
+      provider,
+      model,
+      input: traceInput,
+      output: null,
+      latencyMs: Date.now() - startedAt,
+      userId: request.budgetContext?.userId ?? undefined,
+      organizationId: request.budgetContext?.organizationId,
+      errorMessage: error instanceof Error ? error.message : String(error),
+    });
+
+    throw error;
   }
 }

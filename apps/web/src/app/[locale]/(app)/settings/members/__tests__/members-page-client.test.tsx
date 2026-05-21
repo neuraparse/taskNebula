@@ -55,6 +55,20 @@ jest.mock('next/link', () => {
 
 import { MembersPageClient } from '../members-page-client';
 
+beforeAll(() => {
+  class ResizeObserverMock {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+
+  Object.defineProperty(window, 'ResizeObserver', {
+    configurable: true,
+    writable: true,
+    value: ResizeObserverMock,
+  });
+});
+
 function renderWithClient(ui: React.ReactElement) {
   const client = new QueryClient({
     defaultOptions: {
@@ -90,7 +104,11 @@ function installMembersListFetch(overrides?: {
   invitePostHandler?: (body: string) => { ok: boolean; status?: number; payload: unknown };
 }) {
   fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
-    if (typeof url === 'string' && url.includes('/members') && (!init || init.method === undefined || init.method === 'GET')) {
+    if (
+      typeof url === 'string' &&
+      url.includes('/members') &&
+      (!init || init.method === undefined || init.method === 'GET')
+    ) {
       return {
         ok: true,
         status: 200,
@@ -151,13 +169,14 @@ describe('MembersPageClient — invite with project assignment', () => {
 
     // Wait for the members query to settle so the Invite button is enabled.
     const inviteTrigger = await screen.findByRole('button', { name: /invite/i });
-    expect(inviteTrigger).toBeEnabled();
+    await waitFor(() => expect(inviteTrigger).toBeEnabled());
 
     await user.click(inviteTrigger);
 
     // Dialog opens: email input, role label, and project picker region.
     expect(await screen.findByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.getByText(/role/i)).toBeInTheDocument();
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText(/^Role$/)).toBeInTheDocument();
 
     // Project picker: some control/section referencing projects must exist.
     // Match anything project-assignment related.
@@ -177,24 +196,18 @@ describe('MembersPageClient — invite with project assignment', () => {
     renderWithClient(<MembersPageClient />);
 
     const inviteTrigger = await screen.findByRole('button', { name: /invite/i });
+    await waitFor(() => expect(inviteTrigger).toBeEnabled());
     await user.click(inviteTrigger);
 
-    // Try to open the project picker trigger (may be a button or combobox).
-    // We look for anything that mentions "project" and click through.
     const dialog = await screen.findByRole('dialog');
-    const pickerTriggerCandidates = within(dialog).queryAllByRole('button');
-    const pickerTrigger = pickerTriggerCandidates.find((btn) =>
-      /project|add|select|pick/i.test(btn.textContent ?? '')
-    );
-    if (pickerTrigger && pickerTrigger.textContent?.toLowerCase().includes('project')) {
-      await user.click(pickerTrigger);
-    }
+    await user.click(within(dialog).getByRole('button', { name: /add to projects/i }));
+    await user.click(within(dialog).getByRole('combobox', { name: /select projects/i }));
 
     await waitFor(
       () => {
         // Either rendered inline or via popover — project names must appear.
-        expect(screen.getByText(/alpha/i)).toBeInTheDocument();
-        expect(screen.getByText(/beta/i)).toBeInTheDocument();
+        expect(screen.getByText(/^Alpha$/)).toBeInTheDocument();
+        expect(screen.getByText(/^Beta$/)).toBeInTheDocument();
       },
       { timeout: 2000 }
     );
@@ -234,25 +247,17 @@ describe('MembersPageClient — invite with project assignment', () => {
     renderWithClient(<MembersPageClient />);
 
     const inviteTrigger = await screen.findByRole('button', { name: /invite/i });
+    await waitFor(() => expect(inviteTrigger).toBeEnabled());
     await user.click(inviteTrigger);
 
     // Fill email.
     const emailInput = await screen.findByLabelText(/email/i);
     await user.type(emailInput, 'new@example.com');
 
-    // Try to select a project via the picker. We attempt best-effort: click
-    // something that says "project" then click "Alpha". If the peer's picker
-    // isn't wired yet, this branch may no-op — the subsequent assertion
-    // specifically targets the projectIds field in the request body.
     const dialog = await screen.findByRole('dialog');
-    const pickerTrigger = within(dialog)
-      .queryAllByRole('button')
-      .find((btn) => /project|add.*project|select.*project/i.test(btn.textContent ?? ''));
-    if (pickerTrigger) {
-      await user.click(pickerTrigger);
-      const alphaOption = await screen.findByText(/alpha/i);
-      await user.click(alphaOption);
-    }
+    await user.click(within(dialog).getByRole('button', { name: /add to projects/i }));
+    await user.click(within(dialog).getByRole('combobox', { name: /select projects/i }));
+    await user.click(await screen.findByText(/^Alpha$/));
 
     const submitBtn = await screen.findByRole('button', { name: /send invitation/i });
     await user.click(submitBtn);
@@ -302,6 +307,7 @@ describe('MembersPageClient — invite with project assignment', () => {
     renderWithClient(<MembersPageClient />);
 
     const inviteTrigger = await screen.findByRole('button', { name: /invite/i });
+    await waitFor(() => expect(inviteTrigger).toBeEnabled());
     await user.click(inviteTrigger);
 
     const emailInput = await screen.findByLabelText(/email/i);

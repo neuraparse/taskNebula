@@ -28,13 +28,7 @@
 
 import { createHash } from 'crypto';
 
-export type PiiKind =
-  | 'EMAIL'
-  | 'PHONE'
-  | 'CC'
-  | 'SSN'
-  | 'TCKN'
-  | 'APIKEY';
+export type PiiKind = 'EMAIL' | 'PHONE' | 'CC' | 'SSN' | 'TCKN' | 'APIKEY';
 
 export interface RedactPiiOptions {
   /**
@@ -83,16 +77,16 @@ function placeholderFor(kind: PiiKind, original: string, salt?: string): string 
 // HTML5-input shape. We require at least one dot in the domain so that things
 // like `Re: foo@bar` (a header line, not an address) don't all match.
 const EMAIL_RE =
-  /\b[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9](?:[a-zA-Z0-9\-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9\-]*[a-zA-Z0-9])?)+\b/g;
+  /\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)+\b/g;
 
 // E.164 (+CC plus 7..14 digits) and common North-American formats
 // "(415) 555-0132", "415-555-0132", "415.555.0132". We exclude short numbers
 // (< 7 digits) to avoid eating sprint/issue numbers.
 const PHONE_RE =
-  /(?:\+\d{1,3}[\s\-.]?)?(?:\(\d{2,4}\)[\s\-.]?|\d{2,4}[\s\-.])\d{3,4}[\s\-.]?\d{3,5}|\+\d{7,15}/g;
+  /(?:\+\d{1,3}[\s.-]?)?(?:\(\d{2,4}\)[\s.-]?|\d{2,4}[\s.-])\d{3,4}[\s.-]?\d{3,5}|\+\d{7,15}/g;
 
 // Credit-card-ish: 13..19 digits, optionally with dashes / spaces every 4.
-const CC_RE = /\b(?:\d[ \-]?){12,18}\d\b/g;
+const CC_RE = /\b(?:\d[ -]?){12,18}\d\b/g;
 
 // US SSN with three-dash-two-dash-four form (we don't catch the bare 9-digit
 // form on purpose — too easy to false-positive into a phone number).
@@ -106,7 +100,7 @@ const TCKN_RE = /\b[1-9]\d{10}\b/g;
 // We deliberately require a minimum length so "sk-foo" in a sentence doesn't
 // match.
 const APIKEY_RE =
-  /\b(?:sk-(?:ant-)?[A-Za-z0-9_\-]{20,}|ghp_[A-Za-z0-9]{20,}|ghs_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,}|pat-[A-Za-z0-9_\-]{20,})\b/g;
+  /\b(?:sk-(?:ant-)?[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{20,}|ghs_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,}|pat-[A-Za-z0-9_-]{20,})\b/g;
 
 // ---------------------------------------------------------------------------
 // Luhn / TCKN validators (false-positive filters)
@@ -138,10 +132,10 @@ function tcknValid(id: string): boolean {
   if (id.length !== 11 || id.charCodeAt(0) === 48 /* '0' */) return false;
   const d: number[] = id.split('').map((c) => c.charCodeAt(0) - 48);
   if (d.length !== 11 || d.some((n) => n < 0 || n > 9)) return false;
-  const odd = (d[0]! + d[2]! + d[4]! + d[6]! + d[8]!);
-  const even = (d[1]! + d[3]! + d[5]! + d[7]!);
+  const odd = d[0]! + d[2]! + d[4]! + d[6]! + d[8]!;
+  const even = d[1]! + d[3]! + d[5]! + d[7]!;
   // Per spec, the mod-10 result must be normalised to a positive remainder.
-  const ten = ((odd * 7 - even) % 10 + 10) % 10;
+  const ten = (((odd * 7 - even) % 10) + 10) % 10;
   const eleven = d.slice(0, 10).reduce((a, b) => a + b, 0) % 10;
   return ten === d[9] && eleven === d[10];
 }
@@ -167,11 +161,7 @@ function collectSpans(text: string, detectors: PiiKind[]): Span[] {
   const claimed: boolean[] = new Array(text.length).fill(false);
   const spans: Span[] = [];
 
-  const tryPush = (
-    kind: PiiKind,
-    re: RegExp,
-    validator?: (raw: string) => boolean
-  ) => {
+  const tryPush = (kind: PiiKind, re: RegExp, validator?: (raw: string) => boolean) => {
     if (!detectors.includes(kind)) return;
     re.lastIndex = 0;
     let m: RegExpExecArray | null;
@@ -198,7 +188,7 @@ function collectSpans(text: string, detectors: PiiKind[]): Span[] {
   tryPush('EMAIL', EMAIL_RE);
   tryPush('SSN', SSN_RE);
   tryPush('CC', CC_RE, (raw) => {
-    const digits = raw.replace(/[\s\-]/g, '');
+    const digits = raw.replace(/[\s-]/g, '');
     return digits.length >= 13 && digits.length <= 19 && luhnValid(digits);
   });
   tryPush('TCKN', TCKN_RE, tcknValid);
@@ -258,9 +248,7 @@ export function rehydrate(
   if (!replacements) return text;
 
   const entries: Array<[string, string]> =
-    replacements instanceof Map
-      ? Array.from(replacements.entries())
-      : Object.entries(replacements);
+    replacements instanceof Map ? Array.from(replacements.entries()) : Object.entries(replacements);
   if (entries.length === 0) return text;
 
   // Longest placeholder first so a hypothetical `[EMAIL_aaaa]` does not get

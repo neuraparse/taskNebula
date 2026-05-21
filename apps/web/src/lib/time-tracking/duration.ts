@@ -45,7 +45,7 @@ export function parseDuration(input: string): number | null {
   if (!trimmed) return null;
   // Reject any input containing a sign or punctuation we don't recognise so
   // "-5m" / "+30m" don't silently coerce to a positive duration.
-  if (/[+\-]/.test(trimmed)) return null;
+  if (/[+-]/.test(trimmed)) return null;
 
   // Bare number = minutes.
   if (/^\d+(?:\.\d+)?$/.test(trimmed)) {

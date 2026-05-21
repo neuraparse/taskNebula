@@ -43,10 +43,19 @@ export function SignUpForm() {
     setLoading(true);
 
     try {
+      const inviteToken =
+        typeof window !== 'undefined'
+          ? new URLSearchParams(window.location.search).get('token')
+          : null;
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          ...(inviteToken ? { inviteToken } : {}),
+        }),
       });
 
       const data = await response.json();
@@ -70,9 +79,7 @@ export function SignUpForm() {
         // Ignore — we degrade to the email-query-param path below.
       }
 
-      router.push(
-        `/auth/verify-request?email=${encodeURIComponent(email)}`,
-      );
+      router.push(`/auth/verify-request?email=${encodeURIComponent(email)}`);
       router.refresh();
     } catch {
       setError('An error occurred. Please try again.');
@@ -93,7 +100,7 @@ export function SignUpForm() {
     return (
       <div className="flex items-center justify-center py-12">
         <div
-          className="h-5 w-5 animate-spin rounded-full border-2 border-foreground border-t-transparent"
+          className="border-foreground h-5 w-5 animate-spin rounded-full border-2 border-t-transparent"
           aria-label="Loading"
         />
       </div>
@@ -101,11 +108,13 @@ export function SignUpForm() {
   }
 
   return (
-    <div className="space-y-6 stagger">
+    <div className="stagger space-y-6">
       {/* Header */}
-      <div className="text-center space-y-1.5">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Create your account</h1>
-        <p className="text-sm text-muted-foreground">Get started with TaskNebula</p>
+      <div className="space-y-1.5 text-center">
+        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
+          Create your account
+        </h1>
+        <p className="text-muted-foreground text-sm">Get started with TaskNebula</p>
       </div>
 
       {/* OAuth Buttons */}
@@ -114,7 +123,7 @@ export function SignUpForm() {
           variant="outline"
           onClick={handleGitHubSignIn}
           type="button"
-          className="w-full transition-all duration-150 ease-snap"
+          className="ease-snap w-full transition-all duration-150"
           size="lg"
         >
           <Github className="mr-2 h-4 w-4" />
@@ -124,7 +133,7 @@ export function SignUpForm() {
           variant="outline"
           onClick={handleGoogleSignIn}
           type="button"
-          className="w-full transition-all duration-150 ease-snap"
+          className="ease-snap w-full transition-all duration-150"
           size="lg"
         >
           <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
@@ -152,10 +161,10 @@ export function SignUpForm() {
       {/* Divider */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-border" />
+          <span className="border-border w-full border-t" />
         </div>
         <div className="relative flex justify-center text-xs">
-          <span className="bg-card px-2.5 text-muted-foreground">Or continue with email</span>
+          <span className="bg-card text-muted-foreground px-2.5">Or continue with email</span>
         </div>
       </div>
 
@@ -198,7 +207,7 @@ export function SignUpForm() {
             required
             autoComplete="new-password"
           />
-          <p className="text-xs text-muted-foreground">Must be at least 8 characters</p>
+          <p className="text-muted-foreground text-xs">Must be at least 8 characters</p>
         </div>
 
         {error && (
@@ -209,25 +218,25 @@ export function SignUpForm() {
 
         <Button
           type="submit"
-          className="w-full transition-all duration-150 ease-snap"
+          className="ease-snap w-full transition-all duration-150"
           size="lg"
           disabled={loading}
         >
           {loading ? 'Creating account...' : 'Create account'}
         </Button>
 
-        <p className="text-center text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-center text-xs">
           By creating an account, you agree to our{' '}
           <Link
             href="/terms"
-            className="underline hover:text-foreground transition-colors duration-150 ease-snap"
+            className="hover:text-foreground ease-snap underline transition-colors duration-150"
           >
             Terms
           </Link>{' '}
           and{' '}
           <Link
             href="/privacy"
-            className="underline hover:text-foreground transition-colors duration-150 ease-snap"
+            className="hover:text-foreground ease-snap underline transition-colors duration-150"
           >
             Privacy
           </Link>
@@ -236,11 +245,11 @@ export function SignUpForm() {
       </form>
 
       {/* Sign In Link */}
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-center text-sm">
         Already have an account?{' '}
         <Link
           href="/auth/signin"
-          className="font-medium text-foreground hover:text-primary transition-colors duration-150 ease-snap"
+          className="text-foreground hover:text-primary ease-snap font-medium transition-colors duration-150"
         >
           Sign in
         </Link>

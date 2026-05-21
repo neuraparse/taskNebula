@@ -35,7 +35,7 @@ export interface TrackCommandContext {
  */
 export async function handleTrackCommand(
   input: string,
-  ctx: TrackCommandContext,
+  ctx: TrackCommandContext
 ): Promise<TrackCommandResult> {
   if (!ctx.issueId) {
     return { ok: false, message: 'Open an issue to log time against.' };
@@ -61,7 +61,7 @@ export async function handleTrackCommand(
   let durationSeconds: number | null = null;
   let descriptionStart = -1;
   // We greedy-extend the duration so "1h 30m fix" still works.
-  let durationTokens: string[] = [];
+  const durationTokens: string[] = [];
   for (let i = 0; i < tokens.length; i++) {
     const trial = [...durationTokens, tokens[i]!].join('');
     const parsed = parseDuration(trial);
@@ -84,8 +84,7 @@ export async function handleTrackCommand(
     };
   }
 
-  const description =
-    descriptionStart >= 0 ? tokens.slice(descriptionStart).join(' ') : undefined;
+  const description = descriptionStart >= 0 ? tokens.slice(descriptionStart).join(' ') : undefined;
 
   const fetcher = ctx.fetcher ?? fetch;
   try {

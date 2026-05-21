@@ -15,11 +15,17 @@
 // AFTER the assignment to guarantee the ordering.
 process.env.AUTH_SECRET = 'test-auth-secret-do-not-use-in-prod';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { mintRelayState, verifyRelayState } =
-  require('../relay-state') as typeof import('../relay-state');
+type RelayStateModule = typeof import('../relay-state');
+
+let mintRelayState: RelayStateModule['mintRelayState'];
+let verifyRelayState: RelayStateModule['verifyRelayState'];
 
 describe('SAML RelayState helper', () => {
+  beforeAll(async () => {
+    const relayStateModule = await import('../relay-state');
+    ({ mintRelayState, verifyRelayState } = relayStateModule);
+  });
+
   beforeEach(() => {
     // Belt-and-braces: ensure the env var stays set even if another suite
     // mutated it. The module already closed over its own copy at import,

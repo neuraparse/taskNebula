@@ -4,6 +4,7 @@ import { db, customFieldValues, customFields, issues } from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
 import { publishEvent } from '@/lib/realtime/events';
+import { canEditIssue, canReadIssue } from '@/lib/auth/access-control';
 
 async function publishIssueUpdated(userId: string, issueId: string) {
   try {
@@ -47,6 +48,13 @@ export async function GET(
     }
 
     const { issueId } = await params;
+    const access = await canReadIssue(session.user.id, issueId);
+    if (!access.issue) {
+      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+    }
+    if (!access.allowed) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     // Fetch all custom field values for this issue with field definitions
     const values = await db
@@ -90,6 +98,14 @@ export async function POST(
     const { issueId } = await params;
     const body = await request.json();
     const validatedData = setCustomFieldValueSchema.parse(body);
+
+    const access = await canEditIssue(session.user.id, issueId);
+    if (!access.issue) {
+      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+    }
+    if (!access.allowed) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     // Check if value already exists
     const [existingValue] = await db
@@ -135,7 +151,10 @@ export async function POST(
     }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid request data', details: error.errors }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid request data', details: error.errors },
+        { status: 400 }
+      );
     }
     console.error('Error setting custom field value:', error);
     return NextResponse.json({ error: 'Failed to set custom field value' }, { status: 500 });
@@ -161,6 +180,14 @@ export async function DELETE(
       return NextResponse.json({ error: 'customFieldId is required' }, { status: 400 });
     }
 
+    const access = await canEditIssue(session.user.id, issueId);
+    if (!access.issue) {
+      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+    }
+    if (!access.allowed) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     await db
       .delete(customFieldValues)
       .where(
@@ -177,4 +204,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Failed to delete custom field value' }, { status: 500 });
   }
 }
-

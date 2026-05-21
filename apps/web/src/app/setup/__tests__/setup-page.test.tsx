@@ -107,6 +107,8 @@ describe('SetupPage', () => {
         expect.objectContaining({ method: 'POST' })
       );
     });
+
+    await user.click(await screen.findByRole('button', { name: /skip \/ start blank/i }));
     expect(await screen.findByText(/setup complete/i)).toBeInTheDocument();
   });
 });

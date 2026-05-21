@@ -11,6 +11,14 @@ jest.mock('@/lib/drafts/use-drafts', () => ({
   useDrafts: jest.fn(),
 }));
 
+jest.mock('@/lib/hooks/use-projects', () => ({
+  useProjects: () => ({ data: [{ id: 'project-1', name: 'Demo', key: 'DEM' }] }),
+}));
+
+jest.mock('@/components/issues/create-issue-modal', () => ({
+  CreateIssueModal: () => null,
+}));
+
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
 }));
@@ -66,8 +74,6 @@ describe('DraftsList', () => {
     render(<DraftsList />);
 
     expect(screen.getByText('No drafts yet')).toBeInTheDocument();
-    expect(
-      screen.getByRole('link', { name: /Create work item/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Create work item/i })).toBeInTheDocument();
   });
 });

@@ -1,40 +1,34 @@
 /**
- * Command palette (Cmd+K / Ctrl+K) — opens, accepts a query, and selects an
- * action. We use the "Create" leader chord (C → I) which is registered as
- * "New work item" in `command-palette.tsx`.
+ * Command palette — opens from the global trigger, accepts a query, and
+ * surfaces the Ask AI action for sentence-like input.
  */
 import { test, expect } from '@playwright/test';
 import { ensureSeed } from './fixtures/seed';
 
 test.describe('cmd+k command palette', () => {
-  test('opens with the keyboard shortcut and surfaces a create action', async ({ page }) => {
+  test('opens from the global trigger and surfaces an Ask AI action', async ({ page }) => {
     const seed = await ensureSeed();
-    await page.goto(`/projects/${seed.projectId}`);
+    await page.goto(`/projects/${seed.projectId}/views`);
 
-    // Use ControlOrMeta so the same test works on macOS (Cmd) and Linux (Ctrl).
-    await page.keyboard.press('ControlOrMeta+KeyK');
+    const trigger = page.getByRole('button', { name: /open command palette/i });
+    await expect(trigger).toBeVisible({ timeout: 20_000 });
+    await trigger.click();
 
-    // The Radix Dialog renders the palette with a Combobox-style input.
-    const palette = page.getByRole('dialog');
+    // The Radix Dialog renders the palette with a named text input.
+    const palette = page.getByRole('dialog', { name: /command palette/i });
     await expect(palette).toBeVisible({ timeout: 10_000 });
 
-    // The combobox is the cmdk Command.Input.
-    const input = palette.getByRole('combobox');
+    const input = palette.getByLabel(/command palette query/i);
     await expect(input).toBeVisible();
-    await input.fill('create issue');
+    await input.fill('summarize project risks');
 
-    // The palette should surface an option that matches the query.
-    // We accept either "New work item", "Create issue", or "New issue".
-    const createOption = palette
-      .getByRole('option', { name: /new (work item|issue)|create issue/i })
-      .first();
-    await expect(createOption).toBeVisible({ timeout: 5_000 });
+    const askOption = palette.getByRole('option', {
+      name: /ask tasknebula.*summarize project risks/i,
+    });
+    await expect(askOption).toBeVisible({ timeout: 5_000 });
 
-    await createOption.click();
+    await askOption.click();
 
-    // After selecting, the palette closes. We do not assert on a follow-up
-    // modal because routing differs by registered chord; closing the dialog
-    // is sufficient evidence the action fired.
     await expect(palette).toBeHidden({ timeout: 5_000 });
   });
 });

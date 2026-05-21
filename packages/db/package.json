@@ -12,10 +12,10 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx src/seed.ts",
     "db:seed:prod": "tsx scripts/seed-production.ts",
-    "db:setup": "pnpm db:push && pnpm db:seed",
+    "db:setup": "pnpm db:migrate && pnpm db:seed",
     "db:setup:prod": "pnpm db:migrate:prod && pnpm db:seed:prod",
     "type-check": "tsc --noEmit",
-    "lint": "eslint src/"
+    "lint": "eslint src --ext .ts"
   },
   "dependencies": {
     "@paralleldrive/cuid2": "^2.2.2",

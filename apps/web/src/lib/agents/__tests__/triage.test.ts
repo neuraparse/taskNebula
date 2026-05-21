@@ -40,6 +40,7 @@ jest.mock('@/lib/agents/credentials', () => ({
   resolveProviderApiKeyFromSettings: jest.fn().mockReturnValue(null),
 }));
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const credentials = require('@/lib/agents/credentials') as {
   resolveProviderApiKeyFromSettings: jest.Mock;
 };
@@ -103,7 +104,8 @@ describe('triageIssueNative (no-LLM fallback)', () => {
       issue: {
         ...baseContext.issue,
         title: 'Payments API outage — all checkouts failing',
-        description: 'P0: production payment endpoint returns 502 for every user. Customers cannot pay.',
+        description:
+          'P0: production payment endpoint returns 502 for every user. Customers cannot pay.',
       },
     };
     const out = triageIssueNative(urgent);
@@ -151,7 +153,7 @@ describe('triageIssue with mocked LLM provider', () => {
         team_id: 'team_identity',
         confidence: 87,
         rationale: 'Strongly resembles ACME-40 (Okta callback bug, also high).',
-      }),
+      })
     );
     const { suggestion } = await triageIssue('iss_1', {
       loadContextOverride: baseContext,
@@ -176,7 +178,7 @@ describe('triageIssue with mocked LLM provider', () => {
         team_id: 'team_identity',
         confidence: 70,
         rationale: 'Alice owned the previous SSO callback bug.',
-      }),
+      })
     );
     const { suggestion } = await triageIssue('iss_1', {
       loadContextOverride: baseContext,
@@ -192,10 +194,10 @@ describe('triageIssue with mocked LLM provider', () => {
         labels: 'not-an-array',
         priority: 'nonsense',
         confidence: 999,
-      }),
+      })
     );
     await expect(
-      triageIssue('iss_1', { loadContextOverride: baseContext, llmClient: llm }),
+      triageIssue('iss_1', { loadContextOverride: baseContext, llmClient: llm })
     ).rejects.toBeInstanceOf(AiDraftError);
   });
 
@@ -203,7 +205,7 @@ describe('triageIssue with mocked LLM provider', () => {
     credentials.resolveProviderApiKeyFromSettings.mockReturnValue('sk-test');
     const llm = fakeLlm('this is not json');
     await expect(
-      triageIssue('iss_1', { loadContextOverride: baseContext, llmClient: llm }),
+      triageIssue('iss_1', { loadContextOverride: baseContext, llmClient: llm })
     ).rejects.toMatchObject({ code: 'invalid_json' });
   });
 

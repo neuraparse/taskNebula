@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse, after } from 'next/server';
 import { z } from 'zod';
-import { getIssueComments, createComment, createActivity, createAuditLog, getIssueById } from '@tasknebula/db';
+import {
+  getIssueComments,
+  createComment,
+  createActivity,
+  createAuditLog,
+  getIssueById,
+} from '@tasknebula/db';
 import { auth } from '@/auth';
 import { createId } from '@paralleldrive/cuid2';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { publishEvent } from '@/lib/realtime/events';
 import { withValidation } from '@/lib/api-validation';
+import { canCommentOnIssue, canReadIssue } from '@/lib/auth/access-control';
 
 // Validation schema for creating a comment
 const createCommentSchema = z.object({
@@ -29,6 +36,14 @@ export async function GET(
     }
 
     const { issueId } = await params;
+    const access = await canReadIssue(session.user.id!, issueId);
+    if (!access.issue) {
+      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+    }
+    if (!access.allowed) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const comments = await getIssueComments(issueId);
 
     return NextResponse.json({
@@ -53,6 +68,14 @@ export const POST = withValidation({
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const access = await canCommentOnIssue(session.user.id!, issueId);
+    if (!access.issue) {
+      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+    }
+    if (!access.allowed) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const newComment = await createComment({
@@ -155,4 +178,3 @@ export const POST = withValidation({
     return NextResponse.json({ error: 'Failed to create comment' }, { status: 500 });
   }
 });
-

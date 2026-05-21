@@ -3,6 +3,7 @@ import type { ToolDefinition } from './types.js';
 
 export const createSubtaskInput = z.object({
   parentIssueId: z.string().min(1),
+  projectId: z.string().min(1),
   title: z.string().min(1).max(255),
   description: z.string().optional(),
   assigneeId: z.string().optional(),

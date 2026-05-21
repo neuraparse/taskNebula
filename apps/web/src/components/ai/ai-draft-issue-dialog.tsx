@@ -44,9 +44,7 @@ type IssueDraft = {
   estimate?: number | null;
 };
 
-type ChatTurn =
-  | { role: 'user'; content: string }
-  | { role: 'assistant'; content: string };
+type ChatTurn = { role: 'user'; content: string } | { role: 'assistant'; content: string };
 
 interface AiDraftIssueDialogProps {
   open: boolean;
@@ -100,11 +98,7 @@ async function createIssue(projectId: string, draft: IssueDraft) {
   return r.json();
 }
 
-export function AiDraftIssueDialog({
-  open,
-  onOpenChange,
-  projectId,
-}: AiDraftIssueDialogProps) {
+export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIssueDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { canDraft } = useAiCapability();
@@ -178,7 +172,10 @@ export function AiDraftIssueDialog({
       });
       toast({
         title: `${created.length} issue${created.length === 1 ? '' : 's'} created`,
-        description: created.map((c) => c.key || c.title).slice(0, 3).join(', '),
+        description: created
+          .map((c) => c.key || c.title)
+          .slice(0, 3)
+          .join(', '),
       });
       reset();
       onOpenChange(false);
@@ -278,10 +275,10 @@ export function AiDraftIssueDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden">
-        <DialogHeader className="px-5 pt-5 pb-3 border-b border-border">
+      <DialogContent className="max-w-4xl overflow-hidden p-0">
+        <DialogHeader className="border-border border-b px-5 pb-3 pt-5">
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
+            <Sparkles className="text-primary h-4 w-4" />
             Draft issues with AI
           </DialogTitle>
           <DialogDescription>
@@ -290,11 +287,11 @@ export function AiDraftIssueDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-[1fr,360px] gap-0 max-h-[70vh] overflow-hidden">
+        <div className="grid max-h-[70vh] grid-cols-1 gap-0 overflow-hidden md:grid-cols-[1fr,360px]">
           {/* LEFT — chat thread */}
-          <div className="overflow-y-auto border-r border-border p-5 space-y-4">
+          <div className="border-border space-y-4 overflow-y-auto border-r p-5">
             {chat.length === 0 && drafts.length === 0 && !isDrafting && (
-              <p className="text-[13px] text-muted-foreground">
+              <p className="text-muted-foreground text-[13px]">
                 One prompt can describe a single bug OR a whole checklist — AI splits on its own.
               </p>
             )}
@@ -302,12 +299,12 @@ export function AiDraftIssueDialog({
             {chat.map((turn, i) =>
               turn.role === 'user' ? (
                 <div key={i} className="flex justify-end">
-                  <div className="bg-muted px-3 py-2 rounded-lg text-[13px] max-w-[80%] whitespace-pre-wrap">
+                  <div className="bg-muted max-w-[80%] whitespace-pre-wrap rounded-lg px-3 py-2 text-[13px]">
                     {turn.content}
                   </div>
                 </div>
               ) : (
-                <div key={i} className="text-[13px] text-foreground whitespace-pre-wrap">
+                <div key={i} className="text-foreground whitespace-pre-wrap text-[13px]">
                   {turn.content}
                 </div>
               )
@@ -318,18 +315,16 @@ export function AiDraftIssueDialog({
                 <button
                   type="button"
                   onClick={() => setThoughtsOpen(!thoughtsOpen)}
-                  className="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-[12px]"
                 >
                   <Brain className="h-3.5 w-3.5" />
-                  <span>
-                    Thought for {isDrafting ? elapsedSeconds : lastThinkSeconds}s
-                  </span>
+                  <span>Thought for {isDrafting ? elapsedSeconds : lastThinkSeconds}s</span>
                   <ChevronRight
                     className={`h-3 w-3 transition-transform ${thoughtsOpen ? 'rotate-90' : ''}`}
                   />
                 </button>
                 {thoughtsOpen && (
-                  <div className="rounded-md border border-border bg-muted/30 p-3 text-[12px] text-muted-foreground">
+                  <div className="border-border bg-muted/30 text-muted-foreground rounded-md border p-3 text-[12px]">
                     Reading prompt, classifying scope (single ticket vs checklist), then drafting
                     titles, types, priorities, and labels for each item.
                   </div>
@@ -340,13 +335,13 @@ export function AiDraftIssueDialog({
             {drafts.length > 0 && (
               <div className="space-y-2 pt-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex min-w-0 items-center gap-2">
                     <AiBadge
                       feature="Draft Issue"
                       model={provider ?? undefined}
                       generatedAt={new Date()}
                     />
-                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
                       {drafts.length === 1 ? 'Draft' : `${drafts.length} drafts`}
                       {provider ? ` · ${provider}` : ''}
                     </span>
@@ -385,7 +380,7 @@ export function AiDraftIssueDialog({
                     key={idx}
                     onClick={() => setSelectedDraftIndex(idx)}
                     className={`rounded-md transition-colors ${
-                      selectedDraftIndex === idx ? 'ring-1 ring-primary' : ''
+                      selectedDraftIndex === idx ? 'ring-primary ring-1' : ''
                     }`}
                   >
                     <DraftCard
@@ -404,7 +399,7 @@ export function AiDraftIssueDialog({
             )}
 
             {draftMutation.isError && drafts.length === 0 ? (
-              <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+              <div className="border-destructive/30 bg-destructive/5 text-destructive flex items-start gap-2 rounded-md border p-3 text-sm">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>{(draftMutation.error as Error).message}</span>
               </div>
@@ -424,7 +419,7 @@ export function AiDraftIssueDialog({
                   disabled={isDrafting || isCreating}
                 />
                 <div className="flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">{prompt.length}/6000</p>
+                  <p className="text-muted-foreground text-xs">{prompt.length}/6000</p>
                   <Button onClick={handleSubmitPrompt} disabled={!canSubmitPrompt} size="sm">
                     {isDrafting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     <Sparkles className="mr-1.5 h-4 w-4" />
@@ -436,9 +431,9 @@ export function AiDraftIssueDialog({
           </div>
 
           {/* RIGHT — live preview */}
-          <aside className="overflow-y-auto bg-muted/20 p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
+          <aside className="bg-muted/20 overflow-y-auto p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="text-muted-foreground text-[11px] uppercase tracking-wider">
                 Live preview
               </div>
               {previewDraft && (
@@ -452,15 +447,15 @@ export function AiDraftIssueDialog({
             {previewDraft ? (
               <div className="space-y-4">
                 <div>
-                  <label className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                  <label className="text-muted-foreground text-[11px] uppercase tracking-wider">
                     Project icon
                   </label>
-                  <div className="mt-1 h-12 w-12 rounded-lg bg-muted flex items-center justify-center text-2xl">
+                  <div className="bg-muted mt-1 flex h-12 w-12 items-center justify-center rounded-lg text-2xl">
                     {TYPE_ICON[previewDraft.type] ?? '📋'}
                   </div>
                 </div>
                 <div>
-                  <label className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                  <label className="text-muted-foreground text-[11px] uppercase tracking-wider">
                     Title
                   </label>
                   <div className="mt-1 text-[14px] font-medium">
@@ -470,10 +465,10 @@ export function AiDraftIssueDialog({
                   </div>
                 </div>
                 <div>
-                  <label className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                  <label className="text-muted-foreground text-[11px] uppercase tracking-wider">
                     Description
                   </label>
-                  <div className="mt-1 text-[13px] text-foreground/80 whitespace-pre-wrap">
+                  <div className="text-foreground/80 mt-1 whitespace-pre-wrap text-[13px]">
                     {previewDraft.description?.trim() ? (
                       previewDraft.description
                     ) : (
@@ -483,30 +478,30 @@ export function AiDraftIssueDialog({
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                    <label className="text-muted-foreground text-[11px] uppercase tracking-wider">
                       Type
                     </label>
                     <div className="mt-1 text-[13px] capitalize">{previewDraft.type}</div>
                   </div>
                   <div>
-                    <label className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                    <label className="text-muted-foreground text-[11px] uppercase tracking-wider">
                       Priority
                     </label>
                     <div className="mt-1 text-[13px] capitalize">{previewDraft.priority}</div>
                   </div>
                 </div>
                 <div>
-                  <label className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                  <label className="text-muted-foreground text-[11px] uppercase tracking-wider">
                     Labels
                   </label>
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     {previewDraft.labels.length === 0 ? (
-                      <span className="text-[13px] text-muted-foreground italic">None</span>
+                      <span className="text-muted-foreground text-[13px] italic">None</span>
                     ) : (
                       previewDraft.labels.map((l) => (
                         <span
                           key={l}
-                          className="inline-flex items-center rounded-full border border-border bg-background px-2 py-0.5 text-[11px]"
+                          className="border-border bg-background inline-flex items-center rounded-full border px-2 py-0.5 text-[11px]"
                         >
                           {l}
                         </span>
@@ -516,7 +511,7 @@ export function AiDraftIssueDialog({
                 </div>
                 {typeof previewDraft.estimate === 'number' && (
                   <div>
-                    <label className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                    <label className="text-muted-foreground text-[11px] uppercase tracking-wider">
                       Estimate
                     </label>
                     <div className="mt-1 text-[13px]">{previewDraft.estimate}</div>
@@ -526,8 +521,8 @@ export function AiDraftIssueDialog({
             ) : (
               <div className="flex h-full min-h-[200px] items-center justify-center text-center">
                 <div className="space-y-2">
-                  <Sparkles className="mx-auto h-6 w-6 text-muted-foreground/60" />
-                  <p className="text-[13px] text-muted-foreground">
+                  <Sparkles className="text-muted-foreground/60 mx-auto h-6 w-6" />
+                  <p className="text-muted-foreground text-[13px]">
                     {isDrafting ? 'Generating draft…' : 'Draft will appear here'}
                   </p>
                 </div>
@@ -538,7 +533,7 @@ export function AiDraftIssueDialog({
 
         {/* Sticky bottom — Awaiting response confirm bar */}
         {drafts.length > 0 ? (
-          <div className="border-t border-border bg-muted/40 px-5 py-3 flex items-center justify-between">
+          <div className="border-border bg-muted/40 flex items-center justify-between border-t px-5 py-3">
             <div className="text-[12.5px]">
               <div className="font-medium">Awaiting response</div>
               <div className="text-muted-foreground">
@@ -569,7 +564,7 @@ export function AiDraftIssueDialog({
             </div>
           </div>
         ) : (
-          <div className="border-t border-border px-5 py-3 flex items-center justify-end">
+          <div className="border-border flex items-center justify-end border-t px-5 py-3">
             <Button variant="outline" onClick={() => handleClose(false)} size="sm">
               Cancel
             </Button>
@@ -600,7 +595,7 @@ function DraftCard({
   onChange: (patch: Partial<IssueDraft>) => void;
 }) {
   return (
-    <div className="rounded-md border border-border bg-muted/20 p-3 space-y-3">
+    <div className="border-border bg-muted/20 space-y-3 rounded-md border p-3">
       <div className="flex items-start gap-3">
         {multi && (
           <button
@@ -609,11 +604,11 @@ function DraftCard({
               e.stopPropagation();
               onToggle();
             }}
-            className="mt-1 shrink-0 text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground mt-1 shrink-0"
             aria-label={selected ? 'Deselect' : 'Select'}
           >
             {selected ? (
-              <CheckSquare className="h-4 w-4 text-primary" />
+              <CheckSquare className="text-primary h-4 w-4" />
             ) : (
               <Square className="h-4 w-4" />
             )}
@@ -621,8 +616,9 @@ function DraftCard({
         )}
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-mono text-muted-foreground">#{index + 1}</span>
+            <span className="text-muted-foreground font-mono text-xs">#{index + 1}</span>
             <Input
+              aria-label={`Draft ${index + 1} title`}
               value={draft.title}
               onChange={(e) => onChange({ title: e.target.value })}
               onClick={(e) => e.stopPropagation()}
@@ -638,7 +634,7 @@ function DraftCard({
               e.stopPropagation();
               onRemove();
             }}
-            className="shrink-0 text-muted-foreground hover:text-destructive"
+            className="text-muted-foreground hover:text-destructive shrink-0"
             aria-label="Remove draft"
           >
             <X className="h-4 w-4" />
@@ -713,7 +709,7 @@ function DraftCard({
       </div>
 
       {creating && (
-        <div className="flex items-center gap-2 text-xs text-primary">
+        <div className="text-primary flex items-center gap-2 text-xs">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
           Creating…
         </div>

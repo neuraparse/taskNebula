@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { and, eq } from 'drizzle-orm';
 import { db, integrationConnections } from '@tasknebula/db';
 import { auth } from '@/auth';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,9 @@ export async function GET(request: NextRequest) {
   const organizationId = searchParams.get('organizationId');
   if (!organizationId) {
     return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
+  }
+  if (!(await hasPermission(organizationId, 'org:view'))) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   try {

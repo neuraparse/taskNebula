@@ -76,7 +76,7 @@ async function storeDocument({ documentName, state }) {
  * any user with a valid collaboration JWT could connect to any document
  * and receive its Y-state — including issues in projects they don't
  * belong to. Authorization rule: user must be a member of the issue's
- * project, OR an owner/admin of the issue's organization.
+ * project with edit rights, OR an owner/admin of the issue's organization.
  *
  * Returns `true` when access is granted, `false` otherwise. Unknown
  * document-name shapes are rejected (no implicit fallthrough).
@@ -91,12 +91,21 @@ async function userCanAccessDocument(userId, documentName) {
     `
     SELECT 1
     FROM issues i
-    LEFT JOIN project_members pm
-      ON pm.project_id = i.project_id AND pm.user_id = $1
-    LEFT JOIN organization_members om
-      ON om.organization_id = i.organization_id
-       AND om.user_id = $1
-       AND om.role IN ('owner', 'admin')
+	    INNER JOIN users u
+	      ON u.id = $1 AND u.status = 'active'
+	    LEFT JOIN project_members pm
+	      ON pm.project_id = i.project_id
+	     AND pm.user_id = $1
+	     AND (
+	       pm.can_edit_issues = 'true'
+	       OR pm.can_administer_project = 'true'
+	       OR pm.role IN ('product_owner', 'scrum_master', 'tech_lead', 'developer', 'qa_engineer', 'designer')
+	     )
+	    LEFT JOIN organization_members om
+	      ON om.organization_id = i.organization_id
+	       AND om.user_id = $1
+	       AND om.role IN ('owner', 'admin')
+	       AND om.status = 'active'
     WHERE i.id = $2
       AND (pm.user_id IS NOT NULL OR om.user_id IS NOT NULL)
     LIMIT 1
@@ -178,7 +187,7 @@ const server = new Server({
     // Per-document authorization. Without this check a valid JWT for any
     // user lets that user open any `issue:<id>` doc — including issues in
     // projects they cannot see via REST. We resolve the issue's project
-    // and require either project membership or org-level admin/owner.
+    // and require either project edit access or org-level admin/owner.
     let permitted;
     try {
       permitted = await userCanAccessDocument(userId, documentName);

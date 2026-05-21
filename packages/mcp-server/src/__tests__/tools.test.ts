@@ -63,7 +63,7 @@ describe('tool registry', () => {
         'search_issues',
         'transition_status',
         'update_issue',
-      ].sort(),
+      ].sort()
     );
   });
 
@@ -80,19 +80,25 @@ describe('search_issues', () => {
     expect(() => searchIssuesTool.inputSchema.parse({})).toThrow();
   });
   it('applies defaults for limit/offset', () => {
-    const v = searchIssuesTool.inputSchema.parse({ query: 'foo' });
+    const v = searchIssuesTool.inputSchema.parse({ query: 'foo', organizationId: 'org-1' });
     expect(v.limit).toBe(25);
     expect(v.offset).toBe(0);
   });
   it('calls /api/search with query params', async () => {
     const { client, calls } = mockClient({ items: [] });
     await searchIssuesTool.handler(
-      searchIssuesTool.inputSchema.parse({ query: 'bug', projectId: 'p1', limit: 10 }),
-      { client },
+      searchIssuesTool.inputSchema.parse({
+        query: 'bug',
+        organizationId: 'org-1',
+        projectId: 'p1',
+        limit: 10,
+      }),
+      { client }
     );
     expect(calls).toHaveLength(1);
     expect(calls[0]!.url).toContain('/api/search');
     expect(calls[0]!.url).toContain('q=bug');
+    expect(calls[0]!.url).toContain('organizationId=org-1');
     expect(calls[0]!.url).toContain('projectId=p1');
     expect(calls[0]!.url).toContain('limit=10');
   });
@@ -154,7 +160,7 @@ describe('update_issue', () => {
     const { client, calls } = mockClient({ ok: true });
     await updateIssueTool.handler(
       { issueId: 'i1', title: 'Renamed', priority: 'high' },
-      { client },
+      { client }
     );
     expect(calls[0]!.init.method).toBe('PATCH');
     const body = JSON.parse(String(calls[0]!.init.body));
@@ -168,10 +174,7 @@ describe('transition_status', () => {
   });
   it('PATCHes with statusId', async () => {
     const { client, calls } = mockClient({ ok: true });
-    await transitionStatusTool.handler(
-      { issueId: 'i1', statusId: 's2' },
-      { client },
-    );
+    await transitionStatusTool.handler({ issueId: 'i1', statusId: 's2' }, { client });
     expect(JSON.parse(String(calls[0]!.init.body))).toMatchObject({ statusId: 's2' });
   });
 });
@@ -197,6 +200,7 @@ describe('add_comment', () => {
     await addCommentTool.handler({ issueId: 'i1', body: 'hello' }, { client });
     expect(calls[0]!.url).toMatch(/\/api\/issues\/i1\/comments$/);
     expect(calls[0]!.init.method).toBe('POST');
+    expect(JSON.parse(String(calls[0]!.init.body))).toMatchObject({ content: 'hello' });
   });
 });
 
@@ -211,7 +215,7 @@ describe('link_pr', () => {
         issueId: 'i1',
         url: 'https://github.com/o/r/pull/1',
       }),
-      { client },
+      { client }
     );
     expect(calls[0]!.url).toMatch(/\/api\/issues\/i1\/links$/);
     const body = JSON.parse(String(calls[0]!.init.body));
@@ -238,11 +242,16 @@ describe('create_subtask', () => {
   it('forces type=subtask and forwards parentIssueId', async () => {
     const { client, calls } = mockClient({ id: 'i2' });
     await createSubtaskTool.handler(
-      { parentIssueId: 'i1', title: 'Sub' },
-      { client },
+      { parentIssueId: 'i1', projectId: 'p1', title: 'Sub' },
+      { client }
     );
     const body = JSON.parse(String(calls[0]!.init.body));
-    expect(body).toMatchObject({ type: 'subtask', parentIssueId: 'i1', title: 'Sub' });
+    expect(body).toMatchObject({
+      type: 'subtask',
+      parentIssueId: 'i1',
+      projectId: 'p1',
+      title: 'Sub',
+    });
   });
 });
 

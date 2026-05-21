@@ -192,7 +192,11 @@ export function MembersPageClient() {
       resetInviteForm();
     },
     onError: (error: Error) => {
-      toast({ title: 'Failed to invite member', description: error.message, variant: 'destructive' });
+      toast({
+        title: 'Failed to invite member',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 
@@ -252,31 +256,33 @@ export function MembersPageClient() {
       toast({ title: 'Member removed', description: 'Member removed successfully.' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Failed to remove member', description: error.message, variant: 'destructive' });
+      toast({
+        title: 'Failed to remove member',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 
   if (!currentOrganizationId) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <p className="text-sm text-muted-foreground">Please select an organization.</p>
+        <p className="text-muted-foreground text-sm">Please select an organization.</p>
       </div>
     );
   }
 
   return (
-    <div className="animate-fade-up space-y-8 stagger">
+    <div className="animate-fade-up stagger space-y-8">
       <section className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
             <span className="kicker">Access</span>
-            <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
+            <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
               Members
-              <span className="text-sm font-normal text-muted-foreground">
-                ({members.length})
-              </span>
+              <span className="text-muted-foreground text-sm font-normal">({members.length})</span>
             </h2>
-            <p className="text-sm text-muted-foreground max-w-prose">
+            <p className="text-muted-foreground max-w-prose text-sm">
               Manage organization members and their roles.
             </p>
           </div>
@@ -293,7 +299,7 @@ export function MembersPageClient() {
               </span>
             )}
             {isSuperAdmin && (
-              <span className="rounded-full border border-accent-violet/20 bg-accent-violet/10 px-2.5 py-0.5 text-[11px] font-medium text-accent-violet">
+              <span className="border-accent-violet/20 bg-accent-violet/10 text-accent-violet rounded-full border px-2.5 py-0.5 text-[11px] font-medium">
                 Super admin
               </span>
             )}
@@ -314,7 +320,7 @@ export function MembersPageClient() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <UserPlus className="h-4 w-4 text-muted-foreground" />
+                    <UserPlus className="text-muted-foreground h-4 w-4" />
                     Invite member
                   </DialogTitle>
                   <DialogDescription>
@@ -338,7 +344,7 @@ export function MembersPageClient() {
                       value={inviteRole}
                       onValueChange={(value) => setInviteRole(value as Member['role'])}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger id="role">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -350,24 +356,22 @@ export function MembersPageClient() {
                     </Select>
                   </div>
 
-                  <div className="space-y-2 rounded-md border border-border bg-muted/20 p-3">
+                  <div className="border-border bg-muted/20 space-y-2 rounded-md border p-3">
                     <button
                       type="button"
                       onClick={() => setProjectsExpanded((v) => !v)}
                       className="flex w-full items-center justify-between text-left"
                     >
                       <span className="flex items-center gap-2 text-sm font-medium">
-                        <FolderKanban className="h-4 w-4 text-muted-foreground" />
+                        <FolderKanban className="text-muted-foreground h-4 w-4" />
                         Add to projects (optional)
                         {selectedProjectIds.length > 0 && (
-                          <span className="chip text-[11px]">
-                            {selectedProjectIds.length}
-                          </span>
+                          <span className="chip text-[11px]">{selectedProjectIds.length}</span>
                         )}
                       </span>
                       <ChevronsUpDown
                         className={cn(
-                          'h-4 w-4 text-muted-foreground transition-transform',
+                          'text-muted-foreground h-4 w-4 transition-transform',
                           projectsExpanded && 'rotate-180'
                         )}
                       />
@@ -377,23 +381,21 @@ export function MembersPageClient() {
                       <div className="space-y-3 pt-2">
                         {projectsLoading ? (
                           <div className="flex items-center justify-center py-4">
-                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
                           </div>
                         ) : orgProjects.length === 0 ? (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-muted-foreground text-xs">
                             No projects yet — invite this person and add them to a project later.
                           </p>
                         ) : (
                           <>
-                            <Popover
-                              open={projectPickerOpen}
-                              onOpenChange={setProjectPickerOpen}
-                            >
+                            <Popover open={projectPickerOpen} onOpenChange={setProjectPickerOpen}>
                               <PopoverTrigger asChild>
                                 <Button
                                   type="button"
                                   variant="outline"
                                   role="combobox"
+                                  aria-label="Select projects"
                                   aria-expanded={projectPickerOpen}
                                   className="w-full justify-between font-normal"
                                 >
@@ -429,7 +431,7 @@ export function MembersPageClient() {
                                               )}
                                             />
                                             <span className="truncate">{project.name}</span>
-                                            <span className="ml-2 truncate font-mono text-xs text-muted-foreground">
+                                            <span className="text-muted-foreground ml-2 truncate font-mono text-xs">
                                               {project.key}
                                             </span>
                                           </CommandItem>
@@ -446,10 +448,7 @@ export function MembersPageClient() {
                                 {selectedProjectIds.map((id) => {
                                   const project = projectById.get(id);
                                   return (
-                                    <span
-                                      key={id}
-                                      className="chip flex items-center gap-1 text-xs"
-                                    >
+                                    <span key={id} className="chip flex items-center gap-1 text-xs">
                                       {project?.name ?? id}
                                       <button
                                         type="button"
@@ -499,9 +498,7 @@ export function MembersPageClient() {
                     onClick={handleSubmitInvite}
                     disabled={inviteMutation.isPending || !inviteEmail}
                   >
-                    {inviteMutation.isPending && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
+                    {inviteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Send invitation
                   </Button>
                 </DialogFooter>
@@ -518,12 +515,12 @@ export function MembersPageClient() {
 
         {isLoading ? (
           <div className="flex items-center justify-center py-10">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
           </div>
         ) : members.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-12 text-center">
-            <Users className="h-8 w-8 text-muted-foreground/50" />
-            <p className="text-sm text-muted-foreground">No members yet.</p>
+            <Users className="text-muted-foreground/50 h-8 w-8" />
+            <p className="text-muted-foreground text-sm">No members yet.</p>
             {canInvite && (
               <Button size="sm" onClick={() => setInviteOpen(true)}>
                 Invite your first member
@@ -537,7 +534,7 @@ export function MembersPageClient() {
               return (
                 <div
                   key={member.id}
-                  className="flex min-h-[52px] items-center justify-between gap-4 rounded-md px-2 py-2 transition-colors duration-150 hover:bg-accent/40"
+                  className="hover:bg-accent/40 flex min-h-[52px] items-center justify-between gap-4 rounded-md px-2 py-2 transition-colors duration-150"
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     <Avatar className="h-8 w-8">
@@ -553,7 +550,7 @@ export function MembersPageClient() {
                           <span className="chip text-[11px]">Invited</span>
                         )}
                       </div>
-                      <p className="truncate text-xs text-muted-foreground">{member.email}</p>
+                      <p className="text-muted-foreground truncate text-xs">{member.email}</p>
                     </div>
                   </div>
 

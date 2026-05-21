@@ -23,9 +23,7 @@ jest.mock('@/lib/hooks/use-teamspaces', () => ({
 const originalFetch = global.fetch;
 
 const mockUseProjects = useProjects as jest.MockedFunction<typeof useProjects>;
-const mockUseCreateProject = useCreateProject as jest.MockedFunction<
-  typeof useCreateProject
->;
+const mockUseCreateProject = useCreateProject as jest.MockedFunction<typeof useCreateProject>;
 const mockUseTeamspaces = useTeamspaces as jest.MockedFunction<typeof useTeamspaces>;
 
 function Wrapper({ children }: { children: ReactNode }) {
@@ -126,9 +124,8 @@ describe('ProjectsClient', () => {
 
     render(<ProjectsClient />, { wrapper: Wrapper });
 
-    expect(
-      screen.getByText('No projects yet. Create your first to get started.')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Spin up your first project')).toBeInTheDocument();
+    expect(screen.getByText(/Projects collect issues, sprints, docs/i)).toBeInTheDocument();
     // Header shows "0 active projects"
     expect(screen.getByText('0 active projects')).toBeInTheDocument();
     // Empty-state CTA + header CTA both present

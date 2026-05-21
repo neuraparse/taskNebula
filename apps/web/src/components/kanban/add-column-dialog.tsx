@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -43,7 +44,12 @@ const categoryColors: Record<string, string> = {
   blocked: '#ef4444',
 };
 
-export function AddColumnDialog({ open, onOpenChange, projectId, onSuccess }: AddColumnDialogProps) {
+export function AddColumnDialog({
+  open,
+  onOpenChange,
+  projectId,
+  onSuccess,
+}: AddColumnDialogProps) {
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -82,13 +88,14 @@ export function AddColumnDialog({ open, onOpenChange, projectId, onSuccess }: Ad
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Add Column</DialogTitle>
+          <DialogDescription>Create a new column for your board.</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
               <Label htmlFor="col-name" className="text-sm font-medium">
-                Name
+                Column Name
               </Label>
               <Input
                 id="col-name"
@@ -104,10 +111,7 @@ export function AddColumnDialog({ open, onOpenChange, projectId, onSuccess }: Ad
               <Label htmlFor="col-category" className="text-sm font-medium">
                 Category
               </Label>
-              <Select
-                value={category}
-                onValueChange={setCategory}
-              >
+              <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger id="col-category">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
@@ -126,16 +130,12 @@ export function AddColumnDialog({ open, onOpenChange, projectId, onSuccess }: Ad
           </div>
 
           <DialogFooter className="mt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading || !name || !category}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create
+              Create column
             </Button>
           </DialogFooter>
         </form>

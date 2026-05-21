@@ -11,6 +11,7 @@ import { and, eq } from 'drizzle-orm';
 import { db, integrationConnections } from '@tasknebula/db';
 import { auth } from '@/auth';
 import { encryptToken } from '@/lib/integrations/token-crypto';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -129,7 +130,11 @@ export async function GET(request: NextRequest) {
       cache: 'no-store',
     });
     if (userRes.ok) {
-      const user = (await userRes.json()) as { id?: number | string; username?: string; name?: string };
+      const user = (await userRes.json()) as {
+        id?: number | string;
+        username?: string;
+        name?: string;
+      };
       if (user?.id !== undefined && user.id !== null) externalAccountId = String(user.id);
       externalAccountLabel = user?.username || user?.name || '';
     }
@@ -148,6 +153,10 @@ export async function GET(request: NextRequest) {
 
   const now = new Date();
   const organizationId = decoded.o;
+
+  if (!(await hasPermission(organizationId, 'org:settings'))) {
+    return settingsRedirect(request, { integration: 'gitlab', error: 'forbidden' });
+  }
 
   try {
     // Upsert: one connection per (organizationId, provider). If another

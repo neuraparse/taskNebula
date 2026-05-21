@@ -132,7 +132,7 @@ describe('TeamspaceSwitcher', () => {
     render(<TeamspaceSwitcher />);
 
     await user.click(screen.getByRole('combobox'));
-    await user.click(screen.getByText('Manage Teamspaces'));
+    await user.click(screen.getByText('Manage teamspaces'));
 
     expect(pushMock).toHaveBeenCalledWith('/settings/organization?tab=teamspaces');
   });

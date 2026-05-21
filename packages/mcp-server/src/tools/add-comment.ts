@@ -13,7 +13,7 @@ export const addCommentTool: ToolDefinition<typeof addCommentInput> = {
   inputSchema: addCommentInput,
   async handler(input, { client }) {
     return client.post(`/api/issues/${encodeURIComponent(input.issueId)}/comments`, {
-      body: input.body,
+      content: input.body,
       mentions: input.mentions,
     });
   },

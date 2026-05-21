@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { auth } from '@/auth';
 import { getClientCredentials } from '@/lib/integrations/client-credentials';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,6 +28,9 @@ export async function GET(request: NextRequest) {
   const organizationId = searchParams.get('organizationId');
   if (!organizationId) {
     return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
+  }
+  if (!(await hasPermission(organizationId, 'org:settings'))) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   // Prefer admin-managed credentials (DB) with env vars as fallback.

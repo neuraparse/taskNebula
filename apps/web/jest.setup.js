@@ -42,6 +42,32 @@ jest.mock('next-intl', () => {
   };
 });
 
+// Default App Router mock for client component tests. Individual tests can
+// still provide their own next/navigation mock when they need mutable query
+// strings or to assert router calls.
+jest.mock('next/navigation', () => {
+  const searchParams = new URLSearchParams();
+  return {
+    __esModule: true,
+    redirect: jest.fn((path) => {
+      throw new Error(`NEXT_REDIRECT:${path}`);
+    }),
+    notFound: jest.fn(() => {
+      throw new Error('NEXT_NOT_FOUND');
+    }),
+    usePathname: () => '/',
+    useRouter: () => ({
+      back: jest.fn(),
+      forward: jest.fn(),
+      prefetch: jest.fn(),
+      push: jest.fn(),
+      refresh: jest.fn(),
+      replace: jest.fn(),
+    }),
+    useSearchParams: () => searchParams,
+  };
+});
+
 // Radix' DirectionProvider should not blow up in JSDOM. Mock to a passthrough.
 jest.mock('@radix-ui/react-direction', () => ({
   __esModule: true,
@@ -84,4 +110,3 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 if (typeof window !== 'undefined') {
   window.IS_REACT_ACT_ENVIRONMENT = true;
 }
-

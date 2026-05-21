@@ -196,7 +196,9 @@ describe('GET /api/issues/my-issues', () => {
     dbSelectMock.mockReturnValueOnce(whereBuilder([]));
 
     const response = await GET(
-      new NextRequestCtor('http://localhost:3002/api/issues/my-issues?organizationId=org-1&teamId=team-1')
+      new NextRequestCtor(
+        'http://localhost:3002/api/issues/my-issues?organizationId=org-1&teamId=team-1'
+      )
     );
 
     expect(response.status).toBe(200);
@@ -249,11 +251,14 @@ describe('GET /api/issues/my-issues', () => {
       );
 
     const response = await GET(
-      new NextRequestCtor('http://localhost:3002/api/issues/my-issues?organizationId=org-1&teamId=team-1')
+      new NextRequestCtor(
+        'http://localhost:3002/api/issues/my-issues?organizationId=org-1&teamId=team-1'
+      )
     );
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
+      view: 'assigned',
       issues: [
         {
           id: 'issue-1',

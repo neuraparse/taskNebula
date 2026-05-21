@@ -2,7 +2,11 @@ import { z } from 'zod';
 import type { ToolDefinition } from './types.js';
 
 export const searchIssuesInput = z.object({
-  query: z.string().min(1).describe('Free-text query — matches title, description, and key (e.g. "TN-123").'),
+  query: z
+    .string()
+    .min(1)
+    .describe('Free-text query — matches title, description, and key (e.g. "TN-123").'),
+  organizationId: z.string().min(1).describe('Workspace / organization id to search within.'),
   projectId: z.string().optional().describe('Restrict results to a single project.'),
   status: z.string().optional().describe('Workflow status name, e.g. "In Progress".'),
   assigneeId: z.string().optional(),
@@ -18,6 +22,7 @@ export const searchIssuesTool: ToolDefinition<typeof searchIssuesInput> = {
   async handler(input, { client }) {
     return client.get('/api/search', {
       q: input.query,
+      organizationId: input.organizationId,
       type: 'issue',
       projectId: input.projectId,
       status: input.status,

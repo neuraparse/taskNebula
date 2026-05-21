@@ -7,22 +7,15 @@ import { OrganizationSwitcher } from '@/components/organization/organization-swi
 import { UserProfileDropdown } from '@/components/user/user-profile-dropdown';
 import { NotificationBell } from '@/components/notifications/notification-bell';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
+import { useCommandPalette } from '@/lib/command/use-command-palette';
 
 export function AppHeader() {
   const tNav = useTranslations('nav');
   const tActions = useTranslations('actions');
-
-  const openPalette = () => {
-    const event = new KeyboardEvent('keydown', {
-      key: 'k',
-      metaKey: true,
-      bubbles: true,
-    });
-    document.dispatchEvent(event);
-  };
+  const { open: openPalette } = useCommandPalette();
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/80 px-6 backdrop-blur">
+    <header className="border-border bg-background/80 sticky top-0 z-30 flex h-14 items-center justify-between border-b px-6 backdrop-blur">
       {/* Workspace + search trigger */}
       <div className="flex flex-1 items-center gap-4">
         <OrganizationSwitcher />
@@ -30,9 +23,9 @@ export function AppHeader() {
           type="button"
           onClick={openPalette}
           aria-label={tActions('open_command_palette')}
-          className="group relative flex h-9 w-full max-w-md items-center rounded-md border border-border bg-surface ps-9 pe-2 text-start text-sm text-muted-foreground transition-all duration-150 ease-snap hover:border-primary/30 hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="border-border bg-surface text-muted-foreground ease-snap hover:border-primary/30 hover:bg-accent/60 hover:text-foreground focus-visible:ring-ring group relative flex h-9 w-full max-w-md items-center rounded-md border pe-2 ps-9 text-start text-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2"
         >
-          <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="text-muted-foreground absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2" />
           <span className="truncate">{tNav('search_placeholder')}</span>
           <kbd className="chip pointer-events-none ms-auto inline-flex shrink-0 select-none items-center gap-1 font-mono text-[10px]">
             <Command className="h-3 w-3" />K
@@ -48,7 +41,7 @@ export function AppHeader() {
           variant="ghost"
           size="icon"
           aria-label={tActions('help')}
-          className="transition-all duration-150 ease-snap"
+          className="ease-snap transition-all duration-150"
         >
           <HelpCircle className="h-4 w-4" />
         </Button>

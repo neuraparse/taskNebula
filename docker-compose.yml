@@ -91,8 +91,6 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET must be set (generate with `openssl rand -base64 32`)}
-        AUTH_URL: ${APP_URL:-http://localhost:3000}
         NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost:3000}
     container_name: tasknebula-web
     restart: unless-stopped
@@ -122,7 +120,8 @@ services:
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      SKIP_SEED: ${SKIP_SEED:-false}
+      SKIP_SEED: ${SKIP_SEED:-true}
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
       NODE_ENV: production
       # Email / SMTP (optional)
       SMTP_HOST: ${SMTP_HOST:-}

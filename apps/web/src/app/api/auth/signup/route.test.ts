@@ -1,7 +1,10 @@
+import { createHash } from 'crypto';
+
 const dbInsertMock = jest.fn();
 const dbUpdateMock = jest.fn();
 const findFirstMock = jest.fn();
 const bcryptHashMock = jest.fn(async () => 'hashed');
+const issueEmailVerificationTokenMock = jest.fn();
 
 class MockNextRequest {
   private readonly bodyValue: string;
@@ -77,6 +80,10 @@ jest.mock('@tasknebula/db', () => ({
     userId: 'organizationMembers.userId',
     status: 'organizationMembers.status',
   },
+}));
+
+jest.mock('@/lib/auth/email-verification', () => ({
+  issueEmailVerificationToken: (...args: unknown[]) => issueEmailVerificationTokenMock(...args),
 }));
 
 jest.mock('drizzle-orm', () => ({
@@ -168,24 +175,28 @@ describe('/api/auth/signup route', () => {
   });
 
   it('activates an invited user when they sign up', async () => {
+    const inviteToken = 'invite-token-1';
     findFirstMock.mockResolvedValue({
       id: 'u1',
       email: 'a@e.com',
       status: 'invited',
       password: null,
+      inviteTokenHash: createHash('sha256').update(inviteToken).digest('hex'),
+      inviteTokenExpiresAt: new Date(Date.now() + 60_000),
     });
     dbUpdateMock
-      .mockReturnValueOnce(
-        updateReturning([
-          { id: 'u1', name: 'Alice', email: 'a@e.com' },
-        ])
-      )
+      .mockReturnValueOnce(updateReturning([{ id: 'u1', name: 'Alice', email: 'a@e.com' }]))
       .mockReturnValueOnce(updateResolving());
 
     const response = await POST(
       new NextRequestCtor('http://localhost:3002/api/auth/signup', {
         method: 'POST',
-        body: JSON.stringify({ name: 'Alice', email: 'a@e.com', password: 'abcdefgh' }),
+        body: JSON.stringify({
+          name: 'Alice',
+          email: 'a@e.com',
+          password: 'abcdefgh',
+          inviteToken,
+        }),
       })
     );
     expect(response.status).toBe(201);
@@ -208,7 +219,10 @@ describe('/api/auth/signup route', () => {
       })
     );
     expect(response.status).toBe(201);
-    const body = (await response.json()) as { message: string; user: { id: string; email: string } };
+    const body = (await response.json()) as {
+      message: string;
+      user: { id: string; email: string };
+    };
     expect(body.message).toBe('User created successfully');
     expect(body.user).toEqual({ id: 'u2', name: 'Bob', email: 'b@e.com' });
     expect(bcryptHashMock).toHaveBeenCalledWith('secret12', 10);

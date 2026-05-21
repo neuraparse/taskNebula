@@ -13,6 +13,7 @@
  */
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -42,18 +43,17 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
     <div className="flex min-h-[60vh] w-full items-center justify-center p-6">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <div className="mb-2 flex items-center gap-2 text-destructive">
+          <div className="text-destructive mb-2 flex items-center gap-2">
             <AlertTriangle className="h-5 w-5" aria-hidden />
             <CardTitle>Something went wrong</CardTitle>
           </div>
           <CardDescription>
-            An unexpected error occurred while loading this page. Our team has
-            been notified.
+            An unexpected error occurred while loading this page. Our team has been notified.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {error.digest && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Reference: <code className="font-mono">{error.digest}</code>
             </p>
           )}
@@ -64,7 +64,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
             Try again
           </Button>
           <Button asChild variant="outline">
-            <a href="/">Go home</a>
+            <Link href="/">Go home</Link>
           </Button>
         </CardFooter>
       </Card>

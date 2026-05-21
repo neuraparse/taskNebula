@@ -104,6 +104,7 @@ jest.mock('drizzle-orm', () => ({
   desc: (value: unknown) => ({ type: 'desc', value }),
   eq: (left: unknown, right: unknown) => ({ type: 'eq', left, right }),
   inArray: (left: unknown, right: unknown) => ({ type: 'inArray', left, right }),
+  relations: () => ({}),
 }));
 
 function limitBuilder(result: unknown) {
@@ -160,7 +161,10 @@ describe('/api/projects route', () => {
         private readonly _nextUrl: URL;
         private readonly bodyValue: string;
 
-        constructor(url: string, init?: { method?: string; headers?: Record<string, string>; body?: string }) {
+        constructor(
+          url: string,
+          init?: { method?: string; headers?: Record<string, string>; body?: string }
+        ) {
           this._url = url;
           this._method = init?.method || 'GET';
           this._headers = new MockHeaders(init?.headers);
@@ -232,16 +236,14 @@ describe('/api/projects route', () => {
 
   it('rejects a requested organization outside the user membership scope', async () => {
     authMock.mockResolvedValue({ user: { id: 'user-1' } });
-    dbSelectMock
-      .mockReturnValueOnce(limitBuilder([{ isSuperAdmin: false }]))
-      .mockReturnValueOnce(
-        whereBuilder([
-          {
-            organizationId: 'org-1',
-            role: 'member',
-          },
-        ])
-      );
+    dbSelectMock.mockReturnValueOnce(limitBuilder([{ isSuperAdmin: false }])).mockReturnValueOnce(
+      whereBuilder([
+        {
+          organizationId: 'org-1',
+          role: 'member',
+        },
+      ])
+    );
 
     const response = await GET(
       new NextRequestCtor('http://localhost:3002/api/projects?organizationId=org-2')

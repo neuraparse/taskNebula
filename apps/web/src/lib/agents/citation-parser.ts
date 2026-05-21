@@ -40,7 +40,7 @@ export interface Citation {
   occurrence: number;
 }
 
-const MARKER_REGEX = /\[(TN|DOC)-([A-Za-z0-9_\-]+)\]/g;
+const MARKER_REGEX = /\[(TN|DOC)-([A-Za-z0-9_-]+)\]/g;
 
 /**
  * Walk `answer` and pull out every `[TN-...]` / `[DOC-...]` marker. The
@@ -122,10 +122,7 @@ export function extractCitationMarkers(answer: string): string[] {
  * so the API can surface "hallucinated source" warnings instead of
  * silently dropping them.
  */
-export function findUnresolvedCitations(
-  answer: string,
-  sources: CitationSource[]
-): string[] {
+export function findUnresolvedCitations(answer: string, sources: CitationSource[]): string[] {
   const resolved = new Set(
     parseCitations(answer, sources).map((c) => `[${c.type === 'issue' ? 'TN' : 'DOC'}-${c.key}]`)
   );

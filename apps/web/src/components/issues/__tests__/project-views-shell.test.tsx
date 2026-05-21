@@ -179,7 +179,10 @@ describe('ProjectViewsShell', () => {
     fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = input.toString();
 
-      if (url === '/api/projects/project-1/views?teamId=team-1' && (!init || !init.method || init.method === 'GET')) {
+      if (
+        url === '/api/projects/project-1/views?teamId=team-1' &&
+        (!init || !init.method || init.method === 'GET')
+      ) {
         return {
           ok: true,
           json: async () => ({
@@ -230,7 +233,6 @@ describe('ProjectViewsShell', () => {
     renderWithQueryClient(<ProjectViewsShell projectId="project-1" />);
 
     expect(await screen.findByText('Views')).toBeInTheDocument();
-    expect(screen.getByText('Platform')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'List' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Board' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Timeline' })).toBeInTheDocument();
@@ -250,7 +252,10 @@ describe('ProjectViewsShell', () => {
     fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = input.toString();
 
-      if (url === '/api/projects/project-1/views?teamId=team-1' && (!init || !init.method || init.method === 'GET')) {
+      if (
+        url === '/api/projects/project-1/views?teamId=team-1' &&
+        (!init || !init.method || init.method === 'GET')
+      ) {
         return {
           ok: true,
           json: async () => ({
@@ -284,10 +289,10 @@ describe('ProjectViewsShell', () => {
     await screen.findByText('Views');
 
     await user.click(screen.getByRole('tab', { name: 'Calendar' }));
-    await user.click(screen.getByRole('button', { name: /Save current view/i }));
+    await user.click(screen.getByRole('button', { name: /Save view/i }));
     await user.type(screen.getByLabelText('View name'), 'Weekly planning');
     await user.type(screen.getByLabelText('Description'), 'Calendar-first teamspace view');
-    await user.click(screen.getByRole('checkbox', { name: /Apply this as the default view/i }));
+    await user.click(screen.getByRole('checkbox', { name: /Set as default view/i }));
     await user.click(screen.getByRole('button', { name: /^Save view$/i }));
 
     await waitFor(() => {

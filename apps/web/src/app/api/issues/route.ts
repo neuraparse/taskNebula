@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse, after } from 'next/server';
 import { z } from 'zod';
-import { getIssues, createIssue, createActivity, createAuditLog, db, projects, issues, workflowStatuses, workflows, users, projectMembers, organizationMembers } from '@tasknebula/db';
+import {
+  getIssues,
+  createIssue,
+  createActivity,
+  createAuditLog,
+  db,
+  projects,
+  issues,
+  workflowStatuses,
+  workflows,
+  users,
+  projectMembers,
+  organizationMembers,
+} from '@tasknebula/db';
 import { auth } from '@/auth';
 import { createId } from '@paralleldrive/cuid2';
 import { eq, and, desc, asc, sql, inArray } from 'drizzle-orm';
@@ -64,12 +77,7 @@ async function checkIssuePermission(
       canDeleteIssues: projectMembers.canDeleteIssues,
     })
     .from(projectMembers)
-    .where(
-      and(
-        eq(projectMembers.userId, userId),
-        eq(projectMembers.projectId, projectId)
-      )
-    )
+    .where(and(eq(projectMembers.userId, userId), eq(projectMembers.projectId, projectId)))
     .limit(1);
 
   if (!projectMember) {
@@ -81,7 +89,14 @@ async function checkIssuePermission(
   }
 
   // Check role-based permissions
-  const issueCreateRoles = ['product_owner', 'scrum_master', 'tech_lead', 'developer', 'qa_engineer', 'designer'];
+  const issueCreateRoles = [
+    'product_owner',
+    'scrum_master',
+    'tech_lead',
+    'developer',
+    'qa_engineer',
+    'designer',
+  ];
   const issueDeleteRoles = ['product_owner', 'tech_lead'];
 
   if (action === 'view') {
@@ -337,17 +352,6 @@ export const POST = withValidation({ body: createIssueSchema })(async (
       );
     }
 
-    // Get the next issue number for this project
-    const lastIssueResults = await db
-      .select()
-      .from(issues)
-      .where(eq(issues.projectId, actualProjectId))
-      .orderBy(desc(issues.number))
-      .limit(1);
-
-    const nextNumber = lastIssueResults[0] ? (lastIssueResults[0].number || 0) + 1 : 1;
-    const issueKey = `${project.key}-${nextNumber}`;
-
     // Get default workflow for the project
     let workflowId = project.defaultWorkflowId;
 
@@ -357,10 +361,7 @@ export const POST = withValidation({ body: createIssueSchema })(async (
         .select()
         .from(workflows)
         .where(
-          and(
-            eq(workflows.organizationId, project.organizationId),
-            eq(workflows.isDefault, true)
-          )
+          and(eq(workflows.organizationId, project.organizationId), eq(workflows.isDefault, true))
         )
         .limit(1);
 
@@ -382,7 +383,7 @@ export const POST = withValidation({ body: createIssueSchema })(async (
     // belongs to this workflow; otherwise fall back to the first backlog status.
     let finalStatusId: string | undefined;
     if (validatedData.statusId) {
-      const match = allStatuses.find(s => s.id === validatedData.statusId);
+      const match = allStatuses.find((s) => s.id === validatedData.statusId);
       if (match) {
         finalStatusId = match.id;
       }
@@ -391,7 +392,7 @@ export const POST = withValidation({ body: createIssueSchema })(async (
 
     if (!finalStatusId) {
       const backlogStatuses = allStatuses
-        .filter(s => s.category === 'backlog')
+        .filter((s) => s.category === 'backlog')
         .sort((a, b) => a.position - b.position);
       const defaultStatus = backlogStatuses[0];
       if (!defaultStatus) {
@@ -400,37 +401,50 @@ export const POST = withValidation({ body: createIssueSchema })(async (
       finalStatusId = defaultStatus.id;
     }
 
-    const issueData = {
-      id: createId(),
-      organizationId: project.organizationId,
-      projectId: actualProjectId,
-      key: issueKey,
-      number: nextNumber,
-      title: validatedData.title,
-      description: validatedData.description || null,
-      statusId: finalStatusId,
-      priority: validatedData.priority,
-      type: validatedData.type,
-      reporterId: session.user.id,
-      assigneeId: validatedData.assigneeId || null,
-      sprintId: validatedData.sprintId || null,
-      parentId: validatedData.parentId || null,
-      estimate: validatedData.estimate || null,
-      labels: validatedData.labels || [],
-      customFields: validatedData.customFields || {},
-      metadata: {},
-      createdBy: session.user.id,
-      updatedBy: session.user.id,
-    };
-
-    // Insert issue directly using db.insert
+    // Serialize number allocation per project so parallel creates cannot pick
+    // the same next issue key.
     let newIssue;
     try {
-      const newIssueResults = await db
-        .insert(issues)
-        .values(issueData)
-        .returning();
-      newIssue = newIssueResults[0];
+      newIssue = await db.transaction(async (tx) => {
+        await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${actualProjectId}))`);
+
+        const lastIssueResults = await tx
+          .select()
+          .from(issues)
+          .where(eq(issues.projectId, actualProjectId))
+          .orderBy(desc(issues.number))
+          .limit(1);
+
+        const nextNumber = lastIssueResults[0] ? (lastIssueResults[0].number || 0) + 1 : 1;
+        const issueKey = `${project.key}-${nextNumber}`;
+
+        const issueData = {
+          id: createId(),
+          organizationId: project.organizationId,
+          projectId: actualProjectId,
+          key: issueKey,
+          number: nextNumber,
+          title: validatedData.title,
+          description: validatedData.description || null,
+          statusId: finalStatusId,
+          priority: validatedData.priority,
+          type: validatedData.type,
+          reporterId: session.user.id,
+          assigneeId: validatedData.assigneeId || null,
+          sprintId: validatedData.sprintId || null,
+          parentId: validatedData.parentId || null,
+          estimate: validatedData.estimate || null,
+          labels: validatedData.labels || [],
+          customFields: validatedData.customFields || {},
+          metadata: {},
+          createdBy: session.user.id,
+          updatedBy: session.user.id,
+        };
+
+        const newIssueResults = await tx.insert(issues).values(issueData).returning();
+        return newIssueResults[0];
+      });
+
       if (!newIssue) {
         throw new Error('Failed to create issue');
       }

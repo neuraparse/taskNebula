@@ -111,6 +111,7 @@ jest.mock('drizzle-orm', () => ({
   eq: (left: unknown, right: unknown) => ({ type: 'eq', left, right }),
   ne: (left: unknown, right: unknown) => ({ type: 'ne', left, right }),
   count: () => ({ type: 'count' }),
+  relations: () => ({}),
 }));
 
 function chainable(result: unknown) {
@@ -198,9 +199,7 @@ describe('/api/sprints/[sprintId] route', () => {
       authMock.mockResolvedValue({ user: { id: 'user-1' } });
       dbSelectMock
         .mockReturnValueOnce(
-          chainable([
-            { id: 's1', projectId: 'p1', name: 'Sprint 1', status: 'active' },
-          ])
+          chainable([{ id: 's1', projectId: 'p1', name: 'Sprint 1', status: 'active' }])
         )
         // checkSprintPermission('view'): super admin bypass
         .mockReturnValueOnce(chainable([{ isSuperAdmin: true }]))
@@ -299,9 +298,7 @@ describe('/api/sprints/[sprintId] route', () => {
         // super admin bypass
         .mockReturnValueOnce(chainable([{ isSuperAdmin: true }]));
       dbUpdateMock.mockReturnValueOnce(
-        updateReturning([
-          { id: 's1', projectId: 'p1', name: 'Renamed', status: 'planned' },
-        ])
+        updateReturning([{ id: 's1', projectId: 'p1', name: 'Renamed', status: 'planned' }])
       );
 
       const response = await PATCH(

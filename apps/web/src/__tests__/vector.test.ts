@@ -37,7 +37,8 @@ const txExecuteMock = jest.fn(async (q: unknown) => {
 });
 
 const dbTransactionMock = jest.fn(
-  async (fn: (tx: { execute: typeof txExecuteMock }) => Promise<unknown>) => fn({ execute: txExecuteMock }),
+  async (fn: (tx: { execute: typeof txExecuteMock }) => Promise<unknown>) =>
+    fn({ execute: txExecuteMock })
 );
 
 jest.mock('@tasknebula/db', () => ({
@@ -48,13 +49,26 @@ jest.mock('@tasknebula/db', () => ({
   },
 }));
 
-// Import after mocks are wired so the helper picks them up.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { withEfSearch, getDefaultEfSearch, __internal } = require('@/lib/db/vector') as typeof import('@/lib/db/vector');
+type VectorModule = typeof import('@/lib/db/vector');
+type DbArg = Parameters<VectorModule['withEfSearch']>[0];
+
+let withEfSearch: VectorModule['withEfSearch'];
+let getDefaultEfSearch: VectorModule['getDefaultEfSearch'];
+let __internal: VectorModule['__internal'];
+let mockDb: DbArg;
 
 const ORIGINAL_ENV = { ...process.env };
 
 describe('vector.withEfSearch', () => {
+  beforeAll(async () => {
+    const [vectorModule, dbModule] = await Promise.all([
+      import('@/lib/db/vector'),
+      import('@tasknebula/db'),
+    ]);
+    ({ withEfSearch, getDefaultEfSearch, __internal } = vectorModule);
+    mockDb = dbModule.db as DbArg;
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     lastExecutedSql = [];
@@ -67,9 +81,7 @@ describe('vector.withEfSearch', () => {
   });
 
   it('opens a transaction and issues SET LOCAL hnsw.ef_search with the requested value', async () => {
-    const { db } = require('@tasknebula/db') as { db: Parameters<typeof withEfSearch>[0] };
-
-    await withEfSearch(db, 80, async (tx) => {
+    await withEfSearch(mockDb, 80, async (tx) => {
       await tx.execute('SELECT 1');
       return null;
     });
@@ -81,9 +93,7 @@ describe('vector.withEfSearch', () => {
   });
 
   it('falls back to the default ef_search (40) when no value is provided', async () => {
-    const { db } = require('@tasknebula/db') as { db: Parameters<typeof withEfSearch>[0] };
-
-    await withEfSearch(db, undefined, async () => null);
+    await withEfSearch(mockDb, undefined, async () => null);
 
     expect(lastExecutedSql[0]).toBe('SET LOCAL hnsw.ef_search = 40');
   });
@@ -92,19 +102,16 @@ describe('vector.withEfSearch', () => {
     process.env.PGVECTOR_EF_SEARCH = '120';
     expect(getDefaultEfSearch()).toBe(120);
 
-    const { db } = require('@tasknebula/db') as { db: Parameters<typeof withEfSearch>[0] };
-    await withEfSearch(db, undefined, async () => null);
+    await withEfSearch(mockDb, undefined, async () => null);
     expect(lastExecutedSql[0]).toBe('SET LOCAL hnsw.ef_search = 120');
   });
 
   it('clamps out-of-range values to the safe band [10, 1000]', async () => {
-    const { db } = require('@tasknebula/db') as { db: Parameters<typeof withEfSearch>[0] };
-
-    await withEfSearch(db, 1, async () => null);
+    await withEfSearch(mockDb, 1, async () => null);
     expect(lastExecutedSql[0]).toBe('SET LOCAL hnsw.ef_search = 10');
 
     lastExecutedSql = [];
-    await withEfSearch(db, 99999, async () => null);
+    await withEfSearch(mockDb, 99999, async () => null);
     expect(lastExecutedSql[0]).toBe('SET LOCAL hnsw.ef_search = 1000');
   });
 
@@ -115,6 +122,7 @@ describe('vector.withEfSearch', () => {
   });
 
   it('returns the inner block result through the transaction', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { db } = require('@tasknebula/db') as { db: Parameters<typeof withEfSearch>[0] };
     const result = await withEfSearch(db, 60, async () => 'hit');
     expect(result).toBe('hit');
@@ -142,7 +150,7 @@ describe('pgvector HNSW index plan (EXPLAIN, mocked DB)', () => {
     const explainExecute = jest.fn(async () => explainRows);
     const explainTransaction = jest.fn(
       async (fn: (tx: { execute: typeof explainExecute }) => Promise<unknown>) =>
-        fn({ execute: explainExecute }),
+        fn({ execute: explainExecute })
     );
 
     const fakeDb = {
@@ -151,7 +159,7 @@ describe('pgvector HNSW index plan (EXPLAIN, mocked DB)', () => {
     } as unknown as Parameters<typeof withEfSearch>[0];
 
     const plan = await withEfSearch(fakeDb, 40, async (tx) =>
-      tx.execute('EXPLAIN SELECT id FROM content_embeddings ORDER BY embedding <=> $1 LIMIT 10'),
+      tx.execute('EXPLAIN SELECT id FROM content_embeddings ORDER BY embedding <=> $1 LIMIT 10')
     );
 
     expect(JSON.stringify(plan)).toContain('content_embeddings_embedding_hnsw_idx');

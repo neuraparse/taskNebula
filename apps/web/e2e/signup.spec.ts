@@ -1,7 +1,7 @@
 /**
  * Signup flow — verifies the email/password registration path renders, the
- * client-side password validation kicks in, and a fresh account redirects to
- * the email verification screen.
+ * client-side password validation kicks in, and a fresh account can reach the
+ * signed-in product shell.
  *
  * Runs without storage state (project: chromium-public).
  */
@@ -19,10 +19,10 @@ test.describe('signup', () => {
     await page.getByLabel(/^password$/i).fill('short');
     await page.getByRole('button', { name: /create account/i }).click();
 
-    await expect(page.getByRole('alert')).toContainText(/at least 8 characters/i);
+    await expect(page.getByText(/password must be at least 8 characters/i)).toBeVisible();
   });
 
-  test('creates a new account and redirects to verify-request', async ({ page }) => {
+  test('creates a new account and redirects to dashboard', async ({ page }) => {
     const email = `e2e-signup+${Date.now()}@tasknebula.test`;
 
     await page.goto('/auth/signup');
@@ -34,7 +34,7 @@ test.describe('signup', () => {
 
     await page.getByRole('button', { name: /create account/i }).click();
 
-    await page.waitForURL(/\/auth\/verify-request/);
-    await expect(page).toHaveURL(new RegExp(`email=${encodeURIComponent(email)}`));
+    await page.waitForURL(/\/dashboard/, { timeout: 30_000 });
+    await expect(page).toHaveURL(/\/dashboard/);
   });
 });

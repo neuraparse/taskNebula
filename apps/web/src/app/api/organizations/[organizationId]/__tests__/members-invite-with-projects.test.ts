@@ -147,9 +147,13 @@ function limitBuilder(result: unknown) {
 }
 
 function fromWhereBuilder(result: unknown) {
+  const whereResult = {
+    limit: jest.fn().mockResolvedValue(result),
+    then: (resolve: (value: unknown) => unknown) => resolve(result),
+  };
   return {
     from: jest.fn().mockReturnValue({
-      where: jest.fn().mockResolvedValue(result),
+      where: jest.fn().mockReturnValue(whereResult),
     }),
   };
 }
@@ -163,8 +167,12 @@ function valuesReturningBuilder(result: unknown) {
 }
 
 function valuesBuilder() {
+  const valuesResult = {
+    returning: jest.fn().mockResolvedValue([]),
+    then: (resolve: (value: unknown) => unknown) => resolve(undefined),
+  };
   return {
-    values: jest.fn().mockResolvedValue(undefined),
+    values: jest.fn().mockReturnValue(valuesResult),
   };
 }
 
@@ -178,7 +186,15 @@ describe('POST /api/organizations/[organizationId]/members — invite with proje
   });
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    authMock.mockReset();
+    hasPermissionMock.mockReset();
+    getUserRoleMock.mockReset();
+    dbSelectMock.mockReset();
+    dbUpdateMock.mockReset();
+    dbDeleteMock.mockReset();
+    dbInsertMock.mockReset();
+    publishEventMock.mockReset();
+    sendEmailMock.mockReset();
     authMock.mockResolvedValue({ user: { id: 'inviter-1' } });
     hasPermissionMock.mockResolvedValue(true);
     sendEmailMock.mockResolvedValue({ sent: true, messageId: 'msg-1' });
@@ -192,7 +208,13 @@ describe('POST /api/organizations/[organizationId]/members — invite with proje
    *        org name, inviter name).
    */
   function queueInviteSelects(options: {
-    existingUser?: { id: string; email: string; name: string; image: string | null; status: string } | null;
+    existingUser?: {
+      id: string;
+      email: string;
+      name: string;
+      image: string | null;
+      status: string;
+    } | null;
     existingOrgMember?: { id: string } | null;
     projectsInOrg?: Array<{ id: string; organizationId: string }>;
     existingProjectMembers?: Array<{ projectId: string; userId: string }>;
@@ -258,13 +280,10 @@ describe('POST /api/organizations/[organizationId]/members — invite with proje
   }
 
   function buildRequest(body: unknown) {
-    return new NextRequestCtor(
-      'http://localhost:3002/api/organizations/org-1/members',
-      {
-        method: 'POST',
-        body: JSON.stringify(body),
-      }
-    );
+    return new NextRequestCtor('http://localhost:3002/api/organizations/org-1/members', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
   }
 
   const routeParams = {
@@ -327,12 +346,13 @@ describe('POST /api/organizations/[organizationId]/members — invite with proje
     // the projectMembers table (i.e. one of the insert targets was the
     // projectMembers schema object).
     const insertCalls = dbInsertMock.mock.calls;
-    const projectMembersInsertCalls = insertCalls.filter((c) =>
-      Array.isArray(c) &&
-      c.length > 0 &&
-      typeof c[0] === 'object' &&
-      c[0] !== null &&
-      'projectId' in (c[0] as Record<string, unknown>)
+    const projectMembersInsertCalls = insertCalls.filter(
+      (c) =>
+        Array.isArray(c) &&
+        c.length > 0 &&
+        typeof c[0] === 'object' &&
+        c[0] !== null &&
+        'projectId' in (c[0] as Record<string, unknown>)
     );
     expect(projectMembersInsertCalls.length).toBeGreaterThanOrEqual(1);
 

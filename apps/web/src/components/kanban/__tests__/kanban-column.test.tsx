@@ -28,7 +28,6 @@ describe('KanbanColumn', () => {
 
     expect(screen.getByRole('heading', { name: 'In Progress' })).toBeInTheDocument();
     expect(screen.getByText('4')).toBeInTheDocument();
-    expect(screen.getByText('issues')).toBeInTheDocument();
   });
 
   it('renders child issue cards inside the column', () => {

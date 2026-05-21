@@ -116,13 +116,19 @@ const TYPE_CHIP: Record<NonNullable<KanbanCardProps['issue']['type']>, string> =
   task: 'chip',
 };
 
-function formatDue(due?: string | null): { label: string; tone: 'default' | 'warn' | 'danger' } | null {
+function formatDue(
+  due?: string | null
+): { label: string; tone: 'default' | 'warn' | 'danger' } | null {
   if (!due) return null;
   const target = new Date(due);
   if (Number.isNaN(target.getTime())) return null;
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const startOfTarget = new Date(target.getFullYear(), target.getMonth(), target.getDate()).getTime();
+  const startOfTarget = new Date(
+    target.getFullYear(),
+    target.getMonth(),
+    target.getDate()
+  ).getTime();
   const deltaDays = Math.round((startOfTarget - startOfToday) / (1000 * 60 * 60 * 24));
   if (deltaDays < 0) return { label: `${Math.abs(deltaDays)}d overdue`, tone: 'danger' };
   if (deltaDays === 0) return { label: 'Today', tone: 'warn' };
@@ -135,14 +141,7 @@ function formatDue(due?: string | null): { label: string; tone: 'default' | 'war
 }
 
 export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: KanbanCardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: draggableId || issue.id,
     data: {
       type: 'card',
@@ -197,145 +196,146 @@ export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: K
 
   return (
     <ViewTransition name={transitionName}>
-    <div
-      ref={setNodeRef}
-      style={style}
-      data-dragging={isDragging ? 'true' : undefined}
-      {...attributes}
-      {...listeners}
-      onClick={handleClick}
-      className={cn(
-        'kanban-card select-none touch-manipulation group/card pl-4 py-3.5',
-        isDragging ? 'opacity-40 [&_*]:pointer-events-none' : 'cursor-grab'
-      )}
-    >
-      {/* Priority indicator bar — left edge, full height */}
       <div
+        ref={setNodeRef}
+        style={style}
+        data-dragging={isDragging ? 'true' : undefined}
+        {...attributes}
+        {...listeners}
+        onClick={handleClick}
         className={cn(
-          'priority-indicator absolute left-0 top-0 bottom-0 w-1',
-          (issue.priority === 'critical' || issue.priority === 'urgent') && 'priority-critical',
-          issue.priority === 'high' && 'priority-high',
-          issue.priority === 'medium' && 'priority-medium',
-          issue.priority === 'low' && 'priority-low'
-        )}
-      />
-
-      {/* Urgent priority indicator — top-right corner */}
-      {isUrgent && (
-        <AlertCircle
-          className="absolute right-2 top-2 h-3.5 w-3.5 text-red-500"
-          aria-label="Urgent priority"
-        />
-      )}
-
-      {/* Top row: status icon + issue key + type */}
-      {hasTopRow && (
-        <div className={cn('mb-2 flex items-center gap-1.5', isUrgent && 'pr-5')}>
-          <InlineStatusIcon kind={statusKind} size={12} />
-          {keyChip && (
-            <span className="chip font-mono tracking-tight !text-[10px]">{keyChip}</span>
-          )}
-          {typeChip && issue.type && (
-            <span className={cn(typeChip, 'capitalize')}>{issue.type}</span>
-          )}
-        </div>
-      )}
-
-      {/* Title */}
-      <h4
-        className={cn(
-          'text-[13.5px] font-medium leading-snug text-foreground line-clamp-2',
-          !hasTopRow && isUrgent && 'pr-5'
+          'kanban-card group/card touch-manipulation select-none py-3.5 pl-4',
+          isDragging ? 'opacity-40 [&_*]:pointer-events-none' : 'cursor-grab'
         )}
       >
-        {issue.title}
-      </h4>
-
-      {/* Labels */}
-      {hasLabels && (
-        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-          {visibleLabels.map((label) => (
-            <InlineLabelPill key={label} label={label} hashSeed={label} />
-          ))}
-          {extraLabels > 0 && (
-            <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11.5px] font-medium text-muted-foreground tabular-nums">
-              +{extraLabels}
-            </span>
+        {/* Priority indicator bar — left edge, full height */}
+        <div
+          className={cn(
+            'priority-indicator absolute bottom-0 left-0 top-0 w-1',
+            (issue.priority === 'critical' || issue.priority === 'urgent') && 'priority-critical',
+            issue.priority === 'high' && 'priority-high',
+            issue.priority === 'medium' && 'priority-medium',
+            issue.priority === 'low' && 'priority-low'
           )}
-        </div>
-      )}
+        />
 
-      {/* Footer: due + subtasks + comments + attachments + assignees */}
-      {hasFooter && (
-        <div className="mt-3 flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2 text-[11.5px] text-muted-foreground">
-            {due && (
-              <span
-                className={cn(
-                  'inline-flex items-center gap-1 tabular-nums',
-                  due.tone === 'warn' && 'text-accent-amber',
-                  due.tone === 'danger' && 'text-accent-rose'
-                )}
-              >
-                <CalendarDays className="h-3 w-3" />
-                {due.label}
-              </span>
+        {/* Urgent priority indicator — top-right corner */}
+        {isUrgent && (
+          <AlertCircle
+            className="absolute right-2 top-2 h-3.5 w-3.5 text-red-500"
+            aria-label="Urgent priority"
+          />
+        )}
+
+        {/* Top row: status icon + issue key + type */}
+        {hasTopRow && (
+          <div className={cn('mb-2 flex items-center gap-1.5', isUrgent && 'pr-5')}>
+            <InlineStatusIcon kind={statusKind} size={12} />
+            {keyChip && (
+              <span className="chip font-mono !text-[10px] tracking-tight">{keyChip}</span>
             )}
-            {subtasks && (
-              <span className="inline-flex items-center gap-1 tabular-nums">
-                <GitBranch className="h-3 w-3" />
-                {subtasks.done}/{subtasks.total}
-              </span>
+            {typeChip && issue.type && (
+              <span className={cn(typeChip, 'capitalize')}>{issue.type}</span>
             )}
-            {comments > 0 && (
-              <span className="inline-flex items-center gap-1 tabular-nums">
-                <MessageCircle className="h-3 w-3" />
-                {comments}
-              </span>
-            )}
-            {attachments > 0 && (
-              <span className="inline-flex items-center gap-1 tabular-nums">
-                <Paperclip className="h-3 w-3" />
-                {attachments}
+          </div>
+        )}
+
+        {/* Title */}
+        <h4
+          className={cn(
+            'text-foreground line-clamp-2 text-[13.5px] font-medium leading-snug',
+            !hasTopRow && isUrgent && 'pr-5'
+          )}
+        >
+          {issue.title}
+        </h4>
+
+        {/* Labels */}
+        {hasLabels && (
+          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+            {visibleLabels.map((label) => (
+              <InlineLabelPill key={label} label={label} hashSeed={label} />
+            ))}
+            {extraLabels > 0 && (
+              <span className="bg-muted text-muted-foreground inline-flex items-center rounded-full px-2 py-0.5 text-[11.5px] font-medium tabular-nums">
+                +{extraLabels}
               </span>
             )}
           </div>
+        )}
 
-          {visibleAssignees.length > 0 && (
-            <div className="flex -space-x-1.5 shrink-0">
-              {visibleAssignees.map((a) => {
-                const initials = a.name
-                  ?.split(' ')
-                  .map((p) => p[0])
-                  .join('')
-                  .slice(0, 2)
-                  .toUpperCase();
-                return (
-                  <Avatar
-                    key={a.name}
-                    className="h-5 w-5 rounded-full ring-2 ring-card shrink-0"
-                    title={a.name}
-                  >
-                    <AvatarImage src={a.avatar} alt={a.name} />
-                    <AvatarFallback className="text-[9px] font-semibold bg-primary/10 text-primary">
-                      {initials || '?'}
-                    </AvatarFallback>
-                  </Avatar>
-                );
-              })}
-              {extraAssignees > 0 && (
+        {/* Footer: due + subtasks + comments + attachments + assignees */}
+        {hasFooter && (
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <div className="text-muted-foreground flex min-w-0 items-center gap-2 text-[11.5px]">
+              {due && (
                 <span
-                  className="flex h-5 w-5 items-center justify-center rounded-full ring-2 ring-card bg-muted text-[9px] font-semibold text-muted-foreground"
-                  title={`+${extraAssignees} more`}
+                  className={cn(
+                    'inline-flex items-center gap-1 tabular-nums',
+                    due.tone === 'warn' && 'text-accent-amber',
+                    due.tone === 'danger' && 'text-accent-rose'
+                  )}
                 >
-                  +{extraAssignees}
+                  <CalendarDays className="h-3 w-3" />
+                  {due.label}
+                </span>
+              )}
+              {subtasks && (
+                <span className="inline-flex items-center gap-1 tabular-nums">
+                  <GitBranch className="h-3 w-3" />
+                  {subtasks.done}/{subtasks.total}
+                </span>
+              )}
+              {comments > 0 && (
+                <span className="inline-flex items-center gap-1 tabular-nums">
+                  <MessageCircle className="h-3 w-3" />
+                  {comments}
+                </span>
+              )}
+              {attachments > 0 && (
+                <span className="inline-flex items-center gap-1 tabular-nums">
+                  <Paperclip className="h-3 w-3" />
+                  {attachments}
                 </span>
               )}
             </div>
-          )}
-        </div>
-      )}
-    </div>
+
+            {visibleAssignees.length > 0 && (
+              <div className="flex shrink-0 -space-x-1.5">
+                {visibleAssignees.map((a) => {
+                  const initials = a.name
+                    ?.split(' ')
+                    .map((p) => p[0])
+                    .join('')
+                    .slice(0, 2)
+                    .toUpperCase();
+                  return (
+                    <Avatar
+                      key={a.name}
+                      className="ring-card h-5 w-5 shrink-0 rounded-full ring-2"
+                      title={a.name}
+                    >
+                      <span className="sr-only">{a.name}</span>
+                      <AvatarImage src={a.avatar} alt={a.name} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-[9px] font-semibold">
+                        {initials || '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                  );
+                })}
+                {extraAssignees > 0 && (
+                  <span
+                    className="ring-card bg-muted text-muted-foreground flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-semibold ring-2"
+                    title={`+${extraAssignees} more`}
+                  >
+                    +{extraAssignees}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </ViewTransition>
   );
 }

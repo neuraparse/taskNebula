@@ -30,6 +30,7 @@ COPY packages/types/package.json ./packages/types/
 COPY packages/config/package.json ./packages/config/
 COPY packages/mcp-server/package.json ./packages/mcp-server/
 COPY packages/mcp-server/bin ./packages/mcp-server/bin
+COPY services/hocuspocus/package.json ./services/hocuspocus/
 
 # Install dependencies (lockfile will be updated if needed)
 RUN pnpm install --frozen-lockfile
@@ -46,21 +47,18 @@ COPY --from=deps /app/packages/db/node_modules ./packages/db/node_modules
 COPY --from=deps /app/packages/types/node_modules ./packages/types/node_modules
 COPY --from=deps /app/packages/config/node_modules ./packages/config/node_modules
 COPY --from=deps /app/packages/mcp-server/node_modules ./packages/mcp-server/node_modules
+COPY --from=deps /app/services/hocuspocus/node_modules ./services/hocuspocus/node_modules
 
 # Copy source code
 COPY . .
 
-# Build arguments for environment variables needed at build time
-ARG AUTH_SECRET
-ARG AUTH_URL
+# Build arguments for public environment variables baked into the client bundle
 ARG NEXT_PUBLIC_APP_URL
 
 # Set environment variables for build
 # Dummy DATABASE_URL for build-time module evaluation only (no actual DB queries during build)
 # Real value is injected at runtime via docker-compose environment
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
-ENV AUTH_SECRET=$AUTH_SECRET
-ENV AUTH_URL=$AUTH_URL
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1

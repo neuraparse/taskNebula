@@ -6,6 +6,7 @@ import { publishEvent } from '@/lib/realtime/events';
 import { resolveProjectByIdOrKey } from '@/lib/projects/server';
 import { notifyProjectArchived } from '@/lib/notifications/project-events';
 import { runAutomations } from '@/lib/automation/evaluator';
+import { canManageProject, canReadProject } from '@/lib/auth/access-control';
 
 // GET /api/projects/[projectId] - Get single project
 export async function GET(
@@ -24,6 +25,10 @@ export async function GET(
 
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    if (!(await canReadProject(session.user.id, project))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Get sprint count
@@ -71,12 +76,26 @@ export async function PATCH(
 
   try {
     const body = await request.json();
-    const { name, key, description, status, visibility, settings, metadata, leadId, defaultWorkflowId } = body;
+    const {
+      name,
+      key,
+      description,
+      status,
+      visibility,
+      settings,
+      metadata,
+      leadId,
+      defaultWorkflowId,
+    } = body;
 
     const project = await resolveProjectByIdOrKey(projectId);
 
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    if (!(await canManageProject(session.user.id, project))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const updateData: Record<string, unknown> = {
@@ -96,7 +115,12 @@ export async function PATCH(
         const [existingProject] = await db
           .select({ id: projects.id })
           .from(projects)
-          .where(and(eq(projects.organizationId, project.organizationId), eq(projects.key, normalizedKey)))
+          .where(
+            and(
+              eq(projects.organizationId, project.organizationId),
+              eq(projects.key, normalizedKey)
+            )
+          )
           .limit(1);
 
         if (existingProject) {
@@ -154,9 +178,7 @@ export async function PATCH(
         projectId: project.id,
         payload: { project: updatedProject },
         actorUserId: session.user.id,
-      }).catch((err) =>
-        console.error('Failed to run project.archived automations:', err)
-      );
+      }).catch((err) => console.error('Failed to run project.archived automations:', err));
     }
 
     return NextResponse.json(updatedProject);
@@ -183,6 +205,10 @@ export async function DELETE(
 
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    if (!(await canManageProject(session.user.id, project))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Check if project has issues

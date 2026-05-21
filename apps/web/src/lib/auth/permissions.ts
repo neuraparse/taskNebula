@@ -29,6 +29,7 @@ export async function getUserRole(organizationId: string) {
   // Get user's super admin status
   const [user] = await db
     .select({
+      status: users.status,
       isSuperAdmin: users.isSuperAdmin,
     })
     .from(users)
@@ -39,6 +40,7 @@ export async function getUserRole(organizationId: string) {
   const [member] = await db
     .select({
       role: organizationMembers.role,
+      status: organizationMembers.status,
     })
     .from(organizationMembers)
     .where(
@@ -50,7 +52,7 @@ export async function getUserRole(organizationId: string) {
     .limit(1);
 
   return {
-    role: member?.role || null,
+    role: member?.status === 'active' ? member.role : null,
     isSuperAdmin: user?.isSuperAdmin || false,
   };
 }
@@ -159,4 +161,3 @@ export async function getUserPermissions(organizationId: string): Promise<Permis
 
   return getRolePermissions(userRole.role || '', userRole.isSuperAdmin);
 }
-

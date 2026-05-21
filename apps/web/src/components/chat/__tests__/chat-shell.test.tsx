@@ -101,7 +101,10 @@ jest.mock('@livekit/components-react', () => {
     RoomContext,
     setLogLevel: jest.fn(),
     RoomAudioRenderer: () => null,
-    useSequentialRoomConnectDisconnect: (room: { connect: typeof roomConnect; disconnect: typeof roomDisconnect }) => ({
+    useSequentialRoomConnectDisconnect: (room: {
+      connect: typeof roomConnect;
+      disconnect: typeof roomDisconnect;
+    }) => ({
       connect: room.connect,
       disconnect: room.disconnect,
     }),
@@ -254,7 +257,15 @@ jest.mock('@/lib/hooks/use-chat', () => ({
   }),
   useConversationStream: () => ({
     isConnected: true,
-    presence: [{ roomId: 'room-1', userId: 'user-1', name: 'Admin User', image: null, lastSeenAt: new Date().toISOString() }],
+    presence: [
+      {
+        roomId: 'room-1',
+        userId: 'user-1',
+        name: 'Admin User',
+        image: null,
+        lastSeenAt: new Date().toISOString(),
+      },
+    ],
     activeCall: null,
   }),
   useLiveCalls: () => ({
@@ -297,7 +308,13 @@ jest.mock('@/components/chat/global-voice-provider', () => {
         isTogglingMicrophone,
         microphoneLevel: isMicrophoneEnabled ? 0.36 : 0,
         setRuntimeError,
-        startSession: ({ session, target }: { session: Record<string, unknown>; target: Record<string, unknown> }) => {
+        startSession: ({
+          session,
+          target,
+        }: {
+          session: Record<string, unknown>;
+          target: Record<string, unknown>;
+        }) => {
           startSessionMock({ session, target });
           if (startSessionError) {
             throw startSessionError;
@@ -430,8 +447,8 @@ describe('ChatShell', () => {
   it('renders the simplified chat layout without the old detail sidebar', () => {
     render(<ChatShell projectId="project-1" />);
 
-    expect(screen.getByText('Channels')).toBeInTheDocument();
     expect(screen.getAllByText('general').length).toBeGreaterThan(0);
+    expect(screen.getByText(/Team updates/)).toBeInTheDocument();
     expect(screen.getByText('Latest release plan is ready.')).toBeInTheDocument();
     expect(screen.queryByText('Room details')).not.toBeInTheDocument();
     expect(screen.queryByText('Files')).not.toBeInTheDocument();
@@ -610,7 +627,7 @@ describe('ChatShell', () => {
 
     await act(async () => {
       fireEvent.click(joinWithMicButton);
-      await jest.advanceTimersByTimeAsync(1_500);
+      await jest.advanceTimersByTimeAsync(8_100);
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -665,7 +682,7 @@ describe('ChatShell', () => {
     fireEvent.click(joinWithMicButton);
 
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(1_600);
+      await jest.advanceTimersByTimeAsync(8_100);
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -700,7 +717,7 @@ describe('ChatShell', () => {
 
     await act(async () => {
       await user.click(joinWithMicButton);
-      await jest.advanceTimersByTimeAsync(1_500);
+      await jest.advanceTimersByTimeAsync(8_100);
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -711,7 +728,7 @@ describe('ChatShell', () => {
 
     await act(async () => {
       setVoiceRuntimeErrorRef?.(
-        'Microphone access timed out while waiting for the browser prompt. Check the browser microphone prompt or this site\'s permissions and allow microphone access. Then try the mic button again.'
+        "Microphone access timed out while waiting for the browser prompt. Check the browser microphone prompt or this site's permissions and allow microphone access. Then try the mic button again."
       );
       await Promise.resolve();
     });
@@ -776,7 +793,7 @@ describe('ChatShell', () => {
     render(<ChatShell projectId="project-1" />);
 
     await user.type(screen.getByPlaceholderText(/write a message/i), 'Need final QA sign-off');
-    await user.click(screen.getByRole('button', { name: /^send$/i }));
+    await user.click(screen.getByRole('button', { name: /send message/i }));
 
     await waitFor(() => {
       expect(createMessageMutateAsync).toHaveBeenCalledWith({
@@ -885,7 +902,7 @@ describe('ChatShell', () => {
     render(<ChatShell projectId="project-1" />);
 
     await user.type(screen.getByPlaceholderText(/write a message/i), 'Race condition check');
-    await user.click(screen.getByRole('button', { name: /^send$/i }));
+    await user.click(screen.getByRole('button', { name: /send message/i }));
     await user.click(screen.getByRole('button', { name: /send/i }));
 
     expect(createMessageMutateAsync).toHaveBeenCalledTimes(1);
