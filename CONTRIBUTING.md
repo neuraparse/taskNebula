@@ -14,28 +14,33 @@ Thank you for your interest in contributing to TaskNebula! This document provide
 ### Development Setup
 
 1. **Fork and clone the repository**
+
    ```bash
-   git clone https://github.com/yourusername/tasknebula.git
+   git clone https://github.com/neuraparse/taskNebula.git
    cd tasknebula
    ```
 
 2. **Install dependencies**
+
    ```bash
    pnpm install
    ```
 
 3. **Setup environment variables**
+
    ```bash
    cp apps/web/.env.example apps/web/.env.local
    cp packages/db/.env.example packages/db/.env
    ```
 
 4. **Start PostgreSQL** (using Docker)
+
    ```bash
    docker-compose up -d postgres
    ```
 
 5. **Run database migrations**
+
    ```bash
    pnpm db:generate
    pnpm db:migrate
@@ -152,6 +157,7 @@ pnpm test:coverage
 ## 📝 Pull Request Process
 
 1. **Create a feature branch**
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -162,12 +168,14 @@ pnpm test:coverage
    - Update documentation as needed
 
 3. **Commit your changes**
+
    ```bash
    git add .
    git commit -m "feat: add your feature"
    ```
 
 4. **Push to your fork**
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -234,4 +242,3 @@ By contributing to TaskNebula, you agree that your contributions will be license
 ---
 
 Thank you for contributing to TaskNebula! 🌌
-

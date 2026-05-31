@@ -261,6 +261,7 @@ See `.env.example` files in each package for required configuration.
 ### Future (Microservices)
 
 Potential service extraction:
+
 - **Core API**: Project & issue management
 - **AI Worker**: LLM processing (async)
 - **Notification Service**: Email, Slack, webhooks
@@ -277,12 +278,11 @@ Potential service extraction:
 
 ## 📚 Further Reading
 
-- [Database Schema](./DATABASE.md)
-- [API Documentation](./API.md)
+- [Database Setup](./DATABASE_SETUP.md)
+- [API Documentation](../apps/web/src/lib/openapi/README.md)
 - [Deployment Guide](./DEPLOYMENT.md)
-- [Security Best Practices](./SECURITY.md)
+- [Security Best Practices](../SECURITY.md)
 
 ---
 
 Last updated: 2025-01-24
-
