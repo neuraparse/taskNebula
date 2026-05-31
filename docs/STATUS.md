@@ -187,6 +187,7 @@
 We're actively looking for contributors! See [CONTRIBUTING.md](../CONTRIBUTING.md) for details.
 
 **Priority Areas:**
+
 - Authentication implementation
 - API development
 - Testing infrastructure
@@ -195,15 +196,14 @@ We're actively looking for contributors! See [CONTRIBUTING.md](../CONTRIBUTING.m
 
 ## 📞 Contact
 
-- **GitHub Issues**: [Report bugs or request features](https://github.com/yourusername/tasknebula/issues)
-- **GitHub Discussions**: [Ask questions and share ideas](https://github.com/yourusername/tasknebula/discussions)
+- **GitHub Issues**: [Report bugs, request features, or ask questions](https://github.com/neuraparse/taskNebula/issues)
 - **Email**: contact@tasknebula.dev (coming soon)
 
 ---
 
 **Legend:**
+
 - ✅ Complete
 - 🚧 In Progress
 - ⏳ Planned
 - ❌ Blocked
-

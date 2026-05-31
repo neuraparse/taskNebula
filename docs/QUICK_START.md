@@ -14,7 +14,7 @@ Before you begin, ensure you have:
 ## Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/tasknebula.git
+git clone https://github.com/neuraparse/taskNebula.git
 cd tasknebula
 ```
 
@@ -37,6 +37,7 @@ cp packages/db/.env.example packages/db/.env
 Edit the `.env.local` and `.env` files with your configuration:
 
 **`apps/web/.env.local`:**
+
 ```env
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/tasknebula
 NEXTAUTH_URL=http://localhost:3000
@@ -44,6 +45,7 @@ NEXTAUTH_SECRET=your-secret-key-here-change-this-in-production
 ```
 
 **`packages/db/.env`:**
+
 ```env
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/tasknebula
 ```
@@ -87,6 +89,7 @@ pnpm dev
 ```
 
 This will start:
+
 - 🌐 **Web app** at [http://localhost:3000](http://localhost:3000)
 
 ## Step 7: Open in Browser
@@ -159,6 +162,7 @@ taskkill /PID <PID> /F
 ### Database Connection Error
 
 1. Ensure PostgreSQL is running:
+
    ```bash
    docker-compose ps
    # or
@@ -175,6 +179,7 @@ taskkill /PID <PID> /F
 ### pnpm Install Fails
 
 1. Clear pnpm cache:
+
    ```bash
    pnpm store prune
    ```
@@ -188,11 +193,12 @@ taskkill /PID <PID> /F
 ### Migration Errors
 
 1. Reset database (⚠️ This will delete all data):
+
    ```bash
    # Drop and recreate database
    dropdb tasknebula
    createdb tasknebula
-   
+
    # Run migrations again
    pnpm db:migrate
    ```
@@ -201,16 +207,14 @@ taskkill /PID <PID> /F
 
 - [Architecture Overview](./ARCHITECTURE.md)
 - [Contributing Guide](../CONTRIBUTING.md)
-- [API Documentation](./API.md)
+- [API Documentation](../apps/web/src/lib/openapi/README.md)
 - [Deployment Guide](./DEPLOYMENT.md)
 
 ## 💬 Get Help
 
-- **GitHub Issues**: [Report bugs or request features](https://github.com/yourusername/tasknebula/issues)
-- **GitHub Discussions**: [Ask questions and share ideas](https://github.com/yourusername/tasknebula/discussions)
+- **GitHub Issues**: [Report bugs, request features, or ask questions](https://github.com/neuraparse/taskNebula/issues)
 - **Discord**: Join our community (coming soon)
 
 ---
 
 Happy coding! 🌌
-

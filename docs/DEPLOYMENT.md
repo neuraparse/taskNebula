@@ -84,16 +84,19 @@ NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
 ### Vercel (Recommended)
 
 1. **Install Vercel CLI**
+
    ```bash
    pnpm add -g vercel
    ```
 
 2. **Login to Vercel**
+
    ```bash
    vercel login
    ```
 
 3. **Deploy**
+
    ```bash
    cd apps/web
    vercel --prod
@@ -114,11 +117,13 @@ NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
 ### Docker
 
 1. **Build Image**
+
    ```bash
    docker build -t tasknebula:latest .
    ```
 
 2. **Run with Docker Compose**
+
    ```bash
    docker-compose up -d
    ```
@@ -126,6 +131,7 @@ NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
    The local compose stack provisions PostgreSQL, Redis, and a self-hosted LiveKit server for project voice rooms.
 
 3. **Run Migrations**
+
    ```bash
    docker-compose exec web pnpm --filter=@tasknebula/db db:migrate:prod
    ```
@@ -138,35 +144,40 @@ NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
 ### Self-Hosted
 
 1. **Install Dependencies**
+
    ```bash
    pnpm install --frozen-lockfile
    ```
 
 2. **Build Application**
+
    ```bash
    pnpm build
    ```
 
 3. **Run Migrations**
+
    ```bash
    pnpm --filter=@tasknebula/db db:migrate:prod
    pnpm --filter=@tasknebula/db db:seed:prod
    ```
 
 4. **Start Application**
+
    ```bash
    pnpm --filter=@tasknebula/web start
    ```
 
 5. **Provision Realtime Services**
-  - Redis is required for multi-instance SSE fanout and room presence.
-  - LiveKit is required for voice rooms.
-  - For Docker deployments, run LiveKit on the host network. LiveKit’s official deployment guide says Dockerized environments should use host networking for optimal performance.
-  - The bundled compose stack auto-detects `LIVEKIT_NODE_IP` inside the LiveKit container when left blank.
-  - For same-machine localhost development, keep `LIVEKIT_PUBLIC_HOST=127.0.0.1`.
-  - For LAN testing from another device, set `LIVEKIT_PUBLIC_HOST` to your machine IP, for example `192.168.1.103`.
-  - For production, pin your own `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET` and terminate TLS in front of the LiveKit WebSocket endpoint.
-  - LiveKit includes an embedded TURN server; use `TURN_*` only if you operate a separate TURN relay for stricter network environments.
+
+- Redis is required for multi-instance SSE fanout and room presence.
+- LiveKit is required for voice rooms.
+- For Docker deployments, run LiveKit on the host network. LiveKit’s official deployment guide says Dockerized environments should use host networking for optimal performance.
+- The bundled compose stack auto-detects `LIVEKIT_NODE_IP` inside the LiveKit container when left blank.
+- For same-machine localhost development, keep `LIVEKIT_PUBLIC_HOST=127.0.0.1`.
+- For LAN testing from another device, set `LIVEKIT_PUBLIC_HOST` to your machine IP, for example `192.168.1.103`.
+- For production, pin your own `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET` and terminate TLS in front of the LiveKit WebSocket endpoint.
+- LiveKit includes an embedded TURN server; use `TURN_*` only if you operate a separate TURN relay for stricter network environments.
 
 5. **Setup Process Manager (PM2)**
    ```bash
@@ -181,6 +192,7 @@ NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
 ### PostgreSQL
 
 1. **Create Database**
+
    ```sql
    CREATE DATABASE tasknebula;
    CREATE USER tasknebula_user WITH PASSWORD 'your-password';
@@ -188,6 +200,7 @@ NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
    ```
 
 2. **Run Migrations**
+
    ```bash
    pnpm --filter=@tasknebula/db db:migrate:prod
    ```
@@ -207,27 +220,32 @@ NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
 ## Post-Deployment
 
 ### 1. Verify Health
+
 ```bash
 curl https://yourdomain.com/api/health
 ```
 
 ### 2. Create First Organization
+
 - Visit your domain
 - Sign in with OAuth
 - Create your first organization
 
 ### 3. Configure OAuth Callbacks
+
 - GitHub: `https://yourdomain.com/api/auth/callback/github`
 - Google: `https://yourdomain.com/api/auth/callback/google`
 
 ## Monitoring
 
 ### Health Checks
+
 - Health: `GET /api/health`
 - Readiness: `GET /api/ready`
 - Metrics: `GET /api/metrics`
 
 ### Logs
+
 ```bash
 # Docker
 docker-compose logs -f web
@@ -239,18 +257,21 @@ pm2 logs tasknebula
 ## Troubleshooting
 
 ### Database Connection Issues
+
 - Verify `DATABASE_URL` is correct
 - Check database is running
 - Verify network connectivity
 
 ### OAuth Issues
+
 - Verify callback URLs are correct
 - Check client IDs and secrets
 - Ensure `AUTH_URL` matches your domain
 
 ### Build Failures
+
 - Clear cache: `pnpm clean`
 - Reinstall: `rm -rf node_modules && pnpm install`
 - Check Node.js version: `node --version`
 
-For more help, see [GitHub Issues](https://github.com/yourusername/tasknebula/issues)
+For more help, see [GitHub Issues](https://github.com/neuraparse/taskNebula/issues)
