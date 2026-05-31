@@ -135,23 +135,33 @@ const extensions = [
 ];
 
 if (REDIS_URL) {
-  // Parse a redis URL into the (host, port, password) shape the extension wants.
-  // The Redis extension also accepts the raw URL via `options.path`, but the
-  // explicit shape works across redis@5 and ioredis variants.
-  const url = new URL(REDIS_URL);
-  extensions.push(
-    new Redis({
-      host: url.hostname,
-      port: Number.parseInt(url.port || '6379', 10),
-      options: {
-        password: decodeURIComponent(url.password || '') || undefined,
-        db:
-          url.pathname && url.pathname.length > 1
-            ? Number.parseInt(url.pathname.slice(1), 10) || 0
-            : 0,
-      },
-    })
-  );
+  try {
+    // Parse a redis URL into the (host, port, password) shape the extension wants.
+    // The Redis extension also accepts the raw URL via `options.path`, but the
+    // explicit shape works across redis@5 and ioredis variants.
+    const url = new URL(REDIS_URL);
+    const port = Number.parseInt(url.port || '6379', 10);
+    const db =
+      url.pathname && url.pathname.length > 1 ? Number.parseInt(url.pathname.slice(1), 10) : 0;
+    if (!Number.isInteger(port) || port <= 0 || !Number.isInteger(db) || db < 0) {
+      throw new Error('REDIS_URL has an invalid port or database index');
+    }
+    extensions.push(
+      new Redis({
+        host: url.hostname,
+        port,
+        options: {
+          password: decodeURIComponent(url.password || '') || undefined,
+          db,
+        },
+      })
+    );
+  } catch (error) {
+    console.warn(
+      '[hocuspocus] REDIS_URL is invalid; running in single-node mode:',
+      error?.message || error
+    );
+  }
 } else {
   console.warn('[hocuspocus] REDIS_URL not set — running in single-node mode (no pub/sub).');
 }

@@ -8,7 +8,7 @@ import {
   workflowStatuses,
   workflowTransitions,
 } from '@tasknebula/db';
-import { eq, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { createId } from '@paralleldrive/cuid2';
 
@@ -22,9 +22,17 @@ export async function GET() {
       setupRequired: userCount === 0,
       userCount,
     });
-  } catch {
-    // Database might not be ready yet
-    return NextResponse.json({ setupRequired: true, userCount: 0 });
+  } catch (error) {
+    console.error('Setup status check failed:', error);
+    return NextResponse.json(
+      {
+        setupRequired: false,
+        databaseReady: false,
+        userCount: 0,
+        error: 'Database is not ready. Check the database connection and migrations.',
+      },
+      { status: 503 }
+    );
   }
 }
 

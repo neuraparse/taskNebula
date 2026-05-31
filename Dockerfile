@@ -141,6 +141,8 @@ COPY --chmod=755 docker-entrypoint.sh /docker-entrypoint.sh
 # Create uploads directory with correct permissions
 RUN mkdir -p ./uploads && chown -R nextjs:nodejs ./uploads ./packages
 
+USER nextjs
+
 # Expose port
 EXPOSE 3000
 

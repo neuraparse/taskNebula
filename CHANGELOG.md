@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-05-31
+
+### Security
+
+- **Next.js upgraded to 15.5.18.** This pulls in the current Next 15 security patch line, including fixes for middleware bypass, RSC denial-of-service, image optimizer, rewrite/request-smuggling, and cache-poisoning advisories reported by `pnpm audit`.
+- **Docker build context now excludes local incident and secret artifacts.** `.dockerignore` now blocks `forensic/`, Claude worktrees, env variants, backups, dumps, local DB files, certs, and test reports so ignored local files cannot be sent to the Docker daemon during image builds.
+- **Postgres password rehash no longer interpolates secrets into SQL.** The startup override now uses psql quoted variables for role and password values, so special characters cannot break the `ALTER ROLE` command.
+- **Push subscription creation now fails closed when VAPID is incomplete.** The client disables unsupported push setup without a public key, and the API rejects subscription writes when server-side VAPID keys are missing.
+
+### Fixed
+
+- **Remote MCP HTTP endpoint is mounted.** `/api/mcp` now delegates to the shared `@tasknebula/mcp-server` HTTP handler instead of returning the temporary 503 stub.
+- **Auth env aliases are consistent.** Runtime env validation now accepts `AUTH_*` and `NEXTAUTH_*` aliases for secret/base URL resolution, and agent dispatch URL generation no longer imports the strict env module just to build callback links.
+- **First-run setup no longer masks database outages.** `GET /api/setup` returns a 503 database-not-ready state instead of showing the admin setup form when the DB query fails.
+- **Authenticated mobile shell is usable.** The desktop sidebar/header are hidden on small screens, a bottom mobile nav uses real routes, and the app shell now has a keyboard skip link plus a stable `main` target.
+- **PWA manifest and service worker no longer reference missing assets.** A bundled app icon is used for install shortcuts and notifications, and stale screenshot/share-target entries were removed.
+- **Docker health/runtime hardening.** Postgres healthchecks respect overridden DB user/name values, Redis no longer exposes its password in the process arguments, and the web runtime starts as the unprivileged `nextjs` user.
+- **Production DB config fails fast.** The DB connection helper only falls back to local Postgres outside production.
+
 ## [0.3.1] - 2026-05-19
 
 ### Fixed
@@ -142,7 +161,10 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Internal alpha release. [See git log] for details.
 
-[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.2.6...HEAD
+[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.3.3...HEAD
+[0.3.3]: https://github.com/neuraparse/tasknebula/compare/v0.3.2...v0.3.3
+[0.3.2]: https://github.com/neuraparse/tasknebula/releases/tag/v0.3.2
+[0.3.1]: https://github.com/neuraparse/tasknebula/releases/tag/v0.3.1
 [0.2.6]: https://github.com/neuraparse/tasknebula/releases/tag/v0.2.6
 [0.2.0]: https://github.com/neuraparse/tasknebula/releases/tag/v0.2.0
 [0.1.0]: https://github.com/neuraparse/tasknebula/releases/tag/v0.1.0

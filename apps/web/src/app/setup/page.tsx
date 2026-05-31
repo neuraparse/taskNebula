@@ -17,6 +17,7 @@ export default function SetupPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [setupUnavailable, setSetupUnavailable] = useState(false);
   const [stage, setStage] = useState<Stage>('admin');
   const [form, setForm] = useState({
     name: '',
@@ -29,15 +30,31 @@ export default function SetupPage() {
   useEffect(() => {
     // Check if setup is needed
     fetch('/api/setup')
-      .then((res) => res.json())
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.databaseReady === false) {
+          setSetupUnavailable(true);
+          setError(
+            data.error || 'Database is not ready. Check the database connection and try again.'
+          );
+          setLoading(false);
+          return;
+        }
+        return data;
+      })
       .then((data) => {
+        if (!data) return;
         if (!data.setupRequired) {
           router.replace('/auth/signin');
         } else {
           setLoading(false);
         }
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setSetupUnavailable(true);
+        setError('Connection error. Please check your server.');
+        setLoading(false);
+      });
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,18 +101,17 @@ export default function SetupPage() {
     }
   };
 
-  const currentStep =
-    stage === 'done' ? STEP_LABELS.length : stage === 'workspace' ? 2 : 1;
+  const currentStep = stage === 'done' ? STEP_LABELS.length : stage === 'workspace' ? 2 : 1;
 
   if (loading) {
     return (
-      <div className="relative min-h-dvh grid place-items-center bg-background overflow-hidden">
+      <div className="bg-background relative grid min-h-dvh place-items-center overflow-hidden">
         <div
           aria-hidden="true"
-          className="bg-aurora absolute inset-0 pointer-events-none blur-3xl opacity-60 -z-10"
+          className="bg-aurora pointer-events-none absolute inset-0 -z-10 opacity-60 blur-3xl"
         />
         <div
-          className="relative h-5 w-5 animate-spin rounded-full border-2 border-foreground border-t-transparent"
+          className="border-foreground relative h-5 w-5 animate-spin rounded-full border-2 border-t-transparent"
           aria-label="Loading"
         />
       </div>
@@ -104,19 +120,21 @@ export default function SetupPage() {
 
   if (stage === 'done') {
     return (
-      <div className="relative min-h-dvh grid place-items-center bg-background overflow-hidden px-4">
+      <div className="bg-background relative grid min-h-dvh place-items-center overflow-hidden px-4">
         <div
           aria-hidden="true"
-          className="bg-aurora absolute inset-0 pointer-events-none blur-3xl opacity-60 -z-10"
+          className="bg-aurora pointer-events-none absolute inset-0 -z-10 opacity-60 blur-3xl"
         />
-        <div className="relative w-full max-w-sm animate-fade-up">
-          <div className="surface-card rounded-lg p-8 text-center space-y-4">
+        <div className="animate-fade-up relative w-full max-w-sm">
+          <div className="surface-card space-y-4 rounded-lg p-8 text-center">
             <div className="flex justify-center">
-              <CheckCircle2 className="h-8 w-8 text-accent-emerald" aria-hidden="true" />
+              <CheckCircle2 className="text-accent-emerald h-8 w-8" aria-hidden="true" />
             </div>
             <div className="space-y-1">
-              <h2 className="text-2xl font-semibold tracking-tight text-foreground">Setup complete</h2>
-              <p className="text-sm text-muted-foreground">Redirecting to sign in&hellip;</p>
+              <h2 className="text-foreground text-2xl font-semibold tracking-tight">
+                Setup complete
+              </h2>
+              <p className="text-muted-foreground text-sm">Redirecting to sign in&hellip;</p>
             </div>
           </div>
         </div>
@@ -125,26 +143,26 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="relative min-h-dvh grid place-items-center bg-background overflow-hidden px-4 py-10">
+    <div className="bg-background relative grid min-h-dvh place-items-center overflow-hidden px-4 py-10">
       {/* Aurora glow */}
       <div
         aria-hidden="true"
-        className="bg-aurora absolute inset-0 pointer-events-none blur-3xl opacity-60 -z-10"
+        className="bg-aurora pointer-events-none absolute inset-0 -z-10 opacity-60 blur-3xl"
       />
 
-      <div className="relative w-full max-w-3xl animate-fade-up">
+      <div className="animate-fade-up relative w-full max-w-3xl">
         {/* Brand + heading */}
-        <div className="mb-6 text-center space-y-3">
+        <div className="mb-6 space-y-3 text-center">
           <div className="flex justify-center">
-            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-foreground">
-              <span className="text-xs font-semibold tracking-tight text-background">TN</span>
+            <div className="bg-foreground flex h-9 w-9 items-center justify-center rounded-md">
+              <span className="text-background text-xs font-semibold tracking-tight">TN</span>
             </div>
           </div>
           <div className="space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            <h1 className="text-foreground text-2xl font-semibold tracking-tight">
               Welcome to TaskNebula
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               {stage === 'admin'
                 ? 'Create your admin account to get started'
                 : 'Tell us about your project — we will draft a workspace for you'}
@@ -153,25 +171,14 @@ export default function SetupPage() {
         </div>
 
         {/* Step nav chips */}
-        <nav
-          aria-label="Setup progress"
-          className="mb-6 flex items-center justify-center gap-2"
-        >
+        <nav aria-label="Setup progress" className="mb-6 flex items-center justify-center gap-2">
           {STEP_LABELS.map((label, idx) => {
             const stepNum = idx + 1;
             const isCurrent = stepNum === currentStep;
             const isComplete = stepNum < currentStep;
-            const chipClass = isComplete
-              ? 'chip-emerald'
-              : isCurrent
-                ? 'chip-accent'
-                : 'chip';
+            const chipClass = isComplete ? 'chip-emerald' : isCurrent ? 'chip-accent' : 'chip';
             return (
-              <span
-                key={label}
-                className={chipClass}
-                aria-current={isCurrent ? 'step' : undefined}
-              >
+              <span key={label} className={chipClass} aria-current={isCurrent ? 'step' : undefined}>
                 <span className="tabular-nums">{stepNum}</span>
                 <span>{label}</span>
               </span>
@@ -179,11 +186,22 @@ export default function SetupPage() {
           })}
         </nav>
 
-        {stage === 'admin' ? (
-          <div className="mx-auto max-w-md surface-card rounded-lg p-6 sm:p-8 animate-fade-up">
+        {setupUnavailable ? (
+          <div className="surface-card mx-auto max-w-md rounded-lg p-6 text-center sm:p-8">
+            <p className="text-destructive text-sm" role="alert">
+              {error}
+            </p>
+            <Button type="button" className="mt-4" onClick={() => window.location.reload()}>
+              Retry
+            </Button>
+          </div>
+        ) : stage === 'admin' ? (
+          <div className="surface-card animate-fade-up mx-auto max-w-md rounded-lg p-6 sm:p-8">
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <p className="text-sm text-destructive" role="alert">{error}</p>
+                <p className="text-destructive text-sm" role="alert">
+                  {error}
+                </p>
               )}
 
               <div className="space-y-1.5">
@@ -271,7 +289,7 @@ export default function SetupPage() {
           />
         )}
 
-        <p className="mt-4 text-xs text-muted-foreground text-center">
+        <p className="text-muted-foreground mt-4 text-center text-xs">
           This page is only available when the database is empty.
         </p>
       </div>

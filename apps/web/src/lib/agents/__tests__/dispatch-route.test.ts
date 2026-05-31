@@ -79,8 +79,7 @@ jest.mock('@tasknebula/db', () => {
               const rows = fake.rows[table.__name] ?? [];
               const result = {
                 limit: (_n: number) => Promise.resolve(rows.slice(0, _n)),
-                then: (resolve: (rows: Row[]) => unknown) =>
-                  Promise.resolve(rows).then(resolve),
+                then: (resolve: (rows: Row[]) => unknown) => Promise.resolve(rows).then(resolve),
               };
               return result;
             },
@@ -93,13 +92,9 @@ jest.mock('@tasknebula/db', () => {
         values(values: Row) {
           fake.inserted.push({ table: table.__name, ...values });
           // Provide deterministic ids so the route can echo them back.
-          const id =
-            (values.id as string | undefined) ?? `gen_${fake.inserted.length}`;
+          const id = (values.id as string | undefined) ?? `gen_${fake.inserted.length}`;
           const stored: Row = { ...values, id };
-          fake.rows[table.__name] = [
-            ...(fake.rows[table.__name] ?? []),
-            stored,
-          ];
+          fake.rows[table.__name] = [...(fake.rows[table.__name] ?? []), stored];
           return {
             returning: () => Promise.resolve([stored]),
           };
@@ -152,17 +147,12 @@ jest.mock('@/auth', () => ({
   auth: jest.fn(),
 }));
 
-// ------------------------- env mock ---------------------------------------
-
-jest.mock('@/lib/env', () => ({
-  env: {
-    NEXT_PUBLIC_APP_URL: 'https://tasknebula.test',
-  },
-}));
-
 // --------------------------------------------------------------------------
 
 import { auth as authMock } from '@/auth';
+
+const originalAppUrl = process.env.NEXT_PUBLIC_APP_URL;
+process.env.NEXT_PUBLIC_APP_URL = 'https://tasknebula.test';
 
 // Pull the helpers we need _after_ the mocks above so the route picks them
 // up.
@@ -192,9 +182,7 @@ function seedHappyPath(opts: { hmacSecret: string }) {
       statusId: 'status_open',
     },
   ];
-  fake.rows.projects = [
-    { id: 'proj_1', organizationId: 'org_1' },
-  ];
+  fake.rows.projects = [{ id: 'proj_1', organizationId: 'org_1' }];
   fake.rows.agent_providers = [
     {
       id: 'prov_1',
@@ -217,6 +205,11 @@ beforeEach(() => {
 
 afterAll(() => {
   global.fetch = originalFetch;
+  if (originalAppUrl === undefined) {
+    delete process.env.NEXT_PUBLIC_APP_URL;
+  } else {
+    process.env.NEXT_PUBLIC_APP_URL = originalAppUrl;
+  }
 });
 
 function buildRequest(body: unknown): {
@@ -234,10 +227,9 @@ function buildRequest(body: unknown): {
 describe('POST /api/issues/[id]/dispatch-agent', () => {
   it('returns 401 when unauthenticated', async () => {
     (authMock as unknown as jest.Mock).mockResolvedValueOnce(null);
-    const res = await dispatchHandler(
-      buildRequest({ provider: 'cursor' }) as never,
-      { params: Promise.resolve({ issueId: 'issue_1' }) }
-    );
+    const res = await dispatchHandler(buildRequest({ provider: 'cursor' }) as never, {
+      params: Promise.resolve({ issueId: 'issue_1' }),
+    });
     expect(res.status).toBe(401);
   });
 
@@ -248,10 +240,9 @@ describe('POST /api/issues/[id]/dispatch-agent', () => {
     seedHappyPath({ hmacSecret: 'unused' });
     fake.rows.agent_providers = []; // wipe provider config
 
-    const res = await dispatchHandler(
-      buildRequest({ provider: 'cursor' }) as never,
-      { params: Promise.resolve({ issueId: 'issue_1' }) }
-    );
+    const res = await dispatchHandler(buildRequest({ provider: 'cursor' }) as never, {
+      params: Promise.resolve({ issueId: 'issue_1' }),
+    });
     expect(res.status).toBe(422);
     const body = await res.json();
     expect(body.error).toMatch(/not configured/i);
@@ -278,9 +269,7 @@ describe('POST /api/issues/[id]/dispatch-agent', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.state).toBe('active');
-    expect(body.callbackUrl).toBe(
-      'https://tasknebula.test/api/webhooks/agent-session/cursor'
-    );
+    expect(body.callbackUrl).toBe('https://tasknebula.test/api/webhooks/agent-session/cursor');
 
     // The provider URL was hit exactly once with a signed body.
     expect(global.fetch).toHaveBeenCalledTimes(1);
@@ -313,9 +302,7 @@ describe('POST /api/issues/[id]/dispatch-agent', () => {
     );
 
     // We inserted a session row…
-    const sessionInsert = fake.inserted.find(
-      (i) => i.table === 'agent_sessions'
-    );
+    const sessionInsert = fake.inserted.find((i) => i.table === 'agent_sessions');
     expect(sessionInsert).toMatchObject({
       issueId: 'issue_1',
       provider: 'cursor',
@@ -337,10 +324,9 @@ describe('POST /api/issues/[id]/dispatch-agent', () => {
       text: () => Promise.resolve('overloaded'),
     });
 
-    const res = await dispatchHandler(
-      buildRequest({ provider: 'cursor' }) as never,
-      { params: Promise.resolve({ issueId: 'issue_1' }) }
-    );
+    const res = await dispatchHandler(buildRequest({ provider: 'cursor' }) as never, {
+      params: Promise.resolve({ issueId: 'issue_1' }),
+    });
 
     expect(res.status).toBe(502);
     const body = await res.json();

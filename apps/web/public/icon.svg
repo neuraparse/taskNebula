@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="TaskNebula">
+  <rect width="512" height="512" rx="96" fill="#050505"/>
+  <path d="M148 148h216v56h-80v160h-56V204h-80z" fill="#ffffff"/>
+  <path d="M146 346h220v26H146z" fill="#38bdf8"/>
+</svg>

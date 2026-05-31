@@ -51,23 +51,27 @@ import {
   type AgentProviderKind,
   type AgentSessionRequest,
 } from '@/lib/agents/sessions';
-import { env } from '@/lib/env';
 
 export const dynamic = 'force-dynamic';
 
 const DISPATCH_TIMEOUT_MS = 10_000;
 
 const bodySchema = z.object({
-  provider: z.enum(
-    AGENT_PROVIDERS as readonly [AgentProviderKind, ...AgentProviderKind[]]
-  ),
+  provider: z.enum(AGENT_PROVIDERS as readonly [AgentProviderKind, ...AgentProviderKind[]]),
   prompt_override: z.string().max(16000).optional(),
 });
 
-async function userCanAssign(
-  userId: string,
-  projectId: string
-): Promise<boolean> {
+function getAppBaseUrl() {
+  return (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.AUTH_URL ||
+    process.env.NEXTAUTH_URL ||
+    process.env.APP_URL ||
+    'http://localhost:3000'
+  ).replace(/\/$/, '');
+}
+
+async function userCanAssign(userId: string, projectId: string): Promise<boolean> {
   const [user] = await db
     .select({ isSuperAdmin: users.isSuperAdmin })
     .from(users)
@@ -97,12 +101,7 @@ async function userCanAssign(
   const [pm] = await db
     .select()
     .from(projectMembers)
-    .where(
-      and(
-        eq(projectMembers.userId, userId),
-        eq(projectMembers.projectId, projectId)
-      )
-    )
+    .where(and(eq(projectMembers.userId, userId), eq(projectMembers.projectId, projectId)))
     .limit(1);
   if (!pm) return false;
   const role = pm.role as ProjectRole;
@@ -201,13 +200,11 @@ export async function POST(
     .returning();
 
   if (!created) {
-    return NextResponse.json(
-      { error: 'Failed to create agent session' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to create agent session' }, { status: 500 });
   }
 
-  const callbackUrl = `${env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')}/api/webhooks/agent-session/${parsed.provider}`;
+  const appBaseUrl = getAppBaseUrl();
+  const callbackUrl = `${appBaseUrl}/api/webhooks/agent-session/${parsed.provider}`;
 
   const envelope: AgentSessionRequest = {
     sessionId: created.id,
@@ -220,7 +217,7 @@ export async function POST(
       labels: issue.labels ?? [],
       projectId: issue.projectId,
       organizationId: issue.organizationId,
-      url: `${env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')}/issues/${issue.id}`,
+      url: `${appBaseUrl}/issues/${issue.id}`,
     },
     actorUserId: session.user.id,
     promptOverride: parsed.prompt_override ?? null,

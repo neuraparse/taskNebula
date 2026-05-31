@@ -26,7 +26,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U "$${POSTGRES_USER:-postgres}" -d "$${POSTGRES_DB:-tasknebula}"',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -35,7 +39,15 @@ services:
     image: redis:7-alpine
     container_name: tasknebula-redis
     restart: unless-stopped
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
+    command:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        : "$${REDIS_PASSWORD:?REDIS_PASSWORD must be set}"
+        umask 077
+        printf 'appendonly yes\nrequirepass %s\n' "$$REDIS_PASSWORD" > /tmp/redis.conf
+        exec redis-server /tmp/redis.conf
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
     ports:

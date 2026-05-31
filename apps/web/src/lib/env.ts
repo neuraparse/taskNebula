@@ -1,6 +1,6 @@
 /**
  * Environment Configuration
- * 
+ *
  * Centralized environment variable validation and access.
  * Uses Zod for runtime validation.
  */
@@ -11,20 +11,20 @@ import { z } from 'zod';
 const envSchema = z.object({
   // Node environment
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  
+
   // Database
   DATABASE_URL: z.string().url(),
-  
+
   // Auth
   AUTH_SECRET: z.string().min(32),
   AUTH_URL: z.string().url(),
-  
+
   // OAuth
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
-  
+
   // AI
   OPENAI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
@@ -35,7 +35,7 @@ const envSchema = z.object({
   TURN_URL: z.string().optional(),
   TURN_USERNAME: z.string().optional(),
   TURN_PASSWORD: z.string().optional(),
-  
+
   // App
   NEXT_PUBLIC_APP_URL: z.string().url(),
   NEXT_PUBLIC_APP_NAME: z.string().default('TaskNebula'),
@@ -60,45 +60,83 @@ const envSchema = z.object({
   SMTP_SECURE: z.string().optional(),
   EMAIL_FROM: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
-  
+
   // Cache
-  CACHE_ENABLED: z.string().transform(val => val === 'true').default('true'),
+  CACHE_ENABLED: z
+    .string()
+    .transform((val) => val === 'true')
+    .default('true'),
   REDIS_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
-  
+
   // Monitoring
   NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
   SENTRY_AUTH_TOKEN: z.string().optional(),
-  
+
   // Analytics
   NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().optional(),
   VERCEL_ANALYTICS_ID: z.string().optional(),
-  
+
   // File Upload
   UPLOAD_DIR: z.string().default('./uploads'),
-  MAX_FILE_SIZE: z.string().transform(val => parseInt(val, 10)).default('10485760'),
-  
+  MAX_FILE_SIZE: z
+    .string()
+    .transform((val) => parseInt(val, 10))
+    .default('10485760'),
+
   // Web Push
   VAPID_PUBLIC_KEY: z.string().optional(),
   VAPID_PRIVATE_KEY: z.string().optional(),
   VAPID_SUBJECT: z.string().email().optional(),
-  
+
   // Feature Flags
   // AI on/off is managed in DB (systemSettings.agent_control_center.globalEnabled,
   // toggled from Admin → Agent control), not via env. No FEATURE_AI_ENABLED here.
-  FEATURE_WEBHOOKS_ENABLED: z.string().transform(val => val === 'true').default('true'),
-  FEATURE_EMAIL_ENABLED: z.string().transform(val => val === 'true').default('false'),
-  FEATURE_PUSH_NOTIFICATIONS_ENABLED: z.string().transform(val => val === 'true').default('false'),
-  
+  FEATURE_WEBHOOKS_ENABLED: z
+    .string()
+    .transform((val) => val === 'true')
+    .default('true'),
+  FEATURE_EMAIL_ENABLED: z
+    .string()
+    .transform((val) => val === 'true')
+    .default('false'),
+  FEATURE_PUSH_NOTIFICATIONS_ENABLED: z
+    .string()
+    .transform((val) => val === 'true')
+    .default('false'),
+
   // Rate Limiting
-  RATE_LIMIT_ENABLED: z.string().transform(val => val === 'true').default('true'),
-  RATE_LIMIT_MAX_REQUESTS: z.string().transform(val => parseInt(val, 10)).default('100'),
-  RATE_LIMIT_WINDOW_MS: z.string().transform(val => parseInt(val, 10)).default('60000'),
-  
+  RATE_LIMIT_ENABLED: z
+    .string()
+    .transform((val) => val === 'true')
+    .default('true'),
+  RATE_LIMIT_MAX_REQUESTS: z
+    .string()
+    .transform((val) => parseInt(val, 10))
+    .default('100'),
+  RATE_LIMIT_WINDOW_MS: z
+    .string()
+    .transform((val) => parseInt(val, 10))
+    .default('60000'),
+
   // Logging
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 });
+
+function withEnvAliases(source: NodeJS.ProcessEnv | Record<string, string | undefined>) {
+  const authSecret = source.AUTH_SECRET || source.NEXTAUTH_SECRET;
+  const authUrl =
+    source.AUTH_URL || source.NEXTAUTH_URL || source.NEXT_PUBLIC_APP_URL || source.APP_URL;
+  const appUrl = source.NEXT_PUBLIC_APP_URL || source.APP_URL || authUrl;
+
+  return {
+    ...source,
+    AUTH_SECRET: authSecret,
+    AUTH_URL: authUrl,
+    NEXT_PUBLIC_APP_URL: appUrl,
+  };
+}
 
 // Parse and validate environment variables.
 //
@@ -112,7 +150,7 @@ const envSchema = z.object({
 function parseEnv() {
   const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
   try {
-    return envSchema.parse(process.env);
+    return envSchema.parse(withEnvAliases(process.env));
   } catch (error) {
     // During build/page-data collection, return a permissive shape so route
     // modules can be loaded without crashing. Real validation will run
@@ -121,14 +159,23 @@ function parseEnv() {
     if (isBuildPhase) {
       const stub = {
         ...process.env,
-        AUTH_SECRET: process.env.AUTH_SECRET || 'build-time-placeholder-secret-min-32-chars',
-        AUTH_URL: process.env.AUTH_URL || 'http://localhost:3000',
+        AUTH_SECRET:
+          process.env.AUTH_SECRET ||
+          process.env.NEXTAUTH_SECRET ||
+          'build-time-placeholder-secret-min-32-chars',
+        AUTH_URL:
+          process.env.AUTH_URL ||
+          process.env.NEXTAUTH_URL ||
+          process.env.NEXT_PUBLIC_APP_URL ||
+          'http://localhost:3000',
         NEXT_PUBLIC_APP_URL:
-          process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-        DATABASE_URL:
-          process.env.DATABASE_URL || 'postgresql://build:build@localhost:5432/build',
+          process.env.NEXT_PUBLIC_APP_URL ||
+          process.env.AUTH_URL ||
+          process.env.NEXTAUTH_URL ||
+          'http://localhost:3000',
+        DATABASE_URL: process.env.DATABASE_URL || 'postgresql://build:build@localhost:5432/build',
       } as Record<string, string>;
-      return envSchema.parse(stub);
+      return envSchema.parse(withEnvAliases(stub));
     }
 
     // Real failure at runtime — surface every missing field, then throw.

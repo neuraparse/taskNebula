@@ -18,6 +18,10 @@ const subscriptionSchema = z.object({
   deviceName: z.string().optional(),
 });
 
+function pushNotificationsConfigured() {
+  return Boolean(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY);
+}
+
 // GET - List user's push subscriptions
 export async function GET(request: NextRequest) {
   try {
@@ -30,10 +34,7 @@ export async function GET(request: NextRequest) {
     const organizationId = searchParams.get('organizationId');
 
     if (!organizationId) {
-      return NextResponse.json(
-        { error: 'organizationId is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
     }
 
     const subscriptions = await db
@@ -50,10 +51,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(subscriptions);
   } catch (error) {
     console.error('Error fetching push subscriptions:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch push subscriptions' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch push subscriptions' }, { status: 500 });
   }
 }
 
@@ -63,6 +61,10 @@ export async function POST(request: NextRequest) {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!pushNotificationsConfigured()) {
+      return NextResponse.json({ error: 'Push notifications are not configured' }, { status: 503 });
     }
 
     const body = await request.json();
@@ -111,10 +113,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.errors }, { status: 400 });
     }
     console.error('Error creating push subscription:', error);
-    return NextResponse.json(
-      { error: 'Failed to create push subscription' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to create push subscription' }, { status: 500 });
   }
 }
 
@@ -130,28 +129,18 @@ export async function DELETE(request: NextRequest) {
     const endpoint = searchParams.get('endpoint');
 
     if (!endpoint) {
-      return NextResponse.json(
-        { error: 'endpoint is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'endpoint is required' }, { status: 400 });
     }
 
     await db
       .delete(pushSubscriptions)
       .where(
-        and(
-          eq(pushSubscriptions.userId, session.user.id),
-          eq(pushSubscriptions.endpoint, endpoint)
-        )
+        and(eq(pushSubscriptions.userId, session.user.id), eq(pushSubscriptions.endpoint, endpoint))
       );
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting push subscription:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete push subscription' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to delete push subscription' }, { status: 500 });
   }
 }
-

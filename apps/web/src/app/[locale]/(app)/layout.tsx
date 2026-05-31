@@ -8,6 +8,7 @@ import { CommandPaletteProvider } from '@/components/command/command-palette-pro
 import { KeyboardShortcutsProvider } from '@/components/help/keyboard-shortcuts-provider';
 import { AiSidecarProvider } from '@/components/ai/ai-sidecar-provider';
 import { EmailVerificationBanner } from '@/components/auth/email-verification-banner';
+import { MobileNav } from '@/components/mobile/mobile-nav';
 
 // Force dynamic rendering for authenticated routes
 export const dynamic = 'force-dynamic';
@@ -20,18 +21,33 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <KeyboardShortcutsProvider>
           <AiSidecarProvider>
             <PageSidebarSlotProvider>
-              <div className="app-square-ui flex h-screen overflow-hidden bg-background">
-                <AppSidebar />
+              <a
+                href="#main-content"
+                className="focus:bg-primary focus:text-primary-foreground sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-md focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:shadow-md"
+              >
+                Skip to content
+              </a>
+              <div className="app-square-ui bg-background flex h-dvh overflow-hidden">
+                <div className="hidden md:flex">
+                  <AppSidebar />
+                </div>
 
                 <div className="flex flex-1 flex-col overflow-hidden">
                   {/* Rendered async; returns null when the user is verified. */}
                   <EmailVerificationBanner />
-                  <AppHeader />
+                  <div className="hidden md:block">
+                    <AppHeader />
+                  </div>
 
-                  <main className="flex-1 overflow-auto">
+                  <main
+                    id="main-content"
+                    tabIndex={-1}
+                    className="flex-1 overflow-auto pb-16 focus:outline-none md:pb-0"
+                  >
                     <RouteTransition>{children}</RouteTransition>
                   </main>
                 </div>
+                <MobileNav />
               </div>
             </PageSidebarSlotProvider>
           </AiSidecarProvider>

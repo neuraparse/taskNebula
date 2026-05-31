@@ -16,10 +16,15 @@ if [ -s "$PGDATA/PG_VERSION" ] && [ -n "$POSTGRES_PASSWORD" ]; then
     exec docker-entrypoint.sh "$@"
   }
 
-  # 3. Re-hash password with scram-sha-256 (PG16 default, secure)
+  # 3. Re-hash password with scram-sha-256 (PG16 default, secure). psql's
+  # quoted variable forms handle special characters in both role and password.
   psql -U "${POSTGRES_USER:-postgres}" -d postgres \
-    -c "ALTER USER \"${POSTGRES_USER:-postgres}\" PASSWORD '${POSTGRES_PASSWORD}';" \
-    2>/dev/null || true
+    -v ON_ERROR_STOP=1 \
+    -v role="${POSTGRES_USER:-postgres}" \
+    -v password="${POSTGRES_PASSWORD}" \
+    2>/dev/null <<'SQL' || true
+ALTER ROLE :"role" PASSWORD :'password';
+SQL
 
   # 4. Stop temporary server
   pg_ctl -D "$PGDATA" -m fast -w stop 2>/dev/null

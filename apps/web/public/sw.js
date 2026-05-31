@@ -3,11 +3,7 @@ const CACHE_NAME = 'tasknebula-v2';
 const RUNTIME_CACHE = 'tasknebula-runtime';
 
 // Assets to cache on install
-const PRECACHE_URLS = [
-  '/',
-  '/offline',
-  '/manifest.json',
-];
+const PRECACHE_URLS = ['/', '/offline', '/manifest.json'];
 
 function shouldHandleNavigation(requestUrl) {
   const pathname = new URL(requestUrl).pathname;
@@ -46,9 +42,11 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Skip _next/static and other Next.js internal requests - let browser handle them
-  if (event.request.url.includes('/_next/') ||
-      event.request.url.includes('/_rsc') ||
-      event.request.url.includes('?_rsc=')) {
+  if (
+    event.request.url.includes('/_next/') ||
+    event.request.url.includes('/_rsc') ||
+    event.request.url.includes('?_rsc=')
+  ) {
     return;
   }
 
@@ -78,19 +76,25 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => {
           // Fallback to cache or offline page
-          return caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-              return cachedResponse;
-            }
-            return caches.match('/offline');
-          }).then((response) => {
-            // If still no response, return a basic offline response
-            return response || new Response('Offline', {
-              status: 503,
-              statusText: 'Service Unavailable',
-              headers: { 'Content-Type': 'text/plain' }
+          return caches
+            .match(event.request)
+            .then((cachedResponse) => {
+              if (cachedResponse) {
+                return cachedResponse;
+              }
+              return caches.match('/offline');
+            })
+            .then((response) => {
+              // If still no response, return a basic offline response
+              return (
+                response ||
+                new Response('Offline', {
+                  status: 503,
+                  statusText: 'Service Unavailable',
+                  headers: { 'Content-Type': 'text/plain' },
+                })
+              );
             });
-          });
         })
     );
     return;
@@ -103,25 +107,27 @@ self.addEventListener('fetch', (event) => {
         return cachedResponse;
       }
 
-      return fetch(event.request).then((response) => {
-        // Don't cache non-successful responses
-        if (!response || response.status !== 200) {
+      return fetch(event.request)
+        .then((response) => {
+          // Don't cache non-successful responses
+          if (!response || response.status !== 200) {
+            return response;
+          }
+
+          // Only cache same-origin basic responses
+          if (response.type === 'basic') {
+            const responseClone = response.clone();
+            caches.open(RUNTIME_CACHE).then((cache) => {
+              cache.put(event.request, responseClone);
+            });
+          }
+
           return response;
-        }
-
-        // Only cache same-origin basic responses
-        if (response.type === 'basic') {
-          const responseClone = response.clone();
-          caches.open(RUNTIME_CACHE).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
-        }
-
-        return response;
-      }).catch(() => {
-        // Return nothing if fetch fails for static assets
-        return new Response('', { status: 404 });
-      });
+        })
+        .catch(() => {
+          // Return nothing if fetch fails for static assets
+          return new Response('', { status: 404 });
+        });
     })
   );
 });
@@ -132,8 +138,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'TaskNebula';
   const options = {
     body: data.body || 'You have a new notification',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-96x96.png',
+    icon: '/icon.svg',
+    badge: '/icon.svg',
     data: data.url || '/',
     tag: data.tag || 'default',
     requireInteraction: false,
@@ -157,20 +163,18 @@ self.addEventListener('notificationclick', (event) => {
   const urlToOpen = event.notification.data || '/';
 
   event.waitUntil(
-    clients
-      .matchAll({ type: 'window', includeUncontrolled: true })
-      .then((clientList) => {
-        // Check if there's already a window open
-        for (const client of clientList) {
-          if (client.url === urlToOpen && 'focus' in client) {
-            return client.focus();
-          }
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Check if there's already a window open
+      for (const client of clientList) {
+        if (client.url === urlToOpen && 'focus' in client) {
+          return client.focus();
         }
-        // Open a new window
-        if (clients.openWindow) {
-          return clients.openWindow(urlToOpen);
-        }
-      })
+      }
+      // Open a new window
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
   );
 });
 
@@ -185,4 +189,3 @@ async function syncIssues() {
   // Implement background sync logic here
   console.log('Background sync: syncing issues');
 }
-

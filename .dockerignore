@@ -5,16 +5,25 @@ node_modules
 
 # Build outputs
 .next
+**/.next
 dist
+**/dist
 build
+**/build
 out
+**/out
+*.tsbuildinfo
+**/*.tsbuildinfo
+**/.swc
 
 # Environment files
 .env
 .env.local
+.env.*
 .env.*.local
 **/.env
 **/.env.local
+**/.env.*
 **/.env.*.local
 
 images
@@ -29,7 +38,15 @@ yarn-error.log*
 
 # Testing
 coverage
+**/coverage
 .nyc_output
+**/.nyc_output
+test-results
+**/test-results
+playwright-report
+**/playwright-report
+playwright/.cache
+**/playwright/.cache
 
 # IDE
 .vscode
@@ -49,6 +66,8 @@ Thumbs.db
 # Docker
 Dockerfile
 docker-compose.yml
+docker-compose.override.yml
+docker-compose.*.override.yml
 .dockerignore
 
 # CI/CD
@@ -62,8 +81,25 @@ docs
 .turbo
 .vercel
 uploads
+forensic
+forensic/**
+*.bak
+*.backup
+*.backup.*
+*.old
+*.orig
+*.dump
+*.dump.*
+*.sqlite
+*.sqlite3
+*.db
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
 
 
 # Claude Code worktrees and caches
 .claude/
-

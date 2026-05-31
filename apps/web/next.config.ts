@@ -1,3 +1,4 @@
+import path from 'node:path';
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
@@ -10,6 +11,7 @@ const nextConfig: NextConfig = {
   // Enable standalone output for optimized Docker deployment
   // This creates a minimal production build with only necessary files
   output: 'standalone',
+  outputFileTracingRoot: path.join(__dirname, '../..'),
   transpilePackages: ['@tasknebula/types', '@tasknebula/mcp-server'],
   serverExternalPackages: ['@tasknebula/db', 'postgres', 'drizzle-orm'],
   experimental: {
