@@ -60,7 +60,7 @@ to point at a deployed environment.
 
 ## How auth + seeding works
 
-`auth.setup.ts` runs *before* every authed project and:
+`auth.setup.ts` runs _before_ every authed project and:
 
 1. Calls `ensureSeed()` to insert (idempotently) the `E2E Workspace`
    organization, an admin user (`e2e-admin@tasknebula.test` /
@@ -77,15 +77,15 @@ under the `chromium-public` project.
 ## Artifacts
 
 - `apps/web/test-results/` — per-test output (HTML report, traces, video).
-- Traces and screenshots are captured *only on failure* to keep the working
+- Traces and screenshots are captured _only on failure_ to keep the working
   directory small. Open the HTML report with
   `pnpm --filter @tasknebula/web exec playwright show-report`.
 
 ## CI
 
-`.github/workflows/e2e.yml` runs the suite on every pull request with Postgres
-and Redis service containers, applies migrations, runs the seeder, executes
-the suite, and uploads the trace artifacts on failure.
+When CI coverage is restored, run this suite on pull requests with Postgres
+and Redis service containers, apply migrations, run the seeder, execute the
+suite, and upload trace artifacts on failure.
 
 ## Known follow-ups
 
