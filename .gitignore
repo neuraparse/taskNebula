@@ -394,10 +394,21 @@ tramp
 # ============================================================================
 # AI / LLM TOOLING
 # ============================================================================
-# Claude
-.claude
-.claude/
-CLAUDE.local.md
+# Claude Code — share team config (settings.json, agents, commands, rules),
+# ignore personal/local files and generated worktrees.
+.claude/*
+!.claude/settings.json
+!.claude/agents/
+!.claude/commands/
+!.claude/rules/
+!.claude/output-styles/
+.claude/settings.local.json
+.claude/worktrees/
+# Personal/local variants must never be published, even inside shared dirs.
+.claude/**/*.local.json
+.claude/**/*.local.md
+**/CLAUDE.local.md
+.claude/memory/
 .anthropic/
 
 # Cursor / Aider / Continue / Cody / Windsurf / etc.

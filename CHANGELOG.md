@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-06-09
+
+### Security
+
+- **Dependency vulnerabilities reduced from 14 to 1 (`pnpm audit --prod`).**
+  - **Nodemailer upgraded to 8.0.10** to fix the SMTP command-injection advisory affecting `<= 8.0.4`.
+  - Added range-scoped pnpm overrides patching transitive advisories without disturbing other major lines: `ajv >=6.14.0`, `bn.js >=4.12.3`, `brace-expansion >=1.1.13 / >=2.0.3`, `hono >=4.12.21`, `postcss >=8.5.10`, `qs >=6.15.2`, `uuid` 11.x `>=11.1.1`, `ws >=8.20.1`.
+  - One remaining moderate advisory (`uuid` 9.0.1, transitive) is intentionally not force-upgraded: the fix requires a major bump (9 → 11) of a transitive dependency, and the issue only affects `v3/v5/v6` calls that pass a `buf` argument.
+
+### Changed
+
+- Removed two unused declarations flagged by ESLint (`PART_RE` in `time-tracking/duration.ts`, `ExecCall` type in the hybrid-search test).
+
+### Added
+
+- Claude Code project configuration: `CLAUDE.md` (also exposed as `AGENTS.md`), subagents, slash commands, and path-scoped rules under `.claude/`, plus a release runbook at `docs/RELEASE.md`.
+
 ## [0.3.3] - 2026-05-31
 
 ### Security

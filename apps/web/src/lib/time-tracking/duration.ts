@@ -37,8 +37,6 @@ export function computeDurationSeconds(start: Date, end: Date): number {
  * Returns `null` on unrecognized input. We intentionally don't throw — the
  * command palette will simply show a "couldn't parse" toast.
  */
-const PART_RE = /(\d+(?:\.\d+)?)\s*(h(?:ours?|rs?)?|m(?:in(?:utes?)?)?|s(?:ec(?:onds?)?)?)/gi;
-
 export function parseDuration(input: string): number | null {
   if (typeof input !== 'string') return null;
   const trimmed = input.trim().toLowerCase();

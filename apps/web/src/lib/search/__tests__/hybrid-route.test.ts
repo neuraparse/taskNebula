@@ -27,7 +27,6 @@ jest.mock('@/auth', () => ({
 import { auth } from '@/auth';
 
 // --- DB mock -----------------------------------------------------------------
-type ExecCall = { sqlText: string };
 const execMock = jest.fn();
 
 jest.mock('@tasknebula/db', () => {

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install)",
+      "Bash(pnpm dev:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm type-check:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm format:*)",
+      "Bash(pnpm run:*)",
+      "Bash(pnpm db:generate:*)",
+      "Bash(pnpm db:migrate:*)",
+      "Bash(pnpm db:studio:*)",
+      "Bash(pnpm tests:e2e:*)",
+      "Bash(turbo run:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker-compose:*)"
+    ],
+    "deny": ["Read(.env)", "Read(.env.*)", "Read(./**/.env)", "Read(./**/.env.*)"],
+    "ask": []
+  },
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // empty' | grep -E '\\.(ts|tsx|js|jsx|cjs|mjs|json|md|ya?ml)$' | xargs -r ./node_modules/.bin/prettier --write --ignore-unknown 2>/dev/null; exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}
