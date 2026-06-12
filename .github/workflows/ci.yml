@@ -38,6 +38,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # apps/web imports @tasknebula/mcp-server via its exports map, which
+      # points at dist/ — build it first or type-check fails on a fresh clone.
+      - name: Build workspace packages consumed via dist
+        run: pnpm --filter @tasknebula/mcp-server build
+
       - name: Type-check
         run: pnpm type-check
 
