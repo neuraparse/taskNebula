@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-12
+
 ### Added
 
 - **First-class labels, project versions/releases, and components** (migration `0054_jira_parity_layer.sql` + REST APIs). New tables: `labels` + `issue_labels` (with an idempotent backfill from the legacy `issues.labels` JSONB array), `project_versions` + `issue_fix_versions` / `issue_affects_versions`, and `components` + `issue_components`. UI is minimal for now — these land as schema + API.
@@ -202,7 +204,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Internal alpha release. [See git log] for details.
 
-[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.3.4...HEAD
+[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/neuraparse/tasknebula/compare/v0.3.4...v0.4.0
 [0.3.4]: https://github.com/neuraparse/tasknebula/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/neuraparse/tasknebula/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/neuraparse/tasknebula/releases/tag/v0.3.2
