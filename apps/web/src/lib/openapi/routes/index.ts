@@ -23,7 +23,9 @@
 
 import './issues';
 import './projects';
-import './cycles';
+import './labels';
+import './versions';
+import './components';
 import './users';
 import './search';
 import './health';

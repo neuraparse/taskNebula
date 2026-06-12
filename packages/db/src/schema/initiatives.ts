@@ -9,6 +9,7 @@ import {
   uniqueIndex,
   primaryKey,
 } from 'drizzle-orm/pg-core';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { organizations } from './organizations';
@@ -35,10 +36,12 @@ export const initiativeStatusEnum = pgEnum('initiative_status', [
   'cancelled',
 ]);
 
-export const initiatives: any = pgTable(
+export const initiatives = pgTable(
   'initiatives',
   {
-    id: text('id').$defaultFn(() => createId()).primaryKey(),
+    id: text('id')
+      .$defaultFn(() => createId())
+      .primaryKey(),
 
     // "Workspace" in roadmap parlance maps to our organization concept.
     workspaceId: text('workspace_id')
@@ -46,10 +49,9 @@ export const initiatives: any = pgTable(
       .references(() => organizations.id, { onDelete: 'cascade' }),
 
     // Self-reference for sub-initiatives. App layer caps depth at 5.
-    parentInitiativeId: text('parent_initiative_id').references(
-      (): any => initiatives.id,
-      { onDelete: 'cascade' }
-    ),
+    parentInitiativeId: text('parent_initiative_id').references((): AnyPgColumn => initiatives.id, {
+      onDelete: 'cascade',
+    }),
 
     name: text('name').notNull(),
     slug: text('slug').notNull(),
@@ -115,7 +117,9 @@ export const initiativeProjects = pgTable(
 export const initiativeUpdates = pgTable(
   'initiative_updates',
   {
-    id: text('id').$defaultFn(() => createId()).primaryKey(),
+    id: text('id')
+      .$defaultFn(() => createId())
+      .primaryKey(),
     initiativeId: text('initiative_id')
       .notNull()
       .references(() => initiatives.id, { onDelete: 'cascade' }),
@@ -130,9 +134,7 @@ export const initiativeUpdates = pgTable(
     createdAt: timestamp('created_at').notNull().defaultNow(),
   },
   (table) => ({
-    initiativeIdx: index('initiative_updates_initiative_idx').on(
-      table.initiativeId
-    ),
+    initiativeIdx: index('initiative_updates_initiative_idx').on(table.initiativeId),
     weekIdx: index('initiative_updates_week_idx').on(table.weekOf),
   })
 );
@@ -157,33 +159,27 @@ export const initiativesRelations = relations(initiatives, ({ one, many }) => ({
   updates: many(initiativeUpdates),
 }));
 
-export const initiativeProjectsRelations = relations(
-  initiativeProjects,
-  ({ one }) => ({
-    initiative: one(initiatives, {
-      fields: [initiativeProjects.initiativeId],
-      references: [initiatives.id],
-    }),
-    project: one(projects, {
-      fields: [initiativeProjects.projectId],
-      references: [projects.id],
-    }),
-  })
-);
+export const initiativeProjectsRelations = relations(initiativeProjects, ({ one }) => ({
+  initiative: one(initiatives, {
+    fields: [initiativeProjects.initiativeId],
+    references: [initiatives.id],
+  }),
+  project: one(projects, {
+    fields: [initiativeProjects.projectId],
+    references: [projects.id],
+  }),
+}));
 
-export const initiativeUpdatesRelations = relations(
-  initiativeUpdates,
-  ({ one }) => ({
-    initiative: one(initiatives, {
-      fields: [initiativeUpdates.initiativeId],
-      references: [initiatives.id],
-    }),
-    author: one(users, {
-      fields: [initiativeUpdates.authorId],
-      references: [users.id],
-    }),
-  })
-);
+export const initiativeUpdatesRelations = relations(initiativeUpdates, ({ one }) => ({
+  initiative: one(initiatives, {
+    fields: [initiativeUpdates.initiativeId],
+    references: [initiatives.id],
+  }),
+  author: one(users, {
+    fields: [initiativeUpdates.authorId],
+    references: [users.id],
+  }),
+}));
 
 export type Initiative = typeof initiatives.$inferSelect;
 export type NewInitiative = typeof initiatives.$inferInsert;

@@ -160,7 +160,7 @@ function OmnibarTabs({ active, onChange }: OmnibarTabsProps) {
             aria-selected={isActive}
             onClick={() => onChange(tab.key)}
             className={cn(
-              'group inline-flex items-center gap-2 rounded-md px-2.5 py-1 text-xs font-medium transition-all duration-150 ease-snap',
+              'ease-snap group inline-flex items-center gap-2 rounded-md px-2.5 py-1 text-xs font-medium transition-all duration-150',
               isActive
                 ? 'bg-white/10 text-zinc-50 ring-1 ring-white/15'
                 : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
@@ -202,11 +202,9 @@ function FacetPicker({ facetKey, onPick, onCancel }: FacetPickerProps) {
     <div
       role="listbox"
       aria-label={`${facetKey} values`}
-      className="mx-3 mt-1 mb-2 flex flex-wrap gap-1 rounded-md border border-white/10 bg-zinc-900/60 p-2 backdrop-blur-xl"
+      className="mx-3 mb-2 mt-1 flex flex-wrap gap-1 rounded-md border border-white/10 bg-zinc-900/60 p-2 backdrop-blur-xl"
     >
-      <span className="text-[10px] uppercase tracking-wider text-zinc-500">
-        {facetKey}:
-      </span>
+      <span className="text-[10px] uppercase tracking-wider text-zinc-500">{facetKey}:</span>
       {presets.length === 0 ? (
         <span className="text-[11px] text-zinc-500">Type to filter…</span>
       ) : (
@@ -276,29 +274,26 @@ function useHistory(organizationId: string | null, open: boolean) {
     return () => controller.abort();
   }, [open, organizationId]);
 
-  const togglePin = React.useCallback(
-    async (entry: HistoryEntry) => {
-      const next = !entry.pinned;
-      // Optimistic update.
-      if (next) {
-        setPinned((p) => [{ ...entry, pinned: true }, ...p.filter((x) => x.id !== entry.id)]);
-        setRecents((r) => r.filter((x) => x.id !== entry.id));
-      } else {
-        setPinned((p) => p.filter((x) => x.id !== entry.id));
-        setRecents((r) => [{ ...entry, pinned: false }, ...r]);
-      }
-      try {
-        await fetch('/api/search-history', {
-          method: 'PATCH',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ id: entry.id, pinned: next }),
-        });
-      } catch {
-        /* swallow — UI already reflects the intent */
-      }
-    },
-    []
-  );
+  const togglePin = React.useCallback(async (entry: HistoryEntry) => {
+    const next = !entry.pinned;
+    // Optimistic update.
+    if (next) {
+      setPinned((p) => [{ ...entry, pinned: true }, ...p.filter((x) => x.id !== entry.id)]);
+      setRecents((r) => r.filter((x) => x.id !== entry.id));
+    } else {
+      setPinned((p) => p.filter((x) => x.id !== entry.id));
+      setRecents((r) => [{ ...entry, pinned: false }, ...r]);
+    }
+    try {
+      await fetch('/api/search-history', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ id: entry.id, pinned: next }),
+      });
+    } catch {
+      /* swallow — UI already reflects the intent */
+    }
+  }, []);
 
   return { recents, pinned, togglePin };
 }
@@ -346,22 +341,25 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const askAi = React.useCallback(
     (prompt: string) => {
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(
-          new CustomEvent('tasknebula:ask-ai', { detail: { prompt } })
-        );
+        window.dispatchEvent(new CustomEvent('tasknebula:ask-ai', { detail: { prompt } }));
       }
-      // Optimistic fire-and-forget POST so /api/ask, once it lands
-      // (task #3), starts capturing palette-initiated prompts.
+      // Optimistic fire-and-forget POST so /api/ask starts capturing
+      // palette-initiated prompts. The route's zod schema expects `query`
+      // (see api/ask/route.ts bodySchema), not `prompt`.
+      const body: { query: string; organizationId?: string } = { query: prompt };
+      if (currentOrganizationId) {
+        body.organizationId = currentOrganizationId;
+      }
       fetch('/api/ask', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ prompt, source: 'command-palette' }),
+        body: JSON.stringify(body),
       }).catch(() => {
-        /* endpoint may not exist yet — silently ignore */
+        /* non-blocking — the event above already drives the UI */
       });
       close();
     },
-    [close]
+    [close, currentOrganizationId]
   );
 
   const removeChip = React.useCallback((facet: Facet) => {
@@ -382,12 +380,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       // Number keys 1–5 switch tabs when input is empty so the user can
       // scope without taking their hands off the keyboard. We respect
       // typing — once the input has content, digits go to the query.
-      if (
-        rawInput.length === 0 &&
-        /^[1-5]$/.test(event.key) &&
-        !event.metaKey &&
-        !event.ctrlKey
-      ) {
+      if (rawInput.length === 0 && /^[1-5]$/.test(event.key) && !event.metaKey && !event.ctrlKey) {
         const idx = parseInt(event.key, 10) - 1;
         const next = TABS[idx];
         if (next) {
@@ -419,8 +412,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   // Heuristic: surface the Ask AI CTA when the user has typed a
   // sentence-ish input (more than a single word OR ends with `?`).
   const showAskCta =
-    askPrompt.length > 0 &&
-    (askPrompt.includes(' ') || askPrompt.endsWith('?') || tab === 'ask');
+    askPrompt.length > 0 && (askPrompt.includes(' ') || askPrompt.endsWith('?') || tab === 'ask');
 
   /* ------------------------------------------------------------------ */
   /* Render                                                              */
@@ -430,10 +422,10 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       <DialogContent
         onKeyDown={onContentKeyDown}
         className={cn(
-          'p-0 gap-0 max-w-2xl w-[92vw] overflow-hidden border-0',
+          'w-[92vw] max-w-2xl gap-0 overflow-hidden border-0 p-0',
           'left-[50%] top-[18vh] translate-x-[-50%] translate-y-0',
           // Dark glassmorphism per FEAT-25 spec.
-          'bg-zinc-900/70 backdrop-blur-xl ring-1 ring-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset,0_24px_48px_-12px_rgba(0,0,0,0.5)]'
+          'bg-zinc-900/70 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset,0_24px_48px_-12px_rgba(0,0,0,0.5)] ring-1 ring-white/10 backdrop-blur-xl'
         )}
       >
         <DialogTitle className="sr-only">Command palette</DialogTitle>
@@ -470,7 +462,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 }
                 autoFocus
                 aria-label="Command palette query"
-                className="min-w-[120px] flex-1 bg-transparent text-sm text-zinc-100 placeholder:text-zinc-500 outline-none"
+                className="min-w-[120px] flex-1 bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-500"
               />
             </div>
             <kbd className="hidden rounded border border-white/10 bg-zinc-950/40 px-1 font-mono text-[10px] text-zinc-500 sm:inline-block">
@@ -484,6 +476,18 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               onPick={(value) => appendFacetValue(`"${value}" `)}
               onCancel={() => setRawInput((prev) => prev.replace(/\w+:$/, '').trimEnd())}
             />
+          ) : null}
+
+          {/* Surface search failures instead of silently showing "No results". */}
+          {search.error ? (
+            <div
+              role="alert"
+              data-testid="omnibar-search-error"
+              className="mx-3 mt-2 flex items-center gap-2 rounded-md border border-red-500/20 bg-red-500/10 px-2.5 py-1.5 text-[11px] text-red-300"
+            >
+              <X className="h-3 w-3 shrink-0" aria-hidden />
+              <span className="truncate">{search.error}</span>
+            </div>
           ) : null}
 
           <CommandList className="max-h-[480px]">
@@ -532,7 +536,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                         history.togglePin(entry);
                       }}
                       aria-label="Unpin query"
-                      className="opacity-0 transition group-data-[selected=true]:opacity-100 hover:opacity-100"
+                      className="opacity-0 transition hover:opacity-100 group-data-[selected=true]:opacity-100"
                     >
                       <PinOff className="h-3 w-3 text-zinc-400" />
                     </button>
@@ -561,7 +565,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                           history.togglePin(entry);
                         }}
                         aria-label="Pin query"
-                        className="opacity-0 transition group-data-[selected=true]:opacity-100 hover:opacity-100"
+                        className="opacity-0 transition hover:opacity-100 group-data-[selected=true]:opacity-100"
                       >
                         <Pin className="h-3 w-3 text-zinc-400" />
                       </button>
@@ -608,9 +612,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             {showRecents ? (
               <>
                 <CommandSeparator className="bg-white/5" />
-                <CommandGroup
-                  heading={<span className="kicker text-zinc-500">Navigate</span>}
-                >
+                <CommandGroup heading={<span className="kicker text-zinc-500">Navigate</span>}>
                   {QUICK_NAV.map((nav) => (
                     <CommandItem
                       key={nav.id}
@@ -618,10 +620,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                       onSelect={() => navigate(nav.href)}
                       className="flex items-center gap-2 rounded-md text-zinc-200 data-[selected=true]:bg-white/5"
                     >
-                      <nav.icon
-                        className="h-3.5 w-3.5 shrink-0 text-zinc-500"
-                        aria-hidden
-                      />
+                      <nav.icon className="h-3.5 w-3.5 shrink-0 text-zinc-500" aria-hidden />
                       <span className="flex-1 truncate">{nav.label}</span>
                     </CommandItem>
                   ))}

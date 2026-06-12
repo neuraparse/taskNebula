@@ -4,6 +4,7 @@ import { auth } from '@/auth';
 import { eq, and, asc, desc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { resolveProjectByIdOrKey } from '@/lib/projects/server';
+import { canManageProject, canReadProject } from '@/lib/auth/access-control';
 
 // GET /api/projects/[projectId]/workflow-statuses - Get workflow statuses for a project
 export async function GET(
@@ -12,30 +13,33 @@ export async function GET(
 ) {
   try {
     const session = await auth();
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { projectId } = await params;
-    const project = await resolveProjectByIdOrKey(projectId);
+    const project = await resolveProjectByIdOrKey(projectId, session.user.id);
 
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
+    // 404 (not 403) so cross-org probing cannot confirm the project exists
+    const canRead = await canReadProject(session.user.id, project);
+    if (!canRead) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
     // Get workflow for project
     let workflowId = project.defaultWorkflowId;
-    
+
     if (!workflowId) {
       // Get organization's default workflow
       const defaultWorkflows = await db
         .select()
         .from(workflows)
         .where(
-          and(
-            eq(workflows.organizationId, project.organizationId),
-            eq(workflows.isDefault, true)
-          )
+          and(eq(workflows.organizationId, project.organizationId), eq(workflows.isDefault, true))
         )
         .limit(1);
 
@@ -72,7 +76,7 @@ export async function POST(
 ) {
   try {
     const session = await auth();
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -84,10 +88,21 @@ export async function POST(
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const project = await resolveProjectByIdOrKey(projectId);
+    const project = await resolveProjectByIdOrKey(projectId, session.user.id);
 
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    // 404 (not 403) so cross-org probing cannot confirm the project exists
+    const canRead = await canReadProject(session.user.id, project);
+    if (!canRead) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const canManage = await canManageProject(session.user.id, project);
+    if (!canManage) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
     // Get workflow for project
@@ -99,10 +114,7 @@ export async function POST(
         .select()
         .from(workflows)
         .where(
-          and(
-            eq(workflows.organizationId, project.organizationId),
-            eq(workflows.isDefault, true)
-          )
+          and(eq(workflows.organizationId, project.organizationId), eq(workflows.isDefault, true))
         )
         .limit(1);
 

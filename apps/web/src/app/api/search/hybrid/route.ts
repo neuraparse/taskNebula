@@ -1,8 +1,63 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { and, eq, db, organizationMembers } from '@tasknebula/db';
 import { auth } from '@/auth';
 import { hybridSearch } from '@/lib/search/hybrid';
 
 export const dynamic = 'force-dynamic';
+
+const stringOrArray = z.union([z.string().min(1), z.array(z.string().min(1)).min(1)]);
+
+/**
+ * Body schema. `organizationId` is only a *hint* — the effective
+ * organization is always resolved against the caller's memberships in
+ * `resolveOrganizationId` below; a request naming an org the caller does
+ * not belong to is rejected with 403 (never trusted, per
+ * .claude/rules/api.md tenant-isolation rule).
+ */
+const bodySchema = z.object({
+  query: z.string().trim().min(1, 'query is required').max(500),
+  organizationId: z.string().min(1).max(64).optional(),
+  projectId: stringOrArray.optional(),
+  assigneeId: stringOrArray.optional(),
+  statusId: stringOrArray.optional(),
+  statusCategory: stringOrArray.optional(),
+  type: stringOrArray.optional(),
+  label: z.string().min(1).max(100).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+/**
+ * Resolve the organization the search runs against. Mirrors the pattern in
+ * api/ask/route.ts: a requested org id is only honoured when the session
+ * user is actually a member; with no request hint we fall back to the
+ * user's first membership.
+ */
+async function resolveOrganizationId(
+  userId: string,
+  requested?: string | null
+): Promise<string | null> {
+  if (requested) {
+    const [member] = await db
+      .select({ organizationId: organizationMembers.organizationId })
+      .from(organizationMembers)
+      .where(
+        and(
+          eq(organizationMembers.userId, userId),
+          eq(organizationMembers.organizationId, requested),
+          eq(organizationMembers.status, 'active')
+        )
+      )
+      .limit(1);
+    return member?.organizationId ?? null;
+  }
+  const [member] = await db
+    .select({ organizationId: organizationMembers.organizationId })
+    .from(organizationMembers)
+    .where(and(eq(organizationMembers.userId, userId), eq(organizationMembers.status, 'active')))
+    .limit(1);
+  return member?.organizationId ?? null;
+}
 
 /**
  * Hybrid search endpoint.
@@ -12,7 +67,7 @@ export const dynamic = 'force-dynamic';
  * Body:
  *   {
  *     query: string,                          // required, free-text
- *     organizationId: string,                 // required
+ *     organizationId?: string,                // must match a membership; defaults to first
  *     projectId?: string | string[],
  *     assigneeId?: string | string[],
  *     statusId?: string | string[],
@@ -37,49 +92,50 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json().catch(() => ({}));
-    const query: unknown = body?.query;
-    const organizationId: unknown = body?.organizationId;
-
-    if (typeof query !== 'string' || query.trim().length === 0) {
-      return NextResponse.json({ error: 'query is required' }, { status: 400 });
+    let payload: z.infer<typeof bodySchema>;
+    try {
+      payload = bodySchema.parse(await request.json());
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return NextResponse.json({ error: 'Invalid input', details: err.errors }, { status: 400 });
+      }
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
-    if (typeof organizationId !== 'string' || organizationId.length === 0) {
-      return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
-    }
 
-    const limit = Math.min(
-      Math.max(Number(body?.limit ?? 20) | 0, 1),
-      100
-    );
+    // SECURITY: derive the tenant from the session user's memberships —
+    // never trust an organizationId straight from the request body.
+    const organizationId = await resolveOrganizationId(session.user.id, payload.organizationId);
+    if (!organizationId) {
+      return NextResponse.json(
+        { error: 'No accessible organization for this user.', code: 'no_org' },
+        { status: 403 }
+      );
+    }
 
     const filters = {
       organizationId,
-      projectId: body?.projectId ?? null,
-      assigneeId: body?.assigneeId ?? null,
-      statusId: body?.statusId ?? null,
-      statusCategory: body?.statusCategory ?? null,
-      type: body?.type ?? null,
-      label: typeof body?.label === 'string' ? body.label : null,
+      projectId: payload.projectId ?? null,
+      assigneeId: payload.assigneeId ?? null,
+      statusId: payload.statusId ?? null,
+      statusCategory: payload.statusCategory ?? null,
+      type: payload.type ?? null,
+      label: payload.label ?? null,
     };
 
     const results = await hybridSearch({
-      query,
+      query: payload.query,
       filters,
-      limit,
+      limit: payload.limit,
     });
 
     return NextResponse.json({
       results,
       count: results.length,
-      query,
+      query: payload.query,
       filters,
     });
   } catch (error) {
     console.error('Hybrid search error:', error);
-    return NextResponse.json(
-      { error: 'Failed to execute hybrid search' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to execute hybrid search' }, { status: 500 });
   }
 }

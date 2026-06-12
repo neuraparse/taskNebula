@@ -1,3 +1,5 @@
+> ARCHIVED 2026-06-12 — historical snapshot, superseded by docs/AUDIT_2026-06.md and README. Claims below describe Nov-2025-era state.
+
 # 🚀 Phase 3-13 Progress: Real Database Integration, AI Features, Advanced UI, Sprint Management, Analytics, Issue Relationships, Team Collaboration, Custom Fields, Advanced Features, Email/Watchers & Advanced Search
 
 ## 🎯 Current Status
@@ -5,6 +7,7 @@
 **Phase 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 & 13 Progress: ✅ 100% COMPLETE**
 
 ✅ **Phase 3 - Completed:**
+
 - API Routes with Real Database Queries (270+ lines)
 - User Context & Organization Management (300+ lines)
 - Frontend Data Fetching with React Query (168+ lines)
@@ -12,16 +15,19 @@
 - Real-time Updates Infrastructure (350+ lines)
 
 ✅ **Phase 4 - Completed:**
+
 - File Upload Infrastructure (450+ lines)
 - AI Issue Generation with OpenAI (200+ lines)
 - AI Thread Summarization (150+ lines)
 
 ✅ **Phase 5 - Completed:**
+
 - Assignee Picker Component (140+ lines)
 - Priority Picker Component (120+ lines)
 - Label Management (135+ lines)
 
 ✅ **Phase 6 - Completed:**
+
 - Sprint API Routes (300+ lines)
 - Sprint Hooks (170+ lines)
 - Sprint Planning Page (150+ lines)
@@ -29,6 +35,7 @@
 - Sprint Analytics (120+ lines)
 
 ✅ **Phase 7 - Completed:**
+
 - Analytics API Routes (400+ lines)
 - Velocity Chart Component (60+ lines)
 - Burndown Chart Component (70+ lines)
@@ -37,6 +44,7 @@
 - Export Features (CSV/JSON)
 
 ✅ **Phase 8 - Completed:**
+
 - Issue Links Database Schema (issueLinks table)
 - Issue Links API Routes (170+ lines)
 - Issue Links Hooks (160+ lines)
@@ -45,6 +53,7 @@
 - Integration with Issue Detail View
 
 ✅ **Phase 9 - Completed:**
+
 - Notifications Database Schema (notifications table)
 - Notifications API Routes (170+ lines)
 - Notifications Hooks (120+ lines)
@@ -54,6 +63,7 @@
 - Integration with Header and Dashboard
 
 ✅ **Phase 10 - Completed:**
+
 - Custom Fields Database Schema (customFields, customFieldValues tables)
 - Custom Fields API Routes (200+ lines)
 - Custom Field Values API Routes (140+ lines)
@@ -65,6 +75,7 @@
 - Integration with Issue Sidebar
 
 ✅ **Phase 11 - Completed:**
+
 - Audit Log Database Schema (auditLogs table with 42 action types)
 - API Keys Database Schema (apiKeys table)
 - Webhooks Database Schema (webhooks, webhookDeliveries tables)
@@ -79,6 +90,7 @@
 - Organization Settings Page (60+ lines)
 
 🔜 **Next Steps:**
+
 - Advanced Search & JQL-like Query Language
 - Bulk Operations & Saved Filters
 - Email Notifications & Watchers
@@ -92,6 +104,7 @@
 Created comprehensive query helpers in `packages/db/src/queries/`:
 
 **Issues Queries (`issues.ts`):**
+
 - ✅ `getIssues()` - List issues with filters (projectId, assigneeId, status, sprintId)
 - ✅ `getIssueById()` - Get single issue with assignee and reporter
 - ✅ `createIssue()` - Create new issue
@@ -102,6 +115,7 @@ Created comprehensive query helpers in `packages/db/src/queries/`:
 - ✅ `getIssueActivities()` - Get activity log
 
 **Projects Queries (`projects.ts`):**
+
 - ✅ `getProjects()` - List projects for organization
 - ✅ `getProjectById()` - Get single project
 - ✅ `getProjectWithWorkflow()` - Get project with workflow and statuses
@@ -110,6 +124,7 @@ Created comprehensive query helpers in `packages/db/src/queries/`:
 - ✅ `updateProject()` - Update project
 
 **Users Queries (`users.ts`):**
+
 - ✅ `getUserById()` - Get user by ID
 - ✅ `getUserByEmail()` - Get user by email
 - ✅ `getUserOrganizations()` - Get user's organizations
@@ -119,6 +134,7 @@ Created comprehensive query helpers in `packages/db/src/queries/`:
 ### 2. API Routes Updated
 
 **Issues API (`/api/issues`):**
+
 - ✅ GET - List issues with real database queries
 - ✅ POST - Create issue with authentication
 - ✅ Authentication check (session required)
@@ -126,6 +142,7 @@ Created comprehensive query helpers in `packages/db/src/queries/`:
 - ✅ Proper error handling
 
 **Issue Detail API (`/api/issues/[issueId]`):**
+
 - ✅ GET - Fetch single issue from database
 - ✅ PATCH - Update issue with validation
 - ✅ DELETE - Delete issue
@@ -133,6 +150,7 @@ Created comprehensive query helpers in `packages/db/src/queries/`:
 - ✅ Authentication on all endpoints
 
 **Comments API (`/api/issues/[issueId]/comments`):**
+
 - ✅ GET - Fetch comments with author info
 - ✅ POST - Create comment with authentication
 - ✅ Zod validation
@@ -141,21 +159,25 @@ Created comprehensive query helpers in `packages/db/src/queries/`:
 ### 3. Key Features
 
 **Authentication Integration:**
+
 - All API routes now check for valid session
 - User ID from session used for reporterId/authorId
 - 401 Unauthorized responses for unauthenticated requests
 
 **Type Safety:**
+
 - Full TypeScript support
 - Drizzle ORM type inference
 - Zod schema validation
 
 **Error Handling:**
+
 - Try-catch blocks on all routes
 - Proper HTTP status codes (200, 201, 400, 401, 404, 500)
 - Detailed error messages in development
 
 **Database Queries:**
+
 - Efficient joins for related data (assignee, reporter, author)
 - Filtering support (projectId, assigneeId, status, sprintId)
 - Proper null handling
@@ -163,12 +185,14 @@ Created comprehensive query helpers in `packages/db/src/queries/`:
 ### 4. Files Created/Modified
 
 **New Files:**
+
 - `packages/db/src/queries/issues.ts` (143 lines)
 - `packages/db/src/queries/projects.ts` (73 lines)
 - `packages/db/src/queries/users.ts` (51 lines)
 - `packages/db/src/queries/index.ts` (3 lines)
 
 **Modified Files:**
+
 - `packages/db/src/index.ts` - Export queries
 - `apps/web/src/app/api/issues/route.ts` - Real DB integration
 - `apps/web/src/app/api/issues/[issueId]/route.ts` - Real DB integration
@@ -179,7 +203,7 @@ Created comprehensive query helpers in `packages/db/src/queries/`:
 
 ✅ **Type Check:** All packages pass  
 ✅ **Build:** Production build successful  
-✅ **Bundle Size:** 105 kB shared, 139 kB middleware  
+✅ **Bundle Size:** 105 kB shared, 139 kB middleware
 
 ---
 
@@ -188,11 +212,13 @@ Created comprehensive query helpers in `packages/db/src/queries/`:
 ### 1. User Context Hooks
 
 **User Hook (`use-user.ts`):**
+
 - ✅ `useUser()` - Get current user from session
 - ✅ Loading state handling
 - ✅ Authentication status
 
 **Organization Hook (`use-organization.ts`):**
+
 - ✅ Zustand store with persist middleware
 - ✅ SSR-safe localStorage implementation
 - ✅ `currentOrganizationId` state
@@ -204,11 +230,13 @@ Created comprehensive query helpers in `packages/db/src/queries/`:
 ### 2. Organization API Routes
 
 **Organizations API (`/api/organizations`):**
+
 - ✅ GET - List user's organizations with roles
 - ✅ Authentication check
 - ✅ Join with organizationMembers table
 
 **Teams API (`/api/organizations/[organizationId]/teams`):**
+
 - ✅ GET - List teams in organization
 - ✅ User membership status
 - ✅ Authentication check
@@ -216,6 +244,7 @@ Created comprehensive query helpers in `packages/db/src/queries/`:
 ### 3. UI Components
 
 **OrganizationSwitcher:**
+
 - ✅ Dropdown with organization list
 - ✅ Current organization display
 - ✅ Search functionality
@@ -224,6 +253,7 @@ Created comprehensive query helpers in `packages/db/src/queries/`:
 - ✅ Loading states
 
 **UserProfileDropdown:**
+
 - ✅ User avatar with initials
 - ✅ User name and email display
 - ✅ Profile menu
@@ -231,6 +261,7 @@ Created comprehensive query helpers in `packages/db/src/queries/`:
 - ✅ Sign out functionality
 
 **AppHeader Updates:**
+
 - ✅ Organization switcher integration
 - ✅ User profile dropdown integration
 - ✅ Responsive layout
@@ -288,10 +319,12 @@ apps/web/src/components/ui/
 ### 1. TanStack Query (React Query) Setup
 
 **Query Provider:**
+
 - ✅ QueryClient configuration with default options
 - ✅ Integrated into Providers
 
 **Query Hooks (`use-issues.ts`):**
+
 - ✅ `useIssues(filters)` - Fetch issues with filters
 - ✅ `useIssue(issueId)` - Fetch single issue
 - ✅ `useCreateIssue()` - Create mutation
@@ -327,6 +360,7 @@ apps/web/src/lib/hooks/use-issues.ts
 ### 1. Create Issue Modal (189 lines)
 
 **CreateIssueModal Component:**
+
 - ✅ Full form with title, description, type, priority, status
 - ✅ Uses `useCreateIssue()` mutation
 - ✅ Loading state with spinner
@@ -335,6 +369,7 @@ apps/web/src/lib/hooks/use-issues.ts
 - ✅ Integrated into project board page
 
 **UI Components Added:**
+
 - ✅ Dialog (shadcn/ui)
 - ✅ Select (shadcn/ui)
 - ✅ Textarea (shadcn/ui)
@@ -343,6 +378,7 @@ apps/web/src/lib/hooks/use-issues.ts
 ### 2. Drag-and-Drop Functionality
 
 **@dnd-kit Integration:**
+
 - ✅ Added @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities
 - ✅ DndContext in KanbanBoard
 - ✅ Droppable KanbanColumn with hover effect
@@ -352,6 +388,7 @@ apps/web/src/lib/hooks/use-issues.ts
 - ✅ 8px activation distance to prevent accidental drags
 
 **Features:**
+
 - ✅ Drag issues between columns
 - ✅ Visual feedback (border highlight on hover)
 - ✅ Smooth animations
@@ -361,6 +398,7 @@ apps/web/src/lib/hooks/use-issues.ts
 ### 3. Project Board Page Updates
 
 **Enhanced Features:**
+
 - ✅ Real-time issue count display
 - ✅ In-progress count display
 - ✅ "New Issue" button opens create modal
@@ -416,6 +454,7 @@ apps/web/src/components/ui/
 
 **Phase 2:** ✅ Complete - Authentication & Database Schema
 **Phase 3:** ✅ 95% Complete - Real Database Integration
+
 - ✅ API Routes with Real Queries
 - ✅ User Context & Organization Management
 - ✅ Frontend Data Fetching
@@ -448,12 +487,14 @@ apps/web/src/components/ui/
 ### 1. React Query Auto-Refetch
 
 **Updated QueryProvider (`query-provider.tsx`):**
+
 - ✅ Reduced staleTime to 30 seconds (from 60s)
 - ✅ Enabled `refetchOnWindowFocus: true` for automatic updates when tab gains focus
 - ✅ Added `refetchInterval: 30000` for polling every 30 seconds
 - ✅ Provides real-time feel without WebSocket complexity
 
 **Benefits:**
+
 - Automatic background updates for all queries
 - Fresh data when user switches back to tab
 - Simple implementation, no server infrastructure needed
@@ -462,6 +503,7 @@ apps/web/src/components/ui/
 ### 2. Presence System
 
 **API Route (`/api/presence/[issueId]/route.ts`):**
+
 - ✅ GET endpoint - Fetch active users viewing an issue
 - ✅ POST endpoint - Update user presence (heartbeat)
 - ✅ DELETE endpoint - Remove user presence on unmount
@@ -469,6 +511,7 @@ apps/web/src/components/ui/
 - ✅ Authentication on all endpoints
 
 **Presence Hook (`use-presence.ts`):**
+
 - ✅ `usePresence(issueId)` - Track who's viewing an issue
 - ✅ Automatic presence updates every 30 seconds
 - ✅ Cleanup on unmount
@@ -477,6 +520,7 @@ apps/web/src/components/ui/
 - ✅ Polls for presence updates every 10 seconds
 
 **Presence UI Component (`presence-avatars.tsx`):**
+
 - ✅ Shows avatars of users viewing the issue
 - ✅ Eye icon indicator
 - ✅ Tooltips with user names
@@ -486,12 +530,14 @@ apps/web/src/components/ui/
 ### 3. Live Comments
 
 **Comments Hook (`use-comments.ts`):**
+
 - ✅ `useComments(issueId)` - Fetch comments with 10s polling
 - ✅ `useCreateComment(issueId)` - Create comment with cache invalidation
 - ✅ Automatic refetch after new comment
 - ✅ Real-time updates for all users viewing the issue
 
 **Updated IssueActivity Component:**
+
 - ✅ Replaced manual fetch with `useComments()` hook
 - ✅ Loading state with spinner
 - ✅ Empty state handling
@@ -502,21 +548,25 @@ apps/web/src/components/ui/
 ### 4. Updated Components
 
 **IssueHeader:**
+
 - ✅ Added `PresenceAvatars` component
 - ✅ Shows live presence indicators
 - ✅ Added `id` to issue prop interface
 
 **Dependencies:**
+
 - ✅ Added `@radix-ui/react-tooltip` via shadcn/ui
 
 ### 5. Real-time Features Summary
 
 **Polling Intervals:**
+
 - Issues: 30s (via QueryProvider default)
 - Comments: 10s (faster for chat-like experience)
 - Presence: 10s fetch, 30s heartbeat
 
 **User Experience:**
+
 - ✅ See who else is viewing an issue
 - ✅ Comments appear automatically for all users
 - ✅ Issue updates reflect within 30 seconds
@@ -524,6 +574,7 @@ apps/web/src/components/ui/
 - ✅ No page refresh needed
 
 **Production Considerations:**
+
 - In-memory presence store (use Redis in production)
 - Polling-based (consider WebSocket/SSE for scale)
 - 60s presence timeout (configurable)
@@ -537,6 +588,7 @@ apps/web/src/components/ui/
 **API Routes:**
 
 **`/api/issues/[issueId]/attachments` (137 lines):**
+
 - ✅ GET - Fetch all attachments for an issue
 - ✅ POST - Upload file (max 10MB)
   - FormData handling with native API
@@ -548,12 +600,14 @@ apps/web/src/components/ui/
 - ✅ Authentication required on all endpoints
 
 **`/api/uploads/[filename]` (66 lines):**
+
 - ✅ Static file serving with authentication
 - ✅ Content-Type detection based on extension
 - ✅ Security: Directory traversal prevention
 - ✅ Support for images, PDFs, documents, etc.
 
 **React Query Hooks (`use-attachments.ts` - 93 lines):**
+
 - ✅ `useAttachments(issueId)` - Query hook to fetch attachments
 - ✅ `useUploadAttachment(issueId)` - Mutation hook for uploads
 - ✅ `useDeleteAttachment(issueId)` - Mutation hook for deletion
@@ -561,6 +615,7 @@ apps/web/src/components/ui/
 - ✅ Automatic cache invalidation on mutations
 
 **UI Component (`issue-attachments.tsx` - 159 lines):**
+
 - ✅ Drag-and-drop upload area
 - ✅ File browser fallback
 - ✅ Loading states during upload
@@ -569,11 +624,13 @@ apps/web/src/components/ui/
 - ✅ Visual feedback during drag operations
 
 **Database Schema:**
+
 - ✅ `attachments` table with foreign keys to issues and users
 - ✅ Cascade delete on issue/user deletion
 - ✅ Migration: `0003_add_attachments.sql`
 
 **Key Features:**
+
 - ✅ 10MB file size limit
 - ✅ Local file storage (production: S3/Supabase Storage)
 - ✅ Secure file access with authentication
@@ -585,6 +642,7 @@ apps/web/src/components/ui/
 ### 2. AI Issue Generation (200+ lines)
 
 **OpenAI Integration (`packages/llm/src/client.ts` - 92 lines):**
+
 - ✅ `OpenAIClient` class implementation
 - ✅ Chat completions API integration
 - ✅ Configurable model, temperature, max tokens
@@ -593,6 +651,7 @@ apps/web/src/components/ui/
 - ✅ Factory pattern for provider selection
 
 **API Route (`/api/ai/generate-issue` - 80 lines):**
+
 - ✅ POST endpoint for AI issue generation
 - ✅ Input validation with Zod
 - ✅ LLM prompt engineering for structured output
@@ -601,11 +660,13 @@ apps/web/src/components/ui/
 - ✅ Usage tracking (tokens)
 
 **React Query Hook (`use-ai.ts` - 73 lines):**
+
 - ✅ `useGenerateIssue()` - Mutation hook for AI generation
 - ✅ Error handling
 - ✅ TypeScript types for request/response
 
 **UI Page (`ai/generate-issue/page.tsx` - Updated):**
+
 - ✅ Natural language input textarea
 - ✅ Real-time AI generation with loading states
 - ✅ Structured output display (title, description, type, priority, labels)
@@ -614,11 +675,13 @@ apps/web/src/components/ui/
 - ✅ Copy to clipboard functionality
 
 **AI Prompts (`packages/llm/src/prompts.ts`):**
+
 - ✅ `generateIssue()` - Structured issue extraction from natural language
 - ✅ System prompt with clear instructions
 - ✅ JSON output format specification
 
 **Key Features:**
+
 - ✅ GPT-4o-mini model (fast and cost-effective)
 - ✅ Extracts: title, description, type, priority, estimate, labels
 - ✅ Graceful fallback if AI fails
@@ -630,6 +693,7 @@ apps/web/src/components/ui/
 ### 3. AI Thread Summarization (150+ lines)
 
 **API Route (`/api/ai/summarize-thread` - 67 lines):**
+
 - ✅ POST endpoint for thread summarization
 - ✅ Fetches all comments for an issue
 - ✅ Formats comments with author names
@@ -637,11 +701,13 @@ apps/web/src/components/ui/
 - ✅ Returns summary with comment count and usage
 
 **React Query Hook (`use-ai.ts`):**
+
 - ✅ `useSummarizeThread()` - Mutation hook for summarization
 - ✅ Error handling
 - ✅ TypeScript types
 
 **UI Component (`issue-activity.tsx` - Updated):**
+
 - ✅ "AI Summary" button in comments tab
 - ✅ Loading state during summarization
 - ✅ Summary display in highlighted card
@@ -649,11 +715,13 @@ apps/web/src/components/ui/
 - ✅ Only shows button when comments exist
 
 **AI Prompts:**
+
 - ✅ `summarizeThread()` - Concise summary of discussion
 - ✅ Extracts key points, decisions, action items
 - ✅ 200-word limit for readability
 
 **Key Features:**
+
 - ✅ GPT-4o-mini model (temperature 0.5 for consistency)
 - ✅ Summarizes entire comment thread
 - ✅ Highlights key decisions and action items
@@ -669,6 +737,7 @@ apps/web/src/components/ui/
 **File:** `apps/web/src/app/api/organizations/[organizationId]/members/route.ts`
 
 **Features:**
+
 - ✅ GET endpoint to fetch organization members
 - ✅ Joins users and organizationMembers tables
 - ✅ Returns id, name, email, image for each member
@@ -679,6 +748,7 @@ apps/web/src/components/ui/
 **File:** `apps/web/src/lib/hooks/use-members.ts`
 
 **Features:**
+
 - ✅ `useOrganizationMembers(organizationId)` - Query hook
 - ✅ Returns Member[] with id, name, email, image
 - ✅ Enabled only when organizationId is provided
@@ -688,6 +758,7 @@ apps/web/src/components/ui/
 **File:** `apps/web/src/components/issues/assignee-picker.tsx`
 
 **Features:**
+
 - ✅ Popover-based combobox with Command component
 - ✅ Search functionality for members
 - ✅ Avatar display for each member
@@ -701,6 +772,7 @@ apps/web/src/components/ui/
 **File:** `apps/web/src/components/issues/priority-picker.tsx`
 
 **Features:**
+
 - ✅ Popover-based combobox for priority selection
 - ✅ 5 priority levels: critical, high, medium, low, none
 - ✅ Each priority has icon, color, and bgColor
@@ -713,6 +785,7 @@ apps/web/src/components/ui/
 **File:** `apps/web/src/components/issues/label-picker.tsx`
 
 **Features:**
+
 - ✅ Popover-based label management
 - ✅ Create new labels with input field
 - ✅ 12 predefined labels (bug, feature, enhancement, etc.)
@@ -726,6 +799,7 @@ apps/web/src/components/ui/
 **File:** `apps/web/src/components/issues/issue-sidebar.tsx`
 
 **Updates:**
+
 - ✅ Integrated AssigneePicker component
 - ✅ Integrated PriorityPicker component
 - ✅ Integrated LabelPicker component
@@ -740,11 +814,13 @@ apps/web/src/components/ui/
 ### 1. Sprint API Routes (300+ lines)
 
 **Files Created:**
+
 - `apps/web/src/app/api/sprints/route.ts` (100 lines)
 - `apps/web/src/app/api/sprints/[sprintId]/route.ts` (130 lines)
 - `apps/web/src/app/api/sprints/[sprintId]/issues/route.ts` (140 lines)
 
 **Features:**
+
 - ✅ **GET /api/sprints?projectId=xxx** - Fetch sprints with issue counts
 - ✅ **POST /api/sprints** - Create new sprint
 - ✅ **GET /api/sprints/[sprintId]** - Fetch single sprint
@@ -761,6 +837,7 @@ apps/web/src/components/ui/
 **File:** `apps/web/src/lib/hooks/use-sprints.ts`
 
 **Hooks:**
+
 - ✅ `useSprints(projectId)` - Fetch all sprints for a project
 - ✅ `useSprint(sprintId)` - Fetch single sprint
 - ✅ `useSprintIssues(sprintId)` - Fetch sprint issues
@@ -771,6 +848,7 @@ apps/web/src/components/ui/
 - ✅ Automatic query invalidation on mutations
 
 **Types:**
+
 ```typescript
 interface Sprint {
   id: string;
@@ -789,6 +867,7 @@ interface Sprint {
 **File:** `apps/web/src/app/(app)/projects/[projectId]/sprints/page.tsx`
 
 **Features:**
+
 - ✅ **Sprint List View** - Grid layout with sprint cards
 - ✅ **Sprint Status Badges** - Visual indicators (planned, active, completed)
 - ✅ **Sprint Info Display** - Name, goal, dates, issue count
@@ -803,6 +882,7 @@ interface Sprint {
 **File:** `apps/web/src/components/sprints/create-sprint-modal.tsx`
 
 **Features:**
+
 - ✅ **Sprint Name Input** - Required field
 - ✅ **Sprint Goal Textarea** - Optional description
 - ✅ **Date Range Picker** - Start and end dates
@@ -816,6 +896,7 @@ interface Sprint {
 **File:** `apps/web/src/app/(app)/projects/[projectId]/sprints/[sprintId]/page.tsx`
 
 **Features:**
+
 - ✅ **Sprint Header** - Name, status badge, goal, dates
 - ✅ **Sprint Actions** - Start sprint, Complete sprint buttons
 - ✅ **Days Remaining** - Countdown display
@@ -826,6 +907,7 @@ interface Sprint {
 - ✅ **Status-based Actions** - Different buttons for planned/active/completed
 
 **Updated KanbanBoard:**
+
 - ✅ Added `sprintId` prop for filtering
 - ✅ Supports both project-wide and sprint-specific views
 
@@ -834,6 +916,7 @@ interface Sprint {
 **File:** `apps/web/src/components/sprints/sprint-stats.tsx`
 
 **Metrics:**
+
 - ✅ **Completion Progress** - Percentage of completed issues
 - ✅ **Time Progress** - Percentage of sprint elapsed
 - ✅ **Story Points** - Completed vs total points
@@ -842,6 +925,7 @@ interface Sprint {
 - ✅ **Days Remaining** - Countdown display
 
 **Calculations:**
+
 ```typescript
 const completionPercentage = (completedIssues / totalIssues) * 100;
 const timePercentage = (daysElapsed / totalDays) * 100;
@@ -860,12 +944,14 @@ const pointsPercentage = (completedPoints / totalPoints) * 100;
 ### 1. Analytics API Routes (400+ lines)
 
 **Files Created:**
+
 - `apps/web/src/app/api/analytics/velocity/route.ts` (95 lines)
 - `apps/web/src/app/api/analytics/project-health/route.ts` (120 lines)
 - `apps/web/src/app/api/analytics/burndown/route.ts` (95 lines)
 - `apps/web/src/app/api/export/issues/route.ts` (95 lines)
 
 **Features:**
+
 - ✅ **GET /api/analytics/velocity?projectId=xxx** - Sprint velocity data
   - Completed issues and story points per sprint
   - Average velocity calculation
@@ -888,12 +974,14 @@ const pointsPercentage = (completedPoints / totalPoints) * 100;
 **File:** `apps/web/src/lib/hooks/use-analytics.ts`
 
 **Hooks:**
+
 - ✅ `useVelocity(projectId)` - Fetch velocity data
 - ✅ `useProjectHealth(projectId)` - Fetch project health data
 - ✅ `useBurndown(sprintId)` - Fetch burndown data
 - ✅ `exportIssues(projectId, format)` - Export issues function
 
 **Types:**
+
 ```typescript
 interface VelocityData {
   sprints: {
@@ -942,6 +1030,7 @@ interface BurndownData {
 **File:** `apps/web/src/app/(app)/projects/[projectId]/analytics/page.tsx`
 
 **Features:**
+
 - ✅ **Overview Cards** - Total issues, overdue, unassigned, sprints
 - ✅ **Export Buttons** - CSV and JSON export
 - ✅ **Velocity Chart** - Sprint velocity visualization
@@ -954,6 +1043,7 @@ interface BurndownData {
 **File:** `apps/web/src/components/analytics/velocity-chart.tsx`
 
 **Features:**
+
 - ✅ **Composed Chart** - Bars + Lines
 - ✅ **Dual Y-Axis** - Issues (left), Points (right)
 - ✅ **Bar Charts** - Completed issues and story points
@@ -968,6 +1058,7 @@ interface BurndownData {
 **File:** `apps/web/src/components/analytics/burndown-chart.tsx`
 
 **Features:**
+
 - ✅ **Stats Cards** - Total, completed, remaining points, total issues
 - ✅ **Line Chart** - Ideal vs actual burndown
 - ✅ **Ideal Line** - Dashed gray line
@@ -983,6 +1074,7 @@ interface BurndownData {
 **File:** `apps/web/src/components/analytics/issue-distribution-charts.tsx`
 
 **Features:**
+
 - ✅ **Three Pie Charts** - Status, Priority, Type
 - ✅ **Color Coding** - Predefined colors for each category
 - ✅ **Percentage Labels** - Shows name and percentage
@@ -991,6 +1083,7 @@ interface BurndownData {
 - ✅ **Card Layout** - Each chart in a card
 
 **Color Schemes:**
+
 - Status: todo (gray), in-progress (blue), done (green)
 - Priority: lowest (gray), low (blue), medium (yellow), high (orange), highest (red)
 - Type: bug (red), feature (blue), task (purple), story (green)
@@ -1005,11 +1098,13 @@ interface BurndownData {
 ### 8. Integration Points
 
 **Sprint Detail Page:**
+
 - ✅ Burndown chart integrated for active sprints
 - ✅ Shows below sprint stats, above kanban board
 - ✅ Conditional rendering based on sprint status
 
 **Project Analytics Page:**
+
 - ✅ New route: `/projects/[projectId]/analytics`
 - ✅ Comprehensive analytics dashboard
 - ✅ Export functionality for issues
@@ -1021,6 +1116,7 @@ interface BurndownData {
 ### 1. Database Schema (Already Exists)
 
 **Table:** `issueLinks`
+
 - ✅ `id` - Primary key (CUID2)
 - ✅ `sourceIssueId` - Source issue reference
 - ✅ `targetIssueId` - Target issue reference
@@ -1030,6 +1126,7 @@ interface BurndownData {
 - ✅ Indexes on sourceIssueId and targetIssueId
 
 **Link Types:**
+
 - `blocks` / `blocked_by` - Blocking relationships
 - `relates_to` - General relationship
 - `duplicates` / `duplicated_by` - Duplicate issues
@@ -1040,6 +1137,7 @@ interface BurndownData {
 **File:** `apps/web/src/app/api/issues/[issueId]/links/route.ts`
 
 **Endpoints:**
+
 - ✅ **GET /api/issues/[issueId]/links** - Fetch all links for an issue
   - Returns outbound and inbound links separately
   - Joins with issues table to get linked issue details
@@ -1053,6 +1151,7 @@ interface BurndownData {
   - Authentication required
 
 **Response Format:**
+
 ```typescript
 {
   outbound: [
@@ -1081,11 +1180,13 @@ interface BurndownData {
 **File:** `apps/web/src/lib/hooks/use-issue-links.ts`
 
 **Hooks:**
+
 - ✅ `useIssueLinks(issueId)` - Fetch all links for an issue
 - ✅ `useCreateIssueLink()` - Create a new link
 - ✅ `useDeleteIssueLink()` - Delete a link
 
 **Helper Functions:**
+
 - ✅ `getLinkTypeLabel(type, direction)` - Get human-readable label
   - Handles bidirectional relationships
   - Example: "blocks" (outbound) → "blocks", "blocks" (inbound) → "is blocked by"
@@ -1093,6 +1194,7 @@ interface BurndownData {
   - Example: "blocks" → "blocked_by"
 
 **Types:**
+
 ```typescript
 type IssueLinkType =
   | 'blocks'
@@ -1126,6 +1228,7 @@ interface IssueLink {
 **File:** `apps/web/src/components/issues/link-issue-dialog.tsx`
 
 **Features:**
+
 - ✅ **Dialog UI** - Modal for creating links
 - ✅ **Link Type Selector** - Dropdown with all 7 link types
 - ✅ **Issue Picker** - Searchable combobox with Command component
@@ -1137,6 +1240,7 @@ interface IssueLink {
 - ✅ **Auto-close** - Closes on successful creation
 
 **Link Types Available:**
+
 1. blocks
 2. is blocked by
 3. relates to
@@ -1150,6 +1254,7 @@ interface IssueLink {
 **File:** `apps/web/src/components/issues/issue-links.tsx`
 
 **Features:**
+
 - ✅ **Card Layout** - Displays all links in a card
 - ✅ **Link Count Badge** - Shows total number of links
 - ✅ **Add Link Button** - Opens dialog to create new link
@@ -1165,6 +1270,7 @@ interface IssueLink {
 - ✅ **Delete Confirmation** - Removes link on click
 
 **Visual Design:**
+
 - Grouped by link type
 - Color-coded priority badges
 - Hover effects for interactivity
@@ -1173,12 +1279,14 @@ interface IssueLink {
 ### 6. Integration with Issue Detail View
 
 **Updated Files:**
+
 - ✅ `apps/web/src/components/issues/issue-sidebar.tsx`
   - Added `IssueLinks` component
   - Added `projectId` to props
   - Positioned between Attachments and Metadata sections
 
 **User Flow:**
+
 1. User opens issue detail view
 2. Sees "Links" section in right sidebar
 3. Clicks "+" button to add link
@@ -1195,6 +1303,7 @@ interface IssueLink {
 **File:** `packages/db/src/schema/notifications.ts`
 
 **Table:** `notifications`
+
 - ✅ `id` - Primary key (CUID2)
 - ✅ `userId` - User reference (cascade delete)
 - ✅ `type` - Notification type enum (9 types)
@@ -1209,6 +1318,7 @@ interface IssueLink {
 - ✅ Indexes on userId, userId+isRead, issueId
 
 **Notification Types:**
+
 1. `mention` - User mentioned in comment
 2. `comment` - New comment on watched issue
 3. `assigned` - Issue assigned to user
@@ -1222,10 +1332,12 @@ interface IssueLink {
 ### 2. Notifications API Routes (170 lines)
 
 **Files Created:**
+
 - `apps/web/src/app/api/notifications/route.ts` (92 lines)
 - `apps/web/src/app/api/notifications/[notificationId]/route.ts` (85 lines)
 
 **Endpoints:**
+
 - ✅ **GET /api/notifications?unreadOnly=true** - Fetch user's notifications
   - Joins with users table to get actor details
   - Supports unreadOnly filter
@@ -1242,6 +1354,7 @@ interface IssueLink {
   - Removes notification from database
 
 **Response Format:**
+
 ```typescript
 {
   notifications: [
@@ -1271,6 +1384,7 @@ interface IssueLink {
 **File:** `apps/web/src/lib/hooks/use-notifications.ts`
 
 **Hooks:**
+
 - ✅ `useNotifications(unreadOnly)` - Query hook to fetch notifications
   - Polls every 30 seconds for real-time updates
   - Supports unreadOnly filter
@@ -1284,6 +1398,7 @@ interface IssueLink {
   - Uses useNotifications(true) and returns length
 
 **Types:**
+
 ```typescript
 type NotificationType =
   | 'mention'
@@ -1322,6 +1437,7 @@ interface Notification {
 **File:** `apps/web/src/components/notifications/notification-bell.tsx`
 
 **Features:**
+
 - ✅ **Popover-based Dropdown** - Opens on click
 - ✅ **Unread Count Badge** - Shows count (9+ for >9 notifications)
 - ✅ **Mark All as Read Button** - Appears when unread notifications exist
@@ -1337,6 +1453,7 @@ interface Notification {
 - ✅ **Integrated into AppHeader** - Positioned between search and help icon
 
 **Notification Icons:**
+
 - 💬 mention
 - 💭 comment
 - 👤 assigned
@@ -1352,6 +1469,7 @@ interface Notification {
 **File:** `apps/web/src/components/issues/mention-textarea.tsx`
 
 **Features:**
+
 - ✅ **Custom Textarea Component** - Extends standard textarea
 - ✅ **@ Character Detection** - Detects @ and shows dropdown
 - ✅ **Member Dropdown** - Searchable list of organization members
@@ -1364,6 +1482,7 @@ interface Notification {
 - ✅ **Requires organizationId** - Fetches members from organization
 
 **Integration:**
+
 - ✅ Updated `IssueActivity` component to use MentionTextarea
 - ✅ Added organizationId to Issue interface
 - ✅ Tracks mentioned users in state
@@ -1374,6 +1493,7 @@ interface Notification {
 **File:** `apps/web/src/components/activity/activity-feed.tsx`
 
 **Features:**
+
 - ✅ **Card Layout** - Displays recent activity
 - ✅ **Activity Count Badge** - Shows total number of activities
 - ✅ **ScrollArea** - Max height 600px
@@ -1387,6 +1507,7 @@ interface Notification {
 - ✅ **Integrated into Dashboard** - Replaced old ActivityItem component
 
 **Activity Icons:**
+
 - 💬 comment (blue)
 - ✅ status_change (green)
 - 👤 assigned (purple)
@@ -1402,16 +1523,19 @@ interface Notification {
 ### 8. Integration Points
 
 **AppHeader:**
+
 - ✅ Removed static Bell button
 - ✅ Added NotificationBell component
 - ✅ Positioned between search and help icon
 
 **Dashboard:**
+
 - ✅ Replaced old ActivityItem component
 - ✅ Added ActivityFeed component
 - ✅ Shows last 10 activities
 
 **IssueActivity:**
+
 - ✅ Replaced standard textarea with MentionTextarea
 - ✅ Added organizationId prop
 - ✅ Tracks mentioned users
@@ -1423,6 +1547,7 @@ interface Notification {
 
 **Phase 2:** ✅ Complete - Authentication & Database Schema
 **Phase 3:** ✅ Complete - Real Database Integration
+
 - ✅ API Routes with Real Queries (270+ lines)
 - ✅ User Context & Organization Management (300+ lines)
 - ✅ Frontend Data Fetching (168+ lines)
@@ -1430,16 +1555,19 @@ interface Notification {
 - ✅ Real-time Updates (350+ lines)
 
 **Phase 4:** ✅ Complete - File Uploads & AI Integration
+
 - ✅ File Upload Infrastructure (450+ lines)
 - ✅ AI Issue Generation (200+ lines)
 - ✅ AI Thread Summarization (150+ lines)
 
 **Phase 5:** ✅ Complete - Advanced Issue Features
+
 - ✅ Assignee Picker Component (140+ lines)
 - ✅ Priority Picker Component (120+ lines)
 - ✅ Label Management (135+ lines)
 
 **Phase 6:** ✅ Complete - Sprint Management
+
 - ✅ Sprint API Routes (300+ lines)
 - ✅ Sprint Hooks (170+ lines)
 - ✅ Sprint Planning Page (150+ lines)
@@ -1447,6 +1575,7 @@ interface Notification {
 - ✅ Sprint Analytics (120+ lines)
 
 **Phase 7:** ✅ Complete - Advanced Analytics
+
 - ✅ Analytics API Routes (400+ lines)
 - ✅ Velocity Chart Component (60+ lines)
 - ✅ Burndown Chart Component (70+ lines)
@@ -1455,6 +1584,7 @@ interface Notification {
 - ✅ Export Features (CSV/JSON)
 
 **Phase 8:** ✅ Complete - Issue Relationships
+
 - ✅ Issue Links Database Schema (issueLinks table)
 - ✅ Issue Links API Routes (170+ lines)
 - ✅ Issue Links Hooks (160+ lines)
@@ -1463,6 +1593,7 @@ interface Notification {
 - ✅ Integration with Issue Detail View
 
 **Phase 9:** ✅ Complete - Team Collaboration
+
 - ✅ Notifications Database Schema (notifications table)
 - ✅ Notifications API Routes (170+ lines)
 - ✅ Notifications Hooks (120+ lines)
@@ -1472,6 +1603,7 @@ interface Notification {
 - ✅ Integration with Header and Dashboard
 
 **Phase 10:** ✅ Complete - Custom Fields & Workflows
+
 - ✅ Custom Fields Database Schema (customFields, customFieldValues tables)
 - ✅ Custom Fields API Routes (200+ lines)
 - ✅ Custom Field Values API Routes (140+ lines)
@@ -1483,6 +1615,7 @@ interface Notification {
 - ✅ Integration with Issue Sidebar
 
 **Total Development:**
+
 - **Lines of Code:** ~10,200+
 - **API Endpoints:** 31 (all authenticated, real DB)
 - **UI Components:** 74+
@@ -1507,6 +1640,7 @@ interface Notification {
 ### 1. Custom Fields Database Schema
 
 **Custom Fields Table (`customFields`):**
+
 ```typescript
 - id: text (CUID2)
 - organizationId: text (FK to organizations)
@@ -1524,6 +1658,7 @@ interface Notification {
 ```
 
 **Custom Field Values Table (`customFieldValues`):**
+
 ```typescript
 - id: text (CUID2)
 - customFieldId: text (FK to customFields)
@@ -1535,6 +1670,7 @@ interface Notification {
 ```
 
 **Key Features:**
+
 - ✅ 8 field types: text, number, date, select, multi_select, checkbox, url, email
 - ✅ Organization-wide or project-specific fields
 - ✅ Soft delete with isActive flag
@@ -1545,72 +1681,87 @@ interface Notification {
 ### 2. Custom Fields API Routes
 
 **GET /api/custom-fields?organizationId=xxx&projectId=xxx**
+
 - Fetch custom fields for organization/project
 - Filters by organizationId (required) and projectId (optional)
 - Only returns active fields
 - Ordered by position and createdAt
 
 **POST /api/custom-fields**
+
 - Create new custom field
 - Validates with Zod schema
 - Sets createdBy and updatedBy to current user
 
 **GET /api/custom-fields/[fieldId]**
+
 - Fetch single custom field
 
 **PATCH /api/custom-fields/[fieldId]**
+
 - Update custom field
 - Supports partial updates
 - Updates updatedBy and updatedAt
 
 **DELETE /api/custom-fields/[fieldId]**
+
 - Soft delete custom field
 - Sets isActive to false instead of hard delete
 
 **GET /api/issues/[issueId]/custom-fields**
+
 - Fetch all custom field values for an issue
 - Joins with customFields table for field definitions
 - Returns field metadata (name, type, options, etc.)
 
 **POST /api/issues/[issueId]/custom-fields**
+
 - Set/update custom field value for an issue
 - Upsert pattern: creates if not exists, updates if exists
 - Validates customFieldId and value
 
 **DELETE /api/issues/[issueId]/custom-fields?customFieldId=xxx**
+
 - Remove custom field value from an issue
 
 ### 3. Custom Fields Hooks
 
 **useCustomFields(organizationId, projectId)**
+
 - Query hook for fetching custom fields
 - Filters by organizationId and optional projectId
 - Enabled only when organizationId is present
 
 **useCustomFieldValues(issueId)**
+
 - Query hook for fetching custom field values for an issue
 - Returns values with field definitions
 - Enabled only when issueId is present
 
 **useCreateCustomField()**
+
 - Mutation hook for creating custom field
 - Invalidates custom-fields queries on success
 
 **useUpdateCustomField()**
+
 - Mutation hook for updating custom field
 - Invalidates custom-fields queries on success
 
 **useDeleteCustomField()**
+
 - Mutation hook for deleting custom field
 - Invalidates custom-fields queries on success
 
 **useSetCustomFieldValue(issueId)**
+
 - Mutation hook for setting custom field value
 - Invalidates custom-field-values queries on success
 
 ### 4. Custom Field Components
 
 **CustomFieldManager Component:**
+
 - ✅ Displays list of custom fields for organization/project
 - ✅ Shows field type badges with color coding
 - ✅ Shows required badge for required fields
@@ -1620,6 +1771,7 @@ interface Notification {
 - ✅ Empty state when no fields exist
 
 **CreateCustomFieldDialog Component:**
+
 - ✅ Form for creating new custom field
 - ✅ Field name input (required)
 - ✅ Description textarea (optional)
@@ -1630,6 +1782,7 @@ interface Notification {
 - ✅ Loading state during creation
 
 **IssueCustomFields Component:**
+
 - ✅ Displays custom fields for an issue
 - ✅ Renders appropriate input based on field type:
   - Text/URL/Email: Input with type validation
@@ -1645,6 +1798,7 @@ interface Notification {
 - ✅ Empty state when no custom fields
 
 **Project Settings Page:**
+
 - ✅ Tabbed interface (Custom Fields, Workflows, Automation, General)
 - ✅ Custom Fields tab with CustomFieldManager
 - ✅ Placeholder tabs for future features
@@ -1653,11 +1807,13 @@ interface Notification {
 ### 5. Integration
 
 **Issue Sidebar:**
+
 - ✅ Added IssueCustomFields component
 - ✅ Displays custom fields between Links and Metadata sections
 - ✅ Auto-loads custom field values for the issue
 
 **Database Migration:**
+
 - ✅ Generated migration: `drizzle/0003_many_maverick.sql`
 - ✅ Creates customFields and customFieldValues tables
 - ✅ Total tables: 23
@@ -1665,6 +1821,7 @@ interface Notification {
 ### 6. Technical Implementation
 
 **Field Type Handling:**
+
 ```typescript
 // Text, URL, Email
 <Input type={fieldType} value={value} onChange={...} />
@@ -1688,13 +1845,15 @@ interface Notification {
 ```
 
 **Upsert Pattern:**
+
 ```typescript
 // Check if value exists
-const existing = await db.select().from(customFieldValues)
-  .where(and(
-    eq(customFieldValues.issueId, issueId),
-    eq(customFieldValues.customFieldId, customFieldId)
-  ));
+const existing = await db
+  .select()
+  .from(customFieldValues)
+  .where(
+    and(eq(customFieldValues.issueId, issueId), eq(customFieldValues.customFieldId, customFieldId))
+  );
 
 if (existing) {
   // Update
@@ -1706,8 +1865,10 @@ if (existing) {
 ```
 
 **Soft Delete Pattern:**
+
 ```typescript
-await db.update(customFields)
+await db
+  .update(customFields)
   .set({ isActive: false, updatedBy, updatedAt })
   .where(eq(customFields.id, fieldId));
 ```
@@ -1720,6 +1881,7 @@ await db.update(customFields)
 ✅ **Bundle Size:** Optimized
 
 **New Routes:**
+
 - `/api/custom-fields` (GET, POST)
 - `/api/custom-fields/[fieldId]` (GET, PATCH, DELETE)
 - `/api/issues/[issueId]/custom-fields` (GET, POST, DELETE)
@@ -1736,37 +1898,70 @@ await db.update(customFields)
 ```typescript
 export const auditLogActionEnum = pgEnum('audit_log_action', [
   // Issue actions (14 types)
-  'issue.created', 'issue.updated', 'issue.deleted', 'issue.status_changed',
-  'issue.assigned', 'issue.unassigned', 'issue.priority_changed', 'issue.labels_changed',
-  'issue.linked', 'issue.unlinked', 'issue.commented', 'issue.attachment_added',
-  'issue.attachment_removed', 'issue.custom_field_changed',
+  'issue.created',
+  'issue.updated',
+  'issue.deleted',
+  'issue.status_changed',
+  'issue.assigned',
+  'issue.unassigned',
+  'issue.priority_changed',
+  'issue.labels_changed',
+  'issue.linked',
+  'issue.unlinked',
+  'issue.commented',
+  'issue.attachment_added',
+  'issue.attachment_removed',
+  'issue.custom_field_changed',
 
   // Project actions (5 types)
-  'project.created', 'project.updated', 'project.deleted',
-  'project.member_added', 'project.member_removed',
+  'project.created',
+  'project.updated',
+  'project.deleted',
+  'project.member_added',
+  'project.member_removed',
 
   // Sprint actions (7 types)
-  'sprint.created', 'sprint.updated', 'sprint.deleted',
-  'sprint.started', 'sprint.completed', 'sprint.issue_added', 'sprint.issue_removed',
+  'sprint.created',
+  'sprint.updated',
+  'sprint.deleted',
+  'sprint.started',
+  'sprint.completed',
+  'sprint.issue_added',
+  'sprint.issue_removed',
 
   // Organization actions (5 types)
-  'organization.created', 'organization.updated', 'organization.member_added',
-  'organization.member_removed', 'organization.role_changed',
+  'organization.created',
+  'organization.updated',
+  'organization.member_added',
+  'organization.member_removed',
+  'organization.role_changed',
 
   // Custom field actions (3 types)
-  'custom_field.created', 'custom_field.updated', 'custom_field.deleted',
+  'custom_field.created',
+  'custom_field.updated',
+  'custom_field.deleted',
 
   // Webhook actions (4 types)
-  'webhook.created', 'webhook.updated', 'webhook.deleted', 'webhook.triggered',
+  'webhook.created',
+  'webhook.updated',
+  'webhook.deleted',
+  'webhook.triggered',
 
   // API key actions (2 types)
-  'api_key.created', 'api_key.revoked',
+  'api_key.created',
+  'api_key.revoked',
 ]);
 
 export const auditLogs = pgTable('audit_logs', {
-  id: text('id').$defaultFn(() => createId()).primaryKey(),
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  organizationId: text('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  id: text('id')
+    .$defaultFn(() => createId())
+    .primaryKey(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
   action: auditLogActionEnum('action').notNull(),
   resourceType: text('resource_type').notNull(),
   resourceId: text('resource_id').notNull(),
@@ -1779,6 +1974,7 @@ export const auditLogs = pgTable('audit_logs', {
 ```
 
 **Key Features:**
+
 - ✅ 42 action types across all resource types
 - ✅ Changes stored as JSONB with from/to values
 - ✅ Metadata for additional context (IP, user agent, etc.)
@@ -1791,12 +1987,18 @@ export const auditLogs = pgTable('audit_logs', {
 
 ```typescript
 export const apiKeys = pgTable('api_keys', {
-  id: text('id').$defaultFn(() => createId()).primaryKey(),
+  id: text('id')
+    .$defaultFn(() => createId())
+    .primaryKey(),
   name: text('name').notNull(),
   key: text('key').notNull().unique(), // Hashed
   keyPrefix: text('key_prefix').notNull(), // First 8 chars for display
-  organizationId: text('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-  createdBy: text('created_by').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
+  createdBy: text('created_by')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
   isActive: boolean('is_active').notNull().default(true),
   lastUsedAt: timestamp('last_used_at'),
   expiresAt: timestamp('expires_at'), // null = never expires
@@ -1807,8 +2009,9 @@ export const apiKeys = pgTable('api_keys', {
 ```
 
 **Key Features:**
+
 - ✅ Hashed key storage for security
-- ✅ Key prefix for display (e.g., "sk_live_...")
+- ✅ Key prefix for display (e.g., "sk*live*...")
 - ✅ Usage tracking (lastUsedAt)
 - ✅ Expiration support (expiresAt, null = never expires)
 - ✅ Revocation tracking (revokedAt, revokedBy)
@@ -1820,32 +2023,48 @@ export const apiKeys = pgTable('api_keys', {
 
 ```typescript
 export const webhookEventEnum = pgEnum('webhook_event', [
-  'issue.created', 'issue.updated', 'issue.deleted', 'issue.status_changed',
-  'issue.assigned', 'issue.commented',
-  'sprint.started', 'sprint.completed',
-  'project.created', 'project.updated',
+  'issue.created',
+  'issue.updated',
+  'issue.deleted',
+  'issue.status_changed',
+  'issue.assigned',
+  'issue.commented',
+  'sprint.started',
+  'sprint.completed',
+  'project.created',
+  'project.updated',
 ]);
 
 export const webhooks = pgTable('webhooks', {
-  id: text('id').$defaultFn(() => createId()).primaryKey(),
+  id: text('id')
+    .$defaultFn(() => createId())
+    .primaryKey(),
   name: text('name').notNull(),
   url: text('url').notNull(),
   secret: text('secret').notNull(), // For HMAC signature
-  organizationId: text('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
   projectId: text('project_id').references(() => projects.id, { onDelete: 'cascade' }), // null = org-wide
   events: jsonb('events').notNull(), // Array of event types
   isActive: boolean('is_active').notNull().default(true),
   lastTriggeredAt: timestamp('last_triggered_at'),
   successCount: integer('success_count').notNull().default(0),
   failureCount: integer('failure_count').notNull().default(0),
-  createdBy: text('created_by').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdBy: text('created_by')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
 export const webhookDeliveries = pgTable('webhook_deliveries', {
-  id: text('id').$defaultFn(() => createId()).primaryKey(),
-  webhookId: text('webhook_id').notNull().references(() => webhooks.id, { onDelete: 'cascade' }),
+  id: text('id')
+    .$defaultFn(() => createId())
+    .primaryKey(),
+  webhookId: text('webhook_id')
+    .notNull()
+    .references(() => webhooks.id, { onDelete: 'cascade' }),
   event: webhookEventEnum('event').notNull(),
   payload: jsonb('payload').notNull(),
   status: text('status').notNull(), // 'pending', 'success', 'failed'
@@ -1860,6 +2079,7 @@ export const webhookDeliveries = pgTable('webhook_deliveries', {
 ```
 
 **Key Features:**
+
 - ✅ 10 webhook event types
 - ✅ HMAC signature verification with secret
 - ✅ Organization-wide or project-specific webhooks
@@ -1937,6 +2157,7 @@ export async function triggerWebhooks(params: {
 ```
 
 **Key Patterns:**
+
 - ✅ Non-throwing error handling (audit logging should not break main operations)
 - ✅ Automatic change detection with detectChanges() helper
 - ✅ Specific action detection based on changed fields
@@ -2057,12 +2278,15 @@ export async function POST(request: NextRequest) {
     .returning();
 
   // Return the plain key ONLY on creation (this is the only time it's visible)
-  return NextResponse.json({
-    apiKey: {
-      ...newKey,
-      key, // Plain key - show only once!
+  return NextResponse.json(
+    {
+      apiKey: {
+        ...newKey,
+        key, // Plain key - show only once!
+      },
     },
-  }, { status: 201 });
+    { status: 201 }
+  );
 }
 ```
 
@@ -2163,12 +2387,15 @@ export async function POST(request: NextRequest) {
     })
     .returning();
 
-  return NextResponse.json({
-    webhook: {
-      ...newWebhook,
-      secret, // Show secret only on creation
+  return NextResponse.json(
+    {
+      webhook: {
+        ...newWebhook,
+        secret, // Show secret only on creation
+      },
     },
-  }, { status: 201 });
+    { status: 201 }
+  );
 }
 ```
 
@@ -2463,6 +2690,7 @@ export default function SettingsPage() {
 ✅ **Total Database Tables:** 27
 
 **New Routes:**
+
 - `/api/audit-logs` (GET)
 - `/api/api-keys` (GET, POST)
 - `/api/api-keys/[keyId]` (DELETE)
@@ -2471,12 +2699,14 @@ export default function SettingsPage() {
 - `/settings` (Organization Settings Page)
 
 **New Database Tables:**
+
 - `audit_logs` - Audit log entries with 42 action types
 - `api_keys` - API key management
 - `webhooks` - Webhook configurations
 - `webhook_deliveries` - Webhook delivery tracking
 
 **Key Features:**
+
 - ✅ Comprehensive audit logging with 42 action types
 - ✅ Secure API key generation with SHA-256 hashing
 - ✅ Webhook delivery with HMAC signature verification
@@ -2495,18 +2725,24 @@ export default function SettingsPage() {
 **File:** `packages/db/src/schema/watchers.ts` (42 lines)
 
 **Features:**
+
 - Watch specific issues or entire projects
 - Unique constraints to prevent duplicate watches
 - Cascade delete on user/issue/project deletion
 - Used to determine who receives notifications
 
 **Schema:**
+
 ```typescript
 export const watchers = pgTable(
   'watchers',
   {
-    id: text('id').$defaultFn(() => createId()).primaryKey(),
-    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    id: text('id')
+      .$defaultFn(() => createId())
+      .primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     issueId: text('issue_id').references(() => issues.id, { onDelete: 'cascade' }),
     projectId: text('project_id').references(() => projects.id, { onDelete: 'cascade' }),
     createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -2523,6 +2759,7 @@ export const watchers = pgTable(
 **File:** `packages/db/src/schema/email-templates.ts` (110 lines)
 
 **Features:**
+
 - 9 template types for different events
 - Organization-specific or system default templates
 - HTML and plain text versions
@@ -2530,6 +2767,7 @@ export const watchers = pgTable(
 - Comprehensive variable documentation
 
 **Template Types:**
+
 1. `issue_assigned` - When an issue is assigned to a user
 2. `issue_mentioned` - When a user is mentioned in a comment
 3. `issue_commented` - When a comment is added to a watched issue
@@ -2541,6 +2779,7 @@ export const watchers = pgTable(
 9. `weekly_digest` - Weekly summary of activity
 
 **Available Template Variables:**
+
 - `{{userName}}` - Recipient's name
 - `{{issueKey}}` - Issue key (e.g., PROJ-123)
 - `{{issueTitle}}` - Issue title
@@ -2555,6 +2794,7 @@ export const watchers = pgTable(
 **File:** `packages/db/src/schema/notification-preferences.ts` (90 lines)
 
 **Features:**
+
 - Per-organization user settings
 - Channel-specific settings (in-app, email, digest)
 - Event-specific toggles for each notification type
@@ -2564,11 +2804,13 @@ export const watchers = pgTable(
 **Settings Categories:**
 
 **Channel Settings:**
+
 - `enableInApp` - Enable in-app notifications
 - `enableEmail` - Enable email notifications
 - `digestFrequency` - Digest frequency (none, daily, weekly)
 
 **Event-Specific Email Settings:**
+
 - `emailOnAssigned` - Email when assigned to an issue
 - `emailOnMentioned` - Email when mentioned in a comment
 - `emailOnCommented` - Email when someone comments on a watched issue
@@ -2578,6 +2820,7 @@ export const watchers = pgTable(
 - `emailOnSprintCompleted` - Email when sprint completes
 
 **Do Not Disturb:**
+
 - `doNotDisturb` - Enable do not disturb mode
 - `doNotDisturbStart` - Start time (HH:MM format)
 - `doNotDisturbEnd` - End time (HH:MM format)
@@ -2589,21 +2832,25 @@ export const watchers = pgTable(
 **Functions:**
 
 **`replaceVariables(template, variables)`**
+
 - Replaces {{variableName}} placeholders with actual values
 - Handles missing variables gracefully
 
 **`shouldSendEmail(userId, organizationId, eventType)`**
+
 - Checks user preferences before sending
 - Respects do not disturb time range
 - Checks event-specific preferences
 - Returns boolean indicating whether to send
 
 **`getTemplate(organizationId, templateType)`**
+
 - Gets organization-specific template if available
 - Falls back to default template
 - Returns both HTML and plain text versions
 
 **`sendEmail(params)`**
+
 - Main email sending function
 - Checks user preferences
 - Gets appropriate template
@@ -2611,6 +2858,7 @@ export const watchers = pgTable(
 - Sends email (placeholder implementation ready for Resend/SendGrid)
 
 **`sendIssueNotificationEmail(params)`**
+
 - Helper for common issue events
 - Pre-populates common variables
 - Simplifies email sending for issue-related events
@@ -2620,12 +2868,14 @@ export const watchers = pgTable(
 **Watchers API Routes** (`apps/web/src/app/api/watchers/route.ts` - 175 lines)
 
 **Endpoints:**
+
 - `GET /api/watchers?issueId=xxx` - Get watchers for an issue
 - `GET /api/watchers?projectId=xxx` - Get watchers for a project
 - `POST /api/watchers` - Add current user as watcher
 - `DELETE /api/watchers?issueId=xxx` - Remove current user as watcher
 
 **Features:**
+
 - Joins with users table for watcher details
 - Checks for duplicate watches before creating
 - Returns 409 Conflict if already watching
@@ -2633,6 +2883,7 @@ export const watchers = pgTable(
 **Email Templates API Routes** (195 lines total)
 
 **Endpoints:**
+
 - `GET /api/email-templates?organizationId=xxx&type=xxx` - List templates
 - `POST /api/email-templates` - Create new template
 - `PATCH /api/email-templates/[templateId]` - Update template
@@ -2641,10 +2892,12 @@ export const watchers = pgTable(
 **Notification Preferences API Routes** (`apps/web/src/app/api/notification-preferences/route.ts` - 165 lines)
 
 **Endpoints:**
+
 - `GET /api/notification-preferences?organizationId=xxx` - Get user preferences
 - `POST /api/notification-preferences` - Create or update preferences (upsert)
 
 **Features:**
+
 - Returns sensible defaults if no preferences exist
 - Upsert pattern for creating/updating
 - Comprehensive Zod validation
@@ -2654,6 +2907,7 @@ export const watchers = pgTable(
 **WatchersList Component** (`apps/web/src/components/watchers/watchers-list.tsx` - 155 lines)
 
 **Features:**
+
 - Watch/unwatch toggle button with Eye/EyeOff icons
 - List of watchers with avatars and names
 - Empty state with helpful text
@@ -2663,6 +2917,7 @@ export const watchers = pgTable(
 **NotificationPreferences Component** (`apps/web/src/components/settings/notification-preferences.tsx` - 287 lines)
 
 **Features:**
+
 - General Settings section (in-app, email, digest frequency)
 - Email Notifications section (event-specific toggles)
 - Do Not Disturb section (enable/disable with time range)
@@ -2674,6 +2929,7 @@ export const watchers = pgTable(
 **Settings Page Update** (`apps/web/src/app/(app)/settings/page.tsx`)
 
 **Changes:**
+
 - Added "Notifications" tab as first tab
 - Integrated NotificationPreferences component
 - Updated tab order: Notifications, API Keys, Webhooks, Activity Log, General
@@ -2681,6 +2937,7 @@ export const watchers = pgTable(
 **Issue Sidebar Integration** (`apps/web/src/components/issues/issue-sidebar.tsx`)
 
 **Changes:**
+
 - Added WatchersList component before metadata section
 - Shows watchers for current issue
 - Allows users to watch/unwatch the issue
@@ -2690,6 +2947,7 @@ export const watchers = pgTable(
 **Migration:** `drizzle/0005_mature_stephen_strange.sql`
 
 **Tables Added:**
+
 - `watchers` - Issue and project watchers
 - `email_templates` - Email template definitions
 - `notification_preferences` - User notification settings
@@ -2705,17 +2963,20 @@ export const watchers = pgTable(
 ✅ **Total Database Tables:** 30
 
 **New Routes:**
+
 - `/api/watchers` (GET, POST, DELETE)
 - `/api/email-templates` (GET, POST)
 - `/api/email-templates/[templateId]` (PATCH, DELETE)
 - `/api/notification-preferences` (GET, POST)
 
 **New Database Tables:**
+
 - `watchers` - Issue and project watchers
 - `email_templates` - Email template definitions with 9 template types
 - `notification_preferences` - User notification settings
 
 **Key Features:**
+
 - ✅ Watch specific issues or entire projects
 - ✅ Unique constraints to prevent duplicate watches
 - ✅ 9 email template types with variable replacement
@@ -2740,6 +3001,7 @@ export const watchers = pgTable(
 ### 1. Database Schema
 
 **Saved Filters Table (`saved-filters.ts` - 60 lines):**
+
 - ✅ `savedFilters` table - Store user-created filters
   - User-specific or organization-wide filters
   - Project-specific or global filters
@@ -2752,6 +3014,7 @@ export const watchers = pgTable(
   - Soft delete support
 
 **Search History Table (`search-history.ts` - 40 lines):**
+
 - ✅ `searchHistory` table - Recent searches
   - User-specific search history
   - Organization and project scoping
@@ -2761,12 +3024,14 @@ export const watchers = pgTable(
   - Used for autocomplete suggestions
 
 **Migration:**
+
 - ✅ Generated migration: `drizzle/0006_wandering_nightcrawler.sql`
 - ✅ Total database tables: **32** (added saved_filters, search_history)
 
 ### 2. JQL Parser Implementation
 
 **JQL Parser (`jql-parser.ts` - 232 lines):**
+
 - ✅ `parseJQL()` - Parse JQL query string into structured criteria
   - Normalize query string
   - Split by AND operator
@@ -2800,6 +3065,7 @@ export const watchers = pgTable(
   - Date range handling
 
 **Supported JQL Syntax:**
+
 - `assignee = me`
 - `assignee = "user@example.com"`
 - `status = "In Progress"`
@@ -2818,6 +3084,7 @@ export const watchers = pgTable(
 ### 3. API Routes
 
 **Advanced Search API (`/api/search/route.ts` - 180 lines):**
+
 - ✅ GET endpoint with JQL query parameter
   - Parse JQL query string
   - Build Drizzle conditions from parsed criteria
@@ -2830,6 +3097,7 @@ export const watchers = pgTable(
   - Return results with count and parsed criteria
 
 **Saved Filters API (`/api/saved-filters/route.ts` - 130 lines):**
+
 - ✅ GET - List user's filters
   - Filter by organizationId (required)
   - Filter by projectId (optional)
@@ -2846,6 +3114,7 @@ export const watchers = pgTable(
   - Initialize usage count to 0
 
 **Saved Filter Detail API (`/api/saved-filters/[filterId]/route.ts` - 165 lines):**
+
 - ✅ PATCH - Update filter
   - Ownership check (user must own filter)
   - Update name, description, query, criteria
@@ -2864,6 +3133,7 @@ export const watchers = pgTable(
   - Return updated filter
 
 **Search History API (`/api/search-history/route.ts` - 115 lines):**
+
 - ✅ GET - List recent searches
   - Filter by organizationId (required)
   - Filter by projectId (optional)
@@ -2878,6 +3148,7 @@ export const watchers = pgTable(
   - Should be called by cron job
 
 **Bulk Operations API (`/api/issues/bulk/route.ts` - 195 lines):**
+
 - ✅ POST - Bulk update or delete issues
   - Action parameter: "update" or "delete"
   - Zod validation for request body
@@ -2891,6 +3162,7 @@ export const watchers = pgTable(
 ### 4. UI Components
 
 **Advanced Search Component (`advanced-search.tsx` - 230 lines):**
+
 - ✅ Visual query builder interface
   - Field selectors (assignee, reporter, status, priority, type, project, sprint, labels, created, updated)
   - Operator selectors (=, IN, CONTAINS, >=, <=)
@@ -2904,6 +3176,7 @@ export const watchers = pgTable(
   - Example queries in placeholder
 
 **Saved Filters List Component (`saved-filters-list.tsx` - 214 lines):**
+
 - ✅ List of saved filters
   - Fetch filters on mount
   - Display filter name, description, query
@@ -2918,6 +3191,7 @@ export const watchers = pgTable(
   - Auto-refresh on organization change
 
 **Bulk Actions Toolbar Component (`bulk-actions-toolbar.tsx` - 210 lines):**
+
 - ✅ Fixed bottom toolbar
   - Selected count badge
   - Update dropdown menu
@@ -2941,6 +3215,7 @@ export const watchers = pgTable(
 ✅ **Total Database Tables:** 32
 
 **New Routes:**
+
 - `/api/search` (GET)
 - `/api/saved-filters` (GET, POST)
 - `/api/saved-filters/[filterId]` (PATCH, DELETE, POST)
@@ -2948,10 +3223,12 @@ export const watchers = pgTable(
 - `/api/issues/bulk` (POST)
 
 **New Database Tables:**
+
 - `saved_filters` - User-created filters with JQL queries
 - `search_history` - Recent searches for autocomplete
 
 **Key Features:**
+
 - ✅ JQL-like query language with 10+ operators
 - ✅ Visual query builder with field/operator/value selectors
 - ✅ JQL editor mode for advanced users
@@ -2981,6 +3258,7 @@ export const watchers = pgTable(
 #### 1. PWA Manifest & Service Worker
 
 **PWA Manifest (`apps/web/public/manifest.json`)** - 100 satır
+
 - ✅ App metadata (name, short_name, description)
 - ✅ Display mode: standalone
 - ✅ Theme color and background color
@@ -2990,6 +3268,7 @@ export const watchers = pgTable(
 - ✅ Categories: productivity, business
 
 **Service Worker (`apps/web/public/sw.js`)** - 140 satır
+
 - ✅ Cache strategies (CACHE_NAME, RUNTIME_CACHE)
 - ✅ Install event - Precache essential assets
 - ✅ Activate event - Clean up old caches
@@ -2999,11 +3278,13 @@ export const watchers = pgTable(
 - ✅ Background sync event
 
 **Layout Updates (`apps/web/src/app/layout.tsx`)** - Modified
+
 - ✅ PWA metadata (manifest, appleWebApp, icons)
 - ✅ Viewport configuration (width, initialScale, themeColor)
 - ✅ Service worker registration script
 
 **Offline Page (`apps/web/src/app/offline/page.tsx`)** - 38 satır
+
 - ✅ Client component with 'use client'
 - ✅ WifiOff icon
 - ✅ Offline message
@@ -3012,6 +3293,7 @@ export const watchers = pgTable(
 #### 2. Push Notifications Database Schema
 
 **Push Subscriptions Schema (`packages/db/src/schema/push-subscriptions.ts`)** - 47 satır
+
 - ✅ **pushSubscriptions table**
   - id (CUID2)
   - userId (references users, cascade delete)
@@ -3025,12 +3307,14 @@ export const watchers = pgTable(
   - createdAt, updatedAt
 
 **Database Migration**
+
 - ✅ Generated migration: `drizzle/0007_moaning_mojo.sql`
 - ✅ **Total Tables: 33** (added push_subscriptions)
 
 #### 3. Push Notifications API Routes
 
 **Push Subscriptions API (`apps/web/src/app/api/push-subscriptions/route.ts`)** - 157 satır
+
 - ✅ GET endpoint - List user's push subscriptions
 - ✅ POST endpoint - Create/update push subscription (upsert pattern)
 - ✅ DELETE endpoint - Remove push subscription
@@ -3041,6 +3325,7 @@ export const watchers = pgTable(
 #### 4. Push Service Implementation
 
 **Push Service (`packages/db/src/utils/push-service.ts`)** - 115 satır
+
 - ✅ **sendPushNotification()** - Send to specific user
 - ✅ **sendPushNotificationToUsers()** - Send to multiple users
 - ✅ **generateVAPIDKeys()** - Generate VAPID keys for web push
@@ -3049,12 +3334,14 @@ export const watchers = pgTable(
 - ✅ Automatic subscription deactivation on failure
 
 **Dependencies Added:**
+
 - ✅ web-push - Web push notification library
 - ✅ @types/web-push - TypeScript types
 
 #### 5. Push Notifications Hooks
 
 **Push Notifications Hook (`apps/web/src/hooks/use-push-notifications.ts`)** - 157 satır
+
 - ✅ **usePushNotifications()** hook
 - ✅ subscribe() - Request permission and subscribe
 - ✅ unsubscribe() - Remove subscription
@@ -3066,6 +3353,7 @@ export const watchers = pgTable(
 #### 6. Mobile Navigation
 
 **Mobile Nav (`apps/web/src/components/mobile/mobile-nav.tsx`)** - 65 satır
+
 - ✅ Bottom navigation bar
 - ✅ 4 tabs: Dashboard, Board, Search, Settings
 - ✅ Floating Action Button (FAB) for Create Issue
@@ -3073,6 +3361,7 @@ export const watchers = pgTable(
 - ✅ Hidden on desktop (md:hidden)
 
 **Mobile Header (`apps/web/src/components/mobile/mobile-header.tsx`)** - 60 satır
+
 - ✅ Sticky mobile header
 - ✅ Menu button with Sheet component
 - ✅ Title, search, notifications, profile
@@ -3082,6 +3371,7 @@ export const watchers = pgTable(
 #### 7. Responsive Layout
 
 **Media Query Hook (`apps/web/src/hooks/use-media-query.ts`)** - 40 satır
+
 - ✅ **useMediaQuery()** hook
 - ✅ **useIsMobile()** - Check if mobile (<768px)
 - ✅ **useIsTablet()** - Check if tablet (768-1024px)
@@ -3089,6 +3379,7 @@ export const watchers = pgTable(
 - ✅ SSR-safe implementation
 
 **Responsive Layout (`apps/web/src/components/mobile/responsive-layout.tsx`)** - 38 satır
+
 - ✅ Wrapper component for mobile/desktop layouts
 - ✅ Conditionally renders mobile header and nav
 - ✅ Desktop layout passthrough
@@ -3096,6 +3387,7 @@ export const watchers = pgTable(
 #### 8. Touch Gestures
 
 **Swipe Hook (`apps/web/src/hooks/use-swipe.ts`)** - 70 satır
+
 - ✅ **useSwipe()** hook for swipe detection
 - ✅ Threshold configuration (default: 50px)
 - ✅ Velocity calculation
@@ -3103,6 +3395,7 @@ export const watchers = pgTable(
 - ✅ Touch event handling with null safety
 
 **Swipeable Item (`apps/web/src/components/mobile/swipeable-item.tsx`)** - 110 satır
+
 - ✅ Swipeable list item component
 - ✅ Left and right action reveals
 - ✅ Predefined actions: delete, archive, complete
@@ -3110,6 +3403,7 @@ export const watchers = pgTable(
 - ✅ Reset position after action
 
 **Pull to Refresh (`apps/web/src/components/mobile/pull-to-refresh.tsx`)** - 120 satır
+
 - ✅ Pull-to-refresh component
 - ✅ Visual feedback with rotation animation
 - ✅ Threshold-based triggering (default: 80px)
@@ -3120,6 +3414,7 @@ export const watchers = pgTable(
 #### 9. Mobile Issue Components
 
 **Mobile Issue List (`apps/web/src/components/mobile/mobile-issue-list.tsx`)** - 145 satır
+
 - ✅ Mobile-optimized issue list
 - ✅ SwipeableItem integration with complete/delete actions
 - ✅ PullToRefresh integration
@@ -3131,6 +3426,7 @@ export const watchers = pgTable(
 - ✅ Empty state handling
 
 **Mobile Issue Detail (`apps/web/src/components/mobile/mobile-issue-detail.tsx`)** - 185 satır
+
 - ✅ Full-screen mobile issue detail view
 - ✅ Back button navigation
 - ✅ Action sheet for operations (Edit, Assign, Change Status, Delete)
@@ -3148,6 +3444,7 @@ export const watchers = pgTable(
 ### 📊 Build Results
 
 **Production Build:**
+
 - ✅ **Total Routes: 56** (45 API endpoints + 11 pages)
 - ✅ **Total Database Tables: 33**
 - ✅ **Middleware Size: 176 kB**
@@ -3155,6 +3452,7 @@ export const watchers = pgTable(
 - ✅ **Largest Page: 265 kB** (projects/[projectId]/sprints/[sprintId])
 
 **API Endpoints (45):**
+
 - /api/ai/generate-issue
 - /api/ai/summarize-thread
 - /api/analytics/burndown
@@ -3197,6 +3495,7 @@ export const watchers = pgTable(
 - /api/webhooks/[webhookId]
 
 **Pages (11):**
+
 - / (Landing)
 - /auth/error
 - /auth/signin
@@ -3215,6 +3514,7 @@ export const watchers = pgTable(
 ### 🎯 Key Features Implemented
 
 **PWA Capabilities:**
+
 - ✅ Installable web app
 - ✅ Offline support with service worker
 - ✅ Cache strategies (network-first for API, cache-first for static)
@@ -3223,6 +3523,7 @@ export const watchers = pgTable(
 - ✅ Share target
 
 **Push Notifications:**
+
 - ✅ Web Push API integration
 - ✅ VAPID authentication
 - ✅ Subscription management
@@ -3230,6 +3531,7 @@ export const watchers = pgTable(
 - ✅ Invalid subscription handling
 
 **Mobile-First Design:**
+
 - ✅ Responsive breakpoints (mobile, tablet, desktop)
 - ✅ Bottom navigation for mobile
 - ✅ Floating Action Button (FAB)
@@ -3237,12 +3539,14 @@ export const watchers = pgTable(
 - ✅ Sticky headers
 
 **Touch Gestures:**
+
 - ✅ Swipe detection with threshold and velocity
 - ✅ Swipeable list items with left/right actions
 - ✅ Pull-to-refresh with visual feedback
 - ✅ Touch event handling with null safety
 
 **Mobile Components:**
+
 - ✅ Mobile issue list with swipe actions
 - ✅ Mobile issue detail with action sheet
 - ✅ Mobile navigation and header
@@ -3290,4 +3594,3 @@ packages/db/drizzle/
 **Total Lines of Code:** ~16,000+ lines
 
 ---
-

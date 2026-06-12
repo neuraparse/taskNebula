@@ -6,10 +6,12 @@ import {
   varchar,
   integer,
   numeric,
+  boolean,
   pgEnum,
   index,
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import { createId } from '@paralleldrive/cuid2';
 import { organizations } from './organizations';
 import { projects } from './projects';
@@ -45,9 +47,18 @@ export const issueLinkTypeEnum = pgEnum('issue_link_type', [
   'parent_of',
   'child_of',
 ]);
+// Jira-style resolution, set when an issue reaches a terminal status.
+// NULL = unresolved.
+export const issueResolutionEnum = pgEnum('issue_resolution', [
+  'fixed',
+  'wont_do',
+  'duplicate',
+  'cannot_reproduce',
+  'done',
+]);
 
 // Issues table
-export const issues: any = pgTable(
+export const issues = pgTable(
   'issues',
   {
     id: text('id')
@@ -79,8 +90,8 @@ export const issues: any = pgTable(
       .references(() => users.id),
     labels: jsonb('labels').notNull().default('[]'), // Array of strings
     sprintId: text('sprint_id').references(() => sprints.id, { onDelete: 'set null' }),
-    epicId: text('epic_id').references((): any => issues.id, { onDelete: 'set null' }),
-    parentId: text('parent_id').references((): any => issues.id, { onDelete: 'set null' }),
+    epicId: text('epic_id').references((): AnyPgColumn => issues.id, { onDelete: 'set null' }),
+    parentId: text('parent_id').references((): AnyPgColumn => issues.id, { onDelete: 'set null' }),
     securityLevelId: text('security_level_id').references(() => issueSecurityLevels.id, {
       onDelete: 'set null',
     }),
@@ -92,6 +103,12 @@ export const issues: any = pgTable(
     actualHours: numeric('actual_hours', { precision: 8, scale: 2 }).default('0'),
     estimateSource: text('estimate_source'), // 'manual' | 'ai_suggest' | 'story_points'
     storyPoints: integer('story_points'),
+    // Jira-parity structural layer (2026-06): resolution is set when an
+    // issue lands in a terminal status (NULL = unresolved), resolved_at
+    // records when, and flagged marks impediments on the board.
+    resolution: issueResolutionEnum('resolution'),
+    resolvedAt: timestamp('resolved_at'),
+    flagged: boolean('flagged').notNull().default(false),
     dueDate: timestamp('due_date'),
     customFields: jsonb('custom_fields').notNull().default('{}'),
     metadata: jsonb('metadata').notNull().default('{}'),
@@ -105,9 +122,15 @@ export const issues: any = pgTable(
       .references(() => users.id),
   },
   (table) => ({
-    keyIdx: uniqueIndex('issue_key_idx').on(table.key),
+    // Issue keys are only unique within an organization — a global unique
+    // index on `key` alone would let one tenant block another tenant's
+    // "PROJ-1" (cross-tenant collision). Migration 0054 swaps the old
+    // issue_key_idx for this org-scoped one.
+    orgKeyIdx: uniqueIndex('issue_org_key_idx').on(table.organizationId, table.key),
     projectNumberIdx: uniqueIndex('issue_project_number_idx').on(table.projectId, table.number),
+    orgIdx: index('issue_org_idx').on(table.organizationId),
     projectIdx: index('issue_project_idx').on(table.projectId),
+    epicIdx: index('issue_epic_idx').on(table.epicId),
     assigneeIdx: index('issue_assignee_idx').on(table.assigneeId),
     statusIdx: index('issue_status_idx').on(table.statusId),
     sprintIdx: index('issue_sprint_idx').on(table.sprintId),
@@ -124,7 +147,7 @@ export const issues: any = pgTable(
 );
 
 // Issue Comments table
-export const issueComments: any = pgTable(
+export const issueComments = pgTable(
   'issue_comments',
   {
     id: text('id')
@@ -133,7 +156,9 @@ export const issueComments: any = pgTable(
     issueId: text('issue_id')
       .notNull()
       .references(() => issues.id, { onDelete: 'cascade' }),
-    parentId: text('parent_id').references((): any => issueComments.id, { onDelete: 'cascade' }),
+    parentId: text('parent_id').references((): AnyPgColumn => issueComments.id, {
+      onDelete: 'cascade',
+    }),
     content: text('content').notNull(),
     mentions: jsonb('mentions').notNull().default('[]'), // Array of user IDs
     reactions: jsonb('reactions').notNull().default('[]'),

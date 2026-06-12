@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, issueSecuritySchemes, issueSecurityLevels, issueSecurityLevelMembers, projectSecuritySchemes } from '@tasknebula/db';
+import {
+  db,
+  issueSecuritySchemes,
+  issueSecurityLevels,
+  issueSecurityLevelMembers,
+  projectSecuritySchemes,
+} from '@tasknebula/db';
 import { eq, inArray } from 'drizzle-orm';
+import { authorizeSecuritySchemeAccess } from '../utils';
 
 // GET /api/security-schemes/[schemeId] - Get a specific security scheme with levels
 export async function GET(
@@ -16,14 +23,14 @@ export async function GET(
 
     const { schemeId } = await params;
 
-    const [scheme] = await db
-      .select()
-      .from(issueSecuritySchemes)
-      .where(eq(issueSecuritySchemes.id, schemeId));
-
-    if (!scheme) {
+    const access = await authorizeSecuritySchemeAccess(session.user.id, schemeId);
+    if (access.status === 'not-found') {
       return NextResponse.json({ error: 'Security scheme not found' }, { status: 404 });
     }
+    if (access.status === 'forbidden') {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
+    const scheme = access.scheme;
 
     // Get levels and members in batched queries
     type LevelMemberRow = typeof issueSecurityLevelMembers.$inferSelect;
@@ -86,14 +93,14 @@ export async function PATCH(
     const body = await request.json();
     const { name, description, isDefault } = body;
 
-    const [existingScheme] = await db
-      .select()
-      .from(issueSecuritySchemes)
-      .where(eq(issueSecuritySchemes.id, schemeId));
-
-    if (!existingScheme) {
+    const access = await authorizeSecuritySchemeAccess(session.user.id, schemeId);
+    if (access.status === 'not-found') {
       return NextResponse.json({ error: 'Security scheme not found' }, { status: 404 });
     }
+    if (access.status === 'forbidden') {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
+    const existingScheme = access.scheme;
 
     if (isDefault) {
       await db
@@ -134,6 +141,14 @@ export async function DELETE(
 
     const { schemeId } = await params;
 
+    const access = await authorizeSecuritySchemeAccess(session.user.id, schemeId);
+    if (access.status === 'not-found') {
+      return NextResponse.json({ error: 'Security scheme not found' }, { status: 404 });
+    }
+    if (access.status === 'forbidden') {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
+
     const projectAssignments = await db
       .select()
       .from(projectSecuritySchemes)
@@ -154,4 +169,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-

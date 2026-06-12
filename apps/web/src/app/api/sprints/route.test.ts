@@ -161,7 +161,9 @@ describe('/api/sprints route', () => {
   describe('GET', () => {
     it('returns 401 when no session', async () => {
       authMock.mockResolvedValue(null);
-      const response = await GET(new NextRequestCtor('http://localhost:3002/api/sprints?projectId=PRJ'));
+      const response = await GET(
+        new NextRequestCtor('http://localhost:3002/api/sprints?projectId=PRJ')
+      );
       expect(response.status).toBe(401);
       await expect(response.json()).resolves.toEqual({ error: 'Unauthorized' });
     });
@@ -177,15 +179,58 @@ describe('/api/sprints route', () => {
       authMock.mockResolvedValue({ user: { id: 'user-1' } });
       // resolveProjectId: short key lookup returns []
       dbSelectMock.mockReturnValueOnce(chainable([]));
-      const response = await GET(new NextRequestCtor('http://localhost:3002/api/sprints?projectId=PRJ'));
+      const response = await GET(
+        new NextRequestCtor('http://localhost:3002/api/sprints?projectId=PRJ')
+      );
       expect(response.status).toBe(404);
       await expect(response.json()).resolves.toEqual({ error: 'Project not found' });
     });
 
+    it('returns 404 when caller is not a member of the project organization', async () => {
+      authMock.mockResolvedValue({ user: { id: 'user-1' } });
+      // Long projectId skips key lookup; view permission check runs first.
+      dbSelectMock
+        .mockReturnValueOnce(chainable([{ isSuperAdmin: false }])) // users
+        .mockReturnValueOnce(
+          chainable([{ id: 'project_long_id_1234567890', organizationId: 'org-1' }])
+        ) // project
+        .mockReturnValueOnce(chainable([])) // no org membership (cross-org probe)
+        .mockReturnValueOnce(chainable([])); // no project membership
+
+      const response = await GET(
+        new NextRequestCtor(
+          'http://localhost:3002/api/sprints?projectId=project_long_id_1234567890'
+        )
+      );
+      expect(response.status).toBe(404);
+      await expect(response.json()).resolves.toEqual({ error: 'Project not found' });
+    });
+
+    it('returns 403 when an in-org caller is not a project member', async () => {
+      authMock.mockResolvedValue({ user: { id: 'user-1' } });
+      dbSelectMock
+        .mockReturnValueOnce(chainable([{ isSuperAdmin: false }])) // users
+        .mockReturnValueOnce(
+          chainable([{ id: 'project_long_id_1234567890', organizationId: 'org-1' }])
+        ) // project
+        .mockReturnValueOnce(chainable([{ role: 'member' }])) // org member (not admin/owner)
+        .mockReturnValueOnce(chainable([])); // no project membership
+
+      const response = await GET(
+        new NextRequestCtor(
+          'http://localhost:3002/api/sprints?projectId=project_long_id_1234567890'
+        )
+      );
+      expect(response.status).toBe(403);
+      await expect(response.json()).resolves.toEqual({ error: 'Not a project member' });
+    });
+
     it('returns sprints with issue counts on happy path', async () => {
       authMock.mockResolvedValue({ user: { id: 'user-1' } });
-      // Long projectId skips key lookup. First call = sprints list. Second+ = count per sprint.
+      // Long projectId skips key lookup. First call = view permission (super
+      // admin bypass). Second = sprints list. Third = issue counts.
       dbSelectMock
+        .mockReturnValueOnce(chainable([{ isSuperAdmin: true }]))
         .mockReturnValueOnce(
           chainable([
             {
@@ -206,7 +251,9 @@ describe('/api/sprints route', () => {
         .mockReturnValueOnce(chainable([{ sprintId: 'sprint-1', total: 5 }]));
 
       const response = await GET(
-        new NextRequestCtor('http://localhost:3002/api/sprints?projectId=project_long_id_1234567890')
+        new NextRequestCtor(
+          'http://localhost:3002/api/sprints?projectId=project_long_id_1234567890'
+        )
       );
       expect(response.status).toBe(200);
       const body = (await response.json()) as Array<{ id: string; issueCount: number }>;
@@ -265,7 +312,9 @@ describe('/api/sprints route', () => {
       // long projectId skips key lookup, goes straight to permission check
       dbSelectMock
         .mockReturnValueOnce(chainable([{ isSuperAdmin: false }])) // users
-        .mockReturnValueOnce(chainable([{ id: 'proj_long_id_1234567890', organizationId: 'org-1' }])) // project
+        .mockReturnValueOnce(
+          chainable([{ id: 'proj_long_id_1234567890', organizationId: 'org-1' }])
+        ) // project
         .mockReturnValueOnce(chainable([{ role: 'member' }])) // orgMember (not owner)
         .mockReturnValueOnce(chainable([])); // projectMember empty
 
@@ -322,13 +371,17 @@ describe('/api/sprints route', () => {
         })
       );
       expect(response.status).toBe(400);
-      await expect(response.json()).resolves.toEqual({ error: 'End date must be after start date' });
+      await expect(response.json()).resolves.toEqual({
+        error: 'End date must be after start date',
+      });
     });
 
     it('creates sprint and publishes event on happy path', async () => {
       authMock.mockResolvedValue({ user: { id: 'user-1' } });
       // super admin bypass
       dbSelectMock.mockReturnValueOnce(chainable([{ isSuperAdmin: true }]));
+      // post-insert project lookup that resolves organizationId for the SSE event
+      dbSelectMock.mockReturnValueOnce(chainable([{ organizationId: 'org-1' }]));
       dbInsertMock.mockReturnValueOnce(
         insertReturning([
           {
@@ -363,6 +416,7 @@ describe('/api/sprints route', () => {
       expect(publishEventMock).toHaveBeenCalledWith('sprint.created', 'user-1', {
         projectId: 'proj_long_id_1234567890',
         sprintId: 'generated-id',
+        organizationId: 'org-1',
       });
     });
   });

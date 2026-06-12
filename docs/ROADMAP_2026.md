@@ -1,10 +1,14 @@
-# TaskNebula 2026 Roadmap (Nisan-Mayıs sprintleri)
+# TaskNebula 2026 Roadmap
 
-Source: 26-agent paralel araştırma (Linear, Jira/Rovo, Notion, ClickUp, Plane,
-Asana/Monday, MCP, Voice, CRDT, Agent integrations, Calendar, UI, Mobile,
-Analytics, Notifications, Time tracking, Docs, Compliance, Onboarding,
-Slack/Discord, Performance, i18n/a11y, Observability, Search, OSS ecosystem,
-AI safety, codebase audit).
+> **Updated 2026-06-12.** Original plan (#1–27, Nisan–Mayıs sprintleri) now carries per-item Status
+> columns based on the June 2026 full-codebase audit (`docs/AUDIT_2026-06.md`). The H2-2026 extension
+> (#28–50) and the H1-2027 outlook are appended below.
+>
+> Source of the original plan: 26-agent paralel araştırma (Linear, Jira/Rovo, Notion, ClickUp, Plane,
+> Asana/Monday, MCP, Voice, CRDT, Agent integrations, Calendar, UI, Mobile, Analytics, Notifications,
+> Time tracking, Docs, Compliance, Onboarding, Slack/Discord, Performance, i18n/a11y, Observability,
+> Search, OSS ecosystem, AI safety, codebase audit). Extension basis: June 2026 audit (28 domain
+> auditors + adversarial critic) + Jira Spring '26 / Team '26 and Linear 2025–26 market research.
 
 ## Stratejik Pozisyon
 
@@ -21,85 +25,70 @@ başka hiçbir şey gerektirmeyen."**
 Yapma: chat/video/wiki süper-app, kendi calendar UI'sı, tldraw whiteboard
 (lisans tuzağı), Microsoft Teams önce, native mobile önce.
 
+## H1-2026 Status Summary
+
+Of the 27 original items: **18 fully shipped, 6 partial, 3 open** (~21+/27 landed in some form).
+Open: **#20 calendar sync, #25 mobile, #27 SOC 2**. Partial: **#17, #18, #21, #22, #23, #24**.
+Many "Shipped" items have a working backend with a broken or unwired last mile — those seams are
+catalogued in `docs/AUDIT_2026-06.md` and drive the #28–50 extension below.
+
 ## P0 — Nisan-Mayıs Sprintleri (deal-blocker / en yüksek ROI)
 
-| #   | Özellik                                                                                                | Efor |
-| --- | ------------------------------------------------------------------------------------------------------ | ---- |
-| 1   | Hybrid search wire-up (tsvector + pgvector + RRF) — `content_embeddings` tablosu var, kod wire etmemiş | M    |
-| 2   | Triage Intelligence (auto-label + priority + assignee + duplicate detect)                              | M    |
-| 3   | "Ask TaskNebula" Q&A endpoint (RAG over issues+comments+docs, citation zorunlu)                        | M    |
-| 4   | Agent-as-assignee (`@claude`, `@cursor`, `@devin`, `@copilot`) — Linear Agent Protocol uyumu           | L    |
-| 5   | MCP Server paketi (`packages/mcp-server`, 12 tool)                                                     | S-M  |
-| 6   | Centralized error handler + Pino logger (399 console → JSON logs)                                      | S    |
-| 7   | AI cost runaway koruma (per-org token budget + kill switch + audit log)                                | S    |
-| 8   | Anthropic prompt caching + OpenAI Batch API                                                            | S    |
+| #   | Özellik                                                                                                | Efor | Status                                                                              |
+| --- | ------------------------------------------------------------------------------------------------------ | ---- | ----------------------------------------------------------------------------------- |
+| 1   | Hybrid search wire-up (tsvector + pgvector + RRF) — `content_embeddings` tablosu var, kod wire etmemiş | M    | ✅ Shipped (route + schema; embedding worker still has zero callers — see #45)      |
+| 2   | Triage Intelligence (auto-label + priority + assignee + duplicate detect)                              | M    | ✅ Shipped (backend; auto-apply-on-create wiring pending — see #44)                 |
+| 3   | "Ask TaskNebula" Q&A endpoint (RAG over issues+comments+docs, citation zorunlu)                        | M    | ✅ Shipped (`/api/ask` SSE complete; UI consumer pending — see #45)                 |
+| 4   | Agent-as-assignee (`@claude`, `@cursor`, `@devin`, `@copilot`) — Linear Agent Protocol uyumu           | L    | ✅ Shipped                                                                          |
+| 5   | MCP Server paketi (`packages/mcp-server`, 12 tool)                                                     | S-M  | ✅ Shipped (built; end-to-end blocked on API-key auth — see #39/#47)                |
+| 6   | Centralized error handler + Pino logger (399 console → JSON logs)                                      | S    | ✅ Shipped (Pino + handlers exist; adoption incomplete, console.\* call sites grew) |
+| 7   | AI cost runaway koruma (per-org token budget + kill switch + audit log)                                | S    | ✅ Shipped (several LLM paths still bypass `runWithBudget` — see #46)               |
+| 8   | Anthropic prompt caching + OpenAI Batch API                                                            | S    | ✅ Shipped (Batch wrapper has zero callers)                                         |
 
 ## P1 — Mayıs-Haziran
 
-| #   | Özellik                                                                       |
-| --- | ----------------------------------------------------------------------------- |
-| 9   | Tiptap + Yjs + Hocuspocus collaborative issue description editing             |
-| 10  | Native time tracking minimum (estimate/actual + AI estimate suggest)          |
-| 11  | Initiatives + Sub-Initiatives + Initiative Updates                            |
-| 12  | Web Forms / Intake (Linear Asks pattern)                                      |
-| 13  | AI Workspace Bootstrapper (NL → label/cycle/issue seed)                       |
-| 14  | "Catch me up" digest + smart unified Inbox                                    |
-| 15  | Slack integration (slash + emoji-triage + thread sync + AI draft from thread) |
-| 16  | PII redaction (Presidio) + prompt-injection sandbox                           |
-| 17  | SAML 2.0 + SCIM 2.0 (Okta, Entra, Google Workspace)                           |
+| #   | Özellik                                                                       | Status                                                                                          |
+| --- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| 9   | Tiptap + Yjs + Hocuspocus collaborative issue description editing             | ✅ Shipped (env wiring missing from Docker image/compose — collab dark in prod)                 |
+| 10  | Native time tracking minimum (estimate/actual + AI estimate suggest)          | ✅ Shipped (TimeTrackingPanel not mounted in UI)                                                |
+| 11  | Initiatives + Sub-Initiatives + Initiative Updates                            | ✅ Shipped (API-first; no sidebar nav entry)                                                    |
+| 12  | Web Forms / Intake (Linear Asks pattern)                                      | ✅ Shipped (settings page unlinked from nav)                                                    |
+| 13  | AI Workspace Bootstrapper (NL → label/cycle/issue seed)                       | ✅ Shipped                                                                                      |
+| 14  | "Catch me up" digest + smart unified Inbox                                    | ✅ Shipped                                                                                      |
+| 15  | Slack integration (slash + emoji-triage + thread sync + AI draft from thread) | ✅ Shipped (env-only signing secret — one workspace per deployment)                             |
+| 16  | PII redaction (Presidio) + prompt-injection sandbox                           | ✅ Shipped (helpers built; not yet applied to production prompt paths — see #46)                |
+| 17  | SAML 2.0 + SCIM 2.0 (Okta, Entra, Google Workspace)                           | 🟡 Partial (SAML+SCIM live and hardened; no session revocation, enforce-SSO, or OIDC — see #50) |
 
-## P2 — Q3 2026
+## P2 — Q3 2026 (original)
 
-| #   | Özellik                                                                                     |
-| --- | ------------------------------------------------------------------------------------------- |
-| 18  | Docs module (BlockNote + Yjs + bidirectional `#TN-123` linking)                             |
-| 19  | Native charts (Tremor + Recharts) + AI insight summaries + DORA-5 + Monte Carlo forecast    |
-| 20  | Calendar two-way sync (Google/Outlook/Cal.com) + Today + Pomodoro + capacity heatmap        |
-| 21  | Voice features (LiveKit transcript, voice → create issue, async voice notes)                |
-| 22  | i18n (TR/DE/ES) next-intl + WCAG 2.2 AA audit                                               |
-| 23  | Observability (SigNoz + Langfuse + pg_stat_statements + LiveKit metrics)                    |
-| 24  | Agent recipe library (Standup, Stale-janitor, PR↔Issue linker, Release notes, Risk scorer) |
-| 25  | Mobile (Expo: PWA → native shell; share-sheet, Live Activities, App Intents, offline queue) |
-| 26  | Importers (Linear / Jira / GitHub Issues / CSV)                                             |
-| 27  | SOC 2 Type II + immutable audit log streaming + trust center                                |
+| #   | Özellik                                                                                     | Status                                                                                                           |
+| --- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| 18  | Docs module (BlockNote + Yjs + bidirectional `#TN-123` linking)                             | 🟡 Partial (shipped on Tiptap, not BlockNote; no Yjs for docs — concurrent edits 409)                            |
+| 19  | Native charts (Recharts) + AI insight summaries + DORA-5 + Monte Carlo forecast             | ✅ Shipped (Recharts only — Tremor was never added; DORA 4/5 metrics still zeroed; chart suite partly unmounted) |
+| 20  | Calendar two-way sync (Google/Outlook/Cal.com) + Today + Pomodoro + capacity heatmap        | ⬜ Open                                                                                                          |
+| 21  | Voice features (LiveKit transcript, voice → create issue, async voice notes)                | 🟡 Partial (LiveKit calls work, audio-only; transcript/voice-create incomplete)                                  |
+| 22  | i18n (TR/DE/ES) next-intl + WCAG 2.2 AA audit                                               | 🟡 Partial (catalogs + locale routing live; ~97% of UI strings still hardcoded English; no WCAG audit)           |
+| 23  | Observability (SigNoz + Langfuse + pg_stat_statements + LiveKit metrics)                    | 🟡 Partial (Langfuse partial — draft-issue only; `/api/metrics` exists, unauthenticated)                         |
+| 24  | Agent recipe library (Standup, Stale-janitor, PR↔Issue linker, Release notes, Risk scorer) | 🟡 Partial (standup + janitor + cycle-rollover cron live; PR-linker/release-notes/risk-scorer missing)           |
+| 25  | Mobile (Expo: PWA → native shell; share-sheet, Live Activities, App Intents, offline queue) | ⬜ Open (responsive PWA shell only)                                                                              |
+| 26  | Importers (Linear / Jira / GitHub Issues / CSV)                                             | ✅ Shipped (v1; Jira/GitHub adapters are stub-depth — see #42)                                                   |
+| 27  | SOC 2 Type II + immutable audit log streaming + trust center                                | ⬜ Open (trust center + SIEM streaming shipped; SOC 2 certification not started)                                 |
 
-## Sprint Planı (Nisan-Mayıs 2026)
+## Codebase Tech Debt (refreshed 2026-06-12)
 
-**Hafta 1-2 — AI foundation:**
+Done since the original list was written: **OpenAPI generation** (`apps/web/public/openapi.json`
+from Zod), **Husky + lint-staged** pre-commit, **`error.tsx` boundaries**, **Pino structured
+logger**, **hybrid-search schema/route**. The real debt today is the audit's findings
+(`docs/AUDIT_2026-06.md`), headlined by:
 
-- Pino logger + error handler (#6)
-- Hybrid search wire-up (#1)
-- Prompt caching + Batch API (#8)
-
-**Hafta 3-4 — Headline AI:**
-
-- Triage Intelligence (#2)
-- Ask TaskNebula RAG (#3)
-- AI cost guard (#7) + PII redaction iskeleti (#16 yarısı)
-
-**Hafta 5-6 — Ecosystem opening:**
-
-- MCP Server (#5)
-- Agent-as-assignee + Linear Agent Protocol (#4)
-- Slack slash commands MVP (#15 yarısı)
-
-**Hafta 7-8 — Activation & infra:**
-
-- AI Workspace Bootstrapper (#13) + onboarding checklist
-- Initiatives + Web Forms (#11, #12)
-- E2E test seti (Playwright)
-
-## Codebase Tech Debt (paralel olarak temizlenecek)
-
-- 325 `any` tipi → strict null checks açılacak
-- 399 `console.log` → Pino structured logger
-- 194 API route'unun %9'u test edilmiş → Playwright E2E + Zod validator
-  middleware ile %50+'a çıkar
-- `error.tsx` boundary yok → ekle
-- OpenAPI yok → Zod'dan generate
-- SECURITY.md, CHANGELOG.md, CODE_OF_CONDUCT.md ve ISSUE_TEMPLATE mevcut → düzenli güncellenecek
-- pgvector tablosu (`content_embeddings`) wire edilmemiş → embedding worker
-- Pre-commit hook yok → Husky + lint-staged
+- **CI** — workflows were deleted (none existed at audit time); a minimal `.github/workflows/ci.yml` lands in the current change-set. Local verification (`pnpm type-check && pnpm lint && pnpm test`) remains the pre-push gate.
+- **Tenant isolation**: RLS absent (docs previously overclaimed it), ~20 cross-tenant route holes — being closed in the current change-set; RLS itself is #37.
+- **`: any` on core tables** (`issues`, `issueComments`, `initiatives`) erases Drizzle inference across all ~245 routes (#38).
+- **Migration tooling**: journal timestamps were non-monotonic (silently skipped 0044–0051 on upgrades — fixed in the current change-set); drizzle-kit snapshots frozen at 0012 so `pnpm db:generate` is broken.
+- **Console logging**: `console.*` call sites grew ~399 → ~479 despite Pino landing; adoption, not tooling, is the gap.
+- **Unpaginated core endpoints** + no list virtualization + missing `issues(organization_id)` index (#40).
+- **Orphaned finished work**: analytics bento/charts, time-tracking panel, SSO/import/intake settings pages, auth guard wrappers, `@tasknebula/types` — mounting/wiring tasks, not rebuilds.
+- ~218/245 routes untested; zero DB-integration tests; `packages/db` and `services/hocuspocus` have no test scripts.
 
 ## Açıkça Yapılmayacaklar
 
@@ -111,9 +100,93 @@ Yapma: chat/video/wiki süper-app, kendi calendar UI'sı, tldraw whiteboard
 - Replicache/Zero/Triplit (SSE %80 kapsamı veriyor)
 - Time tracking'i Toggl'a karşı tam build (thin + sync)
 
-## En Yüksek Asimetrik Bahis
+---
 
-**MCP Server + Agent-as-assignee (5 + 4)** — bir ayda bitiyor, anında
-Cursor/Claude Code/Devin/Copilot kullanıcı tabanına TaskNebula'yı bağlıyor,
-self-host tarafında henüz kimse yapmamış. Linear bu lane'i cloud'da kapadı,
-açık alan TaskNebula'nın.
+# H2-2026 Extension (Q3-2026, Q4-2026, H1-2027 Outlook)
+
+> Numbering continues at #28. Basis: June 2026 full-codebase audit (`docs/AUDIT_2026-06.md`) +
+> Jira Spring '26 / Team '26 and Linear 2025–26 market research, with the adversarial critic's
+> corrections applied. Strategic frame unchanged: _self-hostable Linear, control plane for AI
+> agents, Postgres-only._ Q3 buys structural Jira parity (the migration wedge); Q4 spends it on
+> AI-native differentiation.
+
+> **Update 2026-06-12 — structural schema layer landed.** Items **#28 (labels), #30 (resolution),
+> #31 (components), and #32 (versions/releases)** landed in this change-set: `labels`/`issue_labels`,
+> `components`/`issue_components`, `project_versions` + `issue_fix_versions`/`issue_affects_versions`
+> tables, plus `issues.resolution`/`resolved_at`/`flagged` (migration `0054_jira_parity_layer.sql`,
+> which also fixes the org-scoped issue-key uniqueness and missing hot-path indexes). Status for
+> these four: **schema + API shipped, UI minimal**. #29 (rank), #33, #34 remain open.
+
+## Q3-2026 — Structural Jira-Parity Layer ("Work Graph Foundations")
+
+The audit confirmed these entities did not exist in the schema. They block Jira migration parity,
+JQL filtering, release planning, and board credibility. Ship them as one coherent data-model wave —
+every later AI feature (triage, release notes, NL search) consumes them.
+
+| #   | Feature                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Why                                                                                                                                                       | Packages                                                           | Size                              | Depends on                                                      | Status                                                                           |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| 28  | **First-class labels** — `labels` (org_id, name, color, description, unique(org,name)) + `issue_labels` join; backfill from the JSONB array; rename-cascade, merge, autocomplete, server-side label filter; org/project label admin UI                                                                                                                                                                                                                                                                                                                               | Parity (Jira/Linear table stakes; previously unmanaged free-text JSONB with no GIN index)                                                                 | `packages/db`, `apps/web`, `packages/mcp-server`, `packages/types` | M                                 | none — first migration of the wave; sets the join-table pattern | 🟡 Schema+API shipped 2026-06-12; UI minimal                                     |
+| 29  | **Issue rank / manual ordering** — fractional `sort_order` (LexoRank-style) on issues + reorder endpoints; persist drag order on board columns, backlog, sprint planning, subtasks                                                                                                                                                                                                                                                                                                                                                                                   | Parity (Jira LexoRank / Linear sortOrder; today same-column drag is a no-op and order is `createdAt desc`)                                                | `packages/db`, `apps/web`                                          | M                                 | #40 pagination (avoid re-fetching unbounded lists on reorder)   | ⬜ Open                                                                          |
+| 30  | **Resolution model** — `resolution` enum (Fixed, Won't Do, Duplicate, Cannot Reproduce, Done) + `resolved_at` timestamptz; set on closing transitions, cleared on reopen; duplicate-close references canonical issue                                                                                                                                                                                                                                                                                                                                                 | Parity (Jira resolved-vs-unresolved semantics; unlocks honest cycle-time/velocity and gives duplicate-detect an action to take)                           | `packages/db`, `apps/web`                                          | S                                 | none; feeds #44 and analytics                                   | 🟡 Schema+API shipped 2026-06-12 (incl. `flagged`); transition/UI wiring minimal |
+| 31  | **Components** — project-scoped `components` (name, description, lead) + `issue_components` join; default-assignee routing (component lead / project default / unassigned); consolidate with existing `project_modules`                                                                                                                                                                                                                                                                                                                                              | Parity (Jira ownership routing; modules table exists but isn't wired into issues)                                                                         | `packages/db`, `apps/web`                                          | M                                 | none                                                            | 🟡 Schema+API shipped 2026-06-12; UI minimal                                     |
+| 32  | **Versions / Releases** — `project_versions` (start/release dates, released/archived) + `issue_fix_versions` + `issue_affects_versions`; per-project Releases page with progress; "release" action rolls unfinished items to next version                                                                                                                                                                                                                                                                                                                            | Parity (zero release-planning story before; `llm_batch_jobs` already references `release_notes` with no entity to scope it to)                            | `packages/db`, `apps/web`, `packages/types`                        | L                                 | #30 (done-ness), #28 pattern                                    | 🟡 Schema+API shipped 2026-06-12; Releases page/UI minimal                       |
+| 33  | **Workflow transition enforcement + editor completion** — issue PATCH/bulk validate `statusId` against the project workflow and `workflow_transitions`; evaluate conditions/validators/post-functions; status rename/reorder/delete APIs (with issue-migration mapping); fix `projects.default_workflow_id` FK; write `issue_status_history` from the single-issue path                                                                                                                                                                                              | Parity (transitions are stored but never enforced — any issue can jump to any status, including cross-tenant status ids; Jira's core workflow guarantee)  | `apps/web`, `packages/db`                                          | L                                 | none; prerequisite for #34                                      | ⬜ Open                                                                          |
+| 34  | **Boards as first-class entities** — `boards` table: multiple boards/project, column↔status mapping (N statuses per column), per-column WIP limits, swimlanes (assignee/epic/query), quick filters, estimation setting; board settings UI                                                                                                                                                                                                                                                                                                                           | Parity (no board entity exists — kanban is a 1:1 workflow-status projection; this is the most-used Jira admin surface)                                    | `packages/db`, `apps/web`                                          | XL                                | #29 (rank), #33 (enforced transitions)                          | ⬜ Open                                                                          |
+| 35  | **JQL v2 — extend the existing saved-filters layer** — fix the broken route (`issues.status` doesn't exist; jsonb `LIKE`), add OR/NOT/parentheses/ORDER BY/relative dates/`IS EMPTY`, fields for labels/components/fixVersion/epic/resolution, free-text dispatch into hybrid search, filter sharing + tenant guards. Note: `saved_filters` schema **and** full `/api/saved-filters` CRUD already exist — this extends and tenant-guards that layer rather than building a backbone from scratch. Filters become the compile target for boards/automation/dashboards | Parity (the primary `/api/search` 500ed; JQL is the backbone every other surface consumes — Atlassian's 2026 direction confirms filter-backed everything) | `packages/db` (parser), `apps/web`, `packages/mcp-server`          | L (reduced — filter layer exists) | #28, #31, #32 for the new fields; route fixes land first        | ⬜ Open (route 500 fixed in current change-set)                                  |
+| 36  | **Notification schemes + core event fan-out** — per-project event→recipient schemes (assignee/reporter/watchers/role); actually insert in-app rows for assigned/commented/status-changed; @mention and watcher fan-out (both currently dead ends); digest/batching job (`digestFrequency` exists, nothing sends); web-push sender. Note: cron **infrastructure already exists** — the compose `cron` sidecar (profile `cron`) hits `/api/cron/{standup,janitor,cycle-rollover}`; the missing piece is only the digest job + senders, not scheduling                  | Parity (Jira notification schemes; today watchers and mentions notify no one and the bell never shows core events)                                        | `packages/db`, `apps/web`                                          | L                                 | none; pairs with realtime SSE org-scoping fix                   | ⬜ Open                                                                          |
+
+### Q3 platform prerequisites (parallel track — unblockers, not features)
+
+| #   | Item                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Why                                                                                                                       | Packages                                         | Size        | Depends on                                      | Status                                                                                                |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | ----------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| 37  | **Tenant-isolation hardening** — RLS phase 1 (policies on top-20 tables + session GUC plumbing), `organization_id` backfill on child tables (comments, attachments, watchers, sprints, time_entries, content_embeddings…), close the **~20** audited cross-tenant route holes (links, watchers, workflows, sprints/issues, permission-scheme PATCH, hybrid search, SSE stream), fix org-scoped issue-key uniqueness, repair the non-monotonic migration journal | Parity/trust — docs claimed RLS that doesn't exist; one missed WHERE clause is a tenant leak; key collision is a hard bug | `packages/db`, `apps/web`                        | XL (phased) | journal repair first; backfills before policies | 🟡 In progress (route holes, key uniqueness, journal repaired in current change-set; RLS itself open) |
+| 38  | **Type-safety restoration** — replace `: any` on issues/issueComments/initiatives with `AnyPgColumn`; export `$inferSelect` model types from `packages/db`; rebase `use-issues.ts` et al. on them; regenerate or retire `packages/types`                                                                                                                                                                                                                        | Internal velocity — the most-queried tables are untyped across all 245 routes                                             | `packages/db`, `packages/types`, `apps/web`      | M           | none                                            | ⬜ Open                                                                                               |
+| 39  | **API-key authentication + scopes** — accept `sk_live_` keys (sha256 lookup, lastUsedAt, scopes column, per-key rate limits) on REST routes                                                                                                                                                                                                                                                                                                                     | Parity (token-first public API is Jira/Linear baseline) and **the single change that un-breaks the entire MCP server**    | `apps/web`, `packages/db`, `packages/mcp-server` | M           | none                                            | ⬜ Open                                                                                               |
+| 40  | **Pagination + scale floor** — limit/cursor on issues, my-issues, comments, activities; `issues(organization_id)` index; board/list virtualization; targeted cache updates instead of broad SSE invalidation                                                                                                                                                                                                                                                    | Parity at 10k+ issues — current endpoints return unbounded result sets                                                    | `apps/web`, `packages/db`                        | M           | none                                            | 🟡 Partial (org/epic/attachment indexes landed in migration 0054; pagination + virtualization open)   |
+
+## Q4-2026 — Developer Workflow + AI-Native Differentiators
+
+With the work graph in place, Q4 ships the acquisition levers (Git, import) and converts the
+already-built AI backend into visible product.
+
+| #   | Feature                                                                                                                                                                                                                                                                                                                                                          | Why                                                                                                                                                                        | Packages                          | Size | Depends on                                        |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ---- | ------------------------------------------------- |
+| 41  | **Deep GitHub/GitLab integration** — webhook receivers, branch/PR/commit↔issue linking (magic words: fixes/closes/refs), auto status transitions on PR open/merge with branch rules, PR review state on the issue, repo selection per project                                                                                                                   | Parity (Linear's daily-driver feature and the #1 missing integration per audit; also feeds DORA's four zeroed metrics)                                                     | `apps/web`, `packages/db`         | XL   | #33 (status automation respects workflow rules)   |
+| 42  | **Jira/Linear importer v2** — real pagination, comments/attachments/sprints/custom fields/hierarchy, route imports through the normal issue pipeline (activities/webhooks/search), encrypted credentials, job recovery + listing UI                                                                                                                              | Parity/acquisition — "migrate from Jira" is the #1 wedge for a Jira alternative and is currently a self-described stub                                                     | `apps/web`                        | L    | #28, #31, #32 (field fidelity targets)            |
+| 43  | **Releases ↔ CI/CD + AI release notes** — webhook ingest of deploy env/version/status per issue; agent-generated release notes from a version's issues                                                                                                                                                                                                          | Differentiation (Linear Releases, Apr 2026) — natural extension of #32 with the existing LLM layer                                                                         | `apps/web`, `packages/db`         | M    | #32, #41                                          |
+| 44  | **AI triage auto-apply + duplicate surfacing** — wire `enqueueTriageOnCreate` (built, never called), confidence-gated auto-apply with accept/reject learning loop, surface `duplicate-detect` (built, zero callers) in create flow and triage queue, "close as duplicate" sets resolution                                                                        | Differentiation (Linear Product Intelligence parity, ~table stakes by late 2026); backend mostly exists — this is wiring + UX                                              | `apps/web`                        | M    | #45 (embeddings live), #30 (duplicate resolution) |
+| 45  | **Semantic search last mile** — run the embedding worker (`drainEmbeddingQueue` has zero callers), fix Cmd+K (GET vs POST 405) and palette hrefs, wire the AI Sidecar to the finished `/api/ask` SSE stream, multi-turn conversation persistence, org-scope the vector retrieval                                                                                 | Differentiation flagship — the entire RAG/vector backend is built and dark; this is the highest ROI-per-line item in the codebase. (Cmd+K 405 fixed in current change-set) | `apps/web`                        | M    | hybrid-route org guard (#37)                      |
+| 46  | **Agent approval queue + AI governance completion** — review/approve/undo queue for agent write actions (`requireApprovalForWrites` currently silently dry-runs), extend cost-guard/kill-switch to the ~50% of LLM paths that bypass it (ask, triage, digests, embeddings), apply the built-but-unused untrusted-content wrapping + PII redaction to all prompts | Differentiation + trust — human-in-the-loop is the consistent 2026 pattern (Linear/Rovo/ClickUp) and an OSS credibility requirement                                        | `apps/web`, `packages/db`         | L    | none                                              |
+| 47  | **MCP server v2** — fix broken tool contracts (priority enums, subtask type, link_pr, cycle/current), publish to npm, spec-compliant Streamable HTTP + OAuth 2.1, ResourceTemplate fix, add sprint/user-lookup/workflow-status/docs/bulk tools, tool annotations + per-call audit                                                                                | Differentiation (a PM tool without a working MCP server is invisible to customers' agents in 2026; ours is built but inoperable end-to-end)                                | `packages/mcp-server`, `apps/web` | L    | #39 (API keys)                                    |
+| 48  | **NL → query translation + summarized answers** — natural-language → JQL v2 compilation in the palette and search, with grounded summarized answers (Rovo Search / intent-detection analog)                                                                                                                                                                      | Differentiation; cheap once #35 and #45 exist                                                                                                                              | `apps/web`                        | M    | #35, #45                                          |
+| 49  | **Coding-agent deeplinks + turnkey integrations** — launch Cursor/Claude Code/Codex from an issue with prefilled context (issue, comments, links); polish 2–3 reference agent-session providers on the existing dispatch protocol                                                                                                                                | Differentiation, low cost / high perceived value (Linear Feb 2026 deeplinks); rides on already-shipped agent sessions                                                      | `apps/web`                        | S–M  | none (#41 enriches context)                       |
+| 50  | **Auth hardening for enterprise** — fix OAuth (no DB adapter today — logins mint orphan JWTs), 2FA TOTP + passkeys, session revocation/maxAge, brute-force limits on credentials, enforce-SSO per workspace, login audit events                                                                                                                                  | Parity (enterprise checklist items; SSO+SCIM without revocable sessions undermines the deprovisioning story)                                                               | `apps/web`, `packages/db`         | L    | none                                              |
+
+## H1-2027 Outlook (directional, not committed)
+
+| Feature                                                                                                                                                                        | Why                                                                                                            | Packages                          | Size | Depends on                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- | --------------------------------- | ---- | ------------------------------ |
+| **Configurable work-item types + custom hierarchy levels** (above-epic Initiative/Theme levels, reparenting, type schemes with caps)                                           | Parity wedge — Jira Premium-gates above-epic levels; shipping it free/self-hosted is the strongest OSS play    | `packages/db`, `apps/web`         | XL   | Q3 wave complete               |
+| **Unified field schemes** (one scheme: work type → field → visible/required/default; copy Jira's 2026 _end state_, not the legacy 3-layer stack)                               | Parity (Atlassian Field Schemes GA 2026)                                                                       | `packages/db`, `apps/web`         | L    | configurable types             |
+| **Permission-scheme enforcement + custom roles/groups** — wire the existing scheme/security-level CRUD into the actual authz path, groups table, issue-security read filtering | Parity/trust — currently admin theater that protects nothing                                                   | `packages/db`, `apps/web`         | XL   | #37 (RLS)                      |
+| **Cross-project Plans / portfolio timeline** — initiative timeline with dependencies, capacity, scoped roll-ups (fix all-issues over-counting)                                 | Parity wedge (Jira Advanced Roadmaps is Premium-gated)                                                         | `apps/web`, `packages/db`         | XL   | hierarchy levels               |
+| **Customer requests + SLAs** — feedback intake attached to issues/projects, customer profiles, rule-based SLA deadlines with breach states                                     | Parity wedge (both Business/Enterprise-gated in Linear)                                                        | `packages/db`, `apps/web`         | L    | #36 (notifications)            |
+| **Configurable dashboards + report builder** — gadget grid over JQL v2 filters, CFD/control chart/sprint report, mount the orphaned analytics suite                            | Parity (Jira dashboards / Linear Insights; backend endpoints largely exist unmounted)                          | `apps/web`, `packages/db`         | L    | #35                            |
+| **Proactive risk & blocker detection** — at-risk sprint items, stalled PRs, scope creep flagging on the standup/janitor agent rails                                            | Differentiation now, table stakes by 2027                                                                      | `apps/web`                        | M    | #41, #44                       |
+| **No-code agent builder / shared skills** — NL → reviewed automation rule v1, reusable agent skills with event/schedule triggers                                               | Differentiation (Rovo Studio / Linear skills analog)                                                           | `apps/web`, `packages/db`         | XL   | #46 (approval queue)           |
+| **Multiplayer docs + AI-maintained specs** — extend Yjs/Hocuspocus to documents (namespace already reserved), spec auto-sync with linked issue state                           | Differentiation; natural fit for the existing collab stack                                                     | `services/hocuspocus`, `apps/web` | L    | collab flag wiring (#9 finish) |
+| **Watch list** — in-app coding sessions / native diffs (Linear Jun 2026), Teamwork-Graph-style knowledge graph over MCP, mobile shell (#25), SOC 2 (#27)                       | Frontier — deeplinks (#49) + agent sessions deliver most value at a fraction of cost; revisit on demand signal | —                                 | —    | —                              |
+
+### Sequencing rationale
+
+1. **Q3 = schema debt before AI polish.** Labels/versions/components/boards/resolutions/rank/JQL were confirmed absent (labels/versions/components/resolution have since landed at the schema+API layer); every Q4 AI feature either reads these entities (release notes, NL→JQL, triage labels) or loses credibility without them. The Jira importer (#42) is only worth marketing once there are fields to import _into_.
+2. **The prerequisite track (#37–40) is non-negotiable** — cross-tenant holes and the broken `: any` typing make every new feature riskier and slower; API-key auth gates the entire MCP/agent story.
+3. **Q4 monetizes what's already built.** The audit's loudest finding is finished-but-dark backend (Ask RAG, embeddings, triage, duplicate detect, MCP, agent engine). Q4 is predominantly last-mile wiring — disproportionate visible payoff per engineering week.
+4. **H1-2027 = the Premium-gated wedge.** Custom hierarchy, portfolio plans, SLAs, dashboards are exactly what Jira/Linear paywall; shipping them free + self-hosted is the durable OSS differentiation once parity and AI trust rails exist.
+
+## En Yüksek Asimetrik Bahis (H1 retrospect → H2 sequel)
+
+H1's bet — **MCP Server + Agent-as-assignee (#5 + #4)** — was built but is inoperable end-to-end
+(no route accepts API keys). H2's asymmetric bet is therefore **#39 + #47**: API-key auth is a
+single M-sized change that un-breaks the public API, the MCP server, and the entire
+agent-ecosystem story at once.

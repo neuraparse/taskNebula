@@ -21,8 +21,10 @@ Update the version in every pinned location:
 - `README.md` → the `0.3.x` references (recommended-tag table, pin examples)
 - Regenerate the API spec so the version matches:
   ```bash
-  pnpm openapi:gen   # writes apps/web/public/openapi.json
+  pnpm --filter @tasknebula/web openapi:gen   # writes apps/web/public/openapi.json
   ```
+  (Plain `pnpm openapi:gen` at the repo root fails with `ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL` —
+  the script only exists in the `@tasknebula/web` workspace.)
 
 > `docker-compose.yml` (production) keeps the web service at `:latest` and is
 > pinned at deploy time via `TASKNEBULA_IMAGE=neuraparse/tasknebula:<v>`, so it

@@ -236,70 +236,70 @@
     {
       "idx": 33,
       "version": "7",
-      "when": 1778900000000,
+      "when": 1778900000001,
       "tag": "0033_ai_cost_guard",
       "breakpoints": true
     },
     {
       "idx": 34,
       "version": "7",
-      "when": 1778900000000,
+      "when": 1778900000002,
       "tag": "0034_llm_batch_jobs",
       "breakpoints": true
     },
     {
       "idx": 35,
       "version": "7",
-      "when": 1778900000000,
+      "when": 1778900000003,
       "tag": "0035_hybrid_search",
       "breakpoints": true
     },
     {
       "idx": 36,
       "version": "7",
-      "when": 1778900000000,
+      "when": 1778900000004,
       "tag": "0036_issue_triage_suggestions",
       "breakpoints": true
     },
     {
       "idx": 37,
       "version": "7",
-      "when": 1778900000000,
+      "when": 1778900000005,
       "tag": "0037_llm_call_audit",
       "breakpoints": true
     },
     {
       "idx": 38,
       "version": "7",
-      "when": 1778900000000,
+      "when": 1778900000006,
       "tag": "0038_agent_as_assignee_linear_protocol",
       "breakpoints": true
     },
     {
       "idx": 39,
       "version": "7",
-      "when": 1778900000000,
+      "when": 1778900000007,
       "tag": "0039_native_time_tracking",
       "breakpoints": true
     },
     {
       "idx": 40,
       "version": "7",
-      "when": 1778900000000,
+      "when": 1778900000008,
       "tag": "0040_initiatives",
       "breakpoints": true
     },
     {
       "idx": 41,
       "version": "7",
-      "when": 1778900000000,
+      "when": 1778900000009,
       "tag": "0041_intake_forms",
       "breakpoints": true
     },
     {
       "idx": 42,
       "version": "7",
-      "when": 1778900000000,
+      "when": 1778900000010,
       "tag": "0042_smart_inbox",
       "breakpoints": true
     },
@@ -313,71 +313,78 @@
     {
       "idx": 44,
       "version": "7",
-      "when": 1778900000000,
+      "when": 1779000000003,
       "tag": "0044_sso_and_scim",
       "breakpoints": true
     },
     {
       "idx": 45,
       "version": "7",
-      "when": 1778900000000,
+      "when": 1779000000004,
       "tag": "0045_issue_status_history_and_rollover",
       "breakpoints": true
     },
     {
       "idx": 46,
       "version": "7",
-      "when": 1778900000000,
+      "when": 1779000000005,
       "tag": "0046_standups",
       "breakpoints": true
     },
     {
       "idx": 47,
       "version": "7",
-      "when": 1778900000000,
+      "when": 1779000000006,
       "tag": "0047_search_history_pinned",
       "breakpoints": true
     },
     {
       "idx": 48,
       "version": "7",
-      "when": 1778900000000,
+      "when": 1779000000007,
       "tag": "0048_ai_disclosures_acknowledged",
       "breakpoints": true
     },
     {
       "idx": 49,
       "version": "7",
-      "when": 1778900000000,
+      "when": 1779000000008,
       "tag": "0049_import_jobs",
       "breakpoints": true
     },
     {
       "idx": 50,
       "version": "7",
-      "when": 1778900000000,
+      "when": 1779000000009,
       "tag": "0050_audit_log_sinks",
       "breakpoints": true
     },
     {
       "idx": 51,
       "version": "7",
-      "when": 1778900000000,
+      "when": 1779000000010,
       "tag": "0051_pgvector_hnsw_content_embeddings",
       "breakpoints": true
     },
     {
       "idx": 52,
       "version": "7",
-      "when": 1779000000001,
+      "when": 1779000000011,
       "tag": "0052_issue_description_rich",
       "breakpoints": true
     },
     {
       "idx": 53,
       "version": "7",
-      "when": 1779000000002,
+      "when": 1779000000012,
       "tag": "0053_user_invite_tokens",
+      "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1779000000013,
+      "tag": "0054_jira_parity_layer",
       "breakpoints": true
     }
   ]

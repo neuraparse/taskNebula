@@ -42,7 +42,8 @@ Thank you for your interest in contributing to TaskNebula! This document provide
 5. **Run database migrations**
 
    ```bash
-   pnpm db:generate
+   # Do NOT run db:generate — drizzle-kit snapshots are frozen at 0012.
+   # Migrations 0013+ are hand-written SQL; see packages/db/CLAUDE.md.
    pnpm db:migrate
    ```
 
@@ -183,7 +184,7 @@ pnpm test:coverage
 5. **Create a Pull Request**
    - Provide a clear description of the changes
    - Reference any related issues
-   - Ensure all CI checks pass
+   - Ensure CI passes — `.github/workflows/ci.yml` runs `pnpm type-check`, `pnpm lint`, and `pnpm test` on every push/PR to `main`; run the same commands locally first
 
 ### PR Checklist
 

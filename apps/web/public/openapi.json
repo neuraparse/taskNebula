@@ -40,6 +40,19 @@
           "none"
         ]
       },
+      "IssueResolution": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "fixed",
+          "wont_do",
+          "duplicate",
+          "cannot_reproduce",
+          "done"
+        ]
+      },
       "Issue": {
         "type": "object",
         "properties": {
@@ -133,6 +146,16 @@
             ],
             "format": "date-time"
           },
+          "resolution": {
+            "$ref": "#/components/schemas/IssueResolution"
+          },
+          "resolvedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -160,6 +183,8 @@
           "parentId",
           "estimate",
           "dueDate",
+          "resolution",
+          "resolvedAt",
           "createdAt",
           "updatedAt"
         ]
@@ -343,6 +368,16 @@
           "customFields": {
             "type": "object",
             "additionalProperties": {}
+          },
+          "resolution": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IssueResolution"
+              },
+              {
+                "description": "Jira-style resolution. Setting a value stamps `resolvedAt`; an explicit `null` clears both fields."
+              }
+            ]
           }
         }
       },
@@ -454,38 +489,6 @@
           "content"
         ]
       },
-      "TransitionResponse": {
-        "type": "object",
-        "properties": {
-          "issue": {
-            "$ref": "#/components/schemas/Issue"
-          },
-          "transitionedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "issue",
-          "transitionedAt"
-        ]
-      },
-      "TransitionIssueBody": {
-        "type": "object",
-        "properties": {
-          "statusId": {
-            "type": "string",
-            "description": "Target workflow status id (UUID/cuid)"
-          },
-          "comment": {
-            "type": "string",
-            "description": "Optional comment to attach to the transition"
-          }
-        },
-        "required": [
-          "statusId"
-        ]
-      },
       "Project": {
         "type": "object",
         "properties": {
@@ -575,10 +578,479 @@
           "updatedAt"
         ]
       },
-      "Cycle": {
+      "Label": {
         "type": "object",
         "properties": {
           "id": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`null` = org-wide label"
+          },
+          "name": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "example": "#6B7280"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "organizationId",
+          "projectId",
+          "name",
+          "color",
+          "description",
+          "createdAt",
+          "updatedAt",
+          "createdBy"
+        ]
+      },
+      "LabelWithUsage": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Label"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "usageCount": {
+                "type": "integer",
+                "description": "Number of issues currently tagged with this label."
+              }
+            },
+            "required": [
+              "usageCount"
+            ]
+          }
+        ]
+      },
+      "LabelListResponse": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabelWithUsage"
+            }
+          }
+        },
+        "required": [
+          "labels"
+        ]
+      },
+      "CreateLabelBody": {
+        "type": "object",
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "description": "Optional project scope; `null`/absent = org-wide label."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+            "description": "Hex color like `#6B7280`. Defaults to `#6B7280`."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "organizationId",
+          "name"
+        ]
+      },
+      "UpdateLabelBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Renaming also rewrites the legacy `issues.labels` JSONB arrays org-wide in the same transaction."
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          }
+        }
+      },
+      "DeleteLabelResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "id"
+        ]
+      },
+      "VersionStatus": {
+        "type": "string",
+        "enum": [
+          "unreleased",
+          "released",
+          "archived"
+        ]
+      },
+      "ProjectVersion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "example": "1.4.0"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/VersionStatus"
+          },
+          "startDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "releaseDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Planned release date."
+          },
+          "releasedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Stamped when the version is released."
+          },
+          "sortOrder": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "organizationId",
+          "projectId",
+          "name",
+          "description",
+          "status",
+          "startDate",
+          "releaseDate",
+          "releasedAt",
+          "sortOrder",
+          "createdAt",
+          "updatedAt",
+          "createdBy"
+        ]
+      },
+      "ProjectVersionWithCounts": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProjectVersion"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "issueCount": {
+                "type": "integer"
+              },
+              "doneIssueCount": {
+                "type": "integer",
+                "description": "Issues with a non-null resolution."
+              }
+            },
+            "required": [
+              "issueCount",
+              "doneIssueCount"
+            ]
+          }
+        ]
+      },
+      "VersionListResponse": {
+        "type": "object",
+        "properties": {
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectVersionWithCounts"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "versions",
+          "total"
+        ]
+      },
+      "VersionResponse": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "$ref": "#/components/schemas/ProjectVersion"
+          }
+        },
+        "required": [
+          "version"
+        ]
+      },
+      "CreateVersionBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 10000
+          },
+          "startDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "releaseDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateVersionBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 10000
+          },
+          "startDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "releaseDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VersionStatus"
+              },
+              {
+                "description": "Transitioning to `released` stamps `releasedAt` (if unset); back to `unreleased` clears it."
+              }
+            ]
+          },
+          "sortOrder": {
+            "type": "integer"
+          }
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
+      "ReleaseVersionResponse": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "$ref": "#/components/schemas/ProjectVersion"
+          },
+          "movedIssueCount": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "movedIssueCount"
+        ]
+      },
+      "ReleaseVersionBody": {
+        "type": "object",
+        "properties": {
+          "moveOpenIssuesToVersionId": {
+            "type": "string",
+            "description": "Optional: re-point unresolved issues' fix-version to another version of the same project."
+          }
+        }
+      },
+      "IssueVersionsResponse": {
+        "type": "object",
+        "properties": {
+          "fixVersions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectVersion"
+            }
+          },
+          "affectsVersions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectVersion"
+            }
+          }
+        },
+        "required": [
+          "fixVersions",
+          "affectsVersions"
+        ]
+      },
+      "SetIssueVersionsBody": {
+        "type": "object",
+        "properties": {
+          "fixVersionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "affectsVersionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Replaces the respective association set(s). At least one of `fixVersionIds` or `affectsVersionIds` must be provided. Every referenced version must belong to the issue's project."
+      },
+      "ComponentDefaultAssigneeType": {
+        "type": "string",
+        "enum": [
+          "project_default",
+          "component_lead",
+          "unassigned"
+        ]
+      },
+      "Component": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "organizationId": {
             "type": "string"
           },
           "projectId": {
@@ -587,26 +1059,23 @@
           "name": {
             "type": "string"
           },
-          "goal": {
+          "description": {
             "type": [
               "string",
               "null"
             ]
           },
-          "startDate": {
-            "type": "string",
-            "format": "date-time"
+          "leadId": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
-          "endDate": {
-            "type": "string",
-            "format": "date-time"
+          "defaultAssigneeType": {
+            "$ref": "#/components/schemas/ComponentDefaultAssigneeType"
           },
-          "status": {
-            "type": "string",
-            "example": "planned"
-          },
-          "issueCount": {
-            "type": "integer"
+          "archived": {
+            "type": "boolean"
           },
           "createdAt": {
             "type": "string",
@@ -619,15 +1088,158 @@
         },
         "required": [
           "id",
+          "organizationId",
           "projectId",
           "name",
-          "goal",
-          "startDate",
-          "endDate",
-          "status",
-          "issueCount",
+          "description",
+          "leadId",
+          "defaultAssigneeType",
+          "archived",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "ComponentWithCount": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Component"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "issueCount": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "issueCount"
+            ]
+          }
+        ]
+      },
+      "ComponentListResponse": {
+        "type": "object",
+        "properties": {
+          "components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ComponentWithCount"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "components",
+          "total"
+        ]
+      },
+      "ComponentResponse": {
+        "type": "object",
+        "properties": {
+          "component": {
+            "$ref": "#/components/schemas/Component"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "CreateComponentBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 10000
+          },
+          "leadId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Must be an active member of the organization."
+          },
+          "defaultAssigneeType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComponentDefaultAssigneeType"
+              },
+              {
+                "default": "project_default"
+              }
+            ]
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateComponentBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 10000
+          },
+          "leadId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Must be an active member of the organization."
+          },
+          "defaultAssigneeType": {
+            "$ref": "#/components/schemas/ComponentDefaultAssigneeType"
+          },
+          "archived": {
+            "type": "boolean"
+          }
+        }
+      },
+      "IssueComponentsResponse": {
+        "type": "object",
+        "properties": {
+          "components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Component"
+            }
+          }
+        },
+        "required": [
+          "components"
+        ]
+      },
+      "SetIssueComponentsBody": {
+        "type": "object",
+        "properties": {
+          "componentIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Replaces the issue's component set. Every component must belong to the issue's project."
+          }
+        },
+        "required": [
+          "componentIds"
         ]
       },
       "CurrentUser": {
@@ -1342,92 +1954,6 @@
         }
       }
     },
-    "/api/issues/{issueId}/transition": {
-      "post": {
-        "summary": "Transition an issue to a new status",
-        "description": "Moves the issue to a target workflow status. Requires `transition` permission. Equivalent to a `PATCH /api/issues/{issueId}` that only changes `statusId`, but exposed as a discrete endpoint for clients/MCP integrations.",
-        "tags": [
-          "Transitions"
-        ],
-        "security": [
-          {
-            "cookieAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "issueId",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TransitionIssueBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Issue transitioned successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TransitionResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation failed or invalid status target.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden — missing transition permission.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Issue not found.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/projects": {
       "get": {
         "summary": "List projects accessible to the current user",
@@ -1495,12 +2021,12 @@
         }
       }
     },
-    "/api/cycles": {
+    "/api/labels": {
       "get": {
-        "summary": "List cycles (sprints) for a project",
-        "description": "Returns cycles (a.k.a. sprints) for the specified project, with issue counts. `projectId` may be a project id or project key.",
+        "summary": "List labels for an organization",
+        "description": "Returns the organization's labels with per-label usage counts, ordered by name. When `projectId` is given, returns that project's labels plus org-wide labels. `q` filters by case-insensitive name prefix.",
         "tags": [
-          "Cycles"
+          "Labels"
         ],
         "security": [
           {
@@ -1510,30 +2036,44 @@
         "parameters": [
           {
             "schema": {
-              "type": "string",
-              "description": "Project id or key"
+              "type": "string"
             },
             "required": true,
+            "name": "organizationId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "When given, returns that project's labels plus org-wide labels (`projectId = null`)."
+            },
+            "required": false,
             "name": "projectId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Case-insensitive name prefix filter."
+            },
+            "required": false,
+            "name": "q",
             "in": "query"
           }
         ],
         "responses": {
           "200": {
-            "description": "A list of cycles.",
+            "description": "A list of labels with usage counts.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Cycle"
-                  }
+                  "$ref": "#/components/schemas/LabelListResponse"
                 }
               }
             }
           },
           "400": {
-            "description": "`projectId` is required.",
+            "description": "`organizationId` is required.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1552,8 +2092,1439 @@
               }
             }
           },
+          "403": {
+            "description": "Forbidden — caller is not an active member of the organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Project not found.",
+            "description": "Project not found in the organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a label",
+        "description": "Creates an org-wide label, or a project-scoped one when `projectId` is provided. Label names are unique per (organization, project) scope.",
+        "tags": [
+          "Labels"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLabelBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The created label.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Label"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — caller is not an active member of the organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found in the organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A label with this name already exists in this scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/labels/{labelId}": {
+      "patch": {
+        "summary": "Update a label",
+        "description": "Rename / recolor / re-describe a label. On rename, the legacy `issues.labels` JSONB arrays in the organization are rewritten in the same transaction.",
+        "tags": [
+          "Labels"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "labelId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLabelBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated label.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Label"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — caller is not a member of the label's organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Label not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A label with this name already exists in this scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a label",
+        "description": "Deletes the label. Issue associations cascade, and the name is removed from the legacy `issues.labels` JSONB arrays org-wide in the same transaction.",
+        "tags": [
+          "Labels"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "labelId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Label deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteLabelResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — caller is not a member of the label's organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Label not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/versions": {
+      "get": {
+        "summary": "List versions for a project",
+        "description": "Returns the project's versions ordered by sort order then name, with per-version issue counts (`doneIssueCount` = issues with a non-null resolution).",
+        "tags": [
+          "Versions"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Project id or key"
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of versions with issue counts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found (or not visible to the caller).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a version",
+        "description": "Creates a version in the project. Requires project-manage permission. Version names are unique per project; the new version is appended to the sort order.",
+        "tags": [
+          "Versions"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Project id or key"
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVersionBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The created version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — caller cannot manage the project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found (or not visible to the caller).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A version with this name already exists in this project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/versions/{versionId}": {
+      "get": {
+        "summary": "Get a version",
+        "tags": [
+          "Versions"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Project id or key"
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "versionId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project or version not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a version",
+        "description": "Partial update. Transitioning `status` to `released` stamps `releasedAt` (if unset); back to `unreleased` clears it. Requires project-manage permission.",
+        "tags": [
+          "Versions"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Project id or key"
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "versionId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVersionBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — caller cannot manage the project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project or version not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A version with this name already exists in this project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a version",
+        "description": "Deletes the version. Issue fix/affects associations cascade. Requires project-manage permission.",
+        "tags": [
+          "Versions"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Project id or key"
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "versionId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Version deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — caller cannot manage the project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project or version not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/versions/{versionId}/release": {
+      "post": {
+        "summary": "Release a version",
+        "description": "Marks the version as released (stamps `releasedAt`). Optionally re-points unresolved issues' fix-version to another version of the same project via `moveOpenIssuesToVersionId`. The body may be omitted entirely. Requires project-manage permission.",
+        "tags": [
+          "Versions"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Project id or key"
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "versionId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReleaseVersionBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The released version and the number of issues moved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseVersionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON body, validation failed, or the move target is invalid (same version or not in this project).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — caller cannot manage the project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project or version not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/issues/{issueId}/versions": {
+      "get": {
+        "summary": "List fix and affects versions for an issue",
+        "tags": [
+          "Versions"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "issueId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The issue's fix and affects versions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueVersionsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — caller has no view access.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Issue not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Replace an issue's fix and/or affects versions",
+        "description": "Replaces the provided association set(s). At least one of `fixVersionIds` or `affectsVersionIds` must be provided; every version must belong to the issue's project.",
+        "tags": [
+          "Versions"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "issueId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetIssueVersionsBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The issue's updated fix and affects versions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueVersionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed, or some versions do not belong to the issue's project (response includes `invalidIds`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — caller cannot edit the issue.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Issue not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/components": {
+      "get": {
+        "summary": "List components for a project",
+        "description": "Returns the project's components ordered by name, with per-component issue counts.",
+        "tags": [
+          "Components"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Project id or key"
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of components with issue counts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComponentListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found (or not visible to the caller).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a component",
+        "description": "Creates a component in the project. Requires project-manage permission. Component names are unique per project; `leadId` must be an active member of the organization.",
+        "tags": [
+          "Components"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Project id or key"
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateComponentBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The created component.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComponentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed, or the lead is not an active organization member.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — caller cannot manage the project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found (or not visible to the caller).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A component with this name already exists in this project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/components/{componentId}": {
+      "get": {
+        "summary": "Get a component",
+        "tags": [
+          "Components"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Project id or key"
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "componentId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The component.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComponentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project or component not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a component",
+        "description": "Partial update, including archiving via `archived`. Requires project-manage permission.",
+        "tags": [
+          "Components"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Project id or key"
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "componentId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateComponentBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated component.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComponentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed, or the lead is not an active organization member.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — caller cannot manage the project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project or component not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A component with this name already exists in this project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a component",
+        "description": "Deletes the component. Issue associations cascade. Requires project-manage permission.",
+        "tags": [
+          "Components"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Project id or key"
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "componentId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Component deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — caller cannot manage the project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project or component not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/issues/{issueId}/components": {
+      "get": {
+        "summary": "List components linked to an issue",
+        "tags": [
+          "Components"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "issueId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The issue's components.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueComponentsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — caller has no view access.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Issue not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Replace an issue's components",
+        "description": "Replaces the issue's component set. Every component must belong to the issue's project.",
+        "tags": [
+          "Components"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "issueId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetIssueComponentsBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The issue's updated components.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueComponentsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed, or some components do not belong to the issue's project (response includes `invalidIds`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — caller cannot edit the issue.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Issue not found.",
             "content": {
               "application/json": {
                 "schema": {

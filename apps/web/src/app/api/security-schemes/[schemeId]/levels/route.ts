@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, issueSecurityLevels, issueSecurityLevelMembers, issueSecuritySchemes } from '@tasknebula/db';
+import { db, issueSecurityLevels, issueSecurityLevelMembers } from '@tasknebula/db';
 import { eq, max, inArray } from 'drizzle-orm';
+import { authorizeSecuritySchemeAccess } from '../../utils';
 
 // GET /api/security-schemes/[schemeId]/levels - Get all levels for a scheme
 export async function GET(
@@ -15,6 +16,14 @@ export async function GET(
     }
 
     const { schemeId } = await params;
+
+    const access = await authorizeSecuritySchemeAccess(session.user.id, schemeId);
+    if (access.status === 'not-found') {
+      return NextResponse.json({ error: 'Security scheme not found' }, { status: 404 });
+    }
+    if (access.status === 'forbidden') {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
 
     type LevelMemberRow = typeof issueSecurityLevelMembers.$inferSelect;
     const levels = await db
@@ -70,14 +79,13 @@ export async function POST(
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
 
-    // Verify scheme exists
-    const [scheme] = await db
-      .select()
-      .from(issueSecuritySchemes)
-      .where(eq(issueSecuritySchemes.id, schemeId));
-
-    if (!scheme) {
+    // Verify scheme exists and the caller may administer its organization
+    const access = await authorizeSecuritySchemeAccess(session.user.id, schemeId);
+    if (access.status === 'not-found') {
       return NextResponse.json({ error: 'Security scheme not found' }, { status: 404 });
+    }
+    if (access.status === 'forbidden') {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
     // Get max sort order
@@ -87,9 +95,8 @@ export async function POST(
       .where(eq(issueSecurityLevels.schemeId, schemeId))
       .orderBy(issueSecurityLevels.sortOrder);
 
-    const maxSortOrder = existingLevels.length > 0 
-      ? Math.max(...existingLevels.map(l => l.sortOrder)) 
-      : -1;
+    const maxSortOrder =
+      existingLevels.length > 0 ? Math.max(...existingLevels.map((l) => l.sortOrder)) : -1;
 
     // If setting as default, unset other defaults
     if (isDefault) {
@@ -137,4 +144,3 @@ export async function POST(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-

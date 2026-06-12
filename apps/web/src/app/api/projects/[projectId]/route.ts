@@ -151,7 +151,10 @@ export async function PATCH(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    publishEvent('project.updated', session.user.id, { projectId: project.id });
+    publishEvent('project.updated', session.user.id, {
+      projectId: project.id,
+      organizationId: project.organizationId,
+    });
 
     // Fire-and-forget project.archived notifications to project members when
     // status transitions into 'archived'. Guarded so SMTP/DB faults never
@@ -233,7 +236,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    publishEvent('project.deleted', session.user.id, { projectId: project.id });
+    publishEvent('project.deleted', session.user.id, {
+      projectId: project.id,
+      organizationId: project.organizationId,
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

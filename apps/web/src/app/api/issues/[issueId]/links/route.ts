@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, issueLinks, issues } from '@tasknebula/db';
-import { eq, or, and } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
+import { canEditIssue, canReadIssue, isActiveOrganizationMember } from '@/lib/auth/access-control';
 
 const createLinkSchema = z.object({
   targetIssueId: z.string(),
-  type: z.enum(['blocks', 'blocked_by', 'relates_to', 'duplicates', 'duplicated_by', 'parent_of', 'child_of']),
+  type: z.enum([
+    'blocks',
+    'blocked_by',
+    'relates_to',
+    'duplicates',
+    'duplicated_by',
+    'parent_of',
+    'child_of',
+  ]),
 });
 
 // GET /api/issues/[issueId]/links - Fetch all links for an issue
@@ -22,7 +31,26 @@ export async function GET(
   const { issueId } = await params;
 
   try {
-    // Fetch outbound links (where this issue is the source)
+    // Permission check: caller must be able to read the subject issue.
+    // Cross-org probes get a 404 so we don't leak that the issue exists.
+    const access = await canReadIssue(session.user.id, issueId);
+    if (!access.issue) {
+      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+    }
+    if (!access.allowed) {
+      const sameOrg = await isActiveOrganizationMember(
+        session.user.id,
+        access.issue.organizationId
+      );
+      return NextResponse.json(
+        { error: sameOrg ? 'Forbidden' : 'Issue not found' },
+        { status: sameOrg ? 403 : 404 }
+      );
+    }
+
+    // Fetch outbound links (where this issue is the source). Linked issues
+    // are scoped to the subject issue's organization so legacy cross-org
+    // rows never leak another tenant's data.
     const outboundLinksData = await db
       .select({
         id: issueLinks.id,
@@ -39,7 +67,12 @@ export async function GET(
       })
       .from(issueLinks)
       .innerJoin(issues, eq(issueLinks.targetIssueId, issues.id))
-      .where(eq(issueLinks.sourceIssueId, issueId));
+      .where(
+        and(
+          eq(issueLinks.sourceIssueId, issueId),
+          eq(issues.organizationId, access.issue.organizationId)
+        )
+      );
 
     // Fetch inbound links (where this issue is the target)
     const inboundLinksData = await db
@@ -58,7 +91,12 @@ export async function GET(
       })
       .from(issueLinks)
       .innerJoin(issues, eq(issueLinks.sourceIssueId, issues.id))
-      .where(eq(issueLinks.targetIssueId, issueId));
+      .where(
+        and(
+          eq(issueLinks.targetIssueId, issueId),
+          eq(issues.organizationId, access.issue.organizationId)
+        )
+      );
 
     const outboundLinks = outboundLinksData.map((link) => ({
       id: link.id,
@@ -99,8 +137,36 @@ export async function POST(
   const { issueId } = await params;
 
   try {
+    // Permission check: caller needs edit-level access on the subject issue.
+    const access = await canEditIssue(session.user.id, issueId);
+    if (!access.issue) {
+      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+    }
+    if (!access.allowed) {
+      const sameOrg = await isActiveOrganizationMember(
+        session.user.id,
+        access.issue.organizationId
+      );
+      return NextResponse.json(
+        { error: sameOrg ? 'Forbidden' : 'Issue not found' },
+        { status: sameOrg ? 403 : 404 }
+      );
+    }
+
     const body = await request.json();
     const { targetIssueId, type } = createLinkSchema.parse(body);
+
+    // The target issue must be readable by the caller and live in the same
+    // organization as the subject issue; otherwise report it as not found so
+    // cross-org ids can't be probed or linked.
+    const target = await canReadIssue(session.user.id, targetIssueId);
+    if (
+      !target.issue ||
+      !target.allowed ||
+      target.issue.organizationId !== access.issue.organizationId
+    ) {
+      return NextResponse.json({ error: 'Target issue not found' }, { status: 404 });
+    }
 
     // Check if link already exists
     const [existingLink] = await db
@@ -134,7 +200,10 @@ export async function POST(
   } catch (error) {
     console.error('Error creating issue link:', error);
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid request data', details: error.errors }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid request data', details: error.errors },
+        { status: 400 }
+      );
     }
     return NextResponse.json({ error: 'Failed to create issue link' }, { status: 500 });
   }
@@ -150,6 +219,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { issueId } = await params;
   const { searchParams } = new URL(request.url);
   const linkId = searchParams.get('linkId');
 
@@ -158,6 +228,43 @@ export async function DELETE(
   }
 
   try {
+    // Permission check: caller needs edit-level access on the subject issue.
+    const access = await canEditIssue(session.user.id, issueId);
+    if (!access.issue) {
+      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+    }
+    if (!access.allowed) {
+      const sameOrg = await isActiveOrganizationMember(
+        session.user.id,
+        access.issue.organizationId
+      );
+      return NextResponse.json(
+        { error: sameOrg ? 'Forbidden' : 'Issue not found' },
+        { status: sameOrg ? 403 : 404 }
+      );
+    }
+
+    // The link row must actually belong to the subject issue (as source or
+    // target) — otherwise arbitrary link ids from other issues/orgs could be
+    // deleted through this endpoint.
+    const [link] = await db.select().from(issueLinks).where(eq(issueLinks.id, linkId)).limit(1);
+
+    if (!link || (link.sourceIssueId !== issueId && link.targetIssueId !== issueId)) {
+      return NextResponse.json({ error: 'Link not found' }, { status: 404 });
+    }
+
+    // The issue on the other end must be visible within the same organization.
+    const otherIssueId = link.sourceIssueId === issueId ? link.targetIssueId : link.sourceIssueId;
+    const [otherIssue] = await db
+      .select({ organizationId: issues.organizationId })
+      .from(issues)
+      .where(eq(issues.id, otherIssueId))
+      .limit(1);
+
+    if (!otherIssue || otherIssue.organizationId !== access.issue.organizationId) {
+      return NextResponse.json({ error: 'Link not found' }, { status: 404 });
+    }
+
     await db.delete(issueLinks).where(eq(issueLinks.id, linkId));
 
     return NextResponse.json({ success: true });
@@ -166,4 +273,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Failed to delete issue link' }, { status: 500 });
   }
 }
-

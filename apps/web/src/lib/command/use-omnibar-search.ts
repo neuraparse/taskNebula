@@ -29,23 +29,28 @@ interface UseOmnibarSearchResult {
 interface SearchEnvelope {
   results?: Array<{
     id: string;
+    /** Hybrid rows may be comments — issueId points at the parent issue. */
+    issueId?: string | null;
     title?: string;
-    key?: string;
+    key?: string | null;
     description?: string | null;
+    snippet?: string | null;
   }>;
 }
 
 const SEARCH_ENDPOINT = '/api/search';
 const HYBRID_ENDPOINT = '/api/search/hybrid';
+const RESULT_LIMIT = 20;
 
 /**
  * useOmnibarSearch — debounced fetch driver for the Cmd+K palette.
  *
  * The hook fires once on every change of `query`/`tab`/`organizationId`,
- * waits `debounceMs` (default 120ms), then calls the hybrid endpoint
- * first and falls back to the classic `/api/search` if hybrid is not
- * implemented yet (status 404 / 501). The Ask AI tab does not call any
- * endpoint — it surfaces a CTA built by the consumer.
+ * waits `debounceMs` (default 120ms), then POSTs to the hybrid endpoint
+ * (it is POST-only) and falls back to the classic GET `/api/search` on any
+ * non-ok hybrid response (404/405/501 while it rolls out, 5xx, …). The
+ * Ask AI tab does not call any endpoint — it surfaces a CTA built by the
+ * consumer.
  */
 export function useOmnibarSearch({
   query,
@@ -68,19 +73,24 @@ export function useOmnibarSearch({
     setLoading(true);
     const controller = new AbortController();
     const timer = setTimeout(async () => {
-      const params = new URLSearchParams({
-        q: query,
-        organizationId,
-        saveHistory: 'false',
-      });
-
-      const tryFetch = async (url: string): Promise<Response> =>
-        fetch(`${url}?${params.toString()}`, { signal: controller.signal });
-
       try {
-        let response = await tryFetch(HYBRID_ENDPOINT);
-        if (response.status === 404 || response.status === 501) {
-          response = await tryFetch(SEARCH_ENDPOINT);
+        // Hybrid is POST-only (see api/search/hybrid/route.ts).
+        let response = await fetch(HYBRID_ENDPOINT, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ query, organizationId, limit: RESULT_LIMIT }),
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          // Any hybrid failure falls back to the classic JQL search.
+          const params = new URLSearchParams({
+            q: query,
+            organizationId,
+            saveHistory: 'false',
+          });
+          response = await fetch(`${SEARCH_ENDPOINT}?${params.toString()}`, {
+            signal: controller.signal,
+          });
         }
         if (!response.ok) {
           throw new Error(`Search failed: ${response.status}`);
@@ -89,9 +99,15 @@ export function useOmnibarSearch({
         const mapped: OmnibarResult[] = (payload.results ?? []).map((row) => ({
           id: row.id,
           title: row.title ?? row.key ?? '(untitled)',
-          subtitle: row.key && row.key !== row.title ? row.key : row.description ?? undefined,
+          subtitle:
+            row.key && row.key !== row.title
+              ? row.key
+              : (row.snippet ?? row.description ?? undefined),
           type: 'issue',
-          href: `/work-items/${row.id}`,
+          // Issue detail lives at /issues/[issueId] (see
+          // app/[locale]/(app)/issues/[issueId]); comment hits navigate to
+          // their parent issue.
+          href: `/issues/${row.issueId ?? row.id}`,
         }));
         setResults(mapped);
         setError(null);

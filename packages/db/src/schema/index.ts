@@ -52,3 +52,8 @@ export * from './slack';
 export * from './sso';
 export * from './standups';
 export * from './time-entries';
+
+// Jira-parity structural layer (2026-06)
+export * from './labels';
+export * from './versions';
+export * from './components';

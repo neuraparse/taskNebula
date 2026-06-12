@@ -38,7 +38,7 @@ TaskNebula follows a **modular monolith** architecture with the potential to ext
 │                    Data Layer                                │
 │  Drizzle ORM + PostgreSQL 16                                 │
 │  - Type-safe database access                                 │
-│  - Multi-tenancy with RLS                                    │
+│  - Org-scoped multi-tenancy (app-level; RLS planned)         │
 │  - Migrations with Drizzle Kit                               │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -71,20 +71,30 @@ We use **Turborepo** for monorepo management with **pnpm workspaces**.
   - Database client
   - Migrations
 
-- **`packages/llm`**: LLM integration
-  - Provider abstraction
-  - Prompt templates
-  - AI utilities
+- **`packages/mcp-server`**: `@tasknebula/mcp-server`
+  - MCP server exposing TaskNebula tools to AI agents
+  - stdio + HTTP transports
+
+### Services
+
+- **`services/hocuspocus`**: Standalone Yjs realtime collaboration server
+  - WebSocket + Postgres persistence + Redis pub/sub
+
+> LLM integration (provider abstraction, prompts, agents) lives in `apps/web/src/lib/ai` and
+> `apps/web/src/lib/agents` — there is no separate `packages/llm` workspace.
 
 ## 🗄️ Database Design
 
 ### Multi-Tenancy Strategy
 
-We use **organization-scoped multi-tenancy** with Row-Level Security (RLS).
+We use **organization-scoped multi-tenancy**.
 
-- Each table has an `organization_id` column
-- PostgreSQL RLS policies enforce data isolation
-- Application-level checks as additional security layer
+- Tenant-scoped tables carry an `organization_id` column
+- Isolation is enforced **at the application level today**: every route scopes its queries with
+  `WHERE organization_id = …` plus membership/permission checks
+- **PostgreSQL RLS is planned, not yet implemented** (roadmap #37 in `docs/ROADMAP_2026.md`):
+  session-GUC plumbing + `CREATE POLICY` per table will add a DB-level backstop. Until then there
+  is no database-level enforcement — see `docs/AUDIT_2026-06.md` Gap #2.
 
 ### Key Entities
 
@@ -156,7 +166,7 @@ components/
   - Organization roles: Owner, Admin, Member, Viewer, Guest
   - Team roles: Lead, Member
 - **Permission checks** at API and UI level
-- **Row-Level Security** in PostgreSQL
+- **Row-Level Security** in PostgreSQL — _planned (roadmap #37); isolation is app-level WHERE clauses today_
 
 ## 🤖 AI Integration
 
@@ -285,4 +295,4 @@ Potential service extraction:
 
 ---
 
-Last updated: 2025-01-24
+Last updated: 2026-06-12 (tenant-isolation description corrected: app-level WHERE clauses today, RLS planned — see `docs/AUDIT_2026-06.md`)

@@ -10,6 +10,8 @@ const VALID_TABS = [
   'schemes',
   'security',
   'custom-fields',
+  'versions',
+  'components',
   'workflows',
   'automation',
   'ai-agents',
@@ -41,7 +43,7 @@ export function ProjectSettingsClient({ projectId }: { projectId: string }) {
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden animate-fade-in">
+    <div className="animate-fade-in flex h-full min-h-0 flex-col overflow-hidden">
       <ProjectSettingsContent
         projectId={projectId}
         initialTab={initialTab}

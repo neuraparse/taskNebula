@@ -1,3 +1,5 @@
+> ARCHIVED 2026-06-12 — historical snapshot, superseded by docs/AUDIT_2026-06.md and README. Claims below describe Nov-2025-era state.
+
 # TaskNebula vs 2025 Competition - Detailed Feature Comparison
 
 **Analysis Date:** November 2025
@@ -10,6 +12,7 @@
 TaskNebula has **79 API endpoints**, **22 database tables**, and **105+ UI components** - making it a comprehensive project management platform. However, compared to 2025 industry leaders, there are critical gaps in **AI capabilities**, **template systems**, and **external integrations**.
 
 ### Competitive Position
+
 - ✅ **Strong Foundation**: Enterprise-grade permissions, security, automation, webhooks
 - ⚠️ **Missing 2025 Trends**: AI agents, semantic search, deep integrations, template marketplace
 - 🎯 **Unique Strengths**: Granular permissions (30+ types), comprehensive audit logging (63+ actions), security schemes
@@ -19,6 +22,7 @@ TaskNebula has **79 API endpoints**, **22 database tables**, and **105+ UI compo
 ## 1. AI & INTELLIGENCE FEATURES
 
 ### TaskNebula Current Implementation ✅
+
 ```
 AI Features:
 ├── POST /api/ai/generate-issue (OpenAI GPT-4o-mini)
@@ -32,7 +36,9 @@ AI Features:
 ### What's Missing in 2025 ❌
 
 #### 1. AI Agents/Teammates (Critical Gap)
+
 **Competitors Have:**
+
 - **ClickUp Autopilot Agents** ($28/user/month): Update statuses, create tasks from meetings, send emails
 - **Asana AI Teammates**: Assign tasks to AI that execute independently
 - **Monday.com agents**: End-to-end task execution
@@ -43,26 +49,33 @@ AI Features:
 **Impact:** Users cannot delegate work to AI - they must manually trigger every AI action.
 
 #### 2. AI Work Breakdown
+
 **Competitors Have:**
+
 - **Jira**: AI automatically breaks down epics into subtasks
 - **ClickUp AI**: Generates project hierarchies from descriptions
 
 **TaskNebula Gap:** Manual task creation only.
 
 #### 3. AI Risk Assessment & Predictions
+
 **Competitors Have:**
+
 - **Asana AI Risk Reports**: Weekly automated risk analysis
 - **ClickUp AI Scheduler**: Predictive scheduling based on workload
 
 **TaskNebula Gap:** No predictive analytics.
 
 #### 4. Semantic Search
+
 **Competitors Have:**
+
 - **Linear**: AI-powered semantic search with context understanding
 - **Asana**: Multilingual semantic search across all content
 - **ClickUp Brain**: Search across tasks, docs, chats with full context
 
 **TaskNebula Current:** Basic JQL search only
+
 ```typescript
 // Current: keyword matching
 /api/search?query=assignee:me status:todo
@@ -72,7 +85,9 @@ AI Features:
 ```
 
 #### 5. Multi-LLM Support
+
 **Competitors Have:**
+
 - **ClickUp Brain**: ChatGPT + Claude + Gemini (unlimited)
 
 **TaskNebula Current:** OpenAI GPT-4o-mini only
@@ -82,6 +97,7 @@ AI Features:
 ## 2. TEMPLATE & REUSABILITY SYSTEM
 
 ### TaskNebula Current Implementation ✅
+
 ```
 Workflow System:
 ├── Workflows table (custom workflows per org)
@@ -93,7 +109,9 @@ Workflow System:
 ### What's Missing in 2025 ❌
 
 #### 1. Project Templates (Most Requested Feature)
+
 **Competitors Have:**
+
 - **Jira Custom Project Templates**: Save entire project config (workflows, fields, automations, permissions)
 - **Asana Smart Workflow Gallery**: Pre-built templates for common workflows
 - **Monday.com**: Template marketplace
@@ -103,6 +121,7 @@ Workflow System:
 **Impact:** Teams waste hours recreating the same project structure repeatedly.
 
 **Implementation Required:**
+
 ```sql
 -- Missing tables
 CREATE TABLE project_templates (
@@ -119,14 +138,18 @@ CREATE TABLE project_templates (
 ```
 
 #### 2. Workflow Templates
+
 **Competitors Have:**
+
 - **Jira Form Templates**: Pre-built request forms
 - **Asana Workflow Gallery**: Request tracking, creative requests, ticketing templates
 
 **TaskNebula Current:** One workflow per org, manual setup.
 
 #### 3. Automation Templates
+
 **Competitors Have:**
+
 - **Asana AI Rules**: "Auto-rename tasks", "Summarize requests", "Triage incoming work"
 - **Monday.com**: Pre-built automation blocks
 
@@ -137,6 +160,7 @@ CREATE TABLE project_templates (
 ## 3. INTEGRATIONS & EXTERNAL TOOLS
 
 ### TaskNebula Current Implementation ✅
+
 ```
 Integration Points:
 ├── Webhooks (10 event types)
@@ -150,6 +174,7 @@ Integration Points:
 ```
 
 **Webhook Events:**
+
 - ✅ Outbound webhooks
 - ✅ Webhook secrets
 - ✅ Retry mechanism
@@ -158,7 +183,9 @@ Integration Points:
 ### What's Missing in 2025 ❌
 
 #### 1. GitHub Integration (Critical for Dev Teams)
+
 **Competitors Have:**
+
 - **Jira**: PR/commit linking, auto-transition on merge, branch creation
 - **Linear**: GitHub sync, Graphite integration, PR status in issues
 - **ClickUp**: Commit tracking, PR auto-close issues
@@ -168,22 +195,25 @@ Integration Points:
 **Impact:** Developers cannot see code status in issues. No auto-close on merge.
 
 **Implementation Required:**
+
 ```typescript
 // Missing API endpoints
-POST /api/integrations/github/connect
-POST /api/integrations/github/repos
-GET  /api/issues/[issueId]/commits
-GET  /api/issues/[issueId]/pull-requests
+POST / api / integrations / github / connect;
+POST / api / integrations / github / repos;
+GET / api / issues / [issueId] / commits;
+GET / api / issues / [issueId] / pull - requests;
 
 // Missing database tables
-github_installations
-github_repositories
-github_commits
-github_pull_requests
+github_installations;
+github_repositories;
+github_commits;
+github_pull_requests;
 ```
 
 #### 2. Slack Integration (Critical for Team Communication)
+
 **Competitors Have:**
+
 - **Linear**: Bi-directional sync, comment in Slack → appears in Linear
 - **Asana**: Task creation from Slack, notifications to channels
 - **Monday.com**: Bot commands, status updates in Slack
@@ -193,20 +223,26 @@ github_pull_requests
 **Impact:** No notifications in Slack, no Slack-based task creation.
 
 #### 3. Confluence/Documentation Integration
+
 **Competitors Have:**
+
 - **Jira**: Create issues from Confluence pages, AI scanning for action items
 
 **TaskNebula Gap:** No doc integration.
 
 #### 4. Microsoft 365 / Google Workspace
+
 **Competitors Have:**
+
 - **Asana**: Microsoft 365 Copilot integration
 - **Monday.com**: Google Drive, Outlook integration
 
 **TaskNebula Gap:** No enterprise suite integration.
 
 #### 5. Video/Meeting Integration
+
 **Competitors Have:**
+
 - **Jira**: Loom AI workflows (video → tasks)
 - **ClickUp AI Notetaker**: Meeting transcription → tasks
 
@@ -217,6 +253,7 @@ github_pull_requests
 ## 4. AUTOMATION & WORKFLOWS
 
 ### TaskNebula Current Implementation ✅
+
 ```
 Automation System:
 ├── automationRules table
@@ -233,6 +270,7 @@ Database Schema:
 ```
 
 **Strong Points:**
+
 - ✅ Trigger-based automation
 - ✅ Custom conditions
 - ✅ Multiple actions per rule
@@ -241,34 +279,43 @@ Database Schema:
 ### What's Missing in 2025 ❌
 
 #### 1. Natural Language Automation
+
 **Competitors Have:**
+
 - **Monday.com vibe**: "When a task is marked high priority, notify the team lead and create a subtask for review"
 - Plain English → automation rule conversion
 
 **TaskNebula Current:** Manual JSON/form-based rule creation.
 
 #### 2. AI-Suggested Rules
+
 **Competitors Have:**
+
 - **Asana AI Rules**: Pre-built AI rules based on common patterns
 - Learns from team behavior to suggest automations
 
 **TaskNebula Current:** No AI suggestions.
 
 #### 3. Cross-Project Automation
+
 **Competitors Have:**
+
 - **Monday.com**: Multi-board automations
 - **Jira**: Cross-project workflows
 
 **TaskNebula Current:** Limited to single project/org.
 
 #### 4. Advanced Action Blocks
+
 **Competitors Have:**
+
 - **Monday.com**: "Move item to another board", "Find linked sub-item", "Update multiple columns"
 - **Asana**: AI-powered task assignment based on skills/availability
 
 **TaskNebula Actions:** Basic (likely limited action types)
 
 **Recommendation:**
+
 ```typescript
 // Expand automation actions
 interface AutomationAction {
@@ -279,14 +326,14 @@ interface AutomationAction {
     | 'update_field'
     | 'send_notification'
     | 'send_email'
-    | 'create_subtask'        // NEW
-    | 'link_issue'            // NEW
-    | 'add_to_sprint'         // NEW
-    | 'notify_slack'          // NEW
-    | 'trigger_webhook'       // NEW
-    | 'ai_summarize'          // NEW
-    | 'ai_breakdown'          // NEW
-    | 'schedule_task'         // NEW
+    | 'create_subtask' // NEW
+    | 'link_issue' // NEW
+    | 'add_to_sprint' // NEW
+    | 'notify_slack' // NEW
+    | 'trigger_webhook' // NEW
+    | 'ai_summarize' // NEW
+    | 'ai_breakdown' // NEW
+    | 'schedule_task'; // NEW
 }
 ```
 
@@ -295,6 +342,7 @@ interface AutomationAction {
 ## 5. REPORTING & ANALYTICS
 
 ### TaskNebula Current Implementation ✅
+
 ```
 Analytics Endpoints:
 ├── GET /api/analytics/velocity
@@ -314,6 +362,7 @@ UI Components:
 ```
 
 **Strong Points:**
+
 - ✅ Sprint velocity tracking
 - ✅ Burndown charts
 - ✅ Project health metrics
@@ -322,7 +371,9 @@ UI Components:
 ### What's Missing in 2025 ❌
 
 #### 1. Historical Reporting & Trends
+
 **Competitors Have:**
+
 - **Monday.com**: Historical-based reporting showing trends over time
 - **ClickUp**: Time-series analysis
 
@@ -331,7 +382,9 @@ UI Components:
 **Impact:** Cannot see velocity trends, cannot track team improvement over quarters.
 
 #### 2. Cross-Project Dashboards
+
 **Competitors Have:**
+
 - **Monday.com**: Aggregate data from multiple projects in single dashboard
 - **Jira**: Portfolio-level reporting
 
@@ -340,20 +393,25 @@ UI Components:
 **Impact:** No executive-level overview of all projects.
 
 #### 3. Predictive Analytics
+
 **Competitors Have:**
+
 - **Asana AI Risk Reports**: Predict project delays before they happen
 - **ClickUp**: Forecast completion dates
 
 **TaskNebula Current:** No forecasting.
 
 #### 4. Custom Dashboards
+
 **Competitors Have:**
+
 - **Jira**: Drag-and-drop dashboard builder with custom widgets
 - **ClickUp**: Customizable dashboard views
 
 **TaskNebula Current:** Fixed analytics views.
 
 **Implementation Gap:**
+
 ```typescript
 // Missing: Dashboard system
 CREATE TABLE dashboards (
@@ -379,6 +437,7 @@ CREATE TABLE dashboard_widgets (
 ## 6. PERMISSIONS & SECURITY
 
 ### TaskNebula Current Implementation ✅✅ (STRENGTH)
+
 ```
 Permission System (Industry-Leading):
 ├── permissionSchemes (reusable templates)
@@ -414,6 +473,7 @@ Security Features:
 **Assessment:** ✅ TaskNebula's permission system is **on par or better** than competitors.
 
 **Jira Comparison:**
+
 - Jira has similar permission schemes
 - TaskNebula has **more granular** permissions (30+ vs Jira's ~20)
 
@@ -424,50 +484,61 @@ Security Features:
 ## 7. RESOURCE & CAPACITY MANAGEMENT
 
 ### TaskNebula Current Implementation ❌
+
 **Not implemented.**
 
 ### What Competitors Have ❌
 
 #### 1. Workload Balancing
+
 **Monday.com AI Smart Assignment:**
+
 - Analyzes task requirements, skills, roles, availability
 - Auto-suggests best team member for assignment
 
 **Impact:** Teams manually balance work, leading to burnout or underutilization.
 
 #### 2. Capacity Planning
+
 **ClickUp AI Scheduler:**
+
 - Builds daily agendas based on deadlines and availability
 - Dynamically adjusts as priorities shift
 
 **Impact:** No visibility into team capacity or overload.
 
 #### 3. Time Tracking Enhancement
+
 **TaskNebula Current:**
+
 - ✅ Worklog entries (timeSpent, description, startedAt)
 - ✅ Time tracking UI
 
 **Missing:**
+
 - ❌ Estimated vs actual time reports
 - ❌ Team capacity dashboards
 - ❌ Burnup charts
 - ❌ Time allocation by project/epic
 
 **Implementation Required:**
+
 ```typescript
 // Add to issues table
-estimatedTime: integer // minutes
-remainingTime: integer
+estimatedTime: integer; // minutes
+remainingTime: integer;
 
 // New analytics endpoint
-GET /api/analytics/capacity
+GET / api / analytics / capacity;
 {
-  teamMembers: [{
-    userId: string,
-    allocatedHours: number,
-    availableHours: number,
-    utilization: number // percentage
-  }]
+  teamMembers: [
+    {
+      userId: string,
+      allocatedHours: number,
+      availableHours: number,
+      utilization: number, // percentage
+    },
+  ];
 }
 ```
 
@@ -476,6 +547,7 @@ GET /api/analytics/capacity
 ## 8. MOBILE & OFFLINE CAPABILITIES
 
 ### TaskNebula Current Implementation ⚠️
+
 ```
 Mobile Components (exists):
 ├── mobile-nav.tsx
@@ -491,7 +563,9 @@ BUT: Web-only, no native apps
 ### What's Missing ❌
 
 #### 1. Native Mobile Apps
+
 **Competitors Have:**
+
 - iOS/Android apps with offline mode
 - Push notifications
 - Camera integration for attachments
@@ -500,7 +574,9 @@ BUT: Web-only, no native apps
 **TaskNebula:** Responsive web only.
 
 #### 2. Offline Mode
+
 **Competitors Have:**
+
 - **ClickUp**: Full offline mode with sync
 - **Asana**: Offline task viewing/editing
 
@@ -513,6 +589,7 @@ BUT: Web-only, no native apps
 ## 9. COLLABORATION & COMMUNICATION
 
 ### TaskNebula Current Implementation ✅
+
 ```
 Collaboration Features:
 ├── issueComments (mentions, reactions, internal flag)
@@ -531,6 +608,7 @@ Notification Types:
 ```
 
 **Strong Points:**
+
 - ✅ Real-time presence
 - ✅ Mentions and reactions
 - ✅ Watcher system
@@ -539,17 +617,22 @@ Notification Types:
 ### What's Missing ❌
 
 #### 1. Slack/Chat Integration
+
 Already covered in Integrations section.
 
 #### 2. Video Comments
+
 **Competitors Have:**
+
 - **Jira**: Loom video comments
 - **ClickUp**: Screen recording in tasks
 
 **TaskNebula:** Text/file attachments only.
 
 #### 3. Collaborative Editing
+
 **Competitors Have:**
+
 - **ClickUp**: Real-time co-editing of task descriptions
 - **Asana**: Live editing with presence indicators
 
@@ -560,6 +643,7 @@ Already covered in Integrations section.
 ## 10. VISUAL PLANNING & ROADMAPS
 
 ### TaskNebula Current Implementation ✅
+
 ```
 Visualization:
 ├── Kanban Board (drag-and-drop)
@@ -572,20 +656,25 @@ Visualization:
 ```
 
 **UI Components:**
+
 - ✅ kanban-board.tsx (DnD)
 - ✅ roadmap/page.tsx (timeline)
 
 ### What's Missing ❌
 
 #### 1. Gantt Charts
+
 **Competitors Have:**
+
 - **Monday.com**: Full Gantt view with dependencies
 - **ClickUp**: Timeline view with milestones
 
 **TaskNebula:** Only epic roadmap (simplified timeline).
 
 #### 2. Dependency Management
+
 **TaskNebula Current:**
+
 ```sql
 issueLinks table:
 - blocks, relates_to, duplicates
@@ -593,11 +682,13 @@ issueLinks table:
 ```
 
 **Good, but missing:**
+
 - ❌ Visual dependency arrows in roadmap
 - ❌ Critical path highlighting
 - ❌ Dependency conflict detection
 
 #### 3. Swimlanes
+
 **Linear Added:** Swimlanes for board organization
 
 **TaskNebula:** Basic columns only.
@@ -605,11 +696,13 @@ issueLinks table:
 **Impact:** Cannot group by assignee, priority, or epic on board.
 
 #### 4. Conditional Formatting
+
 **Jira 2025:** Conditional formatting rules to highlight cells
 
 **TaskNebula:** Static card colors.
 
 **Example Missing:**
+
 - Overdue tasks → red background
 - Blocked issues → yellow border
 - High priority → bold text
@@ -619,6 +712,7 @@ issueLinks table:
 ## 11. ENTERPRISE & ADMIN FEATURES
 
 ### TaskNebula Current Implementation ✅✅ (STRENGTH)
+
 ```
 Admin System:
 ├── Super admin role (isSuperAdmin flag)
@@ -649,6 +743,7 @@ Audit Logging (63+ actions):
 ### What's Missing ❌
 
 #### 1. SCIM 2.0 Provisioning
+
 **Jira 2025:** Automated user provisioning from IdP (Okta, Azure AD)
 
 **TaskNebula:** Manual user creation only.
@@ -656,16 +751,18 @@ Audit Logging (63+ actions):
 **Impact:** Large enterprises cannot auto-sync users from corporate directory.
 
 **Implementation Required:**
+
 ```typescript
 // SCIM 2.0 endpoints
-POST /api/scim/v2/Users
-GET  /api/scim/v2/Users
-PUT  /api/scim/v2/Users/[userId]
-DELETE /api/scim/v2/Users/[userId]
-POST /api/scim/v2/Groups
+POST / api / scim / v2 / Users;
+GET / api / scim / v2 / Users;
+PUT / api / scim / v2 / Users / [userId];
+DELETE / api / scim / v2 / Users / [userId];
+POST / api / scim / v2 / Groups;
 ```
 
 #### 2. Multi-Tenant/Multi-Portal
+
 **Monday.com:** Multiple branded portals within single account
 
 **TaskNebula:** Single organization context.
@@ -673,12 +770,15 @@ POST /api/scim/v2/Groups
 **Impact:** Service desks cannot create separate portals for different clients.
 
 #### 3. Advanced Billing
+
 **TaskNebula Current:**
+
 - ✅ Stripe integration
 - ✅ Plan tiers (free/starter/growth/enterprise)
 - ✅ Usage tracking (/api/organizations/[id]/usage)
 
 **Missing:**
+
 - ❌ Usage-based billing (per-API-call pricing)
 - ❌ Custom contracts for enterprise
 - ❌ Multi-currency support
@@ -690,15 +790,18 @@ POST /api/scim/v2/Groups
 ### What Competitors Have (2025 Trend)
 
 #### ClickUp AI Custom Fields
+
 **Concept:** Every field is a customizable AI prompt.
 
 **Examples:**
+
 - **Summary field**: "Summarize this task in one sentence"
 - **Translation field**: "Translate to Spanish"
 - **Action Items field**: "Extract action items from description"
 - **Data Points field**: "Extract key metrics from comments"
 
 **TaskNebula Current:**
+
 ```sql
 customFields table:
 - type: text, number, date, select, multi_select,
@@ -710,6 +813,7 @@ customFields table:
 **Impact:** Users manually fill fields that AI could auto-populate.
 
 **Implementation Idea:**
+
 ```typescript
 interface AICustomField {
   id: string;
@@ -805,28 +909,33 @@ interface AICustomField {
 ## COMPETITIVE STRENGTHS (Market Differentiators)
 
 ### 1. **Granular Permissions** ✅✅
+
 - 30+ permission types (most in industry)
 - Reusable permission schemes
 - Issue-level security
 - **Marketing Angle:** "Enterprise-grade security that scales"
 
 ### 2. **Comprehensive Audit Logging** ✅✅
+
 - 63+ tracked action types
 - Compliance-ready
 - **Marketing Angle:** "SOC 2 / GDPR ready out of the box"
 
 ### 3. **Webhook System** ✅
+
 - Robust retry mechanism
 - Delivery tracking
 - Secret signing
 - **Marketing Angle:** "Integrate with any tool via webhooks"
 
 ### 4. **Custom Fields** ✅
+
 - 8 field types
 - Organization/project scope
 - **Enhancement Opportunity:** Add AI-powered fields
 
 ### 5. **Security Schemes** ✅
+
 - Jira-like issue security levels
 - Fine-grained visibility control
 - **Marketing Angle:** "Control who sees what at issue level"
@@ -836,26 +945,31 @@ interface AICustomField {
 ## RECOMMENDED ROADMAP (Next 6 Months)
 
 ### Month 1-2: AI Foundation
+
 - ✅ Semantic search (AI embeddings)
 - ✅ AI Agents framework (basic task execution)
 - ✅ Multi-LLM support (OpenAI + Anthropic Claude)
 
 ### Month 2-3: Templates & Reusability
+
 - ✅ Project template system
 - ✅ Template marketplace UI
 - ✅ Workflow templates
 
 ### Month 3-4: Integrations
+
 - ✅ GitHub integration (PR/commit sync)
 - ✅ Slack integration (notifications + commands)
 - ✅ Loom/meeting integration (optional)
 
 ### Month 4-5: Advanced Features
+
 - ✅ Resource management (workload balancing)
 - ✅ AI work breakdown
 - ✅ Cross-project dashboards
 
 ### Month 5-6: Enterprise & Mobile
+
 - ✅ SCIM 2.0 provisioning
 - ✅ Gantt charts
 - ✅ Mobile app (React Native) - start development
@@ -865,24 +979,29 @@ interface AICustomField {
 ## SOURCES
 
 ### Jira 2025 Features
+
 - [Jira Cloud Platform changelog](https://developer.atlassian.com/cloud/jira/platform/changelog/)
 - [Atlassian Cloud changes Nov 2025](https://confluence.atlassian.com/cloud/blog/2025/11/atlassian-cloud-changes-nov-3-to-nov-10-2025)
 - [Jira's ever-evolving-UI (2025 Edition)](https://community.atlassian.com/forums/Jira-articles/Jira-s-ever-evolving-UI-2025-Edition/ba-p/2966105)
 
 ### Linear 2025 Features
+
 - [Initiative updates – Changelog](https://linear.app/changelog/2025-02-13-initiative-updates)
 - [Linear App Review 2025](https://www.siit.io/tools/trending/linear-app-review)
 
 ### Asana 2025 Features
+
 - [Asana Spring 2025 Release](https://asana.com/inside-asana/spring-release-2025)
 - [Asana Fall 2025 Release](https://asana.com/inside-asana/fall-release-2025)
 - [Asana Summer 2025 Release](https://asana.com/inside-asana/summer-release-2025)
 
 ### Monday.com 2025 Features
+
 - [monday.com Expands AI Capabilities](https://www.nasdaq.com/press-release/mondaycom-expands-ai-powered-agents-crm-suite-and-enterprise-grade-capabilities-2025)
 - [monday.com April 2025 Updates](https://www.dsapps.dev/blog/monday-work-management-new-features-april-2025/)
 
 ### ClickUp 2025 Features
+
 - [ClickUp AI Features Roundup 2025](https://tuckconsultinggroup.com/articles/clickup-ai-features-roundup-whats-new-in-2025/)
 - [ClickUp's AI Overhaul 2025](https://www.webpronews.com/clickups-ai-overhaul-targets-slack-notion-in-2025-battle/)
 

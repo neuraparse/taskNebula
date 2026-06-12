@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Type-check, lint & test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Dummy value: no test touches a live DB, but turbo.json lists
+      # DATABASE_URL in globalEnv — pin it so the turbo cache key is stable.
+      DATABASE_URL: postgresql://test:test@localhost:5432/test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check
+        run: pnpm type-check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        # --forceExit: a leaked handle (timer/connection) should fail fast,
+        # not hang the job until the 30-minute timeout. Invoke turbo directly
+        # so the flag deterministically reaches each package's jest.
+        run: pnpm exec turbo run test -- --forceExit

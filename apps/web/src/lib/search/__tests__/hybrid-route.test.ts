@@ -10,7 +10,10 @@
  *
  * Verified behaviors:
  *   - 401 when unauthenticated.
- *   - 400 when query/organizationId are missing.
+ *   - 400 when query is missing.
+ *   - 403 when the caller is not a member of the requested organization
+ *     (the route derives the tenant from the session user's memberships
+ *     instead of trusting the request body).
  *   - Successful 200 returns RRF-fused results merging BM25 + vector rows.
  *   - BM25-only fallback works when no embedding provider is configured
  *     (no OPENAI_API_KEY, no injected provider).
@@ -28,6 +31,7 @@ import { auth } from '@/auth';
 
 // --- DB mock -----------------------------------------------------------------
 const execMock = jest.fn();
+const selectMock = jest.fn();
 
 jest.mock('@tasknebula/db', () => {
   const sqlTag = (strings: TemplateStringsArray | string[], ...values: unknown[]) => {
@@ -44,11 +48,32 @@ jest.mock('@tasknebula/db', () => {
   return {
     db: {
       execute: (...args: unknown[]) => execMock(...args),
+      select: (...args: unknown[]) => selectMock(...args),
       insert: () => ({ values: jest.fn().mockResolvedValue(undefined) }),
     },
     sql: sqlTag,
+    and: (...args: unknown[]) => ({ type: 'and', args }),
+    eq: (left: unknown, right: unknown) => ({ type: 'eq', left, right }),
+    organizationMembers: {
+      userId: 'organizationMembers.userId',
+      organizationId: 'organizationMembers.organizationId',
+    },
   };
 });
+
+/**
+ * The membership lookup in the route is `db.select(...).from(...).where(...).limit(1)`.
+ * This helper builds a chain resolving to the given rows.
+ */
+function membershipChain(rows: unknown[]) {
+  return {
+    from: jest.fn().mockReturnValue({
+      where: jest.fn().mockReturnValue({
+        limit: jest.fn().mockResolvedValue(rows),
+      }),
+    }),
+  };
+}
 
 // --- Module under test (imported after mocks) --------------------------------
 import { POST } from '@/app/api/search/hybrid/route';
@@ -56,6 +81,9 @@ import { looksLikeFreeText } from '@/lib/search/hybrid';
 
 beforeEach(() => {
   execMock.mockReset();
+  selectMock.mockReset();
+  // Default: the session user is a member of org_1.
+  selectMock.mockReturnValue(membershipChain([{ organizationId: 'org_1' }]));
   (auth as jest.Mock).mockReset();
   delete process.env.OPENAI_API_KEY;
 });
@@ -81,10 +109,45 @@ describe('POST /api/search/hybrid', () => {
     expect(res.status).toBe(400);
   });
 
-  it('rejects missing organizationId with 400', async () => {
+  it('rejects an organizationId the caller is not a member of with 403', async () => {
     (auth as jest.Mock).mockResolvedValue({ user: { id: 'u1' } });
+    // Membership lookup for the requested org comes back empty.
+    selectMock.mockReturnValue(membershipChain([]));
+    const res = await POST(makeRequest({ query: 'login bug', organizationId: 'org_other' }));
+    expect(res.status).toBe(403);
+    // The hybrid query must never run for a non-member.
+    expect(execMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects a caller with no organization membership at all with 403', async () => {
+    (auth as jest.Mock).mockResolvedValue({ user: { id: 'u1' } });
+    selectMock.mockReturnValue(membershipChain([]));
     const res = await POST(makeRequest({ query: 'login bug' }));
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(403);
+    expect(execMock).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the first membership when organizationId is omitted', async () => {
+    (auth as jest.Mock).mockResolvedValue({ user: { id: 'u1' } });
+    execMock.mockResolvedValueOnce([
+      {
+        id: 'iss_1',
+        entity_type: 'issue',
+        issue_id: 'iss_1',
+        issue_key: 'ACME-1',
+        title: 'Fix login button on Safari',
+        snippet: 'Login button does not respond…',
+        project_id: 'proj_1',
+        rank: 0.82,
+      },
+    ]);
+
+    const res = await POST(makeRequest({ query: 'login button broken' }));
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    // Tenant came from the membership lookup, not the request body.
+    expect(json.filters.organizationId).toBe('org_1');
+    expect(json.count).toBe(1);
   });
 
   it('returns BM25-only results when no embedding provider is configured', async () => {

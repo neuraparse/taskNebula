@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+### Added
+
+- **First-class labels, project versions/releases, and components** (migration `0054_jira_parity_layer.sql` + REST APIs). New tables: `labels` + `issue_labels` (with an idempotent backfill from the legacy `issues.labels` JSONB array), `project_versions` + `issue_fix_versions` / `issue_affects_versions`, and `components` + `issue_components`. UI is minimal for now — these land as schema + API.
+- **Issue resolution model**: `resolution` enum (fixed / wont_do / duplicate / cannot_reproduce / done), `resolvedAt`, and `flagged` fields on issues, so cycle-time analytics can distinguish Done from Won't Fix.
+- `docs/AUDIT_2026-06.md` — the June 2026 full-codebase audit (28 domain auditors + adversarial critic) with file/line evidence for every known gap.
+
+### Fixed
+
+- **Cross-org issue-key collision.** The unique index on issue keys was global (`issue_key_idx` on `key` alone), so two organizations choosing the same project key collided on first insert. Replaced by `issue_org_key_idx` on `(organization_id, key)`.
+- **Migration journal ordering silently skipped migrations 0044–0051 on upgrades.** `_journal.json` had non-monotonic `when` timestamps (0043 newer than 0044–0051), so drizzle's `created_at < folderMillis` rule skipped them on already-migrated databases. Timestamps renumbered strictly increasing; affected migrations are idempotent and re-run safely.
+- **Cmd+K palette returned 405 on every query.** The omnibar issued `GET /api/search/hybrid`, which only exports `POST`.
+- **`/api/search` returned 500.** The route referenced a non-existent `issues.status` column (schema has `statusId`) and used an invalid jsonb `LIKE` on labels.
+- **~20 cross-tenant authorization gaps closed** across workflows, sprint issues, permission/security schemes, project members, issue links/activities, hybrid search, the SSE event stream, analytics, watchers, and saved filters (see `docs/AUDIT_2026-06.md` Gap #1).
+
+### Changed
+
+- **Docs refresh + 2026 roadmap extension.** `docs/ROADMAP_2026.md` now carries per-item status for #1–27 and the H2-2026 extension (#28–50 + H1-2027 outlook); `docs/STATUS.md`, `docs/FEATURES.md`, `docs/ARCHITECTURE.md` (RLS is planned, not implemented), and `docs/RELEASE.md` corrected; seven stale 2025-era snapshot docs archived to `docs/archive/`.
+
 ## [0.3.4] - 2026-06-09
 
 ### Security
@@ -41,6 +59,12 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 - **PWA manifest and service worker no longer reference missing assets.** A bundled app icon is used for install shortcuts and notifications, and stale screenshot/share-target entries were removed.
 - **Docker health/runtime hardening.** Postgres healthchecks respect overridden DB user/name values, Redis no longer exposes its password in the process arguments, and the web runtime starts as the unprivileged `nextjs` user.
 - **Production DB config fails fast.** The DB connection helper only falls back to local Postgres outside production.
+
+## [0.3.2] - 2026-05-21
+
+### Fixed
+
+- **Self-hosted release path hardened** (`fix: harden self-hosted release path`); README Docker quickstart and screenshot refresh shipped alongside.
 
 ## [0.3.1] - 2026-05-19
 
@@ -178,10 +202,15 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Internal alpha release. [See git log] for details.
 
-[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.3.3...HEAD
+[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.3.4...HEAD
+[0.3.4]: https://github.com/neuraparse/tasknebula/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/neuraparse/tasknebula/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/neuraparse/tasknebula/releases/tag/v0.3.2
-[0.3.1]: https://github.com/neuraparse/tasknebula/releases/tag/v0.3.1
+[0.3.1]: https://github.com/neuraparse/tasknebula/commit/a2211ec
+[0.3.0]: https://github.com/neuraparse/tasknebula/commit/14e9bab
+[0.2.9]: https://github.com/neuraparse/tasknebula/commit/1b0ef18
+[0.2.8]: https://github.com/neuraparse/tasknebula/commit/38ad445
+[0.2.7]: https://github.com/neuraparse/tasknebula/commit/fc3afe7
 [0.2.6]: https://github.com/neuraparse/tasknebula/releases/tag/v0.2.6
 [0.2.0]: https://github.com/neuraparse/tasknebula/releases/tag/v0.2.0
-[0.1.0]: https://github.com/neuraparse/tasknebula/releases/tag/v0.1.0
+[0.1.0]: https://github.com/neuraparse/tasknebula/commit/b07e16c

@@ -1,3 +1,5 @@
+> ARCHIVED 2026-06-12 — historical snapshot, superseded by docs/AUDIT_2026-06.md and README. Claims below describe Nov-2025-era state.
+
 # TaskNebula 2025 Implementation Roadmap
 
 **Created:** November 2025
@@ -8,21 +10,25 @@
 ## 🎯 ROADMAP OVERVIEW
 
 ### Phase 1: Foundation (COMPLETED ✅)
+
 - ✅ Database schemas created for all 5 critical features
 - ✅ 2025 competitive analysis completed
 - ✅ Feature gaps identified
 
 ### Phase 2: AI Agents & Templates (Weeks 1-8)
+
 - 🔄 AI Agents API endpoints
 - 🔄 Project Templates system
 - 🔄 Template marketplace UI
 
 ### Phase 3: Search & GitHub (Weeks 9-16)
+
 - ⏳ Semantic search implementation
 - ⏳ GitHub integration
 - ⏳ Slack integration basics
 
 ### Phase 4: Resource Management (Weeks 17-24)
+
 - ⏳ Workload balancing
 - ⏳ Capacity planning
 - ⏳ Smart assignment
@@ -34,14 +40,17 @@
 ### Created Schemas
 
 #### 1. AI Agents System
+
 **File:** `packages/db/src/schema/ai-agents.ts`
 
 **Tables:**
+
 - ✅ `ai_agents` - Agent configurations (task creator, status updater, smart assigner, etc.)
 - ✅ `ai_agent_executions` - Execution history and performance tracking
 - ✅ `ai_agent_templates` - Pre-built agent templates marketplace
 
 **Features:**
+
 - Multi-LLM support (OpenAI, Anthropic, Google)
 - Autonomous task execution
 - Trigger-based activation
@@ -49,6 +58,7 @@
 - Execution analytics
 
 **Example Agents:**
+
 ```typescript
 // Task Creator Agent
 {
@@ -78,15 +88,18 @@
 ---
 
 #### 2. Project Templates System
+
 **File:** `packages/db/src/schema/project-templates.ts`
 
 **Tables:**
+
 - ✅ `project_templates` - Reusable project configurations
 - ✅ `template_usages` - Track template installations
 - ✅ `template_reviews` - User ratings and reviews
 - ✅ `template_categories` - Organize templates
 
 **Features:**
+
 - Save complete project setup (workflow, fields, automations, permissions)
 - Template marketplace with ratings
 - Public/private templates
@@ -94,6 +107,7 @@
 - Usage analytics
 
 **Template Configuration:**
+
 ```typescript
 {
   name: "Agile Software Development",
@@ -117,14 +131,17 @@
 ---
 
 #### 3. Semantic Search
+
 **File:** `packages/db/src/schema/semantic-search.ts`
 
 **Tables:**
+
 - ✅ `content_embeddings` - Vector embeddings for semantic search (pgvector)
 - ✅ `semantic_search_history` - Track searches for analytics
 - ✅ `search_suggestions` - AI-powered search suggestions
 
 **Features:**
+
 - Natural language queries
 - Context-aware search
 - Multi-entity search (issues, comments, projects)
@@ -132,6 +149,7 @@
 - Performance tracking
 
 **Technical Stack:**
+
 - PostgreSQL pgvector extension
 - OpenAI text-embedding-ada-002 (1536 dimensions)
 - Vector similarity search
@@ -140,9 +158,11 @@
 ---
 
 #### 4. GitHub Integration
+
 **File:** `packages/db/src/schema/github-integration.ts`
 
 **Tables:**
+
 - ✅ `github_installations` - GitHub App installations
 - ✅ `github_repositories` - Linked repositories
 - ✅ `github_commits` - Commits linked to issues
@@ -151,6 +171,7 @@
 - ✅ `github_webhook_events` - Webhook event tracking
 
 **Features:**
+
 - PR/commit linking to issues
 - Auto-transition on PR merge
 - Branch creation from issues
@@ -159,6 +180,7 @@
 - Developer attribution
 
 **Auto-Transition Example:**
+
 ```typescript
 // Repository config
 {
@@ -172,9 +194,11 @@
 ---
 
 #### 5. Resource Management
+
 **File:** `packages/db/src/schema/resource-management.ts`
 
 **Tables:**
+
 - ✅ `user_capacity` - Team member availability and skills
 - ✅ `workload_snapshots` - Daily workload tracking
 - ✅ `issue_estimations` - Enhanced time tracking
@@ -183,6 +207,7 @@
 - ✅ `smart_assignment_rules` - AI-powered assignment config
 
 **Features:**
+
 - Workload balancing
 - Capacity planning
 - Skills-based assignment
@@ -191,6 +216,7 @@
 - AI-powered smart assignment
 
 **Smart Assignment Algorithm:**
+
 ```typescript
 {
   considerWorkload: true,      // 40% weight
@@ -209,6 +235,7 @@
 ### Week 1-2: AI Agents Infrastructure
 
 #### Database Migration
+
 ```bash
 # Run migrations for new schemas
 pnpm db:generate
@@ -219,6 +246,7 @@ psql -d tasknebula -c "CREATE EXTENSION IF NOT EXISTS vector;"
 ```
 
 #### LLM Package Enhancement
+
 **File:** `packages/llm/src/index.ts`
 
 ```typescript
@@ -258,22 +286,25 @@ class AnthropicClient {
 ```
 
 #### API Endpoints
+
 **Files to create:**
+
 - `apps/web/src/app/api/ai-agents/route.ts`
 - `apps/web/src/app/api/ai-agents/[agentId]/route.ts`
 - `apps/web/src/app/api/ai-agents/[agentId]/execute/route.ts`
 - `apps/web/src/app/api/ai-agents/templates/route.ts`
 
 **Endpoints:**
+
 ```typescript
-GET    /api/ai-agents                    // List agents
-POST   /api/ai-agents                    // Create agent
-GET    /api/ai-agents/[agentId]          // Get agent
-PUT    /api/ai-agents/[agentId]          // Update agent
-DELETE /api/ai-agents/[agentId]          // Delete agent
-POST   /api/ai-agents/[agentId]/execute  // Execute agent manually
-GET    /api/ai-agents/[agentId]/history  // Execution history
-GET    /api/ai-agents/templates          // Get agent templates
+GET / api / ai - agents; // List agents
+POST / api / ai - agents; // Create agent
+GET / api / ai - agents / [agentId]; // Get agent
+PUT / api / ai - agents / [agentId]; // Update agent
+DELETE / api / ai - agents / [agentId]; // Delete agent
+POST / api / ai - agents / [agentId] / execute; // Execute agent manually
+GET / api / ai - agents / [agentId] / history; // Execution history
+GET / api / ai - agents / templates; // Get agent templates
 ```
 
 ---
@@ -281,16 +312,13 @@ GET    /api/ai-agents/templates          // Get agent templates
 ### Week 3-4: AI Agent Types Implementation
 
 #### 1. Task Creator Agent
+
 **Purpose:** Create tasks from meetings, Slack messages, emails
 
 ```typescript
 // apps/web/src/lib/ai-agents/task-creator-agent.ts
 export class TaskCreatorAgent {
-  async execute(input: {
-    source: 'slack' | 'zoom' | 'email';
-    content: string;
-    context?: any;
-  }) {
+  async execute(input: { source: 'slack' | 'zoom' | 'email'; content: string; context?: any }) {
     // 1. Parse content with LLM
     const parsed = await this.llm.parse(input.content);
 
@@ -312,6 +340,7 @@ export class TaskCreatorAgent {
 ```
 
 #### 2. Status Updater Agent
+
 **Purpose:** Auto-update issue status based on GitHub events
 
 ```typescript
@@ -329,9 +358,7 @@ export class StatusUpdaterAgent {
     if (!newStatus) return;
 
     // Update issue status
-    await db.update(issues)
-      .set({ statusId: newStatus })
-      .where(eq(issues.id, input.issueId));
+    await db.update(issues).set({ statusId: newStatus }).where(eq(issues.id, input.issueId));
 
     // Add comment
     await db.insert(issueComments).values({
@@ -347,6 +374,7 @@ export class StatusUpdaterAgent {
 ```
 
 #### 3. Smart Assignment Agent
+
 **Purpose:** Intelligently assign issues based on workload, skills, availability
 
 ```typescript
@@ -358,14 +386,15 @@ export class SmartAssignmentAgent {
 
     // Calculate scores for each team member
     const scores = await Promise.all(
-      teamMembers.map(member => this.calculateAssignmentScore(member, issue))
+      teamMembers.map((member) => this.calculateAssignmentScore(member, issue))
     );
 
     // Sort by score (highest first)
     const bestMatch = scores.sort((a, b) => b.score - a.score)[0];
 
     // Assign issue
-    await db.update(issues)
+    await db
+      .update(issues)
       .set({ assigneeId: bestMatch.userId })
       .where(eq(issues.id, input.issueId));
 
@@ -396,9 +425,7 @@ export class SmartAssignmentAgent {
 
     // Skills factor (30%)
     if (rule.considerSkills) {
-      const requiredSkills = issue.labels.filter(l =>
-        capacity.skills.includes(l)
-      );
+      const requiredSkills = issue.labels.filter((l) => capacity.skills.includes(l));
       const skillScore = requiredSkills.length / issue.labels.length;
       score += skillScore * 0.3;
       if (skillScore > 0.7) {
@@ -431,25 +458,29 @@ export class SmartAssignmentAgent {
 ### Week 5-6: Project Templates System
 
 #### API Endpoints
+
 **Files to create:**
+
 - `apps/web/src/app/api/project-templates/route.ts`
 - `apps/web/src/app/api/project-templates/[templateId]/route.ts`
 - `apps/web/src/app/api/project-templates/[templateId]/use/route.ts`
 - `apps/web/src/app/api/project-templates/marketplace/route.ts`
 
 **Endpoints:**
+
 ```typescript
-GET    /api/project-templates                  // List templates
-POST   /api/project-templates                  // Create template
-GET    /api/project-templates/[templateId]     // Get template
-PUT    /api/project-templates/[templateId]     // Update template
-DELETE /api/project-templates/[templateId]     // Delete template
-POST   /api/project-templates/[templateId]/use // Create project from template
-GET    /api/project-templates/marketplace      // Browse marketplace
-POST   /api/project-templates/[templateId]/review // Submit review
+GET / api / project - templates; // List templates
+POST / api / project - templates; // Create template
+GET / api / project - templates / [templateId]; // Get template
+PUT / api / project - templates / [templateId]; // Update template
+DELETE / api / project - templates / [templateId]; // Delete template
+POST / api / project - templates / [templateId] / use; // Create project from template
+GET / api / project - templates / marketplace; // Browse marketplace
+POST / api / project - templates / [templateId] / review; // Submit review
 ```
 
 #### Template Creation Flow
+
 ```typescript
 // Save existing project as template
 POST /api/project-templates
@@ -471,6 +502,7 @@ POST /api/project-templates
 ```
 
 #### Template Usage Flow
+
 ```typescript
 // Create project from template
 POST /api/project-templates/[templateId]/use
@@ -498,7 +530,9 @@ POST /api/project-templates/[templateId]/use
 ### Week 7-8: Template Marketplace UI
 
 #### UI Components
+
 **Files to create:**
+
 - `apps/web/src/components/templates/template-browser.tsx`
 - `apps/web/src/components/templates/template-card.tsx`
 - `apps/web/src/components/templates/template-detail-modal.tsx`
@@ -506,6 +540,7 @@ POST /api/project-templates/[templateId]/use
 - `apps/web/src/components/templates/use-template-wizard.tsx`
 
 #### Template Browser
+
 ```typescript
 // apps/web/src/components/templates/template-browser.tsx
 export function TemplateBrowser() {
@@ -546,28 +581,33 @@ export function TemplateBrowser() {
 ## 📊 SUCCESS METRICS
 
 ### AI Agents
+
 - [ ] 3+ agent types implemented
 - [ ] 100+ agent executions per week
 - [ ] 90%+ successful execution rate
 - [ ] <2s average execution time
 
 ### Project Templates
+
 - [ ] 10+ pre-built templates
 - [ ] 50+ template installations per month
 - [ ] 4.5+ average rating
 - [ ] 80%+ user retention (templates used again)
 
 ### Semantic Search
+
 - [ ] 50%+ queries using natural language
 - [ ] <200ms search response time
 - [ ] 90%+ search success rate (user clicks result)
 
 ### GitHub Integration
+
 - [ ] 100+ repositories connected
 - [ ] 500+ commits/PRs linked
 - [ ] 80%+ auto-transition usage
 
 ### Resource Management
+
 - [ ] 100%+ team capacity tracked
 - [ ] 70%+ smart assignment usage
 - [ ] 20%+ improvement in workload balance
@@ -577,18 +617,21 @@ export function TemplateBrowser() {
 ## 🎯 NEXT STEPS
 
 ### Immediate (This Week)
+
 1. ✅ Run database migrations
 2. ⏳ Install required extensions (pgvector)
 3. ⏳ Set up Anthropic API keys
 4. ⏳ Create AI agents API endpoints
 
 ### Short Term (Weeks 2-4)
+
 1. ⏳ Implement Task Creator Agent
 2. ⏳ Implement Status Updater Agent
 3. ⏳ Implement Smart Assignment Agent
 4. ⏳ Build template creation flow
 
 ### Medium Term (Weeks 5-8)
+
 1. ⏳ Template marketplace UI
 2. ⏳ Pre-built templates (10+)
 3. ⏳ Semantic search implementation
@@ -599,6 +642,7 @@ export function TemplateBrowser() {
 ## 📚 RESOURCES
 
 ### Documentation to Create
+
 - [ ] AI Agents Developer Guide
 - [ ] Template Creation Guide
 - [ ] Semantic Search Usage Guide
@@ -606,6 +650,7 @@ export function TemplateBrowser() {
 - [ ] Resource Management Best Practices
 
 ### Training Materials
+
 - [ ] Video: Creating Your First AI Agent
 - [ ] Video: Building Custom Templates
 - [ ] Video: Setting Up GitHub Integration
@@ -616,6 +661,7 @@ export function TemplateBrowser() {
 ## 🔄 UPDATE LOG
 
 **2025-11-26:**
+
 - ✅ Created 5 core database schemas
 - ✅ Competitive analysis completed
 - ✅ Implementation roadmap defined

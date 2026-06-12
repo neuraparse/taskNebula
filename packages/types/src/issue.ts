@@ -1,4 +1,4 @@
-import type { AuditableEntity, ID } from './common';
+import type { AuditableEntity, BaseEntity, ID } from './common';
 
 // Issue (Core entity)
 export interface Issue extends AuditableEntity {
@@ -19,6 +19,9 @@ export interface Issue extends AuditableEntity {
   parentId?: ID; // For subtasks
   estimate?: number; // Story points or hours
   dueDate?: string;
+  resolution?: IssueResolution | null; // Jira-style resolution; null/absent = unresolved
+  resolvedAt?: string | null; // Stamped when a resolution is set
+  flagged?: boolean; // Marks impediments on the board
   customFields: Record<string, CustomFieldValue>;
   metadata: IssueMetadata;
 }
@@ -26,6 +29,18 @@ export interface Issue extends AuditableEntity {
 export type IssueType = 'story' | 'task' | 'bug' | 'epic' | 'subtask';
 
 export type IssuePriority = 'critical' | 'high' | 'medium' | 'low' | 'none';
+
+export type IssueResolution = 'fixed' | 'wont_do' | 'duplicate' | 'cannot_reproduce' | 'done';
+
+// Label (first-class, org-scoped; optionally narrowed to a project)
+export interface Label extends BaseEntity {
+  organizationId: ID;
+  projectId?: ID | null; // null/absent = org-wide label
+  name: string;
+  color: string; // Hex color, e.g. "#6B7280"
+  description?: string | null;
+  createdBy?: ID | null;
+}
 
 export type CustomFieldValue = string | number | boolean | string[] | null;
 
@@ -97,4 +112,3 @@ export interface IssueAttachment extends AuditableEntity {
   url: string;
   thumbnailUrl?: string;
 }
-

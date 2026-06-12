@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import {
-  db,
-  issueStatusHistory,
-  issues,
-  workflowStatuses,
-} from '@tasknebula/db';
+import { db, issueStatusHistory, workflowStatuses } from '@tasknebula/db';
 import { eq, asc } from 'drizzle-orm';
 import { computeTimeInStatus } from '@/lib/issues/time-in-status';
+import { canReadIssue, isActiveOrganizationMember } from '@/lib/auth/access-control';
 
 /**
  * GET /api/issues/[issueId]/time-in-status
@@ -31,16 +27,19 @@ export async function GET(
 
   const { issueId } = await params;
 
-  // Confirm the issue exists so callers get a 404 rather than an empty 200
-  // when they typo the id.
-  const [issue] = await db
-    .select({ id: issues.id })
-    .from(issues)
-    .where(eq(issues.id, issueId))
-    .limit(1);
-
-  if (!issue) {
+  // Permission check: caller must be able to read the issue. Missing issues
+  // and cross-org probes both get a 404 so we don't leak that the issue
+  // exists; in-org callers without project access get a 403.
+  const access = await canReadIssue(session.user.id, issueId);
+  if (!access.issue) {
     return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+  }
+  if (!access.allowed) {
+    const sameOrg = await isActiveOrganizationMember(session.user.id, access.issue.organizationId);
+    return NextResponse.json(
+      { error: sameOrg ? 'Forbidden' : 'Issue not found' },
+      { status: sameOrg ? 403 : 404 }
+    );
   }
 
   const rows = await db

@@ -43,6 +43,7 @@ import {
   Pin,
   Plug,
   Sparkles,
+  Tags,
   UserCog,
   UserPlus,
   Webhook,
@@ -159,6 +160,14 @@ const SETTINGS_LINKS: NavLink[] = [
     icon: Webhook,
     match: { path: '/settings', tab: 'webhooks' },
     requiredPermission: 'webhook:view',
+  },
+  {
+    // Every active member may manage labels (the /api/labels routes only
+    // require org membership), so no requiredPermission gate here.
+    href: '/settings/labels',
+    label: 'Labels',
+    icon: Tags,
+    match: { path: '/settings/labels' },
   },
   {
     href: '/settings/integrations',

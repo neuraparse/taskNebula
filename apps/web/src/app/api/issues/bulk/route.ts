@@ -13,6 +13,7 @@ import {
 import { eq, inArray, and } from 'drizzle-orm';
 import { z } from 'zod';
 import { publishEvent } from '@/lib/realtime/events';
+import { syncIssueLabelsBestEffort } from '@/lib/labels/sync';
 
 export const dynamic = 'force-dynamic';
 
@@ -97,12 +98,7 @@ async function assertBulkPermission(
         canDeleteIssues: projectMembers.canDeleteIssues,
       })
       .from(projectMembers)
-      .where(
-        and(
-          eq(projectMembers.userId, userId),
-          eq(projectMembers.projectId, projectId)
-        )
-      )
+      .where(and(eq(projectMembers.userId, userId), eq(projectMembers.projectId, projectId)))
       .limit(1);
 
     if (!projectMember) {
@@ -123,9 +119,14 @@ async function assertBulkPermission(
     const elevatedRoles = ['product_owner', 'tech_lead', 'scrum_master'];
     const allowedByRole =
       action === 'edit'
-        ? ['product_owner', 'scrum_master', 'tech_lead', 'developer', 'qa_engineer', 'designer'].includes(
-            projectMember.role
-          )
+        ? [
+            'product_owner',
+            'scrum_master',
+            'tech_lead',
+            'developer',
+            'qa_engineer',
+            'designer',
+          ].includes(projectMember.role)
         : elevatedRoles.includes(projectMember.role);
 
     if (!canModify && !allowedByRole) {
@@ -185,10 +186,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.error('Bulk operation error:', error);
-    return NextResponse.json(
-      { error: 'Failed to perform bulk operation' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to perform bulk operation' }, { status: 500 });
   }
 }
 
@@ -205,16 +203,10 @@ async function handleBulkUpdate(body: any, userId: string) {
   }
 
   // Verify all issues exist and get their current state
-  const existingIssues = await db
-    .select()
-    .from(issues)
-    .where(inArray(issues.id, issueIds));
+  const existingIssues = await db.select().from(issues).where(inArray(issues.id, issueIds));
 
   if (existingIssues.length !== issueIds.length) {
-    return NextResponse.json(
-      { error: 'Some issues not found' },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: 'Some issues not found' }, { status: 404 });
   }
 
   // Perform bulk update
@@ -251,10 +243,27 @@ async function handleBulkUpdate(body: any, userId: string) {
     }
   }
 
+  // Write-through to the first-class labels layer. The jsonb write above
+  // (`issues.labels`) stays the REST contract; this mirrors the names into
+  // labels/issue_labels per issue and never fails the bulk update.
+  if (updates.labels !== undefined) {
+    for (const issue of updatedIssues) {
+      await syncIssueLabelsBestEffort({
+        organizationId: issue.organizationId,
+        issueId: issue.id,
+        labels: updates.labels,
+        createdBy: userId,
+      });
+    }
+  }
+
   // Create audit logs for each updated issue
-  const affectedSprintIds = new Set<string>();
+  // sprintId -> organizationId, so sprint.issues.changed events carry the org
+  // (the SSE stream drops org-less events). An issue's old/new sprint always
+  // belongs to the same org as the issue.
+  const affectedSprintIds = new Map<string, string>();
   for (const issue of updatedIssues) {
-    const oldIssue = existingIssues.find(i => i.id === issue.id);
+    const oldIssue = existingIssues.find((i) => i.id === issue.id);
     if (oldIssue) {
       try {
         // Build changes object
@@ -290,13 +299,14 @@ async function handleBulkUpdate(body: any, userId: string) {
       organizationId: issue.organizationId,
       sprintId: issue.sprintId ?? undefined,
     });
-    if (issue.sprintId) affectedSprintIds.add(issue.sprintId);
-    const oldSprint = existingIssues.find(i => i.id === issue.id)?.sprintId;
-    if (oldSprint && oldSprint !== issue.sprintId) affectedSprintIds.add(oldSprint);
+    if (issue.sprintId) affectedSprintIds.set(issue.sprintId, issue.organizationId);
+    const oldSprint = existingIssues.find((i) => i.id === issue.id)?.sprintId;
+    if (oldSprint && oldSprint !== issue.sprintId)
+      affectedSprintIds.set(oldSprint, issue.organizationId);
   }
 
-  for (const sprintId of affectedSprintIds) {
-    publishEvent('sprint.issues.changed', userId, { sprintId });
+  for (const [sprintId, organizationId] of affectedSprintIds) {
+    publishEvent('sprint.issues.changed', userId, { sprintId, organizationId });
   }
 
   return NextResponse.json({
@@ -319,23 +329,19 @@ async function handleBulkDelete(body: any, userId: string) {
   }
 
   // Verify all issues exist
-  const existingIssues = await db
-    .select()
-    .from(issues)
-    .where(inArray(issues.id, issueIds));
+  const existingIssues = await db.select().from(issues).where(inArray(issues.id, issueIds));
 
   if (existingIssues.length !== issueIds.length) {
-    return NextResponse.json(
-      { error: 'Some issues not found' },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: 'Some issues not found' }, { status: 404 });
   }
 
   // Delete issues
   await db.delete(issues).where(inArray(issues.id, issueIds));
 
   // Create audit logs for each deleted issue
-  const affectedSprintIds = new Set<string>();
+  // sprintId -> organizationId, so sprint.issues.changed events carry the org
+  // (the SSE stream drops org-less events).
+  const affectedSprintIds = new Map<string, string>();
   for (const issue of existingIssues) {
     try {
       await createAuditLog({
@@ -359,11 +365,11 @@ async function handleBulkDelete(body: any, userId: string) {
       organizationId: issue.organizationId,
       sprintId: issue.sprintId ?? undefined,
     });
-    if (issue.sprintId) affectedSprintIds.add(issue.sprintId);
+    if (issue.sprintId) affectedSprintIds.set(issue.sprintId, issue.organizationId);
   }
 
-  for (const sprintId of affectedSprintIds) {
-    publishEvent('sprint.issues.changed', userId, { sprintId });
+  for (const [sprintId, organizationId] of affectedSprintIds) {
+    publishEvent('sprint.issues.changed', userId, { sprintId, organizationId });
   }
 
   return NextResponse.json({

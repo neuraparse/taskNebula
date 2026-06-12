@@ -1,30 +1,48 @@
 'use client';
 
+import { useState } from 'react';
 import {
+  Boxes,
+  Bug,
   Calendar,
   CalendarClock,
+  CheckCircle2,
+  ChevronRight,
   CircleDot,
   Gauge,
+  Milestone,
   Tag,
   User,
   UserCircle2,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PriorityBars, type PriorityLevel } from '@/components/ui/priority-bars';
 import { AssigneePicker } from './assignee-picker';
 import { PriorityPicker } from './priority-picker';
 import { StatusPicker } from './status-picker';
 import { LabelPicker } from './label-picker';
+import { ComponentPicker } from './component-picker';
+import { VersionPicker } from './version-picker';
+import { ResolutionSelect, type IssueResolution } from './resolution-select';
 import { IssueCustomFields } from '@/components/custom-fields/issue-custom-fields';
 import { WatchersList } from '@/components/watchers/watchers-list';
 import { AiIssueAssistPanel } from '@/components/ai/ai-issue-assist-panel';
 import { AgentActivityPanel } from './agent-activity-panel';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useOrganizationMembers } from '@/lib/hooks/use-members';
-import { useUpdateIssue } from '@/lib/hooks/use-issues';
+import { useIssue, useUpdateIssue, type Issue } from '@/lib/hooks/use-issues';
+import { useIssueVersions, useSetIssueVersions } from '@/lib/hooks/use-issue-versions';
+import { useIssueComponents, useSetIssueComponents } from '@/lib/hooks/use-issue-components';
 
 // Reserved for future fields (not yet rendered but part of the design vocabulary):
 // CalendarPlus (Start date), GitBranch (Parent), RefreshCw (Cycle / Sprint), Users (multi-assignee)
+
+/** Fields the detail GET returns beyond the shared `Issue` hook shape. */
+type IssueDetailExtras = Issue & {
+  resolution?: string | null;
+  resolvedAt?: string | null;
+};
 
 interface IssueSidebarProps {
   issue: {
@@ -40,20 +58,31 @@ interface IssueSidebarProps {
     createdAt: string | Date;
     updatedAt: string | Date;
   };
-  onUpdate: (issue: any) => void;
+  onUpdate: (issue: unknown) => void;
 }
 
 export function IssueSidebar({ issue }: IssueSidebarProps) {
+  const t = useTranslations('issueSidebar');
   const { currentOrganizationId } = useOrganization();
   const updateIssue = useUpdateIssue();
   const { data: membersData } = useOrganizationMembers(currentOrganizationId);
+  // The detail query is already populated by the parent view; reading it here
+  // surfaces fields the narrowed `issue` prop doesn't carry (type/resolution).
+  const { data: issueDetailData } = useIssue(issue.id);
+  const issueDetail = issueDetailData as IssueDetailExtras | null | undefined;
+
+  const { data: issueVersions } = useIssueVersions(issue.id);
+  const { data: issueComponents } = useIssueComponents(issue.id);
+  const setIssueVersions = useSetIssueVersions();
+  const setIssueComponents = useSetIssueComponents();
+
+  const [affectsExpanded, setAffectsExpanded] = useState(false);
+
   const assignee = issue.assigneeId
     ? membersData?.members.find((m) => m.id === issue.assigneeId)
     : null;
-  const agentAssignee =
-    assignee && assignee.isAgent && assignee.agentProvider
-      ? assignee
-      : null;
+  const agentAssignee = assignee && assignee.isAgent && assignee.agentProvider ? assignee : null;
+  const reporter = membersData?.members.find((m) => m.id === issue.reporterId);
 
   const handleAssigneeChange = async (assigneeId: string | null) => {
     try {
@@ -73,7 +102,7 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
 
   const handleLabelsChange = async (labels: string[]) => {
     try {
-      await updateIssue.mutateAsync({ issueId: issue.id, data: { labels } as any });
+      await updateIssue.mutateAsync({ issueId: issue.id, data: { labels } });
     } catch (error) {
       console.error('Error updating labels:', error);
     }
@@ -87,7 +116,47 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
     }
   };
 
+  const handleResolutionChange = async (resolution: IssueResolution | null) => {
+    try {
+      // `resolution` is accepted by the PATCH route but isn't part of the
+      // shared `Issue` hook shape yet — widen the payload type explicitly.
+      const data: Partial<Issue> & { resolution: IssueResolution | null } = { resolution };
+      await updateIssue.mutateAsync({ issueId: issue.id, data });
+    } catch (error) {
+      console.error('Error updating resolution:', error);
+    }
+  };
+
+  const handleComponentsChange = (componentIds: string[]) => {
+    setIssueComponents.mutate(
+      { issueId: issue.id, componentIds },
+      { onError: (error) => console.error('Error updating components:', error) }
+    );
+  };
+
+  const handleFixVersionsChange = (fixVersionIds: string[]) => {
+    setIssueVersions.mutate(
+      { issueId: issue.id, fixVersionIds },
+      { onError: (error) => console.error('Error updating fix versions:', error) }
+    );
+  };
+
+  const handleAffectsVersionsChange = (affectsVersionIds: string[]) => {
+    setIssueVersions.mutate(
+      { issueId: issue.id, affectsVersionIds },
+      { onError: (error) => console.error('Error updating affects versions:', error) }
+    );
+  };
+
   const priorityLevel = toPriorityLevel(issue.priority);
+
+  const fixVersions = issueVersions?.fixVersions ?? [];
+  const affectsVersions = issueVersions?.affectsVersions ?? [];
+  const components = issueComponents ?? [];
+  // Affects Versions is a first-class row for bugs; for other issue types it
+  // stays collapsed behind a disclosure unless something is already linked.
+  const isBug = issueDetail?.type === 'bug';
+  const showAffectsRow = isBug || affectsVersions.length > 0 || affectsExpanded;
 
   return (
     <div className="space-y-6">
@@ -121,16 +190,68 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
               value={issue.labels}
               onChange={handleLabelsChange}
               disabled={updateIssue.isPending}
+              organizationId={currentOrganizationId}
+              projectId={issue.projectId}
             />
           </PropertyRow>
         </div>
 
-        {/* Group 2: People */}
-        <div className="border-t border-border/50 mt-3 pt-3">
+        {/* Group 2: Delivery — components, versions, resolution */}
+        <div className="border-border/50 mt-3 border-t pt-3">
+          <PropertyRow icon={<Boxes className="h-3.5 w-3.5" />} label={t('components.label')}>
+            <ComponentPicker
+              projectId={issue.projectId}
+              value={components}
+              onChange={handleComponentsChange}
+              disabled={setIssueComponents.isPending}
+            />
+          </PropertyRow>
+
+          <PropertyRow icon={<Milestone className="h-3.5 w-3.5" />} label={t('versions.fixLabel')}>
+            <VersionPicker
+              projectId={issue.projectId}
+              value={fixVersions}
+              onChange={handleFixVersionsChange}
+              disabled={setIssueVersions.isPending}
+            />
+          </PropertyRow>
+
+          {showAffectsRow ? (
+            <PropertyRow icon={<Bug className="h-3.5 w-3.5" />} label={t('versions.affectsLabel')}>
+              <VersionPicker
+                projectId={issue.projectId}
+                value={affectsVersions}
+                onChange={handleAffectsVersionsChange}
+                disabled={setIssueVersions.isPending}
+              />
+            </PropertyRow>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAffectsExpanded(true)}
+              className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 py-1.5 text-[12px] transition-colors duration-150"
+            >
+              <ChevronRight className="h-3 w-3" />
+              {t('versions.showAffects')}
+            </button>
+          )}
+
           <PropertyRow
-            icon={<User className="h-3.5 w-3.5" />}
-            label="Assignee"
+            icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+            label={t('resolution.label')}
           >
+            <ResolutionSelect
+              value={issueDetail?.resolution ?? null}
+              resolvedAt={issueDetail?.resolvedAt ?? null}
+              onChange={handleResolutionChange}
+              disabled={updateIssue.isPending}
+            />
+          </PropertyRow>
+        </div>
+
+        {/* Group 3: People */}
+        <div className="border-border/50 mt-3 border-t pt-3">
+          <PropertyRow icon={<User className="h-3.5 w-3.5" />} label="Assignee">
             <AssigneePicker
               organizationId={currentOrganizationId}
               value={issue.assigneeId || null}
@@ -139,26 +260,27 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
             />
           </PropertyRow>
 
-          <PropertyRow
-            icon={<UserCircle2 className="h-3.5 w-3.5" />}
-            label="Reporter"
-          >
-            <div className="flex items-center gap-2">
+          <PropertyRow icon={<UserCircle2 className="h-3.5 w-3.5" />} label={t('reporter.label')}>
+            <div className="flex min-w-0 items-center gap-2">
               <Avatar className="h-5 w-5">
-                <AvatarImage src="https://avatar.vercel.sh/reporter" />
-                <AvatarFallback className="text-[9px] font-medium bg-muted">R</AvatarFallback>
+                <AvatarImage
+                  src={reporter?.image || undefined}
+                  alt={reporter?.name ?? reporter?.email ?? 'Reporter avatar'}
+                />
+                <AvatarFallback className="bg-muted text-[9px] font-medium">
+                  {(reporter?.name?.[0] || reporter?.email?.[0] || '?').toUpperCase()}
+                </AvatarFallback>
               </Avatar>
-              <span className="text-foreground">Reporter</span>
+              <span className={reporter ? 'text-foreground truncate' : 'text-muted-foreground'}>
+                {reporter?.name || reporter?.email || t('reporter.unknown')}
+              </span>
             </div>
           </PropertyRow>
         </div>
 
-        {/* Group 3: Dates & Hierarchy */}
-        <div className="border-t border-border/50 mt-3 pt-3">
-          <PropertyRow
-            icon={<CalendarClock className="h-3.5 w-3.5" />}
-            label="Due date"
-          >
+        {/* Group 4: Dates & Hierarchy */}
+        <div className="border-border/50 mt-3 border-t pt-3">
+          <PropertyRow icon={<CalendarClock className="h-3.5 w-3.5" />} label="Due date">
             <span className="text-foreground">
               {issue.dueDate ? (
                 new Date(issue.dueDate).toLocaleDateString('en-US', {
@@ -171,10 +293,7 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
             </span>
           </PropertyRow>
 
-          <PropertyRow
-            icon={<Calendar className="h-3.5 w-3.5" />}
-            label="Created on"
-          >
+          <PropertyRow icon={<Calendar className="h-3.5 w-3.5" />} label="Created on">
             <span className="text-foreground">{formatDate(issue.createdAt)}</span>
           </PropertyRow>
 
@@ -218,12 +337,12 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
         />
       </section>
 
-      <section className="space-y-1 pt-3 border-t border-border/60">
-        <div className="flex justify-between text-xs text-muted-foreground">
+      <section className="border-border/60 space-y-1 border-t pt-3">
+        <div className="text-muted-foreground flex justify-between text-xs">
           <span>Created</span>
           <span>{formatDate(issue.createdAt)}</span>
         </div>
-        <div className="flex justify-between text-xs text-muted-foreground">
+        <div className="text-muted-foreground flex justify-between text-xs">
           <span>Updated</span>
           <span>{formatDate(issue.updatedAt)}</span>
         </div>
@@ -241,11 +360,11 @@ interface PropertyRowProps {
 function PropertyRow({ icon, label, children }: PropertyRowProps) {
   return (
     <div className="flex items-center gap-3 py-1.5 text-[12.5px]">
-      <div className="flex items-center gap-2 w-24 text-muted-foreground shrink-0">
+      <div className="text-muted-foreground flex w-24 shrink-0 items-center gap-2">
         {icon}
         <span>{label}</span>
       </div>
-      <div className="flex-1 min-w-0">{children}</div>
+      <div className="min-w-0 flex-1">{children}</div>
     </div>
   );
 }

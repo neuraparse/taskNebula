@@ -21,6 +21,7 @@ import { publishEvent } from '@/lib/realtime/events';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { runAutomations } from '@/lib/automation/evaluator';
 import { withValidation } from '@/lib/api-validation';
+import { syncIssueLabelsBestEffort } from '@/lib/labels/sync';
 
 // Permission check helper for issues
 async function checkIssuePermission(
@@ -240,6 +241,8 @@ export async function GET(request: NextRequest) {
         parentId: issues.parentId,
         estimate: issues.estimate,
         dueDate: issues.dueDate,
+        resolution: issues.resolution,
+        resolvedAt: issues.resolvedAt,
         createdAt: issues.createdAt,
         updatedAt: issues.updatedAt,
         status: workflowStatuses.category,
@@ -460,6 +463,18 @@ export const POST = withValidation({ body: createIssueSchema })(async (
     } catch (insertError) {
       console.error('Insert error details:', insertError);
       throw insertError;
+    }
+
+    // Write-through to the first-class labels layer. The jsonb write above
+    // (`issues.labels`) stays the REST contract; this mirrors the names into
+    // labels/issue_labels and never fails the create (best-effort).
+    if (validatedData.labels && validatedData.labels.length > 0) {
+      await syncIssueLabelsBestEffort({
+        organizationId: newIssue.organizationId,
+        issueId: newIssue.id,
+        labels: validatedData.labels,
+        createdBy: session.user.id ?? null,
+      });
     }
 
     // Defer all post-response side-effects: activity log, audit log,

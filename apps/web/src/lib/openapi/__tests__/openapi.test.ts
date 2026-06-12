@@ -39,9 +39,24 @@ describe('OpenAPI registry', () => {
       ['/api/issues/{issueId}', 'patch'],
       ['/api/issues/{issueId}', 'delete'],
       ['/api/issues/{issueId}/comments', 'post'],
-      ['/api/issues/{issueId}/transition', 'post'],
+      ['/api/issues/{issueId}/versions', 'get'],
+      ['/api/issues/{issueId}/versions', 'put'],
+      ['/api/issues/{issueId}/components', 'get'],
+      ['/api/issues/{issueId}/components', 'put'],
+      ['/api/labels', 'get'],
+      ['/api/labels', 'post'],
+      ['/api/labels/{labelId}', 'patch'],
+      ['/api/labels/{labelId}', 'delete'],
       ['/api/projects', 'get'],
-      ['/api/cycles', 'get'],
+      ['/api/projects/{projectId}/versions', 'get'],
+      ['/api/projects/{projectId}/versions', 'post'],
+      ['/api/projects/{projectId}/versions/{versionId}', 'patch'],
+      ['/api/projects/{projectId}/versions/{versionId}', 'delete'],
+      ['/api/projects/{projectId}/versions/{versionId}/release', 'post'],
+      ['/api/projects/{projectId}/components', 'get'],
+      ['/api/projects/{projectId}/components', 'post'],
+      ['/api/projects/{projectId}/components/{componentId}', 'patch'],
+      ['/api/projects/{projectId}/components/{componentId}', 'delete'],
       ['/api/users/me', 'get'],
       ['/api/search', 'post'],
       ['/api/health', 'get'],
@@ -51,6 +66,12 @@ describe('OpenAPI registry', () => {
       expect(built.paths?.[path]).toBeDefined();
       expect((built.paths as any)[path][method]).toBeDefined();
     }
+  });
+
+  it('does not register phantom endpoints that 404 at runtime', () => {
+    // Removed by the 2026-06 audit: these were documented but never implemented.
+    expect(built.paths?.['/api/issues/{issueId}/transition']).toBeUndefined();
+    expect(built.paths?.['/api/cycles']).toBeUndefined();
   });
 
   it('marks /api/health as a public route (no security)', () => {

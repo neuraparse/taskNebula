@@ -23,6 +23,7 @@ import { publishEvent } from '@/lib/realtime/events';
 import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { runAutomations } from '@/lib/automation/evaluator';
 import { withValidation } from '@/lib/api-validation';
+import { syncIssueLabelsBestEffort } from '@/lib/labels/sync';
 
 // Params schema for /api/issues/[issueId] — kept loose (`min(1)`) to allow
 // the existing dataset of mixed-format ids; tighten to `id` from
@@ -193,10 +194,28 @@ const updateIssueSchema = z.object({
   // TimeTrackingPanel posts both fields together; without them in the
   // schema, Zod silently drops the keys and the panel's "Save estimate"
   // button becomes a no-op.
-  estimateHours: z.number().nullable().optional(),
+  estimateHours: z
+    .number()
+    .nullable()
+    .optional()
+    // Drizzle `numeric()` columns are typed `string` — coerce before the spread
+    // into updateIssue() so the payload matches the column type.
+    .transform((v) => (v == null ? v : String(v))),
   estimateSource: z.enum(['manual', 'ai_suggest']).nullable().optional(),
-  dueDate: z.string().datetime().nullable().optional(),
+  dueDate: z
+    .string()
+    .datetime()
+    .nullable()
+    .optional()
+    // `timestamp()` columns expect Date — coerce like estimateHours above.
+    .transform((v) => (v == null ? v : new Date(v))),
   customFields: z.record(z.any()).optional(),
+  // Jira-style resolution. Setting a value also stamps `resolvedAt`;
+  // sending an explicit `null` clears both fields.
+  resolution: z
+    .enum(['fixed', 'wont_do', 'duplicate', 'cannot_reproduce', 'done'])
+    .nullable()
+    .optional(),
 });
 
 // GET /api/issues/[issueId] - Get a single issue
@@ -269,7 +288,8 @@ export const PATCH = withValidation({
       validatedData.priority ||
       validatedData.labels ||
       validatedData.estimate !== undefined ||
-      validatedData.dueDate !== undefined
+      validatedData.dueDate !== undefined ||
+      validatedData.resolution !== undefined
     ) {
       permissionChecks.push('edit');
     }
@@ -351,10 +371,29 @@ export const PATCH = withValidation({
       delete updateData.status;
     }
 
-    const updatedIssueData = await updateIssue(issueId, updateData);
+    // Resolution write-through: setting a resolution stamps `resolvedAt`;
+    // an explicit `resolution: null` clears both fields.
+    const resolutionPatch =
+      updateData.resolution !== undefined
+        ? { resolvedAt: updateData.resolution === null ? null : new Date() }
+        : {};
+
+    const updatedIssueData = await updateIssue(issueId, { ...updateData, ...resolutionPatch });
 
     if (!updatedIssueData) {
       return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+    }
+
+    // Write-through to the first-class labels layer. The jsonb write above
+    // (`issues.labels`) stays the REST contract; this mirrors the names into
+    // labels/issue_labels and never fails the update (best-effort).
+    if (validatedData.labels !== undefined) {
+      await syncIssueLabelsBestEffort({
+        organizationId: currentIssue.organizationId,
+        issueId,
+        labels: validatedData.labels,
+        createdBy: session.user.id ?? null,
+      });
     }
 
     // Create activity logs for changed fields
@@ -408,6 +447,19 @@ export const PATCH = withValidation({
           field: 'title',
           oldValue: currentIssue.title,
           newValue: updateData.title,
+        })
+      );
+    }
+
+    if (updateData.resolution !== undefined && updateData.resolution !== currentIssue.resolution) {
+      activityPromises.push(
+        createActivity({
+          issueId,
+          userId: session.user.id,
+          type: 'updated',
+          field: 'resolution',
+          oldValue: currentIssue.resolution ?? null,
+          newValue: updateData.resolution ?? null,
         })
       );
     }
@@ -546,6 +598,7 @@ export const PATCH = withValidation({
       'estimate',
       'dueDate',
       'customFields',
+      'resolution',
     ];
     for (const field of trackedFields) {
       if (updateData[field] === undefined) continue;

@@ -16,9 +16,14 @@ A comprehensive overview of TaskNebula's features and capabilities.
 
 - **Projects**: Organize work into distinct projects
 - **Custom Workflows**: Define your own issue lifecycle
-- **Sprints**: Time-boxed iterations with planning and tracking
+- **Sprints**: Time-boxed iterations with planning, tracking, and auto-rollover
 - **Custom Fields**: Extend issues with organization-specific fields
 - **Issue Types**: Story, Task, Bug, Epic (customizable)
+- **Labels, Versions & Components** — _new in 0.3.x (API; UI minimal)_:
+  - First-class org-scoped labels (`labels` + `issue_labels`, backfilled from the legacy JSONB array)
+  - Project versions/releases with Fix Version / Affects Version relations
+  - Project components with leads
+  - Issue resolution model (`resolution`, `resolvedAt`, `flagged`)
 
 ### Issue Tracking
 
@@ -47,9 +52,9 @@ A comprehensive overview of TaskNebula's features and capabilities.
 
 - **Kanban Board**: Drag-and-drop issue management
 - **List View**: Filterable, sortable table view
-- **Timeline View**: Gantt-style project timeline (coming soon)
-- **Roadmap View**: High-level strategic planning (coming soon)
-- **Calendar View**: Date-based issue visualization (coming soon)
+- **Roadmap View**: Per-project roadmap with Gantt-style bars (shipped; navigation entry minimal)
+- **Backlog View**: Grooming and sprint assignment
+- **Calendar View**: Date-based issue visualization (coming soon — roadmap #20)
 
 ### Keyboard-First UX
 
@@ -78,13 +83,15 @@ A comprehensive overview of TaskNebula's features and capabilities.
 Transform natural language into structured tickets:
 
 **Input:**
+
 ```
-We need to add user authentication to our app. Users should be able 
-to sign in with Google or GitHub. We also need to protect certain 
+We need to add user authentication to our app. Users should be able
+to sign in with Google or GitHub. We also need to protect certain
 routes and manage user sessions securely.
 ```
 
 **Output:**
+
 - ✅ Structured title
 - ✅ Detailed description with acceptance criteria
 - ✅ Suggested type, priority, and labels
@@ -93,6 +100,7 @@ routes and manage user sessions securely.
 ### 2. Summarize Thread
 
 Get concise summaries of long comment threads:
+
 - Key points and decisions
 - Action items
 - Unresolved questions
@@ -101,6 +109,7 @@ Get concise summaries of long comment threads:
 ### 3. Sprint Planning Assistant
 
 AI-powered sprint planning:
+
 - Analyzes backlog and team capacity
 - Suggests optimal issue selection
 - Considers priorities and dependencies
@@ -109,6 +118,7 @@ AI-powered sprint planning:
 ### 4. Project Health Analysis
 
 Automated project insights:
+
 - Overall health score (Healthy, At-Risk, Critical)
 - Velocity trend analysis
 - Risk identification
@@ -117,17 +127,18 @@ Automated project insights:
 ### 5. Improve Issue Title
 
 Make titles clearer and more actionable:
+
 - Action-oriented phrasing
 - Concise and specific
 - Professional tone
 - Under 80 characters
 
-### 6. Story Point Estimation (Coming Soon)
+### 6. Story Point Estimation
 
-AI-powered effort estimation:
-- Based on issue complexity
-- Historical data analysis
-- Team velocity consideration
+AI-suggested effort estimation (shipped):
+
+- Story points and estimate hours with tracked estimate source
+- AI estimate suggestions in the time-tracking flow
 
 ## 🎨 User Experience
 
@@ -170,8 +181,7 @@ AI-powered effort estimation:
 
 ### Authorization
 
-- Row-Level Security (PostgreSQL RLS)
-- API-level permission checks
+- API-level permission checks (application-level `WHERE`-clause tenant isolation — PostgreSQL RLS is **planned, not yet implemented**; see roadmap #37)
 - UI-level access control
 - Audit logging
 
@@ -183,7 +193,7 @@ AI-powered effort estimation:
 - CSRF protection
 - Rate limiting
 
-## 📊 Analytics & Reporting (Coming Soon)
+## 📊 Analytics & Reporting (Shipped)
 
 ### Team Metrics
 
@@ -191,6 +201,8 @@ AI-powered effort estimation:
 - Burndown charts
 - Cycle time analysis
 - Lead time measurement
+- Time-in-status history per issue
+- CSV / JSON export
 
 ### Individual Metrics
 
@@ -205,20 +217,18 @@ AI-powered effort estimation:
 - Priority analysis
 - Blocker identification
 
-## 🔔 Notifications (Coming Soon)
+## 🔔 Notifications (Partially Shipped)
 
 ### In-App Notifications
 
-- Real-time updates
-- @mention alerts
-- Issue assignments
-- Status changes
+- Notification bell with deep links and Smart Inbox (shipped)
+- Issue assignment / comment / status-change events currently arrive via **email only**; in-app rows, @mention and watcher fan-out are roadmap #36
+- Web-push subscriptions stored; sender pending
 
 ### Email Notifications
 
-- Configurable preferences
-- Daily/weekly digests
-- Critical updates
+- Configurable preferences (shipped)
+- Daily/weekly digests (preference exists; sending job pending — roadmap #36)
 
 ### Integrations
 
@@ -252,12 +262,12 @@ AI-powered effort estimation:
 
 ## 🌐 Collaboration
 
-### Real-Time Features (Coming Soon)
+### Real-Time Features (Shipped)
 
-- Live cursors
-- Presence indicators
-- Collaborative editing
-- WebSocket-based updates
+- Presence indicators on issues
+- Collaborative issue-description editing (Tiptap + Yjs + Hocuspocus)
+- SSE-based live updates (boards, activity, chat)
+- LiveKit voice rooms and project-scoped chat
 
 ### Team Features
 
@@ -299,7 +309,7 @@ AI-powered effort estimation:
 
 ---
 
-**Note**: Features marked as "Coming Soon" or "Future" are planned but not yet implemented.
+**Note**: Features marked as "Coming Soon" or "Future" are planned but not yet implemented. For
+per-feature status with evidence, see `docs/AUDIT_2026-06.md` and `docs/ROADMAP_2026.md`.
 
-Last updated: 2025-01-24
-
+Last updated: 2026-06-12

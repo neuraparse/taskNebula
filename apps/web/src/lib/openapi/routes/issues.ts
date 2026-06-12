@@ -9,8 +9,6 @@ import {
   IssueListQuerySchema,
   IssueListResponseSchema,
   IssueSchema,
-  TransitionIssueBodySchema,
-  TransitionResponseSchema,
   UpdateIssueBodySchema,
 } from '../schemas';
 
@@ -195,45 +193,6 @@ registerRoute({
     },
     '401': {
       description: 'Unauthorized.',
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-    },
-  },
-});
-
-// POST /api/issues/{issueId}/transition
-registerRoute({
-  method: 'post',
-  path: '/api/issues/{issueId}/transition',
-  summary: 'Transition an issue to a new status',
-  description:
-    'Moves the issue to a target workflow status. Requires `transition` permission. Equivalent to a `PATCH /api/issues/{issueId}` that only changes `statusId`, but exposed as a discrete endpoint for clients/MCP integrations.',
-  tags: [TAGS.Transitions],
-  request: {
-    params: IssueIdParamSchema,
-    body: {
-      required: true,
-      content: { 'application/json': { schema: TransitionIssueBodySchema } },
-    },
-  },
-  responses: {
-    '200': {
-      description: 'Issue transitioned successfully.',
-      content: { 'application/json': { schema: TransitionResponseSchema } },
-    },
-    '400': {
-      description: 'Validation failed or invalid status target.',
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-    },
-    '401': {
-      description: 'Unauthorized.',
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-    },
-    '403': {
-      description: 'Forbidden — missing transition permission.',
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-    },
-    '404': {
-      description: 'Issue not found.',
       content: { 'application/json': { schema: ErrorResponseSchema } },
     },
   },

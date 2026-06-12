@@ -13,9 +13,11 @@ src/lib/openapi/
 ├── schemas.ts             ← shared Zod schemas (request/response shapes)
 ├── routes/
 │   ├── index.ts           ← side-effect entrypoint — imports every route file
-│   ├── issues.ts          ← /api/issues, /api/issues/{id}, comments, transitions
+│   ├── issues.ts          ← /api/issues, /api/issues/{id}, comments
 │   ├── projects.ts        ← /api/projects
-│   ├── cycles.ts          ← /api/cycles
+│   ├── labels.ts          ← /api/labels, /api/labels/{labelId}
+│   ├── versions.ts        ← project versions + issue fix/affects versions
+│   ├── components.ts      ← project components + issue components
 │   ├── users.ts           ← /api/users/me
 │   ├── search.ts          ← /api/search
 │   └── health.ts          ← /api/health
@@ -40,10 +42,12 @@ pnpm --filter @tasknebula/web openapi:gen
    `description`, or a named component name:
 
    ```ts
-   export const FooSchema = z.object({
-     id: z.string(),
-     name: z.string().openapi({ example: 'My foo' }),
-   }).openapi('Foo');
+   export const FooSchema = z
+     .object({
+       id: z.string(),
+       name: z.string().openapi({ example: 'My foo' }),
+     })
+     .openapi('Foo');
    ```
 
 2. **Create or extend a file under `routes/` and call `registerRoute()`:**

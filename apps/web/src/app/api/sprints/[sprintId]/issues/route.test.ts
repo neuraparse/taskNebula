@@ -89,6 +89,35 @@ jest.mock('@tasknebula/db', () => ({
     name: 'workflowStatuses.name',
     color: 'workflowStatuses.color',
   },
+  sprints: {
+    id: 'sprints.id',
+    projectId: 'sprints.projectId',
+  },
+  projects: {
+    id: 'projects.id',
+    organizationId: 'projects.organizationId',
+  },
+  projectMembers: {
+    userId: 'projectMembers.userId',
+    projectId: 'projectMembers.projectId',
+    role: 'projectMembers.role',
+    canManageSprints: 'projectMembers.canManageSprints',
+  },
+  organizationMembers: {
+    userId: 'organizationMembers.userId',
+    organizationId: 'organizationMembers.organizationId',
+    role: 'organizationMembers.role',
+  },
+  users: {
+    id: 'users.id',
+    isSuperAdmin: 'users.isSuperAdmin',
+  },
+  ROLE_DEFAULT_PERMISSIONS: {
+    viewer: {},
+    product_owner: {
+      canManageSprints: true,
+    },
+  },
 }));
 
 jest.mock('drizzle-orm', () => ({
@@ -146,26 +175,59 @@ describe('/api/sprints/[sprintId]/issues route', () => {
     it('returns 401 when no session', async () => {
       authMock.mockResolvedValue(null);
       const response = await GET(
-        new MockNextRequest('http://localhost:3002/api/sprints/s1/issues') as unknown as import('next/server').NextRequest,
+        new MockNextRequest(
+          'http://localhost:3002/api/sprints/s1/issues'
+        ) as unknown as import('next/server').NextRequest,
         { params: Promise.resolve({ sprintId: 's1' }) }
       );
       expect(response.status).toBe(401);
     });
 
+    it('returns 404 when sprint does not exist', async () => {
+      authMock.mockResolvedValue({ user: { id: 'user-1' } });
+      dbSelectMock.mockReturnValueOnce(chainable([])); // sprint lookup empty
+      const response = await GET(
+        new NextRequestCtor('http://localhost:3002/api/sprints/s1/issues'),
+        { params: Promise.resolve({ sprintId: 's1' }) }
+      );
+      expect(response.status).toBe(404);
+      await expect(response.json()).resolves.toEqual({ error: 'Sprint not found' });
+    });
+
+    it('returns 404 when caller is not a member of the sprint organization', async () => {
+      authMock.mockResolvedValue({ user: { id: 'user-1' } });
+      dbSelectMock
+        .mockReturnValueOnce(chainable([{ id: 's1', projectId: 'p1' }])) // sprint
+        .mockReturnValueOnce(chainable([{ isSuperAdmin: false }])) // users
+        .mockReturnValueOnce(chainable([{ id: 'p1', organizationId: 'org-other' }])) // project
+        .mockReturnValueOnce(chainable([])) // no org membership (cross-org probe)
+        .mockReturnValueOnce(chainable([])); // no project membership
+
+      const response = await GET(
+        new NextRequestCtor('http://localhost:3002/api/sprints/s1/issues'),
+        { params: Promise.resolve({ sprintId: 's1' }) }
+      );
+      expect(response.status).toBe(404);
+      await expect(response.json()).resolves.toEqual({ error: 'Sprint not found' });
+    });
+
     it('returns sprint issues enriched with status info', async () => {
       authMock.mockResolvedValue({ user: { id: 'user-1' } });
-      dbSelectMock.mockReturnValueOnce(
-        chainable([
-          {
-            id: 'i1',
-            key: 'PRJ-1',
-            title: 'Task 1',
-            status: 'in_progress',
-            statusName: 'In Progress',
-            statusColor: '#2563eb',
-          },
-        ])
-      );
+      dbSelectMock
+        .mockReturnValueOnce(chainable([{ id: 's1', projectId: 'p1' }])) // sprint
+        .mockReturnValueOnce(chainable([{ isSuperAdmin: true }])) // permission bypass
+        .mockReturnValueOnce(
+          chainable([
+            {
+              id: 'i1',
+              key: 'PRJ-1',
+              title: 'Task 1',
+              status: 'in_progress',
+              statusName: 'In Progress',
+              statusColor: '#2563eb',
+            },
+          ])
+        );
 
       const response = await GET(
         new NextRequestCtor('http://localhost:3002/api/sprints/s1/issues'),
@@ -204,9 +266,9 @@ describe('/api/sprints/[sprintId]/issues route', () => {
       await expect(response.json()).resolves.toEqual({ error: 'Issue ID is required' });
     });
 
-    it('returns 404 when issue not found', async () => {
+    it('returns 404 when sprint does not exist', async () => {
       authMock.mockResolvedValue({ user: { id: 'user-1' } });
-      dbUpdateMock.mockReturnValueOnce(updateReturning([]));
+      dbSelectMock.mockReturnValueOnce(chainable([])); // sprint lookup empty
       const response = await POST(
         new NextRequestCtor('http://localhost:3002/api/sprints/s1/issues', {
           method: 'POST',
@@ -215,13 +277,98 @@ describe('/api/sprints/[sprintId]/issues route', () => {
         { params: Promise.resolve({ sprintId: 's1' }) }
       );
       expect(response.status).toBe(404);
+      await expect(response.json()).resolves.toEqual({ error: 'Sprint not found' });
+    });
+
+    it('returns 404 when caller is not a member of the sprint organization', async () => {
+      authMock.mockResolvedValue({ user: { id: 'user-1' } });
+      dbSelectMock
+        .mockReturnValueOnce(chainable([{ id: 's1', projectId: 'p1' }])) // sprint
+        .mockReturnValueOnce(chainable([{ isSuperAdmin: false }])) // users
+        .mockReturnValueOnce(chainable([{ id: 'p1', organizationId: 'org-other' }])) // project
+        .mockReturnValueOnce(chainable([])) // no org membership (cross-org probe)
+        .mockReturnValueOnce(chainable([])); // no project membership
+
+      const response = await POST(
+        new NextRequestCtor('http://localhost:3002/api/sprints/s1/issues', {
+          method: 'POST',
+          body: JSON.stringify({ issueId: 'i1' }),
+        }),
+        { params: Promise.resolve({ sprintId: 's1' }) }
+      );
+      expect(response.status).toBe(404);
+      await expect(response.json()).resolves.toEqual({ error: 'Sprint not found' });
+      expect(dbUpdateMock).not.toHaveBeenCalled();
+    });
+
+    it('returns 404 when issue not found', async () => {
+      authMock.mockResolvedValue({ user: { id: 'user-1' } });
+      dbSelectMock
+        .mockReturnValueOnce(chainable([{ id: 's1', projectId: 'p1' }])) // sprint
+        .mockReturnValueOnce(chainable([{ isSuperAdmin: true }])) // permission bypass
+        .mockReturnValueOnce(chainable([])); // issue lookup empty
+      const response = await POST(
+        new NextRequestCtor('http://localhost:3002/api/sprints/s1/issues', {
+          method: 'POST',
+          body: JSON.stringify({ issueId: 'i1' }),
+        }),
+        { params: Promise.resolve({ sprintId: 's1' }) }
+      );
+      expect(response.status).toBe(404);
+      await expect(response.json()).resolves.toEqual({ error: 'Issue not found' });
+    });
+
+    it('returns 404 when issue belongs to another organization', async () => {
+      authMock.mockResolvedValue({ user: { id: 'user-1' } });
+      dbSelectMock
+        .mockReturnValueOnce(chainable([{ id: 's1', projectId: 'p1' }])) // sprint
+        .mockReturnValueOnce(chainable([{ isSuperAdmin: true }])) // permission bypass
+        .mockReturnValueOnce(
+          chainable([{ id: 'i1', projectId: 'p2', organizationId: 'org-other' }])
+        ) // issue in another org's project
+        .mockReturnValueOnce(chainable([{ organizationId: 'org-1' }])); // sprint's project
+
+      const response = await POST(
+        new NextRequestCtor('http://localhost:3002/api/sprints/s1/issues', {
+          method: 'POST',
+          body: JSON.stringify({ issueId: 'i1' }),
+        }),
+        { params: Promise.resolve({ sprintId: 's1' }) }
+      );
+      expect(response.status).toBe(404);
+      await expect(response.json()).resolves.toEqual({ error: 'Issue not found' });
+      expect(dbUpdateMock).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when issue is in another project of the same organization', async () => {
+      authMock.mockResolvedValue({ user: { id: 'user-1' } });
+      dbSelectMock
+        .mockReturnValueOnce(chainable([{ id: 's1', projectId: 'p1' }])) // sprint
+        .mockReturnValueOnce(chainable([{ isSuperAdmin: true }])) // permission bypass
+        .mockReturnValueOnce(chainable([{ id: 'i1', projectId: 'p2', organizationId: 'org-1' }])) // issue in a sibling project
+        .mockReturnValueOnce(chainable([{ organizationId: 'org-1' }])); // sprint's project
+
+      const response = await POST(
+        new NextRequestCtor('http://localhost:3002/api/sprints/s1/issues', {
+          method: 'POST',
+          body: JSON.stringify({ issueId: 'i1' }),
+        }),
+        { params: Promise.resolve({ sprintId: 's1' }) }
+      );
+      expect(response.status).toBe(400);
+      await expect(response.json()).resolves.toEqual({
+        error: 'Issue does not belong to the sprint project',
+      });
+      expect(dbUpdateMock).not.toHaveBeenCalled();
     });
 
     it('assigns issue to sprint and publishes event', async () => {
       authMock.mockResolvedValue({ user: { id: 'user-1' } });
-      dbUpdateMock.mockReturnValueOnce(
-        updateReturning([{ id: 'i1', sprintId: 's1' }])
-      );
+      dbSelectMock
+        .mockReturnValueOnce(chainable([{ id: 's1', projectId: 'p1' }])) // sprint
+        .mockReturnValueOnce(chainable([{ isSuperAdmin: true }])) // permission bypass
+        .mockReturnValueOnce(chainable([{ id: 'i1', projectId: 'p1', organizationId: 'org-1' }])); // issue in the sprint's project
+      dbUpdateMock.mockReturnValueOnce(updateReturning([{ id: 'i1', sprintId: 's1' }]));
 
       const response = await POST(
         new NextRequestCtor('http://localhost:3002/api/sprints/s1/issues', {
@@ -234,6 +381,7 @@ describe('/api/sprints/[sprintId]/issues route', () => {
       await expect(response.json()).resolves.toEqual({ id: 'i1', sprintId: 's1' });
       expect(publishEventMock).toHaveBeenCalledWith('sprint.issues.changed', 'user-1', {
         sprintId: 's1',
+        organizationId: 'org-1',
       });
     });
   });
@@ -258,8 +406,22 @@ describe('/api/sprints/[sprintId]/issues route', () => {
       await expect(response.json()).resolves.toEqual({ error: 'Issue ID is required' });
     });
 
+    it('returns 404 when sprint does not exist', async () => {
+      authMock.mockResolvedValue({ user: { id: 'user-1' } });
+      dbSelectMock.mockReturnValueOnce(chainable([])); // sprint lookup empty
+      const response = await DELETE(
+        new NextRequestCtor('http://localhost:3002/api/sprints/s1/issues?issueId=i1'),
+        { params: Promise.resolve({ sprintId: 's1' }) }
+      );
+      expect(response.status).toBe(404);
+      await expect(response.json()).resolves.toEqual({ error: 'Sprint not found' });
+    });
+
     it('returns 404 when issue not in sprint', async () => {
       authMock.mockResolvedValue({ user: { id: 'user-1' } });
+      dbSelectMock
+        .mockReturnValueOnce(chainable([{ id: 's1', projectId: 'p1' }])) // sprint
+        .mockReturnValueOnce(chainable([{ isSuperAdmin: true }])); // permission bypass
       dbUpdateMock.mockReturnValueOnce(updateReturning([]));
       const response = await DELETE(
         new NextRequestCtor('http://localhost:3002/api/sprints/s1/issues?issueId=i1'),
@@ -270,9 +432,10 @@ describe('/api/sprints/[sprintId]/issues route', () => {
 
     it('removes issue from sprint and publishes event', async () => {
       authMock.mockResolvedValue({ user: { id: 'user-1' } });
-      dbUpdateMock.mockReturnValueOnce(
-        updateReturning([{ id: 'i1', sprintId: null }])
-      );
+      dbSelectMock
+        .mockReturnValueOnce(chainable([{ id: 's1', projectId: 'p1' }])) // sprint
+        .mockReturnValueOnce(chainable([{ isSuperAdmin: true }])); // permission bypass
+      dbUpdateMock.mockReturnValueOnce(updateReturning([{ id: 'i1', sprintId: null }]));
       const response = await DELETE(
         new NextRequestCtor('http://localhost:3002/api/sprints/s1/issues?issueId=i1'),
         { params: Promise.resolve({ sprintId: 's1' }) }

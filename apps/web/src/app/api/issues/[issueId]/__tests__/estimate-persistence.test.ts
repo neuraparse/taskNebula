@@ -201,9 +201,10 @@ describe('PATCH /api/issues/[issueId] — estimate & rich description persistenc
 
     expect(response.status).toBe(200);
     expect(updateIssueMock).toHaveBeenCalledTimes(1);
+    // Drizzle numeric() columns are string-typed; the route coerces before writing.
     expect(updateIssueMock).toHaveBeenCalledWith(
       'issue-1',
-      expect.objectContaining({ estimateHours: 4, estimateSource: 'manual' })
+      expect.objectContaining({ estimateHours: '4', estimateSource: 'manual' })
     );
   });
 
@@ -214,7 +215,7 @@ describe('PATCH /api/issues/[issueId] — estimate & rich description persistenc
 
     expect(updateIssueMock).toHaveBeenCalledTimes(1);
     const [, payload] = updateIssueMock.mock.calls[0] as [string, Record<string, unknown>];
-    expect(payload).toHaveProperty('estimateHours', 0);
+    expect(payload).toHaveProperty('estimateHours', '0');
   });
 
   it('preserves estimateHours: null', async () => {

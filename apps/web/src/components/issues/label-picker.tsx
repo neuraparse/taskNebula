@@ -1,22 +1,37 @@
 'use client';
 
-import { useState } from 'react';
-import { X, Plus } from 'lucide-react';
+import { useDeferredValue, useMemo, useState } from 'react';
+import { X, Plus, Check } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useLabels, type OrgLabel } from '@/lib/hooks/use-labels';
+import { cn } from '@/lib/utils';
 
 interface LabelPickerProps {
   value: string[];
   onChange: (labels: string[]) => void;
   disabled?: boolean;
+  /**
+   * Enables autocomplete against the org's label catalog (GET /api/labels).
+   * Without it the picker falls back to a static suggestion list — the
+   * emitted contract is unchanged either way: a plain `labels: string[]`
+   * (the server resolves names → label rows and syncs the join table).
+   */
+  organizationId?: string | null;
+  /** Narrows suggestions to this project's labels + org-wide ones. */
+  projectId?: string | null;
 }
 
+/** Fallback suggestions when no org context is provided (legacy callers). */
 const predefinedLabels = [
   'bug',
   'feature',
@@ -32,25 +47,71 @@ const predefinedLabels = [
   'urgent',
 ];
 
-export function LabelPicker({ value, onChange, disabled = false }: LabelPickerProps) {
+const FALLBACK_DOT_COLOR = 'hsl(var(--muted-foreground) / 0.45)';
+
+export function LabelPicker({
+  value,
+  onChange,
+  disabled = false,
+  organizationId,
+  projectId,
+}: LabelPickerProps) {
+  const t = useTranslations('issueSidebar.labels');
   const [open, setOpen] = useState(false);
-  const [newLabel, setNewLabel] = useState('');
+  const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search);
 
-  const handleAddLabel = (label: string) => {
-    if (!value.includes(label)) {
-      onChange([...value, label]);
+  const orgId = organizationId ?? null;
+  const labelScope = projectId ? { projectId } : {};
+  // Unfiltered catalog: keeps color dots on selected chips while typing.
+  const { data: allLabels } = useLabels(orgId, labelScope);
+  // Server-side prefix autocomplete (?q=) drives the dropdown options.
+  const { data: searchedLabels, isLoading } = useLabels(orgId, {
+    ...labelScope,
+    q: deferredSearch,
+  });
+
+  const colorByName = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const label of allLabels ?? []) {
+      map.set(label.name, label.color);
     }
-  };
+    return map;
+  }, [allLabels]);
 
-  const handleRemoveLabel = (label: string) => {
-    onChange(value.filter((l) => l !== label));
+  const trimmedSearch = search.trim();
+
+  const options: Array<Pick<OrgLabel, 'name' | 'color'>> = useMemo(() => {
+    if (orgId) {
+      return (searchedLabels ?? []).map(({ name, color }) => ({ name, color }));
+    }
+    const prefix = trimmedSearch.toLowerCase();
+    return predefinedLabels
+      .filter((name) => !prefix || name.toLowerCase().startsWith(prefix))
+      .map((name) => ({ name, color: FALLBACK_DOT_COLOR }));
+  }, [orgId, searchedLabels, trimmedSearch]);
+
+  const hasExactMatch =
+    options.some((option) => option.name.toLowerCase() === trimmedSearch.toLowerCase()) ||
+    value.some((name) => name.toLowerCase() === trimmedSearch.toLowerCase());
+  const showCreate = trimmedSearch.length > 0 && trimmedSearch.length <= 100 && !hasExactMatch;
+
+  const handleToggleLabel = (name: string) => {
+    if (value.includes(name)) {
+      onChange(value.filter((l) => l !== name));
+    } else {
+      onChange([...value, name]);
+    }
   };
 
   const handleCreateLabel = () => {
-    if (newLabel.trim() && !value.includes(newLabel.trim())) {
-      onChange([...value, newLabel.trim()]);
-      setNewLabel('');
-    }
+    if (!showCreate) return;
+    onChange([...value, trimmedSearch]);
+    setSearch('');
+  };
+
+  const handleRemoveLabel = (name: string) => {
+    onChange(value.filter((l) => l !== name));
   };
 
   return (
@@ -59,13 +120,18 @@ export function LabelPicker({ value, onChange, disabled = false }: LabelPickerPr
       {value.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {value.map((label) => (
-            <span key={label} className="chip rounded-sm inline-flex items-center gap-1">
+            <span key={label} className="chip inline-flex items-center gap-1 rounded-sm">
+              <span
+                aria-hidden="true"
+                className="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
+                style={{ backgroundColor: colorByName.get(label) ?? FALLBACK_DOT_COLOR }}
+              />
               {label}
               {!disabled && (
                 <button
                   onClick={() => handleRemoveLabel(label)}
-                  className="ml-0.5 hover:text-destructive transition-colors duration-150"
-                  aria-label={`Remove label ${label}`}
+                  className="hover:text-destructive ease-snap ml-0.5 transition-colors duration-150"
+                  aria-label={t('remove', { name: label })}
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -81,59 +147,61 @@ export function LabelPicker({ value, onChange, disabled = false }: LabelPickerPr
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 px-2 justify-start text-sm rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors duration-150 ease-snap"
+            className="text-muted-foreground hover:bg-accent hover:text-foreground ease-snap h-8 justify-start rounded-md px-2 text-sm transition-colors duration-150"
             disabled={disabled}
           >
             <Plus className="mr-2 h-4 w-4" />
-            Add label
+            {t('add')}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-3">
-          <div className="space-y-3">
-            {/* Create new label */}
-            <div className="flex gap-2">
-              <Input
-                placeholder="Create new label..."
-                value={newLabel}
-                onChange={(e) => setNewLabel(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleCreateLabel();
-                  }
-                }}
-              />
-              <Button size="sm" onClick={handleCreateLabel}>
-                Add
-              </Button>
-            </div>
-
-            {/* Predefined labels */}
-            <div>
-              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Suggested Labels
-              </p>
-              <div className="flex flex-wrap gap-1">
-                {predefinedLabels
-                  .filter((label) => !value.includes(label))
-                  .map((label) => (
-                    <button
-                      key={label}
-                      type="button"
-                      className="chip rounded-sm cursor-pointer hover:bg-accent transition-colors duration-150 ease-snap"
-                      onClick={() => {
-                        handleAddLabel(label);
-                        setOpen(false);
-                      }}
+        <PopoverContent className="w-[300px] p-0">
+          {/* Server-side ?q= filtering — disable cmdk's client filter. */}
+          <Command shouldFilter={false}>
+            <CommandInput
+              placeholder={t('searchOrCreate')}
+              value={search}
+              onValueChange={setSearch}
+            />
+            <CommandList>
+              {!showCreate && (
+                <CommandEmpty>{isLoading ? t('loading') : t('noResults')}</CommandEmpty>
+              )}
+              {options.length > 0 && (
+                <CommandGroup>
+                  {options.map((option) => (
+                    <CommandItem
+                      key={option.name}
+                      value={option.name}
+                      onSelect={() => handleToggleLabel(option.name)}
                     >
-                      {label}
-                    </button>
+                      <Check
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          value.includes(option.name) ? 'opacity-100' : 'opacity-0'
+                        )}
+                      />
+                      <span
+                        aria-hidden="true"
+                        className="mr-2 inline-block h-2 w-2 shrink-0 rounded-full"
+                        style={{ backgroundColor: option.color }}
+                      />
+                      <span className="truncate">{option.name}</span>
+                    </CommandItem>
                   ))}
-              </div>
-            </div>
-          </div>
+                </CommandGroup>
+              )}
+              {showCreate && (
+                <CommandGroup>
+                  <CommandItem value={`__create__${trimmedSearch}`} onSelect={handleCreateLabel}>
+                    <Plus className="text-muted-foreground mr-2 h-4 w-4" />
+                    <span className="truncate">{t('create', { name: trimmedSearch })}</span>
+                  </CommandItem>
+                </CommandGroup>
+              )}
+            </CommandList>
+          </Command>
         </PopoverContent>
       </Popover>
     </div>
   );
 }
-

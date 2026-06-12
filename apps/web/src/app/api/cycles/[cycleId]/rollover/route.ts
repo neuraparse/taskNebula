@@ -37,11 +37,7 @@ export async function POST(
 
   const { cycleId } = await params;
 
-  const [cycle] = await db
-    .select()
-    .from(sprints)
-    .where(eq(sprints.id, cycleId))
-    .limit(1);
+  const [cycle] = await db.select().from(sprints).where(eq(sprints.id, cycleId)).limit(1);
 
   if (!cycle) {
     return NextResponse.json({ error: 'Cycle not found' }, { status: 404 });
@@ -55,17 +51,19 @@ export async function POST(
     .where(eq(users.id, userId))
     .limit(1);
 
+  // Resolved unconditionally so realtime events below can carry the
+  // organizationId (the SSE stream drops org-less events).
+  const [project] = await db
+    .select({ organizationId: projects.organizationId })
+    .from(projects)
+    .where(eq(projects.id, cycle.projectId))
+    .limit(1);
+
+  if (!project) {
+    return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+  }
+
   if (!user?.isSuperAdmin) {
-    const [project] = await db
-      .select({ organizationId: projects.organizationId })
-      .from(projects)
-      .where(eq(projects.id, cycle.projectId))
-      .limit(1);
-
-    if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
-    }
-
     const [orgMember] = await db
       .select({ role: organizationMembers.role })
       .from(organizationMembers)
@@ -82,30 +80,20 @@ export async function POST(
         .select()
         .from(projectMembers)
         .where(
-          and(
-            eq(projectMembers.userId, userId),
-            eq(projectMembers.projectId, cycle.projectId)
-          )
+          and(eq(projectMembers.userId, userId), eq(projectMembers.projectId, cycle.projectId))
         )
         .limit(1);
 
       if (!projectMember) {
-        return NextResponse.json(
-          { error: 'Not a project member' },
-          { status: 403 }
-        );
+        return NextResponse.json({ error: 'Not a project member' }, { status: 403 });
       }
 
       const roleDefaults =
         ROLE_DEFAULT_PERMISSIONS[projectMember.role as ProjectRole] ||
         ROLE_DEFAULT_PERMISSIONS.viewer;
-      const allowed =
-        projectMember.canManageSprints === 'true' || roleDefaults.canManageSprints;
+      const allowed = projectMember.canManageSprints === 'true' || roleDefaults.canManageSprints;
       if (!allowed) {
-        return NextResponse.json(
-          { error: 'No permission to manage sprints' },
-          { status: 403 }
-        );
+        return NextResponse.json({ error: 'No permission to manage sprints' }, { status: 403 });
       }
     }
   }
@@ -115,11 +103,13 @@ export async function POST(
   publishEvent('sprint.updated', userId, {
     projectId: cycle.projectId,
     sprintId: cycleId,
+    organizationId: project.organizationId,
   });
   if (result.nextCycleId) {
     publishEvent('sprint.updated', userId, {
       projectId: cycle.projectId,
       sprintId: result.nextCycleId,
+      organizationId: project.organizationId,
     });
   }
 

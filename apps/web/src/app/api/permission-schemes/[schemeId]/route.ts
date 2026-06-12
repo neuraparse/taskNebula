@@ -2,6 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, permissionSchemes, projectPermissionSchemes } from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
+import { isActiveOrganizationMember } from '@/lib/auth/access-control';
+import { hasPermission } from '@/lib/auth/permissions';
+
+/**
+ * Authorize access against the scheme row's organization (never client input).
+ * Non-members get 'not-found' (404) so cross-org probing cannot confirm the
+ * scheme exists; members without org:settings get 'forbidden' (403).
+ */
+async function authorizeSchemeAccess(
+  userId: string,
+  organizationId: string
+): Promise<'ok' | 'not-found' | 'forbidden'> {
+  if (!(await isActiveOrganizationMember(userId, organizationId))) return 'not-found';
+  if (!(await hasPermission(organizationId, 'org:settings'))) return 'forbidden';
+  return 'ok';
+}
 
 // GET /api/permission-schemes/[schemeId] - Get a specific permission scheme
 export async function GET(
@@ -23,6 +39,14 @@ export async function GET(
 
     if (!scheme) {
       return NextResponse.json({ error: 'Permission scheme not found' }, { status: 404 });
+    }
+
+    const access = await authorizeSchemeAccess(session.user.id, scheme.organizationId);
+    if (access === 'not-found') {
+      return NextResponse.json({ error: 'Permission scheme not found' }, { status: 404 });
+    }
+    if (access === 'forbidden') {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
     // Get projects using this scheme
@@ -66,6 +90,14 @@ export async function PATCH(
       return NextResponse.json({ error: 'Permission scheme not found' }, { status: 404 });
     }
 
+    const access = await authorizeSchemeAccess(session.user.id, existingScheme.organizationId);
+    if (access === 'not-found') {
+      return NextResponse.json({ error: 'Permission scheme not found' }, { status: 404 });
+    }
+    if (access === 'forbidden') {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
+
     // If setting as default, unset other defaults
     if (isDefault) {
       await db
@@ -107,6 +139,23 @@ export async function DELETE(
 
     const { schemeId } = await params;
 
+    const [existingScheme] = await db
+      .select()
+      .from(permissionSchemes)
+      .where(eq(permissionSchemes.id, schemeId));
+
+    if (!existingScheme) {
+      return NextResponse.json({ error: 'Permission scheme not found' }, { status: 404 });
+    }
+
+    const access = await authorizeSchemeAccess(session.user.id, existingScheme.organizationId);
+    if (access === 'not-found') {
+      return NextResponse.json({ error: 'Permission scheme not found' }, { status: 404 });
+    }
+    if (access === 'forbidden') {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
+
     // Check if scheme is in use
     const projectAssignments = await db
       .select()
@@ -128,4 +177,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-

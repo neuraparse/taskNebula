@@ -1,15 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, issueSecuritySchemes, projectSecuritySchemes } from '@tasknebula/db';
+import { db, issueSecuritySchemes, projectSecuritySchemes, projects } from '@tasknebula/db';
 import { and, eq } from 'drizzle-orm';
 import { resolveProjectByIdOrKey } from '@/lib/projects/server';
+import { isActiveOrganizationMember } from '@/lib/auth/access-control';
+import { hasPermission } from '@/lib/auth/permissions';
 
-async function getSecuritySchemeState(projectIdOrKey: string) {
-  const project = await resolveProjectByIdOrKey(projectIdOrKey);
-  if (!project) {
-    return null;
+type ProjectRow = typeof projects.$inferSelect;
+
+/**
+ * Authorize against the PROJECT's organization (never client input).
+ * Non-members get 404 so cross-org probing cannot confirm the project
+ * exists; org members without `org:settings` get 403.
+ */
+async function authorizeProjectSchemeAccess(
+  userId: string,
+  project: ProjectRow
+): Promise<NextResponse | null> {
+  if (!(await isActiveOrganizationMember(userId, project.organizationId))) {
+    return NextResponse.json({ error: 'Project not found' }, { status: 404 });
   }
+  if (!(await hasPermission(project.organizationId, 'org:settings'))) {
+    return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+  }
+  return null;
+}
 
+async function getSecuritySchemeState(project: ProjectRow) {
   const [assignment] = await db
     .select()
     .from(projectSecuritySchemes)
@@ -37,7 +54,12 @@ async function getSecuritySchemeState(projectIdOrKey: string) {
       isDefault: issueSecuritySchemes.isDefault,
     })
     .from(issueSecuritySchemes)
-    .where(and(eq(issueSecuritySchemes.organizationId, project.organizationId), eq(issueSecuritySchemes.isDefault, true)))
+    .where(
+      and(
+        eq(issueSecuritySchemes.organizationId, project.organizationId),
+        eq(issueSecuritySchemes.isDefault, true)
+      )
+    )
     .limit(1);
 
   const effectiveScheme = assignedScheme ?? defaultScheme ?? null;
@@ -63,11 +85,17 @@ export async function GET(
   const { projectId } = await params;
 
   try {
-    const state = await getSecuritySchemeState(projectId);
-    if (!state) {
+    const project = await resolveProjectByIdOrKey(projectId, session.user.id);
+    if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
+    const denied = await authorizeProjectSchemeAccess(session.user.id, project);
+    if (denied) {
+      return denied;
+    }
+
+    const state = await getSecuritySchemeState(project);
     return NextResponse.json(state);
   } catch (error) {
     console.error('Error fetching project security scheme:', error);
@@ -89,21 +117,34 @@ export async function PATCH(
   try {
     const body = await request.json();
     const schemeId = body?.schemeId ?? null;
-    const project = await resolveProjectByIdOrKey(projectId);
+    const project = await resolveProjectByIdOrKey(projectId, session.user.id);
 
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const denied = await authorizeProjectSchemeAccess(session.user.id, project);
+    if (denied) {
+      return denied;
     }
 
     if (schemeId) {
       const [scheme] = await db
         .select({ id: issueSecuritySchemes.id })
         .from(issueSecuritySchemes)
-        .where(and(eq(issueSecuritySchemes.id, schemeId), eq(issueSecuritySchemes.organizationId, project.organizationId)))
+        .where(
+          and(
+            eq(issueSecuritySchemes.id, schemeId),
+            eq(issueSecuritySchemes.organizationId, project.organizationId)
+          )
+        )
         .limit(1);
 
       if (!scheme) {
-        return NextResponse.json({ error: 'Security scheme not found for this organization' }, { status: 404 });
+        return NextResponse.json(
+          { error: 'Security scheme not found for this organization' },
+          { status: 404 }
+        );
       }
     }
 
@@ -117,10 +158,13 @@ export async function PATCH(
       });
     }
 
-    const state = await getSecuritySchemeState(project.id);
+    const state = await getSecuritySchemeState(project);
     return NextResponse.json(state);
   } catch (error) {
     console.error('Error updating project security scheme:', error);
-    return NextResponse.json({ error: 'Failed to update project security scheme' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to update project security scheme' },
+      { status: 500 }
+    );
   }
 }

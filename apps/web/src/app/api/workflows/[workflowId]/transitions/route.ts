@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, workflowTransitions, workflowStatuses } from '@tasknebula/db';
+import { db, workflowTransitions, workflowStatuses, workflows } from '@tasknebula/db';
 import { eq } from 'drizzle-orm';
+import { isActiveOrganizationMember } from '@/lib/auth/access-control';
+import { hasPermission } from '@/lib/auth/permissions';
 
 // GET /api/workflows/[workflowId]/transitions - Get all transitions
 export async function GET(
@@ -15,6 +17,20 @@ export async function GET(
     }
 
     const { workflowId } = await params;
+
+    const [workflow] = await db
+      .select({ organizationId: workflows.organizationId })
+      .from(workflows)
+      .where(eq(workflows.id, workflowId))
+      .limit(1);
+
+    // 404 (not 403) so cross-org probing cannot confirm the workflow exists
+    if (
+      !workflow ||
+      !(await isActiveOrganizationMember(session.user.id, workflow.organizationId))
+    ) {
+      return NextResponse.json({ error: 'Workflow not found' }, { status: 404 });
+    }
 
     const transitions = await db
       .select()
@@ -48,6 +64,25 @@ export async function POST(
         { error: 'Name, fromStatusId, and toStatusId are required' },
         { status: 400 }
       );
+    }
+
+    const [workflow] = await db
+      .select({ organizationId: workflows.organizationId })
+      .from(workflows)
+      .where(eq(workflows.id, workflowId))
+      .limit(1);
+
+    // 404 (not 403) so cross-org probing cannot confirm the workflow exists
+    if (
+      !workflow ||
+      !(await isActiveOrganizationMember(session.user.id, workflow.organizationId))
+    ) {
+      return NextResponse.json({ error: 'Workflow not found' }, { status: 404 });
+    }
+
+    const canManage = await hasPermission(workflow.organizationId, 'org:settings');
+    if (!canManage) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
     const [transition] = await db

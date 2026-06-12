@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db, permissionSchemes, projectPermissionSchemes } from '@tasknebula/db';
 import { eq, and, desc, inArray } from 'drizzle-orm';
 import { PERMISSION_KEYS, ROLE_DEFAULT_PERMISSIONS } from '@tasknebula/db';
+import { hasPermission } from '@/lib/auth/permissions';
 
 // GET /api/permission-schemes - List all permission schemes for an organization
 export async function GET(request: NextRequest) {
@@ -17,6 +18,11 @@ export async function GET(request: NextRequest) {
 
     if (!organizationId) {
       return NextResponse.json({ error: 'Organization ID is required' }, { status: 400 });
+    }
+
+    const canView = await hasPermission(organizationId, 'org:settings');
+    if (!canView) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
     const schemes = await db
@@ -75,10 +81,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Organization ID and name are required' }, { status: 400 });
     }
 
+    const canManage = await hasPermission(organizationId, 'org:settings');
+    if (!canManage) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
+
     // If baseRole is provided, use its default permissions
     let schemePermissions = permissions || {};
     if (baseRole && ROLE_DEFAULT_PERMISSIONS[baseRole as keyof typeof ROLE_DEFAULT_PERMISSIONS]) {
-      schemePermissions = ROLE_DEFAULT_PERMISSIONS[baseRole as keyof typeof ROLE_DEFAULT_PERMISSIONS];
+      schemePermissions =
+        ROLE_DEFAULT_PERMISSIONS[baseRole as keyof typeof ROLE_DEFAULT_PERMISSIONS];
     }
 
     // If this is set as default, unset other defaults

@@ -11,7 +11,14 @@
 -- 3. Adds `last_seen_at` to users so the dashboard "Welcome back" banner can
 --    decide when to surface a "Catch me up" prompt (> 4h since last seen).
 
-CREATE TYPE "notification_actor_type" AS ENUM ('user', 'agent', 'webhook', 'system');
+-- DO-block so the migration stays idempotent: the repaired journal
+-- (_journal.json renumber, 2026-06) can legitimately re-run this file on
+-- databases that stopped mid-way through the 2026-05 migration block.
+DO $$ BEGIN
+  CREATE TYPE "notification_actor_type" AS ENUM ('user', 'agent', 'webhook', 'system');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 ALTER TABLE "notifications"
   ADD COLUMN IF NOT EXISTS "snoozed_until" timestamp with time zone;

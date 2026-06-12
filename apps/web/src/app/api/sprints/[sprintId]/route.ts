@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, sprints, issues, workflowStatuses, projects, projectMembers, organizationMembers, users, ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from '@tasknebula/db';
+import {
+  db,
+  sprints,
+  issues,
+  workflowStatuses,
+  projects,
+  projectMembers,
+  organizationMembers,
+  users,
+  ROLE_DEFAULT_PERMISSIONS,
+  type ProjectRole,
+} from '@tasknebula/db';
 import { eq, count, and, ne } from 'drizzle-orm';
 import { publishEvent } from '@/lib/realtime/events';
 import { runAutomations } from '@/lib/automation/evaluator';
@@ -11,7 +22,7 @@ async function checkSprintPermission(
   userId: string,
   projectId: string,
   action: 'view' | 'manage' | 'start' | 'complete' | 'delete'
-): Promise<{ allowed: boolean; reason?: string }> {
+): Promise<{ allowed: boolean; reason?: string; notFound?: boolean }> {
   // Get user super admin status
   const [user] = await db
     .select({ isSuperAdmin: users.isSuperAdmin })
@@ -34,7 +45,7 @@ async function checkSprintPermission(
     .limit(1);
 
   if (!project) {
-    return { allowed: false, reason: 'Project not found' };
+    return { allowed: false, reason: 'Project not found', notFound: true };
   }
 
   // Check organization membership
@@ -58,17 +69,17 @@ async function checkSprintPermission(
   const [projectMember] = await db
     .select()
     .from(projectMembers)
-    .where(
-      and(
-        eq(projectMembers.userId, userId),
-        eq(projectMembers.projectId, projectId)
-      )
-    )
+    .where(and(eq(projectMembers.userId, userId), eq(projectMembers.projectId, projectId)))
     .limit(1);
 
   if (!projectMember) {
     if (orgMember?.role === 'admin' && action === 'view') {
       return { allowed: true };
+    }
+    if (!orgMember) {
+      // Cross-org probe: report the sprint as not found so its existence
+      // is not leaked to other tenants.
+      return { allowed: false, reason: 'Sprint not found', notFound: true };
     }
     return { allowed: false, reason: 'Not a project member' };
   }
@@ -78,7 +89,8 @@ async function checkSprintPermission(
   }
 
   // Get role defaults
-  const roleDefaults = ROLE_DEFAULT_PERMISSIONS[projectMember.role as ProjectRole] || ROLE_DEFAULT_PERMISSIONS.viewer;
+  const roleDefaults =
+    ROLE_DEFAULT_PERMISSIONS[projectMember.role as ProjectRole] || ROLE_DEFAULT_PERMISSIONS.viewer;
   const toBool = (val: string | null | undefined): boolean => val === 'true';
 
   // Check specific permissions based on action
@@ -125,19 +137,19 @@ export async function GET(
   const { sprintId } = await params;
 
   try {
-    const [sprint] = await db
-      .select()
-      .from(sprints)
-      .where(eq(sprints.id, sprintId))
-      .limit(1);
+    const [sprint] = await db.select().from(sprints).where(eq(sprints.id, sprintId)).limit(1);
 
     if (!sprint) {
       return NextResponse.json({ error: 'Sprint not found' }, { status: 404 });
     }
 
-    // Permission check: caller must be able to view this sprint
+    // Permission check: caller must be able to view this sprint. Cross-org
+    // probes get a 404 so sprint existence is not leaked.
     const permission = await checkSprintPermission(session.user.id, sprint.projectId, 'view');
     if (!permission.allowed) {
+      if (permission.notFound) {
+        return NextResponse.json({ error: 'Sprint not found' }, { status: 404 });
+      }
       return NextResponse.json(
         { error: permission.reason || 'Permission denied' },
         { status: 403 }
@@ -206,9 +218,17 @@ export async function PATCH(
       requiredAction = 'complete';
     }
 
-    // Check permission
-    const permission = await checkSprintPermission(session.user.id, currentSprint.projectId, requiredAction);
+    // Check permission. Cross-org probes get a 404 so sprint existence is
+    // not leaked.
+    const permission = await checkSprintPermission(
+      session.user.id,
+      currentSprint.projectId,
+      requiredAction
+    );
     if (!permission.allowed) {
+      if (permission.notFound) {
+        return NextResponse.json({ error: 'Sprint not found' }, { status: 404 });
+      }
       return NextResponse.json(
         { error: permission.reason || 'Permission denied' },
         { status: 403 }
@@ -244,10 +264,7 @@ export async function PATCH(
     const newEndDate = endDate ? new Date(endDate) : currentSprint.endDate;
 
     if (newEndDate <= newStartDate) {
-      return NextResponse.json(
-        { error: 'End date must be after start date' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'End date must be after start date' }, { status: 400 });
     }
 
     const updateData: Record<string, unknown> = {
@@ -309,20 +326,29 @@ export async function PATCH(
         .leftJoin(workflowStatuses, eq(issues.statusId, workflowStatuses.id))
         .where(eq(issues.sprintId, sprintId));
 
-      response.completedIssuesCount = remainingIssues.filter((i) => i.statusCategory === 'done').length;
+      response.completedIssuesCount = remainingIssues.filter(
+        (i) => i.statusCategory === 'done'
+      ).length;
       response.movedToBacklogCount = movedToBacklogCount;
     }
+
+    // Sprints carry no organization_id column; resolve it via the project so
+    // the realtime event survives the SSE stream's org filter.
+    const [sprintProject] = await db
+      .select({ organizationId: projects.organizationId })
+      .from(projects)
+      .where(eq(projects.id, currentSprint.projectId))
+      .limit(1);
 
     publishEvent('sprint.updated', session.user.id, {
       projectId: currentSprint.projectId,
       sprintId,
+      organizationId: sprintProject?.organizationId,
     });
 
     // Fire automation triggers + notifications on status transitions.
-    const transitionedToActive =
-      status === 'active' && currentSprint.status === 'planned';
-    const transitionedToCompleted =
-      status === 'completed' && currentSprint.status === 'active';
+    const transitionedToActive = status === 'active' && currentSprint.status === 'planned';
+    const transitionedToCompleted = status === 'completed' && currentSprint.status === 'active';
 
     if ((transitionedToActive || transitionedToCompleted) && updatedSprint) {
       const [projectForEvents] = await db
@@ -337,9 +363,7 @@ export async function PATCH(
         .limit(1);
 
       if (projectForEvents) {
-        const trigger = transitionedToActive
-          ? 'sprint.started'
-          : 'sprint.completed';
+        const trigger = transitionedToActive ? 'sprint.started' : 'sprint.completed';
 
         void runAutomations({
           trigger,
@@ -353,15 +377,12 @@ export async function PATCH(
             },
           },
           actorUserId: session.user.id,
-        }).catch((err) =>
-          console.error(`Failed to run ${trigger} automations:`, err)
-        );
+        }).catch((err) => console.error(`Failed to run ${trigger} automations:`, err));
 
         try {
           const stats = transitionedToCompleted
             ? {
-                issueCount:
-                  Number(response.completedIssuesCount ?? 0) + movedToBacklogCount,
+                issueCount: Number(response.completedIssuesCount ?? 0) + movedToBacklogCount,
                 completedCount: Number(response.completedIssuesCount ?? 0),
                 carriedOverCount: movedToBacklogCount,
               }
@@ -417,9 +438,13 @@ export async function DELETE(
       return NextResponse.json({ error: 'Sprint not found' }, { status: 404 });
     }
 
-    // Check permission to delete sprints
+    // Check permission to delete sprints. Cross-org probes get a 404 so
+    // sprint existence is not leaked.
     const permission = await checkSprintPermission(session.user.id, sprint.projectId, 'delete');
     if (!permission.allowed) {
+      if (permission.notFound) {
+        return NextResponse.json({ error: 'Sprint not found' }, { status: 404 });
+      }
       return NextResponse.json(
         { error: permission.reason || 'Permission denied' },
         { status: 403 }
@@ -439,18 +464,24 @@ export async function DELETE(
       );
     }
 
-    const [deletedSprint] = await db
-      .delete(sprints)
-      .where(eq(sprints.id, sprintId))
-      .returning();
+    const [deletedSprint] = await db.delete(sprints).where(eq(sprints.id, sprintId)).returning();
 
     if (!deletedSprint) {
       return NextResponse.json({ error: 'Sprint not found' }, { status: 404 });
     }
 
+    // Sprints carry no organization_id column; resolve it via the project so
+    // the realtime event survives the SSE stream's org filter.
+    const [sprintProject] = await db
+      .select({ organizationId: projects.organizationId })
+      .from(projects)
+      .where(eq(projects.id, sprint.projectId))
+      .limit(1);
+
     publishEvent('sprint.deleted', session.user.id, {
       projectId: sprint.projectId,
       sprintId,
+      organizationId: sprintProject?.organizationId,
     });
 
     return NextResponse.json({ success: true });
@@ -459,4 +490,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Failed to delete sprint' }, { status: 500 });
   }
 }
-

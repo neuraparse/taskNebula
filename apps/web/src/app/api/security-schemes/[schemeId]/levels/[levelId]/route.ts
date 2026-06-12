@@ -2,6 +2,48 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, issueSecurityLevels, issueSecurityLevelMembers, issues } from '@tasknebula/db';
 import { eq } from 'drizzle-orm';
+import { authorizeSecuritySchemeAccess } from '../../../utils';
+
+type SecurityLevelRow = typeof issueSecurityLevels.$inferSelect;
+
+/**
+ * Resolve the level within the scheme from the URL, then authorize against
+ * the scheme row's organization. Returns a NextResponse on denial:
+ * 404 when the level/scheme does not exist, belongs to another scheme, or
+ * the caller is not in the scheme's organization (no cross-org probing);
+ * 403 when the caller is an org member without `org:settings`.
+ */
+async function authorizeLevelAccess(
+  userId: string,
+  schemeId: string,
+  levelId: string
+): Promise<{ level: SecurityLevelRow } | { errorResponse: NextResponse }> {
+  const [level] = await db
+    .select()
+    .from(issueSecurityLevels)
+    .where(eq(issueSecurityLevels.id, levelId))
+    .limit(1);
+
+  if (!level || level.schemeId !== schemeId) {
+    return {
+      errorResponse: NextResponse.json({ error: 'Security level not found' }, { status: 404 }),
+    };
+  }
+
+  const access = await authorizeSecuritySchemeAccess(userId, schemeId);
+  if (access.status === 'not-found') {
+    return {
+      errorResponse: NextResponse.json({ error: 'Security level not found' }, { status: 404 }),
+    };
+  }
+  if (access.status === 'forbidden') {
+    return {
+      errorResponse: NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 }),
+    };
+  }
+
+  return { level };
+}
 
 // GET /api/security-schemes/[schemeId]/levels/[levelId] - Get a specific level
 export async function GET(
@@ -14,16 +56,13 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { levelId } = await params;
+    const { schemeId, levelId } = await params;
 
-    const [level] = await db
-      .select()
-      .from(issueSecurityLevels)
-      .where(eq(issueSecurityLevels.id, levelId));
-
-    if (!level) {
-      return NextResponse.json({ error: 'Security level not found' }, { status: 404 });
+    const result = await authorizeLevelAccess(session.user.id, schemeId, levelId);
+    if ('errorResponse' in result) {
+      return result.errorResponse;
     }
+    const level = result.level;
 
     const members = await db
       .select()
@@ -52,13 +91,9 @@ export async function PATCH(
     const body = await request.json();
     const { name, description, isDefault, members } = body;
 
-    const [existingLevel] = await db
-      .select()
-      .from(issueSecurityLevels)
-      .where(eq(issueSecurityLevels.id, levelId));
-
-    if (!existingLevel) {
-      return NextResponse.json({ error: 'Security level not found' }, { status: 404 });
+    const result = await authorizeLevelAccess(session.user.id, schemeId, levelId);
+    if ('errorResponse' in result) {
+      return result.errorResponse;
     }
 
     if (isDefault) {
@@ -82,8 +117,10 @@ export async function PATCH(
     // Update members if provided
     if (members && Array.isArray(members)) {
       // Delete existing members
-      await db.delete(issueSecurityLevelMembers).where(eq(issueSecurityLevelMembers.levelId, levelId));
-      
+      await db
+        .delete(issueSecurityLevelMembers)
+        .where(eq(issueSecurityLevelMembers.levelId, levelId));
+
       // Add new members
       for (const member of members) {
         await db.insert(issueSecurityLevelMembers).values({
@@ -117,7 +154,12 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { levelId } = await params;
+    const { schemeId, levelId } = await params;
+
+    const result = await authorizeLevelAccess(session.user.id, schemeId, levelId);
+    if ('errorResponse' in result) {
+      return result.errorResponse;
+    }
 
     // Check if level is in use by any issues
     const issuesWithLevel = await db
@@ -141,4 +183,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-

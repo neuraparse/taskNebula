@@ -23,9 +23,10 @@ export const registry = new OpenAPIRegistry();
 export const TAGS = {
   Issues: 'Issues',
   Comments: 'Comments',
-  Transitions: 'Transitions',
   Projects: 'Projects',
-  Cycles: 'Cycles',
+  Labels: 'Labels',
+  Versions: 'Versions',
+  Components: 'Components',
   Users: 'Users',
   Search: 'Search',
   Health: 'Health',
@@ -52,10 +53,13 @@ export interface RegisterRouteInput {
       content: { 'application/json': { schema: z.ZodTypeAny } };
     };
   };
-  responses: Record<string, {
-    description: string;
-    content?: { 'application/json': { schema: z.ZodTypeAny } };
-  }>;
+  responses: Record<
+    string,
+    {
+      description: string;
+      content?: { 'application/json': { schema: z.ZodTypeAny } };
+    }
+  >;
   security?: Array<Record<string, string[]>>;
 }
 
@@ -95,8 +99,7 @@ export function buildOpenApiDocument(opts?: { version?: string }): any {
       // Both prod (`__Secure-`) and dev (`authjs.session-token`) NextAuth
       // cookies map to the same conceptual scheme. We document the prod name.
       name: '__Secure-authjs.session-token',
-      description:
-        'NextAuth session cookie. In dev the cookie is named `authjs.session-token`.',
+      description: 'NextAuth session cookie. In dev the cookie is named `authjs.session-token`.',
     });
   } catch {
     // already registered — ignore

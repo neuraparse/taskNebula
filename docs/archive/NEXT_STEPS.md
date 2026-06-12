@@ -1,3 +1,5 @@
+> ARCHIVED 2026-06-12 — historical snapshot, superseded by docs/AUDIT_2026-06.md and README. Claims below describe Nov-2025-era state.
+
 # 🚀 Next Steps for TaskNebula
 
 ## Phase 1 ✅ COMPLETE
@@ -5,6 +7,7 @@
 Congratulations! The foundation is solid. Here's what we've built:
 
 ### Infrastructure ✅
+
 - ✅ Monorepo with Turborepo + pnpm workspaces
 - ✅ Next.js 15 + React 19 + TypeScript 5.7
 - ✅ Complete database schema (Drizzle ORM)
@@ -12,6 +15,7 @@ Congratulations! The foundation is solid. Here's what we've built:
 - ✅ Production build working
 
 ### UI & Components ✅
+
 - ✅ shadcn/ui + Tailwind CSS
 - ✅ Three-panel layout system
 - ✅ Command palette (⌘K)
@@ -20,16 +24,19 @@ Congratulations! The foundation is solid. Here's what we've built:
 - ✅ Dashboard
 
 ### Backend ✅
+
 - ✅ API routes (Issues, Comments)
 - ✅ Database seeder
 - ✅ Mock data for development
 
 ### AI Foundation ✅
+
 - ✅ LLM client abstraction
 - ✅ Prompt templates
 - ✅ AI UI pages
 
 ### Testing ✅
+
 - ✅ Jest + React Testing Library
 - ✅ Sample tests
 
@@ -38,6 +45,7 @@ Congratulations! The foundation is solid. Here's what we've built:
 ## Phase 2: Authentication & Real Data ✅ COMPLETE
 
 ### 1. Authentication ✅ COMPLETE
+
 - [x] Setup Auth.js (NextAuth v5)
 - [x] Add GitHub OAuth provider
 - [x] Add Google OAuth provider
@@ -47,6 +55,7 @@ Congratulations! The foundation is solid. Here's what we've built:
 - [x] Protect routes with middleware
 
 ### 2. Database Setup ✅ COMPLETE
+
 - [x] Setup PostgreSQL schema (19 tables)
 - [x] Create Drizzle migrations
 - [x] Database seeder with demo data
@@ -54,6 +63,7 @@ Congratulations! The foundation is solid. Here's what we've built:
 - [x] Migration scripts
 
 ### 3. Database Integration (Next Step)
+
 - [ ] Setup actual PostgreSQL database (Docker or Supabase)
 - [ ] Run migrations: `pnpm --filter=@tasknebula/db db:push`
 - [ ] Seed data: `pnpm --filter=@tasknebula/db db:seed`
@@ -64,6 +74,7 @@ Congratulations! The foundation is solid. Here's what we've built:
 **Estimated Time:** 1-2 days
 
 ### 3. Real-time Features (Medium Priority)
+
 - [ ] Choose WebSocket solution (Pusher, Ably, or Socket.io)
 - [ ] Implement real-time issue updates
 - [ ] Add presence indicators
@@ -77,6 +88,7 @@ Congratulations! The foundation is solid. Here's what we've built:
 ## Phase 3: Core Features
 
 ### 4. Complete Issue Management
+
 - [ ] Drag-and-drop for Kanban board
 - [ ] Issue creation modal
 - [ ] Issue editing inline
@@ -89,6 +101,7 @@ Congratulations! The foundation is solid. Here's what we've built:
 **Estimated Time:** 5-7 days
 
 ### 5. Project Management
+
 - [ ] Project creation/editing
 - [ ] Project settings
 - [ ] Team management
@@ -99,6 +112,7 @@ Congratulations! The foundation is solid. Here's what we've built:
 **Estimated Time:** 4-5 days
 
 ### 6. Additional Views
+
 - [ ] Timeline view (Gantt chart)
 - [ ] Roadmap view
 - [ ] Table view with sorting/filtering
@@ -112,6 +126,7 @@ Congratulations! The foundation is solid. Here's what we've built:
 ## Phase 4: AI Integration
 
 ### 7. Real AI Features
+
 - [ ] Integrate OpenAI API
 - [ ] Integrate Anthropic API
 - [ ] Smart ticket generation (working)
@@ -128,6 +143,7 @@ Congratulations! The foundation is solid. Here's what we've built:
 ## Phase 5: Polish & Launch
 
 ### 8. Performance & Optimization
+
 - [ ] Implement proper caching (React Query)
 - [ ] Optimize database queries
 - [ ] Add loading states everywhere
@@ -138,6 +154,7 @@ Congratulations! The foundation is solid. Here's what we've built:
 **Estimated Time:** 3-4 days
 
 ### 9. Testing & Quality
+
 - [ ] Write comprehensive unit tests
 - [ ] Add integration tests
 - [ ] E2E tests with Playwright
@@ -148,6 +165,7 @@ Congratulations! The foundation is solid. Here's what we've built:
 **Estimated Time:** 5-7 days
 
 ### 10. Documentation & Deployment
+
 - [ ] User documentation
 - [ ] API documentation
 - [ ] Deployment guide
@@ -193,10 +211,10 @@ pnpm db:studio      # Open Drizzle Studio
 **Start with Phase 2, Step 1: Authentication**
 
 This is the most critical next step because:
+
 1. It unlocks user-specific features
 2. Required for multi-tenancy
 3. Needed for real database integration
 4. Foundation for all other features
 
 Good luck! 🚀
-

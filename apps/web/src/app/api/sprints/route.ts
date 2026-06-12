@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, sprints, issues, projects, projectMembers, organizationMembers, users } from '@tasknebula/db';
+import {
+  db,
+  sprints,
+  issues,
+  projects,
+  projectMembers,
+  organizationMembers,
+  users,
+} from '@tasknebula/db';
 import { eq, and, desc, count, inArray } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { publishEvent } from '@/lib/realtime/events';
@@ -10,7 +18,7 @@ async function checkSprintPermission(
   userId: string,
   projectId: string,
   action: 'view' | 'create' | 'manage'
-): Promise<{ allowed: boolean; reason?: string }> {
+): Promise<{ allowed: boolean; reason?: string; notFound?: boolean }> {
   // Get user super admin status
   const [user] = await db
     .select({ isSuperAdmin: users.isSuperAdmin })
@@ -33,7 +41,7 @@ async function checkSprintPermission(
     .limit(1);
 
   if (!project) {
-    return { allowed: false, reason: 'Project not found' };
+    return { allowed: false, reason: 'Project not found', notFound: true };
   }
 
   // Check organization membership
@@ -60,12 +68,7 @@ async function checkSprintPermission(
       canManageSprints: projectMembers.canManageSprints,
     })
     .from(projectMembers)
-    .where(
-      and(
-        eq(projectMembers.userId, userId),
-        eq(projectMembers.projectId, projectId)
-      )
-    )
+    .where(and(eq(projectMembers.userId, userId), eq(projectMembers.projectId, projectId)))
     .limit(1);
 
   if (!projectMember) {
@@ -73,12 +76,18 @@ async function checkSprintPermission(
     if (orgMember?.role === 'admin' && action === 'view') {
       return { allowed: true };
     }
+    if (!orgMember) {
+      // Cross-org probe: report the project as not found so its existence
+      // is not leaked to other tenants.
+      return { allowed: false, reason: 'Project not found', notFound: true };
+    }
     return { allowed: false, reason: 'Not a project member' };
   }
 
   // Check role-based permissions
   const sprintManageRoles = ['product_owner', 'scrum_master', 'tech_lead'];
-  const canManage = sprintManageRoles.includes(projectMember.role) || projectMember.canManageSprints;
+  const canManage =
+    sprintManageRoles.includes(projectMember.role) || projectMember.canManageSprints;
 
   if (action === 'view') {
     return { allowed: true };
@@ -130,6 +139,19 @@ export async function GET(request: NextRequest) {
     const projectId = await resolveProjectId(projectIdParam);
     if (!projectId) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    // Permission check: caller must be able to view this project's sprints.
+    // Cross-org probes get a 404 so project existence is not leaked.
+    const permission = await checkSprintPermission(session.user.id, projectId, 'view');
+    if (!permission.allowed) {
+      if (permission.notFound) {
+        return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+      }
+      return NextResponse.json(
+        { error: permission.reason || 'Permission denied' },
+        { status: 403 }
+      );
     }
 
     // Fetch sprints with issue counts
@@ -205,9 +227,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    // Check permission to create sprints
+    // Check permission to create sprints. Cross-org probes get a 404 so
+    // project existence is not leaked.
     const permission = await checkSprintPermission(session.user.id, projectId, 'create');
     if (!permission.allowed) {
+      if (permission.notFound) {
+        return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+      }
       return NextResponse.json(
         { error: permission.reason || 'Permission denied' },
         { status: 403 }
@@ -219,17 +245,11 @@ export async function POST(request: NextRequest) {
     const end = new Date(endDate);
 
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      return NextResponse.json(
-        { error: 'Invalid date format' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid date format' }, { status: 400 });
     }
 
     if (end <= start) {
-      return NextResponse.json(
-        { error: 'End date must be after start date' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'End date must be after start date' }, { status: 400 });
     }
 
     // Sprint duration should be reasonable (1-90 days)
@@ -261,9 +281,18 @@ export async function POST(request: NextRequest) {
       throw new Error('Failed to create sprint');
     }
 
+    // Sprints carry no organization_id column; resolve it via the project so
+    // the realtime event survives the SSE stream's org filter.
+    const [sprintProject] = await db
+      .select({ organizationId: projects.organizationId })
+      .from(projects)
+      .where(eq(projects.id, createdSprint.projectId))
+      .limit(1);
+
     publishEvent('sprint.created', session.user.id, {
       projectId: createdSprint.projectId,
       sprintId: createdSprint.id,
+      organizationId: sprintProject?.organizationId,
     });
 
     return NextResponse.json(createdSprint, { status: 201 });
@@ -272,4 +301,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to create sprint' }, { status: 500 });
   }
 }
-

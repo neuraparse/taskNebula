@@ -1,12 +1,15 @@
 import { auth } from '@/auth';
+import { db, organizationMembers, users } from '@tasknebula/db';
+import { and, eq } from 'drizzle-orm';
 import { eventBus, type RealtimeEvent } from '@/lib/realtime/events';
 
 export const dynamic = 'force-dynamic';
-// SSE keepalive: pure async iteration, no DB / fs / drizzle.
-// Auth happens via JWT (next-auth) which is edge-safe.
-// NOTE: kept on the Node runtime for now — `eventBus` is an in-process
-// EventEmitter, and on edge the route would not see events from Node
-// API routes. Once the bus is moved to Redis pub/sub we can flip this.
+// SSE stream: one membership snapshot query at connect, then pure async
+// iteration. Auth happens via JWT (next-auth).
+// NOTE: kept on the Node runtime — `eventBus` is an in-process EventEmitter
+// (and we query Drizzle at connect time); on edge the route would not see
+// events from Node API routes. Once the bus is moved to Redis pub/sub we can
+// revisit.
 // export const runtime = 'edge';
 
 export async function GET(request: Request) {
@@ -16,6 +19,26 @@ export async function GET(request: Request) {
   }
 
   const userId = session.user.id;
+
+  // Tenant isolation: snapshot the subscriber's active org memberships at
+  // connect time and only forward events for those organizations.
+  const [user] = await db
+    .select({ isSuperAdmin: users.isSuperAdmin })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  const isSuperAdmin = Boolean(user?.isSuperAdmin);
+
+  const memberships = isSuperAdmin
+    ? []
+    : await db
+        .select({ organizationId: organizationMembers.organizationId })
+        .from(organizationMembers)
+        .where(
+          and(eq(organizationMembers.userId, userId), eq(organizationMembers.status, 'active'))
+        );
+  const memberOrgIds = new Set(memberships.map((m) => m.organizationId));
+
   const encoder = new TextEncoder();
   let cleanup = () => {};
 
@@ -45,6 +68,13 @@ export async function GET(request: Request) {
       const unsubscribe = eventBus.subscribe((event: RealtimeEvent) => {
         // Don't send events back to the user who triggered them
         if (event.userId === userId) return;
+        // Tenant isolation: only forward events that provably belong to one
+        // of the subscriber's organizations. Events without an
+        // organizationId are dropped (fail closed) — publishers must attach
+        // organizationId for the event to be delivered.
+        if (!isSuperAdmin && (!event.organizationId || !memberOrgIds.has(event.organizationId))) {
+          return;
+        }
         send(`data: ${JSON.stringify(event)}\n\n`);
       });
 

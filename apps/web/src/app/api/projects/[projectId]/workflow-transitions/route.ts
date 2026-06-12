@@ -3,15 +3,18 @@ import { db, projects, workflows, workflowStatuses, workflowTransitions } from '
 import { auth } from '@/auth';
 import { eq, and } from 'drizzle-orm';
 import { resolveProjectByIdOrKey } from '@/lib/projects/server';
+import { canManageProject, canReadProject } from '@/lib/auth/access-control';
 
-async function resolveWorkflowId(project: { id: string; organizationId: string; defaultWorkflowId: string | null }) {
+async function resolveWorkflowId(project: {
+  id: string;
+  organizationId: string;
+  defaultWorkflowId: string | null;
+}) {
   if (project.defaultWorkflowId) return project.defaultWorkflowId;
   const [defaultWorkflow] = await db
     .select()
     .from(workflows)
-    .where(
-      and(eq(workflows.organizationId, project.organizationId), eq(workflows.isDefault, true))
-    )
+    .where(and(eq(workflows.organizationId, project.organizationId), eq(workflows.isDefault, true)))
     .limit(1);
   return defaultWorkflow?.id ?? null;
 }
@@ -24,13 +27,19 @@ export async function GET(
 ) {
   try {
     const session = await auth();
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { projectId } = await params;
-    const project = await resolveProjectByIdOrKey(projectId);
+    const project = await resolveProjectByIdOrKey(projectId, session.user.id);
     if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    // 404 (not 403) so cross-org probing cannot confirm the project exists
+    const canRead = await canReadProject(session.user.id, project);
+    if (!canRead) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
@@ -65,19 +74,33 @@ export async function PUT(
 ) {
   try {
     const session = await auth();
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { projectId } = await params;
-    const project = await resolveProjectByIdOrKey(projectId);
+    const project = await resolveProjectByIdOrKey(projectId, session.user.id);
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
+    // 404 (not 403) so cross-org probing cannot confirm the project exists
+    const canRead = await canReadProject(session.user.id, project);
+    if (!canRead) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const canManage = await canManageProject(session.user.id, project);
+    if (!canManage) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
+
     const workflowId = await resolveWorkflowId(project);
     if (!workflowId) {
-      return NextResponse.json({ error: 'Workflow not configured for this project' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Workflow not configured for this project' },
+        { status: 400 }
+      );
     }
 
     const body = await request.json().catch(() => null);
@@ -101,7 +124,10 @@ export async function PUT(
       }
       return {
         workflowId,
-        name: typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : `Transition ${raw.fromStatusId} → ${raw.toStatusId}`,
+        name:
+          typeof raw.name === 'string' && raw.name.trim()
+            ? raw.name.trim()
+            : `Transition ${raw.fromStatusId} → ${raw.toStatusId}`,
         fromStatusId: raw.fromStatusId as string,
         toStatusId: raw.toStatusId as string,
         conditions: raw.conditions ?? [],

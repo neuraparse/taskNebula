@@ -262,7 +262,7 @@ The 2026.05 roadmap merge introduced 34 features in a single push.
 - Agent-as-assignee with the Linear Agent Protocol.
 - Standup agent and stale-issue janitor (cron-driven AI).
 - Zod validator middleware for typed request handling.
-- Native charts dashboard (Tremor + Recharts) with AI-generated insights.
+- Native charts dashboard (Recharts) with AI-generated insights.
 
 See the [CHANGELOG](CHANGELOG.md) for the complete list.
 
@@ -341,7 +341,7 @@ See the [CHANGELOG](CHANGELOG.md) for the complete list.
 - Burndown, velocity, **cycle time**
 - Throughput + lead-time distributions
 - Project health scorecard
-- **Native charts** (Tremor + Recharts)
+- **Native charts** (Recharts)
 - **AI-generated insights** on dashboards
 - **Time-in-status** history per issue
 - CSV / JSON export

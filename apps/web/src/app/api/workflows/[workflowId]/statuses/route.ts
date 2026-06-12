@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, workflowStatuses, workflows } from '@tasknebula/db';
 import { desc, eq } from 'drizzle-orm';
+import { isActiveOrganizationMember } from '@/lib/auth/access-control';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export async function GET(
   _request: NextRequest,
@@ -14,6 +16,20 @@ export async function GET(
     }
 
     const { workflowId } = await params;
+
+    const [workflow] = await db
+      .select({ organizationId: workflows.organizationId })
+      .from(workflows)
+      .where(eq(workflows.id, workflowId))
+      .limit(1);
+
+    // 404 (not 403) so cross-org probing cannot confirm the workflow exists
+    if (
+      !workflow ||
+      !(await isActiveOrganizationMember(session.user.id, workflow.organizationId))
+    ) {
+      return NextResponse.json({ error: 'Workflow not found' }, { status: 404 });
+    }
 
     const statuses = await db
       .select()
@@ -43,17 +59,31 @@ export async function POST(
     const { name, category, color } = body;
 
     if (!name || !category || !color) {
-      return NextResponse.json({ error: 'Name, category, and color are required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Name, category, and color are required' },
+        { status: 400 }
+      );
     }
 
     const [workflow] = await db
-      .select({ id: workflows.id })
+      .select({ id: workflows.id, organizationId: workflows.organizationId })
       .from(workflows)
       .where(eq(workflows.id, workflowId))
       .limit(1);
 
     if (!workflow) {
       return NextResponse.json({ error: 'Workflow not found' }, { status: 404 });
+    }
+
+    // 404 (not 403) so cross-org probing cannot confirm the workflow exists
+    const isMember = await isActiveOrganizationMember(session.user.id, workflow.organizationId);
+    if (!isMember) {
+      return NextResponse.json({ error: 'Workflow not found' }, { status: 404 });
+    }
+
+    const canManage = await hasPermission(workflow.organizationId, 'org:settings');
+    if (!canManage) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
     const [lastStatus] = await db

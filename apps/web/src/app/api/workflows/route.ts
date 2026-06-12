@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, workflows, workflowStatuses, workflowTransitions } from '@tasknebula/db';
 import { eq, desc, inArray } from 'drizzle-orm';
+import { isActiveOrganizationMember } from '@/lib/auth/access-control';
+import { hasPermission } from '@/lib/auth/permissions';
 
 // GET /api/workflows - List all workflows for an organization
 export async function GET(request: NextRequest) {
@@ -16,6 +18,11 @@ export async function GET(request: NextRequest) {
 
     if (!organizationId) {
       return NextResponse.json({ error: 'Organization ID is required' }, { status: 400 });
+    }
+
+    const isMember = await isActiveOrganizationMember(session.user.id, organizationId);
+    if (!isMember) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
     const workflowList = await db
@@ -75,6 +82,11 @@ export async function POST(request: NextRequest) {
 
     if (!organizationId || !name) {
       return NextResponse.json({ error: 'Organization ID and name are required' }, { status: 400 });
+    }
+
+    const canManage = await hasPermission(organizationId, 'org:settings');
+    if (!canManage) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
     // If this is set as default, unset other defaults

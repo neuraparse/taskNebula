@@ -6,6 +6,8 @@ import { CustomFieldManager } from '@/components/custom-fields/custom-field-mana
 import { PermissionManager } from '@/components/permissions/permission-manager';
 import { PermissionSchemeManager } from '@/components/permissions/permission-scheme-manager';
 import { IssueSecurityManager } from '@/components/security/issue-security-manager';
+import { VersionsManager } from '@/components/settings/versions-manager';
+import { ComponentsManager } from '@/components/settings/components-manager';
 import { WorkflowEditor } from '@/components/workflows/workflow-editor';
 import { AutomationManager } from '@/components/automation/automation-manager';
 import { WebhooksManager } from '@/components/settings/webhooks-manager';
@@ -24,7 +26,9 @@ import {
   Key,
   Webhook,
   Bot,
+  Boxes,
   MessageSquareText,
+  Rocket,
 } from 'lucide-react';
 
 const TABS = [
@@ -33,6 +37,8 @@ const TABS = [
   { value: 'schemes', label: 'Schemes', icon: Key },
   { value: 'security', label: 'Security', icon: Lock },
   { value: 'custom-fields', label: 'Custom Fields', icon: FileText },
+  { value: 'versions', label: 'Versions', icon: Rocket },
+  { value: 'components', label: 'Components', icon: Boxes },
   { value: 'workflows', label: 'Workflows', icon: Workflow },
   { value: 'automation', label: 'Automation', icon: Zap },
   { value: 'ai-agents', label: 'AI Agents', icon: Bot },
@@ -84,7 +90,7 @@ export function ProjectSettingsContent({
   if (!currentOrganizationId || permissionsLoading) {
     return (
       <div className="p-6">
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-muted-foreground text-sm">Loading…</p>
       </div>
     );
   }
@@ -93,7 +99,7 @@ export function ProjectSettingsContent({
     return (
       <div className="p-6">
         <div className="panel-danger rounded-lg p-6 text-center">
-          <p className="text-sm text-destructive">
+          <p className="text-destructive text-sm">
             You don&apos;t have permission to access project settings.
           </p>
         </div>
@@ -102,8 +108,12 @@ export function ProjectSettingsContent({
   }
 
   return (
-    <Tabs value={activeTab} onValueChange={handleTabChange} className="flex min-h-0 flex-1 flex-col">
-      <div className="border-b border-border bg-background">
+    <Tabs
+      value={activeTab}
+      onValueChange={handleTabChange}
+      className="flex min-h-0 flex-1 flex-col"
+    >
+      <div className="border-border bg-background border-b">
         <TabsList
           aria-label="Project settings sections"
           className="h-auto w-full justify-start gap-0 overflow-x-auto rounded-none bg-transparent p-0"
@@ -114,7 +124,7 @@ export function ProjectSettingsContent({
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="flex items-center gap-1.5 rounded-none border-b-2 border-transparent px-3 py-2 text-sm text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground"
+                className="text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-foreground flex items-center gap-1.5 rounded-none border-b-2 border-transparent px-3 py-2 text-sm data-[state=active]:bg-transparent"
               >
                 <Icon className="h-4 w-4" />
                 <span>{tab.label}</span>
@@ -143,6 +153,12 @@ export function ProjectSettingsContent({
             <CustomFieldManager organizationId={currentOrganizationId} projectId={projectId} />
           ) : null}
         </TabsContent>
+        <TabsContent value="versions" className="focus-visible:outline-none">
+          {activeTab === 'versions' ? <VersionsManager projectId={projectId} /> : null}
+        </TabsContent>
+        <TabsContent value="components" className="focus-visible:outline-none">
+          {activeTab === 'components' ? <ComponentsManager projectId={projectId} /> : null}
+        </TabsContent>
         <TabsContent value="workflows" className="focus-visible:outline-none">
           {activeTab === 'workflows' ? (
             <WorkflowEditor organizationId={currentOrganizationId} projectId={projectId} />
@@ -157,7 +173,9 @@ export function ProjectSettingsContent({
           {activeTab === 'ai-agents' ? <ProjectAiAgents projectId={projectId} /> : null}
         </TabsContent>
         <TabsContent value="chat-calls" className="focus-visible:outline-none">
-          {activeTab === 'chat-calls' ? <ProjectCommunicationsSettings projectId={projectId} /> : null}
+          {activeTab === 'chat-calls' ? (
+            <ProjectCommunicationsSettings projectId={projectId} />
+          ) : null}
         </TabsContent>
         <TabsContent value="webhooks" className="focus-visible:outline-none">
           {activeTab === 'webhooks' ? (

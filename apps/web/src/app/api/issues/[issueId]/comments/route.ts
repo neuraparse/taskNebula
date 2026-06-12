@@ -90,6 +90,10 @@ export const POST = withValidation({
       updatedBy: session.user.id,
     });
 
+    if (!newComment) {
+      return NextResponse.json({ error: 'Failed to create comment' }, { status: 500 });
+    }
+
     // Defer activity log, audit log, realtime publish, and notification
     // emails until after the response ships. The caller only needs the
     // newly-created comment payload to render optimistically.

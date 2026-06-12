@@ -1,4 +1,4 @@
-import type { AuditableEntity, ID } from './common';
+import type { AuditableEntity, BaseEntity, ID } from './common';
 
 // Project
 export interface Project extends AuditableEntity {
@@ -85,3 +85,32 @@ export interface Sprint extends AuditableEntity {
 }
 
 export type SprintStatus = 'planned' | 'active' | 'completed';
+
+// Project Version (Jira-style fix/affects version)
+export interface ProjectVersion extends BaseEntity {
+  organizationId: ID;
+  projectId: ID;
+  name: string;
+  description?: string | null;
+  status: VersionStatus;
+  startDate?: string | null;
+  releaseDate?: string | null; // Planned release date
+  releasedAt?: string | null; // Stamped when the version is released
+  sortOrder: number;
+  createdBy?: ID | null;
+}
+
+export type VersionStatus = 'unreleased' | 'released' | 'archived';
+
+// Component (Jira-style project component)
+export interface Component extends BaseEntity {
+  organizationId: ID;
+  projectId: ID;
+  name: string;
+  description?: string | null;
+  leadId?: ID | null;
+  defaultAssigneeType: ComponentDefaultAssigneeType;
+  archived: boolean;
+}
+
+export type ComponentDefaultAssigneeType = 'project_default' | 'component_lead' | 'unassigned';

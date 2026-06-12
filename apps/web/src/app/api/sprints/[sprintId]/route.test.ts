@@ -195,6 +195,28 @@ describe('/api/sprints/[sprintId] route', () => {
       await expect(response.json()).resolves.toEqual({ error: 'Sprint not found' });
     });
 
+    it('returns 404 when caller is not a member of the sprint organization', async () => {
+      authMock.mockResolvedValue({ user: { id: 'user-1' } });
+      dbSelectMock
+        .mockReturnValueOnce(
+          chainable([{ id: 's1', projectId: 'p1', name: 'Sprint 1', status: 'active' }])
+        )
+        // checkSprintPermission: not super admin
+        .mockReturnValueOnce(chainable([{ isSuperAdmin: false }]))
+        // project exists in another org
+        .mockReturnValueOnce(chainable([{ id: 'p1', organizationId: 'org-other' }]))
+        // no org membership (cross-org probe)
+        .mockReturnValueOnce(chainable([]))
+        // no project membership
+        .mockReturnValueOnce(chainable([]));
+
+      const response = await GET(new NextRequestCtor('http://localhost:3002/api/sprints/s1'), {
+        params: Promise.resolve({ sprintId: 's1' }),
+      });
+      expect(response.status).toBe(404);
+      await expect(response.json()).resolves.toEqual({ error: 'Sprint not found' });
+    });
+
     it('returns sprint with issue stats', async () => {
       authMock.mockResolvedValue({ user: { id: 'user-1' } });
       dbSelectMock
@@ -296,7 +318,9 @@ describe('/api/sprints/[sprintId] route', () => {
           ])
         )
         // super admin bypass
-        .mockReturnValueOnce(chainable([{ isSuperAdmin: true }]));
+        .mockReturnValueOnce(chainable([{ isSuperAdmin: true }]))
+        // project lookup resolving organizationId for the SSE event
+        .mockReturnValueOnce(chainable([{ organizationId: 'org-1' }]));
       dbUpdateMock.mockReturnValueOnce(
         updateReturning([{ id: 's1', projectId: 'p1', name: 'Renamed', status: 'planned' }])
       );
@@ -316,6 +340,7 @@ describe('/api/sprints/[sprintId] route', () => {
       expect(publishEventMock).toHaveBeenCalledWith('sprint.updated', 'user-1', {
         projectId: 'p1',
         sprintId: 's1',
+        organizationId: 'org-1',
       });
     });
 
@@ -405,7 +430,9 @@ describe('/api/sprints/[sprintId] route', () => {
       dbSelectMock
         .mockReturnValueOnce(chainable([{ projectId: 'p1' }]))
         .mockReturnValueOnce(chainable([{ isSuperAdmin: true }]))
-        .mockReturnValueOnce(chainable([{ count: 0 }]));
+        .mockReturnValueOnce(chainable([{ count: 0 }]))
+        // project lookup resolving organizationId for the SSE event
+        .mockReturnValueOnce(chainable([{ organizationId: 'org-1' }]));
       dbDeleteMock.mockReturnValueOnce(deleteReturning([{ id: 's1', projectId: 'p1' }]));
 
       const response = await DELETE(new NextRequestCtor('http://localhost:3002/api/sprints/s1'), {
@@ -417,6 +444,7 @@ describe('/api/sprints/[sprintId] route', () => {
       expect(publishEventMock).toHaveBeenCalledWith('sprint.deleted', 'user-1', {
         projectId: 'p1',
         sprintId: 's1',
+        organizationId: 'org-1',
       });
     });
   });

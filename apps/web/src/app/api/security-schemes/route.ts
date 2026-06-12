@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, issueSecuritySchemes, issueSecurityLevels, issueSecurityLevelMembers, projectSecuritySchemes } from '@tasknebula/db';
+import {
+  db,
+  issueSecuritySchemes,
+  issueSecurityLevels,
+  issueSecurityLevelMembers,
+  projectSecuritySchemes,
+} from '@tasknebula/db';
 import { eq, desc, inArray } from 'drizzle-orm';
+import { hasPermission } from '@/lib/auth/permissions';
 
 // GET /api/security-schemes - List all issue security schemes for an organization
 export async function GET(request: NextRequest) {
@@ -16,6 +23,11 @@ export async function GET(request: NextRequest) {
 
     if (!organizationId) {
       return NextResponse.json({ error: 'Organization ID is required' }, { status: 400 });
+    }
+
+    const canView = await hasPermission(organizationId, 'org:settings');
+    if (!canView) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
     const schemes = await db
@@ -104,6 +116,11 @@ export async function POST(request: NextRequest) {
 
     if (!organizationId || !name) {
       return NextResponse.json({ error: 'Organization ID and name are required' }, { status: 400 });
+    }
+
+    const canManage = await hasPermission(organizationId, 'org:settings');
+    if (!canManage) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
     // If this is set as default, unset other defaults

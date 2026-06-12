@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, workflows, workflowStatuses, workflowTransitions } from '@tasknebula/db';
 import { eq } from 'drizzle-orm';
+import { isActiveOrganizationMember } from '@/lib/auth/access-control';
+import { hasPermission } from '@/lib/auth/permissions';
 
 // GET /api/workflows/[workflowId] - Get a specific workflow with details
 export async function GET(
@@ -16,12 +18,15 @@ export async function GET(
 
     const { workflowId } = await params;
 
-    const [workflow] = await db
-      .select()
-      .from(workflows)
-      .where(eq(workflows.id, workflowId));
+    const [workflow] = await db.select().from(workflows).where(eq(workflows.id, workflowId));
 
     if (!workflow) {
+      return NextResponse.json({ error: 'Workflow not found' }, { status: 404 });
+    }
+
+    // 404 (not 403) so cross-org probing cannot confirm the workflow exists
+    const isMember = await isActiveOrganizationMember(session.user.id, workflow.organizationId);
+    if (!isMember) {
       return NextResponse.json({ error: 'Workflow not found' }, { status: 404 });
     }
 
@@ -73,6 +78,20 @@ export async function PATCH(
       return NextResponse.json({ error: 'Workflow not found' }, { status: 404 });
     }
 
+    // 404 (not 403) so cross-org probing cannot confirm the workflow exists
+    const isMember = await isActiveOrganizationMember(
+      session.user.id,
+      existingWorkflow.organizationId
+    );
+    if (!isMember) {
+      return NextResponse.json({ error: 'Workflow not found' }, { status: 404 });
+    }
+
+    const canManage = await hasPermission(existingWorkflow.organizationId, 'org:settings');
+    if (!canManage) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
+
     // If setting as default, unset other defaults
     if (isDefault) {
       await db
@@ -113,20 +132,25 @@ export async function DELETE(
 
     const { workflowId } = await params;
 
-    const [workflow] = await db
-      .select()
-      .from(workflows)
-      .where(eq(workflows.id, workflowId));
+    const [workflow] = await db.select().from(workflows).where(eq(workflows.id, workflowId));
 
     if (!workflow) {
       return NextResponse.json({ error: 'Workflow not found' }, { status: 404 });
     }
 
+    // 404 (not 403) so cross-org probing cannot confirm the workflow exists
+    const isMember = await isActiveOrganizationMember(session.user.id, workflow.organizationId);
+    if (!isMember) {
+      return NextResponse.json({ error: 'Workflow not found' }, { status: 404 });
+    }
+
+    const canManage = await hasPermission(workflow.organizationId, 'org:settings');
+    if (!canManage) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
+
     if (workflow.isDefault) {
-      return NextResponse.json(
-        { error: 'Cannot delete default workflow' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Cannot delete default workflow' }, { status: 400 });
     }
 
     await db.delete(workflows).where(eq(workflows.id, workflowId));
