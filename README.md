@@ -391,53 +391,13 @@ name. An explicit choice always wins over auto-detection.
 
 ---
 
-## Mobile app (roadmap)
+## Mobile app
 
-A first-class mobile companion is on the roadmap. The plan is to **reuse
-the existing TaskNebula API surface** rather than fork it — so every
-feature you ship on web instantly becomes available to the app.
+A native **iOS and Android** app for TaskNebula is on the way. It connects to
+your self-hosted server — you point it at your instance URL and sign in.
 
-### Stack
-
-- **Runtime:** React Native + Expo SDK 52+ (managed workflow; bare only
-  if we need native bridges)
-- **UI:** Tamagui (atomic, shared theme tokens with Tailwind on web)
-- **State:** TanStack Query (same as web; cache mirroring just works)
-- **Realtime:** EventSource polyfill for SSE + LiveKit React-Native SDK
-  for voice rooms
-- **Storage:** MMKV for cache + secure-store for auth tokens
-- **Push:** Expo Push (APNs + FCM); server adds a `mobile_devices` table
-  and an opt-in toggle in Settings → Notifications
-
-### Phased scope
-
-| Phase                            | Surface                                                                       | Notes                                                                                                                          |
-| -------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| **M1 — Read & Triage**           | Inbox · My issues · Issue detail · Comments                                   | Read-mostly first to validate the API + auth flow on device. Native swipe-to-archive maps to the existing smart-inbox actions. |
-| **M2 — Author**                  | New issue · Edit description · Attach photo/voice · Status & assignee changes | Reuses existing draft-with-AI endpoint; photo capture uploads to the same `/api/attachments`.                                  |
-| **M3 — Standup & notifications** | Push notifications · Standup card · Catch-me-up digest                        | Server-side templates already exist for digest emails; mobile reuses the JSON variant.                                         |
-| **M4 — Realtime collab**         | LiveKit calls · Yjs presence indicators                                       | Read-only Yjs presence in M3, full collaborative editing parity in M4 once the bridge stabilises.                              |
-| **M5 — Offline-first**           | Local-first cache with background sync · Conflict resolution                  | Drop the optimistic-update guards from web back into the shared TanStack layer.                                                |
-
-### Auth on device
-
-Mobile won't use cookie-based Auth.js sessions — instead the
-`/api/auth/mobile/exchange` endpoint (to be added) returns a long-lived
-**refresh token** + short-lived **access token** after the same
-credentials / OAuth / SAML flow. The web session remains the authoritative
-identity store; mobile devices show up in **Settings → Sessions** for
-remote revocation.
-
-### Repo layout
-
-A mobile app would live at `apps/mobile/` as a sibling to `apps/web/`,
-sharing types from `packages/types`. No code change is required to the
-existing Next.js app — every endpoint already returns clean JSON.
-
-### Help wanted
-
-Mobile development is community-driven for now. If you'd like to take the
-lead on M1, open a [discussion](https://github.com/neuraparse/tasknebula/discussions).
+> The mobile app will be **free and available to everyone**. Its source code is
+> **not part of this open-source repository** and is not published here.
 
 ---
 

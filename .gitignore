@@ -605,3 +605,8 @@ data-dump/
 
 # Local scratch/diagnostic scripts — never commit
 apps/web/_*.mjs
+
+# Mobile app (TaskNebula Mobile) — PRIVATE, NOT open-source / community.
+# Lives outside the pnpm/turbo workspace so it can never affect the web build.
+# The entire directory is intentionally untracked — never commit it.
+/mobile/
