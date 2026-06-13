@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-06-13
+
+### Fixed
+
+- **Analytics "By Status" chart** showed raw status CUIDs as names, rendered all-grey, and clipped its slice labels. It now resolves workflow status **names + colors** and uses a contained legend; all distribution charts (Status/Priority/Type) share a consistent donut + legend layout.
+- **Mobile responsiveness.** The My Issues header (search now full-width with horizontally scrollable tabs, title no longer wraps), the project board/views toolbar (scrollable view-icon strip; the "New Issue" button no longer overlaps the search field; sprint status reflows onto its own row), and the Settings tab strip (now horizontally scrollable) no longer overflow or clip on small screens. The desktop board also gained a trailing gutter so the last column isn't sheared at the edge.
+- **Empty states.** The Docs space no longer renders a duplicate "Create page" CTA, the Initiatives empty state offers a real "New initiative" dialog instead of a "create via the API" dead-end, and the issue Links empty state no longer shows an orphaned icon.
+- **API reference page** dark-themes the Swagger "Servers / Authorize" band and raises the description text contrast.
+
 ## [0.5.0] - 2026-06-13
 
 ### Added

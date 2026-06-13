@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "TaskNebula API",
-    "version": "0.5.0",
+    "version": "0.5.1",
     "description": "OpenAPI documentation for the TaskNebula HTTP API. Only the public, stable surface is documented; internal/admin routes are intentionally omitted."
   },
   "servers": [
