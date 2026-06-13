@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-06-13
+
+### Changed
+
+- **Refreshed the Anthropic model catalog to the current Claude lineup** — Claude Opus 4.8 (default), Fable 5, Opus 4.7, Sonnet 4.6, Haiku 4.5 — with correct output limits, reasoning-effort options, and temperature support (Opus 4.7+/Fable are adaptive-thinking only). Removed retired Claude 3.x entries, replaced fabricated model IDs (`claude-sonnet-4-7`, `claude-haiku-4-7`) and retired ones (`claude-3-5-*`) across the ask/draft/catch-me-up paths, and refreshed the per-model price table. (OpenAI catalog unchanged.)
+
+### Added
+
+- **README "Languages" section** documenting the 30 shipped locales (native names), device/browser auto-detection, RTL support, and the zero-hardcoded-string lint gate; updated the supported-models table to the current Claude lineup.
+
 ## [0.6.2] - 2026-06-13
 
 ### Fixed
