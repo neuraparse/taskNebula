@@ -332,8 +332,9 @@ out/
 .history/
 .vscode-test/
 
-# Cursor
-.cursor/
+# Cursor — share rules (team config), ignore personal/local config
+.cursor/*
+!.cursor/rules/
 .cursorrules.local
 
 # Zed
@@ -601,3 +602,6 @@ data-dump/
 
 # Local UI audit screenshots — never commit
 .ui-audit/
+
+# Local scratch/diagnostic scripts — never commit
+apps/web/_*.mjs

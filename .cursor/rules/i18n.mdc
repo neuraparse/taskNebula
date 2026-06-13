@@ -1,0 +1,52 @@
+---
+description: Internationalization (i18n) — mandatory for all user-facing strings
+globs:
+  - apps/web/src/**/*.tsx
+  - apps/web/src/**/*.ts
+alwaysApply: true
+---
+
+# i18n is MANDATORY — zero hardcoded user-facing strings
+
+TaskNebula ships **30 languages** with device/browser auto-detection. Every
+contribution must keep the app fully localized. This applies to all assistants
+and tools (Claude, Cursor, Codex, Copilot, etc.).
+
+## The rule
+
+- **Never hardcode user-facing display text.** Every string a user can see goes
+  through `next-intl`. This includes:
+  - JSX text nodes (labels, headings, empty states, button text, hints).
+  - String props: `placeholder`, `aria-label`, `title`, `alt`, `label`,
+    `description`, `tooltip`, `confirmText`, `emptyText`, …
+  - `toast`/sonner messages and any user-facing error messages.
+  - Select/menu/option labels, dialog titles & descriptions, table headers,
+    badges, tab labels, status text.
+- **Client components:** `const t = useTranslations('namespace')` → `t('key')`,
+  `t('key', { name })` for interpolation, ICU for plurals
+  (`{count, plural, one {# item} other {# items}}`), `t.rich` for links/bold.
+- **Async server components:** `const t = await getTranslations('namespace')`.
+  Don't use hooks in sync server components.
+
+## Adding a new string
+
+1. Add the English key to `apps/web/messages/en.json` under the relevant
+   top-level namespace.
+2. **Add the same key, translated, to ALL locale files** in
+   `apps/web/messages/*.json` (30 locales). Keep full key parity — a missing
+   key in any locale is a bug.
+3. Preserve ICU placeholders verbatim (`{count}`, `{name}`, plural/select, `#`).
+   Never translate placeholder names or brand/tech terms (TaskNebula, GitHub,
+   Docker, Jira, Linear, MCP, API, AI, …).
+4. Verify with `node scripts/i18n-check.mjs` (key parity across all locales).
+
+## Notes
+
+- Locale config: `apps/web/src/lib/i18n/config.ts` (locales + native labels +
+  RTL list + `Accept-Language` negotiation). Add a locale there to surface it
+  in the switcher.
+- `ar` and `he` are right-to-left (handled by the `DirectionProvider`).
+- The **only** intentionally English-only surface is the marketing landing
+  (`apps/web/src/components/marketing/*`, the public `/` page).
+- ESLint (`react/jsx-no-literals`) rejects new hardcoded JSX text — fix by
+  moving the string into the message catalog, not by disabling the rule.
