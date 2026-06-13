@@ -188,7 +188,7 @@ export function BoardFiltersBar({
           <div className="bg-border h-3.5 w-px" />
           {filters.search && (
             <span className="chip gap-1">
-              &quot;{filters.search}&quot;
+              {`"${filters.search}"`}
               <button
                 className="hover:bg-muted ml-0.5 rounded-full p-0.5"
                 onClick={() => removeFilter('search', '')}

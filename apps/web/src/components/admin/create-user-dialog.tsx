@@ -97,7 +97,7 @@ export function CreateUserDialog() {
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Jane Smith"
+                placeholder={t('createUser.fullNamePlaceholder')}
               />
             </div>
             <div className="space-y-2">
@@ -107,7 +107,7 @@ export function CreateUserDialog() {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="jane@example.com"
+                placeholder={t('createUser.emailPlaceholder')}
               />
             </div>
             <div className="space-y-2">

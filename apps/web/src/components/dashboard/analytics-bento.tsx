@@ -205,15 +205,15 @@ export function AnalyticsBento({
             </div>
             <div className="grid grid-cols-3 gap-2 text-right text-xs">
               <div>
-                <p className="text-muted-foreground">p50</p>
+                <p className="text-muted-foreground">{'p50'}</p>
                 <p className="text-foreground font-semibold tabular-nums">{forecast.p50Date}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">p80</p>
+                <p className="text-muted-foreground">{'p80'}</p>
                 <p className="text-foreground font-semibold tabular-nums">{forecast.p80Date}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">p95</p>
+                <p className="text-muted-foreground">{'p95'}</p>
                 <p className="text-foreground font-semibold tabular-nums">{forecast.p95Date}</p>
               </div>
             </div>

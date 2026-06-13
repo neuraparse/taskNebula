@@ -125,7 +125,9 @@ export function IntakeFormsList({ forms, projectLookup, accessibleProjects }: Pr
                   <SelectContent>
                     {accessibleProjects.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
-                        {p.name} ({p.key})
+                        {p.name} {'('}
+                        {p.key}
+                        {')'}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -151,7 +153,8 @@ export function IntakeFormsList({ forms, projectLookup, accessibleProjects }: Pr
                   placeholder={t('slug_placeholder')}
                 />
                 <p className="text-muted-foreground text-xs">
-                  {t('public_url_label')} /intake/<code>{slug || t('slug_fallback')}</code>
+                  {t('public_url_label')} {'/intake/'}
+                  <code>{slug || t('slug_fallback')}</code>
                 </p>
               </div>
               {error ? <p className="text-destructive text-xs">{error}</p> : null}
@@ -192,7 +195,8 @@ export function IntakeFormsList({ forms, projectLookup, accessibleProjects }: Pr
                   </Link>
                   <p className="text-muted-foreground text-xs">
                     {project ? `${project.name} (${project.key}) · ` : ''}
-                    /intake/{form.slug}
+                    {'/intake/'}
+                    {form.slug}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">

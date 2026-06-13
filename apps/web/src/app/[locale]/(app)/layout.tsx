@@ -9,11 +9,13 @@ import { KeyboardShortcutsProvider } from '@/components/help/keyboard-shortcuts-
 import { AiSidecarProvider } from '@/components/ai/ai-sidecar-provider';
 import { EmailVerificationBanner } from '@/components/auth/email-verification-banner';
 import { MobileNav } from '@/components/mobile/mobile-nav';
+import { getTranslations } from 'next-intl/server';
 
 // Force dynamic rendering for authenticated routes
 export const dynamic = 'force-dynamic';
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const t = await getTranslations('common');
   return (
     <GlobalVoiceProvider>
       <AppUiScope />
@@ -25,7 +27,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 href="#main-content"
                 className="focus:bg-primary focus:text-primary-foreground sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-md focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:shadow-md"
               >
-                Skip to content
+                {t('skipToContent')}
               </a>
               <div className="app-square-ui bg-background flex h-dvh overflow-hidden">
                 <div className="hidden md:flex">

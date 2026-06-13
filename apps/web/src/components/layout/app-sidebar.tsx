@@ -129,12 +129,11 @@ const TEAM_LINKS: NavLink[] = [
   },
 ];
 
-// TODO(i18n): translate the remaining settings + admin labels. Tracked in
-// apps/web/src/lib/i18n/MIGRATION.md.
 const SETTINGS_LINKS: NavLink[] = [
   {
     href: '/settings?tab=organization',
     label: 'Organization',
+    i18nKey: 'organization',
     icon: Building2,
     match: { path: '/settings', tab: 'organization' },
     requiredPermission: 'org:settings',
@@ -150,6 +149,7 @@ const SETTINGS_LINKS: NavLink[] = [
   {
     href: '/settings?tab=api-keys',
     label: 'API Keys',
+    i18nKey: 'api_keys',
     icon: KeyRound,
     match: { path: '/settings', tab: 'api-keys' },
     requiredPermission: 'api_key:view',
@@ -157,6 +157,7 @@ const SETTINGS_LINKS: NavLink[] = [
   {
     href: '/settings?tab=webhooks',
     label: 'Webhooks',
+    i18nKey: 'webhooks',
     icon: Webhook,
     match: { path: '/settings', tab: 'webhooks' },
     requiredPermission: 'webhook:view',
@@ -166,12 +167,14 @@ const SETTINGS_LINKS: NavLink[] = [
     // require org membership), so no requiredPermission gate here.
     href: '/settings/labels',
     label: 'Labels',
+    i18nKey: 'labels',
     icon: Tags,
     match: { path: '/settings/labels' },
   },
   {
     href: '/settings/integrations',
     label: 'Integrations',
+    i18nKey: 'integrations',
     icon: Plug,
     match: { path: '/settings/integrations' },
     requiredPermission: 'org:settings',
@@ -179,6 +182,7 @@ const SETTINGS_LINKS: NavLink[] = [
   {
     href: '/settings/security/audit-log-streaming',
     label: 'Audit streaming',
+    i18nKey: 'audit_streaming',
     icon: Radio,
     match: { path: '/settings/security/audit-log-streaming' },
     requiredPermission: 'org:settings',
@@ -186,6 +190,7 @@ const SETTINGS_LINKS: NavLink[] = [
   {
     href: '/settings?tab=ai-agents',
     label: 'AI & Agents',
+    i18nKey: 'ai_agents',
     icon: Bot,
     match: { path: '/settings', tab: 'ai-agents' },
     requiredPermission: 'org:settings',
@@ -193,6 +198,7 @@ const SETTINGS_LINKS: NavLink[] = [
   {
     href: '/settings?tab=communications',
     label: 'Communications',
+    i18nKey: 'communications',
     icon: MessageSquareText,
     match: { path: '/settings', tab: 'communications' },
     requiredPermission: 'org:settings',
@@ -200,70 +206,80 @@ const SETTINGS_LINKS: NavLink[] = [
   {
     href: '/settings?tab=notifications',
     label: 'Notifications',
+    i18nKey: 'notifications',
     icon: Bell,
     match: { path: '/settings', tab: 'notifications' },
   },
   {
     href: '/settings?tab=appearance',
     label: 'Appearance',
+    i18nKey: 'appearance',
     icon: Palette,
     match: { path: '/settings', tab: 'appearance' },
   },
   {
     href: '/settings?tab=audit-log',
     label: 'Activity',
+    i18nKey: 'activity',
     icon: ScrollText,
     match: { path: '/settings', tab: 'audit-log' },
     requiredPermission: 'org:manage',
   },
 ];
 
-// TODO(i18n): translate admin labels — out of scope for FEAT-34 scaffolding.
 const ADMIN_LINKS: Array<{
   href: string;
   label: string;
+  i18nKey: string;
   icon: typeof Gauge;
   match: { path: string; tab?: string };
 }> = [
   {
     href: '/admin?tab=overview',
     label: 'Overview',
+    i18nKey: 'overview',
     icon: Gauge,
     match: { path: '/admin', tab: 'overview' },
   },
   {
     href: '/admin?tab=organizations',
     label: 'Organizations',
+    i18nKey: 'organizations',
     icon: Building2,
     match: { path: '/admin', tab: 'organizations' },
   },
   {
     href: '/admin?tab=users',
     label: 'Users',
+    i18nKey: 'users',
     icon: UserCog,
     match: { path: '/admin', tab: 'users' },
   },
   {
     href: '/admin?tab=feature-flags',
     label: 'Feature flags',
+    i18nKey: 'feature_flags',
     icon: Flag,
     match: { path: '/admin', tab: 'feature-flags' },
   },
   {
     href: '/admin?tab=agents',
     label: 'Agent control',
+    i18nKey: 'agent_control',
     icon: Bot,
     match: { path: '/admin', tab: 'agents' },
   },
   {
     href: '/admin?tab=realtime',
     label: 'Realtime health',
+    i18nKey: 'realtime_health',
     icon: Radio,
     match: { path: '/admin', tab: 'realtime' },
   },
   {
     href: '/admin?tab=audit',
     label: 'Audit logs',
+    i18nKey: 'audit_logs',
     icon: Scroll,
     match: { path: '/admin', tab: 'audit' },
   },
@@ -610,7 +626,7 @@ export function AppSidebar() {
                             className={SIDEBAR_NAV_LINK_CLASS}
                           >
                             <link.icon className="h-4 w-4 shrink-0" />
-                            <span className={SIDEBAR_NAV_LABEL_CLASS}>{link.label}</span>
+                            <span className={SIDEBAR_NAV_LABEL_CLASS}>{tNav(link.i18nKey)}</span>
                           </Link>
                         );
                       })}
@@ -1121,9 +1137,9 @@ function SidebarVoiceWorkspace({
           </div>
           <div className="flex items-center gap-1">
             {resolvedConnectionState === 'connected' ? (
-              <span className="live-pill text-[9px]">live</span>
+              <span className="live-pill text-[9px]">{tLayout('voice.live')}</span>
             ) : (
-              <span className="chip text-[9px]">offline</span>
+              <span className="chip text-[9px]">{tLayout('voice.offline')}</span>
             )}
             <Button
               size="sm"

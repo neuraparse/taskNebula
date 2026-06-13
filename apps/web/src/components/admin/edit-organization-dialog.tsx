@@ -75,7 +75,7 @@ export function EditOrganizationDialog({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error('Failed to update organization');
+      if (!response.ok) throw new Error(t('editOrg.toastFailedTitle'));
       return response.json();
     },
     onSuccess: () => {
@@ -180,7 +180,7 @@ export function EditOrganizationDialog({
                 id="domain"
                 value={formData.domain}
                 onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
-                placeholder="example.com"
+                placeholder={t('editOrg.domainPlaceholder')}
               />
             </div>
 

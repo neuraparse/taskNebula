@@ -24,7 +24,24 @@
     "inbox_unread": "{count} belum dibaca",
     "account_settings": "Pengaturan akun",
     "sign_out": "Keluar",
-    "account_menu": "Menu akun"
+    "account_menu": "Menu akun",
+    "organization": "Organisasi",
+    "api_keys": "Kunci API",
+    "webhooks": "Webhook",
+    "labels": "Label",
+    "integrations": "Integrasi",
+    "audit_streaming": "Streaming audit",
+    "ai_agents": "AI & Agen",
+    "communications": "Komunikasi",
+    "notifications": "Notifikasi",
+    "appearance": "Tampilan",
+    "activity": "Aktivitas",
+    "organizations": "Organisasi",
+    "users": "Pengguna",
+    "feature_flags": "Flag fitur",
+    "agent_control": "Kontrol agen",
+    "realtime_health": "Kesehatan realtime",
+    "audit_logs": "Log audit"
   },
   "actions": {
     "create_issue": "Buat isu",
@@ -72,12 +89,15 @@
     "banner_password_reset": "Kata sandi diperbarui. Masuk dengan kata sandi baru Anda.",
     "banner_incorrect_credentials": "Email atau kata sandi salah.",
     "banner_verification_invalid": "Tautan verifikasi itu sudah tidak berlaku.",
-    "banner_generic_signin_error": "Terjadi kesalahan saat masuk."
+    "banner_generic_signin_error": "Terjadi kesalahan saat masuk.",
+    "loading": "Memuat",
+    "dismiss_notification": "Tutup notifikasi"
   },
   "common": {
     "loading": "Memuat…",
     "no_projects": "Belum ada proyek",
-    "view_all_projects": "Lihat semua {count} proyek"
+    "view_all_projects": "Lihat semua {count} proyek",
+    "skipToContent": "Lewati ke konten"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "Pengguna tidak dikenal",
       "label": "Pelapor"
-    }
+    },
+    "reporter.avatarAlt": "Avatar pelapor"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "Gagal memperbarui komentar",
       "deleteFailed": "Gagal menghapus komentar",
       "deleteBlockedReplies": "Tidak dapat menghapus komentar yang memiliki balasan",
-      "reactionFailed": "Gagal memperbarui reaksi"
+      "reactionFailed": "Gagal memperbarui reaksi",
+      "agentBadge": "AGEN"
     },
     "sections": {
       "timeTracking": "Pelacakan waktu",
@@ -468,7 +490,8 @@
     "addSubIssue": "Tambah sub-isu",
     "placeholder": "Judul sub-isu...",
     "creating": "Membuat sub-isu...",
-    "createFailed": "Tidak dapat membuat sub-isu. Silakan coba lagi."
+    "createFailed": "Tidak dapat membuat sub-isu. Silakan coba lagi.",
+    "noSubtasks": "Belum ada subtugas"
   },
   "issueRelations": {
     "dialogTitle": "Tautkan isu",
@@ -577,7 +600,9 @@
         "reconnecting": "Menghubungkan kembali",
         "disconnected": "Terputus",
         "voiceRoom": "Ruang suara"
-      }
+      },
+      "live": "langsung",
+      "offline": "luring"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "Otomatisasi",
     "tab_ai_agents": "Agen AI",
     "tab_chat_calls": "Obrolan & Panggilan",
-    "tab_webhooks": "Webhook"
+    "tab_webhooks": "Webhook",
+    "ts_name_placeholder": "Platform",
+    "ts_slug_placeholder": "platform",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "Proyek",
@@ -2581,7 +2610,9 @@
         "creating": "Membuat...",
         "createPage": "Buat halaman"
       }
-    }
+    },
+    "shell.collapse": "Ciutkan",
+    "shell.expand": "Bentangkan"
   },
   "planning": {
     "search_placeholder": "Cari templat",
@@ -3364,7 +3395,11 @@
       "close": "Tutup",
       "evaluate": "Evaluasi",
       "evaluating": "Mengevaluasi..."
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "rollout%",
+    "platformAi.saveFailedDescription": "Tidak dapat menyimpan kredensial. Silakan coba lagi.",
+    "platformAi.removeFailedDescription": "Tidak dapat menghapus kredensial. Silakan coba lagi."
   },
   "adminDialogs": {
     "common": {
@@ -3476,7 +3511,13 @@
       "searchPlaceholder": "Cari organisasi...",
       "empty": "Tidak ada organisasi ditemukan.",
       "remove": "Hapus {name}"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "Jane Smith",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "Analitik Lanjutan"
   },
   "charts": {
     "issues": "Isu",
@@ -4623,7 +4664,10 @@
         "datadog": "Atur { apiKey, site? }.",
         "s3": "Atur { bucket, region, prefix? }. AWS_ACCESS_KEY_ID/SECRET harus diatur di env."
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "Sprint {number}",
@@ -5084,7 +5128,16 @@
           "disconnected": "Terputus"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "Izin mikrofon ditolak. Izinkan akses mikrofon di peramban Anda lalu coba lagi.",
+    "chat.voice.micCouldNotStartBusy": "Mikrofon Anda tidak dapat dimulai. Aplikasi lain mungkin sedang menggunakannya.",
+    "chat.voice.audioEngineFailed": "Mesin audio peramban gagal untuk perangkat ini. Hentikan aplikasi audio lain atau ganti mikrofon Anda, lalu coba lagi.",
+    "chat.voice.noMicForSession": "Tidak ada mikrofon yang ditemukan untuk sesi peramban ini.",
+    "chat.voice.runtimeError.serverUnreachable": "Server suara tidak dapat dijangkau pada port media (UDP 50000-50020 / 3478, TCP 7881). Periksa firewall / NAT lalu coba lagi.",
+    "chat.voice.runtimeError.permissionDenied": "Izin mikrofon ditolak. Izinkan akses mikrofon di peramban Anda lalu coba lagi.",
+    "chat.voice.runtimeError.micNotStarted": "Mikrofon Anda tidak dapat dimulai. Aplikasi lain mungkin sedang menggunakannya.",
+    "chat.voice.runtimeError.audioEngineFailed": "Mesin audio peramban gagal untuk perangkat ini. Hentikan aplikasi audio lain atau ganti mikrofon Anda, lalu coba lagi.",
+    "chat.voice.runtimeError.micNotFound": "Tidak ada mikrofon yang ditemukan untuk sesi peramban ini."
   },
   "userSecurity": {
     "accountMenu": "Menu akun",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "Level dihapus",
     "toastLevelDeletedDescription": "Level keamanan berhasil dihapus.",
     "errorDeleteLevel": "Gagal menghapus level"
+  },
+  "aiModelCards": {
+    "back": "Kembali ke TaskNebula",
+    "disclosureBadge": "Pengungkapan EU AI Act Pasal 50",
+    "title": "Kartu Model AI",
+    "intro": "TaskNebula menerapkan fitur AI berikut untuk pengguna akhir. Untuk masing-masing, kami memublikasikan tujuan penggunaan, identitas model, data yang dikirim pada setiap panggilan, kebijakan retensi, dan sikap pengawasan manusia bawaan kami. Halaman ini merupakan catatan transparansi publik dan berlaku untuk semua penerapan TaskNebula. Versi pengungkapan <version></version>.",
+    "lastReviewed": "Terakhir ditinjau 2026-05-14. Penegakan regulasi dimulai 2026-08-02.",
+    "onThisPage": "Pada halaman ini",
+    "model": "Model",
+    "provider": "Penyedia",
+    "oversightDefault": "Pengawasan bawaan",
+    "reviewRequired": "Tinjauan diperlukan",
+    "autoApplyAllowed": "Penerapan otomatis diizinkan",
+    "footerContact": "Ada pertanyaan tentang transparansi AI, hak subjek data, atau kartu model ini? Kirim email ke <link></link>."
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# orang sedang melihat} other {# orang sedang melihat}}",
+    "status_speaking": "berbicara",
+    "status_active": "aktif",
+    "status_viewing": "melihat",
+    "overflow_more": "{count} lainnya",
+    "overflow_more_viewing": "{count} lainnya melihat"
   }
 }

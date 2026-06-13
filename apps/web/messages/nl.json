@@ -24,7 +24,24 @@
     "inbox_unread": "{count} ongelezen",
     "account_settings": "Accountinstellingen",
     "sign_out": "Afmelden",
-    "account_menu": "Accountmenu"
+    "account_menu": "Accountmenu",
+    "organization": "Organisatie",
+    "api_keys": "API-sleutels",
+    "webhooks": "Webhooks",
+    "labels": "Labels",
+    "integrations": "Integraties",
+    "audit_streaming": "Auditstreaming",
+    "ai_agents": "AI en agents",
+    "communications": "Communicatie",
+    "notifications": "Meldingen",
+    "appearance": "Weergave",
+    "activity": "Activiteit",
+    "organizations": "Organisaties",
+    "users": "Gebruikers",
+    "feature_flags": "Functievlaggen",
+    "agent_control": "Agentbeheer",
+    "realtime_health": "Realtime-status",
+    "audit_logs": "Auditlogboeken"
   },
   "actions": {
     "create_issue": "Issue aanmaken",
@@ -72,12 +89,15 @@
     "banner_password_reset": "Wachtwoord bijgewerkt. Meld je aan met je nieuwe wachtwoord.",
     "banner_incorrect_credentials": "Onjuist e-mailadres of wachtwoord.",
     "banner_verification_invalid": "Die verificatielink is niet langer geldig.",
-    "banner_generic_signin_error": "Er ging iets mis tijdens het aanmelden."
+    "banner_generic_signin_error": "Er ging iets mis tijdens het aanmelden.",
+    "loading": "Laden",
+    "dismiss_notification": "Melding sluiten"
   },
   "common": {
     "loading": "Laden…",
     "no_projects": "Nog geen projecten",
-    "view_all_projects": "Alle {count} projecten weergeven"
+    "view_all_projects": "Alle {count} projecten weergeven",
+    "skipToContent": "Ga naar inhoud"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "Onbekende gebruiker",
       "label": "Melder"
-    }
+    },
+    "reporter.avatarAlt": "Avatar van melder"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "Reactie bijwerken mislukt",
       "deleteFailed": "Reactie verwijderen mislukt",
       "deleteBlockedReplies": "Een reactie met antwoorden kan niet worden verwijderd",
-      "reactionFailed": "Reactie bijwerken mislukt"
+      "reactionFailed": "Reactie bijwerken mislukt",
+      "agentBadge": "AGENT"
     },
     "sections": {
       "timeTracking": "Tijdregistratie",
@@ -468,7 +490,8 @@
     "addSubIssue": "Sub-issue toevoegen",
     "placeholder": "Titel van sub-issue...",
     "creating": "Sub-issue aanmaken...",
-    "createFailed": "Kon sub-issue niet aanmaken. Probeer het opnieuw."
+    "createFailed": "Kon sub-issue niet aanmaken. Probeer het opnieuw.",
+    "noSubtasks": "Nog geen subtaken"
   },
   "issueRelations": {
     "dialogTitle": "Issue koppelen",
@@ -577,7 +600,9 @@
         "reconnecting": "Opnieuw verbinden",
         "disconnected": "Verbinding verbroken",
         "voiceRoom": "Spraakruimte"
-      }
+      },
+      "live": "live",
+      "offline": "offline"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "Automatisering",
     "tab_ai_agents": "AI-agents",
     "tab_chat_calls": "Chat & gesprekken",
-    "tab_webhooks": "Webhooks"
+    "tab_webhooks": "Webhooks",
+    "ts_name_placeholder": "Platform",
+    "ts_slug_placeholder": "platform",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "Project",
@@ -2581,7 +2610,9 @@
         "creating": "Aanmaken...",
         "createPage": "Pagina aanmaken"
       }
-    }
+    },
+    "shell.collapse": "Inklappen",
+    "shell.expand": "Uitklappen"
   },
   "planning": {
     "search_placeholder": "Sjablonen zoeken",
@@ -3364,7 +3395,11 @@
       "close": "Sluiten",
       "evaluate": "Evalueren",
       "evaluating": "Evalueren..."
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "uitrol%",
+    "platformAi.saveFailedDescription": "Kan de credential niet opslaan. Probeer het opnieuw.",
+    "platformAi.removeFailedDescription": "Kan de credential niet verwijderen. Probeer het opnieuw."
   },
   "adminDialogs": {
     "common": {
@@ -3476,7 +3511,13 @@
       "searchPlaceholder": "Organisaties zoeken...",
       "empty": "Geen organisaties gevonden.",
       "remove": "{name} verwijderen"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "Jane Smith",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "Geavanceerde analyse"
   },
   "charts": {
     "issues": "Issues",
@@ -4623,7 +4664,10 @@
         "datadog": "Stel { apiKey, site? } in.",
         "s3": "Stel { bucket, region, prefix? } in. AWS_ACCESS_KEY_ID/SECRET moeten in de env zijn ingesteld."
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "Sprint {number}",
@@ -5084,7 +5128,16 @@
           "disconnected": "Verbinding verbroken"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "Toegang tot de microfoon is geweigerd. Sta microfoontoegang toe in je browser en probeer het opnieuw.",
+    "chat.voice.micCouldNotStartBusy": "Je microfoon kon niet worden gestart. Mogelijk gebruikt een andere app deze.",
+    "chat.voice.audioEngineFailed": "De audio-engine van de browser werkte niet op dit apparaat. Sluit andere audio-apps of wijzig je microfoon en probeer het opnieuw.",
+    "chat.voice.noMicForSession": "Er is geen microfoon gevonden voor deze browsersessie.",
+    "chat.voice.runtimeError.serverUnreachable": "Spraakserver is onbereikbaar op de mediapoorten (UDP 50000-50020 / 3478, TCP 7881). Controleer firewall / NAT en probeer het opnieuw.",
+    "chat.voice.runtimeError.permissionDenied": "Toegang tot de microfoon is geweigerd. Sta microfoontoegang toe in je browser en probeer het opnieuw.",
+    "chat.voice.runtimeError.micNotStarted": "Je microfoon kon niet worden gestart. Mogelijk gebruikt een andere app deze.",
+    "chat.voice.runtimeError.audioEngineFailed": "De audio-engine van de browser werkte niet op dit apparaat. Sluit andere audio-apps of wijzig je microfoon en probeer het opnieuw.",
+    "chat.voice.runtimeError.micNotFound": "Er is geen microfoon gevonden voor deze browsersessie."
   },
   "userSecurity": {
     "accountMenu": "Accountmenu",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "Niveau verwijderd",
     "toastLevelDeletedDescription": "Beveiligingsniveau succesvol verwijderd.",
     "errorDeleteLevel": "Verwijderen van niveau mislukt"
+  },
+  "aiModelCards": {
+    "back": "Terug naar TaskNebula",
+    "disclosureBadge": "Openbaarmaking volgens EU AI Act Artikel 50",
+    "title": "AI-modelkaarten",
+    "intro": "TaskNebula stelt de volgende AI-functies beschikbaar aan eindgebruikers. Voor elke functie publiceren we het beoogde doel, de identiteit van het model, de gegevens die bij elke aanroep worden verzonden, het bewaarbeleid en onze standaardhouding ten aanzien van menselijk toezicht. Deze pagina is een openbaar transparantiedossier en is van toepassing op alle TaskNebula-implementaties. Openbaarmakingsversie <version></version>.",
+    "lastReviewed": "Laatst beoordeeld op 2026-05-14. Handhaving van de regelgeving begint op 2026-08-02.",
+    "onThisPage": "Op deze pagina",
+    "model": "Model",
+    "provider": "Aanbieder",
+    "oversightDefault": "Standaardtoezicht",
+    "reviewRequired": "Beoordeling vereist",
+    "autoApplyAllowed": "Automatisch toepassen toegestaan",
+    "footerContact": "Vragen over AI-transparantie, rechten van betrokkenen of deze modelkaarten? Mail naar <link></link>."
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# persoon bekijkt dit} other {# personen bekijken dit}}",
+    "status_speaking": "spreekt",
+    "status_active": "actief",
+    "status_viewing": "bekijkt",
+    "overflow_more": "{count} meer",
+    "overflow_more_viewing": "{count} bekijken dit ook"
   }
 }

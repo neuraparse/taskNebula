@@ -24,7 +24,24 @@
     "inbox_unread": "{count} necitite",
     "account_settings": "Setările contului",
     "sign_out": "Deconectare",
-    "account_menu": "Meniul contului"
+    "account_menu": "Meniul contului",
+    "organization": "Organizație",
+    "api_keys": "Chei API",
+    "webhooks": "Webhook-uri",
+    "labels": "Etichete",
+    "integrations": "Integrări",
+    "audit_streaming": "Streaming audit",
+    "ai_agents": "AI și agenți",
+    "communications": "Comunicări",
+    "notifications": "Notificări",
+    "appearance": "Aspect",
+    "activity": "Activitate",
+    "organizations": "Organizații",
+    "users": "Utilizatori",
+    "feature_flags": "Indicatoare de funcționalități",
+    "agent_control": "Control agenți",
+    "realtime_health": "Stare în timp real",
+    "audit_logs": "Jurnale de audit"
   },
   "actions": {
     "create_issue": "Creează sarcină",
@@ -72,12 +89,15 @@
     "banner_password_reset": "Parolă actualizată. Autentifică-te cu noua parolă.",
     "banner_incorrect_credentials": "E-mail sau parolă incorecte.",
     "banner_verification_invalid": "Acel link de verificare nu mai este valid.",
-    "banner_generic_signin_error": "Ceva nu a funcționat la autentificare."
+    "banner_generic_signin_error": "Ceva nu a funcționat la autentificare.",
+    "loading": "Se încarcă",
+    "dismiss_notification": "Închide notificarea"
   },
   "common": {
     "loading": "Se încarcă…",
     "no_projects": "Niciun proiect încă",
-    "view_all_projects": "Vezi toate cele {count} proiecte"
+    "view_all_projects": "Vezi toate cele {count} proiecte",
+    "skipToContent": "Salt la conținut"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "Utilizator necunoscut",
       "label": "Raportor"
-    }
+    },
+    "reporter.avatarAlt": "Avatar raportor"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "Actualizarea comentariului a eșuat",
       "deleteFailed": "Ștergerea comentariului a eșuat",
       "deleteBlockedReplies": "Nu se poate șterge un comentariu care are răspunsuri",
-      "reactionFailed": "Actualizarea reacției a eșuat"
+      "reactionFailed": "Actualizarea reacției a eșuat",
+      "agentBadge": "AGENT"
     },
     "sections": {
       "timeTracking": "Urmărirea timpului",
@@ -468,7 +490,8 @@
     "addSubIssue": "Adaugă subsarcină",
     "placeholder": "Titlul subsarcinii...",
     "creating": "Se creează subsarcina...",
-    "createFailed": "Nu s-a putut crea subsarcina. Te rugăm să încerci din nou."
+    "createFailed": "Nu s-a putut crea subsarcina. Te rugăm să încerci din nou.",
+    "noSubtasks": "Încă nu există subsarcini"
   },
   "issueRelations": {
     "dialogTitle": "Leagă sarcina",
@@ -577,7 +600,9 @@
         "reconnecting": "Se reconectează",
         "disconnected": "Deconectat",
         "voiceRoom": "Cameră vocală"
-      }
+      },
+      "live": "live",
+      "offline": "offline"
     }
   },
   "dashboardExtra": {
@@ -1518,7 +1543,11 @@
     "tab_automation": "Automatizare",
     "tab_ai_agents": "Agenți AI",
     "tab_chat_calls": "Chat și apeluri",
-    "tab_webhooks": "Webhook-uri"
+    "tab_webhooks": "Webhook-uri",
+    "ts_name_placeholder": "Platformă",
+    "ts_slug_placeholder": "platforma",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "Proiect",
@@ -2681,7 +2710,9 @@
         "creating": "Se creează...",
         "createPage": "Creează pagină"
       }
-    }
+    },
+    "shell.collapse": "Restrânge",
+    "shell.expand": "Extinde"
   },
   "planning": {
     "search_placeholder": "Caută șabloane",
@@ -3464,7 +3495,11 @@
       "close": "Închide",
       "evaluate": "Evaluează",
       "evaluating": "Se evaluează..."
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "rollout%",
+    "platformAi.saveFailedDescription": "Acreditarea nu a putut fi salvată. Încearcă din nou.",
+    "platformAi.removeFailedDescription": "Acreditarea nu a putut fi eliminată. Încearcă din nou."
   },
   "adminDialogs": {
     "common": {
@@ -3576,7 +3611,13 @@
       "searchPlaceholder": "Caută organizații...",
       "empty": "Nicio organizație găsită.",
       "remove": "Elimină {name}"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "Jane Smith",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "Analize avansate"
   },
   "aiFeatures": {
     "badge": {
@@ -4623,7 +4664,10 @@
         "datadog": "Setează { apiKey, site? }.",
         "s3": "Setează { bucket, region, prefix? }. AWS_ACCESS_KEY_ID/SECRET trebuie setate în env."
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "Sprint {number}",
@@ -5084,7 +5128,16 @@
           "disconnected": "Deconectat"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "Permisiunea pentru microfon a fost refuzată. Permite accesul la microfon în browser și încearcă din nou.",
+    "chat.voice.micCouldNotStartBusy": "Microfonul nu a putut fi pornit. Este posibil ca o altă aplicație să îl folosească.",
+    "chat.voice.audioEngineFailed": "Motorul audio al browserului a eșuat pe acest dispozitiv. Oprește alte aplicații audio sau schimbă microfonul, apoi încearcă din nou.",
+    "chat.voice.noMicForSession": "Nu a fost găsit niciun microfon pentru această sesiune de browser.",
+    "chat.voice.runtimeError.serverUnreachable": "Serverul de voce este inaccesibil pe porturile media (UDP 50000-50020 / 3478, TCP 7881). Verifică firewall-ul / NAT și încearcă din nou.",
+    "chat.voice.runtimeError.permissionDenied": "Permisiunea pentru microfon a fost refuzată. Permite accesul la microfon în browser și încearcă din nou.",
+    "chat.voice.runtimeError.micNotStarted": "Microfonul nu a putut fi pornit. Este posibil ca o altă aplicație să îl folosească.",
+    "chat.voice.runtimeError.audioEngineFailed": "Motorul audio al browserului a eșuat pe acest dispozitiv. Oprește alte aplicații audio sau schimbă microfonul, apoi încearcă din nou.",
+    "chat.voice.runtimeError.micNotFound": "Nu a fost găsit niciun microfon pentru această sesiune de browser."
   },
   "userSecurity": {
     "accountMenu": "Meniul contului",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "Nivel șters",
     "toastLevelDeletedDescription": "Nivel de securitate eliminat cu succes.",
     "errorDeleteLevel": "Nu s-a putut șterge nivelul"
+  },
+  "aiModelCards": {
+    "back": "Înapoi la TaskNebula",
+    "disclosureBadge": "Notificare conform Articolului 50 din EU AI Act",
+    "title": "Fișe ale modelelor AI",
+    "intro": "TaskNebula pune la dispoziția utilizatorilor finali următoarele funcții AI. Pentru fiecare publicăm scopul prevăzut, identitatea modelului, datele trimise la fiecare apel, politica de păstrare a datelor și poziția noastră implicită privind supravegherea umană. Această pagină este o evidență publică de transparență și se aplică tuturor implementărilor TaskNebula. Versiunea notificării <version></version>.",
+    "lastReviewed": "Ultima revizuire: 2026-05-14. Aplicarea reglementării începe la 2026-08-02.",
+    "onThisPage": "Pe această pagină",
+    "model": "Model",
+    "provider": "Furnizor",
+    "oversightDefault": "Supraveghere implicită",
+    "reviewRequired": "Revizuire necesară",
+    "autoApplyAllowed": "Aplicare automată permisă",
+    "footerContact": "Aveți întrebări despre transparența AI, drepturile persoanelor vizate sau aceste fișe ale modelelor? Trimiteți un e-mail la <link></link>."
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# persoană vizualizează} few {# persoane vizualizează} other {# de persoane vizualizează}}",
+    "status_speaking": "vorbește",
+    "status_active": "activ",
+    "status_viewing": "vizualizează",
+    "overflow_more": "încă {count}",
+    "overflow_more_viewing": "încă {count} vizualizează"
   }
 }

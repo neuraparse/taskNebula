@@ -110,7 +110,7 @@ export function CreateOrganizationDialog({ trigger }: CreateOrganizationDialogPr
             <Label htmlFor="org-name">{t('org_name_label')}</Label>
             <Input
               id="org-name"
-              placeholder="Acme Inc."
+              placeholder={t('org_name_placeholder')}
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
               required
@@ -120,10 +120,10 @@ export function CreateOrganizationDialog({ trigger }: CreateOrganizationDialogPr
           <div className="space-y-2">
             <Label htmlFor="org-slug">{t('org_slug_label')}</Label>
             <div className="flex items-center gap-2">
-              <span className="text-muted-foreground shrink-0 text-sm">tasknebula.io/</span>
+              <span className="text-muted-foreground shrink-0 text-sm">{'tasknebula.io/'}</span>
               <Input
                 id="org-slug"
-                placeholder="acme-inc"
+                placeholder={t('org_slug_placeholder')}
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 pattern="[a-z0-9-]+"

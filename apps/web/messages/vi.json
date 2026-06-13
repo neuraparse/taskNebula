@@ -24,7 +24,24 @@
     "inbox_unread": "{count} chưa đọc",
     "account_settings": "Cài đặt tài khoản",
     "sign_out": "Đăng xuất",
-    "account_menu": "Menu tài khoản"
+    "account_menu": "Menu tài khoản",
+    "organization": "Tổ chức",
+    "api_keys": "Khóa API",
+    "webhooks": "Webhook",
+    "labels": "Nhãn",
+    "integrations": "Tích hợp",
+    "audit_streaming": "Truyền nhật ký kiểm toán",
+    "ai_agents": "AI & Tác nhân",
+    "communications": "Liên lạc",
+    "notifications": "Thông báo",
+    "appearance": "Giao diện",
+    "activity": "Hoạt động",
+    "organizations": "Tổ chức",
+    "users": "Người dùng",
+    "feature_flags": "Cờ tính năng",
+    "agent_control": "Điều khiển tác nhân",
+    "realtime_health": "Tình trạng thời gian thực",
+    "audit_logs": "Nhật ký kiểm toán"
   },
   "actions": {
     "create_issue": "Tạo vấn đề",
@@ -72,12 +89,15 @@
     "banner_password_reset": "Mật khẩu đã được cập nhật. Đăng nhập bằng mật khẩu mới của bạn.",
     "banner_incorrect_credentials": "Email hoặc mật khẩu không chính xác.",
     "banner_verification_invalid": "Liên kết xác minh đó không còn hợp lệ.",
-    "banner_generic_signin_error": "Đã xảy ra sự cố khi đăng nhập."
+    "banner_generic_signin_error": "Đã xảy ra sự cố khi đăng nhập.",
+    "loading": "Đang tải",
+    "dismiss_notification": "Bỏ qua thông báo"
   },
   "common": {
     "loading": "Đang tải…",
     "no_projects": "Chưa có dự án nào",
-    "view_all_projects": "Xem tất cả {count} dự án"
+    "view_all_projects": "Xem tất cả {count} dự án",
+    "skipToContent": "Chuyển đến nội dung"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "Người dùng không xác định",
       "label": "Người báo cáo"
-    }
+    },
+    "reporter.avatarAlt": "Ảnh đại diện người báo cáo"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "Không thể cập nhật bình luận",
       "deleteFailed": "Không thể xóa bình luận",
       "deleteBlockedReplies": "Không thể xóa bình luận đã có phản hồi",
-      "reactionFailed": "Không thể cập nhật biểu cảm"
+      "reactionFailed": "Không thể cập nhật biểu cảm",
+      "agentBadge": "TÁC NHÂN"
     },
     "sections": {
       "timeTracking": "Theo dõi thời gian",
@@ -468,7 +490,8 @@
     "addSubIssue": "Thêm vấn đề con",
     "placeholder": "Tiêu đề vấn đề con...",
     "creating": "Đang tạo vấn đề con...",
-    "createFailed": "Không thể tạo vấn đề con. Vui lòng thử lại."
+    "createFailed": "Không thể tạo vấn đề con. Vui lòng thử lại.",
+    "noSubtasks": "Chưa có công việc con"
   },
   "issueRelations": {
     "dialogTitle": "Liên kết vấn đề",
@@ -577,7 +600,9 @@
         "reconnecting": "Đang kết nối lại",
         "disconnected": "Đã ngắt kết nối",
         "voiceRoom": "Phòng thoại"
-      }
+      },
+      "live": "trực tiếp",
+      "offline": "ngoại tuyến"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "Tự động hóa",
     "tab_ai_agents": "Tác nhân AI",
     "tab_chat_calls": "Trò chuyện & Cuộc gọi",
-    "tab_webhooks": "Webhook"
+    "tab_webhooks": "Webhook",
+    "ts_name_placeholder": "Platform",
+    "ts_slug_placeholder": "platform",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "Dự án",
@@ -2581,7 +2610,9 @@
         "creating": "Đang tạo...",
         "createPage": "Tạo trang"
       }
-    }
+    },
+    "shell.collapse": "Thu gọn",
+    "shell.expand": "Mở rộng"
   },
   "planning": {
     "search_placeholder": "Tìm kiếm mẫu",
@@ -3364,7 +3395,11 @@
       "close": "Đóng",
       "evaluate": "Đánh giá",
       "evaluating": "Đang đánh giá..."
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "rollout%",
+    "platformAi.saveFailedDescription": "Không thể lưu thông tin xác thực. Vui lòng thử lại.",
+    "platformAi.removeFailedDescription": "Không thể xóa thông tin xác thực. Vui lòng thử lại."
   },
   "adminDialogs": {
     "common": {
@@ -3476,7 +3511,13 @@
       "searchPlaceholder": "Tìm kiếm tổ chức...",
       "empty": "Không tìm thấy tổ chức nào.",
       "remove": "Gỡ bỏ {name}"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "Jane Smith",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "Advanced Analytics"
   },
   "charts": {
     "issues": "Vấn đề",
@@ -4623,7 +4664,10 @@
         "datadog": "Đặt { apiKey, site? }.",
         "s3": "Đặt { bucket, region, prefix? }. AWS_ACCESS_KEY_ID/SECRET phải được đặt trong env."
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "Sprint {number}",
@@ -5084,7 +5128,16 @@
           "disconnected": "Đã ngắt kết nối"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "Quyền truy cập micrô đã bị từ chối. Hãy cho phép truy cập micrô trong trình duyệt và thử lại.",
+    "chat.voice.micCouldNotStartBusy": "Không thể khởi động micrô của bạn. Có thể một ứng dụng khác đang sử dụng nó.",
+    "chat.voice.audioEngineFailed": "Bộ máy âm thanh của trình duyệt gặp lỗi với thiết bị này. Hãy dừng các ứng dụng âm thanh khác hoặc đổi micrô, rồi thử lại.",
+    "chat.voice.noMicForSession": "Không tìm thấy micrô nào cho phiên trình duyệt này.",
+    "chat.voice.runtimeError.serverUnreachable": "Không thể kết nối tới máy chủ thoại trên các cổng media (UDP 50000-50020 / 3478, TCP 7881). Hãy kiểm tra tường lửa / NAT và thử lại.",
+    "chat.voice.runtimeError.permissionDenied": "Quyền truy cập micrô đã bị từ chối. Hãy cho phép truy cập micrô trong trình duyệt và thử lại.",
+    "chat.voice.runtimeError.micNotStarted": "Không thể khởi động micrô của bạn. Có thể một ứng dụng khác đang sử dụng nó.",
+    "chat.voice.runtimeError.audioEngineFailed": "Bộ máy âm thanh của trình duyệt gặp lỗi với thiết bị này. Hãy dừng các ứng dụng âm thanh khác hoặc đổi micrô, rồi thử lại.",
+    "chat.voice.runtimeError.micNotFound": "Không tìm thấy micrô nào cho phiên trình duyệt này."
   },
   "userSecurity": {
     "accountMenu": "Menu tài khoản",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "Đã xóa cấp độ",
     "toastLevelDeletedDescription": "Đã gỡ bỏ cấp độ bảo mật thành công.",
     "errorDeleteLevel": "Không thể xóa cấp độ"
+  },
+  "aiModelCards": {
+    "back": "Quay lại TaskNebula",
+    "disclosureBadge": "Công bố theo Điều 50 EU AI Act",
+    "title": "Thẻ mô hình AI",
+    "intro": "TaskNebula triển khai các tính năng AI sau đây cho người dùng cuối. Với mỗi tính năng, chúng tôi công bố mục đích sử dụng, danh tính mô hình, dữ liệu được gửi trong mỗi lần gọi, chính sách lưu trữ và lập trường giám sát của con người theo mặc định. Trang này là hồ sơ minh bạch công khai và áp dụng cho mọi triển khai TaskNebula. Phiên bản công bố <version></version>.",
+    "lastReviewed": "Lần rà soát gần nhất 2026-05-14. Quy định bắt đầu được thực thi từ 2026-08-02.",
+    "onThisPage": "Trên trang này",
+    "model": "Mô hình",
+    "provider": "Nhà cung cấp",
+    "oversightDefault": "Giám sát mặc định",
+    "reviewRequired": "Cần rà soát",
+    "autoApplyAllowed": "Cho phép tự động áp dụng",
+    "footerContact": "Có câu hỏi về tính minh bạch của AI, quyền của chủ thể dữ liệu hoặc các thẻ mô hình này? Gửi email tới <link></link>."
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# người đang xem} other {# người đang xem}}",
+    "status_speaking": "đang nói",
+    "status_active": "đang hoạt động",
+    "status_viewing": "đang xem",
+    "overflow_more": "thêm {count}",
+    "overflow_more_viewing": "thêm {count} người đang xem"
   }
 }

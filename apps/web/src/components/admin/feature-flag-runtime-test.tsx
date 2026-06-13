@@ -133,11 +133,11 @@ export function FeatureFlagRuntimeTest({ defaultKey = '' }: FeatureFlagRuntimeTe
               {result.flag ? (
                 <div className="border-border mt-2 space-y-1 border-t pt-2">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">isEnabled</span>
+                    <span className="text-muted-foreground">{t('flagTest.isEnabled')}</span>
                     <span className="font-mono">{String(result.flag.isEnabled)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">rollout%</span>
+                    <span className="text-muted-foreground">{t('flagTest.rolloutPercent')}</span>
                     <span className="font-mono">{result.flag.rolloutPercentage}</span>
                   </div>
                   <div className="flex justify-between gap-2">

@@ -24,7 +24,24 @@
     "inbox_unread": "{count} nieprzeczytanych",
     "account_settings": "Ustawienia konta",
     "sign_out": "Wyloguj się",
-    "account_menu": "Menu konta"
+    "account_menu": "Menu konta",
+    "organization": "Organizacja",
+    "api_keys": "Klucze API",
+    "webhooks": "Webhooki",
+    "labels": "Etykiety",
+    "integrations": "Integracje",
+    "audit_streaming": "Strumieniowanie audytu",
+    "ai_agents": "AI i agenci",
+    "communications": "Komunikacja",
+    "notifications": "Powiadomienia",
+    "appearance": "Wygląd",
+    "activity": "Aktywność",
+    "organizations": "Organizacje",
+    "users": "Użytkownicy",
+    "feature_flags": "Flagi funkcji",
+    "agent_control": "Sterowanie agentami",
+    "realtime_health": "Stan połączeń w czasie rzeczywistym",
+    "audit_logs": "Dzienniki audytu"
   },
   "actions": {
     "create_issue": "Utwórz zgłoszenie",
@@ -72,12 +89,15 @@
     "banner_password_reset": "Hasło zaktualizowane. Zaloguj się przy użyciu nowego hasła.",
     "banner_incorrect_credentials": "Nieprawidłowy adres e-mail lub hasło.",
     "banner_verification_invalid": "Ten link weryfikacyjny jest już nieważny.",
-    "banner_generic_signin_error": "Coś poszło nie tak podczas logowania."
+    "banner_generic_signin_error": "Coś poszło nie tak podczas logowania.",
+    "loading": "Ładowanie",
+    "dismiss_notification": "Zamknij powiadomienie"
   },
   "common": {
     "loading": "Ładowanie…",
     "no_projects": "Brak projektów",
-    "view_all_projects": "Zobacz wszystkie projekty ({count})"
+    "view_all_projects": "Zobacz wszystkie projekty ({count})",
+    "skipToContent": "Przejdź do treści"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "Nieznany użytkownik",
       "label": "Zgłaszający"
-    }
+    },
+    "reporter.avatarAlt": "Awatar zgłaszającego"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "Nie udało się zaktualizować komentarza",
       "deleteFailed": "Nie udało się usunąć komentarza",
       "deleteBlockedReplies": "Nie można usunąć komentarza, który ma odpowiedzi",
-      "reactionFailed": "Nie udało się zaktualizować reakcji"
+      "reactionFailed": "Nie udało się zaktualizować reakcji",
+      "agentBadge": "AGENT"
     },
     "sections": {
       "timeTracking": "Śledzenie czasu",
@@ -468,7 +490,8 @@
     "addSubIssue": "Dodaj podzgłoszenie",
     "placeholder": "Tytuł podzgłoszenia...",
     "creating": "Tworzenie podzgłoszenia...",
-    "createFailed": "Nie udało się utworzyć podzgłoszenia. Spróbuj ponownie."
+    "createFailed": "Nie udało się utworzyć podzgłoszenia. Spróbuj ponownie.",
+    "noSubtasks": "Brak podzadań"
   },
   "issueRelations": {
     "dialogTitle": "Powiąż zgłoszenie",
@@ -577,7 +600,9 @@
         "reconnecting": "Ponowne łączenie",
         "disconnected": "Rozłączono",
         "voiceRoom": "Pokój głosowy"
-      }
+      },
+      "live": "na żywo",
+      "offline": "offline"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "Automatyzacja",
     "tab_ai_agents": "Agenci AI",
     "tab_chat_calls": "Czat i połączenia",
-    "tab_webhooks": "Webhooki"
+    "tab_webhooks": "Webhooki",
+    "ts_name_placeholder": "Platforma",
+    "ts_slug_placeholder": "platforma",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "Projekt",
@@ -2581,7 +2610,9 @@
         "creating": "Tworzenie...",
         "createPage": "Utwórz stronę"
       }
-    }
+    },
+    "shell.collapse": "Zwiń",
+    "shell.expand": "Rozwiń"
   },
   "planning": {
     "search_placeholder": "Szukaj szablonów",
@@ -3364,7 +3395,11 @@
       "close": "Zamknij",
       "evaluate": "Oceń",
       "evaluating": "Ocenianie..."
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "rollout%",
+    "platformAi.saveFailedDescription": "Nie udało się zapisać poświadczenia. Spróbuj ponownie.",
+    "platformAi.removeFailedDescription": "Nie udało się usunąć poświadczenia. Spróbuj ponownie."
   },
   "adminDialogs": {
     "common": {
@@ -3476,7 +3511,13 @@
       "searchPlaceholder": "Szukaj organizacji...",
       "empty": "Nie znaleziono organizacji.",
       "remove": "Usuń {name}"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "Jane Smith",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "Zaawansowana analityka"
   },
   "charts": {
     "issues": "Zadania",
@@ -4623,7 +4664,10 @@
         "datadog": "Ustaw { apiKey, site? }.",
         "s3": "Ustaw { bucket, region, prefix? }. AWS_ACCESS_KEY_ID/SECRET muszą być ustawione w środowisku."
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "Sprint {number}",
@@ -5084,7 +5128,16 @@
           "disconnected": "Rozłączono"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "Odmówiono dostępu do mikrofonu. Zezwól na dostęp do mikrofonu w przeglądarce i spróbuj ponownie.",
+    "chat.voice.micCouldNotStartBusy": "Nie udało się uruchomić mikrofonu. Może być używany przez inną aplikację.",
+    "chat.voice.audioEngineFailed": "Silnik dźwięku przeglądarki nie zadziałał na tym urządzeniu. Zamknij inne aplikacje audio lub zmień mikrofon, a następnie spróbuj ponownie.",
+    "chat.voice.noMicForSession": "Nie znaleziono mikrofonu dla tej sesji przeglądarki.",
+    "chat.voice.runtimeError.serverUnreachable": "Serwer głosowy jest nieosiągalny na portach mediów (UDP 50000-50020 / 3478, TCP 7881). Sprawdź zaporę / NAT i spróbuj ponownie.",
+    "chat.voice.runtimeError.permissionDenied": "Odmówiono dostępu do mikrofonu. Zezwól na dostęp do mikrofonu w przeglądarce i spróbuj ponownie.",
+    "chat.voice.runtimeError.micNotStarted": "Nie udało się uruchomić mikrofonu. Może być używany przez inną aplikację.",
+    "chat.voice.runtimeError.audioEngineFailed": "Silnik dźwięku przeglądarki nie zadziałał na tym urządzeniu. Zamknij inne aplikacje audio lub zmień mikrofon, a następnie spróbuj ponownie.",
+    "chat.voice.runtimeError.micNotFound": "Nie znaleziono mikrofonu dla tej sesji przeglądarki."
   },
   "userSecurity": {
     "accountMenu": "Menu konta",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "Poziom usunięty",
     "toastLevelDeletedDescription": "Pomyślnie usunięto poziom bezpieczeństwa.",
     "errorDeleteLevel": "Nie udało się usunąć poziomu"
+  },
+  "aiModelCards": {
+    "back": "Powrót do TaskNebula",
+    "disclosureBadge": "Informacja zgodnie z art. 50 EU AI Act",
+    "title": "Karty modeli AI",
+    "intro": "TaskNebula udostępnia użytkownikom końcowym następujące funkcje AI. Dla każdej z nich publikujemy przeznaczenie, tożsamość modelu, dane wysyłane przy każdym wywołaniu, politykę przechowywania oraz domyślny poziom nadzoru ludzkiego. Ta strona stanowi publiczny rejestr przejrzystości i dotyczy wszystkich wdrożeń TaskNebula. Wersja informacji <version></version>.",
+    "lastReviewed": "Ostatni przegląd 2026-05-14. Egzekwowanie regulacji rozpoczyna się 2026-08-02.",
+    "onThisPage": "Na tej stronie",
+    "model": "Model",
+    "provider": "Dostawca",
+    "oversightDefault": "Domyślny nadzór",
+    "reviewRequired": "Wymagana weryfikacja",
+    "autoApplyAllowed": "Automatyczne zastosowanie dozwolone",
+    "footerContact": "Masz pytania dotyczące przejrzystości AI, praw osób, których dane dotyczą, lub tych kart modeli? Napisz na <link></link>."
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# osoba przegląda} few {# osoby przeglądają} many {# osób przegląda} other {# osoby przegląda}}",
+    "status_speaking": "mówi",
+    "status_active": "aktywny",
+    "status_viewing": "przegląda",
+    "overflow_more": "jeszcze {count}",
+    "overflow_more_viewing": "jeszcze {count} przegląda"
   }
 }

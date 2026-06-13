@@ -24,7 +24,24 @@
     "inbox_unread": "{count} unread",
     "account_settings": "Account settings",
     "sign_out": "Sign out",
-    "account_menu": "Account menu"
+    "account_menu": "Account menu",
+    "organization": "Organization",
+    "api_keys": "API Keys",
+    "webhooks": "Webhooks",
+    "labels": "Labels",
+    "integrations": "Integrations",
+    "audit_streaming": "Audit streaming",
+    "ai_agents": "AI & Agents",
+    "communications": "Communications",
+    "notifications": "Notifications",
+    "appearance": "Appearance",
+    "activity": "Activity",
+    "organizations": "Organizations",
+    "users": "Users",
+    "feature_flags": "Feature flags",
+    "agent_control": "Agent control",
+    "realtime_health": "Realtime health",
+    "audit_logs": "Audit logs"
   },
   "actions": {
     "create_issue": "Create issue",
@@ -72,12 +89,15 @@
     "banner_password_reset": "Password updated. Sign in with your new password.",
     "banner_incorrect_credentials": "Incorrect email or password.",
     "banner_verification_invalid": "That verification link is no longer valid.",
-    "banner_generic_signin_error": "Something went wrong while signing in."
+    "banner_generic_signin_error": "Something went wrong while signing in.",
+    "loading": "Loading",
+    "dismiss_notification": "Dismiss notification"
   },
   "common": {
     "loading": "Loading…",
     "no_projects": "No projects yet",
-    "view_all_projects": "View all {count} projects"
+    "view_all_projects": "View all {count} projects",
+    "skipToContent": "Skip to content"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "Unknown user",
       "label": "Reporter"
-    }
+    },
+    "reporter.avatarAlt": "Reporter avatar"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "Failed to update comment",
       "deleteFailed": "Failed to delete comment",
       "deleteBlockedReplies": "Cannot delete a comment that has replies",
-      "reactionFailed": "Failed to update reaction"
+      "reactionFailed": "Failed to update reaction",
+      "agentBadge": "AGENT"
     },
     "sections": {
       "timeTracking": "Time tracking",
@@ -468,7 +490,8 @@
     "addSubIssue": "Add sub-issue",
     "placeholder": "Sub-issue title...",
     "creating": "Creating sub-issue...",
-    "createFailed": "Couldn't create sub-issue. Please try again."
+    "createFailed": "Couldn't create sub-issue. Please try again.",
+    "noSubtasks": "No subtasks yet"
   },
   "issueRelations": {
     "dialogTitle": "Link issue",
@@ -577,7 +600,9 @@
         "reconnecting": "Reconnecting",
         "disconnected": "Disconnected",
         "voiceRoom": "Voice room"
-      }
+      },
+      "live": "live",
+      "offline": "offline"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "Automation",
     "tab_ai_agents": "AI Agents",
     "tab_chat_calls": "Chat & Calls",
-    "tab_webhooks": "Webhooks"
+    "tab_webhooks": "Webhooks",
+    "ts_name_placeholder": "Platform",
+    "ts_slug_placeholder": "platform",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "Project",
@@ -2581,7 +2610,9 @@
         "creating": "Creating...",
         "createPage": "Create page"
       }
-    }
+    },
+    "shell.collapse": "Collapse",
+    "shell.expand": "Expand"
   },
   "planning": {
     "search_placeholder": "Search templates",
@@ -3364,7 +3395,11 @@
       "close": "Close",
       "evaluate": "Evaluate",
       "evaluating": "Evaluating..."
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "rollout%",
+    "platformAi.saveFailedDescription": "Could not save the credential. Please try again.",
+    "platformAi.removeFailedDescription": "Could not remove the credential. Please try again."
   },
   "adminDialogs": {
     "common": {
@@ -3476,7 +3511,13 @@
       "searchPlaceholder": "Search organizations...",
       "empty": "No organizations found.",
       "remove": "Remove {name}"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "Jane Smith",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "Advanced Analytics"
   },
   "charts": {
     "issues": "Issues",
@@ -4623,7 +4664,10 @@
         "datadog": "Set { apiKey, site? }.",
         "s3": "Set { bucket, region, prefix? }. AWS_ACCESS_KEY_ID/SECRET must be set in env."
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "Sprint {number}",
@@ -5084,7 +5128,16 @@
           "disconnected": "Disconnected"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "Microphone permission was denied. Allow microphone access in your browser and try again.",
+    "chat.voice.micCouldNotStartBusy": "Your microphone could not be started. Another app may be using it.",
+    "chat.voice.audioEngineFailed": "The browser audio engine failed for this device. Stop other audio apps or change your microphone, then try again.",
+    "chat.voice.noMicForSession": "No microphone was found for this browser session.",
+    "chat.voice.runtimeError.serverUnreachable": "Voice server is unreachable on the media ports (UDP 50000-50020 / 3478, TCP 7881). Check firewall / NAT and try again.",
+    "chat.voice.runtimeError.permissionDenied": "Microphone permission was denied. Allow microphone access in your browser and try again.",
+    "chat.voice.runtimeError.micNotStarted": "Your microphone could not be started. Another app may be using it.",
+    "chat.voice.runtimeError.audioEngineFailed": "The browser audio engine failed for this device. Stop other audio apps or change your microphone, then try again.",
+    "chat.voice.runtimeError.micNotFound": "No microphone was found for this browser session."
   },
   "userSecurity": {
     "accountMenu": "Account menu",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "Level deleted",
     "toastLevelDeletedDescription": "Security level removed successfully.",
     "errorDeleteLevel": "Failed to delete level"
+  },
+  "aiModelCards": {
+    "back": "Back to TaskNebula",
+    "disclosureBadge": "EU AI Act Article 50 disclosure",
+    "title": "AI Model Cards",
+    "intro": "TaskNebula deploys the following AI features to end users. For each, we publish the intended purpose, model identity, data sent on every call, retention policy, and our default human-oversight posture. This page is a public transparency record and applies to all TaskNebula deployments. Disclosure version <version></version>.",
+    "lastReviewed": "Last reviewed 2026-05-14. Regulation enforcement begins 2026-08-02.",
+    "onThisPage": "On this page",
+    "model": "Model",
+    "provider": "Provider",
+    "oversightDefault": "Oversight default",
+    "reviewRequired": "Review required",
+    "autoApplyAllowed": "Auto-apply allowed",
+    "footerContact": "Questions about AI transparency, data subject rights, or these model cards? Email <link></link>."
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# person viewing} other {# people viewing}}",
+    "status_speaking": "speaking",
+    "status_active": "active",
+    "status_viewing": "viewing",
+    "overflow_more": "{count} more",
+    "overflow_more_viewing": "{count} more viewing"
   }
 }

@@ -24,7 +24,24 @@
     "inbox_unread": "{count} غير مقروءة",
     "account_settings": "إعدادات الحساب",
     "sign_out": "تسجيل الخروج",
-    "account_menu": "قائمة الحساب"
+    "account_menu": "قائمة الحساب",
+    "organization": "المؤسسة",
+    "api_keys": "مفاتيح API",
+    "webhooks": "Webhooks",
+    "labels": "التسميات",
+    "integrations": "التكاملات",
+    "audit_streaming": "بث التدقيق",
+    "ai_agents": "الذكاء الاصطناعي والوكلاء",
+    "communications": "الاتصالات",
+    "notifications": "الإشعارات",
+    "appearance": "المظهر",
+    "activity": "النشاط",
+    "organizations": "المؤسسات",
+    "users": "المستخدمون",
+    "feature_flags": "أعلام الميزات",
+    "agent_control": "التحكم بالوكلاء",
+    "realtime_health": "صحة الزمن الحقيقي",
+    "audit_logs": "سجلات التدقيق"
   },
   "actions": {
     "create_issue": "إنشاء مهمة",
@@ -72,12 +89,15 @@
     "banner_password_reset": "تم تحديث كلمة المرور. سجّل الدخول بكلمة المرور الجديدة.",
     "banner_incorrect_credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
     "banner_verification_invalid": "رابط التحقق هذا لم يعد صالحًا.",
-    "banner_generic_signin_error": "حدث خطأ ما أثناء تسجيل الدخول."
+    "banner_generic_signin_error": "حدث خطأ ما أثناء تسجيل الدخول.",
+    "loading": "جارٍ التحميل",
+    "dismiss_notification": "تجاهل الإشعار"
   },
   "common": {
     "loading": "جارٍ التحميل…",
     "no_projects": "لا توجد مشاريع بعد",
-    "view_all_projects": "عرض جميع المشاريع ({count})"
+    "view_all_projects": "عرض جميع المشاريع ({count})",
+    "skipToContent": "تخطٍّ إلى المحتوى"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "مستخدم غير معروف",
       "label": "المُبلِّغ"
-    }
+    },
+    "reporter.avatarAlt": "صورة المُبلِّغ"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "فشل تحديث التعليق",
       "deleteFailed": "فشل حذف التعليق",
       "deleteBlockedReplies": "لا يمكن حذف تعليق له ردود",
-      "reactionFailed": "فشل تحديث التفاعل"
+      "reactionFailed": "فشل تحديث التفاعل",
+      "agentBadge": "وكيل"
     },
     "sections": {
       "timeTracking": "تتبّع الوقت",
@@ -468,7 +490,8 @@
     "addSubIssue": "إضافة مهمة فرعية",
     "placeholder": "عنوان المهمة الفرعية...",
     "creating": "جارٍ إنشاء المهمة الفرعية...",
-    "createFailed": "تعذّر إنشاء المهمة الفرعية. يُرجى المحاولة مرة أخرى."
+    "createFailed": "تعذّر إنشاء المهمة الفرعية. يُرجى المحاولة مرة أخرى.",
+    "noSubtasks": "لا توجد مهام فرعية بعد"
   },
   "issueRelations": {
     "dialogTitle": "ربط مهمة",
@@ -577,7 +600,9 @@
         "reconnecting": "جارٍ إعادة الاتصال",
         "disconnected": "غير متصل",
         "voiceRoom": "غرفة صوتية"
-      }
+      },
+      "live": "مباشر",
+      "offline": "غير متصل"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "الأتمتة",
     "tab_ai_agents": "وكلاء الذكاء الاصطناعي",
     "tab_chat_calls": "الدردشة والمكالمات",
-    "tab_webhooks": "خطافات الويب"
+    "tab_webhooks": "خطافات الويب",
+    "ts_name_placeholder": "Platform",
+    "ts_slug_placeholder": "platform",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "المشروع",
@@ -2581,7 +2610,9 @@
         "creating": "جارٍ الإنشاء...",
         "createPage": "إنشاء صفحة"
       }
-    }
+    },
+    "shell.collapse": "طي",
+    "shell.expand": "توسيع"
   },
   "planning": {
     "search_placeholder": "ابحث في القوالب",
@@ -3364,7 +3395,11 @@
       "close": "إغلاق",
       "evaluate": "تقييم",
       "evaluating": "جارٍ التقييم..."
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "rollout%",
+    "platformAi.saveFailedDescription": "تعذّر حفظ بيانات الاعتماد. يرجى المحاولة مرة أخرى.",
+    "platformAi.removeFailedDescription": "تعذّرت إزالة بيانات الاعتماد. يرجى المحاولة مرة أخرى."
   },
   "adminDialogs": {
     "common": {
@@ -3476,7 +3511,13 @@
       "searchPlaceholder": "ابحث في المؤسسات...",
       "empty": "لم يتم العثور على مؤسسات.",
       "remove": "إزالة {name}"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "Jane Smith",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "التحليلات المتقدمة"
   },
   "charts": {
     "issues": "المهام",
@@ -4623,7 +4664,10 @@
         "datadog": "اضبط { apiKey, site? }.",
         "s3": "اضبط { bucket, region, prefix? }. يجب ضبط AWS_ACCESS_KEY_ID/SECRET في البيئة."
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "سباق {number}",
@@ -5084,7 +5128,16 @@
           "disconnected": "غير متصل"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "تم رفض إذن الميكروفون. اسمح بالوصول إلى الميكروفون في متصفحك وحاول مرة أخرى.",
+    "chat.voice.micCouldNotStartBusy": "تعذّر تشغيل الميكروفون. قد يكون تطبيق آخر يستخدمه.",
+    "chat.voice.audioEngineFailed": "فشل محرك الصوت في المتصفح لهذا الجهاز. أوقف تطبيقات الصوت الأخرى أو غيّر الميكروفون، ثم حاول مرة أخرى.",
+    "chat.voice.noMicForSession": "لم يتم العثور على ميكروفون لجلسة المتصفح هذه.",
+    "chat.voice.runtimeError.serverUnreachable": "خادم الصوت غير قابل للوصول على منافذ الوسائط (UDP 50000-50020 / 3478، TCP 7881). تحقق من الجدار الناري / NAT وحاول مرة أخرى.",
+    "chat.voice.runtimeError.permissionDenied": "تم رفض إذن الميكروفون. اسمح بالوصول إلى الميكروفون في متصفحك وحاول مرة أخرى.",
+    "chat.voice.runtimeError.micNotStarted": "تعذّر تشغيل الميكروفون. قد يكون تطبيق آخر يستخدمه.",
+    "chat.voice.runtimeError.audioEngineFailed": "فشل محرك الصوت في المتصفح لهذا الجهاز. أوقف تطبيقات الصوت الأخرى أو غيّر الميكروفون، ثم حاول مرة أخرى.",
+    "chat.voice.runtimeError.micNotFound": "لم يتم العثور على ميكروفون لجلسة المتصفح هذه."
   },
   "userSecurity": {
     "accountMenu": "قائمة الحساب",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "تم حذف المستوى",
     "toastLevelDeletedDescription": "تمت إزالة مستوى الأمان بنجاح.",
     "errorDeleteLevel": "تعذّر حذف المستوى"
+  },
+  "aiModelCards": {
+    "back": "العودة إلى TaskNebula",
+    "disclosureBadge": "إفصاح بموجب المادة 50 من قانون EU AI Act",
+    "title": "بطاقات نماذج الذكاء الاصطناعي",
+    "intro": "تنشر TaskNebula ميزات الذكاء الاصطناعي التالية للمستخدمين النهائيين. ولكل ميزة، نوضّح الغرض المقصود، وهوية النموذج، والبيانات المُرسَلة في كل استدعاء، وسياسة الاحتفاظ، وموقفنا الافتراضي بشأن الإشراف البشري. هذه الصفحة سجلّ شفافية عام وينطبق على جميع عمليات نشر TaskNebula. إصدار الإفصاح <version></version>.",
+    "lastReviewed": "آخر مراجعة 2026-05-14. يبدأ إنفاذ اللائحة في 2026-08-02.",
+    "onThisPage": "في هذه الصفحة",
+    "model": "النموذج",
+    "provider": "المزوّد",
+    "oversightDefault": "الإشراف الافتراضي",
+    "reviewRequired": "المراجعة مطلوبة",
+    "autoApplyAllowed": "التطبيق التلقائي مسموح",
+    "footerContact": "هل لديك أسئلة حول شفافية الذكاء الاصطناعي، أو حقوق أصحاب البيانات، أو بطاقات النماذج هذه؟ راسلنا عبر <link></link>."
+  },
+  "presence": {
+    "group_viewing": "{count, plural, zero {لا أحد يشاهد} one {شخص واحد يشاهد} two {شخصان يشاهدان} few {# أشخاص يشاهدون} many {# شخصًا يشاهدون} other {# شخص يشاهدون}}",
+    "status_speaking": "يتحدث",
+    "status_active": "نشط",
+    "status_viewing": "يشاهد",
+    "overflow_more": "{count} إضافي",
+    "overflow_more_viewing": "{count} إضافي يشاهدون"
   }
 }

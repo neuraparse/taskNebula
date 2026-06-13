@@ -3,24 +3,28 @@ import Link from 'next/link';
 
 export default function SignUpPage() {
   return (
-    <div className="relative min-h-dvh grid place-items-center bg-background overflow-hidden px-4 py-10">
+    <div className="bg-background relative grid min-h-dvh place-items-center overflow-hidden px-4 py-10">
       {/* Aurora glow behind card */}
       <div
         aria-hidden="true"
-        className="bg-aurora absolute inset-0 pointer-events-none blur-3xl opacity-60 -z-10"
+        className="bg-aurora pointer-events-none absolute inset-0 -z-10 opacity-60 blur-3xl"
       />
 
-      <div className="relative w-full max-w-sm animate-blur-in">
+      <div className="animate-blur-in relative w-full max-w-sm">
         {/* Brand mark */}
         <div className="mb-5 flex justify-center">
           <Link
             href="/"
-            className="flex items-center gap-2 rounded-md transition-all duration-150 ease-snap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="ease-snap focus-visible:ring-ring flex items-center gap-2 rounded-md transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
           >
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-foreground">
-              <span className="text-[11px] font-semibold tracking-tight text-background">TN</span>
+            <div className="bg-foreground flex h-7 w-7 items-center justify-center rounded-md">
+              <span className="text-background text-[11px] font-semibold tracking-tight">
+                {'TN'}
+              </span>
             </div>
-            <span className="text-sm font-semibold tracking-tight text-foreground">TaskNebula</span>
+            <span className="text-foreground text-sm font-semibold tracking-tight">
+              {'TaskNebula'}
+            </span>
           </Link>
         </div>
 

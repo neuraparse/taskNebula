@@ -146,7 +146,7 @@ function PieCard({ kicker, title, subtitle, data, colorMap, tone, icon }: PieCar
                 {entry.name}
               </span>
               <span className="text-muted-foreground shrink-0 tabular-nums">
-                {entry.value} <span className="text-muted-foreground/60">({pct}%)</span>
+                {entry.value} <span className="text-muted-foreground/60">{`(${pct}%)`}</span>
               </span>
             </div>
           );

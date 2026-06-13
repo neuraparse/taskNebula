@@ -1081,7 +1081,7 @@ export function DocumentEditor({
               aria-label={t('editor.toolbar.bold')}
               title={t('editor.toolbar.bold')}
             >
-              <span className="text-sm font-bold leading-none">B</span>
+              <span className="text-sm font-bold leading-none">{'B'}</span>
             </MenuBarButton>
             <MenuBarButton
               onClick={() => editor.chain().focus().toggleItalic().run()}
@@ -1089,7 +1089,7 @@ export function DocumentEditor({
               aria-label={t('editor.toolbar.italic')}
               title={t('editor.toolbar.italic')}
             >
-              <span className="text-sm italic leading-none">I</span>
+              <span className="text-sm italic leading-none">{'I'}</span>
             </MenuBarButton>
             <MenuBarButton
               onClick={() => editor.chain().focus().toggleUnderline().run()}
@@ -1097,7 +1097,7 @@ export function DocumentEditor({
               aria-label={t('editor.toolbar.underline')}
               title={t('editor.toolbar.underline')}
             >
-              <span className="text-sm leading-none underline">U</span>
+              <span className="text-sm leading-none underline">{'U'}</span>
             </MenuBarButton>
             <MenuBarButton
               onClick={() => editor.chain().focus().toggleStrike().run()}
@@ -1105,7 +1105,7 @@ export function DocumentEditor({
               aria-label={t('editor.toolbar.strikethrough')}
               title={t('editor.toolbar.strikethrough')}
             >
-              <span className="text-sm leading-none line-through">S</span>
+              <span className="text-sm leading-none line-through">{'S'}</span>
             </MenuBarButton>
             <MenuBarDivider />
             <MenuBarButton
@@ -1302,7 +1302,7 @@ export function DocumentEditor({
                 {breadcrumbPages.length > 0 ? (
                   breadcrumbPages.map((breadcrumb) => (
                     <div key={breadcrumb.id} className="flex items-center gap-1.5">
-                      <span className="text-muted-foreground/50">/</span>
+                      <span className="text-muted-foreground/50">{'/'}</span>
                       <Link
                         href={createDocumentAppHref({
                           id: breadcrumb.id,
@@ -1317,7 +1317,7 @@ export function DocumentEditor({
                   ))
                 ) : (
                   <>
-                    <span className="text-muted-foreground/50">/</span>
+                    <span className="text-muted-foreground/50">{'/'}</span>
                     <span className="kicker">{documentScopeLabel}</span>
                   </>
                 )}

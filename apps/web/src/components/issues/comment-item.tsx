@@ -158,7 +158,7 @@ export function CommentItem({ comment, issueId, currentUserId, isAgent }: Commen
           <span className="text-sm font-medium">{authorName}</span>
           {isAgent && (
             <span className="rounded-full bg-violet-100 px-1.5 text-[9px] font-semibold tracking-wider text-violet-700">
-              AGENT
+              {t('agentBadge')}
             </span>
           )}
           <span className="text-muted-foreground text-[11px]">{timeAgo}</span>

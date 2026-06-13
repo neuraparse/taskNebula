@@ -186,7 +186,7 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
         <div className="stagger space-y-2">
           {conditions.map((condition, index) => (
             <div key={condition.id} className="animate-fade-up flex items-center gap-2">
-              {index > 0 && <span className="chip shrink-0">AND</span>}
+              {index > 0 && <span className="chip shrink-0">{'AND'}</span>}
               <Select
                 value={condition.field}
                 onValueChange={(value) => updateCondition(condition.id, { field: value })}

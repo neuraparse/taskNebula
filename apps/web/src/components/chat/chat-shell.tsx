@@ -1685,13 +1685,16 @@ function ChatVoiceDock({
     }
   }, []);
 
-  const handleRoomError = useCallback((error: Error) => {
-    const message = formatLivekitRuntimeError(error);
-    if (!message) {
-      return;
-    }
-    latestOnRuntimeErrorRef.current(message);
-  }, []);
+  const handleRoomError = useCallback(
+    (error: Error) => {
+      const message = formatLivekitRuntimeError(error, t);
+      if (!message) {
+        return;
+      }
+      latestOnRuntimeErrorRef.current(message);
+    },
+    [t]
+  );
 
   const handleMediaDeviceFailure = useCallback((error?: Error) => {
     latestOnRuntimeErrorRef.current(formatMicrophoneError(error));
@@ -3320,7 +3323,10 @@ function formatConnectionStateLabel(
   }
 }
 
-function formatLivekitRuntimeError(error: Error) {
+function formatLivekitRuntimeError(
+  error: Error,
+  t: ReturnType<typeof useTranslations<'workspaceTools'>>
+) {
   const message = error.message.toLowerCase();
   // ICE / PeerConnection failure surfaces as a "client initiated" disconnect
   // from the SDK, so we disambiguate those before falling through to the
@@ -3332,7 +3338,7 @@ function formatLivekitRuntimeError(error: Error) {
     message.includes('pc connection failed') ||
     message.includes('ice connection failed')
   ) {
-    return 'Voice server is unreachable on the media ports (UDP 50000-50020 / 3478, TCP 7881). Check firewall / NAT and try again.';
+    return t('chat.voice.runtimeError.serverUnreachable');
   }
   if (
     message.includes('client initiated disconnect') ||
@@ -3342,19 +3348,19 @@ function formatLivekitRuntimeError(error: Error) {
     return '';
   }
   if (message.includes('permission denied') || message.includes('notallowederror')) {
-    return 'Microphone permission was denied. Allow microphone access in your browser and try again.';
+    return t('chat.voice.runtimeError.permissionDenied');
   }
   if (message.includes('could not start audio source') || message.includes('notreadableerror')) {
-    return 'Your microphone could not be started. Another app may be using it.';
+    return t('chat.voice.runtimeError.micNotStarted');
   }
   if (
     message.includes('audiocontext encountered an error') ||
     message.includes('webaudio renderer')
   ) {
-    return 'The browser audio engine failed for this device. Stop other audio apps or change your microphone, then try again.';
+    return t('chat.voice.runtimeError.audioEngineFailed');
   }
   if (message.includes('device not found') || message.includes('notfounderror')) {
-    return 'No microphone was found for this browser session.';
+    return t('chat.voice.runtimeError.micNotFound');
   }
   return error.message;
 }

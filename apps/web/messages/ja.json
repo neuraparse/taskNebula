@@ -24,7 +24,24 @@
     "inbox_unread": "未読 {count} 件",
     "account_settings": "アカウント設定",
     "sign_out": "サインアウト",
-    "account_menu": "アカウントメニュー"
+    "account_menu": "アカウントメニュー",
+    "organization": "組織",
+    "api_keys": "APIキー",
+    "webhooks": "Webhook",
+    "labels": "ラベル",
+    "integrations": "連携",
+    "audit_streaming": "監査ストリーミング",
+    "ai_agents": "AIとエージェント",
+    "communications": "コミュニケーション",
+    "notifications": "通知",
+    "appearance": "外観",
+    "activity": "アクティビティ",
+    "organizations": "組織",
+    "users": "ユーザー",
+    "feature_flags": "機能フラグ",
+    "agent_control": "エージェント制御",
+    "realtime_health": "リアルタイム稼働状況",
+    "audit_logs": "監査ログ"
   },
   "actions": {
     "create_issue": "課題を作成",
@@ -72,12 +89,15 @@
     "banner_password_reset": "パスワードを更新しました。新しいパスワードでサインインしてください。",
     "banner_incorrect_credentials": "メールアドレスまたはパスワードが正しくありません。",
     "banner_verification_invalid": "この確認リンクは無効になっています。",
-    "banner_generic_signin_error": "サインイン中に問題が発生しました。"
+    "banner_generic_signin_error": "サインイン中に問題が発生しました。",
+    "loading": "読み込み中",
+    "dismiss_notification": "通知を閉じる"
   },
   "common": {
     "loading": "読み込み中…",
     "no_projects": "プロジェクトはまだありません",
-    "view_all_projects": "{count} 件すべてのプロジェクトを表示"
+    "view_all_projects": "{count} 件すべてのプロジェクトを表示",
+    "skipToContent": "コンテンツにスキップ"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "不明なユーザー",
       "label": "報告者"
-    }
+    },
+    "reporter.avatarAlt": "報告者のアバター"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "コメントの更新に失敗しました",
       "deleteFailed": "コメントの削除に失敗しました",
       "deleteBlockedReplies": "返信のあるコメントは削除できません",
-      "reactionFailed": "リアクションの更新に失敗しました"
+      "reactionFailed": "リアクションの更新に失敗しました",
+      "agentBadge": "エージェント"
     },
     "sections": {
       "timeTracking": "時間追跡",
@@ -468,7 +490,8 @@
     "addSubIssue": "サブ課題を追加",
     "placeholder": "サブ課題のタイトル...",
     "creating": "サブ課題を作成しています...",
-    "createFailed": "サブ課題を作成できませんでした。もう一度お試しください。"
+    "createFailed": "サブ課題を作成できませんでした。もう一度お試しください。",
+    "noSubtasks": "サブタスクはまだありません"
   },
   "issueRelations": {
     "dialogTitle": "課題をリンク",
@@ -577,7 +600,9 @@
         "reconnecting": "再接続中",
         "disconnected": "切断済み",
         "voiceRoom": "音声ルーム"
-      }
+      },
+      "live": "ライブ",
+      "offline": "オフライン"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "自動化",
     "tab_ai_agents": "AI エージェント",
     "tab_chat_calls": "チャットと通話",
-    "tab_webhooks": "Webhook"
+    "tab_webhooks": "Webhook",
+    "ts_name_placeholder": "プラットフォーム",
+    "ts_slug_placeholder": "platform",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "プロジェクト",
@@ -2581,7 +2610,9 @@
         "creating": "作成中...",
         "createPage": "ページを作成"
       }
-    }
+    },
+    "shell.collapse": "折りたたむ",
+    "shell.expand": "展開する"
   },
   "planning": {
     "search_placeholder": "テンプレートを検索",
@@ -3364,7 +3395,11 @@
       "close": "閉じる",
       "evaluate": "評価",
       "evaluating": "評価中..."
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "rollout%",
+    "platformAi.saveFailedDescription": "認証情報を保存できませんでした。もう一度お試しください。",
+    "platformAi.removeFailedDescription": "認証情報を削除できませんでした。もう一度お試しください。"
   },
   "adminDialogs": {
     "common": {
@@ -3476,7 +3511,13 @@
       "searchPlaceholder": "組織を検索...",
       "empty": "組織が見つかりません。",
       "remove": "{name} を削除"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "山田 花子",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "高度な分析"
   },
   "charts": {
     "issues": "課題",
@@ -4623,7 +4664,10 @@
         "datadog": "{ apiKey, site? } を設定します。",
         "s3": "{ bucket, region, prefix? } を設定します。AWS_ACCESS_KEY_ID/SECRET を環境変数に設定する必要があります。"
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "スプリント {number}",
@@ -5084,7 +5128,16 @@
           "disconnected": "切断されました"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "マイクの使用が拒否されました。ブラウザでマイクへのアクセスを許可してから、もう一度お試しください。",
+    "chat.voice.micCouldNotStartBusy": "マイクを開始できませんでした。他のアプリが使用している可能性があります。",
+    "chat.voice.audioEngineFailed": "このデバイスでブラウザのオーディオエンジンが失敗しました。他のオーディオアプリを停止するか、マイクを変更してから、もう一度お試しください。",
+    "chat.voice.noMicForSession": "このブラウザセッションでマイクが見つかりませんでした。",
+    "chat.voice.runtimeError.serverUnreachable": "メディアポート（UDP 50000-50020 / 3478、TCP 7881）でボイスサーバーに到達できません。ファイアウォール／NATを確認してから、もう一度お試しください。",
+    "chat.voice.runtimeError.permissionDenied": "マイクの使用が拒否されました。ブラウザでマイクへのアクセスを許可してから、もう一度お試しください。",
+    "chat.voice.runtimeError.micNotStarted": "マイクを開始できませんでした。他のアプリが使用している可能性があります。",
+    "chat.voice.runtimeError.audioEngineFailed": "このデバイスでブラウザのオーディオエンジンが失敗しました。他のオーディオアプリを停止するか、マイクを変更してから、もう一度お試しください。",
+    "chat.voice.runtimeError.micNotFound": "このブラウザセッションでマイクが見つかりませんでした。"
   },
   "userSecurity": {
     "accountMenu": "アカウントメニュー",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "レベルを削除しました",
     "toastLevelDeletedDescription": "セキュリティレベルを正常に削除しました。",
     "errorDeleteLevel": "レベルの削除に失敗しました"
+  },
+  "aiModelCards": {
+    "back": "TaskNebula に戻る",
+    "disclosureBadge": "EU AI Act 第50条の開示",
+    "title": "AI モデルカード",
+    "intro": "TaskNebula は以下の AI 機能をエンドユーザーに提供しています。それぞれについて、利用目的、モデルの識別情報、各呼び出しで送信されるデータ、保持ポリシー、およびデフォルトの人的監督の方針を公開しています。このページは公開された透明性の記録であり、すべての TaskNebula デプロイメントに適用されます。開示バージョン <version></version>。",
+    "lastReviewed": "最終レビュー日 2026-05-14。規制の施行は 2026-08-02 に開始されます。",
+    "onThisPage": "このページの内容",
+    "model": "モデル",
+    "provider": "プロバイダー",
+    "oversightDefault": "監督のデフォルト",
+    "reviewRequired": "レビューが必要",
+    "autoApplyAllowed": "自動適用を許可",
+    "footerContact": "AI の透明性、データ主体の権利、またはこれらのモデルカードについてご質問がありますか？<link></link> までメールでお問い合わせください。"
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# 人が閲覧中} other {# 人が閲覧中}}",
+    "status_speaking": "発言中",
+    "status_active": "アクティブ",
+    "status_viewing": "閲覧中",
+    "overflow_more": "他 {count} 件",
+    "overflow_more_viewing": "他 {count} 人が閲覧中"
   }
 }

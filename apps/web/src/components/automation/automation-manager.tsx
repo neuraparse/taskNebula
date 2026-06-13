@@ -352,7 +352,7 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
       try {
         const response = await fetch(`/api/automation-rules/${ruleId}/executions?limit=50`);
         if (!response.ok) {
-          throw new Error('Failed to fetch executions');
+          throw new Error(t('automation.toast.executionsLoadFailed'));
         }
         const data: AutomationExecution[] = await response.json();
         setExecutions(data);

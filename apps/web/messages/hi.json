@@ -24,7 +24,24 @@
     "inbox_unread": "{count} अपठित",
     "account_settings": "अकाउंट सेटिंग्स",
     "sign_out": "साइन आउट",
-    "account_menu": "अकाउंट मेन्यू"
+    "account_menu": "अकाउंट मेन्यू",
+    "organization": "संगठन",
+    "api_keys": "API कुंजियाँ",
+    "webhooks": "Webhooks",
+    "labels": "लेबल",
+    "integrations": "एकीकरण",
+    "audit_streaming": "ऑडिट स्ट्रीमिंग",
+    "ai_agents": "AI और एजेंट",
+    "communications": "संचार",
+    "notifications": "सूचनाएँ",
+    "appearance": "रूप-रंग",
+    "activity": "गतिविधि",
+    "organizations": "संगठन",
+    "users": "उपयोगकर्ता",
+    "feature_flags": "फ़ीचर फ़्लैग",
+    "agent_control": "एजेंट नियंत्रण",
+    "realtime_health": "रीयल-टाइम स्वास्थ्य",
+    "audit_logs": "ऑडिट लॉग"
   },
   "actions": {
     "create_issue": "इश्यू बनाएं",
@@ -72,12 +89,15 @@
     "banner_password_reset": "पासवर्ड अपडेट हो गया। अपने नए पासवर्ड के साथ साइन इन करें।",
     "banner_incorrect_credentials": "गलत ईमेल या पासवर्ड।",
     "banner_verification_invalid": "वह सत्यापन लिंक अब मान्य नहीं है।",
-    "banner_generic_signin_error": "साइन इन करते समय कुछ गलत हो गया।"
+    "banner_generic_signin_error": "साइन इन करते समय कुछ गलत हो गया।",
+    "loading": "लोड हो रहा है",
+    "dismiss_notification": "सूचना खारिज करें"
   },
   "common": {
     "loading": "लोड हो रहा है…",
     "no_projects": "अभी तक कोई प्रोजेक्ट नहीं",
-    "view_all_projects": "सभी {count} प्रोजेक्ट देखें"
+    "view_all_projects": "सभी {count} प्रोजेक्ट देखें",
+    "skipToContent": "सामग्री पर जाएँ"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "अज्ञात उपयोगकर्ता",
       "label": "रिपोर्टर"
-    }
+    },
+    "reporter.avatarAlt": "रिपोर्टर अवतार"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "टिप्पणी अपडेट करने में विफल",
       "deleteFailed": "टिप्पणी हटाने में विफल",
       "deleteBlockedReplies": "जिस टिप्पणी पर जवाब हैं उसे हटाया नहीं जा सकता",
-      "reactionFailed": "प्रतिक्रिया अपडेट करने में विफल"
+      "reactionFailed": "प्रतिक्रिया अपडेट करने में विफल",
+      "agentBadge": "एजेंट"
     },
     "sections": {
       "timeTracking": "समय ट्रैकिंग",
@@ -468,7 +490,8 @@
     "addSubIssue": "सब-इश्यू जोड़ें",
     "placeholder": "सब-इश्यू शीर्षक...",
     "creating": "सब-इश्यू बनाया जा रहा है...",
-    "createFailed": "सब-इश्यू नहीं बनाया जा सका। कृपया फिर से प्रयास करें।"
+    "createFailed": "सब-इश्यू नहीं बनाया जा सका। कृपया फिर से प्रयास करें।",
+    "noSubtasks": "अभी तक कोई उप-कार्य नहीं"
   },
   "issueRelations": {
     "dialogTitle": "इश्यू लिंक करें",
@@ -577,7 +600,9 @@
         "reconnecting": "पुनः कनेक्ट हो रहा है",
         "disconnected": "डिस्कनेक्टेड",
         "voiceRoom": "वॉइस रूम"
-      }
+      },
+      "live": "लाइव",
+      "offline": "ऑफ़लाइन"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "ऑटोमेशन",
     "tab_ai_agents": "AI एजेंट्स",
     "tab_chat_calls": "चैट और कॉल",
-    "tab_webhooks": "वेबहुक"
+    "tab_webhooks": "वेबहुक",
+    "ts_name_placeholder": "Platform",
+    "ts_slug_placeholder": "platform",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "प्रोजेक्ट",
@@ -2581,7 +2610,9 @@
         "creating": "बनाया जा रहा है...",
         "createPage": "पृष्ठ बनाएँ"
       }
-    }
+    },
+    "shell.collapse": "संक्षिप्त करें",
+    "shell.expand": "विस्तृत करें"
   },
   "planning": {
     "search_placeholder": "टेम्पलेट खोजें",
@@ -3364,7 +3395,11 @@
       "close": "बंद करें",
       "evaluate": "मूल्यांकन करें",
       "evaluating": "मूल्यांकन हो रहा है..."
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "rollout%",
+    "platformAi.saveFailedDescription": "क्रेडेंशियल सहेजा नहीं जा सका। कृपया पुनः प्रयास करें।",
+    "platformAi.removeFailedDescription": "क्रेडेंशियल हटाया नहीं जा सका। कृपया पुनः प्रयास करें।"
   },
   "adminDialogs": {
     "common": {
@@ -3476,7 +3511,13 @@
       "searchPlaceholder": "संगठन खोजें...",
       "empty": "कोई संगठन नहीं मिला।",
       "remove": "{name} हटाएँ"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "Jane Smith",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "Advanced Analytics"
   },
   "charts": {
     "issues": "इश्यू",
@@ -4623,7 +4664,10 @@
         "datadog": "{ apiKey, site? } सेट करें।",
         "s3": "{ bucket, region, prefix? } सेट करें। AWS_ACCESS_KEY_ID/SECRET को env में सेट किया जाना चाहिए।"
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "स्प्रिंट {number}",
@@ -5084,7 +5128,16 @@
           "disconnected": "डिस्कनेक्ट किया गया"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "माइक्रोफ़ोन की अनुमति अस्वीकार कर दी गई। अपने ब्राउज़र में माइक्रोफ़ोन एक्सेस की अनुमति दें और पुनः प्रयास करें।",
+    "chat.voice.micCouldNotStartBusy": "आपका माइक्रोफ़ोन प्रारंभ नहीं किया जा सका। कोई अन्य ऐप इसका उपयोग कर रहा हो सकता है।",
+    "chat.voice.audioEngineFailed": "इस डिवाइस के लिए ब्राउज़र ऑडियो इंजन विफल रहा। अन्य ऑडियो ऐप्स बंद करें या अपना माइक्रोफ़ोन बदलें, फिर पुनः प्रयास करें।",
+    "chat.voice.noMicForSession": "इस ब्राउज़र सत्र के लिए कोई माइक्रोफ़ोन नहीं मिला।",
+    "chat.voice.runtimeError.serverUnreachable": "वॉइस सर्वर मीडिया पोर्ट्स (UDP 50000-50020 / 3478, TCP 7881) पर पहुँच योग्य नहीं है। फ़ायरवॉल / NAT जाँचें और पुनः प्रयास करें।",
+    "chat.voice.runtimeError.permissionDenied": "माइक्रोफ़ोन की अनुमति अस्वीकार कर दी गई। अपने ब्राउज़र में माइक्रोफ़ोन एक्सेस की अनुमति दें और पुनः प्रयास करें।",
+    "chat.voice.runtimeError.micNotStarted": "आपका माइक्रोफ़ोन प्रारंभ नहीं किया जा सका। कोई अन्य ऐप इसका उपयोग कर रहा हो सकता है।",
+    "chat.voice.runtimeError.audioEngineFailed": "इस डिवाइस के लिए ब्राउज़र ऑडियो इंजन विफल रहा। अन्य ऑडियो ऐप्स बंद करें या अपना माइक्रोफ़ोन बदलें, फिर पुनः प्रयास करें।",
+    "chat.voice.runtimeError.micNotFound": "इस ब्राउज़र सत्र के लिए कोई माइक्रोफ़ोन नहीं मिला।"
   },
   "userSecurity": {
     "accountMenu": "खाता मेनू",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "स्तर हटाया गया",
     "toastLevelDeletedDescription": "सुरक्षा स्तर सफलतापूर्वक हटाया गया।",
     "errorDeleteLevel": "स्तर हटाने में विफल"
+  },
+  "aiModelCards": {
+    "back": "TaskNebula पर वापस जाएँ",
+    "disclosureBadge": "EU AI Act अनुच्छेद 50 प्रकटीकरण",
+    "title": "AI मॉडल कार्ड",
+    "intro": "TaskNebula अंतिम उपयोगकर्ताओं के लिए निम्नलिखित AI सुविधाएँ तैनात करता है। प्रत्येक के लिए, हम इच्छित उद्देश्य, मॉडल पहचान, हर कॉल पर भेजा गया डेटा, प्रतिधारण नीति और हमारी डिफ़ॉल्ट मानव-निरीक्षण मुद्रा प्रकाशित करते हैं। यह पृष्ठ एक सार्वजनिक पारदर्शिता रिकॉर्ड है और सभी TaskNebula परिनियोजनों पर लागू होता है। प्रकटीकरण संस्करण <version></version>।",
+    "lastReviewed": "अंतिम समीक्षा 2026-05-14। विनियमन प्रवर्तन 2026-08-02 से शुरू होता है।",
+    "onThisPage": "इस पृष्ठ पर",
+    "model": "मॉडल",
+    "provider": "प्रदाता",
+    "oversightDefault": "निरीक्षण डिफ़ॉल्ट",
+    "reviewRequired": "समीक्षा आवश्यक",
+    "autoApplyAllowed": "स्वतः-लागू करने की अनुमति",
+    "footerContact": "AI पारदर्शिता, डेटा विषय अधिकारों, या इन मॉडल कार्डों के बारे में प्रश्न हैं? <link></link> पर ईमेल करें।"
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# व्यक्ति देख रहा है} other {# लोग देख रहे हैं}}",
+    "status_speaking": "बोल रहा है",
+    "status_active": "सक्रिय",
+    "status_viewing": "देख रहा है",
+    "overflow_more": "{count} और",
+    "overflow_more_viewing": "{count} और देख रहे हैं"
   }
 }

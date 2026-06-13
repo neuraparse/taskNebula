@@ -391,6 +391,7 @@ async function enableRoomMicrophoneWithTimeout(
 }
 
 export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
+  const t = useTranslations('workspaceTools');
   const queryClient = useQueryClient();
   const [currentSession, setCurrentSession] = useState<PersistentVoiceSession | null>(null);
   const [currentTarget, setCurrentTarget] = useState<PersistentVoiceTarget | null>(null);
@@ -599,7 +600,7 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
         hasRoom: Boolean(room),
         connectionState,
       });
-      throw new Error('Wait for the call to connect before changing your microphone.');
+      throw new Error(t('chat.voice.waitToConnect'));
     }
 
     try {
@@ -832,6 +833,7 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
     currentTarget?.roomId,
     isMicrophoneEnabled,
     syncRoomState,
+    t,
   ]);
 
   const handleRoomAttached = useCallback(
@@ -1417,9 +1419,7 @@ function PersistentVoiceHost({
                   session.audioDeviceId,
                   () => {
                     onAudioDeviceFallbackToDefault();
-                    latestOnRuntimeErrorRef.current(
-                      'The selected microphone could not start in this browser, so TaskNebula switched to your system default microphone.'
-                    );
+                    latestOnRuntimeErrorRef.current(t('chat.voice.micSwitchedToDefault'));
                   },
                   stream,
                   buildStoredMicrophoneRequestOptions(session.audioDeviceId, {
@@ -1508,7 +1508,7 @@ function PersistentVoiceHost({
         }
         const message =
           error instanceof Error
-            ? formatLivekitRuntimeError(error)
+            ? formatLivekitRuntimeError(error, t)
             : t('chat.voice.activeRoomConnectFailed');
         chatClientError('global-voice.host.connect.error', {
           roomName: session.roomName,
@@ -1558,7 +1558,9 @@ export function createPreparedPersistentRoom() {
   return createVoiceRoom();
 }
 
-export function formatLivekitRuntimeError(error: Error) {
+type LivekitRuntimeErrorTranslator = (key: string) => string;
+
+export function formatLivekitRuntimeError(error: Error, t?: LivekitRuntimeErrorTranslator) {
   const message = error.message.toLowerCase();
   if (
     message.includes('client initiated disconnect') ||
@@ -1568,19 +1570,19 @@ export function formatLivekitRuntimeError(error: Error) {
     return '';
   }
   if (message.includes('permission denied') || message.includes('notallowederror')) {
-    return 'Microphone permission was denied. Allow microphone access in your browser and try again.';
+    return t ? t('chat.voice.permissionDeniedRetry') : error.message;
   }
   if (message.includes('could not start audio source') || message.includes('notreadableerror')) {
-    return 'Your microphone could not be started. Another app may be using it.';
+    return t ? t('chat.voice.micCouldNotStartBusy') : error.message;
   }
   if (
     message.includes('audiocontext encountered an error') ||
     message.includes('webaudio renderer')
   ) {
-    return 'The browser audio engine failed for this device. Stop other audio apps or change your microphone, then try again.';
+    return t ? t('chat.voice.audioEngineFailed') : error.message;
   }
   if (message.includes('device not found') || message.includes('notfounderror')) {
-    return 'No microphone was found for this browser session.';
+    return t ? t('chat.voice.noMicForSession') : error.message;
   }
   return error.message;
 }

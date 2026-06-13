@@ -24,7 +24,24 @@
     "inbox_unread": "{count} 則未讀",
     "account_settings": "帳號設定",
     "sign_out": "登出",
-    "account_menu": "帳號選單"
+    "account_menu": "帳號選單",
+    "organization": "組織",
+    "api_keys": "API 金鑰",
+    "webhooks": "Webhooks",
+    "labels": "標籤",
+    "integrations": "整合",
+    "audit_streaming": "稽核串流",
+    "ai_agents": "AI 與代理程式",
+    "communications": "通訊",
+    "notifications": "通知",
+    "appearance": "外觀",
+    "activity": "動態",
+    "organizations": "組織",
+    "users": "使用者",
+    "feature_flags": "功能旗標",
+    "agent_control": "代理程式控制",
+    "realtime_health": "即時健康狀態",
+    "audit_logs": "稽核記錄"
   },
   "actions": {
     "create_issue": "建立工作項目",
@@ -72,12 +89,15 @@
     "banner_password_reset": "密碼已更新。請使用新密碼登入。",
     "banner_incorrect_credentials": "電子郵件或密碼錯誤。",
     "banner_verification_invalid": "該驗證連結已失效。",
-    "banner_generic_signin_error": "登入時發生問題。"
+    "banner_generic_signin_error": "登入時發生問題。",
+    "loading": "載入中",
+    "dismiss_notification": "關閉通知"
   },
   "common": {
     "loading": "載入中…",
     "no_projects": "尚無專案",
-    "view_all_projects": "查看全部 {count} 個專案"
+    "view_all_projects": "查看全部 {count} 個專案",
+    "skipToContent": "跳至主要內容"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "未知使用者",
       "label": "回報者"
-    }
+    },
+    "reporter.avatarAlt": "回報者頭像"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "無法更新留言",
       "deleteFailed": "無法刪除留言",
       "deleteBlockedReplies": "無法刪除有回覆的留言",
-      "reactionFailed": "無法更新反應"
+      "reactionFailed": "無法更新反應",
+      "agentBadge": "代理"
     },
     "sections": {
       "timeTracking": "時間追蹤",
@@ -468,7 +490,8 @@
     "addSubIssue": "新增子項目",
     "placeholder": "子項目標題…",
     "creating": "正在建立子項目…",
-    "createFailed": "無法建立子項目。請再試一次。"
+    "createFailed": "無法建立子項目。請再試一次。",
+    "noSubtasks": "尚無子任務"
   },
   "issueRelations": {
     "dialogTitle": "連結工作項目",
@@ -577,7 +600,9 @@
         "reconnecting": "重新連線中",
         "disconnected": "已中斷連線",
         "voiceRoom": "語音房間"
-      }
+      },
+      "live": "上線",
+      "offline": "離線"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "自動化",
     "tab_ai_agents": "AI 代理程式",
     "tab_chat_calls": "聊天與通話",
-    "tab_webhooks": "Webhook"
+    "tab_webhooks": "Webhook",
+    "ts_name_placeholder": "平台",
+    "ts_slug_placeholder": "platform",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "專案",
@@ -2581,7 +2610,9 @@
         "creating": "建立中...",
         "createPage": "建立頁面"
       }
-    }
+    },
+    "shell.collapse": "收合",
+    "shell.expand": "展開"
   },
   "planning": {
     "search_placeholder": "搜尋範本",
@@ -3364,7 +3395,11 @@
       "close": "關閉",
       "evaluate": "評估",
       "evaluating": "評估中..."
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "推出百分比%",
+    "platformAi.saveFailedDescription": "無法儲存憑證，請再試一次。",
+    "platformAi.removeFailedDescription": "無法移除憑證，請再試一次。"
   },
   "adminDialogs": {
     "common": {
@@ -3476,7 +3511,13 @@
       "searchPlaceholder": "搜尋組織...",
       "empty": "找不到組織。",
       "remove": "移除 {name}"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "王小明",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "進階分析"
   },
   "charts": {
     "issues": "議題",
@@ -4623,7 +4664,10 @@
         "datadog": "設定 { apiKey, site? }。",
         "s3": "設定 { bucket, region, prefix? }。必須在環境變數中設定 AWS_ACCESS_KEY_ID/SECRET。"
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "衝刺 {number}",
@@ -5084,7 +5128,16 @@
           "disconnected": "已中斷連線"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "麥克風權限遭拒。請在瀏覽器中允許麥克風存取後再試一次。",
+    "chat.voice.micCouldNotStartBusy": "無法啟動您的麥克風，可能有其他應用程式正在使用它。",
+    "chat.voice.audioEngineFailed": "此裝置的瀏覽器音訊引擎發生故障。請停止其他音訊應用程式或更換麥克風後再試一次。",
+    "chat.voice.noMicForSession": "找不到適用於此瀏覽器工作階段的麥克風。",
+    "chat.voice.runtimeError.serverUnreachable": "無法透過媒體連接埠連線至語音伺服器（UDP 50000-50020 / 3478，TCP 7881）。請檢查防火牆 / NAT 後再試一次。",
+    "chat.voice.runtimeError.permissionDenied": "麥克風權限遭拒。請在瀏覽器中允許麥克風存取後再試一次。",
+    "chat.voice.runtimeError.micNotStarted": "無法啟動您的麥克風，可能有其他應用程式正在使用它。",
+    "chat.voice.runtimeError.audioEngineFailed": "此裝置的瀏覽器音訊引擎發生故障。請停止其他音訊應用程式或更換麥克風後再試一次。",
+    "chat.voice.runtimeError.micNotFound": "找不到適用於此瀏覽器工作階段的麥克風。"
   },
   "userSecurity": {
     "accountMenu": "帳戶選單",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "層級已刪除",
     "toastLevelDeletedDescription": "已成功移除安全層級。",
     "errorDeleteLevel": "無法刪除層級"
+  },
+  "aiModelCards": {
+    "back": "返回 TaskNebula",
+    "disclosureBadge": "EU AI Act 第 50 條揭露",
+    "title": "AI 模型卡",
+    "intro": "TaskNebula 為終端使用者部署下列 AI 功能。針對每項功能，我們會公布其預期用途、模型身分、每次呼叫所傳送的資料、保留政策，以及我們預設的人為監督立場。本頁為公開透明度紀錄，適用於所有 TaskNebula 部署。揭露版本 <version></version>。",
+    "lastReviewed": "最後審查日期 2026-05-14。法規執行自 2026-08-02 起生效。",
+    "onThisPage": "本頁內容",
+    "model": "模型",
+    "provider": "供應商",
+    "oversightDefault": "預設監督",
+    "reviewRequired": "需要審查",
+    "autoApplyAllowed": "允許自動套用",
+    "footerContact": "對 AI 透明度、資料主體權利或這些模型卡有疑問嗎？請來信 <link></link>。"
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# 人正在檢視} other {# 人正在檢視}}",
+    "status_speaking": "發言中",
+    "status_active": "活躍中",
+    "status_viewing": "檢視中",
+    "overflow_more": "另有 {count} 人",
+    "overflow_more_viewing": "另有 {count} 人正在檢視"
   }
 }

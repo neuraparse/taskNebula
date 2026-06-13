@@ -24,7 +24,24 @@
     "inbox_unread": "{count} непрочетени",
     "account_settings": "Настройки на акаунта",
     "sign_out": "Изход",
-    "account_menu": "Меню на акаунта"
+    "account_menu": "Меню на акаунта",
+    "organization": "Организация",
+    "api_keys": "API ключове",
+    "webhooks": "Уебхукове",
+    "labels": "Етикети",
+    "integrations": "Интеграции",
+    "audit_streaming": "Поточно предаване на одит",
+    "ai_agents": "AI и агенти",
+    "communications": "Комуникации",
+    "notifications": "Известия",
+    "appearance": "Облик",
+    "activity": "Активност",
+    "organizations": "Организации",
+    "users": "Потребители",
+    "feature_flags": "Флагове за функции",
+    "agent_control": "Управление на агенти",
+    "realtime_health": "Състояние в реално време",
+    "audit_logs": "Одитни записи"
   },
   "actions": {
     "create_issue": "Създаване на задача",
@@ -72,12 +89,15 @@
     "banner_password_reset": "Паролата е обновена. Влезте с новата си парола.",
     "banner_incorrect_credentials": "Неправилен имейл или парола.",
     "banner_verification_invalid": "Този линк за потвърждение вече не е валиден.",
-    "banner_generic_signin_error": "Нещо се обърка при влизането."
+    "banner_generic_signin_error": "Нещо се обърка при влизането.",
+    "loading": "Зареждане",
+    "dismiss_notification": "Отхвърляне на известието"
   },
   "common": {
     "loading": "Зареждане…",
     "no_projects": "Все още няма проекти",
-    "view_all_projects": "Преглед на всички {count} проекта"
+    "view_all_projects": "Преглед на всички {count} проекта",
+    "skipToContent": "Към съдържанието"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "Неизвестен потребител",
       "label": "Докладвал"
-    }
+    },
+    "reporter.avatarAlt": "Аватар на подателя"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "Коментарът не можа да бъде обновен",
       "deleteFailed": "Коментарът не можа да бъде изтрит",
       "deleteBlockedReplies": "Коментар с отговори не може да бъде изтрит",
-      "reactionFailed": "Реакцията не можа да бъде обновена"
+      "reactionFailed": "Реакцията не можа да бъде обновена",
+      "agentBadge": "АГЕНТ"
     },
     "sections": {
       "timeTracking": "Проследяване на времето",
@@ -468,7 +490,8 @@
     "addSubIssue": "Добавяне на подзадача",
     "placeholder": "Заглавие на подзадачата...",
     "creating": "Създаване на подзадача...",
-    "createFailed": "Подзадачата не можа да бъде създадена. Моля, опитайте отново."
+    "createFailed": "Подзадачата не можа да бъде създадена. Моля, опитайте отново.",
+    "noSubtasks": "Все още няма подзадачи"
   },
   "issueRelations": {
     "dialogTitle": "Свързване на задача",
@@ -577,7 +600,9 @@
         "reconnecting": "Повторно свързване",
         "disconnected": "Прекъснат",
         "voiceRoom": "Гласова стая"
-      }
+      },
+      "live": "на живо",
+      "offline": "офлайн"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "Автоматизация",
     "tab_ai_agents": "AI агенти",
     "tab_chat_calls": "Чат и разговори",
-    "tab_webhooks": "Webhook-ове"
+    "tab_webhooks": "Webhook-ове",
+    "ts_name_placeholder": "Platform",
+    "ts_slug_placeholder": "platform",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "Проект",
@@ -2581,7 +2610,9 @@
         "creating": "Създаване...",
         "createPage": "Създай страница"
       }
-    }
+    },
+    "shell.collapse": "Свиване",
+    "shell.expand": "Разгъване"
   },
   "planning": {
     "search_placeholder": "Търсене на шаблони",
@@ -3364,7 +3395,11 @@
       "close": "Затвори",
       "evaluate": "Оцени",
       "evaluating": "Оценяване..."
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "rollout%",
+    "platformAi.saveFailedDescription": "Идентификационните данни не можаха да бъдат запазени. Моля, опитайте отново.",
+    "platformAi.removeFailedDescription": "Идентификационните данни не можаха да бъдат премахнати. Моля, опитайте отново."
   },
   "adminDialogs": {
     "common": {
@@ -3476,7 +3511,13 @@
       "searchPlaceholder": "Търсене на организации...",
       "empty": "Няма намерени организации.",
       "remove": "Премахни {name}"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "Jane Smith",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "Advanced Analytics"
   },
   "charts": {
     "issues": "Задачи",
@@ -4623,7 +4664,10 @@
         "datadog": "Задайте { apiKey, site? }.",
         "s3": "Задайте { bucket, region, prefix? }. AWS_ACCESS_KEY_ID/SECRET трябва да са зададени в средата."
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "Спринт {number}",
@@ -5084,7 +5128,16 @@
           "disconnected": "Прекъснат"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "Достъпът до микрофона беше отказан. Разрешете достъпа до микрофона в браузъра си и опитайте отново.",
+    "chat.voice.micCouldNotStartBusy": "Микрофонът ви не можа да бъде стартиран. Възможно е друго приложение да го използва.",
+    "chat.voice.audioEngineFailed": "Аудио ядрото на браузъра отказа за това устройство. Спрете другите аудио приложения или сменете микрофона си, след което опитайте отново.",
+    "chat.voice.noMicForSession": "Не беше намерен микрофон за тази сесия на браузъра.",
+    "chat.voice.runtimeError.serverUnreachable": "Гласовият сървър е недостъпен на медийните портове (UDP 50000-50020 / 3478, TCP 7881). Проверете защитната стена / NAT и опитайте отново.",
+    "chat.voice.runtimeError.permissionDenied": "Достъпът до микрофона беше отказан. Разрешете достъпа до микрофона в браузъра си и опитайте отново.",
+    "chat.voice.runtimeError.micNotStarted": "Микрофонът ви не можа да бъде стартиран. Възможно е друго приложение да го използва.",
+    "chat.voice.runtimeError.audioEngineFailed": "Аудио ядрото на браузъра отказа за това устройство. Спрете другите аудио приложения или сменете микрофона си, след което опитайте отново.",
+    "chat.voice.runtimeError.micNotFound": "Не беше намерен микрофон за тази сесия на браузъра."
   },
   "userSecurity": {
     "accountMenu": "Меню на профила",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "Нивото е изтрито",
     "toastLevelDeletedDescription": "Нивото на сигурност е премахнато успешно.",
     "errorDeleteLevel": "Изтриването на нивото е неуспешно"
+  },
+  "aiModelCards": {
+    "back": "Обратно към TaskNebula",
+    "disclosureBadge": "Разкриване по член 50 от EU AI Act",
+    "title": "Карти на AI моделите",
+    "intro": "TaskNebula предоставя на крайните потребители следните AI функции. За всяка от тях публикуваме предназначението, идентичността на модела, данните, изпращани при всяко обръщение, политиката за съхранение и нашата подразбираща се позиция за човешки надзор. Тази страница е публичен запис за прозрачност и важи за всички внедрявания на TaskNebula. Версия на разкриването <version></version>.",
+    "lastReviewed": "Последно прегледано на 2026-05-14. Прилагането на регламента започва на 2026-08-02.",
+    "onThisPage": "На тази страница",
+    "model": "Модел",
+    "provider": "Доставчик",
+    "oversightDefault": "Надзор по подразбиране",
+    "reviewRequired": "Изисква се преглед",
+    "autoApplyAllowed": "Разрешено е автоматично прилагане",
+    "footerContact": "Въпроси относно прозрачността на AI, правата на субектите на данни или тези карти на модели? Пишете на <link></link>."
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# човек преглежда} other {# души преглеждат}}",
+    "status_speaking": "говори",
+    "status_active": "активен",
+    "status_viewing": "преглежда",
+    "overflow_more": "още {count}",
+    "overflow_more_viewing": "още {count} преглеждат"
   }
 }

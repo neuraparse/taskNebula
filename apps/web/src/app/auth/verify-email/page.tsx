@@ -59,9 +59,13 @@ export default async function VerifyEmailPage({
             className="ease-snap focus-visible:ring-ring flex items-center gap-2 rounded-md transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
           >
             <div className="bg-foreground flex h-7 w-7 items-center justify-center rounded-md">
-              <span className="text-background text-[11px] font-semibold tracking-tight">TN</span>
+              <span className="text-background text-[11px] font-semibold tracking-tight">
+                {'TN'}
+              </span>
             </div>
-            <span className="text-foreground text-sm font-semibold tracking-tight">TaskNebula</span>
+            <span className="text-foreground text-sm font-semibold tracking-tight">
+              {'TaskNebula'}
+            </span>
           </Link>
         </div>
 

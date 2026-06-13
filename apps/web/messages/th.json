@@ -24,7 +24,24 @@
     "inbox_unread": "ยังไม่ได้อ่าน {count} รายการ",
     "account_settings": "การตั้งค่าบัญชี",
     "sign_out": "ออกจากระบบ",
-    "account_menu": "เมนูบัญชี"
+    "account_menu": "เมนูบัญชี",
+    "organization": "องค์กร",
+    "api_keys": "API Keys",
+    "webhooks": "Webhooks",
+    "labels": "ป้ายกำกับ",
+    "integrations": "การเชื่อมต่อ",
+    "audit_streaming": "สตรีมบันทึกการตรวจสอบ",
+    "ai_agents": "AI และเอเจนต์",
+    "communications": "การสื่อสาร",
+    "notifications": "การแจ้งเตือน",
+    "appearance": "ลักษณะที่ปรากฏ",
+    "activity": "กิจกรรม",
+    "organizations": "องค์กร",
+    "users": "ผู้ใช้",
+    "feature_flags": "ฟีเจอร์แฟล็ก",
+    "agent_control": "การควบคุมเอเจนต์",
+    "realtime_health": "สถานะเรียลไทม์",
+    "audit_logs": "บันทึกการตรวจสอบ"
   },
   "actions": {
     "create_issue": "สร้างงาน",
@@ -72,12 +89,15 @@
     "banner_password_reset": "อัปเดตรหัสผ่านแล้ว เข้าสู่ระบบด้วยรหัสผ่านใหม่ของคุณ",
     "banner_incorrect_credentials": "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
     "banner_verification_invalid": "ลิงก์ยืนยันนี้ใช้ไม่ได้แล้ว",
-    "banner_generic_signin_error": "เกิดข้อผิดพลาดขณะเข้าสู่ระบบ"
+    "banner_generic_signin_error": "เกิดข้อผิดพลาดขณะเข้าสู่ระบบ",
+    "loading": "กำลังโหลด",
+    "dismiss_notification": "ปิดการแจ้งเตือน"
   },
   "common": {
     "loading": "กำลังโหลด…",
     "no_projects": "ยังไม่มีโปรเจกต์",
-    "view_all_projects": "ดูโปรเจกต์ทั้งหมด {count} รายการ"
+    "view_all_projects": "ดูโปรเจกต์ทั้งหมด {count} รายการ",
+    "skipToContent": "ข้ามไปยังเนื้อหา"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "ผู้ใช้ที่ไม่รู้จัก",
       "label": "ผู้รายงาน"
-    }
+    },
+    "reporter.avatarAlt": "รูปโปรไฟล์ผู้รายงาน"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "อัปเดตความคิดเห็นไม่สำเร็จ",
       "deleteFailed": "ลบความคิดเห็นไม่สำเร็จ",
       "deleteBlockedReplies": "ไม่สามารถลบความคิดเห็นที่มีการตอบกลับได้",
-      "reactionFailed": "อัปเดตรีแอ็กชันไม่สำเร็จ"
+      "reactionFailed": "อัปเดตรีแอ็กชันไม่สำเร็จ",
+      "agentBadge": "เอเจนต์"
     },
     "sections": {
       "timeTracking": "การติดตามเวลา",
@@ -468,7 +490,8 @@
     "addSubIssue": "เพิ่มงานย่อย",
     "placeholder": "ชื่องานย่อย...",
     "creating": "กำลังสร้างงานย่อย...",
-    "createFailed": "ไม่สามารถสร้างงานย่อยได้ กรุณาลองอีกครั้ง"
+    "createFailed": "ไม่สามารถสร้างงานย่อยได้ กรุณาลองอีกครั้ง",
+    "noSubtasks": "ยังไม่มีงานย่อย"
   },
   "issueRelations": {
     "dialogTitle": "เชื่อมโยงงาน",
@@ -577,7 +600,9 @@
         "reconnecting": "กำลังเชื่อมต่อใหม่",
         "disconnected": "ตัดการเชื่อมต่อแล้ว",
         "voiceRoom": "ห้องเสียง"
-      }
+      },
+      "live": "สด",
+      "offline": "ออฟไลน์"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "ระบบอัตโนมัติ",
     "tab_ai_agents": "เอเจนต์ AI",
     "tab_chat_calls": "แชทและการโทร",
-    "tab_webhooks": "Webhook"
+    "tab_webhooks": "Webhook",
+    "ts_name_placeholder": "Platform",
+    "ts_slug_placeholder": "platform",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "โปรเจกต์",
@@ -2581,7 +2610,9 @@
         "creating": "กำลังสร้าง...",
         "createPage": "สร้างหน้า"
       }
-    }
+    },
+    "shell.collapse": "ยุบ",
+    "shell.expand": "ขยาย"
   },
   "planning": {
     "search_placeholder": "ค้นหาเทมเพลต",
@@ -3364,7 +3395,11 @@
       "close": "ปิด",
       "evaluate": "ประเมิน",
       "evaluating": "กำลังประเมิน..."
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "rollout%",
+    "platformAi.saveFailedDescription": "ไม่สามารถบันทึกข้อมูลรับรองได้ โปรดลองอีกครั้ง",
+    "platformAi.removeFailedDescription": "ไม่สามารถลบข้อมูลรับรองได้ โปรดลองอีกครั้ง"
   },
   "adminDialogs": {
     "common": {
@@ -3476,7 +3511,13 @@
       "searchPlaceholder": "ค้นหาองค์กร...",
       "empty": "ไม่พบองค์กร",
       "remove": "นำ {name} ออก"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "Jane Smith",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "Advanced Analytics"
   },
   "charts": {
     "issues": "งาน",
@@ -4623,7 +4664,10 @@
         "datadog": "กำหนด { apiKey, site? }",
         "s3": "กำหนด { bucket, region, prefix? } ต้องตั้งค่า AWS_ACCESS_KEY_ID/SECRET ในตัวแปรสภาพแวดล้อม"
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "สปรินต์ {number}",
@@ -5084,7 +5128,16 @@
           "disconnected": "ตัดการเชื่อมต่อแล้ว"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "ไมโครโฟนถูกปฏิเสธสิทธิ์ โปรดอนุญาตการเข้าถึงไมโครโฟนในเบราว์เซอร์ของคุณแล้วลองอีกครั้ง",
+    "chat.voice.micCouldNotStartBusy": "ไม่สามารถเริ่มไมโครโฟนของคุณได้ อาจมีแอปอื่นกำลังใช้งานอยู่",
+    "chat.voice.audioEngineFailed": "เอนจินเสียงของเบราว์เซอร์ทำงานล้มเหลวบนอุปกรณ์นี้ โปรดหยุดแอปเสียงอื่นหรือเปลี่ยนไมโครโฟนแล้วลองอีกครั้ง",
+    "chat.voice.noMicForSession": "ไม่พบไมโครโฟนสำหรับเซสชันเบราว์เซอร์นี้",
+    "chat.voice.runtimeError.serverUnreachable": "ไม่สามารถเข้าถึงเซิร์ฟเวอร์เสียงบนพอร์ตสื่อ (UDP 50000-50020 / 3478, TCP 7881) โปรดตรวจสอบไฟร์วอลล์ / NAT แล้วลองอีกครั้ง",
+    "chat.voice.runtimeError.permissionDenied": "ไมโครโฟนถูกปฏิเสธสิทธิ์ โปรดอนุญาตการเข้าถึงไมโครโฟนในเบราว์เซอร์ของคุณแล้วลองอีกครั้ง",
+    "chat.voice.runtimeError.micNotStarted": "ไม่สามารถเริ่มไมโครโฟนของคุณได้ อาจมีแอปอื่นกำลังใช้งานอยู่",
+    "chat.voice.runtimeError.audioEngineFailed": "เอนจินเสียงของเบราว์เซอร์ทำงานล้มเหลวบนอุปกรณ์นี้ โปรดหยุดแอปเสียงอื่นหรือเปลี่ยนไมโครโฟนแล้วลองอีกครั้ง",
+    "chat.voice.runtimeError.micNotFound": "ไม่พบไมโครโฟนสำหรับเซสชันเบราว์เซอร์นี้"
   },
   "userSecurity": {
     "accountMenu": "เมนูบัญชี",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "ลบระดับแล้ว",
     "toastLevelDeletedDescription": "นำระดับความปลอดภัยออกสำเร็จ",
     "errorDeleteLevel": "ลบระดับไม่สำเร็จ"
+  },
+  "aiModelCards": {
+    "back": "กลับไปยัง TaskNebula",
+    "disclosureBadge": "การเปิดเผยตามมาตรา 50 ของ EU AI Act",
+    "title": "การ์ดโมเดล AI",
+    "intro": "TaskNebula นำฟีเจอร์ AI ต่อไปนี้มาให้บริการแก่ผู้ใช้ปลายทาง สำหรับแต่ละฟีเจอร์ เราเผยแพร่วัตถุประสงค์การใช้งาน ข้อมูลระบุตัวตนของโมเดล ข้อมูลที่ส่งในทุกการเรียกใช้ นโยบายการเก็บรักษาข้อมูล และแนวทางการกำกับดูแลโดยมนุษย์ตามค่าเริ่มต้นของเรา หน้านี้เป็นบันทึกความโปร่งใสสาธารณะและมีผลบังคับใช้กับทุกการติดตั้ง TaskNebula เวอร์ชันการเปิดเผย <version></version>",
+    "lastReviewed": "ตรวจสอบล่าสุดเมื่อ 2026-05-14 การบังคับใช้กฎระเบียบจะเริ่มในวันที่ 2026-08-02",
+    "onThisPage": "ในหน้านี้",
+    "model": "โมเดล",
+    "provider": "ผู้ให้บริการ",
+    "oversightDefault": "การกำกับดูแลตามค่าเริ่มต้น",
+    "reviewRequired": "ต้องมีการตรวจสอบ",
+    "autoApplyAllowed": "อนุญาตให้ใช้งานโดยอัตโนมัติ",
+    "footerContact": "มีคำถามเกี่ยวกับความโปร่งใสของ AI สิทธิของเจ้าของข้อมูล หรือการ์ดโมเดลเหล่านี้ใช่ไหม ส่งอีเมลถึง <link></link>"
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# คนกำลังดู} other {# คนกำลังดู}}",
+    "status_speaking": "กำลังพูด",
+    "status_active": "ใช้งานอยู่",
+    "status_viewing": "กำลังดู",
+    "overflow_more": "อีก {count} คน",
+    "overflow_more_viewing": "อีก {count} คนกำลังดู"
   }
 }

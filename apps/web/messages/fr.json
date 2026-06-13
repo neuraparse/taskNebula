@@ -24,7 +24,24 @@
     "inbox_unread": "{count} non lus",
     "account_settings": "Paramètres du compte",
     "sign_out": "Se déconnecter",
-    "account_menu": "Menu du compte"
+    "account_menu": "Menu du compte",
+    "organization": "Organisation",
+    "api_keys": "Clés API",
+    "webhooks": "Webhooks",
+    "labels": "Étiquettes",
+    "integrations": "Intégrations",
+    "audit_streaming": "Diffusion d'audit",
+    "ai_agents": "IA et agents",
+    "communications": "Communications",
+    "notifications": "Notifications",
+    "appearance": "Apparence",
+    "activity": "Activité",
+    "organizations": "Organisations",
+    "users": "Utilisateurs",
+    "feature_flags": "Indicateurs de fonctionnalité",
+    "agent_control": "Contrôle des agents",
+    "realtime_health": "État du temps réel",
+    "audit_logs": "Journaux d'audit"
   },
   "actions": {
     "create_issue": "Créer un ticket",
@@ -72,12 +89,15 @@
     "banner_password_reset": "Mot de passe mis à jour. Connectez-vous avec votre nouveau mot de passe.",
     "banner_incorrect_credentials": "E-mail ou mot de passe incorrect.",
     "banner_verification_invalid": "Ce lien de vérification n'est plus valide.",
-    "banner_generic_signin_error": "Une erreur s'est produite lors de la connexion."
+    "banner_generic_signin_error": "Une erreur s'est produite lors de la connexion.",
+    "loading": "Chargement",
+    "dismiss_notification": "Ignorer la notification"
   },
   "common": {
     "loading": "Chargement…",
     "no_projects": "Aucun projet pour l'instant",
-    "view_all_projects": "Afficher les {count} projets"
+    "view_all_projects": "Afficher les {count} projets",
+    "skipToContent": "Passer au contenu"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "Utilisateur inconnu",
       "label": "Rapporteur"
-    }
+    },
+    "reporter.avatarAlt": "Avatar du rapporteur"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "Échec de la mise à jour du commentaire",
       "deleteFailed": "Échec de la suppression du commentaire",
       "deleteBlockedReplies": "Impossible de supprimer un commentaire qui a des réponses",
-      "reactionFailed": "Échec de la mise à jour de la réaction"
+      "reactionFailed": "Échec de la mise à jour de la réaction",
+      "agentBadge": "AGENT"
     },
     "sections": {
       "timeTracking": "Suivi du temps",
@@ -468,7 +490,8 @@
     "addSubIssue": "Ajouter un sous-ticket",
     "placeholder": "Titre du sous-ticket...",
     "creating": "Création du sous-ticket...",
-    "createFailed": "Impossible de créer le sous-ticket. Veuillez réessayer."
+    "createFailed": "Impossible de créer le sous-ticket. Veuillez réessayer.",
+    "noSubtasks": "Aucune sous-tâche pour le moment"
   },
   "issueRelations": {
     "dialogTitle": "Lier un ticket",
@@ -577,7 +600,9 @@
         "reconnecting": "Reconnexion",
         "disconnected": "Déconnecté",
         "voiceRoom": "Salle vocale"
-      }
+      },
+      "live": "en direct",
+      "offline": "hors ligne"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "Automatisation",
     "tab_ai_agents": "Agents IA",
     "tab_chat_calls": "Chat et appels",
-    "tab_webhooks": "Webhooks"
+    "tab_webhooks": "Webhooks",
+    "ts_name_placeholder": "Plateforme",
+    "ts_slug_placeholder": "plateforme",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "Projet",
@@ -2581,7 +2610,9 @@
         "creating": "Création...",
         "createPage": "Créer la page"
       }
-    }
+    },
+    "shell.collapse": "Réduire",
+    "shell.expand": "Développer"
   },
   "planning": {
     "search_placeholder": "Rechercher des modèles",
@@ -3364,7 +3395,11 @@
       "close": "Fermer",
       "evaluate": "Évaluer",
       "evaluating": "Évaluation..."
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "rollout%",
+    "platformAi.saveFailedDescription": "Impossible d'enregistrer l'identifiant. Veuillez réessayer.",
+    "platformAi.removeFailedDescription": "Impossible de supprimer l'identifiant. Veuillez réessayer."
   },
   "adminDialogs": {
     "common": {
@@ -3476,7 +3511,13 @@
       "searchPlaceholder": "Rechercher des organisations...",
       "empty": "Aucune organisation trouvée.",
       "remove": "Supprimer {name}"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "Jeanne Dupont",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "Analyses avancées"
   },
   "charts": {
     "issues": "Tickets",
@@ -4623,7 +4664,10 @@
         "datadog": "Définissez { apiKey, site? }.",
         "s3": "Définissez { bucket, region, prefix? }. AWS_ACCESS_KEY_ID/SECRET doivent être définis dans l'environnement."
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "Sprint {number}",
@@ -5084,7 +5128,16 @@
           "disconnected": "Déconnecté"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "L'autorisation du microphone a été refusée. Autorisez l'accès au microphone dans votre navigateur et réessayez.",
+    "chat.voice.micCouldNotStartBusy": "Votre microphone n'a pas pu démarrer. Une autre application l'utilise peut-être.",
+    "chat.voice.audioEngineFailed": "Le moteur audio du navigateur a échoué sur cet appareil. Arrêtez les autres applications audio ou changez de microphone, puis réessayez.",
+    "chat.voice.noMicForSession": "Aucun microphone n'a été trouvé pour cette session du navigateur.",
+    "chat.voice.runtimeError.serverUnreachable": "Le serveur vocal est injoignable sur les ports média (UDP 50000-50020 / 3478, TCP 7881). Vérifiez le pare-feu / NAT et réessayez.",
+    "chat.voice.runtimeError.permissionDenied": "L'autorisation du microphone a été refusée. Autorisez l'accès au microphone dans votre navigateur et réessayez.",
+    "chat.voice.runtimeError.micNotStarted": "Votre microphone n'a pas pu démarrer. Une autre application l'utilise peut-être.",
+    "chat.voice.runtimeError.audioEngineFailed": "Le moteur audio du navigateur a échoué sur cet appareil. Arrêtez les autres applications audio ou changez de microphone, puis réessayez.",
+    "chat.voice.runtimeError.micNotFound": "Aucun microphone n'a été trouvé pour cette session du navigateur."
   },
   "userSecurity": {
     "accountMenu": "Menu du compte",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "Niveau supprimé",
     "toastLevelDeletedDescription": "Niveau de sécurité supprimé avec succès.",
     "errorDeleteLevel": "Échec de la suppression du niveau"
+  },
+  "aiModelCards": {
+    "back": "Retour à TaskNebula",
+    "disclosureBadge": "Divulgation au titre de l'article 50 de l'EU AI Act",
+    "title": "Fiches des modèles d'IA",
+    "intro": "TaskNebula met les fonctionnalités d'IA suivantes à la disposition des utilisateurs finaux. Pour chacune, nous publions la finalité prévue, l'identité du modèle, les données envoyées à chaque appel, la politique de conservation et notre posture par défaut en matière de supervision humaine. Cette page constitue un registre public de transparence et s'applique à tous les déploiements de TaskNebula. Version de divulgation <version></version>.",
+    "lastReviewed": "Dernière révision le 2026-05-14. L'application de la réglementation débute le 2026-08-02.",
+    "onThisPage": "Sur cette page",
+    "model": "Modèle",
+    "provider": "Fournisseur",
+    "oversightDefault": "Supervision par défaut",
+    "reviewRequired": "Révision requise",
+    "autoApplyAllowed": "Application automatique autorisée",
+    "footerContact": "Des questions sur la transparence de l'IA, les droits des personnes concernées ou ces fiches de modèles ? Écrivez à <link></link>."
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# personne consulte} other {# personnes consultent}}",
+    "status_speaking": "parle",
+    "status_active": "actif",
+    "status_viewing": "consulte",
+    "overflow_more": "{count} de plus",
+    "overflow_more_viewing": "{count} autres consultent"
   }
 }

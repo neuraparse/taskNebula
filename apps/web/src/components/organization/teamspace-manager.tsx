@@ -296,7 +296,7 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                           : current.slug,
                     }))
                   }
-                  placeholder="Platform"
+                  placeholder={t('ts_name_placeholder')}
                 />
               </div>
               <div className="space-y-2">
@@ -310,7 +310,7 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                       slug: slugifyTeamspaceName(event.target.value),
                     }))
                   }
-                  placeholder="platform"
+                  placeholder={t('ts_slug_placeholder')}
                 />
               </div>
             </div>

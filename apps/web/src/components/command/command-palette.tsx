@@ -122,7 +122,10 @@ function FacetChip({ facet, onRemove }: FacetChipProps) {
       data-testid={`facet-chip-${facet.key}`}
     >
       <Icon className="h-3 w-3 text-zinc-400" aria-hidden />
-      <span className="font-medium text-zinc-300">{facet.key}:</span>
+      <span className="font-medium text-zinc-300">
+        {facet.key}
+        {':'}
+      </span>
       <span className="truncate text-zinc-100">{facet.value}</span>
       <button
         type="button"
@@ -208,7 +211,10 @@ function FacetPicker({ facetKey, onPick, onCancel }: FacetPickerProps) {
       aria-label={t('facetValues', { key: facetKey })}
       className="mx-3 mb-2 mt-1 flex flex-wrap gap-1 rounded-md border border-white/10 bg-zinc-900/60 p-2 backdrop-blur-xl"
     >
-      <span className="text-[10px] uppercase tracking-wider text-zinc-500">{facetKey}:</span>
+      <span className="text-[10px] uppercase tracking-wider text-zinc-500">
+        {facetKey}
+        {':'}
+      </span>
       {presets.length === 0 ? (
         <span className="text-[11px] text-zinc-500">{t('typeToFilter')}</span>
       ) : (
@@ -465,7 +471,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               />
             </div>
             <kbd className="hidden rounded border border-white/10 bg-zinc-950/40 px-1 font-mono text-[10px] text-zinc-500 sm:inline-block">
-              esc
+              {'esc'}
             </kbd>
           </div>
 
@@ -509,7 +515,12 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 >
                   <Sparkles className="h-4 w-4 text-violet-400" aria-hidden />
                   <span className="flex-1 truncate">
-                    {t('askLabel')} <span className="text-zinc-300">&ldquo;{askPrompt}&rdquo;</span>
+                    {t('askLabel')}{' '}
+                    <span className="text-zinc-300">
+                      {'“'}
+                      {askPrompt}
+                      {'”'}
+                    </span>
                   </span>
                   <ArrowRight className="h-3 w-3 text-zinc-500 group-data-[selected=true]:text-violet-300" />
                 </CommandItem>
@@ -637,27 +648,27 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             <div className="flex items-center gap-3">
               <span>
                 <kbd className="rounded border border-white/10 bg-zinc-900/70 px-1 font-mono">
-                  ↑
+                  {'↑'}
                 </kbd>{' '}
                 <kbd className="rounded border border-white/10 bg-zinc-900/70 px-1 font-mono">
-                  ↓
+                  {'↓'}
                 </kbd>{' '}
                 {t('hintNavigate')}
               </span>
               <span>
                 <kbd className="rounded border border-white/10 bg-zinc-900/70 px-1 font-mono">
-                  ⏎
+                  {'⏎'}
                 </kbd>{' '}
                 {t('hintOpen')}
               </span>
               <span>
                 <kbd className="rounded border border-white/10 bg-zinc-900/70 px-1 font-mono">
-                  tab
+                  {'tab'}
                 </kbd>{' '}
                 {t('hintCycleTabs')}
               </span>
             </div>
-            <span>FEAT-25 omnibar</span>
+            <span>{'FEAT-25 omnibar'}</span>
           </div>
         </Command>
       </DialogContent>

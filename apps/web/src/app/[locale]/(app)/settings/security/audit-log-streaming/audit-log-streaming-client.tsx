@@ -368,8 +368,11 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
                   </span>
                 </div>
                 <p className="text-muted-foreground mt-1 text-xs">
-                  {t('audit.created', { date: new Date(sink.createdAt).toLocaleDateString() })} · ✓{' '}
-                  {sink.successCount} · ✗ {sink.failureCount}
+                  {t('audit.created', { date: new Date(sink.createdAt).toLocaleDateString() })}
+                  {' · ✓ '}
+                  {sink.successCount}
+                  {' · ✗ '}
+                  {sink.failureCount}
                   {sink.lastDeliveryAt
                     ? ` · ${t('audit.lastDelivery', {
                         date: new Date(sink.lastDeliveryAt).toLocaleString(),

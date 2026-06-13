@@ -188,8 +188,8 @@ export function AiQuickSetup({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="openai">OpenAI</SelectItem>
-              <SelectItem value="anthropic">Anthropic (Claude)</SelectItem>
+              <SelectItem value="openai">{'OpenAI'}</SelectItem>
+              <SelectItem value="anthropic">{'Anthropic (Claude)'}</SelectItem>
               <SelectItem value="native">{t('aiQuickSetup.provider_native')}</SelectItem>
             </SelectContent>
           </Select>
@@ -227,7 +227,7 @@ export function AiQuickSetup({
                       .filter((p) => p.provider === provider)
                       .map((profile) => (
                         <SelectItem key={`profile:${profile.id}`} value={profile.model}>
-                          {profile.name} · {profile.model}
+                          {profile.name} {'·'} {profile.model}
                         </SelectItem>
                       ))}
                     <div className="border-border/60 my-1 border-t" />

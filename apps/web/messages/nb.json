@@ -24,7 +24,24 @@
     "inbox_unread": "{count} uleste",
     "account_settings": "Kontoinnstillinger",
     "sign_out": "Logg ut",
-    "account_menu": "Kontomeny"
+    "account_menu": "Kontomeny",
+    "organization": "Organisasjon",
+    "api_keys": "API-nøkler",
+    "webhooks": "Webhooks",
+    "labels": "Etiketter",
+    "integrations": "Integrasjoner",
+    "audit_streaming": "Strømming av revisjonslogg",
+    "ai_agents": "AI og agenter",
+    "communications": "Kommunikasjon",
+    "notifications": "Varsler",
+    "appearance": "Utseende",
+    "activity": "Aktivitet",
+    "organizations": "Organisasjoner",
+    "users": "Brukere",
+    "feature_flags": "Funksjonsflagg",
+    "agent_control": "Agentkontroll",
+    "realtime_health": "Sanntidsstatus",
+    "audit_logs": "Revisjonslogger"
   },
   "actions": {
     "create_issue": "Opprett sak",
@@ -72,12 +89,15 @@
     "banner_password_reset": "Passordet er oppdatert. Logg inn med det nye passordet ditt.",
     "banner_incorrect_credentials": "Feil e-post eller passord.",
     "banner_verification_invalid": "Den bekreftelseslenken er ikke lenger gyldig.",
-    "banner_generic_signin_error": "Noe gikk galt under innlogging."
+    "banner_generic_signin_error": "Noe gikk galt under innlogging.",
+    "loading": "Laster",
+    "dismiss_notification": "Lukk varsel"
   },
   "common": {
     "loading": "Laster …",
     "no_projects": "Ingen prosjekter ennå",
-    "view_all_projects": "Vis alle {count} prosjekter"
+    "view_all_projects": "Vis alle {count} prosjekter",
+    "skipToContent": "Hopp til innhold"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "Ukjent bruker",
       "label": "Rapportør"
-    }
+    },
+    "reporter.avatarAlt": "Avatar for rapportør"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "Kunne ikke oppdatere kommentaren",
       "deleteFailed": "Kunne ikke slette kommentaren",
       "deleteBlockedReplies": "Kan ikke slette en kommentar som har svar",
-      "reactionFailed": "Kunne ikke oppdatere reaksjonen"
+      "reactionFailed": "Kunne ikke oppdatere reaksjonen",
+      "agentBadge": "AGENT"
     },
     "sections": {
       "timeTracking": "Tidssporing",
@@ -468,7 +490,8 @@
     "addSubIssue": "Legg til delsak",
     "placeholder": "Tittel på delsak …",
     "creating": "Oppretter delsak …",
-    "createFailed": "Kunne ikke opprette delsak. Prøv igjen."
+    "createFailed": "Kunne ikke opprette delsak. Prøv igjen.",
+    "noSubtasks": "Ingen deloppgaver ennå"
   },
   "issueRelations": {
     "dialogTitle": "Koble sak",
@@ -577,7 +600,9 @@
         "reconnecting": "Kobler til på nytt",
         "disconnected": "Frakoblet",
         "voiceRoom": "Talerom"
-      }
+      },
+      "live": "direkte",
+      "offline": "frakoblet"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "Automatisering",
     "tab_ai_agents": "AI-agenter",
     "tab_chat_calls": "Chat og samtaler",
-    "tab_webhooks": "Webhooks"
+    "tab_webhooks": "Webhooks",
+    "ts_name_placeholder": "Platform",
+    "ts_slug_placeholder": "platform",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "Prosjekt",
@@ -2581,7 +2610,9 @@
         "creating": "Oppretter …",
         "createPage": "Opprett side"
       }
-    }
+    },
+    "shell.collapse": "Skjul",
+    "shell.expand": "Utvid"
   },
   "planning": {
     "search_placeholder": "Søk i maler",
@@ -3364,7 +3395,11 @@
       "close": "Lukk",
       "evaluate": "Evaluer",
       "evaluating": "Evaluerer …"
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "rollout%",
+    "platformAi.saveFailedDescription": "Kunne ikke lagre legitimasjonen. Prøv igjen.",
+    "platformAi.removeFailedDescription": "Kunne ikke fjerne legitimasjonen. Prøv igjen."
   },
   "adminDialogs": {
     "common": {
@@ -3476,7 +3511,13 @@
       "searchPlaceholder": "Søk i organisasjoner …",
       "empty": "Fant ingen organisasjoner.",
       "remove": "Fjern {name}"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "Jane Smith",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "Avansert analyse"
   },
   "charts": {
     "issues": "Saker",
@@ -4623,7 +4664,10 @@
         "datadog": "Angi { apiKey, site? }.",
         "s3": "Angi { bucket, region, prefix? }. AWS_ACCESS_KEY_ID/SECRET må være satt i miljøet."
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "Sprint {number}",
@@ -5084,7 +5128,16 @@
           "disconnected": "Frakoblet"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "Mikrofontillatelse ble avslått. Tillat mikrofontilgang i nettleseren og prøv igjen.",
+    "chat.voice.micCouldNotStartBusy": "Mikrofonen kunne ikke startes. En annen app bruker den kanskje.",
+    "chat.voice.audioEngineFailed": "Nettleserens lydmotor mislyktes for denne enheten. Stopp andre lydapper eller bytt mikrofon, og prøv igjen.",
+    "chat.voice.noMicForSession": "Ingen mikrofon ble funnet for denne nettleserøkten.",
+    "chat.voice.runtimeError.serverUnreachable": "Taleserveren er utilgjengelig på medieportene (UDP 50000-50020 / 3478, TCP 7881). Sjekk brannmur / NAT og prøv igjen.",
+    "chat.voice.runtimeError.permissionDenied": "Mikrofontillatelse ble avslått. Tillat mikrofontilgang i nettleseren og prøv igjen.",
+    "chat.voice.runtimeError.micNotStarted": "Mikrofonen kunne ikke startes. En annen app bruker den kanskje.",
+    "chat.voice.runtimeError.audioEngineFailed": "Nettleserens lydmotor mislyktes for denne enheten. Stopp andre lydapper eller bytt mikrofon, og prøv igjen.",
+    "chat.voice.runtimeError.micNotFound": "Ingen mikrofon ble funnet for denne nettleserøkten."
   },
   "userSecurity": {
     "accountMenu": "Kontomeny",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "Nivå slettet",
     "toastLevelDeletedDescription": "Sikkerhetsnivået ble fjernet.",
     "errorDeleteLevel": "Kunne ikke slette nivå"
+  },
+  "aiModelCards": {
+    "back": "Tilbake til TaskNebula",
+    "disclosureBadge": "EU AI Act Article 50 disclosure",
+    "title": "AI-modellkort",
+    "intro": "TaskNebula leverer følgende AI-funksjoner til sluttbrukere. For hver av dem publiserer vi det tiltenkte formålet, modellidentiteten, data som sendes ved hvert kall, oppbevaringspolicy og vår standardholdning til menneskelig tilsyn. Denne siden er en offentlig åpenhetsoversikt og gjelder for alle TaskNebula-installasjoner. Åpenhetsversjon <version></version>.",
+    "lastReviewed": "Sist gjennomgått 2026-05-14. Håndheving av forordningen starter 2026-08-02.",
+    "onThisPage": "På denne siden",
+    "model": "Modell",
+    "provider": "Leverandør",
+    "oversightDefault": "Standard tilsyn",
+    "reviewRequired": "Gjennomgang kreves",
+    "autoApplyAllowed": "Automatisk bruk tillatt",
+    "footerContact": "Spørsmål om AI-åpenhet, registrertes rettigheter eller disse modellkortene? Send e-post til <link></link>."
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# person ser på} other {# personer ser på}}",
+    "status_speaking": "snakker",
+    "status_active": "aktiv",
+    "status_viewing": "ser på",
+    "overflow_more": "{count} til",
+    "overflow_more_viewing": "{count} til ser på"
   }
 }

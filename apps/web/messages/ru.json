@@ -24,7 +24,24 @@
     "inbox_unread": "{count} непрочитанных",
     "account_settings": "Настройки аккаунта",
     "sign_out": "Выйти",
-    "account_menu": "Меню аккаунта"
+    "account_menu": "Меню аккаунта",
+    "organization": "Организация",
+    "api_keys": "API-ключи",
+    "webhooks": "Вебхуки",
+    "labels": "Метки",
+    "integrations": "Интеграции",
+    "audit_streaming": "Потоковая передача аудита",
+    "ai_agents": "AI и агенты",
+    "communications": "Коммуникации",
+    "notifications": "Уведомления",
+    "appearance": "Оформление",
+    "activity": "Активность",
+    "organizations": "Организации",
+    "users": "Пользователи",
+    "feature_flags": "Флаги функций",
+    "agent_control": "Управление агентами",
+    "realtime_health": "Состояние реального времени",
+    "audit_logs": "Журналы аудита"
   },
   "actions": {
     "create_issue": "Создать задачу",
@@ -72,12 +89,15 @@
     "banner_password_reset": "Пароль обновлён. Войдите с новым паролем.",
     "banner_incorrect_credentials": "Неверный адрес электронной почты или пароль.",
     "banner_verification_invalid": "Эта ссылка для подтверждения больше недействительна.",
-    "banner_generic_signin_error": "При входе что-то пошло не так."
+    "banner_generic_signin_error": "При входе что-то пошло не так.",
+    "loading": "Загрузка",
+    "dismiss_notification": "Закрыть уведомление"
   },
   "common": {
     "loading": "Загрузка…",
     "no_projects": "Пока нет проектов",
-    "view_all_projects": "Показать все проекты ({count})"
+    "view_all_projects": "Показать все проекты ({count})",
+    "skipToContent": "Перейти к содержимому"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "Неизвестный пользователь",
       "label": "Автор"
-    }
+    },
+    "reporter.avatarAlt": "Аватар автора"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "Не удалось обновить комментарий",
       "deleteFailed": "Не удалось удалить комментарий",
       "deleteBlockedReplies": "Нельзя удалить комментарий, на который есть ответы",
-      "reactionFailed": "Не удалось обновить реакцию"
+      "reactionFailed": "Не удалось обновить реакцию",
+      "agentBadge": "АГЕНТ"
     },
     "sections": {
       "timeTracking": "Учёт времени",
@@ -468,7 +490,8 @@
     "addSubIssue": "Добавить подзадачу",
     "placeholder": "Заголовок подзадачи...",
     "creating": "Создание подзадачи...",
-    "createFailed": "Не удалось создать подзадачу. Пожалуйста, попробуйте ещё раз."
+    "createFailed": "Не удалось создать подзадачу. Пожалуйста, попробуйте ещё раз.",
+    "noSubtasks": "Подзадач пока нет"
   },
   "issueRelations": {
     "dialogTitle": "Связать задачу",
@@ -577,7 +600,9 @@
         "reconnecting": "Переподключение",
         "disconnected": "Отключено",
         "voiceRoom": "Голосовая комната"
-      }
+      },
+      "live": "в эфире",
+      "offline": "не в сети"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "Автоматизация",
     "tab_ai_agents": "AI-агенты",
     "tab_chat_calls": "Чат и звонки",
-    "tab_webhooks": "Вебхуки"
+    "tab_webhooks": "Вебхуки",
+    "ts_name_placeholder": "Platform",
+    "ts_slug_placeholder": "platform",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "Проект",
@@ -2581,7 +2610,9 @@
         "creating": "Создание...",
         "createPage": "Создать страницу"
       }
-    }
+    },
+    "shell.collapse": "Свернуть",
+    "shell.expand": "Развернуть"
   },
   "planning": {
     "search_placeholder": "Поиск шаблонов",
@@ -3364,7 +3395,11 @@
       "close": "Закрыть",
       "evaluate": "Оценить",
       "evaluating": "Оценка..."
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "rollout%",
+    "platformAi.saveFailedDescription": "Не удалось сохранить учётные данные. Попробуйте ещё раз.",
+    "platformAi.removeFailedDescription": "Не удалось удалить учётные данные. Попробуйте ещё раз."
   },
   "adminDialogs": {
     "common": {
@@ -3476,7 +3511,13 @@
       "searchPlaceholder": "Поиск организаций...",
       "empty": "Организации не найдены.",
       "remove": "Удалить {name}"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "Иван Иванов",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "Расширенная аналитика"
   },
   "charts": {
     "issues": "Задачи",
@@ -4623,7 +4664,10 @@
         "datadog": "Укажите { apiKey, site? }.",
         "s3": "Укажите { bucket, region, prefix? }. В переменных окружения должны быть заданы AWS_ACCESS_KEY_ID/SECRET."
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "Спринт {number}",
@@ -5084,7 +5128,16 @@
           "disconnected": "Отключено"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "Доступ к микрофону запрещён. Разрешите доступ к микрофону в браузере и попробуйте снова.",
+    "chat.voice.micCouldNotStartBusy": "Не удалось запустить микрофон. Возможно, его использует другое приложение.",
+    "chat.voice.audioEngineFailed": "Аудиодвижок браузера дал сбой на этом устройстве. Остановите другие аудиоприложения или смените микрофон, затем попробуйте снова.",
+    "chat.voice.noMicForSession": "Для этой сессии браузера микрофон не найден.",
+    "chat.voice.runtimeError.serverUnreachable": "Голосовой сервер недоступен на медиапортах (UDP 50000-50020 / 3478, TCP 7881). Проверьте брандмауэр / NAT и попробуйте снова.",
+    "chat.voice.runtimeError.permissionDenied": "Доступ к микрофону запрещён. Разрешите доступ к микрофону в браузере и попробуйте снова.",
+    "chat.voice.runtimeError.micNotStarted": "Не удалось запустить микрофон. Возможно, его использует другое приложение.",
+    "chat.voice.runtimeError.audioEngineFailed": "Аудиодвижок браузера дал сбой на этом устройстве. Остановите другие аудиоприложения или смените микрофон, затем попробуйте снова.",
+    "chat.voice.runtimeError.micNotFound": "Для этой сессии браузера микрофон не найден."
   },
   "userSecurity": {
     "accountMenu": "Меню аккаунта",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "Уровень удалён",
     "toastLevelDeletedDescription": "Уровень безопасности успешно удалён.",
     "errorDeleteLevel": "Не удалось удалить уровень"
+  },
+  "aiModelCards": {
+    "back": "Назад в TaskNebula",
+    "disclosureBadge": "Раскрытие информации согласно статье 50 EU AI Act",
+    "title": "Карточки ИИ-моделей",
+    "intro": "TaskNebula предоставляет конечным пользователям следующие ИИ-функции. Для каждой из них мы публикуем назначение, идентификацию модели, данные, отправляемые при каждом вызове, политику хранения и используемый по умолчанию подход к человеческому контролю. Эта страница является публичной записью о прозрачности и распространяется на все развёртывания TaskNebula. Версия раскрытия информации <version></version>.",
+    "lastReviewed": "Последняя проверка 2026-05-14. Применение регламента начинается 2026-08-02.",
+    "onThisPage": "На этой странице",
+    "model": "Модель",
+    "provider": "Поставщик",
+    "oversightDefault": "Контроль по умолчанию",
+    "reviewRequired": "Требуется проверка",
+    "autoApplyAllowed": "Автоприменение разрешено",
+    "footerContact": "Вопросы о прозрачности ИИ, правах субъектов данных или этих карточках моделей? Напишите на <link></link>."
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# человек просматривает} few {# человека просматривают} many {# человек просматривают} other {# человека просматривают}}",
+    "status_speaking": "говорит",
+    "status_active": "активен",
+    "status_viewing": "просматривает",
+    "overflow_more": "ещё {count}",
+    "overflow_more_viewing": "ещё {count} просматривают"
   }
 }

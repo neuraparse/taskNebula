@@ -24,7 +24,24 @@
     "inbox_unread": "{count} okunmamış",
     "account_settings": "Hesap ayarları",
     "sign_out": "Çıkış yap",
-    "account_menu": "Hesap menüsü"
+    "account_menu": "Hesap menüsü",
+    "organization": "Organizasyon",
+    "api_keys": "API Anahtarları",
+    "webhooks": "Webhook'lar",
+    "labels": "Etiketler",
+    "integrations": "Entegrasyonlar",
+    "audit_streaming": "Denetim akışı",
+    "ai_agents": "AI ve Aracılar",
+    "communications": "İletişim",
+    "notifications": "Bildirimler",
+    "appearance": "Görünüm",
+    "activity": "Etkinlik",
+    "organizations": "Organizasyonlar",
+    "users": "Kullanıcılar",
+    "feature_flags": "Özellik bayrakları",
+    "agent_control": "Aracı denetimi",
+    "realtime_health": "Gerçek zamanlı durum",
+    "audit_logs": "Denetim günlükleri"
   },
   "actions": {
     "create_issue": "Konu oluştur",
@@ -72,12 +89,15 @@
     "banner_password_reset": "Parola güncellendi. Yeni parolanla giriş yap.",
     "banner_incorrect_credentials": "E-posta veya parola hatalı.",
     "banner_verification_invalid": "Doğrulama bağlantısı artık geçerli değil.",
-    "banner_generic_signin_error": "Giriş sırasında bir şeyler ters gitti."
+    "banner_generic_signin_error": "Giriş sırasında bir şeyler ters gitti.",
+    "loading": "Yükleniyor",
+    "dismiss_notification": "Bildirimi kapat"
   },
   "common": {
     "loading": "Yükleniyor…",
     "no_projects": "Henüz proje yok",
-    "view_all_projects": "Tüm {count} projeyi gör"
+    "view_all_projects": "Tüm {count} projeyi gör",
+    "skipToContent": "İçeriğe geç"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "Unknown user",
       "label": "Reporter"
-    }
+    },
+    "reporter.avatarAlt": "Bildiren avatarı"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "Failed to update comment",
       "deleteFailed": "Failed to delete comment",
       "deleteBlockedReplies": "Cannot delete a comment that has replies",
-      "reactionFailed": "Failed to update reaction"
+      "reactionFailed": "Failed to update reaction",
+      "agentBadge": "AJAN"
     },
     "sections": {
       "timeTracking": "Time tracking",
@@ -468,7 +490,8 @@
     "addSubIssue": "Alt görev ekle",
     "placeholder": "Alt görev başlığı...",
     "creating": "Alt görev oluşturuluyor...",
-    "createFailed": "Alt görev oluşturulamadı. Lütfen tekrar deneyin."
+    "createFailed": "Alt görev oluşturulamadı. Lütfen tekrar deneyin.",
+    "noSubtasks": "Henüz alt görev yok"
   },
   "issueRelations": {
     "dialogTitle": "İş bağla",
@@ -577,7 +600,9 @@
         "reconnecting": "Yeniden bağlanıyor",
         "disconnected": "Bağlantı kesildi",
         "voiceRoom": "Sesli oda"
-      }
+      },
+      "live": "canlı",
+      "offline": "çevrimdışı"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "Otomasyon",
     "tab_ai_agents": "AI Aracıları",
     "tab_chat_calls": "Sohbet ve Görüşmeler",
-    "tab_webhooks": "Web kancaları"
+    "tab_webhooks": "Web kancaları",
+    "ts_name_placeholder": "Platform",
+    "ts_slug_placeholder": "platform",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "Proje",
@@ -2581,7 +2610,9 @@
         "creating": "Oluşturuluyor...",
         "createPage": "Sayfa oluştur"
       }
-    }
+    },
+    "shell.collapse": "Daralt",
+    "shell.expand": "Genişlet"
   },
   "planning": {
     "search_placeholder": "Şablonları ara",
@@ -3364,7 +3395,11 @@
       "close": "Kapat",
       "evaluate": "Değerlendir",
       "evaluating": "Değerlendiriliyor..."
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "yayılım%",
+    "platformAi.saveFailedDescription": "Kimlik bilgisi kaydedilemedi. Lütfen tekrar deneyin.",
+    "platformAi.removeFailedDescription": "Kimlik bilgisi kaldırılamadı. Lütfen tekrar deneyin."
   },
   "adminDialogs": {
     "common": {
@@ -3476,7 +3511,13 @@
       "searchPlaceholder": "Kuruluşları ara...",
       "empty": "Kuruluş bulunamadı.",
       "remove": "{name} kaldır"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "Jane Smith",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "Gelişmiş Analitik"
   },
   "charts": {
     "issues": "İşler",
@@ -4623,7 +4664,10 @@
         "datadog": "{ apiKey, site? } ayarlayın.",
         "s3": "{ bucket, region, prefix? } ayarlayın. AWS_ACCESS_KEY_ID/SECRET ortam değişkenlerinde ayarlanmalıdır."
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "Sprint {number}",
@@ -5084,7 +5128,16 @@
           "disconnected": "Bağlantı kesildi"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "Mikrofon izni reddedildi. Tarayıcınızda mikrofon erişimine izin verip tekrar deneyin.",
+    "chat.voice.micCouldNotStartBusy": "Mikrofonunuz başlatılamadı. Başka bir uygulama onu kullanıyor olabilir.",
+    "chat.voice.audioEngineFailed": "Bu cihaz için tarayıcı ses motoru başarısız oldu. Diğer ses uygulamalarını durdurun veya mikrofonunuzu değiştirip tekrar deneyin.",
+    "chat.voice.noMicForSession": "Bu tarayıcı oturumu için mikrofon bulunamadı.",
+    "chat.voice.runtimeError.serverUnreachable": "Sesli sunucuya medya bağlantı noktalarından erişilemiyor (UDP 50000-50020 / 3478, TCP 7881). Güvenlik duvarını / NAT'ı kontrol edip tekrar deneyin.",
+    "chat.voice.runtimeError.permissionDenied": "Mikrofon izni reddedildi. Tarayıcınızda mikrofon erişimine izin verip tekrar deneyin.",
+    "chat.voice.runtimeError.micNotStarted": "Mikrofonunuz başlatılamadı. Başka bir uygulama onu kullanıyor olabilir.",
+    "chat.voice.runtimeError.audioEngineFailed": "Bu cihaz için tarayıcı ses motoru başarısız oldu. Diğer ses uygulamalarını durdurun veya mikrofonunuzu değiştirip tekrar deneyin.",
+    "chat.voice.runtimeError.micNotFound": "Bu tarayıcı oturumu için mikrofon bulunamadı."
   },
   "userSecurity": {
     "accountMenu": "Hesap menüsü",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "Düzey silindi",
     "toastLevelDeletedDescription": "Güvenlik düzeyi başarıyla kaldırıldı.",
     "errorDeleteLevel": "Düzey silinemedi"
+  },
+  "aiModelCards": {
+    "back": "TaskNebula'ya dön",
+    "disclosureBadge": "EU AI Act Madde 50 açıklaması",
+    "title": "AI Model Kartları",
+    "intro": "TaskNebula, son kullanıcılara aşağıdaki AI özelliklerini sunar. Her biri için amaçlanan kullanımı, model kimliğini, her çağrıda gönderilen verileri, saklama politikasını ve varsayılan insan gözetimi yaklaşımımızı yayımlıyoruz. Bu sayfa kamuya açık bir şeffaflık kaydıdır ve tüm TaskNebula dağıtımları için geçerlidir. Açıklama sürümü <version></version>.",
+    "lastReviewed": "Son inceleme 2026-05-14. Düzenlemenin yürürlüğe girmesi 2026-08-02 tarihinde başlar.",
+    "onThisPage": "Bu sayfada",
+    "model": "Model",
+    "provider": "Sağlayıcı",
+    "oversightDefault": "Varsayılan gözetim",
+    "reviewRequired": "İnceleme gerekli",
+    "autoApplyAllowed": "Otomatik uygulamaya izin verilir",
+    "footerContact": "AI şeffaflığı, veri sahibi hakları veya bu model kartları hakkında sorularınız mı var? <link></link> adresine e-posta gönderin."
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# kişi görüntülüyor} other {# kişi görüntülüyor}}",
+    "status_speaking": "konuşuyor",
+    "status_active": "etkin",
+    "status_viewing": "görüntülüyor",
+    "overflow_more": "{count} tane daha",
+    "overflow_more_viewing": "{count} kişi daha görüntülüyor"
   }
 }

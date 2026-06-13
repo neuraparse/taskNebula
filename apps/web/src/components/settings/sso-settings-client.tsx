@@ -325,7 +325,7 @@ function ScimSection({ organizationId }: { organizationId: string }) {
       <div>
         <h2 className="text-lg font-semibold">{tr('sso.scim_heading')}</h2>
         <p className="text-muted-foreground text-sm">
-          {tr('sso.scim_desc_prefix')} <code>/api/scim/v2/</code>
+          {tr('sso.scim_desc_prefix')} <code>{'/api/scim/v2/'}</code>
           {tr('sso.scim_desc_suffix')}
         </p>
       </div>

@@ -86,7 +86,7 @@ export function PermissionSchemeManager({
     try {
       const res = await fetch(`/api/permission-schemes?organizationId=${organizationId}`);
       if (!res.ok) {
-        throw new Error('Failed to fetch permission schemes');
+        throw new Error(t('psm_load_failed_description'));
       }
 
       const data = await res.json();
@@ -126,8 +126,8 @@ export function PermissionSchemeManager({
       });
 
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: 'Failed to create scheme' }));
-        throw new Error(error.error || 'Failed to create scheme');
+        const error = await res.json().catch(() => ({ error: t('psm_create_failed') }));
+        throw new Error(error.error || t('psm_create_failed'));
       }
 
       toast({ title: t('psm_created_title'), description: t('psm_created_description') });
@@ -160,8 +160,8 @@ export function PermissionSchemeManager({
       });
 
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: 'Failed to update scheme' }));
-        throw new Error(error.error || 'Failed to update scheme');
+        const error = await res.json().catch(() => ({ error: t('psm_update_failed') }));
+        throw new Error(error.error || t('psm_update_failed'));
       }
 
       toast({ title: t('psm_updated_title'), description: t('psm_updated_description') });
@@ -186,7 +186,7 @@ export function PermissionSchemeManager({
       });
 
       if (!res.ok) {
-        throw new Error('Failed to update default scheme');
+        throw new Error(t('psm_update_failed'));
       }
 
       toast({
@@ -220,8 +220,8 @@ export function PermissionSchemeManager({
       });
 
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: 'Failed to assign scheme' }));
-        throw new Error(error.error || 'Failed to assign scheme');
+        const error = await res.json().catch(() => ({ error: t('psm_assign_failed') }));
+        throw new Error(error.error || t('psm_assign_failed'));
       }
 
       const nextState = await res.json();
@@ -252,8 +252,8 @@ export function PermissionSchemeManager({
     try {
       const res = await fetch(`/api/permission-schemes/${schemeId}`, { method: 'DELETE' });
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: 'Failed to delete scheme' }));
-        throw new Error(error.error || 'Failed to delete scheme');
+        const error = await res.json().catch(() => ({ error: t('psm_delete_failed') }));
+        throw new Error(error.error || t('psm_delete_failed'));
       }
 
       toast({ title: t('psm_deleted_title'), description: t('psm_deleted_description') });

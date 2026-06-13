@@ -24,7 +24,24 @@
     "inbox_unread": "{count} por ler",
     "account_settings": "Definições da conta",
     "sign_out": "Terminar sessão",
-    "account_menu": "Menu da conta"
+    "account_menu": "Menu da conta",
+    "organization": "Organização",
+    "api_keys": "Chaves de API",
+    "webhooks": "Webhooks",
+    "labels": "Etiquetas",
+    "integrations": "Integrações",
+    "audit_streaming": "Transmissão de auditoria",
+    "ai_agents": "IA e Agentes",
+    "communications": "Comunicações",
+    "notifications": "Notificações",
+    "appearance": "Aparência",
+    "activity": "Atividade",
+    "organizations": "Organizações",
+    "users": "Utilizadores",
+    "feature_flags": "Flags de funcionalidades",
+    "agent_control": "Controlo de agentes",
+    "realtime_health": "Estado em tempo real",
+    "audit_logs": "Registos de auditoria"
   },
   "actions": {
     "create_issue": "Criar tarefa",
@@ -72,12 +89,15 @@
     "banner_password_reset": "Palavra-passe atualizada. Inicie sessão com a sua nova palavra-passe.",
     "banner_incorrect_credentials": "E-mail ou palavra-passe incorretos.",
     "banner_verification_invalid": "Essa ligação de verificação já não é válida.",
-    "banner_generic_signin_error": "Ocorreu um problema ao iniciar sessão."
+    "banner_generic_signin_error": "Ocorreu um problema ao iniciar sessão.",
+    "loading": "A carregar",
+    "dismiss_notification": "Dispensar notificação"
   },
   "common": {
     "loading": "A carregar…",
     "no_projects": "Ainda não há projetos",
-    "view_all_projects": "Ver todos os {count} projetos"
+    "view_all_projects": "Ver todos os {count} projetos",
+    "skipToContent": "Saltar para o conteúdo"
   },
   "settings": {
     "labels": {
@@ -324,7 +344,8 @@
     },
     "reporter": {
       "unknown": "Utilizador desconhecido",
-      "label": "Relator"
+      "label": "Relator",
+      "avatarAlt": "Avatar do relator"
     }
   },
   "issueDetail": {
@@ -341,7 +362,8 @@
       "updateFailed": "Não foi possível atualizar o comentário",
       "deleteFailed": "Não foi possível eliminar o comentário",
       "deleteBlockedReplies": "Não é possível eliminar um comentário que tem respostas",
-      "reactionFailed": "Não foi possível atualizar a reação"
+      "reactionFailed": "Não foi possível atualizar a reação",
+      "agentBadge": "AGENTE"
     },
     "sections": {
       "timeTracking": "Controlo de tempo",
@@ -468,7 +490,8 @@
     "addSubIssue": "Adicionar subtarefa",
     "placeholder": "Título da subtarefa...",
     "creating": "A criar subtarefa...",
-    "createFailed": "Não foi possível criar a subtarefa. Tente novamente."
+    "createFailed": "Não foi possível criar a subtarefa. Tente novamente.",
+    "noSubtasks": "Ainda não há subtarefas"
   },
   "issueRelations": {
     "dialogTitle": "Associar tarefa",
@@ -577,7 +600,9 @@
         "reconnecting": "A reconectar",
         "disconnected": "Desligado",
         "voiceRoom": "Sala de voz"
-      }
+      },
+      "live": "ao vivo",
+      "offline": "offline"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "Automação",
     "tab_ai_agents": "Agentes de IA",
     "tab_chat_calls": "Chat e chamadas",
-    "tab_webhooks": "Webhooks"
+    "tab_webhooks": "Webhooks",
+    "ts_name_placeholder": "Plataforma",
+    "ts_slug_placeholder": "plataforma",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "Projeto",
@@ -2580,7 +2609,9 @@
         "noPermission": "Não tem permissão para criar documentos neste espaço.",
         "creating": "A criar...",
         "createPage": "Criar página"
-      }
+      },
+      "collapse": "Recolher",
+      "expand": "Expandir"
     }
   },
   "planning": {
@@ -3233,7 +3264,9 @@
       "hint": {
         "openai": "Usada quando uma área de trabalho não introduziu a sua própria chave OpenAI. Começa por sk-…",
         "anthropic": "Usada quando uma área de trabalho não introduziu a sua própria chave Anthropic. Começa por sk-ant-…"
-      }
+      },
+      "saveFailedDescription": "Não foi possível guardar a credencial. Tente novamente.",
+      "removeFailedDescription": "Não foi possível remover a credencial. Tente novamente."
     },
     "realtimeHealth": {
       "loading": "A carregar a saúde de tempo real...",
@@ -3363,7 +3396,9 @@
       "targetedOrgs": "organizações visadas",
       "close": "Fechar",
       "evaluate": "Avaliar",
-      "evaluating": "A avaliar..."
+      "evaluating": "A avaliar...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "rollout%"
     }
   },
   "adminDialogs": {
@@ -3405,7 +3440,8 @@
       "plansHint": "Deixe vazio para ativar para todos os planos.",
       "targetOrganizations": "Organizações-alvo",
       "targetOrganizationsHint": "Deixe vazio para ativar para todas as organizações que correspondam ao plano + implementação.",
-      "rollout": "Implementação: {percentage}%"
+      "rollout": "Implementação: {percentage}%",
+      "namePlaceholder": "Análises Avançadas"
     },
     "createOrg": {
       "trigger": "Nova organização",
@@ -3429,7 +3465,8 @@
       "domain": "Domínio (opcional)",
       "toastUpdatedTitle": "Organização atualizada",
       "toastUpdatedDescription": "As alterações foram guardadas com sucesso.",
-      "toastFailedTitle": "Falha ao atualizar a organização"
+      "toastFailedTitle": "Falha ao atualizar a organização",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "Nome",
@@ -3439,7 +3476,9 @@
       "planFree": "Gratuito",
       "planStarter": "Inicial",
       "planGrowth": "Crescimento",
-      "planEnterprise": "Empresa"
+      "planEnterprise": "Empresa",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "Novo utilizador",
@@ -3452,7 +3491,9 @@
       "missingFieldsDescription": "São obrigatórios o nome, o e-mail e a palavra-passe.",
       "toastCreatedTitle": "Utilizador criado",
       "toastCreatedDescription": "O utilizador foi criado com sucesso.",
-      "toastFailedTitle": "Falha ao criar o utilizador"
+      "toastFailedTitle": "Falha ao criar o utilizador",
+      "fullNamePlaceholder": "Jane Smith",
+      "emailPlaceholder": "jane@example.com"
     },
     "editUser": {
       "title": "Editar utilizador",
@@ -4458,7 +4499,10 @@
         "status": "Status",
         "priority": "Prioridade",
         "assignee": "Responsável"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "Acesso",
@@ -5082,6 +5126,17 @@
           "connecting": "Conectando",
           "reconnecting": "Reconectando",
           "disconnected": "Desconectado"
+        },
+        "permissionDeniedRetry": "A permissão do microfone foi negada. Permita o acesso ao microfone no seu navegador e tente novamente.",
+        "micCouldNotStartBusy": "Não foi possível iniciar o seu microfone. É possível que outra aplicação o esteja a utilizar.",
+        "audioEngineFailed": "O motor de áudio do navegador falhou neste dispositivo. Feche outras aplicações de áudio ou mude de microfone e, em seguida, tente novamente.",
+        "noMicForSession": "Não foi encontrado nenhum microfone para esta sessão do navegador.",
+        "runtimeError": {
+          "serverUnreachable": "O servidor de voz está inacessível nas portas de média (UDP 50000-50020 / 3478, TCP 7881). Verifique a firewall / NAT e tente novamente.",
+          "permissionDenied": "A permissão do microfone foi negada. Permita o acesso ao microfone no seu navegador e tente novamente.",
+          "micNotStarted": "Não foi possível iniciar o seu microfone. É possível que outra aplicação o esteja a utilizar.",
+          "audioEngineFailed": "O motor de áudio do navegador falhou neste dispositivo. Feche outras aplicações de áudio ou mude de microfone e, em seguida, tente novamente.",
+          "micNotFound": "Não foi encontrado nenhum microfone para esta sessão do navegador."
         }
       }
     }
@@ -5197,5 +5252,27 @@
     "toastLevelDeletedTitle": "Nível excluído",
     "toastLevelDeletedDescription": "Nível de segurança removido com sucesso.",
     "errorDeleteLevel": "Falha ao excluir o nível"
+  },
+  "aiModelCards": {
+    "back": "Voltar ao TaskNebula",
+    "disclosureBadge": "Divulgação ao abrigo do artigo 50.º do EU AI Act",
+    "title": "Fichas de modelos de IA",
+    "intro": "O TaskNebula disponibiliza as seguintes funcionalidades de IA aos utilizadores finais. Para cada uma, publicamos a finalidade prevista, a identidade do modelo, os dados enviados em cada chamada, a política de retenção e a nossa postura predefinida de supervisão humana. Esta página é um registo público de transparência e aplica-se a todas as implementações do TaskNebula. Versão da divulgação <version></version>.",
+    "lastReviewed": "Última revisão a 2026-05-14. A aplicação do regulamento tem início a 2026-08-02.",
+    "onThisPage": "Nesta página",
+    "model": "Modelo",
+    "provider": "Fornecedor",
+    "oversightDefault": "Supervisão predefinida",
+    "reviewRequired": "Revisão obrigatória",
+    "autoApplyAllowed": "Aplicação automática permitida",
+    "footerContact": "Dúvidas sobre transparência de IA, direitos dos titulares dos dados ou estas fichas de modelos? Envie um e-mail para <link></link>."
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# pessoa a visualizar} other {# pessoas a visualizar}}",
+    "status_speaking": "a falar",
+    "status_active": "ativo",
+    "status_viewing": "a visualizar",
+    "overflow_more": "mais {count}",
+    "overflow_more_viewing": "mais {count} a visualizar"
   }
 }

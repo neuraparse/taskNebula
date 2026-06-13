@@ -970,12 +970,15 @@ export function DocsShell({ projectId }: DocsShellProps) {
                               {getShortRevisionId(revision.id)}
                             </span>
                             <span className="truncate text-sm font-medium">{commitMessage}</span>
-                            {isCurrentRevision && <Badge variant="secondary">HEAD</Badge>}
+                            {isCurrentRevision && <Badge variant="secondary">{'HEAD'}</Badge>}
                           </div>
                           <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-[11px]">
                             <span>{revision.author?.name || t('shell.unknown')}</span>
                             <span>{new Date(revision.createdAt).toLocaleString()}</span>
-                            <span>r{revision.revision}</span>
+                            <span>
+                              {'r'}
+                              {revision.revision}
+                            </span>
                           </div>
                         </div>
                       </AccordionTrigger>
@@ -1028,7 +1031,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                   <SelectContent>
                     {(searchableIssues || []).map((issue) => (
                       <SelectItem key={issue.id} value={issue.id}>
-                        {issue.key} · {issue.title}
+                        {issue.key} {'·'} {issue.title}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1376,6 +1379,7 @@ function TreeNode({
   onSelect: (pageId: string) => void;
   isCollectionRoot?: boolean;
 }) {
+  const t = useTranslations('collab');
   const [open, setOpen] = useState(true);
   const isActive = node.id === activePageId;
   const hasChildren = node.children.length > 0;
@@ -1395,7 +1399,7 @@ function TreeNode({
             !hasChildren && 'opacity-0'
           )}
           onClick={() => setOpen((value) => !value)}
-          aria-label={hasChildren ? (open ? 'Collapse' : 'Expand') : undefined}
+          aria-label={hasChildren ? (open ? t('shell.collapse') : t('shell.expand')) : undefined}
         >
           {hasChildren ? (
             open ? (

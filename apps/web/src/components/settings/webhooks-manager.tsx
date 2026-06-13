@@ -421,7 +421,8 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
                         }`
                       : lastTestResults[webhook.id]!.error || t('webhooks.failed')}
                     {' · '}
-                    {lastTestResults[webhook.id]!.durationMs}ms
+                    {lastTestResults[webhook.id]!.durationMs}
+                    {'ms'}
                   </p>
                 ) : null}
               </div>

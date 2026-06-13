@@ -43,7 +43,8 @@ async function upsertCredential(
   });
   if (!response.ok) {
     const err = (await response.json().catch(() => ({}))) as { error?: string };
-    throw new Error(err.error || 'Failed to save credential');
+    if (err.error) throw new Error(err.error);
+    throw new Error('SAVE_CREDENTIAL_FAILED');
   }
   return response.json();
 }
@@ -56,7 +57,8 @@ async function deleteCredential(provider: ProviderKey): Promise<CredentialsRespo
   });
   if (!response.ok) {
     const err = (await response.json().catch(() => ({}))) as { error?: string };
-    throw new Error(err.error || 'Failed to remove credential');
+    if (err.error) throw new Error(err.error);
+    throw new Error('REMOVE_CREDENTIAL_FAILED');
   }
   return response.json();
 }
@@ -88,7 +90,10 @@ export function PlatformAiCredentials() {
     onError: (err: Error) => {
       toast({
         title: t('platformAi.saveFailed'),
-        description: err.message,
+        description:
+          err.message === 'SAVE_CREDENTIAL_FAILED'
+            ? t('platformAi.saveFailedDescription')
+            : err.message,
         variant: 'destructive',
       });
     },
@@ -103,7 +108,10 @@ export function PlatformAiCredentials() {
     onError: (err: Error) => {
       toast({
         title: t('platformAi.removeFailed'),
-        description: err.message,
+        description:
+          err.message === 'REMOVE_CREDENTIAL_FAILED'
+            ? t('platformAi.removeFailedDescription')
+            : err.message,
         variant: 'destructive',
       });
     },

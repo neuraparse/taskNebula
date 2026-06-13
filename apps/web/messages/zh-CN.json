@@ -24,7 +24,24 @@
     "inbox_unread": "{count} 条未读",
     "account_settings": "账户设置",
     "sign_out": "退出登录",
-    "account_menu": "账户菜单"
+    "account_menu": "账户菜单",
+    "organization": "组织",
+    "api_keys": "API 密钥",
+    "webhooks": "Webhook",
+    "labels": "标签",
+    "integrations": "集成",
+    "audit_streaming": "审计流式传输",
+    "ai_agents": "AI 与智能体",
+    "communications": "通讯",
+    "notifications": "通知",
+    "appearance": "外观",
+    "activity": "活动",
+    "organizations": "组织",
+    "users": "用户",
+    "feature_flags": "功能开关",
+    "agent_control": "智能体控制",
+    "realtime_health": "实时状态",
+    "audit_logs": "审计日志"
   },
   "actions": {
     "create_issue": "创建事项",
@@ -72,12 +89,15 @@
     "banner_password_reset": "密码已更新。请使用新密码登录。",
     "banner_incorrect_credentials": "邮箱或密码不正确。",
     "banner_verification_invalid": "该验证链接已失效。",
-    "banner_generic_signin_error": "登录时出现问题。"
+    "banner_generic_signin_error": "登录时出现问题。",
+    "loading": "加载中",
+    "dismiss_notification": "关闭通知"
   },
   "common": {
     "loading": "加载中…",
     "no_projects": "暂无项目",
-    "view_all_projects": "查看全部 {count} 个项目"
+    "view_all_projects": "查看全部 {count} 个项目",
+    "skipToContent": "跳至内容"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "未知用户",
       "label": "报告人"
-    }
+    },
+    "reporter.avatarAlt": "报告人头像"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "更新评论失败",
       "deleteFailed": "删除评论失败",
       "deleteBlockedReplies": "无法删除已有回复的评论",
-      "reactionFailed": "更新表情回应失败"
+      "reactionFailed": "更新表情回应失败",
+      "agentBadge": "AGENT"
     },
     "sections": {
       "timeTracking": "工时跟踪",
@@ -468,7 +490,8 @@
     "addSubIssue": "添加子事项",
     "placeholder": "子事项标题…",
     "creating": "正在创建子事项…",
-    "createFailed": "无法创建子事项，请重试。"
+    "createFailed": "无法创建子事项，请重试。",
+    "noSubtasks": "暂无子任务"
   },
   "issueRelations": {
     "dialogTitle": "关联事项",
@@ -577,7 +600,9 @@
         "reconnecting": "正在重新连接",
         "disconnected": "已断开",
         "voiceRoom": "语音房间"
-      }
+      },
+      "live": "在线",
+      "offline": "离线"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "自动化",
     "tab_ai_agents": "AI 智能体",
     "tab_chat_calls": "聊天与通话",
-    "tab_webhooks": "Webhook"
+    "tab_webhooks": "Webhook",
+    "ts_name_placeholder": "Platform",
+    "ts_slug_placeholder": "platform",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "项目",
@@ -2581,7 +2610,9 @@
         "creating": "正在创建...",
         "createPage": "创建页面"
       }
-    }
+    },
+    "shell.collapse": "折叠",
+    "shell.expand": "展开"
   },
   "planning": {
     "search_placeholder": "搜索模板",
@@ -3364,7 +3395,11 @@
       "close": "关闭",
       "evaluate": "评估",
       "evaluating": "正在评估..."
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "rollout%",
+    "platformAi.saveFailedDescription": "无法保存凭据。请重试。",
+    "platformAi.removeFailedDescription": "无法移除凭据。请重试。"
   },
   "adminDialogs": {
     "common": {
@@ -3476,7 +3511,13 @@
       "searchPlaceholder": "搜索组织...",
       "empty": "未找到组织。",
       "remove": "移除 {name}"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "Jane Smith",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "高级分析"
   },
   "charts": {
     "issues": "问题",
@@ -4623,7 +4664,10 @@
         "datadog": "设置 { apiKey, site? }。",
         "s3": "设置 { bucket, region, prefix? }。必须在环境变量中设置 AWS_ACCESS_KEY_ID/SECRET。"
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "冲刺 {number}",
@@ -5084,7 +5128,16 @@
           "disconnected": "已断开连接"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "麦克风权限已被拒绝。请在浏览器中允许麦克风访问后重试。",
+    "chat.voice.micCouldNotStartBusy": "无法启动麦克风。可能有其他应用正在使用它。",
+    "chat.voice.audioEngineFailed": "此设备的浏览器音频引擎出现故障。请停止其他音频应用或更换麦克风后重试。",
+    "chat.voice.noMicForSession": "未找到适用于此浏览器会话的麦克风。",
+    "chat.voice.runtimeError.serverUnreachable": "无法通过媒体端口连接到语音服务器（UDP 50000-50020 / 3478，TCP 7881）。请检查防火墙 / NAT 后重试。",
+    "chat.voice.runtimeError.permissionDenied": "麦克风权限已被拒绝。请在浏览器中允许麦克风访问后重试。",
+    "chat.voice.runtimeError.micNotStarted": "无法启动麦克风。可能有其他应用正在使用它。",
+    "chat.voice.runtimeError.audioEngineFailed": "此设备的浏览器音频引擎出现故障。请停止其他音频应用或更换麦克风后重试。",
+    "chat.voice.runtimeError.micNotFound": "未找到适用于此浏览器会话的麦克风。"
   },
   "userSecurity": {
     "accountMenu": "账户菜单",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "级别已删除",
     "toastLevelDeletedDescription": "安全级别移除成功。",
     "errorDeleteLevel": "删除级别失败"
+  },
+  "aiModelCards": {
+    "back": "返回 TaskNebula",
+    "disclosureBadge": "EU AI Act 第 50 条信息披露",
+    "title": "AI 模型卡",
+    "intro": "TaskNebula 向最终用户部署了以下 AI 功能。针对每项功能，我们公开其预期用途、模型标识、每次调用所发送的数据、数据保留政策以及我们默认的人工监督机制。本页面为公开透明度记录，适用于所有 TaskNebula 部署。披露版本 <version></version>。",
+    "lastReviewed": "最近审核日期：2026-05-14。法规自 2026-08-02 起开始执行。",
+    "onThisPage": "本页内容",
+    "model": "模型",
+    "provider": "提供方",
+    "oversightDefault": "默认监督机制",
+    "reviewRequired": "需要审核",
+    "autoApplyAllowed": "允许自动应用",
+    "footerContact": "对 AI 透明度、数据主体权利或这些模型卡有疑问？请发送邮件至 <link></link>。"
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# 人正在查看} other {# 人正在查看}}",
+    "status_speaking": "发言中",
+    "status_active": "活跃",
+    "status_viewing": "查看中",
+    "overflow_more": "另有 {count} 人",
+    "overflow_more_viewing": "另有 {count} 人正在查看"
   }
 }

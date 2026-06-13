@@ -24,7 +24,24 @@
     "inbox_unread": "{count} непрочитаних",
     "account_settings": "Налаштування облікового запису",
     "sign_out": "Вийти",
-    "account_menu": "Меню облікового запису"
+    "account_menu": "Меню облікового запису",
+    "organization": "Організація",
+    "api_keys": "Ключі API",
+    "webhooks": "Вебхуки",
+    "labels": "Мітки",
+    "integrations": "Інтеграції",
+    "audit_streaming": "Потокове передавання аудиту",
+    "ai_agents": "AI та агенти",
+    "communications": "Комунікації",
+    "notifications": "Сповіщення",
+    "appearance": "Вигляд",
+    "activity": "Активність",
+    "organizations": "Організації",
+    "users": "Користувачі",
+    "feature_flags": "Прапорці функцій",
+    "agent_control": "Керування агентами",
+    "realtime_health": "Стан реального часу",
+    "audit_logs": "Журнали аудиту"
   },
   "actions": {
     "create_issue": "Створити задачу",
@@ -72,12 +89,15 @@
     "banner_password_reset": "Пароль оновлено. Увійдіть із новим паролем.",
     "banner_incorrect_credentials": "Неправильна електронна пошта або пароль.",
     "banner_verification_invalid": "Це посилання для підтвердження більше недійсне.",
-    "banner_generic_signin_error": "Під час входу сталася помилка."
+    "banner_generic_signin_error": "Під час входу сталася помилка.",
+    "loading": "Завантаження",
+    "dismiss_notification": "Закрити сповіщення"
   },
   "common": {
     "loading": "Завантаження…",
     "no_projects": "Поки що немає проєктів",
-    "view_all_projects": "Переглянути всі проєкти ({count})"
+    "view_all_projects": "Переглянути всі проєкти ({count})",
+    "skipToContent": "Перейти до вмісту"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "Невідомий користувач",
       "label": "Автор"
-    }
+    },
+    "reporter.avatarAlt": "Аватар автора"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "Не вдалося оновити коментар",
       "deleteFailed": "Не вдалося видалити коментар",
       "deleteBlockedReplies": "Неможливо видалити коментар, що має відповіді",
-      "reactionFailed": "Не вдалося оновити реакцію"
+      "reactionFailed": "Не вдалося оновити реакцію",
+      "agentBadge": "АГЕНТ"
     },
     "sections": {
       "timeTracking": "Облік часу",
@@ -468,7 +490,8 @@
     "addSubIssue": "Додати підзадачу",
     "placeholder": "Заголовок підзадачі...",
     "creating": "Створення підзадачі...",
-    "createFailed": "Не вдалося створити підзадачу. Спробуйте ще раз."
+    "createFailed": "Не вдалося створити підзадачу. Спробуйте ще раз.",
+    "noSubtasks": "Підзадач ще немає"
   },
   "issueRelations": {
     "dialogTitle": "Зв’язати задачу",
@@ -577,7 +600,9 @@
         "reconnecting": "Повторне підключення",
         "disconnected": "Відключено",
         "voiceRoom": "Голосова кімната"
-      }
+      },
+      "live": "наживо",
+      "offline": "офлайн"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "Автоматизація",
     "tab_ai_agents": "AI-агенти",
     "tab_chat_calls": "Чат і дзвінки",
-    "tab_webhooks": "Вебхуки"
+    "tab_webhooks": "Вебхуки",
+    "ts_name_placeholder": "Platform",
+    "ts_slug_placeholder": "platform",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "Проєкт",
@@ -2581,7 +2610,9 @@
         "creating": "Створення...",
         "createPage": "Створити сторінку"
       }
-    }
+    },
+    "shell.collapse": "Згорнути",
+    "shell.expand": "Розгорнути"
   },
   "planning": {
     "search_placeholder": "Пошук шаблонів",
@@ -3364,7 +3395,11 @@
       "close": "Закрити",
       "evaluate": "Оцінити",
       "evaluating": "Оцінювання..."
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "відсоток розгортання",
+    "platformAi.saveFailedDescription": "Не вдалося зберегти облікові дані. Спробуйте ще раз.",
+    "platformAi.removeFailedDescription": "Не вдалося видалити облікові дані. Спробуйте ще раз."
   },
   "adminDialogs": {
     "common": {
@@ -3476,7 +3511,13 @@
       "searchPlaceholder": "Пошук організацій...",
       "empty": "Організацій не знайдено.",
       "remove": "Прибрати {name}"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "Jane Smith",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "Розширена аналітика"
   },
   "charts": {
     "issues": "Задачі",
@@ -4623,7 +4664,10 @@
         "datadog": "Встановіть { apiKey, site? }.",
         "s3": "Встановіть { bucket, region, prefix? }. У середовищі мають бути задані AWS_ACCESS_KEY_ID/SECRET."
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "Спринт {number}",
@@ -5084,7 +5128,16 @@
           "disconnected": "Відключено"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "У доступі до мікрофона відмовлено. Дозвольте доступ до мікрофона у браузері та спробуйте ще раз.",
+    "chat.voice.micCouldNotStartBusy": "Не вдалося запустити мікрофон. Можливо, його використовує інший застосунок.",
+    "chat.voice.audioEngineFailed": "Аудіорушій браузера дав збій на цьому пристрої. Закрийте інші аудіозастосунки або змініть мікрофон і спробуйте ще раз.",
+    "chat.voice.noMicForSession": "Для цього сеансу браузера не знайдено мікрофона.",
+    "chat.voice.runtimeError.serverUnreachable": "Голосовий сервер недоступний на медіапортах (UDP 50000-50020 / 3478, TCP 7881). Перевірте брандмауер / NAT і спробуйте ще раз.",
+    "chat.voice.runtimeError.permissionDenied": "У доступі до мікрофона відмовлено. Дозвольте доступ до мікрофона у браузері та спробуйте ще раз.",
+    "chat.voice.runtimeError.micNotStarted": "Не вдалося запустити мікрофон. Можливо, його використовує інший застосунок.",
+    "chat.voice.runtimeError.audioEngineFailed": "Аудіорушій браузера дав збій на цьому пристрої. Закрийте інші аудіозастосунки або змініть мікрофон і спробуйте ще раз.",
+    "chat.voice.runtimeError.micNotFound": "Для цього сеансу браузера не знайдено мікрофона."
   },
   "userSecurity": {
     "accountMenu": "Меню облікового запису",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "Рівень видалено",
     "toastLevelDeletedDescription": "Рівень безпеки успішно видалено.",
     "errorDeleteLevel": "Не вдалося видалити рівень"
+  },
+  "aiModelCards": {
+    "back": "Назад до TaskNebula",
+    "disclosureBadge": "Розкриття згідно зі статтею 50 EU AI Act",
+    "title": "Картки моделей ШІ",
+    "intro": "TaskNebula надає кінцевим користувачам наведені нижче функції ШІ. Для кожної з них ми публікуємо передбачене призначення, ідентичність моделі, дані, що надсилаються під час кожного виклику, політику зберігання та нашу типову позицію щодо людського нагляду. Ця сторінка є публічним записом прозорості й поширюється на всі розгортання TaskNebula. Версія розкриття <version></version>.",
+    "lastReviewed": "Востаннє переглянуто 2026-05-14. Застосування регулювання починається 2026-08-02.",
+    "onThisPage": "На цій сторінці",
+    "model": "Модель",
+    "provider": "Постачальник",
+    "oversightDefault": "Типовий нагляд",
+    "reviewRequired": "Потрібна перевірка",
+    "autoApplyAllowed": "Дозволено автозастосування",
+    "footerContact": "Маєте запитання щодо прозорості ШІ, прав суб'єктів даних або цих карток моделей? Напишіть на <link></link>."
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# особа переглядає} few {# особи переглядають} many {# осіб переглядають} other {# особи переглядають}}",
+    "status_speaking": "говорить",
+    "status_active": "активний",
+    "status_viewing": "переглядає",
+    "overflow_more": "ще {count}",
+    "overflow_more_viewing": "ще {count} переглядають"
   }
 }

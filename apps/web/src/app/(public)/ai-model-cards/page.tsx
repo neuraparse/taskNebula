@@ -13,6 +13,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Sparkles, ArrowLeft } from 'lucide-react';
+import { getTranslations } from 'next-intl/server';
 import { AI_FEATURE_MODEL_CARDS, DISCLOSURE_VERSION } from '@/config/ai-model-cards';
 
 export const metadata: Metadata = {
@@ -30,7 +31,7 @@ function renderMarkdown(md: string): React.ReactNode {
   function flushList(key: string) {
     if (listBuffer.length === 0) return;
     out.push(
-      <ul key={`ul-${key}`} className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+      <ul key={`ul-${key}`} className="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
         {listBuffer.map((item, i) => (
           <li key={i} dangerouslySetInnerHTML={{ __html: inline(item) }} />
         ))}
@@ -55,7 +56,7 @@ function renderMarkdown(md: string): React.ReactNode {
     if (line.startsWith('## ')) {
       flushList(`h-${idx}`);
       out.push(
-        <h3 key={`h-${idx}`} className="text-base font-semibold mt-4 mb-2">
+        <h3 key={`h-${idx}`} className="mb-2 mt-4 text-base font-semibold">
           {line.slice(3)}
         </h3>
       );
@@ -69,7 +70,7 @@ function renderMarkdown(md: string): React.ReactNode {
     out.push(
       <p
         key={`p-${idx}`}
-        className="text-sm text-muted-foreground"
+        className="text-muted-foreground text-sm"
         dangerouslySetInnerHTML={{ __html: inline(line) }}
       />
     );
@@ -78,40 +79,37 @@ function renderMarkdown(md: string): React.ReactNode {
   return out;
 }
 
-export default function AiModelCardsPage() {
+export default async function AiModelCardsPage() {
+  const t = await getTranslations('aiModelCards');
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 sm:py-16">
       <Link
         href="/"
-        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-6"
+        className="text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-1 text-xs"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
-        Back to TaskNebula
+        {t('back')}
       </Link>
 
       <header className="mb-8 space-y-2">
-        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs text-muted-foreground">
-          <Sparkles className="h-3 w-3 text-primary" />
-          EU AI Act Article 50 disclosure
+        <div className="border-border bg-muted/40 text-muted-foreground inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs">
+          <Sparkles className="text-primary h-3 w-3" />
+          {t('disclosureBadge')}
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">AI Model Cards</h1>
-        <p className="text-sm text-muted-foreground max-w-2xl">
-          TaskNebula deploys the following AI features to end users. For each, we
-          publish the intended purpose, model identity, data sent on every call,
-          retention policy, and our default human-oversight posture. This page is
-          a public transparency record and applies to all TaskNebula
-          deployments. Disclosure version <code className="font-mono">{DISCLOSURE_VERSION}</code>.
+        <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
+        <p className="text-muted-foreground max-w-2xl text-sm">
+          {t.rich('intro', {
+            version: () => <code className="font-mono">{DISCLOSURE_VERSION}</code>,
+          })}
         </p>
-        <p className="text-xs text-muted-foreground">
-          Last reviewed 2026-05-14. Regulation enforcement begins 2026-08-02.
-        </p>
+        <p className="text-muted-foreground text-xs">{t('lastReviewed')}</p>
       </header>
 
-      <nav className="mb-10 rounded-md border border-border bg-muted/30 p-4">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
-          On this page
+      <nav className="border-border bg-muted/30 mb-10 rounded-md border p-4">
+        <p className="text-muted-foreground mb-2 text-xs uppercase tracking-wider">
+          {t('onThisPage')}
         </p>
-        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-sm">
+        <ul className="grid grid-cols-1 gap-1.5 text-sm sm:grid-cols-2">
           {AI_FEATURE_MODEL_CARDS.map((c) => (
             <li key={c.id}>
               <a href={`#${c.id}`} className="text-foreground hover:underline">
@@ -130,32 +128,32 @@ export default function AiModelCardsPage() {
             className="scroll-mt-20"
             data-testid={`model-card-${card.id}`}
           >
-            <div className="border-l-2 border-primary pl-4 mb-3">
+            <div className="border-primary mb-3 border-l-2 pl-4">
               <h2 className="text-xl font-semibold">{card.name}</h2>
-              <p className="text-xs text-muted-foreground mt-1">{card.purpose}</p>
+              <p className="text-muted-foreground mt-1 text-xs">{card.purpose}</p>
             </div>
 
-            <dl className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs mb-4">
+            <dl className="mb-4 grid grid-cols-1 gap-3 text-xs sm:grid-cols-3">
               <div>
-                <dt className="text-muted-foreground uppercase tracking-wider mb-0.5">
-                  Model
+                <dt className="text-muted-foreground mb-0.5 uppercase tracking-wider">
+                  {t('model')}
                 </dt>
                 <dd className="font-mono">{card.defaultModel}</dd>
               </div>
               <div>
-                <dt className="text-muted-foreground uppercase tracking-wider mb-0.5">
-                  Provider
+                <dt className="text-muted-foreground mb-0.5 uppercase tracking-wider">
+                  {t('provider')}
                 </dt>
                 <dd className="font-mono">{card.defaultProvider}</dd>
               </div>
               <div>
-                <dt className="text-muted-foreground uppercase tracking-wider mb-0.5">
-                  Oversight default
+                <dt className="text-muted-foreground mb-0.5 uppercase tracking-wider">
+                  {t('oversightDefault')}
                 </dt>
                 <dd>
                   {card.defaultOversight === 'review_required'
-                    ? 'Review required'
-                    : 'Auto-apply allowed'}
+                    ? t('reviewRequired')
+                    : t('autoApplyAllowed')}
                 </dd>
               </div>
             </dl>
@@ -165,14 +163,15 @@ export default function AiModelCardsPage() {
         ))}
       </div>
 
-      <footer className="mt-16 border-t border-border pt-6 text-xs text-muted-foreground">
+      <footer className="border-border text-muted-foreground mt-16 border-t pt-6 text-xs">
         <p>
-          Questions about AI transparency, data subject rights, or these model
-          cards? Email{' '}
-          <a href="mailto:privacy@tasknebula.com" className="underline">
-            privacy@tasknebula.com
-          </a>
-          .
+          {t.rich('footerContact', {
+            link: () => (
+              <a href="mailto:privacy@tasknebula.com" className="underline">
+                {'privacy@tasknebula.com'}
+              </a>
+            ),
+          })}
         </p>
       </footer>
     </main>

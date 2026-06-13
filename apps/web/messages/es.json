@@ -24,7 +24,24 @@
     "inbox_unread": "{count} sin leer",
     "account_settings": "Ajustes de cuenta",
     "sign_out": "Cerrar sesión",
-    "account_menu": "Menú de cuenta"
+    "account_menu": "Menú de cuenta",
+    "organization": "Organización",
+    "api_keys": "Claves de API",
+    "webhooks": "Webhooks",
+    "labels": "Etiquetas",
+    "integrations": "Integraciones",
+    "audit_streaming": "Transmisión de auditoría",
+    "ai_agents": "IA y agentes",
+    "communications": "Comunicaciones",
+    "notifications": "Notificaciones",
+    "appearance": "Apariencia",
+    "activity": "Actividad",
+    "organizations": "Organizaciones",
+    "users": "Usuarios",
+    "feature_flags": "Indicadores de funciones",
+    "agent_control": "Control de agentes",
+    "realtime_health": "Estado en tiempo real",
+    "audit_logs": "Registros de auditoría"
   },
   "actions": {
     "create_issue": "Crear incidencia",
@@ -72,12 +89,15 @@
     "banner_password_reset": "Contraseña actualizada. Inicia sesión con tu nueva contraseña.",
     "banner_incorrect_credentials": "Correo o contraseña incorrectos.",
     "banner_verification_invalid": "Ese enlace de verificación ya no es válido.",
-    "banner_generic_signin_error": "Algo salió mal al iniciar sesión."
+    "banner_generic_signin_error": "Algo salió mal al iniciar sesión.",
+    "loading": "Cargando",
+    "dismiss_notification": "Descartar notificación"
   },
   "common": {
     "loading": "Cargando…",
     "no_projects": "Aún no hay proyectos",
-    "view_all_projects": "Ver los {count} proyectos"
+    "view_all_projects": "Ver los {count} proyectos",
+    "skipToContent": "Saltar al contenido"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "Unknown user",
       "label": "Reporter"
-    }
+    },
+    "reporter.avatarAlt": "Avatar del informante"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "Failed to update comment",
       "deleteFailed": "Failed to delete comment",
       "deleteBlockedReplies": "Cannot delete a comment that has replies",
-      "reactionFailed": "Failed to update reaction"
+      "reactionFailed": "Failed to update reaction",
+      "agentBadge": "AGENTE"
     },
     "sections": {
       "timeTracking": "Time tracking",
@@ -468,7 +490,8 @@
     "addSubIssue": "Añadir subtarea",
     "placeholder": "Título de la subtarea...",
     "creating": "Creando subtarea...",
-    "createFailed": "No se pudo crear la subtarea. Inténtalo de nuevo."
+    "createFailed": "No se pudo crear la subtarea. Inténtalo de nuevo.",
+    "noSubtasks": "Aún no hay subtareas"
   },
   "issueRelations": {
     "dialogTitle": "Vincular incidencia",
@@ -577,7 +600,9 @@
         "reconnecting": "Reconectando",
         "disconnected": "Desconectado",
         "voiceRoom": "Sala de voz"
-      }
+      },
+      "live": "en vivo",
+      "offline": "sin conexión"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "Automatización",
     "tab_ai_agents": "Agentes de IA",
     "tab_chat_calls": "Chat y llamadas",
-    "tab_webhooks": "Webhooks"
+    "tab_webhooks": "Webhooks",
+    "ts_name_placeholder": "Plataforma",
+    "ts_slug_placeholder": "plataforma",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "Proyecto",
@@ -2581,7 +2610,9 @@
         "creating": "Creando...",
         "createPage": "Crear página"
       }
-    }
+    },
+    "shell.collapse": "Contraer",
+    "shell.expand": "Expandir"
   },
   "planning": {
     "search_placeholder": "Buscar plantillas",
@@ -3364,7 +3395,11 @@
       "close": "Cerrar",
       "evaluate": "Evaluar",
       "evaluating": "Evaluando..."
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "rollout%",
+    "platformAi.saveFailedDescription": "No se pudo guardar la credencial. Inténtalo de nuevo.",
+    "platformAi.removeFailedDescription": "No se pudo eliminar la credencial. Inténtalo de nuevo."
   },
   "adminDialogs": {
     "common": {
@@ -3476,7 +3511,13 @@
       "searchPlaceholder": "Buscar organizaciones...",
       "empty": "No se encontraron organizaciones.",
       "remove": "Quitar {name}"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "Jane Smith",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "Analítica avanzada"
   },
   "charts": {
     "issues": "Incidencias",
@@ -4623,7 +4664,10 @@
         "datadog": "Define { apiKey, site? }.",
         "s3": "Define { bucket, region, prefix? }. AWS_ACCESS_KEY_ID/SECRET deben estar definidos en el entorno."
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "Sprint {number}",
@@ -5084,7 +5128,16 @@
           "disconnected": "Desconectado"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "Se denegó el permiso del micrófono. Permite el acceso al micrófono en tu navegador e inténtalo de nuevo.",
+    "chat.voice.micCouldNotStartBusy": "No se pudo iniciar el micrófono. Es posible que otra aplicación lo esté usando.",
+    "chat.voice.audioEngineFailed": "El motor de audio del navegador falló en este dispositivo. Cierra otras aplicaciones de audio o cambia de micrófono e inténtalo de nuevo.",
+    "chat.voice.noMicForSession": "No se encontró ningún micrófono para esta sesión del navegador.",
+    "chat.voice.runtimeError.serverUnreachable": "El servidor de voz no está accesible en los puertos de medios (UDP 50000-50020 / 3478, TCP 7881). Comprueba el firewall / NAT e inténtalo de nuevo.",
+    "chat.voice.runtimeError.permissionDenied": "Se denegó el permiso del micrófono. Permite el acceso al micrófono en tu navegador e inténtalo de nuevo.",
+    "chat.voice.runtimeError.micNotStarted": "No se pudo iniciar el micrófono. Es posible que otra aplicación lo esté usando.",
+    "chat.voice.runtimeError.audioEngineFailed": "El motor de audio del navegador falló en este dispositivo. Cierra otras aplicaciones de audio o cambia de micrófono e inténtalo de nuevo.",
+    "chat.voice.runtimeError.micNotFound": "No se encontró ningún micrófono para esta sesión del navegador."
   },
   "userSecurity": {
     "accountMenu": "Menú de la cuenta",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "Nivel eliminado",
     "toastLevelDeletedDescription": "Nivel de seguridad eliminado correctamente.",
     "errorDeleteLevel": "No se pudo eliminar el nivel"
+  },
+  "aiModelCards": {
+    "back": "Volver a TaskNebula",
+    "disclosureBadge": "Divulgación del artículo 50 de la EU AI Act",
+    "title": "Fichas de modelos de IA",
+    "intro": "TaskNebula despliega las siguientes funciones de IA para los usuarios finales. Para cada una, publicamos el propósito previsto, la identidad del modelo, los datos enviados en cada llamada, la política de retención y nuestra postura predeterminada de supervisión humana. Esta página es un registro público de transparencia y se aplica a todos los despliegues de TaskNebula. Versión de la divulgación <version></version>.",
+    "lastReviewed": "Última revisión el 2026-05-14. La aplicación de la regulación comienza el 2026-08-02.",
+    "onThisPage": "En esta página",
+    "model": "Modelo",
+    "provider": "Proveedor",
+    "oversightDefault": "Supervisión predeterminada",
+    "reviewRequired": "Revisión requerida",
+    "autoApplyAllowed": "Aplicación automática permitida",
+    "footerContact": "¿Preguntas sobre la transparencia de la IA, los derechos de los interesados o estas fichas de modelos? Escribe a <link></link>."
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# persona viendo} other {# personas viendo}}",
+    "status_speaking": "hablando",
+    "status_active": "activo",
+    "status_viewing": "viendo",
+    "overflow_more": "{count} más",
+    "overflow_more_viewing": "{count} más viendo"
   }
 }

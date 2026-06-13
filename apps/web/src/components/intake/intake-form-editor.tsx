@@ -157,7 +157,8 @@ export function IntakeFormEditor({ form, recentSubmissions }: Props) {
               onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
             />
             <p className="text-muted-foreground text-xs">
-              {t('public_url_label')} /intake/{slug || form.slug}
+              {t('public_url_label')} {'/intake/'}
+              {slug || form.slug}
             </p>
           </div>
         </div>

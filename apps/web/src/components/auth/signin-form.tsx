@@ -150,7 +150,7 @@ export function SignInForm() {
       <div className="flex items-center justify-center py-12">
         <div
           className="border-foreground h-5 w-5 animate-spin rounded-full border-2 border-t-transparent"
-          aria-label="Loading"
+          aria-label={tAuth('loading')}
         />
       </div>
     );
@@ -179,7 +179,7 @@ export function SignInForm() {
             type="button"
             onClick={() => setDismissedBannerKey(activeBanner.key)}
             className="text-muted-foreground ease-snap hover:text-foreground focus-visible:ring-ring shrink-0 rounded-sm p-0.5 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2"
-            aria-label="Dismiss notification"
+            aria-label={tAuth('dismiss_notification')}
           >
             <X className="h-3.5 w-3.5" aria-hidden="true" />
           </button>

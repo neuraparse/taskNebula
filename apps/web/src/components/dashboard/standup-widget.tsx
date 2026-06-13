@@ -30,7 +30,9 @@ async function generatePreview(): Promise<StandupResponse> {
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    throw new Error(text || 'Failed to generate standup');
+    // Throw any server-provided message verbatim; an empty message lets the
+    // caller fall back to a localized generic error instead of hardcoded English.
+    throw new Error(text);
   }
   return (await res.json()) as StandupResponse;
 }
@@ -56,7 +58,7 @@ export function StandupWidget() {
     onError: (err) => {
       toast({
         title: t('standup.generate_error_title'),
-        description: err instanceof Error ? err.message : t('standup.unknown_error'),
+        description: err instanceof Error && err.message ? err.message : t('standup.unknown_error'),
         variant: 'destructive',
       });
     },

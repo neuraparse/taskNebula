@@ -112,7 +112,7 @@ export function CreateFeatureFlagDialog() {
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Advanced Analytics"
+                placeholder={t('flagForm.namePlaceholder')}
                 required
               />
             </div>

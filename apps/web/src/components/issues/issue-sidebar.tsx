@@ -391,7 +391,7 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
               <Avatar className="h-5 w-5">
                 <AvatarImage
                   src={reporter?.image || undefined}
-                  alt={reporter?.name ?? reporter?.email ?? 'Reporter avatar'}
+                  alt={reporter?.name ?? reporter?.email ?? t('reporter.avatarAlt')}
                 />
                 <AvatarFallback className="bg-muted text-[9px] font-medium">
                   {(reporter?.name?.[0] || reporter?.email?.[0] || '?').toUpperCase()}

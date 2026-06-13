@@ -155,7 +155,7 @@ export default function SetupPage() {
         <div className="mb-6 space-y-3 text-center">
           <div className="flex justify-center">
             <div className="bg-foreground flex h-9 w-9 items-center justify-center rounded-md">
-              <span className="text-background text-xs font-semibold tracking-tight">TN</span>
+              <span className="text-background text-xs font-semibold tracking-tight">{'TN'}</span>
             </div>
           </div>
           <div className="space-y-1">

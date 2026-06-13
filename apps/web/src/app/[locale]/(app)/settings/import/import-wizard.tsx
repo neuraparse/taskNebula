@@ -234,7 +234,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
           id="projectId"
           value={projectId}
           onChange={(e) => setProjectId(e.target.value)}
-          placeholder="prj_xxx"
+          placeholder={t('import.projectIdPlaceholder')}
         />
 
         {source === 'csv' && (
@@ -267,7 +267,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
               id="linearTeam"
               value={linearTeam}
               onChange={(e) => setLinearTeam(e.target.value)}
-              placeholder="ENG"
+              placeholder={t('import.linearTeamPlaceholder')}
             />
           </div>
         )}
@@ -279,7 +279,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
               id="jiraSite"
               value={jiraSite}
               onChange={(e) => setJiraSite(e.target.value)}
-              placeholder="acme.atlassian.net"
+              placeholder={t('import.jiraSitePlaceholder')}
             />
             <Label htmlFor="jiraEmail">{t('import.jiraEmail')}</Label>
             <Input

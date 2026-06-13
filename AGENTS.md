@@ -8,6 +8,12 @@ workflow, and architecture.
 Tools that follow the `AGENTS.md` convention should read `CLAUDE.md` as the
 full instruction set.
 
+> **i18n is mandatory.** The app ships 30 languages with device auto-detection.
+> Never hardcode user-facing strings — route every one through `next-intl` and
+> add the key to all 30 catalogs in `apps/web/messages/*.json` (key parity:
+> `node scripts/i18n-check.mjs`). See `.claude/rules/frontend.md` and
+> `.cursor/rules/i18n.mdc`. Applies to all assistants (Claude/Cursor/Codex).
+
 Per-package guides (each `CLAUDE.md` has a sibling `AGENTS.md` pointer):
 
 - [apps/web/CLAUDE.md](apps/web/CLAUDE.md) — Next.js app: route auth idiom, validation, i18n, design system

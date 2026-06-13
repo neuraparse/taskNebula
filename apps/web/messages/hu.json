@@ -24,7 +24,24 @@
     "inbox_unread": "{count} olvasatlan",
     "account_settings": "Fiókbeállítások",
     "sign_out": "Kijelentkezés",
-    "account_menu": "Fiók menü"
+    "account_menu": "Fiók menü",
+    "organization": "Szervezet",
+    "api_keys": "API-kulcsok",
+    "webhooks": "Webhookok",
+    "labels": "Címkék",
+    "integrations": "Integrációk",
+    "audit_streaming": "Auditfolyam",
+    "ai_agents": "AI és ügynökök",
+    "communications": "Kommunikáció",
+    "notifications": "Értesítések",
+    "appearance": "Megjelenés",
+    "activity": "Tevékenység",
+    "organizations": "Szervezetek",
+    "users": "Felhasználók",
+    "feature_flags": "Funkciókapcsolók",
+    "agent_control": "Ügynökvezérlés",
+    "realtime_health": "Valós idejű állapot",
+    "audit_logs": "Auditnaplók"
   },
   "actions": {
     "create_issue": "Feladat létrehozása",
@@ -72,12 +89,15 @@
     "banner_password_reset": "Jelszó frissítve. Jelentkezz be az új jelszavaddal.",
     "banner_incorrect_credentials": "Helytelen e-mail-cím vagy jelszó.",
     "banner_verification_invalid": "Ez a megerősítő hivatkozás már nem érvényes.",
-    "banner_generic_signin_error": "Hiba történt a bejelentkezés során."
+    "banner_generic_signin_error": "Hiba történt a bejelentkezés során.",
+    "loading": "Betöltés",
+    "dismiss_notification": "Értesítés elvetése"
   },
   "common": {
     "loading": "Betöltés…",
     "no_projects": "Még nincsenek projektek",
-    "view_all_projects": "Mind a(z) {count} projekt megtekintése"
+    "view_all_projects": "Mind a(z) {count} projekt megtekintése",
+    "skipToContent": "Ugrás a tartalomra"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "Ismeretlen felhasználó",
       "label": "Bejelentő"
-    }
+    },
+    "reporter.avatarAlt": "Bejelentő profilképe"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "Nem sikerült frissíteni a hozzászólást",
       "deleteFailed": "Nem sikerült törölni a hozzászólást",
       "deleteBlockedReplies": "Nem törölhető olyan hozzászólás, amelynek válaszai vannak",
-      "reactionFailed": "Nem sikerült frissíteni a reakciót"
+      "reactionFailed": "Nem sikerült frissíteni a reakciót",
+      "agentBadge": "ÜGYNÖK"
     },
     "sections": {
       "timeTracking": "Időkövetés",
@@ -468,7 +490,8 @@
     "addSubIssue": "Részfeladat hozzáadása",
     "placeholder": "Részfeladat címe...",
     "creating": "Részfeladat létrehozása...",
-    "createFailed": "Nem sikerült létrehozni a részfeladatot. Kérjük, próbáld újra."
+    "createFailed": "Nem sikerült létrehozni a részfeladatot. Kérjük, próbáld újra.",
+    "noSubtasks": "Még nincsenek részfeladatok"
   },
   "issueRelations": {
     "dialogTitle": "Feladat összekapcsolása",
@@ -577,7 +600,9 @@
         "reconnecting": "Újrakapcsolódás",
         "disconnected": "Lecsatlakozva",
         "voiceRoom": "Hangszoba"
-      }
+      },
+      "live": "élő",
+      "offline": "offline"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "Automatizálás",
     "tab_ai_agents": "AI-ügynökök",
     "tab_chat_calls": "Csevegés és hívások",
-    "tab_webhooks": "Webhookok"
+    "tab_webhooks": "Webhookok",
+    "ts_name_placeholder": "Platform",
+    "ts_slug_placeholder": "platform",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "Projekt",
@@ -2581,7 +2610,9 @@
         "creating": "Létrehozás...",
         "createPage": "Oldal létrehozása"
       }
-    }
+    },
+    "shell.collapse": "Összecsukás",
+    "shell.expand": "Kibontás"
   },
   "planning": {
     "search_placeholder": "Sablonok keresése",
@@ -3364,7 +3395,11 @@
       "close": "Bezárás",
       "evaluate": "Kiértékelés",
       "evaluating": "Kiértékelés..."
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "kivezetés%",
+    "platformAi.saveFailedDescription": "Nem sikerült menteni a hitelesítő adatot. Kérjük, próbálja újra.",
+    "platformAi.removeFailedDescription": "Nem sikerült eltávolítani a hitelesítő adatot. Kérjük, próbálja újra."
   },
   "adminDialogs": {
     "common": {
@@ -3476,7 +3511,13 @@
       "searchPlaceholder": "Szervezetek keresése...",
       "empty": "Nem található szervezet.",
       "remove": "{name} eltávolítása"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "Jane Smith",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "Speciális elemzés"
   },
   "charts": {
     "issues": "Feladatok",
@@ -4623,7 +4664,10 @@
         "datadog": "Állítsa be: { apiKey, site? }.",
         "s3": "Állítsa be: { bucket, region, prefix? }. Az AWS_ACCESS_KEY_ID/SECRET értékeknek be kell lenniük állítva a környezeti változókban."
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "{number}. sprint",
@@ -5084,7 +5128,16 @@
           "disconnected": "Kapcsolat bontva"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "A mikrofonhasználat engedélyezése meg lett tagadva. Engedélyezze a mikrofon-hozzáférést a böngészőben, majd próbálja újra.",
+    "chat.voice.micCouldNotStartBusy": "Nem sikerült elindítani a mikrofont. Lehet, hogy egy másik alkalmazás használja.",
+    "chat.voice.audioEngineFailed": "A böngésző hangmotorja meghibásodott ezen az eszközön. Állítsa le a többi hangalkalmazást, vagy váltson mikrofont, majd próbálja újra.",
+    "chat.voice.noMicForSession": "Nem található mikrofon ehhez a böngészőmenethez.",
+    "chat.voice.runtimeError.serverUnreachable": "A hangkiszolgáló nem érhető el a médiaportokon (UDP 50000-50020 / 3478, TCP 7881). Ellenőrizze a tűzfalat / NAT-ot, majd próbálja újra.",
+    "chat.voice.runtimeError.permissionDenied": "A mikrofonhasználat engedélyezése meg lett tagadva. Engedélyezze a mikrofon-hozzáférést a böngészőben, majd próbálja újra.",
+    "chat.voice.runtimeError.micNotStarted": "Nem sikerült elindítani a mikrofont. Lehet, hogy egy másik alkalmazás használja.",
+    "chat.voice.runtimeError.audioEngineFailed": "A böngésző hangmotorja meghibásodott ezen az eszközön. Állítsa le a többi hangalkalmazást, vagy váltson mikrofont, majd próbálja újra.",
+    "chat.voice.runtimeError.micNotFound": "Nem található mikrofon ehhez a böngészőmenethez."
   },
   "userSecurity": {
     "accountMenu": "Fiókmenü",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "Szint törölve",
     "toastLevelDeletedDescription": "A biztonsági szint sikeresen eltávolítva.",
     "errorDeleteLevel": "A szint törlése sikertelen"
+  },
+  "aiModelCards": {
+    "back": "Vissza a TaskNebulához",
+    "disclosureBadge": "EU AI Act 50. cikk szerinti közzététel",
+    "title": "AI modellkártyák",
+    "intro": "A TaskNebula az alábbi AI-funkciókat teszi elérhetővé a végfelhasználók számára. Mindegyikhez közzétesszük a tervezett célt, a modell azonosítóját, a minden hívásnál elküldött adatokat, a megőrzési szabályzatot, valamint az alapértelmezett emberi felügyeleti hozzáállásunkat. Ez az oldal egy nyilvános átláthatósági nyilvántartás, amely minden TaskNebula-telepítésre vonatkozik. Közzétételi verzió: <version></version>.",
+    "lastReviewed": "Utoljára felülvizsgálva: 2026-05-14. A szabályozás érvényesítése 2026-08-02-án kezdődik.",
+    "onThisPage": "Ezen az oldalon",
+    "model": "Modell",
+    "provider": "Szolgáltató",
+    "oversightDefault": "Alapértelmezett felügyelet",
+    "reviewRequired": "Felülvizsgálat szükséges",
+    "autoApplyAllowed": "Automatikus alkalmazás engedélyezve",
+    "footerContact": "Kérdése van az AI átláthatóságról, az érintetti jogokról vagy ezekről a modellkártyákról? Írjon e-mailt ide: <link></link>."
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# fő nézi} other {# fő nézi}}",
+    "status_speaking": "beszél",
+    "status_active": "aktív",
+    "status_viewing": "nézi",
+    "overflow_more": "még {count}",
+    "overflow_more_viewing": "még {count} nézi"
   }
 }

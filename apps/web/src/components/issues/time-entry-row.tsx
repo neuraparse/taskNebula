@@ -85,7 +85,7 @@ export function TimeEntryRow({ entry, canEdit = false, onUpdate, onRemove }: Tim
               className="h-8 w-16 text-sm"
               aria-label={t('hours_label')}
             />
-            <span className="text-muted-foreground text-xs">h</span>
+            <span className="text-muted-foreground text-xs">{'h'}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <Input
@@ -98,7 +98,7 @@ export function TimeEntryRow({ entry, canEdit = false, onUpdate, onRemove }: Tim
               className="h-8 w-16 text-sm"
               aria-label={t('minutes_label')}
             />
-            <span className="text-muted-foreground text-xs">m</span>
+            <span className="text-muted-foreground text-xs">{'m'}</span>
           </div>
           <div className="ml-auto flex items-center gap-1">
             <Button

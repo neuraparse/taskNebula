@@ -126,7 +126,7 @@ export function CreateOrganizationAdminDialog() {
                     slug: formData.slug || generateSlug(name),
                   });
                 }}
-                placeholder="Acme Inc"
+                placeholder={t('orgForm.namePlaceholder')}
               />
             </div>
             <div className="space-y-2">
@@ -135,7 +135,7 @@ export function CreateOrganizationAdminDialog() {
                 id="slug"
                 value={formData.slug}
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                placeholder="acme-inc"
+                placeholder={t('orgForm.slugPlaceholder')}
               />
               <p className="text-muted-foreground text-xs">{t('orgForm.slugHint')}</p>
             </div>

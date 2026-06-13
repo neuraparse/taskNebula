@@ -28,7 +28,8 @@ export function AppHeader() {
           <Search className="text-muted-foreground absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2" />
           <span className="truncate">{tNav('search_placeholder')}</span>
           <kbd className="chip pointer-events-none ms-auto inline-flex shrink-0 select-none items-center gap-1 font-mono text-[10px]">
-            <Command className="h-3 w-3" />K
+            <Command className="h-3 w-3" />
+            {'K'}
           </kbd>
         </button>
       </div>

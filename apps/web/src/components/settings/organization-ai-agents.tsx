@@ -604,7 +604,8 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                   {activeModelConfig && (
                     <span className="ml-1">
                       {t('orgAi.locked_profile_prefix')}{' '}
-                      <span className="text-foreground font-medium">{activeModelConfig.name}</span>.
+                      <span className="text-foreground font-medium">{activeModelConfig.name}</span>
+                      {'.'}
                     </span>
                   )}
                 </div>
@@ -814,9 +815,9 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                           ) : null}
                           <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
                             <span>{formatModelConfigSummary(config, t)}</span>
-                            <span>·</span>
+                            <span>{'·'}</span>
                             <span>{t('orgAi.revisions', { count: config.revisionCount })}</span>
-                            <span>·</span>
+                            <span>{'·'}</span>
                             <span>
                               {t('orgAi.updated_ago', {
                                 ago: formatDistanceToNow(new Date(config.updatedAt), {
@@ -1130,9 +1131,9 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="native">{t('orgAi.provider_native')}</SelectItem>
-                        <SelectItem value="openai">OpenAI</SelectItem>
-                        <SelectItem value="anthropic">Anthropic</SelectItem>
-                        <SelectItem value="azure">Azure OpenAI</SelectItem>
+                        <SelectItem value="openai">{'OpenAI'}</SelectItem>
+                        <SelectItem value="anthropic">{'Anthropic'}</SelectItem>
+                        <SelectItem value="azure">{'Azure OpenAI'}</SelectItem>
                         <SelectItem value="custom">{t('orgAi.provider_custom')}</SelectItem>
                       </SelectContent>
                     </Select>

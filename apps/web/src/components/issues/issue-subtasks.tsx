@@ -105,7 +105,9 @@ export function IssueSubtasks({ issueId, projectId }: IssueSubtasksProps) {
             <div className="bg-primary h-full transition-all" style={{ width: `${progress}%` }} />
           </div>
           <span className="text-muted-foreground text-xs">
-            {completedCount}/{totalCount}
+            {completedCount}
+            {'/'}
+            {totalCount}
           </span>
         </div>
       )}
@@ -145,7 +147,7 @@ export function IssueSubtasks({ issueId, projectId }: IssueSubtasksProps) {
           ))}
         </ul>
       ) : !isAdding ? (
-        <p className="text-muted-foreground py-2 text-center text-sm">No subtasks yet</p>
+        <p className="text-muted-foreground py-2 text-center text-sm">{t('noSubtasks')}</p>
       ) : null}
 
       {/* Add subtask form */}

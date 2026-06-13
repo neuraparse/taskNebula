@@ -24,7 +24,24 @@
     "inbox_unread": "{count} lukematonta",
     "account_settings": "Tilin asetukset",
     "sign_out": "Kirjaudu ulos",
-    "account_menu": "Tilivalikko"
+    "account_menu": "Tilivalikko",
+    "organization": "Organisaatio",
+    "api_keys": "API-avaimet",
+    "webhooks": "Webhookit",
+    "labels": "Tunnisteet",
+    "integrations": "Integraatiot",
+    "audit_streaming": "Auditlokin suoratoisto",
+    "ai_agents": "Tekoäly ja agentit",
+    "communications": "Viestintä",
+    "notifications": "Ilmoitukset",
+    "appearance": "Ulkoasu",
+    "activity": "Toiminta",
+    "organizations": "Organisaatiot",
+    "users": "Käyttäjät",
+    "feature_flags": "Ominaisuusliput",
+    "agent_control": "Agenttien hallinta",
+    "realtime_health": "Reaaliaikaisuuden tila",
+    "audit_logs": "Auditlokit"
   },
   "actions": {
     "create_issue": "Luo työ",
@@ -72,12 +89,15 @@
     "banner_password_reset": "Salasana päivitetty. Kirjaudu sisään uudella salasanallasi.",
     "banner_incorrect_credentials": "Virheellinen sähköposti tai salasana.",
     "banner_verification_invalid": "Vahvistuslinkki ei ole enää voimassa.",
-    "banner_generic_signin_error": "Sisäänkirjautumisessa tapahtui virhe."
+    "banner_generic_signin_error": "Sisäänkirjautumisessa tapahtui virhe.",
+    "loading": "Ladataan",
+    "dismiss_notification": "Hylkää ilmoitus"
   },
   "common": {
     "loading": "Ladataan…",
     "no_projects": "Ei vielä projekteja",
-    "view_all_projects": "Näytä kaikki {count} projektia"
+    "view_all_projects": "Näytä kaikki {count} projektia",
+    "skipToContent": "Siirry sisältöön"
   },
   "settings": {
     "labels": {
@@ -324,7 +344,8 @@
     },
     "reporter": {
       "unknown": "Tuntematon käyttäjä",
-      "label": "Raportoija"
+      "label": "Raportoija",
+      "avatarAlt": "Ilmoittajan profiilikuva"
     }
   },
   "issueDetail": {
@@ -341,7 +362,8 @@
       "updateFailed": "Kommentin päivitys epäonnistui",
       "deleteFailed": "Kommentin poisto epäonnistui",
       "deleteBlockedReplies": "Kommenttia, jolla on vastauksia, ei voi poistaa",
-      "reactionFailed": "Reaktion päivitys epäonnistui"
+      "reactionFailed": "Reaktion päivitys epäonnistui",
+      "agentBadge": "AGENTTI"
     },
     "sections": {
       "timeTracking": "Ajanseuranta",
@@ -468,7 +490,8 @@
     "addSubIssue": "Lisää alityö",
     "placeholder": "Alityön otsikko...",
     "creating": "Luodaan alityötä...",
-    "createFailed": "Alityötä ei voitu luoda. Yritä uudelleen."
+    "createFailed": "Alityötä ei voitu luoda. Yritä uudelleen.",
+    "noSubtasks": "Ei vielä alitehtäviä"
   },
   "issueRelations": {
     "dialogTitle": "Linkitä työ",
@@ -577,7 +600,9 @@
         "reconnecting": "Yhdistetään uudelleen",
         "disconnected": "Yhteys katkaistu",
         "voiceRoom": "Äänihuone"
-      }
+      },
+      "live": "live",
+      "offline": "offline"
     }
   },
   "dashboardExtra": {
@@ -1479,7 +1504,11 @@
     "tab_automation": "Automaatio",
     "tab_ai_agents": "Tekoälyagentit",
     "tab_chat_calls": "Chat ja puhelut",
-    "tab_webhooks": "Webhookit"
+    "tab_webhooks": "Webhookit",
+    "ts_name_placeholder": "Alusta",
+    "ts_slug_placeholder": "alusta",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "Projekti",
@@ -2580,7 +2609,9 @@
         "noPermission": "Sinulla ei ole oikeutta luoda dokumentteja tässä tilassa.",
         "creating": "Luodaan...",
         "createPage": "Luo sivu"
-      }
+      },
+      "collapse": "Pienennä",
+      "expand": "Laajenna"
     }
   },
   "planning": {
@@ -3233,7 +3264,9 @@
       "hint": {
         "openai": "Käytetään, kun työtila ei ole syöttänyt omaa OpenAI-avaintaan. Alkaa sk-…",
         "anthropic": "Käytetään, kun työtila ei ole syöttänyt omaa Anthropic-avaintaan. Alkaa sk-ant-…"
-      }
+      },
+      "saveFailedDescription": "Tunnistetietoa ei voitu tallentaa. Yritä uudelleen.",
+      "removeFailedDescription": "Tunnistetietoa ei voitu poistaa. Yritä uudelleen."
     },
     "realtimeHealth": {
       "loading": "Ladataan reaaliaikaisuuden tilaa...",
@@ -3363,7 +3396,9 @@
       "targetedOrgs": "kohdistetut organisaatiot",
       "close": "Sulje",
       "evaluate": "Arvioi",
-      "evaluating": "Arvioidaan..."
+      "evaluating": "Arvioidaan...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "rollout%"
     }
   },
   "adminDialogs": {
@@ -3405,7 +3440,8 @@
       "plansHint": "Jätä tyhjäksi ottaaksesi käyttöön kaikille tilauksille.",
       "targetOrganizations": "Kohdeorganisaatiot",
       "targetOrganizationsHint": "Jätä tyhjäksi ottaaksesi käyttöön kaikille tilausta + käyttöönottoa vastaaville organisaatioille.",
-      "rollout": "Käyttöönotto: {percentage} %"
+      "rollout": "Käyttöönotto: {percentage} %",
+      "namePlaceholder": "Edistynyt analytiikka"
     },
     "createOrg": {
       "trigger": "Uusi organisaatio",
@@ -3429,7 +3465,8 @@
       "domain": "Verkkotunnus (valinnainen)",
       "toastUpdatedTitle": "Organisaatio päivitetty",
       "toastUpdatedDescription": "Muutokset tallennettiin onnistuneesti.",
-      "toastFailedTitle": "Organisaation päivitys epäonnistui"
+      "toastFailedTitle": "Organisaation päivitys epäonnistui",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "Nimi",
@@ -3439,7 +3476,9 @@
       "planFree": "Ilmainen",
       "planStarter": "Aloitus",
       "planGrowth": "Kasvu",
-      "planEnterprise": "Yritys"
+      "planEnterprise": "Yritys",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "Uusi käyttäjä",
@@ -3452,7 +3491,9 @@
       "missingFieldsDescription": "Nimi, sähköposti ja salasana ovat pakollisia.",
       "toastCreatedTitle": "Käyttäjä luotu",
       "toastCreatedDescription": "Käyttäjä luotiin onnistuneesti.",
-      "toastFailedTitle": "Käyttäjän luominen epäonnistui"
+      "toastFailedTitle": "Käyttäjän luominen epäonnistui",
+      "fullNamePlaceholder": "Jane Smith",
+      "emailPlaceholder": "jane@example.com"
     },
     "editUser": {
       "title": "Muokkaa käyttäjää",
@@ -4458,7 +4499,10 @@
         "status": "Tila",
         "priority": "Prioriteetti",
         "assignee": "Vastaanottaja"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "Käyttöoikeus",
@@ -5082,6 +5126,17 @@
           "connecting": "Yhdistetään",
           "reconnecting": "Yhdistetään uudelleen",
           "disconnected": "Yhteys katkaistu"
+        },
+        "permissionDeniedRetry": "Mikrofonin käyttöoikeus evättiin. Salli mikrofonin käyttö selaimessasi ja yritä uudelleen.",
+        "micCouldNotStartBusy": "Mikrofoniasi ei voitu käynnistää. Jokin toinen sovellus saattaa käyttää sitä.",
+        "audioEngineFailed": "Selaimen äänimoottori epäonnistui tällä laitteella. Sulje muut äänisovellukset tai vaihda mikrofonia ja yritä uudelleen.",
+        "noMicForSession": "Tälle selainistunnolle ei löytynyt mikrofonia.",
+        "runtimeError": {
+          "serverUnreachable": "Ääniserveriin ei saada yhteyttä mediaporttien kautta (UDP 50000-50020 / 3478, TCP 7881). Tarkista palomuuri / NAT ja yritä uudelleen.",
+          "permissionDenied": "Mikrofonin käyttöoikeus evättiin. Salli mikrofonin käyttö selaimessasi ja yritä uudelleen.",
+          "micNotStarted": "Mikrofoniasi ei voitu käynnistää. Jokin toinen sovellus saattaa käyttää sitä.",
+          "audioEngineFailed": "Selaimen äänimoottori epäonnistui tällä laitteella. Sulje muut äänisovellukset tai vaihda mikrofonia ja yritä uudelleen.",
+          "micNotFound": "Tälle selainistunnolle ei löytynyt mikrofonia."
         }
       }
     }
@@ -5197,5 +5252,27 @@
     "toastLevelDeletedTitle": "Taso poistettu",
     "toastLevelDeletedDescription": "Tietoturvataso poistettiin onnistuneesti.",
     "errorDeleteLevel": "Tason poisto epäonnistui"
+  },
+  "aiModelCards": {
+    "back": "Takaisin TaskNebulaan",
+    "disclosureBadge": "EU AI Act Article 50 -ilmoitus",
+    "title": "Tekoälymallikortit",
+    "intro": "TaskNebula ottaa loppukäyttäjille käyttöön seuraavat tekoälyominaisuudet. Julkaisemme jokaisesta käyttötarkoituksen, mallin tunnistetiedot, jokaisella kutsulla lähetettävät tiedot, säilytyskäytännön sekä oletusarvoisen ihmisen valvonnan tason. Tämä sivu on julkinen läpinäkyvyysseloste ja koskee kaikkia TaskNebula-käyttöönottoja. Ilmoituksen versio <version></version>.",
+    "lastReviewed": "Viimeksi tarkistettu 2026-05-14. Sääntelyn täytäntöönpano alkaa 2026-08-02.",
+    "onThisPage": "Tällä sivulla",
+    "model": "Malli",
+    "provider": "Tarjoaja",
+    "oversightDefault": "Valvonnan oletus",
+    "reviewRequired": "Tarkistus vaaditaan",
+    "autoApplyAllowed": "Automaattinen käyttöönotto sallittu",
+    "footerContact": "Kysymyksiä tekoälyn läpinäkyvyydestä, rekisteröidyn oikeuksista tai näistä mallikorteista? Lähetä sähköpostia osoitteeseen <link></link>."
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# henkilö katselee} other {# henkilöä katselee}}",
+    "status_speaking": "puhuu",
+    "status_active": "aktiivinen",
+    "status_viewing": "katselee",
+    "overflow_more": "{count} lisää",
+    "overflow_more_viewing": "{count} katselee lisää"
   }
 }

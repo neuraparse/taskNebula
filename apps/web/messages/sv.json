@@ -24,7 +24,24 @@
     "inbox_unread": "{count} olästa",
     "account_settings": "Kontoinställningar",
     "sign_out": "Logga ut",
-    "account_menu": "Kontomeny"
+    "account_menu": "Kontomeny",
+    "organization": "Organisation",
+    "api_keys": "API-nycklar",
+    "webhooks": "Webhooks",
+    "labels": "Etiketter",
+    "integrations": "Integrationer",
+    "audit_streaming": "Granskningsströmning",
+    "ai_agents": "AI och agenter",
+    "communications": "Kommunikation",
+    "notifications": "Aviseringar",
+    "appearance": "Utseende",
+    "activity": "Aktivitet",
+    "organizations": "Organisationer",
+    "users": "Användare",
+    "feature_flags": "Funktionsflaggor",
+    "agent_control": "Agentstyrning",
+    "realtime_health": "Realtidsstatus",
+    "audit_logs": "Granskningsloggar"
   },
   "actions": {
     "create_issue": "Skapa ärende",
@@ -72,12 +89,15 @@
     "banner_password_reset": "Lösenordet har uppdaterats. Logga in med ditt nya lösenord.",
     "banner_incorrect_credentials": "Felaktig e-postadress eller lösenord.",
     "banner_verification_invalid": "Den verifieringslänken är inte längre giltig.",
-    "banner_generic_signin_error": "Något gick fel vid inloggningen."
+    "banner_generic_signin_error": "Något gick fel vid inloggningen.",
+    "loading": "Laddar",
+    "dismiss_notification": "Stäng avisering"
   },
   "common": {
     "loading": "Läser in…",
     "no_projects": "Inga projekt ännu",
-    "view_all_projects": "Visa alla {count} projekt"
+    "view_all_projects": "Visa alla {count} projekt",
+    "skipToContent": "Hoppa till innehåll"
   },
   "settings": {
     "labels": {
@@ -325,7 +345,8 @@
     "reporter": {
       "unknown": "Okänd användare",
       "label": "Rapportör"
-    }
+    },
+    "reporter.avatarAlt": "Rapportörens avatar"
   },
   "issueDetail": {
     "comments": {
@@ -341,7 +362,8 @@
       "updateFailed": "Det gick inte att uppdatera kommentaren",
       "deleteFailed": "Det gick inte att ta bort kommentaren",
       "deleteBlockedReplies": "Det går inte att ta bort en kommentar som har svar",
-      "reactionFailed": "Det gick inte att uppdatera reaktionen"
+      "reactionFailed": "Det gick inte att uppdatera reaktionen",
+      "agentBadge": "AGENT"
     },
     "sections": {
       "timeTracking": "Tidsregistrering",
@@ -468,7 +490,8 @@
     "addSubIssue": "Lägg till delärende",
     "placeholder": "Titel på delärende...",
     "creating": "Skapar delärende...",
-    "createFailed": "Det gick inte att skapa delärendet. Försök igen."
+    "createFailed": "Det gick inte att skapa delärendet. Försök igen.",
+    "noSubtasks": "Inga deluppgifter ännu"
   },
   "issueRelations": {
     "dialogTitle": "Länka ärende",
@@ -577,7 +600,9 @@
         "reconnecting": "Återansluter",
         "disconnected": "Frånkopplad",
         "voiceRoom": "Röstrum"
-      }
+      },
+      "live": "live",
+      "offline": "offline"
     }
   },
   "dashboardExtra": {
@@ -1518,7 +1543,11 @@
     "tab_automation": "Automatisering",
     "tab_ai_agents": "AI-agenter",
     "tab_chat_calls": "Chatt och samtal",
-    "tab_webhooks": "Webhooks"
+    "tab_webhooks": "Webhooks",
+    "ts_name_placeholder": "Plattform",
+    "ts_slug_placeholder": "plattform",
+    "org_name_placeholder": "Acme Inc.",
+    "org_slug_placeholder": "acme-inc"
   },
   "settingsProject": {
     "kicker": "Projekt",
@@ -2620,7 +2649,9 @@
         "creating": "Skapar...",
         "createPage": "Skapa sida"
       }
-    }
+    },
+    "shell.collapse": "Fäll ihop",
+    "shell.expand": "Expandera"
   },
   "planning": {
     "search_placeholder": "Sök mallar",
@@ -3403,7 +3434,11 @@
       "close": "Stäng",
       "evaluate": "Utvärdera",
       "evaluating": "Utvärderar..."
-    }
+    },
+    "flagTest.isEnabled": "isEnabled",
+    "flagTest.rolloutPercent": "utrullning%",
+    "platformAi.saveFailedDescription": "Det gick inte att spara autentiseringsuppgiften. Försök igen.",
+    "platformAi.removeFailedDescription": "Det gick inte att ta bort autentiseringsuppgiften. Försök igen."
   },
   "adminDialogs": {
     "common": {
@@ -3515,7 +3550,13 @@
       "searchPlaceholder": "Sök organisationer...",
       "empty": "Inga organisationer hittades.",
       "remove": "Ta bort {name}"
-    }
+    },
+    "orgForm.namePlaceholder": "Acme Inc",
+    "orgForm.slugPlaceholder": "acme-inc",
+    "editOrg.domainPlaceholder": "example.com",
+    "createUser.fullNamePlaceholder": "Jane Smith",
+    "createUser.emailPlaceholder": "jane@example.com",
+    "flagForm.namePlaceholder": "Avancerad analys"
   },
   "charts": {
     "issues": "Ärenden",
@@ -4623,7 +4664,10 @@
         "datadog": "Ange { apiKey, site? }.",
         "s3": "Ange { bucket, region, prefix? }. AWS_ACCESS_KEY_ID/SECRET måste anges i miljön."
       }
-    }
+    },
+    "import.projectIdPlaceholder": "prj_xxx",
+    "import.linearTeamPlaceholder": "ENG",
+    "import.jiraSitePlaceholder": "acme.atlassian.net"
   },
   "sprints": {
     "defaultName": "Sprint {number}",
@@ -5084,7 +5128,16 @@
           "disconnected": "Frånkopplad"
         }
       }
-    }
+    },
+    "chat.voice.permissionDeniedRetry": "Mikrofonbehörighet nekades. Tillåt mikrofonåtkomst i din webbläsare och försök igen.",
+    "chat.voice.micCouldNotStartBusy": "Din mikrofon kunde inte startas. En annan app kanske använder den.",
+    "chat.voice.audioEngineFailed": "Webbläsarens ljudmotor misslyckades för den här enheten. Stäng andra ljudappar eller byt mikrofon och försök igen.",
+    "chat.voice.noMicForSession": "Ingen mikrofon hittades för den här webbläsarsessionen.",
+    "chat.voice.runtimeError.serverUnreachable": "Röstservern går inte att nå på medieportarna (UDP 50000-50020 / 3478, TCP 7881). Kontrollera brandvägg/NAT och försök igen.",
+    "chat.voice.runtimeError.permissionDenied": "Mikrofonbehörighet nekades. Tillåt mikrofonåtkomst i din webbläsare och försök igen.",
+    "chat.voice.runtimeError.micNotStarted": "Din mikrofon kunde inte startas. En annan app kanske använder den.",
+    "chat.voice.runtimeError.audioEngineFailed": "Webbläsarens ljudmotor misslyckades för den här enheten. Stäng andra ljudappar eller byt mikrofon och försök igen.",
+    "chat.voice.runtimeError.micNotFound": "Ingen mikrofon hittades för den här webbläsarsessionen."
   },
   "userSecurity": {
     "accountMenu": "Kontomeny",
@@ -5197,5 +5250,27 @@
     "toastLevelDeletedTitle": "Nivå borttagen",
     "toastLevelDeletedDescription": "Säkerhetsnivån togs bort.",
     "errorDeleteLevel": "Det gick inte att ta bort nivån"
+  },
+  "aiModelCards": {
+    "back": "Tillbaka till TaskNebula",
+    "disclosureBadge": "Informationskrav enligt EU AI Act artikel 50",
+    "title": "AI-modellkort",
+    "intro": "TaskNebula tillhandahåller följande AI-funktioner till slutanvändare. För var och en publicerar vi avsett syfte, modellidentitet, data som skickas vid varje anrop, lagringspolicy och vår standardinställning för mänsklig tillsyn. Den här sidan är ett offentligt transparensregister och gäller alla TaskNebula-driftsättningar. Informationsversion <version></version>.",
+    "lastReviewed": "Senast granskad 2026-05-14. Regleringens tillämpning börjar 2026-08-02.",
+    "onThisPage": "På den här sidan",
+    "model": "Modell",
+    "provider": "Leverantör",
+    "oversightDefault": "Standard för tillsyn",
+    "reviewRequired": "Granskning krävs",
+    "autoApplyAllowed": "Automatisk tillämpning tillåten",
+    "footerContact": "Frågor om AI-transparens, registrerades rättigheter eller dessa modellkort? Mejla <link></link>."
+  },
+  "presence": {
+    "group_viewing": "{count, plural, one {# person tittar} other {# personer tittar}}",
+    "status_speaking": "talar",
+    "status_active": "aktiv",
+    "status_viewing": "tittar",
+    "overflow_more": "{count} till",
+    "overflow_more_viewing": "{count} till tittar"
   }
 }
