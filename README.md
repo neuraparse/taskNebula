@@ -227,44 +227,25 @@ the relevant project AI settings. Full audit trail in
 
 ---
 
-## What's new in May 2026
+## What's new
 
-The 2026.05 roadmap merge introduced 34 features in a single push.
+Latest release: **v0.6.4**. Highlights from the recent line — see the
+[CHANGELOG](CHANGELOG.md) for the complete history:
 
-**Localization and UX**
-
-- Turkish, German, Spanish, and English locales via `next-intl`.
-- Route-level skeletons and glass surfaces on a zinc-950 base.
-- Cmd+K omnibar rebuilt with facet chips and an `Ask AI` tab.
-
-**Workflow**
-
-- Initiatives and sub-initiatives with rollup status.
-- Native time tracking — estimate, actual, and AI-suggested time.
-- Cycle auto-rollover for unfinished work.
-- Smart inbox and catch-me-up digest.
-- Public intake forms (Linear Asks pattern).
-- Importers for Linear, Jira, GitHub Issues, and CSV.
-
-**Collaboration**
-
-- Tiptap and Yjs collaborative issue descriptions.
-- Slack integration: slash commands, emoji triage, thread sync.
-
-**Identity and trust**
-
-- SAML SSO and SCIM 2.0 scaffolding.
-- Trust center with SIEM streaming (Splunk, Datadog, OpenSearch).
-- EU AI Act Article 50 disclosure UI and per-model cards.
-
-**AI and automation**
-
-- Agent-as-assignee with the Linear Agent Protocol.
-- Standup agent and stale-issue janitor (cron-driven AI).
-- Zod validator middleware for typed request handling.
-- Native charts dashboard (Recharts) with AI-generated insights.
-
-See the [CHANGELOG](CHANGELOG.md) for the complete list.
+- **30-language internationalization.** The entire authenticated app is
+  localized via `next-intl` (~3,900 strings across 55 namespaces) with
+  device/browser auto-detection and a native-name language switcher; Arabic
+  and Hebrew render right-to-left.
+- **Jira-parity work graph.** First-class **labels**, project
+  **versions/releases**, **components**, and a **resolution** model (plus
+  `flagged`) landed as one coherent schema wave (migration `0054`).
+- **Refreshed AI model catalog.** Current Anthropic lineup — Claude Opus 4.8
+  (default), Fable 5, Opus 4.7, Sonnet 4.6, Haiku 4.5 — with correct output
+  limits and reasoning-effort options.
+- **Inline type-to-create pickers** for sprints, epics, and sub-issues, more
+  Jira/Plane-parity issue-detail fields, and an admin version-update banner.
+- **Light/dark theming fix.** Modals, the Cmd+K palette, and popovers are now
+  legible in day mode (theme-aware surfaces) with no dark-mode regression.
 
 ---
 
@@ -379,7 +360,7 @@ name. An explicit choice always wins over auto-detection.
 - **Cmd+K omnibar** + facet chips + Ask AI
 - Keyboard shortcuts everywhere
 - Dark mode + mobile responsive
-- **i18n**: TR · DE · ES · EN
+- **i18n**: 30 languages, auto-detected
 - Route-level skeletons and polished loading states
 - SSE-based real-time sync
 - One-command production deploy
@@ -398,6 +379,40 @@ your self-hosted server — you point it at your instance URL and sign in.
 
 > The mobile app will be **free and available to everyone**. Its source code is
 > **not part of this open-source repository** and is not published here.
+
+---
+
+## Roadmap
+
+Per-item detail and status live in
+[`docs/ROADMAP_2026.md`](docs/ROADMAP_2026.md). Near-term focus:
+
+**Q3 2026 — Work-graph foundations**
+
+- Finish the Jira-parity layer UI (labels, components, versions/releases)
+  already shipped at the schema level.
+- Manual issue ranking (drag order) and enforced workflow transitions.
+- First-class **boards** (multiple boards per project, WIP limits, swimlanes)
+  and **JQL v2** saved filters.
+- Notification schemes with watcher / @mention / digest fan-out.
+- Platform hardening: tenant isolation (Postgres RLS, phase 1),
+  **API-key auth + scopes** (also un-breaks the MCP server), and pagination
+  for 10k+ issues.
+
+**Q4 2026 — Developer workflow + AI-native**
+
+- Deep **GitHub / GitLab** integration (branch / PR / commit ↔ issue,
+  auto-transitions on merge).
+- **Jira / Linear importer v2** (comments, attachments, hierarchy, custom
+  fields).
+- AI triage auto-apply + duplicate surfacing; semantic search and Ask-AI
+  last mile.
+- Agent approval queue + AI governance; **MCP server v2** (npm-published,
+  OAuth 2.1).
+- Auth hardening: OAuth DB adapter fix, 2FA / passkeys, session revocation.
+
+**Mobile** — a native iOS/Android client for self-hosted instances (see
+above) is in progress.
 
 ---
 
