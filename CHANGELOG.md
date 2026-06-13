@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-06-13
+
+### Fixed
+
+- **Language selection now actually translates the whole app.** Because TaskNebula uses a custom middleware (not next-intl's `createMiddleware`), next-intl's `requestLocale` was never populated, so `getMessages()` and server `getTranslations()` silently fell back to English — the authenticated app stayed English even with a non-English locale selected and `<html lang>` set correctly. The middleware now forwards the resolved locale as an `x-tasknebula-locale` request header, and `request.ts` resolves the active locale as route segment → header → cookie → default. Switching language (and device auto-detection) now localizes every surface — dashboard, settings, admin, projects, issues — verified across locales.
+
 ## [0.6.1] - 2026-06-13
 
 ### Added
