@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-06-13
+
+### Added
+
+- **Zero-hardcoded-string enforcement.** A `react/jsx-no-literals` ESLint gate now errors on any bare visible string literal in app components/pages (marketing landing, `global-error`, `offline`, and tests are exempt), so CI blocks untranslated text from regressing. `scripts/i18n-check.mjs` enforces key parity across all 30 locale catalogs.
+- **i18n governance for all assistants.** The "every user-facing string goes through next-intl; every key in all 30 catalogs" rule is documented in `CLAUDE.md`, `AGENTS.md`, `.cursor/rules/i18n.mdc`, and `.claude/rules/frontend.md`.
+
+### Fixed
+
+- **Completed localization of the remaining surfaces** — finished every partially-migrated component plus the public AI model-cards page, command palette, doc editor, auth/setup page wrappers, presence, and more. All visible app text now routes through next-intl and is translated into all 30 languages (catalogs at full key parity, 4,586 keys each).
+
 ## [0.6.0] - 2026-06-13
 
 ### Added
