@@ -1,6 +1,7 @@
 'use client';
 
 import { Plus, StickyNote as StickyNoteIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { type ReactElement, useCallback } from 'react';
 
 import { StickyNote } from '@/components/personal/sticky-note';
@@ -12,10 +13,8 @@ export interface StickiesWidgetProps {
   columns?: number;
 }
 
-export function StickiesWidget({
-  className,
-  columns,
-}: StickiesWidgetProps): ReactElement | null {
+export function StickiesWidget({ className, columns }: StickiesWidgetProps): ReactElement | null {
+  const t = useTranslations('personalHelp');
   const { stickies, hydrated, addSticky, updateSticky, removeSticky } = useStickies();
 
   const handleAdd = useCallback(() => {
@@ -27,23 +26,23 @@ export function StickiesWidget({
     return (
       <section
         aria-busy="true"
-        aria-label="Stickies"
+        aria-label={t('stickies')}
         className={cn(
-          'flex flex-col gap-3 rounded-xl border border-border/60 bg-card/40 p-4',
+          'border-border/60 bg-card/40 flex flex-col gap-3 rounded-xl border p-4',
           className
         )}
       >
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <StickyNoteIcon className="h-4 w-4 text-foreground/60" />
-            <h3 className="text-sm font-semibold text-foreground">Stickies</h3>
+            <StickyNoteIcon className="text-foreground/60 h-4 w-4" />
+            <h3 className="text-foreground text-sm font-semibold">{t('stickies')}</h3>
           </div>
-          <span className="h-6 w-6 rounded-md bg-muted/40" aria-hidden="true" />
+          <span className="bg-muted/40 h-6 w-6 rounded-md" aria-hidden="true" />
         </header>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <div className="h-24 animate-pulse rounded-lg bg-muted/30" />
-          <div className="h-24 animate-pulse rounded-lg bg-muted/30" />
-          <div className="h-24 animate-pulse rounded-lg bg-muted/30" />
+          <div className="bg-muted/30 h-24 animate-pulse rounded-lg" />
+          <div className="bg-muted/30 h-24 animate-pulse rounded-lg" />
+          <div className="bg-muted/30 h-24 animate-pulse rounded-lg" />
         </div>
       </section>
     );
@@ -58,18 +57,18 @@ export function StickiesWidget({
 
   return (
     <section
-      aria-label="Stickies"
+      aria-label={t('stickies')}
       className={cn(
-        'flex flex-col gap-3 rounded-xl border border-border/60 bg-card/40 p-4',
+        'border-border/60 bg-card/40 flex flex-col gap-3 rounded-xl border p-4',
         className
       )}
     >
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <StickyNoteIcon className="h-4 w-4 text-foreground/60" />
-          <h3 className="text-sm font-semibold text-foreground">Stickies</h3>
+          <StickyNoteIcon className="text-foreground/60 h-4 w-4" />
+          <h3 className="text-foreground text-sm font-semibold">{t('stickies')}</h3>
           {!isEmpty ? (
-            <span className="rounded-full bg-muted/60 px-1.5 py-0.5 text-[10px] font-medium text-foreground/60">
+            <span className="bg-muted/60 text-foreground/60 rounded-full px-1.5 py-0.5 text-[10px] font-medium">
               {stickies.length}
             </span>
           ) : null}
@@ -77,11 +76,11 @@ export function StickiesWidget({
         <button
           type="button"
           onClick={handleAdd}
-          aria-label="Add sticky"
-          title="Add sticky"
+          aria-label={t('addSticky')}
+          title={t('addSticky')}
           className={cn(
             'inline-flex h-6 w-6 items-center justify-center rounded-md',
-            'text-foreground/60 transition-colors hover:bg-muted hover:text-foreground'
+            'text-foreground/60 hover:bg-muted hover:text-foreground transition-colors'
           )}
         >
           <Plus className="h-4 w-4" />
@@ -89,19 +88,19 @@ export function StickiesWidget({
       </header>
 
       {isEmpty ? (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-8 text-center">
-          <StickyNoteIcon className="h-6 w-6 text-foreground/40" />
-          <p className="text-sm text-foreground/60">No stickies yet</p>
+        <div className="border-border/60 bg-muted/20 flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center">
+          <StickyNoteIcon className="text-foreground/40 h-6 w-6" />
+          <p className="text-foreground/60 text-sm">{t('noStickiesYet')}</p>
           <button
             type="button"
             onClick={handleAdd}
             className={cn(
               'inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium',
-              'text-foreground/80 transition-colors hover:bg-muted hover:text-foreground'
+              'text-foreground/80 hover:bg-muted hover:text-foreground transition-colors'
             )}
           >
             <Plus className="h-3.5 w-3.5" />
-            Add a sticky
+            {t('addASticky')}
           </button>
         </div>
       ) : gridStyle ? (

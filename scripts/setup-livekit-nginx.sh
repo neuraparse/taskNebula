@@ -7,12 +7,12 @@
 # the Next.js bundle picks up the new URL.
 #
 # Usage (run as root on the host that terminates TLS for the main site):
-#   sudo bash scripts/setup-livekit-nginx.sh tasknebula.nowflow.io \
+#   sudo bash scripts/setup-livekit-nginx.sh tasknebula.example.com \
 #     you@example.com
 #
 # Args:
 #   $1  main domain the TaskNebula app is already served from
-#       (e.g. tasknebula.nowflow.io). The LiveKit subdomain is derived
+#       (e.g. tasknebula.example.com). The LiveKit subdomain is derived
 #       as `livekit.<main>` unless $3 is passed.
 #   $2  email certbot registers with.
 #   $3  optional override for the LiveKit subdomain FQDN.

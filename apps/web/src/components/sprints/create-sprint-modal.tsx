@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Loader2, AlertCircle, Calendar } from 'lucide-react';
 import {
   Dialog,
@@ -23,6 +24,7 @@ interface CreateSprintModalProps {
 }
 
 export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprintModalProps) {
+  const t = useTranslations('sprints');
   const [name, setName] = useState('');
   const [goal, setGoal] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -36,7 +38,7 @@ export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprin
   useEffect(() => {
     if (open && existingSprints) {
       const sprintNumber = existingSprints.length + 1;
-      setName(`Sprint ${sprintNumber}`);
+      setName(t('defaultName', { number: sprintNumber }));
 
       // Set default dates (2 weeks from today)
       const today = new Date();
@@ -46,7 +48,7 @@ export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprin
       setStartDate(today.toISOString().split('T')[0] ?? '');
       setEndDate(twoWeeksLater.toISOString().split('T')[0] ?? '');
     }
-  }, [open, existingSprints]);
+  }, [open, existingSprints, t]);
 
   // Calculate sprint duration
   const getDuration = () => {
@@ -64,7 +66,7 @@ export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprin
     setError(null);
 
     if (!name.trim() || !startDate || !endDate) {
-      setError('Please fill in all required fields');
+      setError(t('errors.requiredFields'));
       return;
     }
 
@@ -73,13 +75,13 @@ export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprin
     const end = new Date(endDate);
 
     if (end <= start) {
-      setError('End date must be after start date');
+      setError(t('errors.endAfterStart'));
       return;
     }
 
     const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     if (days < 1 || days > 90) {
-      setError('Sprint duration must be between 1 and 90 days');
+      setError(t('errors.durationRange'));
       return;
     }
 
@@ -101,7 +103,7 @@ export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprin
       onOpenChange(false);
     } catch (err: any) {
       console.error('Error creating sprint:', err);
-      setError(err.message || 'Failed to create sprint');
+      setError(err.message || t('errors.createFailed'));
     }
   };
 
@@ -118,11 +120,11 @@ export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprin
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[480px] max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-[480px]">
         <DialogHeader className="space-y-1">
-          <DialogTitle className="text-base font-semibold">Create Sprint</DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground">
-            Organize work into a time-boxed iteration.
+          <DialogTitle className="text-base font-semibold">{t('createTitle')}</DialogTitle>
+          <DialogDescription className="text-muted-foreground text-sm">
+            {t('createDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -137,11 +139,11 @@ export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprin
           {/* Sprint Name */}
           <div className="space-y-1.5">
             <Label htmlFor="name" className="text-sm">
-              Sprint Name <span className="text-destructive">*</span>
+              {t('nameLabel')} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="name"
-              placeholder="e.g., Sprint 1, Q1 Sprint, Feature Release"
+              placeholder={t('namePlaceholder')}
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -151,12 +153,14 @@ export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprin
           {/* Sprint Goal */}
           <div className="space-y-1.5">
             <Label htmlFor="goal" className="text-sm">
-              Sprint Goal
-              <span className="ml-1.5 text-xs text-muted-foreground font-normal">(optional)</span>
+              {t('goalLabel')}
+              <span className="text-muted-foreground ml-1.5 text-xs font-normal">
+                {t('optional')}
+              </span>
             </Label>
             <Textarea
               id="goal"
-              placeholder="What do you want to achieve in this sprint?"
+              placeholder={t('goalPlaceholder')}
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
               rows={2}
@@ -168,7 +172,7 @@ export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprin
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="startDate" className="text-sm">
-                Start Date <span className="text-destructive">*</span>
+                {t('startDateLabel')} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="startDate"
@@ -180,7 +184,7 @@ export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprin
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="endDate" className="text-sm">
-                End Date <span className="text-destructive">*</span>
+                {t('endDateLabel')} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="endDate"
@@ -195,13 +199,15 @@ export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprin
 
           {/* Duration Info */}
           {duration && duration > 0 && (
-            <div className="surface-inset flex items-center gap-2 text-sm text-muted-foreground rounded-md px-3 py-2">
+            <div className="surface-inset text-muted-foreground flex items-center gap-2 rounded-md px-3 py-2 text-sm">
               <Calendar className="h-3.5 w-3.5 shrink-0" />
               <span>
-                <span className="font-medium text-foreground">{duration} days</span>
-                {duration === 14 && ' — 2 weeks (recommended)'}
-                {duration === 7 && ' — 1 week'}
-                {duration === 21 && ' — 3 weeks'}
+                <span className="text-foreground font-medium">
+                  {t('durationDays', { count: duration })}
+                </span>
+                {duration === 14 && t('durationTwoWeeks')}
+                {duration === 7 && t('durationOneWeek')}
+                {duration === 21 && t('durationThreeWeeks')}
               </span>
             </div>
           )}
@@ -215,11 +221,11 @@ export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprin
               onClick={() => handleClose(false)}
               disabled={createSprint.isPending}
             >
-              Cancel
+              {t('cancel')}
             </Button>
             <Button type="submit" size="sm" disabled={createSprint.isPending}>
               {createSprint.isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-              Create Sprint
+              {t('createButton')}
             </Button>
           </div>
         </form>

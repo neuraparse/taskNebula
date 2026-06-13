@@ -19,6 +19,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 type SinkType = 'webhook' | 'splunk_hec' | 'datadog' | 's3';
 
@@ -57,14 +58,10 @@ const DEFAULT_CONFIG_FOR_TYPE: Record<SinkType, string> = {
   s3: JSON.stringify({ bucket: 'tasknebula-audit', region: 'us-east-1', prefix: 'audit' }, null, 2),
 };
 
-const TYPE_LABEL: Record<SinkType, string> = {
-  webhook: 'Generic webhook (HMAC)',
-  splunk_hec: 'Splunk HEC',
-  datadog: 'Datadog Logs',
-  s3: 'AWS S3 (JSONL)',
-};
+const SINK_TYPES: SinkType[] = ['webhook', 'splunk_hec', 'datadog', 's3'];
 
 export function AuditLogStreamingClient({ organizationId }: { organizationId: string }) {
+  const t = useTranslations('settingsClients');
   const [sinks, setSinks] = useState<Sink[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -100,11 +97,11 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
       const data = (await res.json()) as { sinks: Sink[] };
       setSinks(data.sinks);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load sinks');
+      setError(err instanceof Error ? err.message : t('audit.loadFailed'));
     } finally {
       setLoading(false);
     }
-  }, [organizationId]);
+  }, [organizationId, t]);
 
   useEffect(() => {
     void refresh();
@@ -120,7 +117,7 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
         try {
           parsedConfig = JSON.parse(form.configJson);
         } catch {
-          throw new Error('Config is not valid JSON');
+          throw new Error(t('audit.invalidJson'));
         }
         const res = await fetch('/api/admin/audit-log-sinks', {
           method: 'POST',
@@ -149,12 +146,12 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
         });
         await refresh();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to create sink');
+        setError(err instanceof Error ? err.message : t('audit.createFailed'));
       } finally {
         setCreating(false);
       }
     },
-    [form, organizationId, refresh]
+    [form, organizationId, refresh, t]
   );
 
   const handleToggle = useCallback(
@@ -167,75 +164,80 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
         });
         await refresh();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update sink');
+        setError(err instanceof Error ? err.message : t('audit.toggleFailed'));
       }
     },
-    [refresh]
+    [refresh, t]
   );
 
   const handleDelete = useCallback(
     async (sink: Sink) => {
-      if (!window.confirm(`Delete sink "${sink.name}"?`)) return;
+      if (!window.confirm(t('audit.deleteConfirm', { name: sink.name }))) return;
       try {
         await fetch(`/api/admin/audit-log-sinks/${sink.id}`, {
           method: 'DELETE',
         });
         await refresh();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to delete sink');
+        setError(err instanceof Error ? err.message : t('audit.deleteFailed'));
       }
     },
-    [refresh]
+    [refresh, t]
   );
 
-  const handleTest = useCallback(async (sink: Sink) => {
-    setTestResults((prev) => ({
-      ...prev,
-      [sink.id]: { ok: false, message: 'Testing…' },
-    }));
-    try {
-      const res = await fetch(`/api/admin/audit-log-sinks/${sink.id}/test`, { method: 'POST' });
-      const data = (await res.json()) as {
-        result?: { ok: boolean; statusCode: number | null; error: string | null };
-        error?: string;
-      };
-      if (data.result) {
-        setTestResults((prev) => ({
-          ...prev,
-          [sink.id]: data.result!.ok
-            ? {
-                ok: true,
-                message: `OK (HTTP ${data.result!.statusCode ?? '?'})`,
-              }
-            : {
-                ok: false,
-                message: data.result!.error || `HTTP ${data.result!.statusCode}`,
-              },
-        }));
-      } else {
-        setTestResults((prev) => ({
-          ...prev,
-          [sink.id]: { ok: false, message: data.error || 'Test failed' },
-        }));
-      }
-    } catch (err) {
+  const handleTest = useCallback(
+    async (sink: Sink) => {
       setTestResults((prev) => ({
         ...prev,
-        [sink.id]: {
-          ok: false,
-          message: err instanceof Error ? err.message : 'Test failed',
-        },
+        [sink.id]: { ok: false, message: t('audit.testing') },
       }));
-    }
-  }, []);
+      try {
+        const res = await fetch(`/api/admin/audit-log-sinks/${sink.id}/test`, { method: 'POST' });
+        const data = (await res.json()) as {
+          result?: { ok: boolean; statusCode: number | null; error: string | null };
+          error?: string;
+        };
+        if (data.result) {
+          setTestResults((prev) => ({
+            ...prev,
+            [sink.id]: data.result!.ok
+              ? {
+                  ok: true,
+                  message: t('audit.testOk', { status: data.result!.statusCode ?? '?' }),
+                }
+              : {
+                  ok: false,
+                  message:
+                    data.result!.error ||
+                    t('audit.testHttp', { status: data.result!.statusCode ?? '?' }),
+                },
+          }));
+        } else {
+          setTestResults((prev) => ({
+            ...prev,
+            [sink.id]: { ok: false, message: data.error || t('audit.testFailed') },
+          }));
+        }
+      } catch (err) {
+        setTestResults((prev) => ({
+          ...prev,
+          [sink.id]: {
+            ok: false,
+            message: err instanceof Error ? err.message : t('audit.testFailed'),
+          },
+        }));
+      }
+    },
+    [t]
+  );
 
   const typeOptions = useMemo(
     () =>
-      (Object.keys(TYPE_LABEL) as SinkType[]).map((t) => ({
-        value: t,
-        label: TYPE_LABEL[t],
+      SINK_TYPES.map((type) => ({
+        value: type,
+        label: t(`audit.type.${type}`),
       })),
-    []
+    [t]
   );
 
   return (
@@ -248,7 +250,7 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
 
       {revealedSecret ? (
         <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-4">
-          <p className="text-sm font-medium">Signing secret (shown once — copy it now)</p>
+          <p className="text-sm font-medium">{t('audit.signingSecret')}</p>
           <code className="bg-background mt-2 block break-all rounded px-3 py-2 font-mono text-xs">
             {revealedSecret.signingSecret}
           </code>
@@ -257,23 +259,21 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
             className="text-muted-foreground mt-3 text-xs underline"
             onClick={() => setRevealedSecret(null)}
           >
-            Dismiss
+            {t('audit.dismiss')}
           </button>
         </div>
       ) : null}
 
       <div className="flex items-center justify-between">
         <p className="text-muted-foreground text-sm">
-          {loading
-            ? 'Loading sinks…'
-            : `${sinks.length} sink${sinks.length === 1 ? '' : 's'} configured.`}
+          {loading ? t('audit.loadingSinks') : t('audit.sinkCount', { count: sinks.length })}
         </p>
         <button
           type="button"
           onClick={() => setShowForm((s) => !s)}
           className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center rounded-md px-3 text-sm font-medium"
         >
-          {showForm ? 'Cancel' : 'Add sink'}
+          {showForm ? t('common.cancel') : t('audit.addSink')}
         </button>
       </div>
 
@@ -281,18 +281,18 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
         <form onSubmit={handleCreate} className="bg-card space-y-4 rounded-lg border p-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium">Name</span>
+              <span className="font-medium">{t('audit.name')}</span>
               <input
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                placeholder="e.g. Splunk prod"
+                placeholder={t('audit.namePlaceholder')}
                 required
                 className="bg-background rounded-md border px-3 py-2 text-sm"
               />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium">Type</span>
+              <span className="font-medium">{t('audit.typeLabel')}</span>
               <select
                 value={form.type}
                 onChange={(e) => {
@@ -314,7 +314,7 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
             </label>
           </div>
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium">Config (JSON)</span>
+            <span className="font-medium">{t('audit.configJson')}</span>
             <textarea
               value={form.configJson}
               onChange={(e) => setForm((f) => ({ ...f, configJson: e.target.value }))}
@@ -322,14 +322,10 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
               className="bg-background rounded-md border px-3 py-2 font-mono text-xs"
             />
             <span className="text-muted-foreground text-xs">
-              {form.type === 'webhook'
-                ? 'Set { url }. HMAC signature uses the generated signing secret.'
-                : null}
-              {form.type === 'splunk_hec' ? 'Set { url, token, index? }.' : null}
-              {form.type === 'datadog' ? 'Set { apiKey, site? }.' : null}
-              {form.type === 's3'
-                ? 'Set { bucket, region, prefix? }. AWS_ACCESS_KEY_ID/SECRET must be set in env.'
-                : null}
+              {form.type === 'webhook' ? t('audit.hint.webhook') : null}
+              {form.type === 'splunk_hec' ? t('audit.hint.splunk_hec') : null}
+              {form.type === 'datadog' ? t('audit.hint.datadog') : null}
+              {form.type === 's3' ? t('audit.hint.s3') : null}
             </span>
           </label>
           <div className="flex justify-end gap-2">
@@ -338,14 +334,14 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
               onClick={() => setShowForm(false)}
               className="hover:bg-muted/40 inline-flex h-9 items-center rounded-md border px-3 text-sm"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={creating || !form.name.trim()}
               className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center rounded-md px-3 text-sm font-medium disabled:opacity-60"
             >
-              {creating ? 'Creating…' : 'Create sink'}
+              {creating ? t('audit.creating') : t('audit.createSink')}
             </button>
           </div>
         </form>
@@ -359,7 +355,7 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
                 <div className="flex items-center gap-3">
                   <p className="text-sm font-semibold">{sink.name}</p>
                   <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
-                    {TYPE_LABEL[sink.type]}
+                    {t(`audit.type.${sink.type}`)}
                   </span>
                   <span
                     className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
@@ -368,18 +364,22 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
                         : 'bg-muted text-muted-foreground'
                     }`}
                   >
-                    {sink.enabled ? 'Enabled' : 'Disabled'}
+                    {sink.enabled ? t('audit.enabled') : t('audit.disabled')}
                   </span>
                 </div>
                 <p className="text-muted-foreground mt-1 text-xs">
-                  Created {new Date(sink.createdAt).toLocaleDateString()} · ✓ {sink.successCount} ·
-                  ✗ {sink.failureCount}
+                  {t('audit.created', { date: new Date(sink.createdAt).toLocaleDateString() })} · ✓{' '}
+                  {sink.successCount} · ✗ {sink.failureCount}
                   {sink.lastDeliveryAt
-                    ? ` · last ${new Date(sink.lastDeliveryAt).toLocaleString()}`
+                    ? ` · ${t('audit.lastDelivery', {
+                        date: new Date(sink.lastDeliveryAt).toLocaleString(),
+                      })}`
                     : ''}
                 </p>
                 {sink.lastError ? (
-                  <p className="text-destructive mt-1 text-xs">Last error: {sink.lastError}</p>
+                  <p className="text-destructive mt-1 text-xs">
+                    {t('audit.lastError', { error: sink.lastError })}
+                  </p>
                 ) : null}
               </div>
               <div className="flex items-center gap-2">
@@ -388,21 +388,21 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
                   onClick={() => handleTest(sink)}
                   className="hover:bg-muted/40 inline-flex h-8 items-center rounded-md border px-3 text-xs"
                 >
-                  Test
+                  {t('audit.test')}
                 </button>
                 <button
                   type="button"
                   onClick={() => handleToggle(sink)}
                   className="hover:bg-muted/40 inline-flex h-8 items-center rounded-md border px-3 text-xs"
                 >
-                  {sink.enabled ? 'Disable' : 'Enable'}
+                  {sink.enabled ? t('audit.disable') : t('audit.enable')}
                 </button>
                 <button
                   type="button"
                   onClick={() => handleDelete(sink)}
                   className="border-destructive/30 text-destructive hover:bg-destructive/5 inline-flex h-8 items-center rounded-md border px-3 text-xs"
                 >
-                  Delete
+                  {t('common.delete')}
                 </button>
               </div>
             </div>
@@ -415,12 +415,12 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
                     tr.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'
                   }`}
                 >
-                  Test: {tr.message}
+                  {t('audit.testResult', { message: tr.message })}
                 </p>
               );
             })()}
             <details className="text-muted-foreground mt-3 text-xs">
-              <summary className="cursor-pointer select-none">Config</summary>
+              <summary className="cursor-pointer select-none">{t('audit.config')}</summary>
               <pre className="bg-background mt-2 overflow-x-auto rounded p-3 text-[11px]">
                 {JSON.stringify(sink.config, null, 2)}
               </pre>
@@ -429,7 +429,9 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
         ))}
         {!loading && sinks.length === 0 ? (
           <div className="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm">
-            No sinks yet. Click <strong>Add sink</strong> to forward audit events to a SIEM.
+            {t.rich('audit.emptyState', {
+              strong: (chunks) => <strong>{chunks}</strong>,
+            })}
           </div>
         ) : null}
       </div>

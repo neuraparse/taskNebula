@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { auth } from '@/auth';
 import { VerifyRequestResendButton } from '@/components/auth/verify-request-resend-button';
 
@@ -22,9 +23,7 @@ interface VerifyRequestPageProps {
  *     by email — used immediately after signup before session cookie
  *     is established).
  */
-export default async function VerifyRequestPage({
-  searchParams,
-}: VerifyRequestPageProps) {
+export default async function VerifyRequestPage({ searchParams }: VerifyRequestPageProps) {
   const session = await auth();
   const isAuthenticated = !!session?.user?.id;
 
@@ -35,62 +34,61 @@ export default async function VerifyRequestPage({
 
   const canResend = isAuthenticated || !!email;
 
+  const t = await getTranslations('authPages');
+
   return (
-    <div className="relative min-h-dvh grid place-items-center bg-background overflow-hidden px-4">
+    <div className="bg-background relative grid min-h-dvh place-items-center overflow-hidden px-4">
       <div
         aria-hidden="true"
-        className="bg-aurora absolute inset-0 pointer-events-none blur-3xl opacity-60 -z-10"
+        className="bg-aurora pointer-events-none absolute inset-0 -z-10 opacity-60 blur-3xl"
       />
 
-      <div className="relative w-full max-w-sm animate-blur-in">
+      <div className="animate-blur-in relative w-full max-w-sm">
         <div className="mb-5 flex justify-center">
           <Link
             href="/"
-            className="flex items-center gap-2 rounded-md transition-all duration-150 ease-snap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="ease-snap focus-visible:ring-ring flex items-center gap-2 rounded-md transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
           >
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-foreground">
-              <span className="text-[11px] font-semibold tracking-tight text-background">TN</span>
+            <div className="bg-foreground flex h-7 w-7 items-center justify-center rounded-md">
+              <span className="text-background text-[11px] font-semibold tracking-tight">TN</span>
             </div>
-            <span className="text-sm font-semibold tracking-tight text-foreground">TaskNebula</span>
+            <span className="text-foreground text-sm font-semibold tracking-tight">TaskNebula</span>
           </Link>
         </div>
 
-        <div className="surface-card rounded-lg p-6 sm:p-8 text-center">
-          <h1 className="text-lg font-semibold text-foreground">Check your email</h1>
+        <div className="surface-card rounded-lg p-6 text-center sm:p-8">
+          <h1 className="text-foreground text-lg font-semibold">{t('verifyRequest.title')}</h1>
           {email ? (
-            <p className="mt-2 text-sm text-muted-foreground">
-              We sent a verification email to{' '}
-              <span className="font-medium text-foreground break-all">{email}</span>.
-              Click the link to confirm your email address and continue. The link
-              expires in 24 hours.
+            <p className="text-muted-foreground mt-2 text-sm">
+              {t.rich('verifyRequest.bodyWithEmail', {
+                email,
+                strong: (chunks) => (
+                  <span className="text-foreground break-all font-medium">{chunks}</span>
+                ),
+              })}
             </p>
           ) : (
-            <p className="mt-2 text-sm text-muted-foreground">
-              We sent you a verification link. Click it to confirm your email
-              address and continue. The link expires in 24 hours.
-            </p>
+            <p className="text-muted-foreground mt-2 text-sm">{t('verifyRequest.body')}</p>
           )}
 
           {canResend ? (
             <div className="mt-6 space-y-3">
               <VerifyRequestResendButton email={email ?? undefined} />
-              <p className="text-xs text-muted-foreground">
-                Didn&apos;t get the email? Check your spam folder or resend.
-              </p>
+              <p className="text-muted-foreground text-xs">{t('verifyRequest.didntGet')}</p>
               <Link
                 href="/auth/signin"
-                className="inline-block text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground inline-block text-xs font-medium transition-colors"
               >
-                Back to sign in
+                {t('verifyRequest.backToSignIn')}
               </Link>
             </div>
           ) : (
             <div className="mt-6 space-y-3">
               <Link
                 href="/auth/signin"
-                className="inline-block text-sm font-medium text-primary hover:underline"
+                className="text-primary inline-block text-sm font-medium hover:underline"
               >
-                Back to sign in
+                {t('verifyRequest.backToSignIn')}
               </Link>
             </div>
           )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,14 +62,14 @@ type ProjectRole =
   | 'designer'
   | 'viewer';
 
-const PROJECT_ROLE_OPTIONS: Array<{ value: ProjectRole; label: string }> = [
-  { value: 'developer', label: 'Developer' },
-  { value: 'tech_lead', label: 'Tech Lead' },
-  { value: 'scrum_master', label: 'Scrum Master' },
-  { value: 'product_owner', label: 'Product Owner' },
-  { value: 'qa_engineer', label: 'QA Engineer' },
-  { value: 'designer', label: 'Designer' },
-  { value: 'viewer', label: 'Viewer' },
+const PROJECT_ROLE_VALUES: ProjectRole[] = [
+  'developer',
+  'tech_lead',
+  'scrum_master',
+  'product_owner',
+  'qa_engineer',
+  'designer',
+  'viewer',
 ];
 
 type Member = {
@@ -92,6 +93,7 @@ const roleChipClass: Record<Member['role'], string> = {
 };
 
 export function MembersPageClient() {
+  const t = useTranslations('settingsClients');
   const { currentOrganizationId } = useOrganization();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -134,7 +136,7 @@ export function MembersPageClient() {
     queryKey: ['organization-members', currentOrganizationId],
     queryFn: async () => {
       const response = await fetch(`/api/organizations/${currentOrganizationId}/members`);
-      if (!response.ok) throw new Error('Failed to fetch members');
+      if (!response.ok) throw new Error(t('members.fetchFailed'));
       return response.json() as Promise<{
         members: Member[];
         userRole: 'owner' | 'admin' | 'member' | 'viewer' | 'guest' | null;
@@ -166,7 +168,7 @@ export function MembersPageClient() {
       });
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to invite member');
+        throw new Error(error.error || t('members.inviteFailed'));
       }
       return response.json() as Promise<{
         addedToProjects?: string[];
@@ -181,19 +183,22 @@ export function MembersPageClient() {
         (result?.addedToProjects !== undefined || result?.skippedProjects !== undefined) &&
         (variables.projectIds?.length ?? 0) > 0;
       if (hasProjectSummary) {
-        const parts = [`Invited ${variables.email}.`];
-        if (added > 0) parts.push(`Added to ${added} project${added === 1 ? '' : 's'}.`);
-        if (skipped > 0) parts.push(`Skipped ${skipped}.`);
-        toast({ title: 'Invitation sent', description: parts.join(' ') });
+        const parts = [t('members.invitedEmail', { email: variables.email })];
+        if (added > 0) parts.push(t('members.addedToProjects', { count: added }));
+        if (skipped > 0) parts.push(t('members.skippedProjects', { count: skipped }));
+        toast({ title: t('members.invitationSent'), description: parts.join(' ') });
       } else {
-        toast({ title: 'Invitation sent', description: 'Member invited successfully.' });
+        toast({
+          title: t('members.invitationSent'),
+          description: t('members.memberInvited'),
+        });
       }
       setInviteOpen(false);
       resetInviteForm();
     },
     onError: (error: Error) => {
       toast({
-        title: 'Failed to invite member',
+        title: t('members.inviteFailed'),
         description: error.message,
         variant: 'destructive',
       });
@@ -226,16 +231,20 @@ export function MembersPageClient() {
       );
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to update role');
+        throw new Error(error.error || t('members.updateRoleFailed'));
       }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organization-members', currentOrganizationId] });
-      toast({ title: 'Role updated', description: 'Member role updated successfully.' });
+      toast({ title: t('members.roleUpdated'), description: t('members.roleUpdatedDesc') });
     },
     onError: (error: Error) => {
-      toast({ title: 'Failed to update role', description: error.message, variant: 'destructive' });
+      toast({
+        title: t('members.updateRoleFailed'),
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 
@@ -247,17 +256,17 @@ export function MembersPageClient() {
       );
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to remove member');
+        throw new Error(error.error || t('members.removeFailed'));
       }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organization-members', currentOrganizationId] });
-      toast({ title: 'Member removed', description: 'Member removed successfully.' });
+      toast({ title: t('members.memberRemoved'), description: t('members.memberRemovedDesc') });
     },
     onError: (error: Error) => {
       toast({
-        title: 'Failed to remove member',
+        title: t('members.removeFailed'),
         description: error.message,
         variant: 'destructive',
       });
@@ -267,7 +276,7 @@ export function MembersPageClient() {
   if (!currentOrganizationId) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <p className="text-muted-foreground text-sm">Please select an organization.</p>
+        <p className="text-muted-foreground text-sm">{t('members.selectOrg')}</p>
       </div>
     );
   }
@@ -277,30 +286,28 @@ export function MembersPageClient() {
       <section className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
-            <span className="kicker">Access</span>
+            <span className="kicker">{t('members.kicker')}</span>
             <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-              Members
+              {t('members.heading')}
               <span className="text-muted-foreground text-sm font-normal">({members.length})</span>
             </h2>
-            <p className="text-muted-foreground max-w-prose text-sm">
-              Manage organization members and their roles.
-            </p>
+            <p className="text-muted-foreground max-w-prose text-sm">{t('members.subtitle')}</p>
           </div>
 
           <div className="flex items-center gap-2">
             {userRole && (
               <span
                 className={cn(
-                  'rounded-full px-2.5 py-0.5 text-[11px] font-medium capitalize',
+                  'rounded-full px-2.5 py-0.5 text-[11px] font-medium',
                   roleChipClass[userRole] ?? roleChipClass.member
                 )}
               >
-                {userRole}
+                {t(`members.role.${userRole}`)}
               </span>
             )}
             {isSuperAdmin && (
               <span className="border-accent-violet/20 bg-accent-violet/10 text-accent-violet rounded-full border px-2.5 py-0.5 text-[11px] font-medium">
-                Super admin
+                {t('members.superAdmin')}
               </span>
             )}
 
@@ -314,22 +321,20 @@ export function MembersPageClient() {
               <DialogTrigger asChild>
                 <Button size="sm" disabled={!canInvite}>
                   <UserPlus className="mr-1.5 h-4 w-4" />
-                  Invite
+                  {t('members.invite')}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
                     <UserPlus className="text-muted-foreground h-4 w-4" />
-                    Invite member
+                    {t('members.inviteMember')}
                   </DialogTitle>
-                  <DialogDescription>
-                    Send an invitation to join this organization.
-                  </DialogDescription>
+                  <DialogDescription>{t('members.inviteDescription')}</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t('members.email')}</Label>
                     <Input
                       id="email"
                       type="email"
@@ -339,7 +344,7 @@ export function MembersPageClient() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="role">Role</Label>
+                    <Label htmlFor="role">{t('members.roleLabel')}</Label>
                     <Select
                       value={inviteRole}
                       onValueChange={(value) => setInviteRole(value as Member['role'])}
@@ -348,10 +353,10 @@ export function MembersPageClient() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="member">Member</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="viewer">Viewer</SelectItem>
-                        <SelectItem value="guest">Guest</SelectItem>
+                        <SelectItem value="member">{t('members.role.member')}</SelectItem>
+                        <SelectItem value="admin">{t('members.role.admin')}</SelectItem>
+                        <SelectItem value="viewer">{t('members.role.viewer')}</SelectItem>
+                        <SelectItem value="guest">{t('members.role.guest')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -364,7 +369,7 @@ export function MembersPageClient() {
                     >
                       <span className="flex items-center gap-2 text-sm font-medium">
                         <FolderKanban className="text-muted-foreground h-4 w-4" />
-                        Add to projects (optional)
+                        {t('members.addToProjects')}
                         {selectedProjectIds.length > 0 && (
                           <span className="chip text-[11px]">{selectedProjectIds.length}</span>
                         )}
@@ -385,7 +390,7 @@ export function MembersPageClient() {
                           </div>
                         ) : orgProjects.length === 0 ? (
                           <p className="text-muted-foreground text-xs">
-                            No projects yet — invite this person and add them to a project later.
+                            {t('members.noProjectsYet')}
                           </p>
                         ) : (
                           <>
@@ -395,14 +400,16 @@ export function MembersPageClient() {
                                   type="button"
                                   variant="outline"
                                   role="combobox"
-                                  aria-label="Select projects"
+                                  aria-label={t('members.selectProjects')}
                                   aria-expanded={projectPickerOpen}
                                   className="w-full justify-between font-normal"
                                 >
                                   <span className="truncate text-sm">
                                     {selectedProjectIds.length === 0
-                                      ? 'Select projects...'
-                                      : `${selectedProjectIds.length} selected`}
+                                      ? t('members.selectProjectsPlaceholder')
+                                      : t('members.selectedCount', {
+                                          count: selectedProjectIds.length,
+                                        })}
                                   </span>
                                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
@@ -412,9 +419,9 @@ export function MembersPageClient() {
                                 align="start"
                               >
                                 <Command>
-                                  <CommandInput placeholder="Search projects..." />
+                                  <CommandInput placeholder={t('members.searchProjects')} />
                                   <CommandList>
-                                    <CommandEmpty>No projects found.</CommandEmpty>
+                                    <CommandEmpty>{t('members.noProjectsFound')}</CommandEmpty>
                                     <CommandGroup>
                                       {orgProjects.map((project) => {
                                         const selected = selectedProjectIds.includes(project.id);
@@ -454,7 +461,9 @@ export function MembersPageClient() {
                                         type="button"
                                         onClick={() => removeProject(id)}
                                         className="rounded p-0.5 opacity-60 hover:opacity-100"
-                                        aria-label={`Remove ${project?.name ?? id}`}
+                                        aria-label={t('members.removeProject', {
+                                          name: project?.name ?? id,
+                                        })}
                                       >
                                         <X className="h-3 w-3" />
                                       </button>
@@ -466,7 +475,7 @@ export function MembersPageClient() {
 
                             {selectedProjectIds.length > 0 && (
                               <div className="space-y-2">
-                                <Label htmlFor="project-role">Project role</Label>
+                                <Label htmlFor="project-role">{t('members.projectRole')}</Label>
                                 <Select
                                   value={projectRole}
                                   onValueChange={(value) => setProjectRole(value as ProjectRole)}
@@ -475,9 +484,9 @@ export function MembersPageClient() {
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {PROJECT_ROLE_OPTIONS.map((opt) => (
-                                      <SelectItem key={opt.value} value={opt.value}>
-                                        {opt.label}
+                                    {PROJECT_ROLE_VALUES.map((value) => (
+                                      <SelectItem key={value} value={value}>
+                                        {t(`members.projectRoleOption.${value}`)}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
@@ -492,14 +501,14 @@ export function MembersPageClient() {
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setInviteOpen(false)}>
-                    Cancel
+                    {t('common.cancel')}
                   </Button>
                   <Button
                     onClick={handleSubmitInvite}
                     disabled={inviteMutation.isPending || !inviteEmail}
                   >
                     {inviteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Send invitation
+                    {t('members.sendInvitation')}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -507,11 +516,7 @@ export function MembersPageClient() {
           </div>
         </div>
 
-        {!canManage && (
-          <div className="panel-warn text-sm">
-            View-only access. Only owners and admins can manage members.
-          </div>
-        )}
+        {!canManage && <div className="panel-warn text-sm">{t('members.viewOnly')}</div>}
 
         {isLoading ? (
           <div className="flex items-center justify-center py-10">
@@ -520,10 +525,10 @@ export function MembersPageClient() {
         ) : members.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-12 text-center">
             <Users className="text-muted-foreground/50 h-8 w-8" />
-            <p className="text-muted-foreground text-sm">No members yet.</p>
+            <p className="text-muted-foreground text-sm">{t('members.noMembers')}</p>
             {canInvite && (
               <Button size="sm" onClick={() => setInviteOpen(true)}>
-                Invite your first member
+                {t('members.inviteFirst')}
               </Button>
             )}
           </div>
@@ -547,7 +552,7 @@ export function MembersPageClient() {
                       <div className="flex items-center gap-2">
                         <p className="truncate text-sm font-medium">{member.name}</p>
                         {member.status === 'invited' && (
-                          <span className="chip text-[11px]">Invited</span>
+                          <span className="chip text-[11px]">{t('members.invited')}</span>
                         )}
                       </div>
                       <p className="text-muted-foreground truncate text-xs">{member.email}</p>
@@ -558,11 +563,11 @@ export function MembersPageClient() {
                     {disableRoleChange ? (
                       <span
                         className={cn(
-                          'rounded-full px-2.5 py-0.5 text-[11px] font-medium capitalize',
+                          'rounded-full px-2.5 py-0.5 text-[11px] font-medium',
                           roleChipClass[member.role]
                         )}
                       >
-                        {member.role}
+                        {t(`members.role.${member.role}`)}
                       </span>
                     ) : (
                       <Select
@@ -578,10 +583,10 @@ export function MembersPageClient() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="member">Member</SelectItem>
-                          <SelectItem value="viewer">Viewer</SelectItem>
-                          <SelectItem value="guest">Guest</SelectItem>
+                          <SelectItem value="admin">{t('members.role.admin')}</SelectItem>
+                          <SelectItem value="member">{t('members.role.member')}</SelectItem>
+                          <SelectItem value="viewer">{t('members.role.viewer')}</SelectItem>
+                          <SelectItem value="guest">{t('members.role.guest')}</SelectItem>
                         </SelectContent>
                       </Select>
                     )}
@@ -598,7 +603,7 @@ export function MembersPageClient() {
                             onClick={() => removeMutation.mutate(member.id)}
                             className="text-destructive focus:text-destructive"
                           >
-                            Remove member
+                            {t('members.removeMember')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

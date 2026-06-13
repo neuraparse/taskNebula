@@ -6,6 +6,7 @@
  */
 
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { Compass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,27 +18,25 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-export default function NotFound() {
+export default async function NotFound() {
+  const t = await getTranslations('errorPages');
+
   return (
     <div className="flex min-h-[60vh] w-full items-center justify-center p-6">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <div className="mb-2 flex items-center gap-2 text-muted-foreground">
+          <div className="text-muted-foreground mb-2 flex items-center gap-2">
             <Compass className="h-5 w-5" aria-hidden />
-            <CardTitle>Page not found</CardTitle>
+            <CardTitle>{t('notFound.title')}</CardTitle>
           </div>
-          <CardDescription>
-            The page you&apos;re looking for doesn&apos;t exist or has moved.
-          </CardDescription>
+          <CardDescription>{t('notFound.description')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Double-check the URL, or head back to your workspace.
-          </p>
+          <p className="text-muted-foreground text-sm">{t('notFound.hint')}</p>
         </CardContent>
         <CardFooter>
           <Button asChild variant="default">
-            <Link href="/">Back to home</Link>
+            <Link href="/">{t('notFound.backToHome')}</Link>
           </Button>
         </CardFooter>
       </Card>

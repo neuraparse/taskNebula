@@ -16,6 +16,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -53,7 +54,18 @@ interface Props {
   onDone: () => void;
 }
 
+const ROLE_KEYS: Record<(typeof ROLES)[number], string> = {
+  engineering: 'roleEngineering',
+  product: 'roleProduct',
+  design: 'roleDesign',
+  marketing: 'roleMarketing',
+  operations: 'roleOperations',
+  founder: 'roleFounder',
+  other: 'roleOther',
+};
+
 export function WorkspaceBootstrapStep({ onSkip, onDone }: Props) {
+  const t = useTranslations('publicPages');
   const [description, setDescription] = useState('');
   const [teamSize, setTeamSize] = useState<(typeof TEAM_SIZES)[number]>('2-5');
   const [role, setRole] = useState<(typeof ROLES)[number]>('engineering');
@@ -65,7 +77,7 @@ export function WorkspaceBootstrapStep({ onSkip, onDone }: Props) {
   const handlePreview = async () => {
     setError('');
     if (!description.trim()) {
-      setError('Please describe your project.');
+      setError(t('workspaceDescribeRequired'));
       return;
     }
     setLoading(true);
@@ -81,12 +93,12 @@ export function WorkspaceBootstrapStep({ onSkip, onDone }: Props) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data?.error || 'Failed to generate workspace preview.');
+        setError(data?.error || t('workspacePreviewFailed'));
         return;
       }
       setSeed(data.seed);
     } catch {
-      setError('Network error while contacting the bootstrapper.');
+      setError(t('workspacePreviewNetworkError'));
     } finally {
       setLoading(false);
     }
@@ -110,12 +122,12 @@ export function WorkspaceBootstrapStep({ onSkip, onDone }: Props) {
           onDone();
           return;
         }
-        setError(data?.error || 'Failed to apply workspace seed.');
+        setError(data?.error || t('workspaceApplyFailed'));
         return;
       }
       onDone();
     } catch {
-      setError('Network error while applying the workspace seed.');
+      setError(t('workspaceApplyNetworkError'));
     } finally {
       setApplying(false);
     }
@@ -123,53 +135,53 @@ export function WorkspaceBootstrapStep({ onSkip, onDone }: Props) {
 
   if (!seed) {
     return (
-      <div className="mx-auto max-w-2xl surface-card rounded-lg p-6 sm:p-8 animate-fade-up space-y-4">
+      <div className="surface-card animate-fade-up mx-auto max-w-2xl space-y-4 rounded-lg p-6 sm:p-8">
         {error && (
-          <p className="text-sm text-destructive" role="alert">
+          <p className="text-destructive text-sm" role="alert">
             {error}
           </p>
         )}
 
         <div className="space-y-1.5">
-          <Label htmlFor="description">Tell us about your project</Label>
+          <Label htmlFor="description">{t('workspaceTellUsTitle')}</Label>
           <textarea
             id="description"
             rows={5}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            placeholder="e.g. We are building a mobile app for tracking running routes with friends. We need to ship a private beta in 6 weeks."
+            className="border-input bg-background focus:ring-ring w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2"
+            placeholder={t('workspaceDescriptionPlaceholder')}
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="teamSize">Team size</Label>
+            <Label htmlFor="teamSize">{t('workspaceTeamSize')}</Label>
             <select
               id="teamSize"
               value={teamSize}
               onChange={(e) => setTeamSize(e.target.value as typeof teamSize)}
-              className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+              className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
             >
               {TEAM_SIZES.map((s) => (
                 <option key={s} value={s}>
-                  {s}
+                  {s === 'solo' ? t('teamSizeSolo') : s}
                 </option>
               ))}
             </select>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="role">Your primary role</Label>
+            <Label htmlFor="role">{t('workspacePrimaryRole')}</Label>
             <select
               id="role"
               value={role}
               onChange={(e) => setRole(e.target.value as typeof role)}
-              className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+              className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
             >
               {ROLES.map((r) => (
                 <option key={r} value={r}>
-                  {r}
+                  {t(ROLE_KEYS[r])}
                 </option>
               ))}
             </select>
@@ -177,11 +189,16 @@ export function WorkspaceBootstrapStep({ onSkip, onDone }: Props) {
         </div>
 
         <div className="flex flex-wrap gap-2 pt-2">
-          <Button onClick={handlePreview} disabled={loading} size="lg" className="flex-1 sm:flex-none">
-            {loading ? 'Generating…' : 'Preview workspace'}
+          <Button
+            onClick={handlePreview}
+            disabled={loading}
+            size="lg"
+            className="flex-1 sm:flex-none"
+          >
+            {loading ? t('workspaceGenerating') : t('workspacePreview')}
           </Button>
           <Button onClick={onSkip} variant="ghost" size="lg">
-            Skip / start blank
+            {t('workspaceSkip')}
           </Button>
         </div>
       </div>
@@ -190,23 +207,21 @@ export function WorkspaceBootstrapStep({ onSkip, onDone }: Props) {
 
   // ---------- Preview / edit step ----------
   return (
-    <div className="mx-auto max-w-3xl surface-card rounded-lg p-6 sm:p-8 animate-fade-up space-y-6">
+    <div className="surface-card animate-fade-up mx-auto max-w-3xl space-y-6 rounded-lg p-6 sm:p-8">
       {error && (
-        <p className="text-sm text-destructive" role="alert">
+        <p className="text-destructive text-sm" role="alert">
           {error}
         </p>
       )}
 
       <header className="space-y-1">
-        <h2 className="text-lg font-semibold text-foreground">Review your workspace</h2>
-        <p className="text-sm text-muted-foreground">
-          We will create the items below. Edit anything before applying.
-        </p>
+        <h2 className="text-foreground text-lg font-semibold">{t('workspaceReviewTitle')}</h2>
+        <p className="text-muted-foreground text-sm">{t('workspaceReviewSubtitle')}</p>
       </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor="projectName">Project name</Label>
+          <Label htmlFor="projectName">{t('workspaceProjectName')}</Label>
           <Input
             id="projectName"
             value={seed.projectName}
@@ -214,7 +229,7 @@ export function WorkspaceBootstrapStep({ onSkip, onDone }: Props) {
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="projectKey">Project key</Label>
+          <Label htmlFor="projectKey">{t('workspaceProjectKey')}</Label>
           <Input
             id="projectKey"
             value={seed.projectKey}
@@ -226,24 +241,28 @@ export function WorkspaceBootstrapStep({ onSkip, onDone }: Props) {
       </div>
 
       <section className="space-y-2">
-        <h3 className="text-sm font-medium text-foreground">Teams ({seed.teams.length})</h3>
-        <ul className="text-sm text-muted-foreground list-disc pl-5">
-          {seed.teams.map((t, idx) => (
+        <h3 className="text-foreground text-sm font-medium">
+          {t('workspaceTeamsCount', { count: seed.teams.length })}
+        </h3>
+        <ul className="text-muted-foreground list-disc pl-5 text-sm">
+          {seed.teams.map((team, idx) => (
             <li key={idx}>
-              <span className="text-foreground">{t.name}</span>{' '}
-              <span className="text-xs">/ {t.slug}</span>
+              <span className="text-foreground">{team.name}</span>{' '}
+              <span className="text-xs">/ {team.slug}</span>
             </li>
           ))}
         </ul>
       </section>
 
       <section className="space-y-2">
-        <h3 className="text-sm font-medium text-foreground">Labels ({seed.labels.length})</h3>
+        <h3 className="text-foreground text-sm font-medium">
+          {t('workspaceLabelsCount', { count: seed.labels.length })}
+        </h3>
         <div className="flex flex-wrap gap-1.5">
           {seed.labels.map((l, idx) => (
             <span
               key={idx}
-              className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-0.5 text-xs"
+              className="border-border inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs"
             >
               <span
                 aria-hidden="true"
@@ -257,8 +276,10 @@ export function WorkspaceBootstrapStep({ onSkip, onDone }: Props) {
       </section>
 
       <section className="space-y-2">
-        <h3 className="text-sm font-medium text-foreground">Cycles ({seed.cycles.length})</h3>
-        <ul className="text-sm text-muted-foreground list-disc pl-5">
+        <h3 className="text-foreground text-sm font-medium">
+          {t('workspaceCyclesCount', { count: seed.cycles.length })}
+        </h3>
+        <ul className="text-muted-foreground list-disc pl-5 text-sm">
           {seed.cycles.map((c, idx) => (
             <li key={idx}>
               <span className="text-foreground">{c.name}</span> — {c.startDate} → {c.endDate}
@@ -268,21 +289,21 @@ export function WorkspaceBootstrapStep({ onSkip, onDone }: Props) {
       </section>
 
       <section className="space-y-2">
-        <h3 className="text-sm font-medium text-foreground">
-          Starter issues ({seed.issues.length})
+        <h3 className="text-foreground text-sm font-medium">
+          {t('workspaceStarterIssuesCount', { count: seed.issues.length })}
         </h3>
-        <div className="overflow-hidden rounded-md border border-border">
+        <div className="border-border overflow-hidden rounded-md border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/40 text-xs text-muted-foreground">
+            <thead className="bg-muted/40 text-muted-foreground text-xs">
               <tr>
-                <th className="px-3 py-2 text-left">Title</th>
-                <th className="px-3 py-2 text-left">Priority</th>
-                <th className="px-3 py-2 text-left">Hours</th>
+                <th className="px-3 py-2 text-left">{t('workspaceColTitle')}</th>
+                <th className="px-3 py-2 text-left">{t('workspaceColPriority')}</th>
+                <th className="px-3 py-2 text-left">{t('workspaceColHours')}</th>
               </tr>
             </thead>
             <tbody>
               {seed.issues.map((issue, idx) => (
-                <tr key={idx} className="border-t border-border">
+                <tr key={idx} className="border-border border-t">
                   <td className="px-3 py-2">
                     <input
                       type="text"
@@ -295,10 +316,10 @@ export function WorkspaceBootstrapStep({ onSkip, onDone }: Props) {
                       className="w-full bg-transparent focus:outline-none"
                     />
                   </td>
-                  <td className="px-3 py-2 text-xs uppercase tracking-wide text-muted-foreground">
+                  <td className="text-muted-foreground px-3 py-2 text-xs uppercase tracking-wide">
                     {issue.priority}
                   </td>
-                  <td className="px-3 py-2 text-xs text-muted-foreground">
+                  <td className="text-muted-foreground px-3 py-2 text-xs">
                     {issue.estimateHours ?? '—'}
                   </td>
                 </tr>
@@ -310,13 +331,13 @@ export function WorkspaceBootstrapStep({ onSkip, onDone }: Props) {
 
       <div className="flex flex-wrap gap-2">
         <Button onClick={handleApply} disabled={applying} size="lg" className="flex-1 sm:flex-none">
-          {applying ? 'Creating workspace…' : 'Create workspace'}
+          {applying ? t('workspaceCreating') : t('workspaceCreate')}
         </Button>
         <Button onClick={() => setSeed(null)} variant="outline" size="lg">
-          Back
+          {t('workspaceBack')}
         </Button>
         <Button onClick={onSkip} variant="ghost" size="lg">
-          Skip / start blank
+          {t('workspaceSkip')}
         </Button>
       </div>
     </div>

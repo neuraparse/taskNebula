@@ -13,11 +13,7 @@ import {
 } from '@tasknebula/db';
 import { auth } from '@/auth';
 import { aiDisabledResponse, isAiFeatureEnabled } from '@/lib/ai/feature-gate';
-import {
-  AiDraftError,
-  draftIssue,
-  type DraftProvider,
-} from '@/lib/ai/draft-issue';
+import { AiDraftError, draftIssue, type DraftProvider } from '@/lib/ai/draft-issue';
 import { BudgetExhaustedError } from '@/lib/ai/budget';
 import { getSystemAgentControlSettingsFromDb } from '@/lib/agents/system';
 import { resolveProviderApiKeyFromSettings } from '@/lib/agents/credentials';
@@ -126,10 +122,7 @@ export async function POST(request: NextRequest) {
     body = bodySchema.parse(raw);
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: err.errors },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid input', details: err.errors }, { status: 400 });
     }
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
@@ -139,8 +132,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Project not found or access denied' }, { status: 404 });
   }
 
-  // The URL segment can be either the project id or its key (e.g. "N" for
-  // Nowflow). Resolve both so we never reject a legitimate Backlog-page click.
+  // The URL segment can be either the project id or its key (e.g. "WEB" for
+  // a Website project). Resolve both so we never reject a legitimate Backlog-page click.
   const project = await resolveProjectByIdOrKey(body.projectId);
   if (!project) {
     return NextResponse.json(
@@ -187,10 +180,7 @@ export async function POST(request: NextRequest) {
     if (labelSet.size >= 60) break;
   }
 
-  const { provider, apiKey } = await resolveProviderAndKey(
-    body.provider,
-    project.organizationId
-  );
+  const { provider, apiKey } = await resolveProviderAndKey(body.provider, project.organizationId);
 
   // P1-16: run the prompt-injection sandbox before we forward the user's
   // text to any provider. `warn` mode logs hits and continues; `strict`

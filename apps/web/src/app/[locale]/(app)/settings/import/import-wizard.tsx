@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,47 +39,27 @@ type JobStatusResponse = {
   errors: Array<{ key?: string; message: string }>;
 };
 
-const SOURCES: Array<{ key: SourceKey; label: string; description: string; ready: boolean }> = [
-  {
-    key: 'csv',
-    label: 'CSV file',
-    description: 'Upload a CSV exported from any tool. Map columns to TaskNebula fields.',
-    ready: true,
-  },
-  {
-    key: 'linear',
-    label: 'Linear',
-    description: 'Connect with a Linear personal API key. Basic metadata only.',
-    ready: false,
-  },
-  {
-    key: 'jira',
-    label: 'Jira',
-    description:
-      'Connect with an Atlassian email + API token. Sprints and attachments are not yet supported.',
-    ready: false,
-  },
-  {
-    key: 'github',
-    label: 'GitHub Issues',
-    description: 'Imports from a repo using the connected GitHub OAuth token.',
-    ready: false,
-  },
+const SOURCES: Array<{ key: SourceKey; ready: boolean }> = [
+  { key: 'csv', ready: true },
+  { key: 'linear', ready: false },
+  { key: 'jira', ready: false },
+  { key: 'github', ready: false },
 ];
 
-const MAPPABLE_FIELDS: Array<{ field: string; label: string }> = [
-  { field: 'title', label: 'Title' },
-  { field: 'description', label: 'Description' },
-  { field: 'status', label: 'Status' },
-  { field: 'priority', label: 'Priority' },
-  { field: 'labels', label: 'Labels' },
-  { field: 'assigneeEmail', label: 'Assignee email' },
-  { field: 'parentKey', label: 'Parent key' },
-  { field: 'createdAt', label: 'Created at' },
-  { field: 'key', label: 'Source key' },
+const MAPPABLE_FIELDS: string[] = [
+  'title',
+  'description',
+  'status',
+  'priority',
+  'labels',
+  'assigneeEmail',
+  'parentKey',
+  'createdAt',
+  'key',
 ];
 
 export function ImportWizard({ workspaceId }: { workspaceId: string }) {
+  const t = useTranslations('settingsClients');
   const [source, setSource] = useState<SourceKey | null>(null);
   const [projectId, setProjectId] = useState('');
   const [csvText, setCsvText] = useState('');
@@ -138,7 +119,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `Preview failed (${res.status})`);
+        throw new Error(body.error ?? t('import.previewFailed', { status: res.status }));
       }
       const data = await res.json();
       setPreview(data.sample ?? []);
@@ -156,7 +137,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
 
   async function runImport() {
     if (!source || !projectId) {
-      setError('A target project id is required.');
+      setError(t('import.projectIdRequired'));
       return;
     }
     setBusy(true);
@@ -178,7 +159,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
       });
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.error ?? `Import failed (${res.status})`);
+        throw new Error(errBody.error ?? t('import.importFailedStatus', { status: res.status }));
       }
       const { jobId } = await res.json();
       pollJob(jobId);
@@ -192,7 +173,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
     const tick = async () => {
       try {
         const res = await fetch(`/api/import/jobs/${jobId}`);
-        if (!res.ok) throw new Error('Failed to fetch job status');
+        if (!res.ok) throw new Error(t('import.jobStatusFailed'));
         const data: JobStatusResponse = await res.json();
         setJobStatus(data);
         if (data.status === 'completed' || data.status === 'failed') {
@@ -219,14 +200,16 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
             className="border-border bg-card hover:border-foreground/30 rounded-lg border p-4 text-left transition hover:shadow-sm"
           >
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">{s.label}</span>
+              <span className="text-sm font-medium">{t(`import.source.${s.key}.label`)}</span>
               {!s.ready && (
                 <span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide">
-                  Preview
+                  {t('import.previewBadge')}
                 </span>
               )}
             </div>
-            <p className="text-muted-foreground mt-1 text-sm">{s.description}</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {t(`import.source.${s.key}.description`)}
+            </p>
           </button>
         ))}
       </div>
@@ -237,16 +220,16 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Button variant="outline" size="sm" onClick={() => setSource(null)}>
-          ← Back
+          {t('import.back')}
         </Button>
         <span className="text-sm font-medium">
-          Importing from {SOURCES.find((s) => s.key === source)?.label}
+          {t('import.importingFrom', { source: t(`import.source.${source}.label`) })}
         </span>
       </div>
 
       {/* Source-specific form */}
       <div className="border-border bg-card space-y-3 rounded-lg border p-4">
-        <Label htmlFor="projectId">Target project id</Label>
+        <Label htmlFor="projectId">{t('import.targetProjectId')}</Label>
         <Input
           id="projectId"
           value={projectId}
@@ -256,7 +239,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
 
         {source === 'csv' && (
           <div className="space-y-2">
-            <Label htmlFor="csvFile">CSV file</Label>
+            <Label htmlFor="csvFile">{t('import.csvFile')}</Label>
             <input
               id="csvFile"
               type="file"
@@ -272,14 +255,14 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
 
         {source === 'linear' && (
           <div className="space-y-2">
-            <Label htmlFor="linearKey">Linear personal API key</Label>
+            <Label htmlFor="linearKey">{t('import.linearKey')}</Label>
             <Input
               id="linearKey"
               type="password"
               value={linearKey}
               onChange={(e) => setLinearKey(e.target.value)}
             />
-            <Label htmlFor="linearTeam">Team key (optional)</Label>
+            <Label htmlFor="linearTeam">{t('import.linearTeam')}</Label>
             <Input
               id="linearTeam"
               value={linearTeam}
@@ -291,21 +274,21 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
 
         {source === 'jira' && (
           <div className="space-y-2">
-            <Label htmlFor="jiraSite">Atlassian site</Label>
+            <Label htmlFor="jiraSite">{t('import.jiraSite')}</Label>
             <Input
               id="jiraSite"
               value={jiraSite}
               onChange={(e) => setJiraSite(e.target.value)}
               placeholder="acme.atlassian.net"
             />
-            <Label htmlFor="jiraEmail">Email</Label>
+            <Label htmlFor="jiraEmail">{t('import.jiraEmail')}</Label>
             <Input
               id="jiraEmail"
               type="email"
               value={jiraEmail}
               onChange={(e) => setJiraEmail(e.target.value)}
             />
-            <Label htmlFor="jiraToken">API token</Label>
+            <Label htmlFor="jiraToken">{t('import.jiraToken')}</Label>
             <Input
               id="jiraToken"
               type="password"
@@ -317,37 +300,35 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
 
         {source === 'github' && (
           <div className="space-y-2">
-            <Label htmlFor="ghToken">GitHub access token</Label>
+            <Label htmlFor="ghToken">{t('import.ghToken')}</Label>
             <Input
               id="ghToken"
               type="password"
               value={ghToken}
               onChange={(e) => setGhToken(e.target.value)}
             />
-            <Label htmlFor="ghOwner">Owner</Label>
+            <Label htmlFor="ghOwner">{t('import.ghOwner')}</Label>
             <Input id="ghOwner" value={ghOwner} onChange={(e) => setGhOwner(e.target.value)} />
-            <Label htmlFor="ghRepo">Repo</Label>
+            <Label htmlFor="ghRepo">{t('import.ghRepo')}</Label>
             <Input id="ghRepo" value={ghRepo} onChange={(e) => setGhRepo(e.target.value)} />
           </div>
         )}
 
         <Button onClick={runPreview} disabled={busy} className="mt-2">
-          {busy ? 'Loading...' : 'Preview'}
+          {busy ? t('import.loading') : t('import.preview')}
         </Button>
       </div>
 
       {/* Column mapping (CSV only) */}
       {source === 'csv' && csvHeaders.length > 0 && (
         <div className="border-border bg-card space-y-2 rounded-lg border p-4">
-          <div className="text-sm font-medium">Column mapping</div>
-          <p className="text-muted-foreground text-xs">
-            Pick the CSV column that backs each TaskNebula field. Leave blank to skip.
-          </p>
+          <div className="text-sm font-medium">{t('import.columnMapping')}</div>
+          <p className="text-muted-foreground text-xs">{t('import.columnMappingHint')}</p>
           <div className="grid gap-2 sm:grid-cols-2">
-            {MAPPABLE_FIELDS.map(({ field, label }) => (
+            {MAPPABLE_FIELDS.map((field) => (
               <div key={field} className="space-y-1">
                 <Label htmlFor={`map-${field}`} className="text-xs">
-                  {label}
+                  {t(`import.field.${field}`)}
                 </Label>
                 <select
                   id={`map-${field}`}
@@ -355,7 +336,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
                   onChange={(e) => setColumns((c) => ({ ...c, [field]: e.target.value }))}
                   className="border-border bg-background w-full rounded border px-2 py-1.5 text-sm"
                 >
-                  <option value="">— none —</option>
+                  <option value="">{t('import.none')}</option>
                   {csvHeaders.map((h) => (
                     <option key={h} value={h}>
                       {h}
@@ -373,21 +354,21 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
         <div className="border-border bg-card space-y-2 rounded-lg border p-4">
           <div className="flex items-center justify-between">
             <div className="text-sm font-medium">
-              Preview ({preview.length} of {previewTotal})
+              {t('import.previewCount', { shown: preview.length, total: previewTotal })}
             </div>
             <Button onClick={runImport} disabled={busy || !projectId}>
-              Run import
+              {t('import.runImport')}
             </Button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead className="text-muted-foreground text-left">
                 <tr>
-                  <th className="py-1 pr-2">Key</th>
-                  <th className="py-1 pr-2">Title</th>
-                  <th className="py-1 pr-2">Status</th>
-                  <th className="py-1 pr-2">Priority</th>
-                  <th className="py-1 pr-2">Assignee</th>
+                  <th className="py-1 pr-2">{t('import.col.key')}</th>
+                  <th className="py-1 pr-2">{t('import.col.title')}</th>
+                  <th className="py-1 pr-2">{t('import.col.status')}</th>
+                  <th className="py-1 pr-2">{t('import.col.priority')}</th>
+                  <th className="py-1 pr-2">{t('import.col.assignee')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -412,10 +393,10 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium">
               {jobStatus.status === 'completed'
-                ? 'Import complete'
+                ? t('import.complete')
                 : jobStatus.status === 'failed'
-                  ? 'Import failed'
-                  : 'Importing…'}
+                  ? t('import.failed')
+                  : t('import.importing')}
             </span>
             <span className="text-muted-foreground">
               {jobStatus.processed} / {jobStatus.total}
@@ -434,7 +415,9 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
           </div>
           {jobStatus.errors.length > 0 && (
             <div className="border-destructive/40 bg-destructive/5 text-destructive rounded border p-2 text-xs">
-              <div className="mb-1 font-medium">{jobStatus.errors.length} record(s) failed:</div>
+              <div className="mb-1 font-medium">
+                {t('import.recordsFailed', { count: jobStatus.errors.length })}
+              </div>
               <ul className="space-y-0.5">
                 {jobStatus.errors.slice(0, 5).map((e, i) => (
                   <li key={i}>

@@ -13,6 +13,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useMemo, useState, type ComponentType } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -37,11 +38,11 @@ type SortKey = 'updated' | 'created';
 
 const TYPE_META: Record<
   Draft['type'],
-  { label: string; icon: ComponentType<{ className?: string }> }
+  { labelKey: string; icon: ComponentType<{ className?: string }> }
 > = {
-  work_item: { label: 'Work item', icon: CheckSquare },
-  page: { label: 'Page', icon: FileText },
-  comment: { label: 'Comment', icon: MessageSquare },
+  work_item: { labelKey: 'drafts.types.work_item', icon: CheckSquare },
+  page: { labelKey: 'drafts.types.page', icon: FileText },
+  comment: { labelKey: 'drafts.types.comment', icon: MessageSquare },
 };
 
 function truncate(text: string | undefined, max: number): string {
@@ -51,15 +52,8 @@ function truncate(text: string | undefined, max: number): string {
 }
 
 export function DraftsList() {
-  const {
-    drafts,
-    updateDraft,
-    removeDraft,
-    promoteDraft,
-    isLoading,
-    isError,
-    error,
-  } = useDrafts();
+  const t = useTranslations('workspaceTools');
+  const { drafts, updateDraft, removeDraft, promoteDraft, isLoading, isError, error } = useDrafts();
   const [filter, setFilter] = useState<DraftFilter>('all');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortKey>('updated');
@@ -85,10 +79,7 @@ export function DraftsList() {
     const filtered = drafts.filter((d) => {
       if (filter !== 'all' && d.type !== filter) return false;
       if (!q) return true;
-      return (
-        d.title.toLowerCase().includes(q) ||
-        (d.body ?? '').toLowerCase().includes(q)
-      );
+      return d.title.toLowerCase().includes(q) || (d.body ?? '').toLowerCase().includes(q);
     });
     const sorted = [...filtered].sort((a, b) => {
       const key = sort === 'updated' ? 'updatedAt' : 'createdAt';
@@ -105,7 +96,7 @@ export function DraftsList() {
   const commitEdit = () => {
     if (editingId) {
       void updateDraft(editingId, {
-        title: editTitle.trim() || 'Untitled draft',
+        title: editTitle.trim() || t('drafts.untitled'),
       });
     }
     setEditingId(null);
@@ -122,25 +113,25 @@ export function DraftsList() {
         >
           <TabsList>
             <TabsTrigger value="all" className="gap-2">
-              All
+              {t('drafts.tabs.all')}
               <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
                 {counts.all}
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="work_item" className="gap-2">
-              Work items
+              {t('drafts.tabs.work_item')}
               <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
                 {counts.work_item}
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="page" className="gap-2">
-              Pages
+              {t('drafts.tabs.page')}
               <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
                 {counts.page}
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="comment" className="gap-2">
-              Comments
+              {t('drafts.tabs.comment')}
               <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
                 {counts.comment}
               </Badge>
@@ -150,22 +141,22 @@ export function DraftsList() {
 
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="text-muted-foreground absolute left-2.5 top-1/2 size-4 -translate-y-1/2" />
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search drafts"
-              className="pl-8 w-full sm:w-64"
-              aria-label="Search drafts"
+              placeholder={t('drafts.searchPlaceholder')}
+              className="w-full pl-8 sm:w-64"
+              aria-label={t('drafts.searchAria')}
             />
           </div>
           <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
-            <SelectTrigger className="w-[140px]" aria-label="Sort drafts">
+            <SelectTrigger className="w-[140px]" aria-label={t('drafts.sortAria')}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="updated">Updated</SelectItem>
-              <SelectItem value="created">Created</SelectItem>
+              <SelectItem value="updated">{t('drafts.sort.updated')}</SelectItem>
+              <SelectItem value="created">{t('drafts.sort.created')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -174,7 +165,7 @@ export function DraftsList() {
       {isLoading ? (
         <LoadingState />
       ) : isError ? (
-        <ErrorState message={error?.message ?? 'Could not load drafts.'} />
+        <ErrorState message={error?.message ?? t('drafts.loadFailed')} />
       ) : visible.length === 0 ? (
         <EmptyState
           hasAny={drafts.length > 0}
@@ -182,7 +173,7 @@ export function DraftsList() {
           onCreate={() => setIsCreateOpen(true)}
         />
       ) : (
-        <ul className="divide-y rounded-md border bg-card">
+        <ul className="bg-card divide-y rounded-md border">
           {visible.map((draft) => {
             const meta = TYPE_META[draft.type];
             const Icon = meta.icon;
@@ -190,9 +181,9 @@ export function DraftsList() {
             return (
               <li
                 key={draft.id}
-                className="group flex items-start gap-3 p-3 transition-colors hover:bg-accent/40"
+                className="hover:bg-accent/40 group flex items-start gap-3 p-3 transition-colors"
               >
-                <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                <div className="bg-muted text-muted-foreground mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md">
                   <Icon className="size-4" />
                 </div>
 
@@ -213,32 +204,34 @@ export function DraftsList() {
                         }
                       }}
                       className="h-8"
-                      aria-label="Edit draft title"
+                      aria-label={t('drafts.editTitleAria')}
                     />
                   ) : (
                     <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-semibold text-foreground">
-                        {draft.title || 'Untitled draft'}
+                      <p className="text-foreground truncate text-sm font-semibold">
+                        {draft.title || t('drafts.untitled')}
                       </p>
                       <Badge variant="outline" className="text-[10px] uppercase">
-                        {meta.label}
+                        {t(meta.labelKey)}
                       </Badge>
                     </div>
                   )}
                   {draft.body ? (
-                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                    <p className="text-muted-foreground mt-0.5 truncate text-xs">
                       {truncate(draft.body, 80)}
                     </p>
                   ) : null}
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    Updated {formatDistanceToNow(draft.updatedAt, { addSuffix: true })}
+                  <p className="text-muted-foreground mt-1 text-[11px]">
+                    {t('drafts.updatedAt', {
+                      time: formatDistanceToNow(draft.updatedAt, { addSuffix: true }),
+                    })}
                   </p>
                 </div>
 
                 <div
                   className={cn(
                     'flex shrink-0 items-center gap-1 opacity-0 transition-opacity',
-                    'group-hover:opacity-100 focus-within:opacity-100',
+                    'focus-within:opacity-100 group-hover:opacity-100'
                   )}
                 >
                   <Button
@@ -246,8 +239,8 @@ export function DraftsList() {
                     size="icon"
                     className="size-8"
                     onClick={() => beginEdit(draft)}
-                    aria-label="Edit draft"
-                    title="Edit"
+                    aria-label={t('drafts.editAria')}
+                    title={t('drafts.editTitle')}
                   >
                     <Pencil className="size-4" />
                   </Button>
@@ -258,20 +251,20 @@ export function DraftsList() {
                     onClick={() => {
                       void promoteDraft(draft.id);
                     }}
-                    aria-label="Promote draft"
-                    title="Promote"
+                    aria-label={t('drafts.promoteAria')}
+                    title={t('drafts.promoteTitle')}
                   >
                     <ArrowUpRight className="size-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="size-8 text-destructive hover:text-destructive"
+                    className="text-destructive hover:text-destructive size-8"
                     onClick={() => {
                       void removeDraft(draft.id);
                     }}
-                    aria-label="Delete draft"
-                    title="Delete"
+                    aria-label={t('drafts.deleteAria')}
+                    title={t('drafts.deleteTitle')}
                   >
                     <Trash2 className="size-4" />
                   </Button>
@@ -294,18 +287,19 @@ export function DraftsList() {
 }
 
 function LoadingState() {
+  const t = useTranslations('workspaceTools');
   return (
     <ul
-      className="divide-y rounded-md border bg-card"
+      className="bg-card divide-y rounded-md border"
       aria-busy="true"
-      aria-label="Loading drafts"
+      aria-label={t('drafts.loadingAria')}
     >
       {Array.from({ length: 4 }).map((_, i) => (
         <li key={i} className="flex items-start gap-3 p-3">
-          <div className="mt-0.5 size-8 shrink-0 animate-pulse rounded-md bg-muted" />
+          <div className="bg-muted mt-0.5 size-8 shrink-0 animate-pulse rounded-md" />
           <div className="min-w-0 flex-1 space-y-2">
-            <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
-            <div className="h-3 w-2/3 animate-pulse rounded bg-muted" />
+            <div className="bg-muted h-4 w-1/2 animate-pulse rounded" />
+            <div className="bg-muted h-3 w-2/3 animate-pulse rounded" />
           </div>
         </li>
       ))}
@@ -314,13 +308,14 @@ function LoadingState() {
 }
 
 function ErrorState({ message }: { message: string }) {
+  const t = useTranslations('workspaceTools');
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-destructive/40 bg-destructive/5 px-6 py-16 text-center">
-      <div className="flex size-14 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+    <div className="border-destructive/40 bg-destructive/5 flex flex-col items-center justify-center rounded-lg border border-dashed px-6 py-16 text-center">
+      <div className="bg-destructive/10 text-destructive flex size-14 items-center justify-center rounded-full">
         <AlertCircle className="size-7" />
       </div>
-      <h2 className="mt-4 text-base font-semibold">Could not load drafts</h2>
-      <p className="mt-1 max-w-sm text-sm text-muted-foreground">{message}</p>
+      <h2 className="mt-4 text-base font-semibold">{t('drafts.errorTitle')}</h2>
+      <p className="text-muted-foreground mt-1 max-w-sm text-sm">{message}</p>
     </div>
   );
 }
@@ -334,23 +329,22 @@ function EmptyState({
   firstProjectId: string | null;
   onCreate: () => void;
 }) {
+  const t = useTranslations('workspaceTools');
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card/50 px-6 py-16 text-center">
-      <div className="flex size-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
+    <div className="bg-card/50 flex flex-col items-center justify-center rounded-lg border border-dashed px-6 py-16 text-center">
+      <div className="bg-muted text-muted-foreground flex size-14 items-center justify-center rounded-full">
         <Inbox className="size-7" />
       </div>
-      <h2 className="mt-4 text-base font-semibold">No drafts yet</h2>
-      <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-        {hasAny
-          ? 'Nothing matches your current filter or search. Try clearing them to see your other drafts.'
-          : 'Stash unfinished work items, pages, and comments here. They sync across your devices until you promote them.'}
+      <h2 className="mt-4 text-base font-semibold">{t('drafts.emptyTitle')}</h2>
+      <p className="text-muted-foreground mt-1 max-w-sm text-sm">
+        {hasAny ? t('drafts.emptyFiltered') : t('drafts.emptyDescription')}
       </p>
       <div className="mt-5">
         {firstProjectId ? (
-          <Button onClick={onCreate}>Create work item</Button>
+          <Button onClick={onCreate}>{t('drafts.createWorkItem')}</Button>
         ) : (
           <Button asChild variant="outline">
-            <Link href="/projects">Create a project first</Link>
+            <Link href="/projects">{t('drafts.createProjectFirst')}</Link>
           </Button>
         )}
       </div>

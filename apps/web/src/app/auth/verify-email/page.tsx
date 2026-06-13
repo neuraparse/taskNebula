@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,28 +18,7 @@ type SearchParams = {
   error?: string;
 };
 
-const ERROR_COPY: Record<string, { title: string; body: string }> = {
-  invalid: {
-    title: 'This verification link is invalid',
-    body: 'The token we received doesn’t match any active verification request. Ask for a fresh email from the verification prompt.',
-  },
-  expired: {
-    title: 'This verification link has expired',
-    body: 'Verification links are valid for 24 hours. Request a new one to continue.',
-  },
-  already_used: {
-    title: 'This link was already used',
-    body: 'You can sign in now. If you still need to verify a different email, request a fresh link from your account.',
-  },
-  user_missing: {
-    title: 'Account not found',
-    body: 'We couldn’t find the account this link belongs to. Please sign up again.',
-  },
-  server_error: {
-    title: 'Something went wrong',
-    body: 'An unexpected error occurred while verifying your email. Please try again in a moment.',
-  },
-};
+const ERROR_KEYS = ['invalid', 'expired', 'already_used', 'user_missing', 'server_error'] as const;
 
 export default async function VerifyEmailPage({
   searchParams,
@@ -54,49 +34,57 @@ export default async function VerifyEmailPage({
     redirect(`/api/auth/verify-email/${encodeURIComponent(params.token)}`);
   }
 
-  const copy = params.error ? ERROR_COPY[params.error] : null;
+  const t = await getTranslations('authPages');
+
+  const errorKey =
+    params.error && (ERROR_KEYS as readonly string[]).includes(params.error) ? params.error : null;
+  const copy = errorKey
+    ? {
+        title: t(`verifyEmail.errors.${errorKey}.title`),
+        body: t(`verifyEmail.errors.${errorKey}.body`),
+      }
+    : null;
 
   return (
-    <div className="relative min-h-dvh grid place-items-center bg-background overflow-hidden px-4">
+    <div className="bg-background relative grid min-h-dvh place-items-center overflow-hidden px-4">
       <div
         aria-hidden="true"
-        className="bg-aurora absolute inset-0 pointer-events-none blur-3xl opacity-60 -z-10"
+        className="bg-aurora pointer-events-none absolute inset-0 -z-10 opacity-60 blur-3xl"
       />
 
-      <div className="relative w-full max-w-sm animate-blur-in">
+      <div className="animate-blur-in relative w-full max-w-sm">
         <div className="mb-5 flex justify-center">
           <Link
             href="/"
-            className="flex items-center gap-2 rounded-md transition-all duration-150 ease-snap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="ease-snap focus-visible:ring-ring flex items-center gap-2 rounded-md transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
           >
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-foreground">
-              <span className="text-[11px] font-semibold tracking-tight text-background">TN</span>
+            <div className="bg-foreground flex h-7 w-7 items-center justify-center rounded-md">
+              <span className="text-background text-[11px] font-semibold tracking-tight">TN</span>
             </div>
-            <span className="text-sm font-semibold tracking-tight text-foreground">TaskNebula</span>
+            <span className="text-foreground text-sm font-semibold tracking-tight">TaskNebula</span>
           </Link>
         </div>
 
-        <div className="surface-card rounded-lg p-6 sm:p-8 text-center">
-          <h1 className="text-lg font-semibold text-foreground">
-            {copy?.title || 'Email verification'}
+        <div className="surface-card rounded-lg p-6 text-center sm:p-8">
+          <h1 className="text-foreground text-lg font-semibold">
+            {copy?.title || t('verifyEmail.defaultTitle')}
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {copy?.body ||
-              'Open the verification link from your inbox to continue. If you need a fresh link, use the resend button on the previous screen.'}
+          <p className="text-muted-foreground mt-2 text-sm">
+            {copy?.body || t('verifyEmail.defaultBody')}
           </p>
 
           <div className="mt-6 flex flex-col items-center gap-3">
             <Link
               href="/auth/verify-request"
-              className="text-sm font-medium text-primary hover:underline"
+              className="text-primary text-sm font-medium hover:underline"
             >
-              Back to verification prompt
+              {t('verifyEmail.backToPrompt')}
             </Link>
             <Link
               href="/auth/signin"
-              className="text-xs text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground text-xs"
             >
-              Go to sign in
+              {t('verifyEmail.goToSignIn')}
             </Link>
           </div>
         </div>

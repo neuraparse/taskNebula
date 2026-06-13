@@ -1,6 +1,7 @@
 'use client';
 
 import { Component, ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -43,50 +44,56 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         return this.props.fallback;
       }
 
-      return (
-        <div className="flex min-h-[320px] flex-col items-center justify-center gap-4 p-8 animate-fade-up">
-          <div className="rounded-full bg-destructive/10 p-3">
-            <AlertTriangle className="h-8 w-8 text-destructive" aria-hidden />
-          </div>
-
-          <div className="text-center">
-            <h2 className="text-lg font-semibold">Something went wrong</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              An unexpected error occurred. Try reloading the page.
-            </p>
-          </div>
-
-          <Button onClick={() => window.location.reload()} size="sm">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Reload page
-          </Button>
-
-          {process.env.NODE_ENV === 'development' && this.state.error && (
-            <details className="mt-2 max-w-xl w-full">
-              <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
-                Error details (dev only)
-              </summary>
-              <pre className="mt-2 overflow-auto rounded-md bg-surface p-3 text-[11px] text-muted-foreground">
-                {this.state.error.stack}
-              </pre>
-            </details>
-          )}
-        </div>
-      );
+      return <DefaultErrorFallback error={this.state.error} />;
     }
 
     return this.props.children;
   }
 }
 
+function DefaultErrorFallback({ error }: { error: Error | null }) {
+  const t = useTranslations('errorPages');
+
+  return (
+    <div className="animate-fade-up flex min-h-[320px] flex-col items-center justify-center gap-4 p-8">
+      <div className="bg-destructive/10 rounded-full p-3">
+        <AlertTriangle className="text-destructive h-8 w-8" aria-hidden />
+      </div>
+
+      <div className="text-center">
+        <h2 className="text-lg font-semibold">{t('boundary.title')}</h2>
+        <p className="text-muted-foreground mt-1 text-sm">{t('boundary.description')}</p>
+      </div>
+
+      <Button onClick={() => window.location.reload()} size="sm">
+        <RefreshCw className="mr-2 h-4 w-4" />
+        {t('boundary.reload')}
+      </Button>
+
+      {process.env.NODE_ENV === 'development' && error && (
+        <details className="mt-2 w-full max-w-xl">
+          <summary className="text-muted-foreground cursor-pointer text-xs font-medium">
+            {t('boundary.detailsDev')}
+          </summary>
+          <pre className="bg-surface text-muted-foreground mt-2 overflow-auto rounded-md p-3 text-[11px]">
+            {error.stack}
+          </pre>
+        </details>
+      )}
+    </div>
+  );
+}
+
 export function AsyncErrorBoundary({ children }: { children: ReactNode }) {
+  const t = useTranslations('errorPages');
+
   return (
     <ErrorBoundary
       fallback={
         <div className="flex min-h-[160px] items-center justify-center">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <AlertTriangle className="h-4 w-4 text-destructive" aria-hidden />
-            Failed to load content
+          <div className="text-muted-foreground flex items-center gap-2 text-sm">
+            <AlertTriangle className="text-destructive h-4 w-4" aria-hidden />
+            {t('failedToLoadContent')}
           </div>
         </div>
       }
@@ -103,14 +110,18 @@ export function SectionErrorBoundary({
   children: ReactNode;
   sectionName?: string;
 }) {
+  const t = useTranslations('errorPages');
+
   return (
     <ErrorBoundary
       fallback={
-        <div className="rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2">
-          <div className="flex items-center gap-2 text-destructive">
+        <div className="border-destructive/20 bg-destructive/5 rounded-md border px-3 py-2">
+          <div className="text-destructive flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
             <p className="text-sm">
-              {sectionName ? `Failed to load ${sectionName}` : 'Failed to load section'}
+              {sectionName
+                ? t('failedToLoadSectionNamed', { section: sectionName })
+                : t('failedToLoadSection')}
             </p>
           </div>
         </div>

@@ -562,11 +562,11 @@ TODO.local.md
 NOTES.md
 NOTES.local.md
 
-# Deployment-specific nginx vhosts bearing real domains
-nginx/*.nowflow.io*
-nginx/*.nowflow.*
+# Deployment-specific nginx vhosts bearing real domains. Keep real domains
+# out of the repo — add your own host's pattern locally if needed.
 nginx/*.your-domain.*
 nginx/*.example.com*
+nginx/*.live.*
 nginx/sites-*.local/
 
 # Internal generated scripts or data

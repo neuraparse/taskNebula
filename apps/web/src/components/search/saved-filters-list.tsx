@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Star, Trash2, Globe, Lock, Play, Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,6 +30,7 @@ interface SavedFiltersListProps {
 }
 
 export function SavedFiltersList({ onSelectFilter }: SavedFiltersListProps) {
+  const t = useTranslations('searchCommand');
   const { currentOrganizationId } = useOrganization();
   const [filters, setFilters] = useState<SavedFilter[]>([]);
   const [loading, setLoading] = useState(false);
@@ -67,7 +69,7 @@ export function SavedFiltersList({ onSelectFilter }: SavedFiltersListProps) {
 
   // Delete filter
   const deleteFilter = async (filterId: string) => {
-    if (!confirm('Are you sure you want to delete this filter?')) return;
+    if (!confirm(t('confirmDeleteFilter'))) return;
 
     try {
       await fetch(`/api/saved-filters/${filterId}`, {
@@ -100,35 +102,35 @@ export function SavedFiltersList({ onSelectFilter }: SavedFiltersListProps) {
 
   if (loading) {
     return (
-      <div className="py-6 text-center text-sm text-muted-foreground">Loading filters…</div>
+      <div className="text-muted-foreground py-6 text-center text-sm">{t('loadingFilters')}</div>
     );
   }
 
   if (filters.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
-        <Bookmark className="h-7 w-7 text-muted-foreground/40" aria-hidden="true" />
-        <p className="text-sm text-muted-foreground">No saved filters yet</p>
+        <Bookmark className="text-muted-foreground/40 h-7 w-7" aria-hidden="true" />
+        <p className="text-muted-foreground text-sm">{t('noSavedFilters')}</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-2">
-      <span className="kicker px-1">Saved filters</span>
+      <span className="kicker px-1">{t('savedFilters')}</span>
       <ScrollArea className="max-h-[360px]">
         <ul className="stagger space-y-px">
           {filters.map((filter) => (
             <li
               key={filter.id}
-              className="row-interactive group animate-fade-up rounded-md transition-all duration-150 ease-snap"
+              className="row-interactive animate-fade-up ease-snap group rounded-md transition-all duration-150"
             >
               {/* Visibility icon */}
-              <div className="shrink-0 text-muted-foreground">
+              <div className="text-muted-foreground shrink-0">
                 {filter.isPublic ? (
-                  <Globe className="h-3.5 w-3.5" aria-label="Public filter" />
+                  <Globe className="h-3.5 w-3.5" aria-label={t('publicFilter')} />
                 ) : (
-                  <Lock className="h-3.5 w-3.5" aria-label="Private filter" />
+                  <Lock className="h-3.5 w-3.5" aria-label={t('privateFilter')} />
                 )}
               </div>
 
@@ -137,13 +139,18 @@ export function SavedFiltersList({ onSelectFilter }: SavedFiltersListProps) {
                 <div className="flex items-baseline gap-2">
                   <span className="truncate text-sm font-medium">{filter.name}</span>
                   {filter.isStarred && (
-                    <Star className="h-3 w-3 shrink-0 fill-accent-amber text-accent-amber" aria-label="Starred" />
+                    <Star
+                      className="fill-accent-amber text-accent-amber h-3 w-3 shrink-0"
+                      aria-label={t('starred')}
+                    />
                   )}
                 </div>
                 {filter.description && (
-                  <p className="truncate text-xs text-muted-foreground">{filter.description}</p>
+                  <p className="text-muted-foreground truncate text-xs">{filter.description}</p>
                 )}
-                <p className="truncate text-[10px] text-muted-foreground font-mono mt-0.5">{filter.query}</p>
+                <p className="text-muted-foreground mt-0.5 truncate font-mono text-[10px]">
+                  {filter.query}
+                </p>
               </div>
 
               {/* Actions (visible on hover) */}
@@ -156,11 +163,13 @@ export function SavedFiltersList({ onSelectFilter }: SavedFiltersListProps) {
                     e.stopPropagation();
                     toggleStar(filter.id, filter.isStarred);
                   }}
-                  aria-label={filter.isStarred ? 'Unstar filter' : 'Star filter'}
+                  aria-label={filter.isStarred ? t('unstarFilter') : t('starFilter')}
                 >
                   <Star
                     className={`h-3.5 w-3.5 ${
-                      filter.isStarred ? 'fill-accent-amber text-accent-amber' : 'text-muted-foreground'
+                      filter.isStarred
+                        ? 'fill-accent-amber text-accent-amber'
+                        : 'text-muted-foreground'
                     }`}
                   />
                 </Button>
@@ -168,19 +177,19 @@ export function SavedFiltersList({ onSelectFilter }: SavedFiltersListProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-primary"
+                  className="text-primary h-7 w-7"
                   onClick={(e) => {
                     e.stopPropagation();
                     applyFilter(filter);
                   }}
-                  aria-label="Run filter"
+                  aria-label={t('runFilter')}
                 >
                   <Play className="h-3.5 w-3.5" />
                 </Button>
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground">
+                    <Button variant="ghost" size="icon" className="text-muted-foreground h-7 w-7">
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -193,7 +202,7 @@ export function SavedFiltersList({ onSelectFilter }: SavedFiltersListProps) {
                       className="text-destructive"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
-                      Delete filter
+                      {t('deleteFilter')}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

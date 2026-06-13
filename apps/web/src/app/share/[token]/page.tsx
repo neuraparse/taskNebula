@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -12,11 +13,12 @@ export async function generateMetadata({
   params: Promise<{ token: string }>;
 }): Promise<Metadata> {
   const { token } = await params;
+  const t = await getTranslations('publicPages');
   const page = await getPublicDocumentByToken(token);
 
   if (!page) {
     return {
-      title: 'Shared document',
+      title: t('shareMetaFallbackTitle'),
       robots: {
         index: false,
         follow: false,
@@ -25,8 +27,8 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${page.title} · TaskNebula Docs`,
-    description: page.excerpt || 'Shared from TaskNebula Docs',
+    title: t('shareMetaTitle', { title: page.title }),
+    description: page.excerpt || t('shareMetaDescription'),
     robots: page.allowSearchIndexing
       ? {
           index: true,
@@ -45,6 +47,7 @@ export default async function PublicDocumentPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
+  const t = await getTranslations('publicPages');
   const page = await getPublicDocumentByToken(token);
 
   if (!page) {
@@ -52,34 +55,34 @@ export default async function PublicDocumentPage({
   }
 
   return (
-    <main className="min-h-dvh bg-background">
-      <article className="mx-auto max-w-3xl animate-blur-in px-4 py-10 sm:px-6 sm:py-14">
-        <div className="surface-card rounded-lg p-6 sm:p-10 space-y-6">
+    <main className="bg-background min-h-dvh">
+      <article className="animate-blur-in mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+        <div className="surface-card space-y-6 rounded-lg p-6 sm:p-10">
           {/* Document header — quiet, no card chrome */}
           <header className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               <span className="chip flex items-center gap-1.5">
                 <Globe2 className="h-3.5 w-3.5" aria-hidden="true" />
-                Public
+                {t('sharePublic')}
               </span>
               {!page.allowSearchIndexing && (
                 <span className="chip flex items-center gap-1.5">
                   <LockKeyhole className="h-3.5 w-3.5" aria-hidden="true" />
-                  Search hidden
+                  {t('shareSearchHidden')}
                 </span>
               )}
             </div>
 
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground text-balance sm:text-4xl">
+            <h1 className="text-foreground text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
               {page.title}
             </h1>
 
             {page.excerpt && (
-              <p className="text-base leading-7 text-muted-foreground">{page.excerpt}</p>
+              <p className="text-muted-foreground text-base leading-7">{page.excerpt}</p>
             )}
 
-            <p className="text-xs text-muted-foreground">
-              Updated {new Date(page.updatedAt).toLocaleString()}
+            <p className="text-muted-foreground text-xs">
+              {t('shareUpdated', { date: new Date(page.updatedAt).toLocaleString() })}
             </p>
           </header>
 
@@ -91,7 +94,7 @@ export default async function PublicDocumentPage({
           {/* Attachments — inline, no nested card */}
           {page.attachments.length > 0 && (
             <section className="space-y-3 pt-2">
-              <h2 className="text-sm font-medium text-foreground">Published files</h2>
+              <h2 className="text-foreground text-sm font-medium">{t('sharePublishedFiles')}</h2>
               <ul className="space-y-2">
                 {page.attachments.map((attachment) => (
                   <li key={attachment.id}>
@@ -99,10 +102,12 @@ export default async function PublicDocumentPage({
                       href={attachment.publicUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block rounded-md border border-border px-3 py-2 text-sm transition-all duration-150 ease-snap hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      className="border-border ease-snap hover:bg-accent focus-visible:ring-ring block rounded-md border px-3 py-2 text-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                     >
-                      <div className="font-medium text-foreground">{attachment.fileName}</div>
-                      <div className="mt-0.5 text-xs text-muted-foreground">{attachment.mimeType}</div>
+                      <div className="text-foreground font-medium">{attachment.fileName}</div>
+                      <div className="text-muted-foreground mt-0.5 text-xs">
+                        {attachment.mimeType}
+                      </div>
                     </a>
                   </li>
                 ))}
@@ -111,10 +116,8 @@ export default async function PublicDocumentPage({
           )}
 
           {/* Footer — quiet, one action */}
-          <footer className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-muted-foreground">
-              This public view hides workspace metadata and unpublished files.
-            </p>
+          <footer className="border-border flex flex-col gap-3 border-t pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-muted-foreground text-xs">{t('sharePublicViewNotice')}</p>
             <Button asChild variant="outline" size="sm" className="rounded-md">
               <Link href="/">
                 TaskNebula

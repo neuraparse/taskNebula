@@ -4,6 +4,7 @@ import type { FormEvent, KeyboardEvent, ReactNode } from 'react';
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { formatDistanceToNow } from 'date-fns';
 import {
   RoomContext,
@@ -169,6 +170,7 @@ function getOrCreateVoiceClientSessionId() {
 }
 
 export function ChatShell({ projectId }: { projectId: string }) {
+  const t = useTranslations('workspaceTools');
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -180,8 +182,12 @@ export function ChatShell({ projectId }: { projectId: string }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [newChannelName, setNewChannelName] = useState('');
   const [newChannelDescription, setNewChannelDescription] = useState('');
-  const [pendingModerationAction, setPendingModerationAction] = useState<'clear_deleted' | 'clear_room' | null>(null);
-  const [preparedVoiceSession, setPreparedVoiceSession] = useState<PreparedVoiceSession | null>(null);
+  const [pendingModerationAction, setPendingModerationAction] = useState<
+    'clear_deleted' | 'clear_room' | null
+  >(null);
+  const [preparedVoiceSession, setPreparedVoiceSession] = useState<PreparedVoiceSession | null>(
+    null
+  );
   const [isVoicePanelOpen, setIsVoicePanelOpen] = useState(false);
   const [isVoiceSetupOpen, setIsVoiceSetupOpen] = useState(false);
   const [composerError, setComposerError] = useState<string | null>(null);
@@ -241,7 +247,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
       return {
         id: channel.roomId!,
         title: channel.name,
-        subtitle: channel.description || 'Project channel',
+        subtitle: channel.description || t('chat.projectChannel'),
         kind: 'channel' as const,
         activeCall: channel.activeCall || null,
       };
@@ -254,24 +260,23 @@ export function ChatShell({ projectId }: { projectId: string }) {
         title:
           typeof discussion.context?.title === 'string'
             ? discussion.context.title
-            : discussion.title || 'Discussion',
+            : discussion.title || t('chat.discussion'),
         subtitle:
           discussion.kind === 'issue_thread'
-            ? (discussion.context?.key as string | undefined) || 'Issue discussion'
-            : 'Document discussion',
+            ? (discussion.context?.key as string | undefined) || t('chat.issueDiscussion')
+            : t('chat.documentDiscussion'),
         kind: discussion.kind,
         activeCall: discussion.activeCall || null,
       };
     }
 
     return null;
-  }, [bootstrap?.channels, bootstrap?.recentDiscussions, selectedRoomId]);
+  }, [bootstrap?.channels, bootstrap?.recentDiscussions, selectedRoomId, t]);
 
   const messageList = messagesQuery.data || [];
   const currentVoiceRoomId = voice.currentTarget?.roomId || null;
   const isCurrentVoiceRoom = Boolean(selectedRoomId && currentVoiceRoomId === selectedRoomId);
-  const globalSelectedRoomCall =
-    liveCalls?.find((call) => call.roomId === selectedRoomId) || null;
+  const globalSelectedRoomCall = liveCalls?.find((call) => call.roomId === selectedRoomId) || null;
   const localSelectedRoomCall =
     isCurrentVoiceRoom && voice.currentSession
       ? {
@@ -296,11 +301,11 @@ export function ChatShell({ projectId }: { projectId: string }) {
   const canSendMessages = Boolean(selectedRoomId && bootstrap?.permissions.canPostMessages);
   const attachmentsEnabled = Boolean(bootstrap?.effectiveSettings.attachmentsEnabled);
   const sendDisabledReason = !selectedRoomId
-    ? 'Choose a conversation first.'
+    ? t('chat.send.chooseConversation')
     : !bootstrap?.permissions.canPostMessages
-      ? 'You do not have permission to send messages here.'
+      ? t('chat.send.noPermission')
       : queuedFiles.length > 0 && !attachmentsEnabled
-        ? 'Attachments are disabled in this project.'
+        ? t('chat.send.attachmentsDisabled')
         : null;
 
   useEffect(() => {
@@ -316,7 +321,14 @@ export function ChatShell({ projectId }: { projectId: string }) {
       currentVoiceRoomId,
       isCurrentVoiceRoom,
     });
-  }, [combinedActiveCall, currentVoiceRoomId, isCurrentVoiceRoom, projectId, selectedRoomId, selectedRoomMeta?.title]);
+  }, [
+    combinedActiveCall,
+    currentVoiceRoomId,
+    isCurrentVoiceRoom,
+    projectId,
+    selectedRoomId,
+    selectedRoomMeta?.title,
+  ]);
 
   useEffect(() => {
     const lastActiveRoomId = bootstrap?.lastActiveRoomId;
@@ -342,7 +354,11 @@ export function ChatShell({ projectId }: { projectId: string }) {
   }, [bootstrap?.lastActiveRoomId, selectedRoomId]);
 
   useEffect(() => {
-    if (!selectedRoomId || !bootstrap?.effectiveSettings.unreadTrackingEnabled || !lastReadableMessageId) {
+    if (
+      !selectedRoomId ||
+      !bootstrap?.effectiveSettings.unreadTrackingEnabled ||
+      !lastReadableMessageId
+    ) {
       return;
     }
 
@@ -359,7 +375,12 @@ export function ChatShell({ projectId }: { projectId: string }) {
         }
       },
     });
-  }, [bootstrap?.effectiveSettings.unreadTrackingEnabled, lastReadableMessageId, markRead.mutate, selectedRoomId]);
+  }, [
+    bootstrap?.effectiveSettings.unreadTrackingEnabled,
+    lastReadableMessageId,
+    markRead.mutate,
+    selectedRoomId,
+  ]);
 
   const lastMessageId = messageList.length ? messageList[messageList.length - 1]?.id : null;
 
@@ -422,17 +443,19 @@ export function ChatShell({ projectId }: { projectId: string }) {
           description: newChannelDescription || null,
         }),
       });
-      const payload = await response.json().catch(() => ({ error: 'Failed to create channel' }));
+      const payload = await response
+        .json()
+        .catch(() => ({ error: t('chat.channel.createFailed') }));
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to create channel');
+        throw new Error(payload.error || t('chat.channel.createFailed'));
       }
 
       setIsCreateChannelOpen(false);
       setNewChannelName('');
       setNewChannelDescription('');
       toast({
-        title: 'Channel created',
-        description: `${payload.channel.name} is ready.`,
+        title: t('chat.channel.createdTitle'),
+        description: t('chat.channel.createdDescription', { name: payload.channel.name }),
       });
       await refetch();
       if (payload.room?.id) {
@@ -440,8 +463,9 @@ export function ChatShell({ projectId }: { projectId: string }) {
       }
     } catch (mutationError) {
       toast({
-        title: 'Failed to create channel',
-        description: mutationError instanceof Error ? mutationError.message : 'Failed to create channel',
+        title: t('chat.channel.createFailed'),
+        description:
+          mutationError instanceof Error ? mutationError.message : t('chat.channel.createFailed'),
         variant: 'destructive',
       });
     }
@@ -459,10 +483,10 @@ export function ChatShell({ projectId }: { projectId: string }) {
     }
 
     if (!attachmentsEnabled) {
-      const errorMessage = 'Attachments are disabled in this project.';
+      const errorMessage = t('chat.send.attachmentsDisabled');
       setComposerError(errorMessage);
       toast({
-        title: 'Attachments unavailable',
+        title: t('chat.attachmentsUnavailable'),
         description: errorMessage,
         variant: 'destructive',
       });
@@ -479,7 +503,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
     }
 
     if (!selectedRoomId || !canSendMessages) {
-      setComposerError(sendDisabledReason || 'You cannot send messages right now.');
+      setComposerError(sendDisabledReason || t('chat.send.cannotSend'));
       return;
     }
 
@@ -488,7 +512,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
     }
 
     if (queuedFiles.length > 0 && !attachmentsEnabled) {
-      setComposerError('Attachments are disabled in this project.');
+      setComposerError(t('chat.send.attachmentsDisabled'));
       return;
     }
 
@@ -514,7 +538,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
       setQueuedFiles([]);
     } catch (mutationError) {
       const description =
-        mutationError instanceof Error ? mutationError.message : 'Failed to send message';
+        mutationError instanceof Error ? mutationError.message : t('chat.message.sendFailed');
       chatClientError('chat-shell.message.send.error', {
         roomId: selectedRoomId,
         bodyLength: trimmedComposerValue.length,
@@ -523,7 +547,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
       });
       setComposerError(description);
       toast({
-        title: 'Failed to send message',
+        title: t('chat.message.sendFailed'),
         description,
         variant: 'destructive',
       });
@@ -543,8 +567,9 @@ export function ChatShell({ projectId }: { projectId: string }) {
       await reactToMessage.mutateAsync({ messageId, reactionEmoji: emoji });
     } catch (mutationError) {
       toast({
-        title: 'Failed to update reaction',
-        description: mutationError instanceof Error ? mutationError.message : 'Failed to update reaction',
+        title: t('chat.message.reactionFailed'),
+        description:
+          mutationError instanceof Error ? mutationError.message : t('chat.message.reactionFailed'),
         variant: 'destructive',
       });
     }
@@ -555,8 +580,9 @@ export function ChatShell({ projectId }: { projectId: string }) {
       await deleteMessage.mutateAsync(messageId);
     } catch (mutationError) {
       toast({
-        title: 'Failed to delete message',
-        description: mutationError instanceof Error ? mutationError.message : 'Failed to delete message',
+        title: t('chat.message.deleteFailed'),
+        description:
+          mutationError instanceof Error ? mutationError.message : t('chat.message.deleteFailed'),
         variant: 'destructive',
       });
     }
@@ -572,21 +598,21 @@ export function ChatShell({ projectId }: { projectId: string }) {
       toast({
         title:
           pendingModerationAction === 'clear_deleted'
-            ? 'Deleted messages cleared'
-            : 'Room history cleared',
+            ? t('chat.moderation.deletedCleared')
+            : t('chat.moderation.historyCleared'),
         description:
           result.affectedCount > 0
-            ? `${result.affectedCount} message${result.affectedCount === 1 ? '' : 's'} updated.`
-            : 'Nothing needed cleaning up.',
+            ? t('chat.moderation.messagesUpdated', { count: result.affectedCount })
+            : t('chat.moderation.nothingToClean'),
       });
       setPendingModerationAction(null);
     } catch (mutationError) {
       toast({
-        title: 'Moderation action failed',
+        title: t('chat.moderation.actionFailed'),
         description:
           mutationError instanceof Error
             ? mutationError.message
-            : 'Failed to update conversation moderation state',
+            : t('chat.moderation.actionFailedDescription'),
         variant: 'destructive',
       });
     }
@@ -595,7 +621,9 @@ export function ChatShell({ projectId }: { projectId: string }) {
   function clearPreparedVoiceSession(roomId?: string | null) {
     if (!roomId || preparedVoiceSessionRef.current?.roomId === roomId) {
       preparedVoiceSessionRef.current = null;
-      setPreparedVoiceSession((current) => (!roomId || current?.roomId === roomId ? null : current));
+      setPreparedVoiceSession((current) =>
+        !roomId || current?.roomId === roomId ? null : current
+      );
     }
 
     if (!roomId || prepareVoiceSessionPromiseRef.current?.roomId === roomId) {
@@ -630,7 +658,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
         chatClientError('chat-shell.voice.prepare.timeout', {
           roomId,
         });
-        reject(new Error('Preparing the voice room took too long. Try again.'));
+        reject(new Error(t('chat.voice.prepareTimeout')));
       }, 10_000);
 
       void (async () => {
@@ -645,7 +673,10 @@ export function ChatShell({ projectId }: { projectId: string }) {
             });
           } catch (error) {
             const message = error instanceof Error ? error.message.toLowerCase() : '';
-            if (message.includes('start a call before joining') || message.includes('no active call')) {
+            if (
+              message.includes('start a call before joining') ||
+              message.includes('no active call')
+            ) {
               chatClientDebug('chat-shell.voice.prepare.start-call', {
                 roomId,
               });
@@ -735,7 +766,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
     void prepareVoiceSession(selectedRoomId)
       .catch((mutationError) => {
         const description =
-          mutationError instanceof Error ? mutationError.message : 'Failed to prepare the voice room';
+          mutationError instanceof Error ? mutationError.message : t('chat.voice.prepareFailed');
         setCallError(description);
       })
       .finally(() => {
@@ -781,8 +812,8 @@ export function ChatShell({ projectId }: { projectId: string }) {
         },
         target: {
           roomId: selectedRoomId,
-          roomTitle: selectedRoomMeta?.title || 'Voice room',
-          roomSubtitle: selectedRoomMeta?.subtitle || 'Project conversation',
+          roomTitle: selectedRoomMeta?.title || t('chat.voice.voiceRoom'),
+          roomSubtitle: selectedRoomMeta?.subtitle || t('chat.voice.projectConversation'),
           roomHref: `/projects/${projectId}/chat?roomId=${selectedRoomId}`,
           projectName: bootstrap.project.name,
           projectPath: bootstrap.project.key.toLowerCase(),
@@ -808,7 +839,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
       });
     } catch (mutationError) {
       const description =
-        mutationError instanceof Error ? mutationError.message : 'Failed to join call';
+        mutationError instanceof Error ? mutationError.message : t('chat.voice.joinFailed');
       stopMediaStream(options.preflightMicrophoneStream);
       chatClientError('chat-shell.voice.join.error', {
         roomId: selectedRoomId,
@@ -817,7 +848,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
       });
       setCallError(description);
       toast({
-        title: 'Failed to join call',
+        title: t('chat.voice.joinFailed'),
         description,
         variant: 'destructive',
       });
@@ -851,9 +882,9 @@ export function ChatShell({ projectId }: { projectId: string }) {
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex items-center gap-2 text-sm">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Loading chat…
+          {t('chat.loading')}
         </div>
       </div>
     );
@@ -864,9 +895,9 @@ export function ChatShell({ projectId }: { projectId: string }) {
       <div className="flex h-full items-center justify-center p-6">
         <Card className="max-w-md">
           <CardHeader>
-            <CardTitle>Chat is unavailable</CardTitle>
+            <CardTitle>{t('chat.unavailableTitle')}</CardTitle>
             <CardDescription>
-              {error instanceof Error ? error.message : 'Failed to load project chat.'}
+              {error instanceof Error ? error.message : t('chat.unavailableDescription')}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -879,18 +910,18 @@ export function ChatShell({ projectId }: { projectId: string }) {
       <div className="p-6">
         <Card className="max-w-2xl">
           <CardHeader>
-            <CardTitle>Chat & Calls are disabled</CardTitle>
-            <CardDescription>
-              Enable communications in workspace or project settings to use channels, issue discussions, and voice rooms.
-            </CardDescription>
+            <CardTitle>{t('chat.disabledTitle')}</CardTitle>
+            <CardDescription>{t('chat.disabledDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
               <Button asChild variant="outline">
-                <Link href={`/projects/${projectId}/settings?tab=chat-calls`}>Project settings</Link>
+                <Link href={`/projects/${projectId}/settings?tab=chat-calls`}>
+                  {t('chat.projectSettings')}
+                </Link>
               </Button>
               <Button asChild variant="outline">
-                <Link href="/settings?tab=communications">Workspace settings</Link>
+                <Link href="/settings?tab=communications">{t('chat.workspaceSettings')}</Link>
               </Button>
             </div>
           </CardContent>
@@ -916,16 +947,21 @@ export function ChatShell({ projectId }: { projectId: string }) {
       <Dialog open={isCreateChannelOpen} onOpenChange={setIsCreateChannelOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Create channel</DialogTitle>
-            <DialogDescription>Add a focused room for a release stream, team function, or incident lane.</DialogDescription>
+            <DialogTitle>{t('chat.createChannel.title')}</DialogTitle>
+            <DialogDescription>{t('chat.createChannel.description')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Name</label>
-              <Input value={newChannelName} onChange={(event) => setNewChannelName(event.target.value)} />
+              <label className="text-sm font-medium">{t('chat.createChannel.nameLabel')}</label>
+              <Input
+                value={newChannelName}
+                onChange={(event) => setNewChannelName(event.target.value)}
+              />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Description</label>
+              <label className="text-sm font-medium">
+                {t('chat.createChannel.descriptionLabel')}
+              </label>
               <Textarea
                 value={newChannelDescription}
                 onChange={(event) => setNewChannelDescription(event.target.value)}
@@ -934,7 +970,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
             </div>
             <div className="flex justify-end">
               <Button onClick={handleCreateChannel} disabled={!newChannelName.trim()}>
-                Create channel
+                {t('chat.createChannel.submit')}
               </Button>
             </div>
           </div>
@@ -952,25 +988,29 @@ export function ChatShell({ projectId }: { projectId: string }) {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {pendingModerationAction === 'clear_deleted' ? 'Clear deleted messages' : 'Clear room history'}
+              {pendingModerationAction === 'clear_deleted'
+                ? t('chat.moderation.clearDeletedTitle')
+                : t('chat.moderation.clearHistoryTitle')}
             </DialogTitle>
             <DialogDescription>
               {pendingModerationAction === 'clear_deleted'
-                ? 'Permanently remove deleted tombstones from this conversation for everyone.'
-                : 'Permanently remove the room history for everyone. Active calls stay untouched.'}
+                ? t('chat.moderation.clearDeletedDescription')
+                : t('chat.moderation.clearHistoryDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setPendingModerationAction(null)}>
-              Cancel
+              {t('chat.cancel')}
             </Button>
             <Button
               variant="destructive"
               onClick={() => void handleModerationAction()}
               disabled={moderateMessages.isPending}
             >
-              {moderateMessages.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Confirm
+              {moderateMessages.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              {t('chat.confirm')}
             </Button>
           </div>
         </DialogContent>
@@ -979,313 +1019,328 @@ export function ChatShell({ projectId }: { projectId: string }) {
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
         <SheetContent side="left" className="w-[320px] p-0">
           <SheetHeader className="border-b px-4 py-4 text-left">
-            <SheetTitle>Conversations</SheetTitle>
+            <SheetTitle>{t('chat.conversations')}</SheetTitle>
           </SheetHeader>
           {sidebar}
         </SheetContent>
       </Sheet>
 
       <PageSidebarContent>
-        <div className="flex h-full min-h-0 flex-col bg-background">{sidebar}</div>
+        <div className="bg-background flex h-full min-h-0 flex-col">{sidebar}</div>
       </PageSidebarContent>
 
-      <div className="flex h-full min-h-0 bg-background">
+      <div className="bg-background flex h-full min-h-0">
         <main className="flex min-h-0 min-w-0 flex-1">
           {selectedRoomMeta ? (
             <>
               <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-              <div className="border-b bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-6">
-                <div className="mx-auto flex w-full max-w-6xl items-start justify-between gap-4">
-                  <div className="min-w-0 flex items-start gap-3">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="mt-0.5 h-8 w-8 lg:hidden"
-                      onClick={() => setIsSidebarOpen(true)}
-                    >
-                      <PanelLeft className="h-4 w-4" />
-                    </Button>
-                    <div className="min-w-0 space-y-1">
-                      <div className="flex items-center gap-2">
-                        {selectedRoomMeta.kind === 'channel' ? (
-                          <Hash className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        ) : (
-                          <MessageSquareText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        )}
-                        <div className="truncate text-base font-semibold">{selectedRoomMeta.title}</div>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span className="truncate">
-                          {selectedRoomMeta.subtitle}
-                          {combinedActiveCall ? ` · ${Number(combinedActiveCall.participantCount) || 0} in call` : ''}
-                          {stream.presence.length ? ` · ${stream.presence.length} online` : ''}
-                        </span>
-                        {stream.isConnected ? (
-                          <span className="live-pill shrink-0">Live</span>
-                        ) : (
-                          <span className="chip-amber shrink-0">Reconnecting</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex shrink-0 items-center gap-2">
-                    {bootstrap.permissions.canModerateMessages ? (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            className="h-9 w-9"
-                            aria-label="Moderation tools"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
-                          <DropdownMenuItem onClick={() => setPendingModerationAction('clear_deleted')}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Clear deleted messages
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => setPendingModerationAction('clear_room')}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Clear room history
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    ) : null}
-                    {voice.currentSession ? (
+                <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 border-b px-4 py-3 backdrop-blur sm:px-6">
+                  <div className="mx-auto flex w-full max-w-6xl items-start justify-between gap-4">
+                    <div className="flex min-w-0 items-start gap-3">
                       <Button
-                        variant={isCurrentVoiceRoom ? 'secondary' : 'outline'}
-                        size="sm"
-                        onClick={() => {
-                          if (voice.currentTarget?.roomHref && !isCurrentVoiceRoom) {
-                            router.push(voice.currentTarget.roomHref);
-                          }
-                        }}
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="mt-0.5 h-8 w-8 lg:hidden"
+                        onClick={() => setIsSidebarOpen(true)}
                       >
-                        <Volume2 className="mr-1.5 h-4 w-4" />
-                        {isCurrentVoiceRoom ? 'In call' : 'Open call'}
+                        <PanelLeft className="h-4 w-4" />
                       </Button>
-                    ) : null}
-                    {bootstrap.effectiveSettings.voiceEnabled ? (
-                      <Button
-                        variant={combinedActiveCall ? 'outline' : 'default'}
-                        size="sm"
-                        onClick={handleOpenVoiceSetup}
-                        disabled={
-                          isJoiningCall ||
-                          Boolean(voice.currentSession) ||
-                          (!combinedActiveCall && !bootstrap.permissions.canStartCalls)
-                        }
-                      >
-                        {isJoiningCall ? (
-                          <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                        ) : (
-                          <PhoneCall className="mr-1.5 h-4 w-4" />
-                        )}
-                        {voice.currentSession ? 'In call' : combinedActiveCall ? 'Join call' : 'Start call'}
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-
-              {callError ? (
-                <div className="border-b px-4 py-2">
-                  <div className="mx-auto w-full max-w-3xl rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
-                    {callError}
-                  </div>
-                </div>
-              ) : null}
-
-              {combinedActiveCall ? (
-                <div className="border-b px-4 py-2">
-                <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 rounded-md border border-accent-emerald/20 bg-accent-emerald/5 px-3 py-2 text-xs">
-                    <div className="min-w-0">
-                      <div className="font-medium text-foreground">
-                        {isCurrentVoiceRoom ? 'Voice call is live' : 'Active call in this room'}
-                      </div>
-                      <div className="truncate text-muted-foreground">
-                        {isCurrentVoiceRoom
-                          ? 'This room is active in the global sidebar dock'
-                          : 'Someone in this room already started a call'}
-                        {combinedActiveCall && 'participantCount' in combinedActiveCall
-                          ? ` · ${Number(combinedActiveCall.participantCount) || 0} in call`
-                          : ''}
-                      </div>
-                    </div>
-                    {isCurrentVoiceRoom ? (
-                      <Button size="sm" variant="outline" onClick={() => void voice.leaveCurrentCall()}>
-                        <PhoneOff className="mr-2 h-3.5 w-3.5" />
-                        Leave
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handleOpenVoiceSetup}
-                        disabled={Boolean(voice.currentSession) || isJoiningCall}
-                      >
-                        <PhoneCall className="mr-2 h-3.5 w-3.5" />
-                        Join
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ) : null}
-
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                <div
-                  className="mx-auto flex w-full max-w-6xl flex-col px-4 py-5 sm:px-6"
-                >
-                  {messagesQuery.isLoading ? (
-                    <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Loading messages…
-                    </div>
-                  ) : messageList.length ? (
-                    <>
-                      {messagesQuery.hasMore ? (
-                        <div className="pb-3">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => void messagesQuery.loadMore()}
-                            disabled={messagesQuery.isLoadingMore}
-                          >
-                            {messagesQuery.isLoadingMore ? (
-                              <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                            ) : null}
-                            Load older messages
-                          </Button>
+                      <div className="min-w-0 space-y-1">
+                        <div className="flex items-center gap-2">
+                          {selectedRoomMeta.kind === 'channel' ? (
+                            <Hash className="text-muted-foreground h-4 w-4 shrink-0" />
+                          ) : (
+                            <MessageSquareText className="text-muted-foreground h-4 w-4 shrink-0" />
+                          )}
+                          <div className="truncate text-base font-semibold">
+                            {selectedRoomMeta.title}
+                          </div>
                         </div>
-                      ) : null}
-                      {messageList.map((message) => (
-                        <ChatMessageRow
-                          key={message.id}
-                          message={message}
-                          onDelete={handleDeleteMessage}
-                          onToggleReaction={handleToggleReaction}
-                        />
-                      ))}
-                    </>
-                  ) : (
-                    <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border/60 px-8 text-center">
-                      <MessageSquareText className="h-6 w-6 text-muted-foreground" aria-hidden />
-                      <p className="text-sm text-muted-foreground">No messages yet — post the first update.</p>
+                        <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                          <span className="truncate">
+                            {selectedRoomMeta.subtitle}
+                            {combinedActiveCall
+                              ? ` · ${t('chat.inCall', { count: Number(combinedActiveCall.participantCount) || 0 })}`
+                              : ''}
+                            {stream.presence.length
+                              ? ` · ${t('chat.online', { count: stream.presence.length })}`
+                              : ''}
+                          </span>
+                          {stream.isConnected ? (
+                            <span className="live-pill shrink-0">{t('chat.live')}</span>
+                          ) : (
+                            <span className="chip-amber shrink-0">{t('chat.reconnecting')}</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  )}
-                  <div ref={messageEndRef} />
-                </div>
-              </div>
 
-              <div className="border-t bg-background/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-6">
-                <form
-                  className="mx-auto flex w-full max-w-6xl flex-col gap-3"
-                  onSubmit={handleComposerSubmit}
-                >
-                  {queuedFiles.length ? (
-                    <div className="flex flex-wrap gap-2">
-                      {queuedFiles.map((file, index) => (
-                        <span
-                          key={`${file.name}-${index}`}
-                          className="chip max-w-full gap-1.5"
+                    <div className="flex shrink-0 items-center gap-2">
+                      {bootstrap.permissions.canModerateMessages ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="h-9 w-9"
+                              aria-label={t('chat.moderationTools')}
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuItem
+                              onClick={() => setPendingModerationAction('clear_deleted')}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              {t('chat.moderation.clearDeletedTitle')}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => setPendingModerationAction('clear_room')}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              {t('chat.moderation.clearHistoryTitle')}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : null}
+                      {voice.currentSession ? (
+                        <Button
+                          variant={isCurrentVoiceRoom ? 'secondary' : 'outline'}
+                          size="sm"
+                          onClick={() => {
+                            if (voice.currentTarget?.roomHref && !isCurrentVoiceRoom) {
+                              router.push(voice.currentTarget.roomHref);
+                            }
+                          }}
                         >
-                          <span className="truncate">{file.name}</span>
+                          <Volume2 className="mr-1.5 h-4 w-4" />
+                          {isCurrentVoiceRoom ? t('chat.voice.inCall') : t('chat.voice.openCall')}
+                        </Button>
+                      ) : null}
+                      {bootstrap.effectiveSettings.voiceEnabled ? (
+                        <Button
+                          variant={combinedActiveCall ? 'outline' : 'default'}
+                          size="sm"
+                          onClick={handleOpenVoiceSetup}
+                          disabled={
+                            isJoiningCall ||
+                            Boolean(voice.currentSession) ||
+                            (!combinedActiveCall && !bootstrap.permissions.canStartCalls)
+                          }
+                        >
+                          {isJoiningCall ? (
+                            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                          ) : (
+                            <PhoneCall className="mr-1.5 h-4 w-4" />
+                          )}
+                          {voice.currentSession
+                            ? t('chat.voice.inCall')
+                            : combinedActiveCall
+                              ? t('chat.voice.joinCall')
+                              : t('chat.voice.startCall')}
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+
+                {callError ? (
+                  <div className="border-b px-4 py-2">
+                    <div className="border-destructive/40 bg-destructive/5 text-destructive mx-auto w-full max-w-3xl rounded-md border px-3 py-2 text-xs">
+                      {callError}
+                    </div>
+                  </div>
+                ) : null}
+
+                {combinedActiveCall ? (
+                  <div className="border-b px-4 py-2">
+                    <div className="border-accent-emerald/20 bg-accent-emerald/5 mx-auto flex w-full max-w-6xl items-center justify-between gap-3 rounded-md border px-3 py-2 text-xs">
+                      <div className="min-w-0">
+                        <div className="text-foreground font-medium">
+                          {isCurrentVoiceRoom
+                            ? t('chat.voice.callLiveTitle')
+                            : t('chat.voice.activeCallTitle')}
+                        </div>
+                        <div className="text-muted-foreground truncate">
+                          {isCurrentVoiceRoom
+                            ? t('chat.voice.callLiveDescription')
+                            : t('chat.voice.activeCallDescription')}
+                          {combinedActiveCall && 'participantCount' in combinedActiveCall
+                            ? ` · ${t('chat.inCall', { count: Number(combinedActiveCall.participantCount) || 0 })}`
+                            : ''}
+                        </div>
+                      </div>
+                      {isCurrentVoiceRoom ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => void voice.leaveCurrentCall()}
+                        >
+                          <PhoneOff className="mr-2 h-3.5 w-3.5" />
+                          {t('chat.voice.leave')}
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleOpenVoiceSetup}
+                          disabled={Boolean(voice.currentSession) || isJoiningCall}
+                        >
+                          <PhoneCall className="mr-2 h-3.5 w-3.5" />
+                          {t('chat.voice.join')}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="min-h-0 flex-1 overflow-y-auto">
+                  <div className="mx-auto flex w-full max-w-6xl flex-col px-4 py-5 sm:px-6">
+                    {messagesQuery.isLoading ? (
+                      <div className="text-muted-foreground flex items-center gap-2 py-8 text-sm">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {t('chat.loadingMessages')}
+                      </div>
+                    ) : messageList.length ? (
+                      <>
+                        {messagesQuery.hasMore ? (
+                          <div className="pb-3">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => void messagesQuery.loadMore()}
+                              disabled={messagesQuery.isLoadingMore}
+                            >
+                              {messagesQuery.isLoadingMore ? (
+                                <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                              ) : null}
+                              {t('chat.loadOlder')}
+                            </Button>
+                          </div>
+                        ) : null}
+                        {messageList.map((message) => (
+                          <ChatMessageRow
+                            key={message.id}
+                            message={message}
+                            onDelete={handleDeleteMessage}
+                            onToggleReaction={handleToggleReaction}
+                          />
+                        ))}
+                      </>
+                    ) : (
+                      <div className="border-border/60 flex min-h-[320px] flex-col items-center justify-center gap-3 rounded-lg border border-dashed px-8 text-center">
+                        <MessageSquareText className="text-muted-foreground h-6 w-6" aria-hidden />
+                        <p className="text-muted-foreground text-sm">{t('chat.noMessages')}</p>
+                      </div>
+                    )}
+                    <div ref={messageEndRef} />
+                  </div>
+                </div>
+
+                <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 border-t px-4 py-4 backdrop-blur sm:px-6">
+                  <form
+                    className="mx-auto flex w-full max-w-6xl flex-col gap-3"
+                    onSubmit={handleComposerSubmit}
+                  >
+                    {queuedFiles.length ? (
+                      <div className="flex flex-wrap gap-2">
+                        {queuedFiles.map((file, index) => (
+                          <span key={`${file.name}-${index}`} className="chip max-w-full gap-1.5">
+                            <span className="truncate">{file.name}</span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setQueuedFiles((current) =>
+                                  current.filter((_, currentIndex) => currentIndex !== index)
+                                )
+                              }
+                              className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2"
+                              aria-label={t('chat.removeFile', { name: file.name })}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    {composerError ? (
+                      <div className="border-destructive/30 bg-destructive/5 text-destructive rounded-md border px-3 py-2 text-xs">
+                        {composerError}
+                      </div>
+                    ) : null}
+
+                    <div className="surface-card p-2">
+                      <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-2 px-1 pb-2 text-xs">
+                        <div className="flex flex-wrap items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => setQueuedFiles((current) => current.filter((_, currentIndex) => currentIndex !== index))}
-                            className="text-muted-foreground transition-colors duration-150 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
-                            aria-label={`Remove ${file.name}`}
+                            className="border-border ease-smooth hover:bg-accent hover:text-foreground inline-flex items-center gap-1 rounded-md border px-2 py-1 transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={!attachmentsEnabled || isSendingMessage}
+                            aria-label={t('chat.attachFiles')}
                           >
-                            <X className="h-3.5 w-3.5" />
+                            <ImagePlus className="h-3.5 w-3.5" />
+                            {t('chat.attach')}
                           </button>
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
+                          {sendDisabledReason ? (
+                            <span>{sendDisabledReason}</span>
+                          ) : (
+                            <span className="hidden sm:inline">{t('chat.composerHint')}</span>
+                          )}
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            multiple
+                            className="hidden"
+                            onChange={(event) => queueFiles(Array.from(event.target.files || []))}
+                          />
+                        </div>
+                      </div>
 
-                  {composerError ? (
-                    <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
-                      {composerError}
-                    </div>
-                  ) : null}
-
-                  <div className="surface-card p-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-2 text-xs text-muted-foreground">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 transition-colors duration-200 ease-smooth hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={!attachmentsEnabled || isSendingMessage}
-                          aria-label="Attach files"
-                        >
-                          <ImagePlus className="h-3.5 w-3.5" />
-                          Attach
-                        </button>
-                        {sendDisabledReason ? (
-                          <span>{sendDisabledReason}</span>
-                        ) : (
-                          <span className="hidden sm:inline">
-                            Paste screenshots directly. Ctrl/Cmd + Enter sends.
-                          </span>
-                        )}
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          multiple
-                          className="hidden"
-                          onChange={(event) => queueFiles(Array.from(event.target.files || []))}
+                      <div className="flex items-end gap-2">
+                        <Textarea
+                          value={composerValue}
+                          onChange={(event) => {
+                            setComposerValue(event.target.value);
+                            if (composerError) {
+                              setComposerError(null);
+                            }
+                          }}
+                          onKeyDown={handleComposerKeyDown}
+                          onPaste={handlePaste}
+                          placeholder={t('chat.composerPlaceholder')}
+                          className="max-h-[200px] min-h-[80px] flex-1 resize-none overflow-y-auto border-0 bg-transparent px-2 py-1.5 shadow-none focus-visible:ring-0"
+                          disabled={!canSendMessages || isSendingMessage}
                         />
+
+                        <Button
+                          type="submit"
+                          size="sm"
+                          className="h-8 w-8 shrink-0 p-0"
+                          aria-label={t('chat.sendMessage')}
+                          disabled={
+                            isSendingMessage ||
+                            Boolean(sendDisabledReason) ||
+                            (!trimmedComposerValue && queuedFiles.length === 0)
+                          }
+                        >
+                          {isSendingMessage ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <SendHorizontal className="h-4 w-4" />
+                          )}
+                        </Button>
                       </div>
                     </div>
-
-                    <div className="flex items-end gap-2">
-                      <Textarea
-                        value={composerValue}
-                        onChange={(event) => {
-                          setComposerValue(event.target.value);
-                          if (composerError) {
-                            setComposerError(null);
-                          }
-                        }}
-                        onKeyDown={handleComposerKeyDown}
-                        onPaste={handlePaste}
-                        placeholder="Write a message, use @name, or paste an image."
-                        className="min-h-[80px] max-h-[200px] flex-1 resize-none overflow-y-auto border-0 bg-transparent px-2 py-1.5 shadow-none focus-visible:ring-0"
-                        disabled={!canSendMessages || isSendingMessage}
-                      />
-
-                      <Button
-                        type="submit"
-                        size="sm"
-                        className="h-8 w-8 p-0 shrink-0"
-                        aria-label="Send message"
-                        disabled={
-                          isSendingMessage ||
-                          Boolean(sendDisabledReason) ||
-                          (!trimmedComposerValue && queuedFiles.length === 0)
-                        }
-                      >
-                        {isSendingMessage ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <SendHorizontal className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </form>
-              </div>
+                  </form>
+                </div>
               </div>
 
               {bootstrap.effectiveSettings.voiceEnabled && isVoiceSetupOpen ? (
@@ -1311,10 +1366,12 @@ export function ChatShell({ projectId }: { projectId: string }) {
             </>
           ) : (
             <div className="flex h-full items-center justify-center p-6">
-              <div className="text-center space-y-2">
-                <p className="text-sm font-medium text-foreground">Select a conversation</p>
-                <p className="text-sm text-muted-foreground max-w-xs">
-                  Choose a channel or open an issue or doc discussion to start collaborating.
+              <div className="space-y-2 text-center">
+                <p className="text-foreground text-sm font-medium">
+                  {t('chat.selectConversation')}
+                </p>
+                <p className="text-muted-foreground max-w-xs text-sm">
+                  {t('chat.selectConversationHint')}
                 </p>
               </div>
             </div>
@@ -1336,18 +1393,26 @@ function ChatSidebar({
   onSelectRoom: (roomId: string) => void;
   onCreateChannel: () => void;
 }) {
+  const t = useTranslations('workspaceTools');
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background/98">
-      <div className="border-b bg-background/95 px-5 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <div className="bg-background/98 flex h-full min-h-0 flex-col">
+      <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 border-b px-5 py-4 backdrop-blur">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-1">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Project chat</div>
+            <div className="text-muted-foreground text-[10px] font-semibold uppercase tracking-[0.18em]">
+              {t('chat.sidebar.projectChat')}
+            </div>
             <div className="truncate text-sm font-semibold">{bootstrap.project.name}</div>
-            <div className="text-xs text-muted-foreground">Channels and linked discussions</div>
+            <div className="text-muted-foreground text-xs">{t('chat.sidebar.subtitle')}</div>
           </div>
           {bootstrap.permissions.canCreateChannels ? (
-            <Button size="sm" variant="outline" className="h-8 shrink-0 px-3" onClick={onCreateChannel}>
-              New
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 shrink-0 px-3"
+              onClick={onCreateChannel}
+            >
+              {t('chat.sidebar.new')}
             </Button>
           ) : null}
         </div>
@@ -1356,7 +1421,9 @@ function ChatSidebar({
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="space-y-6 px-4 py-4">
           <section className="space-y-2">
-            <div className="px-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Channels</div>
+            <div className="text-muted-foreground px-1 text-[10px] font-semibold uppercase tracking-[0.18em]">
+              {t('chat.sidebar.channels')}
+            </div>
             {bootstrap.channels.map((channel) => (
               <button
                 key={channel.id}
@@ -1368,10 +1435,10 @@ function ChatSidebar({
                 <Hash className="h-4 w-4 shrink-0" />
                 <span className="min-w-0 flex-1 truncate">{channel.name}</span>
                 {channel.activeCall ? (
-                  <span className="chip text-[11px]">call</span>
+                  <span className="chip text-[11px]">{t('chat.sidebar.call')}</span>
                 ) : null}
                 {channel.unreadCount ? (
-                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-semibold px-1">
+                  <span className="bg-primary text-primary-foreground flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold">
                     {channel.unreadCount > 99 ? '99+' : channel.unreadCount}
                   </span>
                 ) : null}
@@ -1380,7 +1447,9 @@ function ChatSidebar({
           </section>
 
           <section className="space-y-2">
-            <div className="px-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Recent</div>
+            <div className="text-muted-foreground px-1 text-[10px] font-semibold uppercase tracking-[0.18em]">
+              {t('chat.sidebar.recent')}
+            </div>
             {bootstrap.recentDiscussions.length ? (
               bootstrap.recentDiscussions.map((discussion) => (
                 <button
@@ -1392,29 +1461,31 @@ function ChatSidebar({
                 >
                   <MessageSquareText className="mt-0.5 h-4 w-4 shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium text-foreground">
+                    <div className="text-foreground truncate text-sm font-medium">
                       {typeof discussion.context?.title === 'string'
                         ? discussion.context.title
-                        : discussion.title || 'Discussion'}
+                        : discussion.title || t('chat.discussion')}
                     </div>
-                    <div className="truncate text-xs text-muted-foreground">
+                    <div className="text-muted-foreground truncate text-xs">
                       {discussion.kind === 'issue_thread'
-                        ? (discussion.context?.key as string | undefined) || 'Issue'
-                        : 'Document'}
+                        ? (discussion.context?.key as string | undefined) || t('chat.sidebar.issue')
+                        : t('chat.sidebar.document')}
                     </div>
                   </div>
                   {discussion.activeCall ? (
-                    <span className="chip text-[11px]">call</span>
+                    <span className="chip text-[11px]">{t('chat.sidebar.call')}</span>
                   ) : null}
                   {discussion.unreadCount ? (
-                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-semibold px-1">
+                    <span className="bg-primary text-primary-foreground flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold">
                       {discussion.unreadCount > 99 ? '99+' : discussion.unreadCount}
                     </span>
                   ) : null}
                 </button>
               ))
             ) : (
-              <div className="px-1 py-3 text-sm text-muted-foreground">Issue and doc threads appear here.</div>
+              <div className="text-muted-foreground px-1 py-3 text-sm">
+                {t('chat.sidebar.recentEmpty')}
+              </div>
             )}
           </section>
         </div>
@@ -1432,19 +1503,17 @@ function ChatMessageRow({
   onDelete: (messageId: string) => Promise<void>;
   onToggleReaction: (messageId: string, emoji: string) => Promise<void>;
 }) {
-  const authorName = message.author.name || message.author.email || 'Unknown user';
+  const t = useTranslations('workspaceTools');
+  const authorName = message.author.name || message.author.email || t('chat.message.unknownUser');
   const moderationLabel = message.moderation?.deletedByName
-    ? `Deleted by ${message.moderation.deletedByName}`
-    : 'Deleted message';
+    ? t('chat.message.deletedBy', { name: message.moderation.deletedByName })
+    : t('chat.message.deletedLabel');
   // Heuristic: users can edit their own messages. Used for a subtle right-aligned variant.
   const isOwnMessage = Boolean(message.canEdit) && !message.deletedAt;
 
   return (
     <div
-      className={cn(
-        'group flex gap-3 py-3 animate-fade-up',
-        isOwnMessage && 'flex-row-reverse'
-      )}
+      className={cn('animate-fade-up group flex gap-3 py-3', isOwnMessage && 'flex-row-reverse')}
     >
       <Avatar className="mt-0.5 h-7 w-7 shrink-0">
         <AvatarImage src={message.author.image || undefined} alt={authorName} />
@@ -1459,53 +1528,48 @@ function ChatMessageRow({
           )}
         >
           <span className="text-sm font-medium">{authorName}</span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-muted-foreground text-xs">
             {message.optimistic
-              ? 'Sending…'
+              ? t('chat.message.sending')
               : formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
-            {message.editedAt ? ' · edited' : ''}
+            {message.editedAt ? ` · ${t('chat.message.edited')}` : ''}
           </span>
           {message.canDelete ? (
             <button
               type="button"
-              className="text-[11px] text-muted-foreground opacity-0 transition-opacity duration-200 hover:text-foreground group-hover:opacity-100"
+              className="text-muted-foreground hover:text-foreground text-[11px] opacity-0 transition-opacity duration-200 group-hover:opacity-100"
               onClick={() => void onDelete(message.id)}
             >
-              Delete
+              {t('chat.message.delete')}
             </button>
           ) : null}
         </div>
 
         <div
           className={cn(
-            'mt-1 whitespace-pre-wrap text-sm leading-relaxed text-foreground',
-            message.deletedAt && 'italic text-muted-foreground',
+            'text-foreground mt-1 whitespace-pre-wrap text-sm leading-relaxed',
+            message.deletedAt && 'text-muted-foreground italic',
             isOwnMessage &&
               !message.deletedAt &&
-              'inline-block max-w-full rounded-md bg-primary/8 px-3 py-1.5 text-left'
+              'bg-primary/8 inline-block max-w-full rounded-md px-3 py-1.5 text-left'
           )}
         >
-          {message.deletedAt ? 'Message deleted' : message.body}
+          {message.deletedAt ? t('chat.message.messageDeleted') : message.body}
         </div>
 
         {message.deletedAt && message.moderation?.deletedBody ? (
           <div className="surface-inset mt-2 rounded-md px-3 py-2 text-left">
-            <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+            <div className="text-muted-foreground text-[11px] font-medium uppercase tracking-[0.12em]">
               {moderationLabel}
             </div>
-            <div className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
+            <div className="text-foreground/90 mt-2 whitespace-pre-wrap text-sm leading-relaxed">
               {message.moderation.deletedBody}
             </div>
           </div>
         ) : null}
 
         {message.attachments.length ? (
-          <div
-            className={cn(
-              'mt-2 flex flex-wrap gap-2',
-              isOwnMessage && 'justify-end'
-            )}
-          >
+          <div className={cn('mt-2 flex flex-wrap gap-2', isOwnMessage && 'justify-end')}>
             {message.attachments.map((attachment) =>
               attachment.filePath ? (
                 <a
@@ -1513,7 +1577,7 @@ function ChatMessageRow({
                   href={`/api/uploads/${attachment.filePath.split('/').pop()}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="chip transition-colors duration-200 hover:text-foreground"
+                  className="chip hover:text-foreground transition-colors duration-200"
                 >
                   {attachment.fileName}
                 </a>
@@ -1537,12 +1601,7 @@ function ChatMessageRow({
         ) : null}
 
         {!message.deletedAt && !message.optimistic ? (
-          <div
-            className={cn(
-              'mt-2 flex flex-wrap gap-1.5',
-              isOwnMessage && 'justify-end'
-            )}
-          >
+          <div className={cn('mt-2 flex flex-wrap gap-1.5', isOwnMessage && 'justify-end')}>
             {message.reactions.map((reaction) => (
               <button
                 key={`${message.id}-${reaction.emoji}`}
@@ -1564,7 +1623,7 @@ function ChatMessageRow({
                 key={`${message.id}-${emoji}-quick`}
                 type="button"
                 onClick={() => void onToggleReaction(message.id, emoji)}
-                className="inline-flex items-center rounded-full border border-dashed border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors duration-200 hover:bg-accent hover:text-foreground opacity-0 group-hover:opacity-100"
+                className="border-border text-muted-foreground hover:bg-accent hover:text-foreground inline-flex items-center rounded-full border border-dashed px-2 py-0.5 text-xs opacity-0 transition-colors duration-200 group-hover:opacity-100"
               >
                 {emoji}
               </button>
@@ -1595,6 +1654,7 @@ function ChatVoiceDock({
   onDisconnected: () => Promise<void>;
   onRuntimeError: (message: string) => void;
 }) {
+  const t = useTranslations('workspaceTools');
   const disconnectHandledRef = useRef(false);
   const disconnectModeRef = useRef<'leave' | 'end' | null>(null);
   const latestOnDisconnectedRef = useRef(onDisconnected);
@@ -1625,23 +1685,17 @@ function ChatVoiceDock({
     }
   }, []);
 
-  const handleRoomError = useCallback(
-    (error: Error) => {
-      const message = formatLivekitRuntimeError(error);
-      if (!message) {
-        return;
-      }
-      latestOnRuntimeErrorRef.current(message);
-    },
-    []
-  );
+  const handleRoomError = useCallback((error: Error) => {
+    const message = formatLivekitRuntimeError(error);
+    if (!message) {
+      return;
+    }
+    latestOnRuntimeErrorRef.current(message);
+  }, []);
 
-  const handleMediaDeviceFailure = useCallback(
-    (error?: Error) => {
-      latestOnRuntimeErrorRef.current(formatMicrophoneError(error));
-    },
-    []
-  );
+  const handleMediaDeviceFailure = useCallback((error?: Error) => {
+    latestOnRuntimeErrorRef.current(formatMicrophoneError(error));
+  }, []);
 
   const handleRoomDisconnected = useCallback(() => {
     void handleDisconnected();
@@ -1652,11 +1706,11 @@ function ChatVoiceDock({
   }
 
   return (
-    <div className={cn('flex h-full min-h-0 flex-col bg-background', className)}>
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+    <div className={cn('bg-background flex h-full min-h-0 flex-col', className)}>
+      <div className="border-border flex items-center justify-between border-b px-4 py-3">
         <div>
-          <div className="text-sm font-semibold">Voice room</div>
-          <div className="text-xs text-muted-foreground">Mic, levels, test, and people</div>
+          <div className="text-sm font-semibold">{t('chat.voice.voiceRoom')}</div>
+          <div className="text-muted-foreground text-xs">{t('chat.voice.dockSubtitle')}</div>
         </div>
         {onClose ? (
           <Button
@@ -1665,7 +1719,7 @@ function ChatVoiceDock({
             size="icon"
             className="h-8 w-8"
             onClick={onClose}
-            aria-label="Close voice room"
+            aria-label={t('chat.voice.closeVoiceRoom')}
           >
             <X className="h-4 w-4" />
           </Button>
@@ -1694,14 +1748,15 @@ function ChatVoiceDock({
 
 function formatMicrophoneDeviceOptionLabel(
   device: Pick<MediaDeviceInfo, 'deviceId' | 'label'>,
-  index: number
+  index: number,
+  fallbackLabel: (index: number) => string
 ) {
   const label = device.label.trim();
   if (label) {
     return label;
   }
 
-  return `Microphone ${index + 1}`;
+  return fallbackLabel(index + 1);
 }
 
 function useMicrophoneEnvironment({
@@ -1723,11 +1778,11 @@ function useMicrophoneEnvironment({
   }) => void;
   storeAudioDeviceId: (deviceId: string) => void;
 }) {
+  const t = useTranslations('workspaceTools');
   const [microphoneDevices, setMicrophoneDevices] = useState<MicrophoneDeviceOption[]>([]);
   const [microphonePermissionState, setMicrophonePermissionState] =
     useState<MicrophonePermissionState>('unknown');
-  const [isRefreshingMicrophoneEnvironment, setIsRefreshingMicrophoneEnvironment] =
-    useState(false);
+  const [isRefreshingMicrophoneEnvironment, setIsRefreshingMicrophoneEnvironment] = useState(false);
   const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
 
   const refreshMicrophoneEnvironment = useCallback(async () => {
@@ -1834,19 +1889,16 @@ function useMicrophoneEnvironment({
       audioDeviceLabel: storedAudioDeviceLabel,
       audioDeviceGroupId: storedAudioDeviceGroupId,
     })?.label ||
-    (storedAudioDeviceId === 'default' ? 'System default microphone' : 'Selected microphone');
+    (storedAudioDeviceId === 'default'
+      ? t('chat.voice.systemDefaultMic')
+      : t('chat.voice.selectedMic'));
 
-  const microphonePermissionLabel = formatMicrophonePermissionStateLabel(
-    microphonePermissionState
-  );
-  const microphonePermissionHelp = getMicrophonePermissionHelpMessage(
-    microphonePermissionState,
-    {
-      userAgent,
-      hasDetectedDevices: microphoneDevices.length > 0,
-      labelsVisible: deviceLabelsVisible,
-    }
-  );
+  const microphonePermissionLabel = formatMicrophonePermissionStateLabel(microphonePermissionState);
+  const microphonePermissionHelp = getMicrophonePermissionHelpMessage(microphonePermissionState, {
+    userAgent,
+    hasDetectedDevices: microphoneDevices.length > 0,
+    labelsVisible: deviceLabelsVisible,
+  });
 
   return {
     deviceLabelsVisible,
@@ -1881,6 +1933,7 @@ export function VoiceJoinSetupPanel({
     pendingMicrophoneStreamPromise?: Promise<MediaStream | null> | null;
   }) => Promise<void>;
 }) {
+  const t = useTranslations('workspaceTools');
   const {
     storedAudioDeviceGroupId,
     storedAudioDeviceId,
@@ -1994,14 +2047,14 @@ export function VoiceJoinSetupPanel({
     const playPromise = audioElement.play();
     if (playPromise && typeof playPromise.catch === 'function') {
       playPromise.catch(() => {
-        setSetupError('Self-monitor playback was blocked by the browser. Try the toggle again if needed.');
+        setSetupError(t('chat.voice.selfMonitorBlocked'));
       });
     }
 
     return () => {
       resetMonitorAudio();
     };
-  }, [isSelfMonitorEnabled, isTestingMicrophone, resetMonitorAudio]);
+  }, [isSelfMonitorEnabled, isTestingMicrophone, resetMonitorAudio, t]);
 
   const requestMicrophoneStream = useCallback(async () => {
     return requestRawMicrophoneStream(storedAudioDeviceId, {
@@ -2061,7 +2114,7 @@ export function VoiceJoinSetupPanel({
         (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
 
       if (!AudioContextCtor) {
-        throw new Error('AudioContext is unavailable in this browser.');
+        throw new Error(t('chat.voice.audioContextUnavailable'));
       }
 
       const audioContext = new AudioContextCtor();
@@ -2069,7 +2122,7 @@ export function VoiceJoinSetupPanel({
         await audioContext.resume();
       }
       if (audioContext.state !== 'running') {
-        throw new Error('AudioContext could not start with the current audio device.');
+        throw new Error(t('chat.voice.audioContextFailed'));
       }
 
       const analyser = audioContext.createAnalyser();
@@ -2203,13 +2256,14 @@ export function VoiceJoinSetupPanel({
             selectedDeviceId: storedAudioDeviceId,
             resolvedDeviceId: joinAudioResolution.audioDeviceId,
           });
-          setSetupError(
-            'Chromium and Safari now start with the system default microphone first for a faster, more reliable join. You can switch inputs after the room connects.'
-          );
+          setSetupError(t('chat.voice.browserStabilityFallback'));
         }
-        if (joinAudioResolution.shouldPersist && joinAudioResolution.audioDeviceId !== storedAudioDeviceId) {
+        if (
+          joinAudioResolution.shouldPersist &&
+          joinAudioResolution.audioDeviceId !== storedAudioDeviceId
+        ) {
           storeAudioDeviceId(joinAudioResolution.audioDeviceId);
-          setSetupError('The selected microphone could not start, so TaskNebula switched to your system default microphone.');
+          setSetupError(t('chat.voice.switchedToDefault'));
         }
       }
       chatClientDebug('voice-setup.join.resolved', {
@@ -2297,7 +2351,9 @@ export function VoiceJoinSetupPanel({
             resolvedDeviceId: joinAudioResolution.audioDeviceId,
           });
           setSetupError(
-            `${formatMicrophoneError(error, { userAgent })} Joined muted so the call can start right away. You can turn the mic on once you're inside.`
+            t('chat.voice.joinedMutedFallback', {
+              error: formatMicrophoneError(error, { userAgent }),
+            })
           );
         }
       }
@@ -2316,9 +2372,11 @@ export function VoiceJoinSetupPanel({
       pendingMicrophoneStreamPromise = null;
     } catch (error) {
       stopMediaStream(preflightMicrophoneStream);
-      void pendingMicrophoneStreamPromise?.then((stream) => {
-        stopMediaStream(stream);
-      }).catch(() => {});
+      void pendingMicrophoneStreamPromise
+        ?.then((stream) => {
+          stopMediaStream(stream);
+        })
+        .catch(() => {});
       chatClientError('voice-setup.join.error', {
         startWithMicrophone,
         selectedDeviceId: storedAudioDeviceId,
@@ -2336,13 +2394,11 @@ export function VoiceJoinSetupPanel({
   }
 
   return (
-    <div className={cn('flex h-full min-h-0 flex-col bg-background', className)}>
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+    <div className={cn('bg-background flex h-full min-h-0 flex-col', className)}>
+      <div className="border-border flex items-center justify-between border-b px-4 py-3">
         <div>
-          <div className="text-sm font-semibold">Join voice room</div>
-          <div className="text-xs text-muted-foreground">
-            Pick a mic once before connecting. This keeps self-hosted calls more stable.
-          </div>
+          <div className="text-sm font-semibold">{t('chat.voice.joinVoiceRoom')}</div>
+          <div className="text-muted-foreground text-xs">{t('chat.voice.joinSetupSubtitle')}</div>
         </div>
         <Button
           type="button"
@@ -2350,7 +2406,7 @@ export function VoiceJoinSetupPanel({
           size="icon"
           className="h-8 w-8"
           onClick={onClose}
-          aria-label="Close setup panel"
+          aria-label={t('chat.voice.closeSetupPanel')}
         >
           <X className="h-4 w-4" />
         </Button>
@@ -2361,31 +2417,33 @@ export function VoiceJoinSetupPanel({
 
         <div className="surface-inset space-y-4 rounded-md px-3 py-3">
           <div className="space-y-2">
-            <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-              Input device
+            <div className="text-muted-foreground text-[11px] font-medium uppercase tracking-[0.14em]">
+              {t('chat.voice.inputDevice')}
             </div>
             <div className="truncate text-sm font-medium">{selectedMicrophoneLabel}</div>
           </div>
 
           <select
-            className="flex h-9 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="border-border bg-background focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 text-sm outline-none focus-visible:ring-2"
             value={storedAudioDeviceId || 'default'}
             onChange={(event) => {
               void handleSelectMicrophone(event.target.value);
             }}
             disabled={isJoining || isSubmittingJoin}
           >
-            <option value="default">System default microphone</option>
+            <option value="default">{t('chat.voice.systemDefaultMic')}</option>
             {microphoneDevices.map((device, index) => (
               <option key={device.deviceId} value={device.deviceId}>
-                {formatMicrophoneDeviceOptionLabel(device, index)}
+                {formatMicrophoneDeviceOptionLabel(device, index, (n) =>
+                  t('chat.voice.microphoneN', { index: n })
+                )}
               </option>
             ))}
           </select>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs text-muted-foreground">
+          <div className="border-border bg-background text-muted-foreground flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs">
             <div>
-              <span className="font-medium text-foreground">Permission:</span>{' '}
+              <span className="text-foreground font-medium">{t('chat.voice.permission')}</span>{' '}
               {microphonePermissionLabel}
             </div>
             <div className="flex flex-wrap gap-2">
@@ -2407,7 +2465,7 @@ export function VoiceJoinSetupPanel({
                   ) : (
                     <Mic className="mr-1.5 h-3.5 w-3.5" />
                   )}
-                  Unlock microphones
+                  {t('chat.voice.unlockMicrophones')}
                 </Button>
               ) : null}
               <Button
@@ -2422,19 +2480,19 @@ export function VoiceJoinSetupPanel({
                 ) : (
                   <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
                 )}
-                Refresh devices
+                {t('chat.voice.refreshDevices')}
               </Button>
             </div>
           </div>
 
-          <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+          <div className="border-border bg-muted/30 text-muted-foreground rounded-md border px-3 py-2 text-xs">
             {microphonePermissionHelp}
-            {microphoneDevices.length === 0 ? ' No microphones are currently visible to the browser.' : ''}
+            {microphoneDevices.length === 0 ? ` ${t('chat.voice.noMicsVisible')}` : ''}
             {microphonePermissionState === 'granted' && !deviceLabelsVisible
-              ? ' If you changed permissions in browser settings, use Refresh devices after returning to this tab.'
+              ? ` ${t('chat.voice.refreshAfterSettings')}`
               : ''}
             {storedAudioDeviceId !== 'default' && microphonePermissionState !== 'granted'
-              ? ' Exact microphone selection becomes reliable after the browser grants microphone access.'
+              ? ` ${t('chat.voice.exactSelectionReliable')}`
               : ''}
           </div>
 
@@ -2457,7 +2515,11 @@ export function VoiceJoinSetupPanel({
               ) : (
                 <TestTube2 className="mr-2 h-4 w-4" />
               )}
-              {isTestingMicrophone ? 'Stop test' : isPreparingMicrophoneTest ? 'Testing...' : 'Test mic'}
+              {isTestingMicrophone
+                ? t('chat.voice.stopTest')
+                : isPreparingMicrophoneTest
+                  ? t('chat.voice.testing')
+                  : t('chat.voice.testMic')}
             </Button>
             <Button
               size="sm"
@@ -2472,60 +2534,60 @@ export function VoiceJoinSetupPanel({
               }
             >
               <Volume2 className="mr-2 h-4 w-4" />
-              {isSelfMonitorEnabled ? 'Stop monitor' : 'Hear myself'}
+              {isSelfMonitorEnabled ? t('chat.voice.stopMonitor') : t('chat.voice.hearMyself')}
             </Button>
           </div>
 
-          <div className="space-y-2 rounded-md border border-border bg-background px-3 py-3">
+          <div className="border-border bg-background space-y-2 rounded-md border px-3 py-3">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-medium">
                 {isTestingMicrophone
                   ? isSelfMonitorEnabled
-                    ? 'Testing and monitoring'
-                    : 'Testing locally'
-                  : 'Mic level'}
+                    ? t('chat.voice.testingAndMonitoring')
+                    : t('chat.voice.testingLocally')
+                  : t('chat.voice.micLevel')}
               </div>
-              <div className="text-xs font-medium tabular-nums text-muted-foreground">
+              <div className="text-muted-foreground text-xs font-medium tabular-nums">
                 {Math.round(microphoneTestLevel * 100)}%
               </div>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-muted">
+            <div className="bg-muted h-2 overflow-hidden rounded-full">
               <div
-                className="h-full bg-primary/70 transition-[width] duration-100"
+                className="bg-primary/70 h-full transition-[width] duration-100"
                 style={{ width: `${Math.round(microphoneTestLevel * 100)}%` }}
               />
             </div>
           </div>
 
           {setupError ? (
-            <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+            <div className="border-destructive/30 bg-destructive/5 text-destructive rounded-md border px-3 py-2 text-xs">
               {setupError}
             </div>
           ) : null}
 
           {isPreparing ? (
-            <div className="rounded-md border border-border px-3 py-2 text-xs text-muted-foreground">
+            <div className="border-border text-muted-foreground rounded-md border px-3 py-2 text-xs">
               <div className="flex items-center gap-2">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Preparing room token and call state…
+                {t('chat.voice.preparingRoom')}
               </div>
             </div>
           ) : null}
 
           {!isPreparing && !isReady ? (
-            <div className="rounded-md border border-border px-3 py-2 text-xs text-muted-foreground">
-              The room is still getting ready. Wait a moment, then join.
+            <div className="border-border text-muted-foreground rounded-md border px-3 py-2 text-xs">
+              {t('chat.voice.roomGettingReady')}
             </div>
           ) : null}
 
-          <div className="rounded-md border border-border bg-background px-3 py-2 text-xs text-muted-foreground">
+          <div className="border-border bg-background text-muted-foreground rounded-md border px-3 py-2 text-xs">
             {shouldPreferDefaultMicrophoneForLiveJoin(
               typeof navigator !== 'undefined' ? navigator.userAgent : ''
             )
               ? microphonePermissionState === 'granted'
-                ? 'Browser access is already allowed, so TaskNebula will try to keep your selected microphone through the join flow.'
-                : 'Before browser access is granted, Chromium and Safari may fall back to the system default microphone or the device chosen in the browser prompt.'
-              : 'Firefox can usually keep the selected microphone all the way through the join flow.'}
+                ? t('chat.voice.joinHintGranted')
+                : t('chat.voice.joinHintNotGranted')
+              : t('chat.voice.joinHintFirefox')}
           </div>
 
           <div className="flex flex-wrap justify-end gap-2">
@@ -2537,7 +2599,7 @@ export function VoiceJoinSetupPanel({
               onClick={onClose}
               disabled={isJoining || isSubmittingJoin}
             >
-              Cancel
+              {t('chat.cancel')}
             </Button>
             <Button
               type="button"
@@ -2547,8 +2609,10 @@ export function VoiceJoinSetupPanel({
               onClick={() => void handleJoin(false)}
               disabled={isJoining || isSubmittingJoin || isPreparing || !isReady}
             >
-              {isJoining || isSubmittingJoin || isPreparing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Join muted
+              {isJoining || isSubmittingJoin || isPreparing ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              {t('chat.voice.joinMuted')}
             </Button>
             <Button
               type="button"
@@ -2562,7 +2626,7 @@ export function VoiceJoinSetupPanel({
               ) : (
                 <Mic className="mr-2 h-4 w-4" />
               )}
-              Join with mic
+              {t('chat.voice.joinWithMic')}
             </Button>
           </div>
         </div>
@@ -2584,6 +2648,7 @@ function ManagedLiveKitRoomProvider({
   onMediaDeviceFailure: (error?: Error) => void;
   session: LivekitSession;
 }) {
+  const t = useTranslations('workspaceTools');
   const [room] = useState(() => createVoiceRoom());
   const latestOnDisconnectedRef = useRef(onDisconnected);
   const latestOnErrorRef = useRef(onError);
@@ -2646,7 +2711,7 @@ function ManagedLiveKitRoomProvider({
           return;
         }
         latestOnErrorRef.current(
-          error instanceof Error ? error : new Error('Failed to connect to voice room.')
+          error instanceof Error ? error : new Error(t('chat.voice.connectFailed'))
         );
       }
     })();
@@ -2657,7 +2722,7 @@ function ManagedLiveKitRoomProvider({
       room.off(RoomEvent.MediaDevicesError, handleMediaDevicesError);
       void room.disconnect();
     };
-  }, [room, session.roomName, session.token, session.url]);
+  }, [room, session.roomName, session.token, session.url, t]);
 
   return <RoomContext.Provider value={room}>{children}</RoomContext.Provider>;
 }
@@ -2671,6 +2736,7 @@ function InlineVoiceRoom({
   isVisible: boolean;
   onPrepareDisconnect: (mode: 'leave' | 'end') => void;
 }) {
+  const t = useTranslations('workspaceTools');
   const room = useRoomContext();
   const connectionState = useConnectionState();
   const { canPlayAudio, startAudio } = useAudioPlayback(room);
@@ -2714,7 +2780,8 @@ function InlineVoiceRoom({
     () => participants.filter((participant) => participant.identity !== localParticipant.identity),
     [localParticipant.identity, participants]
   );
-  const liveMicrophoneLevel = isVisible && isMicrophoneEnabled ? Math.min(1, localParticipant.audioLevel * 1.85) : 0;
+  const liveMicrophoneLevel =
+    isVisible && isMicrophoneEnabled ? Math.min(1, localParticipant.audioLevel * 1.85) : 0;
 
   useEffect(() => {
     if (isVisible) {
@@ -2732,8 +2799,8 @@ function InlineVoiceRoom({
     } catch (error) {
       setVoiceError(
         error instanceof Error
-          ? `Speaker output could not start. ${error.message}`
-          : 'Speaker output could not start on this device.'
+          ? t('chat.voice.speakerStartFailedWith', { error: error.message })
+          : t('chat.voice.speakerStartFailed')
       );
     } finally {
       setIsStartingAudioPlayback(false);
@@ -2742,7 +2809,7 @@ function InlineVoiceRoom({
 
   async function handleToggleMicrophone() {
     if (connectionState !== 'connected') {
-      setVoiceError('Wait for the call to finish connecting before changing your microphone state.');
+      setVoiceError(t('chat.voice.waitToConnect'));
       return;
     }
 
@@ -2767,7 +2834,7 @@ function InlineVoiceRoom({
       onPrepareDisconnect('leave');
       await room.disconnect();
     } catch (error) {
-      setVoiceError(error instanceof Error ? error.message : 'Failed to leave the call cleanly.');
+      setVoiceError(error instanceof Error ? error.message : t('chat.voice.leaveFailed'));
     } finally {
       setIsLeaving(false);
     }
@@ -2780,7 +2847,7 @@ function InlineVoiceRoom({
       onPrepareDisconnect('end');
       await room.disconnect();
     } catch (error) {
-      setVoiceError(error instanceof Error ? error.message : 'Failed to end the call cleanly.');
+      setVoiceError(error instanceof Error ? error.message : t('chat.voice.endFailed'));
     } finally {
       setIsEnding(false);
     }
@@ -2789,9 +2856,9 @@ function InlineVoiceRoom({
   const deferredMicrophoneLevel = useDeferredValue(Math.min(1, liveMicrophoneLevel));
   const microphoneStatus = isMicrophoneEnabled
     ? isActivelySpeaking
-      ? 'You are speaking'
-      : 'Mic is live'
-    : 'Mic muted';
+      ? t('chat.voice.youAreSpeaking')
+      : t('chat.voice.micIsLive')
+    : t('chat.voice.micMuted');
   const hasRemoteAudio = remoteParticipants.some((participant) => participant.isMicrophoneEnabled);
 
   return (
@@ -2802,21 +2869,18 @@ function InlineVoiceRoom({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span
-              className={cn(
-                'status-dot',
-                isActivelySpeaking ? 'status-live' : 'status-warn'
-              )}
+              className={cn('status-dot', isActivelySpeaking ? 'status-live' : 'status-warn')}
               aria-hidden
             />
-            <div className="text-sm font-medium">Voice room live</div>
+            <div className="text-sm font-medium">{t('chat.voice.voiceRoomLive')}</div>
             <Badge variant="outline" className="h-6 rounded-md px-2">
               <Users2 className="mr-1.5 h-3.5 w-3.5" />
               {participants.length}
             </Badge>
           </div>
-          <div className="pt-1 text-xs text-muted-foreground">
-            {formatConnectionStateLabel(connectionState)} · {microphoneStatus}
-            {!canPlayAudio ? ' · enable audio once if playback is blocked' : ''}
+          <div className="text-muted-foreground pt-1 text-xs">
+            {formatConnectionStateLabel(connectionState, t)} · {microphoneStatus}
+            {!canPlayAudio ? ` · ${t('chat.voice.enableAudioHint')}` : ''}
           </div>
         </div>
 
@@ -2833,7 +2897,7 @@ function InlineVoiceRoom({
             ) : (
               <Volume2 className="mr-2 h-4 w-4" />
             )}
-            Enable audio
+            {t('chat.voice.enableAudio')}
           </Button>
         ) : null}
       </div>
@@ -2849,13 +2913,13 @@ function InlineVoiceRoom({
       </div>
 
       <div className="mt-3 space-y-2">
-        <div className="flex items-center justify-between gap-3 text-[11px] text-muted-foreground">
+        <div className="text-muted-foreground flex items-center justify-between gap-3 text-[11px]">
           <span className="font-medium uppercase tracking-[0.14em]">
-            Microphone · {microphoneStatus}
+            {t('chat.voice.microphone')} · {microphoneStatus}
           </span>
           <span className="tabular-nums">{Math.round(deferredMicrophoneLevel * 100)}%</span>
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-muted">
+        <div className="bg-muted h-2 overflow-hidden rounded-full">
           <div
             className={cn(
               'h-full transition-[width,background-color] duration-100',
@@ -2867,11 +2931,11 @@ function InlineVoiceRoom({
       </div>
 
       {voiceError || lastMicrophoneError ? (
-        <div className="mt-3 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
-          Audio error:{' '}
+        <div className="border-destructive/30 bg-destructive/5 text-destructive mt-3 rounded-md border px-3 py-2 text-xs">
+          {t('chat.voice.audioErrorPrefix')}{' '}
           {voiceError ||
             formatMicrophoneError(lastMicrophoneError) ||
-            'Audio capture is unavailable. Check browser permissions and try again.'}
+            t('chat.voice.audioCaptureUnavailable')}
         </div>
       ) : null}
 
@@ -2880,10 +2944,12 @@ function InlineVoiceRoom({
           type="button"
           size="sm"
           variant="outline"
-          className={cn(expandedPanel === 'audio' && 'border-primary/40 bg-primary/10 text-primary')}
+          className={cn(
+            expandedPanel === 'audio' && 'border-primary/40 bg-primary/10 text-primary'
+          )}
           onClick={() => setExpandedPanel((current) => (current === 'audio' ? null : 'audio'))}
         >
-          Audio settings
+          {t('chat.voice.audioSettings')}
           <ChevronDown
             className={cn(
               'ml-2 h-4 w-4 transition-transform duration-200',
@@ -2915,7 +2981,7 @@ function InlineVoiceRoom({
             type="button"
             size="sm"
             variant="ghost"
-            aria-label={isMicrophoneEnabled ? 'Mute microphone' : 'Unmute microphone'}
+            aria-label={isMicrophoneEnabled ? t('chat.voice.muteMic') : t('chat.voice.unmuteMic')}
             className={cn(
               'h-9 w-9 rounded-full p-0',
               isMicrophoneEnabled
@@ -2939,8 +3005,8 @@ function InlineVoiceRoom({
             type="button"
             size="sm"
             variant="ghost"
-            aria-label="Leave call"
-            className="h-9 w-9 rounded-full bg-destructive/10 p-0 text-destructive hover:bg-destructive/15"
+            aria-label={t('chat.voice.leaveCall')}
+            className="bg-destructive/10 text-destructive hover:bg-destructive/15 h-9 w-9 rounded-full p-0"
             onClick={() => void handleLeave()}
             disabled={isLeaving || isEnding}
           >
@@ -2955,13 +3021,13 @@ function InlineVoiceRoom({
               type="button"
               size="sm"
               variant="ghost"
-              aria-label="End room for everyone"
+              aria-label={t('chat.voice.endForEveryone')}
               className="h-9 rounded-full px-3 text-xs"
               onClick={() => void handleEnd()}
               disabled={isEnding || isLeaving}
             >
               {isEnding ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
-              End
+              {t('chat.voice.end')}
             </Button>
           ) : null}
         </div>
@@ -2977,24 +3043,25 @@ function VoiceParticipantTile({
   participant: Participant;
   isCurrentUser: boolean;
 }) {
+  const t = useTranslations('workspaceTools');
   const isSpeaking = useIsSpeaking(participant);
-  const displayName = participant.name || participant.identity || 'Participant';
+  const displayName = participant.name || participant.identity || t('chat.voice.participant');
   const micEnabled = participant.isMicrophoneEnabled;
   const stateLabel = micEnabled
     ? isCurrentUser
       ? isSpeaking
-        ? 'Sending audio'
-        : 'Mic on'
+        ? t('chat.voice.sendingAudio')
+        : t('chat.voice.micOn')
       : isSpeaking
-        ? 'Speaking'
-        : 'Listening'
-    : 'Muted';
+        ? t('chat.voice.speaking')
+        : t('chat.voice.listening')
+    : t('chat.voice.muted');
 
   return (
     <div
       className={cn(
-        'relative flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-border bg-card transition-colors duration-200',
-        isSpeaking && micEnabled && 'ring-2 ring-accent-emerald'
+        'border-border bg-card relative flex aspect-video items-center justify-center overflow-hidden rounded-lg border transition-colors duration-200',
+        isSpeaking && micEnabled && 'ring-accent-emerald ring-2'
       )}
     >
       <Avatar className="h-12 w-12">
@@ -3002,16 +3069,16 @@ function VoiceParticipantTile({
       </Avatar>
 
       <div className="absolute inset-x-2 bottom-2 flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-1.5 rounded-md bg-background/70 px-2 py-1 text-xs backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="bg-background/70 supports-[backdrop-filter]:bg-background/60 flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-xs backdrop-blur">
           <span className="truncate font-medium">{displayName}</span>
           {isCurrentUser ? (
-            <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-              You
+            <span className="text-muted-foreground text-[10px] uppercase tracking-[0.12em]">
+              {t('chat.voice.you')}
             </span>
           ) : null}
         </div>
 
-        <div className="flex items-center gap-1 rounded-md bg-background/70 px-1.5 py-1 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="bg-background/70 supports-[backdrop-filter]:bg-background/60 flex items-center gap-1 rounded-md px-1.5 py-1 backdrop-blur">
           {micEnabled ? (
             <Mic
               className={cn(
@@ -3020,7 +3087,7 @@ function VoiceParticipantTile({
               )}
             />
           ) : (
-            <MicOff className="h-3.5 w-3.5 text-destructive" />
+            <MicOff className="text-destructive h-3.5 w-3.5" />
           )}
         </div>
       </div>
@@ -3057,6 +3124,7 @@ function VoiceAudioSettingsPanel({
   }) => void;
   storeAudioDeviceId: (deviceId: string) => void;
 }) {
+  const t = useTranslations('workspaceTools');
   const room = useRoomContext();
   const [isUnlockingMicrophoneAccess, setIsUnlockingMicrophoneAccess] = useState(false);
   const {
@@ -3129,15 +3197,15 @@ function VoiceAudioSettingsPanel({
     <div className="surface-inset mt-3 rounded-md px-3 py-3">
       <div className="space-y-4">
         <div className="space-y-2">
-          <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            Input device
+          <div className="text-muted-foreground text-[11px] font-medium uppercase tracking-[0.14em]">
+            {t('chat.voice.inputDevice')}
           </div>
           <div className="truncate text-sm font-medium">{selectedMicrophoneLabel}</div>
         </div>
 
         <div className="space-y-2">
           <select
-            className="flex h-9 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="border-border bg-background focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 text-sm outline-none focus-visible:ring-2"
             value={storedAudioDeviceId || 'default'}
             onChange={(event) => {
               void handleSelectMicrophone(event.target.value);
@@ -3148,18 +3216,20 @@ function VoiceAudioSettingsPanel({
               isRefreshingMicrophoneEnvironment
             }
           >
-            <option value="default">System default microphone</option>
+            <option value="default">{t('chat.voice.systemDefaultMic')}</option>
             {microphoneDevices.map((device, index) => (
               <option key={device.deviceId} value={device.deviceId}>
-                {formatMicrophoneDeviceOptionLabel(device, index)}
+                {formatMicrophoneDeviceOptionLabel(device, index, (n) =>
+                  t('chat.voice.microphoneN', { index: n })
+                )}
               </option>
             ))}
           </select>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+        <div className="border-border bg-muted/30 text-muted-foreground flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs">
           <div>
-            <span className="font-medium text-foreground">Permission:</span>{' '}
+            <span className="text-foreground font-medium">{t('chat.voice.permission')}</span>{' '}
             {microphonePermissionLabel}
           </div>
           <div className="flex flex-wrap gap-2">
@@ -3176,7 +3246,7 @@ function VoiceAudioSettingsPanel({
                 ) : (
                   <Mic className="mr-1.5 h-3.5 w-3.5" />
                 )}
-                Unlock microphones
+                {t('chat.voice.unlockMicrophones')}
               </Button>
             ) : null}
             <Button
@@ -3191,27 +3261,27 @@ function VoiceAudioSettingsPanel({
               ) : (
                 <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
               )}
-              Refresh devices
+              {t('chat.voice.refreshDevices')}
             </Button>
           </div>
         </div>
 
-        <div className="rounded-md border border-border bg-background px-3 py-2 text-xs text-muted-foreground">
+        <div className="border-border bg-background text-muted-foreground rounded-md border px-3 py-2 text-xs">
           {microphonePermissionHelp}
-          {microphoneDevices.length === 0 ? ' No microphones are currently visible to the browser.' : ''}
+          {microphoneDevices.length === 0 ? ` ${t('chat.voice.noMicsVisible')}` : ''}
           {microphonePermissionState === 'granted' && !deviceLabelsVisible
-            ? ' The browser still has not exposed microphone labels; refreshing after returning from browser settings usually fixes that.'
+            ? ` ${t('chat.voice.labelsNotExposed')}`
             : ''}
           {storedAudioDeviceId !== 'default' && microphonePermissionState !== 'granted'
-            ? ' Exact device switching becomes reliable after browser microphone access is granted.'
+            ? ` ${t('chat.voice.exactSwitchingReliable')}`
             : ''}
         </div>
 
-        <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-          {hasRemoteAudio
-            ? 'Speaker output activates when others are talking. Use the join setup panel if you want to test or self-monitor this device before reconnecting.'
-            : 'No one else is in the room yet. Re-open join setup if you want to re-test this microphone locally.'}
-          {isMicrophoneEnabled ? ' The live microphone is currently enabled.' : ' The live microphone is currently muted.'}
+        <div className="border-border bg-muted/30 text-muted-foreground rounded-md border px-3 py-2 text-xs">
+          {hasRemoteAudio ? t('chat.voice.speakerActivates') : t('chat.voice.noOneElse')}
+          {isMicrophoneEnabled
+            ? ` ${t('chat.voice.liveMicEnabled')}`
+            : ` ${t('chat.voice.liveMicMuted')}`}
         </div>
       </div>
     </div>
@@ -3222,26 +3292,31 @@ const MemoizedChatVoiceDock = memo(ChatVoiceDock);
 MemoizedChatVoiceDock.displayName = 'MemoizedChatVoiceDock';
 
 function getInitials(value: string) {
-  return value
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('') || 'TN';
+  return (
+    value
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('') || 'TN'
+  );
 }
 
-function formatConnectionStateLabel(state: string) {
+function formatConnectionStateLabel(
+  state: string,
+  t: ReturnType<typeof useTranslations<'workspaceTools'>>
+) {
   switch (state) {
     case 'connected':
-      return 'Connected';
+      return t('chat.voice.connectionState.connected');
     case 'connecting':
-      return 'Connecting';
+      return t('chat.voice.connectionState.connecting');
     case 'reconnecting':
-      return 'Reconnecting';
+      return t('chat.voice.connectionState.reconnecting');
     case 'disconnected':
-      return 'Disconnected';
+      return t('chat.voice.connectionState.disconnected');
     default:
-      return 'Voice room';
+      return t('chat.voice.voiceRoom');
   }
 }
 
@@ -3272,7 +3347,10 @@ function formatLivekitRuntimeError(error: Error) {
   if (message.includes('could not start audio source') || message.includes('notreadableerror')) {
     return 'Your microphone could not be started. Another app may be using it.';
   }
-  if (message.includes('audiocontext encountered an error') || message.includes('webaudio renderer')) {
+  if (
+    message.includes('audiocontext encountered an error') ||
+    message.includes('webaudio renderer')
+  ) {
     return 'The browser audio engine failed for this device. Stop other audio apps or change your microphone, then try again.';
   }
   if (message.includes('device not found') || message.includes('notfounderror')) {

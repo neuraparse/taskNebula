@@ -1,10 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -15,7 +22,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Edit, Zap, ArrowRight, History, ChevronRight, AlertCircle } from 'lucide-react';
+import {
+  Plus,
+  Trash2,
+  Edit,
+  Zap,
+  ArrowRight,
+  History,
+  ChevronRight,
+  AlertCircle,
+} from 'lucide-react';
 
 interface AutomationRule {
   id: string;
@@ -87,21 +103,21 @@ function prettyJson(value: unknown): string {
 }
 
 const TRIGGER_TYPES = [
-  { value: 'issue_created', label: 'Issue Created' },
-  { value: 'issue_updated', label: 'Issue Updated' },
-  { value: 'issue_transitioned', label: 'Issue Transitioned' },
-  { value: 'issue_assigned', label: 'Issue Assigned' },
-  { value: 'issue_commented', label: 'Issue Commented' },
-  { value: 'schedule', label: 'Scheduled' },
+  { value: 'issue_created', labelKey: 'automation.triggers.issue_created' },
+  { value: 'issue_updated', labelKey: 'automation.triggers.issue_updated' },
+  { value: 'issue_transitioned', labelKey: 'automation.triggers.issue_transitioned' },
+  { value: 'issue_assigned', labelKey: 'automation.triggers.issue_assigned' },
+  { value: 'issue_commented', labelKey: 'automation.triggers.issue_commented' },
+  { value: 'schedule', labelKey: 'automation.triggers.schedule' },
 ];
 
 const ACTION_TYPES = [
-  { value: 'assign_issue', label: 'Assign Issue' },
-  { value: 'transition_issue', label: 'Transition Issue' },
-  { value: 'add_comment', label: 'Add Comment' },
-  { value: 'update_field', label: 'Update Field' },
-  { value: 'send_notification', label: 'Send Notification' },
-  { value: 'send_email', label: 'Send Email' },
+  { value: 'assign_issue', labelKey: 'automation.actions.assign_issue' },
+  { value: 'transition_issue', labelKey: 'automation.actions.transition_issue' },
+  { value: 'add_comment', labelKey: 'automation.actions.add_comment' },
+  { value: 'update_field', labelKey: 'automation.actions.update_field' },
+  { value: 'send_notification', labelKey: 'automation.actions.send_notification' },
+  { value: 'send_email', labelKey: 'automation.actions.send_email' },
 ];
 
 interface AutomationManagerProps {
@@ -130,14 +146,12 @@ function FormRow({
   htmlFor?: string;
 }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+    <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[240px_1fr]">
       <div className="space-y-1 pt-2">
         <Label htmlFor={htmlFor} className="text-sm font-medium">
           {label}
         </Label>
-        {description ? (
-          <p className="text-xs text-muted-foreground">{description}</p>
-        ) : null}
+        {description ? <p className="text-muted-foreground text-xs">{description}</p> : null}
       </div>
       <div>{children}</div>
     </div>
@@ -156,6 +170,7 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
   const [executionsError, setExecutionsError] = useState<string | null>(null);
   const [expandedExecutionId, setExpandedExecutionId] = useState<string | null>(null);
   const { toast } = useToast();
+  const t = useTranslations('workspaceTools');
 
   useEffect(() => {
     void fetchRules();
@@ -179,8 +194,8 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
       setRules(data);
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to load automation rules',
+        title: t('automation.toast.errorTitle'),
+        description: t('automation.toast.loadFailed'),
         variant: 'destructive',
       });
     } finally {
@@ -215,8 +230,8 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
   async function saveRule() {
     if (!formData.name.trim()) {
       toast({
-        title: 'Error',
-        description: 'Rule name is required',
+        title: t('automation.toast.errorTitle'),
+        description: t('automation.toast.nameRequired'),
         variant: 'destructive',
       });
       return;
@@ -235,7 +250,9 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
       };
 
       const response = await fetch(
-        formMode === 'edit' && editingRuleId ? `/api/automation-rules/${editingRuleId}` : '/api/automation-rules',
+        formMode === 'edit' && editingRuleId
+          ? `/api/automation-rules/${editingRuleId}`
+          : '/api/automation-rules',
         {
           method: formMode === 'edit' ? 'PATCH' : 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -244,20 +261,27 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
       );
 
       if (!response.ok) {
-        throw new Error(`Failed to ${formMode === 'edit' ? 'update' : 'create'} automation rule`);
+        throw new Error(
+          formMode === 'edit'
+            ? t('automation.toast.updateFailed')
+            : t('automation.toast.createFailed')
+        );
       }
 
       toast({
-        title: 'Success',
-        description: formMode === 'edit' ? 'Automation rule updated' : 'Automation rule created',
+        title: t('automation.toast.successTitle'),
+        description:
+          formMode === 'edit'
+            ? t('automation.toast.ruleUpdated')
+            : t('automation.toast.ruleCreated'),
       });
 
       resetForm();
       await fetchRules();
     } catch (error) {
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to save automation rule',
+        title: t('automation.toast.errorTitle'),
+        description: error instanceof Error ? error.message : t('automation.toast.saveFailed'),
         variant: 'destructive',
       });
     }
@@ -274,22 +298,24 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
       if (!response.ok) throw new Error('Failed to toggle rule');
 
       toast({
-        title: 'Success',
-        description: `Rule ${!currentState ? 'enabled' : 'disabled'}`,
+        title: t('automation.toast.successTitle'),
+        description: !currentState
+          ? t('automation.toast.ruleEnabled')
+          : t('automation.toast.ruleDisabled'),
       });
 
       await fetchRules();
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to toggle rule',
+        title: t('automation.toast.errorTitle'),
+        description: t('automation.toast.toggleFailed'),
         variant: 'destructive',
       });
     }
   }
 
   async function deleteRule(ruleId: string) {
-    if (!window.confirm('Are you sure you want to delete this automation rule?')) {
+    if (!window.confirm(t('automation.deleteConfirm'))) {
       return;
     }
 
@@ -301,8 +327,8 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
       if (!response.ok) throw new Error('Failed to delete rule');
 
       toast({
-        title: 'Success',
-        description: 'Automation rule deleted',
+        title: t('automation.toast.successTitle'),
+        description: t('automation.toast.ruleDeleted'),
       });
 
       if (editingRuleId === ruleId) {
@@ -312,32 +338,35 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
       await fetchRules();
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to delete rule',
+        title: t('automation.toast.errorTitle'),
+        description: t('automation.toast.deleteFailed'),
         variant: 'destructive',
       });
     }
   }
 
-  const fetchExecutions = useCallback(async (ruleId: string) => {
-    setExecutionsLoading(true);
-    setExecutionsError(null);
-    try {
-      const response = await fetch(`/api/automation-rules/${ruleId}/executions?limit=50`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch executions');
+  const fetchExecutions = useCallback(
+    async (ruleId: string) => {
+      setExecutionsLoading(true);
+      setExecutionsError(null);
+      try {
+        const response = await fetch(`/api/automation-rules/${ruleId}/executions?limit=50`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch executions');
+        }
+        const data: AutomationExecution[] = await response.json();
+        setExecutions(data);
+      } catch (error) {
+        setExecutions([]);
+        setExecutionsError(
+          error instanceof Error ? error.message : t('automation.toast.executionsLoadFailed')
+        );
+      } finally {
+        setExecutionsLoading(false);
       }
-      const data: AutomationExecution[] = await response.json();
-      setExecutions(data);
-    } catch (error) {
-      setExecutions([]);
-      setExecutionsError(
-        error instanceof Error ? error.message : 'Failed to load executions'
-      );
-    } finally {
-      setExecutionsLoading(false);
-    }
-  }, []);
+    },
+    [t]
+  );
 
   function openExecutions(rule: AutomationRule) {
     setExecutionsRule(rule);
@@ -354,52 +383,68 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
   }
 
   if (isLoading) {
-    return <div className="p-4 text-sm text-muted-foreground">Loading automation rules...</div>;
+    return <div className="text-muted-foreground p-4 text-sm">{t('automation.loading')}</div>;
   }
 
   return (
-    <div className="space-y-6 animate-fade-up">
+    <div className="animate-fade-up space-y-6">
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <span className="kicker">Automation</span>
-          <h3 className="text-base font-semibold tracking-tight text-foreground">Automation rules</h3>
-          <p className="text-sm text-muted-foreground">Automate repetitive work with project-specific or organization-wide rules.</p>
+          <span className="kicker">{t('automation.kicker')}</span>
+          <h3 className="text-foreground text-base font-semibold tracking-tight">
+            {t('automation.title')}
+          </h3>
+          <p className="text-muted-foreground text-sm">{t('automation.subtitle')}</p>
         </div>
         <Button
           onClick={() => (formMode ? resetForm() : openCreateForm())}
           variant={formMode ? 'outline' : 'default'}
         >
           <Plus className="mr-2 h-4 w-4" />
-          {formMode ? 'Close editor' : 'Create rule'}
+          {formMode ? t('automation.closeEditor') : t('automation.createRule')}
         </Button>
       </div>
 
       {formMode ? (
-        <div className="surface-card p-5 space-y-5 animate-fade-up">
+        <div className="surface-card animate-fade-up space-y-5 p-5">
           <div className="space-y-1">
-            <span className="kicker">{formMode === 'edit' ? 'Edit rule' : 'New rule'}</span>
+            <span className="kicker">
+              {formMode === 'edit'
+                ? t('automation.form.editKicker')
+                : t('automation.form.newKicker')}
+            </span>
             <h4 className="text-sm font-semibold tracking-tight">
-              {formMode === 'edit' ? 'Edit automation rule' : 'Create automation rule'}
+              {formMode === 'edit'
+                ? t('automation.form.editTitle')
+                : t('automation.form.createTitle')}
             </h4>
-            <p className="text-xs text-muted-foreground">
-              Define a trigger and the primary action the rule should perform.
-            </p>
+            <p className="text-muted-foreground text-xs">{t('automation.form.description')}</p>
           </div>
 
           <div className="space-y-5">
-            <FormRow label="Rule name" htmlFor="rule-name" description="A short name team members will recognize.">
+            <FormRow
+              label={t('automation.form.nameLabel')}
+              htmlFor="rule-name"
+              description={t('automation.form.nameDescription')}
+            >
               <Input
                 id="rule-name"
-                placeholder="Auto-assign new issues"
+                placeholder={t('automation.form.namePlaceholder')}
                 value={formData.name}
-                onChange={(event) => setFormData((current) => ({ ...current, name: event.target.value }))}
+                onChange={(event) =>
+                  setFormData((current) => ({ ...current, name: event.target.value }))
+                }
               />
             </FormRow>
 
-            <FormRow label="Description" htmlFor="rule-description" description="Optional — explain when this rule fires.">
+            <FormRow
+              label={t('automation.form.descriptionLabel')}
+              htmlFor="rule-description"
+              description={t('automation.form.descriptionHint')}
+            >
               <Input
                 id="rule-description"
-                placeholder="Optional description"
+                placeholder={t('automation.form.descriptionPlaceholder')}
                 value={formData.description}
                 onChange={(event) =>
                   setFormData((current) => ({ ...current, description: event.target.value }))
@@ -407,13 +452,19 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
               />
             </FormRow>
 
-            <div className="surface-inset p-4 rounded-md space-y-5">
-              <span className="kicker">Triggers and actions</span>
+            <div className="surface-inset space-y-5 rounded-md p-4">
+              <span className="kicker">{t('automation.form.triggersAndActions')}</span>
 
-              <FormRow label="Trigger" htmlFor="trigger-type" description="What event starts this rule.">
+              <FormRow
+                label={t('automation.form.triggerLabel')}
+                htmlFor="trigger-type"
+                description={t('automation.form.triggerDescription')}
+              >
                 <Select
                   value={formData.triggerType}
-                  onValueChange={(value) => setFormData((current) => ({ ...current, triggerType: value }))}
+                  onValueChange={(value) =>
+                    setFormData((current) => ({ ...current, triggerType: value }))
+                  }
                 >
                   <SelectTrigger id="trigger-type">
                     <SelectValue />
@@ -421,17 +472,23 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
                   <SelectContent>
                     {TRIGGER_TYPES.map((type) => (
                       <SelectItem key={type.value} value={type.value}>
-                        {type.label}
+                        {t(type.labelKey)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </FormRow>
 
-              <FormRow label="Action" htmlFor="action-type" description="What should happen when the rule fires.">
+              <FormRow
+                label={t('automation.form.actionLabel')}
+                htmlFor="action-type"
+                description={t('automation.form.actionDescription')}
+              >
                 <Select
                   value={formData.actionType}
-                  onValueChange={(value) => setFormData((current) => ({ ...current, actionType: value }))}
+                  onValueChange={(value) =>
+                    setFormData((current) => ({ ...current, actionType: value }))
+                  }
                 >
                   <SelectTrigger id="action-type">
                     <SelectValue />
@@ -439,7 +496,7 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
                   <SelectContent>
                     {ACTION_TYPES.map((type) => (
                       <SelectItem key={type.value} value={type.value}>
-                        {type.label}
+                        {t(type.labelKey)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -447,41 +504,48 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
               </FormRow>
             </div>
 
-            <FormRow label="Enabled" htmlFor="enabled" description="Turn on as soon as saved.">
+            <FormRow
+              label={t('automation.form.enabledLabel')}
+              htmlFor="enabled"
+              description={t('automation.form.enabledDescription')}
+            >
               <div className="flex h-10 items-center">
                 <Switch
                   id="enabled"
                   checked={formData.enabled}
-                  onCheckedChange={(checked) => setFormData((current) => ({ ...current, enabled: checked }))}
+                  onCheckedChange={(checked) =>
+                    setFormData((current) => ({ ...current, enabled: checked }))
+                  }
                 />
               </div>
             </FormRow>
           </div>
 
-          <div className="flex justify-end gap-2 border-t border-border/60 pt-4">
+          <div className="border-border/60 flex justify-end gap-2 border-t pt-4">
             <Button variant="outline" onClick={resetForm}>
-              Cancel
+              {t('automation.cancel')}
             </Button>
             <Button onClick={() => void saveRule()}>
-              {formMode === 'edit' ? 'Save changes' : 'Create rule'}
+              {formMode === 'edit' ? t('automation.saveChanges') : t('automation.createRule')}
             </Button>
           </div>
         </div>
       ) : null}
 
       {rules.length === 0 && !formMode ? (
-        <div className="surface-card p-10 text-center space-y-3">
-          <Zap className="mx-auto h-8 w-8 text-muted-foreground/50" />
-          <p className="text-sm text-muted-foreground">No automation rules yet.</p>
+        <div className="surface-card space-y-3 p-10 text-center">
+          <Zap className="text-muted-foreground/50 mx-auto h-8 w-8" />
+          <p className="text-muted-foreground text-sm">{t('automation.emptyTitle')}</p>
           <Button size="sm" onClick={openCreateForm}>
             <Plus className="mr-2 h-4 w-4" />
-            Create your first rule
+            {t('automation.createFirst')}
           </Button>
         </div>
       ) : rules.length > 0 ? (
-        <div className="surface-card divide-y divide-border/60 stagger">
+        <div className="surface-card divide-border/60 stagger divide-y">
           {rules.map((rule) => {
-            const triggerLabel = TRIGGER_TYPES.find((t) => t.value === rule.trigger.type)?.label || rule.trigger.type;
+            const triggerMeta = TRIGGER_TYPES.find((type) => type.value === rule.trigger.type);
+            const triggerLabel = triggerMeta ? t(triggerMeta.labelKey) : rule.trigger.type;
 
             return (
               <div
@@ -496,33 +560,38 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{rule.name}</p>
                   {rule.description ? (
-                    <p className="truncate text-xs text-muted-foreground">{rule.description}</p>
+                    <p className="text-muted-foreground truncate text-xs">{rule.description}</p>
                   ) : null}
                 </div>
 
                 <div className="hidden shrink-0 items-center gap-1.5 md:flex">
                   <span className="chip-violet text-[11px]">{triggerLabel}</span>
-                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                  {rule.actions.slice(0, 1).map((action, index) => (
-                    <span key={`${action.type}-${index}`} className="chip text-[11px]">
-                      {ACTION_TYPES.find((t) => t.value === action.type)?.label || action.type}
-                    </span>
-                  ))}
+                  <ArrowRight className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+                  {rule.actions.slice(0, 1).map((action, index) => {
+                    const actionMeta = ACTION_TYPES.find((type) => type.value === action.type);
+                    return (
+                      <span key={`${action.type}-${index}`} className="chip text-[11px]">
+                        {actionMeta ? t(actionMeta.labelKey) : action.type}
+                      </span>
+                    );
+                  })}
                 </div>
 
                 <div className="flex shrink-0 items-center gap-1.5">
                   <Switch
                     checked={rule.enabled}
                     onCheckedChange={() => void toggleRule(rule.id, rule.enabled)}
-                    aria-label={rule.enabled ? 'Disable rule' : 'Enable rule'}
+                    aria-label={
+                      rule.enabled ? t('automation.disableRule') : t('automation.enableRule')
+                    }
                   />
                   <Button
                     size="icon"
                     variant="ghost"
                     className="h-7 w-7"
                     onClick={() => openExecutions(rule)}
-                    aria-label="View executions"
-                    title="View executions"
+                    aria-label={t('automation.viewExecutions')}
+                    title={t('automation.viewExecutions')}
                   >
                     <History className="h-3.5 w-3.5" />
                   </Button>
@@ -531,16 +600,16 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
                     variant="ghost"
                     className="h-7 w-7"
                     onClick={() => openEditForm(rule)}
-                    aria-label="Edit rule"
+                    aria-label={t('automation.editRule')}
                   >
                     <Edit className="h-3.5 w-3.5" />
                   </Button>
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-7 w-7 text-destructive hover:text-destructive"
+                    className="text-destructive hover:text-destructive h-7 w-7"
                     onClick={() => void deleteRule(rule.id)}
-                    aria-label="Delete rule"
+                    aria-label={t('automation.deleteRule')}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -560,61 +629,62 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <History className="h-4 w-4 text-muted-foreground" />
-              Executions
+              <History className="text-muted-foreground h-4 w-4" />
+              {t('automation.executions.title')}
               {executionsRule ? (
-                <span className="text-sm font-normal text-muted-foreground truncate">
+                <span className="text-muted-foreground truncate text-sm font-normal">
                   · {executionsRule.name}
                 </span>
               ) : null}
             </DialogTitle>
-            <DialogDescription>
-              Recent runs of this rule, newest first. Click a row to inspect the trigger payload and
-              per-action results.
-            </DialogDescription>
+            <DialogDescription>{t('automation.executions.description')}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3">
             {executionsLoading ? (
-              <div className="p-6 text-center text-sm text-muted-foreground">
-                Loading executions…
+              <div className="text-muted-foreground p-6 text-center text-sm">
+                {t('automation.executions.loading')}
               </div>
             ) : executionsError ? (
-              <div className="surface-inset flex items-start gap-2 rounded-md p-4 text-sm text-destructive">
+              <div className="surface-inset text-destructive flex items-start gap-2 rounded-md p-4 text-sm">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 <div>
-                  <p className="font-medium">Couldn&apos;t load executions</p>
-                  <p className="text-xs text-muted-foreground">{executionsError}</p>
+                  <p className="font-medium">{t('automation.executions.loadFailedTitle')}</p>
+                  <p className="text-muted-foreground text-xs">{executionsError}</p>
                 </div>
               </div>
             ) : executions.length === 0 && executionsRule ? (
-              <div className="surface-inset rounded-md p-6 text-center space-y-2">
-                <Zap className="mx-auto h-6 w-6 text-muted-foreground/50" />
-                <p className="text-sm text-muted-foreground">
-                  No executions yet. This rule will run when{' '}
-                  <span className="font-medium text-foreground">
-                    {TRIGGER_TYPES.find((t) => t.value === executionsRule.trigger.type)?.label ||
-                      executionsRule.trigger.type}
-                  </span>{' '}
-                  events happen on this project.
+              <div className="surface-inset space-y-2 rounded-md p-6 text-center">
+                <Zap className="text-muted-foreground/50 mx-auto h-6 w-6" />
+                <p className="text-muted-foreground text-sm">
+                  {t.rich('automation.executions.empty', {
+                    trigger: () => {
+                      const meta = TRIGGER_TYPES.find(
+                        (type) => type.value === executionsRule.trigger.type
+                      );
+                      return (
+                        <span className="text-foreground font-medium">
+                          {meta ? t(meta.labelKey) : executionsRule.trigger.type}
+                        </span>
+                      );
+                    },
+                  })}
                 </p>
               </div>
             ) : (
-              <div className="surface-card divide-y divide-border/60 max-h-[60vh] overflow-y-auto">
+              <div className="surface-card divide-border/60 max-h-[60vh] divide-y overflow-y-auto">
                 {executions.map((execution) => {
                   const isExpanded = expandedExecutionId === execution.id;
                   return (
                     <div key={execution.id} className="flex flex-col">
                       <button
                         type="button"
-                        onClick={() =>
-                          setExpandedExecutionId(isExpanded ? null : execution.id)
-                        }
+                        onClick={() => setExpandedExecutionId(isExpanded ? null : execution.id)}
                         className="row-interactive flex items-center gap-3 px-3 py-2.5 text-left"
                         aria-expanded={isExpanded}
                       >
                         <ChevronRight
-                          className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${
+                          className={`text-muted-foreground h-3.5 w-3.5 shrink-0 transition-transform ${
                             isExpanded ? 'rotate-90' : ''
                           }`}
                         />
@@ -623,41 +693,44 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
                             {formatTimestamp(execution.triggeredAt)}
                           </p>
                           {execution.error ? (
-                            <p className="truncate text-xs text-destructive">{execution.error}</p>
+                            <p className="text-destructive truncate text-xs">{execution.error}</p>
                           ) : null}
                         </div>
                         <Badge variant={executionStatusVariant(execution.status)}>
                           {execution.status}
                         </Badge>
-                        <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">
-                          {executionActionCount(execution.actionResults)}{' '}
-                          {executionActionCount(execution.actionResults) === 1
-                            ? 'action'
-                            : 'actions'}
+                        <span className="text-muted-foreground hidden shrink-0 text-xs sm:inline">
+                          {t('automation.executions.actionCount', {
+                            count: executionActionCount(execution.actionResults),
+                          })}
                         </span>
-                        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                        <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
                           {formatDuration(execution.durationMs)}
                         </span>
                       </button>
 
                       {isExpanded ? (
-                        <div className="surface-inset grid gap-3 border-t border-border/60 p-3 text-xs">
+                        <div className="surface-inset border-border/60 grid gap-3 border-t p-3 text-xs">
                           <div>
-                            <p className="kicker mb-1">Trigger payload</p>
-                            <pre className="max-h-64 overflow-auto rounded-md bg-background/70 p-2 font-mono text-[11px] leading-snug">
+                            <p className="kicker mb-1">
+                              {t('automation.executions.triggerPayload')}
+                            </p>
+                            <pre className="bg-background/70 max-h-64 overflow-auto rounded-md p-2 font-mono text-[11px] leading-snug">
                               {prettyJson(execution.triggerPayload)}
                             </pre>
                           </div>
                           <div>
-                            <p className="kicker mb-1">Action results</p>
-                            <pre className="max-h-64 overflow-auto rounded-md bg-background/70 p-2 font-mono text-[11px] leading-snug">
+                            <p className="kicker mb-1">
+                              {t('automation.executions.actionResults')}
+                            </p>
+                            <pre className="bg-background/70 max-h-64 overflow-auto rounded-md p-2 font-mono text-[11px] leading-snug">
                               {prettyJson(execution.actionResults)}
                             </pre>
                           </div>
                           {execution.error ? (
                             <div>
-                              <p className="kicker mb-1">Error</p>
-                              <pre className="overflow-auto rounded-md bg-destructive/5 p-2 font-mono text-[11px] leading-snug text-destructive">
+                              <p className="kicker mb-1">{t('automation.executions.error')}</p>
+                              <pre className="bg-destructive/5 text-destructive overflow-auto rounded-md p-2 font-mono text-[11px] leading-snug">
                                 {execution.error}
                               </pre>
                             </div>

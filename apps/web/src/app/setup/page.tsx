@@ -2,18 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CheckCircle2 } from 'lucide-react';
 import { WorkspaceBootstrapStep } from './workspace-step';
 
-const STEP_LABELS = ['Admin', 'Workspace', 'Done'] as const;
+const STEP_KEYS = ['stepAdmin', 'stepWorkspace', 'stepDone'] as const;
 
 type Stage = 'admin' | 'workspace' | 'done';
 
 export default function SetupPage() {
   const router = useRouter();
+  const t = useTranslations('publicPages');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -34,9 +36,7 @@ export default function SetupPage() {
         const data = await res.json().catch(() => ({}));
         if (!res.ok || data.databaseReady === false) {
           setSetupUnavailable(true);
-          setError(
-            data.error || 'Database is not ready. Check the database connection and try again.'
-          );
+          setError(data.error || t('setupDatabaseNotReady'));
           setLoading(false);
           return;
         }
@@ -52,22 +52,22 @@ export default function SetupPage() {
       })
       .catch(() => {
         setSetupUnavailable(true);
-        setError('Connection error. Please check your server.');
+        setError(t('setupConnectionError'));
         setLoading(false);
       });
-  }, [router]);
+  }, [router, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (form.password !== form.confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('setupPasswordsMismatch'));
       return;
     }
 
     if (form.password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(t('setupPasswordTooShort'));
       return;
     }
 
@@ -88,20 +88,20 @@ export default function SetupPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Setup failed');
+        setError(data.error || t('setupFailed'));
         return;
       }
 
       // Admin created — now offer the AI bootstrapper step.
       setStage('workspace');
     } catch {
-      setError('Connection error. Please check your server.');
+      setError(t('setupConnectionError'));
     } finally {
       setSubmitting(false);
     }
   };
 
-  const currentStep = stage === 'done' ? STEP_LABELS.length : stage === 'workspace' ? 2 : 1;
+  const currentStep = stage === 'done' ? STEP_KEYS.length : stage === 'workspace' ? 2 : 1;
 
   if (loading) {
     return (
@@ -112,7 +112,7 @@ export default function SetupPage() {
         />
         <div
           className="border-foreground relative h-5 w-5 animate-spin rounded-full border-2 border-t-transparent"
-          aria-label="Loading"
+          aria-label={t('loading')}
         />
       </div>
     );
@@ -132,9 +132,9 @@ export default function SetupPage() {
             </div>
             <div className="space-y-1">
               <h2 className="text-foreground text-2xl font-semibold tracking-tight">
-                Setup complete
+                {t('setupComplete')}
               </h2>
-              <p className="text-muted-foreground text-sm">Redirecting to sign in&hellip;</p>
+              <p className="text-muted-foreground text-sm">{t('setupRedirecting')}</p>
             </div>
           </div>
         </div>
@@ -160,27 +160,28 @@ export default function SetupPage() {
           </div>
           <div className="space-y-1">
             <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-              Welcome to TaskNebula
+              {t('setupWelcomeTitle')}
             </h1>
             <p className="text-muted-foreground text-sm">
-              {stage === 'admin'
-                ? 'Create your admin account to get started'
-                : 'Tell us about your project — we will draft a workspace for you'}
+              {stage === 'admin' ? t('setupAdminSubtitle') : t('setupWorkspaceSubtitle')}
             </p>
           </div>
         </div>
 
         {/* Step nav chips */}
-        <nav aria-label="Setup progress" className="mb-6 flex items-center justify-center gap-2">
-          {STEP_LABELS.map((label, idx) => {
+        <nav
+          aria-label={t('setupProgress')}
+          className="mb-6 flex items-center justify-center gap-2"
+        >
+          {STEP_KEYS.map((key, idx) => {
             const stepNum = idx + 1;
             const isCurrent = stepNum === currentStep;
             const isComplete = stepNum < currentStep;
             const chipClass = isComplete ? 'chip-emerald' : isCurrent ? 'chip-accent' : 'chip';
             return (
-              <span key={label} className={chipClass} aria-current={isCurrent ? 'step' : undefined}>
+              <span key={key} className={chipClass} aria-current={isCurrent ? 'step' : undefined}>
                 <span className="tabular-nums">{stepNum}</span>
-                <span>{label}</span>
+                <span>{t(key)}</span>
               </span>
             );
           })}
@@ -192,7 +193,7 @@ export default function SetupPage() {
               {error}
             </p>
             <Button type="button" className="mt-4" onClick={() => window.location.reload()}>
-              Retry
+              {t('setupRetry')}
             </Button>
           </div>
         ) : stage === 'admin' ? (
@@ -205,12 +206,12 @@ export default function SetupPage() {
               )}
 
               <div className="space-y-1.5">
-                <Label htmlFor="name">Full name</Label>
+                <Label htmlFor="name">{t('setupFullName')}</Label>
                 <Input
                   id="name"
                   type="text"
                   required
-                  placeholder="John Doe"
+                  placeholder={t('setupFullNamePlaceholder')}
                   autoComplete="name"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -218,7 +219,7 @@ export default function SetupPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="email">Email address</Label>
+                <Label htmlFor="email">{t('setupEmailAddress')}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -231,13 +232,13 @@ export default function SetupPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('setupPassword')}</Label>
                 <Input
                   id="password"
                   type="password"
                   required
                   minLength={8}
-                  placeholder="Min. 8 characters"
+                  placeholder={t('setupPasswordPlaceholder')}
                   autoComplete="new-password"
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -245,12 +246,12 @@ export default function SetupPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="confirmPassword">Confirm password</Label>
+                <Label htmlFor="confirmPassword">{t('setupConfirmPassword')}</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
                   required
-                  placeholder="Confirm your password"
+                  placeholder={t('setupConfirmPasswordPlaceholder')}
                   autoComplete="new-password"
                   value={form.confirmPassword}
                   onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
@@ -259,20 +260,23 @@ export default function SetupPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="orgName">
-                  Organization name{' '}
-                  <span className="text-muted-foreground font-normal">(optional)</span>
+                  {t.rich('setupOrganizationName', {
+                    optional: (chunks) => (
+                      <span className="text-muted-foreground font-normal">{chunks}</span>
+                    ),
+                  })}
                 </Label>
                 <Input
                   id="orgName"
                   type="text"
-                  placeholder="My Company"
+                  placeholder={t('setupOrganizationNamePlaceholder')}
                   value={form.organizationName}
                   onChange={(e) => setForm({ ...form, organizationName: e.target.value })}
                 />
               </div>
 
               <Button type="submit" className="w-full" size="lg" disabled={submitting}>
-                {submitting ? 'Creating account…' : 'Create admin account'}
+                {submitting ? t('setupCreatingAccount') : t('setupCreateAdminAccount')}
               </Button>
             </form>
           </div>
@@ -290,7 +294,7 @@ export default function SetupPage() {
         )}
 
         <p className="text-muted-foreground mt-4 text-center text-xs">
-          This page is only available when the database is empty.
+          {t('setupDatabaseEmptyOnly')}
         </p>
       </div>
     </div>

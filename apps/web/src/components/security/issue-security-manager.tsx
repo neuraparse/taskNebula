@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,20 +15,21 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
 import {
-  Plus,
-  Lock,
-  Trash2,
-  Edit,
-  Star,
-  Users,
-  User,
-  UserCheck,
-  Shield,
-} from 'lucide-react';
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { Plus, Lock, Trash2, Edit, Star, Users, User, UserCheck, Shield } from 'lucide-react';
 
 interface SecurityLevelMember {
   id?: string;
@@ -76,15 +78,23 @@ interface LevelFormState {
 const DEFAULT_SCHEME_VALUE = '__default__';
 
 const MEMBER_TYPES = [
-  { value: 'reporter', label: 'Reporter', icon: User },
-  { value: 'assignee', label: 'Assignee', icon: UserCheck },
-  { value: 'project_lead', label: 'Project lead', icon: Users },
-  { value: 'project_role', label: 'Project role', icon: Users },
-  { value: 'user', label: 'Specific user', icon: User },
-  { value: 'anyone', label: 'Anyone', icon: Shield },
-];
+  { value: 'reporter', labelKey: 'memberReporter', icon: User },
+  { value: 'assignee', labelKey: 'memberAssignee', icon: UserCheck },
+  { value: 'project_lead', labelKey: 'memberProjectLead', icon: Users },
+  { value: 'project_role', labelKey: 'memberProjectRole', icon: Users },
+  { value: 'user', labelKey: 'memberUser', icon: User },
+  { value: 'anyone', labelKey: 'memberAnyone', icon: Shield },
+] as const;
 
-const PROJECT_ROLE_VALUES = ['product_owner', 'scrum_master', 'tech_lead', 'developer', 'qa_engineer', 'designer', 'viewer'];
+const PROJECT_ROLE_VALUES = [
+  'product_owner',
+  'scrum_master',
+  'tech_lead',
+  'developer',
+  'qa_engineer',
+  'designer',
+  'viewer',
+];
 
 export function IssueSecurityManager({ organizationId, projectId }: IssueSecurityManagerProps) {
   const [schemes, setSchemes] = useState<SecurityScheme[]>([]);
@@ -104,8 +114,11 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
     members: [{ type: 'project_role', value: 'developer' }],
   });
   const [selectedProjectScheme, setSelectedProjectScheme] = useState<string>(DEFAULT_SCHEME_VALUE);
-  const [projectSecurityState, setProjectSecurityState] = useState<ProjectSecurityState | null>(null);
+  const [projectSecurityState, setProjectSecurityState] = useState<ProjectSecurityState | null>(
+    null
+  );
   const { toast } = useToast();
+  const t = useTranslations('userSecurity');
 
   useEffect(() => {
     void fetchSchemes();
@@ -134,8 +147,8 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
     } catch (error) {
       console.error('Error fetching security schemes:', error);
       toast({
-        title: 'Load failed',
-        description: 'Issue security schemes could not be loaded.',
+        title: t('toastLoadFailedTitle'),
+        description: t('toastLoadFailedDescription'),
         variant: 'destructive',
       });
     } finally {
@@ -153,26 +166,41 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
           name: newScheme.name,
           description: newScheme.description,
           levels: [
-            { name: 'Internal', description: 'Visible to delivery team roles', members: [{ type: 'project_role', value: 'developer' }] },
-            { name: 'Confidential', description: 'Visible to project leads only', members: [{ type: 'project_role', value: 'tech_lead' }] },
-            { name: 'Restricted', description: 'Visible to reporter and assignee', members: [{ type: 'reporter' }, { type: 'assignee' }] },
+            {
+              name: t('starterInternalName'),
+              description: t('starterInternalDescription'),
+              members: [{ type: 'project_role', value: 'developer' }],
+            },
+            {
+              name: t('starterConfidentialName'),
+              description: t('starterConfidentialDescription'),
+              members: [{ type: 'project_role', value: 'tech_lead' }],
+            },
+            {
+              name: t('starterRestrictedName'),
+              description: t('starterRestrictedDescription'),
+              members: [{ type: 'reporter' }, { type: 'assignee' }],
+            },
           ],
         }),
       });
 
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: 'Failed to create scheme' }));
-        throw new Error(error.error || 'Failed to create scheme');
+        const error = await res.json().catch(() => ({ error: t('errorCreateScheme') }));
+        throw new Error(error.error || t('errorCreateScheme'));
       }
 
-      toast({ title: 'Security scheme created', description: 'Default visibility levels were added automatically.' });
+      toast({
+        title: t('toastSchemeCreatedTitle'),
+        description: t('toastSchemeCreatedDescription'),
+      });
       setCreateDialogOpen(false);
       setNewScheme({ name: '', description: '' });
       await fetchSchemes();
     } catch (error) {
       toast({
-        title: 'Create failed',
-        description: error instanceof Error ? error.message : 'Failed to create scheme',
+        title: t('toastCreateFailedTitle'),
+        description: error instanceof Error ? error.message : t('errorCreateScheme'),
         variant: 'destructive',
       });
     }
@@ -195,18 +223,21 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
       });
 
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: 'Failed to update scheme' }));
-        throw new Error(error.error || 'Failed to update scheme');
+        const error = await res.json().catch(() => ({ error: t('errorUpdateScheme') }));
+        throw new Error(error.error || t('errorUpdateScheme'));
       }
 
-      toast({ title: 'Scheme updated', description: 'Issue security scheme changes were saved.' });
+      toast({
+        title: t('toastSchemeUpdatedTitle'),
+        description: t('toastSchemeUpdatedDescription'),
+      });
       setEditDialogOpen(false);
       setEditingScheme(null);
       await fetchSchemes();
     } catch (error) {
       toast({
-        title: 'Update failed',
-        description: error instanceof Error ? error.message : 'Failed to update scheme',
+        title: t('toastUpdateFailedTitle'),
+        description: error instanceof Error ? error.message : t('errorUpdateScheme'),
         variant: 'destructive',
       });
     }
@@ -221,15 +252,18 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
       });
 
       if (!res.ok) {
-        throw new Error('Failed to update default scheme');
+        throw new Error(t('errorUpdateDefaultScheme'));
       }
 
-      toast({ title: 'Default updated', description: 'Organization default security scheme changed.' });
+      toast({
+        title: t('toastDefaultUpdatedTitle'),
+        description: t('toastDefaultUpdatedDescription'),
+      });
       await fetchSchemes();
     } catch (error) {
       toast({
-        title: 'Update failed',
-        description: error instanceof Error ? error.message : 'Failed to update scheme',
+        title: t('toastUpdateFailedTitle'),
+        description: error instanceof Error ? error.message : t('errorUpdateScheme'),
         variant: 'destructive',
       });
     }
@@ -252,24 +286,24 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
       });
 
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: 'Failed to assign scheme' }));
-        throw new Error(error.error || 'Failed to assign scheme');
+        const error = await res.json().catch(() => ({ error: t('errorAssignScheme') }));
+        throw new Error(error.error || t('errorAssignScheme'));
       }
 
       const nextState = await res.json();
       setProjectSecurityState(nextState);
       toast({
-        title: 'Project scheme updated',
+        title: t('toastProjectSchemeUpdatedTitle'),
         description:
           nextState.source === 'project'
-            ? `This project now uses ${nextState.scheme?.name}.`
-            : 'This project now follows the organization default security scheme.',
+            ? t('toastProjectSchemeUsesDescription', { name: nextState.scheme?.name ?? '' })
+            : t('toastProjectSchemeDefaultDescription'),
       });
       await fetchSchemes();
     } catch (error) {
       toast({
-        title: 'Assignment failed',
-        description: error instanceof Error ? error.message : 'Failed to assign scheme',
+        title: t('toastAssignmentFailedTitle'),
+        description: error instanceof Error ? error.message : t('errorAssignScheme'),
         variant: 'destructive',
       });
       await fetchSchemes();
@@ -277,23 +311,26 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
   }
 
   async function deleteScheme(schemeId: string) {
-    if (!window.confirm('Delete this security scheme? Projects using it must be moved first.')) {
+    if (!window.confirm(t('confirmDeleteScheme'))) {
       return;
     }
 
     try {
       const res = await fetch(`/api/security-schemes/${schemeId}`, { method: 'DELETE' });
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: 'Failed to delete scheme' }));
-        throw new Error(error.error || 'Failed to delete scheme');
+        const error = await res.json().catch(() => ({ error: t('errorDeleteScheme') }));
+        throw new Error(error.error || t('errorDeleteScheme'));
       }
 
-      toast({ title: 'Scheme deleted', description: 'Security scheme removed successfully.' });
+      toast({
+        title: t('toastSchemeDeletedTitle'),
+        description: t('toastSchemeDeletedDescription'),
+      });
       await fetchSchemes();
     } catch (error) {
       toast({
-        title: 'Delete failed',
-        description: error instanceof Error ? error.message : 'Failed to delete scheme',
+        title: t('toastDeleteFailedTitle'),
+        description: error instanceof Error ? error.message : t('errorDeleteScheme'),
         variant: 'destructive',
       });
     }
@@ -316,13 +353,12 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
       name: level?.name || '',
       description: level?.description || '',
       isDefault: level?.isDefault || false,
-      members:
-        level?.members?.length
-          ? level.members.map((member) => ({
-              type: member.memberType,
-              value: member.memberValue || '',
-            }))
-          : [{ type: 'project_role', value: 'developer' }],
+      members: level?.members?.length
+        ? level.members.map((member) => ({
+            type: member.memberType,
+            value: member.memberValue || '',
+          }))
+        : [{ type: 'project_role', value: 'developer' }],
     });
     setLevelDialogOpen(true);
   }
@@ -353,13 +389,13 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
       });
 
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: 'Failed to save level' }));
-        throw new Error(error.error || 'Failed to save level');
+        const error = await res.json().catch(() => ({ error: t('errorSaveLevel') }));
+        throw new Error(error.error || t('errorSaveLevel'));
       }
 
       toast({
-        title: editingLevel ? 'Level updated' : 'Level created',
-        description: 'Security level changes were saved successfully.',
+        title: editingLevel ? t('toastLevelUpdatedTitle') : t('toastLevelCreatedTitle'),
+        description: t('toastLevelSavedDescription'),
       });
       setLevelDialogOpen(false);
       setEditingLevel(null);
@@ -367,15 +403,15 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
       await fetchSchemes();
     } catch (error) {
       toast({
-        title: 'Save failed',
-        description: error instanceof Error ? error.message : 'Failed to save level',
+        title: t('toastSaveFailedTitle'),
+        description: error instanceof Error ? error.message : t('errorSaveLevel'),
         variant: 'destructive',
       });
     }
   }
 
   async function deleteLevel(schemeId: string, levelId: string) {
-    if (!window.confirm('Delete this security level?')) {
+    if (!window.confirm(t('confirmDeleteLevel'))) {
       return;
     }
 
@@ -385,16 +421,19 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
       });
 
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: 'Failed to delete level' }));
-        throw new Error(error.error || 'Failed to delete level');
+        const error = await res.json().catch(() => ({ error: t('errorDeleteLevel') }));
+        throw new Error(error.error || t('errorDeleteLevel'));
       }
 
-      toast({ title: 'Level deleted', description: 'Security level removed successfully.' });
+      toast({
+        title: t('toastLevelDeletedTitle'),
+        description: t('toastLevelDeletedDescription'),
+      });
       await fetchSchemes();
     } catch (error) {
       toast({
-        title: 'Delete failed',
-        description: error instanceof Error ? error.message : 'Failed to delete level',
+        title: t('toastDeleteFailedTitle'),
+        description: error instanceof Error ? error.message : t('errorDeleteLevel'),
         variant: 'destructive',
       });
     }
@@ -411,50 +450,51 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
     }
 
     if (type === 'user' && value) {
-      return `User · ${value}`;
+      return t('memberUserValue', { value });
     }
 
     const memberType = MEMBER_TYPES.find((member) => member.value === type);
-    return memberType?.label || type;
+    return memberType ? t(memberType.labelKey) : type;
   }
 
   const activeSchemeName = useMemo(() => {
     if (!projectSecurityState?.scheme) {
-      return 'No scheme';
+      return t('noScheme');
     }
 
     return projectSecurityState.scheme.name;
-  }, [projectSecurityState]);
+  }, [projectSecurityState, t]);
 
   if (loading) {
-    return <div className="p-4 text-sm text-muted-foreground">Loading security schemes...</div>;
+    return <div className="text-muted-foreground p-4 text-sm">{t('loadingSchemes')}</div>;
   }
 
   return (
-    <div className="space-y-6 animate-fade-up">
+    <div className="animate-fade-up space-y-6">
       {projectId ? (
-        <div className="surface-card p-5 space-y-3">
+        <div className="surface-card space-y-3 p-5">
           <div className="space-y-1">
-            <span className="kicker">Project assignment</span>
-            <p className="text-xs text-muted-foreground">
-              Choose which issue visibility scheme this project should apply by default.
-            </p>
+            <span className="kicker">{t('projectAssignment')}</span>
+            <p className="text-muted-foreground text-xs">{t('projectAssignmentHint')}</p>
           </div>
-          <div className="grid grid-cols-1 gap-4 items-center md:grid-cols-[240px_1fr]">
+          <div className="grid grid-cols-1 items-center gap-4 md:grid-cols-[240px_1fr]">
             <div className="space-y-1">
               <div className="text-sm font-medium">{activeSchemeName}</div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 {projectSecurityState?.source === 'project'
-                  ? 'This project uses an explicit scheme.'
-                  : 'This project inherits the organization default.'}
+                  ? t('projectUsesExplicit')
+                  : t('projectInheritsDefault')}
               </p>
             </div>
-            <Select value={selectedProjectScheme} onValueChange={(value) => void assignSchemeToProject(value)}>
+            <Select
+              value={selectedProjectScheme}
+              onValueChange={(value) => void assignSchemeToProject(value)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={DEFAULT_SCHEME_VALUE}>Use organization default</SelectItem>
+                <SelectItem value={DEFAULT_SCHEME_VALUE}>{t('useOrganizationDefault')}</SelectItem>
                 {schemes.map((scheme) => (
                   <SelectItem key={scheme.id} value={scheme.id}>
                     {scheme.name}
@@ -468,48 +508,52 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
 
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <span className="kicker">Schemes</span>
-          <h3 className="text-sm font-semibold tracking-tight text-foreground">Issue security schemes</h3>
-          <p className="text-sm text-muted-foreground">
-            Control who can see sensitive issues and what defaults new work starts with.
-          </p>
+          <span className="kicker">{t('schemes')}</span>
+          <h3 className="text-foreground text-sm font-semibold tracking-tight">
+            {t('issueSecuritySchemes')}
+          </h3>
+          <p className="text-muted-foreground text-sm">{t('schemesHint')}</p>
         </div>
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Create scheme
+              {t('createScheme')}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create security scheme</DialogTitle>
-              <DialogDescription>Create a new issue security scheme with a few starter levels.</DialogDescription>
+              <DialogTitle>{t('createSchemeTitle')}</DialogTitle>
+              <DialogDescription>{t('createSchemeDescription')}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label>Name</Label>
+                <Label>{t('fieldName')}</Label>
                 <Input
                   value={newScheme.name}
-                  onChange={(event) => setNewScheme((current) => ({ ...current, name: event.target.value }))}
-                  placeholder="Standard security"
+                  onChange={(event) =>
+                    setNewScheme((current) => ({ ...current, name: event.target.value }))
+                  }
+                  placeholder={t('schemeNamePlaceholder')}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Description</Label>
+                <Label>{t('fieldDescription')}</Label>
                 <Textarea
                   value={newScheme.description}
-                  onChange={(event) => setNewScheme((current) => ({ ...current, description: event.target.value }))}
-                  placeholder="Describe how teams should use this scheme."
+                  onChange={(event) =>
+                    setNewScheme((current) => ({ ...current, description: event.target.value }))
+                  }
+                  placeholder={t('schemeDescriptionPlaceholder')}
                 />
               </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
-                Cancel
+                {t('cancel')}
               </Button>
               <Button onClick={() => void createScheme()} disabled={!newScheme.name.trim()}>
-                Create
+                {t('create')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -517,16 +561,16 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
       </div>
 
       {schemes.length === 0 ? (
-        <div className="surface-card p-10 text-center space-y-3">
-          <Lock className="mx-auto h-8 w-8 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">No security schemes yet.</p>
+        <div className="surface-card space-y-3 p-10 text-center">
+          <Lock className="text-muted-foreground/40 mx-auto h-8 w-8" />
+          <p className="text-muted-foreground text-sm">{t('noSchemesYet')}</p>
           <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            Create your first scheme
+            {t('createFirstScheme')}
           </Button>
         </div>
       ) : (
-        <div className="space-y-4 stagger">
+        <div className="stagger space-y-4">
           {schemes.map((scheme) => {
             const isAssignedToProject = projectSecurityState?.assignedSchemeId === scheme.id;
             const isEffectiveForProject = projectSecurityState?.effectiveSchemeId === scheme.id;
@@ -534,22 +578,22 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
             return (
               <div
                 key={scheme.id}
-                className={`surface-card p-5 space-y-4 ${scheme.isDefault ? 'border-primary/30' : ''}`}
+                className={`surface-card space-y-4 p-5 ${scheme.isDefault ? 'border-primary/30' : ''}`}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0 space-y-1">
                     <div className="flex items-center gap-2">
-                      <Lock className="h-4 w-4 shrink-0 text-primary" />
+                      <Lock className="text-primary h-4 w-4 shrink-0" />
                       <h4 className="truncate text-sm font-semibold">{scheme.name}</h4>
                       {scheme.isDefault ? (
                         <span className="chip gap-1">
                           <Star className="h-3 w-3" />
-                          Default
+                          {t('default')}
                         </span>
                       ) : null}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {scheme.description || 'No description provided.'}
+                    <p className="text-muted-foreground text-xs">
+                      {scheme.description || t('noDescription')}
                     </p>
                   </div>
                   <div className="flex items-center gap-1">
@@ -559,7 +603,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                         size="icon"
                         className="h-7 w-7"
                         onClick={() => void setAsDefault(scheme.id)}
-                        aria-label="Set as default"
+                        aria-label={t('setAsDefault')}
                       >
                         <Star className="h-3.5 w-3.5" />
                       </Button>
@@ -569,7 +613,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                       size="icon"
                       className="h-7 w-7"
                       onClick={() => openEditDialog(scheme)}
-                      aria-label="Edit scheme"
+                      aria-label={t('editScheme')}
                     >
                       <Edit className="h-3.5 w-3.5" />
                     </Button>
@@ -578,16 +622,16 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                       size="icon"
                       className="h-7 w-7"
                       onClick={() => openLevelDialog(scheme.id)}
-                      aria-label="Add level"
+                      aria-label={t('addLevel')}
                     >
                       <Plus className="h-3.5 w-3.5" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      className="text-destructive hover:text-destructive h-7 w-7"
                       onClick={() => void deleteScheme(scheme.id)}
-                      aria-label="Delete scheme"
+                      aria-label={t('deleteScheme')}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -595,30 +639,42 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                 </div>
 
                 <div className="flex flex-wrap gap-1.5">
-                  <span className="chip">{scheme.projectCount || 0} projects</span>
-                  <span className="chip">{scheme.levels.length} levels</span>
-                  {isAssignedToProject ? <span className="chip-accent">Assigned here</span> : null}
+                  <span className="chip">
+                    {t('projectsCount', { count: scheme.projectCount || 0 })}
+                  </span>
+                  <span className="chip">{t('levelsCount', { count: scheme.levels.length })}</span>
+                  {isAssignedToProject ? (
+                    <span className="chip-accent">{t('assignedHere')}</span>
+                  ) : null}
                   {!isAssignedToProject && isEffectiveForProject ? (
-                    <span className="chip">Inherited here</span>
+                    <span className="chip">{t('inheritedHere')}</span>
                   ) : null}
                 </div>
 
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value={`${scheme.id}-levels`} className="border-none">
-                    <AccordionTrigger className="py-2 text-sm">Security levels</AccordionTrigger>
+                    <AccordionTrigger className="py-2 text-sm">
+                      {t('securityLevels')}
+                    </AccordionTrigger>
                     <AccordionContent className="pt-2">
                       {scheme.levels.length ? (
-                        <div className="surface-inset divide-y divide-border/60">
+                        <div className="surface-inset divide-border/60 divide-y">
                           {scheme.levels.map((level) => (
                             <div key={level.id} className="row-interactive px-4 py-3">
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0 space-y-1">
                                   <div className="flex items-center gap-2">
-                                    <span className="truncate text-sm font-medium">{level.name}</span>
-                                    {level.isDefault ? <span className="chip">Default</span> : null}
+                                    <span className="truncate text-sm font-medium">
+                                      {level.name}
+                                    </span>
+                                    {level.isDefault ? (
+                                      <span className="chip">{t('default')}</span>
+                                    ) : null}
                                   </div>
                                   {level.description ? (
-                                    <p className="text-xs text-muted-foreground">{level.description}</p>
+                                    <p className="text-muted-foreground text-xs">
+                                      {level.description}
+                                    </p>
                                   ) : null}
                                 </div>
                                 <div className="flex shrink-0 items-center gap-1">
@@ -627,41 +683,46 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                                     size="icon"
                                     className="h-7 w-7"
                                     onClick={() => openLevelDialog(scheme.id, level)}
-                                    aria-label="Edit level"
+                                    aria-label={t('editLevel')}
                                   >
                                     <Edit className="h-3.5 w-3.5" />
                                   </Button>
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-7 w-7 text-destructive hover:text-destructive"
+                                    className="text-destructive hover:text-destructive h-7 w-7"
                                     onClick={() => void deleteLevel(scheme.id, level.id)}
-                                    aria-label="Delete level"
+                                    aria-label={t('deleteLevel')}
                                   >
                                     <Trash2 className="h-3.5 w-3.5" />
                                   </Button>
                                 </div>
                               </div>
                               <div className="mt-2 flex flex-wrap gap-1">
-                                {(Array.isArray(level.members) ? level.members : []).map((member, index) => {
-                                  const Icon = getMemberIcon(member.memberType);
-                                  return (
-                                    <span
-                                      key={member.id || `${member.memberType}-${member.memberValue || index}`}
-                                      className="chip gap-1"
-                                    >
-                                      <Icon className="h-3 w-3" />
-                                      {getMemberLabel(member.memberType, member.memberValue)}
-                                    </span>
-                                  );
-                                })}
+                                {(Array.isArray(level.members) ? level.members : []).map(
+                                  (member, index) => {
+                                    const Icon = getMemberIcon(member.memberType);
+                                    return (
+                                      <span
+                                        key={
+                                          member.id ||
+                                          `${member.memberType}-${member.memberValue || index}`
+                                        }
+                                        className="chip gap-1"
+                                      >
+                                        <Icon className="h-3 w-3" />
+                                        {getMemberLabel(member.memberType, member.memberValue)}
+                                      </span>
+                                    );
+                                  }
+                                )}
                               </div>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
-                          No levels yet. Add the first visibility level for this scheme.
+                        <div className="border-border text-muted-foreground rounded-md border border-dashed p-4 text-sm">
+                          {t('noLevelsYet')}
                         </div>
                       )}
                     </AccordionContent>
@@ -676,28 +737,32 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit security scheme</DialogTitle>
-            <DialogDescription>Update the scheme metadata and default visibility behavior.</DialogDescription>
+            <DialogTitle>{t('editSchemeTitle')}</DialogTitle>
+            <DialogDescription>{t('editSchemeDescription')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Name</Label>
+              <Label>{t('fieldName')}</Label>
               <Input
                 value={editForm.name}
-                onChange={(event) => setEditForm((current) => ({ ...current, name: event.target.value }))}
-                placeholder="Standard security"
+                onChange={(event) =>
+                  setEditForm((current) => ({ ...current, name: event.target.value }))
+                }
+                placeholder={t('schemeNamePlaceholder')}
               />
             </div>
             <div className="space-y-2">
-              <Label>Description</Label>
+              <Label>{t('fieldDescription')}</Label>
               <Textarea
                 value={editForm.description}
-                onChange={(event) => setEditForm((current) => ({ ...current, description: event.target.value }))}
-                placeholder="Describe how teams should use this scheme."
+                onChange={(event) =>
+                  setEditForm((current) => ({ ...current, description: event.target.value }))
+                }
+                placeholder={t('schemeDescriptionPlaceholder')}
               />
             </div>
             <div className="space-y-2">
-              <Label>Default behavior</Label>
+              <Label>{t('defaultBehavior')}</Label>
               <Select
                 value={editForm.isDefault ? 'default' : 'standard'}
                 onValueChange={(value) =>
@@ -708,18 +773,18 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="standard">Keep as regular scheme</SelectItem>
-                  <SelectItem value="default">Make organization default</SelectItem>
+                  <SelectItem value="standard">{t('keepRegularScheme')}</SelectItem>
+                  <SelectItem value="default">{t('makeOrganizationDefault')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
-              Cancel
+              {t('cancel')}
             </Button>
             <Button onClick={() => void updateScheme()} disabled={!editForm.name.trim()}>
-              Save changes
+              {t('saveChanges')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -728,31 +793,33 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
       <Dialog open={levelDialogOpen} onOpenChange={setLevelDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingLevel ? 'Edit security level' : 'Add security level'}</DialogTitle>
-            <DialogDescription>Define who can see issues tagged with this visibility level.</DialogDescription>
+            <DialogTitle>{editingLevel ? t('editLevelTitle') : t('addLevelTitle')}</DialogTitle>
+            <DialogDescription>{t('levelDialogDescription')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Name</Label>
+              <Label>{t('fieldName')}</Label>
               <Input
                 value={levelForm.name}
-                onChange={(event) => setLevelForm((current) => ({ ...current, name: event.target.value }))}
-                placeholder="Confidential"
+                onChange={(event) =>
+                  setLevelForm((current) => ({ ...current, name: event.target.value }))
+                }
+                placeholder={t('levelNamePlaceholder')}
               />
             </div>
             <div className="space-y-2">
-              <Label>Description</Label>
+              <Label>{t('fieldDescription')}</Label>
               <Textarea
                 value={levelForm.description}
                 onChange={(event) =>
                   setLevelForm((current) => ({ ...current, description: event.target.value }))
                 }
-                placeholder="Who should be able to view issues in this level?"
+                placeholder={t('levelDescriptionPlaceholder')}
               />
             </div>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label>Members</Label>
+                <Label>{t('members')}</Label>
                 <Button
                   type="button"
                   variant="outline"
@@ -765,19 +832,28 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                   }
                 >
                   <Plus className="mr-2 h-3 w-3" />
-                  Add member
+                  {t('addMember')}
                 </Button>
               </div>
               <div className="space-y-2">
                 {levelForm.members.map((member, index) => (
-                  <div key={`${member.type}-${index}`} className="grid gap-2 md:grid-cols-[170px_minmax(0,1fr)_40px]">
+                  <div
+                    key={`${member.type}-${index}`}
+                    className="grid gap-2 md:grid-cols-[170px_minmax(0,1fr)_40px]"
+                  >
                     <Select
                       value={member.type}
                       onValueChange={(value) =>
                         setLevelForm((current) => ({
                           ...current,
                           members: current.members.map((entry, entryIndex) =>
-                            entryIndex === index ? { ...entry, type: value, value: value === 'project_role' ? 'developer' : '' } : entry
+                            entryIndex === index
+                              ? {
+                                  ...entry,
+                                  type: value,
+                                  value: value === 'project_role' ? 'developer' : '',
+                                }
+                              : entry
                           ),
                         }))
                       }
@@ -788,7 +864,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                       <SelectContent>
                         {MEMBER_TYPES.map((memberType) => (
                           <SelectItem key={memberType.value} value={memberType.value}>
-                            {memberType.label}
+                            {t(memberType.labelKey)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -811,7 +887,9 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                         <SelectContent>
                           {PROJECT_ROLE_VALUES.map((role) => (
                             <SelectItem key={role} value={role}>
-                              {role.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())}
+                              {role
+                                .replace(/_/g, ' ')
+                                .replace(/\b\w/g, (letter) => letter.toUpperCase())}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -827,8 +905,17 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                             ),
                           }))
                         }
-                        placeholder={member.type === 'user' ? 'User id or email' : 'Optional value'}
-                        disabled={member.type === 'reporter' || member.type === 'assignee' || member.type === 'project_lead' || member.type === 'anyone'}
+                        placeholder={
+                          member.type === 'user'
+                            ? t('userIdOrEmailPlaceholder')
+                            : t('optionalValuePlaceholder')
+                        }
+                        disabled={
+                          member.type === 'reporter' ||
+                          member.type === 'assignee' ||
+                          member.type === 'project_lead' ||
+                          member.type === 'anyone'
+                        }
                       />
                     )}
                     <Button
@@ -842,7 +929,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                         }))
                       }
                       disabled={levelForm.members.length === 1}
-                      aria-label="Remove member"
+                      aria-label={t('removeMember')}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -851,7 +938,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Default behavior</Label>
+              <Label>{t('defaultBehavior')}</Label>
               <Select
                 value={levelForm.isDefault ? 'default' : 'standard'}
                 onValueChange={(value) =>
@@ -862,18 +949,18 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="standard">Keep as regular level</SelectItem>
-                  <SelectItem value="default">Make default issue level</SelectItem>
+                  <SelectItem value="standard">{t('keepRegularLevel')}</SelectItem>
+                  <SelectItem value="default">{t('makeDefaultLevel')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setLevelDialogOpen(false)}>
-              Cancel
+              {t('cancel')}
             </Button>
             <Button onClick={() => void saveLevel()} disabled={!levelForm.name.trim()}>
-              {editingLevel ? 'Save changes' : 'Create level'}
+              {editingLevel ? t('saveChanges') : t('createLevel')}
             </Button>
           </DialogFooter>
         </DialogContent>

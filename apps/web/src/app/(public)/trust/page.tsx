@@ -18,64 +18,70 @@
 
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { TRUST_CENTER, recentIncidents } from '@/config/trust-center';
 import { SUB_PROCESSORS } from '@/config/sub-processors';
 import type { ComplianceBadge, PublicIncident } from '@/config/trust-center';
 
-export const metadata: Metadata = {
-  title: 'Trust Center · TaskNebula',
-  description:
-    'Security program, sub-processors, compliance status, and recent ' +
-    'reliability incidents for TaskNebula.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('publicPages');
+  return {
+    title: t('trustMetaTitle'),
+    description: t('trustMetaDescription'),
+  };
+}
 
 // `force-static` is the default for a server component without dynamic data,
 // but we make it explicit so reviewers know this page should never depend on
 // per-request state.
 export const dynamic = 'force-static';
 
-export default function TrustCenterPage() {
+export default async function TrustCenterPage() {
+  const t = await getTranslations('publicPages');
   const incidents = recentIncidents(TRUST_CENTER, 90);
+  const complianceStatusLabels = {
+    in_progress: t('trustStatusInProgress'),
+    achieved: t('trustStatusAchieved'),
+    planned: t('trustStatusPlanned'),
+  };
   return (
     <main className="mx-auto w-full max-w-4xl px-6 py-16 lg:px-8">
       <header className="mb-12 border-b pb-10">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Trust Center
+        <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+          {t('trustEyebrow')}
         </p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-          {TRUST_CENTER.intro.title}
-        </h1>
-        <p className="mt-4 max-w-2xl text-base text-muted-foreground">
-          {TRUST_CENTER.intro.body}
-        </p>
-        <p className="mt-3 text-xs text-muted-foreground">
-          Last reviewed: {new Date().toISOString().slice(0, 10)}
+        <h1 className="mt-3 text-4xl font-semibold tracking-tight">{TRUST_CENTER.intro.title}</h1>
+        <p className="text-muted-foreground mt-4 max-w-2xl text-base">{TRUST_CENTER.intro.body}</p>
+        <p className="text-muted-foreground mt-3 text-xs">
+          {t('trustLastReviewed', { date: new Date().toISOString().slice(0, 10) })}
         </p>
       </header>
 
-      <Section title="Compliance" id="compliance">
+      <Section title={t('trustSectionCompliance')} id="compliance">
         <ul className="grid gap-4 sm:grid-cols-2">
           {TRUST_CENTER.compliance.map((badge) => (
-            <ComplianceCard key={badge.name} badge={badge} />
+            <ComplianceCard
+              key={badge.name}
+              badge={badge}
+              statusLabels={complianceStatusLabels}
+              expectedLabel={t('trustExpected')}
+            />
           ))}
         </ul>
       </Section>
 
-      <Section title="Sub-processors" id="sub-processors">
-        <p className="mb-5 text-sm text-muted-foreground">
-          We use the following sub-processors to run TaskNebula. Material
-          changes are announced 30 days before they take effect.
-        </p>
+      <Section title={t('trustSectionSubProcessors')} id="sub-processors">
+        <p className="text-muted-foreground mb-5 text-sm">{t('trustSubProcessorsIntro')}</p>
         <div className="overflow-hidden rounded-lg border">
-          <table className="min-w-full divide-y divide-border text-sm">
+          <table className="divide-border min-w-full divide-y text-sm">
             <thead className="bg-muted/40">
               <tr>
-                <Th>Sub-processor</Th>
-                <Th>Purpose</Th>
-                <Th>Region</Th>
+                <Th>{t('trustColSubProcessor')}</Th>
+                <Th>{t('trustColPurpose')}</Th>
+                <Th>{t('trustColRegion')}</Th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-border divide-y">
               {SUB_PROCESSORS.map((sp) => (
                 <tr key={sp.name}>
                   <Td>
@@ -84,7 +90,7 @@ export default function TrustCenterPage() {
                         href={sp.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-medium text-foreground hover:underline"
+                        className="text-foreground font-medium hover:underline"
                       >
                         {sp.name}
                       </a>
@@ -93,14 +99,12 @@ export default function TrustCenterPage() {
                     )}
                     {sp.placeholder ? (
                       <span className="ml-2 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
-                        Planned
+                        {t('trustStatusPlanned')}
                       </span>
                     ) : null}
                   </Td>
                   <Td className="text-muted-foreground">{sp.purpose}</Td>
-                  <Td className="whitespace-nowrap text-muted-foreground">
-                    {sp.region}
-                  </Td>
+                  <Td className="text-muted-foreground whitespace-nowrap">{sp.region}</Td>
                 </tr>
               ))}
             </tbody>
@@ -108,17 +112,17 @@ export default function TrustCenterPage() {
         </div>
       </Section>
 
-      <Section title="Documents" id="documents">
+      <Section title={t('trustSectionDocuments')} id="documents">
         <ul className="grid gap-3 sm:grid-cols-2">
           {TRUST_CENTER.documents.map((doc) => (
             <li key={doc.label}>
               <Link
                 href={doc.href}
-                className="flex items-center justify-between rounded-md border px-4 py-3 transition-colors hover:bg-muted/40"
+                className="hover:bg-muted/40 flex items-center justify-between rounded-md border px-4 py-3 transition-colors"
               >
                 <span className="text-sm font-medium">{doc.label}</span>
-                <span className="text-xs text-muted-foreground">
-                  {doc.placeholder ? 'Coming soon' : 'Open →'}
+                <span className="text-muted-foreground text-xs">
+                  {doc.placeholder ? t('trustComingSoon') : t('trustOpen')}
                 </span>
               </Link>
             </li>
@@ -126,12 +130,12 @@ export default function TrustCenterPage() {
         </ul>
       </Section>
 
-      <Section title="Status & uptime" id="status">
+      <Section title={t('trustSectionStatus')} id="status">
         <a
           href={TRUST_CENTER.statusPage.href}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted/40"
+          className="hover:bg-muted/40 inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium"
         >
           <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
           {TRUST_CENTER.statusPage.label}
@@ -139,30 +143,35 @@ export default function TrustCenterPage() {
         </a>
       </Section>
 
-      <Section title="Recent incidents (last 90 days)" id="incidents">
+      <Section title={t('trustSectionIncidents')} id="incidents">
         {incidents.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No incidents reported in the last 90 days.
-          </p>
+          <p className="text-muted-foreground text-sm">{t('trustNoIncidents')}</p>
         ) : (
           <ul className="space-y-3">
             {incidents.map((incident) => (
-              <IncidentRow key={incident.id} incident={incident} />
+              <IncidentRow
+                key={incident.id}
+                incident={incident}
+                viewDetailsLabel={t('trustViewDetails')}
+              />
             ))}
           </ul>
         )}
       </Section>
 
-      <Section title="Security contact" id="contact">
-        <p className="text-sm text-muted-foreground">
-          Report a vulnerability or ask a security question at{' '}
-          <a
-            href={`mailto:${TRUST_CENTER.contact.email}`}
-            className="font-medium text-foreground hover:underline"
-          >
-            {TRUST_CENTER.contact.email}
-          </a>
-          .
+      <Section title={t('trustSectionSecurityContact')} id="contact">
+        <p className="text-muted-foreground text-sm">
+          {t.rich('trustSecurityContact', {
+            email: TRUST_CENTER.contact.email,
+            link: (chunks) => (
+              <a
+                href={`mailto:${TRUST_CENTER.contact.email}`}
+                className="text-foreground font-medium hover:underline"
+              >
+                {chunks}
+              </a>
+            ),
+          })}
         </p>
       </Section>
     </main>
@@ -194,29 +203,26 @@ function Th({ children }: { children: React.ReactNode }) {
   return (
     <th
       scope="col"
-      className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+      className="text-muted-foreground px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider"
     >
       {children}
     </th>
   );
 }
 
-function Td({
-  children,
-  className = '',
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
+function Td({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return <td className={`px-4 py-3 align-top ${className}`}>{children}</td>;
 }
 
-function ComplianceCard({ badge }: { badge: ComplianceBadge }) {
-  const STATUS_LABEL: Record<ComplianceBadge['status'], string> = {
-    in_progress: 'In progress',
-    achieved: 'Achieved',
-    planned: 'Planned',
-  };
+function ComplianceCard({
+  badge,
+  statusLabels,
+  expectedLabel,
+}: {
+  badge: ComplianceBadge;
+  statusLabels: Record<ComplianceBadge['status'], string>;
+  expectedLabel: string;
+}) {
   const STATUS_TONE: Record<ComplianceBadge['status'], string> = {
     in_progress: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
     achieved: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
@@ -229,20 +235,26 @@ function ComplianceCard({ badge }: { badge: ComplianceBadge }) {
         <span
           className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${STATUS_TONE[badge.status]}`}
         >
-          {STATUS_LABEL[badge.status]}
+          {statusLabels[badge.status]}
         </span>
       </div>
-      <p className="mt-2 text-sm text-muted-foreground">{badge.description}</p>
+      <p className="text-muted-foreground mt-2 text-sm">{badge.description}</p>
       {badge.expectedAt ? (
-        <p className="mt-2 text-xs text-muted-foreground">
-          Expected: {badge.expectedAt}
+        <p className="text-muted-foreground mt-2 text-xs">
+          {expectedLabel} {badge.expectedAt}
         </p>
       ) : null}
     </li>
   );
 }
 
-function IncidentRow({ incident }: { incident: PublicIncident }) {
+function IncidentRow({
+  incident,
+  viewDetailsLabel,
+}: {
+  incident: PublicIncident;
+  viewDetailsLabel: string;
+}) {
   const STATUS_TONE: Record<PublicIncident['status'], string> = {
     investigating: 'bg-red-500/10 text-red-600 dark:text-red-400',
     identified: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
@@ -259,16 +271,16 @@ function IncidentRow({ incident }: { incident: PublicIncident }) {
           {incident.status}
         </span>
       </div>
-      <p className="mt-1 text-xs text-muted-foreground">{incident.date}</p>
-      <p className="mt-2 text-sm text-muted-foreground">{incident.summary}</p>
+      <p className="text-muted-foreground mt-1 text-xs">{incident.date}</p>
+      <p className="text-muted-foreground mt-2 text-sm">{incident.summary}</p>
       {incident.href ? (
         <a
           href={incident.href}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-2 inline-block text-xs font-medium text-foreground hover:underline"
+          className="text-foreground mt-2 inline-block text-xs font-medium hover:underline"
         >
-          View details →
+          {viewDetailsLabel}
         </a>
       ) : null}
     </li>

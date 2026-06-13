@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   ArrowRight,
   BarChart3,
@@ -63,7 +64,7 @@ interface HistoryEntry {
 
 interface NavShortcut {
   id: string;
-  label: string;
+  labelKey: string;
   icon: LucideIcon;
   href: string;
   hint?: string;
@@ -73,25 +74,25 @@ interface NavShortcut {
 /* Static data                                                                 */
 /* -------------------------------------------------------------------------- */
 
-const TABS: ReadonlyArray<{ key: OmnibarTab; label: string; hotkey: string }> = [
-  { key: 'all', label: 'All', hotkey: '1' },
-  { key: 'issues', label: 'Issues', hotkey: '2' },
-  { key: 'docs', label: 'Docs', hotkey: '3' },
-  { key: 'people', label: 'People', hotkey: '4' },
-  { key: 'ask', label: 'Ask AI', hotkey: '5' },
+const TABS: ReadonlyArray<{ key: OmnibarTab; labelKey: string; hotkey: string }> = [
+  { key: 'all', labelKey: 'tabAll', hotkey: '1' },
+  { key: 'issues', labelKey: 'tabIssues', hotkey: '2' },
+  { key: 'docs', labelKey: 'tabDocs', hotkey: '3' },
+  { key: 'people', labelKey: 'tabPeople', hotkey: '4' },
+  { key: 'ask', labelKey: 'tabAsk', hotkey: '5' },
 ];
 
 const QUICK_NAV: ReadonlyArray<NavShortcut> = [
-  { id: 'nav.home', label: 'Home', icon: Home, href: '/' },
-  { id: 'nav.inbox', label: 'Inbox', icon: Inbox, href: '/inbox' },
-  { id: 'nav.work-items', label: 'Work items', icon: CircleDot, href: '/work-items' },
-  { id: 'nav.docs', label: 'Docs', icon: BookOpenText, href: '/docs' },
-  { id: 'nav.dashboards', label: 'Dashboards', icon: BarChart3, href: '/dashboards' },
-  { id: 'nav.projects', label: 'Projects', icon: FolderKanban, href: '/projects' },
-  { id: 'nav.cycles', label: 'Cycles', icon: RefreshCw, href: '/cycles' },
-  { id: 'nav.modules', label: 'Modules', icon: Layers, href: '/modules' },
-  { id: 'nav.initiatives', label: 'Initiatives', icon: Lightbulb, href: '/initiatives' },
-  { id: 'nav.team', label: 'Team', icon: Users, href: '/team' },
+  { id: 'nav.home', labelKey: 'navHome', icon: Home, href: '/' },
+  { id: 'nav.inbox', labelKey: 'navInbox', icon: Inbox, href: '/inbox' },
+  { id: 'nav.work-items', labelKey: 'navWorkItems', icon: CircleDot, href: '/work-items' },
+  { id: 'nav.docs', labelKey: 'navDocs', icon: BookOpenText, href: '/docs' },
+  { id: 'nav.dashboards', labelKey: 'navDashboards', icon: BarChart3, href: '/dashboards' },
+  { id: 'nav.projects', labelKey: 'navProjects', icon: FolderKanban, href: '/projects' },
+  { id: 'nav.cycles', labelKey: 'navCycles', icon: RefreshCw, href: '/cycles' },
+  { id: 'nav.modules', labelKey: 'navModules', icon: Layers, href: '/modules' },
+  { id: 'nav.initiatives', labelKey: 'navInitiatives', icon: Lightbulb, href: '/initiatives' },
+  { id: 'nav.team', labelKey: 'navTeam', icon: Users, href: '/team' },
 ];
 
 const FACET_ICON: Record<FacetKey, LucideIcon> = {
@@ -113,6 +114,7 @@ interface FacetChipProps {
 }
 
 function FacetChip({ facet, onRemove }: FacetChipProps) {
+  const t = useTranslations('searchCommand');
   const Icon = FACET_ICON[facet.key] ?? Hash;
   return (
     <span
@@ -125,7 +127,7 @@ function FacetChip({ facet, onRemove }: FacetChipProps) {
       <button
         type="button"
         onClick={onRemove}
-        aria-label={`Remove ${facet.key} filter`}
+        aria-label={t('removeFacetFilter', { key: facet.key })}
         className="ml-0.5 rounded-sm p-0.5 text-zinc-400 hover:text-zinc-100"
       >
         <X className="h-3 w-3" />
@@ -144,10 +146,11 @@ interface OmnibarTabsProps {
 }
 
 function OmnibarTabs({ active, onChange }: OmnibarTabsProps) {
+  const t = useTranslations('searchCommand');
   return (
     <div
       role="tablist"
-      aria-label="Search scope"
+      aria-label={t('searchScope')}
       className="flex items-center gap-1 border-b border-white/5 bg-zinc-900/40 px-3 py-2"
     >
       {TABS.map((tab) => {
@@ -166,7 +169,7 @@ function OmnibarTabs({ active, onChange }: OmnibarTabsProps) {
                 : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
             )}
           >
-            {tab.label}
+            {t(tab.labelKey)}
             <kbd className="hidden rounded border border-white/10 bg-zinc-950/60 px-1 font-mono text-[10px] text-zinc-500 group-hover:inline-block">
               {tab.hotkey}
             </kbd>
@@ -197,16 +200,17 @@ interface FacetPickerProps {
 }
 
 function FacetPicker({ facetKey, onPick, onCancel }: FacetPickerProps) {
+  const t = useTranslations('searchCommand');
   const presets = FACET_PRESETS[facetKey];
   return (
     <div
       role="listbox"
-      aria-label={`${facetKey} values`}
+      aria-label={t('facetValues', { key: facetKey })}
       className="mx-3 mb-2 mt-1 flex flex-wrap gap-1 rounded-md border border-white/10 bg-zinc-900/60 p-2 backdrop-blur-xl"
     >
       <span className="text-[10px] uppercase tracking-wider text-zinc-500">{facetKey}:</span>
       {presets.length === 0 ? (
-        <span className="text-[11px] text-zinc-500">Type to filter…</span>
+        <span className="text-[11px] text-zinc-500">{t('typeToFilter')}</span>
       ) : (
         presets.map((value) => (
           <button
@@ -223,7 +227,7 @@ function FacetPicker({ facetKey, onPick, onCancel }: FacetPickerProps) {
         type="button"
         onClick={onCancel}
         className="ml-auto rounded-md p-1 text-zinc-500 hover:text-zinc-200"
-        aria-label="Close facet picker"
+        aria-label={t('closeFacetPicker')}
       >
         <X className="h-3 w-3" />
       </button>
@@ -303,6 +307,7 @@ function useHistory(organizationId: string | null, open: boolean) {
 /* -------------------------------------------------------------------------- */
 
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
+  const t = useTranslations('searchCommand');
   const router = useRouter();
   const { currentOrganizationId } = useOrganization();
   const [rawInput, setRawInput] = React.useState('');
@@ -428,10 +433,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           'bg-zinc-900/70 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset,0_24px_48px_-12px_rgba(0,0,0,0.5)] ring-1 ring-white/10 backdrop-blur-xl'
         )}
       >
-        <DialogTitle className="sr-only">Command palette</DialogTitle>
-        <DialogDescription className="sr-only">
-          Search across issues, docs, people, and ask the TaskNebula AI.
-        </DialogDescription>
+        <DialogTitle className="sr-only">{t('paletteTitle')}</DialogTitle>
+        <DialogDescription className="sr-only">{t('paletteDescription')}</DialogDescription>
 
         <OmnibarTabs active={tab} onChange={setTab} />
 
@@ -455,13 +458,9 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 type="text"
                 value={rawInput}
                 onChange={(event) => setRawInput(event.target.value)}
-                placeholder={
-                  tab === 'ask'
-                    ? 'Ask TaskNebula anything…'
-                    : 'Search or jump to… try status:in_progress'
-                }
+                placeholder={tab === 'ask' ? t('askPlaceholder') : t('searchPlaceholder')}
                 autoFocus
-                aria-label="Command palette query"
+                aria-label={t('queryLabel')}
                 className="min-w-[120px] flex-1 bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-500"
               />
             </div>
@@ -493,16 +492,16 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           <CommandList className="max-h-[480px]">
             <CommandEmpty>
               <div className="flex flex-col items-center gap-1 py-8 text-center">
-                <span className="text-sm text-zinc-400">No results found.</span>
-                <span className="text-[11px] text-zinc-600">
-                  Try removing a filter, or press 5 to ask AI.
-                </span>
+                <span className="text-sm text-zinc-400">{t('noResults')}</span>
+                <span className="text-[11px] text-zinc-600">{t('noResultsHint')}</span>
               </div>
             </CommandEmpty>
 
             {/* ---- Ask AI CTA ---- */}
             {showAskCta ? (
-              <CommandGroup heading={<span className="kicker text-zinc-500">AI</span>}>
+              <CommandGroup
+                heading={<span className="kicker text-zinc-500">{t('aiHeading')}</span>}
+              >
                 <CommandItem
                   value={`ask:${askPrompt}`}
                   onSelect={() => askAi(askPrompt)}
@@ -510,7 +509,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 >
                   <Sparkles className="h-4 w-4 text-violet-400" aria-hidden />
                   <span className="flex-1 truncate">
-                    Ask TaskNebula: <span className="text-zinc-300">&ldquo;{askPrompt}&rdquo;</span>
+                    {t('askLabel')} <span className="text-zinc-300">&ldquo;{askPrompt}&rdquo;</span>
                   </span>
                   <ArrowRight className="h-3 w-3 text-zinc-500 group-data-[selected=true]:text-violet-300" />
                 </CommandItem>
@@ -519,7 +518,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
             {/* ---- Pinned + recents when input is empty ---- */}
             {showRecents && history.pinned.length > 0 ? (
-              <CommandGroup heading={<span className="kicker text-zinc-500">Pinned</span>}>
+              <CommandGroup heading={<span className="kicker text-zinc-500">{t('pinned')}</span>}>
                 {history.pinned.map((entry) => (
                   <CommandItem
                     key={entry.id}
@@ -535,7 +534,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                         event.stopPropagation();
                         history.togglePin(entry);
                       }}
-                      aria-label="Unpin query"
+                      aria-label={t('unpinQuery')}
                       className="opacity-0 transition hover:opacity-100 group-data-[selected=true]:opacity-100"
                     >
                       <PinOff className="h-3 w-3 text-zinc-400" />
@@ -548,7 +547,9 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             {showRecents && history.recents.length > 0 ? (
               <>
                 <CommandSeparator className="bg-white/5" />
-                <CommandGroup heading={<span className="kicker text-zinc-500">Recents</span>}>
+                <CommandGroup
+                  heading={<span className="kicker text-zinc-500">{t('recents')}</span>}
+                >
                   {history.recents.map((entry) => (
                     <CommandItem
                       key={entry.id}
@@ -564,7 +565,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                           event.stopPropagation();
                           history.togglePin(entry);
                         }}
-                        aria-label="Pin query"
+                        aria-label={t('pinQuery')}
                         className="opacity-0 transition hover:opacity-100 group-data-[selected=true]:opacity-100"
                       >
                         <Pin className="h-3 w-3 text-zinc-400" />
@@ -580,9 +581,9 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <CommandGroup
                 heading={
                   <span className="kicker flex items-center gap-2 text-zinc-500">
-                    Results
+                    {t('results')}
                     {search.loading ? (
-                      <span className="text-[10px] text-zinc-600">searching…</span>
+                      <span className="text-[10px] text-zinc-600">{t('searching')}</span>
                     ) : null}
                   </span>
                 }
@@ -612,7 +613,9 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             {showRecents ? (
               <>
                 <CommandSeparator className="bg-white/5" />
-                <CommandGroup heading={<span className="kicker text-zinc-500">Navigate</span>}>
+                <CommandGroup
+                  heading={<span className="kicker text-zinc-500">{t('navigate')}</span>}
+                >
                   {QUICK_NAV.map((nav) => (
                     <CommandItem
                       key={nav.id}
@@ -621,7 +624,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                       className="flex items-center gap-2 rounded-md text-zinc-200 data-[selected=true]:bg-white/5"
                     >
                       <nav.icon className="h-3.5 w-3.5 shrink-0 text-zinc-500" aria-hidden />
-                      <span className="flex-1 truncate">{nav.label}</span>
+                      <span className="flex-1 truncate">{t(nav.labelKey)}</span>
                     </CommandItem>
                   ))}
                 </CommandGroup>
@@ -639,19 +642,19 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 <kbd className="rounded border border-white/10 bg-zinc-900/70 px-1 font-mono">
                   ↓
                 </kbd>{' '}
-                navigate
+                {t('hintNavigate')}
               </span>
               <span>
                 <kbd className="rounded border border-white/10 bg-zinc-900/70 px-1 font-mono">
                   ⏎
                 </kbd>{' '}
-                open
+                {t('hintOpen')}
               </span>
               <span>
                 <kbd className="rounded border border-white/10 bg-zinc-900/70 px-1 font-mono">
                   tab
                 </kbd>{' '}
-                cycle tabs
+                {t('hintCycleTabs')}
               </span>
             </div>
             <span>FEAT-25 omnibar</span>

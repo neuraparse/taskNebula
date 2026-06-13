@@ -1,6 +1,7 @@
 'use client';
 
 import { Palette, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import {
   type ChangeEvent,
   type ReactElement,
@@ -13,11 +14,7 @@ import {
 } from 'react';
 
 import { cn } from '@/lib/utils';
-import {
-  STICKY_COLORS,
-  type Sticky,
-  type StickyColor,
-} from '@/lib/personal/use-stickies';
+import { STICKY_COLORS, type Sticky, type StickyColor } from '@/lib/personal/use-stickies';
 
 interface StickyNoteProps {
   sticky: Sticky;
@@ -27,16 +24,11 @@ interface StickyNoteProps {
 }
 
 const COLOR_CLASSES: Record<StickyColor, string> = {
-  yellow:
-    'bg-amber-50/70 border-amber-200 dark:bg-amber-100/30 dark:border-amber-300/40',
-  pink:
-    'bg-rose-50/70 border-rose-200 dark:bg-rose-100/30 dark:border-rose-300/40',
-  blue:
-    'bg-blue-50/70 border-blue-200 dark:bg-blue-100/30 dark:border-blue-300/40',
-  green:
-    'bg-emerald-50/70 border-emerald-200 dark:bg-emerald-100/30 dark:border-emerald-300/40',
-  purple:
-    'bg-violet-50/70 border-violet-200 dark:bg-violet-100/30 dark:border-violet-300/40',
+  yellow: 'bg-amber-50/70 border-amber-200 dark:bg-amber-100/30 dark:border-amber-300/40',
+  pink: 'bg-rose-50/70 border-rose-200 dark:bg-rose-100/30 dark:border-rose-300/40',
+  blue: 'bg-blue-50/70 border-blue-200 dark:bg-blue-100/30 dark:border-blue-300/40',
+  green: 'bg-emerald-50/70 border-emerald-200 dark:bg-emerald-100/30 dark:border-emerald-300/40',
+  purple: 'bg-violet-50/70 border-violet-200 dark:bg-violet-100/30 dark:border-violet-300/40',
 };
 
 const COLOR_DOT: Record<StickyColor, string> = {
@@ -49,17 +41,19 @@ const COLOR_DOT: Record<StickyColor, string> = {
 
 const AUTOSAVE_DEBOUNCE_MS = 600;
 
-function formatRelative(timestamp: number, now: number): string {
+type RelativeTranslator = (key: string, values?: Record<string, string | number>) => string;
+
+function formatRelative(timestamp: number, now: number, t: RelativeTranslator): string {
   const diff = Math.max(0, now - timestamp);
   const sec = Math.floor(diff / 1000);
-  if (sec < 5) return 'just now';
-  if (sec < 60) return `${sec}s ago`;
+  if (sec < 5) return t('justNow');
+  if (sec < 60) return t('secondsAgo', { count: sec });
   const min = Math.floor(sec / 60);
-  if (min < 60) return `edited ${min}m ago`;
+  if (min < 60) return t('editedMinutesAgo', { count: min });
   const hr = Math.floor(min / 60);
-  if (hr < 24) return `edited ${hr}h ago`;
+  if (hr < 24) return t('editedHoursAgo', { count: hr });
   const day = Math.floor(hr / 24);
-  if (day < 7) return `edited ${day}d ago`;
+  if (day < 7) return t('editedDaysAgo', { count: day });
   return new Date(timestamp).toLocaleDateString();
 }
 
@@ -75,6 +69,7 @@ export function StickyNote({
   onRemove,
   className,
 }: StickyNoteProps): ReactElement {
+  const t = useTranslations('personalHelp');
   const [draft, setDraft] = useState<string>(sticky.content);
   const [now, setNow] = useState<number>(() => Date.now());
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -159,8 +154,8 @@ export function StickyNote({
   }, [onRemove, sticky.id]);
 
   const relative = useMemo(
-    () => formatRelative(sticky.updatedAt, now),
-    [sticky.updatedAt, now]
+    () => formatRelative(sticky.updatedAt, now, t),
+    [sticky.updatedAt, now, t]
   );
 
   return (
@@ -171,22 +166,22 @@ export function StickyNote({
         className
       )}
     >
-      <div className="absolute right-1.5 top-1.5 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+      <div className="absolute right-1.5 top-1.5 flex items-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
         <button
           type="button"
           onClick={handleCycleColor}
-          aria-label="Change sticky color"
-          title="Change color"
-          className="inline-flex h-5 w-5 items-center justify-center rounded text-foreground/60 hover:bg-black/5 hover:text-foreground dark:hover:bg-white/10"
+          aria-label={t('changeStickyColor')}
+          title={t('changeColor')}
+          className="text-foreground/60 hover:text-foreground inline-flex h-5 w-5 items-center justify-center rounded hover:bg-black/5 dark:hover:bg-white/10"
         >
           <Palette className="h-3 w-3" />
         </button>
         <button
           type="button"
           onClick={handleRemove}
-          aria-label="Delete sticky"
-          title="Delete"
-          className="inline-flex h-5 w-5 items-center justify-center rounded text-foreground/60 hover:bg-black/5 hover:text-rose-600 dark:hover:bg-white/10"
+          aria-label={t('deleteSticky')}
+          title={t('delete')}
+          className="text-foreground/60 inline-flex h-5 w-5 items-center justify-center rounded hover:bg-black/5 hover:text-rose-600 dark:hover:bg-white/10"
         >
           <X className="h-3 w-3" />
         </button>
@@ -194,10 +189,7 @@ export function StickyNote({
 
       <span
         aria-hidden="true"
-        className={cn(
-          'mb-1.5 inline-block h-1.5 w-6 rounded-full',
-          COLOR_DOT[sticky.color]
-        )}
+        className={cn('mb-1.5 inline-block h-1.5 w-6 rounded-full', COLOR_DOT[sticky.color])}
       />
 
       <textarea
@@ -205,7 +197,7 @@ export function StickyNote({
         value={draft}
         onChange={handleChange}
         onBlur={handleBlur}
-        placeholder="Write a quick note..."
+        placeholder={t('writeQuickNote')}
         rows={2}
         className={cn(
           'w-full resize-none overflow-hidden bg-transparent text-sm leading-snug',
@@ -215,7 +207,7 @@ export function StickyNote({
       />
 
       <div className="mt-2 flex justify-end">
-        <span className="text-[10px] text-foreground/50">{relative}</span>
+        <span className="text-foreground/50 text-[10px]">{relative}</span>
       </div>
     </div>
   );

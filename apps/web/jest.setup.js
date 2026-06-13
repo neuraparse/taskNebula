@@ -138,11 +138,22 @@ const mockFormatter = {
   relativeTime: (value) => String(value),
 };
 
+// Memoize the translator per namespace so `useTranslations('x')` returns a
+// STABLE function reference across renders — matching real next-intl. Without
+// this, components that (correctly) list `t` in a useEffect dependency array
+// would see a new `t` every render and re-run effects spuriously in tests.
+const _tCache = new Map();
+const getT = (namespace) => {
+  const key = namespace || '';
+  if (!_tCache.has(key)) _tCache.set(key, buildT(namespace));
+  return _tCache.get(key);
+};
+
 jest.mock('next-intl', () => {
   return {
     __esModule: true,
     NextIntlClientProvider: ({ children }) => children,
-    useTranslations: (namespace) => buildT(namespace),
+    useTranslations: (namespace) => getT(namespace),
     useLocale: () => 'en',
     useMessages: () => enMessages,
     useFormatter: () => mockFormatter,
@@ -153,7 +164,7 @@ jest.mock('next-intl', () => {
 // server components that call getTranslations()/getLocale() work in tests.
 jest.mock('next-intl/server', () => ({
   __esModule: true,
-  getTranslations: async (arg) => buildT(typeof arg === 'string' ? arg : arg && arg.namespace),
+  getTranslations: async (arg) => getT(typeof arg === 'string' ? arg : arg && arg.namespace),
   getLocale: async () => 'en',
   getMessages: async () => enMessages,
   getFormatter: async () => mockFormatter,

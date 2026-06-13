@@ -1,12 +1,18 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import {
-  RoomContext,
-  RoomAudioRenderer,
-} from '@livekit/components-react';
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { useTranslations } from 'next-intl';
+import { useQueryClient } from '@tanstack/react-query';
+import { RoomContext, RoomAudioRenderer } from '@livekit/components-react';
 import {
   MediaDeviceFailure,
   Room,
@@ -111,10 +117,7 @@ type GlobalVoiceContextValue = {
   isTogglingMicrophone: boolean;
   setRuntimeError: (message: string | null) => void;
   setAudioDeviceId: (audioDeviceId: string) => Promise<void>;
-  startSession: (input: {
-    session: PersistentVoiceSession;
-    target: PersistentVoiceTarget;
-  }) => void;
+  startSession: (input: { session: PersistentVoiceSession; target: PersistentVoiceTarget }) => void;
   toggleMicrophone: () => Promise<void>;
   leaveCurrentCall: () => Promise<void>;
   endCurrentCall: () => Promise<void>;
@@ -160,9 +163,7 @@ function buildStoredMicrophoneRequestOptions(
 ): MicrophoneRequestOptions {
   const storedPreferences = readStoredVoicePreferences();
   const normalizedRequestedDeviceId = normalizeAudioInputDeviceId(audioDeviceId);
-  const normalizedStoredDeviceId = normalizeAudioInputDeviceId(
-    storedPreferences.audioDeviceId
-  );
+  const normalizedStoredDeviceId = normalizeAudioInputDeviceId(storedPreferences.audioDeviceId);
   const shouldAttachStoredPreferenceMetadata =
     normalizedRequestedDeviceId !== 'default' &&
     normalizedRequestedDeviceId === normalizedStoredDeviceId;
@@ -171,10 +172,10 @@ function buildStoredMicrophoneRequestOptions(
     interactive: options?.interactive,
     timeoutMs: options?.timeoutMs,
     preferredDeviceGroupId: shouldAttachStoredPreferenceMetadata
-      ? storedPreferences.audioDeviceGroupId ?? null
+      ? (storedPreferences.audioDeviceGroupId ?? null)
       : null,
     preferredDeviceLabel: shouldAttachStoredPreferenceMetadata
-      ? storedPreferences.audioDeviceLabel ?? null
+      ? (storedPreferences.audioDeviceLabel ?? null)
       : null,
     userAgent: getCurrentMicrophoneUserAgent(),
   };
@@ -196,9 +197,9 @@ async function enableRoomMicrophoneWithFallback(
   requestOptions?: MicrophoneRequestOptions
 ) {
   const normalizedDeviceId = normalizeAudioInputDeviceId(audioDeviceId);
-  const existingPublication = room.localParticipant.getTrackPublication(
-    Track.Source.Microphone
-  ) as LocalTrackPublication | undefined;
+  const existingPublication = room.localParticipant.getTrackPublication(Track.Source.Microphone) as
+    | LocalTrackPublication
+    | undefined;
 
   const enableExistingPublication = async (deviceId: string) => {
     if (preflightMicrophoneStream) {
@@ -268,15 +269,9 @@ async function enableRoomMicrophoneWithFallback(
       chatClientDebug('global-voice.mic.capture.start', {
         roomName: room.name,
         audioDeviceId: normalizedDeviceId,
-        strategy:
-          normalizedDeviceId === 'default'
-            ? 'raw-default-stream'
-            : 'raw-selected-stream',
+        strategy: normalizedDeviceId === 'default' ? 'raw-default-stream' : 'raw-selected-stream',
       });
-      const stream = await requestRawMicrophoneStream(
-        normalizedDeviceId,
-        requestOptions
-      );
+      const stream = await requestRawMicrophoneStream(normalizedDeviceId, requestOptions);
       const mediaTrack = stream.getAudioTracks()[0];
       if (!mediaTrack) {
         stream.getTracks().forEach((streamTrack) => streamTrack.stop());
@@ -286,10 +281,7 @@ async function enableRoomMicrophoneWithFallback(
       chatClientDebug('global-voice.mic.capture.success', {
         roomName: room.name,
         audioDeviceId: normalizedDeviceId,
-        strategy:
-          normalizedDeviceId === 'default'
-            ? 'raw-default-stream'
-            : 'raw-selected-stream',
+        strategy: normalizedDeviceId === 'default' ? 'raw-default-stream' : 'raw-selected-stream',
       });
 
       try {
@@ -413,34 +405,35 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
   const microphoneAutoRetryInFlightRef = useRef(false);
   const lastObservedMicrophonePermissionStateRef = useRef<MicrophonePermissionState>('unknown');
 
-  const leaveCurrentCallBestEffort = useCallback((roomId: string | null | undefined) => {
-    if (!roomId) {
-      return;
-    }
-
-    sendLeaveBeacon(roomId, currentSession?.participantIdentity);
-  }, [currentSession?.participantIdentity]);
-
-  const syncRoomState = useCallback(
-    (room: Room | null) => {
-      if (!room) {
-        setConnectionState('disconnected');
-        setParticipantCount(0);
-        setIsMicrophoneEnabled(false);
+  const leaveCurrentCallBestEffort = useCallback(
+    (roomId: string | null | undefined) => {
+      if (!roomId) {
         return;
       }
 
-      const nextConnectionState = String((room as Room & { state?: string }).state || 'connected');
-      const nextMicrophoneEnabled = Boolean(
-        (room.localParticipant as typeof room.localParticipant & { isMicrophoneEnabled?: boolean }).isMicrophoneEnabled
-      );
-
-      setConnectionState(nextConnectionState);
-      setParticipantCount(getRoomParticipantCount(room, nextConnectionState));
-      setIsMicrophoneEnabled(nextMicrophoneEnabled);
+      sendLeaveBeacon(roomId, currentSession?.participantIdentity);
     },
-    []
+    [currentSession?.participantIdentity]
   );
+
+  const syncRoomState = useCallback((room: Room | null) => {
+    if (!room) {
+      setConnectionState('disconnected');
+      setParticipantCount(0);
+      setIsMicrophoneEnabled(false);
+      return;
+    }
+
+    const nextConnectionState = String((room as Room & { state?: string }).state || 'connected');
+    const nextMicrophoneEnabled = Boolean(
+      (room.localParticipant as typeof room.localParticipant & { isMicrophoneEnabled?: boolean })
+        .isMicrophoneEnabled
+    );
+
+    setConnectionState(nextConnectionState);
+    setParticipantCount(getRoomParticipantCount(room, nextConnectionState));
+    setIsMicrophoneEnabled(nextMicrophoneEnabled);
+  }, []);
 
   const handleAudioDeviceFallbackToDefault = useCallback(() => {
     setCurrentSession((current) => (current ? { ...current, audioDeviceId: 'default' } : current));
@@ -506,7 +499,12 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
       queryClient.invalidateQueries({ queryKey: ['live-calls'] });
       queryClient.invalidateQueries({ queryKey: ['project-chat-bootstrap'] });
     },
-    [currentSession?.participantIdentity, currentSession?.preflightMicrophoneStream, currentTarget?.roomId, queryClient]
+    [
+      currentSession?.participantIdentity,
+      currentSession?.preflightMicrophoneStream,
+      currentTarget?.roomId,
+      queryClient,
+    ]
   );
 
   const startSession = useCallback(
@@ -561,7 +559,11 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
         });
 
         if (room && connectionState === 'connected') {
-          await room.switchActiveDevice('audioinput', normalizedDeviceId, normalizedDeviceId !== 'default');
+          await room.switchActiveDevice(
+            'audioinput',
+            normalizedDeviceId,
+            normalizedDeviceId !== 'default'
+          );
           syncRoomState(room);
         }
 
@@ -580,17 +582,14 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
           previousAudioDeviceId: currentSession.audioDeviceId,
           nextAudioDeviceId: normalizedDeviceId,
           error:
-            error instanceof Error ? error : new Error('Failed to change the active microphone device'),
+            error instanceof Error
+              ? error
+              : new Error('Failed to change the active microphone device'),
         });
         throw error;
       }
     },
-    [
-      connectionState,
-      currentSession,
-      currentTarget?.roomId,
-      syncRoomState,
-    ]
+    [connectionState, currentSession, currentTarget?.roomId, syncRoomState]
   );
 
   const toggleMicrophone = useCallback(async () => {
@@ -637,9 +636,7 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
         const permissionState = await getMicrophonePermissionState({ silent: true });
         const shouldBridgePromptThroughPendingState =
           isPendingMicrophonePermissionState(userAgent, permissionState) &&
-          (browserFamily === 'chromium' ||
-            browserFamily === 'edge' ||
-            browserFamily === 'safari');
+          (browserFamily === 'chromium' || browserFamily === 'edge' || browserFamily === 'safari');
 
         if (shouldBridgePromptThroughPendingState) {
           const pendingMicrophoneStreamPromise = requestRawMicrophoneStream(
@@ -712,7 +709,9 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
                   room,
                   currentSession?.audioDeviceId,
                   () => {
-                    setCurrentSession((current) => (current ? { ...current, audioDeviceId: 'default' } : current));
+                    setCurrentSession((current) =>
+                      current ? { ...current, audioDeviceId: 'default' } : current
+                    );
                   },
                   stream,
                   {
@@ -783,7 +782,9 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
           room,
           currentSession?.audioDeviceId,
           () => {
-            setCurrentSession((current) => (current ? { ...current, audioDeviceId: 'default' } : current));
+            setCurrentSession((current) =>
+              current ? { ...current, audioDeviceId: 'default' } : current
+            );
           },
           undefined,
           buildStoredMicrophoneRequestOptions(currentSession?.audioDeviceId, {
@@ -865,12 +866,12 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-      try {
-        chatClientDebug('global-voice.leave.start', {
-          roomId: currentTarget.roomId,
-          participantIdentity: currentSession?.participantIdentity || null,
-        });
-        await fetch(`/api/conversations/${currentTarget.roomId}/call/leave`, {
+    try {
+      chatClientDebug('global-voice.leave.start', {
+        roomId: currentTarget.roomId,
+        participantIdentity: currentSession?.participantIdentity || null,
+      });
+      await fetch(`/api/conversations/${currentTarget.roomId}/call/leave`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -913,7 +914,12 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
     });
     leaveCurrentCallBestEffort(currentTarget?.roomId);
     clearCurrentCall();
-  }, [clearCurrentCall, currentSession?.participantIdentity, currentTarget?.roomId, leaveCurrentCallBestEffort]);
+  }, [
+    clearCurrentCall,
+    currentSession?.participantIdentity,
+    currentTarget?.roomId,
+    leaveCurrentCallBestEffort,
+  ]);
 
   useEffect(() => {
     if (!currentSession || !currentTarget?.roomId) {
@@ -1194,6 +1200,7 @@ function PersistentVoiceHost({
   session: PersistentVoiceSession;
   shouldRenderAudio: boolean;
 }) {
+  const t = useTranslations('workspaceTools');
   const [room] = useState(() => createVoiceRoom());
   const latestOnConnectionFailedRef = useRef(onConnectionFailed);
   const latestOnDisconnectedRef = useRef(onDisconnected);
@@ -1230,7 +1237,7 @@ function PersistentVoiceHost({
     let disposed = false;
     let didConnect = false;
 
-  const handleDisconnected = () => {
+    const handleDisconnected = () => {
       if (disposed || hasTriggeredDisconnectRef.current) {
         return;
       }
@@ -1264,7 +1271,11 @@ function PersistentVoiceHost({
         state: String((room as Room & { state?: string }).state || 'unknown'),
         remoteParticipants: room.remoteParticipants.size,
         isMicrophoneEnabled: Boolean(
-          (room.localParticipant as typeof room.localParticipant & { isMicrophoneEnabled?: boolean }).isMicrophoneEnabled
+          (
+            room.localParticipant as typeof room.localParticipant & {
+              isMicrophoneEnabled?: boolean;
+            }
+          ).isMicrophoneEnabled
         ),
       });
       latestOnRoomStateChangedRef.current(room);
@@ -1317,14 +1328,18 @@ function PersistentVoiceHost({
           });
 
           try {
-            await enableRoomMicrophoneWithTimeout(room, session.audioDeviceId, () => {
-              onAudioDeviceFallbackToDefault();
-              latestOnRuntimeErrorRef.current(
-                'The selected microphone could not start in this browser, so TaskNebula switched to your system default microphone.'
-              );
-            }, session.preflightMicrophoneStream, buildStoredMicrophoneRequestOptions(session.audioDeviceId, {
-              timeoutMs: MICROPHONE_ENABLE_TIMEOUT_MS,
-            }));
+            await enableRoomMicrophoneWithTimeout(
+              room,
+              session.audioDeviceId,
+              () => {
+                onAudioDeviceFallbackToDefault();
+                latestOnRuntimeErrorRef.current(t('chat.voice.micSwitchedToDefault'));
+              },
+              session.preflightMicrophoneStream,
+              buildStoredMicrophoneRequestOptions(session.audioDeviceId, {
+                timeoutMs: MICROPHONE_ENABLE_TIMEOUT_MS,
+              })
+            );
             chatClientDebug('global-voice.host.mic.enable.success', {
               roomName: session.roomName,
               audioDeviceId: session.audioDeviceId,
@@ -1335,9 +1350,15 @@ function PersistentVoiceHost({
               audioDeviceId: session.audioDeviceId,
               failure: MediaDeviceFailure.getFailure(error),
               lastMicrophoneError:
-                (room.localParticipant as typeof room.localParticipant & { lastMicrophoneError?: Error })
-                  .lastMicrophoneError || null,
-              error: error instanceof Error ? error : new Error('Failed to enable microphone during connect'),
+                (
+                  room.localParticipant as typeof room.localParticipant & {
+                    lastMicrophoneError?: Error;
+                  }
+                ).lastMicrophoneError || null,
+              error:
+                error instanceof Error
+                  ? error
+                  : new Error('Failed to enable microphone during connect'),
             });
             latestOnRuntimeErrorRef.current(formatMicrophoneError(error));
           } finally {
@@ -1416,12 +1437,17 @@ function PersistentVoiceHost({
                   audioDeviceId: session.audioDeviceId,
                   failure: MediaDeviceFailure.getFailure(error),
                   lastMicrophoneError:
-                    (room.localParticipant as typeof room.localParticipant & { lastMicrophoneError?: Error })
-                      .lastMicrophoneError || null,
+                    (
+                      room.localParticipant as typeof room.localParticipant & {
+                        lastMicrophoneError?: Error;
+                      }
+                    ).lastMicrophoneError || null,
                   error:
                     error instanceof Error
                       ? error
-                      : new Error('Failed to enable microphone after the background prompt resolved'),
+                      : new Error(
+                          'Failed to enable microphone after the background prompt resolved'
+                        ),
                 });
 
                 if (!isMicrophoneAccessTimeoutError(error)) {
@@ -1463,8 +1489,11 @@ function PersistentVoiceHost({
                 audioDeviceId: session.audioDeviceId,
                 failure: MediaDeviceFailure.getFailure(error),
                 lastMicrophoneError:
-                  (room.localParticipant as typeof room.localParticipant & { lastMicrophoneError?: Error })
-                    .lastMicrophoneError || null,
+                  (
+                    room.localParticipant as typeof room.localParticipant & {
+                      lastMicrophoneError?: Error;
+                    }
+                  ).lastMicrophoneError || null,
                 error:
                   error instanceof Error
                     ? error
@@ -1478,7 +1507,9 @@ function PersistentVoiceHost({
           return;
         }
         const message =
-          error instanceof Error ? formatLivekitRuntimeError(error) : 'Failed to connect to the active voice room.';
+          error instanceof Error
+            ? formatLivekitRuntimeError(error)
+            : t('chat.voice.activeRoomConnectFailed');
         chatClientError('global-voice.host.connect.error', {
           roomName: session.roomName,
           participantIdentity: session.participantIdentity,
@@ -1486,7 +1517,7 @@ function PersistentVoiceHost({
           error: error instanceof Error ? error : new Error(message),
         });
         if (!didConnect) {
-          latestOnConnectionFailedRef.current(message || 'Failed to connect to the active voice room.');
+          latestOnConnectionFailedRef.current(message || t('chat.voice.activeRoomConnectFailed'));
           return;
         }
         latestOnRuntimeErrorRef.current(message);
@@ -1512,12 +1543,7 @@ function PersistentVoiceHost({
       latestOnRoomDetachedRef.current(room);
       void room.disconnect();
     };
-  }, [
-    room,
-    session.roomName,
-    session.token,
-    session.url,
-  ]);
+  }, [room, session.roomName, session.token, session.url, t]);
 
   return (
     <div className="sr-only">
@@ -1547,7 +1573,10 @@ export function formatLivekitRuntimeError(error: Error) {
   if (message.includes('could not start audio source') || message.includes('notreadableerror')) {
     return 'Your microphone could not be started. Another app may be using it.';
   }
-  if (message.includes('audiocontext encountered an error') || message.includes('webaudio renderer')) {
+  if (
+    message.includes('audiocontext encountered an error') ||
+    message.includes('webaudio renderer')
+  ) {
     return 'The browser audio engine failed for this device. Stop other audio apps or change your microphone, then try again.';
   }
   if (message.includes('device not found') || message.includes('notfounderror')) {

@@ -14,6 +14,7 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,6 +32,8 @@ interface ErrorPageProps {
 }
 
 export default function ErrorPage({ error, reset }: ErrorPageProps) {
+  const t = useTranslations('errorPages');
+
   useEffect(() => {
     // Surface the failure for client-side observability. Server-side this
     // error was already logged by the route handler / RSC pipeline.
@@ -45,26 +48,24 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
         <CardHeader>
           <div className="text-destructive mb-2 flex items-center gap-2">
             <AlertTriangle className="h-5 w-5" aria-hidden />
-            <CardTitle>Something went wrong</CardTitle>
+            <CardTitle>{t('error.title')}</CardTitle>
           </div>
-          <CardDescription>
-            An unexpected error occurred while loading this page. Our team has been notified.
-          </CardDescription>
+          <CardDescription>{t('error.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           {error.digest && (
             <p className="text-muted-foreground text-xs">
-              Reference: <code className="font-mono">{error.digest}</code>
+              {t('error.reference')} <code className="font-mono">{error.digest}</code>
             </p>
           )}
         </CardContent>
         <CardFooter className="flex gap-2">
           <Button onClick={reset} variant="default">
             <RefreshCw className="h-4 w-4" aria-hidden />
-            Try again
+            {t('error.tryAgain')}
           </Button>
           <Button asChild variant="outline">
-            <Link href="/">Go home</Link>
+            <Link href="/">{t('error.goHome')}</Link>
           </Button>
         </CardFooter>
       </Card>

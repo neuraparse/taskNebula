@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -64,6 +65,7 @@ const statusChipClass: Record<string, string> = {
 };
 
 export function OrganizationSettingsClient() {
+  const t = useTranslations('settingsClients');
   const { currentOrganizationId, clearContext } = useOrganization();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -78,14 +80,16 @@ export function OrganizationSettingsClient() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmationName, setDeleteConfirmationName] = useState('');
 
-  const { data: org, isLoading, error } = useQuery<Organization>({
+  const {
+    data: org,
+    isLoading,
+    error,
+  } = useQuery<Organization>({
     queryKey: ['organization', currentOrganizationId],
     queryFn: async () => {
       const response = await fetch(`/api/organizations/${currentOrganizationId}`);
-      const payload = await response
-        .json()
-        .catch(() => ({ error: 'Failed to fetch organization' }));
-      if (!response.ok) throw new Error(payload.error || 'Failed to fetch organization');
+      const payload = await response.json().catch(() => ({ error: t('org.fetchFailed') }));
+      if (!response.ok) throw new Error(payload.error || t('org.fetchFailed'));
       return payload;
     },
     enabled: !!currentOrganizationId,
@@ -118,20 +122,18 @@ export function OrganizationSettingsClient() {
           logoUrl: formData.logoUrl.trim(),
         }),
       });
-      const payload = await response
-        .json()
-        .catch(() => ({ error: 'Failed to update organization' }));
-      if (!response.ok) throw new Error(payload.error || 'Failed to update organization');
+      const payload = await response.json().catch(() => ({ error: t('org.updateFailed') }));
+      if (!response.ok) throw new Error(payload.error || t('org.updateFailed'));
       return payload;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organization', currentOrganizationId] });
       queryClient.invalidateQueries({ queryKey: ['organizations'] });
-      toast({ title: 'Organization updated', description: 'Changes were saved successfully.' });
+      toast({ title: t('org.updated'), description: t('org.updatedDesc') });
     },
     onError: (mutationError: Error) => {
       toast({
-        title: 'Failed to update organization',
+        title: t('org.updateFailed'),
         description: mutationError.message,
         variant: 'destructive',
       });
@@ -143,10 +145,8 @@ export function OrganizationSettingsClient() {
       const response = await fetch(`/api/organizations/${currentOrganizationId}`, {
         method: 'DELETE',
       });
-      const payload = await response
-        .json()
-        .catch(() => ({ error: 'Failed to delete organization' }));
-      if (!response.ok) throw new Error(payload.error || 'Failed to delete organization');
+      const payload = await response.json().catch(() => ({ error: t('org.deleteFailed') }));
+      if (!response.ok) throw new Error(payload.error || t('org.deleteFailed'));
       return payload;
     },
     onSuccess: () => {
@@ -158,8 +158,8 @@ export function OrganizationSettingsClient() {
       });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast({
-        title: 'Organization deleted',
-        description: 'The organization and related data were removed.',
+        title: t('org.deleted'),
+        description: t('org.deletedDesc'),
       });
       setDeleteDialogOpen(false);
       setDeleteConfirmationName('');
@@ -167,7 +167,7 @@ export function OrganizationSettingsClient() {
     },
     onError: (mutationError: Error) => {
       toast({
-        title: 'Failed to delete organization',
+        title: t('org.deleteFailed'),
         description: mutationError.message,
         variant: 'destructive',
       });
@@ -176,8 +176,8 @@ export function OrganizationSettingsClient() {
 
   if (!currentOrganizationId) {
     return (
-      <div className="surface-card rounded-lg p-6 text-sm text-muted-foreground">
-        Select an organization to load settings.
+      <div className="surface-card text-muted-foreground rounded-lg p-6 text-sm">
+        {t('org.selectOrg')}
       </div>
     );
   }
@@ -185,7 +185,7 @@ export function OrganizationSettingsClient() {
   if (isLoading) {
     return (
       <div className="flex min-h-[320px] items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
       </div>
     );
   }
@@ -193,7 +193,7 @@ export function OrganizationSettingsClient() {
   if (error || !org) {
     return (
       <div className="panel-danger animate-alert-in text-sm">
-        {error instanceof Error ? error.message : 'Failed to load organization settings.'}
+        {error instanceof Error ? error.message : t('org.loadFailed')}
       </div>
     );
   }
@@ -208,17 +208,17 @@ export function OrganizationSettingsClient() {
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete organization</DialogTitle>
+            <DialogTitle>{t('org.deleteTitle')}</DialogTitle>
             <DialogDescription>
-              This removes projects, issues, docs, keys, and memberships. Type{' '}
-              <span className="font-semibold text-foreground">{org.name}</span> to confirm.
+              {t.rich('org.deleteConfirmPrompt', {
+                name: org.name,
+                strong: (chunks) => <span className="text-foreground font-semibold">{chunks}</span>,
+              })}
             </DialogDescription>
           </DialogHeader>
-          <div className="panel-danger animate-alert-in text-sm">
-            Projects, issues, docs, API keys, and memberships will be permanently removed.
-          </div>
+          <div className="panel-danger animate-alert-in text-sm">{t('org.deleteWarning')}</div>
           <div className="space-y-3">
-            <Label htmlFor="delete-org-name">Organization name</Label>
+            <Label htmlFor="delete-org-name">{t('org.orgName')}</Label>
             <Input
               id="delete-org-name"
               value={deleteConfirmationName}
@@ -235,7 +235,7 @@ export function OrganizationSettingsClient() {
                 setDeleteConfirmationName('');
               }}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               type="button"
@@ -246,10 +246,10 @@ export function OrganizationSettingsClient() {
               {deleteOrgMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting
+                  {t('org.deleting')}
                 </>
               ) : (
-                'Delete organization'
+                t('org.deleteTitle')
               )}
             </Button>
           </DialogFooter>
@@ -262,93 +262,91 @@ export function OrganizationSettingsClient() {
           <div className="flex items-start gap-3">
             {org.logoUrl ? (
               <div
-                className="h-12 w-12 shrink-0 rounded-md border border-border bg-cover bg-center"
+                className="border-border h-12 w-12 shrink-0 rounded-md border bg-cover bg-center"
                 style={{ backgroundImage: `url(${org.logoUrl})` }}
                 aria-hidden
               />
             ) : (
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-border bg-card">
-                <Building2 className="h-5 w-5 text-muted-foreground" />
+              <div className="border-border bg-card flex h-12 w-12 shrink-0 items-center justify-center rounded-md border">
+                <Building2 className="text-muted-foreground h-5 w-5" />
               </div>
             )}
             <div className="space-y-1">
-              <span className="kicker">Workspace</span>
+              <span className="kicker">{t('org.workspaceKicker')}</span>
               <h1 className="text-lg font-semibold tracking-tight">{org.name}</h1>
-              <p className="text-sm text-muted-foreground max-w-prose">
-                Settings, access, and shared service configuration.
+              <p className="text-muted-foreground max-w-prose text-sm">
+                {t('org.workspaceSubtitle')}
               </p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="chip capitalize">{org.plan}</span>
+            <span className="chip">{t(`org.plan.${org.plan}`)}</span>
             <span
               className={cn(
-                'rounded-full px-2.5 py-0.5 text-[11px] font-medium border capitalize',
+                'rounded-full border px-2.5 py-0.5 text-[11px] font-medium',
                 statusChipClass[org.status] ?? statusChipClass.active
               )}
             >
-              {org.status}
+              {t(`org.statusLabel.${org.status}`)}
             </span>
-            <span className="chip capitalize">{org.userRole || 'member'}</span>
-            {org.isSuperAdmin && <span className="chip-accent">Super admin</span>}
+            <span className="chip">{t(`org.role.${org.userRole || 'member'}`)}</span>
+            {org.isSuperAdmin && <span className="chip-accent">{t('org.superAdmin')}</span>}
           </div>
         </div>
 
         {/* Stat summary — minimal text row */}
-        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex flex-wrap gap-x-6 gap-y-2 text-sm">
           {[
-            { label: 'Members', value: org.stats?.members || 0, icon: Users },
-            { label: 'Projects', value: org.stats?.projects || 0, icon: Layers3 },
-            { label: 'Teamspaces', value: org.stats?.teams || 0, icon: Shield },
-            { label: 'API keys', value: org.stats?.apiKeys || 0, icon: KeyRound },
-          ].map(({ label, value, icon: Icon }) => (
-            <span key={label} className="inline-flex items-center gap-1.5">
+            { key: 'members', value: org.stats?.members || 0, icon: Users },
+            { key: 'projects', value: org.stats?.projects || 0, icon: Layers3 },
+            { key: 'teamspaces', value: org.stats?.teams || 0, icon: Shield },
+            { key: 'apiKeys', value: org.stats?.apiKeys || 0, icon: KeyRound },
+          ].map(({ key, value, icon: Icon }) => (
+            <span key={key} className="inline-flex items-center gap-1.5">
               <Icon className="h-3.5 w-3.5" />
-              <span className="font-medium text-foreground">{value}</span>
-              {label}
+              <span className="text-foreground font-medium">{value}</span>
+              {t(`org.stat.${key}`)}
             </span>
           ))}
         </div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="h-auto w-full justify-start gap-1 rounded-lg border border-border bg-card/40 p-1">
+          <TabsList className="border-border bg-card/40 h-auto w-full justify-start gap-1 rounded-lg border p-1">
             <TabsTrigger value="general" className={orgTabTriggerClass}>
-              General
+              {t('org.tabGeneral')}
             </TabsTrigger>
             <TabsTrigger value="teamspaces" className={orgTabTriggerClass}>
-              Teamspaces
+              {t('org.tabTeamspaces')}
             </TabsTrigger>
             <TabsTrigger value="danger" className={orgTabTriggerClass}>
-              Danger zone
+              {t('org.tabDanger')}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="general" className="space-y-8">
             <section className="space-y-4">
               <div className="space-y-1">
-                <span className="kicker">Details</span>
-                <h2 className="text-lg font-semibold tracking-tight">Workspace details</h2>
-                <p className="text-sm text-muted-foreground max-w-prose">
-                  Name, domain, and brand information used across the workspace.
+                <span className="kicker">{t('org.detailsKicker')}</span>
+                <h2 className="text-lg font-semibold tracking-tight">{t('org.detailsHeading')}</h2>
+                <p className="text-muted-foreground max-w-prose text-sm">
+                  {t('org.detailsSubtitle')}
                 </p>
               </div>
 
               {!canManageSettings ? (
-                <div className="panel-warn text-sm">
-                  Only owners and admins can update organization settings.
-                </div>
+                <div className="panel-warn text-sm">{t('org.manageRestricted')}</div>
               ) : null}
 
-              <div className="surface-card rounded-lg p-6 space-y-6">
+              <div className="surface-card space-y-6 rounded-lg p-6">
                 {/* Logo preview tile + URL */}
-                <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+                <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[240px_1fr]">
                   <Label htmlFor="org-logo-url" className="text-sm font-medium">
-                    Logo
+                    {t('org.logo')}
                   </Label>
                   <div className="flex items-start gap-3">
                     <div
-                      className="h-16 w-16 shrink-0 rounded-md border border-border bg-cover bg-center bg-muted"
+                      className="border-border bg-muted h-16 w-16 shrink-0 rounded-md border bg-cover bg-center"
                       style={
                         formData.logoUrl
                           ? { backgroundImage: `url(${formData.logoUrl})` }
@@ -358,7 +356,7 @@ export function OrganizationSettingsClient() {
                     >
                       {!formData.logoUrl && (
                         <div className="flex h-full w-full items-center justify-center">
-                          <Building2 className="h-5 w-5 text-muted-foreground" />
+                          <Building2 className="text-muted-foreground h-5 w-5" />
                         </div>
                       )}
                     </div>
@@ -370,14 +368,14 @@ export function OrganizationSettingsClient() {
                         setFormData((current) => ({ ...current, logoUrl: event.target.value }))
                       }
                       disabled={!canManageSettings}
-                      className="transition-all duration-150 ease-snap"
+                      className="ease-snap transition-all duration-150"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+                <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[240px_1fr]">
                   <Label htmlFor="org-name" className="text-sm font-medium">
-                    Organization name
+                    {t('org.orgName')}
                   </Label>
                   <Input
                     id="org-name"
@@ -386,32 +384,32 @@ export function OrganizationSettingsClient() {
                       setFormData((current) => ({ ...current, name: event.target.value }))
                     }
                     disabled={!canManageSettings}
-                    className="transition-all duration-150 ease-snap"
+                    className="ease-snap transition-all duration-150"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+                <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[240px_1fr]">
                   <div className="space-y-1">
                     <Label htmlFor="org-slug" className="text-sm font-medium">
-                      Workspace slug
+                      {t('org.slug')}
                     </Label>
-                    <p className="text-xs text-muted-foreground">Super admins can change it.</p>
+                    <p className="text-muted-foreground text-xs">{t('org.slugHint')}</p>
                   </div>
                   <Input id="org-slug" value={formData.slug} disabled />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+                <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[240px_1fr]">
                   <div className="space-y-1">
                     <Label htmlFor="org-domain" className="text-sm font-medium">
-                      Verified domain
+                      {t('org.verifiedDomain')}
                     </Label>
-                    <p className="text-xs text-muted-foreground">Auto-join matching emails.</p>
+                    <p className="text-muted-foreground text-xs">{t('org.verifiedDomainHint')}</p>
                   </div>
                   <div className="relative">
-                    <Globe className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Globe className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
                     <Input
                       id="org-domain"
-                      className="pl-9 transition-all duration-150 ease-snap"
+                      className="ease-snap pl-9 transition-all duration-150"
                       placeholder="company.com"
                       value={formData.domain}
                       onChange={(event) =>
@@ -422,9 +420,9 @@ export function OrganizationSettingsClient() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between border-t border-border pt-4">
-                  <p className="text-xs text-muted-foreground">
-                    Updated {new Date(org.updatedAt).toLocaleString()}
+                <div className="border-border flex items-center justify-between border-t pt-4">
+                  <p className="text-muted-foreground text-xs">
+                    {t('org.updatedAt', { date: new Date(org.updatedAt).toLocaleString() })}
                   </p>
                   <Button
                     onClick={() => updateOrgMutation.mutate()}
@@ -435,12 +433,12 @@ export function OrganizationSettingsClient() {
                     {updateOrgMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving
+                        {t('org.saving')}
                       </>
                     ) : (
                       <>
                         <Save className="mr-2 h-4 w-4" />
-                        Save changes
+                        {t('org.saveChanges')}
                       </>
                     )}
                   </Button>
@@ -459,23 +457,23 @@ export function OrganizationSettingsClient() {
           <TabsContent value="danger">
             <section className="animate-fade-up space-y-4">
               <div className="space-y-1">
-                <span className="kicker text-destructive">Danger zone</span>
-                <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-destructive" />
-                  Delete organization
+                <span className="kicker text-destructive">{t('org.dangerKicker')}</span>
+                <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+                  <AlertTriangle className="text-destructive h-4 w-4" />
+                  {t('org.deleteTitle')}
                 </h2>
-                <p className="text-sm text-muted-foreground max-w-prose">
-                  Permanently removes this workspace and everything under it. Owner access required.
+                <p className="text-muted-foreground max-w-prose text-sm">
+                  {t('org.dangerSubtitle')}
                 </p>
               </div>
               <div className="panel-danger animate-alert-in flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <p className="text-sm">Deleted organizations cannot be restored.</p>
+                <p className="text-sm">{t('org.cannotRestore')}</p>
                 <Button
                   variant="destructive"
                   disabled={!canDeleteOrg}
                   onClick={() => setDeleteDialogOpen(true)}
                 >
-                  {canDeleteOrg ? 'Delete organization' : 'Owner only'}
+                  {canDeleteOrg ? t('org.deleteTitle') : t('org.ownerOnly')}
                 </Button>
               </div>
             </section>

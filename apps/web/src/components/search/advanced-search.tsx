@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Search, X, Plus, Save, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +27,7 @@ interface Condition {
 }
 
 export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) {
+  const t = useTranslations('searchCommand');
   const [conditions, setConditions] = useState<Condition[]>([
     { id: '1', field: 'assignee', operator: '=', value: '' },
   ]);
@@ -33,24 +35,24 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
   const [showJQL, setShowJQL] = useState(false);
 
   const fields = [
-    { value: 'assignee', label: 'Assignee' },
-    { value: 'reporter', label: 'Reporter' },
-    { value: 'status', label: 'Status' },
-    { value: 'priority', label: 'Priority' },
-    { value: 'type', label: 'Type' },
-    { value: 'project', label: 'Project' },
-    { value: 'sprint', label: 'Sprint' },
-    { value: 'labels', label: 'Labels' },
-    { value: 'created', label: 'Created Date' },
-    { value: 'updated', label: 'Updated Date' },
+    { value: 'assignee', label: t('fieldAssignee') },
+    { value: 'reporter', label: t('fieldReporter') },
+    { value: 'status', label: t('fieldStatus') },
+    { value: 'priority', label: t('fieldPriority') },
+    { value: 'type', label: t('fieldType') },
+    { value: 'project', label: t('fieldProject') },
+    { value: 'sprint', label: t('fieldSprint') },
+    { value: 'labels', label: t('fieldLabels') },
+    { value: 'created', label: t('fieldCreated') },
+    { value: 'updated', label: t('fieldUpdated') },
   ];
 
   const operators = [
-    { value: '=', label: 'equals' },
-    { value: 'IN', label: 'in' },
-    { value: 'CONTAINS', label: 'contains' },
-    { value: '>=', label: 'after' },
-    { value: '<=', label: 'before' },
+    { value: '=', label: t('opEquals') },
+    { value: 'IN', label: t('opIn') },
+    { value: 'CONTAINS', label: t('opContains') },
+    { value: '>=', label: t('opAfter') },
+    { value: '<=', label: t('opBefore') },
   ];
 
   const addCondition = () => {
@@ -99,7 +101,7 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
     const query = showJQL ? jqlQuery : buildQuery();
     if (!query.trim()) return;
 
-    const name = prompt('Enter filter name:');
+    const name = prompt(t('enterFilterName'));
     if (!name) return;
 
     const criteria: ParsedCriteria = {};
@@ -113,12 +115,12 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
   const activeFilters = conditions.filter((c) => c.value.trim());
 
   return (
-    <div className="surface-card p-4 rounded-lg space-y-3">
+    <div className="surface-card space-y-3 rounded-lg p-4">
       {/* Toolbar */}
       <div className="flex items-center gap-2">
-        <Search className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
+        <Search className="text-muted-foreground h-4 w-4 shrink-0" aria-hidden="true" />
         <span className="text-sm font-medium tracking-tight">
-          {showJQL ? 'JQL editor' : 'Filter builder'}
+          {showJQL ? t('jqlEditor') : t('filterBuilder')}
         </span>
 
         <div className="ml-auto flex items-center gap-1">
@@ -126,9 +128,9 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
             variant="ghost"
             size="sm"
             onClick={() => setShowJQL(!showJQL)}
-            className="h-7 px-2 text-xs text-muted-foreground"
+            className="text-muted-foreground h-7 px-2 text-xs"
           >
-            {showJQL ? 'Visual builder' : 'JQL editor'}
+            {showJQL ? t('visualBuilder') : t('jqlEditor')}
             <ChevronDown className="ml-1 h-3 w-3" />
           </Button>
           {onSaveFilter && (
@@ -136,15 +138,15 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
               variant="ghost"
               size="sm"
               onClick={handleSaveFilter}
-              className="h-7 px-2 text-xs text-muted-foreground"
+              className="text-muted-foreground h-7 px-2 text-xs"
             >
               <Save className="mr-1.5 h-3.5 w-3.5" />
-              Save
+              {t('save')}
             </Button>
           )}
           <Button onClick={handleSearch} size="sm" className="h-7 px-3 text-xs">
             <Search className="mr-1.5 h-3.5 w-3.5" />
-            Search
+            {t('search')}
           </Button>
         </div>
       </div>
@@ -159,8 +161,8 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
               <span>{c.value}</span>
               <button
                 onClick={() => updateCondition(c.id, { value: '' })}
-                className="ml-0.5 rounded-full transition-all duration-150 ease-snap hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                aria-label={`Remove ${c.field} filter`}
+                className="ease-snap hover:text-foreground focus-visible:ring-ring ml-0.5 rounded-full transition-all duration-150 focus-visible:outline-none focus-visible:ring-2"
+                aria-label={t('removeFieldFilter', { field: c.field })}
               >
                 <X className="h-3 w-3" />
               </button>
@@ -173,17 +175,15 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
       {showJQL ? (
         <div className="space-y-2">
           <Input
-            placeholder="e.g. assignee = me AND status = 'In Progress'"
+            placeholder={t('jqlPlaceholder')}
             value={jqlQuery}
             onChange={(e) => setJqlQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           />
-          <p className="text-xs text-muted-foreground">
-            Examples: assignee = me, status IN (&quot;To Do&quot;, &quot;In Progress&quot;), priority = high
-          </p>
+          <p className="text-muted-foreground text-xs">{t('jqlExamples')}</p>
         </div>
       ) : (
-        <div className="space-y-2 stagger">
+        <div className="stagger space-y-2">
           {conditions.map((condition, index) => (
             <div key={condition.id} className="animate-fade-up flex items-center gap-2">
               {index > 0 && <span className="chip shrink-0">AND</span>}
@@ -220,7 +220,7 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
               </Select>
 
               <Input
-                placeholder="Value"
+                placeholder={t('valuePlaceholder')}
                 value={condition.value}
                 onChange={(e) => updateCondition(condition.id, { value: e.target.value })}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -231,9 +231,9 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 shrink-0 text-muted-foreground"
+                  className="text-muted-foreground h-8 w-8 shrink-0"
                   onClick={() => removeCondition(condition.id)}
-                  aria-label="Remove condition"
+                  aria-label={t('removeCondition')}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -245,10 +245,10 @@ export function AdvancedSearch({ onSearch, onSaveFilter }: AdvancedSearchProps) 
             variant="ghost"
             size="sm"
             onClick={addCondition}
-            className="h-7 px-2 text-xs text-muted-foreground"
+            className="text-muted-foreground h-7 px-2 text-xs"
           >
             <Plus className="mr-1.5 h-3.5 w-3.5" />
-            Add condition
+            {t('addCondition')}
           </Button>
         </div>
       )}

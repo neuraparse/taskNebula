@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import * as React from 'react';
 
 import {
@@ -25,8 +26,10 @@ function useIsMac(): boolean {
     if (typeof navigator === 'undefined') return;
     const platform =
       // `userAgentData` is preferred when available (Chromium); fall back to platform.
-      (navigator as Navigator & { userAgentData?: { platform?: string } })
-        .userAgentData?.platform ?? navigator.platform ?? '';
+      (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData
+        ?.platform ??
+      navigator.platform ??
+      '';
     setIsMac(/mac|iphone|ipad|ipod/i.test(platform));
   }, []);
 
@@ -42,7 +45,7 @@ function Kbd({ className, children, ...props }: KbdProps) {
   return (
     <kbd
       className={cn(
-        'inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 rounded border border-border bg-muted/50 text-[11px] font-mono font-medium text-foreground',
+        'border-border bg-muted/50 text-foreground inline-flex h-[20px] min-w-[20px] items-center justify-center rounded border px-1.5 font-mono text-[11px] font-medium',
         className
       )}
       {...props}
@@ -62,26 +65,22 @@ function renderKey(key: ShortcutKey, isMac: boolean): string {
   return key;
 }
 
-export function KeyboardShortcutsModal({
-  open,
-  onOpenChange,
-}: KeyboardShortcutsModalProps) {
+export function KeyboardShortcutsModal({ open, onOpenChange }: KeyboardShortcutsModalProps) {
+  const t = useTranslations('personalHelp');
   const isMac = useIsMac();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Keyboard shortcuts</DialogTitle>
-          <DialogDescription>
-            Move faster across taskNebula with these shortcuts.
-          </DialogDescription>
+          <DialogTitle>{t('keyboardShortcuts')}</DialogTitle>
+          <DialogDescription>{t('keyboardShortcutsDescription')}</DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {SHORTCUTS.map((section) => (
             <section key={section.category} className="space-y-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <h3 className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
                 {section.category}
               </h3>
               <div className="grid grid-cols-2 gap-x-8 gap-y-1.5">
@@ -92,10 +91,7 @@ export function KeyboardShortcutsModal({
                         <React.Fragment key={`${item.label}:${key}:${index}`}>
                           <Kbd>{renderKey(key, isMac)}</Kbd>
                           {index < item.keys.length - 1 ? (
-                            <span
-                              aria-hidden="true"
-                              className="text-[11px] text-muted-foreground"
-                            >
+                            <span aria-hidden="true" className="text-muted-foreground text-[11px]">
                               {/* Combine with + when modifier-bound, otherwise show "then" for sequences. */}
                               {item.keys[0] === 'Mod' ||
                               item.keys[0] === 'Shift' ||
@@ -107,9 +103,7 @@ export function KeyboardShortcutsModal({
                         </React.Fragment>
                       ))}
                     </div>
-                    <div className="flex items-center text-sm text-foreground/90">
-                      {item.label}
-                    </div>
+                    <div className="text-foreground/90 flex items-center text-sm">{item.label}</div>
                   </React.Fragment>
                 ))}
               </div>
