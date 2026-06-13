@@ -598,3 +598,6 @@ exports/
 data-dump/
 *.csv.local
 *.xlsx.local
+
+# Local UI audit screenshots — never commit
+.ui-audit/

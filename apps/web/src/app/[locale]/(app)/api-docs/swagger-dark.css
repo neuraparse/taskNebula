@@ -1,0 +1,77 @@
+/**
+ * Scoped dark-theme overrides for swagger-ui-react.
+ *
+ * swagger-ui ships a light theme (`swagger-ui-react/swagger-ui.css`) that
+ * renders bright white panels which clash with TaskNebula's dark surfaces.
+ * Every rule here is scoped under `.swagger-ui-host` (the wrapper in
+ * `api-docs-client.tsx`) so these styles never leak into the rest of the app,
+ * and they reuse the app's design tokens (`--card`, `--border`,
+ * `--muted-foreground`, etc.) so they track the dark palette.
+ *
+ * Light touch: this targets the high-contrast offenders flagged in the UI
+ * audit — the Servers/Authorize band and the low-contrast API description —
+ * rather than fully restyling Swagger.
+ */
+
+.swagger-ui-host .swagger-ui {
+  color: hsl(var(--foreground));
+}
+
+/* --- Info block: title + description text --- */
+.swagger-ui-host .swagger-ui .info .title,
+.swagger-ui-host .swagger-ui .info h1,
+.swagger-ui-host .swagger-ui .info h2 {
+  color: hsl(var(--foreground));
+}
+
+/* The low-contrast grey description under "TaskNebula API". */
+.swagger-ui-host .swagger-ui .info .description,
+.swagger-ui-host .swagger-ui .info .description p,
+.swagger-ui-host .swagger-ui .info .description li,
+.swagger-ui-host .swagger-ui .markdown p,
+.swagger-ui-host .swagger-ui .renderedMarkdown p {
+  color: hsl(var(--muted-foreground));
+}
+
+.swagger-ui-host .swagger-ui .info a {
+  color: hsl(var(--accent-blue));
+}
+
+/* --- Servers / Authorize band (the bright white box) --- */
+.swagger-ui-host .swagger-ui .scheme-container {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius); /* 4px — design-system default */
+  box-shadow: none;
+}
+
+.swagger-ui-host .swagger-ui .scheme-container .schemes-title,
+.swagger-ui-host .swagger-ui .servers-title,
+.swagger-ui-host .swagger-ui .servers > label {
+  color: hsl(var(--foreground));
+}
+
+/* The "Servers" select inside the band. */
+.swagger-ui-host .swagger-ui .servers select,
+.swagger-ui-host .swagger-ui select {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--input));
+  border-radius: var(--radius);
+}
+
+/* The Authorize button. */
+.swagger-ui-host .swagger-ui .auth-wrapper .authorize {
+  background: hsl(var(--card));
+  border-radius: var(--radius);
+}
+
+.swagger-ui-host .swagger-ui .btn.authorize {
+  color: hsl(var(--accent-emerald));
+  border-color: hsl(var(--accent-emerald));
+  background: transparent;
+}
+
+.swagger-ui-host .swagger-ui .btn.authorize svg {
+  fill: hsl(var(--accent-emerald));
+}

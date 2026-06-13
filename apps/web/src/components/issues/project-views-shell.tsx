@@ -30,13 +30,22 @@ import {
   Target,
   Trash2,
 } from 'lucide-react';
-import { BoardFiltersBar, DEFAULT_BOARD_FILTERS, type BoardFilters } from '@/components/kanban/board-filters';
+import {
+  BoardFiltersBar,
+  DEFAULT_BOARD_FILTERS,
+  type BoardFilters,
+} from '@/components/kanban/board-filters';
 import { KanbanBoard } from '@/components/kanban/kanban-board';
 import { CreateIssueModal } from '@/components/issues/create-issue-modal';
 import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
 import { ViewFilterBar } from '@/components/issues/view-filter-bar';
 import { ViewDisplayOptions } from '@/components/issues/view-display-options';
-import { DEFAULT_DISPLAY_OPTIONS, defaultFilters, type DisplayOptions, type ViewFilter } from '@/lib/issues/view-state';
+import {
+  DEFAULT_DISPLAY_OPTIONS,
+  defaultFilters,
+  type DisplayOptions,
+  type ViewFilter,
+} from '@/lib/issues/view-state';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -56,7 +65,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage, AvatarStack } from '@/components/ui/avatar';
 import { useIssues, type Issue } from '@/lib/hooks/use-issues';
@@ -150,7 +165,8 @@ function buildCriteria({
     scope,
     teamspaceId: scope === 'teamspace' ? currentTeamId : null,
     defaultView: isDefault,
-    groupBy: activeViewType === 'board' ? 'status' : activeViewType === 'timeline' ? 'dueMonth' : null,
+    groupBy:
+      activeViewType === 'board' ? 'status' : activeViewType === 'timeline' ? 'dueMonth' : null,
     visibleColumns: ['key', 'title', 'status', 'priority', 'assignee', 'dueDate'],
     sort: {
       field: activeViewType === 'calendar' ? 'dueDate' : 'updatedAt',
@@ -257,7 +273,11 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
     void applyView(defaultView);
   }, [defaultView]);
 
-  async function syncDefaultViews(scope: ViewScope, teamspaceId: string | null, excludeViewId?: string) {
+  async function syncDefaultViews(
+    scope: ViewScope,
+    teamspaceId: string | null,
+    excludeViewId?: string
+  ) {
     const sameScopeViews = visibleViews.filter((view) => {
       if (!view.isOwned || view.id === excludeViewId) {
         return false;
@@ -344,13 +364,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
   });
 
   const updateViewMutation = useMutation({
-    mutationFn: async ({
-      viewId,
-      payload,
-    }: {
-      viewId: string;
-      payload: Record<string, any>;
-    }) => {
+    mutationFn: async ({ viewId, payload }: { viewId: string; payload: Record<string, any> }) => {
       const response = await fetch(`/api/projects/${projectId}/views/${viewId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -442,7 +456,10 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
     () =>
       filteredIssues
         .filter((issue) => issue.dueDate)
-        .sort((left, right) => new Date(left.dueDate || 0).getTime() - new Date(right.dueDate || 0).getTime()),
+        .sort(
+          (left, right) =>
+            new Date(left.dueDate || 0).getTime() - new Date(right.dueDate || 0).getTime()
+        ),
     [filteredIssues]
   );
   const unscheduledIssues = useMemo(
@@ -480,15 +497,18 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
     // Sort each bucket using the active list sort field (updatedAt desc, matching buildCriteria default).
     for (const [key, bucket] of buckets) {
       bucket.sort(
-        (left, right) => new Date(right.updatedAt || 0).getTime() - new Date(left.updatedAt || 0).getTime()
+        (left, right) =>
+          new Date(right.updatedAt || 0).getTime() - new Date(left.updatedAt || 0).getTime()
       );
       buckets.set(key, bucket);
     }
 
-    return orderedStatuses
-      .map((status) => ({ status, issues: buckets.get(status.id) ?? [] }))
-      // Keep the Triage group only when it has items to avoid empty noise at the top of mature projects.
-      .filter((group) => group.status.id !== TRIAGE_GROUP_ID || group.issues.length > 0);
+    return (
+      orderedStatuses
+        .map((status) => ({ status, issues: buckets.get(status.id) ?? [] }))
+        // Keep the Triage group only when it has items to avoid empty noise at the top of mature projects.
+        .filter((group) => group.status.id !== TRIAGE_GROUP_ID || group.issues.length > 0)
+    );
   }, [filteredIssues, workflowStatuses]);
 
   const toggleGroup = (groupId: string) => {
@@ -517,30 +537,50 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
 
   return (
     <>
-      <div className="flex h-full flex-col bg-background">
-        <div className="shrink-0 border-b border-border bg-background px-4 py-1.5">
+      <div className="bg-background flex h-full flex-col">
+        <div className="border-border bg-background shrink-0 border-b px-4 py-1.5">
           {/* Compact toolbar: view-mode icons + filters + actions (icon-only) */}
-          <div className="flex items-center gap-2">
-            <Tabs value={activeViewType} onValueChange={(value) => setActiveViewType(value as ViewType)}>
-              <TabsList className="h-7 gap-0.5 rounded-md bg-muted/30 p-0.5">
-                <TabsTrigger value="list" aria-label="List" className="h-6 w-6 rounded-sm px-0 data-[state=active]:bg-card data-[state=active]:shadow-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <Tabs
+              value={activeViewType}
+              onValueChange={(value) => setActiveViewType(value as ViewType)}
+              className="shrink-0"
+            >
+              <TabsList className="bg-muted/30 h-7 gap-0.5 rounded-md p-0.5">
+                <TabsTrigger
+                  value="list"
+                  aria-label="List"
+                  className="data-[state=active]:bg-card data-[state=active]:shadow-xs h-6 w-6 rounded-sm px-0"
+                >
                   <LayoutList className="h-3.5 w-3.5" />
                 </TabsTrigger>
-                <TabsTrigger value="board" aria-label="Board" className="h-6 w-6 rounded-sm px-0 data-[state=active]:bg-card data-[state=active]:shadow-xs">
+                <TabsTrigger
+                  value="board"
+                  aria-label="Board"
+                  className="data-[state=active]:bg-card data-[state=active]:shadow-xs h-6 w-6 rounded-sm px-0"
+                >
                   <FolderKanban className="h-3.5 w-3.5" />
                 </TabsTrigger>
-                <TabsTrigger value="timeline" aria-label="Timeline" className="h-6 w-6 rounded-sm px-0 data-[state=active]:bg-card data-[state=active]:shadow-xs">
+                <TabsTrigger
+                  value="timeline"
+                  aria-label="Timeline"
+                  className="data-[state=active]:bg-card data-[state=active]:shadow-xs h-6 w-6 rounded-sm px-0"
+                >
                   <GanttChartSquare className="h-3.5 w-3.5" />
                 </TabsTrigger>
-                <TabsTrigger value="calendar" aria-label="Calendar" className="h-6 w-6 rounded-sm px-0 data-[state=active]:bg-card data-[state=active]:shadow-xs">
+                <TabsTrigger
+                  value="calendar"
+                  aria-label="Calendar"
+                  className="data-[state=active]:bg-card data-[state=active]:shadow-xs h-6 w-6 rounded-sm px-0"
+                >
                   <CalendarDays className="h-3.5 w-3.5" />
                 </TabsTrigger>
               </TabsList>
             </Tabs>
 
-            <div className="h-4 w-px shrink-0 bg-border/70" aria-hidden="true" />
+            <div className="bg-border/70 hidden h-4 w-px shrink-0 sm:block" aria-hidden="true" />
 
-            <div className="min-w-0 flex-1">
+            <div className="order-last w-full min-w-0 sm:order-none sm:w-auto sm:flex-1">
               <BoardFiltersBar
                 filters={filters}
                 onFiltersChange={setFilters}
@@ -549,8 +589,8 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
               />
             </div>
 
-            <div className="flex items-center gap-1">
-              {(activeViewType === 'list' || activeViewType === 'board') ? (
+            <div className="ml-auto flex items-center gap-1 sm:ml-0">
+              {activeViewType === 'list' || activeViewType === 'board' ? (
                 <ViewDisplayOptions options={displayOptions} onChange={setDisplayOptions} />
               ) : null}
               <Button
@@ -576,7 +616,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
             </div>
           </div>
 
-          {(activeViewType === 'list' || activeViewType === 'board') ? (
+          {activeViewType === 'list' || activeViewType === 'board' ? (
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <ViewFilterBar filters={viewFilters} onChange={setViewFilters} />
             </div>
@@ -587,13 +627,13 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
               <div className="flex items-center gap-1.5 pb-1">
                 <span className="kicker shrink-0">Views</span>
                 {viewsLoading ? (
-                  <span className="text-xs text-muted-foreground">Loading…</span>
+                  <span className="text-muted-foreground text-xs">Loading…</span>
                 ) : visibleViews.length ? (
                   visibleViews.map((view) => (
                     <div
                       key={view.id}
                       className={cn(
-                        'inline-flex items-center gap-1 rounded-md border pr-1 text-xs transition-colors duration-150 ease-snap',
+                        'ease-snap inline-flex items-center gap-1 rounded-md border pr-1 text-xs transition-colors duration-150',
                         activeViewType === view.viewType
                           ? 'border-primary/20 bg-primary/10 text-primary'
                           : 'border-border text-muted-foreground hover:text-foreground hover:bg-accent'
@@ -644,7 +684,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                     </div>
                   ))
                 ) : (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-muted-foreground text-xs">
                     Save a view to reuse it across this {currentTeamId ? 'teamspace' : 'project'}.
                   </span>
                 )}
@@ -653,15 +693,21 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
           </div>
         </div>
 
-        <Tabs value={activeViewType} onValueChange={(value) => setActiveViewType(value as ViewType)} className="flex min-h-0 flex-1 flex-col">
+        <Tabs
+          value={activeViewType}
+          onValueChange={(value) => setActiveViewType(value as ViewType)}
+          className="flex min-h-0 flex-1 flex-col"
+        >
           <TabsContent value="list" className="mt-0 min-h-0 flex-1 overflow-hidden">
             <div className="h-full overflow-auto px-5 py-4">
-              <div className="overflow-hidden rounded-lg border border-border bg-card animate-fade-up">
+              <div className="border-border bg-card animate-fade-up overflow-hidden rounded-lg border">
                 {isLoading ? (
-                  <div className="px-4 py-8 text-sm text-muted-foreground">Loading issues…</div>
+                  <div className="text-muted-foreground px-4 py-8 text-sm">Loading issues…</div>
                 ) : filteredIssues.length === 0 ? (
                   <div className="flex flex-col items-center gap-3 px-4 py-12 text-center">
-                    <p className="text-sm text-muted-foreground">No issues match the current view.</p>
+                    <p className="text-muted-foreground text-sm">
+                      No issues match the current view.
+                    </p>
                     <Button size="sm" onClick={() => setCreateIssueOpen(true)}>
                       <Plus className="mr-1.5 h-3.5 w-3.5" />
                       New Issue
@@ -674,43 +720,57 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                       const groupColor = group.status.color || '#94a3b8';
 
                       return (
-                        <section key={group.status.id} className="border-b border-border/60 last:border-b-0">
+                        <section
+                          key={group.status.id}
+                          className="border-border/60 border-b last:border-b-0"
+                        >
                           <button
                             type="button"
                             onClick={() => toggleGroup(group.status.id)}
                             className={cn(
-                              'sticky top-0 z-10 flex w-full items-center gap-2 border-b border-border/60 bg-background px-4 py-2 text-left',
-                              'hover:bg-accent/40 transition-colors duration-150 ease-snap'
+                              'border-border/60 bg-background sticky top-0 z-10 flex w-full items-center gap-2 border-b px-4 py-2 text-left',
+                              'hover:bg-accent/40 ease-snap transition-colors duration-150'
                             )}
                             aria-expanded={!isCollapsed}
                           >
                             {isCollapsed ? (
-                              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                              <ChevronRight className="text-muted-foreground h-3.5 w-3.5" />
                             ) : (
-                              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                              <ChevronDown className="text-muted-foreground h-3.5 w-3.5" />
                             )}
                             <span
                               aria-hidden="true"
                               className="inline-block h-2.5 w-2.5 rounded-full border"
                               style={{ backgroundColor: groupColor, borderColor: groupColor }}
                             />
-                            <span className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                            <span className="text-foreground text-xs font-semibold uppercase tracking-wide">
                               {group.status.name}
                             </span>
-                            <span className="text-xs text-muted-foreground">{group.issues.length}</span>
+                            <span className="text-muted-foreground text-xs">
+                              {group.issues.length}
+                            </span>
                           </button>
 
                           {!isCollapsed ? (
                             group.issues.length === 0 ? (
-                              <div className="px-4 py-3 text-xs text-muted-foreground">No items</div>
+                              <div className="text-muted-foreground px-4 py-3 text-xs">
+                                No items
+                              </div>
                             ) : (
-                              <ul className="divide-y divide-border/60">
+                              <ul className="divide-border/60 divide-y">
                                 {group.issues.map((issue) => {
-                                  const priorityKey = ['critical', 'high', 'medium', 'low'].includes(issue.priority)
+                                  const priorityKey = [
+                                    'critical',
+                                    'high',
+                                    'medium',
+                                    'low',
+                                  ].includes(issue.priority)
                                     ? issue.priority
                                     : 'low';
                                   const dotColor = issue.statusColor || groupColor;
-                                  const dueLabel = issue.dueDate ? format(parseISO(issue.dueDate), 'MMM d') : null;
+                                  const dueLabel = issue.dueDate
+                                    ? format(parseISO(issue.dueDate), 'MMM d')
+                                    : null;
                                   const assignees = issue.assignee ? [issue.assignee] : [];
                                   const labels = Array.isArray(issue.labels) ? issue.labels : [];
 
@@ -719,39 +779,42 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                                       <span
                                         aria-hidden="true"
                                         className={cn(
-                                          'priority-indicator absolute left-0 top-0 bottom-0 h-full',
+                                          'priority-indicator absolute bottom-0 left-0 top-0 h-full',
                                           `priority-${priorityKey}`
                                         )}
                                       />
                                       <button
                                         onClick={() => setSelectedIssueId(issue.id)}
-                                        className="group flex h-9 w-full items-center gap-3 rounded-md pl-4 pr-4 text-left transition-colors duration-150 ease-snap hover:bg-accent/50"
+                                        className="ease-snap hover:bg-accent/50 group flex h-9 w-full items-center gap-3 rounded-md pl-4 pr-4 text-left transition-colors duration-150"
                                       >
                                         <span
                                           aria-hidden="true"
                                           className="inline-block h-2 w-2 shrink-0 rounded-full border"
-                                          style={{ backgroundColor: dotColor, borderColor: dotColor }}
+                                          style={{
+                                            backgroundColor: dotColor,
+                                            borderColor: dotColor,
+                                          }}
                                         />
-                                        <span className="w-16 shrink-0 truncate font-mono text-[11px] text-muted-foreground">
+                                        <span className="text-muted-foreground w-16 shrink-0 truncate font-mono text-[11px]">
                                           {issue.key}
                                         </span>
-                                        <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                                        <span className="text-foreground min-w-0 flex-1 truncate text-sm font-medium">
                                           {issue.title}
                                         </span>
 
                                         <span className="ml-auto flex shrink-0 items-center gap-2">
                                           {labels.length > 0 ? (
-                                            <span className="hidden md:flex items-center gap-1">
+                                            <span className="hidden items-center gap-1 md:flex">
                                               {labels.slice(0, 2).map((label) => (
                                                 <span
                                                   key={label}
-                                                  className="rounded-full bg-muted/50 px-2 py-0.5 text-xs text-muted-foreground"
+                                                  className="bg-muted/50 text-muted-foreground rounded-full px-2 py-0.5 text-xs"
                                                 >
                                                   {label}
                                                 </span>
                                               ))}
                                               {labels.length > 2 ? (
-                                                <span className="rounded-full bg-muted/50 px-2 py-0.5 text-xs text-muted-foreground">
+                                                <span className="bg-muted/50 text-muted-foreground rounded-full px-2 py-0.5 text-xs">
                                                   +{labels.length - 2}
                                                 </span>
                                               ) : null}
@@ -759,7 +822,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                                           ) : null}
 
                                           {dueLabel ? (
-                                            <span className="hidden sm:inline-flex items-center gap-1 text-xs text-muted-foreground">
+                                            <span className="text-muted-foreground hidden items-center gap-1 text-xs sm:inline-flex">
                                               <CalendarDays className="h-3 w-3" />
                                               {dueLabel}
                                             </span>
@@ -782,10 +845,15 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                                               {assignees.map((person) => (
                                                 <Avatar key={person.id} size="xs">
                                                   {person.image ? (
-                                                    <AvatarImage src={person.image} alt={person.name || person.email} />
+                                                    <AvatarImage
+                                                      src={person.image}
+                                                      alt={person.name || person.email}
+                                                    />
                                                   ) : null}
                                                   <AvatarFallback>
-                                                    {(person.name || person.email || '?').charAt(0).toUpperCase()}
+                                                    {(person.name || person.email || '?')
+                                                      .charAt(0)
+                                                      .toUpperCase()}
                                                   </AvatarFallback>
                                                 </Avatar>
                                               ))}
@@ -815,35 +883,42 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
           <TabsContent value="timeline" className="mt-0 min-h-0 flex-1 overflow-hidden">
             <div className="h-full overflow-auto px-5 py-4">
               <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
-                <div className="space-y-3 animate-fade-up">
+                <div className="animate-fade-up space-y-3">
                   <span className="kicker">Scheduled</span>
-                  <div className="overflow-hidden rounded-lg border border-border bg-card">
+                  <div className="border-border bg-card overflow-hidden rounded-lg border">
                     {scheduledIssues.length === 0 ? (
-                      <div className="px-4 py-8 text-sm text-muted-foreground">No scheduled issues in this view.</div>
+                      <div className="text-muted-foreground px-4 py-8 text-sm">
+                        No scheduled issues in this view.
+                      </div>
                     ) : (
-                      <ul className="stagger divide-y divide-border/60">
+                      <ul className="stagger divide-border/60 divide-y">
                         {scheduledIssues.map((issue) => {
-                          const priorityKey = ['critical', 'high', 'medium', 'low'].includes(issue.priority)
+                          const priorityKey = ['critical', 'high', 'medium', 'low'].includes(
+                            issue.priority
+                          )
                             ? issue.priority
                             : 'low';
                           return (
                             <li key={issue.id} className="relative">
                               <span
                                 aria-hidden="true"
-                                className={cn('priority-indicator absolute left-0 top-0 bottom-0 h-full', `priority-${priorityKey}`)}
+                                className={cn(
+                                  'priority-indicator absolute bottom-0 left-0 top-0 h-full',
+                                  `priority-${priorityKey}`
+                                )}
                               />
                               <button
                                 onClick={() => setSelectedIssueId(issue.id)}
-                                className="row-interactive flex w-full items-center justify-between gap-4 rounded-md pl-4 pr-4 py-2.5 text-left"
+                                className="row-interactive flex w-full items-center justify-between gap-4 rounded-md py-2.5 pl-4 pr-4 text-left"
                               >
                                 <div className="min-w-0">
                                   <p className="truncate text-sm font-medium">{issue.title}</p>
-                                  <p className="text-xs text-muted-foreground">
+                                  <p className="text-muted-foreground text-xs">
                                     <span className="font-mono">{issue.key}</span> ·{' '}
                                     {issue.assignee?.name || issue.assignee?.email || 'Unassigned'}
                                   </p>
                                 </div>
-                                <span className="shrink-0 text-xs font-medium text-muted-foreground">
+                                <span className="text-muted-foreground shrink-0 text-xs font-medium">
                                   {issue.dueDate ? format(parseISO(issue.dueDate), 'MMM d') : '—'}
                                 </span>
                               </button>
@@ -855,13 +930,15 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                   </div>
                 </div>
 
-                <div className="space-y-3 animate-fade-up">
+                <div className="animate-fade-up space-y-3">
                   <span className="kicker">Unscheduled</span>
-                  <div className="overflow-hidden rounded-lg border border-border bg-card">
+                  <div className="border-border bg-card overflow-hidden rounded-lg border">
                     {unscheduledIssues.length === 0 ? (
-                      <div className="px-4 py-8 text-sm text-muted-foreground">Everything in this view is scheduled.</div>
+                      <div className="text-muted-foreground px-4 py-8 text-sm">
+                        Everything in this view is scheduled.
+                      </div>
                     ) : (
-                      <ul className="divide-y divide-border/60">
+                      <ul className="divide-border/60 divide-y">
                         {unscheduledIssues.map((issue) => (
                           <li key={issue.id}>
                             <button
@@ -870,7 +947,9 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                             >
                               <div className="min-w-0">
                                 <p className="truncate text-sm font-medium">{issue.title}</p>
-                                <p className="text-xs text-muted-foreground font-mono">{issue.key}</p>
+                                <p className="text-muted-foreground font-mono text-xs">
+                                  {issue.key}
+                                </p>
                               </div>
                             </button>
                           </li>
@@ -885,8 +964,8 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
 
           <TabsContent value="calendar" className="mt-0 min-h-0 flex-1 overflow-hidden">
             <div className="h-full overflow-auto px-5 py-4">
-              <div className="overflow-hidden rounded-lg border border-border bg-card animate-fade-up">
-                <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <div className="border-border bg-card animate-fade-up overflow-hidden rounded-lg border">
+                <div className="border-border flex items-center justify-between border-b px-4 py-3">
                   <h2 className="text-sm font-semibold">{format(calendarMonth, 'MMMM yyyy')}</h2>
                   <div className="flex items-center gap-1">
                     <Button
@@ -910,9 +989,12 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-7 border-b border-border">
+                <div className="border-border grid grid-cols-7 border-b">
                   {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                    <div key={day} className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <div
+                      key={day}
+                      className="text-muted-foreground px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide"
+                    >
                       {day}
                     </div>
                   ))}
@@ -927,7 +1009,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                       <div
                         key={key}
                         className={cn(
-                          'min-h-32 border-r border-b border-border/60 px-2 py-2 last:border-r-0',
+                          'border-border/60 min-h-32 border-b border-r px-2 py-2 last:border-r-0',
                           !isSameMonth(day, calendarMonth) && 'bg-muted/30 text-muted-foreground/60'
                         )}
                       >
@@ -935,7 +1017,8 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                           <span
                             className={cn(
                               'text-xs font-medium',
-                              isToday(day) && 'bg-primary px-1.5 py-0.5 rounded-sm text-primary-foreground'
+                              isToday(day) &&
+                                'bg-primary text-primary-foreground rounded-sm px-1.5 py-0.5'
                             )}
                           >
                             {format(day, 'd')}
@@ -950,14 +1033,18 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                             <button
                               key={issue.id}
                               onClick={() => setSelectedIssueId(issue.id)}
-                              className="w-full rounded-sm px-1.5 py-0.5 text-left transition-all duration-150 ease-snap hover:bg-accent/60"
+                              className="ease-snap hover:bg-accent/60 w-full rounded-sm px-1.5 py-0.5 text-left transition-all duration-150"
                             >
                               <p className="truncate text-[11px] font-medium">{issue.title}</p>
-                              <p className="truncate text-[10px] text-muted-foreground font-mono">{issue.key}</p>
+                              <p className="text-muted-foreground truncate font-mono text-[10px]">
+                                {issue.key}
+                              </p>
                             </button>
                           ))}
                           {dayIssues.length > 3 ? (
-                            <p className="text-[10px] text-muted-foreground">+{dayIssues.length - 3} more</p>
+                            <p className="text-muted-foreground text-[10px]">
+                              +{dayIssues.length - 3} more
+                            </p>
                           ) : null}
                         </div>
                       </div>
@@ -1016,27 +1103,35 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                   <SelectItem value="personal">Personal</SelectItem>
                   <SelectItem value="project">Project</SelectItem>
                   <SelectItem value="teamspace" disabled={!currentTeamId}>
-                    {currentTeamId ? `Teamspace${activeTeamspace ? ` · ${activeTeamspace.name}` : ''}` : 'Teamspace'}
+                    {currentTeamId
+                      ? `Teamspace${activeTeamspace ? ` · ${activeTeamspace.name}` : ''}`
+                      : 'Teamspace'}
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Personal views stay private. Project and Teamspace views are shared.
               </p>
             </div>
 
             <label className="flex items-center gap-3 text-sm">
-              <Checkbox checked={isPinnedView} onCheckedChange={(checked) => setIsPinnedView(checked === true)} />
+              <Checkbox
+                checked={isPinnedView}
+                onCheckedChange={(checked) => setIsPinnedView(checked === true)}
+              />
               Pin this view in the header
             </label>
 
             <label className="flex items-center gap-3 text-sm">
-              <Checkbox checked={isDefaultView} onCheckedChange={(checked) => setIsDefaultView(checked === true)} />
+              <Checkbox
+                checked={isDefaultView}
+                onCheckedChange={(checked) => setIsDefaultView(checked === true)}
+              />
               Set as default view for this scope
             </label>
 
             {saveViewMutation.error ? (
-              <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <div className="bg-destructive/10 text-destructive rounded-md px-3 py-2 text-sm">
                 {saveViewMutation.error.message}
               </div>
             ) : null}
@@ -1056,7 +1151,11 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
         </DialogContent>
       </Dialog>
 
-      <CreateIssueModal open={createIssueOpen} onOpenChange={setCreateIssueOpen} projectId={projectId} />
+      <CreateIssueModal
+        open={createIssueOpen}
+        onOpenChange={setCreateIssueOpen}
+        projectId={projectId}
+      />
 
       {selectedIssueId ? (
         <IssueDetailModal

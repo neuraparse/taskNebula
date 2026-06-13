@@ -121,35 +121,32 @@ export function MyIssuesClient() {
   const filteredIssues = (myIssues ?? []).filter((issue) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
-    return (
-      issue.title.toLowerCase().includes(query) ||
-      issue.key.toLowerCase().includes(query)
-    );
+    return issue.title.toLowerCase().includes(query) || issue.key.toLowerCase().includes(query);
   });
 
   if (isLoading) {
     return (
       <div className="flex h-full min-h-0 items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
       </div>
     );
   }
 
   return (
     <>
-      <div className="flex h-full min-h-0 flex-col bg-background">
+      <div className="bg-background flex h-full min-h-0 flex-col">
         {/* Header */}
-        <div className="shrink-0 border-b border-border bg-background px-8 py-5">
-          <div className="flex items-center justify-between gap-4">
+        <div className="border-border bg-background shrink-0 border-b px-8 py-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
             <div className="space-y-1">
               <span className="kicker">Issues</span>
-              <h1 className="text-2xl font-semibold tracking-tight">My Issues</h1>
-              <p className="text-sm text-muted-foreground">
+              <h1 className="whitespace-nowrap text-2xl font-semibold tracking-tight">My Issues</h1>
+              <p className="text-muted-foreground text-sm">
                 {filteredIssues.length} issue{filteredIssues.length === 1 ? '' : 's'}
               </p>
             </div>
-            <div className="relative w-72 shrink-0">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <div className="relative w-full max-w-full md:w-72 md:shrink-0">
+              <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
               <Input
                 placeholder="Search issues..."
                 value={searchQuery}
@@ -161,15 +158,15 @@ export function MyIssuesClient() {
         </div>
 
         {/* Filter toolbar: single simple scope switch */}
-        <div className="shrink-0 border-b border-border bg-background px-8 py-2.5">
-          <div className="flex items-center gap-1 overflow-x-auto">
+        <div className="border-border bg-background shrink-0 border-b px-8 py-2.5">
+          <div className="scrollbar-none flex items-center gap-1 overflow-x-auto whitespace-nowrap">
             {scopeOptions.map((option) => (
               <button
                 key={option.value}
                 type="button"
                 onClick={() => handleScopeChange(option.value)}
                 className={cn(
-                  'shrink-0 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-150 ease-snap',
+                  'ease-snap shrink-0 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-150',
                   scope === option.value
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
@@ -182,12 +179,12 @@ export function MyIssuesClient() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar px-8 py-6">
+        <div className="custom-scrollbar flex-1 overflow-y-auto px-8 py-6">
           {filteredIssues.length === 0 ? (
-            <div className="flex h-full items-center justify-center animate-fade-up">
+            <div className="animate-fade-up flex h-full items-center justify-center">
               <div className="text-center">
-                <Inbox className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
+                <Inbox className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
+                <p className="text-muted-foreground text-sm">
                   {searchQuery
                     ? 'No issues match your search'
                     : scope === 'assigned'
@@ -254,31 +251,26 @@ function IssueRow({
   const updated = formatRelativeDate(issue.updatedAt ?? issue.createdAt);
 
   return (
-    <li className={cn('relative', !isLast && 'border-b border-border/60')}>
+    <li className={cn('relative', !isLast && 'border-border/60 border-b')}>
       {/* Left-edge priority indicator */}
-      <span
-        aria-hidden
-        className={cn('absolute left-0 top-0 bottom-0 w-0.5', pClass)}
-      />
+      <span aria-hidden className={cn('absolute bottom-0 left-0 top-0 w-0.5', pClass)} />
       <button
         type="button"
         onClick={onClick}
         className="row-interactive group flex min-h-[44px] w-full items-center gap-3 rounded-md pl-4 pr-4 text-left"
       >
         {/* Title (with inline key) */}
-        <p className="flex-1 truncate text-sm text-foreground">
-          <span className="mr-2 font-mono text-xs text-muted-foreground">{issue.key}</span>
+        <p className="text-foreground flex-1 truncate text-sm">
+          <span className="text-muted-foreground mr-2 font-mono text-xs">{issue.key}</span>
           {issue.title}
         </p>
 
         {/* Status chip */}
-        <span className={cn('hidden shrink-0 sm:inline-flex', chipClass)}>
-          {issue.status.name}
-        </span>
+        <span className={cn('hidden shrink-0 sm:inline-flex', chipClass)}>{issue.status.name}</span>
 
         {/* Compact time */}
         {updated && (
-          <span className="hidden w-10 shrink-0 text-right font-mono text-[11px] text-muted-foreground sm:inline">
+          <span className="text-muted-foreground hidden w-10 shrink-0 text-right font-mono text-[11px] sm:inline">
             {updated}
           </span>
         )}

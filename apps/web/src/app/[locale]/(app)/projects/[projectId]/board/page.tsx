@@ -64,9 +64,7 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
     }
   }, [sprints, sprintsLoading, activeSprint, isInitialized]);
 
-  const currentSprint = selectedSprintId
-    ? sprints?.find((s) => s.id === selectedSprintId)
-    : null;
+  const currentSprint = selectedSprintId ? sprints?.find((s) => s.id === selectedSprintId) : null;
 
   const getSprintProgress = () => {
     if (!currentSprint || currentSprint.status !== 'active') return null;
@@ -82,14 +80,14 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
   return (
     <div className="flex h-full flex-col">
       {/* Board Header - single compact row */}
-      <div className="shrink-0 border-b border-border bg-background/95 px-4 py-2 backdrop-blur">
-        <div className="flex items-center gap-3">
+      <div className="border-border bg-background/95 shrink-0 border-b px-4 py-2 backdrop-blur">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           {/* Sprint selector */}
           <Select
             value={selectedSprintId || 'all'}
             onValueChange={(value) => setSelectedSprintId(value === 'all' ? undefined : value)}
           >
-            <SelectTrigger className="h-8 w-48 border-border bg-background text-xs shadow-none">
+            <SelectTrigger className="border-border bg-background h-8 w-40 shrink-0 text-xs shadow-none sm:w-48">
               <SelectValue placeholder="All Issues" />
             </SelectTrigger>
             <SelectContent>
@@ -97,7 +95,7 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
               <SelectItem value="backlog">Backlog (No Sprint)</SelectItem>
               {sprints && sprints.length > 0 && (
                 <>
-                  <div className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  <div className="text-muted-foreground px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider">
                     Sprints
                   </div>
                   {sprints.map((sprint) => (
@@ -105,7 +103,10 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
                       <span className="flex items-center gap-2">
                         {sprint.name}
                         {sprint.status === 'active' && (
-                          <Badge variant="default" className="h-3.5 bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20 px-1 py-0 text-[9px]">
+                          <Badge
+                            variant="default"
+                            className="bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20 h-3.5 px-1 py-0 text-[9px]"
+                          >
                             Active
                           </Badge>
                         )}
@@ -124,12 +125,14 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
 
           {/* Sprint meta */}
           {currentSprint && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="text-muted-foreground flex items-center gap-2 text-xs">
               <span>{currentSprint.issueCount || 0} issues</span>
               {sprintProgress && sprintProgress.daysLeft > 0 && (
                 <>
                   <span className="text-border">·</span>
-                  <span className={sprintProgress.daysLeft <= 2 ? 'text-accent-amber font-medium' : ''}>
+                  <span
+                    className={sprintProgress.daysLeft <= 2 ? 'text-accent-amber font-medium' : ''}
+                  >
                     {sprintProgress.daysLeft}d left
                   </span>
                 </>
@@ -137,7 +140,7 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-5 w-5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="text-muted-foreground hover:bg-muted hover:text-foreground h-5 w-5"
                 onClick={() => setSelectedSprintId(undefined)}
               >
                 <X className="h-2.5 w-2.5" />
@@ -146,20 +149,23 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
           )}
 
           {!activeSprint && !sprintsLoading && isInitialized && (
-            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <AlertCircle className="h-3 w-3 text-accent-amber" />
+            <div className="text-muted-foreground flex w-full shrink-0 items-center gap-1.5 whitespace-nowrap text-[11px] sm:w-auto">
+              <AlertCircle className="text-accent-amber h-3 w-3 shrink-0" />
               No active sprint
-              <Link href={`/projects/${projectId}/sprints`} className="text-primary hover:underline ml-0.5">
+              <Link
+                href={`/projects/${projectId}/sprints`}
+                className="text-primary ml-0.5 hover:underline"
+              >
                 {plannedSprints.length > 0 ? 'Start' : 'Create'}
               </Link>
             </div>
           )}
 
           {/* Separator */}
-          <div className="h-5 w-px bg-border/70" />
+          <div className="bg-border/70 hidden h-5 w-px sm:block" />
 
           {/* Filters */}
-          <div className="min-w-0 flex-1">
+          <div className="order-last w-full min-w-0 sm:order-none sm:w-auto sm:flex-1">
             <BoardFiltersBar
               filters={filters}
               onFiltersChange={setFilters}
@@ -169,12 +175,8 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
           </div>
 
           {/* Spacer + New Issue */}
-          <div className="ml-auto">
-            <Button
-              size="sm"
-              onClick={() => setCreateModalOpen(true)}
-              className="h-8 gap-1.5"
-            >
+          <div className="ml-auto shrink-0">
+            <Button size="sm" onClick={() => setCreateModalOpen(true)} className="h-8 gap-1.5">
               <Plus className="h-3.5 w-3.5" />
               New Issue
             </Button>
@@ -184,11 +186,7 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
 
       {/* Kanban Board */}
       <div className="flex-1 overflow-hidden">
-        <KanbanBoard
-          projectId={projectId}
-          sprintId={effectiveSprintId}
-          filters={filters}
-        />
+        <KanbanBoard projectId={projectId} sprintId={effectiveSprintId} filters={filters} />
       </div>
 
       <CreateIssueModal

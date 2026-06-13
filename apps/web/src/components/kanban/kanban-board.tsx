@@ -40,7 +40,8 @@ interface KanbanBoardProps {
 
 export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) {
   const { data: issues, isLoading: issuesLoading, error } = useIssues({ projectId, sprintId });
-  const { data: workflowStatuses = [], isLoading: statusesLoading } = useWorkflowStatuses(projectId);
+  const { data: workflowStatuses = [], isLoading: statusesLoading } =
+    useWorkflowStatuses(projectId);
   const updateIssue = useUpdateIssue();
   const queryClient = useQueryClient();
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -70,8 +71,8 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
       }
 
       if (activeFilters.labels.length > 0) {
-        const issueLabels = ((issue.labels ?? []) as Array<string | { id: string }>).map(
-          (l) => (typeof l === 'string' ? l : l.id)
+        const issueLabels = ((issue.labels ?? []) as Array<string | { id: string }>).map((l) =>
+          typeof l === 'string' ? l : l.id
         );
         if (!activeFilters.labels.some((id) => issueLabels.includes(id))) return false;
       }
@@ -83,7 +84,7 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
   const collisionDetection: CollisionDetection = (args) => {
@@ -98,11 +99,23 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
     onDragStart({ active }: { active: { id: string | number } }) {
       return `Picked up issue. Use arrow keys to move between columns.`;
     },
-    onDragOver({ active, over }: { active: { id: string | number }; over: { id: string | number } | null }) {
+    onDragOver({
+      active,
+      over,
+    }: {
+      active: { id: string | number };
+      over: { id: string | number } | null;
+    }) {
       if (over) return `Issue is over a drop target.`;
       return `Issue is not over a drop target.`;
     },
-    onDragEnd({ active, over }: { active: { id: string | number }; over: { id: string | number } | null }) {
+    onDragEnd({
+      active,
+      over,
+    }: {
+      active: { id: string | number };
+      over: { id: string | number } | null;
+    }) {
       if (over) return `Issue was moved.`;
       return `Issue drop was cancelled.`;
     },
@@ -120,15 +133,15 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
     setActiveId(null);
     if (!over) return;
 
-    const activeData = active.data.current as { type?: string; statusId?: string; issueId?: string } | undefined;
+    const activeData = active.data.current as
+      | { type?: string; statusId?: string; issueId?: string }
+      | undefined;
     const overData = over.data.current as { type?: string; statusId?: string } | undefined;
 
     if (activeData?.type !== 'card') return;
 
     const targetStatusId =
-      overData?.type === 'column' || overData?.type === 'card'
-        ? overData.statusId
-        : undefined;
+      overData?.type === 'column' || overData?.type === 'card' ? overData.statusId : undefined;
 
     const issueId = activeData.issueId;
     if (!issueId || !targetStatusId) return;
@@ -147,11 +160,7 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
       <div className="flex h-full overflow-x-auto overflow-y-hidden px-4 py-4">
         <div className="flex h-full gap-3">
           {Array.from({ length: columnCount }).map((_, idx) => (
-            <SkeletonKanbanColumn
-              key={idx}
-              title={workflowStatuses[idx]?.name ?? ''}
-              cards={3}
-            />
+            <SkeletonKanbanColumn key={idx} title={workflowStatuses[idx]?.name ?? ''} cards={3} />
           ))}
         </div>
       </div>
@@ -162,8 +171,8 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <p className="text-sm text-destructive">Failed to load issues</p>
-          <p className="text-xs text-muted-foreground">{error.message}</p>
+          <p className="text-destructive text-sm">Failed to load issues</p>
+          <p className="text-muted-foreground text-xs">{error.message}</p>
         </div>
       </div>
     );
@@ -172,8 +181,8 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
   if (workflowStatuses.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-        <LayoutKanban className="h-8 w-8 text-muted-foreground/40" />
-        <p className="text-sm text-muted-foreground">No columns yet</p>
+        <LayoutKanban className="text-muted-foreground/40 h-8 w-8" />
+        <p className="text-muted-foreground text-sm">No columns yet</p>
         <Button variant="outline" size="sm" onClick={() => setAddColumnOpen(true)}>
           <Plus className="mr-1.5 h-3.5 w-3.5" />
           Add column
@@ -182,7 +191,9 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
           open={addColumnOpen}
           onOpenChange={setAddColumnOpen}
           projectId={projectId}
-          onSuccess={() => queryClient.invalidateQueries({ queryKey: ['workflow-statuses', projectId] })}
+          onSuccess={() =>
+            queryClient.invalidateQueries({ queryKey: ['workflow-statuses', projectId] })
+          }
         />
       </div>
     );
@@ -191,7 +202,7 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
   return (
     <>
       <div
-        className="dot-grid flex h-full flex-col bg-background"
+        className="dot-grid bg-background flex h-full flex-col"
         data-dragging-active={activeId ? 'true' : undefined}
       >
         <DndContext
@@ -202,7 +213,7 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
           accessibility={{ announcements }}
           measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
         >
-          <div className="flex flex-1 items-stretch gap-3 overflow-x-auto px-4 py-4 custom-scrollbar">
+          <div className="custom-scrollbar flex flex-1 items-stretch gap-3 overflow-x-auto px-4 py-4">
             {workflowStatuses.map((status) => {
               const columnIssues = filteredIssues.filter((issue) => issue.statusId === status.id);
               return (
@@ -239,7 +250,9 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
                                   ?.split(' ')
                                   .map((n) => n[0])
                                   .join('')
-                                  .toUpperCase() || issue.assignee.email?.[0]?.toUpperCase() || '?',
+                                  .toUpperCase() ||
+                                issue.assignee.email?.[0]?.toUpperCase() ||
+                                '?',
                             }
                           : undefined,
                         labels: issue.labels ?? [],
@@ -255,13 +268,16 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
             <div className="w-[320px] flex-shrink-0 self-start">
               <Button
                 variant="ghost"
-                className="h-10 w-full rounded-md border border-dashed border-border text-sm text-muted-foreground transition-all duration-150 ease-snap hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                className="border-border text-muted-foreground ease-snap hover:border-primary/40 hover:bg-primary/5 hover:text-primary h-10 w-full rounded-md border border-dashed text-sm transition-all duration-150"
                 onClick={() => setAddColumnOpen(true)}
               >
                 <Plus className="mr-1.5 h-4 w-4" />
                 Add column
               </Button>
             </div>
+
+            {/* Trailing gutter so the last column isn't sheared at the viewport edge when scrolled */}
+            <div className="w-4 shrink-0" aria-hidden="true" />
           </div>
 
           <DragOverlay
@@ -287,7 +303,9 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
                               ?.split(' ')
                               .map((n) => n[0])
                               .join('')
-                              .toUpperCase() || activeIssue.assignee.email?.[0]?.toUpperCase() || '?',
+                              .toUpperCase() ||
+                            activeIssue.assignee.email?.[0]?.toUpperCase() ||
+                            '?',
                         }
                       : undefined,
                     labels: activeIssue.labels ?? [],
@@ -312,7 +330,9 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
         open={addColumnOpen}
         onOpenChange={setAddColumnOpen}
         projectId={projectId}
-        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['workflow-statuses', projectId] })}
+        onSuccess={() =>
+          queryClient.invalidateQueries({ queryKey: ['workflow-statuses', projectId] })
+        }
       />
     </>
   );

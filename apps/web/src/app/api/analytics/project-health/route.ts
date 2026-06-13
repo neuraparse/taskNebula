@@ -26,15 +26,25 @@ export async function GET(request: NextRequest) {
 
     const totalIssues = totalIssuesData?.count || 0;
 
-    // Issues by status
+    // Issues by status — resolve the statusId (a CUID) to the human-readable
+    // workflow status name + color so the chart never renders raw ids.
     const issuesByStatus = await db
       .select({
-        status: issues.statusId,
+        statusId: issues.statusId,
+        name: workflowStatuses.name,
+        color: workflowStatuses.color,
+        category: workflowStatuses.category,
         count: count(),
       })
       .from(issues)
+      .leftJoin(workflowStatuses, eq(issues.statusId, workflowStatuses.id))
       .where(eq(issues.projectId, projectId))
-      .groupBy(issues.statusId);
+      .groupBy(
+        issues.statusId,
+        workflowStatuses.name,
+        workflowStatuses.color,
+        workflowStatuses.category
+      );
 
     // Issues by priority
     const issuesByPriority = await db
@@ -105,7 +115,10 @@ export async function GET(request: NextRequest) {
         completed: completedSprintsData?.count || 0,
       },
       issuesByStatus: issuesByStatus.map((item) => ({
-        status: item.status,
+        status: item.statusId ?? 'unknown',
+        name: item.name ?? null,
+        color: item.color ?? null,
+        category: item.category ?? null,
         count: item.count,
       })),
       issuesByPriority: issuesByPriority.map((item) => ({
@@ -122,4 +135,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to fetch project health data' }, { status: 500 });
   }
 }
-

@@ -30,6 +30,9 @@ export interface ProjectHealthData {
   };
   issuesByStatus: {
     status: string;
+    name: string | null;
+    color: string | null;
+    category: string | null;
     count: number;
   }[];
   issuesByPriority: {
@@ -104,4 +107,3 @@ export function exportIssues(projectId: string, format: 'csv' | 'json' = 'csv') 
   const url = `/api/export/issues?projectId=${projectId}&format=${format}`;
   window.open(url, '_blank');
 }
-

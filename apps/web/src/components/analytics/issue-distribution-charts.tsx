@@ -4,19 +4,12 @@ import { AlertTriangle, Layers, ListTodo } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface IssueDistributionChartsProps {
-  issuesByStatus: { status: string; count: number }[];
+  issuesByStatus: { status: string; name: string | null; color: string | null; count: number }[];
   issuesByPriority: { priority: string; count: number }[];
   issuesByType: { type: string; count: number }[];
 }
 
 // Token-mapped colors using CSS variables
-const STATUS_COLORS: Record<string, string> = {
-  todo: 'hsl(var(--muted-foreground))',
-  'in-progress': 'hsl(var(--primary))',
-  done: 'hsl(var(--accent-emerald))',
-  backlog: 'hsl(var(--border-strong))',
-};
-
 const PRIORITY_COLORS: Record<string, string> = {
   lowest: 'hsl(var(--muted-foreground))',
   low: 'hsl(var(--accent-cyan))',
@@ -32,14 +25,44 @@ const TYPE_COLORS: Record<string, string> = {
   story: 'hsl(var(--accent-emerald))',
 };
 
-function DistributionTooltip({ active, payload }: any) {
-  if (!active || !payload?.length) return null;
-  const item = payload[0];
+// Design-system accent palette used to color slices that have no explicit /
+// token color (e.g. a workflow status with no stored color).
+const ACCENT_PALETTE = [
+  'hsl(var(--accent-blue))',
+  'hsl(var(--accent-violet))',
+  'hsl(var(--accent-emerald))',
+  'hsl(var(--accent-amber))',
+  'hsl(var(--accent-cyan))',
+  'hsl(var(--accent-rose))',
+  'hsl(var(--accent-indigo))',
+];
+
+interface ChartDatum {
+  /** Human-readable label shown in legend/tooltip. */
+  name: string;
+  value: number;
+  /** Explicit color (e.g. a workflow status hex). Takes precedence. */
+  color?: string;
+  /** Key for the name-keyed colorMap lookup (defaults to `name`). */
+  colorKey?: string;
+  // Recharts' Pie `data` prop expects an index signature.
+  [key: string]: string | number | undefined;
+}
+
+function DistributionTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: { name?: string; value?: number }[];
+}) {
+  const item = payload?.[0];
+  if (!active || !item) return null;
   return (
-    <div className="surface-card px-3 py-2 text-xs space-y-0.5">
-      <p className="font-medium text-foreground capitalize">{item.name}</p>
+    <div className="surface-card space-y-0.5 px-3 py-2 text-xs">
+      <p className="text-foreground font-medium capitalize">{item.name}</p>
       <p className="text-muted-foreground">
-        <span className="font-semibold text-foreground tabular-nums">{item.value}</span> issues
+        <span className="text-foreground font-semibold tabular-nums">{item.value}</span> issues
       </p>
     </div>
   );
@@ -51,69 +74,78 @@ interface PieCardProps {
   kicker: string;
   title: string;
   subtitle?: string;
-  data: { name: string; value: number }[];
+  data: ChartDatum[];
   colorMap: Record<string, string>;
-  fallbackColor: string;
   tone: Tone;
   icon: React.ReactNode;
 }
 
-function PieCard({ kicker, title, subtitle, data, colorMap, fallbackColor, tone, icon }: PieCardProps) {
+function colorForDatum(entry: ChartDatum, index: number, colorMap: Record<string, string>): string {
+  if (entry.color) return entry.color;
+  const mapped = colorMap[entry.colorKey ?? entry.name];
+  if (mapped) return mapped;
+  return ACCENT_PALETTE[index % ACCENT_PALETTE.length] ?? 'hsl(var(--muted-foreground))';
+}
+
+function PieCard({ kicker, title, subtitle, data, colorMap, tone, icon }: PieCardProps) {
   const total = data.reduce((sum, d) => sum + d.value, 0);
   return (
-    <div className="surface-card animate-fade-up p-5 space-y-3">
+    <div className="surface-card animate-fade-up space-y-3 p-5">
       <div className="flex items-start gap-3">
         <span className={`icon-tile icon-tile-accent-${tone} shrink-0`}>{icon}</span>
         <div className="min-w-0 flex-1 space-y-0.5">
           <span className="kicker">{kicker}</span>
-          <h3 className="text-base font-semibold tracking-tight text-foreground">{title}</h3>
-          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+          <h3 className="text-foreground text-base font-semibold tracking-tight">{title}</h3>
+          {subtitle && <p className="text-muted-foreground text-xs">{subtitle}</p>}
         </div>
         <div className="text-right">
-          <div className="text-xl font-semibold tabular-nums text-foreground">{total}</div>
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Total</div>
+          <div className="text-foreground text-xl font-semibold tabular-nums">{total}</div>
+          <div className="text-muted-foreground text-[10px] uppercase tracking-wide">Total</div>
         </div>
       </div>
 
-      {/* Legend chips */}
-      <div className="flex flex-wrap items-center gap-1.5">
-        {data.map((entry) => (
-          <span
-            key={entry.name}
-            className="chip inline-flex items-center gap-1.5 capitalize"
-          >
-            <span
-              className="h-1.5 w-1.5 rounded-full"
-              style={{ backgroundColor: colorMap[entry.name] || fallbackColor }}
-            />
-            {entry.name}
-          </span>
-        ))}
-      </div>
-
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height={200}>
         <PieChart>
           <Pie
             data={data}
             cx="50%"
             cy="50%"
-            labelLine={false}
-            label={({ name, percent }) =>
-              `${name} (${((percent || 0) * 100).toFixed(0)}%)`
-            }
+            innerRadius={48}
             outerRadius={80}
+            paddingAngle={1}
             dataKey="value"
           >
             {data.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={colorMap[entry.name] || fallbackColor}
-              />
+              <Cell key={`cell-${index}`} fill={colorForDatum(entry, index, colorMap)} />
             ))}
           </Pie>
           <Tooltip content={<DistributionTooltip />} />
         </PieChart>
       </ResponsiveContainer>
+
+      {/* Legend — contained within the card; names truncate instead of bleeding off. */}
+      <div className="flex flex-col gap-1.5">
+        {data.map((entry, index) => {
+          const pct = total > 0 ? Math.round((entry.value / total) * 100) : 0;
+          return (
+            <div key={`${entry.name}-${index}`} className="flex items-center gap-2 text-xs">
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: colorForDatum(entry, index, colorMap) }}
+              />
+              <span
+                className="text-muted-foreground min-w-0 flex-1 truncate capitalize"
+                title={entry.name}
+              >
+                {entry.name}
+              </span>
+              <span className="text-muted-foreground shrink-0 tabular-nums">
+                {entry.value} <span className="text-muted-foreground/60">({pct}%)</span>
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -123,17 +155,20 @@ export function IssueDistributionCharts({
   issuesByPriority,
   issuesByType,
 }: IssueDistributionChartsProps) {
-  const statusData = issuesByStatus.map((item) => ({
-    name: item.status,
+  const statusData: ChartDatum[] = issuesByStatus.map((item) => ({
+    // Resolve the workflow status name; fall back to the raw id only if the
+    // status was deleted / not joinable.
+    name: item.name ?? item.status,
     value: item.count,
+    ...(item.color ? { color: item.color } : {}),
   }));
 
-  const priorityData = issuesByPriority.map((item) => ({
+  const priorityData: ChartDatum[] = issuesByPriority.map((item) => ({
     name: item.priority,
     value: item.count,
   }));
 
-  const typeData = issuesByType.map((item) => ({
+  const typeData: ChartDatum[] = issuesByType.map((item) => ({
     name: item.type,
     value: item.count,
   }));
@@ -145,8 +180,7 @@ export function IssueDistributionCharts({
         title="By Status"
         subtitle="Where work currently sits."
         data={statusData}
-        colorMap={STATUS_COLORS}
-        fallbackColor="hsl(var(--muted-foreground))"
+        colorMap={{}}
         tone="blue"
         icon={<ListTodo className="h-3.5 w-3.5" />}
       />
@@ -156,7 +190,6 @@ export function IssueDistributionCharts({
         subtitle="How urgent the backlog is."
         data={priorityData}
         colorMap={PRIORITY_COLORS}
-        fallbackColor="hsl(var(--muted-foreground))"
         tone="amber"
         icon={<AlertTriangle className="h-3.5 w-3.5" />}
       />
@@ -166,7 +199,6 @@ export function IssueDistributionCharts({
         subtitle="Mix of work categories."
         data={typeData}
         colorMap={TYPE_COLORS}
-        fallbackColor="hsl(var(--muted-foreground))"
         tone="violet"
         icon={<Layers className="h-3.5 w-3.5" />}
       />

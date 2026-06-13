@@ -112,10 +112,7 @@ export default function SettingsPage() {
     });
   }, [perms.isLoading, perms]);
 
-  const validTabs = useMemo(
-    () => visibleNavItems.map((item) => item.value),
-    [visibleNavItems]
-  );
+  const validTabs = useMemo(() => visibleNavItems.map((item) => item.value), [visibleNavItems]);
 
   const requestedTab = searchParams.get('tab') as TabValue | null;
   const initialTab: TabValue = useMemo(() => {
@@ -145,7 +142,7 @@ export default function SettingsPage() {
   if (!currentOrganizationId) {
     return (
       <div className="p-6">
-        <p className="text-sm text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground text-sm">Loading...</p>
       </div>
     );
   }
@@ -155,14 +152,14 @@ export default function SettingsPage() {
   const activeNavItem = NAV_ITEMS.find((item) => item.value === activeTab);
   const activeTabRequires = activeNavItem?.requiredPermissions;
   const activeTabDenied =
-    !perms.isLoading &&
-    activeTabRequires !== undefined &&
-    !perms.has(activeTabRequires);
+    !perms.isLoading && activeTabRequires !== undefined && !perms.has(activeTabRequires);
 
   return (
     <div className="animate-fade-in flex min-h-0 flex-1 flex-col">
-      {/* Mobile tab bar — main sidebar already hosts the nav on desktop */}
-      <div className="flex gap-1 overflow-x-auto border-b border-border px-4 py-2 lg:hidden">
+      {/* Mobile tab bar — main sidebar already hosts the nav on desktop.
+          Horizontally scrollable so every tab is reachable on narrow screens;
+          scrollbar hidden, with trailing padding so the last tab clears the edge. */}
+      <div className="scrollbar-none border-border flex flex-nowrap gap-1 overflow-x-auto whitespace-nowrap border-b py-2 pl-4 lg:hidden">
         {visibleNavItems.map(({ value, label, icon: Icon }) => (
           <button
             key={value}
@@ -175,9 +172,12 @@ export default function SettingsPage() {
             <span>{label}</span>
           </button>
         ))}
+        {/* Trailing spacer: guarantees the last tab clears the right edge even
+            though flex overflow containers can collapse trailing padding. */}
+        <span aria-hidden className="w-4 shrink-0" />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 animate-fade-up lg:p-8">
+      <div className="animate-fade-up flex-1 overflow-y-auto p-6 lg:p-8">
         <div className="mx-auto w-full max-w-5xl">
           {activeTabDenied ? (
             <NoAccessNotice />
@@ -218,9 +218,9 @@ function renderContent(tab: TabValue, organizationId: string, aiEnabled: boolean
 
 function AiDisabledNotice() {
   return (
-    <div className="surface-card p-8 text-center space-y-2">
-      <p className="text-sm font-medium text-foreground">AI features are paused platform-wide</p>
-      <p className="text-sm text-muted-foreground">
+    <div className="surface-card space-y-2 p-8 text-center">
+      <p className="text-foreground text-sm font-medium">AI features are paused platform-wide</p>
+      <p className="text-muted-foreground text-sm">
         A super-admin has to flip the master toggle in{' '}
         <strong>Admin → Agent control → Global enablement</strong> to expose the agent runtime,
         model registry, and AI-assisted task drafting to this workspace.
@@ -231,13 +231,11 @@ function AiDisabledNotice() {
 
 function NoAccessNotice() {
   return (
-    <div className="surface-card p-8 text-center space-y-2">
-      <p className="text-sm font-medium text-foreground">
+    <div className="surface-card space-y-2 p-8 text-center">
+      <p className="text-foreground text-sm font-medium">
         You don&apos;t have access to this section.
       </p>
-      <p className="text-sm text-muted-foreground">
-        Contact an org admin to request permissions.
-      </p>
+      <p className="text-muted-foreground text-sm">Contact an org admin to request permissions.</p>
     </div>
   );
 }

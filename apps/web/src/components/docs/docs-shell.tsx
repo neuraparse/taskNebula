@@ -34,15 +34,32 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { PageSidebarContent } from '@/components/layout/page-sidebar-slot';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { DOCUMENT_ICON_OPTIONS, DocumentIcon } from './document-icon';
 import {
   ChevronDown,
@@ -103,10 +120,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
     projectId: projectId || null,
   });
 
-  const {
-    data: pagesData,
-    isLoading: pagesLoading,
-  } = useDocumentPages({
+  const { data: pagesData, isLoading: pagesLoading } = useDocumentPages({
     spaceId: selectedSpaceId,
     organizationId: currentOrganizationId,
     projectId: projectId || null,
@@ -125,8 +139,10 @@ export function DocsShell({ projectId }: DocsShellProps) {
 
   const activeSpace = currentPage?.space || pagesData?.space || spaces?.[0] || null;
   const allPages = pagesData?.pages || [];
-  const createTargetSpace = activeSpace || spaces?.find((space) => space.permissions?.canCreate) || spaces?.[0] || null;
-  const pagePermissions = currentPage?.permissions || activeSpace?.permissions || createTargetSpace?.permissions || null;
+  const createTargetSpace =
+    activeSpace || spaces?.find((space) => space.permissions?.canCreate) || spaces?.[0] || null;
+  const pagePermissions =
+    currentPage?.permissions || activeSpace?.permissions || createTargetSpace?.permissions || null;
   const canEditCurrentPage = !!pagePermissions?.canEdit;
   const canCreateChildPages = !!pagePermissions?.canCreate;
   const canCreateInContext =
@@ -155,18 +171,22 @@ export function DocsShell({ projectId }: DocsShellProps) {
 
   const tree = buildDocumentTree(filteredPages);
   const showSearchResults = pageSearch.trim().length > 1;
-  const selectedParentPage = newPageParentId ? allPages.find((page) => page.id === newPageParentId) || null : null;
+  const selectedParentPage = newPageParentId
+    ? allPages.find((page) => page.id === newPageParentId) || null
+    : null;
   const currentPageHeadings = currentPage ? extractDocumentHeadings(currentPage.contentJson) : [];
   const currentPageWordCount = currentPage?.contentText
     ? currentPage.contentText.trim().split(/\s+/).filter(Boolean).length
     : 0;
   const currentChildPages = currentPage
-    ? [...allPages]
-        .filter((page) => page.parentId === currentPage.id)
-        .sort(sortDocumentPages)
+    ? [...allPages].filter((page) => page.parentId === currentPage.id).sort(sortDocumentPages)
     : [];
-  const currentSharePath = currentPage?.share?.internalPath || (currentPage ? `${pathname}?pageId=${currentPage.id}&spaceId=${currentPage.spaceId}` : null);
-  const publicSharePath = currentPage?.share?.public?.enabled ? currentPage.share.public.urlPath : null;
+  const currentSharePath =
+    currentPage?.share?.internalPath ||
+    (currentPage ? `${pathname}?pageId=${currentPage.id}&spaceId=${currentPage.spaceId}` : null);
+  const publicSharePath = currentPage?.share?.public?.enabled
+    ? currentPage.share.public.urlPath
+    : null;
 
   useEffect(() => {
     if (isSyncingUrlRef.current) {
@@ -291,9 +311,12 @@ export function DocsShell({ projectId }: DocsShellProps) {
     setNewPageParentId(null);
   }
 
-  async function handleSavePage(
-    data: { title: string; icon: string | null; contentJson: Record<string, any>; expectedRevision: number }
-  ): Promise<DocumentPage> {
+  async function handleSavePage(data: {
+    title: string;
+    icon: string | null;
+    contentJson: Record<string, any>;
+    expectedRevision: number;
+  }): Promise<DocumentPage> {
     if (!selectedPageId) {
       throw new Error('Open a page before saving');
     }
@@ -424,7 +447,9 @@ export function DocsShell({ projectId }: DocsShellProps) {
     }
 
     const value =
-      typeof window !== 'undefined' ? `${window.location.origin}${currentSharePath}` : currentSharePath;
+      typeof window !== 'undefined'
+        ? `${window.location.origin}${currentSharePath}`
+        : currentSharePath;
 
     try {
       if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
@@ -452,7 +477,9 @@ export function DocsShell({ projectId }: DocsShellProps) {
     }
 
     const value =
-      typeof window !== 'undefined' ? `${window.location.origin}${publicSharePath}` : publicSharePath;
+      typeof window !== 'undefined'
+        ? `${window.location.origin}${publicSharePath}`
+        : publicSharePath;
 
     try {
       if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
@@ -463,7 +490,8 @@ export function DocsShell({ projectId }: DocsShellProps) {
 
       toast({
         title: 'Public link copied',
-        description: 'This link can be opened without signing in while public access stays enabled.',
+        description:
+          'This link can be opened without signing in while public access stays enabled.',
       });
     } catch {
       toast({
@@ -507,16 +535,16 @@ export function DocsShell({ projectId }: DocsShellProps) {
 
   const navigationPane = (
     <>
-      <div className="border-b border-border px-3 py-3">
+      <div className="border-border border-b px-3 py-3">
         <div className="space-y-2.5">
           <div className="flex items-center gap-2 px-1">
-            <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" />
+            <FolderOpen className="text-muted-foreground h-3.5 w-3.5" />
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-semibold tracking-tight">
                 {activeSpace?.name || 'Docs'}
               </div>
             </div>
-            <span className="text-[11px] text-muted-foreground">{allPages.length}</span>
+            <span className="text-muted-foreground text-[11px]">{allPages.length}</span>
           </div>
 
           {spaces && spaces.length > 1 && (
@@ -544,7 +572,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
             variant="outline"
             onClick={() => openCreateDialog(null)}
             disabled={!canCreateInContext}
-            className="flex h-9 w-full items-center justify-center gap-2 border-dashed bg-accent/30 text-sm font-medium text-foreground transition-colors hover:bg-accent/60"
+            className="bg-accent/30 text-foreground hover:bg-accent/60 flex h-9 w-full items-center justify-center gap-2 border-dashed text-sm font-medium transition-colors"
             aria-label="Create new page"
           >
             <FilePlus2 className="h-4 w-4" />
@@ -553,7 +581,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
 
           <div className="flex items-center gap-1.5">
             <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Search className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
               <Input
                 value={pageSearch}
                 onChange={(event) => setPageSearch(event.target.value)}
@@ -582,14 +610,14 @@ export function DocsShell({ projectId }: DocsShellProps) {
                   <DocumentIcon icon={result.icon} className="h-6 w-6 rounded-md text-[11px]" />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium">{result.title}</div>
-                    <div className="mt-0.5 truncate text-[11px] text-muted-foreground">{result.spaceName}</div>
+                    <div className="text-muted-foreground mt-0.5 truncate text-[11px]">
+                      {result.spaceName}
+                    </div>
                   </div>
                 </button>
               ))
             ) : (
-              <div className="px-3 py-6 text-center text-sm text-muted-foreground">
-                No matches.
-              </div>
+              <div className="text-muted-foreground px-3 py-6 text-center text-sm">No matches.</div>
             )}
           </div>
         ) : tree.length > 0 ? (
@@ -602,13 +630,15 @@ export function DocsShell({ projectId }: DocsShellProps) {
                       key={node.id}
                       node={node}
                       activePageId={selectedPageId}
-                      onSelect={(pageId) => updateQueryParams({ pageId, spaceId: activeSpace?.id || null })}
+                      onSelect={(pageId) =>
+                        updateQueryParams({ pageId, spaceId: activeSpace?.id || null })
+                      }
                       isCollectionRoot
                     />
                   ))}
                 </div>
               ) : (
-                <div className="px-2 py-2 text-[11px] text-muted-foreground">
+                <div className="text-muted-foreground px-2 py-2 text-[11px]">
                   No collections yet.
                 </div>
               )}
@@ -622,12 +652,14 @@ export function DocsShell({ projectId }: DocsShellProps) {
                       key={node.id}
                       node={node}
                       activePageId={selectedPageId}
-                      onSelect={(pageId) => updateQueryParams({ pageId, spaceId: activeSpace?.id || null })}
+                      onSelect={(pageId) =>
+                        updateQueryParams({ pageId, spaceId: activeSpace?.id || null })
+                      }
                     />
                   ))}
                 </div>
               ) : (
-                <div className="px-2 py-2 text-[11px] text-muted-foreground">
+                <div className="text-muted-foreground px-2 py-2 text-[11px]">
                   No standalone pages.
                 </div>
               )}
@@ -636,12 +668,13 @@ export function DocsShell({ projectId }: DocsShellProps) {
         ) : pagesLoading ? (
           <DocsTreeSkeleton />
         ) : (
-          <div className="flex flex-col items-center gap-3 px-3 py-8 text-center">
-            <p className="text-sm text-muted-foreground">No pages yet</p>
-            <Button size="sm" onClick={() => openCreateDialog(null)} disabled={!canCreateInContext}>
-              <FilePlus2 className="mr-2 h-4 w-4" />
-              Create page
-            </Button>
+          <div className="px-3 py-8 text-center">
+            <p className="text-muted-foreground text-sm">No pages yet</p>
+            {canCreateInContext ? (
+              <p className="text-muted-foreground/70 mt-1 text-[11px]">
+                Use “New page” above to add the first one.
+              </p>
+            ) : null}
           </div>
         )}
       </div>
@@ -649,14 +682,14 @@ export function DocsShell({ projectId }: DocsShellProps) {
   );
 
   const detailsPane = currentPage ? (
-    <div className="min-h-full bg-background">
-      <div className="border-b border-border px-5 pb-4 pt-5 pr-14">
+    <div className="bg-background min-h-full">
+      <div className="border-border border-b px-5 pb-4 pr-14 pt-5">
         <span className="kicker">Details</span>
         <div className="mt-3 flex items-start gap-3">
           <DocumentIcon icon={currentPage.icon} className="h-9 w-9 rounded-md text-sm" />
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold tracking-tight">{currentPage.title}</div>
-            <div className="mt-1 truncate text-xs text-muted-foreground">
+            <div className="text-muted-foreground mt-1 truncate text-xs">
               {currentPage.projectId ? 'Project doc' : 'Workspace note'}
             </div>
           </div>
@@ -665,9 +698,15 @@ export function DocsShell({ projectId }: DocsShellProps) {
 
       <Tabs defaultValue="overview" className="flex min-h-full flex-col gap-4 p-4">
         <TabsList className="grid h-9 grid-cols-3">
-          <TabsTrigger value="overview" className="text-sm">Overview</TabsTrigger>
-          <TabsTrigger value="history" className="text-sm">History</TabsTrigger>
-          <TabsTrigger value="connections" className="text-sm">Links</TabsTrigger>
+          <TabsTrigger value="overview" className="text-sm">
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="history" className="text-sm">
+            History
+          </TabsTrigger>
+          <TabsTrigger value="connections" className="text-sm">
+            Links
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-0 space-y-3">
@@ -678,7 +717,9 @@ export function DocsShell({ projectId }: DocsShellProps) {
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium">{currentPage.title}</div>
                   {currentPage.excerpt && (
-                    <div className="mt-0.5 line-clamp-2 text-xs leading-5 text-muted-foreground">{currentPage.excerpt}</div>
+                    <div className="text-muted-foreground mt-0.5 line-clamp-2 text-xs leading-5">
+                      {currentPage.excerpt}
+                    </div>
                   )}
                 </div>
               </div>
@@ -688,7 +729,10 @@ export function DocsShell({ projectId }: DocsShellProps) {
               label="Visibility"
               value={currentPage.share?.public?.enabled ? 'Workspace + public' : 'Workspace only'}
             />
-            <DetailRow label="Updated" value={new Date(currentPage.updatedAt).toLocaleDateString()} />
+            <DetailRow
+              label="Updated"
+              value={new Date(currentPage.updatedAt).toLocaleDateString()}
+            />
             <DetailRow label="Words" value={currentPageWordCount} />
             <DetailRow label="Revisions" value={currentPage.revisionCount || revisions.length} />
             <DetailRow label="Sub-notes" value={currentChildPages.length} />
@@ -697,7 +741,9 @@ export function DocsShell({ projectId }: DocsShellProps) {
           <DetailSection title="Sharing">
             <DetailRow label="Workspace link">
               <div className="space-y-2">
-                <div className="truncate font-mono text-[11px] text-muted-foreground">{currentSharePath || '/docs'}</div>
+                <div className="text-muted-foreground truncate font-mono text-[11px]">
+                  {currentSharePath || '/docs'}
+                </div>
                 <div className="flex flex-wrap gap-2">
                   <Button size="sm" variant="outline" onClick={() => void copyCurrentPageLink()}>
                     <Share2 className="mr-2 h-4 w-4" />
@@ -732,7 +778,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                     )
                   }
                 />
-                <span className="text-xs text-muted-foreground">
+                <span className="text-muted-foreground text-xs">
                   {currentPage.share?.public?.enabled ? 'Enabled' : 'Disabled'}
                 </span>
               </div>
@@ -747,7 +793,11 @@ export function DocsShell({ projectId }: DocsShellProps) {
                     label="Search indexing"
                     hint="Allow search engines"
                     checked={currentPage.share?.public?.allowSearchIndexing ?? false}
-                    disabled={!currentPage.share?.public?.enabled || !currentPage.share?.canManagePublic || updateShare.isPending}
+                    disabled={
+                      !currentPage.share?.public?.enabled ||
+                      !currentPage.share?.canManagePublic ||
+                      updateShare.isPending
+                    }
                     onCheckedChange={(checked) =>
                       void updateShareWithToast(
                         { allowSearchIndexing: checked },
@@ -761,7 +811,11 @@ export function DocsShell({ projectId }: DocsShellProps) {
                     label="Attachments"
                     hint="Publish uploaded files"
                     checked={currentPage.share?.public?.includeAttachments ?? false}
-                    disabled={!currentPage.share?.public?.enabled || !currentPage.share?.canManagePublic || updateShare.isPending}
+                    disabled={
+                      !currentPage.share?.public?.enabled ||
+                      !currentPage.share?.canManagePublic ||
+                      updateShare.isPending
+                    }
                     onCheckedChange={(checked) =>
                       void updateShareWithToast(
                         { includeAttachments: checked },
@@ -777,7 +831,9 @@ export function DocsShell({ projectId }: DocsShellProps) {
             {publicSharePath ? (
               <DetailRow label="Public link">
                 <div className="space-y-2">
-                  <div className="truncate font-mono text-[11px] text-muted-foreground">{publicSharePath}</div>
+                  <div className="text-muted-foreground truncate font-mono text-[11px]">
+                    {publicSharePath}
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     <Button size="sm" onClick={() => void copyPublicPageLink()}>
                       <Globe2 className="mr-2 h-4 w-4" />
@@ -841,13 +897,22 @@ export function DocsShell({ projectId }: DocsShellProps) {
                   key={childPage.id}
                   type="button"
                   className="w-full"
-                  onClick={() => updateQueryParams({ pageId: childPage.id, spaceId: childPage.spaceId })}
+                  onClick={() =>
+                    updateQueryParams({ pageId: childPage.id, spaceId: childPage.spaceId })
+                  }
                 >
                   <DetailButtonRow
-                    icon={<DocumentIcon icon={childPage.icon} className="h-7 w-7 rounded-sm text-[11px]" />}
+                    icon={
+                      <DocumentIcon
+                        icon={childPage.icon}
+                        className="h-7 w-7 rounded-sm text-[11px]"
+                      />
+                    }
                     primary={childPage.title}
-                    secondary={childPage.excerpt || new Date(childPage.updatedAt).toLocaleDateString()}
-                    action={<ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                    secondary={
+                      childPage.excerpt || new Date(childPage.updatedAt).toLocaleDateString()
+                    }
+                    action={<ChevronRight className="text-muted-foreground h-4 w-4" />}
                   />
                 </button>
               ))
@@ -863,7 +928,10 @@ export function DocsShell({ projectId }: DocsShellProps) {
               <Accordion
                 type="single"
                 collapsible
-                defaultValue={revisions.find((revision) => revision.revision === currentPage.currentRevision)?.id}
+                defaultValue={
+                  revisions.find((revision) => revision.revision === currentPage.currentRevision)
+                    ?.id
+                }
                 className="overflow-hidden rounded-lg border"
               >
                 {revisions.map((revision) => {
@@ -871,15 +939,21 @@ export function DocsShell({ projectId }: DocsShellProps) {
                   const commitMessage = getRevisionCommitMessage(revision);
 
                   return (
-                    <AccordionItem key={revision.id} value={revision.id} className="border-b border-border last:border-b-0">
+                    <AccordionItem
+                      key={revision.id}
+                      value={revision.id}
+                      className="border-border border-b last:border-b-0"
+                    >
                       <AccordionTrigger className="px-3 py-2.5 hover:no-underline">
                         <div className="min-w-0 flex-1 text-left">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-mono text-[11px] text-muted-foreground">{getShortRevisionId(revision.id)}</span>
+                            <span className="text-muted-foreground font-mono text-[11px]">
+                              {getShortRevisionId(revision.id)}
+                            </span>
                             <span className="truncate text-sm font-medium">{commitMessage}</span>
                             {isCurrentRevision && <Badge variant="secondary">HEAD</Badge>}
                           </div>
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                          <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-[11px]">
                             <span>{revision.author?.name || 'Unknown'}</span>
                             <span>{new Date(revision.createdAt).toLocaleString()}</span>
                             <span>r{revision.revision}</span>
@@ -887,13 +961,20 @@ export function DocsShell({ projectId }: DocsShellProps) {
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="px-3 pb-3 pt-0">
-                        <div className="space-y-2 border-t border-border pt-3">
-                          {revision.changeSummary && <div className="text-xs text-foreground">{revision.changeSummary}</div>}
-                          <div className="text-xs leading-5 text-muted-foreground">
+                        <div className="border-border space-y-2 border-t pt-3">
+                          {revision.changeSummary && (
+                            <div className="text-foreground text-xs">{revision.changeSummary}</div>
+                          )}
+                          <div className="text-muted-foreground text-xs leading-5">
                             {revision.excerpt || 'No preview.'}
                           </div>
                           {canEditCurrentPage && !isCurrentRevision && (
-                            <Button variant="outline" size="sm" className="h-8" onClick={() => handleRestoreRevision(revision.id)}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8"
+                              onClick={() => handleRestoreRevision(revision.id)}
+                            >
                               <RefreshCcw className="mr-2 h-3.5 w-3.5" />
                               Restore
                             </Button>
@@ -943,7 +1024,12 @@ export function DocsShell({ projectId }: DocsShellProps) {
                     secondary={issue.title}
                     action={
                       canEditCurrentPage ? (
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDetachIssue(issue.id)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => handleDetachIssue(issue.id)}
+                        >
                           <Unlink2 className="h-3.5 w-3.5" />
                         </Button>
                       ) : null
@@ -963,14 +1049,17 @@ export function DocsShell({ projectId }: DocsShellProps) {
                   key={backlink.id}
                   className="w-full"
                   onClick={() =>
-                    updateQueryParams({ pageId: backlink.id, spaceId: currentPage.space?.id || activeSpace?.id || null })
+                    updateQueryParams({
+                      pageId: backlink.id,
+                      spaceId: currentPage.space?.id || activeSpace?.id || null,
+                    })
                   }
                   type="button"
                 >
                   <DetailButtonRow
                     primary={backlink.title}
                     secondary={backlink.slug}
-                    action={<ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                    action={<ChevronRight className="text-muted-foreground h-4 w-4" />}
                   />
                 </button>
               ))
@@ -992,7 +1081,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                           href={`/api/uploads/${attachment.filePath.split('/').pop()}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex h-7 items-center rounded-md border px-2 text-xs transition-colors hover:bg-accent"
+                          className="hover:bg-accent inline-flex h-7 items-center rounded-md border px-2 text-xs transition-colors"
                           onClick={(event) => event.stopPropagation()}
                         >
                           Open
@@ -1025,7 +1114,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Details</CardTitle>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
+        <CardContent className="text-muted-foreground text-sm">
           Select a page from the left.
         </CardContent>
       </Card>
@@ -1034,8 +1123,8 @@ export function DocsShell({ projectId }: DocsShellProps) {
 
   return (
     <>
-      <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
-        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2 lg:hidden">
+      <div className="bg-background flex h-full min-h-0 flex-col overflow-hidden">
+        <div className="border-border flex items-center justify-between gap-3 border-b px-4 py-2 lg:hidden">
           <div className="min-w-0 truncate text-sm font-medium">
             {currentPage?.title || activeSpace?.name || 'Docs'}
           </div>
@@ -1047,9 +1136,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[92vw] max-w-md p-0">
-                <div className="flex h-full min-h-0 flex-col bg-surface">
-                  {navigationPane}
-                </div>
+                <div className="bg-surface flex h-full min-h-0 flex-col">{navigationPane}</div>
               </SheetContent>
             </Sheet>
 
@@ -1060,7 +1147,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[95vw] max-w-[32rem] p-0">
-                <div className="h-full min-h-0 overflow-y-auto overscroll-contain bg-background">
+                <div className="bg-background h-full min-h-0 overflow-y-auto overscroll-contain">
                   {detailsPane}
                 </div>
               </SheetContent>
@@ -1069,7 +1156,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
         </div>
 
         <PageSidebarContent>
-          <div className="flex h-full min-h-0 flex-col bg-surface">{navigationPane}</div>
+          <div className="bg-surface flex h-full min-h-0 flex-col">{navigationPane}</div>
         </PageSidebarContent>
 
         <div className="grid h-full min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_22rem]">
@@ -1109,18 +1196,21 @@ export function DocsShell({ projectId }: DocsShellProps) {
           </div>
 
           {currentPage ? (
-            <aside className="hidden h-full min-h-0 overflow-y-auto overscroll-contain border-l border-border bg-background lg:block">
+            <aside className="border-border bg-background hidden h-full min-h-0 overflow-y-auto overscroll-contain border-l lg:block">
               {detailsPane}
             </aside>
           ) : null}
         </div>
       </div>
 
-      <Dialog open={isCreateDialogOpen} onOpenChange={(open) => (open ? setIsCreateDialogOpen(true) : resetCreateDialog())}>
+      <Dialog
+        open={isCreateDialogOpen}
+        onOpenChange={(open) => (open ? setIsCreateDialogOpen(true) : resetCreateDialog())}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{newPageParentId ? 'Create sub-note' : 'Create new page'}</DialogTitle>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               {selectedParentPage
                 ? `Nested under ${selectedParentPage.title}.`
                 : `Creates a root page in ${createTargetSpace?.name || 'Docs'}.`}
@@ -1143,7 +1233,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                 <button
                   type="button"
                   className={cn(
-                    'flex h-10 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent/60',
+                    'text-muted-foreground hover:bg-accent/60 flex h-10 items-center justify-center rounded-md transition-colors duration-150',
                     !newPageIcon && 'bg-primary/10 text-primary'
                   )}
                   onClick={() => setNewPageIcon(null)}
@@ -1155,7 +1245,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                     key={iconOption}
                     type="button"
                     className={cn(
-                      'flex h-10 items-center justify-center rounded-md text-xl transition-colors duration-150 hover:bg-accent/60',
+                      'hover:bg-accent/60 flex h-10 items-center justify-center rounded-md text-xl transition-colors duration-150',
                       newPageIcon === iconOption && 'bg-primary/10 text-primary'
                     )}
                     onClick={() => setNewPageIcon(iconOption)}
@@ -1166,7 +1256,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
               </div>
             </div>
             {!canCreateInContext && (
-              <div className="rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+              <div className="border-destructive/20 bg-destructive/5 text-destructive rounded-md border px-3 py-2 text-sm">
                 You do not have permission to create docs in this space.
               </div>
             )}
@@ -1175,7 +1265,10 @@ export function DocsShell({ projectId }: DocsShellProps) {
             <Button variant="ghost" onClick={resetCreateDialog}>
               Cancel
             </Button>
-            <Button onClick={handleCreatePage} disabled={!newPageTitle.trim() || createPage.isPending || !canCreateInContext}>
+            <Button
+              onClick={handleCreatePage}
+              disabled={!newPageTitle.trim() || createPage.isPending || !canCreateInContext}
+            >
               {createPage.isPending ? 'Creating...' : 'Create page'}
             </Button>
           </DialogFooter>
@@ -1203,7 +1296,7 @@ function SidebarSection({
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center gap-1.5 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+        className="text-muted-foreground hover:text-foreground flex w-full items-center gap-1.5 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider transition-colors"
         aria-expanded={open}
       >
         <ChevronDown
@@ -1214,7 +1307,7 @@ function SidebarSection({
         />
         <span className="flex-1 truncate text-left">{title}</span>
         {typeof count === 'number' && (
-          <span className="text-[10px] font-normal normal-case tracking-normal text-muted-foreground/70">
+          <span className="text-muted-foreground/70 text-[10px] font-normal normal-case tracking-normal">
             {count}
           </span>
         )}
@@ -1269,20 +1362,28 @@ function TreeNode({
         <button
           type="button"
           className={cn(
-            'flex h-5 w-5 items-center justify-center rounded-sm text-muted-foreground transition-colors duration-150 hover:bg-accent/60',
+            'text-muted-foreground hover:bg-accent/60 flex h-5 w-5 items-center justify-center rounded-sm transition-colors duration-150',
             !hasChildren && 'opacity-0'
           )}
           onClick={() => setOpen((value) => !value)}
           aria-label={hasChildren ? (open ? 'Collapse' : 'Expand') : undefined}
         >
           {hasChildren ? (
-            open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />
+            open ? (
+              <ChevronDown className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5" />
+            )
           ) : (
             <ChevronRight className="h-3.5 w-3.5" />
           )}
         </button>
 
-        <button type="button" className="flex min-w-0 flex-1 items-center gap-2 text-left" onClick={() => onSelect(node.id)}>
+        <button
+          type="button"
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+          onClick={() => onSelect(node.id)}
+        >
           {isCollectionRoot ? (
             <span
               aria-hidden="true"
@@ -1297,15 +1398,12 @@ function TreeNode({
             <DocumentIcon icon={node.icon} className="h-5 w-5 rounded-sm text-[10px]" />
           )}
           <span
-            className={cn(
-              'min-w-0 flex-1 truncate text-sm',
-              isCollectionRoot && 'font-medium'
-            )}
+            className={cn('min-w-0 flex-1 truncate text-sm', isCollectionRoot && 'font-medium')}
           >
             {node.title}
           </span>
           {hasChildren && (
-            <span className="text-[11px] text-muted-foreground">{node.children.length}</span>
+            <span className="text-muted-foreground text-[11px]">{node.children.length}</span>
           )}
         </button>
       </div>
@@ -1313,7 +1411,13 @@ function TreeNode({
       {open && hasChildren && (
         <div className="mt-0.5 space-y-0.5">
           {node.children.map((child) => (
-            <TreeNode key={child.id} node={child} depth={depth + 1} activePageId={activePageId} onSelect={onSelect} />
+            <TreeNode
+              key={child.id}
+              node={child}
+              depth={depth + 1}
+              activePageId={activePageId}
+              onSelect={onSelect}
+            />
           ))}
         </div>
       )}
@@ -1352,13 +1456,13 @@ function DetailSection({
 }) {
   return (
     <section className="surface-card overflow-hidden">
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+      <div className="border-border flex items-center justify-between border-b px-4 py-3">
         <span className="kicker">{title}</span>
         {typeof count === 'number' && (
-          <span className="text-xs text-muted-foreground">{count}</span>
+          <span className="text-muted-foreground text-xs">{count}</span>
         )}
       </div>
-      <div className="divide-y divide-border">{children}</div>
+      <div className="divide-border divide-y">{children}</div>
     </section>
   );
 }
@@ -1374,8 +1478,13 @@ function DetailRow({
 }) {
   return (
     <div className="flex items-start justify-between gap-4 px-4 py-3">
-      <div className="min-w-0 text-xs text-muted-foreground">{label}</div>
-      <div className={cn('min-w-0 flex-1 text-sm text-foreground', children ? 'text-left' : 'text-right')}>
+      <div className="text-muted-foreground min-w-0 text-xs">{label}</div>
+      <div
+        className={cn(
+          'text-foreground min-w-0 flex-1 text-sm',
+          children ? 'text-left' : 'text-right'
+        )}
+      >
         {children ?? value}
       </div>
     </div>
@@ -1399,8 +1508,10 @@ function DetailButtonRow({
     <div className="flex items-center gap-3 px-4 py-3" style={{ paddingLeft: `${16 + inset}px` }}>
       {icon ? <div className="shrink-0">{icon}</div> : null}
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm text-foreground">{primary}</div>
-        {secondary ? <div className="truncate text-xs text-muted-foreground">{secondary}</div> : null}
+        <div className="text-foreground truncate text-sm">{primary}</div>
+        {secondary ? (
+          <div className="text-muted-foreground truncate text-xs">{secondary}</div>
+        ) : null}
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
     </div>
@@ -1424,7 +1535,7 @@ function CompactSwitchRow({
     <div className="surface-inset flex items-center justify-between gap-3 px-3 py-3">
       <div className="min-w-0">
         <div className="text-sm font-medium">{label}</div>
-        <div className="mt-1 text-xs text-muted-foreground">{hint}</div>
+        <div className="text-muted-foreground mt-1 text-xs">{hint}</div>
       </div>
       <Switch checked={checked} disabled={disabled} onCheckedChange={onCheckedChange} />
     </div>
@@ -1432,7 +1543,7 @@ function CompactSwitchRow({
 }
 
 function CompactEmptyState({ children }: { children: ReactNode }) {
-  return <div className="px-4 py-4 text-sm text-muted-foreground">{children}</div>;
+  return <div className="text-muted-foreground px-4 py-4 text-sm">{children}</div>;
 }
 
 function sortDocumentPages(left: DocumentPage, right: DocumentPage) {
@@ -1464,7 +1575,15 @@ function DocsTreeSkeleton() {
 }
 
 function DocsShellSkeleton() {
-  const paragraphWidths = ['w-11/12', 'w-10/12', 'w-9/12', 'w-11/12', 'w-8/12', 'w-10/12', 'w-7/12'];
+  const paragraphWidths = [
+    'w-11/12',
+    'w-10/12',
+    'w-9/12',
+    'w-11/12',
+    'w-8/12',
+    'w-10/12',
+    'w-7/12',
+  ];
   return (
     <div
       aria-hidden="true"
@@ -1472,7 +1591,7 @@ function DocsShellSkeleton() {
       className="flex h-full min-h-0 flex-col overflow-hidden"
       data-testid="docs-shell-skeleton"
     >
-      <div className="border-b border-border px-8 py-5">
+      <div className="border-border border-b px-8 py-5">
         <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="shimmer h-8 w-8 rounded-md" />

@@ -10,6 +10,9 @@
 
 import dynamic from 'next/dynamic';
 import 'swagger-ui-react/swagger-ui.css';
+// Scoped dark-theme overrides — must load after the base swagger CSS so the
+// `.swagger-ui-host` rules win the cascade.
+import './swagger-dark.css';
 
 const SwaggerUI = dynamic(() => import('swagger-ui-react'), {
   ssr: false,

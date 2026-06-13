@@ -72,45 +72,47 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
     return true;
   });
 
-  const activeTabValue = visibleTabs.some((t) => t.href === currentTab)
-    ? currentTab
-    : 'views';
+  const activeTabValue = visibleTabs.some((t) => t.href === currentTab) ? currentTab : 'views';
 
   const projectName = project?.name || projectId;
-  const canOpenSettings = permissions.canBrowseProject || permissions.isSuperAdmin || permissions.isOrgOwner;
+  const canOpenSettings =
+    permissions.canBrowseProject || permissions.isSuperAdmin || permissions.isOrgOwner;
 
   return (
     <TooltipProvider delayDuration={80}>
       <div className="flex h-full flex-col">
         {/* Compact top bar — breadcrumb on the left, icon tabs in the center, actions on the right */}
-        <div className="shrink-0 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/60 shrink-0 border-b backdrop-blur">
           <div className="flex items-center gap-3 px-4 py-1.5">
             {/* Breadcrumb: Projects › name */}
             <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1 text-xs">
               <Link
                 href="/projects"
-                className="text-muted-foreground transition-colors hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 Projects
               </Link>
-              <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/50" />
-              <span className="truncate font-medium text-foreground">{projectName}</span>
+              <ChevronRight className="text-muted-foreground/50 h-3 w-3 shrink-0" />
+              <span className="text-foreground truncate font-medium">{projectName}</span>
               {project?.key && (
-                <span className="ml-1 hidden font-mono text-[10px] text-muted-foreground sm:inline">
+                <span className="text-muted-foreground ml-1 hidden font-mono text-[10px] sm:inline">
                   {project.key}
                 </span>
               )}
             </nav>
 
-            <div className="h-4 w-px bg-border/70" aria-hidden="true" />
+            <div className="bg-border/70 h-4 w-px" aria-hidden="true" />
 
-            {/* Icon tabs */}
+            {/* Icon tabs — horizontally scrollable on narrow screens so the strip never overflows */}
             <Tabs
               value={activeTabValue}
               onValueChange={(value) => router.push(`/projects/${projectId}/${value}`)}
-              className="min-w-0"
+              className="min-w-0 flex-1"
             >
-              <TabsList className="h-auto gap-0.5 bg-transparent p-0" aria-label="Project sections">
+              <TabsList
+                className="h-auto max-w-full justify-start gap-0.5 overflow-x-auto bg-transparent p-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                aria-label="Project sections"
+              >
                 {visibleTabs.map((tab) => {
                   const Icon = tab.icon;
                   return (
@@ -119,7 +121,7 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
                         <TabsTrigger
                           value={tab.href}
                           aria-label={tab.name}
-                          className="h-7 w-7 rounded-md px-0 data-[state=active]:bg-accent/60"
+                          className="data-[state=active]:bg-accent/60 h-7 w-7 shrink-0 rounded-md px-0"
                         >
                           <Icon className="h-4 w-4" />
                         </TabsTrigger>
@@ -133,7 +135,7 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
               </TabsList>
             </Tabs>
 
-            <div className="ml-auto flex items-center gap-1.5">
+            <div className="ml-auto flex shrink-0 items-center gap-1.5">
               {activeSprint ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
