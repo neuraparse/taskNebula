@@ -1,11 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useDeleteProject, useProject, useUpdateProject } from '@/lib/hooks/use-projects';
@@ -15,19 +22,26 @@ interface ProjectGeneralSettingsProps {
   projectId: string;
 }
 
-const PROJECT_STATUSES = [
-  { value: 'active', label: 'Active' },
-  { value: 'on_hold', label: 'On hold' },
-  { value: 'archived', label: 'Archived' },
+const PROJECT_STATUSES: ReadonlyArray<{
+  value: string;
+  i18nKey: 'status_active' | 'status_on_hold' | 'status_archived';
+}> = [
+  { value: 'active', i18nKey: 'status_active' },
+  { value: 'on_hold', i18nKey: 'status_on_hold' },
+  { value: 'archived', i18nKey: 'status_archived' },
 ];
 
-const PROJECT_VISIBILITY = [
-  { value: 'private', label: 'Private' },
-  { value: 'internal', label: 'Internal' },
-  { value: 'public', label: 'Public' },
+const PROJECT_VISIBILITY: ReadonlyArray<{
+  value: string;
+  i18nKey: 'visibility_private' | 'visibility_internal' | 'visibility_public';
+}> = [
+  { value: 'private', i18nKey: 'visibility_private' },
+  { value: 'internal', i18nKey: 'visibility_internal' },
+  { value: 'public', i18nKey: 'visibility_public' },
 ];
 
 export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProps) {
+  const t = useTranslations('settingsProject');
   const router = useRouter();
   const { toast } = useToast();
   const { data: project, isLoading } = useProject(projectId);
@@ -69,22 +83,20 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
       });
 
       toast({
-        title: 'Project updated',
-        description: 'General settings were saved successfully.',
+        title: t('toast_updated_title'),
+        description: t('toast_updated_description'),
       });
     } catch (error) {
       toast({
-        title: 'Save failed',
-        description: error instanceof Error ? error.message : 'Failed to update project',
+        title: t('toast_save_failed_title'),
+        description: error instanceof Error ? error.message : t('toast_save_failed_description'),
         variant: 'destructive',
       });
     }
   }
 
   async function handleDelete() {
-    const shouldDelete = window.confirm(
-      'Delete this project permanently? This only works when the project has no issues.'
-    );
+    const shouldDelete = window.confirm(t('delete_confirm'));
 
     if (!shouldDelete) {
       return;
@@ -93,22 +105,22 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
     try {
       await deleteProject.mutateAsync(projectId);
       toast({
-        title: 'Project deleted',
-        description: 'The project was removed successfully.',
+        title: t('toast_deleted_title'),
+        description: t('toast_deleted_description'),
       });
       router.push('/projects');
       router.refresh();
     } catch (error) {
       toast({
-        title: 'Delete failed',
-        description: error instanceof Error ? error.message : 'Failed to delete project',
+        title: t('toast_delete_failed_title'),
+        description: error instanceof Error ? error.message : t('toast_delete_failed_description'),
         variant: 'destructive',
       });
     }
   }
 
   if (isLoading || !project) {
-    return <div className="p-4 text-sm text-muted-foreground">Loading project settings...</div>;
+    return <div className="text-muted-foreground p-4 text-sm">{t('loading')}</div>;
   }
 
   const hasChanges =
@@ -119,35 +131,35 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
     formData.visibility !== ((project as { visibility?: string }).visibility || 'internal');
 
   return (
-    <div className="animate-fade-up space-y-8 stagger">
+    <div className="animate-fade-up stagger space-y-8">
       <section className="space-y-4">
         <div className="space-y-1">
-          <span className="kicker">Project</span>
-          <h2 className="text-lg font-semibold tracking-tight">General</h2>
-          <p className="text-sm text-muted-foreground max-w-prose">
-            Update the core project details your team sees across TaskNebula.
-          </p>
+          <span className="kicker">{t('kicker')}</span>
+          <h2 className="text-lg font-semibold tracking-tight">{t('general_title')}</h2>
+          <p className="text-muted-foreground max-w-prose text-sm">{t('general_description')}</p>
         </div>
-        <div className="surface-card rounded-lg p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+        <div className="surface-card space-y-6 rounded-lg p-6">
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[240px_1fr]">
             <Label htmlFor="project-name" className="text-sm font-medium">
-              Project name
+              {t('name_label')}
             </Label>
             <Input
               id="project-name"
               value={formData.name}
-              onChange={(event) => setFormData((current) => ({ ...current, name: event.target.value }))}
-              placeholder="Website Redesign"
-              className="transition-all duration-150 ease-snap"
+              onChange={(event) =>
+                setFormData((current) => ({ ...current, name: event.target.value }))
+              }
+              placeholder={t('name_placeholder')}
+              className="ease-snap transition-all duration-150"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[240px_1fr]">
             <div className="space-y-1">
               <Label htmlFor="project-key" className="text-sm font-medium">
-                Project key
+                {t('key_label')}
               </Label>
-              <p className="text-xs text-muted-foreground">Uppercase, digits, dashes.</p>
+              <p className="text-muted-foreground text-xs">{t('key_hint')}</p>
             </div>
             <Input
               id="project-key"
@@ -160,13 +172,13 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
               }
               maxLength={20}
               placeholder="WEB"
-              className="transition-all duration-150 ease-snap"
+              className="ease-snap transition-all duration-150"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[240px_1fr]">
             <Label htmlFor="project-description" className="text-sm font-medium">
-              Description
+              {t('description_label')}
             </Label>
             <Textarea
               id="project-description"
@@ -175,13 +187,13 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
               onChange={(event) =>
                 setFormData((current) => ({ ...current, description: event.target.value }))
               }
-              placeholder="Summarize the goal, scope, and audience for this project."
-              className="transition-all duration-150 ease-snap"
+              placeholder={t('description_placeholder')}
+              className="ease-snap transition-all duration-150"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
-            <Label className="text-sm font-medium">Status</Label>
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[240px_1fr]">
+            <Label className="text-sm font-medium">{t('status_label')}</Label>
             <Select
               value={formData.status}
               onValueChange={(value) => setFormData((current) => ({ ...current, status: value }))}
@@ -192,18 +204,20 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
               <SelectContent>
                 {PROJECT_STATUSES.map((status) => (
                   <SelectItem key={status.value} value={status.value}>
-                    {status.label}
+                    {t(status.i18nKey)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
-            <Label className="text-sm font-medium">Visibility</Label>
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[240px_1fr]">
+            <Label className="text-sm font-medium">{t('visibility_label')}</Label>
             <Select
               value={formData.visibility}
-              onValueChange={(value) => setFormData((current) => ({ ...current, visibility: value }))}
+              onValueChange={(value) =>
+                setFormData((current) => ({ ...current, visibility: value }))
+              }
             >
               <SelectTrigger>
                 <SelectValue />
@@ -211,24 +225,28 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
               <SelectContent>
                 {PROJECT_VISIBILITY.map((visibility) => (
                   <SelectItem key={visibility.value} value={visibility.value}>
-                    {visibility.label}
+                    {t(visibility.i18nKey)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          <div className="flex items-center justify-between border-t border-border pt-4">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <div className="border-border flex items-center justify-between border-t pt-4">
+            <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
               <span className="chip">
-                {(project as { issueCount?: number }).issueCount || 0} issues
+                {t('issue_count', { count: (project as { issueCount?: number }).issueCount || 0 })}
               </span>
               <span className="chip">
-                {(project as { sprintCount?: number }).sprintCount || 0} sprints
+                {t('sprint_count', {
+                  count: (project as { sprintCount?: number }).sprintCount || 0,
+                })}
               </span>
               {(project as { activeSprint?: { name?: string } | null }).activeSprint?.name ? (
                 <span className="chip-accent">
-                  Active: {(project as { activeSprint: { name: string } }).activeSprint.name}
+                  {t('active_sprint', {
+                    name: (project as { activeSprint: { name: string } }).activeSprint.name,
+                  })}
                 </span>
               ) : null}
             </div>
@@ -247,13 +265,18 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
                 }
                 disabled={!hasChanges || updateProject.isPending}
               >
-                Reset
+                {t('reset')}
               </Button>
               <Button
                 onClick={handleSave}
-                disabled={!hasChanges || updateProject.isPending || !formData.name.trim() || !formData.key.trim()}
+                disabled={
+                  !hasChanges ||
+                  updateProject.isPending ||
+                  !formData.name.trim() ||
+                  !formData.key.trim()
+                }
               >
-                {updateProject.isPending ? 'Saving...' : 'Save changes'}
+                {updateProject.isPending ? t('saving') : t('save_changes')}
               </Button>
             </div>
           </div>
@@ -262,23 +285,17 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
 
       <section className="animate-fade-up space-y-4">
         <div className="space-y-1">
-          <span className="kicker text-destructive">Danger zone</span>
-          <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-destructive" />
-            Delete project
+          <span className="kicker text-destructive">{t('danger_zone')}</span>
+          <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+            <AlertTriangle className="text-destructive h-4 w-4" />
+            {t('delete_project')}
           </h2>
-          <p className="text-sm text-muted-foreground max-w-prose">
-            Blocked while the project still has issues.
-          </p>
+          <p className="text-muted-foreground max-w-prose text-sm">{t('delete_blocked_hint')}</p>
         </div>
         <div className="panel-danger animate-alert-in flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <p className="text-sm">Deleted projects cannot be restored.</p>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={deleteProject.isPending}
-          >
-            {deleteProject.isPending ? 'Deleting...' : 'Delete project'}
+          <p className="text-sm">{t('delete_irreversible')}</p>
+          <Button variant="destructive" onClick={handleDelete} disabled={deleteProject.isPending}>
+            {deleteProject.isPending ? t('deleting') : t('delete_project')}
           </Button>
         </div>
       </section>

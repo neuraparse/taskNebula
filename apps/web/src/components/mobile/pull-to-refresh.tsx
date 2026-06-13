@@ -2,6 +2,7 @@
 
 import { ReactNode, useState, useRef, TouchEvent } from 'react';
 import { RefreshCw } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
 interface PullToRefreshProps {
@@ -17,6 +18,7 @@ export function PullToRefresh({
   threshold = 80,
   className,
 }: PullToRefreshProps) {
+  const t = useTranslations('mobileNav');
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [canPull, setCanPull] = useState(false);
@@ -93,19 +95,19 @@ export function PullToRefresh({
         <div className="flex flex-col items-center gap-1.5">
           <RefreshCw
             className={cn(
-              'h-5 w-5 text-primary transition-transform',
+              'text-primary h-5 w-5 transition-transform',
               isRefreshing && 'animate-spin'
             )}
             style={{
               transform: isRefreshing ? undefined : `rotate(${rotation}deg)`,
             }}
           />
-          <span className="text-[11px] text-muted-foreground">
+          <span className="text-muted-foreground text-[11px]">
             {isRefreshing
-              ? 'Refreshing...'
+              ? t('refreshing')
               : pullDistance >= threshold
-              ? 'Release to refresh'
-              : 'Pull to refresh'}
+                ? t('releaseToRefresh')
+                : t('pullToRefresh')}
           </span>
         </div>
       </div>

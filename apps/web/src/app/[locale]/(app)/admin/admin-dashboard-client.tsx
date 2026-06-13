@@ -4,6 +4,7 @@ import type { ComponentType } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -129,21 +130,21 @@ type AdminAuditLog = {
 
 type NavItem = {
   key: string;
-  label: string;
+  labelKey: string;
   icon: ComponentType<{ className?: string }>;
 };
 
 const NAV: NavItem[] = [
-  { key: 'overview', label: 'Overview', icon: Gauge },
-  { key: 'organizations', label: 'Organizations', icon: Building2 },
-  { key: 'users', label: 'Users', icon: Users },
-  { key: 'feature-flags', label: 'Feature flags', icon: Flag },
-  { key: 'agents', label: 'Agent control', icon: Bot },
-  { key: 'integrations', label: 'Integrations', icon: Plug },
-  { key: 'system', label: 'System', icon: ShieldCheck },
-  { key: 'updates', label: 'Updates', icon: Rocket },
-  { key: 'realtime', label: 'Realtime health', icon: Radio },
-  { key: 'audit', label: 'Audit logs', icon: Scroll },
+  { key: 'overview', labelKey: 'nav.overview', icon: Gauge },
+  { key: 'organizations', labelKey: 'nav.organizations', icon: Building2 },
+  { key: 'users', labelKey: 'nav.users', icon: Users },
+  { key: 'feature-flags', labelKey: 'nav.featureFlags', icon: Flag },
+  { key: 'agents', labelKey: 'nav.agentControl', icon: Bot },
+  { key: 'integrations', labelKey: 'nav.integrations', icon: Plug },
+  { key: 'system', labelKey: 'nav.system', icon: ShieldCheck },
+  { key: 'updates', labelKey: 'nav.updates', icon: Rocket },
+  { key: 'realtime', labelKey: 'nav.realtimeHealth', icon: Radio },
+  { key: 'audit', labelKey: 'nav.auditLogs', icon: Scroll },
 ];
 
 const DEFAULT_CHIP_CLASS = 'chip';
@@ -169,6 +170,7 @@ const auditSeverity = (action: string): 'critical' | 'high' | 'medium' | 'low' =
 };
 
 export function AdminDashboardClient() {
+  const t = useTranslations('pagesAdmin');
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -295,14 +297,14 @@ export function AdminDashboardClient() {
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
       queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
       toast({
-        title: 'Organization deleted',
-        description: 'The organization was removed permanently.',
+        title: t('orgs.deletedTitle'),
+        description: t('orgs.deletedDescription'),
       });
       setDeleteOrg(null);
     },
     onError: (mutationError: Error) => {
       toast({
-        title: 'Failed to delete organization',
+        title: t('orgs.deleteFailedTitle'),
         description: mutationError.message,
         variant: 'destructive',
       });
@@ -329,13 +331,15 @@ export function AdminDashboardClient() {
       await updateFeatureFlag.mutateAsync({ flagId: flag.id, data: { isEnabled: next } });
       queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
       toast({
-        title: next ? 'Feature enabled' : 'Feature disabled',
-        description: `${flag.name} is now ${next ? 'enabled' : 'disabled'}.`,
+        title: next ? t('flags.enabledTitle') : t('flags.disabledTitle'),
+        description: next
+          ? t('flags.enabledDescription', { name: flag.name })
+          : t('flags.disabledDescription', { name: flag.name }),
       });
     } catch (error) {
       toast({
-        title: 'Failed to update feature flag',
-        description: error instanceof Error ? error.message : 'Failed to update feature flag',
+        title: t('flags.updateFailedTitle'),
+        description: error instanceof Error ? error.message : t('flags.updateFailedTitle'),
         variant: 'destructive',
       });
     }
@@ -346,12 +350,15 @@ export function AdminDashboardClient() {
     try {
       await deleteFeatureFlag.mutateAsync(deleteFlag.id);
       queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
-      toast({ title: 'Feature flag deleted', description: `${deleteFlag.name} was removed.` });
+      toast({
+        title: t('flags.deletedTitle'),
+        description: t('flags.deletedDescription', { name: deleteFlag.name }),
+      });
       setDeleteFlag(null);
     } catch (error) {
       toast({
-        title: 'Failed to delete feature flag',
-        description: error instanceof Error ? error.message : 'Failed to delete feature flag',
+        title: t('flags.deleteFailedTitle'),
+        description: error instanceof Error ? error.message : t('flags.deleteFailedTitle'),
         variant: 'destructive',
       });
     }
@@ -386,13 +393,11 @@ export function AdminDashboardClient() {
       <ConfirmDialog
         open={!!deleteOrg}
         onOpenChange={(open) => !open && setDeleteOrg(null)}
-        title="Delete organization?"
-        description={
-          deleteOrg
-            ? `"${deleteOrg.name}" and all associated data will be removed permanently. This cannot be undone.`
-            : ''
-        }
-        confirmLabel="Delete organization"
+        title={t('orgs.confirmDeleteTitle')}
+        description={deleteOrg ? t('orgs.confirmDeleteDescription', { name: deleteOrg.name }) : ''}
+        confirmLabel={t('orgs.confirmDeleteLabel')}
+        pendingLabel={t('common.deleting')}
+        cancelLabel={t('common.cancel')}
         pending={deleteOrgMutation.isPending}
         onConfirm={() => deleteOrg && deleteOrgMutation.mutate(deleteOrg.id)}
       />
@@ -400,13 +405,13 @@ export function AdminDashboardClient() {
       <ConfirmDialog
         open={!!deleteFlag}
         onOpenChange={(open) => !open && setDeleteFlag(null)}
-        title="Delete feature flag?"
+        title={t('flags.confirmDeleteTitle')}
         description={
-          deleteFlag
-            ? `"${deleteFlag.name}" will be removed. Any rollouts referencing it will revert.`
-            : ''
+          deleteFlag ? t('flags.confirmDeleteDescription', { name: deleteFlag.name }) : ''
         }
-        confirmLabel="Delete flag"
+        confirmLabel={t('flags.confirmDeleteLabel')}
+        pendingLabel={t('common.deleting')}
+        cancelLabel={t('common.cancel')}
         pending={deleteFeatureFlag.isPending}
         onConfirm={handleConfirmDeleteFlag}
       />
@@ -422,7 +427,7 @@ export function AdminDashboardClient() {
               <SelectContent>
                 {visibleNav.map((item) => (
                   <SelectItem key={item.key} value={item.key}>
-                    {item.label}
+                    {t(item.labelKey)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -436,13 +441,11 @@ export function AdminDashboardClient() {
 
           {/* Header */}
           <div className="flex flex-col gap-1">
-            <span className="kicker">Admin</span>
+            <span className="kicker">{t('header.kicker')}</span>
             <h1 className="text-balance text-2xl font-semibold tracking-tight">
-              {currentNav.label}
+              {t(currentNav.labelKey)}
             </h1>
-            <p className="text-muted-foreground max-w-2xl text-sm">
-              System-wide organizations, users, rollout flags, agent control, and audit activity.
-            </p>
+            <p className="text-muted-foreground max-w-2xl text-sm">{t('header.subtitle')}</p>
           </div>
 
           {/* Section body */}
@@ -534,6 +537,7 @@ function OverviewSection({
   stats: StatsResponse | undefined;
   loading: boolean;
 }) {
+  const t = useTranslations('pagesAdmin');
   const tiles: Array<{
     label: string;
     value: number | string;
@@ -541,25 +545,25 @@ function OverviewSection({
     tone: 'blue' | 'violet' | 'emerald' | 'amber';
   }> = [
     {
-      label: 'Organizations',
+      label: t('overview.organizations'),
       value: loading ? '—' : (stats?.overview?.totalOrganizations ?? 0),
       icon: Building2,
       tone: 'blue',
     },
     {
-      label: 'Users',
+      label: t('overview.users'),
       value: loading ? '—' : (stats?.overview?.totalUsers ?? 0),
       icon: Users,
       tone: 'violet',
     },
     {
-      label: 'Active users',
+      label: t('overview.activeUsers'),
       value: loading ? '—' : (stats?.overview?.activeUsers ?? 0),
       icon: Activity,
       tone: 'emerald',
     },
     {
-      label: 'Super admins',
+      label: t('overview.superAdmins'),
       value: loading ? '—' : (stats?.overview?.superAdmins ?? 0),
       icon: Crown,
       tone: 'amber',
@@ -577,31 +581,61 @@ function OverviewSection({
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="surface-card space-y-3 p-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Organization health</h3>
+            <h3 className="text-sm font-semibold">{t('overview.orgHealth')}</h3>
             <BarChart3 className="text-muted-foreground h-4 w-4" />
           </div>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-            <MetricRow label="Active" value={stats?.organizations?.byStatus?.active ?? 0} />
-            <MetricRow label="Trial" value={stats?.organizations?.byStatus?.trial ?? 0} />
-            <MetricRow label="Suspended" value={stats?.organizations?.byStatus?.suspended ?? 0} />
-            <MetricRow label="Free" value={stats?.organizations?.byPlan?.free ?? 0} />
-            <MetricRow label="Starter" value={stats?.organizations?.byPlan?.starter ?? 0} />
-            <MetricRow label="Growth" value={stats?.organizations?.byPlan?.growth ?? 0} />
-            <MetricRow label="Enterprise" value={stats?.organizations?.byPlan?.enterprise ?? 0} />
+            <MetricRow
+              label={t('overview.active')}
+              value={stats?.organizations?.byStatus?.active ?? 0}
+            />
+            <MetricRow
+              label={t('overview.trial')}
+              value={stats?.organizations?.byStatus?.trial ?? 0}
+            />
+            <MetricRow
+              label={t('overview.suspended')}
+              value={stats?.organizations?.byStatus?.suspended ?? 0}
+            />
+            <MetricRow label={t('overview.free')} value={stats?.organizations?.byPlan?.free ?? 0} />
+            <MetricRow
+              label={t('overview.starter')}
+              value={stats?.organizations?.byPlan?.starter ?? 0}
+            />
+            <MetricRow
+              label={t('overview.growth')}
+              value={stats?.organizations?.byPlan?.growth ?? 0}
+            />
+            <MetricRow
+              label={t('overview.enterprise')}
+              value={stats?.organizations?.byPlan?.enterprise ?? 0}
+            />
           </dl>
         </div>
 
         <div className="surface-card space-y-3 p-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Last 30 days</h3>
+            <h3 className="text-sm font-semibold">{t('overview.last30Days')}</h3>
             <Activity className="text-muted-foreground h-4 w-4" />
           </div>
           <dl className="space-y-2 text-sm">
-            <MetricRow label="New organizations" value={stats?.growth?.newOrganizations30d ?? 0} />
-            <MetricRow label="New users" value={stats?.growth?.newUsers30d ?? 0} />
-            <MetricRow label="Projects total" value={stats?.overview?.totalProjects ?? 0} />
-            <MetricRow label="Issues total" value={stats?.overview?.totalIssues ?? 0} />
-            <MetricRow label="Comments total" value={stats?.overview?.totalComments ?? 0} />
+            <MetricRow
+              label={t('overview.newOrganizations')}
+              value={stats?.growth?.newOrganizations30d ?? 0}
+            />
+            <MetricRow label={t('overview.newUsers')} value={stats?.growth?.newUsers30d ?? 0} />
+            <MetricRow
+              label={t('overview.projectsTotal')}
+              value={stats?.overview?.totalProjects ?? 0}
+            />
+            <MetricRow
+              label={t('overview.issuesTotal')}
+              value={stats?.overview?.totalIssues ?? 0}
+            />
+            <MetricRow
+              label={t('overview.commentsTotal')}
+              value={stats?.overview?.totalComments ?? 0}
+            />
           </dl>
         </div>
       </div>
@@ -636,72 +670,75 @@ function OrganizationsSection({
   onEdit: (id: string) => void;
   onDelete: (org: OrganizationItem) => void;
 }) {
+  const t = useTranslations('pagesAdmin');
   const orgs = orgsData?.organizations || [];
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <p className="text-muted-foreground text-xs">
-          {orgsData?.pagination?.total ?? 0} matching workspaces
+          {t('orgs.matchingCount', { count: orgsData?.pagination?.total ?? 0 })}
         </p>
         <CreateOrganizationAdminDialog />
       </div>
 
       <div className="animate-blur-in grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_180px]">
-        <SearchInput value={orgSearch} onChange={setOrgSearch} placeholder="Search organizations" />
+        <SearchInput
+          value={orgSearch}
+          onChange={setOrgSearch}
+          placeholder={t('orgs.searchPlaceholder')}
+        />
         <Select value={orgStatus} onValueChange={setOrgStatus}>
           <SelectTrigger>
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder={t('filters.status')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="trial">Trial</SelectItem>
-            <SelectItem value="suspended">Suspended</SelectItem>
+            <SelectItem value="all">{t('filters.allStatuses')}</SelectItem>
+            <SelectItem value="active">{t('filters.active')}</SelectItem>
+            <SelectItem value="trial">{t('filters.trial')}</SelectItem>
+            <SelectItem value="suspended">{t('filters.suspended')}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={orgPlan} onValueChange={setOrgPlan}>
           <SelectTrigger>
-            <SelectValue placeholder="Plan" />
+            <SelectValue placeholder={t('filters.plan')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All plans</SelectItem>
-            <SelectItem value="free">Free</SelectItem>
-            <SelectItem value="starter">Starter</SelectItem>
-            <SelectItem value="growth">Growth</SelectItem>
-            <SelectItem value="enterprise">Enterprise</SelectItem>
+            <SelectItem value="all">{t('filters.allPlans')}</SelectItem>
+            <SelectItem value="free">{t('filters.free')}</SelectItem>
+            <SelectItem value="starter">{t('filters.starter')}</SelectItem>
+            <SelectItem value="growth">{t('filters.growth')}</SelectItem>
+            <SelectItem value="enterprise">{t('filters.enterprise')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <div className="surface-card overflow-hidden">
         {orgsLoading ? (
-          <EmptyState icon={Building2} message="Loading organizations..." />
+          <EmptyState icon={Building2} message={t('orgs.loading')} />
         ) : orgsError ? (
           <ErrorState
-            message={
-              orgsError instanceof Error ? orgsError.message : 'Failed to load organizations'
-            }
+            message={orgsError instanceof Error ? orgsError.message : t('orgs.loadFailed')}
           />
         ) : orgs.length === 0 ? (
-          <EmptyState icon={Building2} message="No organizations match the current filters." />
+          <EmptyState icon={Building2} message={t('orgs.empty')} />
         ) : (
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-border border-b">
                 <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
-                  Name
+                  {t('orgs.colName')}
                 </th>
                 <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
-                  Status
+                  {t('orgs.colStatus')}
                 </th>
                 <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
-                  Plan
+                  {t('orgs.colPlan')}
                 </th>
                 <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
-                  Owner
+                  {t('orgs.colOwner')}
                 </th>
                 <th className="text-muted-foreground px-4 py-2 text-right text-xs font-medium uppercase tracking-wider">
-                  Members
+                  {t('orgs.colMembers')}
                 </th>
                 <th className="px-4 py-2" />
               </tr>
@@ -734,7 +771,7 @@ function OrganizationsSection({
                   <td className="px-4 py-3">
                     <p className="max-w-[200px] truncate text-sm">
                       {org.owner?.name || org.owner?.email || (
-                        <span className="text-muted-foreground">No owner</span>
+                        <span className="text-muted-foreground">{t('orgs.noOwner')}</span>
                       )}
                     </p>
                   </td>
@@ -749,11 +786,11 @@ function OrganizationsSection({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuLabel>{t('common.actions')}</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => onEdit(org.id)}>
                           <Edit className="mr-2 h-4 w-4" />
-                          Edit
+                          {t('common.edit')}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
@@ -761,7 +798,7 @@ function OrganizationsSection({
                           onClick={() => onDelete(org)}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
+                          {t('common.delete')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -797,55 +834,60 @@ function UsersSection({
   setUserStatus: (v: string) => void;
   onEdit: (id: string) => void;
 }) {
+  const t = useTranslations('pagesAdmin');
   const users = usersData?.users || [];
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <p className="text-muted-foreground text-xs">
-          {usersData?.pagination?.total ?? 0} matching users
+          {t('users.matchingCount', { count: usersData?.pagination?.total ?? 0 })}
         </p>
         <CreateUserDialog />
       </div>
 
       <div className="animate-blur-in grid gap-3 md:grid-cols-[minmax(0,1fr)_180px]">
-        <SearchInput value={userSearch} onChange={setUserSearch} placeholder="Search users" />
+        <SearchInput
+          value={userSearch}
+          onChange={setUserSearch}
+          placeholder={t('users.searchPlaceholder')}
+        />
         <Select value={userStatus} onValueChange={setUserStatus}>
           <SelectTrigger>
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder={t('filters.status')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-            <SelectItem value="invited">Invited</SelectItem>
+            <SelectItem value="all">{t('filters.allStatuses')}</SelectItem>
+            <SelectItem value="active">{t('filters.active')}</SelectItem>
+            <SelectItem value="inactive">{t('filters.inactive')}</SelectItem>
+            <SelectItem value="invited">{t('filters.invited')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <div className="surface-card overflow-hidden">
         {usersLoading ? (
-          <EmptyState icon={Users} message="Loading users..." />
+          <EmptyState icon={Users} message={t('users.loading')} />
         ) : usersError ? (
           <ErrorState
-            message={usersError instanceof Error ? usersError.message : 'Failed to load users'}
+            message={usersError instanceof Error ? usersError.message : t('users.loadFailed')}
           />
         ) : users.length === 0 ? (
-          <EmptyState icon={Users} message="No users match the current filters." />
+          <EmptyState icon={Users} message={t('users.empty')} />
         ) : (
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-border border-b">
                 <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
-                  User
+                  {t('users.colUser')}
                 </th>
                 <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
-                  Role
+                  {t('users.colRole')}
                 </th>
                 <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
-                  Status
+                  {t('users.colStatus')}
                 </th>
                 <th className="text-muted-foreground px-4 py-2 text-right text-xs font-medium uppercase tracking-wider">
-                  Orgs
+                  {t('users.colOrgs')}
                 </th>
                 <th className="px-4 py-2" />
               </tr>
@@ -869,14 +911,14 @@ function UsersSection({
                       {user.isSuperAdmin ? (
                         <span className="chip-rose inline-flex items-center gap-1">
                           <Crown className="h-3 w-3" />
-                          Admin
+                          {t('users.roleAdmin')}
                         </span>
                       ) : isSuspended ? (
-                        <span className="chip-rose">Suspended</span>
+                        <span className="chip-rose">{t('users.roleSuspended')}</span>
                       ) : isInvited ? (
-                        <span className="chip-amber">Pending</span>
+                        <span className="chip-amber">{t('users.rolePending')}</span>
                       ) : (
-                        <span className="chip-blue">Member</span>
+                        <span className="chip-blue">{t('users.roleMember')}</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -900,11 +942,11 @@ function UsersSection({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuLabel>{t('common.actions')}</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => onEdit(user.id)}>
                             <Edit className="mr-2 h-4 w-4" />
-                            Edit user
+                            {t('users.editUser')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -947,10 +989,13 @@ function FeatureFlagsSection({
   onToggle: (flag: any, next: boolean) => void;
   updatePending: boolean;
 }) {
+  const t = useTranslations('pagesAdmin');
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <p className="text-muted-foreground text-xs">{flags.length} matching flags</p>
+        <p className="text-muted-foreground text-xs">
+          {t('flags.matchingCount', { count: flags.length })}
+        </p>
         <div className="flex items-center gap-2">
           <FeatureFlagRuntimeTest />
           <CreateFeatureFlagDialog />
@@ -958,28 +1003,30 @@ function FeatureFlagsSection({
       </div>
 
       <div className="animate-blur-in grid gap-3 md:grid-cols-[minmax(0,1fr)_180px]">
-        <SearchInput value={search} onChange={setSearch} placeholder="Search feature flags" />
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder={t('flags.searchPlaceholder')}
+        />
         <Select value={state} onValueChange={setState}>
           <SelectTrigger>
-            <SelectValue placeholder="State" />
+            <SelectValue placeholder={t('filters.state')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All flags</SelectItem>
-            <SelectItem value="enabled">Enabled</SelectItem>
-            <SelectItem value="disabled">Disabled</SelectItem>
+            <SelectItem value="all">{t('filters.allFlags')}</SelectItem>
+            <SelectItem value="enabled">{t('filters.enabled')}</SelectItem>
+            <SelectItem value="disabled">{t('filters.disabled')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <div className="surface-card overflow-hidden">
         {loading ? (
-          <EmptyState icon={Flag} message="Loading feature flags..." />
+          <EmptyState icon={Flag} message={t('flags.loading')} />
         ) : error ? (
-          <ErrorState
-            message={error instanceof Error ? error.message : 'Failed to load feature flags'}
-          />
+          <ErrorState message={error instanceof Error ? error.message : t('flags.loadFailed')} />
         ) : flags.length === 0 ? (
-          <EmptyState icon={Flag} message="No feature flags match the current filters." />
+          <EmptyState icon={Flag} message={t('flags.empty')} />
         ) : (
           <ul className="stagger divide-border/50 divide-y">
             {flags.map((flag: any) => (
@@ -1003,7 +1050,7 @@ function FeatureFlagsSection({
                     checked={flag.isEnabled}
                     onCheckedChange={(next) => onToggle(flag, next)}
                     disabled={updatePending}
-                    aria-label={flag.isEnabled ? 'Disable flag' : 'Enable flag'}
+                    aria-label={flag.isEnabled ? t('flags.disableAria') : t('flags.enableAria')}
                   />
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -1012,11 +1059,11 @@ function FeatureFlagsSection({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuLabel>{t('common.actions')}</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => onEdit(flag.id)}>
                         <Edit className="mr-2 h-4 w-4" />
-                        Edit
+                        {t('common.edit')}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
@@ -1024,7 +1071,7 @@ function FeatureFlagsSection({
                         onClick={() => onDelete(flag)}
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
+                        {t('common.delete')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -1057,36 +1104,35 @@ function AuditSection({
   resourceType: string;
   setResourceType: (v: string) => void;
 }) {
+  const t = useTranslations('pagesAdmin');
   return (
     <div className="space-y-4">
       <div className="animate-blur-in grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Search by action, resource, or user"
+          placeholder={t('audit.searchPlaceholder')}
         />
         <Select value={resourceType} onValueChange={setResourceType}>
           <SelectTrigger>
-            <SelectValue placeholder="Resource type" />
+            <SelectValue placeholder={t('audit.resourceType')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All resources</SelectItem>
-            <SelectItem value="organization">Organization</SelectItem>
-            <SelectItem value="user">User</SelectItem>
-            <SelectItem value="feature_flag">Feature flag</SelectItem>
+            <SelectItem value="all">{t('audit.allResources')}</SelectItem>
+            <SelectItem value="organization">{t('audit.organization')}</SelectItem>
+            <SelectItem value="user">{t('audit.user')}</SelectItem>
+            <SelectItem value="feature_flag">{t('audit.featureFlag')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <div className="surface-card overflow-hidden">
         {loading ? (
-          <EmptyState icon={Scroll} message="Loading audit logs..." />
+          <EmptyState icon={Scroll} message={t('audit.loading')} />
         ) : error ? (
-          <ErrorState
-            message={error instanceof Error ? error.message : 'Failed to load audit logs'}
-          />
+          <ErrorState message={error instanceof Error ? error.message : t('audit.loadFailed')} />
         ) : logs.length === 0 ? (
-          <EmptyState icon={Scroll} message="No audit events match the current filters." />
+          <EmptyState icon={Scroll} message={t('audit.empty')} />
         ) : (
           <ul className="stagger divide-border/50 divide-y">
             {logs.map((log) => {
@@ -1105,7 +1151,7 @@ function AuditSection({
                   />
                   <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-0.5">
                     <span className="text-foreground truncate text-sm font-medium">
-                      {log.user?.name || log.user?.email || 'Unknown user'}
+                      {log.user?.name || log.user?.email || t('audit.unknownUser')}
                     </span>
                     <span className="text-muted-foreground truncate text-sm">
                       {formatAdminAction(log.action)}
@@ -1223,6 +1269,8 @@ function ConfirmDialog({
   title,
   description,
   confirmLabel,
+  pendingLabel,
+  cancelLabel,
   pending,
   onConfirm,
 }: {
@@ -1231,6 +1279,8 @@ function ConfirmDialog({
   title: string;
   description: string;
   confirmLabel: string;
+  pendingLabel: string;
+  cancelLabel: string;
   pending: boolean;
   onConfirm: () => void;
 }) {
@@ -1243,10 +1293,10 @@ function ConfirmDialog({
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-            Cancel
+            {cancelLabel}
           </Button>
           <Button variant="destructive" size="sm" onClick={onConfirm} disabled={pending}>
-            {pending ? 'Deleting...' : confirmLabel}
+            {pending ? pendingLabel : confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

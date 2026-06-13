@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { EditorContent, useEditor, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Collaboration from '@tiptap/extension-collaboration';
@@ -64,8 +65,10 @@ export function CollabDescriptionEditor({
   canEdit,
   onSave,
   isSaving,
-  placeholder = 'Write a description...',
+  placeholder: placeholderProp,
 }: CollabDescriptionEditorProps) {
+  const t = useTranslations('issueMisc');
+  const placeholder = placeholderProp ?? t('description_placeholder');
   const { data: session } = useSession();
   const [handle, setHandle] = useState<CollabProviderHandle | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -129,14 +132,14 @@ export function CollabDescriptionEditor({
         CollaborationCursor.configure({
           provider: handle.provider,
           user: {
-            name: session?.user?.name || session?.user?.email || 'Anonymous',
+            name: session?.user?.name || session?.user?.email || t('anonymous_user'),
             color: presenceColorFor(session?.user?.id || session?.user?.email || 'anon'),
           },
         }) as any
       );
     }
     return base;
-  }, [handle, placeholder, session?.user?.id, session?.user?.email, session?.user?.name]);
+  }, [handle, placeholder, session?.user?.id, session?.user?.email, session?.user?.name, t]);
 
   const editor = useEditor(
     {
@@ -169,8 +172,9 @@ export function CollabDescriptionEditor({
   if (!hocuspocusConfigured) {
     return (
       <div className="border-border bg-muted/30 text-muted-foreground rounded-md border border-dashed p-4 text-sm">
-        Collaboration is enabled, but <code>NEXT_PUBLIC_HOCUSPOCUS_URL</code> is not configured.
-        Description editing is temporarily disabled.
+        {t.rich('collab_not_configured', {
+          code: (chunks) => <code>{chunks}</code>,
+        })}
       </div>
     );
   }
@@ -191,7 +195,7 @@ export function CollabDescriptionEditor({
             ) : (
               <Save className="mr-1.5 h-3 w-3" />
             )}
-            Save snapshot
+            {t('save_snapshot')}
           </Button>
         )}
       </div>
@@ -203,8 +207,13 @@ export function CollabDescriptionEditor({
 }
 
 function ConnectionPill({ state }: { state: 'connecting' | 'connected' | 'disconnected' }) {
+  const t = useTranslations('issueMisc');
   const label =
-    state === 'connected' ? 'Live' : state === 'connecting' ? 'Connecting...' : 'Offline';
+    state === 'connected'
+      ? t('connection_live')
+      : state === 'connecting'
+        ? t('connection_connecting')
+        : t('connection_offline');
   const tone =
     state === 'connected'
       ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'

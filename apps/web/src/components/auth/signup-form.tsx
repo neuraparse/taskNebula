@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +11,7 @@ import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 
 export function SignUpForm() {
+  const t = useTranslations('authExtra');
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -36,7 +38,7 @@ export function SignUpForm() {
     setError('');
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(t('password_min_length'));
       return;
     }
 
@@ -61,7 +63,7 @@ export function SignUpForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Failed to create account');
+        setError(data.error || t('signup_failed'));
         return;
       }
 
@@ -82,7 +84,7 @@ export function SignUpForm() {
       router.push(`/auth/verify-request?email=${encodeURIComponent(email)}`);
       router.refresh();
     } catch {
-      setError('An error occurred. Please try again.');
+      setError(t('generic_error'));
     } finally {
       setLoading(false);
     }
@@ -101,7 +103,7 @@ export function SignUpForm() {
       <div className="flex items-center justify-center py-12">
         <div
           className="border-foreground h-5 w-5 animate-spin rounded-full border-2 border-t-transparent"
-          aria-label="Loading"
+          aria-label={t('loading')}
         />
       </div>
     );
@@ -112,9 +114,9 @@ export function SignUpForm() {
       {/* Header */}
       <div className="space-y-1.5 text-center">
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          Create your account
+          {t('create_account_title')}
         </h1>
-        <p className="text-muted-foreground text-sm">Get started with TaskNebula</p>
+        <p className="text-muted-foreground text-sm">{t('create_account_subtitle')}</p>
       </div>
 
       {/* OAuth Buttons */}
@@ -127,7 +129,7 @@ export function SignUpForm() {
           size="lg"
         >
           <Github className="mr-2 h-4 w-4" />
-          Continue with GitHub
+          {t('continue_with_github')}
         </Button>
         <Button
           variant="outline"
@@ -154,7 +156,7 @@ export function SignUpForm() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          Continue with Google
+          {t('continue_with_google')}
         </Button>
       </div>
 
@@ -164,18 +166,20 @@ export function SignUpForm() {
           <span className="border-border w-full border-t" />
         </div>
         <div className="relative flex justify-center text-xs">
-          <span className="bg-card text-muted-foreground px-2.5">Or continue with email</span>
+          <span className="bg-card text-muted-foreground px-2.5">
+            {t('or_continue_with_email')}
+          </span>
         </div>
       </div>
 
       {/* Email/Password Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="name">Full name</Label>
+          <Label htmlFor="name">{t('full_name_label')}</Label>
           <Input
             id="name"
             type="text"
-            placeholder="John Doe"
+            placeholder={t('full_name_placeholder')}
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -184,7 +188,7 @@ export function SignUpForm() {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="email">Email address</Label>
+          <Label htmlFor="email">{t('email_label')}</Label>
           <Input
             id="email"
             type="email"
@@ -197,17 +201,17 @@ export function SignUpForm() {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{t('password_label')}</Label>
           <Input
             id="password"
             type="password"
-            placeholder="Create a strong password"
+            placeholder={t('password_placeholder')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             autoComplete="new-password"
           />
-          <p className="text-muted-foreground text-xs">Must be at least 8 characters</p>
+          <p className="text-muted-foreground text-xs">{t('password_hint')}</p>
         </div>
 
         {error && (
@@ -222,36 +226,39 @@ export function SignUpForm() {
           size="lg"
           disabled={loading}
         >
-          {loading ? 'Creating account...' : 'Create account'}
+          {loading ? t('creating_account') : t('create_account_submit')}
         </Button>
 
         <p className="text-muted-foreground text-center text-xs">
-          By creating an account, you agree to our{' '}
-          <Link
-            href="/terms"
-            className="hover:text-foreground ease-snap underline transition-colors duration-150"
-          >
-            Terms
-          </Link>{' '}
-          and{' '}
-          <Link
-            href="/privacy"
-            className="hover:text-foreground ease-snap underline transition-colors duration-150"
-          >
-            Privacy
-          </Link>
-          .
+          {t.rich('terms_agreement', {
+            terms: (chunks) => (
+              <Link
+                href="/terms"
+                className="hover:text-foreground ease-snap underline transition-colors duration-150"
+              >
+                {chunks}
+              </Link>
+            ),
+            privacy: (chunks) => (
+              <Link
+                href="/privacy"
+                className="hover:text-foreground ease-snap underline transition-colors duration-150"
+              >
+                {chunks}
+              </Link>
+            ),
+          })}
         </p>
       </form>
 
       {/* Sign In Link */}
       <p className="text-muted-foreground text-center text-sm">
-        Already have an account?{' '}
+        {t('have_account')}{' '}
         <Link
           href="/auth/signin"
           className="text-foreground hover:text-primary ease-snap font-medium transition-colors duration-150"
         >
-          Sign in
+          {t('signin')}
         </Link>
       </p>
     </div>

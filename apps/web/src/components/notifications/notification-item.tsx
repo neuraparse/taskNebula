@@ -1,6 +1,7 @@
 'use client';
 
 import { forwardRef, type MouseEvent, type ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import {
   Activity,
@@ -25,10 +26,7 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type {
-  Notification,
-  NotificationType,
-} from '@/lib/hooks/use-notifications';
+import type { Notification, NotificationType } from '@/lib/hooks/use-notifications';
 
 /**
  * Defensive resolver for an entity key we can group by.
@@ -53,8 +51,7 @@ export function resolveStackKey(notification: Notification): string | null {
 export function resolveHref(notification: Notification): string | null {
   if (notification.issueId) return `/issues/${notification.issueId}`;
   if (
-    (notification.type === 'ai_draft_failed' ||
-      notification.type === 'agent_run_failed') &&
+    (notification.type === 'ai_draft_failed' || notification.type === 'agent_run_failed') &&
     notification.projectId
   ) {
     return `/projects/${notification.projectId}/settings?tab=ai-agents`;
@@ -62,14 +59,13 @@ export function resolveHref(notification: Notification): string | null {
   return null;
 }
 
-export function getActorName(notification: Notification): string {
-  if (notification.type === 'ai_draft_failed') return 'AI draft';
-  if (notification.type === 'agent_run_failed') return 'Agent run';
-  return (
-    notification.actor?.name ||
-    notification.actor?.email?.split('@')[0] ||
-    'Someone'
-  );
+/** Translator shape compatible with next-intl's `useTranslations` return. */
+type NotificationTranslator = (key: string) => string;
+
+export function getActorName(notification: Notification, t: NotificationTranslator): string {
+  if (notification.type === 'ai_draft_failed') return t('actor.ai_draft');
+  if (notification.type === 'agent_run_failed') return t('actor.agent_run');
+  return notification.actor?.name || notification.actor?.email?.split('@')[0] || t('actor.someone');
 }
 
 /* -------------------------------------------------------------------------- */
@@ -78,7 +74,8 @@ export function getActorName(notification: Notification): string {
 
 type TypeVisual = {
   Icon: typeof Bell;
-  label: string;
+  /** Translation key (under `notifications.type_label`) for the chip label. */
+  labelKey: string;
   /** Tailwind classes for the icon badge ring/background/foreground. */
   tone: string;
 };
@@ -86,57 +83,57 @@ type TypeVisual = {
 const TYPE_VISUALS: Record<NotificationType, TypeVisual> = {
   mention: {
     Icon: AtSign,
-    label: 'Mention',
+    labelKey: 'mention',
     tone: 'bg-primary/10 text-primary ring-primary/30',
   },
   comment: {
     Icon: MessageSquare,
-    label: 'Comment',
+    labelKey: 'comment',
     tone: 'bg-indigo-500/10 text-indigo-600 ring-indigo-500/30 dark:text-indigo-300',
   },
   assigned: {
     Icon: UserCheck,
-    label: 'Assigned',
+    labelKey: 'assigned',
     tone: 'bg-violet-500/10 text-violet-600 ring-violet-500/30 dark:text-violet-300',
   },
   status_changed: {
     Icon: Activity,
-    label: 'Status',
+    labelKey: 'status',
     tone: 'bg-sky-500/10 text-sky-600 ring-sky-500/30 dark:text-sky-300',
   },
   issue_created: {
     Icon: CheckCircle2,
-    label: 'Created',
+    labelKey: 'created',
     tone: 'bg-emerald-500/10 text-emerald-600 ring-emerald-500/30 dark:text-emerald-300',
   },
   issue_updated: {
     Icon: GitBranch,
-    label: 'Updated',
+    labelKey: 'updated',
     tone: 'bg-amber-500/10 text-amber-600 ring-amber-500/30 dark:text-amber-300',
   },
   issue_linked: {
     Icon: Link2,
-    label: 'Linked',
+    labelKey: 'linked',
     tone: 'bg-slate-500/10 text-slate-600 ring-slate-500/30 dark:text-slate-300',
   },
   sprint_started: {
     Icon: Flag,
-    label: 'Sprint',
+    labelKey: 'sprint',
     tone: 'bg-fuchsia-500/10 text-fuchsia-600 ring-fuchsia-500/30 dark:text-fuchsia-300',
   },
   sprint_completed: {
     Icon: Flag,
-    label: 'Sprint',
+    labelKey: 'sprint',
     tone: 'bg-fuchsia-500/10 text-fuchsia-600 ring-fuchsia-500/30 dark:text-fuchsia-300',
   },
   ai_draft_failed: {
     Icon: Sparkles,
-    label: 'AI draft',
+    labelKey: 'ai_draft',
     tone: 'bg-destructive/10 text-destructive ring-destructive/30',
   },
   agent_run_failed: {
     Icon: Bot,
-    label: 'Agent',
+    labelKey: 'agent',
     tone: 'bg-destructive/10 text-destructive ring-destructive/30',
   },
 };
@@ -145,7 +142,7 @@ function getTypeVisual(type: NotificationType): TypeVisual {
   return (
     TYPE_VISUALS[type] ?? {
       Icon: Bell,
-      label: 'Update',
+      labelKey: 'update',
       tone: 'bg-muted text-muted-foreground ring-border',
     }
   );
@@ -164,28 +161,17 @@ function getReferenceChip(notification: Notification): string | null {
   return null;
 }
 
-export function NotificationAvatar({
-  notification,
-}: {
-  notification: Notification;
-}) {
+export function NotificationAvatar({ notification }: { notification: Notification }) {
   const initial =
-    (notification.actor?.name || notification.actor?.email || '?')[0]?.toUpperCase() ??
-    '?';
+    (notification.actor?.name || notification.actor?.email || '?')[0]?.toUpperCase() ?? '?';
   const visual = getTypeVisual(notification.type);
 
   // System/AI events: show only the typed icon, no actor avatar.
-  if (
-    notification.type === 'ai_draft_failed' ||
-    notification.type === 'agent_run_failed'
-  ) {
+  if (notification.type === 'ai_draft_failed' || notification.type === 'agent_run_failed') {
     const { Icon } = visual;
     return (
       <span
-        className={cn(
-          'flex h-9 w-9 items-center justify-center rounded-full ring-1',
-          visual.tone
-        )}
+        className={cn('flex h-9 w-9 items-center justify-center rounded-full ring-1', visual.tone)}
       >
         <Icon className="h-4 w-4" />
       </span>
@@ -196,16 +182,16 @@ export function NotificationAvatar({
   const { Icon } = visual;
   return (
     <span className="relative">
-      <Avatar className="h-9 w-9 ring-1 ring-border">
+      <Avatar className="ring-border h-9 w-9 ring-1">
         <AvatarImage src={notification.actor?.image || undefined} alt="" />
-        <AvatarFallback className="bg-gradient-to-br from-indigo-500/15 to-violet-500/15 text-[11px] font-semibold text-foreground">
+        <AvatarFallback className="text-foreground bg-gradient-to-br from-indigo-500/15 to-violet-500/15 text-[11px] font-semibold">
           {initial}
         </AvatarFallback>
       </Avatar>
       <span
         aria-hidden="true"
         className={cn(
-          'absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full ring-2 ring-background',
+          'ring-background absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full ring-2',
           visual.tone
         )}
       >
@@ -219,9 +205,9 @@ export function NotificationAvatar({
 /* Timestamp formatting                                                        */
 /* -------------------------------------------------------------------------- */
 
-function formatRelative(date: Date): string {
+function formatRelative(date: Date, t: NotificationTranslator): string {
   const diffMs = Date.now() - date.getTime();
-  if (diffMs < 60_000) return 'now';
+  if (diffMs < 60_000) return t('item.now');
   try {
     // "2h", "3d", "5m" — strict form keeps the row compact.
     return formatDistanceToNowStrict(date, { addSuffix: false })
@@ -286,22 +272,21 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
     },
     ref
   ) {
-    const actorName = getActorName(notification);
+    const t = useTranslations('notifications');
+    const actorName = getActorName(notification, t);
     const href = resolveHref(notification);
     const visual = getTypeVisual(notification.type);
+    const typeLabel = t(`type_label.${visual.labelKey}`);
     const referenceChip = getReferenceChip(notification);
     const isUnread = !notification.isRead;
-    const relative = formatRelative(new Date(notification.createdAt));
+    const relative = formatRelative(new Date(notification.createdAt), t);
 
     const handleRowClick = () => {
       if (isUnread && onMarkRead) onMarkRead(notification.id);
       onSelect(notification);
     };
 
-    const handleAction = (
-      event: MouseEvent<HTMLButtonElement>,
-      fn?: (id: string) => void
-    ) => {
+    const handleAction = (event: MouseEvent<HTMLButtonElement>, fn?: (id: string) => void) => {
       event.preventDefault();
       event.stopPropagation();
       fn?.(notification.id);
@@ -313,10 +298,10 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
         data-selected={selected ? 'true' : undefined}
         data-unread={isUnread ? 'true' : undefined}
         className={cn(
-          'group relative flex items-start gap-3 px-4 py-3 transition-all duration-150 ease-snap',
+          'ease-snap group relative flex items-start gap-3 px-4 py-3 transition-all duration-150',
           'hover:bg-accent/50',
           selected && 'bg-accent/70',
-          isUnread && 'bg-gradient-to-r from-primary/[0.04] via-transparent to-transparent',
+          isUnread && 'from-primary/[0.04] bg-gradient-to-r via-transparent to-transparent',
           compact ? 'gap-2.5 py-2' : 'py-3'
         )}
       >
@@ -324,7 +309,7 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
         {isUnread && (
           <span
             aria-hidden="true"
-            className="absolute left-0 top-2 bottom-2 w-[2px] rounded-r-full bg-gradient-to-b from-indigo-500 to-violet-500"
+            className="absolute bottom-2 left-0 top-2 w-[2px] rounded-r-full bg-gradient-to-b from-indigo-500 to-violet-500"
           />
         )}
 
@@ -332,7 +317,7 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
         {showStackToggle ? (
           <button
             type="button"
-            aria-label={stackOpen ? 'Collapse stack' : 'Expand stack'}
+            aria-label={stackOpen ? t('item.collapse_stack') : t('item.expand_stack')}
             aria-expanded={stackOpen}
             onClick={(e) => {
               e.preventDefault();
@@ -340,15 +325,15 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
               onToggleStack?.();
             }}
             className={cn(
-              'mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground',
-              'transition-transform duration-150 ease-snap hover:bg-accent hover:text-foreground',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+              'text-muted-foreground mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-sm',
+              'ease-snap hover:bg-accent hover:text-foreground transition-transform duration-150',
+              'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2'
             )}
             data-open={stackOpen ? 'true' : undefined}
           >
             <ChevronRight
               className={cn(
-                'h-3.5 w-3.5 transition-transform duration-150 ease-snap',
+                'ease-snap h-3.5 w-3.5 transition-transform duration-150',
                 stackOpen && 'rotate-90'
               )}
             />
@@ -371,17 +356,15 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
                 isUnread ? 'text-foreground' : 'text-foreground/90'
               )}
             >
-              <span className={cn('font-medium', isUnread && 'font-semibold')}>
-                {actorName}
-              </span>{' '}
+              <span className={cn('font-medium', isUnread && 'font-semibold')}>{actorName}</span>{' '}
               <span className="text-muted-foreground">
-                {notification.title || visual.label.toLowerCase()}
+                {notification.title || t(`type_action.${visual.labelKey}`)}
               </span>
             </p>
           </div>
 
           {notification.message && !compact && (
-            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+            <p className="text-muted-foreground mt-0.5 line-clamp-1 text-xs">
               {notification.message}
             </p>
           )}
@@ -396,16 +379,16 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
                 )}
               >
                 <visual.Icon className="h-2.5 w-2.5" />
-                {visual.label}
+                {typeLabel}
               </span>
               {referenceChip && (
-                <span className="inline-flex items-center rounded-full bg-muted px-1.5 py-[1px] font-mono text-[10px] font-medium text-muted-foreground ring-1 ring-border">
+                <span className="bg-muted text-muted-foreground ring-border inline-flex items-center rounded-full px-1.5 py-[1px] font-mono text-[10px] font-medium ring-1">
                   {referenceChip}
                 </span>
               )}
               {typeof stackCount === 'number' && stackCount > 1 && (
-                <span className="inline-flex items-center rounded-full bg-accent px-1.5 py-[1px] text-[10px] font-medium text-foreground/80 ring-1 ring-border">
-                  +{stackCount - 1} more
+                <span className="bg-accent text-foreground/80 ring-border inline-flex items-center rounded-full px-1.5 py-[1px] text-[10px] font-medium ring-1">
+                  {t('item.stack_more', { count: stackCount - 1 })}
                 </span>
               )}
             </div>
@@ -427,7 +410,7 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
             </time>
             {isUnread && (
               <span
-                aria-label="Unread"
+                aria-label={t('item.unread')}
                 className="h-2 w-2 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 shadow-[0_0_0_2px_var(--background)] group-hover:opacity-0"
               />
             )}
@@ -436,8 +419,8 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
           {/* Hover action bar (absolutely positioned so it doesn't reflow the row) */}
           <div
             className={cn(
-              'pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-0.5 rounded-md border bg-popover/95 p-0.5 opacity-0 shadow-sm backdrop-blur',
-              'transition-opacity duration-150 ease-snap',
+              'bg-popover/95 pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-0.5 rounded-md border p-0.5 opacity-0 shadow-sm backdrop-blur',
+              'ease-snap transition-opacity duration-150',
               'group-hover:pointer-events-auto group-hover:opacity-100',
               'focus-within:pointer-events-auto focus-within:opacity-100'
             )}
@@ -447,9 +430,9 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
                 variant="ghost"
                 size="icon"
                 type="button"
-                className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                aria-label="Mark unread"
-                title="Mark unread"
+                className="text-muted-foreground hover:text-foreground h-7 w-7"
+                aria-label={t('item.mark_unread')}
+                title={t('item.mark_unread')}
                 onClick={(e) => handleAction(e, onMarkUnread)}
               >
                 <Bell className="h-3.5 w-3.5" />
@@ -459,9 +442,9 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
                 variant="ghost"
                 size="icon"
                 type="button"
-                className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                aria-label="Mark read"
-                title="Mark read"
+                className="text-muted-foreground hover:text-foreground h-7 w-7"
+                aria-label={t('item.mark_read')}
+                title={t('item.mark_read')}
                 onClick={(e) => handleAction(e, onMarkRead)}
               >
                 <Check className="h-3.5 w-3.5" />
@@ -473,9 +456,9 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
                 variant="ghost"
                 size="icon"
                 type="button"
-                className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                aria-label="Open"
-                title="Open"
+                className="text-muted-foreground hover:text-foreground h-7 w-7"
+                aria-label={t('item.open')}
+                title={t('item.open')}
                 onClick={(e) => {
                   e.stopPropagation();
                   onSelect(notification);
@@ -490,9 +473,9 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
                 variant="ghost"
                 size="icon"
                 type="button"
-                className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                aria-label="Snooze"
-                title="Snooze"
+                className="text-muted-foreground hover:text-foreground h-7 w-7"
+                aria-label={t('item.snooze')}
+                title={t('item.snooze')}
                 onClick={(e) => handleAction(e, onSnooze)}
               >
                 <Clock className="h-3.5 w-3.5" />
@@ -504,9 +487,9 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
                 variant="ghost"
                 size="icon"
                 type="button"
-                className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                aria-label="Archive"
-                title="Archive"
+                className="text-muted-foreground hover:text-foreground h-7 w-7"
+                aria-label={t('item.archive')}
+                title={t('item.archive')}
                 onClick={(e) => handleAction(e, onArchive)}
               >
                 <Archive className="h-3.5 w-3.5" />
@@ -522,7 +505,7 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
         <Link
           href={href}
           onClick={handleRowClick}
-          className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="focus-visible:ring-ring block focus-visible:outline-none focus-visible:ring-2"
         >
           {body}
         </Link>
@@ -533,7 +516,7 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
       <button
         type="button"
         onClick={handleRowClick}
-        className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="focus-visible:ring-ring w-full text-left focus-visible:outline-none focus-visible:ring-2"
       >
         {body}
       </button>

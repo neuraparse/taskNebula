@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, use, useEffect, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { KanbanBoard } from '@/components/kanban/kanban-board';
 import { BoardFiltersBar, BoardFilters } from '@/components/kanban/board-filters';
 import { CreateIssueModal } from '@/components/issues/create-issue-modal';
@@ -20,6 +21,7 @@ import Link from 'next/link';
 
 export default function ProjectBoardPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params);
+  const t = useTranslations('pagesProjects');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedSprintId, setSelectedSprintId] = useState<string | undefined>(undefined);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -88,15 +90,15 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
             onValueChange={(value) => setSelectedSprintId(value === 'all' ? undefined : value)}
           >
             <SelectTrigger className="border-border bg-background h-8 w-40 shrink-0 text-xs shadow-none sm:w-48">
-              <SelectValue placeholder="All Issues" />
+              <SelectValue placeholder={t('allIssues')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Issues</SelectItem>
-              <SelectItem value="backlog">Backlog (No Sprint)</SelectItem>
+              <SelectItem value="all">{t('allIssues')}</SelectItem>
+              <SelectItem value="backlog">{t('backlogNoSprint')}</SelectItem>
               {sprints && sprints.length > 0 && (
                 <>
                   <div className="text-muted-foreground px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider">
-                    Sprints
+                    {t('sprintsHeader')}
                   </div>
                   {sprints.map((sprint) => (
                     <SelectItem key={sprint.id} value={sprint.id}>
@@ -107,12 +109,12 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
                             variant="default"
                             className="bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20 h-3.5 px-1 py-0 text-[9px]"
                           >
-                            Active
+                            {t('statusActive')}
                           </Badge>
                         )}
                         {sprint.status === 'planned' && (
                           <Badge variant="outline" className="h-3.5 px-1 py-0 text-[9px]">
-                            Planned
+                            {t('statusPlanned')}
                           </Badge>
                         )}
                       </span>
@@ -126,14 +128,14 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
           {/* Sprint meta */}
           {currentSprint && (
             <div className="text-muted-foreground flex items-center gap-2 text-xs">
-              <span>{currentSprint.issueCount || 0} issues</span>
+              <span>{t('issuesCount', { count: currentSprint.issueCount || 0 })}</span>
               {sprintProgress && sprintProgress.daysLeft > 0 && (
                 <>
                   <span className="text-border">·</span>
                   <span
                     className={sprintProgress.daysLeft <= 2 ? 'text-accent-amber font-medium' : ''}
                   >
-                    {sprintProgress.daysLeft}d left
+                    {t('daysLeft', { count: sprintProgress.daysLeft })}
                   </span>
                 </>
               )}
@@ -151,12 +153,12 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
           {!activeSprint && !sprintsLoading && isInitialized && (
             <div className="text-muted-foreground flex w-full shrink-0 items-center gap-1.5 whitespace-nowrap text-[11px] sm:w-auto">
               <AlertCircle className="text-accent-amber h-3 w-3 shrink-0" />
-              No active sprint
+              {t('noActiveSprint')}
               <Link
                 href={`/projects/${projectId}/sprints`}
                 className="text-primary ml-0.5 hover:underline"
               >
-                {plannedSprints.length > 0 ? 'Start' : 'Create'}
+                {plannedSprints.length > 0 ? t('startSprintLink') : t('createSprintLink')}
               </Link>
             </div>
           )}
@@ -178,7 +180,7 @@ export default function ProjectBoardPage({ params }: { params: Promise<{ project
           <div className="ml-auto shrink-0">
             <Button size="sm" onClick={() => setCreateModalOpen(true)} className="h-8 gap-1.5">
               <Plus className="h-3.5 w-3.5" />
-              New Issue
+              {t('newIssue')}
             </Button>
           </div>
         </div>

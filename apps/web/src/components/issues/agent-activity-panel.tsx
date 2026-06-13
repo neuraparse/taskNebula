@@ -19,15 +19,10 @@
  */
 
 import { Bot, Loader2, RefreshCcw } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
-type AgentProviderKind =
-  | 'claude'
-  | 'cursor'
-  | 'devin'
-  | 'copilot'
-  | 'openhands'
-  | 'custom';
+type AgentProviderKind = 'claude' | 'cursor' | 'devin' | 'copilot' | 'openhands' | 'custom';
 
 interface AgentActivityPanelProps {
   issueId: string;
@@ -40,6 +35,7 @@ export function AgentActivityPanel({
   agentProvider,
   assigneeName,
 }: AgentActivityPanelProps) {
+  const t = useTranslations('issuePanels');
   const [dispatching, setDispatching] = useState(false);
   const [lastState, setLastState] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,51 +53,47 @@ export function AgentActivityPanel({
       });
       const json = (await res.json()) as { state?: string; error?: string };
       if (!res.ok) {
-        setError(json.error || `Dispatch failed (${res.status})`);
+        setError(json.error || t('agent.dispatch_failed_status', { status: res.status }));
       } else {
         setLastState(json.state ?? 'active');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Dispatch failed');
+      setError(err instanceof Error ? err.message : t('agent.dispatch_failed'));
     } finally {
       setDispatching(false);
     }
   };
 
   return (
-    <section className="space-y-2 rounded-md border border-border/60 bg-muted/30 p-3">
-      <header className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+    <section className="border-border/60 bg-muted/30 space-y-2 rounded-md border p-3">
+      <header className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
         <Bot className="h-3.5 w-3.5" />
-        <span>Agent activity</span>
+        <span>{t('agent.title')}</span>
       </header>
 
       <div className="flex items-center justify-between gap-2 text-sm">
         <div className="flex flex-col">
-          <span className="font-medium">
-            {assigneeName ?? agentProvider}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {lastState ? `State: ${lastState}` : 'Idle — no session dispatched yet'}
+          <span className="font-medium">{assigneeName ?? agentProvider}</span>
+          <span className="text-muted-foreground text-xs">
+            {lastState ? t('agent.state', { state: lastState }) : t('agent.idle')}
           </span>
         </div>
         <button
           type="button"
           onClick={onDispatch}
           disabled={dispatching}
-          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium hover:bg-accent disabled:opacity-60"
+          className="border-border bg-background hover:bg-accent inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium disabled:opacity-60"
         >
           {dispatching ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
             <RefreshCcw className="h-3.5 w-3.5" />
           )}
-          Dispatch
+          {t('agent.dispatch')}
         </button>
       </div>
 
-      {error ? (
-        <p className="text-xs text-destructive">{error}</p>
-      ) : null}
+      {error ? <p className="text-destructive text-xs">{error}</p> : null}
 
       {/* TODO(agent-ui): live state subscription, session history, prompt override editor. */}
     </section>

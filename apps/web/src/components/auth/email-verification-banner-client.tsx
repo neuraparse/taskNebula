@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { MailCheck, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ const DISMISS_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
  * check without shipping JS for it.
  */
 export function EmailVerificationBannerClient({ email: _email }: { email: string }) {
+  const t = useTranslations('authExtra');
   const router = useRouter();
   // Start hidden so SSR markup matches the first client paint (we only
   // know the dismissal state after reading localStorage on mount).
@@ -44,28 +46,28 @@ export function EmailVerificationBannerClient({ email: _email }: { email: string
       const res = await fetch('/api/auth/send-verification', { method: 'POST' });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
-        const message = data?.error || 'Failed to send verification email';
+        const message = data?.error || t('send_verification_failed');
         if (typeof toast.error === 'function') {
-          toast.error('Could not send email', message);
+          toast.error(t('toast_send_failed_title'), message);
         } else {
-          toast({ title: 'Could not send email', description: message });
+          toast({ title: t('toast_send_failed_title'), description: message });
         }
         return;
       }
       if (typeof toast.success === 'function') {
-        toast.success('Verification email sent', 'Check your inbox for the confirmation link.');
+        toast.success(t('toast_sent_title'), t('toast_sent_description'));
       } else {
         toast({
-          title: 'Verification email sent',
-          description: 'Check your inbox for the confirmation link.',
+          title: t('toast_sent_title'),
+          description: t('toast_sent_description'),
         });
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Network error';
+      const message = err instanceof Error ? err.message : t('network_error');
       if (typeof toast.error === 'function') {
-        toast.error('Could not send email', message);
+        toast.error(t('toast_send_failed_title'), message);
       } else {
-        toast({ title: 'Could not send email', description: message });
+        toast({ title: t('toast_send_failed_title'), description: message });
       }
     } finally {
       setSending(false);
@@ -80,26 +82,26 @@ export function EmailVerificationBannerClient({ email: _email }: { email: string
       const data = (await res.json().catch(() => ({}))) as { verified?: boolean };
       if (data.verified) {
         if (typeof toast.success === 'function') {
-          toast.success('Email verified', 'Welcome aboard.');
+          toast.success(t('toast_verified_title'), t('toast_verified_description'));
         } else {
-          toast({ title: 'Email verified', description: 'Welcome aboard.' });
+          toast({ title: t('toast_verified_title'), description: t('toast_verified_description') });
         }
         setVisible(false);
         router.refresh();
         return;
       }
-      const message = 'We couldn’t find a completed verification. Please click the link in your inbox or resend.';
+      const message = t('toast_not_verified_description');
       if (typeof toast.warning === 'function') {
-        toast.warning('Still not verified', message);
+        toast.warning(t('toast_not_verified_title'), message);
       } else {
-        toast({ title: 'Still not verified', description: message });
+        toast({ title: t('toast_not_verified_title'), description: message });
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Network error';
+      const message = err instanceof Error ? err.message : t('network_error');
       if (typeof toast.error === 'function') {
-        toast.error('Could not refresh status', message);
+        toast.error(t('toast_refresh_failed_title'), message);
       } else {
-        toast({ title: 'Could not refresh status', description: message });
+        toast({ title: t('toast_refresh_failed_title'), description: message });
       }
     } finally {
       setRefreshing(false);
@@ -108,10 +110,7 @@ export function EmailVerificationBannerClient({ email: _email }: { email: string
 
   function handleDismiss() {
     try {
-      window.localStorage.setItem(
-        DISMISS_STORAGE_KEY,
-        String(Date.now() + DISMISS_TTL_MS)
-      );
+      window.localStorage.setItem(DISMISS_STORAGE_KEY, String(Date.now() + DISMISS_TTL_MS));
     } catch {
       // Ignore storage failures — the banner will simply reappear next load.
     }
@@ -128,7 +127,7 @@ export function EmailVerificationBannerClient({ email: _email }: { email: string
         'relative flex flex-wrap items-center justify-between gap-x-4 gap-y-2',
         'border-b border-indigo-500/15 px-4 py-2 sm:px-6',
         'bg-gradient-to-r from-indigo-500/[0.06] via-violet-500/[0.05] to-transparent',
-        'text-sm text-foreground'
+        'text-foreground text-sm'
       )}
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -139,10 +138,8 @@ export function EmailVerificationBannerClient({ email: _email }: { email: string
           <MailCheck className="h-4 w-4" />
         </span>
         <div className="min-w-0 leading-tight">
-          <p className="truncate font-medium text-foreground">Verify your email address</p>
-          <p className="truncate text-xs text-muted-foreground">
-            You&apos;ll need to verify to receive notifications and team invites.
-          </p>
+          <p className="text-foreground truncate font-medium">{t('banner_title')}</p>
+          <p className="text-muted-foreground truncate text-xs">{t('banner_description')}</p>
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
@@ -152,25 +149,25 @@ export function EmailVerificationBannerClient({ email: _email }: { email: string
           variant="ghost"
           onClick={handleAlreadyVerified}
           disabled={refreshing}
-          aria-label="Check if email is already verified"
+          aria-label={t('already_verified_aria')}
         >
-          {refreshing ? 'Checking…' : 'I already verified'}
+          {refreshing ? t('checking_ellipsis') : t('already_verified')}
         </Button>
         <Button
           type="button"
           size="sm"
           onClick={handleResend}
           disabled={sending}
-          aria-label="Resend verification email"
+          aria-label={t('resend_verification_email')}
         >
-          {sending ? 'Sending…' : 'Resend email'}
+          {sending ? t('sending_ellipsis') : t('resend_email')}
         </Button>
         <Button
           type="button"
           size="icon-sm"
           variant="ghost"
           onClick={handleDismiss}
-          aria-label="Dismiss verification reminder"
+          aria-label={t('dismiss_aria')}
           className="text-muted-foreground hover:text-foreground"
         >
           <X className="h-4 w-4" />

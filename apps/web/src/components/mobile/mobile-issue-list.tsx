@@ -7,6 +7,7 @@ import { PullToRefresh } from './pull-to-refresh';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import { useTranslations } from 'next-intl';
 
 interface MobileIssueListProps {
   issues: Issue[];
@@ -28,72 +29,69 @@ const priorityIndicatorClass: Record<string, string> = {
 const statusDotClass: Record<string, string> = {
   'To Do': 'status-dot status-idle',
   'In Progress': 'status-dot status-live',
-  'Done': 'status-dot status-idle opacity-50',
-  'Blocked': 'status-dot status-danger',
+  Done: 'status-dot status-idle opacity-50',
+  Blocked: 'status-dot status-danger',
 };
 
-export function MobileIssueList({
-  issues,
-  onRefresh,
-  onDelete,
-  onComplete,
-}: MobileIssueListProps) {
+export function MobileIssueList({ issues, onRefresh, onDelete, onComplete }: MobileIssueListProps) {
+  const t = useTranslations('mobileNav');
   return (
     <PullToRefresh onRefresh={onRefresh} className="h-full">
-      <div className="stagger divide-y divide-border">
+      <div className="stagger divide-border divide-y">
         {issues.map((issue) => (
           <SwipeableItem
             key={issue.id}
             leftAction={
               onComplete
-                ? swipeActions.complete(() => onComplete(issue.id))
+                ? swipeActions.complete(() => onComplete(issue.id), t('swipeComplete'))
                 : undefined
             }
             rightAction={
-              onDelete
-                ? swipeActions.delete(() => onDelete(issue.id))
-                : undefined
+              onDelete ? swipeActions.delete(() => onDelete(issue.id), t('swipeDelete')) : undefined
             }
           >
             <Link
               href={`/issues/${issue.id}`}
-              className="flex items-stretch transition-all duration-150 ease-snap hover:bg-accent/50"
+              className="ease-snap hover:bg-accent/50 flex items-stretch transition-all duration-150"
             >
               {/* Left priority indicator bar */}
               <div
                 className={cn(
                   'w-1 shrink-0 rounded-r-full',
-                  priorityIndicatorClass[issue.priority as keyof typeof priorityIndicatorClass] || 'bg-border'
+                  priorityIndicatorClass[issue.priority as keyof typeof priorityIndicatorClass] ||
+                    'bg-border'
                 )}
-                aria-label={`Priority: ${issue.priority}`}
+                aria-label={t('priorityAria', { priority: issue.priority })}
               />
 
               {/* Main content */}
-              <div className="flex-1 px-3 py-3 space-y-1.5">
+              <div className="flex-1 space-y-1.5 px-3 py-3">
                 {/* Key + status */}
                 <div className="flex items-center gap-2">
                   {issue.status === 'In Progress' ? (
-                    <span className="realtime-ping" aria-label={`Status: ${issue.status}`}>
+                    <span
+                      className="realtime-ping"
+                      aria-label={t('statusAria', { status: issue.status })}
+                    >
                       <span className="status-dot status-live" />
                     </span>
                   ) : (
                     <span
                       className={cn(
-                        statusDotClass[issue.status as keyof typeof statusDotClass] || 'status-dot status-idle'
+                        statusDotClass[issue.status as keyof typeof statusDotClass] ||
+                          'status-dot status-idle'
                       )}
-                      aria-label={`Status: ${issue.status}`}
+                      aria-label={t('statusAria', { status: issue.status })}
                     />
                   )}
-                  <span className="text-[11px] font-mono text-muted-foreground">{issue.key}</span>
-                  <span className="ml-auto text-[10px] text-muted-foreground">
+                  <span className="text-muted-foreground font-mono text-[11px]">{issue.key}</span>
+                  <span className="text-muted-foreground ml-auto text-[10px]">
                     {formatDistanceToNow(new Date(issue.updatedAt), { addSuffix: true })}
                   </span>
                 </div>
 
                 {/* Title */}
-                <p className="line-clamp-2 text-sm font-medium leading-snug">
-                  {issue.title}
-                </p>
+                <p className="line-clamp-2 text-sm font-medium leading-snug">{issue.title}</p>
 
                 {/* Footer */}
                 <div className="flex items-center gap-2">
@@ -122,8 +120,8 @@ export function MobileIssueList({
         ))}
 
         {issues.length === 0 && (
-          <div className="py-12 text-center text-sm text-muted-foreground">
-            No issues found
+          <div className="text-muted-foreground py-12 text-center text-sm">
+            {t('noIssuesFound')}
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Pencil, Loader2, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -46,6 +47,8 @@ function formatRelativeTime(value: string | Date): string {
 }
 
 export function IssueContent({ issue }: IssueContentProps) {
+  const t = useTranslations('issuePanels');
+  const tActions = useTranslations('actions');
   const [isEditing, setIsEditing] = useState(false);
   const [description, setDescription] = useState(issue.description || '');
   const updateIssue = useUpdateIssue();
@@ -72,7 +75,7 @@ export function IssueContent({ issue }: IssueContentProps) {
       {/* Description */}
       <section>
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="kicker">Description</h3>
+          <h3 className="kicker">{t('content.description')}</h3>
           {!isEditing && !COLLAB_ENABLED && (
             <Button
               variant="ghost"
@@ -81,7 +84,7 @@ export function IssueContent({ issue }: IssueContentProps) {
               onClick={() => setIsEditing(true)}
             >
               <Pencil className="mr-1.5 h-3 w-3" />
-              Edit
+              {t('content.edit')}
             </Button>
           )}
         </div>
@@ -113,7 +116,7 @@ export function IssueContent({ issue }: IssueContentProps) {
               className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-[160px] w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add a description..."
+              placeholder={t('content.description_placeholder')}
               autoFocus
             />
             <div className="flex gap-2">
@@ -124,7 +127,7 @@ export function IssueContent({ issue }: IssueContentProps) {
                 disabled={updateIssue.isPending}
               >
                 {updateIssue.isPending && <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />}
-                Save
+                {tActions('save')}
               </Button>
               <Button
                 size="sm"
@@ -133,7 +136,7 @@ export function IssueContent({ issue }: IssueContentProps) {
                 onClick={handleCancel}
                 disabled={updateIssue.isPending}
               >
-                Cancel
+                {tActions('cancel')}
               </Button>
             </div>
           </div>
@@ -154,7 +157,7 @@ export function IssueContent({ issue }: IssueContentProps) {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground italic">No description provided</p>
+              <p className="text-muted-foreground italic">{t('content.no_description')}</p>
             )}
           </div>
         )}
@@ -168,7 +171,7 @@ export function IssueContent({ issue }: IssueContentProps) {
           return (
             <div className="text-muted-foreground mt-3 flex items-center gap-1.5 text-[11.5px]">
               <Clock className="h-3 w-3" />
-              <span>Last edited by</span>
+              <span>{t('content.last_edited_by')}</span>
               <span className="text-foreground font-medium">{editorName}</span>
               <span>{relative}</span>
             </div>
@@ -178,7 +181,7 @@ export function IssueContent({ issue }: IssueContentProps) {
 
       {/* Subtasks */}
       <section>
-        <h3 className="kicker mb-2">Subtasks</h3>
+        <h3 className="kicker mb-2">{t('content.subtasks')}</h3>
         <div className="surface-inset rounded-md p-3">
           <IssueSubtasks issueId={issue.id} projectId={issue.projectId} />
         </div>
@@ -186,19 +189,19 @@ export function IssueContent({ issue }: IssueContentProps) {
 
       {/* Attachments */}
       <section>
-        <h3 className="kicker mb-2">Attachments</h3>
+        <h3 className="kicker mb-2">{t('content.attachments')}</h3>
         <IssueAttachments issueId={issue.id} />
       </section>
 
       {/* Links */}
       <section>
-        <h3 className="kicker mb-2">Links</h3>
+        <h3 className="kicker mb-2">{t('content.links')}</h3>
         <IssueLinks issueId={issue.id} projectId={issue.projectId} />
       </section>
 
       {/* Related Docs */}
       <section>
-        <h3 className="kicker mb-2">Related Docs</h3>
+        <h3 className="kicker mb-2">{t('content.related_docs')}</h3>
         <IssueDocs
           issueId={issue.id}
           issueKey={issue.key}
@@ -209,7 +212,7 @@ export function IssueContent({ issue }: IssueContentProps) {
 
       {/* Discussion */}
       <section>
-        <h3 className="kicker mb-2">Discussion</h3>
+        <h3 className="kicker mb-2">{t('content.discussion')}</h3>
         <IssueDiscussionCard issueId={issue.id} projectId={issue.projectId} />
       </section>
     </div>

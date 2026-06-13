@@ -90,10 +90,7 @@ export function SwipeableItem({
 
       {/* Content */}
       <div
-        className={cn(
-          'relative bg-background',
-          isAnimating && 'transition-transform duration-300'
-        )}
+        className={cn('bg-background relative', isAnimating && 'transition-transform duration-300')}
         style={{ transform: `translateX(${offset}px)` }}
         {...swipeHandlers}
       >
@@ -103,23 +100,25 @@ export function SwipeableItem({
   );
 }
 
-// Predefined actions using design token colors
+// Predefined actions using design token colors.
+// Callers pass an already-translated `label` (used for the action's aria-label),
+// since these factories run outside React and cannot use translation hooks.
 export const swipeActions = {
-  delete: (onClick: () => void): SwipeAction => ({
-    icon: <Trash2 className="h-4 w-4 text-destructive-foreground" />,
-    label: 'Delete',
+  delete: (onClick: () => void, label: string): SwipeAction => ({
+    icon: <Trash2 className="text-destructive-foreground h-4 w-4" />,
+    label,
     color: 'bg-destructive',
     onClick,
   }),
-  archive: (onClick: () => void): SwipeAction => ({
-    icon: <Archive className="h-4 w-4 text-background" />,
-    label: 'Archive',
+  archive: (onClick: () => void, label: string): SwipeAction => ({
+    icon: <Archive className="text-background h-4 w-4" />,
+    label,
     color: 'bg-accent-amber',
     onClick,
   }),
-  complete: (onClick: () => void): SwipeAction => ({
-    icon: <Check className="h-4 w-4 text-background" />,
-    label: 'Complete',
+  complete: (onClick: () => void, label: string): SwipeAction => ({
+    icon: <Check className="text-background h-4 w-4" />,
+    label,
     color: 'bg-accent-emerald',
     onClick,
   }),

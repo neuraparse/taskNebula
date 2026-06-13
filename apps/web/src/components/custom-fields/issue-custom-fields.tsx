@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -19,6 +20,7 @@ interface IssueCustomFieldsProps {
 }
 
 export function IssueCustomFields({ issueId }: IssueCustomFieldsProps) {
+  const t = useTranslations('projectConfig');
   const { data, isLoading } = useCustomFieldValues(issueId);
   const setFieldValue = useSetCustomFieldValue(issueId);
   const [pendingFields, setPendingFields] = useState<Set<string>>(new Set());
@@ -41,7 +43,7 @@ export function IssueCustomFields({ issueId }: IssueCustomFieldsProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-6">
-        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
       </div>
     );
   }
@@ -64,7 +66,7 @@ export function IssueCustomFields({ issueId }: IssueCustomFieldsProps) {
             value={value || ''}
             onChange={(e) => handleValueChange(customFieldId, e.target.value)}
             disabled={isPending}
-            placeholder={`Enter ${field.name.toLowerCase()}`}
+            placeholder={t('field_enter_placeholder', { name: field.name.toLowerCase() })}
           />
         );
 
@@ -75,7 +77,7 @@ export function IssueCustomFields({ issueId }: IssueCustomFieldsProps) {
             value={value || ''}
             onChange={(e) => handleValueChange(customFieldId, e.target.value)}
             disabled={isPending}
-            placeholder={`Enter ${field.name.toLowerCase()}`}
+            placeholder={t('field_enter_placeholder', { name: field.name.toLowerCase() })}
           />
         );
 
@@ -99,8 +101,8 @@ export function IssueCustomFields({ issueId }: IssueCustomFieldsProps) {
               }
               disabled={isPending}
             />
-            <span className="text-sm text-muted-foreground">
-              {value === 'true' ? 'Yes' : 'No'}
+            <span className="text-muted-foreground text-sm">
+              {value === 'true' ? t('field_yes') : t('field_no')}
             </span>
           </label>
         );
@@ -114,7 +116,9 @@ export function IssueCustomFields({ issueId }: IssueCustomFieldsProps) {
             disabled={isPending}
           >
             <SelectTrigger>
-              <SelectValue placeholder={`Select ${field.name.toLowerCase()}`} />
+              <SelectValue
+                placeholder={t('field_select_placeholder', { name: field.name.toLowerCase() })}
+              />
             </SelectTrigger>
             <SelectContent>
               {options.map((option: string) => (
@@ -133,7 +137,7 @@ export function IssueCustomFields({ issueId }: IssueCustomFieldsProps) {
             value={value || ''}
             onChange={(e) => handleValueChange(customFieldId, e.target.value)}
             disabled={isPending}
-            placeholder="Enter values separated by commas"
+            placeholder={t('field_multi_select_placeholder')}
           />
         );
 
@@ -143,19 +147,21 @@ export function IssueCustomFields({ issueId }: IssueCustomFieldsProps) {
   };
 
   return (
-    <div className="space-y-3 animate-fade-up">
-      <span className="kicker">Custom fields</span>
-      <div className="space-y-3 stagger">
+    <div className="animate-fade-up space-y-3">
+      <span className="kicker">{t('custom_fields')}</span>
+      <div className="stagger space-y-3">
         {customFieldValues.map((fieldValue) => (
           <div key={fieldValue.customFieldId} className="space-y-1.5">
             <Label className="text-xs">
               {fieldValue.field.name}
               {fieldValue.field.isRequired && (
-                <span className="ml-1 text-destructive" aria-label="required">*</span>
+                <span className="text-destructive ml-1" aria-label={t('required')}>
+                  *
+                </span>
               )}
             </Label>
             {fieldValue.field.description && (
-              <p className="text-xs text-muted-foreground">{fieldValue.field.description}</p>
+              <p className="text-muted-foreground text-xs">{fieldValue.field.description}</p>
             )}
             {renderFieldInput(fieldValue)}
           </div>

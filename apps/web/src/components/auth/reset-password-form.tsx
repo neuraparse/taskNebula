@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,7 @@ interface ResetPasswordFormProps {
 }
 
 export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
+  const t = useTranslations('authExtra');
   const router = useRouter();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -32,12 +34,12 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
     setError('');
 
     if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(t('password_min_length'));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('passwords_no_match'));
       return;
     }
 
@@ -53,13 +55,13 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        setError(data?.error || 'Failed to reset password. The link may be invalid or expired.');
+        setError(data?.error || t('reset_failed'));
         return;
       }
 
       setSuccess(true);
     } catch {
-      setError('An error occurred. Please try again.');
+      setError(t('generic_error'));
     } finally {
       setLoading(false);
     }
@@ -67,20 +69,18 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
   if (success) {
     return (
-      <div className="space-y-6 stagger">
-        <div className="text-center space-y-1.5">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Password reset
+      <div className="stagger space-y-6">
+        <div className="space-y-1.5 text-center">
+          <h1 className="text-foreground text-2xl font-semibold tracking-tight">
+            {t('password_reset_title')}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Password reset — redirecting to sign in
-          </p>
+          <p className="text-muted-foreground text-sm">{t('password_reset_redirecting')}</p>
         </div>
 
         <div className="flex items-center justify-center py-2">
           <div
-            className="h-5 w-5 animate-spin rounded-full border-2 border-foreground border-t-transparent"
-            aria-label="Redirecting"
+            className="border-foreground h-5 w-5 animate-spin rounded-full border-2 border-t-transparent"
+            aria-label={t('redirecting')}
           />
         </div>
       </div>
@@ -88,36 +88,38 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   }
 
   return (
-    <div className="space-y-6 stagger">
+    <div className="stagger space-y-6">
       {/* Header */}
-      <div className="text-center space-y-1.5">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Reset password</h1>
-        <p className="text-sm text-muted-foreground">Choose a new password for your account</p>
+      <div className="space-y-1.5 text-center">
+        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
+          {t('reset_password_title')}
+        </h1>
+        <p className="text-muted-foreground text-sm">{t('reset_password_subtitle')}</p>
       </div>
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="newPassword">New password</Label>
+          <Label htmlFor="newPassword">{t('new_password_label')}</Label>
           <Input
             id="newPassword"
             type="password"
-            placeholder="Enter a new password"
+            placeholder={t('new_password_placeholder')}
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             required
             autoComplete="new-password"
             minLength={8}
           />
-          <p className="text-xs text-muted-foreground">Must be at least 8 characters</p>
+          <p className="text-muted-foreground text-xs">{t('password_hint')}</p>
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="confirmPassword">Confirm password</Label>
+          <Label htmlFor="confirmPassword">{t('confirm_password_label')}</Label>
           <Input
             id="confirmPassword"
             type="password"
-            placeholder="Re-enter your new password"
+            placeholder={t('confirm_password_placeholder')}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
@@ -134,22 +136,22 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
         <Button
           type="submit"
-          className="w-full transition-all duration-150 ease-snap"
+          className="ease-snap w-full transition-all duration-150"
           size="lg"
           disabled={loading}
         >
-          {loading ? 'Resetting...' : 'Reset password'}
+          {loading ? t('resetting') : t('reset_password_submit')}
         </Button>
       </form>
 
       {/* Back to Sign In */}
-      <p className="text-center text-sm text-muted-foreground">
-        Remember your password?{' '}
+      <p className="text-muted-foreground text-center text-sm">
+        {t('remember_password')}{' '}
         <Link
           href="/auth/signin"
-          className="font-medium text-foreground hover:text-primary transition-colors duration-150 ease-snap"
+          className="text-foreground hover:text-primary ease-snap font-medium transition-colors duration-150"
         >
-          Sign in
+          {t('signin')}
         </Link>
       </p>
     </div>

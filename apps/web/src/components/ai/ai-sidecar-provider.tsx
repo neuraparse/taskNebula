@@ -1,13 +1,7 @@
 'use client';
 
-import {
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useToast } from '@/hooks/use-toast';
 import {
   SidecarContext,
@@ -33,6 +27,7 @@ interface AiSidecarProviderProps {
  * (handled inside <AiSidecar />).
  */
 export function AiSidecarProvider({ children }: AiSidecarProviderProps) {
+  const t = useTranslations('aiFeatures');
   const { toast } = useToast();
   const [open, setOpenState] = useState(false);
   const [entity, setEntity] = useState<SidecarEntity | null>(null);
@@ -103,9 +98,8 @@ export function AiSidecarProvider({ children }: AiSidecarProviderProps) {
         // the action landed, then still produce an assistant acknowledgement
         // so the thread stays coherent.
         toast({
-          title: 'Build mode (stub)',
-          description:
-            'Entity creation from Sidecar is not wired yet. This prompt has been captured.',
+          title: t('sidecar.buildStubTitle'),
+          description: t('sidecar.buildStubDescription'),
         });
       }
 
@@ -121,12 +115,12 @@ export function AiSidecarProvider({ children }: AiSidecarProviderProps) {
             role: 'assistant',
             content:
               mode === 'ask'
-                ? `(stub) I would answer "${trimmed}" using ${entityLabel} as context.`
-                : `(stub) I would build something based on "${trimmed}" scoped to ${entityLabel}.`,
+                ? t('sidecar.stubAnswer', { prompt: trimmed, entity: entityLabel })
+                : t('sidecar.stubBuild', { prompt: trimmed, entity: entityLabel }),
             thinking:
               mode === 'ask'
-                ? `1. Load context for ${entityLabel}.\n2. Retrieve relevant chunks.\n3. Draft grounded answer.`
-                : `1. Parse intent from "${trimmed}".\n2. Map to entity schema under ${entityLabel}.\n3. Stage a creation plan for the user to confirm.`,
+                ? t('sidecar.stubThinkingAsk', { entity: entityLabel })
+                : t('sidecar.stubThinkingBuild', { prompt: trimmed, entity: entityLabel }),
             createdAt: Date.now(),
           };
           setMessages((prev) => [...prev, reply]);
@@ -135,7 +129,7 @@ export function AiSidecarProvider({ children }: AiSidecarProviderProps) {
         timersRef.current.add(timer);
       });
     },
-    [entity, toast],
+    [entity, toast, t]
   );
 
   const value = useMemo<SidecarContextValue>(
@@ -149,7 +143,7 @@ export function AiSidecarProvider({ children }: AiSidecarProviderProps) {
       sendMessage,
       clear,
     }),
-    [open, setOpen, toggle, entity, messages, sendMessage, clear],
+    [open, setOpen, toggle, entity, messages, sendMessage, clear]
   );
 
   return (

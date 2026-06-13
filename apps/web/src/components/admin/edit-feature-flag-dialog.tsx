@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -40,6 +41,7 @@ interface EditFeatureFlagDialogProps {
 }
 
 export function EditFeatureFlagDialog({ flag, open, onOpenChange }: EditFeatureFlagDialogProps) {
+  const t = useTranslations('adminDialogs');
   const [key, setKey] = useState(flag.key);
   const [name, setName] = useState(flag.name);
   const [description, setDescription] = useState(flag.description || '');
@@ -78,12 +80,15 @@ export function EditFeatureFlagDialog({ flag, open, onOpenChange }: EditFeatureF
           rolloutPercentage,
         },
       });
-      toast({ title: 'Feature flag updated', description: `"${name}" was updated successfully.` });
+      toast({
+        title: t('editFlag.toastUpdatedTitle'),
+        description: t('editFlag.toastUpdatedDescription', { name }),
+      });
       onOpenChange(false);
     } catch (error: any) {
       toast({
-        title: 'Failed to update feature flag',
-        description: error.message || 'Something went wrong.',
+        title: t('editFlag.toastFailedTitle'),
+        description: error.message || t('common.somethingWentWrong'),
         variant: 'destructive',
       });
     }
@@ -100,13 +105,13 @@ export function EditFeatureFlagDialog({ flag, open, onOpenChange }: EditFeatureF
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Edit feature flag</DialogTitle>
-            <DialogDescription>Update flag settings to control feature rollout.</DialogDescription>
+            <DialogTitle>{t('editFlag.title')}</DialogTitle>
+            <DialogDescription>{t('editFlag.description')}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-key">Key</Label>
+              <Label htmlFor="edit-key">{t('flagForm.key')}</Label>
               <Input
                 id="edit-key"
                 value={key}
@@ -114,11 +119,11 @@ export function EditFeatureFlagDialog({ flag, open, onOpenChange }: EditFeatureF
                 pattern="[a-z0-9_-]+"
                 required
               />
-              <p className="text-xs text-muted-foreground">Lowercase, dashes or underscores only.</p>
+              <p className="text-muted-foreground text-xs">{t('flagForm.keyHint')}</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-name">Name</Label>
+              <Label htmlFor="edit-name">{t('flagForm.name')}</Label>
               <Input
                 id="edit-name"
                 value={name}
@@ -128,7 +133,7 @@ export function EditFeatureFlagDialog({ flag, open, onOpenChange }: EditFeatureF
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-description">Description</Label>
+              <Label htmlFor="edit-description">{t('flagForm.descriptionLabel')}</Label>
               <Textarea
                 id="edit-description"
                 value={description}
@@ -139,17 +144,20 @@ export function EditFeatureFlagDialog({ flag, open, onOpenChange }: EditFeatureF
 
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="edit-enabled">Enabled</Label>
-                <p className="text-xs text-muted-foreground">Enable this flag globally.</p>
+                <Label htmlFor="edit-enabled">{t('flagForm.enabled')}</Label>
+                <p className="text-muted-foreground text-xs">{t('editFlag.enabledHint')}</p>
               </div>
               <Switch id="edit-enabled" checked={isEnabled} onCheckedChange={setIsEnabled} />
             </div>
 
             <div className="space-y-2">
-              <Label>Plans</Label>
+              <Label>{t('flagForm.plans')}</Label>
               <div className="grid grid-cols-2 gap-2">
                 {PLANS.map((plan) => (
-                  <label key={plan} className="flex cursor-pointer items-center gap-2 text-sm capitalize">
+                  <label
+                    key={plan}
+                    className="flex cursor-pointer items-center gap-2 text-sm capitalize"
+                  >
                     <Checkbox
                       id={`edit-plan-${plan}`}
                       checked={enabledForPlans.includes(plan)}
@@ -159,22 +167,24 @@ export function EditFeatureFlagDialog({ flag, open, onOpenChange }: EditFeatureF
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground">Leave empty to enable for all plans.</p>
+              <p className="text-muted-foreground text-xs">{t('flagForm.plansHint')}</p>
             </div>
 
             <div className="space-y-2">
-              <Label>Target organizations</Label>
+              <Label>{t('flagForm.targetOrganizations')}</Label>
               <OrganizationMultiSelect
                 value={enabledForOrganizations}
                 onChange={setEnabledForOrganizations}
               />
-              <p className="text-xs text-muted-foreground">
-                Leave empty to enable for all organizations matching the plan + rollout.
+              <p className="text-muted-foreground text-xs">
+                {t('flagForm.targetOrganizationsHint')}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-rollout">Rollout: {rolloutPercentage}%</Label>
+              <Label htmlFor="edit-rollout">
+                {t('flagForm.rollout', { percentage: rolloutPercentage })}
+              </Label>
               <input
                 type="range"
                 id="edit-rollout"
@@ -183,17 +193,17 @@ export function EditFeatureFlagDialog({ flag, open, onOpenChange }: EditFeatureF
                 step="5"
                 value={rolloutPercentage}
                 onChange={(e) => setRolloutPercentage(Number(e.target.value))}
-                className="w-full accent-primary"
+                className="accent-primary w-full"
               />
             </div>
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={updateFeatureFlag.isPending}>
-              {updateFeatureFlag.isPending ? 'Saving...' : 'Save changes'}
+              {updateFeatureFlag.isPending ? t('common.saving') : t('common.saveChanges')}
             </Button>
           </DialogFooter>
         </form>

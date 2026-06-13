@@ -7,6 +7,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Loader2, Sparkles, Wand2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -27,12 +28,8 @@ interface InsightResponse {
   generatedAt?: string;
 }
 
-export function AiInsightCard({
-  metric,
-  period,
-  scopeId,
-  className,
-}: AiInsightCardProps) {
+export function AiInsightCard({ metric, period, scopeId, className }: AiInsightCardProps) {
+  const t = useTranslations('charts');
   const [loading, setLoading] = useState(false);
   const [insight, setInsight] = useState<InsightResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +49,7 @@ export function AiInsightCard({
       const data = (await res.json()) as InsightResponse;
       setInsight(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch insight');
+      setError(err instanceof Error ? err.message : t('insightFetchFailed'));
     } finally {
       setLoading(false);
     }
@@ -63,14 +60,14 @@ export function AiInsightCard({
       type="button"
       onClick={fetchInsight}
       disabled={loading}
-      aria-label={`Get AI insight for ${metric}`}
+      aria-label={t('getInsightFor', { metric })}
       className={cn(
-        'group surface-card flex w-full items-start gap-3 rounded-lg px-3 py-2 text-left transition-all duration-150 ease-snap',
-        'hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'surface-card ease-snap group flex w-full items-start gap-3 rounded-lg px-3 py-2 text-left transition-all duration-150',
+        'hover:bg-muted/40 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
         className
       )}
     >
-      <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+      <span className="bg-primary/10 text-primary mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md">
         {loading ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
         ) : insight ? (
@@ -81,20 +78,19 @@ export function AiInsightCard({
       </span>
       <div className="min-w-0 flex-1">
         {insight ? (
-          <p className="text-xs leading-relaxed text-foreground">
+          <p className="text-foreground text-xs leading-relaxed">
             {insight.summary}
             {insight.cached ? (
-              <span className="ml-2 text-[10px] text-muted-foreground">
-                · cached
-              </span>
+              <span className="text-muted-foreground ml-2 text-[10px]">· {t('cached')}</span>
             ) : null}
           </p>
         ) : error ? (
           <p className="text-xs text-rose-600 dark:text-rose-400">{error}</p>
         ) : (
-          <p className="text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">AI insight</span> —
-            click to explain what changed in this chart.
+          <p className="text-muted-foreground text-xs">
+            {t.rich('insightPrompt', {
+              label: (chunks) => <span className="text-foreground font-medium">{chunks}</span>,
+            })}
           </p>
         )}
       </div>

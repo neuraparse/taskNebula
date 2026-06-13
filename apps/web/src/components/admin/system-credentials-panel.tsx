@@ -1,21 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Check,
-  HardDrive,
-  Loader2,
-  Mail,
-  Radio,
-  Save,
-  ShieldCheck,
-} from 'lucide-react';
+import { Check, HardDrive, Loader2, Mail, Radio, Save, ShieldCheck } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
 /*  Shared types                                                              */
@@ -64,14 +57,15 @@ type StorageResponse = {
 /* -------------------------------------------------------------------------- */
 
 export function SystemCredentialsPanel() {
+  const t = useTranslations('adminPanels');
   return (
     <div className="space-y-4">
       <div className="flex items-start gap-3">
-        <ShieldCheck className="mt-0.5 h-4 w-4 text-muted-foreground" />
-        <p className="text-xs text-muted-foreground max-w-prose">
-          Platform-wide credentials that override environment variables. Secrets are encrypted
-          (AES-256-GCM) before being written to the <code>system_settings</code> table and are
-          only shown as <code>••••last4</code> previews after save.
+        <ShieldCheck className="text-muted-foreground mt-0.5 h-4 w-4" />
+        <p className="text-muted-foreground max-w-prose text-xs">
+          {t.rich('systemCredentials.intro', {
+            code: (chunks) => <code>{chunks}</code>,
+          })}
         </p>
       </div>
       <SmtpSection />
@@ -86,6 +80,7 @@ export function SystemCredentialsPanel() {
 /* -------------------------------------------------------------------------- */
 
 function SmtpSection() {
+  const t = useTranslations('adminPanels');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -93,7 +88,7 @@ function SmtpSection() {
     queryKey: ['admin', 'system', 'smtp'],
     queryFn: async () => {
       const res = await fetch('/api/admin/system/smtp');
-      if (!res.ok) throw new Error('Failed to load SMTP config');
+      if (!res.ok) throw new Error(t('systemCredentials.smtp.loadError'));
       return res.json();
     },
     refetchOnWindowFocus: false,
@@ -131,18 +126,24 @@ function SmtpSection() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      const payload = await res.json().catch(() => ({ error: 'Failed to save SMTP config' }));
-      if (!res.ok) throw new Error(payload.error || 'Failed to save SMTP config');
+      const payload = await res
+        .json()
+        .catch(() => ({ error: t('systemCredentials.smtp.saveError') }));
+      if (!res.ok) throw new Error(payload.error || t('systemCredentials.smtp.saveError'));
       return payload as SmtpResponse;
     },
     onSuccess: () => {
       setPassword('');
       queryClient.invalidateQueries({ queryKey: ['admin', 'system', 'smtp'] });
       queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
-      toast({ title: 'SMTP configuration saved' });
+      toast({ title: t('systemCredentials.smtp.saved') });
     },
     onError: (err: Error) => {
-      toast({ title: 'Save failed', description: err.message, variant: 'destructive' });
+      toast({
+        title: t('systemCredentials.saveFailed'),
+        description: err.message,
+        variant: 'destructive',
+      });
     },
   });
 
@@ -160,30 +161,41 @@ function SmtpSection() {
         source?: string;
       };
       if (!res.ok || !payload.success) {
-        throw new Error(payload.error || 'Failed to send test email');
+        throw new Error(payload.error || t('systemCredentials.smtp.testError'));
       }
       return payload;
     },
     onSuccess: (result) => {
       toast({
-        title: 'Test email sent',
-        description: `Delivered to ${result.recipient} via ${result.source} config.`,
+        title: t('systemCredentials.smtp.testSent'),
+        description: t('systemCredentials.smtp.testSentDescription', {
+          recipient: result.recipient ?? '',
+          source: result.source ?? '',
+        }),
       });
     },
     onError: (err: Error) => {
-      toast({ title: 'Test failed', description: err.message, variant: 'destructive' });
+      toast({
+        title: t('systemCredentials.testFailed'),
+        description: err.message,
+        variant: 'destructive',
+      });
     },
   });
 
   const stored = data?.smtp;
 
   return (
-    <div className="surface-card p-6 space-y-4">
+    <div className="surface-card space-y-4 p-6">
       <SectionHeader
         icon={Mail}
-        title="SMTP"
-        description="Used for invite, notification, and verification emails."
-        stored={stored?.configured ? `••••${stored.passwordPreview || 'configured'}` : null}
+        title={t('systemCredentials.smtp.title')}
+        description={t('systemCredentials.smtp.description')}
+        stored={
+          stored?.configured
+            ? `••••${stored.passwordPreview || t('systemCredentials.configured')}`
+            : null
+        }
         updatedAt={stored?.updatedAt ?? null}
       />
 
@@ -191,10 +203,14 @@ function SmtpSection() {
         <SectionSkeleton />
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Host">
-            <Input value={host} onChange={(e) => setHost(e.target.value)} placeholder="smtp.example.com" />
+          <Field label={t('systemCredentials.smtp.host')}>
+            <Input
+              value={host}
+              onChange={(e) => setHost(e.target.value)}
+              placeholder="smtp.example.com"
+            />
           </Field>
-          <Field label="Port">
+          <Field label={t('systemCredentials.smtp.port')}>
             <Input
               type="number"
               inputMode="numeric"
@@ -203,21 +219,34 @@ function SmtpSection() {
               placeholder="587"
             />
           </Field>
-          <Field label="Username">
-            <Input value={user} onChange={(e) => setUser(e.target.value)} placeholder="noreply@example.com" autoComplete="off" />
+          <Field label={t('systemCredentials.smtp.username')}>
+            <Input
+              value={user}
+              onChange={(e) => setUser(e.target.value)}
+              placeholder="noreply@example.com"
+              autoComplete="off"
+            />
           </Field>
           <Field
-            label={stored?.passwordPreview ? `Password (stored: ${stored.passwordPreview})` : 'Password'}
+            label={
+              stored?.passwordPreview
+                ? t('systemCredentials.smtp.passwordStored', { preview: stored.passwordPreview })
+                : t('systemCredentials.smtp.password')
+            }
           >
             <Input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder={stored?.passwordPreview ? 'Leave blank to keep current' : 'SMTP password'}
+              placeholder={
+                stored?.passwordPreview
+                  ? t('systemCredentials.leaveBlankToKeep')
+                  : t('systemCredentials.smtp.passwordPlaceholder')
+              }
               autoComplete="new-password"
             />
           </Field>
-          <Field label="From address">
+          <Field label={t('systemCredentials.smtp.fromAddress')}>
             <Input
               value={emailFrom}
               onChange={(e) => setEmailFrom(e.target.value)}
@@ -227,7 +256,7 @@ function SmtpSection() {
           <div className="flex items-center gap-3 self-end pb-2">
             <Switch id="smtp-secure" checked={secure} onCheckedChange={setSecure} />
             <Label htmlFor="smtp-secure" className="text-sm">
-              TLS (secure connection)
+              {t('systemCredentials.smtp.tls')}
             </Label>
           </div>
         </div>
@@ -240,21 +269,25 @@ function SmtpSection() {
           ) : (
             <Save className="mr-1.5 h-3.5 w-3.5" />
           )}
-          Save
+          {t('systemCredentials.save')}
         </Button>
         <Button
           size="sm"
           variant="outline"
           onClick={() => testMutation.mutate()}
           disabled={testMutation.isPending || !stored?.configured}
-          title={!stored?.configured ? 'Save SMTP config first' : 'Send a test email to yourself'}
+          title={
+            !stored?.configured
+              ? t('systemCredentials.smtp.saveFirst')
+              : t('systemCredentials.smtp.sendTestTitle')
+          }
         >
           {testMutation.isPending ? (
             <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
           ) : (
             <Mail className="mr-1.5 h-3.5 w-3.5" />
           )}
-          Send test email
+          {t('systemCredentials.smtp.sendTest')}
         </Button>
       </div>
     </div>
@@ -266,6 +299,7 @@ function SmtpSection() {
 /* -------------------------------------------------------------------------- */
 
 function LivekitSection() {
+  const t = useTranslations('adminPanels');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -273,7 +307,7 @@ function LivekitSection() {
     queryKey: ['admin', 'system', 'livekit'],
     queryFn: async () => {
       const res = await fetch('/api/admin/system/livekit');
-      if (!res.ok) throw new Error('Failed to load LiveKit config');
+      if (!res.ok) throw new Error(t('systemCredentials.livekit.loadError'));
       return res.json();
     },
     refetchOnWindowFocus: false,
@@ -300,18 +334,24 @@ function LivekitSection() {
           apiSecret: apiSecret.trim() ? apiSecret : undefined,
         }),
       });
-      const payload = await res.json().catch(() => ({ error: 'Failed to save LiveKit config' }));
-      if (!res.ok) throw new Error(payload.error || 'Failed to save LiveKit config');
+      const payload = await res
+        .json()
+        .catch(() => ({ error: t('systemCredentials.livekit.saveError') }));
+      if (!res.ok) throw new Error(payload.error || t('systemCredentials.livekit.saveError'));
       return payload as LivekitResponse;
     },
     onSuccess: () => {
       setApiSecret('');
       queryClient.invalidateQueries({ queryKey: ['admin', 'system', 'livekit'] });
       queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
-      toast({ title: 'LiveKit configuration saved' });
+      toast({ title: t('systemCredentials.livekit.saved') });
     },
     onError: (err: Error) => {
-      toast({ title: 'Save failed', description: err.message, variant: 'destructive' });
+      toast({
+        title: t('systemCredentials.saveFailed'),
+        description: err.message,
+        variant: 'destructive',
+      });
     },
   });
 
@@ -325,30 +365,43 @@ function LivekitSection() {
         roomName?: string;
       };
       if (!res.ok || !payload.success) {
-        throw new Error(payload.error || 'Failed to mint LiveKit token');
+        throw new Error(payload.error || t('systemCredentials.livekit.testError'));
       }
       return payload;
     },
     onSuccess: (result) => {
       toast({
-        title: 'LiveKit token minted',
-        description: `Room ${result.roomName} · ${result.source} config.`,
+        title: t('systemCredentials.livekit.tokenMinted'),
+        description: t('systemCredentials.livekit.tokenMintedDescription', {
+          roomName: result.roomName ?? '',
+          source: result.source ?? '',
+        }),
       });
     },
     onError: (err: Error) => {
-      toast({ title: 'Test failed', description: err.message, variant: 'destructive' });
+      toast({
+        title: t('systemCredentials.testFailed'),
+        description: err.message,
+        variant: 'destructive',
+      });
     },
   });
 
   const stored = data?.livekit;
 
   return (
-    <div className="surface-card p-6 space-y-4">
+    <div className="surface-card space-y-4 p-6">
       <SectionHeader
         icon={Radio}
-        title="LiveKit"
-        description="Realtime audio/video rooms for in-app calls."
-        stored={stored?.configured ? `secret ${stored.apiSecretPreview}` : null}
+        title={t('systemCredentials.livekit.title')}
+        description={t('systemCredentials.livekit.description')}
+        stored={
+          stored?.configured
+            ? t('systemCredentials.livekit.secretPreview', {
+                preview: stored.apiSecretPreview ?? '',
+              })
+            : null
+        }
         updatedAt={stored?.updatedAt ?? null}
       />
 
@@ -356,14 +409,14 @@ function LivekitSection() {
         <SectionSkeleton />
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Server URL">
+          <Field label={t('systemCredentials.livekit.serverUrl')}>
             <Input
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="wss://livekit.example.com"
             />
           </Field>
-          <Field label="API key">
+          <Field label={t('systemCredentials.livekit.apiKey')}>
             <Input
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
@@ -374,15 +427,21 @@ function LivekitSection() {
           <Field
             label={
               stored?.apiSecretPreview
-                ? `API secret (stored: ${stored.apiSecretPreview})`
-                : 'API secret'
+                ? t('systemCredentials.livekit.apiSecretStored', {
+                    preview: stored.apiSecretPreview,
+                  })
+                : t('systemCredentials.livekit.apiSecret')
             }
           >
             <Input
               type="password"
               value={apiSecret}
               onChange={(e) => setApiSecret(e.target.value)}
-              placeholder={stored?.apiSecretPreview ? 'Leave blank to keep current' : 'LiveKit API secret'}
+              placeholder={
+                stored?.apiSecretPreview
+                  ? t('systemCredentials.leaveBlankToKeep')
+                  : t('systemCredentials.livekit.apiSecretPlaceholder')
+              }
               autoComplete="new-password"
             />
           </Field>
@@ -396,21 +455,25 @@ function LivekitSection() {
           ) : (
             <Save className="mr-1.5 h-3.5 w-3.5" />
           )}
-          Save
+          {t('systemCredentials.save')}
         </Button>
         <Button
           size="sm"
           variant="outline"
           onClick={() => testMutation.mutate()}
           disabled={testMutation.isPending || !stored?.configured}
-          title={!stored?.configured ? 'Save LiveKit config first' : 'Mint a room access token'}
+          title={
+            !stored?.configured
+              ? t('systemCredentials.livekit.saveFirst')
+              : t('systemCredentials.livekit.mintTitle')
+          }
         >
           {testMutation.isPending ? (
             <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
           ) : (
             <Radio className="mr-1.5 h-3.5 w-3.5" />
           )}
-          Mint test token
+          {t('systemCredentials.livekit.mintTest')}
         </Button>
       </div>
     </div>
@@ -422,6 +485,7 @@ function LivekitSection() {
 /* -------------------------------------------------------------------------- */
 
 function StorageSection() {
+  const t = useTranslations('adminPanels');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -429,7 +493,7 @@ function StorageSection() {
     queryKey: ['admin', 'system', 'storage'],
     queryFn: async () => {
       const res = await fetch('/api/admin/system/storage');
-      if (!res.ok) throw new Error('Failed to load storage config');
+      if (!res.ok) throw new Error(t('systemCredentials.storage.loadError'));
       return res.json();
     },
     refetchOnWindowFocus: false,
@@ -462,30 +526,36 @@ function StorageSection() {
           s3SecretKey: s3SecretKey.trim() ? s3SecretKey : undefined,
         }),
       });
-      const payload = await res.json().catch(() => ({ error: 'Failed to save storage config' }));
-      if (!res.ok) throw new Error(payload.error || 'Failed to save storage config');
+      const payload = await res
+        .json()
+        .catch(() => ({ error: t('systemCredentials.storage.saveError') }));
+      if (!res.ok) throw new Error(payload.error || t('systemCredentials.storage.saveError'));
       return payload as StorageResponse;
     },
     onSuccess: () => {
       setS3SecretKey('');
       queryClient.invalidateQueries({ queryKey: ['admin', 'system', 'storage'] });
       queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
-      toast({ title: 'Storage configuration saved' });
+      toast({ title: t('systemCredentials.storage.saved') });
     },
     onError: (err: Error) => {
-      toast({ title: 'Save failed', description: err.message, variant: 'destructive' });
+      toast({
+        title: t('systemCredentials.saveFailed'),
+        description: err.message,
+        variant: 'destructive',
+      });
     },
   });
 
   const stored = data?.storage;
 
   return (
-    <div className="surface-card p-6 space-y-4">
+    <div className="surface-card space-y-4 p-6">
       <SectionHeader
         icon={HardDrive}
-        title="Storage"
-        description="Local uploads directory or an S3-compatible bucket for attachments."
-        stored={stored?.configured ? 'saved' : null}
+        title={t('systemCredentials.storage.title')}
+        description={t('systemCredentials.storage.description')}
+        stored={stored?.configured ? t('systemCredentials.storage.savedBadge') : null}
         updatedAt={stored?.updatedAt ?? null}
       />
 
@@ -493,20 +563,28 @@ function StorageSection() {
         <SectionSkeleton />
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Uploads directory (local)">
+          <Field label={t('systemCredentials.storage.uploadsDir')}>
             <Input
               value={uploadsDir}
               onChange={(e) => setUploadsDir(e.target.value)}
               placeholder="/var/tasknebula/uploads"
             />
           </Field>
-          <Field label="S3 bucket">
-            <Input value={s3Bucket} onChange={(e) => setS3Bucket(e.target.value)} placeholder="tasknebula-prod" />
+          <Field label={t('systemCredentials.storage.s3Bucket')}>
+            <Input
+              value={s3Bucket}
+              onChange={(e) => setS3Bucket(e.target.value)}
+              placeholder="tasknebula-prod"
+            />
           </Field>
-          <Field label="S3 region">
-            <Input value={s3Region} onChange={(e) => setS3Region(e.target.value)} placeholder="us-east-1" />
+          <Field label={t('systemCredentials.storage.s3Region')}>
+            <Input
+              value={s3Region}
+              onChange={(e) => setS3Region(e.target.value)}
+              placeholder="us-east-1"
+            />
           </Field>
-          <Field label="S3 access key">
+          <Field label={t('systemCredentials.storage.s3AccessKey')}>
             <Input
               value={s3AccessKey}
               onChange={(e) => setS3AccessKey(e.target.value)}
@@ -517,15 +595,21 @@ function StorageSection() {
           <Field
             label={
               stored?.s3SecretKeyPreview
-                ? `S3 secret key (stored: ${stored.s3SecretKeyPreview})`
-                : 'S3 secret key'
+                ? t('systemCredentials.storage.s3SecretKeyStored', {
+                    preview: stored.s3SecretKeyPreview,
+                  })
+                : t('systemCredentials.storage.s3SecretKey')
             }
           >
             <Input
               type="password"
               value={s3SecretKey}
               onChange={(e) => setS3SecretKey(e.target.value)}
-              placeholder={stored?.s3SecretKeyPreview ? 'Leave blank to keep current' : 'S3 secret'}
+              placeholder={
+                stored?.s3SecretKeyPreview
+                  ? t('systemCredentials.leaveBlankToKeep')
+                  : t('systemCredentials.storage.s3SecretPlaceholder')
+              }
               autoComplete="new-password"
             />
           </Field>
@@ -539,7 +623,7 @@ function StorageSection() {
           ) : (
             <Save className="mr-1.5 h-3.5 w-3.5" />
           )}
-          Save
+          {t('systemCredentials.save')}
         </Button>
       </div>
     </div>
@@ -563,27 +647,30 @@ function SectionHeader({
   stored: string | null;
   updatedAt: string | null;
 }) {
+  const t = useTranslations('adminPanels');
   return (
     <div className="flex items-start justify-between gap-3">
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <Icon className="h-4 w-4 text-muted-foreground" />
+          <Icon className="text-muted-foreground h-4 w-4" />
           <h3 className="text-sm font-semibold">{title}</h3>
         </div>
-        <p className="text-xs text-muted-foreground max-w-prose">{description}</p>
+        <p className="text-muted-foreground max-w-prose text-xs">{description}</p>
       </div>
-      <div className="flex flex-col items-end gap-1 shrink-0">
+      <div className="flex shrink-0 flex-col items-end gap-1">
         {stored ? (
           <span className="chip text-[11px]">
             <Check className="h-3 w-3" />
             {stored}
           </span>
         ) : (
-          <span className="chip text-[11px] text-muted-foreground">Not configured</span>
+          <span className="chip text-muted-foreground text-[11px]">
+            {t('systemCredentials.notConfigured')}
+          </span>
         )}
         {updatedAt && (
-          <span className="text-[11px] text-muted-foreground">
-            Updated {new Date(updatedAt).toLocaleDateString()}
+          <span className="text-muted-foreground text-[11px]">
+            {t('systemCredentials.updated', { date: new Date(updatedAt).toLocaleDateString() })}
           </span>
         )}
       </div>
@@ -601,10 +688,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function SectionSkeleton() {
+  const t = useTranslations('adminPanels');
   return (
-    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+    <div className="text-muted-foreground flex items-center gap-2 text-xs">
       <Loader2 className="h-3.5 w-3.5 animate-spin" />
-      Loading…
+      {t('systemCredentials.loading')}
     </div>
   );
 }

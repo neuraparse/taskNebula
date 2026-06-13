@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,10 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import type {
-  CustomProperty,
-  CustomPropertyType,
-} from '@/lib/work-item-types/use-work-item-types';
+import type { CustomProperty, CustomPropertyType } from '@/lib/work-item-types/use-work-item-types';
 import {
   Calendar,
   ChevronDown,
@@ -35,29 +33,36 @@ interface CustomPropertyEditorProps {
   onRemove: () => void;
 }
 
+type PropertyTypeI18nKey =
+  | 'prop_type_text'
+  | 'prop_type_number'
+  | 'prop_type_dropdown'
+  | 'prop_type_date'
+  | 'prop_type_member'
+  | 'prop_type_url'
+  | 'prop_type_boolean';
+
 interface PropertyTypeMeta {
   value: CustomPropertyType;
-  label: string;
+  i18nKey: PropertyTypeI18nKey;
   Icon: React.ComponentType<{ className?: string }>;
 }
 
-const TEXT_META: PropertyTypeMeta = { value: 'text', label: 'Text', Icon: Type };
+const TEXT_META: PropertyTypeMeta = { value: 'text', i18nKey: 'prop_type_text', Icon: Type };
 
 const PROPERTY_TYPE_META: ReadonlyArray<PropertyTypeMeta> = [
   TEXT_META,
-  { value: 'number', label: 'Number', Icon: Hash },
-  { value: 'dropdown', label: 'Dropdown', Icon: ChevronDown },
-  { value: 'date', label: 'Date', Icon: Calendar },
-  { value: 'member', label: 'Member', Icon: User },
-  { value: 'url', label: 'URL', Icon: LinkIcon },
-  { value: 'boolean', label: 'Boolean', Icon: ToggleLeft },
+  { value: 'number', i18nKey: 'prop_type_number', Icon: Hash },
+  { value: 'dropdown', i18nKey: 'prop_type_dropdown', Icon: ChevronDown },
+  { value: 'date', i18nKey: 'prop_type_date', Icon: Calendar },
+  { value: 'member', i18nKey: 'prop_type_member', Icon: User },
+  { value: 'url', i18nKey: 'prop_type_url', Icon: LinkIcon },
+  { value: 'boolean', i18nKey: 'prop_type_boolean', Icon: ToggleLeft },
 ];
 
-export function CustomPropertyEditor({
-  property,
-  onChange,
-  onRemove,
-}: CustomPropertyEditorProps) {
+export function CustomPropertyEditor({ property, onChange, onRemove }: CustomPropertyEditorProps) {
+  const t = useTranslations('settingsProject');
+
   const handleNameChange = (name: string) => {
     onChange({ ...property, name });
   };
@@ -67,7 +72,10 @@ export function CustomPropertyEditor({
     if (nextType === property.type) return;
     const next: CustomProperty = { ...property, type: nextType };
     if (nextType === 'dropdown') {
-      next.options = property.options && property.options.length > 0 ? property.options : ['Option 1'];
+      next.options =
+        property.options && property.options.length > 0
+          ? property.options
+          : [t('option_n', { index: 1 })];
     } else {
       delete next.options;
     }
@@ -82,7 +90,7 @@ export function CustomPropertyEditor({
     const options = property.options ?? [];
     onChange({
       ...property,
-      options: [...options, `Option ${options.length + 1}`],
+      options: [...options, t('option_n', { index: options.length + 1 })],
     });
   };
 
@@ -98,42 +106,41 @@ export function CustomPropertyEditor({
     onChange({ ...property, options });
   };
 
-  const selectedMeta =
-    PROPERTY_TYPE_META.find((meta) => meta.value === property.type) ?? TEXT_META;
+  const selectedMeta = PROPERTY_TYPE_META.find((meta) => meta.value === property.type) ?? TEXT_META;
   const SelectedIcon = selectedMeta.Icon;
 
   return (
-    <div className="rounded-md border border-border bg-card/50 p-3 space-y-3">
+    <div className="border-border bg-card/50 space-y-3 rounded-md border p-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="flex-1 space-y-1.5">
           <Label htmlFor={`prop-name-${property.id}`} className="text-xs">
-            Property name
+            {t('property_name_label')}
           </Label>
           <Input
             id={`prop-name-${property.id}`}
             value={property.name}
             onChange={(e) => handleNameChange(e.target.value)}
-            placeholder="e.g. Severity"
+            placeholder={t('property_name_placeholder')}
           />
         </div>
 
-        <div className="sm:w-44 space-y-1.5">
-          <Label className="text-xs">Type</Label>
+        <div className="space-y-1.5 sm:w-44">
+          <Label className="text-xs">{t('property_type_label')}</Label>
           <Select value={property.type} onValueChange={handleTypeChange}>
             <SelectTrigger>
               <SelectValue>
                 <span className="inline-flex items-center gap-2">
-                  <SelectedIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                  {selectedMeta.label}
+                  <SelectedIcon className="text-muted-foreground h-3.5 w-3.5" />
+                  {t(selectedMeta.i18nKey)}
                 </span>
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {PROPERTY_TYPE_META.map(({ value, label, Icon }) => (
+              {PROPERTY_TYPE_META.map(({ value, i18nKey, Icon }) => (
                 <SelectItem key={value} value={value}>
                   <span className="inline-flex items-center gap-2">
-                    <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                    {label}
+                    <Icon className="text-muted-foreground h-3.5 w-3.5" />
+                    {t(i18nKey)}
                   </span>
                 </SelectItem>
               ))}
@@ -147,8 +154,8 @@ export function CustomPropertyEditor({
             checked={property.required}
             onCheckedChange={handleRequiredChange}
           />
-          <Label htmlFor={`prop-required-${property.id}`} className="text-xs cursor-pointer">
-            Required
+          <Label htmlFor={`prop-required-${property.id}`} className="cursor-pointer text-xs">
+            {t('property_required_label')}
           </Label>
         </div>
 
@@ -156,20 +163,20 @@ export function CustomPropertyEditor({
           type="button"
           variant="ghost"
           size="icon"
-          className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+          className="text-muted-foreground hover:text-destructive h-8 w-8 shrink-0"
           onClick={onRemove}
-          aria-label="Remove property"
+          aria-label={t('remove_property')}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
 
       {property.type === 'dropdown' ? (
-        <div className="space-y-2 rounded-md bg-muted/40 p-2">
+        <div className="bg-muted/40 space-y-2 rounded-md p-2">
           <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs font-medium">
               <List className="h-3.5 w-3.5" />
-              Options
+              {t('options_label')}
             </span>
             <Button
               type="button"
@@ -179,7 +186,7 @@ export function CustomPropertyEditor({
               onClick={handleAddOption}
             >
               <Plus className="mr-1 h-3 w-3" />
-              Add option
+              {t('add_option')}
             </Button>
           </div>
           <div className="space-y-1.5">
@@ -188,16 +195,16 @@ export function CustomPropertyEditor({
                 <Input
                   value={option}
                   onChange={(e) => handleOptionChange(index, e.target.value)}
-                  placeholder={`Option ${index + 1}`}
+                  placeholder={t('option_n', { index: index + 1 })}
                   className="h-8"
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                  className="text-muted-foreground hover:text-destructive h-7 w-7"
                   onClick={() => handleRemoveOption(index)}
-                  aria-label="Remove option"
+                  aria-label={t('remove_option')}
                   disabled={(property.options?.length ?? 0) <= 1}
                 >
                   <X className="h-3.5 w-3.5" />

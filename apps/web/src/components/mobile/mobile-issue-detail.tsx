@@ -3,23 +3,11 @@
 import { Issue } from '@tasknebula/types';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
-import {
-  ArrowLeft,
-  MoreVertical,
-  User,
-  Calendar,
-  Tag,
-  MessageSquare,
-} from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { ArrowLeft, MoreVertical, User, Calendar, Tag, MessageSquare } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 interface MobileIssueDetailProps {
   issue: Issue;
@@ -27,18 +15,19 @@ interface MobileIssueDetailProps {
 }
 
 export function MobileIssueDetail({ issue, onBack }: MobileIssueDetailProps) {
+  const t = useTranslations('mobileNav');
   return (
-    <div className="flex h-full flex-col bg-background">
+    <div className="bg-background flex h-full flex-col">
       {/* Compact header */}
-      <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur">
+      <div className="border-border bg-background/80 sticky top-0 z-10 border-b backdrop-blur">
         <div className="flex h-14 items-center justify-between px-3">
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9 transition-all duration-150 ease-snap"
+            className="ease-snap h-9 w-9 transition-all duration-150"
             onClick={onBack}
             asChild={!onBack}
-            aria-label="Go back"
+            aria-label={t('goBack')}
           >
             {onBack ? (
               <ArrowLeft className="h-4 w-4" />
@@ -49,38 +38,35 @@ export function MobileIssueDetail({ issue, onBack }: MobileIssueDetailProps) {
             )}
           </Button>
 
-          <span className="font-mono text-xs text-muted-foreground">{issue.key}</span>
+          <span className="text-muted-foreground font-mono text-xs">{issue.key}</span>
 
           <Sheet>
             <SheetTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 transition-all duration-150 ease-snap"
-                aria-label="More actions"
+                className="ease-snap h-9 w-9 transition-all duration-150"
+                aria-label={t('moreActions')}
               >
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </SheetTrigger>
             <SheetContent side="bottom">
               <SheetHeader>
-                <SheetTitle>Actions</SheetTitle>
+                <SheetTitle>{t('actions')}</SheetTitle>
               </SheetHeader>
               <div className="space-y-2 py-4">
                 <Button variant="outline" className="w-full justify-start">
-                  Edit Issue
+                  {t('editIssue')}
                 </Button>
                 <Button variant="outline" className="w-full justify-start">
-                  Assign to Me
+                  {t('assignToMe')}
                 </Button>
                 <Button variant="outline" className="w-full justify-start">
-                  Change Status
+                  {t('changeStatus')}
                 </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-destructive"
-                >
-                  Delete Issue
+                <Button variant="outline" className="text-destructive w-full justify-start">
+                  {t('deleteIssue')}
                 </Button>
               </div>
             </SheetContent>
@@ -103,17 +89,15 @@ export function MobileIssueDetail({ issue, onBack }: MobileIssueDetailProps) {
 
           {/* Description */}
           {issue.description && (
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {issue.description}
-            </p>
+            <p className="text-muted-foreground text-sm leading-relaxed">{issue.description}</p>
           )}
 
           {/* Details */}
-          <div className="space-y-3 border-t border-border pt-4">
+          <div className="border-border space-y-3 border-t pt-4">
             {/* Assignee */}
             <div className="flex items-center gap-3">
-              <User className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Assignee</span>
+              <User className="text-muted-foreground h-4 w-4 shrink-0" />
+              <span className="text-muted-foreground text-sm">{t('assignee')}</span>
               <div className="ml-auto flex items-center gap-2">
                 {issue.assigneeId ? (
                   <>
@@ -121,10 +105,10 @@ export function MobileIssueDetail({ issue, onBack }: MobileIssueDetailProps) {
                       <AvatarImage src={undefined} />
                       <AvatarFallback className="text-[9px]">?</AvatarFallback>
                     </Avatar>
-                    <span className="text-sm">Assigned</span>
+                    <span className="text-sm">{t('assigned')}</span>
                   </>
                 ) : (
-                  <span className="text-sm text-muted-foreground">Unassigned</span>
+                  <span className="text-muted-foreground text-sm">{t('unassigned')}</span>
                 )}
               </div>
             </div>
@@ -132,22 +116,22 @@ export function MobileIssueDetail({ issue, onBack }: MobileIssueDetailProps) {
             {/* Reporter */}
             {issue.reporterId && (
               <div className="flex items-center gap-3">
-                <User className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Reporter</span>
+                <User className="text-muted-foreground h-4 w-4 shrink-0" />
+                <span className="text-muted-foreground text-sm">{t('reporter')}</span>
                 <div className="ml-auto flex items-center gap-2">
                   <Avatar className="h-5 w-5">
                     <AvatarImage src={undefined} />
                     <AvatarFallback className="text-[9px]">?</AvatarFallback>
                   </Avatar>
-                  <span className="text-sm">Reporter</span>
+                  <span className="text-sm">{t('reporter')}</span>
                 </div>
               </div>
             )}
 
             {/* Created */}
             <div className="flex items-center gap-3">
-              <Calendar className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Created</span>
+              <Calendar className="text-muted-foreground h-4 w-4 shrink-0" />
+              <span className="text-muted-foreground text-sm">{t('created')}</span>
               <span className="ml-auto text-sm">
                 {formatDistanceToNow(new Date(issue.createdAt), { addSuffix: true })}
               </span>
@@ -156,8 +140,8 @@ export function MobileIssueDetail({ issue, onBack }: MobileIssueDetailProps) {
             {/* Labels */}
             {issue.labels && issue.labels.length > 0 && (
               <div className="flex items-start gap-3">
-                <Tag className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Labels</span>
+                <Tag className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
+                <span className="text-muted-foreground text-sm">{t('labels')}</span>
                 <div className="ml-auto flex flex-wrap justify-end gap-1">
                   {issue.labels.map((label) => (
                     <span key={label} className="chip text-xs">
@@ -172,10 +156,10 @@ export function MobileIssueDetail({ issue, onBack }: MobileIssueDetailProps) {
       </div>
 
       {/* Bottom action */}
-      <div className="border-t border-border p-3">
+      <div className="border-border border-t p-3">
         <Button className="w-full">
           <MessageSquare className="mr-2 h-4 w-4" />
-          Add Comment
+          {t('addComment')}
         </Button>
       </div>
     </div>

@@ -1,12 +1,16 @@
 import { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { ProjectsClient } from './projects-client';
 
-export const metadata: Metadata = {
-  title: 'Projects | TaskNebula',
-  description: 'View and manage all your projects',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('pagesProjects');
+  return {
+    title: t('metaTitle'),
+    description: t('metaDescription'),
+  };
+}
 
 export const dynamic = 'force-dynamic';
 

@@ -7,6 +7,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useState } from 'react';
 import { CreateIssueModal } from '@/components/issues/create-issue-modal';
+import { useTranslations } from 'next-intl';
 
 interface KanbanColumnProps {
   column: {
@@ -30,6 +31,7 @@ export function KanbanColumn({
   issueIds = [],
   children,
 }: KanbanColumnProps) {
+  const t = useTranslations('kanban');
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
     data: { type: 'column', statusId, category: column.category },
@@ -59,7 +61,7 @@ export function KanbanColumn({
             size="sm"
             className="text-muted-foreground hover:text-foreground h-7 w-7 p-0"
             onClick={() => setCreateModalOpen(true)}
-            aria-label="Add issue"
+            aria-label={t('column.addIssue')}
           >
             <Plus className="h-3.5 w-3.5" />
           </Button>
@@ -80,11 +82,14 @@ export function KanbanColumn({
                 <Inbox className="text-muted-foreground h-4 w-4" aria-hidden />
               </div>
               <div className="space-y-0.5">
-                <p className="text-foreground text-xs font-medium">No issues here yet</p>
+                <p className="text-foreground text-xs font-medium">{t('column.emptyTitle')}</p>
                 <p className="text-muted-foreground text-[11px]">
-                  Drop work into{' '}
-                  <span className="text-foreground/80 font-medium">{column.name}</span> or create
-                  one.
+                  {t.rich('column.emptyBody', {
+                    name: column.name,
+                    strong: (chunks) => (
+                      <span className="text-foreground/80 font-medium">{chunks}</span>
+                    ),
+                  })}
                 </p>
               </div>
               <div className="flex w-full flex-col items-stretch gap-1.5">
@@ -95,7 +100,7 @@ export function KanbanColumn({
                   onClick={() => setCreateModalOpen(true)}
                 >
                   <Plus className="mr-1 h-3 w-3" />
-                  New issue
+                  {t('column.newIssue')}
                 </Button>
                 <Button
                   variant="ghost"
@@ -111,7 +116,7 @@ export function KanbanColumn({
                   }}
                 >
                   <Sparkles className="mr-1 h-3 w-3" />
-                  Generate with AI
+                  {t('column.generateWithAi')}
                 </Button>
               </div>
             </div>

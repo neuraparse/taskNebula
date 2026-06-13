@@ -1,14 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Eye, EyeOff } from 'lucide-react';
 import { useUser } from '@/lib/hooks/use-user';
 import { cn } from '@/lib/utils';
@@ -19,6 +16,7 @@ interface WatchersListProps {
 }
 
 export function WatchersList({ issueId, projectId }: WatchersListProps) {
+  const t = useTranslations('projectConfig');
   const { user } = useUser();
   const queryClient = useQueryClient();
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -95,8 +93,8 @@ export function WatchersList({ issueId, projectId }: WatchersListProps) {
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="flex items-center gap-2 rounded-md px-1 py-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors duration-150 ease-snap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              aria-label={`${watchers.length} ${watchers.length === 1 ? 'watcher' : 'watchers'} — click to view`}
+              className="text-muted-foreground hover:text-foreground ease-snap focus-visible:ring-ring flex items-center gap-2 rounded-md px-1 py-0.5 text-xs transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+              aria-label={t('watchers_count_label', { count: watchers.length })}
             >
               {/* Overlapping avatar stack */}
               {watchers.length > 0 && (
@@ -104,16 +102,16 @@ export function WatchersList({ issueId, projectId }: WatchersListProps) {
                   {visibleAvatars.map((watcher: any) => (
                     <Avatar
                       key={watcher.id}
-                      className="-ml-2 first:ml-0 h-5 w-5 ring-2 ring-background"
+                      className="ring-background -ml-2 h-5 w-5 ring-2 first:ml-0"
                     >
                       <AvatarImage src={watcher.user.image} alt={watcher.user.name ?? ''} />
-                      <AvatarFallback className="text-[9px] bg-muted text-muted-foreground">
+                      <AvatarFallback className="bg-muted text-muted-foreground text-[9px]">
                         {watcher.user.name?.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
                   ))}
                   {overflowCount > 0 && (
-                    <span className="-ml-2 flex h-5 w-5 items-center justify-center rounded-full ring-2 ring-background bg-muted text-[9px] font-semibold text-muted-foreground">
+                    <span className="ring-background bg-muted text-muted-foreground -ml-2 flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-semibold ring-2">
                       +{overflowCount}
                     </span>
                   )}
@@ -121,30 +119,30 @@ export function WatchersList({ issueId, projectId }: WatchersListProps) {
               )}
               <span>
                 {isLoading
-                  ? 'Loading…'
+                  ? t('loading')
                   : watchers.length === 0
-                    ? 'No watchers'
-                    : `${watchers.length} watching`}
+                    ? t('no_watchers')
+                    : t('watching_count', { count: watchers.length })}
               </span>
             </button>
           </PopoverTrigger>
 
           <PopoverContent
             align="start"
-            className="surface-card w-64 overflow-hidden rounded-lg p-0 shadow-md animate-pop-in"
+            className="surface-card animate-pop-in w-64 overflow-hidden rounded-lg p-0 shadow-md"
           >
-            <div className="border-b border-border/60 px-4 py-2.5">
-              <span className="kicker">Watchers</span>
+            <div className="border-border/60 border-b px-4 py-2.5">
+              <span className="kicker">{t('watchers')}</span>
             </div>
             {watchers.length === 0 ? (
-              <p className="px-4 py-4 text-sm text-muted-foreground">No one is watching yet.</p>
+              <p className="text-muted-foreground px-4 py-4 text-sm">{t('no_one_watching')}</p>
             ) : (
               <ul role="list" className="stagger">
                 {watchers.map((watcher: any) => (
                   <li key={watcher.id} className="flex items-center gap-2.5 px-3 py-1.5">
                     <Avatar className="h-6 w-6 shrink-0">
                       <AvatarImage src={watcher.user.image} alt={watcher.user.name ?? ''} />
-                      <AvatarFallback className="bg-muted text-xs text-muted-foreground">
+                      <AvatarFallback className="bg-muted text-muted-foreground text-xs">
                         {watcher.user.name?.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
@@ -164,19 +162,15 @@ export function WatchersList({ issueId, projectId }: WatchersListProps) {
         variant={isWatching ? 'outline' : 'ghost'}
         size="sm"
         className={cn(
-          'h-7 px-2.5 text-xs gap-1.5 rounded-md transition-colors duration-150 ease-snap',
+          'ease-snap h-7 gap-1.5 rounded-md px-2.5 text-xs transition-colors duration-150',
           isWatching && 'text-primary border-primary/30'
         )}
         onClick={handleToggleWatch}
         disabled={isMutating}
-        aria-label={isWatching ? 'Stop watching' : 'Watch'}
+        aria-label={isWatching ? t('stop_watching') : t('watch')}
       >
-        {isWatching ? (
-          <EyeOff className="h-3.5 w-3.5" />
-        ) : (
-          <Eye className="h-3.5 w-3.5" />
-        )}
-        {isWatching ? 'Unwatch' : 'Watch'}
+        {isWatching ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+        {isWatching ? t('unwatch') : t('watch')}
       </Button>
     </div>
   );

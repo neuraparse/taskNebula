@@ -2,6 +2,7 @@
 // QUAL-21 TS-strict-migration: file untouched intentionally; surfaces 8 errors
 // under `exactOptionalPropertyTypes`. See docs/TS_STRICT_MIGRATION.md.
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useOrganization } from '@/lib/hooks/use-organization';
@@ -86,6 +87,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
   const queryClient = useQueryClient();
   const { currentOrganizationId } = useOrganization();
   const { toast } = useToast();
+  const t = useTranslations('collab');
 
   const [pageSearch, setPageSearch] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -149,7 +151,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
     createTargetSpace?.permissions?.canCreate ??
     spaces?.some((space) => space.permissions?.canCreate) ??
     Boolean(projectId || currentOrganizationId);
-  const scopeLabel = projectId ? 'Project knowledge base' : 'Organization knowledge base';
+  const scopeLabel = projectId ? t('shell.scope.project') : t('shell.scope.organization');
 
   const filteredPages = pageSearch.trim()
     ? allPages.filter((page) => {
@@ -247,8 +249,8 @@ export function DocsShell({ projectId }: DocsShellProps) {
 
     if (!canCreateInContext) {
       toast({
-        title: 'Page creation is disabled',
-        description: 'You need edit access in this docs space to create a page.',
+        title: t('shell.toast.createDisabledTitle'),
+        description: t('shell.toast.createDisabledBody'),
         variant: 'destructive',
       });
       return;
@@ -271,13 +273,13 @@ export function DocsShell({ projectId }: DocsShellProps) {
       setNewPageParentId(null);
       updateQueryParams({ pageId: page.id, spaceId: page.spaceId });
       toast({
-        title: 'Page created',
-        description: `"${page.title}" is ready for editing.`,
+        title: t('shell.toast.pageCreated'),
+        description: t('shell.toast.pageCreatedBody', { title: page.title }),
       });
     } catch (error) {
       toast({
-        title: 'Failed to create page',
-        description: error instanceof Error ? error.message : 'Something went wrong',
+        title: t('shell.toast.pageCreateFailed'),
+        description: error instanceof Error ? error.message : t('common.somethingWrong'),
         variant: 'destructive',
       });
     }
@@ -286,8 +288,8 @@ export function DocsShell({ projectId }: DocsShellProps) {
   function openCreateDialog(parentId: string | null = null) {
     if (!canCreateInContext) {
       toast({
-        title: 'Page creation is disabled',
-        description: 'You need edit access in this docs space to create a page.',
+        title: t('shell.toast.createDisabledTitle'),
+        description: t('shell.toast.createDisabledBody'),
         variant: 'destructive',
       });
       return;
@@ -318,7 +320,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
     expectedRevision: number;
   }): Promise<DocumentPage> {
     if (!selectedPageId) {
-      throw new Error('Open a page before saving');
+      throw new Error(t('shell.error.openPageBeforeSaving'));
     }
 
     setSaveError(null);
@@ -329,7 +331,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
       });
       return page;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to save page';
+      const message = error instanceof Error ? error.message : t('shell.error.saveFailed');
       setSaveError(message);
 
       const maybeError = error as Error & { status?: number };
@@ -339,7 +341,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
       }
 
       toast({
-        title: 'Save failed',
+        title: t('shell.toast.saveFailed'),
         description: message,
         variant: 'destructive',
       });
@@ -356,13 +358,13 @@ export function DocsShell({ projectId }: DocsShellProps) {
       await restorePage.mutateAsync({ pageId: selectedPageId, revisionId });
       setSaveError(null);
       toast({
-        title: 'Revision restored',
-        description: 'A new head revision was created from the selected history entry.',
+        title: t('shell.toast.revisionRestored'),
+        description: t('shell.toast.revisionRestoredBody'),
       });
     } catch (error) {
       toast({
-        title: 'Restore failed',
-        description: error instanceof Error ? error.message : 'Unable to restore revision',
+        title: t('shell.toast.restoreFailed'),
+        description: error instanceof Error ? error.message : t('shell.error.restoreFailed'),
         variant: 'destructive',
       });
     }
@@ -382,20 +384,20 @@ export function DocsShell({ projectId }: DocsShellProps) {
 
       const result = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to link issue');
+        throw new Error(result.error || t('shell.error.linkIssueFailed'));
       }
 
       setIssueToAttach('');
       queryClient.invalidateQueries({ queryKey: ['document-page', selectedPageId] });
       queryClient.invalidateQueries({ queryKey: ['issue-docs', issueToAttach] });
       toast({
-        title: 'Task linked',
-        description: 'The selected task is now related to this document.',
+        title: t('shell.toast.taskLinked'),
+        description: t('shell.toast.taskLinkedBody'),
       });
     } catch (error) {
       toast({
-        title: 'Could not link task',
-        description: error instanceof Error ? error.message : 'Something went wrong',
+        title: t('shell.toast.taskLinkFailed'),
+        description: error instanceof Error ? error.message : t('common.somethingWrong'),
         variant: 'destructive',
       });
     }
@@ -413,19 +415,19 @@ export function DocsShell({ projectId }: DocsShellProps) {
 
       const result = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to unlink task');
+        throw new Error(result.error || t('shell.error.unlinkTaskFailed'));
       }
 
       queryClient.invalidateQueries({ queryKey: ['document-page', selectedPageId] });
       queryClient.invalidateQueries({ queryKey: ['issue-docs', issueId] });
       toast({
-        title: 'Task unlinked',
-        description: 'The task was removed from this document.',
+        title: t('shell.toast.taskUnlinked'),
+        description: t('shell.toast.taskUnlinkedBody'),
       });
     } catch (error) {
       toast({
-        title: 'Could not unlink task',
-        description: error instanceof Error ? error.message : 'Something went wrong',
+        title: t('shell.toast.taskUnlinkFailed'),
+        description: error instanceof Error ? error.message : t('common.somethingWrong'),
         variant: 'destructive',
       });
     }
@@ -433,7 +435,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
 
   async function handleUploadImage(file: File) {
     if (!selectedPageId) {
-      throw new Error('Open a page before uploading an image');
+      throw new Error(t('shell.error.openPageBeforeUpload'));
     }
 
     const result = await uploadAttachment.mutateAsync(file);
@@ -455,17 +457,17 @@ export function DocsShell({ projectId }: DocsShellProps) {
       if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(value);
       } else if (typeof window !== 'undefined') {
-        window.prompt('Copy this page link', value);
+        window.prompt(t('shell.share.promptCopyPageLink'), value);
       }
 
       toast({
-        title: 'Page link copied',
-        description: 'Only signed-in members with access to this doc can open it.',
+        title: t('shell.toast.pageLinkCopied'),
+        description: t('shell.toast.pageLinkCopiedBody'),
       });
     } catch {
       toast({
-        title: 'Could not copy page link',
-        description: 'Clipboard access was blocked in this browser.',
+        title: t('shell.toast.pageLinkCopyFailed'),
+        description: t('shell.toast.clipboardBlocked'),
         variant: 'destructive',
       });
     }
@@ -485,18 +487,17 @@ export function DocsShell({ projectId }: DocsShellProps) {
       if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(value);
       } else if (typeof window !== 'undefined') {
-        window.prompt('Copy this public page link', value);
+        window.prompt(t('shell.share.promptCopyPublicLink'), value);
       }
 
       toast({
-        title: 'Public link copied',
-        description:
-          'This link can be opened without signing in while public access stays enabled.',
+        title: t('shell.toast.publicLinkCopied'),
+        description: t('shell.toast.publicLinkCopiedBody'),
       });
     } catch {
       toast({
-        title: 'Could not copy public link',
-        description: 'Clipboard access was blocked in this browser.',
+        title: t('shell.toast.publicLinkCopyFailed'),
+        description: t('shell.toast.clipboardBlocked'),
         variant: 'destructive',
       });
     }
@@ -504,7 +505,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
 
   async function handleUpdateShare(data: DocumentShareUpdateInput): Promise<DocumentPage> {
     if (!selectedPageId) {
-      throw new Error('Open a page before updating sharing');
+      throw new Error(t('shell.error.openPageBeforeSharing'));
     }
 
     return updateShare.mutateAsync(data);
@@ -514,13 +515,13 @@ export function DocsShell({ projectId }: DocsShellProps) {
     try {
       await handleUpdateShare(data);
       toast({
-        title: 'Sharing updated',
+        title: t('shell.toast.sharingUpdated'),
         description: successMessage,
       });
     } catch (error) {
       toast({
-        title: 'Could not update sharing',
-        description: error instanceof Error ? error.message : 'Something went wrong',
+        title: t('shell.toast.sharingUpdateFailed'),
+        description: error instanceof Error ? error.message : t('common.somethingWrong'),
         variant: 'destructive',
       });
     }
@@ -541,7 +542,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
             <FolderOpen className="text-muted-foreground h-3.5 w-3.5" />
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-semibold tracking-tight">
-                {activeSpace?.name || 'Docs'}
+                {activeSpace?.name || t('shell.docsTitle')}
               </div>
             </div>
             <span className="text-muted-foreground text-[11px]">{allPages.length}</span>
@@ -555,7 +556,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
               }}
             >
               <SelectTrigger className="h-8">
-                <SelectValue placeholder="Select space" />
+                <SelectValue placeholder={t('shell.selectSpace')} />
               </SelectTrigger>
               <SelectContent>
                 {spaces.map((space) => (
@@ -573,10 +574,10 @@ export function DocsShell({ projectId }: DocsShellProps) {
             onClick={() => openCreateDialog(null)}
             disabled={!canCreateInContext}
             className="bg-accent/30 text-foreground hover:bg-accent/60 flex h-9 w-full items-center justify-center gap-2 border-dashed text-sm font-medium transition-colors"
-            aria-label="Create new page"
+            aria-label={t('shell.createNewPage')}
           >
             <FilePlus2 className="h-4 w-4" />
-            <span>New page</span>
+            <span>{t('shell.newPage')}</span>
           </Button>
 
           <div className="flex items-center gap-1.5">
@@ -585,7 +586,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
               <Input
                 value={pageSearch}
                 onChange={(event) => setPageSearch(event.target.value)}
-                placeholder="Search pages"
+                placeholder={t('shell.searchPages')}
                 className="h-8 pl-8 text-sm"
               />
             </div>
@@ -617,12 +618,18 @@ export function DocsShell({ projectId }: DocsShellProps) {
                 </button>
               ))
             ) : (
-              <div className="text-muted-foreground px-3 py-6 text-center text-sm">No matches.</div>
+              <div className="text-muted-foreground px-3 py-6 text-center text-sm">
+                {t('shell.noMatches')}
+              </div>
             )}
           </div>
         ) : tree.length > 0 ? (
           <div className="stagger space-y-3">
-            <SidebarSection title="Collections" defaultOpen count={collectionsNodes.length}>
+            <SidebarSection
+              title={t('shell.collections')}
+              defaultOpen
+              count={collectionsNodes.length}
+            >
               {collectionsNodes.length > 0 ? (
                 <div className="space-y-0.5">
                   {collectionsNodes.map((node) => (
@@ -639,12 +646,12 @@ export function DocsShell({ projectId }: DocsShellProps) {
                 </div>
               ) : (
                 <div className="text-muted-foreground px-2 py-2 text-[11px]">
-                  No collections yet.
+                  {t('shell.noCollections')}
                 </div>
               )}
             </SidebarSection>
 
-            <SidebarSection title="Workspace" defaultOpen count={workspaceNodes.length}>
+            <SidebarSection title={t('shell.workspace')} defaultOpen count={workspaceNodes.length}>
               {workspaceNodes.length > 0 ? (
                 <div className="space-y-0.5">
                   {workspaceNodes.map((node) => (
@@ -660,7 +667,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                 </div>
               ) : (
                 <div className="text-muted-foreground px-2 py-2 text-[11px]">
-                  No standalone pages.
+                  {t('shell.noStandalonePages')}
                 </div>
               )}
             </SidebarSection>
@@ -669,11 +676,9 @@ export function DocsShell({ projectId }: DocsShellProps) {
           <DocsTreeSkeleton />
         ) : (
           <div className="px-3 py-8 text-center">
-            <p className="text-muted-foreground text-sm">No pages yet</p>
+            <p className="text-muted-foreground text-sm">{t('shell.noPagesYet')}</p>
             {canCreateInContext ? (
-              <p className="text-muted-foreground/70 mt-1 text-[11px]">
-                Use “New page” above to add the first one.
-              </p>
+              <p className="text-muted-foreground/70 mt-1 text-[11px]">{t('shell.noPagesHint')}</p>
             ) : null}
           </div>
         )}
@@ -684,13 +689,15 @@ export function DocsShell({ projectId }: DocsShellProps) {
   const detailsPane = currentPage ? (
     <div className="bg-background min-h-full">
       <div className="border-border border-b px-5 pb-4 pr-14 pt-5">
-        <span className="kicker">Details</span>
+        <span className="kicker">{t('shell.details.kicker')}</span>
         <div className="mt-3 flex items-start gap-3">
           <DocumentIcon icon={currentPage.icon} className="h-9 w-9 rounded-md text-sm" />
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold tracking-tight">{currentPage.title}</div>
             <div className="text-muted-foreground mt-1 truncate text-xs">
-              {currentPage.projectId ? 'Project doc' : 'Workspace note'}
+              {currentPage.projectId
+                ? t('shell.details.projectDoc')
+                : t('shell.details.workspaceNote')}
             </div>
           </div>
         </div>
@@ -699,19 +706,19 @@ export function DocsShell({ projectId }: DocsShellProps) {
       <Tabs defaultValue="overview" className="flex min-h-full flex-col gap-4 p-4">
         <TabsList className="grid h-9 grid-cols-3">
           <TabsTrigger value="overview" className="text-sm">
-            Overview
+            {t('shell.tabs.overview')}
           </TabsTrigger>
           <TabsTrigger value="history" className="text-sm">
-            History
+            {t('shell.tabs.history')}
           </TabsTrigger>
           <TabsTrigger value="connections" className="text-sm">
-            Links
+            {t('shell.tabs.links')}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-0 space-y-3">
-          <DetailSection title="Overview">
-            <DetailRow label="Page">
+          <DetailSection title={t('shell.section.overview')}>
+            <DetailRow label={t('shell.row.page')}>
               <div className="flex items-start gap-3">
                 <DocumentIcon icon={currentPage.icon} className="h-8 w-8 rounded-sm text-xs" />
                 <div className="min-w-0 flex-1">
@@ -724,22 +731,34 @@ export function DocsShell({ projectId }: DocsShellProps) {
                 </div>
               </div>
             </DetailRow>
-            <DetailRow label="Type" value={currentPage.projectId ? 'Project Doc' : 'Wiki Page'} />
             <DetailRow
-              label="Visibility"
-              value={currentPage.share?.public?.enabled ? 'Workspace + public' : 'Workspace only'}
+              label={t('shell.row.type')}
+              value={
+                currentPage.projectId ? t('shell.value.projectDoc') : t('shell.value.wikiPage')
+              }
             />
             <DetailRow
-              label="Updated"
+              label={t('shell.row.visibility')}
+              value={
+                currentPage.share?.public?.enabled
+                  ? t('shell.value.workspacePublic')
+                  : t('shell.value.workspaceOnly')
+              }
+            />
+            <DetailRow
+              label={t('shell.row.updated')}
               value={new Date(currentPage.updatedAt).toLocaleDateString()}
             />
-            <DetailRow label="Words" value={currentPageWordCount} />
-            <DetailRow label="Revisions" value={currentPage.revisionCount || revisions.length} />
-            <DetailRow label="Sub-notes" value={currentChildPages.length} />
+            <DetailRow label={t('shell.row.words')} value={currentPageWordCount} />
+            <DetailRow
+              label={t('shell.row.revisions')}
+              value={currentPage.revisionCount || revisions.length}
+            />
+            <DetailRow label={t('shell.row.subNotes')} value={currentChildPages.length} />
           </DetailSection>
 
-          <DetailSection title="Sharing">
-            <DetailRow label="Workspace link">
+          <DetailSection title={t('shell.section.sharing')}>
+            <DetailRow label={t('shell.row.workspaceLink')}>
               <div className="space-y-2">
                 <div className="text-muted-foreground truncate font-mono text-[11px]">
                   {currentSharePath || '/docs'}
@@ -747,7 +766,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                 <div className="flex flex-wrap gap-2">
                   <Button size="sm" variant="outline" onClick={() => void copyCurrentPageLink()}>
                     <Share2 className="mr-2 h-4 w-4" />
-                    Copy
+                    {t('shell.copy')}
                   </Button>
                   <Button
                     size="sm"
@@ -759,12 +778,12 @@ export function DocsShell({ projectId }: DocsShellProps) {
                     }}
                   >
                     <ExternalLink className="mr-2 h-4 w-4" />
-                    Open
+                    {t('shell.open')}
                   </Button>
                 </div>
               </div>
             </DetailRow>
-            <DetailRow label="Public access">
+            <DetailRow label={t('shell.row.publicAccess')}>
               <div className="flex items-center gap-3">
                 <Switch
                   checked={currentPage.share?.public?.enabled}
@@ -773,25 +792,25 @@ export function DocsShell({ projectId }: DocsShellProps) {
                     void updateShareWithToast(
                       { enablePublic: checked },
                       checked
-                        ? 'This page is now available on a public link.'
-                        : 'Public access has been disabled for this page.'
+                        ? t('shell.share.msg.publicEnabled')
+                        : t('shell.share.msg.publicDisabled')
                     )
                   }
                 />
                 <span className="text-muted-foreground text-xs">
-                  {currentPage.share?.public?.enabled ? 'Enabled' : 'Disabled'}
+                  {currentPage.share?.public?.enabled ? t('shell.enabled') : t('shell.disabled')}
                 </span>
               </div>
             </DetailRow>
             <Accordion type="single" collapsible className="rounded-lg border">
               <AccordionItem value="public-settings" className="border-b-0">
                 <AccordionTrigger className="px-3 py-2 text-sm hover:no-underline">
-                  Advanced public settings
+                  {t('shell.advancedPublicSettings')}
                 </AccordionTrigger>
                 <AccordionContent className="space-y-2 px-3 pb-3 pt-0">
                   <CompactSwitchRow
-                    label="Search indexing"
-                    hint="Allow search engines"
+                    label={t('shell.searchIndexing')}
+                    hint={t('shell.searchIndexingHint')}
                     checked={currentPage.share?.public?.allowSearchIndexing ?? false}
                     disabled={
                       !currentPage.share?.public?.enabled ||
@@ -802,14 +821,14 @@ export function DocsShell({ projectId }: DocsShellProps) {
                       void updateShareWithToast(
                         { allowSearchIndexing: checked },
                         checked
-                          ? 'Search indexing is enabled for the public page.'
-                          : 'Search indexing is disabled for the public page.'
+                          ? t('shell.share.msg.indexingEnabled')
+                          : t('shell.share.msg.indexingDisabled')
                       )
                     }
                   />
                   <CompactSwitchRow
-                    label="Attachments"
-                    hint="Publish uploaded files"
+                    label={t('shell.attachments')}
+                    hint={t('shell.attachmentsHint')}
                     checked={currentPage.share?.public?.includeAttachments ?? false}
                     disabled={
                       !currentPage.share?.public?.enabled ||
@@ -820,8 +839,8 @@ export function DocsShell({ projectId }: DocsShellProps) {
                       void updateShareWithToast(
                         { includeAttachments: checked },
                         checked
-                          ? 'Uploaded attachments are now visible on the public page.'
-                          : 'Uploaded attachments are hidden from the public page.'
+                          ? t('shell.share.msg.attachmentsShown')
+                          : t('shell.share.msg.attachmentsHidden')
                       )
                     }
                   />
@@ -829,7 +848,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
               </AccordionItem>
             </Accordion>
             {publicSharePath ? (
-              <DetailRow label="Public link">
+              <DetailRow label={t('shell.row.publicLink')}>
                 <div className="space-y-2">
                   <div className="text-muted-foreground truncate font-mono text-[11px]">
                     {publicSharePath}
@@ -837,7 +856,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                   <div className="flex flex-wrap gap-2">
                     <Button size="sm" onClick={() => void copyPublicPageLink()}>
                       <Globe2 className="mr-2 h-4 w-4" />
-                      Copy
+                      {t('shell.copy')}
                     </Button>
                     <Button
                       size="sm"
@@ -849,7 +868,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                       }}
                     >
                       <ExternalLink className="mr-2 h-4 w-4" />
-                      Open
+                      {t('shell.open')}
                     </Button>
                     {currentPage.share?.canManagePublic && (
                       <Button
@@ -859,23 +878,23 @@ export function DocsShell({ projectId }: DocsShellProps) {
                         onClick={() =>
                           void updateShareWithToast(
                             { regenerateToken: true, enablePublic: true },
-                            'A fresh public link has been generated and the previous one no longer works.'
+                            t('shell.share.msg.regenerated')
                           )
                         }
                       >
                         <RefreshCcw className="mr-2 h-4 w-4" />
-                        Renew
+                        {t('shell.renew')}
                       </Button>
                     )}
                   </div>
                 </div>
               </DetailRow>
             ) : (
-              <DetailRow label="Public link" value="Off" />
+              <DetailRow label={t('shell.row.publicLink')} value={t('shell.off')} />
             )}
           </DetailSection>
 
-          <DetailSection title="Outline" count={currentPageHeadings.length}>
+          <DetailSection title={t('shell.section.outline')} count={currentPageHeadings.length}>
             {currentPageHeadings.length > 0 ? (
               currentPageHeadings.map((heading) => (
                 <DetailButtonRow
@@ -886,11 +905,11 @@ export function DocsShell({ projectId }: DocsShellProps) {
                 />
               ))
             ) : (
-              <CompactEmptyState>No headings yet.</CompactEmptyState>
+              <CompactEmptyState>{t('shell.noHeadings')}</CompactEmptyState>
             )}
           </DetailSection>
 
-          <DetailSection title="Sub-notes" count={currentChildPages.length}>
+          <DetailSection title={t('shell.section.subNotes')} count={currentChildPages.length}>
             {currentChildPages.length > 0 ? (
               currentChildPages.map((childPage) => (
                 <button
@@ -917,13 +936,13 @@ export function DocsShell({ projectId }: DocsShellProps) {
                 </button>
               ))
             ) : (
-              <CompactEmptyState>No sub-notes</CompactEmptyState>
+              <CompactEmptyState>{t('shell.noSubNotes')}</CompactEmptyState>
             )}
           </DetailSection>
         </TabsContent>
 
         <TabsContent value="history" className="mt-0">
-          <DetailSection title="History" count={revisions.length}>
+          <DetailSection title={t('shell.section.history')} count={revisions.length}>
             {revisions.length > 0 ? (
               <Accordion
                 type="single"
@@ -936,7 +955,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
               >
                 {revisions.map((revision) => {
                   const isCurrentRevision = revision.revision === currentPage.currentRevision;
-                  const commitMessage = getRevisionCommitMessage(revision);
+                  const commitMessage = getRevisionCommitMessage(revision, t);
 
                   return (
                     <AccordionItem
@@ -954,7 +973,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                             {isCurrentRevision && <Badge variant="secondary">HEAD</Badge>}
                           </div>
                           <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-[11px]">
-                            <span>{revision.author?.name || 'Unknown'}</span>
+                            <span>{revision.author?.name || t('shell.unknown')}</span>
                             <span>{new Date(revision.createdAt).toLocaleString()}</span>
                             <span>r{revision.revision}</span>
                           </div>
@@ -966,7 +985,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                             <div className="text-foreground text-xs">{revision.changeSummary}</div>
                           )}
                           <div className="text-muted-foreground text-xs leading-5">
-                            {revision.excerpt || 'No preview.'}
+                            {revision.excerpt || t('shell.noPreview')}
                           </div>
                           {canEditCurrentPage && !isCurrentRevision && (
                             <Button
@@ -976,7 +995,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                               onClick={() => handleRestoreRevision(revision.id)}
                             >
                               <RefreshCcw className="mr-2 h-3.5 w-3.5" />
-                              Restore
+                              {t('shell.restore')}
                             </Button>
                           )}
                         </div>
@@ -986,7 +1005,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                 })}
               </Accordion>
             ) : (
-              <CompactEmptyState>No revisions yet.</CompactEmptyState>
+              <CompactEmptyState>{t('shell.noRevisions')}</CompactEmptyState>
             )}
           </DetailSection>
         </TabsContent>
@@ -996,12 +1015,15 @@ export function DocsShell({ projectId }: DocsShellProps) {
             <DocumentDiscussionCard pageId={currentPage.id} projectId={currentPage.projectId} />
           ) : null}
 
-          <DetailSection title="Related Tasks" count={currentPage.relatedIssues?.length || 0}>
+          <DetailSection
+            title={t('shell.section.relatedTasks')}
+            count={currentPage.relatedIssues?.length || 0}
+          >
             {canEditCurrentPage && (
               <div className="flex gap-2">
                 <Select value={issueToAttach} onValueChange={setIssueToAttach}>
                   <SelectTrigger className="h-9 flex-1">
-                    <SelectValue placeholder="Attach a task" />
+                    <SelectValue placeholder={t('shell.attachTask')} />
                   </SelectTrigger>
                   <SelectContent>
                     {(searchableIssues || []).map((issue) => (
@@ -1012,7 +1034,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                   </SelectContent>
                 </Select>
                 <Button size="sm" onClick={handleAttachIssue} disabled={!issueToAttach}>
-                  Link
+                  {t('shell.link')}
                 </Button>
               </div>
             )}
@@ -1038,11 +1060,14 @@ export function DocsShell({ projectId }: DocsShellProps) {
                 </div>
               ))
             ) : (
-              <CompactEmptyState>No linked tasks yet.</CompactEmptyState>
+              <CompactEmptyState>{t('shell.noLinkedTasks')}</CompactEmptyState>
             )}
           </DetailSection>
 
-          <DetailSection title="Backlinks" count={currentPage.backlinks?.length || 0}>
+          <DetailSection
+            title={t('shell.section.backlinks')}
+            count={currentPage.backlinks?.length || 0}
+          >
             {currentPage.backlinks?.length ? (
               currentPage.backlinks.map((backlink) => (
                 <button
@@ -1064,11 +1089,11 @@ export function DocsShell({ projectId }: DocsShellProps) {
                 </button>
               ))
             ) : (
-              <CompactEmptyState>No backlinks yet.</CompactEmptyState>
+              <CompactEmptyState>{t('shell.noBacklinks')}</CompactEmptyState>
             )}
           </DetailSection>
 
-          <DetailSection title="Attachments" count={attachments.length}>
+          <DetailSection title={t('shell.section.attachments')} count={attachments.length}>
             {attachments.length ? (
               attachments.map((attachment) => (
                 <div key={attachment.id}>
@@ -1084,7 +1109,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                           className="hover:bg-accent inline-flex h-7 items-center rounded-md border px-2 text-xs transition-colors"
                           onClick={(event) => event.stopPropagation()}
                         >
-                          Open
+                          {t('shell.open')}
                         </a>
                         {canEditCurrentPage && (
                           <Button
@@ -1102,7 +1127,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                 </div>
               ))
             ) : (
-              <CompactEmptyState>No attachments yet.</CompactEmptyState>
+              <CompactEmptyState>{t('shell.noAttachments')}</CompactEmptyState>
             )}
           </DetailSection>
         </TabsContent>
@@ -1112,10 +1137,10 @@ export function DocsShell({ projectId }: DocsShellProps) {
     <div className="p-4">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Details</CardTitle>
+          <CardTitle className="text-sm">{t('shell.details.kicker')}</CardTitle>
         </CardHeader>
         <CardContent className="text-muted-foreground text-sm">
-          Select a page from the left.
+          {t('shell.selectPageLeft')}
         </CardContent>
       </Card>
     </div>
@@ -1126,13 +1151,13 @@ export function DocsShell({ projectId }: DocsShellProps) {
       <div className="bg-background flex h-full min-h-0 flex-col overflow-hidden">
         <div className="border-border flex items-center justify-between gap-3 border-b px-4 py-2 lg:hidden">
           <div className="min-w-0 truncate text-sm font-medium">
-            {currentPage?.title || activeSpace?.name || 'Docs'}
+            {currentPage?.title || activeSpace?.name || t('shell.docsTitle')}
           </div>
           <div className="flex items-center gap-2">
             <Sheet open={isPagesSheetOpen} onOpenChange={setIsPagesSheetOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm" className="h-8">
-                  Pages
+                  {t('shell.pages')}
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[92vw] max-w-md p-0">
@@ -1143,7 +1168,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
             <Sheet open={isDetailsSheetOpen} onOpenChange={setIsDetailsSheetOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm" className="h-8" disabled={!currentPage}>
-                  Details
+                  {t('shell.details.kicker')}
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[95vw] max-w-[32rem] p-0">
@@ -1209,26 +1234,30 @@ export function DocsShell({ projectId }: DocsShellProps) {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{newPageParentId ? 'Create sub-note' : 'Create new page'}</DialogTitle>
+            <DialogTitle>
+              {newPageParentId ? t('shell.dialog.createSubNote') : t('shell.dialog.createNewPage')}
+            </DialogTitle>
             <p className="text-muted-foreground text-sm">
               {selectedParentPage
-                ? `Nested under ${selectedParentPage.title}.`
-                : `Creates a root page in ${createTargetSpace?.name || 'Docs'}.`}
+                ? t('shell.dialog.nestedUnder', { title: selectedParentPage.title })
+                : t('shell.dialog.createsRoot', {
+                    space: createTargetSpace?.name || t('shell.docsTitle'),
+                  })}
             </p>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="page-title">Title</Label>
+              <Label htmlFor="page-title">{t('shell.dialog.titleLabel')}</Label>
               <Input
                 id="page-title"
                 value={newPageTitle}
                 onChange={(event) => setNewPageTitle(event.target.value)}
-                placeholder="Release plan, onboarding guide, architecture notes..."
+                placeholder={t('shell.dialog.titlePlaceholder')}
                 autoFocus
               />
             </div>
             <div className="space-y-2">
-              <Label>Icon</Label>
+              <Label>{t('shell.dialog.iconLabel')}</Label>
               <div className="grid grid-cols-6 gap-1.5">
                 <button
                   type="button"
@@ -1257,19 +1286,19 @@ export function DocsShell({ projectId }: DocsShellProps) {
             </div>
             {!canCreateInContext && (
               <div className="border-destructive/20 bg-destructive/5 text-destructive rounded-md border px-3 py-2 text-sm">
-                You do not have permission to create docs in this space.
+                {t('shell.dialog.noPermission')}
               </div>
             )}
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={resetCreateDialog}>
-              Cancel
+              {t('shell.cancel')}
             </Button>
             <Button
               onClick={handleCreatePage}
               disabled={!newPageTitle.trim() || createPage.isPending || !canCreateInContext}
             >
-              {createPage.isPending ? 'Creating...' : 'Create page'}
+              {createPage.isPending ? t('shell.dialog.creating') : t('shell.dialog.createPage')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1429,20 +1458,23 @@ function getShortRevisionId(revisionId: string) {
   return revisionId.slice(0, 7);
 }
 
-function getRevisionCommitMessage(revision: {
-  changeSummary?: string | null;
-  revision: number;
-  title: string;
-}) {
+function getRevisionCommitMessage(
+  revision: {
+    changeSummary?: string | null;
+    revision: number;
+    title: string;
+  },
+  t: (key: string, values?: Record<string, string | number>) => string
+) {
   if (revision.changeSummary?.trim()) {
     return revision.changeSummary.trim();
   }
 
   if (revision.revision === 1) {
-    return `Initial draft of ${revision.title}`;
+    return t('shell.revision.initialDraft', { title: revision.title });
   }
 
-  return `Updated ${revision.title}`;
+  return t('shell.revision.updated', { title: revision.title });
 }
 
 function DetailSection({

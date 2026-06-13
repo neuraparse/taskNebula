@@ -10,6 +10,7 @@
  */
 
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,13 +24,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Check,
-  Cog,
-  Loader2,
-  Plug,
-  Trash2,
-} from 'lucide-react';
+import { Check, Cog, Loader2, Plug, Trash2 } from 'lucide-react';
 
 type Provider = 'slack' | 'gitlab' | 'jira' | 'github' | 'google' | 'sentry';
 
@@ -50,42 +45,34 @@ type ListResponse = {
 
 const PROVIDER_META: Record<
   Provider,
-  { label: string; description: string; scopeHint?: string; redirectHint?: string }
+  { label: string; scopeHint?: string; redirectHint?: string }
 > = {
   slack: {
     label: 'Slack',
-    description:
-      'OAuth app credentials for connecting Slack workspaces to TaskNebula.',
     scopeHint: 'channels:read,chat:write',
     redirectHint: 'https://your-domain/api/integrations/slack/callback',
   },
   gitlab: {
     label: 'GitLab',
-    description: 'OAuth application for mirroring merge requests and pipelines.',
     scopeHint: 'read_api read_repository',
     redirectHint: 'https://your-domain/api/integrations/gitlab/callback',
   },
   jira: {
     label: 'Jira (Atlassian)',
-    description: 'Atlassian 3LO app for syncing issues and projects.',
     scopeHint: 'read:jira-user read:jira-work write:jira-work offline_access',
     redirectHint: 'https://your-domain/api/integrations/jira/callback',
   },
   github: {
     label: 'GitHub',
-    description:
-      'GitHub OAuth app for sign-in and repo / issue / pull request sync.',
     scopeHint: 'repo read:user',
     redirectHint: 'https://your-domain/api/integrations/github/callback',
   },
   google: {
     label: 'Google',
-    description: 'Google OAuth client for sign-in and workspace integrations.',
     redirectHint: 'https://your-domain/api/auth/callback/google',
   },
   sentry: {
     label: 'Sentry',
-    description: 'OAuth app for syncing Sentry issues with TaskNebula work items.',
     scopeHint: 'org:read project:read event:read',
     redirectHint: 'https://your-domain/api/integrations/sentry/callback',
   },
@@ -120,10 +107,9 @@ async function saveProvider(input: {
 }
 
 async function deleteProvider(provider: Provider): Promise<ListResponse> {
-  const response = await fetch(
-    `/api/admin/integrations?provider=${encodeURIComponent(provider)}`,
-    { method: 'DELETE' }
-  );
+  const response = await fetch(`/api/admin/integrations?provider=${encodeURIComponent(provider)}`, {
+    method: 'DELETE',
+  });
   if (!response.ok) {
     const err = (await response.json().catch(() => ({}))) as { error?: string };
     throw new Error(err.error || 'Failed to remove credentials');
@@ -132,6 +118,7 @@ async function deleteProvider(provider: Provider): Promise<ListResponse> {
 }
 
 export function IntegrationsAdminPanel() {
+  const t = useTranslations('adminPanels');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<Provider | null>(null);
@@ -148,11 +135,11 @@ export function IntegrationsAdminPanel() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'integrations'] });
       queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
-      toast({ title: 'Credentials removed' });
+      toast({ title: t('integrations.credentialsRemoved') });
     },
     onError: (err: Error) => {
       toast({
-        title: 'Remove failed',
+        title: t('integrations.removeFailed'),
         description: err.message,
         variant: 'destructive',
       });
@@ -169,29 +156,28 @@ export function IntegrationsAdminPanel() {
     <div className="space-y-4">
       <div className="surface-card space-y-1 p-6">
         <div className="flex items-center gap-2">
-          <Plug className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold">Integration OAuth credentials</h3>
+          <Plug className="text-muted-foreground h-4 w-4" />
+          <h3 className="text-sm font-semibold">{t('integrations.title')}</h3>
         </div>
-        <p className="max-w-prose text-xs text-muted-foreground">
-          Configure platform-wide client id / client secret for each integration
-          provider. Values are encrypted (AES-256-GCM) at rest. Environment
-          variables (e.g. <code className="font-mono">SLACK_CLIENT_ID</code>) still
-          work as a fallback when a provider has no database entry.
+        <p className="text-muted-foreground max-w-prose text-xs">
+          {t.rich('integrations.description', {
+            code: (chunks) => <code className="font-mono">{chunks}</code>,
+          })}
         </p>
       </div>
 
       <div className="surface-card overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center gap-2 px-6 py-8 text-xs text-muted-foreground">
+          <div className="text-muted-foreground flex items-center gap-2 px-6 py-8 text-xs">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            Loading integrations…
+            {t('integrations.loading')}
           </div>
         ) : error ? (
-          <div className="px-6 py-6 text-sm text-destructive">
-            {error instanceof Error ? error.message : 'Failed to load integrations'}
+          <div className="text-destructive px-6 py-6 text-sm">
+            {error instanceof Error ? error.message : t('integrations.loadError')}
           </div>
         ) : (
-          <ul className="divide-y divide-border/50">
+          <ul className="divide-border/50 divide-y">
             {providers.map((provider) => (
               <ProviderRow
                 key={provider.provider}
@@ -199,8 +185,7 @@ export function IntegrationsAdminPanel() {
                 onConfigure={() => setEditing(provider.provider)}
                 onRemove={() => deleteMutation.mutate(provider.provider)}
                 removing={
-                  deleteMutation.isPending &&
-                  deleteMutation.variables === provider.provider
+                  deleteMutation.isPending && deleteMutation.variables === provider.provider
                 }
               />
             ))}
@@ -231,6 +216,7 @@ function ProviderRow({
   onRemove: () => void;
   removing: boolean;
 }) {
+  const t = useTranslations('adminPanels');
   const meta = PROVIDER_META[provider.provider];
   return (
     <li className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center">
@@ -240,32 +226,33 @@ function ProviderRow({
           {provider.configured ? (
             <span className="chip-emerald inline-flex items-center gap-1 text-[11px]">
               <Check className="h-3 w-3" />
-              Configured
-              {provider.source === 'env' ? ' (env)' : ''}
+              {provider.source === 'env'
+                ? t('integrations.configuredEnv')
+                : t('integrations.configured')}
             </span>
           ) : (
-            <span className="chip text-[11px] text-muted-foreground">
-              Not configured
+            <span className="chip text-muted-foreground text-[11px]">
+              {t('integrations.notConfigured')}
             </span>
           )}
           {provider.clientIdPreview ? (
-            <span className="chip font-mono text-[11px]">
-              {provider.clientIdPreview}
-            </span>
+            <span className="chip font-mono text-[11px]">{provider.clientIdPreview}</span>
           ) : null}
         </div>
-        <p className="mt-0.5 text-xs text-muted-foreground">{meta.description}</p>
-        <dl className="mt-2 grid gap-1 text-[11px] text-muted-foreground sm:grid-cols-2">
+        <p className="text-muted-foreground mt-0.5 text-xs">
+          {t(`integrations.providerDescription.${provider.provider}`)}
+        </p>
+        <dl className="text-muted-foreground mt-2 grid gap-1 text-[11px] sm:grid-cols-2">
           <div className="min-w-0">
-            <dt className="inline font-medium">Redirect URI: </dt>
+            <dt className="inline font-medium">{t('integrations.redirectUriLabel')} </dt>
             <dd className="inline break-all font-mono">
-              {provider.redirectUri ?? <em>default</em>}
+              {provider.redirectUri ?? <em>{t('integrations.default')}</em>}
             </dd>
           </div>
           <div className="min-w-0">
-            <dt className="inline font-medium">Scope: </dt>
+            <dt className="inline font-medium">{t('integrations.scopeLabel')} </dt>
             <dd className="inline break-words font-mono">
-              {provider.scope ?? <em>default</em>}
+              {provider.scope ?? <em>{t('integrations.default')}</em>}
             </dd>
           </div>
         </dl>
@@ -273,21 +260,16 @@ function ProviderRow({
       <div className="flex shrink-0 items-center gap-2">
         <Button size="sm" variant="outline" onClick={onConfigure}>
           <Cog className="mr-1.5 h-3.5 w-3.5" />
-          {provider.source === 'db' ? 'Edit' : 'Configure'}
+          {provider.source === 'db' ? t('integrations.edit') : t('integrations.configure')}
         </Button>
         {provider.source === 'db' ? (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={onRemove}
-            disabled={removing}
-          >
+          <Button size="sm" variant="outline" onClick={onRemove} disabled={removing}>
             {removing ? (
               <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
             ) : (
               <Trash2 className="mr-1.5 h-3.5 w-3.5" />
             )}
-            Remove
+            {t('integrations.remove')}
           </Button>
         ) : null}
       </div>
@@ -306,6 +288,7 @@ function ConfigureDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useTranslations('adminPanels');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const meta = PROVIDER_META[provider];
@@ -321,14 +304,14 @@ function ConfigureDialog({
       queryClient.invalidateQueries({ queryKey: ['admin', 'integrations'] });
       queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
       toast({
-        title: 'Credentials saved',
-        description: `${meta.label} OAuth is now configured from the admin store.`,
+        title: t('integrations.credentialsSaved'),
+        description: t('integrations.credentialsSavedDescription', { provider: meta.label }),
       });
       onOpenChange(false);
     },
     onError: (err: Error) => {
       toast({
-        title: 'Save failed',
+        title: t('integrations.saveFailed'),
         description: err.message,
         variant: 'destructive',
       });
@@ -352,28 +335,29 @@ function ConfigureDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Configure {meta.label}</DialogTitle>
+          <DialogTitle>{t('integrations.configureProvider', { provider: meta.label })}</DialogTitle>
           <DialogDescription>
-            Paste the OAuth client id and secret from your {meta.label} app.
-            Secrets are encrypted before leaving the server.
+            {t('integrations.configureDescription', { provider: meta.label })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor={`integration-${provider}-client-id`}>Client ID</Label>
+            <Label htmlFor={`integration-${provider}-client-id`}>
+              {t('integrations.clientId')}
+            </Label>
             <Input
               id={`integration-${provider}-client-id`}
               autoComplete="off"
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
-              placeholder={current?.clientIdPreview ?? 'Client ID'}
+              placeholder={current?.clientIdPreview ?? t('integrations.clientId')}
             />
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor={`integration-${provider}-client-secret`}>
-              Client secret
+              {t('integrations.clientSecret')}
             </Label>
             <Input
               id={`integration-${provider}-client-secret`}
@@ -381,16 +365,19 @@ function ConfigureDialog({
               autoComplete="off"
               value={clientSecret}
               onChange={(e) => setClientSecret(e.target.value)}
-              placeholder={current?.configured ? 'Leave blank to rotate' : 'Client secret'}
+              placeholder={
+                current?.configured
+                  ? t('integrations.leaveBlankToRotate')
+                  : t('integrations.clientSecret')
+              }
             />
-            <p className="text-[11px] text-muted-foreground">
-              Replacing the row requires re-entering the secret.
-            </p>
+            <p className="text-muted-foreground text-[11px]">{t('integrations.replaceRowHint')}</p>
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor={`integration-${provider}-redirect`}>
-              Redirect URI <span className="text-muted-foreground">(optional)</span>
+              {t('integrations.redirectUri')}{' '}
+              <span className="text-muted-foreground">{t('integrations.optional')}</span>
             </Label>
             <Input
               id={`integration-${provider}-redirect`}
@@ -402,7 +389,8 @@ function ConfigureDialog({
 
           <div className="space-y-1.5">
             <Label htmlFor={`integration-${provider}-scope`}>
-              Scope <span className="text-muted-foreground">(optional)</span>
+              {t('integrations.scope')}{' '}
+              <span className="text-muted-foreground">{t('integrations.optional')}</span>
             </Label>
             <Input
               id={`integration-${provider}-scope`}
@@ -415,17 +403,13 @@ function ConfigureDialog({
 
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t('integrations.cancel')}
           </Button>
-          <Button
-            size="sm"
-            onClick={handleSubmit}
-            disabled={!canSubmit || saveMutation.isPending}
-          >
+          <Button size="sm" onClick={handleSubmit} disabled={!canSubmit || saveMutation.isPending}>
             {saveMutation.isPending ? (
               <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
             ) : null}
-            Save credentials
+            {t('integrations.saveCredentials')}
           </Button>
         </DialogFooter>
       </DialogContent>

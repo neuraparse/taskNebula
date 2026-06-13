@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +20,7 @@ import { Plus, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 
 export function CreateUserDialog() {
+  const t = useTranslations('adminDialogs');
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -38,19 +40,26 @@ export function CreateUserDialog() {
       });
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to create user');
+        throw new Error(error.error || t('createUser.toastFailedTitle'));
       }
       return response.json();
     },
     onSuccess: () => {
-      toast({ title: 'User created', description: 'The user was created successfully.' });
+      toast({
+        title: t('createUser.toastCreatedTitle'),
+        description: t('createUser.toastCreatedDescription'),
+      });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
       setOpen(false);
       setFormData({ name: '', email: '', password: '', isSuperAdmin: false });
     },
     onError: (error: Error) => {
-      toast({ title: 'Failed to create user', description: error.message, variant: 'destructive' });
+      toast({
+        title: t('createUser.toastFailedTitle'),
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 
@@ -58,8 +67,8 @@ export function CreateUserDialog() {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.password) {
       toast({
-        title: 'Missing fields',
-        description: 'Name, email, and password are required.',
+        title: t('common.missingFields'),
+        description: t('createUser.missingFieldsDescription'),
         variant: 'destructive',
       });
       return;
@@ -72,20 +81,18 @@ export function CreateUserDialog() {
       <DialogTrigger asChild>
         <Button size="sm">
           <Plus className="mr-1.5 h-4 w-4" />
-          New user
+          {t('createUser.trigger')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create user</DialogTitle>
-            <DialogDescription>
-              Create a new user account. They can be added to organizations later.
-            </DialogDescription>
+            <DialogTitle>{t('createUser.title')}</DialogTitle>
+            <DialogDescription>{t('createUser.description')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full name</Label>
+              <Label htmlFor="name">{t('createUser.fullName')}</Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -94,7 +101,7 @@ export function CreateUserDialog() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('createUser.email')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -104,7 +111,7 @@ export function CreateUserDialog() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('createUser.password')}</Label>
               <Input
                 id="password"
                 type="password"
@@ -113,10 +120,10 @@ export function CreateUserDialog() {
                 placeholder="••••••••"
               />
             </div>
-            <div className="flex items-center justify-between rounded-md border border-border px-4 py-3">
+            <div className="border-border flex items-center justify-between rounded-md border px-4 py-3">
               <div className="space-y-0.5">
-                <Label htmlFor="super-admin">Super admin</Label>
-                <p className="text-xs text-muted-foreground">Grant full system access.</p>
+                <Label htmlFor="super-admin">{t('userForm.superAdmin')}</Label>
+                <p className="text-muted-foreground text-xs">{t('userForm.superAdminHint')}</p>
               </div>
               <Switch
                 id="super-admin"
@@ -127,11 +134,11 @@ export function CreateUserDialog() {
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={createUserMutation.isPending}>
               {createUserMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create user
+              {t('createUser.submit')}
             </Button>
           </DialogFooter>
         </form>

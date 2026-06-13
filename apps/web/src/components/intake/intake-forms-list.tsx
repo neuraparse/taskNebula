@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,6 +49,8 @@ interface Props {
 
 export function IntakeFormsList({ forms, projectLookup, accessibleProjects }: Props) {
   const router = useRouter();
+  const t = useTranslations('planning');
+  const tActions = useTranslations('actions');
   const [open, setOpen] = useState(false);
   const [projectId, setProjectId] = useState(accessibleProjects[0]?.id ?? '');
   const [slug, setSlug] = useState('');
@@ -58,7 +61,7 @@ export function IntakeFormsList({ forms, projectLookup, accessibleProjects }: Pr
   async function handleCreate() {
     setError(null);
     if (!projectId || !slug || !title) {
-      setError('Project, slug and title are required');
+      setError(t('error_project_slug_title_required'));
       return;
     }
     setCreating(true);
@@ -71,15 +74,15 @@ export function IntakeFormsList({ forms, projectLookup, accessibleProjects }: Pr
           slug,
           title,
           fields: [
-            { name: 'summary', label: 'Summary', type: 'text', required: true },
-            { name: 'details', label: 'Details', type: 'textarea' },
-            { name: 'email', label: 'Your email', type: 'email' },
+            { name: 'summary', label: t('field_summary'), type: 'text', required: true },
+            { name: 'details', label: t('field_details'), type: 'textarea' },
+            { name: 'email', label: t('field_your_email'), type: 'email' },
           ],
         }),
       });
       const data = (await response.json()) as { error?: string; form?: { id: string } };
       if (!response.ok || !data.form) {
-        setError(data.error ?? 'Failed to create form');
+        setError(data.error ?? t('error_create_form'));
         return;
       }
       setOpen(false);
@@ -91,7 +94,7 @@ export function IntakeFormsList({ forms, projectLookup, accessibleProjects }: Pr
   }
 
   async function handleDelete(id: string) {
-    const ok = window.confirm('Delete this intake form? Submissions will be removed.');
+    const ok = window.confirm(t('delete_form_confirm'));
     if (!ok) return;
     const response = await fetch(`/api/intake-forms/${id}`, { method: 'DELETE' });
     if (response.ok) router.refresh();
@@ -100,28 +103,24 @@ export function IntakeFormsList({ forms, projectLookup, accessibleProjects }: Pr
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {forms.length} {forms.length === 1 ? 'form' : 'forms'}
-        </p>
+        <p className="text-muted-foreground text-sm">{t('form_count', { count: forms.length })}</p>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" disabled={accessibleProjects.length === 0}>
-              <Plus className="mr-1.5 h-4 w-4" /> New form
+              <Plus className="mr-1.5 h-4 w-4" /> {t('new_form')}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create intake form</DialogTitle>
-              <DialogDescription>
-                Pick a project and choose a public slug. You can edit fields next.
-              </DialogDescription>
+              <DialogTitle>{t('create_intake_form')}</DialogTitle>
+              <DialogDescription>{t('create_intake_form_desc')}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <Label>Project</Label>
+                <Label>{t('label_project')}</Label>
                 <Select value={projectId} onValueChange={setProjectId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select project" />
+                    <SelectValue placeholder={t('select_project')} />
                   </SelectTrigger>
                   <SelectContent>
                     {accessibleProjects.map((p) => (
@@ -133,34 +132,36 @@ export function IntakeFormsList({ forms, projectLookup, accessibleProjects }: Pr
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="title">Title</Label>
+                <Label htmlFor="title">{t('label_title')}</Label>
                 <Input
                   id="title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Customer feedback"
+                  placeholder={t('title_placeholder')}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="slug">Slug</Label>
+                <Label htmlFor="slug">{t('label_slug')}</Label>
                 <Input
                   id="slug"
                   value={slug}
-                  onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
-                  placeholder="customer-feedback"
+                  onChange={(e) =>
+                    setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))
+                  }
+                  placeholder={t('slug_placeholder')}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Public URL: /intake/<code>{slug || 'your-slug'}</code>
+                <p className="text-muted-foreground text-xs">
+                  {t('public_url_label')} /intake/<code>{slug || t('slug_fallback')}</code>
                 </p>
               </div>
-              {error ? <p className="text-xs text-destructive">{error}</p> : null}
+              {error ? <p className="text-destructive text-xs">{error}</p> : null}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>
-                Cancel
+                {tActions('cancel')}
               </Button>
               <Button onClick={handleCreate} disabled={creating}>
-                {creating ? 'Creating…' : 'Create'}
+                {creating ? t('creating') : t('create')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -168,8 +169,10 @@ export function IntakeFormsList({ forms, projectLookup, accessibleProjects }: Pr
       </div>
 
       {forms.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          No intake forms yet. Click <span className="font-medium">New form</span> to create one.
+        <div className="border-border text-muted-foreground rounded-md border border-dashed p-8 text-center text-sm">
+          {t.rich('empty_forms', {
+            action: (chunks) => <span className="font-medium">{chunks}</span>,
+          })}
         </div>
       ) : (
         <ul className="space-y-2">
@@ -178,16 +181,16 @@ export function IntakeFormsList({ forms, projectLookup, accessibleProjects }: Pr
             return (
               <li
                 key={form.id}
-                className="flex items-center justify-between rounded-md border border-border bg-card p-4"
+                className="border-border bg-card flex items-center justify-between rounded-md border p-4"
               >
                 <div className="space-y-0.5">
                   <Link
                     href={`/settings/intake-forms/${form.id}/edit`}
-                    className="font-medium text-foreground hover:underline"
+                    className="text-foreground font-medium hover:underline"
                   >
                     {form.title}
                   </Link>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     {project ? `${project.name} (${project.key}) · ` : ''}
                     /intake/{form.slug}
                   </p>
@@ -202,9 +205,9 @@ export function IntakeFormsList({ forms, projectLookup, accessibleProjects }: Pr
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDelete(form.id)}
-                    aria-label="Delete form"
+                    aria-label={t('delete_form_aria')}
                   >
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <Trash2 className="text-destructive h-4 w-4" />
                   </Button>
                 </div>
               </li>

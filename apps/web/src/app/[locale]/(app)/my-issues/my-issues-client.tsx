@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,11 +51,11 @@ const statusChipClass: Record<string, string> = {
 
 type ScopeFilter = 'assigned' | 'created' | 'subscribed' | 'mentioned';
 
-const scopeOptions: { value: ScopeFilter; label: string }[] = [
-  { value: 'assigned', label: 'Assigned to me' },
-  { value: 'created', label: 'Created by me' },
-  { value: 'subscribed', label: 'Subscribed' },
-  { value: 'mentioned', label: 'Mentioned' },
+const scopeOptions: { value: ScopeFilter; labelKey: string }[] = [
+  { value: 'assigned', labelKey: 'assigned_to_me' },
+  { value: 'created', labelKey: 'created_by_me' },
+  { value: 'subscribed', labelKey: 'subscribed' },
+  { value: 'mentioned', labelKey: 'mentioned' },
 ];
 
 function parseScope(value: string | null): ScopeFilter {
@@ -86,6 +87,8 @@ function formatRelativeDate(input?: string): string {
 }
 
 export function MyIssuesClient() {
+  const t = useTranslations('pagesHome');
+  const tNav = useTranslations('nav');
   const { data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
@@ -139,16 +142,18 @@ export function MyIssuesClient() {
         <div className="border-border bg-background shrink-0 border-b px-8 py-5">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
             <div className="space-y-1">
-              <span className="kicker">Issues</span>
-              <h1 className="whitespace-nowrap text-2xl font-semibold tracking-tight">My Issues</h1>
+              <span className="kicker">{t('my_issues_kicker')}</span>
+              <h1 className="whitespace-nowrap text-2xl font-semibold tracking-tight">
+                {tNav('my_issues')}
+              </h1>
               <p className="text-muted-foreground text-sm">
-                {filteredIssues.length} issue{filteredIssues.length === 1 ? '' : 's'}
+                {t('my_issues_count', { count: filteredIssues.length })}
               </p>
             </div>
             <div className="relative w-full max-w-full md:w-72 md:shrink-0">
               <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
               <Input
-                placeholder="Search issues..."
+                placeholder={t('my_issues_search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="h-9 pl-9"
@@ -172,7 +177,7 @@ export function MyIssuesClient() {
                     : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                 )}
               >
-                {option.label}
+                {tNav(option.labelKey)}
               </button>
             ))}
           </div>
@@ -186,14 +191,14 @@ export function MyIssuesClient() {
                 <Inbox className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
                 <p className="text-muted-foreground text-sm">
                   {searchQuery
-                    ? 'No issues match your search'
+                    ? t('my_issues_empty_search')
                     : scope === 'assigned'
-                      ? 'No issues assigned to you yet'
+                      ? t('my_issues_empty_assigned')
                       : scope === 'created'
-                        ? 'You have not reported any issues'
+                        ? t('my_issues_empty_created')
                         : scope === 'subscribed'
-                          ? 'You are not subscribed to any issues'
-                          : 'No mentions yet'}
+                          ? t('my_issues_empty_subscribed')
+                          : t('my_issues_empty_mentioned')}
                 </p>
                 {searchQuery && (
                   <Button
@@ -202,7 +207,7 @@ export function MyIssuesClient() {
                     className="mt-3"
                     onClick={() => setSearchQuery('')}
                   >
-                    Clear search
+                    {t('my_issues_clear_search')}
                   </Button>
                 )}
               </div>

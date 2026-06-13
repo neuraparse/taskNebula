@@ -12,6 +12,7 @@
  * deepened with a project selector in a follow-up.
  */
 
+import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import {
   AiInsightCard,
@@ -55,6 +56,7 @@ export function AnalyticsBento({
   organizationId: string | null;
   projectId: string | null;
 }) {
+  const t = useTranslations('dashboardExtra');
   const { data: velocity } = useQuery<VelocityResponse>({
     queryKey: ['analytics', 'velocity', projectId],
     queryFn: async () => {
@@ -96,29 +98,29 @@ export function AnalyticsBento({
       {/* KPI strip — bento-style 4-up */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <KpiTile
-          label="Last Sprint Points"
+          label={t('analytics.kpi_last_sprint_points')}
           value={lastSprint?.completedPoints ?? '—'}
           delta={
             velocity && lastSprint
               ? lastSprint.completedPoints - velocity.averageVelocity.points
               : null
           }
-          deltaSuffix=" pts"
+          deltaSuffix={t('analytics.suffix_pts')}
           sparkline={velSpark}
-          hint={lastSprint ? lastSprint.sprintName : 'No completed sprints'}
+          hint={lastSprint ? lastSprint.sprintName : t('analytics.hint_no_completed_sprints')}
           icon={<Gauge className="h-4 w-4" />}
         />
         <KpiTile
-          label="Avg Velocity"
+          label={t('analytics.kpi_avg_velocity')}
           value={velocity?.averageVelocity?.points?.toFixed(1) ?? '—'}
-          deltaSuffix=" pts"
+          deltaSuffix={t('analytics.suffix_pts')}
           delta={null}
           sparkline={velSpark}
-          hint="points / sprint"
+          hint={t('analytics.hint_points_per_sprint')}
           icon={<TrendingUp className="h-4 w-4" />}
         />
         <KpiTile
-          label="Throughput (week)"
+          label={t('analytics.kpi_throughput_week')}
           value={tpSpark[tpSpark.length - 1] ?? '—'}
           delta={
             tpSpark.length >= 2
@@ -127,14 +129,14 @@ export function AnalyticsBento({
           }
           deltaSuffix=""
           sparkline={tpSpark}
-          hint="issues completed"
+          hint={t('analytics.hint_issues_completed')}
           icon={<Hash className="h-4 w-4" />}
         />
         <KpiTile
-          label="Backlog"
+          label={t('analytics.kpi_backlog')}
           value={forecast?.backlog ?? '—'}
           delta={null}
-          hint={forecast ? `p50 ships ${forecast.p50Date}` : ' '}
+          hint={forecast ? t('analytics.hint_p50_ships', { date: forecast.p50Date }) : ' '}
           icon={<Target className="h-4 w-4" />}
         />
       </div>
@@ -147,9 +149,9 @@ export function AnalyticsBento({
         <section className="surface-card space-y-3 p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="kicker">Delivery</p>
+              <p className="kicker">{t('analytics.kicker_delivery')}</p>
               <h3 className="text-foreground mt-1 text-base font-semibold tracking-tight">
-                Velocity
+                {t('analytics.heading_velocity')}
               </h3>
             </div>
             <Sparkles className="text-muted-foreground h-4 w-4" />
@@ -162,7 +164,7 @@ export function AnalyticsBento({
             />
           ) : (
             <p className="text-muted-foreground py-12 text-center text-sm">
-              No completed sprints yet.
+              {t('analytics.empty_velocity')}
             </p>
           )}
         </section>
@@ -170,9 +172,9 @@ export function AnalyticsBento({
         <section className="surface-card space-y-3 p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="kicker">Flow</p>
+              <p className="kicker">{t('analytics.kicker_flow')}</p>
               <h3 className="text-foreground mt-1 text-base font-semibold tracking-tight">
-                Throughput
+                {t('analytics.heading_throughput')}
               </h3>
             </div>
             <Sparkles className="text-muted-foreground h-4 w-4" />
@@ -182,7 +184,7 @@ export function AnalyticsBento({
             <ThroughputChart data={throughput.data} />
           ) : (
             <p className="text-muted-foreground py-12 text-center text-sm">
-              No completions in the last 60 days.
+              {t('analytics.empty_throughput')}
             </p>
           )}
         </section>
@@ -193,12 +195,12 @@ export function AnalyticsBento({
         <section className="surface-card space-y-3 p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="kicker">Forecast</p>
+              <p className="kicker">{t('analytics.kicker_forecast')}</p>
               <h3 className="text-foreground mt-1 text-base font-semibold tracking-tight">
-                Ship-date Monte Carlo
+                {t('analytics.heading_forecast')}
               </h3>
               <p className="text-muted-foreground mt-0.5 text-xs">
-                1000 trajectories sampled from the last 6 sprints&apos; throughput.
+                {t('analytics.forecast_description')}
               </p>
             </div>
             <div className="grid grid-cols-3 gap-2 text-right text-xs">

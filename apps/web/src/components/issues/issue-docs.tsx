@@ -2,9 +2,15 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useOrganization } from '@/lib/hooks/use-organization';
-import { useAttachIssueDoc, useDetachIssueDoc, useDocumentSearch, useIssueDocs } from '@/lib/hooks/use-docs';
+import {
+  useAttachIssueDoc,
+  useDetachIssueDoc,
+  useDocumentSearch,
+  useIssueDocs,
+} from '@/lib/hooks/use-docs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createDocumentAppHref } from '@/lib/docs/content';
@@ -20,6 +26,7 @@ interface IssueDocsProps {
 }
 
 export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDocsProps) {
+  const t = useTranslations('issuePanels');
   const router = useRouter();
   const { toast } = useToast();
   const { currentOrganizationId } = useOrganization();
@@ -45,10 +52,10 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
       const createdPage = result?.page;
 
       toast({
-        title: 'Spec doc created',
+        title: t('docs.spec_created_title'),
         description: createdPage
-          ? `"${createdPage.title}" was linked to ${issueKey}.`
-          : `A new spec doc was linked to ${issueKey}.`,
+          ? t('docs.spec_created_named', { title: createdPage.title, issueKey })
+          : t('docs.spec_created_generic', { issueKey }),
       });
 
       if (createdPage?.id) {
@@ -62,8 +69,8 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
       }
     } catch (error) {
       toast({
-        title: 'Could not create spec doc',
-        description: error instanceof Error ? error.message : 'Something went wrong',
+        title: t('docs.spec_create_failed'),
+        description: error instanceof Error ? error.message : t('docs.something_went_wrong'),
         variant: 'destructive',
       });
     }
@@ -74,13 +81,13 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
       await attachDoc.mutateAsync({ pageId });
       setSearch('');
       toast({
-        title: 'Doc linked',
-        description: `"${title}" is now connected to ${issueKey}.`,
+        title: t('docs.linked_title'),
+        description: t('docs.linked_description', { title, issueKey }),
       });
     } catch (error) {
       toast({
-        title: 'Could not link doc',
-        description: error instanceof Error ? error.message : 'Something went wrong',
+        title: t('docs.link_failed'),
+        description: error instanceof Error ? error.message : t('docs.something_went_wrong'),
         variant: 'destructive',
       });
     }
@@ -90,32 +97,32 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
     try {
       await detachDoc.mutateAsync(pageId);
       toast({
-        title: 'Doc unlinked',
-        description: `"${title}" was removed from ${issueKey}.`,
+        title: t('docs.unlinked_title'),
+        description: t('docs.unlinked_description', { title, issueKey }),
       });
     } catch (error) {
       toast({
-        title: 'Could not unlink doc',
-        description: error instanceof Error ? error.message : 'Something went wrong',
+        title: t('docs.unlink_failed'),
+        description: error instanceof Error ? error.message : t('docs.something_went_wrong'),
         variant: 'destructive',
       });
     }
   }
 
-  const visibleDocs = showAll ? (docs || []) : (docs || []).slice(0, SHOW_LIMIT);
+  const visibleDocs = showAll ? docs || [] : (docs || []).slice(0, SHOW_LIMIT);
 
   return (
-    <div className="space-y-3 animate-fade-up">
+    <div className="animate-fade-up space-y-3">
       <div className="flex items-center justify-between">
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground transition-colors duration-200"
+          className="text-muted-foreground hover:text-foreground h-7 px-2 text-xs transition-colors duration-200"
           onClick={() => void handleCreateSpecDoc()}
           disabled={attachDoc.isPending}
         >
           <Plus className="mr-1 h-3.5 w-3.5" />
-          Create spec
+          {t('docs.create_spec')}
         </Button>
       </div>
 
@@ -123,7 +130,7 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
       <Input
         value={search}
         onChange={(event) => setSearch(event.target.value)}
-        placeholder="Search docs to link..."
+        placeholder={t('docs.search_placeholder')}
         className="h-8 text-sm"
       />
       {search.trim().length > 1 && (
@@ -137,14 +144,14 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
                 onClick={() => void handleAttachExisting(doc.id, doc.title)}
               >
                 <div className="flex min-w-0 items-center gap-2">
-                  <DocumentIcon icon={doc.icon} className="h-7 w-7 rounded-md text-sm shrink-0" />
+                  <DocumentIcon icon={doc.icon} className="h-7 w-7 shrink-0 rounded-md text-sm" />
                   <span className="truncate text-sm font-medium">{doc.title}</span>
                 </div>
-                <Link2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <Link2 className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
               </button>
             ))
           ) : (
-            <p className="px-2 py-3 text-sm text-muted-foreground">No matching docs found.</p>
+            <p className="text-muted-foreground px-2 py-3 text-sm">{t('docs.no_matches')}</p>
           )}
         </div>
       )}
@@ -152,7 +159,7 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
       {/* Linked docs list */}
       {isLoading ? (
         <div className="flex items-center justify-center py-4">
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
         </div>
       ) : docs && docs.length > 0 ? (
         <div className="space-y-1">
@@ -162,7 +169,7 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
               className="row-interactive group flex items-center justify-between gap-2 rounded-md px-2 py-1.5"
             >
               <div className="flex min-w-0 items-center gap-2">
-                <DocumentIcon icon={doc.icon} className="h-7 w-7 rounded-md text-sm shrink-0" />
+                <DocumentIcon icon={doc.icon} className="h-7 w-7 shrink-0 rounded-md text-sm" />
                 <div className="min-w-0">
                   <Link
                     href={createDocumentAppHref({
@@ -170,16 +177,18 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
                       spaceId: doc.spaceId,
                       projectId: doc.projectId,
                     })}
-                    className="block truncate text-sm font-medium hover:text-primary transition-colors duration-200"
+                    className="hover:text-primary block truncate text-sm font-medium transition-colors duration-200"
                   >
                     {doc.title}
                   </Link>
-                  <span className="text-[11px] text-muted-foreground">
-                    {doc.projectId ? 'Project doc' : 'Wiki'} · Updated {new Date(doc.updatedAt).toLocaleDateString()}
+                  <span className="text-muted-foreground text-[11px]">
+                    {doc.projectId ? t('docs.kind_project') : t('docs.kind_wiki')}
+                    {' · '}
+                    {t('docs.updated', { date: new Date(doc.updatedAt).toLocaleDateString() })}
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0">
+              <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                 <Button asChild variant="ghost" size="icon" className="h-7 w-7">
                   <Link
                     href={createDocumentAppHref({
@@ -187,7 +196,7 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
                       spaceId: doc.spaceId,
                       projectId: doc.projectId,
                     })}
-                    aria-label="Open doc"
+                    aria-label={t('docs.open_doc')}
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
                   </Link>
@@ -198,7 +207,7 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
                   className="h-7 w-7"
                   onClick={() => void handleDetach(doc.id, doc.title)}
                   disabled={detachDoc.isPending}
-                  aria-label="Unlink doc"
+                  aria-label={t('docs.unlink_doc')}
                 >
                   <Unlink2 className="h-3.5 w-3.5" />
                 </Button>
@@ -209,16 +218,16 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
             <button
               type="button"
               onClick={() => setShowAll(!showAll)}
-              className="w-full text-xs text-muted-foreground hover:text-foreground py-1 transition-colors duration-200"
+              className="text-muted-foreground hover:text-foreground w-full py-1 text-xs transition-colors duration-200"
             >
-              {showAll ? 'Show less' : `+${docs.length - SHOW_LIMIT} more`}
+              {showAll
+                ? t('docs.show_less')
+                : t('docs.show_more', { count: docs.length - SHOW_LIMIT })}
             </button>
           )}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">
-          No docs linked yet. Link design notes, specs, or runbooks to keep context close.
-        </p>
+        <p className="text-muted-foreground text-sm">{t('docs.empty')}</p>
       )}
     </div>
   );

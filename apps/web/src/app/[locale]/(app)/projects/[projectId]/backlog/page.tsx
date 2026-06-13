@@ -1,6 +1,7 @@
 'use client';
 
 import { use, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useIssues, useUpdateIssue } from '@/lib/hooks/use-issues';
 import { useSprints, useAssignIssueToSprint } from '@/lib/hooks/use-sprints';
 import { CreateIssueModal } from '@/components/issues/create-issue-modal';
@@ -53,6 +54,7 @@ const typeConfig: Record<string, { icon: React.ElementType; color: string }> = {
 
 export default function BacklogPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params);
+  const t = useTranslations('pagesProjects');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [aiDraftOpen, setAiDraftOpen] = useState(false);
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
@@ -84,44 +86,42 @@ export default function BacklogPage({ params }: { params: Promise<{ projectId: s
 
   const toggleIssueSelection = (issueId: string) => {
     setSelectedIssues((prev) =>
-      prev.includes(issueId)
-        ? prev.filter((id) => id !== issueId)
-        : [...prev, issueId]
+      prev.includes(issueId) ? prev.filter((id) => id !== issueId) : [...prev, issueId]
     );
   };
 
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
       case 'critical':
-        return <AlertCircle className="h-3.5 w-3.5 text-accent-rose" />;
+        return <AlertCircle className="text-accent-rose h-3.5 w-3.5" />;
       case 'high':
-        return <ArrowUp className="h-3.5 w-3.5 text-accent-amber" />;
+        return <ArrowUp className="text-accent-amber h-3.5 w-3.5" />;
       case 'medium':
-        return <Minus className="h-3.5 w-3.5 text-accent-amber" />;
+        return <Minus className="text-accent-amber h-3.5 w-3.5" />;
       case 'low':
-        return <ArrowDown className="h-3.5 w-3.5 text-accent-blue" />;
+        return <ArrowDown className="text-accent-blue h-3.5 w-3.5" />;
       default:
-        return <Circle className="h-3.5 w-3.5 text-muted-foreground" />;
+        return <Circle className="text-muted-foreground h-3.5 w-3.5" />;
     }
   };
 
   if (issuesLoading || sprintsLoading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col animate-fade-in">
+    <div className="animate-fade-in flex h-full flex-col">
       {/* Header */}
-      <div className="border-b border-border bg-background/95 backdrop-blur px-6 py-3 shrink-0">
+      <div className="border-border bg-background/95 shrink-0 border-b px-6 py-3 backdrop-blur">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight">Backlog</h1>
-            <span className="text-xs text-muted-foreground">
-              {backlogIssues.length} issue{backlogIssues.length !== 1 ? 's' : ''}
+            <h1 className="text-2xl font-semibold tracking-tight">{t('backlogTitle')}</h1>
+            <span className="text-muted-foreground text-xs">
+              {t('issuesCount', { count: backlogIssues.length })}
             </span>
           </div>
 
@@ -129,22 +129,19 @@ export default function BacklogPage({ params }: { params: Promise<{ projectId: s
             {selectedIssues.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+                  <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
                     <Timer className="h-3.5 w-3.5" />
-                    Move {selectedIssues.length} to Sprint
+                    {t('moveToSprint', { count: selectedIssues.length })}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   {activeSprint && (
                     <DropdownMenuItem onClick={() => handleBulkAssign(activeSprint.id)}>
-                      {activeSprint.name} (Active)
+                      {t('sprintActiveLabel', { name: activeSprint.name })}
                     </DropdownMenuItem>
                   )}
                   {plannedSprints.map((sprint) => (
-                    <DropdownMenuItem
-                      key={sprint.id}
-                      onClick={() => handleBulkAssign(sprint.id)}
-                    >
+                    <DropdownMenuItem key={sprint.id} onClick={() => handleBulkAssign(sprint.id)}>
                       {sprint.name}
                     </DropdownMenuItem>
                   ))}
@@ -160,13 +157,17 @@ export default function BacklogPage({ params }: { params: Promise<{ projectId: s
                 onClick={() => setAiDraftOpen(true)}
               >
                 <Sparkles className="h-3.5 w-3.5" />
-                Draft with AI
+                {t('draftWithAi')}
               </Button>
             )}
 
-            <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => setCreateModalOpen(true)}>
+            <Button
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => setCreateModalOpen(true)}
+            >
               <Plus className="h-3.5 w-3.5" />
-              New Issue
+              {t('newIssue')}
             </Button>
           </div>
         </div>
@@ -175,23 +176,23 @@ export default function BacklogPage({ params }: { params: Promise<{ projectId: s
       {/* Table */}
       <div className="flex-1 overflow-y-auto">
         {backlogIssues.length === 0 ? (
-          <div className="mx-auto mt-16 flex max-w-md animate-fade-up flex-col items-center gap-3 rounded-lg border border-dashed border-border p-8 text-center">
-            <Inbox className="h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              Backlog is empty. All issues are assigned to sprints.
-            </p>
+          <div className="animate-fade-up border-border mx-auto mt-16 flex max-w-md flex-col items-center gap-3 rounded-lg border border-dashed p-8 text-center">
+            <Inbox className="text-muted-foreground h-8 w-8" />
+            <p className="text-muted-foreground text-sm">{t('backlogEmpty')}</p>
             <Button size="sm" variant="outline" onClick={() => setCreateModalOpen(true)}>
               <Plus className="mr-1.5 h-3.5 w-3.5" />
-              Create Issue
+              {t('createIssue')}
             </Button>
           </div>
         ) : (
           <div>
             {/* Table Header */}
-            <div className="flex items-center gap-3 px-6 py-2 border-b border-border bg-surface text-[11px] font-medium uppercase tracking-wider text-muted-foreground sticky top-0 z-10">
-              <div className="w-8 flex justify-center">
+            <div className="border-border bg-surface text-muted-foreground sticky top-0 z-10 flex items-center gap-3 border-b px-6 py-2 text-[11px] font-medium uppercase tracking-wider">
+              <div className="flex w-8 justify-center">
                 <Checkbox
-                  checked={selectedIssues.length === backlogIssues.length && backlogIssues.length > 0}
+                  checked={
+                    selectedIssues.length === backlogIssues.length && backlogIssues.length > 0
+                  }
                   onCheckedChange={(checked) => {
                     if (checked) {
                       setSelectedIssues(backlogIssues.map((i) => i.id));
@@ -202,62 +203,63 @@ export default function BacklogPage({ params }: { params: Promise<{ projectId: s
                 />
               </div>
               <div className="w-8" />
-              <div className="w-20">Key</div>
-              <div className="flex-1">Title</div>
-              <div className="w-20 text-center">Type</div>
-              <div className="w-20 text-center">Priority</div>
-              <div className="w-16 text-center">Est.</div>
-              <div className="w-44">Sprint</div>
+              <div className="w-20">{t('columnKey')}</div>
+              <div className="flex-1">{t('columnTitle')}</div>
+              <div className="w-20 text-center">{t('columnType')}</div>
+              <div className="w-20 text-center">{t('columnPriority')}</div>
+              <div className="w-16 text-center">{t('columnEstimate')}</div>
+              <div className="w-44">{t('columnSprint')}</div>
             </div>
 
             {/* Rows */}
             {backlogIssues.map((issue) => {
-              const tConfig = typeConfig[issue.type] || { icon: FileText, color: 'text-muted-foreground' };
+              const tConfig = typeConfig[issue.type] || {
+                icon: FileText,
+                color: 'text-muted-foreground',
+              };
               const TypeIcon = tConfig.icon;
 
               return (
                 <div
                   key={issue.id}
                   className={cn(
-                    'flex items-center gap-3 px-6 py-2.5 border-b border-border/30 hover:bg-accent/50 transition-colors group',
+                    'border-border/30 hover:bg-accent/50 group flex items-center gap-3 border-b px-6 py-2.5 transition-colors',
                     selectedIssues.includes(issue.id) && 'bg-primary/5'
                   )}
                 >
-                  <div className="w-8 flex justify-center">
+                  <div className="flex w-8 justify-center">
                     <Checkbox
                       checked={selectedIssues.includes(issue.id)}
                       onCheckedChange={() => toggleIssueSelection(issue.id)}
                     />
                   </div>
 
-                  <div className="w-8 flex justify-center">
-                    {getPriorityIcon(issue.priority)}
-                  </div>
+                  <div className="flex w-8 justify-center">{getPriorityIcon(issue.priority)}</div>
 
                   <div className="w-20">
-                    <span className="text-xs font-mono text-muted-foreground">{issue.key}</span>
+                    <span className="text-muted-foreground font-mono text-xs">{issue.key}</span>
                   </div>
 
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <button
                       onClick={() => setSelectedIssueId(issue.id)}
-                      className="text-sm font-medium text-foreground hover:text-primary transition-colors truncate block w-full text-left"
+                      className="text-foreground hover:text-primary block w-full truncate text-left text-sm font-medium transition-colors"
                     >
                       {issue.title}
                     </button>
                   </div>
 
-                  <div className="w-20 flex justify-center">
+                  <div className="flex w-20 justify-center">
                     <TypeIcon className={cn('h-4 w-4', tConfig.color)} />
                   </div>
 
-                  <div className="w-20 flex justify-center">
+                  <div className="flex w-20 justify-center">
                     <Badge
                       variant="outline"
                       className={cn(
-                        'text-[10px] px-1.5 py-0 capitalize font-medium',
+                        'px-1.5 py-0 text-[10px] font-medium capitalize',
                         issue.priority === 'critical' && 'border-accent-rose/30 text-accent-rose',
-                        issue.priority === 'high' && 'border-accent-amber/30 text-accent-amber',
+                        issue.priority === 'high' && 'border-accent-amber/30 text-accent-amber'
                       )}
                     >
                       {issue.priority}
@@ -266,23 +268,23 @@ export default function BacklogPage({ params }: { params: Promise<{ projectId: s
 
                   <div className="w-16 text-center">
                     {issue.estimate ? (
-                      <span className="text-xs text-muted-foreground">{issue.estimate}pt</span>
+                      <span className="text-muted-foreground text-xs">
+                        {t('estimatePoints', { points: issue.estimate })}
+                      </span>
                     ) : (
-                      <span className="text-xs text-muted-foreground/30">-</span>
+                      <span className="text-muted-foreground/30 text-xs">-</span>
                     )}
                   </div>
 
                   <div className="w-44">
-                    <Select
-                      onValueChange={(sprintId) => handleAssignToSprint(issue.id, sprintId)}
-                    >
-                      <SelectTrigger className="h-7 text-xs border-dashed">
-                        <SelectValue placeholder="Add to sprint..." />
+                    <Select onValueChange={(sprintId) => handleAssignToSprint(issue.id, sprintId)}>
+                      <SelectTrigger className="h-7 border-dashed text-xs">
+                        <SelectValue placeholder={t('addToSprint')} />
                       </SelectTrigger>
                       <SelectContent>
                         {activeSprint && (
                           <SelectItem value={activeSprint.id}>
-                            {activeSprint.name} (Active)
+                            {t('sprintActiveLabel', { name: activeSprint.name })}
                           </SelectItem>
                         )}
                         {plannedSprints.map((sprint) => (
@@ -306,11 +308,7 @@ export default function BacklogPage({ params }: { params: Promise<{ projectId: s
         projectId={projectId}
       />
 
-      <AiDraftIssueDialog
-        open={aiDraftOpen}
-        onOpenChange={setAiDraftOpen}
-        projectId={projectId}
-      />
+      <AiDraftIssueDialog open={aiDraftOpen} onOpenChange={setAiDraftOpen} projectId={projectId} />
 
       {selectedIssueId && (
         <IssueDetailModal

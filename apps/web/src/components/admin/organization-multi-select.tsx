@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { Check, ChevronsUpDown, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,9 +31,11 @@ interface OrganizationMultiSelectProps {
 export function OrganizationMultiSelect({
   value,
   onChange,
-  placeholder = 'All organizations',
+  placeholder,
 }: OrganizationMultiSelectProps) {
+  const t = useTranslations('adminDialogs');
   const [open, setOpen] = useState(false);
+  const resolvedPlaceholder = placeholder ?? t('orgMultiSelect.allOrganizations');
 
   const { data: orgs = [], isLoading } = useQuery({
     queryKey: ['admin-organizations-options'],
@@ -81,18 +84,18 @@ export function OrganizationMultiSelect({
           >
             <span className="truncate text-sm">
               {value.length === 0
-                ? placeholder
-                : `${value.length} selected`}
+                ? resolvedPlaceholder
+                : t('orgMultiSelect.selectedCount', { count: value.length })}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
           <Command>
-            <CommandInput placeholder="Search organizations..." />
+            <CommandInput placeholder={t('orgMultiSelect.searchPlaceholder')} />
             <CommandList>
               <CommandEmpty>
-                {isLoading ? 'Loading...' : 'No organizations found.'}
+                {isLoading ? t('common.loading') : t('orgMultiSelect.empty')}
               </CommandEmpty>
               <CommandGroup>
                 {orgs.map((org) => {
@@ -104,13 +107,10 @@ export function OrganizationMultiSelect({
                       onSelect={() => toggle(org.id)}
                     >
                       <Check
-                        className={cn(
-                          'mr-2 h-4 w-4',
-                          selected ? 'opacity-100' : 'opacity-0'
-                        )}
+                        className={cn('mr-2 h-4 w-4', selected ? 'opacity-100' : 'opacity-0')}
                       />
                       <span className="truncate">{org.name}</span>
-                      <span className="ml-2 truncate font-mono text-xs text-muted-foreground">
+                      <span className="text-muted-foreground ml-2 truncate font-mono text-xs">
                         {org.slug}
                       </span>
                     </CommandItem>
@@ -127,16 +127,13 @@ export function OrganizationMultiSelect({
           {value.map((id) => {
             const org = byId.get(id);
             return (
-              <span
-                key={id}
-                className="chip flex items-center gap-1 text-xs"
-              >
+              <span key={id} className="chip flex items-center gap-1 text-xs">
                 {org?.name ?? id}
                 <button
                   type="button"
                   onClick={() => remove(id)}
                   className="rounded p-0.5 opacity-60 hover:opacity-100"
-                  aria-label={`Remove ${org?.name ?? id}`}
+                  aria-label={t('orgMultiSelect.remove', { name: org?.name ?? id })}
                 >
                   <X className="h-3 w-3" />
                 </button>

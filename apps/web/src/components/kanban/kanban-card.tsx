@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { AlertCircle, CalendarDays, MessageCircle, Paperclip, GitBranch } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface KanbanCardProps {
   issue: {
@@ -116,9 +117,14 @@ const TYPE_CHIP: Record<NonNullable<KanbanCardProps['issue']['type']>, string> =
   task: 'chip',
 };
 
-function formatDue(
-  due?: string | null
-): { label: string; tone: 'default' | 'warn' | 'danger' } | null {
+type DueDescriptor =
+  | { kind: 'overdue'; days: number; tone: 'danger' }
+  | { kind: 'today'; tone: 'warn' }
+  | { kind: 'tomorrow'; tone: 'warn' }
+  | { kind: 'days'; days: number; tone: 'default' }
+  | { kind: 'date'; label: string; tone: 'default' };
+
+function describeDue(due?: string | null): DueDescriptor | null {
   if (!due) return null;
   const target = new Date(due);
   if (Number.isNaN(target.getTime())) return null;
@@ -130,17 +136,19 @@ function formatDue(
     target.getDate()
   ).getTime();
   const deltaDays = Math.round((startOfTarget - startOfToday) / (1000 * 60 * 60 * 24));
-  if (deltaDays < 0) return { label: `${Math.abs(deltaDays)}d overdue`, tone: 'danger' };
-  if (deltaDays === 0) return { label: 'Today', tone: 'warn' };
-  if (deltaDays === 1) return { label: 'Tomorrow', tone: 'warn' };
-  if (deltaDays < 7) return { label: `${deltaDays}d`, tone: 'default' };
+  if (deltaDays < 0) return { kind: 'overdue', days: Math.abs(deltaDays), tone: 'danger' };
+  if (deltaDays === 0) return { kind: 'today', tone: 'warn' };
+  if (deltaDays === 1) return { kind: 'tomorrow', tone: 'warn' };
+  if (deltaDays < 7) return { kind: 'days', days: deltaDays, tone: 'default' };
   return {
+    kind: 'date',
     label: target.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
     tone: 'default',
   };
 }
 
 export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: KanbanCardProps) {
+  const t = useTranslations('kanban');
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: draggableId || issue.id,
     data: {
@@ -172,7 +180,22 @@ export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: K
   const visibleLabels = (issue.labels ?? []).slice(0, 3);
   const extraLabels = Math.max(0, (issue.labels ?? []).length - visibleLabels.length);
 
-  const due = formatDue(issue.dueDate);
+  const due = describeDue(issue.dueDate);
+  const dueLabel = (() => {
+    if (!due) return null;
+    switch (due.kind) {
+      case 'overdue':
+        return t('card.due.overdue', { days: due.days });
+      case 'today':
+        return t('card.due.today');
+      case 'tomorrow':
+        return t('card.due.tomorrow');
+      case 'days':
+        return t('card.due.inDays', { days: due.days });
+      case 'date':
+        return due.label;
+    }
+  })();
   const subtasks =
     typeof issue.subtaskCount === 'number' && issue.subtaskCount > 0
       ? { done: issue.subtaskDone ?? 0, total: issue.subtaskCount }
@@ -223,7 +246,7 @@ export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: K
         {isUrgent && (
           <AlertCircle
             className="absolute right-2 top-2 h-3.5 w-3.5 text-red-500"
-            aria-label="Urgent priority"
+            aria-label={t('card.urgentPriority')}
           />
         )}
 
@@ -277,7 +300,7 @@ export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: K
                   )}
                 >
                   <CalendarDays className="h-3 w-3" />
-                  {due.label}
+                  {dueLabel}
                 </span>
               )}
               {subtasks && (
@@ -326,7 +349,7 @@ export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: K
                 {extraAssignees > 0 && (
                   <span
                     className="ring-card bg-muted text-muted-foreground flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-semibold ring-2"
-                    title={`+${extraAssignees} more`}
+                    title={t('card.moreAssignees', { count: extraAssignees })}
                   >
                     +{extraAssignees}
                   </span>

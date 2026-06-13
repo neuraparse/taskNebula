@@ -64,6 +64,7 @@ export function DashboardClient() {
   const tDash = useTranslations('dashboard');
   const tActions = useTranslations('actions');
   const tNav = useTranslations('nav');
+  const t = useTranslations('pagesHome');
 
   // Surface server-side permission redirects (e.g. /settings/organization without perms)
   // and the post-verify success landing (/dashboard?verified=1).
@@ -73,14 +74,14 @@ export function DashboardClient() {
 
     if (error === 'insufficient-permission') {
       toast({
-        title: 'Access denied',
-        description: "You don't have permission to view that page.",
+        title: t('toast_access_denied_title'),
+        description: t('toast_access_denied_description'),
         variant: 'destructive',
       });
     } else if (verified === '1') {
       toast({
-        title: 'Email verified',
-        description: 'Welcome aboard — your account is now active.',
+        title: t('toast_verified_title'),
+        description: t('toast_verified_description'),
       });
     } else {
       return;
@@ -125,7 +126,9 @@ export function DashboardClient() {
       if (currentOrganizationId) params.set('organizationId', currentOrganizationId);
       if (currentTeamId) params.set('teamId', currentTeamId);
 
-      const response = await fetch(`/api/issues/my-issues${params.size > 0 ? `?${params.toString()}` : ''}`);
+      const response = await fetch(
+        `/api/issues/my-issues${params.size > 0 ? `?${params.toString()}` : ''}`
+      );
       if (!response.ok) throw new Error('Failed to fetch issues');
       const data = await response.json();
       return data.issues || [];
@@ -140,13 +143,9 @@ export function DashboardClient() {
       (issue) => issue.status.category === 'in_progress' || issue.status.category === 'backlog'
     ).length;
 
-    const completed = myIssues.filter(
-      (issue) => issue.status.category === 'done'
-    ).length;
+    const completed = myIssues.filter((issue) => issue.status.category === 'done').length;
 
-    const blocked = myIssues.filter(
-      (issue) => issue.status.category === 'blocked'
-    ).length;
+    const blocked = myIssues.filter((issue) => issue.status.category === 'blocked').length;
 
     const points = myIssues
       .filter((issue) => issue.status.category === 'in_progress')
@@ -158,33 +157,30 @@ export function DashboardClient() {
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
       </div>
     );
   }
 
-  const firstName = session?.user?.name?.split(' ')[0] || 'there';
+  const firstName = session?.user?.name?.split(' ')[0] || t('greeting_fallback_name');
 
   return (
     <>
-      <div className="flex h-full min-h-0 flex-col bg-background">
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="p-6 space-y-8">
-
+      <div className="bg-background flex h-full min-h-0 flex-col">
+        <div className="custom-scrollbar flex-1 overflow-y-auto">
+          <div className="space-y-8 p-6">
             {/* Greeting */}
-            <div className="flex items-end justify-between gap-4 animate-fade-up">
+            <div className="animate-fade-up flex items-end justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="kicker">{tDash('kicker')}</span>
                   <span className="live-pill">{tDash('live')}</span>
                 </div>
-                <h1 className="text-2xl font-semibold tracking-tight text-foreground text-balance">
+                <h1 className="text-foreground text-balance text-2xl font-semibold tracking-tight">
                   {tDash('welcome_back', { name: firstName })}
                 </h1>
-                <p className="text-sm text-muted-foreground">
-                  {currentTeamId
-                    ? tDash('subtitle_team')
-                    : tDash('subtitle_personal')}
+                <p className="text-muted-foreground text-sm">
+                  {currentTeamId ? tDash('subtitle_team') : tDash('subtitle_personal')}
                 </p>
               </div>
               <Link href="/my-issues">
@@ -197,26 +193,46 @@ export function DashboardClient() {
 
             {/* KPI Summary Row */}
             <div className="stagger grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <StatTile label={tDash('stat_active')} value={stats.active} hue="blue" icon={Activity} />
-              <StatTile label={tDash('stat_completed')} value={stats.completed} hue="emerald" icon={CheckCircle2} />
-              <StatTile label={tDash('stat_blocked')} value={stats.blocked} hue="rose" icon={AlertOctagon} />
-              <StatTile label={tDash('stat_story_points')} value={stats.points} hue="violet" icon={Gauge} />
+              <StatTile
+                label={tDash('stat_active')}
+                value={stats.active}
+                hue="blue"
+                icon={Activity}
+              />
+              <StatTile
+                label={tDash('stat_completed')}
+                value={stats.completed}
+                hue="emerald"
+                icon={CheckCircle2}
+              />
+              <StatTile
+                label={tDash('stat_blocked')}
+                value={stats.blocked}
+                hue="rose"
+                icon={AlertOctagon}
+              />
+              <StatTile
+                label={tDash('stat_story_points')}
+                value={stats.points}
+                hue="violet"
+                icon={Gauge}
+              />
             </div>
 
             {/* Main Content */}
             <div className="stagger grid gap-6 lg:grid-cols-3">
               {/* My Issues */}
-              <div className="surface-card p-6 lg:col-span-2 animate-fade-up">
-                <div className="flex items-center justify-between mb-4">
+              <div className="surface-card animate-fade-up p-6 lg:col-span-2">
+                <div className="mb-4 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Inbox className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium text-foreground">
+                    <Inbox className="text-muted-foreground h-4 w-4" />
+                    <span className="text-foreground text-sm font-medium">
                       {tDash('my_issues_heading')}
                     </span>
                   </div>
                   <Link
                     href="/my-issues"
-                    className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-all duration-150 ease-snap"
+                    className="text-muted-foreground hover:text-foreground ease-snap inline-flex items-center gap-1 text-xs transition-all duration-150"
                   >
                     {tActions('view_all')}
                     <ArrowUpRight className="h-3 w-3" />
@@ -225,10 +241,8 @@ export function DashboardClient() {
 
                 {!myIssues || myIssues.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <Inbox className="h-8 w-8 text-muted-foreground mb-3" />
-                    <p className="text-sm text-muted-foreground mb-4">
-                      {tDash('all_caught_up')}
-                    </p>
+                    <Inbox className="text-muted-foreground mb-3 h-8 w-8" />
+                    <p className="text-muted-foreground mb-4 text-sm">{tDash('all_caught_up')}</p>
                     {firstProjectId ? (
                       <Button
                         variant="outline"
@@ -260,14 +274,14 @@ export function DashboardClient() {
 
               {/* Recent Activity */}
               {currentOrganizationId && (
-                <div className="surface-card p-6 animate-fade-up">
+                <div className="surface-card animate-fade-up p-6">
                   <ActivityFeed organizationId={currentOrganizationId} limit={5} />
                 </div>
               )}
             </div>
 
             {/* Workspace widgets */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
+            <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
               <YourWorkWidget />
               <UpcomingDeadlinesWidget />
               <PinnedItemsWidget />
@@ -307,16 +321,14 @@ function StatTile({
   icon: LucideIcon;
 }) {
   return (
-    <div className="surface-card surface-card-hover p-4 max-h-[140px] transition-all duration-150 ease-snap hover:-translate-y-0.5 hover:shadow-md">
+    <div className="surface-card surface-card-hover ease-snap max-h-[140px] p-4 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
       <span className={cn('icon-tile', `icon-tile-accent-${hue}`)}>
         <Icon className="h-4 w-4" />
       </span>
-      <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground tabular-nums">
+      <p className="text-foreground mt-3 text-2xl font-semibold tabular-nums tracking-tight">
         {value}
       </p>
-      <p className="mt-0.5 text-[11px] uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
+      <p className="text-muted-foreground mt-0.5 text-[11px] uppercase tracking-wide">{label}</p>
     </div>
   );
 }
@@ -343,19 +355,15 @@ function IssueRow({ issue, onClick }: { issue: Issue; onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="row-interactive w-full flex items-center gap-3 rounded-md pl-2 pr-3 py-2.5 min-h-[40px] text-left transition-all duration-150 ease-snap cursor-pointer"
+      className="row-interactive ease-snap flex min-h-[40px] w-full cursor-pointer items-center gap-3 rounded-md py-2.5 pl-2 pr-3 text-left transition-all duration-150"
     >
       <span className={cn('priority-indicator h-6 shrink-0', priorityCls)} />
 
-      <span className="text-xs font-mono text-muted-foreground shrink-0 w-20">
-        {issue.key}
-      </span>
+      <span className="text-muted-foreground w-20 shrink-0 font-mono text-xs">{issue.key}</span>
 
-      <p className="text-sm truncate flex-1 text-foreground">
-        {issue.title}
-      </p>
+      <p className="text-foreground flex-1 truncate text-sm">{issue.title}</p>
 
-      <span className="hidden sm:inline-flex items-center gap-1.5 shrink-0 text-xs text-muted-foreground">
+      <span className="text-muted-foreground hidden shrink-0 items-center gap-1.5 text-xs sm:inline-flex">
         <span className={cn('status-dot', statusCls)} />
         {issue.status.name}
       </span>

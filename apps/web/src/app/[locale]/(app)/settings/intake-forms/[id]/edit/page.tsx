@@ -3,9 +3,13 @@ import { auth } from '@/auth';
 import { db, intakeForms, intakeSubmissions, organizationMembers } from '@tasknebula/db';
 import { and, desc, eq } from 'drizzle-orm';
 import type { IntakeFieldDefinition } from '@tasknebula/db';
+import { getTranslations } from 'next-intl/server';
 import { IntakeFormEditor } from '@/components/intake/intake-form-editor';
 
-export const metadata = { title: 'Edit intake form · TaskNebula' };
+export async function generateMetadata() {
+  const t = await getTranslations('pagesSettings');
+  return { title: t('intakeFormEdit.metaTitle') };
+}
 
 export default async function EditIntakeFormPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

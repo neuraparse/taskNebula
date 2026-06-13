@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Search, Users } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,7 @@ interface TeamMembersListProps {
 }
 
 export function TeamMembersList({ members }: TeamMembersListProps) {
+  const t = useTranslations('pagesWork');
   const [query, setQuery] = useState('');
   const [role, setRole] = useState<string>('all');
 
@@ -53,13 +55,11 @@ export function TeamMembersList({ members }: TeamMembersListProps) {
 
   if (members.length === 0) {
     return (
-      <div className="surface-card p-8 text-center space-y-3 animate-fade-up">
-        <Users className="mx-auto h-8 w-8 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">
-          Invite team members to collaborate on projects.
-        </p>
+      <div className="surface-card animate-fade-up space-y-3 p-8 text-center">
+        <Users className="text-muted-foreground mx-auto h-8 w-8" />
+        <p className="text-muted-foreground text-sm">{t('team.members.emptyDescription')}</p>
         <Link href="/settings?tab=members">
-          <Button size="sm">Invite member</Button>
+          <Button size="sm">{t('team.inviteMember')}</Button>
         </Link>
       </div>
     );
@@ -68,21 +68,21 @@ export function TeamMembersList({ members }: TeamMembersListProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <div className="relative flex-1 max-w-xs">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <div className="relative max-w-xs flex-1">
+          <Search className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search members"
-            className="h-9 rounded-md pl-8 transition-all duration-150 ease-snap"
+            placeholder={t('team.members.searchPlaceholder')}
+            className="ease-snap h-9 rounded-md pl-8 transition-all duration-150"
           />
         </div>
         <Select value={role} onValueChange={setRole}>
-          <SelectTrigger className="h-9 w-[160px] rounded-md transition-all duration-150 ease-snap">
-            <SelectValue placeholder="Role" />
+          <SelectTrigger className="ease-snap h-9 w-[160px] rounded-md transition-all duration-150">
+            <SelectValue placeholder={t('team.members.rolePlaceholder')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All roles</SelectItem>
+            <SelectItem value="all">{t('team.members.allRoles')}</SelectItem>
             {roles.map((r) => (
               <SelectItem key={r} value={r} className="capitalize">
                 {r}
@@ -93,9 +93,9 @@ export function TeamMembersList({ members }: TeamMembersListProps) {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="surface-card p-8 text-center space-y-3">
-          <Search className="mx-auto h-8 w-8 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">No members match your filters.</p>
+        <div className="surface-card space-y-3 p-8 text-center">
+          <Search className="text-muted-foreground mx-auto h-8 w-8" />
+          <p className="text-muted-foreground text-sm">{t('team.members.noMatches')}</p>
           <Button
             size="sm"
             variant="outline"
@@ -104,7 +104,7 @@ export function TeamMembersList({ members }: TeamMembersListProps) {
               setRole('all');
             }}
           >
-            Clear filters
+            {t('team.members.clearFilters')}
           </Button>
         </div>
       ) : (
@@ -114,33 +114,31 @@ export function TeamMembersList({ members }: TeamMembersListProps) {
             return (
               <div
                 key={member.id}
-                className="surface-card rounded-lg flex items-center gap-3 px-4 py-3 transition-all duration-150 ease-snap hover:border-border-strong"
+                className="surface-card ease-snap hover:border-border-strong flex items-center gap-3 rounded-lg px-4 py-3 transition-all duration-150"
               >
                 <Avatar className="h-9 w-9 shrink-0 rounded-full">
                   <AvatarImage
                     src={member.user.image || undefined}
-                    alt={member.user.name || 'Member'}
+                    alt={member.user.name || t('team.members.memberAlt')}
                   />
                   <AvatarFallback className="rounded-full text-xs font-medium">
                     {member.user.name?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">
+                  <p className="text-foreground truncate text-sm font-medium">
                     {member.user.name || member.user.email}
                   </p>
-                  <p className="truncate text-xs text-muted-foreground capitalize">
-                    {member.role}
-                  </p>
+                  <p className="text-muted-foreground truncate text-xs capitalize">{member.role}</p>
                 </div>
                 {isActive ? (
-                  <span className="live-pill" aria-label="Online">
-                    Online
+                  <span className="live-pill" aria-label={t('team.members.online')}>
+                    {t('team.members.online')}
                   </span>
                 ) : (
-                  <span className="chip" aria-label="Offline">
+                  <span className="chip" aria-label={t('team.members.offline')}>
                     <span className="status-dot status-idle" aria-hidden />
-                    Offline
+                    {t('team.members.offline')}
                   </span>
                 )}
               </div>

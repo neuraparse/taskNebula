@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ApiKeysManager } from '@/components/settings/api-keys-manager';
 import { WebhooksManager } from '@/components/settings/webhooks-manager';
@@ -38,7 +39,7 @@ type NavItem = {
     | 'ai-agents'
     | 'communications'
     | 'audit-log';
-  label: string;
+  labelKey: string;
   icon: typeof Building2;
   // Permission required to see this tab. `undefined` means every member sees it.
   requiredPermissions?: Permission;
@@ -47,46 +48,46 @@ type NavItem = {
 const NAV_ITEMS: readonly NavItem[] = [
   {
     value: 'organization',
-    label: 'Organization',
+    labelKey: 'nav.organization',
     icon: Building2,
     requiredPermissions: 'org:settings',
   },
   {
     // Every member can view members; `member:invite` is enforced inside the manager.
     value: 'members',
-    label: 'Members',
+    labelKey: 'nav.members',
     icon: Users,
     requiredPermissions: 'member:view',
   },
   {
     value: 'api-keys',
-    label: 'API Keys',
+    labelKey: 'nav.apiKeys',
     icon: Key,
     requiredPermissions: 'api_key:view',
   },
   {
     value: 'webhooks',
-    label: 'Webhooks',
+    labelKey: 'nav.webhooks',
     icon: Webhook,
     requiredPermissions: 'webhook:view',
   },
-  { value: 'notifications', label: 'Notifications', icon: Bell },
-  { value: 'appearance', label: 'Appearance', icon: Palette },
+  { value: 'notifications', labelKey: 'nav.notifications', icon: Bell },
+  { value: 'appearance', labelKey: 'nav.appearance', icon: Palette },
   {
     value: 'ai-agents',
-    label: 'AI & Agents',
+    labelKey: 'nav.aiAgents',
     icon: Bot,
     requiredPermissions: 'org:settings',
   },
   {
     value: 'communications',
-    label: 'Communications',
+    labelKey: 'nav.communications',
     icon: MessageSquareText,
     requiredPermissions: 'org:settings',
   },
   {
     value: 'audit-log',
-    label: 'Activity',
+    labelKey: 'nav.activity',
     icon: ScrollText,
     requiredPermissions: 'org:manage',
   },
@@ -95,6 +96,7 @@ const NAV_ITEMS: readonly NavItem[] = [
 type TabValue = NavItem['value'];
 
 export default function SettingsPage() {
+  const t = useTranslations('pagesSettings');
   const { currentOrganizationId } = useOrganization();
   const { aiEnabled } = useAiFeature();
   const perms = useOrganizationPermissions(currentOrganizationId ?? undefined);
@@ -142,7 +144,7 @@ export default function SettingsPage() {
   if (!currentOrganizationId) {
     return (
       <div className="p-6">
-        <p className="text-muted-foreground text-sm">Loading...</p>
+        <p className="text-muted-foreground text-sm">{t('loading')}</p>
       </div>
     );
   }
@@ -160,7 +162,7 @@ export default function SettingsPage() {
           Horizontally scrollable so every tab is reachable on narrow screens;
           scrollbar hidden, with trailing padding so the last tab clears the edge. */}
       <div className="scrollbar-none border-border flex flex-nowrap gap-1 overflow-x-auto whitespace-nowrap border-b py-2 pl-4 lg:hidden">
-        {visibleNavItems.map(({ value, label, icon: Icon }) => (
+        {visibleNavItems.map(({ value, labelKey, icon: Icon }) => (
           <button
             key={value}
             type="button"
@@ -169,7 +171,7 @@ export default function SettingsPage() {
             className="row-interactive shrink-0 gap-1.5 px-3 py-1.5 text-sm"
           >
             <Icon className="h-3.5 w-3.5" />
-            <span>{label}</span>
+            <span>{t(labelKey)}</span>
           </button>
         ))}
         {/* Trailing spacer: guarantees the last tab clears the right edge even
@@ -217,25 +219,25 @@ function renderContent(tab: TabValue, organizationId: string, aiEnabled: boolean
 }
 
 function AiDisabledNotice() {
+  const t = useTranslations('pagesSettings');
   return (
     <div className="surface-card space-y-2 p-8 text-center">
-      <p className="text-foreground text-sm font-medium">AI features are paused platform-wide</p>
+      <p className="text-foreground text-sm font-medium">{t('aiDisabled.title')}</p>
       <p className="text-muted-foreground text-sm">
-        A super-admin has to flip the master toggle in{' '}
-        <strong>Admin → Agent control → Global enablement</strong> to expose the agent runtime,
-        model registry, and AI-assisted task drafting to this workspace.
+        {t.rich('aiDisabled.body', {
+          strong: (chunks) => <strong>{chunks}</strong>,
+        })}
       </p>
     </div>
   );
 }
 
 function NoAccessNotice() {
+  const t = useTranslations('pagesSettings');
   return (
     <div className="surface-card space-y-2 p-8 text-center">
-      <p className="text-foreground text-sm font-medium">
-        You don&apos;t have access to this section.
-      </p>
-      <p className="text-muted-foreground text-sm">Contact an org admin to request permissions.</p>
+      <p className="text-foreground text-sm font-medium">{t('noAccess.title')}</p>
+      <p className="text-muted-foreground text-sm">{t('noAccess.body')}</p>
     </div>
   );
 }

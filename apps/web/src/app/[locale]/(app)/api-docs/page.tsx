@@ -10,6 +10,7 @@
  */
 
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import { auth } from '@/auth';
 import { db, users, organizationMembers } from '@tasknebula/db';
 import { eq, and, inArray } from 'drizzle-orm';
@@ -41,6 +42,7 @@ async function isWorkspaceAdmin(userId: string): Promise<boolean> {
 }
 
 export default async function ApiDocsPage() {
+  const t = await getTranslations('pagesWork');
   const session = await auth();
   if (!session?.user?.id) {
     redirect('/auth/signin');
@@ -54,12 +56,15 @@ export default async function ApiDocsPage() {
   return (
     <div className="bg-background min-h-full">
       <div className="border-border bg-card border-b px-6 py-4">
-        <h1 className="text-2xl font-semibold">API Reference</h1>
+        <h1 className="text-2xl font-semibold">{t('apiDocs.title')}</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          OpenAPI 3.1 documentation for the TaskNebula HTTP API. Spec source:{' '}
-          <a href="/openapi.json" className="underline" target="_blank" rel="noreferrer">
-            /openapi.json
-          </a>
+          {t.rich('apiDocs.description', {
+            link: (chunks) => (
+              <a href="/openapi.json" className="underline" target="_blank" rel="noreferrer">
+                {chunks}
+              </a>
+            ),
+          })}
         </p>
       </div>
       <ApiDocsClient specUrl="/openapi.json" />

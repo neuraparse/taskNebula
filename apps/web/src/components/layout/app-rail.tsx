@@ -59,6 +59,7 @@ export function AppRail() {
   const normalizedPathname = stripLocalePrefix(pathname);
   const { data: session } = useSession();
   const tNav = useTranslations('nav');
+  const tLayout = useTranslations('layoutNav');
   const isSuperAdmin = (session?.user as { role?: string } | undefined)?.role === 'super_admin';
   // Lightweight unread count — keys on { unread: true } so the response is
   // small (just unread items, first page). Refetches every minute via the
@@ -76,7 +77,7 @@ export function AppRail() {
   return (
     <TooltipProvider delayDuration={150}>
       <nav
-        aria-label="Workspace rail"
+        aria-label={tLayout('workspaceRail')}
         className="border-border bg-background flex h-screen w-14 shrink-0 flex-col items-center border-r py-2"
       >
         <ul className="flex flex-1 flex-col items-center gap-1">
@@ -164,7 +165,10 @@ export function AppRail() {
               >
                 <Avatar size="lg">
                   {session?.user?.image ? (
-                    <AvatarImage src={session.user.image} alt={session.user.name ?? 'User'} />
+                    <AvatarImage
+                      src={session.user.image}
+                      alt={session.user.name ?? tLayout('userFallback')}
+                    />
                   ) : null}
                   <AvatarFallback className="bg-muted text-muted-foreground text-[11px] font-medium">
                     {initials}
@@ -175,9 +179,11 @@ export function AppRail() {
             <DropdownMenuContent side="right" align="end" className="w-60">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="truncate text-sm font-medium">{session?.user?.name ?? 'User'}</p>
+                  <p className="truncate text-sm font-medium">
+                    {session?.user?.name ?? tLayout('userFallback')}
+                  </p>
                   <p className="text-muted-foreground truncate text-xs">
-                    {session?.user?.email ?? 'Workspace'}
+                    {session?.user?.email ?? tLayout('workspaceFallback')}
                   </p>
                 </div>
               </DropdownMenuLabel>

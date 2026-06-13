@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,7 +15,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Shield, Trash2, Edit, Star, Link2 } from 'lucide-react';
 
@@ -41,18 +48,21 @@ interface PermissionSchemeManagerProps {
 }
 
 const PROJECT_ROLES = [
-  { value: 'product_owner', label: 'Product Owner' },
-  { value: 'scrum_master', label: 'Scrum Master' },
-  { value: 'tech_lead', label: 'Tech Lead' },
-  { value: 'developer', label: 'Developer' },
-  { value: 'qa_engineer', label: 'QA Engineer' },
-  { value: 'designer', label: 'Designer' },
-  { value: 'viewer', label: 'Viewer' },
+  { value: 'product_owner', labelKey: 'pr_product_owner' },
+  { value: 'scrum_master', labelKey: 'pr_scrum_master' },
+  { value: 'tech_lead', labelKey: 'pr_tech_lead' },
+  { value: 'developer', labelKey: 'pr_developer' },
+  { value: 'qa_engineer', labelKey: 'pr_qa_engineer' },
+  { value: 'designer', labelKey: 'pr_designer' },
+  { value: 'viewer', labelKey: 'pr_viewer' },
 ];
 
 const DEFAULT_SCHEME_VALUE = '__default__';
 
-export function PermissionSchemeManager({ organizationId, projectId }: PermissionSchemeManagerProps) {
+export function PermissionSchemeManager({
+  organizationId,
+  projectId,
+}: PermissionSchemeManagerProps) {
   const [schemes, setSchemes] = useState<PermissionScheme[]>([]);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -62,6 +72,8 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
   const [newScheme, setNewScheme] = useState({ name: '', description: '', baseRole: '' });
   const [editingScheme, setEditingScheme] = useState<PermissionScheme | null>(null);
   const [editForm, setEditForm] = useState({ name: '', description: '', isDefault: false });
+  const t = useTranslations('projectConfig');
+  const tActions = useTranslations('actions');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -91,8 +103,8 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
     } catch (error) {
       console.error('Error fetching schemes:', error);
       toast({
-        title: 'Load failed',
-        description: 'Permission schemes could not be loaded.',
+        title: t('psm_load_failed_title'),
+        description: t('psm_load_failed_description'),
         variant: 'destructive',
       });
     } finally {
@@ -118,14 +130,14 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
         throw new Error(error.error || 'Failed to create scheme');
       }
 
-      toast({ title: 'Permission scheme created', description: 'The new scheme is ready to assign.' });
+      toast({ title: t('psm_created_title'), description: t('psm_created_description') });
       setCreateDialogOpen(false);
       setNewScheme({ name: '', description: '', baseRole: '' });
       await fetchSchemes();
     } catch (error) {
       toast({
-        title: 'Create failed',
-        description: error instanceof Error ? error.message : 'Failed to create scheme',
+        title: t('psm_create_failed_title'),
+        description: error instanceof Error ? error.message : t('psm_create_failed'),
         variant: 'destructive',
       });
     }
@@ -152,14 +164,14 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
         throw new Error(error.error || 'Failed to update scheme');
       }
 
-      toast({ title: 'Scheme updated', description: 'Permission scheme changes were saved.' });
+      toast({ title: t('psm_updated_title'), description: t('psm_updated_description') });
       setEditDialogOpen(false);
       setEditingScheme(null);
       await fetchSchemes();
     } catch (error) {
       toast({
-        title: 'Update failed',
-        description: error instanceof Error ? error.message : 'Failed to update scheme',
+        title: t('psm_update_failed_title'),
+        description: error instanceof Error ? error.message : t('psm_update_failed'),
         variant: 'destructive',
       });
     }
@@ -177,12 +189,15 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
         throw new Error('Failed to update default scheme');
       }
 
-      toast({ title: 'Default updated', description: 'Organization default permission scheme changed.' });
+      toast({
+        title: t('psm_default_updated_title'),
+        description: t('psm_default_updated_description'),
+      });
       await fetchSchemes();
     } catch (error) {
       toast({
-        title: 'Update failed',
-        description: error instanceof Error ? error.message : 'Failed to update scheme',
+        title: t('psm_update_failed_title'),
+        description: error instanceof Error ? error.message : t('psm_update_failed'),
         variant: 'destructive',
       });
     }
@@ -212,17 +227,17 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
       const nextState = await res.json();
       setProjectSchemeState(nextState);
       toast({
-        title: 'Project scheme updated',
+        title: t('psm_project_updated_title'),
         description:
           nextState.source === 'project'
-            ? `This project now uses ${nextState.scheme?.name}.`
-            : 'This project now follows the organization default scheme.',
+            ? t('psm_project_uses_scheme', { name: nextState.scheme?.name ?? '' })
+            : t('psm_project_follows_default'),
       });
       await fetchSchemes();
     } catch (error) {
       toast({
-        title: 'Assignment failed',
-        description: error instanceof Error ? error.message : 'Failed to assign scheme',
+        title: t('psm_assign_failed_title'),
+        description: error instanceof Error ? error.message : t('psm_assign_failed'),
         variant: 'destructive',
       });
       await fetchSchemes();
@@ -230,7 +245,7 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
   }
 
   async function deleteScheme(schemeId: string) {
-    if (!window.confirm('Delete this permission scheme? Projects using it must be moved first.')) {
+    if (!window.confirm(t('psm_delete_confirm'))) {
       return;
     }
 
@@ -241,12 +256,12 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
         throw new Error(error.error || 'Failed to delete scheme');
       }
 
-      toast({ title: 'Scheme deleted', description: 'Permission scheme removed successfully.' });
+      toast({ title: t('psm_deleted_title'), description: t('psm_deleted_description') });
       await fetchSchemes();
     } catch (error) {
       toast({
-        title: 'Delete failed',
-        description: error instanceof Error ? error.message : 'Failed to delete scheme',
+        title: t('psm_delete_failed_title'),
+        description: error instanceof Error ? error.message : t('psm_delete_failed'),
         variant: 'destructive',
       });
     }
@@ -264,41 +279,42 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
 
   const assignedSchemeName = useMemo(() => {
     if (!projectSchemeState?.scheme) {
-      return 'No scheme';
+      return t('psm_no_scheme');
     }
 
     return projectSchemeState.scheme.name;
-  }, [projectSchemeState]);
+  }, [projectSchemeState, t]);
 
   if (loading) {
-    return <div className="p-4 text-sm text-muted-foreground">Loading permission schemes...</div>;
+    return <div className="text-muted-foreground p-4 text-sm">{t('psm_loading')}</div>;
   }
 
   return (
-    <div className="space-y-6 animate-fade-up">
+    <div className="animate-fade-up space-y-6">
       {projectId ? (
-        <div className="surface-card p-5 space-y-3">
+        <div className="surface-card space-y-3 p-5">
           <div className="space-y-1">
-            <span className="kicker">Project assignment</span>
-            <p className="text-xs text-muted-foreground">
-              Choose which permission scheme should drive this project&apos;s default access model.
-            </p>
+            <span className="kicker">{t('psm_project_assignment')}</span>
+            <p className="text-muted-foreground text-xs">{t('psm_project_assignment_help')}</p>
           </div>
-          <div className="grid grid-cols-1 gap-4 items-center md:grid-cols-[240px_1fr]">
+          <div className="grid grid-cols-1 items-center gap-4 md:grid-cols-[240px_1fr]">
             <div className="space-y-1">
               <div className="text-sm font-medium">{assignedSchemeName}</div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 {projectSchemeState?.source === 'project'
-                  ? 'This project uses its own explicit scheme.'
-                  : 'This project inherits the organization default.'}
+                  ? t('psm_uses_explicit')
+                  : t('psm_inherits_default')}
               </p>
             </div>
-            <Select value={selectedProjectScheme} onValueChange={(value) => void assignSchemeToProject(value)}>
+            <Select
+              value={selectedProjectScheme}
+              onValueChange={(value) => void assignSchemeToProject(value)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={DEFAULT_SCHEME_VALUE}>Use organization default</SelectItem>
+                <SelectItem value={DEFAULT_SCHEME_VALUE}>{t('psm_use_org_default')}</SelectItem>
                 {schemes.map((scheme) => (
                   <SelectItem key={scheme.id} value={scheme.id}>
                     {scheme.name}
@@ -312,56 +328,60 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
 
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <span className="kicker">Schemes</span>
-          <h3 className="text-sm font-semibold tracking-tight text-foreground">Permission schemes</h3>
-          <p className="text-sm text-muted-foreground">
-            Create reusable access templates and reuse them across projects.
-          </p>
+          <span className="kicker">{t('psm_schemes')}</span>
+          <h3 className="text-foreground text-sm font-semibold tracking-tight">
+            {t('psm_permission_schemes')}
+          </h3>
+          <p className="text-muted-foreground text-sm">{t('psm_schemes_help')}</p>
         </div>
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Create scheme
+              {t('psm_create_scheme')}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create permission scheme</DialogTitle>
-              <DialogDescription>
-                Start from a role template and adjust member-level permissions later if needed.
-              </DialogDescription>
+              <DialogTitle>{t('psm_create_dialog_title')}</DialogTitle>
+              <DialogDescription>{t('psm_create_dialog_description')}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label>Name</Label>
+                <Label>{t('psm_name')}</Label>
                 <Input
                   value={newScheme.name}
-                  onChange={(event) => setNewScheme((current) => ({ ...current, name: event.target.value }))}
-                  placeholder="Standard project permissions"
+                  onChange={(event) =>
+                    setNewScheme((current) => ({ ...current, name: event.target.value }))
+                  }
+                  placeholder={t('psm_name_placeholder')}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Description</Label>
+                <Label>{t('psm_description')}</Label>
                 <Textarea
                   value={newScheme.description}
-                  onChange={(event) => setNewScheme((current) => ({ ...current, description: event.target.value }))}
-                  placeholder="Describe when teams should use this scheme."
+                  onChange={(event) =>
+                    setNewScheme((current) => ({ ...current, description: event.target.value }))
+                  }
+                  placeholder={t('psm_description_placeholder')}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Base role</Label>
+                <Label>{t('psm_base_role')}</Label>
                 <Select
                   value={newScheme.baseRole}
-                  onValueChange={(value) => setNewScheme((current) => ({ ...current, baseRole: value }))}
+                  onValueChange={(value) =>
+                    setNewScheme((current) => ({ ...current, baseRole: value }))
+                  }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Start from a project role template" />
+                    <SelectValue placeholder={t('psm_base_role_placeholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     {PROJECT_ROLES.map((role) => (
                       <SelectItem key={role.value} value={role.value}>
-                        {role.label}
+                        {t(role.labelKey)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -370,10 +390,10 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
-                Cancel
+                {tActions('cancel')}
               </Button>
               <Button onClick={() => void createScheme()} disabled={!newScheme.name.trim()}>
-                Create
+                {t('psm_create')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -381,16 +401,16 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
       </div>
 
       {schemes.length === 0 ? (
-        <div className="surface-card p-10 text-center space-y-3">
-          <Shield className="mx-auto h-8 w-8 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">No permission schemes yet.</p>
+        <div className="surface-card space-y-3 p-10 text-center">
+          <Shield className="text-muted-foreground/40 mx-auto h-8 w-8" />
+          <p className="text-muted-foreground text-sm">{t('psm_no_schemes')}</p>
           <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            Create your first scheme
+            {t('psm_create_first')}
           </Button>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 stagger">
+        <div className="stagger grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {schemes.map((scheme) => {
             const isAssignedToProject = projectSchemeState?.assignedSchemeId === scheme.id;
             const isEffectiveForProject = projectSchemeState?.effectiveSchemeId === scheme.id;
@@ -398,46 +418,52 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
             return (
               <div
                 key={scheme.id}
-                className={`surface-card surface-card-hover p-5 space-y-3 ${
+                className={`surface-card surface-card-hover space-y-3 p-5 ${
                   scheme.isDefault ? 'border-primary/30' : ''
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 space-y-1">
                     <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 shrink-0 text-primary" />
+                      <Shield className="text-primary h-4 w-4 shrink-0" />
                       <h4 className="truncate text-sm font-semibold">{scheme.name}</h4>
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      {scheme.description || 'No description provided.'}
+                    <p className="text-muted-foreground line-clamp-2 text-xs">
+                      {scheme.description || t('psm_no_description')}
                     </p>
                   </div>
                   {scheme.isDefault ? (
                     <span className="chip shrink-0 gap-1">
                       <Star className="h-3 w-3" />
-                      Default
+                      {t('psm_default_chip')}
                     </span>
                   ) : null}
                 </div>
 
                 <div className="flex flex-wrap gap-1.5">
-                  <span className="chip">{Object.keys(scheme.permissions || {}).length} groups</span>
-                  <span className="chip">{scheme.projectCount || 0} projects</span>
-                  {isAssignedToProject ? <span className="chip-accent">Assigned here</span> : null}
+                  <span className="chip">
+                    {t('psm_groups_count', { count: Object.keys(scheme.permissions || {}).length })}
+                  </span>
+                  <span className="chip">
+                    {t('psm_projects_count', { count: scheme.projectCount || 0 })}
+                  </span>
+                  {isAssignedToProject ? (
+                    <span className="chip-accent">{t('psm_assigned_here')}</span>
+                  ) : null}
                   {!isAssignedToProject && isEffectiveForProject ? (
-                    <span className="chip">Inherited here</span>
+                    <span className="chip">{t('psm_inherited_here')}</span>
                   ) : null}
                 </div>
 
-                <div className="flex items-center justify-between gap-2 border-t border-border/60 pt-3">
-                  <div className="text-xs text-muted-foreground">
+                <div className="border-border/60 flex items-center justify-between gap-2 border-t pt-3">
+                  <div className="text-muted-foreground text-xs">
                     {isEffectiveForProject ? (
                       <span className="inline-flex items-center gap-1">
                         <Link2 className="h-3 w-3" />
-                        Active here
+                        {t('psm_active_here')}
                       </span>
                     ) : (
-                      'Reusable org-wide'
+                      t('psm_reusable_org_wide')
                     )}
                   </div>
                   <div className="flex items-center gap-1">
@@ -447,7 +473,7 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
                         size="icon"
                         className="h-7 w-7"
                         onClick={() => void setAsDefault(scheme.id)}
-                        aria-label="Set as default"
+                        aria-label={t('psm_set_as_default')}
                       >
                         <Star className="h-3.5 w-3.5" />
                       </Button>
@@ -457,16 +483,16 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
                       size="icon"
                       className="h-7 w-7"
                       onClick={() => openEditDialog(scheme)}
-                      aria-label="Edit scheme"
+                      aria-label={t('psm_edit_scheme')}
                     >
                       <Edit className="h-3.5 w-3.5" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      className="text-destructive hover:text-destructive h-7 w-7"
                       onClick={() => void deleteScheme(scheme.id)}
-                      aria-label="Delete scheme"
+                      aria-label={t('psm_delete_scheme')}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -481,30 +507,32 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit permission scheme</DialogTitle>
-            <DialogDescription>
-              Update the scheme metadata and default behavior for new projects.
-            </DialogDescription>
+            <DialogTitle>{t('psm_edit_dialog_title')}</DialogTitle>
+            <DialogDescription>{t('psm_edit_dialog_description')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Name</Label>
+              <Label>{t('psm_name')}</Label>
               <Input
                 value={editForm.name}
-                onChange={(event) => setEditForm((current) => ({ ...current, name: event.target.value }))}
-                placeholder="Standard project permissions"
+                onChange={(event) =>
+                  setEditForm((current) => ({ ...current, name: event.target.value }))
+                }
+                placeholder={t('psm_name_placeholder')}
               />
             </div>
             <div className="space-y-2">
-              <Label>Description</Label>
+              <Label>{t('psm_description')}</Label>
               <Textarea
                 value={editForm.description}
-                onChange={(event) => setEditForm((current) => ({ ...current, description: event.target.value }))}
-                placeholder="Describe when teams should use this scheme."
+                onChange={(event) =>
+                  setEditForm((current) => ({ ...current, description: event.target.value }))
+                }
+                placeholder={t('psm_description_placeholder')}
               />
             </div>
             <div className="space-y-2">
-              <Label>Default behavior</Label>
+              <Label>{t('psm_default_behavior')}</Label>
               <Select
                 value={editForm.isDefault ? 'default' : 'standard'}
                 onValueChange={(value) =>
@@ -515,18 +543,18 @@ export function PermissionSchemeManager({ organizationId, projectId }: Permissio
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="standard">Keep as regular scheme</SelectItem>
-                  <SelectItem value="default">Make organization default</SelectItem>
+                  <SelectItem value="standard">{t('psm_keep_regular')}</SelectItem>
+                  <SelectItem value="default">{t('psm_make_org_default')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
-              Cancel
+              {tActions('cancel')}
             </Button>
             <Button onClick={() => void updateScheme()} disabled={!editForm.name.trim()}>
-              Save changes
+              {t('save_changes')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { useAdminAgentControl, useAdminAgentStream, useUpdateAdminAgentControl } from '@/lib/hooks/use-agents';
+import {
+  useAdminAgentControl,
+  useAdminAgentStream,
+  useUpdateAdminAgentControl,
+} from '@/lib/hooks/use-agents';
 import { PlatformAiCredentials } from './platform-ai-credentials';
 import { cn } from '@/lib/utils';
 import type { ComponentType } from 'react';
@@ -50,14 +55,15 @@ function serviceStatusDot(state: 'ready' | 'blocked' | 'disabled' | 'preview') {
   return 'status-warn';
 }
 
-function formatCredentialSource(source: 'workspace' | 'platform' | 'server_env' | null) {
-  if (source === 'workspace') return 'Workspace secret';
-  if (source === 'platform') return 'Platform default';
-  if (source === 'server_env') return 'Server env';
-  return 'Not configured';
+function credentialSourceKey(source: 'workspace' | 'platform' | 'server_env' | null) {
+  if (source === 'workspace') return 'agentOps.credentialSource.workspace';
+  if (source === 'platform') return 'agentOps.credentialSource.platform';
+  if (source === 'server_env') return 'agentOps.credentialSource.serverEnv';
+  return 'agentOps.credentialSource.notConfigured';
 }
 
 export function AgentOpsPanel() {
+  const t = useTranslations('adminPanels');
   const { data, isLoading, error } = useAdminAgentControl();
   const stream = useAdminAgentStream();
   const updateControl = useUpdateAdminAgentControl();
@@ -76,24 +82,32 @@ export function AgentOpsPanel() {
   async function handleSave() {
     try {
       await updateControl.mutateAsync(formState);
-      toast({ title: 'Agent control updated', description: 'Global agent safety and runtime controls were saved.' });
+      toast({
+        title: t('agentOps.controlUpdated'),
+        description: t('agentOps.controlUpdatedDescription'),
+      });
     } catch (mutationError) {
       toast({
-        title: 'Failed to update agent control',
-        description: mutationError instanceof Error ? mutationError.message : 'Failed to update agent control',
+        title: t('agentOps.controlUpdateFailed'),
+        description:
+          mutationError instanceof Error
+            ? mutationError.message
+            : t('agentOps.controlUpdateFailed'),
         variant: 'destructive',
       });
     }
   }
 
   if (isLoading) {
-    return <div className="surface-card p-6 text-sm text-muted-foreground">Loading agent control...</div>;
+    return (
+      <div className="surface-card text-muted-foreground p-6 text-sm">{t('agentOps.loading')}</div>
+    );
   }
 
   if (error || !data) {
     return (
-      <div className="surface-card p-6 text-sm text-destructive">
-        {error instanceof Error ? error.message : 'Failed to load agent control.'}
+      <div className="surface-card text-destructive p-6 text-sm">
+        {error instanceof Error ? error.message : t('agentOps.loadError')}
       </div>
     );
   }
@@ -104,10 +118,30 @@ export function AgentOpsPanel() {
     icon: ComponentType<{ className?: string }>;
     tone: 'blue' | 'violet' | 'emerald' | 'amber' | 'rose';
   }> = [
-    { label: 'Enabled workspaces', value: data.stats.enabledWorkspaceCount, icon: Bot, tone: 'blue' },
-    { label: 'Enabled projects', value: data.stats.enabledProjectCount, icon: Sparkles, tone: 'violet' },
-    { label: 'Running now', value: data.stats.runningRuns, icon: Zap, tone: 'emerald' },
-    { label: 'Recent failures', value: data.stats.failedRuns, icon: Shield, tone: 'rose' },
+    {
+      label: t('agentOps.kpi.enabledWorkspaces'),
+      value: data.stats.enabledWorkspaceCount,
+      icon: Bot,
+      tone: 'blue',
+    },
+    {
+      label: t('agentOps.kpi.enabledProjects'),
+      value: data.stats.enabledProjectCount,
+      icon: Sparkles,
+      tone: 'violet',
+    },
+    {
+      label: t('agentOps.kpi.runningNow'),
+      value: data.stats.runningRuns,
+      icon: Zap,
+      tone: 'emerald',
+    },
+    {
+      label: t('agentOps.kpi.recentFailures'),
+      value: data.stats.failedRuns,
+      icon: Shield,
+      tone: 'rose',
+    },
   ];
 
   return (
@@ -115,7 +149,10 @@ export function AgentOpsPanel() {
       {/* KPIs */}
       <div className="stagger grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map(({ label, value, icon: Icon, tone }) => (
-          <div key={label} className="surface-card flex max-h-[140px] flex-col justify-between gap-2 p-4">
+          <div
+            key={label}
+            className="surface-card flex max-h-[140px] flex-col justify-between gap-2 p-4"
+          >
             <div className="flex items-center justify-between gap-2">
               <p className="kicker truncate">{label}</p>
               <span className={cn('icon-tile', `icon-tile-accent-${tone}`)}>
@@ -130,35 +167,35 @@ export function AgentOpsPanel() {
       {/* Global guardrails (primary section) */}
       <section className="space-y-3">
         <SectionHeader
-          title="Global guardrails"
-          description="One place to pause every agent or force the system into supervised mode."
+          title={t('agentOps.guardrails.title')}
+          description={t('agentOps.guardrails.description')}
         />
-        <div className="surface-card p-6 space-y-5">
+        <div className="surface-card space-y-5 p-6">
           <div className="space-y-0.5">
             {[
               {
                 key: 'globalEnabled' as const,
-                label: 'Global enablement',
-                detail: 'Turn off all workspace and project agent runs from one switch.',
+                label: t('agentOps.guardrails.globalEnablement'),
+                detail: t('agentOps.guardrails.globalEnablementDetail'),
               },
               {
                 key: 'allowWriteActions' as const,
-                label: 'Allow write actions globally',
-                detail: 'Force every sprint creation and backlog edit into preview if disabled.',
+                label: t('agentOps.guardrails.allowWriteActions'),
+                detail: t('agentOps.guardrails.allowWriteActionsDetail'),
               },
               {
                 key: 'requireSupervisionForAutoMode' as const,
-                label: 'Require supervision in auto mode',
-                detail: 'Even autonomous projects stay preview-first when this is enabled.',
+                label: t('agentOps.guardrails.requireSupervision'),
+                detail: t('agentOps.guardrails.requireSupervisionDetail'),
               },
             ].map(({ key, label, detail }) => (
               <div
                 key={key}
-                className="flex items-center justify-between gap-4 rounded-md py-3 px-1 border-b border-border/50 last:border-b-0"
+                className="border-border/50 flex items-center justify-between gap-4 rounded-md border-b px-1 py-3 last:border-b-0"
               >
-                <div className="space-y-0.5 min-w-0">
+                <div className="min-w-0 space-y-0.5">
                   <p className="text-sm font-medium">{label}</p>
-                  <p className="text-xs text-muted-foreground">{detail}</p>
+                  <p className="text-muted-foreground text-xs">{detail}</p>
                 </div>
                 <Switch
                   checked={formState[key]}
@@ -174,7 +211,7 @@ export function AgentOpsPanel() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="max-w-xs space-y-2">
               <Label htmlFor="max-concurrent-runs" className="text-sm font-medium">
-                Max concurrent runs
+                {t('agentOps.guardrails.maxConcurrentRuns')}
               </Label>
               <Input
                 id="max-concurrent-runs"
@@ -185,7 +222,10 @@ export function AgentOpsPanel() {
                 onChange={(event) =>
                   setFormState((current) => ({
                     ...current,
-                    maxConcurrentRuns: Math.max(1, Number.parseInt(event.target.value || '1', 10) || 1),
+                    maxConcurrentRuns: Math.max(
+                      1,
+                      Number.parseInt(event.target.value || '1', 10) || 1
+                    ),
                   }))
                 }
               />
@@ -198,7 +238,7 @@ export function AgentOpsPanel() {
                 onClick={() => setFormState(data.settings)}
                 disabled={!hasChanges || updateControl.isPending}
               >
-                Reset
+                {t('agentOps.reset')}
               </Button>
               <Button
                 size="sm"
@@ -208,10 +248,10 @@ export function AgentOpsPanel() {
                 {updateControl.isPending ? (
                   <>
                     <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                    Saving
+                    {t('agentOps.saving')}
                   </>
                 ) : (
-                  'Save'
+                  t('agentOps.save')
                 )}
               </Button>
             </div>
@@ -226,50 +266,60 @@ export function AgentOpsPanel() {
 
       {/* Service status + Provider coverage */}
       <section className="grid gap-4 xl:grid-cols-2">
-        <div className="surface-card p-6 space-y-3">
+        <div className="surface-card space-y-3 p-6">
           <SectionHeader
-            title="Service status"
-            description="Runtime gates for the agent control plane."
+            title={t('agentOps.serviceStatus.title')}
+            description={t('agentOps.serviceStatus.description')}
             inline
           />
-          <ul className="stagger divide-y divide-border/50">
+          <ul className="stagger divide-border/50 divide-y">
             {data.serviceStatus.map((service) => (
               <li key={service.key} className="flex items-start justify-between gap-3 py-2.5">
                 <div className="min-w-0 flex-1 space-y-0.5">
                   <p className="text-sm font-medium">{service.label}</p>
-                  <p className="text-xs text-muted-foreground">{service.detail}</p>
+                  <p className="text-muted-foreground text-xs">{service.detail}</p>
                 </div>
                 <span className="flex shrink-0 items-center gap-1.5">
                   <span className={`status-dot ${serviceStatusDot(service.state)}`} />
-                  <span className="text-xs text-muted-foreground capitalize">{service.state}</span>
+                  <span className="text-muted-foreground text-xs capitalize">{service.state}</span>
                 </span>
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="surface-card p-6 space-y-3">
+        <div className="surface-card space-y-3 p-6">
           <SectionHeader
-            title="Provider coverage"
-            description="Workspace provider selection and runnable coverage."
+            title={t('agentOps.providerCoverage.title')}
+            description={t('agentOps.providerCoverage.description')}
             inline
           />
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <p className="kicker">Runnable</p>
-              <p className="text-2xl font-semibold tabular-nums">{data.stats.readyWorkspaceCount}</p>
-              <p className="text-xs text-muted-foreground">With provider access</p>
+              <p className="kicker">{t('agentOps.providerCoverage.runnable')}</p>
+              <p className="text-2xl font-semibold tabular-nums">
+                {data.stats.readyWorkspaceCount}
+              </p>
+              <p className="text-muted-foreground text-xs">
+                {t('agentOps.providerCoverage.withProviderAccess')}
+              </p>
             </div>
             <div className="space-y-1">
-              <p className="kicker">Blocked</p>
-              <p className="text-2xl font-semibold tabular-nums">{data.stats.blockedWorkspaceCount}</p>
-              <p className="text-xs text-muted-foreground">Missing provider state</p>
+              <p className="kicker">{t('agentOps.providerCoverage.blocked')}</p>
+              <p className="text-2xl font-semibold tabular-nums">
+                {data.stats.blockedWorkspaceCount}
+              </p>
+              <p className="text-muted-foreground text-xs">
+                {t('agentOps.providerCoverage.missingProviderState')}
+              </p>
             </div>
           </div>
           {Object.entries(data.providerBreakdown).length === 0 ? (
-            <p className="pt-2 text-xs text-muted-foreground">No provider data yet.</p>
+            <p className="text-muted-foreground pt-2 text-xs">
+              {t('agentOps.providerCoverage.noData')}
+            </p>
           ) : (
-            <ul className="stagger space-y-1 pt-2 border-t border-border/50">
+            <ul className="stagger border-border/50 space-y-1 border-t pt-2">
               {Object.entries(data.providerBreakdown).map(([provider, item]) => (
                 <li
                   key={provider}
@@ -277,14 +327,18 @@ export function AgentOpsPanel() {
                 >
                   <span className="text-sm font-medium capitalize">{provider}</span>
                   <div className="flex flex-wrap gap-1.5">
-                    <span className="chip">{item.total} total</span>
-                    <span className="chip">{item.enabled} on</span>
+                    <span className="chip">
+                      {t('agentOps.providerCoverage.totalChip', { count: item.total })}
+                    </span>
+                    <span className="chip">
+                      {t('agentOps.providerCoverage.onChip', { count: item.enabled })}
+                    </span>
                     <span className={cn('chip', item.ready > 0 && 'chip-accent')}>
-                      {item.ready} ready
+                      {t('agentOps.providerCoverage.readyChip', { count: item.ready })}
                     </span>
                     {item.blocked > 0 && (
                       <span className="chip-rose realtime-ping">
-                        {item.blocked} blocked
+                        {t('agentOps.providerCoverage.blockedChip', { count: item.blocked })}
                       </span>
                     )}
                   </div>
@@ -298,50 +352,67 @@ export function AgentOpsPanel() {
       {/* Workspace coverage */}
       <section className="space-y-3">
         <SectionHeader
-          title="Workspace coverage"
-          description="Per-workspace readiness, credential source, and recent failure visibility."
+          title={t('agentOps.workspaceCoverage.title')}
+          description={t('agentOps.workspaceCoverage.description')}
         />
-        <div className="surface-card p-4 space-y-0.5">
+        <div className="surface-card space-y-0.5 p-4">
           {data.workspaceCoverage.length === 0 ? (
-            <p className="px-2 py-6 text-center text-sm text-muted-foreground">
-              No workspace AI coverage data yet.
+            <p className="text-muted-foreground px-2 py-6 text-center text-sm">
+              {t('agentOps.workspaceCoverage.noData')}
             </p>
           ) : (
-            <ul className="stagger divide-y divide-border/50">
+            <ul className="stagger divide-border/50 divide-y">
               {data.workspaceCoverage.map((workspace) => (
-                <li key={workspace.organizationId} className="py-3 px-1 space-y-1">
+                <li key={workspace.organizationId} className="space-y-1 px-1 py-3">
                   <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="space-y-0.5 min-w-0">
+                    <div className="min-w-0 space-y-0.5">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-medium truncate">{workspace.organizationName}</span>
+                        <span className="truncate text-sm font-medium">
+                          {workspace.organizationName}
+                        </span>
                         <span
                           className={cn(
                             workspace.providerStatus.ready ? 'chip-emerald' : 'chip-rose'
                           )}
                         >
-                          {workspace.providerStatus.ready ? 'Runnable' : 'Blocked'}
+                          {workspace.providerStatus.ready
+                            ? t('agentOps.workspaceCoverage.runnable')
+                            : t('agentOps.workspaceCoverage.blocked')}
                         </span>
-                        <span className="chip">{workspace.workspaceEnabled ? 'On' : 'Off'}</span>
+                        <span className="chip">
+                          {workspace.workspaceEnabled
+                            ? t('agentOps.workspaceCoverage.on')
+                            : t('agentOps.workspaceCoverage.off')}
+                        </span>
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {workspace.provider} · {workspace.model || 'No model'} · {workspace.executionMode} · {workspace.enabledProjects} projects
+                      <p className="text-muted-foreground truncate text-xs">
+                        {workspace.provider} ·{' '}
+                        {workspace.model || t('agentOps.workspaceCoverage.noModel')} ·{' '}
+                        {workspace.executionMode} ·{' '}
+                        {t('agentOps.workspaceCoverage.projectsCount', {
+                          count: workspace.enabledProjects,
+                        })}
                       </p>
                     </div>
-                    <div className="shrink-0 text-xs text-muted-foreground lg:text-right space-y-0.5">
-                      <p>{formatCredentialSource(workspace.providerStatus.source)}</p>
+                    <div className="text-muted-foreground shrink-0 space-y-0.5 text-xs lg:text-right">
+                      <p>{t(credentialSourceKey(workspace.providerStatus.source))}</p>
                       <p>
                         {workspace.lastRunAt
-                          ? `Last run ${formatDistanceToNow(new Date(workspace.lastRunAt), { addSuffix: true })}`
-                          : 'No runs yet'}
+                          ? t('agentOps.workspaceCoverage.lastRun', {
+                              time: formatDistanceToNow(new Date(workspace.lastRunAt), {
+                                addSuffix: true,
+                              }),
+                            })
+                          : t('agentOps.workspaceCoverage.noRuns')}
                       </p>
                     </div>
                   </div>
                   {workspace.lastFailure ? (
                     <details>
-                      <summary className="cursor-pointer text-xs text-accent-amber">Last failure</summary>
-                      <p className="panel-warn mt-1 px-3 py-2 text-xs">
-                        {workspace.lastFailure}
-                      </p>
+                      <summary className="text-accent-amber cursor-pointer text-xs">
+                        {t('agentOps.workspaceCoverage.lastFailure')}
+                      </summary>
+                      <p className="panel-warn mt-1 px-3 py-2 text-xs">{workspace.lastFailure}</p>
                     </details>
                   ) : null}
                 </li>
@@ -354,46 +425,43 @@ export function AgentOpsPanel() {
       {/* Where to manage what */}
       <section className="space-y-3">
         <SectionHeader
-          title="Where to manage what"
-          description="Clear separation between global controls, workspace credentials, and project behavior."
+          title={t('agentOps.manage.title')}
+          description={t('agentOps.manage.description')}
         />
         <div className="surface-card p-4">
-          <ul className="stagger divide-y divide-border/50">
+          <ul className="stagger divide-border/50 divide-y">
             {[
               {
                 icon: Shield,
-                label: 'Admin agent control',
-                detail: 'Global pause, write guardrails, auto-mode supervision, concurrency, live feed.',
+                label: t('agentOps.manage.adminControl'),
+                detail: t('agentOps.manage.adminControlDetail'),
                 link: null,
               },
               {
                 icon: Cpu,
-                label: 'Workspace AI settings',
-                detail: 'Provider choice, saved model registry, API key storage, workspace write policy.',
+                label: t('agentOps.manage.workspaceAi'),
+                detail: t('agentOps.manage.workspaceAiDetail'),
                 link: '/settings?tab=ai-agents',
               },
               {
                 icon: Sparkles,
-                label: 'Project AI settings',
-                detail: 'Project enablement, sprint capacity, live run buttons, project-level telemetry.',
+                label: t('agentOps.manage.projectAi'),
+                detail: t('agentOps.manage.projectAiDetail'),
                 link: null,
               },
             ].map(({ icon: Icon, label, detail, link }) => (
-              <li
-                key={label}
-                className="flex items-start justify-between gap-3 px-1 py-3"
-              >
-                <div className="flex items-start gap-2.5 min-w-0">
-                  <Icon className="mt-0.5 h-4 w-4 text-muted-foreground shrink-0" />
+              <li key={label} className="flex items-start justify-between gap-3 px-1 py-3">
+                <div className="flex min-w-0 items-start gap-2.5">
+                  <Icon className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
                   <div className="min-w-0">
                     <p className="text-sm font-medium">{label}</p>
-                    <p className="text-xs text-muted-foreground">{detail}</p>
+                    <p className="text-muted-foreground text-xs">{detail}</p>
                   </div>
                 </div>
                 {link && (
                   <Button asChild variant="ghost" size="sm" className="shrink-0">
                     <Link href={link}>
-                      Open
+                      {t('agentOps.open')}
                       <ExternalLink className="ml-1 h-3 w-3" />
                     </Link>
                   </Button>
@@ -408,19 +476,24 @@ export function AgentOpsPanel() {
       <section className="space-y-3">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
           <SectionHeader
-            title="Live execution feed"
-            description="Real-time status and logs from every agent run happening right now."
+            title={t('agentOps.liveFeed.title')}
+            description={t('agentOps.liveFeed.description')}
           />
           <div className="flex flex-wrap items-center gap-2">
             <span className="flex items-center gap-1.5">
-              <span className={cn('status-dot', stream.isConnected ? 'status-live animate-pulse-subtle' : 'status-warn')} />
+              <span
+                className={cn(
+                  'status-dot',
+                  stream.isConnected ? 'status-live animate-pulse-subtle' : 'status-warn'
+                )}
+              />
               {stream.isConnected ? (
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Wifi className="h-3 w-3" /> Connected
+                <span className="text-muted-foreground flex items-center gap-1 text-xs">
+                  <Wifi className="h-3 w-3" /> {t('agentOps.liveFeed.connected')}
                 </span>
               ) : (
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <WifiOff className="h-3 w-3" /> Reconnecting
+                <span className="text-muted-foreground flex items-center gap-1 text-xs">
+                  <WifiOff className="h-3 w-3" /> {t('agentOps.liveFeed.reconnecting')}
                 </span>
               )}
             </span>
@@ -432,61 +505,73 @@ export function AgentOpsPanel() {
           </div>
         </div>
 
-        <div className="surface-card p-4 space-y-3">
+        <div className="surface-card space-y-3 p-4">
           {stream.liveRuns.length === 0 ? (
-            <p className="px-2 py-6 text-center text-sm text-muted-foreground">
-              No agent runs are active right now.
+            <p className="text-muted-foreground px-2 py-6 text-center text-sm">
+              {t('agentOps.liveFeed.noActiveRuns')}
             </p>
           ) : (
             <ul className="space-y-3">
               {stream.liveRuns.map((run) => {
                 const runMeta = data.recentRuns.find((item) => item.id === run.executionId);
                 return (
-                  <li key={run.executionId} className="rounded-md bg-surface p-4 space-y-3">
+                  <li key={run.executionId} className="bg-surface space-y-3 rounded-md p-4">
                     <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
-                      <div className="space-y-0.5 min-w-0">
+                      <div className="min-w-0 space-y-0.5">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-medium truncate">
-                            {runMeta ? formatRunKind(runMeta.kind) : `Run ${run.executionId.slice(0, 8)}`}
+                          <span className="truncate text-sm font-medium">
+                            {runMeta
+                              ? formatRunKind(runMeta.kind)
+                              : t('agentOps.runFallback', { id: run.executionId.slice(0, 8) })}
                           </span>
                           <RunStatusChip status={run.status} />
-                          {runMeta && <span className="chip">{runMeta.dryRun ? 'Preview' : 'Live'}</span>}
+                          {runMeta && (
+                            <span className="chip">
+                              {runMeta.dryRun ? t('agentOps.preview') : t('agentOps.live')}
+                            </span>
+                          )}
                         </div>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {runMeta?.organizationName || 'Unknown workspace'}
+                        <p className="text-muted-foreground truncate text-xs">
+                          {runMeta?.organizationName || t('agentOps.unknownWorkspace')}
                           {runMeta?.projectName ? ` · ${runMeta.projectName}` : ''}
                           {runMeta?.initiatedBy ? ` · ${runMeta.initiatedBy}` : ''}
                         </p>
                       </div>
-                      <p className="shrink-0 text-xs text-muted-foreground">
-                        Updated {formatDistanceToNow(new Date(run.updatedAt), { addSuffix: true })}
+                      <p className="text-muted-foreground shrink-0 text-xs">
+                        {t('agentOps.updatedAgo', {
+                          time: formatDistanceToNow(new Date(run.updatedAt), { addSuffix: true }),
+                        })}
                       </p>
                     </div>
 
                     <div className="space-y-1">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Progress</span>
-                        <span className="tabular-nums">{Math.max(0, Math.min(100, Math.round(run.progress)))}%</span>
+                      <div className="text-muted-foreground flex items-center justify-between text-xs">
+                        <span>{t('agentOps.liveFeed.progress')}</span>
+                        <span className="tabular-nums">
+                          {Math.max(0, Math.min(100, Math.round(run.progress)))}%
+                        </span>
                       </div>
                       <Progress value={Math.max(0, Math.min(100, Math.round(run.progress)))} />
                     </div>
 
-                    <div className="max-h-40 overflow-y-auto rounded-md bg-surface-2">
+                    <div className="bg-surface-2 max-h-40 overflow-y-auto rounded-md">
                       {run.logs.length === 0 ? (
-                        <p className="p-3 text-xs text-muted-foreground">Waiting for agent logs...</p>
+                        <p className="text-muted-foreground p-3 text-xs">
+                          {t('agentOps.liveFeed.waitingLogs')}
+                        </p>
                       ) : (
-                        <ul className="divide-y divide-border/40">
+                        <ul className="divide-border/40 divide-y">
                           {run.logs.map((log) => (
                             <li
                               key={`${run.executionId}-${log.logIndex}`}
                               className="flex gap-3 px-3 py-1.5 text-xs"
                             >
-                              <span className="w-16 shrink-0 font-mono text-muted-foreground">
+                              <span className="text-muted-foreground w-16 shrink-0 font-mono">
                                 {new Date(log.timestamp).toLocaleTimeString()}
                               </span>
                               <span
                                 className={cn(
-                                  'font-mono break-all',
+                                  'break-all font-mono',
                                   log.type === 'stderr' && 'text-destructive'
                                 )}
                               >
@@ -497,7 +582,7 @@ export function AgentOpsPanel() {
                         </ul>
                       )}
                     </div>
-                    {run.error && <p className="text-xs text-destructive">{run.error}</p>}
+                    {run.error && <p className="text-destructive text-xs">{run.error}</p>}
                   </li>
                 );
               })}
@@ -509,16 +594,16 @@ export function AgentOpsPanel() {
       {/* Recent runs */}
       <section className="space-y-3">
         <SectionHeader
-          title="Recent agent runs"
-          description="System-wide history for monitoring rollout quality and blast radius."
+          title={t('agentOps.recentRuns.title')}
+          description={t('agentOps.recentRuns.description')}
         />
         <div className="surface-card p-4">
           {data.recentRuns.length === 0 ? (
-            <p className="px-2 py-6 text-center text-sm text-muted-foreground">
-              No agent runs have been recorded yet.
+            <p className="text-muted-foreground px-2 py-6 text-center text-sm">
+              {t('agentOps.recentRuns.noData')}
             </p>
           ) : (
-            <ul className="stagger divide-y divide-border/50">
+            <ul className="stagger divide-border/50 divide-y">
               {data.recentRuns.map((run) => (
                 <li
                   key={run.id}
@@ -528,18 +613,22 @@ export function AgentOpsPanel() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-medium">{formatRunKind(run.kind)}</span>
                       <RunStatusChip status={run.status} />
-                      <span className="chip">{run.dryRun ? 'Preview' : 'Live'}</span>
+                      <span className="chip">
+                        {run.dryRun ? t('agentOps.preview') : t('agentOps.live')}
+                      </span>
                       {run.writeActionsCount > 0 && (
-                        <span className="chip">{run.writeActionsCount} writes</span>
+                        <span className="chip">
+                          {t('agentOps.recentRuns.writesChip', { count: run.writeActionsCount })}
+                        </span>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {run.organizationName || 'Unknown workspace'}
+                    <p className="text-muted-foreground truncate text-xs">
+                      {run.organizationName || t('agentOps.unknownWorkspace')}
                       {run.projectName ? ` · ${run.projectName}` : ''}
                       {run.initiatedBy ? ` · ${run.initiatedBy}` : ''}
                     </p>
                   </div>
-                  <p className="shrink-0 text-xs text-muted-foreground font-mono">
+                  <p className="text-muted-foreground shrink-0 font-mono text-xs">
                     {formatDistanceToNow(new Date(run.createdAt), { addSuffix: true })}
                   </p>
                 </li>
@@ -564,7 +653,7 @@ function SectionHeader({
   return (
     <div className={cn(inline ? 'space-y-0.5' : 'space-y-1')}>
       <h3 className="text-sm font-semibold">{title}</h3>
-      <p className="text-xs text-muted-foreground">{description}</p>
+      <p className="text-muted-foreground text-xs">{description}</p>
     </div>
   );
 }

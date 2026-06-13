@@ -342,6 +342,7 @@ export function AppSidebar() {
   const tNav = useTranslations('nav');
   const tActions = useTranslations('actions');
   const tCommon = useTranslations('common');
+  const tLayout = useTranslations('layoutNav');
   const { data: session } = useSession();
   const { currentOrganizationId, currentTeamId } = useOrganization();
   const { data: liveCalls, isLoading: liveCallsLoading } = useLiveCalls();
@@ -479,7 +480,7 @@ export function AppSidebar() {
         </div>
 
         <nav
-          aria-label="Section"
+          aria-label={tLayout('section')}
           className={cn(
             'min-h-0 flex-1',
             hasPageSidebar
@@ -784,7 +785,7 @@ export function AppSidebar() {
             {isLiveCallsOpen && liveCallsLoading ? (
               <div className="text-muted-foreground flex items-center gap-2 px-2 py-2 text-xs">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Checking active calls…
+                {tLayout('checkingActiveCalls')}
               </div>
             ) : null}
 
@@ -804,7 +805,7 @@ export function AppSidebar() {
                       </div>
                       <div className="text-muted-foreground truncate text-[10px]">
                         {call.project.key} · {call.participantCount}
-                        {call.isParticipant ? ' · joined' : ''}
+                        {call.isParticipant ? ` · ${tLayout('joined')}` : ''}
                       </div>
                     </div>
                     <div className="text-muted-foreground flex items-center gap-1 text-[10px]">
@@ -866,6 +867,7 @@ function SidebarVoiceWorkspace({
   onOpenVoiceSettings: () => void;
   onToggleMicrophone: () => void;
 }) {
+  const tLayout = useTranslations('layoutNav');
   const room = useRoomContext();
   const liveConnectionState = useConnectionState();
   const { canPlayAudio, startAudio } = useAudioPlayback(room);
@@ -902,12 +904,12 @@ function SidebarVoiceWorkspace({
   const resolvedConnectionState = liveConnectionState || connectionState;
   const microphoneStatusLabel =
     resolvedConnectionState !== 'connected'
-      ? 'Connecting…'
+      ? tLayout('voice.connecting')
       : isMicrophoneEnabled
         ? isActivelySpeaking
-          ? 'Sending audio'
-          : 'Mic live'
-        : 'Muted';
+          ? tLayout('voice.sendingAudio')
+          : tLayout('voice.micLive')
+        : tLayout('voice.muted');
   const deviceLabelsVisible = useMemo(
     () => areMicrophoneDeviceLabelsVisible(microphoneDevices),
     [microphoneDevices]
@@ -920,10 +922,16 @@ function SidebarVoiceWorkspace({
         audioDeviceLabel: storedAudioDeviceLabel,
       })?.label?.trim() ||
       (selectedAudioDeviceId === 'default'
-        ? 'System default microphone'
-        : storedAudioDeviceLabel || 'Selected microphone unavailable')
+        ? tLayout('voice.systemDefaultMic')
+        : storedAudioDeviceLabel || tLayout('voice.selectedMicUnavailable'))
     );
-  }, [microphoneDevices, selectedAudioDeviceId, storedAudioDeviceGroupId, storedAudioDeviceLabel]);
+  }, [
+    microphoneDevices,
+    selectedAudioDeviceId,
+    storedAudioDeviceGroupId,
+    storedAudioDeviceLabel,
+    tLayout,
+  ]);
   const microphonePermissionLabel = formatMicrophonePermissionStateLabel(microphonePermissionState);
   const microphonePermissionHelp = useMemo(
     () =>
@@ -1083,12 +1091,12 @@ function SidebarVoiceWorkspace({
       await startAudio();
     } catch (error) {
       setSettingsError(
-        error instanceof Error ? error.message : 'Browser audio playback could not be enabled.'
+        error instanceof Error ? error.message : tLayout('voice.audioPlaybackError')
       );
     } finally {
       setIsStartingAudioPlayback(false);
     }
-  }, [startAudio]);
+  }, [startAudio, tLayout]);
 
   return (
     <>
@@ -1107,7 +1115,8 @@ function SidebarVoiceWorkspace({
               {currentTarget.roomTitle}
             </div>
             <div className="text-muted-foreground truncate text-[10px]">
-              {currentTarget.projectName} · {participantDisplayCount} in call
+              {currentTarget.projectName} ·{' '}
+              {tLayout('voice.inCall', { count: participantDisplayCount })}
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -1121,8 +1130,8 @@ function SidebarVoiceWorkspace({
               variant="ghost"
               className="text-muted-foreground ease-snap h-6 w-6 rounded-sm px-0 transition-all duration-150"
               onClick={onOpenVoiceSettings}
-              title="Open voice settings"
-              aria-label="Open voice settings"
+              title={tLayout('voice.openVoiceSettings')}
+              aria-label={tLayout('voice.openVoiceSettings')}
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
             </Button>
@@ -1150,12 +1159,14 @@ function SidebarVoiceWorkspace({
                 ) : null}
               </div>
             ) : (
-              <div className="text-muted-foreground text-[10px]">Waiting for participant info…</div>
+              <div className="text-muted-foreground text-[10px]">
+                {tLayout('voice.waitingForParticipants')}
+              </div>
             )}
           </div>
           <div className="text-right">
             <div className="text-muted-foreground text-[10px] font-medium uppercase tracking-[0.12em]">
-              Voice
+              {tLayout('voice.voice')}
             </div>
             <div className="text-foreground pt-0.5 text-[11px] font-medium">
               {microphoneStatusLabel}
@@ -1166,7 +1177,7 @@ function SidebarVoiceWorkspace({
         <div className="bg-surface-2 space-y-1 rounded-sm px-2 py-2">
           <div className="flex items-center justify-between gap-3 text-[10px]">
             <span className="text-muted-foreground font-medium uppercase tracking-[0.12em]">
-              Mic level
+              {tLayout('voice.micLevel')}
             </span>
             <span className="text-muted-foreground">
               {Math.round(deferredMicrophoneLevel * 100)}%
@@ -1190,7 +1201,7 @@ function SidebarVoiceWorkspace({
           <Link href={currentTarget.roomHref} className="min-w-0 flex-1">
             <Button size="sm" variant="outline" className="h-6 w-full rounded-sm px-2 text-[11px]">
               <PhoneCall className="mr-1 h-3 w-3" />
-              Room
+              {tLayout('voice.room')}
             </Button>
           </Link>
           <Button
@@ -1199,8 +1210,8 @@ function SidebarVoiceWorkspace({
             className="h-6 w-6 rounded-sm px-0"
             onClick={onToggleMicrophone}
             disabled={resolvedConnectionState !== 'connected' || isTogglingMicrophone}
-            title={isMicrophoneEnabled ? 'Mute microphone' : 'Unmute microphone'}
-            aria-label={isMicrophoneEnabled ? 'Mute microphone' : 'Unmute microphone'}
+            title={isMicrophoneEnabled ? tLayout('voice.muteMic') : tLayout('voice.unmuteMic')}
+            aria-label={isMicrophoneEnabled ? tLayout('voice.muteMic') : tLayout('voice.unmuteMic')}
           >
             {isTogglingMicrophone ? (
               <Loader2 className="h-3 w-3 animate-spin" />
@@ -1215,8 +1226,8 @@ function SidebarVoiceWorkspace({
             variant="outline"
             className="h-6 w-6 rounded-sm px-0"
             onClick={onLeaveCurrentCall}
-            title="Leave call"
-            aria-label="Leave call"
+            title={tLayout('voice.leaveCall')}
+            aria-label={tLayout('voice.leaveCall')}
           >
             <PhoneOff className="h-3 w-3" />
           </Button>
@@ -1229,7 +1240,7 @@ function SidebarVoiceWorkspace({
             className="text-muted-foreground hover:text-foreground h-5 w-full rounded-sm px-1.5 text-[10px]"
             onClick={onEndCurrentCall}
           >
-            End room for everyone
+            {tLayout('voice.endRoomForEveryone')}
           </Button>
         ) : null}
 
@@ -1243,11 +1254,8 @@ function SidebarVoiceWorkspace({
       <Dialog open={isVoiceSettingsOpen} onOpenChange={onVoiceSettingsOpenChange}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle>Meeting settings</DialogTitle>
-            <DialogDescription>
-              Manage your microphone, watch live audio activity, and keep an eye on who is speaking
-              from anywhere in the app.
-            </DialogDescription>
+            <DialogTitle>{tLayout('voice.meetingSettings')}</DialogTitle>
+            <DialogDescription>{tLayout('voice.meetingSettingsDescription')}</DialogDescription>
           </DialogHeader>
 
           <div className="max-h-[75vh] space-y-4 overflow-y-auto pr-1">
@@ -1269,11 +1277,12 @@ function SidebarVoiceWorkspace({
                       {currentTarget.roomTitle}
                     </div>
                     <span className="text-muted-foreground rounded-md border px-2 py-1 text-[10px] uppercase tracking-[0.14em]">
-                      {formatConnectionStateLabel(resolvedConnectionState)}
+                      {tLayout(connectionStateLabelKey(resolvedConnectionState))}
                     </span>
                   </div>
                   <div className="text-muted-foreground pt-1 text-xs">
-                    {currentTarget.projectName} · {participantDisplayCount} in call ·{' '}
+                    {currentTarget.projectName} ·{' '}
+                    {tLayout('voice.inCall', { count: participantDisplayCount })} ·{' '}
                     {microphoneStatusLabel}
                   </div>
                 </div>
@@ -1292,7 +1301,7 @@ function SidebarVoiceWorkspace({
                       ) : (
                         <Volume2 className="mr-2 h-4 w-4" />
                       )}
-                      Enable audio
+                      {tLayout('voice.enableAudio')}
                     </Button>
                   ) : null}
                   <Button
@@ -1309,7 +1318,7 @@ function SidebarVoiceWorkspace({
                     ) : (
                       <Mic className="mr-2 h-4 w-4" />
                     )}
-                    {isMicrophoneEnabled ? 'Mute' : 'Unmute'}
+                    {isMicrophoneEnabled ? tLayout('voice.mute') : tLayout('voice.unmute')}
                   </Button>
                   <Button
                     size="sm"
@@ -1318,7 +1327,7 @@ function SidebarVoiceWorkspace({
                     onClick={onLeaveCurrentCall}
                   >
                     <PhoneOff className="mr-2 h-4 w-4" />
-                    Leave
+                    {tLayout('voice.leave')}
                   </Button>
                   {currentTarget.canManageCalls ? (
                     <Button
@@ -1327,7 +1336,7 @@ function SidebarVoiceWorkspace({
                       className="rounded-sm"
                       onClick={onEndCurrentCall}
                     >
-                      End room
+                      {tLayout('voice.endRoom')}
                     </Button>
                   ) : null}
                 </div>
@@ -1355,14 +1364,16 @@ function SidebarVoiceWorkspace({
             <div className="bg-background rounded-md border p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <div className="text-foreground text-sm font-semibold">Microphone</div>
+                  <div className="text-foreground text-sm font-semibold">
+                    {tLayout('voice.microphone')}
+                  </div>
                   <div className="text-muted-foreground pt-1 text-xs">
-                    Choose the input device you want TaskNebula to use for this call.
+                    {tLayout('voice.chooseInputDevice')}
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-muted-foreground text-[11px] font-medium uppercase tracking-[0.14em]">
-                    Level
+                    {tLayout('voice.level')}
                   </div>
                   <div className="text-foreground pt-1 text-sm font-semibold tabular-nums">
                     {Math.round(deferredMicrophoneLevel * 100)}%
@@ -1382,7 +1393,7 @@ function SidebarVoiceWorkspace({
 
               <div className="mt-4 space-y-2">
                 <label className="text-muted-foreground text-[11px] font-medium uppercase tracking-[0.14em]">
-                  Input device
+                  {tLayout('voice.inputDevice')}
                 </label>
                 <select
                   className="bg-background flex h-10 w-full rounded-md border px-3 text-sm outline-none"
@@ -1392,22 +1403,23 @@ function SidebarVoiceWorkspace({
                   }}
                   disabled={isChangingAudioDevice || isRefreshingMicrophoneEnvironment}
                 >
-                  <option value="default">System default microphone</option>
+                  <option value="default">{tLayout('voice.systemDefaultMic')}</option>
                   {microphoneDevices.map((device, index) => (
                     <option key={device.deviceId} value={device.deviceId}>
-                      {formatMicrophoneDeviceOptionLabel(device, index)}
+                      {device.label.trim() ||
+                        tLayout('voice.microphoneNumbered', { number: index + 1 })}
                     </option>
                   ))}
                 </select>
                 <div className="text-muted-foreground text-xs">
-                  Current selection:{' '}
+                  {tLayout('voice.currentSelection')}{' '}
                   <span className="text-foreground font-medium">{selectedMicrophoneLabel}</span>
                 </div>
               </div>
 
               <div className="bg-surface text-muted-foreground mt-4 flex flex-wrap items-center justify-between gap-2 rounded-md px-3 py-2 text-xs">
                 <div>
-                  <span className="text-foreground font-medium">Permission:</span>{' '}
+                  <span className="text-foreground font-medium">{tLayout('voice.permission')}</span>{' '}
                   {microphonePermissionLabel}
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -1424,7 +1436,7 @@ function SidebarVoiceWorkspace({
                       ) : (
                         <Mic className="mr-1.5 h-3.5 w-3.5" />
                       )}
-                      Unlock microphone
+                      {tLayout('voice.unlockMicrophone')}
                     </Button>
                   ) : null}
                   <Button
@@ -1439,21 +1451,19 @@ function SidebarVoiceWorkspace({
                     ) : (
                       <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
                     )}
-                    Refresh devices
+                    {tLayout('voice.refreshDevices')}
                   </Button>
                 </div>
               </div>
 
               <div className="bg-surface text-muted-foreground mt-3 rounded-md px-3 py-2 text-xs">
                 {microphonePermissionHelp}
-                {microphoneDevices.length === 0
-                  ? ' No microphones are currently visible to the browser.'
-                  : ''}
+                {microphoneDevices.length === 0 ? ` ${tLayout('voice.noMicrophonesVisible')}` : ''}
                 {microphonePermissionState === 'granted' && !deviceLabelsVisible
-                  ? ' The browser still has not exposed microphone labels; refreshing after returning from browser settings usually fixes that.'
+                  ? ` ${tLayout('voice.labelsNotExposed')}`
                   : ''}
                 {selectedAudioDeviceId !== 'default' && microphonePermissionState !== 'granted'
-                  ? ' Exact device switching becomes much more reliable once microphone access is fully granted.'
+                  ? ` ${tLayout('voice.deviceSwitchingHint')}`
                   : ''}
               </div>
             </div>
@@ -1461,13 +1471,15 @@ function SidebarVoiceWorkspace({
             <div className="bg-background rounded-md border p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-foreground text-sm font-semibold">People in the call</div>
+                  <div className="text-foreground text-sm font-semibold">
+                    {tLayout('voice.peopleInCall')}
+                  </div>
                   <div className="text-muted-foreground pt-1 text-xs">
-                    Speaking participants glow green. Quiet participants stay neutral.
+                    {tLayout('voice.speakingGlowHint')}
                   </div>
                 </div>
                 <div className="text-muted-foreground rounded-md border px-2 py-1 text-[11px] font-medium">
-                  {participantDisplayCount} total
+                  {tLayout('voice.totalCount', { count: participantDisplayCount })}
                 </div>
               </div>
 
@@ -1513,12 +1525,13 @@ function SidebarVoiceFallbackCard({
   onOpenVoiceSettings: () => void;
   onToggleMicrophone: () => void;
 }) {
+  const tLayout = useTranslations('layoutNav');
   const isConnecting = connectionState !== 'connected';
   const voiceStatusLabel = isConnecting
-    ? 'Connecting…'
+    ? tLayout('voice.connecting')
     : isMicrophoneEnabled
-      ? 'Mic live'
-      : 'Muted';
+      ? tLayout('voice.micLive')
+      : tLayout('voice.muted');
 
   return (
     <div className="bg-surface space-y-2 rounded-sm p-2">
@@ -1531,7 +1544,8 @@ function SidebarVoiceFallbackCard({
             {currentTarget.roomTitle}
           </div>
           <div className="text-muted-foreground truncate text-[10px]">
-            {currentTarget.projectName} · {effectiveParticipantCount} in call
+            {currentTarget.projectName} ·{' '}
+            {tLayout('voice.inCall', { count: effectiveParticipantCount })}
           </div>
         </div>
         <Button
@@ -1545,14 +1559,14 @@ function SidebarVoiceFallbackCard({
       </div>
 
       <div className="bg-surface-2 text-muted-foreground rounded-sm px-2 py-2 text-[10px]">
-        Voice status: {voiceStatusLabel}
+        {tLayout('voice.voiceStatus', { status: voiceStatusLabel })}
       </div>
 
       <div className="flex items-center gap-1">
         <Link href={currentTarget.roomHref} className="min-w-0 flex-1">
           <Button size="sm" variant="outline" className="h-6 w-full rounded-sm px-2 text-[11px]">
             <PhoneCall className="mr-1 h-3 w-3" />
-            Room
+            {tLayout('voice.room')}
           </Button>
         </Link>
         <Button
@@ -1587,7 +1601,7 @@ function SidebarVoiceFallbackCard({
           className="text-muted-foreground hover:text-foreground h-5 w-full rounded-sm px-1.5 text-[10px]"
           onClick={onEndCurrentCall}
         >
-          End room for everyone
+          {tLayout('voice.endRoomForEveryone')}
         </Button>
       ) : null}
 
@@ -1613,13 +1627,14 @@ function SidebarVoiceParticipantAvatar({
   sessionUserImage?: string | null;
   sessionUserName?: string | null;
 }) {
+  const tLayout = useTranslations('layoutNav');
   const isSpeaking = useIsSpeaking(participant);
   const isMicrophoneActive = participant.isMicrophoneEnabled;
   const displayName =
     participant.name ||
     (isCurrentUser ? sessionUserName : null) ||
     participant.identity ||
-    'Participant';
+    tLayout('voice.participant');
 
   return (
     <Avatar
@@ -1632,7 +1647,7 @@ function SidebarVoiceParticipantAvatar({
       )}
     >
       {isCurrentUser && sessionUserImage ? (
-        <AvatarImage src={sessionUserImage} alt={displayName ?? 'Participant'} />
+        <AvatarImage src={sessionUserImage} alt={displayName} />
       ) : null}
       <AvatarFallback
         className={cn(
@@ -1659,22 +1674,23 @@ function SidebarVoiceParticipantRow({
   sessionUserImage?: string | null;
   sessionUserName?: string | null;
 }) {
+  const tLayout = useTranslations('layoutNav');
   const isSpeaking = useIsSpeaking(participant);
   const displayName =
     participant.name ||
     (isCurrentUser ? sessionUserName : null) ||
     participant.identity ||
-    'Participant';
+    tLayout('voice.participant');
   const isMicrophoneActive = participant.isMicrophoneEnabled;
   const stateLabel = isMicrophoneActive
     ? isSpeaking
       ? isCurrentUser
-        ? 'Sending audio'
-        : 'Speaking'
+        ? tLayout('voice.sendingAudio')
+        : tLayout('voice.speaking')
       : isCurrentUser
-        ? 'Mic on'
-        : 'Listening'
-    : 'Muted';
+        ? tLayout('voice.micOn')
+        : tLayout('voice.listening')
+    : tLayout('voice.muted');
 
   return (
     <div
@@ -1697,7 +1713,7 @@ function SidebarVoiceParticipantRow({
           <div className="text-foreground truncate text-sm font-medium">{displayName}</div>
           {isCurrentUser ? (
             <span className="text-muted-foreground rounded-sm border px-1.5 py-0.5 text-[10px] uppercase tracking-[0.12em]">
-              You
+              {tLayout('voice.you')}
             </span>
           ) : null}
         </div>
@@ -1718,31 +1734,19 @@ function SidebarVoiceParticipantRow({
   );
 }
 
-function formatConnectionStateLabel(state: string) {
+function connectionStateLabelKey(state: string) {
   switch (state) {
     case 'connected':
-      return 'Connected';
+      return 'voice.connectionState.connected';
     case 'connecting':
-      return 'Connecting';
+      return 'voice.connectionState.connecting';
     case 'reconnecting':
-      return 'Reconnecting';
+      return 'voice.connectionState.reconnecting';
     case 'disconnected':
-      return 'Disconnected';
+      return 'voice.connectionState.disconnected';
     default:
-      return 'Voice room';
+      return 'voice.connectionState.voiceRoom';
   }
-}
-
-function formatMicrophoneDeviceOptionLabel(
-  device: Pick<MicrophoneDeviceOption, 'deviceId' | 'label'>,
-  index: number
-) {
-  const label = device.label.trim();
-  if (label) {
-    return label;
-  }
-
-  return `Microphone ${index + 1}`;
 }
 
 function getInitials(value: string) {

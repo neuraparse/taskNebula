@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as AvatarPrimitive from '@radix-ui/react-avatar';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
 function isSafeAvatarSrc(src: string | undefined) {
@@ -49,7 +50,7 @@ const Avatar = React.forwardRef<React.ElementRef<typeof AvatarPrimitive.Root>, A
       className={cn(avatarVariants({ size }), className)}
       {...props}
     />
-  ),
+  )
 );
 Avatar.displayName = AvatarPrimitive.Root.displayName;
 
@@ -78,7 +79,10 @@ const AvatarFallback = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AvatarPrimitive.Fallback
     ref={ref}
-    className={cn('flex h-full w-full items-center justify-center rounded-full bg-muted', className)}
+    className={cn(
+      'bg-muted flex h-full w-full items-center justify-center rounded-full',
+      className
+    )}
     {...props}
   />
 ));
@@ -93,6 +97,7 @@ export interface AvatarStackProps {
 
 const AvatarStack = React.forwardRef<HTMLDivElement, AvatarStackProps>(
   ({ children, size, max = 3, className }, ref) => {
+    const t = useTranslations('uiCommon');
     const items = React.Children.toArray(children).filter(React.isValidElement);
     const visible = items.slice(0, max);
     const overflow = items.length - visible.length;
@@ -110,7 +115,7 @@ const AvatarStack = React.forwardRef<HTMLDivElement, AvatarStackProps>(
             className: cn(
               'ring-2 ring-background',
               index > 0 && '-ml-1.5',
-              element.props.className,
+              element.props.className
             ),
           });
         })}
@@ -118,16 +123,16 @@ const AvatarStack = React.forwardRef<HTMLDivElement, AvatarStackProps>(
           <div
             className={cn(
               avatarVariants({ size }),
-              'ring-2 ring-background -ml-1.5 flex items-center justify-center bg-muted text-muted-foreground font-medium',
+              'ring-background bg-muted text-muted-foreground -ml-1.5 flex items-center justify-center font-medium ring-2'
             )}
-            aria-label={`${overflow} more`}
+            aria-label={t('avatarOverflow', { count: overflow })}
           >
             +{overflow}
           </div>
         )}
       </div>
     );
-  },
+  }
 );
 AvatarStack.displayName = 'AvatarStack';
 

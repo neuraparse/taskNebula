@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface AddColumnDialogProps {
   open: boolean;
@@ -29,11 +30,11 @@ interface AddColumnDialogProps {
 }
 
 const categories = [
-  { value: 'backlog', label: 'Backlog', colorClass: 'bg-muted-foreground/40' },
-  { value: 'in_progress', label: 'In Progress', colorClass: 'bg-accent-blue' },
-  { value: 'in_review', label: 'In Review', colorClass: 'bg-accent-violet' },
-  { value: 'done', label: 'Done', colorClass: 'bg-accent-emerald' },
-  { value: 'blocked', label: 'Blocked', colorClass: 'bg-accent-rose' },
+  { value: 'backlog', colorClass: 'bg-muted-foreground/40' },
+  { value: 'in_progress', colorClass: 'bg-accent-blue' },
+  { value: 'in_review', colorClass: 'bg-accent-violet' },
+  { value: 'done', colorClass: 'bg-accent-emerald' },
+  { value: 'blocked', colorClass: 'bg-accent-rose' },
 ];
 
 const categoryColors: Record<string, string> = {
@@ -50,6 +51,7 @@ export function AddColumnDialog({
   projectId,
   onSuccess,
 }: AddColumnDialogProps) {
+  const t = useTranslations('kanban');
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -73,11 +75,11 @@ export function AddColumnDialog({
         onSuccess?.();
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to create column');
+        alert(error.error || t('column.createFailed'));
       }
     } catch (error) {
       console.error('Error creating column:', error);
-      alert('Failed to create column');
+      alert(t('column.createFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -87,19 +89,19 @@ export function AddColumnDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Add Column</DialogTitle>
-          <DialogDescription>Create a new column for your board.</DialogDescription>
+          <DialogTitle>{t('column.title')}</DialogTitle>
+          <DialogDescription>{t('column.description')}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
               <Label htmlFor="col-name" className="text-sm font-medium">
-                Column Name
+                {t('column.nameLabel')}
               </Label>
               <Input
                 id="col-name"
-                placeholder="e.g. Ready for QA"
+                placeholder={t('column.namePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -109,18 +111,18 @@ export function AddColumnDialog({
 
             <div className="space-y-1.5">
               <Label htmlFor="col-category" className="text-sm font-medium">
-                Category
+                {t('column.categoryLabel')}
               </Label>
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger id="col-category">
-                  <SelectValue placeholder="Select category" />
+                  <SelectValue placeholder={t('column.categoryPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((cat) => (
                     <SelectItem key={cat.value} value={cat.value}>
                       <div className="flex items-center gap-2">
                         <span className={`h-2 w-2 rounded-full ${cat.colorClass}`} />
-                        {cat.label}
+                        {t(`column.categories.${cat.value}`)}
                       </div>
                     </SelectItem>
                   ))}
@@ -131,11 +133,11 @@ export function AddColumnDialog({
 
           <DialogFooter className="mt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('column.cancel')}
             </Button>
             <Button type="submit" disabled={isLoading || !name || !category}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create column
+              {t('column.createSubmit')}
             </Button>
           </DialogFooter>
         </form>

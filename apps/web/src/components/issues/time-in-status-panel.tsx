@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Clock } from 'lucide-react';
 
 interface Bucket {
@@ -19,6 +20,8 @@ interface Bucket {
  * minimal numeric summary so the underlying data plumbing can ship first.
  */
 export function TimeInStatusPanel({ issueId }: { issueId: string }) {
+  const t = useTranslations('issueMisc');
+  const tCommon = useTranslations('common');
   const [buckets, setBuckets] = useState<Bucket[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,38 +38,35 @@ export function TimeInStatusPanel({ issueId }: { issueId: string }) {
         if (!cancelled) setBuckets(data);
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message ?? 'Failed to load');
+        if (!cancelled) setError(err.message ?? t('failed_to_load'));
       });
     return () => {
       cancelled = true;
     };
-  }, [issueId]);
+  }, [issueId, t]);
 
   return (
-    <section className="space-y-2 pt-3 border-t border-border/60">
-      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+    <section className="border-border/60 space-y-2 border-t pt-3">
+      <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
         <Clock className="h-3.5 w-3.5" />
-        <span>Time in Status</span>
+        <span>{t('time_in_status_title')}</span>
       </div>
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <p className="text-destructive text-xs">{error}</p>}
       {!error && buckets === null && (
-        <p className="text-xs text-muted-foreground">Loading…</p>
+        <p className="text-muted-foreground text-xs">{tCommon('loading')}</p>
       )}
       {!error && buckets && buckets.length === 0 && (
-        <p className="text-xs text-muted-foreground">No transitions recorded yet.</p>
+        <p className="text-muted-foreground text-xs">{t('no_transitions_recorded')}</p>
       )}
       {!error && buckets && buckets.length > 0 && (
         <ul className="space-y-1">
           {buckets.map((b) => (
-            <li
-              key={b.status}
-              className="flex items-center justify-between text-[12px]"
-            >
-              <span className="truncate text-foreground">{b.status_name}</span>
+            <li key={b.status} className="flex items-center justify-between text-[12px]">
+              <span className="text-foreground truncate">{b.status_name}</span>
               <span className="text-muted-foreground tabular-nums">
                 {formatDuration(b.total_duration_seconds)}
                 {b.exit_count > 0 && (
-                  <span className="ml-1 text-[10px] text-muted-foreground/70">
+                  <span className="text-muted-foreground/70 ml-1 text-[10px]">
                     ×{b.exit_count + 1}
                   </span>
                 )}

@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Clock, Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface TimeLogDialogProps {
   issueId: string;
@@ -29,14 +30,16 @@ export function TimeLogDialog({ issueId, open, onOpenChange, onSuccess }: TimeLo
   const [description, setDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const t = useTranslations('appShell');
+  const tActions = useTranslations('actions');
 
   const handleSubmit = async () => {
     const totalMinutes = (parseInt(hours) || 0) * 60 + (parseInt(minutes) || 0);
 
     if (totalMinutes === 0) {
       toast({
-        title: 'Error',
-        description: 'Please enter time spent',
+        title: t('common.errorTitle'),
+        description: t('timeLog.enterTimeError'),
         variant: 'destructive',
       });
       return;
@@ -57,12 +60,12 @@ export function TimeLogDialog({ issueId, open, onOpenChange, onSuccess }: TimeLo
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to log time');
+        throw new Error(error.error || t('timeLog.logFailed'));
       }
 
       toast({
-        title: 'Success',
-        description: `Logged ${hours || 0}h ${minutes || 0}m`,
+        title: t('common.successTitle'),
+        description: t('timeLog.logged', { hours: hours || 0, minutes: minutes || 0 }),
       });
 
       // Reset form
@@ -74,8 +77,8 @@ export function TimeLogDialog({ issueId, open, onOpenChange, onSuccess }: TimeLo
       onOpenChange(false);
     } catch (error: any) {
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to log time',
+        title: t('common.errorTitle'),
+        description: error.message || t('timeLog.logFailed'),
         variant: 'destructive',
       });
     } finally {
@@ -88,16 +91,16 @@ export function TimeLogDialog({ issueId, open, onOpenChange, onSuccess }: TimeLo
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-accent-emerald" />
-            Log time
+            <Clock className="text-accent-emerald h-4 w-4" />
+            {t('timeLog.title')}
           </DialogTitle>
-          <DialogDescription>Record time spent on this issue.</DialogDescription>
+          <DialogDescription>{t('timeLog.description')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="hours">Hours</Label>
+              <Label htmlFor="hours">{t('timeLog.hours')}</Label>
               <Input
                 id="hours"
                 type="number"
@@ -108,7 +111,7 @@ export function TimeLogDialog({ issueId, open, onOpenChange, onSuccess }: TimeLo
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="minutes">Minutes</Label>
+              <Label htmlFor="minutes">{t('timeLog.minutes')}</Label>
               <Input
                 id="minutes"
                 type="number"
@@ -123,11 +126,12 @@ export function TimeLogDialog({ issueId, open, onOpenChange, onSuccess }: TimeLo
 
           <div className="space-y-2">
             <Label htmlFor="description">
-              Description <span className="font-normal text-muted-foreground">(optional)</span>
+              {t('timeLog.descriptionLabel')}{' '}
+              <span className="text-muted-foreground font-normal">{t('timeLog.optional')}</span>
             </Label>
             <Textarea
               id="description"
-              placeholder="What did you work on?"
+              placeholder={t('timeLog.descriptionPlaceholder')}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
@@ -136,19 +140,21 @@ export function TimeLogDialog({ issueId, open, onOpenChange, onSuccess }: TimeLo
 
           {(hours || minutes) && (
             <div className="surface-inset rounded-md px-3 py-2 text-sm">
-              <span className="text-muted-foreground">Total: </span>
-              <span className="font-mono font-semibold text-foreground">{hours || 0}h {minutes || 0}m</span>
+              <span className="text-muted-foreground">{t('timeLog.totalLabel')} </span>
+              <span className="text-foreground font-mono font-semibold">
+                {t('timeLog.duration', { hours: hours || 0, minutes: minutes || 0 })}
+              </span>
             </div>
           )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
-            Cancel
+            {tActions('cancel')}
           </Button>
           <Button onClick={handleSubmit} disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Log time
+            {t('timeLog.logButton')}
           </Button>
         </DialogFooter>
       </DialogContent>

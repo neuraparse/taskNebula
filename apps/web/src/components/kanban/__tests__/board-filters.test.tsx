@@ -53,7 +53,7 @@ describe('BoardFiltersBar', () => {
       />
     );
 
-    expect(screen.getByText('high')).toBeInTheDocument();
+    expect(screen.getByText('High')).toBeInTheDocument();
     // The filter button shows a count badge of 1
     expect(screen.getByText('1')).toBeInTheDocument();
   });

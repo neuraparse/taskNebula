@@ -1,11 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Trash2, ArrowRight, Save, Star, GitBranch } from 'lucide-react';
 import { useProject, useUpdateProject } from '@/lib/hooks/use-projects';
@@ -45,12 +52,12 @@ const STATUS_CATEGORY_COLORS = {
   blocked: '#ef4444',
 };
 
-const STATUS_CATEGORY_LABELS = {
-  backlog: 'Backlog',
-  in_progress: 'In Progress',
-  in_review: 'In Review',
-  done: 'Done',
-  blocked: 'Blocked',
+const STATUS_CATEGORY_LABEL_KEYS = {
+  backlog: 'status_backlog',
+  in_progress: 'status_in_progress',
+  in_review: 'status_in_review',
+  done: 'status_done',
+  blocked: 'status_blocked',
 };
 
 // Map status category to design token classes
@@ -63,9 +70,12 @@ const STATUS_CATEGORY_TOKEN: Record<string, string> = {
 };
 
 function StatusChip({ status }: { status: WorkflowStatus }) {
-  const tokenClass = STATUS_CATEGORY_TOKEN[status.category] || 'bg-muted text-muted-foreground border border-border';
+  const tokenClass =
+    STATUS_CATEGORY_TOKEN[status.category] || 'bg-muted text-muted-foreground border border-border';
   return (
-    <span className={`inline-flex items-center rounded-sm px-2 py-0.5 text-[11px] font-medium ${tokenClass}`}>
+    <span
+      className={`inline-flex items-center rounded-sm px-2 py-0.5 text-[11px] font-medium ${tokenClass}`}
+    >
       {status.name}
     </span>
   );
@@ -84,14 +94,12 @@ function FormRow({
   htmlFor?: string;
 }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+    <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[240px_1fr]">
       <div className="space-y-1 pt-2">
         <Label htmlFor={htmlFor} className="text-sm font-medium">
           {label}
         </Label>
-        {description ? (
-          <p className="text-xs text-muted-foreground">{description}</p>
-        ) : null}
+        {description ? <p className="text-muted-foreground text-xs">{description}</p> : null}
       </div>
       <div>{children}</div>
     </div>
@@ -121,6 +129,8 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
     fromStatusId: '',
     toStatusId: '',
   });
+  const t = useTranslations('projectConfig');
+  const tActions = useTranslations('actions');
   const { toast } = useToast();
   const { data: project } = useProject(projectId || '');
   const updateProject = useUpdateProject();
@@ -165,8 +175,8 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
       }
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to load workflows',
+        title: t('error'),
+        description: t('we_load_workflows_failed'),
         variant: 'destructive',
       });
     } finally {
@@ -185,8 +195,8 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
       setSelectedWorkflow(data);
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to load workflow details',
+        title: t('error'),
+        description: t('we_load_details_failed'),
         variant: 'destructive',
       });
     }
@@ -195,8 +205,8 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
   async function createWorkflow() {
     if (!newWorkflowName.trim()) {
       toast({
-        title: 'Error',
-        description: 'Workflow name is required',
+        title: t('error'),
+        description: t('we_name_required'),
         variant: 'destructive',
       });
       return;
@@ -213,7 +223,11 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
           description: newWorkflowDescription.trim() || null,
           statuses: [
             { name: 'To Do', category: 'backlog', color: STATUS_CATEGORY_COLORS.backlog },
-            { name: 'In Progress', category: 'in_progress', color: STATUS_CATEGORY_COLORS.in_progress },
+            {
+              name: 'In Progress',
+              category: 'in_progress',
+              color: STATUS_CATEGORY_COLORS.in_progress,
+            },
             { name: 'Done', category: 'done', color: STATUS_CATEGORY_COLORS.done },
           ],
         }),
@@ -224,8 +238,8 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
       const workflow = await response.json();
 
       toast({
-        title: 'Success',
-        description: 'Workflow created successfully',
+        title: t('success'),
+        description: t('we_created'),
       });
 
       setNewWorkflowName('');
@@ -234,8 +248,8 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
       await loadWorkflowDetails(workflow.id);
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to create workflow',
+        title: t('error'),
+        description: t('we_create_failed'),
         variant: 'destructive',
       });
     } finally {
@@ -263,16 +277,16 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
       }
 
       toast({
-        title: 'Workflow updated',
-        description: 'Workflow name and description were saved.',
+        title: t('we_updated_title'),
+        description: t('we_updated_description'),
       });
 
       await fetchWorkflows();
       await loadWorkflowDetails(selectedWorkflow.id);
     } catch (error) {
       toast({
-        title: 'Save failed',
-        description: error instanceof Error ? error.message : 'Failed to update workflow',
+        title: t('we_save_failed_title'),
+        description: error instanceof Error ? error.message : t('we_update_failed'),
         variant: 'destructive',
       });
     }
@@ -291,23 +305,23 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
       }
 
       toast({
-        title: 'Default updated',
-        description: 'Organization default workflow changed.',
+        title: t('we_default_updated_title'),
+        description: t('we_default_updated_description'),
       });
 
       await fetchWorkflows();
       await loadWorkflowDetails(workflowId);
     } catch (error) {
       toast({
-        title: 'Update failed',
-        description: error instanceof Error ? error.message : 'Failed to update workflow',
+        title: t('we_update_failed_title'),
+        description: error instanceof Error ? error.message : t('we_update_failed'),
         variant: 'destructive',
       });
     }
   }
 
   async function deleteWorkflow(workflowId: string) {
-    if (!window.confirm('Delete this workflow? Default workflows cannot be deleted.')) {
+    if (!window.confirm(t('we_delete_confirm'))) {
       return;
     }
 
@@ -322,8 +336,8 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
       }
 
       toast({
-        title: 'Workflow deleted',
-        description: 'The workflow was removed successfully.',
+        title: t('we_deleted_title'),
+        description: t('we_deleted_description'),
       });
 
       if (selectedWorkflow?.id === workflowId) {
@@ -333,8 +347,8 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
       await fetchWorkflows();
     } catch (error) {
       toast({
-        title: 'Delete failed',
-        description: error instanceof Error ? error.message : 'Failed to delete workflow',
+        title: t('we_delete_failed_title'),
+        description: error instanceof Error ? error.message : t('we_delete_failed'),
         variant: 'destructive',
       });
     }
@@ -354,13 +368,13 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
       });
 
       toast({
-        title: 'Project workflow updated',
-        description: 'This project will now use the selected workflow.',
+        title: t('we_project_updated_title'),
+        description: t('we_project_updated_description'),
       });
     } catch (error) {
       toast({
-        title: 'Assignment failed',
-        description: error instanceof Error ? error.message : 'Failed to assign workflow',
+        title: t('we_assign_failed_title'),
+        description: error instanceof Error ? error.message : t('we_assign_failed'),
         variant: 'destructive',
       });
     }
@@ -387,8 +401,8 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
       }
 
       toast({
-        title: 'Status added',
-        description: 'Workflow status created successfully.',
+        title: t('we_status_added_title'),
+        description: t('we_status_added_description'),
       });
 
       setStatusForm({
@@ -400,8 +414,8 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
       await loadWorkflowDetails(selectedWorkflow.id);
     } catch (error) {
       toast({
-        title: 'Create failed',
-        description: error instanceof Error ? error.message : 'Failed to create workflow status',
+        title: t('we_create_failed_title'),
+        description: error instanceof Error ? error.message : t('we_status_create_failed'),
         variant: 'destructive',
       });
     }
@@ -410,15 +424,19 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
   async function addTransition() {
     if (!selectedWorkflow || !transitionForm.fromStatusId || !transitionForm.toStatusId) {
       toast({
-        title: 'Error',
-        description: 'Select both a source and target status.',
+        title: t('error'),
+        description: t('we_select_both_status'),
         variant: 'destructive',
       });
       return;
     }
 
-    const fromStatus = selectedWorkflow.statuses.find((status) => status.id === transitionForm.fromStatusId);
-    const toStatus = selectedWorkflow.statuses.find((status) => status.id === transitionForm.toStatusId);
+    const fromStatus = selectedWorkflow.statuses.find(
+      (status) => status.id === transitionForm.fromStatusId
+    );
+    const toStatus = selectedWorkflow.statuses.find(
+      (status) => status.id === transitionForm.toStatusId
+    );
 
     try {
       const response = await fetch(`/api/workflows/${selectedWorkflow.id}/transitions`, {
@@ -427,7 +445,7 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
         body: JSON.stringify({
           name:
             transitionForm.name.trim() ||
-            `${fromStatus?.name || 'From'} → ${toStatus?.name || 'To'}`,
+            `${fromStatus?.name || t('we_from_fallback')} → ${toStatus?.name || t('we_to_fallback')}`,
           fromStatusId: transitionForm.fromStatusId,
           toStatusId: transitionForm.toStatusId,
         }),
@@ -436,8 +454,8 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
       if (!response.ok) throw new Error('Failed to create transition');
 
       toast({
-        title: 'Transition created',
-        description: 'Workflow transition added successfully.',
+        title: t('we_transition_created_title'),
+        description: t('we_transition_created_description'),
       });
 
       setTransitionForm((current) => ({
@@ -448,8 +466,8 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
       await fetchWorkflows();
     } catch (error) {
       toast({
-        title: 'Create failed',
-        description: error instanceof Error ? error.message : 'Failed to create transition',
+        title: t('we_create_failed_title'),
+        description: error instanceof Error ? error.message : t('we_transition_create_failed'),
         variant: 'destructive',
       });
     }
@@ -461,25 +479,28 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
     }
 
     try {
-      const response = await fetch(`/api/workflows/${selectedWorkflow.id}/transitions/${transitionId}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `/api/workflows/${selectedWorkflow.id}/transitions/${transitionId}`,
+        {
+          method: 'DELETE',
+        }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to delete transition');
       }
 
       toast({
-        title: 'Transition deleted',
-        description: 'Workflow transition removed successfully.',
+        title: t('we_transition_deleted_title'),
+        description: t('we_transition_deleted_description'),
       });
 
       await loadWorkflowDetails(selectedWorkflow.id);
       await fetchWorkflows();
     } catch (error) {
       toast({
-        title: 'Delete failed',
-        description: error instanceof Error ? error.message : 'Failed to delete transition',
+        title: t('we_delete_failed_title'),
+        description: error instanceof Error ? error.message : t('we_transition_delete_failed'),
         variant: 'destructive',
       });
     }
@@ -490,27 +511,23 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
     workflowDraft.description !== (selectedWorkflow?.description || '');
 
   if (isLoading) {
-    return <div className="p-4 text-sm text-muted-foreground">Loading workflows...</div>;
+    return <div className="text-muted-foreground p-4 text-sm">{t('we_loading')}</div>;
   }
 
   return (
-    <div className="space-y-6 animate-fade-up">
+    <div className="animate-fade-up space-y-6">
       {projectId ? (
-        <div className="surface-card p-5 space-y-4">
+        <div className="surface-card space-y-4 p-5">
           <div className="space-y-1">
-            <span className="kicker">Project workflow</span>
-            <h3 className="text-sm font-semibold tracking-tight">Project workflow</h3>
-            <p className="text-xs text-muted-foreground">
-              Choose which workflow this project should use for issue statuses and transitions.
-            </p>
+            <span className="kicker">{t('we_project_workflow')}</span>
+            <h3 className="text-sm font-semibold tracking-tight">{t('we_project_workflow')}</h3>
+            <p className="text-muted-foreground text-xs">{t('we_project_workflow_help')}</p>
           </div>
-          <FormRow
-            label="Active workflow"
-            description="Changing this updates statuses across the board and issue views."
-          >
+          <FormRow label={t('we_active_workflow')} description={t('we_active_workflow_help')}>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <div className="text-sm font-medium">
-                {workflows.find((workflow) => workflow.id === project?.defaultWorkflowId)?.name || 'No workflow assigned'}
+                {workflows.find((workflow) => workflow.id === project?.defaultWorkflowId)?.name ||
+                  t('we_no_workflow_assigned')}
               </div>
               <div className="sm:ml-auto sm:w-[240px]">
                 <Select
@@ -518,7 +535,7 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
                   onValueChange={(value) => void assignWorkflowToProject(value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select workflow" />
+                    <SelectValue placeholder={t('we_select_workflow')} />
                   </SelectTrigger>
                   <SelectContent>
                     {workflows.map((workflow) => (
@@ -534,49 +551,54 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
         </div>
       ) : null}
 
-      <div className="surface-card p-5 space-y-5">
+      <div className="surface-card space-y-5 p-5">
         <div className="space-y-1">
-          <span className="kicker">Create</span>
-          <h3 className="text-sm font-semibold tracking-tight">Create workflow</h3>
-          <p className="text-xs text-muted-foreground">
-            Start a new workflow with a simple To Do &rarr; In Progress &rarr; Done flow.
-          </p>
+          <span className="kicker">{t('we_create_kicker')}</span>
+          <h3 className="text-sm font-semibold tracking-tight">{t('we_create_workflow')}</h3>
+          <p className="text-muted-foreground text-xs">{t('we_create_workflow_help')}</p>
         </div>
 
-        <FormRow label="Workflow name" htmlFor="workflow-name">
+        <FormRow label={t('we_workflow_name')} htmlFor="workflow-name">
           <Input
             id="workflow-name"
-            placeholder="Development workflow"
+            placeholder={t('we_workflow_name_placeholder')}
             value={newWorkflowName}
             onChange={(event) => setNewWorkflowName(event.target.value)}
           />
         </FormRow>
-        <FormRow label="Description" htmlFor="workflow-description" description="Optional — who uses this workflow.">
+        <FormRow
+          label={t('we_description')}
+          htmlFor="workflow-description"
+          description={t('we_description_create_help')}
+        >
           <Input
             id="workflow-description"
-            placeholder="Optional description"
+            placeholder={t('we_description_placeholder')}
             value={newWorkflowDescription}
             onChange={(event) => setNewWorkflowDescription(event.target.value)}
           />
         </FormRow>
 
         <div className="flex justify-end">
-          <Button onClick={() => void createWorkflow()} disabled={isSaving || !newWorkflowName.trim()}>
+          <Button
+            onClick={() => void createWorkflow()}
+            disabled={isSaving || !newWorkflowName.trim()}
+          >
             <Plus className="mr-2 h-4 w-4" />
-            Create workflow
+            {t('we_create_workflow')}
           </Button>
         </div>
       </div>
 
       {workflows.length > 0 ? (
-        <div className="surface-card p-5 space-y-4">
+        <div className="surface-card space-y-4 p-5">
           <div className="space-y-1">
-            <span className="kicker">Library</span>
-            <h3 className="text-sm font-semibold tracking-tight">Workflows</h3>
-            <p className="text-xs text-muted-foreground">Select a workflow to manage its statuses and transitions.</p>
+            <span className="kicker">{t('we_library')}</span>
+            <h3 className="text-sm font-semibold tracking-tight">{t('we_workflows')}</h3>
+            <p className="text-muted-foreground text-xs">{t('we_library_help')}</p>
           </div>
 
-          <div className="grid gap-2 stagger sm:grid-cols-2 xl:grid-cols-3">
+          <div className="stagger grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {workflows.map((workflow) => (
               <Button
                 key={workflow.id}
@@ -591,10 +613,12 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
                   <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
                     <div className="flex w-full items-center gap-2">
                       <span className="truncate font-medium">{workflow.name}</span>
-                      {workflow.isDefault ? <span className="chip ml-auto">Default</span> : null}
+                      {workflow.isDefault ? (
+                        <span className="chip ml-auto">{t('we_default_chip')}</span>
+                      ) : null}
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {workflow.statuses?.length || 0} statuses
+                    <span className="text-muted-foreground text-xs">
+                      {t('we_statuses_count', { count: workflow.statuses?.length || 0 })}
                     </span>
                   </div>
                 </div>
@@ -605,34 +629,44 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
       ) : null}
 
       {selectedWorkflow ? (
-        <div className="surface-card p-5 space-y-6">
+        <div className="surface-card space-y-6 p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-1">
-              <span className="kicker">Details</span>
-              <h3 className="text-sm font-semibold tracking-tight">Workflow details</h3>
-              <p className="text-xs text-muted-foreground">Update metadata, add statuses, and manage transitions.</p>
+              <span className="kicker">{t('we_details')}</span>
+              <h3 className="text-sm font-semibold tracking-tight">{t('we_workflow_details')}</h3>
+              <p className="text-muted-foreground text-xs">{t('we_workflow_details_help')}</p>
             </div>
             <div className="flex items-center gap-2">
               {!selectedWorkflow.isDefault ? (
-                <Button variant="outline" size="sm" onClick={() => void setWorkflowAsDefault(selectedWorkflow.id)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void setWorkflowAsDefault(selectedWorkflow.id)}
+                >
                   <Star className="mr-2 h-4 w-4" />
-                  Make default
+                  {t('we_make_default')}
                 </Button>
               ) : null}
-              <Button variant="outline" size="sm" onClick={() => void deleteWorkflow(selectedWorkflow.id)}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void deleteWorkflow(selectedWorkflow.id)}
+              >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Delete
+                {tActions('delete')}
               </Button>
             </div>
           </div>
 
-          <FormRow label="Name" description="Shown wherever this workflow is referenced.">
+          <FormRow label={t('we_name')} description={t('we_name_help')}>
             <Input
               value={workflowDraft.name}
-              onChange={(event) => setWorkflowDraft((current) => ({ ...current, name: event.target.value }))}
+              onChange={(event) =>
+                setWorkflowDraft((current) => ({ ...current, name: event.target.value }))
+              }
             />
           </FormRow>
-          <FormRow label="Description" description="Optional — what this workflow is for.">
+          <FormRow label={t('we_description')} description={t('we_description_help')}>
             <Textarea
               rows={3}
               value={workflowDraft.description}
@@ -648,14 +682,14 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
               disabled={!hasWorkflowMetaChanges || !workflowDraft.name.trim()}
             >
               <Save className="mr-2 h-4 w-4" />
-              Save workflow
+              {t('we_save_workflow')}
             </Button>
           </div>
 
           {/* Statuses */}
-          <div className="surface-inset p-4 rounded-md space-y-4">
+          <div className="surface-inset space-y-4 rounded-md p-4">
             <div className="flex items-center justify-between gap-2">
-              <span className="kicker">Statuses</span>
+              <span className="kicker">{t('we_statuses')}</span>
               <div className="flex flex-wrap gap-1.5">
                 {selectedWorkflow.statuses.map((status) => (
                   <StatusChip key={status.id} status={status} />
@@ -665,9 +699,11 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
 
             <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_140px_auto]">
               <Input
-                placeholder="New status name"
+                placeholder={t('we_new_status_placeholder')}
                 value={statusForm.name}
-                onChange={(event) => setStatusForm((current) => ({ ...current, name: event.target.value }))}
+                onChange={(event) =>
+                  setStatusForm((current) => ({ ...current, name: event.target.value }))
+                }
               />
               <Select
                 value={statusForm.category}
@@ -683,9 +719,9 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(STATUS_CATEGORY_LABELS).map(([value, label]) => (
+                  {Object.entries(STATUS_CATEGORY_LABEL_KEYS).map(([value, labelKey]) => (
                     <SelectItem key={value} value={value}>
-                      {label}
+                      {t(labelKey)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -693,35 +729,41 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
               <Input
                 type="color"
                 value={statusForm.color}
-                onChange={(event) => setStatusForm((current) => ({ ...current, color: event.target.value }))}
+                onChange={(event) =>
+                  setStatusForm((current) => ({ ...current, color: event.target.value }))
+                }
                 className="h-10 w-full"
-                aria-label="Status color"
+                aria-label={t('we_status_color')}
               />
               <Button onClick={() => void addStatus()} disabled={!statusForm.name.trim()}>
                 <Plus className="mr-2 h-4 w-4" />
-                Add
+                {t('we_add')}
               </Button>
             </div>
           </div>
 
           {/* Transitions */}
-          <div className="surface-inset p-4 rounded-md space-y-4">
+          <div className="surface-inset space-y-4 rounded-md p-4">
             <div className="flex items-center gap-2">
-              <GitBranch className="h-4 w-4 text-muted-foreground" />
-              <span className="kicker">Transitions</span>
+              <GitBranch className="text-muted-foreground h-4 w-4" />
+              <span className="kicker">{t('we_transitions')}</span>
             </div>
             <div className="grid gap-3 md:grid-cols-4">
               <Input
-                placeholder="Transition name (optional)"
+                placeholder={t('we_transition_name_placeholder')}
                 value={transitionForm.name}
-                onChange={(event) => setTransitionForm((current) => ({ ...current, name: event.target.value }))}
+                onChange={(event) =>
+                  setTransitionForm((current) => ({ ...current, name: event.target.value }))
+                }
               />
               <Select
                 value={transitionForm.fromStatusId}
-                onValueChange={(value) => setTransitionForm((current) => ({ ...current, fromStatusId: value }))}
+                onValueChange={(value) =>
+                  setTransitionForm((current) => ({ ...current, fromStatusId: value }))
+                }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="From status" />
+                  <SelectValue placeholder={t('we_from_status')} />
                 </SelectTrigger>
                 <SelectContent>
                   {selectedWorkflow.statuses.map((status) => (
@@ -733,10 +775,12 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
               </Select>
               <Select
                 value={transitionForm.toStatusId}
-                onValueChange={(value) => setTransitionForm((current) => ({ ...current, toStatusId: value }))}
+                onValueChange={(value) =>
+                  setTransitionForm((current) => ({ ...current, toStatusId: value }))
+                }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="To status" />
+                  <SelectValue placeholder={t('we_to_status')} />
                 </SelectTrigger>
                 <SelectContent>
                   {selectedWorkflow.statuses.map((status) => (
@@ -751,35 +795,41 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
                 disabled={!transitionForm.fromStatusId || !transitionForm.toStatusId}
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Add transition
+                {t('we_add_transition')}
               </Button>
             </div>
 
             {selectedWorkflow.transitions.length === 0 ? (
-              <div className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                No transitions defined yet.
+              <div className="border-border text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm">
+                {t('we_no_transitions')}
               </div>
             ) : (
-              <div className="divide-y divide-border/60 rounded-md border border-border/60 bg-card">
+              <div className="divide-border/60 border-border/60 bg-card divide-y rounded-md border">
                 {selectedWorkflow.transitions.map((transition) => {
-                  const fromStatus = selectedWorkflow.statuses.find((status) => status.id === transition.fromStatusId);
-                  const toStatus = selectedWorkflow.statuses.find((status) => status.id === transition.toStatusId);
+                  const fromStatus = selectedWorkflow.statuses.find(
+                    (status) => status.id === transition.fromStatusId
+                  );
+                  const toStatus = selectedWorkflow.statuses.find(
+                    (status) => status.id === transition.toStatusId
+                  );
 
                   return (
                     <div
                       key={transition.id}
-                      className="flex items-center gap-3 px-4 py-2.5 transition-colors duration-150 hover:bg-accent/40"
+                      className="hover:bg-accent/40 flex items-center gap-3 px-4 py-2.5 transition-colors duration-150"
                     >
                       {fromStatus ? <StatusChip status={fromStatus} /> : null}
-                      <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <ArrowRight className="text-muted-foreground h-4 w-4 shrink-0" />
                       {toStatus ? <StatusChip status={toStatus} /> : null}
-                      <span className="flex-1 truncate text-sm text-muted-foreground">{transition.name}</span>
+                      <span className="text-muted-foreground flex-1 truncate text-sm">
+                        {transition.name}
+                      </span>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7"
                         onClick={() => void deleteTransition(transition.id)}
-                        aria-label="Delete transition"
+                        aria-label={t('we_delete_transition')}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>

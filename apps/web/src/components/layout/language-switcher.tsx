@@ -27,6 +27,7 @@ import { LOCALE_COOKIE, localeLabels, locales, type Locale } from '@/lib/i18n/co
 export function LanguageSwitcher() {
   const locale = useLocale() as Locale;
   const t = useTranslations('actions');
+  const tLayout = useTranslations('layoutNav');
   const [isPending, startTransition] = useTransition();
 
   const setLocale = (next: Locale) => {
@@ -80,7 +81,7 @@ export function LanguageSwitcher() {
           >
             <span>{localeLabels[entry]}</span>
             <span className="text-muted-foreground text-[10px] uppercase tracking-[0.14em]">
-              {entry === locale ? 'Active' : entry}
+              {entry === locale ? tLayout('languageActive') : entry}
             </span>
           </DropdownMenuItem>
         ))}

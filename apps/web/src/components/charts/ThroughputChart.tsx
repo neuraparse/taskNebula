@@ -4,6 +4,7 @@
  * ThroughputChart — issues completed per week (or arbitrary period).
  */
 
+import { useTranslations } from 'next-intl';
 import {
   Area,
   AreaChart,
@@ -25,6 +26,7 @@ export interface ThroughputChartProps {
 }
 
 export function ThroughputChart({ data, height = 220 }: ThroughputChartProps) {
+  const t = useTranslations('charts');
   return (
     <ResponsiveContainer width="100%" height={height}>
       <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -58,7 +60,7 @@ export function ThroughputChart({ data, height = 220 }: ThroughputChartProps) {
         <Area
           type="monotone"
           dataKey="count"
-          name="Issues"
+          name={t('issues')}
           stroke="hsl(var(--primary))"
           strokeWidth={2}
           fill="url(#throughput-fill)"

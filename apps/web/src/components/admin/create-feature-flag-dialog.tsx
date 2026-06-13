@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -24,6 +25,7 @@ import { OrganizationMultiSelect } from '@/components/admin/organization-multi-s
 const PLANS = ['free', 'starter', 'growth', 'enterprise'] as const;
 
 export function CreateFeatureFlagDialog() {
+  const t = useTranslations('adminDialogs');
   const [open, setOpen] = useState(false);
   const [key, setKey] = useState('');
   const [name, setName] = useState('');
@@ -48,7 +50,10 @@ export function CreateFeatureFlagDialog() {
         enabledForOrganizations,
         rolloutPercentage,
       });
-      toast({ title: 'Feature flag created', description: `"${name}" was created successfully.` });
+      toast({
+        title: t('createFlag.toastCreatedTitle'),
+        description: t('createFlag.toastCreatedDescription', { name }),
+      });
       setKey('');
       setName('');
       setDescription('');
@@ -59,8 +64,8 @@ export function CreateFeatureFlagDialog() {
       setOpen(false);
     } catch (error: any) {
       toast({
-        title: 'Failed to create feature flag',
-        description: error.message || 'Something went wrong.',
+        title: t('createFlag.toastFailedTitle'),
+        description: error.message || t('common.somethingWentWrong'),
         variant: 'destructive',
       });
     }
@@ -77,21 +82,19 @@ export function CreateFeatureFlagDialog() {
       <DialogTrigger asChild>
         <Button size="sm">
           <Plus className="mr-1.5 h-4 w-4" />
-          New flag
+          {t('createFlag.trigger')}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create feature flag</DialogTitle>
-            <DialogDescription>
-              Control feature rollout across organizations and plans.
-            </DialogDescription>
+            <DialogTitle>{t('createFlag.title')}</DialogTitle>
+            <DialogDescription>{t('createFlag.description')}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="key">Key</Label>
+              <Label htmlFor="key">{t('flagForm.key')}</Label>
               <Input
                 id="key"
                 value={key}
@@ -100,11 +103,11 @@ export function CreateFeatureFlagDialog() {
                 pattern="[a-z0-9_-]+"
                 required
               />
-              <p className="text-xs text-muted-foreground">Lowercase, dashes or underscores only.</p>
+              <p className="text-muted-foreground text-xs">{t('flagForm.keyHint')}</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{t('flagForm.name')}</Label>
               <Input
                 id="name"
                 value={name}
@@ -115,29 +118,32 @@ export function CreateFeatureFlagDialog() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">{t('flagForm.descriptionLabel')}</Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Optional description..."
+                placeholder={t('flagForm.descriptionPlaceholder')}
                 rows={2}
               />
             </div>
 
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="enabled">Enabled</Label>
-                <p className="text-xs text-muted-foreground">Enable globally on creation.</p>
+                <Label htmlFor="enabled">{t('flagForm.enabled')}</Label>
+                <p className="text-muted-foreground text-xs">{t('createFlag.enabledHint')}</p>
               </div>
               <Switch id="enabled" checked={isEnabled} onCheckedChange={setIsEnabled} />
             </div>
 
             <div className="space-y-2">
-              <Label>Plans</Label>
+              <Label>{t('flagForm.plans')}</Label>
               <div className="grid grid-cols-2 gap-2">
                 {PLANS.map((plan) => (
-                  <label key={plan} className="flex cursor-pointer items-center gap-2 text-sm capitalize">
+                  <label
+                    key={plan}
+                    className="flex cursor-pointer items-center gap-2 text-sm capitalize"
+                  >
                     <Checkbox
                       id={`plan-${plan}`}
                       checked={enabledForPlans.includes(plan)}
@@ -147,22 +153,24 @@ export function CreateFeatureFlagDialog() {
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground">Leave empty to enable for all plans.</p>
+              <p className="text-muted-foreground text-xs">{t('flagForm.plansHint')}</p>
             </div>
 
             <div className="space-y-2">
-              <Label>Target organizations</Label>
+              <Label>{t('flagForm.targetOrganizations')}</Label>
               <OrganizationMultiSelect
                 value={enabledForOrganizations}
                 onChange={setEnabledForOrganizations}
               />
-              <p className="text-xs text-muted-foreground">
-                Leave empty to enable for all organizations matching the plan + rollout.
+              <p className="text-muted-foreground text-xs">
+                {t('flagForm.targetOrganizationsHint')}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="rollout">Rollout: {rolloutPercentage}%</Label>
+              <Label htmlFor="rollout">
+                {t('flagForm.rollout', { percentage: rolloutPercentage })}
+              </Label>
               <input
                 type="range"
                 id="rollout"
@@ -171,17 +179,17 @@ export function CreateFeatureFlagDialog() {
                 step="5"
                 value={rolloutPercentage}
                 onChange={(e) => setRolloutPercentage(Number(e.target.value))}
-                className="w-full accent-primary"
+                className="accent-primary w-full"
               />
             </div>
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={createFeatureFlag.isPending}>
-              {createFeatureFlag.isPending ? 'Creating...' : 'Create flag'}
+              {createFeatureFlag.isPending ? t('createFlag.submitting') : t('createFlag.submit')}
             </Button>
           </DialogFooter>
         </form>

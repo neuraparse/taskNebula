@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, Loader2, Send, Target } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -65,6 +66,7 @@ interface RollUpResponse {
 }
 
 export function InitiativeDetailClient({ initiativeId }: { initiativeId: string }) {
+  const t = useTranslations('pagesHome');
   const queryClient = useQueryClient();
 
   const { data: detail, isLoading } = useQuery<InitiativeDetail>({
@@ -107,7 +109,7 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ status, summary, blockers, nextSteps }),
       });
-      if (!res.ok) throw new Error('Failed to post update');
+      if (!res.ok) throw new Error(t('initiative_detail_error_post'));
       return res.json();
     },
     onSuccess: () => {
@@ -122,7 +124,7 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
     return (
       <div className="text-muted-foreground flex h-full items-center justify-center">
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        Loading initiative...
+        {t('initiative_detail_loading')}
       </div>
     );
   }
@@ -135,11 +137,11 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
           className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-1 text-xs"
         >
           <ChevronLeft className="h-3 w-3" />
-          All initiatives
+          {t('initiative_detail_all_initiatives')}
         </Link>
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
-            <span className="kicker">Initiative</span>
+            <span className="kicker">{t('initiative_detail_kicker')}</span>
             <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
               <Target className="text-muted-foreground h-5 w-5" />
               {detail.initiative.name}
@@ -159,7 +161,7 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
         <div className="space-y-6 lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Roll-up</CardTitle>
+              <CardTitle className="text-base">{t('initiative_detail_rollup')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center gap-3">
@@ -170,29 +172,35 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
               </div>
               <p className="text-muted-foreground text-xs">
                 {rollup
-                  ? `${rollup.done}/${rollup.total} issues complete across ${rollup.projectCount} project${rollup.projectCount === 1 ? '' : 's'}`
-                  : 'No data yet'}
+                  ? t('initiative_detail_rollup_summary', {
+                      done: rollup.done,
+                      total: rollup.total,
+                      count: rollup.projectCount,
+                    })
+                  : t('initiative_detail_no_data')}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Member projects</CardTitle>
+              <CardTitle className="text-base">{t('initiative_detail_member_projects')}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {detail.projects.length === 0 ? (
                 <div className="text-muted-foreground px-6 py-8 text-center text-sm">
-                  No projects linked yet.
+                  {t('initiative_detail_no_projects')}
                 </div>
               ) : (
                 <table className="w-full text-sm">
                   <thead className="border-border bg-surface border-b">
                     <tr className="text-muted-foreground text-left text-[10px] uppercase tracking-wider">
-                      <th className="px-4 py-2">Key</th>
-                      <th className="px-4 py-2">Project</th>
-                      <th className="px-4 py-2">Issues</th>
-                      <th className="px-4 py-2 text-right">Progress</th>
+                      <th className="px-4 py-2">{t('initiative_detail_col_key')}</th>
+                      <th className="px-4 py-2">{t('initiative_detail_col_project')}</th>
+                      <th className="px-4 py-2">{t('initiative_detail_col_issues')}</th>
+                      <th className="px-4 py-2 text-right">
+                        {t('initiative_detail_col_progress')}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -222,7 +230,9 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
           {detail.children.length > 0 ? (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Sub-initiatives</CardTitle>
+                <CardTitle className="text-base">
+                  {t('initiative_detail_sub_initiatives')}
+                </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <ul>
@@ -252,11 +262,11 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Post update</CardTitle>
+              <CardTitle className="text-base">{t('initiative_detail_post_update')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-1">
-                <label className="kicker text-[10px]">Status</label>
+                <label className="kicker text-[10px]">{t('initiative_detail_status')}</label>
                 <Select
                   value={status}
                   onValueChange={(v) => setStatus(v as 'green' | 'yellow' | 'red')}
@@ -265,35 +275,35 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="green">Green — on track</SelectItem>
-                    <SelectItem value="yellow">Yellow — at risk</SelectItem>
-                    <SelectItem value="red">Red — blocked</SelectItem>
+                    <SelectItem value="green">{t('initiative_detail_status_green')}</SelectItem>
+                    <SelectItem value="yellow">{t('initiative_detail_status_yellow')}</SelectItem>
+                    <SelectItem value="red">{t('initiative_detail_status_red')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1">
-                <label className="kicker text-[10px]">Summary</label>
+                <label className="kicker text-[10px]">{t('initiative_detail_summary')}</label>
                 <Textarea
                   value={summary}
                   onChange={(e) => setSummary(e.target.value)}
-                  placeholder="What happened this week?"
+                  placeholder={t('initiative_detail_summary_placeholder')}
                   rows={3}
                 />
               </div>
               <div className="space-y-1">
-                <label className="kicker text-[10px]">Blockers</label>
+                <label className="kicker text-[10px]">{t('initiative_detail_blockers')}</label>
                 <Input
                   value={blockers}
                   onChange={(e) => setBlockers(e.target.value)}
-                  placeholder="Anything in the way?"
+                  placeholder={t('initiative_detail_blockers_placeholder')}
                 />
               </div>
               <div className="space-y-1">
-                <label className="kicker text-[10px]">Next steps</label>
+                <label className="kicker text-[10px]">{t('initiative_detail_next_steps')}</label>
                 <Input
                   value={nextSteps}
                   onChange={(e) => setNextSteps(e.target.value)}
-                  placeholder="What's up next?"
+                  placeholder={t('initiative_detail_next_steps_placeholder')}
                 />
               </div>
               <Button
@@ -306,7 +316,7 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
                 ) : (
                   <Send className="mr-2 h-3 w-3" />
                 )}
-                Post update
+                {t('initiative_detail_post_update')}
               </Button>
               {postUpdate.error ? (
                 <p className="text-destructive text-xs">{(postUpdate.error as Error).message}</p>
@@ -316,17 +326,17 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Updates</CardTitle>
+              <CardTitle className="text-base">{t('initiative_detail_updates')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 p-4">
               {!updates?.updates || updates.updates.length === 0 ? (
-                <p className="text-muted-foreground text-sm">No updates yet.</p>
+                <p className="text-muted-foreground text-sm">{t('initiative_detail_no_updates')}</p>
               ) : (
                 updates.updates.map((u) => (
                   <div key={u.id} className="border-border bg-surface rounded-md border p-3">
                     <div className="mb-1 flex items-center justify-between gap-2">
                       <div className="text-foreground text-xs font-medium">
-                        {u.authorName ?? 'Anonymous'}
+                        {u.authorName ?? t('initiative_detail_anonymous')}
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Badge variant="outline" className="uppercase tracking-wider">
@@ -338,12 +348,14 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
                     <p className="text-sm">{u.summary}</p>
                     {u.blockers ? (
                       <p className="text-muted-foreground mt-1 text-xs">
-                        <span className="font-medium">Blockers:</span> {u.blockers}
+                        <span className="font-medium">{t('initiative_detail_blockers_label')}</span>{' '}
+                        {u.blockers}
                       </p>
                     ) : null}
                     {u.nextSteps ? (
                       <p className="text-muted-foreground mt-1 text-xs">
-                        <span className="font-medium">Next:</span> {u.nextSteps}
+                        <span className="font-medium">{t('initiative_detail_next_label')}</span>{' '}
+                        {u.nextSteps}
                       </p>
                     ) : null}
                   </div>

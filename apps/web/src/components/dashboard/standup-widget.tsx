@@ -1,14 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Copy,
-  Sparkles,
-  AlertOctagon,
-  Loader2,
-  Check,
-} from 'lucide-react';
+import { Copy, Sparkles, AlertOctagon, Loader2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
@@ -41,6 +36,7 @@ async function generatePreview(): Promise<StandupResponse> {
 }
 
 export function StandupWidget() {
+  const t = useTranslations('dashboardExtra');
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
@@ -55,12 +51,12 @@ export function StandupWidget() {
     mutationFn: generatePreview,
     onSuccess: (next) => {
       queryClient.setQueryData(['standup', 'today'], next);
-      toast({ title: 'Standup generated', description: 'Today\'s digest is ready.' });
+      toast({ title: t('standup.generated_title'), description: t('standup.generated_desc') });
     },
     onError: (err) => {
       toast({
-        title: 'Could not generate standup',
-        description: err instanceof Error ? err.message : 'Unknown error',
+        title: t('standup.generate_error_title'),
+        description: err instanceof Error ? err.message : t('standup.unknown_error'),
         variant: 'destructive',
       });
     },
@@ -72,11 +68,11 @@ export function StandupWidget() {
       await navigator.clipboard.writeText(data.contentMd);
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
-      toast({ title: 'Copied to clipboard', description: 'Paste into Slack with /tn paste.' });
+      toast({ title: t('standup.copied_title'), description: t('standup.copied_desc') });
     } catch {
       toast({
-        title: 'Copy failed',
-        description: 'Select the text manually instead.',
+        title: t('standup.copy_failed_title'),
+        description: t('standup.copy_failed_desc'),
         variant: 'destructive',
       });
     }
@@ -85,11 +81,14 @@ export function StandupWidget() {
   const hasBlockers = !!(data?.blockersMd && data.blockersMd.trim().length > 0);
 
   return (
-    <div className="surface-card p-4 flex flex-col gap-3 animate-fade-up" data-testid="standup-widget">
+    <div
+      className="surface-card animate-fade-up flex flex-col gap-3 p-4"
+      data-testid="standup-widget"
+    >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-accent-violet" />
-          <h3 className="text-sm font-semibold">Today&apos;s standup</h3>
+          <Sparkles className="text-accent-violet h-4 w-4" />
+          <h3 className="text-sm font-semibold">{t('standup.heading')}</h3>
         </div>
         <div className="flex items-center gap-2">
           {data && (
@@ -100,8 +99,8 @@ export function StandupWidget() {
               className="h-7 px-2 text-xs"
               data-testid="standup-copy"
             >
-              {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
-              {copied ? 'Copied' : 'Copy to Slack'}
+              {copied ? <Check className="mr-1 h-3 w-3" /> : <Copy className="mr-1 h-3 w-3" />}
+              {copied ? t('standup.copied') : t('standup.copy_to_slack')}
             </Button>
           )}
           <Button
@@ -113,39 +112,40 @@ export function StandupWidget() {
             data-testid="standup-refresh"
           >
             {previewMutation.isPending ? (
-              <Loader2 className="h-3 w-3 animate-spin mr-1" />
+              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
             ) : (
-              <Sparkles className="h-3 w-3 mr-1" />
+              <Sparkles className="mr-1 h-3 w-3" />
             )}
-            {data ? 'Refresh' : 'Generate'}
+            {data ? t('standup.refresh') : t('standup.generate')}
           </Button>
         </div>
       </div>
 
       {isLoading ? (
-        <div className="flex items-center text-xs text-muted-foreground">
-          <Loader2 className="h-3 w-3 animate-spin mr-2" /> Loading…
+        <div className="text-muted-foreground flex items-center text-xs">
+          <Loader2 className="mr-2 h-3 w-3 animate-spin" /> {t('standup.loading')}
         </div>
       ) : data ? (
         <div className="flex flex-col gap-2">
-          <pre className="whitespace-pre-wrap text-xs text-foreground/90 leading-relaxed font-sans m-0">
+          <pre className="text-foreground/90 m-0 whitespace-pre-wrap font-sans text-xs leading-relaxed">
             {data.contentMd}
           </pre>
           {hasBlockers && (
-            <div className="mt-2 rounded-md border border-accent-rose/40 bg-accent-rose/5 p-2">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-accent-rose">
-                <AlertOctagon className="h-3 w-3" /> Blockers
+            <div className="border-accent-rose/40 bg-accent-rose/5 mt-2 rounded-md border p-2">
+              <div className="text-accent-rose flex items-center gap-1.5 text-xs font-semibold">
+                <AlertOctagon className="h-3 w-3" /> {t('standup.blockers')}
               </div>
-              <pre className="whitespace-pre-wrap text-xs text-foreground/90 mt-1 m-0 font-sans">
+              <pre className="text-foreground/90 m-0 mt-1 whitespace-pre-wrap font-sans text-xs">
                 {data.blockersMd}
               </pre>
             </div>
           )}
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground">
-          No digest yet for today. Click <em>Generate</em> to build one from the last 24h
-          of your activity.
+        <p className="text-muted-foreground text-xs">
+          {t.rich('standup.empty', {
+            em: (chunks) => <em>{chunks}</em>,
+          })}
         </p>
       )}
     </div>

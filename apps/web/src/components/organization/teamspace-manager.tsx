@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -98,6 +99,7 @@ function buildInitials(name?: string | null, email?: string | null) {
 export function TeamspaceManager({ organizationId, canManage }: TeamspaceManagerProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const t = useTranslations('projectsPages');
   const { currentTeamId, setCurrentTeam } = useOrganization();
   const { data: teamspaces = [], isLoading } = useTeamspaces(organizationId);
   const { data: orgMembersData } = useOrganizationMembers(organizationId);
@@ -178,16 +180,22 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
     try {
       if (editingTeamspace) {
         await updateMutation.mutateAsync({ teamspaceId: editingTeamspace.id, payload });
-        toast({ title: 'Teamspace updated', description: `${formState.name.trim()} is ready.` });
+        toast({
+          title: t('ts_updated_title'),
+          description: t('ts_updated_description', { name: formState.name.trim() }),
+        });
       } else {
         await createMutation.mutateAsync(payload);
-        toast({ title: 'Teamspace created', description: `${formState.name.trim()} is now available.` });
+        toast({
+          title: t('ts_created_title'),
+          description: t('ts_created_description', { name: formState.name.trim() }),
+        });
       }
       closeFormDialogs();
     } catch (error) {
       toast({
-        title: editingTeamspace ? 'Failed to update teamspace' : 'Failed to create teamspace',
-        description: error instanceof Error ? error.message : 'Please try again.',
+        title: editingTeamspace ? t('ts_update_error_title') : t('ts_create_error_title'),
+        description: error instanceof Error ? error.message : t('try_again'),
         variant: 'destructive',
       });
     }
@@ -201,13 +209,13 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
       if (currentTeamId === deleteTarget.id) setCurrentTeam(null);
       setDeleteTarget(null);
       toast({
-        title: 'Teamspace deleted',
-        description: 'Projects stay intact and fall back to organization scope.',
+        title: t('ts_deleted_title'),
+        description: t('ts_deleted_description'),
       });
     } catch (error) {
       toast({
-        title: 'Failed to delete teamspace',
-        description: error instanceof Error ? error.message : 'Please try again.',
+        title: t('ts_delete_error_title'),
+        description: error instanceof Error ? error.message : t('try_again'),
         variant: 'destructive',
       });
     }
@@ -220,11 +228,11 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
       await addMemberMutation.mutateAsync({ userId: memberToAddId, role: memberRoleToAdd });
       setMemberToAddId('none');
       setMemberRoleToAdd('member');
-      toast({ title: 'Member added', description: 'Teamspace membership updated.' });
+      toast({ title: t('member_added_title'), description: t('member_added_description') });
     } catch (error) {
       toast({
-        title: 'Failed to add member',
-        description: error instanceof Error ? error.message : 'Please try again.',
+        title: t('member_add_error_title'),
+        description: error instanceof Error ? error.message : t('try_again'),
         variant: 'destructive',
       });
     }
@@ -233,11 +241,11 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
   async function handleChangeMemberRole(memberId: string, role: 'lead' | 'member') {
     try {
       await updateMemberMutation.mutateAsync({ memberId, role });
-      toast({ title: 'Member updated', description: 'Role changed successfully.' });
+      toast({ title: t('member_updated_title'), description: t('member_updated_description') });
     } catch (error) {
       toast({
-        title: 'Failed to update member',
-        description: error instanceof Error ? error.message : 'Please try again.',
+        title: t('member_update_error_title'),
+        description: error instanceof Error ? error.message : t('try_again'),
         variant: 'destructive',
       });
     }
@@ -246,11 +254,11 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
   async function handleRemoveMember(memberId: string) {
     try {
       await removeMemberMutation.mutateAsync(memberId);
-      toast({ title: 'Member removed', description: 'They no longer have teamspace scope.' });
+      toast({ title: t('member_removed_title'), description: t('member_removed_description') });
     } catch (error) {
       toast({
-        title: 'Failed to remove member',
-        description: error instanceof Error ? error.message : 'Please try again.',
+        title: t('member_remove_error_title'),
+        description: error instanceof Error ? error.message : t('try_again'),
         variant: 'destructive',
       });
     }
@@ -266,17 +274,15 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>
-              {editingTeamspace ? 'Edit teamspace' : 'Create teamspace'}
+              {editingTeamspace ? t('ts_edit_title') : t('ts_create_title')}
             </DialogTitle>
-            <DialogDescription>
-              Teamspaces group projects and planning context without creating a separate organization.
-            </DialogDescription>
+            <DialogDescription>{t('ts_form_description')}</DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-1">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="teamspace-name">Name</Label>
+                <Label htmlFor="teamspace-name">{t('field_name')}</Label>
                 <Input
                   id="teamspace-name"
                   value={formState.name}
@@ -294,7 +300,7 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="teamspace-slug">Slug</Label>
+                <Label htmlFor="teamspace-slug">{t('field_slug')}</Label>
                 <Input
                   id="teamspace-slug"
                   value={formState.slug}
@@ -310,7 +316,7 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="teamspace-description">Description</Label>
+              <Label htmlFor="teamspace-description">{t('field_description')}</Label>
               <Textarea
                 id="teamspace-description"
                 rows={2}
@@ -318,13 +324,13 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                 onChange={(event) =>
                   setFormState((current) => ({ ...current, description: event.target.value }))
                 }
-                placeholder="Own the core platform work and cross-product foundations."
+                placeholder={t('ts_description_placeholder')}
               />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="teamspace-lead">Lead</Label>
+                <Label htmlFor="teamspace-lead">{t('field_lead')}</Label>
                 <Select
                   value={formState.leadId}
                   onValueChange={(value) =>
@@ -332,10 +338,10 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                   }
                 >
                   <SelectTrigger id="teamspace-lead">
-                    <SelectValue placeholder="Use creator as lead" />
+                    <SelectValue placeholder={t('ts_lead_creator')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="creator">Use creator as lead</SelectItem>
+                    <SelectItem value="creator">{t('ts_lead_creator')}</SelectItem>
                     {organizationMembers.map((member) => (
                       <SelectItem key={member.id} value={member.id}>
                         {member.name || member.email || member.id}
@@ -345,7 +351,7 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="teamspace-avatar">Avatar URL</Label>
+                <Label htmlFor="teamspace-avatar">{t('field_avatar_url')}</Label>
                 <Input
                   id="teamspace-avatar"
                   value={formState.avatarUrl}
@@ -360,7 +366,7 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
 
           <DialogFooter>
             <Button type="button" variant="outline" size="sm" onClick={closeFormDialogs}>
-              Cancel
+              {t('cancel')}
             </Button>
             <Button
               type="button"
@@ -369,31 +375,28 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
               disabled={!formState.name.trim() || isMutating}
             >
               {isMutating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {editingTeamspace ? 'Save changes' : 'Create teamspace'}
+              {editingTeamspace ? t('save_changes') : t('ts_create_title')}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete confirmation dialog */}
-      <Dialog
-        open={Boolean(deleteTarget)}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
-      >
+      <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Delete teamspace</DialogTitle>
+            <DialogTitle>{t('ts_delete_title')}</DialogTitle>
             <DialogDescription>
-              <strong>{deleteTarget?.name}</strong> will be removed. Projects remain but their
-              teamspace association is cleared.
+              {t.rich('ts_delete_description', {
+                name: deleteTarget?.name ?? '',
+                strong: (chunks) => <strong>{chunks}</strong>,
+              })}
             </DialogDescription>
           </DialogHeader>
-          <div className="panel-danger animate-alert-in text-sm">
-            This action cannot be undone.
-          </div>
+          <div className="panel-danger animate-alert-in text-sm">{t('action_irreversible')}</div>
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setDeleteTarget(null)}>
-              Cancel
+              {t('cancel')}
             </Button>
             <Button
               variant="destructive"
@@ -402,7 +405,7 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Delete
+              {t('delete')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -421,27 +424,27 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
       >
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{membersTarget?.name} members</DialogTitle>
-            <DialogDescription>
-              Manage who belongs to this teamspace and who owns the planning context.
-            </DialogDescription>
+            <DialogTitle>
+              {t('members_dialog_title', { name: membersTarget?.name ?? '' })}
+            </DialogTitle>
+            <DialogDescription>{t('members_dialog_description')}</DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-5 lg:grid-cols-[1fr_260px]">
             {/* Current members list */}
             <div className="space-y-2">
-              <p className="text-sm font-medium">Current members</p>
+              <p className="text-sm font-medium">{t('current_members')}</p>
               {membersQuery.isLoading ? (
-                <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-4 text-sm text-muted-foreground">
+                <div className="border-border text-muted-foreground flex items-center gap-2 rounded-lg border px-3 py-4 text-sm">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Loading members...
+                  {t('loading_members')}
                 </div>
               ) : membersQuery.data?.members.length ? (
                 <div className="space-y-2">
                   {membersQuery.data.members.map((member) => (
                     <div
                       key={member.id}
-                      className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5"
+                      className="border-border flex items-center justify-between rounded-lg border px-3 py-2.5"
                     >
                       <div className="flex min-w-0 items-center gap-2.5">
                         <Avatar className="h-8 w-8 rounded-full">
@@ -454,7 +457,7 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                           <p className="truncate text-sm font-medium">
                             {member.name || member.email || member.id}
                           </p>
-                          <p className="truncate text-xs text-muted-foreground">{member.email}</p>
+                          <p className="text-muted-foreground truncate text-xs">{member.email}</p>
                         </div>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
@@ -473,18 +476,25 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="data-[state=open]:animate-scale-in">
+                            <DropdownMenuContent
+                              align="end"
+                              className="data-[state=open]:animate-scale-in"
+                            >
                               <DropdownMenuItem
-                                disabled={member.teamRole === 'lead' || updateMemberMutation.isPending}
+                                disabled={
+                                  member.teamRole === 'lead' || updateMemberMutation.isPending
+                                }
                                 onClick={() => void handleChangeMemberRole(member.id, 'lead')}
                               >
-                                Promote to lead
+                                {t('promote_to_lead')}
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                disabled={member.teamRole === 'member' || updateMemberMutation.isPending}
+                                disabled={
+                                  member.teamRole === 'member' || updateMemberMutation.isPending
+                                }
                                 onClick={() => void handleChangeMemberRole(member.id, 'member')}
                               >
-                                Set as member
+                                {t('set_as_member')}
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
@@ -492,7 +502,7 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                                 disabled={removeMemberMutation.isPending}
                                 onClick={() => void handleRemoveMember(member.id)}
                               >
-                                Remove
+                                {t('remove')}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -502,28 +512,26 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                   ))}
                 </div>
               ) : (
-                <div className="rounded-lg border border-border px-3 py-4 text-sm text-muted-foreground">
-                  No explicit members yet. Teamspace-scoped planning still works for linked projects.
+                <div className="border-border text-muted-foreground rounded-lg border px-3 py-4 text-sm">
+                  {t('no_members_empty')}
                 </div>
               )}
             </div>
 
             {/* Add member panel */}
-            <div className="surface-inset rounded-lg p-4 space-y-4">
+            <div className="surface-inset space-y-4 rounded-lg p-4">
               <div>
-                <p className="text-sm font-medium">Add member</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  Assign an org member to this teamspace.
-                </p>
+                <p className="text-sm font-medium">{t('add_member')}</p>
+                <p className="text-muted-foreground mt-0.5 text-xs">{t('add_member_helper')}</p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="teamspace-member-user">Member</Label>
+                <Label htmlFor="teamspace-member-user">{t('member_label')}</Label>
                 <Select value={memberToAddId} onValueChange={setMemberToAddId}>
                   <SelectTrigger id="teamspace-member-user">
-                    <SelectValue placeholder="Choose a member" />
+                    <SelectValue placeholder={t('choose_member')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Choose a member</SelectItem>
+                    <SelectItem value="none">{t('choose_member')}</SelectItem>
                     {availableMembers.map((member) => (
                       <SelectItem key={member.id} value={member.id}>
                         {member.name || member.email || member.id}
@@ -534,7 +542,7 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="teamspace-member-role">Role</Label>
+                <Label htmlFor="teamspace-member-role">{t('field_role')}</Label>
                 <Select
                   value={memberRoleToAdd}
                   onValueChange={(value) => setMemberRoleToAdd(value as 'lead' | 'member')}
@@ -543,8 +551,8 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="member">Member</SelectItem>
-                    <SelectItem value="lead">Lead</SelectItem>
+                    <SelectItem value="member">{t('role_member')}</SelectItem>
+                    <SelectItem value="lead">{t('role_lead')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -561,14 +569,14 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                 ) : (
                   <UserPlus className="mr-2 h-4 w-4" />
                 )}
-                Add to teamspace
+                {t('add_to_teamspace')}
               </Button>
             </div>
           </div>
 
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setMembersTarget(null)}>
-              Close
+              {t('close')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -578,31 +586,25 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
       <section className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
-            <span className="kicker">Planning</span>
-            <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
+            <span className="kicker">{t('planning_kicker')}</span>
+            <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
               <Layers3 className="h-4 w-4" />
-              Teamspaces
+              {t('teamspaces_heading')}
             </h2>
-            <p className="text-sm text-muted-foreground max-w-prose">
-              Planning lanes above individual projects, without splitting the organization.
-            </p>
+            <p className="text-muted-foreground max-w-prose text-sm">{t('teamspaces_subtitle')}</p>
           </div>
           <Button type="button" size="sm" onClick={openCreateDialog} disabled={!canManage}>
             <BadgePlus className="mr-2 h-4 w-4" />
-            {canManage ? 'New teamspace' : 'Owner or admin only'}
+            {canManage ? t('ts_new_button') : t('owner_admin_only')}
           </Button>
         </div>
 
-        {!canManage && (
-          <div className="panel-warn text-sm">
-            Browse only — owners and admins can change the structure.
-          </div>
-        )}
+        {!canManage && <div className="panel-warn text-sm">{t('browse_only_notice')}</div>}
 
         {isLoading ? (
-          <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-4 text-sm text-muted-foreground">
+          <div className="border-border text-muted-foreground flex items-center gap-2 rounded-lg border px-3 py-4 text-sm">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Loading teamspaces...
+            {t('loading_teamspaces')}
           </div>
         ) : teamspaces.length > 0 ? (
           <div className="stagger grid gap-4 xl:grid-cols-2">
@@ -613,7 +615,7 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                 <div
                   key={teamspace.id}
                   className={cn(
-                    'animate-fade-up surface-card rounded-lg p-6 transition-all duration-200 ease-smooth',
+                    'animate-fade-up surface-card ease-smooth rounded-lg p-6 transition-all duration-200',
                     isActive && 'border-primary/20 bg-primary/5'
                   )}
                 >
@@ -621,10 +623,10 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <h3 className="truncate text-sm font-semibold">{teamspace.name}</h3>
-                        {isActive && <span className="chip-accent text-xs">Active</span>}
+                        {isActive && <span className="chip-accent text-xs">{t('active')}</span>}
                       </div>
                       {teamspace.description && (
-                        <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
+                        <p className="text-muted-foreground mt-1 line-clamp-2 text-xs">
                           {teamspace.description}
                         </p>
                       )}
@@ -635,17 +637,20 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="data-[state=open]:animate-scale-in">
+                      <DropdownMenuContent
+                        align="end"
+                        className="data-[state=open]:animate-scale-in"
+                      >
                         <DropdownMenuItem onClick={() => setMembersTarget(teamspace)}>
                           <Users className="mr-2 h-4 w-4" />
-                          Manage members
+                          {t('manage_members')}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           disabled={!canManage}
                           onClick={() => openEditDialog(teamspace)}
                         >
                           <Pencil className="mr-2 h-4 w-4" />
-                          Edit
+                          {t('edit')}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
@@ -654,7 +659,7 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                           onClick={() => setDeleteTarget(teamspace)}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
+                          {t('delete')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -663,12 +668,16 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                   {/* Stat row */}
                   <div className="mb-4 flex items-center gap-4 text-sm">
                     <span className="text-muted-foreground">
-                      <span className="font-semibold text-foreground">{teamspace.memberCount ?? 0}</span>{' '}
-                      members
+                      <span className="text-foreground font-semibold">
+                        {teamspace.memberCount ?? 0}
+                      </span>{' '}
+                      {t('members_label')}
                     </span>
                     <span className="text-muted-foreground">
-                      <span className="font-semibold text-foreground">{teamspace.projectCount ?? 0}</span>{' '}
-                      projects
+                      <span className="text-foreground font-semibold">
+                        {teamspace.projectCount ?? 0}
+                      </span>{' '}
+                      {t('projects_label')}
                     </span>
                     <span className="chip ml-auto text-[10px]">{teamspace.slug}</span>
                   </div>
@@ -677,16 +686,23 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                   <div className="mb-4 flex items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-2">
                       <Avatar className="h-7 w-7 rounded-full">
-                        <AvatarImage src={teamspace.lead?.image || teamspace.avatarUrl || undefined} />
+                        <AvatarImage
+                          src={teamspace.lead?.image || teamspace.avatarUrl || undefined}
+                        />
                         <AvatarFallback className="text-xs">
-                          {buildInitials(teamspace.lead?.name, teamspace.lead?.email || teamspace.name)}
+                          {buildInitials(
+                            teamspace.lead?.name,
+                            teamspace.lead?.email || teamspace.name
+                          )}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
                         <p className="truncate text-xs font-medium">
-                          {teamspace.lead?.name || teamspace.lead?.email || 'Lead assigned on create'}
+                          {teamspace.lead?.name ||
+                            teamspace.lead?.email ||
+                            t('lead_assigned_on_create')}
                         </p>
-                        <p className="text-xs text-muted-foreground">Lead</p>
+                        <p className="text-muted-foreground text-xs">{t('role_lead')}</p>
                       </div>
                     </div>
                     {teamspace.currentUserRole ? (
@@ -700,8 +716,8 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                       </span>
                     ) : (
                       <span className="chip">
-                        <Shield className="mr-1 h-3 w-3 inline" />
-                        Org scope
+                        <Shield className="mr-1 inline h-3 w-3" />
+                        {t('org_scope')}
                       </span>
                     )}
                   </div>
@@ -717,7 +733,7 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                         void queryClient.invalidateQueries({ queryKey: ['projects'] });
                       }}
                     >
-                      {isActive ? 'Show all' : 'Focus'}
+                      {isActive ? t('show_all') : t('focus')}
                     </Button>
                     <Button
                       type="button"
@@ -725,7 +741,7 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                       size="sm"
                       onClick={() => setMembersTarget(teamspace)}
                     >
-                      Members
+                      {t('members_button')}
                     </Button>
                   </div>
                 </div>
@@ -734,13 +750,11 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 py-12 text-center">
-            <Layers3 className="h-8 w-8 text-muted-foreground/50" />
-            <p className="text-sm text-muted-foreground">
-              No teamspaces yet. Group projects above the individual project level.
-            </p>
+            <Layers3 className="text-muted-foreground/50 h-8 w-8" />
+            <p className="text-muted-foreground text-sm">{t('no_teamspaces_empty')}</p>
             {canManage && (
               <Button type="button" size="sm" onClick={openCreateDialog}>
-                Create your first teamspace
+                {t('create_first_teamspace')}
               </Button>
             )}
           </div>

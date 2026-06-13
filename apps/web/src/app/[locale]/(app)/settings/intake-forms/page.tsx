@@ -2,9 +2,13 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { db, intakeForms, organizationMembers, projects } from '@tasknebula/db';
 import { desc, eq, inArray } from 'drizzle-orm';
+import { getTranslations } from 'next-intl/server';
 import { IntakeFormsList } from '@/components/intake/intake-forms-list';
 
-export const metadata = { title: 'Intake forms · TaskNebula' };
+export async function generateMetadata() {
+  const t = await getTranslations('pagesSettings');
+  return { title: t('intakeForms.metaTitle') };
+}
 
 /**
  * Settings → Intake forms. Lists every form belonging to organizations
@@ -57,13 +61,13 @@ export default async function IntakeFormsSettingsPage() {
         .where(inArray(projects.organizationId, orgIds))
     : [];
 
+  const t = await getTranslations('pagesSettings');
+
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-8 lg:px-8">
       <header className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight">Intake forms</h1>
-        <p className="text-muted-foreground mt-1.5 text-sm">
-          Public web forms that turn submissions into issues in a project.
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('intakeForms.title')}</h1>
+        <p className="text-muted-foreground mt-1.5 text-sm">{t('intakeForms.subtitle')}</p>
       </header>
       <IntakeFormsList
         forms={forms}

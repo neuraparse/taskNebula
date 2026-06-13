@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -113,11 +120,11 @@ const EMPTY_MODEL_CONFIG_FORM: ModelConfigFormState = {
   workspaceApiKey: '',
 };
 
-function formatServiceStateLabel(state: 'ready' | 'blocked' | 'disabled' | 'preview') {
-  if (state === 'ready') return 'Ready';
-  if (state === 'blocked') return 'Blocked';
-  if (state === 'disabled') return 'Disabled';
-  return 'Preview';
+function serviceStateLabelKey(state: 'ready' | 'blocked' | 'disabled' | 'preview') {
+  if (state === 'ready') return 'orgAi.state_ready';
+  if (state === 'blocked') return 'orgAi.state_blocked';
+  if (state === 'disabled') return 'orgAi.state_disabled';
+  return 'orgAi.state_preview';
 }
 
 function getServiceBadgeVariant(state: 'ready' | 'blocked' | 'disabled' | 'preview') {
@@ -132,34 +139,34 @@ function getIssueBadgeVariant(severity: 'error' | 'warning' | 'info') {
   return 'outline' as const;
 }
 
-function getWorkspaceIssueAction(issue: {
-  code: string;
-  blocksRuns: boolean;
-}) {
+function getWorkspaceIssueAction(issue: { code: string; blocksRuns: boolean }) {
   if (issue.code === 'global_paused') {
     return {
       href: '/admin?tab=agents',
-      label: 'Open AI Ops',
+      labelKey: 'orgAi.open_ai_ops',
     };
   }
 
   return null;
 }
 
-function formatModelConfigSummary(config: AgentModelConfig) {
+function formatModelConfigSummary(
+  config: AgentModelConfig,
+  t: (key: string, values?: Record<string, string | number>) => string
+) {
   const parts: string[] = [];
 
   if (config.settings.temperature !== null) {
-    parts.push(`Temp ${config.settings.temperature}`);
+    parts.push(t('orgAi.summary_temp', { value: config.settings.temperature }));
   }
   if (config.settings.maxOutputTokens !== null) {
-    parts.push(`${config.settings.maxOutputTokens} max tokens`);
+    parts.push(t('orgAi.summary_max_tokens', { value: config.settings.maxOutputTokens }));
   }
   if (config.settings.reasoningEffort) {
-    parts.push(`${config.settings.reasoningEffort} reasoning`);
+    parts.push(t('orgAi.summary_reasoning', { value: config.settings.reasoningEffort }));
   }
 
-  return parts.join(' · ') || 'No tuning overrides';
+  return parts.join(' · ') || t('orgAi.no_tuning_overrides');
 }
 
 function buildModelConfigForm(config?: AgentModelConfig | null): ModelConfigFormState {
@@ -174,7 +181,8 @@ function buildModelConfigForm(config?: AgentModelConfig | null): ModelConfigForm
     model: config.model,
     description: config.description || '',
     temperature: config.settings.temperature !== null ? String(config.settings.temperature) : '',
-    maxOutputTokens: config.settings.maxOutputTokens !== null ? String(config.settings.maxOutputTokens) : '',
+    maxOutputTokens:
+      config.settings.maxOutputTokens !== null ? String(config.settings.maxOutputTokens) : '',
     reasoningEffort: config.settings.reasoningEffort || 'none',
     notes: config.settings.notes || '',
     isDefault: config.isDefault,
@@ -208,6 +216,7 @@ function getPresetModelValue(form: ModelConfigFormState) {
 }
 
 export function OrganizationAiAgentsSettings({ organizationId }: { organizationId: string }) {
+  const t = useTranslations('settingsConfig');
   const { data, isLoading, error } = useOrganizationAgentSettings(organizationId);
   const updateSettings = useUpdateOrganizationAgentSettings(organizationId);
   const createModelConfig = useCreateOrganizationAgentModelConfig(organizationId);
@@ -219,7 +228,8 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
   const [removeStoredCredential, setRemoveStoredCredential] = useState(false);
   const [isModelDialogOpen, setIsModelDialogOpen] = useState(false);
   const [editingModelConfig, setEditingModelConfig] = useState<AgentModelConfig | null>(null);
-  const [modelConfigForm, setModelConfigForm] = useState<ModelConfigFormState>(EMPTY_MODEL_CONFIG_FORM);
+  const [modelConfigForm, setModelConfigForm] =
+    useState<ModelConfigFormState>(EMPTY_MODEL_CONFIG_FORM);
 
   useEffect(() => {
     if (data?.workspaceSettings) {
@@ -274,9 +284,9 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
         : '';
 
       if (
-        nextReasoningEffort === current.reasoningEffort
-        && nextTemperature === current.temperature
-        && nextMaxTokens === current.maxOutputTokens
+        nextReasoningEffort === current.reasoningEffort &&
+        nextTemperature === current.temperature &&
+        nextMaxTokens === current.maxOutputTokens
       ) {
         return current;
       }
@@ -293,8 +303,8 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
   const hasCredentialChanges = Boolean(credentialInput.trim()) || removeStoredCredential;
   const hasChanges = useMemo(
     () =>
-      JSON.stringify(formState) !== JSON.stringify(data?.workspaceSettings || EMPTY_SETTINGS)
-      || hasCredentialChanges,
+      JSON.stringify(formState) !== JSON.stringify(data?.workspaceSettings || EMPTY_SETTINGS) ||
+      hasCredentialChanges,
     [data?.workspaceSettings, formState, hasCredentialChanges]
   );
 
@@ -320,15 +330,16 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
       setCredentialInput('');
       setRemoveStoredCredential(false);
       toast({
-        title: 'Workspace AI agents updated',
+        title: t('orgAi.saved_toast_title'),
         description: hasCredentialChanges
-          ? 'Policy and credential settings were saved.'
-          : 'The organization-wide agent policy has been saved.',
+          ? t('orgAi.saved_toast_desc_credential')
+          : t('orgAi.saved_toast_desc_policy'),
       });
     } catch (mutationError) {
       toast({
-        title: 'Failed to save workspace AI agents',
-        description: mutationError instanceof Error ? mutationError.message : 'Failed to save workspace AI agents',
+        title: t('orgAi.save_failed_title'),
+        description:
+          mutationError instanceof Error ? mutationError.message : t('orgAi.save_failed_title'),
         variant: 'destructive',
       });
     }
@@ -387,15 +398,15 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
         });
         savedConfig = result.config;
         toast({
-          title: 'Model profile updated',
-          description: `${payload.name} was saved and versioned in the workspace registry.`,
+          title: t('orgAi.profile_updated_title'),
+          description: t('orgAi.profile_updated_desc', { name: payload.name }),
         });
       } else {
         const result = await createModelConfig.mutateAsync(payload);
         savedConfig = result.config;
         toast({
-          title: 'Model profile created',
-          description: `${payload.name} is now available in the workspace model registry.`,
+          title: t('orgAi.profile_created_title'),
+          description: t('orgAi.profile_created_desc', { name: payload.name }),
         });
       }
 
@@ -422,8 +433,13 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
       setModelConfigForm(EMPTY_MODEL_CONFIG_FORM);
     } catch (mutationError) {
       toast({
-        title: editingModelConfig ? 'Failed to update model profile' : 'Failed to create model profile',
-        description: mutationError instanceof Error ? mutationError.message : 'The model profile could not be saved.',
+        title: editingModelConfig
+          ? t('orgAi.profile_update_failed')
+          : t('orgAi.profile_create_failed'),
+        description:
+          mutationError instanceof Error
+            ? mutationError.message
+            : t('orgAi.profile_save_failed_desc'),
         variant: 'destructive',
       });
     }
@@ -433,27 +449,30 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
     try {
       await archiveModelConfig.mutateAsync(config.id);
       toast({
-        title: 'Model profile archived',
-        description: `${config.name} was archived and removed from active selection.`,
+        title: t('orgAi.profile_archived_title'),
+        description: t('orgAi.profile_archived_desc', { name: config.name }),
       });
     } catch (mutationError) {
       toast({
-        title: 'Failed to archive model profile',
-        description: mutationError instanceof Error ? mutationError.message : 'The model profile could not be archived.',
+        title: t('orgAi.profile_archive_failed'),
+        description:
+          mutationError instanceof Error
+            ? mutationError.message
+            : t('orgAi.profile_archive_failed_desc'),
         variant: 'destructive',
       });
     }
   }
 
   if (isLoading) {
-    return <div className="p-4 text-sm text-muted-foreground">Loading workspace AI agents...</div>;
+    return <div className="text-muted-foreground p-4 text-sm">{t('orgAi.loading')}</div>;
   }
 
   if (error || !data) {
     return (
       <Card>
-        <CardContent className="py-8 text-sm text-destructive">
-          {error instanceof Error ? error.message : 'Failed to load workspace AI agents.'}
+        <CardContent className="text-destructive py-8 text-sm">
+          {error instanceof Error ? error.message : t('orgAi.load_error')}
         </CardContent>
       </Card>
     );
@@ -468,16 +487,14 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <CardTitle>Workspace AI & agents</CardTitle>
+                <CardTitle>{t('orgAi.title')}</CardTitle>
                 <Badge variant="outline">{data.organizationName}</Badge>
               </div>
-              <CardDescription>
-                Define the provider, write policy, and default capabilities every project inherits.
-              </CardDescription>
+              <CardDescription>{t('orgAi.subtitle')}</CardDescription>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant={formState.enabled ? 'default' : 'secondary'}>
-                {formState.enabled ? 'Enabled' : 'Disabled'}
+                {formState.enabled ? t('orgAi.enabled') : t('orgAi.disabled')}
               </Badge>
               <Badge variant="outline">{data.access.orgRole || 'member'}</Badge>
             </div>
@@ -505,35 +522,42 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
 
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle className="text-base">Setup checklist</CardTitle>
-              <CardDescription>See what is blocking runs and what is still limited before projects start using agents.</CardDescription>
+              <CardTitle className="text-base">{t('orgAi.checklist_title')}</CardTitle>
+              <CardDescription>{t('orgAi.checklist_desc')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {data.configIssues.length === 0 ? (
-                <div className="rounded-lg border border-border/60 bg-muted/10 px-4 py-3 text-sm text-muted-foreground">
-                  Workspace AI is fully configured. Projects can inherit this setup immediately.
+                <div className="border-border/60 bg-muted/10 text-muted-foreground rounded-lg border px-4 py-3 text-sm">
+                  {t('orgAi.checklist_complete')}
                 </div>
               ) : (
                 data.configIssues.map((issue) => {
                   const action = getWorkspaceIssueAction(issue);
 
                   return (
-                    <div key={`${issue.code}-${issue.scope}`} className="rounded-lg border border-border/60 p-4">
+                    <div
+                      key={`${issue.code}-${issue.scope}`}
+                      className="border-border/60 rounded-lg border p-4"
+                    >
                       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="font-medium">{issue.title}</span>
                             <Badge variant={getIssueBadgeVariant(issue.severity)}>
-                              {issue.blocksRuns ? 'Blocks runs' : issue.severity === 'warning' ? 'Needs review' : 'Policy note'}
+                              {issue.blocksRuns
+                                ? t('orgAi.blocks_runs')
+                                : issue.severity === 'warning'
+                                  ? t('orgAi.needs_review')
+                                  : t('orgAi.policy_note')}
                             </Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground">{issue.detail}</p>
-                          <p className="text-xs text-muted-foreground">{issue.resolution}</p>
+                          <p className="text-muted-foreground text-sm">{issue.detail}</p>
+                          <p className="text-muted-foreground text-xs">{issue.resolution}</p>
                         </div>
                         {action ? (
                           <Button asChild variant="outline" size="sm">
                             <Link href={action.href}>
-                              {action.label}
+                              {t(action.labelKey)}
                               <ArrowRight className="h-3.5 w-3.5" />
                             </Link>
                           </Button>
@@ -555,47 +579,46 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
           <div className="grid gap-4 lg:grid-cols-2">
             <Card id="workspace-ai-policy" className="border-border/60">
               <CardHeader>
-                <CardTitle className="text-base">Agents · execution policy</CardTitle>
-                <CardDescription>
-                  Autonomous/semi-autonomous run kinds (project tracking, backlog triage, sprint
-                  planning). Each capability is <strong>off</strong> until you turn it on below.
-                </CardDescription>
+                <CardTitle className="text-base">{t('orgAi.exec_policy_title')}</CardTitle>
+                <CardDescription>{t('orgAi.exec_policy_desc')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
-                <div className="flex items-center justify-between gap-4 rounded-lg border border-border/60 p-4">
+                <div className="border-border/60 flex items-center justify-between gap-4 rounded-lg border p-4">
                   <div className="space-y-1">
-                    <div className="font-medium">Workspace agents</div>
-                    <p className="text-sm text-muted-foreground">
-                      Master switch for agent run kinds. Leave off unless you explicitly want
-                      automations.
+                    <div className="font-medium">{t('orgAi.workspace_agents')}</div>
+                    <p className="text-muted-foreground text-sm">
+                      {t('orgAi.workspace_agents_desc')}
                     </p>
                   </div>
                   <Switch
                     checked={formState.enabled}
-                    onCheckedChange={(checked) => setFormState((current) => ({ ...current, enabled: checked }))}
+                    onCheckedChange={(checked) =>
+                      setFormState((current) => ({ ...current, enabled: checked }))
+                    }
                     disabled={!canManage}
                   />
                 </div>
 
-                <div className="rounded-lg border border-border/60 bg-muted/10 p-3 text-xs text-muted-foreground">
-                  Provider, model, and API key are managed in the <strong>Quick setup</strong> card
-                  above. Agents inherit whichever provider + model you picked there, so there&apos;s
-                  nothing to re-enter here.
+                <div className="border-border/60 bg-muted/10 text-muted-foreground rounded-lg border p-3 text-xs">
+                  {t('orgAi.provider_note')}
                   {activeModelConfig && (
                     <span className="ml-1">
-                      Currently locked to the saved profile{' '}
-                      <span className="font-medium text-foreground">{activeModelConfig.name}</span>.
+                      {t('orgAi.locked_profile_prefix')}{' '}
+                      <span className="text-foreground font-medium">{activeModelConfig.name}</span>.
                     </span>
                   )}
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label>Execution mode</Label>
+                    <Label>{t('orgAi.execution_mode')}</Label>
                     <Select
                       value={formState.executionMode}
                       onValueChange={(value) =>
-                        setFormState((current) => ({ ...current, executionMode: value as WorkspaceAgentSettings['executionMode'] }))
+                        setFormState((current) => ({
+                          ...current,
+                          executionMode: value as WorkspaceAgentSettings['executionMode'],
+                        }))
                       }
                       disabled={!canManage}
                     >
@@ -603,14 +626,14 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="manual">Manual</SelectItem>
-                        <SelectItem value="assistive">Assistive</SelectItem>
-                        <SelectItem value="auto">Autonomous</SelectItem>
+                        <SelectItem value="manual">{t('orgAi.mode_manual')}</SelectItem>
+                        <SelectItem value="assistive">{t('orgAi.mode_assistive')}</SelectItem>
+                        <SelectItem value="auto">{t('orgAi.mode_autonomous')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="workspace-daily-run-limit">Daily run limit</Label>
+                    <Label htmlFor="workspace-daily-run-limit">{t('orgAi.daily_run_limit')}</Label>
                     <Input
                       id="workspace-daily-run-limit"
                       type="number"
@@ -620,7 +643,10 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                       onChange={(event) =>
                         setFormState((current) => ({
                           ...current,
-                          dailyRunLimit: Math.max(1, Number.parseInt(event.target.value || '1', 10) || 1),
+                          dailyRunLimit: Math.max(
+                            1,
+                            Number.parseInt(event.target.value || '1', 10) || 1
+                          ),
                         }))
                       }
                       disabled={!canManage}
@@ -629,10 +655,12 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                 </div>
 
                 <div className="grid gap-3">
-                  <div className="flex items-center justify-between rounded-lg border border-border/60 p-4">
+                  <div className="border-border/60 flex items-center justify-between rounded-lg border p-4">
                     <div>
-                      <div className="font-medium">Allow write actions</div>
-                      <p className="text-sm text-muted-foreground">Permit agents to create or update issues and sprints.</p>
+                      <div className="font-medium">{t('orgAi.allow_writes')}</div>
+                      <p className="text-muted-foreground text-sm">
+                        {t('orgAi.allow_writes_desc')}
+                      </p>
                     </div>
                     <Switch
                       checked={formState.allowWriteActions}
@@ -642,15 +670,20 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                       disabled={!canManage}
                     />
                   </div>
-                  <div className="flex items-center justify-between rounded-lg border border-border/60 p-4">
+                  <div className="border-border/60 flex items-center justify-between rounded-lg border p-4">
                     <div>
-                      <div className="font-medium">Require approval for writes</div>
-                      <p className="text-sm text-muted-foreground">Force project runs into preview when the workspace wants human sign-off.</p>
+                      <div className="font-medium">{t('orgAi.require_approval')}</div>
+                      <p className="text-muted-foreground text-sm">
+                        {t('orgAi.require_approval_desc')}
+                      </p>
                     </div>
                     <Switch
                       checked={formState.requireApprovalForWrites}
                       onCheckedChange={(checked) =>
-                        setFormState((current) => ({ ...current, requireApprovalForWrites: checked }))
+                        setFormState((current) => ({
+                          ...current,
+                          requireApprovalForWrites: checked,
+                        }))
                       }
                       disabled={!canManage}
                     />
@@ -661,66 +694,68 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
 
             <Card id="workspace-ai-provider" className="border-border/60">
               <CardHeader>
-                <CardTitle className="text-base">Provider readiness</CardTitle>
-                <CardDescription>Provider availability is checked against the workspace secret store and server environment.</CardDescription>
+                <CardTitle className="text-base">{t('orgAi.provider_readiness')}</CardTitle>
+                <CardDescription>{t('orgAi.provider_readiness_desc')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="rounded-lg border border-border/60 p-4">
+                <div className="border-border/60 rounded-lg border p-4">
                   <div className="flex items-start gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/60 bg-muted/30">
-                      <Cpu className="h-4 w-4 text-muted-foreground" />
+                    <div className="border-border/60 bg-muted/30 flex h-9 w-9 items-center justify-center rounded-lg border">
+                      <Cpu className="text-muted-foreground h-4 w-4" />
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">Provider health</span>
+                        <span className="font-medium">{t('orgAi.provider_health')}</span>
                         <Badge variant={data.providerStatus.ready ? 'default' : 'secondary'}>
-                          {data.providerStatus.ready ? 'Ready' : 'Blocked'}
+                          {data.providerStatus.ready ? t('orgAi.ready') : t('orgAi.blocked')}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">{data.providerStatus.summary}</p>
+                      <p className="text-muted-foreground text-sm">{data.providerStatus.summary}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="rounded-lg border border-border/60 p-4">
+                <div className="border-border/60 rounded-lg border p-4">
                   <div className="space-y-1">
-                    <div className="font-medium">Credential source</div>
-                    <p className="text-sm text-muted-foreground">
+                    <div className="font-medium">{t('orgAi.credential_source')}</div>
+                    <p className="text-muted-foreground text-sm">
                       {data.providerStatus.configured
                         ? data.providerStatus.source === 'workspace'
-                          ? 'This workspace has a stored provider credential.'
-                          : 'This provider is being supplied by the server environment.'
-                        : 'No runnable credential is configured for the selected provider.'}
+                          ? t('orgAi.cred_workspace_stored')
+                          : t('orgAi.cred_server_supplied')
+                        : t('orgAi.cred_none_configured')}
                     </p>
                   </div>
-                  <div className="mt-3 grid gap-2 text-sm text-muted-foreground">
-                    <div className="flex items-center justify-between gap-4 rounded-lg border border-border/60 px-3 py-2">
-                      <span>Source</span>
-                      <span className="font-medium text-foreground">
+                  <div className="text-muted-foreground mt-3 grid gap-2 text-sm">
+                    <div className="border-border/60 flex items-center justify-between gap-4 rounded-lg border px-3 py-2">
+                      <span>{t('orgAi.source')}</span>
+                      <span className="text-foreground font-medium">
                         {data.providerStatus.source === 'workspace'
-                          ? 'Workspace secret'
+                          ? t('orgAi.workspace_secret')
                           : data.providerStatus.source === 'server_env'
-                            ? 'Server env'
-                            : 'Not configured'}
+                            ? t('orgAi.server_env')
+                            : t('orgAi.not_configured')}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between gap-4 rounded-lg border border-border/60 px-3 py-2">
-                      <span>Credential</span>
-                      <span className="font-medium text-foreground">{data.providerStatus.label || 'None'}</span>
+                    <div className="border-border/60 flex items-center justify-between gap-4 rounded-lg border px-3 py-2">
+                      <span>{t('orgAi.credential')}</span>
+                      <span className="text-foreground font-medium">
+                        {data.providerStatus.label || t('orgAi.none')}
+                      </span>
                     </div>
-                    <div className="flex items-center justify-between gap-4 rounded-lg border border-border/60 px-3 py-2">
-                      <span>Updated</span>
-                      <span className="font-medium text-foreground">
-                        {data.providerStatus.updatedAt ? new Date(data.providerStatus.updatedAt).toLocaleString() : 'Server managed'}
+                    <div className="border-border/60 flex items-center justify-between gap-4 rounded-lg border px-3 py-2">
+                      <span>{t('orgAi.updated')}</span>
+                      <span className="text-foreground font-medium">
+                        {data.providerStatus.updatedAt
+                          ? new Date(data.providerStatus.updatedAt).toLocaleString()
+                          : t('orgAi.server_managed')}
                       </span>
                     </div>
                   </div>
                 </div>
 
                 {!canManage ? (
-                  <div className="panel-warn text-sm">
-                    Read-only access — owners and admins can update AI policy.
-                  </div>
+                  <div className="panel-warn text-sm">{t('orgAi.read_only_notice')}</div>
                 ) : null}
               </CardContent>
             </Card>
@@ -732,58 +767,66 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                 <div>
                   <CardTitle className="flex items-center gap-2 text-base">
                     <Database className="h-4 w-4" />
-                    Your model profiles
+                    {t('orgAi.your_model_profiles')}
                   </CardTitle>
-                  <CardDescription>
-                    Custom model + tuning combinations saved for reuse. Any profile saved here
-                    also appears in the Quick setup model dropdown above. Use this to pin a model
-                    with specific temperature / token / reasoning-effort settings, or to try a
-                    model that is not in the built-in catalog.
-                  </CardDescription>
+                  <CardDescription>{t('orgAi.your_model_profiles_desc')}</CardDescription>
                 </div>
-                <Button type="button" size="sm" onClick={openCreateModelConfigDialog} disabled={!canManage}>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={openCreateModelConfigDialog}
+                  disabled={!canManage}
+                >
                   <Plus className="mr-2 h-4 w-4" />
-                  Create profile
+                  {t('orgAi.create_profile')}
                 </Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
               {data.modelConfigs.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-border/60 p-6 text-sm text-muted-foreground">
-                  No saved model profiles yet. Create one to track provider, model, and tuning in the database.
+                <div className="border-border/60 text-muted-foreground rounded-lg border border-dashed p-6 text-sm">
+                  {t('orgAi.no_profiles')}
                 </div>
               ) : (
                 data.modelConfigs.map((config) => {
                   const isApplied = formState.modelConfigId === config.id;
 
                   return (
-                    <div key={config.id} className="rounded-lg border border-border/60 p-4">
+                    <div key={config.id} className="border-border/60 rounded-lg border p-4">
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="font-medium">{config.name}</span>
                             <Badge variant="outline">{config.provider}</Badge>
                             <Badge variant="outline">{config.model}</Badge>
-                            {config.isDefault ? <Badge variant="secondary">Default</Badge> : null}
+                            {config.isDefault ? (
+                              <Badge variant="secondary">{t('orgAi.default')}</Badge>
+                            ) : null}
                             {isApplied ? (
                               <Badge variant="default" className="gap-1">
                                 <CheckCircle2 className="h-3 w-3" />
-                                Applied
+                                {t('orgAi.applied')}
                               </Badge>
                             ) : null}
                           </div>
                           {config.description ? (
-                            <p className="text-sm text-muted-foreground">{config.description}</p>
+                            <p className="text-muted-foreground text-sm">{config.description}</p>
                           ) : null}
-                          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            <span>{formatModelConfigSummary(config)}</span>
+                          <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
+                            <span>{formatModelConfigSummary(config, t)}</span>
                             <span>·</span>
-                            <span>{config.revisionCount} revision{config.revisionCount === 1 ? '' : 's'}</span>
+                            <span>{t('orgAi.revisions', { count: config.revisionCount })}</span>
                             <span>·</span>
-                            <span>Updated {formatDistanceToNow(new Date(config.updatedAt), { addSuffix: true })}</span>
+                            <span>
+                              {t('orgAi.updated_ago', {
+                                ago: formatDistanceToNow(new Date(config.updatedAt), {
+                                  addSuffix: true,
+                                }),
+                              })}
+                            </span>
                           </div>
                           {config.settings.notes ? (
-                            <p className="text-xs text-muted-foreground">{config.settings.notes}</p>
+                            <p className="text-muted-foreground text-xs">{config.settings.notes}</p>
                           ) : null}
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -794,7 +837,7 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                             onClick={() => handleModelSourceChange(config.id)}
                             disabled={!canManage || isApplied}
                           >
-                            {isApplied ? 'Applied to workspace' : 'Apply'}
+                            {isApplied ? t('orgAi.applied_to_workspace') : t('orgAi.apply')}
                           </Button>
                           <Button
                             type="button"
@@ -804,7 +847,7 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                             disabled={!canManage}
                           >
                             <PencilLine className="mr-2 h-3.5 w-3.5" />
-                            Edit
+                            {t('orgAi.edit')}
                           </Button>
                           <Button
                             type="button"
@@ -814,7 +857,7 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                             disabled={!canManage || isApplied || archiveModelConfig.isPending}
                           >
                             <Archive className="mr-2 h-3.5 w-3.5" />
-                            Archive
+                            {t('orgAi.archive')}
                           </Button>
                         </div>
                       </div>
@@ -827,22 +870,25 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
 
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle className="text-base">Default capabilities</CardTitle>
-              <CardDescription>Projects inherit these switches unless they intentionally override them.</CardDescription>
+              <CardTitle className="text-base">{t('orgAi.default_capabilities')}</CardTitle>
+              <CardDescription>{t('orgAi.default_capabilities_desc')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {Object.entries(AGENT_CAPABILITY_DETAILS).map(([key, details]) => (
-                <div key={key} className="flex flex-col gap-4 rounded-lg border border-border/60 p-4 lg:flex-row lg:items-center lg:justify-between">
+                <div
+                  key={key}
+                  className="border-border/60 flex flex-col gap-4 rounded-lg border p-4 lg:flex-row lg:items-center lg:justify-between"
+                >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{details.label}</span>
                       {details.writes.length > 0 ? (
                         <Badge variant="outline">{details.writes.join(' · ')}</Badge>
                       ) : (
-                        <Badge variant="secondary">Read only</Badge>
+                        <Badge variant="secondary">{t('orgAi.read_only')}</Badge>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">{details.description}</p>
+                    <p className="text-muted-foreground text-sm">{details.description}</p>
                   </div>
                   <Switch
                     checked={formState.capabilities[key as keyof typeof formState.capabilities]}
@@ -872,18 +918,21 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
               }}
               disabled={!hasChanges || updateSettings.isPending}
             >
-              Reset
+              {t('orgAi.reset')}
             </Button>
-            <Button onClick={handleSave} disabled={!hasChanges || !canManage || updateSettings.isPending}>
+            <Button
+              onClick={handleSave}
+              disabled={!hasChanges || !canManage || updateSettings.isPending}
+            >
               {updateSettings.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving
+                  {t('orgAi.saving')}
                 </>
               ) : (
                 <>
                   <Sparkles className="mr-2 h-4 w-4" />
-                  Save workspace policy
+                  {t('orgAi.save_workspace_policy')}
                 </>
               )}
             </Button>
@@ -895,64 +944,66 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Activity className="h-4 w-4" />
-            Workspace runtime
+            {t('orgAi.workspace_runtime')}
           </CardTitle>
-          <CardDescription>Actual execution, service, and run telemetry for this workspace AI setup.</CardDescription>
+          <CardDescription>{t('orgAi.workspace_runtime_desc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <RuntimeStatCard
               icon={Bot}
-              label="Projects with agents"
+              label={t('orgAi.stat_projects_with_agents')}
               value={`${data.runtimeSummary.enabledProjectCount}/${data.runtimeSummary.projectCount}`}
-              detail="Projects explicitly enabled for AI"
+              detail={t('orgAi.stat_projects_with_agents_detail')}
             />
             <RuntimeStatCard
               icon={Cpu}
-              label="Running now"
+              label={t('orgAi.stat_running_now')}
               value={String(data.runtimeSummary.runningRuns)}
-              detail="Live agent runs in this workspace"
+              detail={t('orgAi.stat_running_now_detail')}
             />
             <RuntimeStatCard
               icon={Activity}
-              label="Total runs"
+              label={t('orgAi.stat_total_runs')}
               value={String(data.runtimeSummary.totalRuns)}
-              detail="Recorded in agent run history"
+              detail={t('orgAi.stat_total_runs_detail')}
             />
             <RuntimeStatCard
               icon={Clock3}
-              label="Last completed"
+              label={t('orgAi.stat_last_completed')}
               value={
                 data.runtimeSummary.lastCompletedAt
-                  ? formatDistanceToNow(new Date(data.runtimeSummary.lastCompletedAt), { addSuffix: true })
-                  : 'None yet'
+                  ? formatDistanceToNow(new Date(data.runtimeSummary.lastCompletedAt), {
+                      addSuffix: true,
+                    })
+                  : t('orgAi.none_yet')
               }
-              detail="Most recent successful or preview completion"
+              detail={t('orgAi.stat_last_completed_detail')}
             />
           </div>
 
           <div className="grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
             <Card className="border-border/60">
               <CardHeader>
-                <CardTitle className="text-base">Service status</CardTitle>
-                <CardDescription>What is actually runnable right now.</CardDescription>
+                <CardTitle className="text-base">{t('orgAi.service_status')}</CardTitle>
+                <CardDescription>{t('orgAi.service_status_desc')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {data.serviceStatus.map((service) => (
-                  <div key={service.key} className="rounded-lg border border-border/60 p-3">
+                  <div key={service.key} className="border-border/60 rounded-lg border p-3">
                     <div className="flex items-center justify-between gap-3">
                       <span className="font-medium">{service.label}</span>
                       <Badge variant={getServiceBadgeVariant(service.state)}>
-                        {formatServiceStateLabel(service.state)}
+                        {t(serviceStateLabelKey(service.state))}
                       </Badge>
                     </div>
-                    <p className="mt-2 text-sm text-muted-foreground">{service.detail}</p>
+                    <p className="text-muted-foreground mt-2 text-sm">{service.detail}</p>
                   </div>
                 ))}
 
                 {data.runtimeSummary.lastFailure ? (
-                  <div className="rounded-lg border border-accent-amber/30 bg-accent-amber/10 px-3 py-2 text-sm text-accent-amber">
-                    Last failure: {data.runtimeSummary.lastFailure}
+                  <div className="border-accent-amber/30 bg-accent-amber/10 text-accent-amber rounded-lg border px-3 py-2 text-sm">
+                    {t('orgAi.last_failure', { error: data.runtimeSummary.lastFailure })}
                   </div>
                 ) : null}
               </CardContent>
@@ -960,34 +1011,48 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
 
             <Card className="border-border/60">
               <CardHeader>
-                <CardTitle className="text-base">Recent workspace runs</CardTitle>
-                <CardDescription>Last agent activity across projects in this workspace.</CardDescription>
+                <CardTitle className="text-base">{t('orgAi.recent_runs')}</CardTitle>
+                <CardDescription>{t('orgAi.recent_runs_desc')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {data.recentRuns.length === 0 ? (
-                  <div className="rounded-lg border border-dashed border-border/60 p-6 text-sm text-muted-foreground">
-                    No runs recorded yet.
+                  <div className="border-border/60 text-muted-foreground rounded-lg border border-dashed p-6 text-sm">
+                    {t('orgAi.no_runs')}
                   </div>
                 ) : (
                   data.recentRuns.map((run) => (
-                    <div key={run.id} className="rounded-lg border border-border/60 p-3">
+                    <div key={run.id} className="border-border/60 rounded-lg border p-3">
                       <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
                         <div className="space-y-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="font-medium">{run.kind.replaceAll('_', ' ')}</span>
-                            <Badge variant={run.status === 'completed' ? 'default' : run.status === 'failed' ? 'destructive' : 'secondary'}>
+                            <Badge
+                              variant={
+                                run.status === 'completed'
+                                  ? 'default'
+                                  : run.status === 'failed'
+                                    ? 'destructive'
+                                    : 'secondary'
+                              }
+                            >
                               {run.status}
                             </Badge>
-                            <Badge variant="outline">{run.dryRun ? 'Preview' : 'Live'}</Badge>
+                            <Badge variant="outline">
+                              {run.dryRun ? t('orgAi.preview') : t('orgAi.live')}
+                            </Badge>
                           </div>
-                          <div className="text-sm text-muted-foreground">
-                            {run.projectName || 'Unknown project'}
+                          <div className="text-muted-foreground text-sm">
+                            {run.projectName || t('orgAi.unknown_project')}
                             {run.initiatedBy ? ` · ${run.initiatedBy}` : ''}
                           </div>
-                          {run.summary ? <p className="text-sm text-muted-foreground">{run.summary}</p> : null}
-                          {run.error ? <p className="text-sm text-destructive">{run.error}</p> : null}
+                          {run.summary ? (
+                            <p className="text-muted-foreground text-sm">{run.summary}</p>
+                          ) : null}
+                          {run.error ? (
+                            <p className="text-destructive text-sm">{run.error}</p>
+                          ) : null}
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-muted-foreground text-xs">
                           {formatDistanceToNow(new Date(run.createdAt), { addSuffix: true })}
                         </div>
                       </div>
@@ -1011,11 +1076,11 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
         }}
       >
         <DialogContent className="flex h-[min(92vh,860px)] w-[min(96vw,72rem)] max-w-[72rem] flex-col overflow-hidden p-0">
-          <DialogHeader className="shrink-0 border-b border-border/60 px-5 py-4 sm:px-6">
-            <DialogTitle>{editingModelConfig ? 'Edit model profile' : 'Create model profile'}</DialogTitle>
-            <DialogDescription>
-              Save provider, model, and tuning in the database so the workspace can reuse them consistently.
-            </DialogDescription>
+          <DialogHeader className="border-border/60 shrink-0 border-b px-5 py-4 sm:px-6">
+            <DialogTitle>
+              {editingModelConfig ? t('orgAi.dialog_edit_title') : t('orgAi.dialog_create_title')}
+            </DialogTitle>
+            <DialogDescription>{t('orgAi.dialog_desc')}</DialogDescription>
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto px-5 py-4 sm:px-6">
@@ -1023,16 +1088,18 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
               <div className="space-y-4">
                 <div className="grid gap-4 lg:grid-cols-2">
                   <div className="space-y-2">
-              <Label htmlFor="model-config-name">Profile name</Label>
-              <Input
-                id="model-config-name"
-                value={modelConfigForm.name}
-                onChange={(event) => setModelConfigForm((current) => ({ ...current, name: event.target.value }))}
-                placeholder="OpenAI GPT-5 Ops"
-              />
+                    <Label htmlFor="model-config-name">{t('orgAi.profile_name')}</Label>
+                    <Input
+                      id="model-config-name"
+                      value={modelConfigForm.name}
+                      onChange={(event) =>
+                        setModelConfigForm((current) => ({ ...current, name: event.target.value }))
+                      }
+                      placeholder={t('orgAi.profile_name_placeholder')}
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label>Provider</Label>
+                    <Label>{t('orgAi.provider')}</Label>
                     <Select
                       value={modelConfigForm.provider}
                       onValueChange={(value) =>
@@ -1048,8 +1115,10 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                             provider: nextProvider,
                             presetModel: nextCatalogEntry?.id || '__custom__',
                             model:
-                              nextSuggestedModel
-                              && (!current.model || current.model === current.presetModel || current.presetModel !== '__custom__')
+                              nextSuggestedModel &&
+                              (!current.model ||
+                                current.model === current.presetModel ||
+                                current.presetModel !== '__custom__')
                                 ? nextSuggestedModel
                                 : current.model,
                           };
@@ -1060,11 +1129,11 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="native">TaskNebula native</SelectItem>
+                        <SelectItem value="native">{t('orgAi.provider_native')}</SelectItem>
                         <SelectItem value="openai">OpenAI</SelectItem>
                         <SelectItem value="anthropic">Anthropic</SelectItem>
                         <SelectItem value="azure">Azure OpenAI</SelectItem>
-                        <SelectItem value="custom">Custom adapter</SelectItem>
+                        <SelectItem value="custom">{t('orgAi.provider_custom')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1072,7 +1141,7 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
 
                 {modelCatalog.length > 0 ? (
                   <div className="space-y-2">
-                    <Label>Current model quick picks</Label>
+                    <Label>{t('orgAi.quick_picks')}</Label>
                     <Select
                       value={getPresetModelValue(modelConfigForm)}
                       onValueChange={(value) =>
@@ -1092,14 +1161,14 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                             {entry.label}
                           </SelectItem>
                         ))}
-                        <SelectItem value="__custom__">Custom model ID</SelectItem>
+                        <SelectItem value="__custom__">{t('orgAi.custom_model_id')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 ) : null}
 
                 <div className="space-y-2">
-                  <Label htmlFor="model-config-model">Model</Label>
+                  <Label htmlFor="model-config-model">{t('orgAi.model')}</Label>
                   <Input
                     id="model-config-model"
                     value={modelConfigForm.model}
@@ -1115,38 +1184,45 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="model-config-description">Description</Label>
+                  <Label htmlFor="model-config-description">{t('orgAi.description')}</Label>
                   <Input
                     id="model-config-description"
                     value={modelConfigForm.description}
-                    onChange={(event) => setModelConfigForm((current) => ({ ...current, description: event.target.value }))}
-                    placeholder="Balanced planning profile for workspace operations"
+                    onChange={(event) =>
+                      setModelConfigForm((current) => ({
+                        ...current,
+                        description: event.target.value,
+                      }))
+                    }
+                    placeholder={t('orgAi.description_placeholder')}
                   />
                 </div>
 
                 {selectedModelCatalogEntry ? (
-                  <div className="rounded-lg border border-border/60 bg-muted/10 px-3 py-2 text-xs text-muted-foreground">
-                    <span className="font-medium text-foreground">{selectedModelCatalogEntry.label}</span>
+                  <div className="border-border/60 bg-muted/10 text-muted-foreground rounded-lg border px-3 py-2 text-xs">
+                    <span className="text-foreground font-medium">
+                      {selectedModelCatalogEntry.label}
+                    </span>
                     {' · '}
                     {selectedModelCatalogEntry.summary}
                     {' · '}
-                    Max output up to {selectedModelCatalogEntry.maxOutputTokensLimit.toLocaleString()} tokens.
+                    {t('orgAi.max_output_up_to', {
+                      tokens: selectedModelCatalogEntry.maxOutputTokensLimit.toLocaleString(),
+                    })}
                   </div>
                 ) : null}
               </div>
 
               <div className="space-y-4">
-                <div className="rounded-lg border border-border/60 p-4">
+                <div className="border-border/60 rounded-lg border p-4">
                   <div className="mb-4">
-                    <div className="font-medium">Tuning</div>
-                    <p className="text-xs text-muted-foreground">
-                      Parameter inputs adapt to the selected model preset.
-                    </p>
+                    <div className="font-medium">{t('orgAi.tuning')}</div>
+                    <p className="text-muted-foreground text-xs">{t('orgAi.tuning_desc')}</p>
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="model-config-temperature">Temperature</Label>
+                      <Label htmlFor="model-config-temperature">{t('orgAi.temperature')}</Label>
                       <Input
                         id="model-config-temperature"
                         type="number"
@@ -1154,17 +1230,26 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                         max={2}
                         step={0.1}
                         value={modelConfigForm.temperature}
-                        onChange={(event) => setModelConfigForm((current) => ({ ...current, temperature: event.target.value }))}
-                        placeholder="Optional"
+                        onChange={(event) =>
+                          setModelConfigForm((current) => ({
+                            ...current,
+                            temperature: event.target.value,
+                          }))
+                        }
+                        placeholder={t('orgAi.optional')}
                         disabled={!supportsTemperature}
                       />
                       {!supportsTemperature ? (
-                        <p className="text-xs text-muted-foreground">This model is set up without a temperature override.</p>
+                        <p className="text-muted-foreground text-xs">
+                          {t('orgAi.no_temp_override')}
+                        </p>
                       ) : null}
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="model-config-max-output">Max output tokens</Label>
+                      <Label htmlFor="model-config-max-output">
+                        {t('orgAi.max_output_tokens')}
+                      </Label>
                       <Input
                         id="model-config-max-output"
                         type="number"
@@ -1173,14 +1258,19 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                         step={1}
                         value={modelConfigForm.maxOutputTokens}
                         onChange={(event) =>
-                          setModelConfigForm((current) => ({ ...current, maxOutputTokens: event.target.value }))
+                          setModelConfigForm((current) => ({
+                            ...current,
+                            maxOutputTokens: event.target.value,
+                          }))
                         }
-                        placeholder={`Up to ${maxOutputTokensLimit.toLocaleString()}`}
+                        placeholder={t('orgAi.up_to', {
+                          tokens: maxOutputTokensLimit.toLocaleString(),
+                        })}
                       />
                     </div>
 
                     <div className="space-y-2 sm:col-span-2">
-                      <Label>Reasoning effort</Label>
+                      <Label>{t('orgAi.reasoning_effort')}</Label>
                       <Select
                         value={modelConfigForm.reasoningEffort}
                         onValueChange={(value) =>
@@ -1197,35 +1287,43 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                         <SelectContent>
                           {supportedReasoningOptions.map((option) => (
                             <SelectItem key={option} value={option}>
-                              {option === 'none' ? 'No override' : option}
+                              {option === 'none' ? t('orgAi.no_override') : option}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                       {!supportsReasoning ? (
-                        <p className="text-xs text-muted-foreground">This model preset is treated as a non-reasoning/chat model.</p>
+                        <p className="text-muted-foreground text-xs">
+                          {t('orgAi.non_reasoning_hint')}
+                        </p>
                       ) : null}
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-3 rounded-lg border border-border/60 p-4">
-                  <div className="font-medium">Workspace behavior</div>
-                  <div className="flex items-center justify-between gap-4 rounded-lg border border-border/60 px-4 py-3">
+                <div className="border-border/60 space-y-3 rounded-lg border p-4">
+                  <div className="font-medium">{t('orgAi.workspace_behavior')}</div>
+                  <div className="border-border/60 flex items-center justify-between gap-4 rounded-lg border px-4 py-3">
                     <div>
-                      <div className="font-medium">Default profile</div>
-                      <p className="text-xs text-muted-foreground">Keep this profile highlighted in the registry.</p>
+                      <div className="font-medium">{t('orgAi.default_profile')}</div>
+                      <p className="text-muted-foreground text-xs">
+                        {t('orgAi.default_profile_desc')}
+                      </p>
                     </div>
                     <Switch
                       checked={modelConfigForm.isDefault}
-                      onCheckedChange={(checked) => setModelConfigForm((current) => ({ ...current, isDefault: checked }))}
+                      onCheckedChange={(checked) =>
+                        setModelConfigForm((current) => ({ ...current, isDefault: checked }))
+                      }
                     />
                   </div>
 
-                  <div className="flex items-center justify-between gap-4 rounded-lg border border-border/60 px-4 py-3">
+                  <div className="border-border/60 flex items-center justify-between gap-4 rounded-lg border px-4 py-3">
                     <div>
-                      <div className="font-medium">Apply to workspace after save</div>
-                      <p className="text-xs text-muted-foreground">Switch the workspace policy to this profile immediately.</p>
+                      <div className="font-medium">{t('orgAi.apply_after_save')}</div>
+                      <p className="text-muted-foreground text-xs">
+                        {t('orgAi.apply_after_save_desc')}
+                      </p>
                     </div>
                     <Switch
                       checked={modelConfigForm.applyToWorkspace}
@@ -1235,58 +1333,63 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                     />
                   </div>
 
-                  {(modelConfigForm.provider === 'openai' || modelConfigForm.provider === 'anthropic') ? (
-                    (() => {
-                      const label = modelConfigForm.provider === 'openai' ? 'OpenAI' : 'Anthropic';
-                      const placeholder =
-                        modelConfigForm.provider === 'openai' ? 'sk-...' : 'sk-ant-...';
-                      const envVar =
-                        modelConfigForm.provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY';
-                      return (
-                        <div className="space-y-2 rounded-lg border border-border/60 px-4 py-3">
-                          <Label htmlFor="model-config-provider-key">
-                            Workspace {label} API key
-                          </Label>
-                          <Input
-                            id="model-config-provider-key"
-                            type="password"
-                            value={modelConfigForm.workspaceApiKey}
-                            onChange={(event) =>
-                              setModelConfigForm((current) => ({
-                                ...current,
-                                workspaceApiKey: event.target.value,
-                              }))
-                            }
-                            placeholder={
-                              data.providerStatus.source === 'workspace'
-                                ? 'Leave empty to keep current stored key'
-                                : placeholder
-                            }
-                            autoComplete="off"
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Optional. Save or rotate the workspace {label} key while creating the
-                            profile.
-                          </p>
-                          {formState.provider === modelConfigForm.provider && !data.providerStatus.configured ? (
-                            <div className="rounded-lg border border-accent-amber/30 bg-accent-amber/10 px-3 py-2 text-xs text-accent-amber">
-                              No runnable {label} key is configured right now. Add one here, use the
-                              platform default, or provide <code>{envVar}</code> on the server.
-                            </div>
-                          ) : null}
-                        </div>
-                      );
-                    })()
-                  ) : null}
+                  {modelConfigForm.provider === 'openai' || modelConfigForm.provider === 'anthropic'
+                    ? (() => {
+                        const label =
+                          modelConfigForm.provider === 'openai' ? 'OpenAI' : 'Anthropic';
+                        const placeholder =
+                          modelConfigForm.provider === 'openai' ? 'sk-...' : 'sk-ant-...';
+                        const envVar =
+                          modelConfigForm.provider === 'openai'
+                            ? 'OPENAI_API_KEY'
+                            : 'ANTHROPIC_API_KEY';
+                        return (
+                          <div className="border-border/60 space-y-2 rounded-lg border px-4 py-3">
+                            <Label htmlFor="model-config-provider-key">
+                              {t('orgAi.workspace_provider_key', { label })}
+                            </Label>
+                            <Input
+                              id="model-config-provider-key"
+                              type="password"
+                              value={modelConfigForm.workspaceApiKey}
+                              onChange={(event) =>
+                                setModelConfigForm((current) => ({
+                                  ...current,
+                                  workspaceApiKey: event.target.value,
+                                }))
+                              }
+                              placeholder={
+                                data.providerStatus.source === 'workspace'
+                                  ? t('orgAi.key_keep_placeholder')
+                                  : placeholder
+                              }
+                              autoComplete="off"
+                            />
+                            <p className="text-muted-foreground text-xs">
+                              {t('orgAi.provider_key_hint', { label })}
+                            </p>
+                            {formState.provider === modelConfigForm.provider &&
+                            !data.providerStatus.configured ? (
+                              <div className="border-accent-amber/30 bg-accent-amber/10 text-accent-amber rounded-lg border px-3 py-2 text-xs">
+                                {t('orgAi.no_runnable_key_prefix', { label })} <code>{envVar}</code>{' '}
+                                {t('orgAi.no_runnable_key_suffix')}
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })()
+                    : null}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="model-config-notes">Ops notes</Label>
+                  <Label htmlFor="model-config-notes">{t('orgAi.ops_notes')}</Label>
                   <Textarea
                     id="model-config-notes"
                     value={modelConfigForm.notes}
-                    onChange={(event) => setModelConfigForm((current) => ({ ...current, notes: event.target.value }))}
-                    placeholder="Why this profile exists, rollout notes, or provider caveats."
+                    onChange={(event) =>
+                      setModelConfigForm((current) => ({ ...current, notes: event.target.value }))
+                    }
+                    placeholder={t('orgAi.ops_notes_placeholder')}
                     rows={6}
                   />
                 </div>
@@ -1294,7 +1397,7 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
             </div>
           </div>
 
-          <DialogFooter className="shrink-0 border-t border-border/60 px-5 py-4 sm:px-6">
+          <DialogFooter className="border-border/60 shrink-0 border-t px-5 py-4 sm:px-6">
             <Button
               type="button"
               variant="outline"
@@ -1304,24 +1407,28 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                 setModelConfigForm(EMPTY_MODEL_CONFIG_FORM);
               }}
             >
-              Cancel
+              {t('orgAi.cancel')}
             </Button>
             <Button
               type="button"
               onClick={handleSubmitModelConfig}
               disabled={
-                !modelConfigForm.name.trim()
-                || !modelConfigForm.model.trim()
-                || createModelConfig.isPending
-                || updateModelConfig.isPending
+                !modelConfigForm.name.trim() ||
+                !modelConfigForm.model.trim() ||
+                createModelConfig.isPending ||
+                updateModelConfig.isPending
               }
             >
-              {(createModelConfig.isPending || updateModelConfig.isPending) ? (
+              {createModelConfig.isPending || updateModelConfig.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving
+                  {t('orgAi.saving')}
                 </>
-              ) : editingModelConfig ? 'Save profile' : 'Create profile'}
+              ) : editingModelConfig ? (
+                t('orgAi.save_profile')
+              ) : (
+                t('orgAi.create_profile')
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1342,13 +1449,13 @@ function RuntimeStatCard({
   detail: string;
 }) {
   return (
-    <div className="rounded-lg border border-border/60 p-4">
+    <div className="border-border/60 rounded-lg border p-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <p className="text-muted-foreground text-xs uppercase tracking-[0.16em]">{label}</p>
+        <Icon className="text-muted-foreground h-4 w-4" />
       </div>
       <p className="mt-2 text-2xl font-semibold">{value}</p>
-      <p className="mt-1 text-sm text-muted-foreground">{detail}</p>
+      <p className="text-muted-foreground mt-1 text-sm">{detail}</p>
     </div>
   );
 }

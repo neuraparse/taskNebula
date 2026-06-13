@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
@@ -34,6 +35,7 @@ export function EditOrganizationDialog({
   open,
   onOpenChange,
 }: EditOrganizationDialogProps) {
+  const t = useTranslations('adminDialogs');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
@@ -80,11 +82,18 @@ export function EditOrganizationDialog({
       queryClient.invalidateQueries({ queryKey: ['admin-organizations'] });
       queryClient.invalidateQueries({ queryKey: ['admin-organization', organizationId] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
-      toast({ title: 'Organization updated', description: 'Changes were saved successfully.' });
+      toast({
+        title: t('editOrg.toastUpdatedTitle'),
+        description: t('editOrg.toastUpdatedDescription'),
+      });
       onOpenChange(false);
     },
     onError: (error: Error) => {
-      toast({ title: 'Failed to update organization', description: error.message, variant: 'destructive' });
+      toast({
+        title: t('editOrg.toastFailedTitle'),
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 
@@ -97,18 +106,18 @@ export function EditOrganizationDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit organization</DialogTitle>
-          <DialogDescription>Update organization details, plan, and status.</DialogDescription>
+          <DialogTitle>{t('editOrg.title')}</DialogTitle>
+          <DialogDescription>{t('editOrg.description')}</DialogDescription>
         </DialogHeader>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{t('orgForm.name')}</Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -118,7 +127,7 @@ export function EditOrganizationDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="slug">Slug</Label>
+              <Label htmlFor="slug">{t('orgForm.slug')}</Label>
               <Input
                 id="slug"
                 value={formData.slug}
@@ -130,7 +139,7 @@ export function EditOrganizationDialog({
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="plan">Plan</Label>
+                <Label htmlFor="plan">{t('orgForm.plan')}</Label>
                 <Select
                   value={formData.plan}
                   onValueChange={(value: any) => setFormData({ ...formData, plan: value })}
@@ -139,16 +148,16 @@ export function EditOrganizationDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="free">Free</SelectItem>
-                    <SelectItem value="starter">Starter</SelectItem>
-                    <SelectItem value="growth">Growth</SelectItem>
-                    <SelectItem value="enterprise">Enterprise</SelectItem>
+                    <SelectItem value="free">{t('orgForm.planFree')}</SelectItem>
+                    <SelectItem value="starter">{t('orgForm.planStarter')}</SelectItem>
+                    <SelectItem value="growth">{t('orgForm.planGrowth')}</SelectItem>
+                    <SelectItem value="enterprise">{t('orgForm.planEnterprise')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="status">{t('editOrg.status')}</Label>
                 <Select
                   value={formData.status}
                   onValueChange={(value: any) => setFormData({ ...formData, status: value })}
@@ -157,16 +166,16 @@ export function EditOrganizationDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="trial">Trial</SelectItem>
-                    <SelectItem value="suspended">Suspended</SelectItem>
+                    <SelectItem value="active">{t('editOrg.statusActive')}</SelectItem>
+                    <SelectItem value="trial">{t('editOrg.statusTrial')}</SelectItem>
+                    <SelectItem value="suspended">{t('editOrg.statusSuspended')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="domain">Domain (optional)</Label>
+              <Label htmlFor="domain">{t('editOrg.domain')}</Label>
               <Input
                 id="domain"
                 value={formData.domain}
@@ -177,11 +186,11 @@ export function EditOrganizationDialog({
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={updateMutation.isPending}>
                 {updateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save changes
+                {t('common.saveChanges')}
               </Button>
             </DialogFooter>
           </form>

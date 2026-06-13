@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,12 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { useCreateProject, useProjects } from '@/lib/hooks/use-projects';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useTeamspaces } from '@/lib/hooks/use-teamspaces';
@@ -57,6 +53,7 @@ function iconTileFor(id: string): string {
 }
 
 export function ProjectsClient() {
+  const t = useTranslations('pagesProjects');
   const [showDialog, setShowDialog] = useState(false);
   const { currentOrganizationId, currentTeamId, setCurrentOrganization } = useOrganization();
 
@@ -88,23 +85,26 @@ export function ProjectsClient() {
   );
 
   return (
-    <div className="flex h-full flex-col animate-fade-in">
-      <div className="border-b border-border bg-background px-6 py-5">
+    <div className="animate-fade-in flex h-full flex-col">
+      <div className="border-border bg-background border-b px-6 py-5">
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-1">
-            <span className="kicker">Workspace</span>
-            <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
-            <p className="text-sm text-muted-foreground">
+            <span className="kicker">{t('kicker')}</span>
+            <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+            <p className="text-muted-foreground text-sm">
               {isLoading
-                ? 'Loading projects...'
-                : `${projects.length} active project${projects.length !== 1 ? 's' : ''}${
-                    activeTeamspace ? ` in ${activeTeamspace.name}` : ''
-                  }`}
+                ? t('loading')
+                : activeTeamspace
+                  ? t('activeCountInTeamspace', {
+                      count: projects.length,
+                      teamspace: activeTeamspace.name,
+                    })
+                  : t('activeCount', { count: projects.length })}
             </p>
           </div>
           <Button onClick={() => setShowDialog(true)}>
             <Plus className="mr-1.5 h-4 w-4" />
-            Create Project
+            {t('createProject')}
           </Button>
         </div>
       </div>
@@ -114,25 +114,22 @@ export function ProjectsClient() {
           /* FEAT-31 dashboard empty state. Illustration tile + primary CTA
              + secondary AI CTA (TODO: route once /api/ai/projects/scaffold
              lands; it should pre-fill the create-project dialog). */
-          <div className="mx-auto flex max-w-md animate-fade-up flex-col items-center gap-4 rounded-lg border border-dashed border-border p-10 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-md bg-gradient-mesh">
-              <FolderKanban className="h-7 w-7 text-foreground/80" />
+          <div className="animate-fade-up border-border mx-auto flex max-w-md flex-col items-center gap-4 rounded-lg border border-dashed p-10 text-center">
+            <div className="bg-gradient-mesh flex h-14 w-14 items-center justify-center rounded-md">
+              <FolderKanban className="text-foreground/80 h-7 w-7" />
             </div>
             <div className="space-y-1">
-              <p className="text-base font-semibold text-foreground">
+              <p className="text-foreground text-base font-semibold">
                 {activeTeamspace
-                  ? `No projects in ${activeTeamspace.name} yet`
-                  : 'Spin up your first project'}
+                  ? t('emptyTitleTeamspace', { teamspace: activeTeamspace.name })
+                  : t('emptyTitle')}
               </p>
-              <p className="text-sm text-muted-foreground">
-                Projects collect issues, sprints, docs, and automations. You can also
-                let AI scaffold one from a short description.
-              </p>
+              <p className="text-muted-foreground text-sm">{t('emptyDescription')}</p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button onClick={() => setShowDialog(true)}>
                 <Plus className="mr-1.5 h-4 w-4" />
-                Create Project
+                {t('createProject')}
               </Button>
               <Button
                 variant="outline"
@@ -146,7 +143,7 @@ export function ProjectsClient() {
                 }}
               >
                 <Sparkles className="mr-1.5 h-4 w-4" />
-                Generate with AI
+                {t('generateWithAi')}
               </Button>
             </div>
           </div>
@@ -167,60 +164,60 @@ export function ProjectsClient() {
                    <ViewTransition name="project-${id}"> on the project home
                    page header to enable a shared-element transition. */
                 <ViewTransition key={project.id} name={`project-${project.id}`}>
-                <Link
-                  href={`/projects/${project.key.toLowerCase()}/views`}
-                  className="surface-card surface-card-hover group flex flex-col gap-3 rounded-lg p-5 transition-all duration-150 ease-snap hover:-translate-y-0.5"
-                >
-                  <div className="flex items-start gap-3">
-                    <span
-                      className={`${tileClass} h-9 w-9 shrink-0 font-mono text-xs font-semibold`}
-                    >
-                      {initials}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold leading-tight text-foreground transition-colors group-hover:text-primary">
-                        {project.name}
-                      </p>
-                      <p className="font-mono text-[11px] text-muted-foreground">
-                        {project.key}
-                        {project.team ? (
-                          <>
-                            <span className="mx-1.5 opacity-40">·</span>
-                            <span className="inline-flex items-center gap-1 font-sans">
-                              <Layers3 className="h-3 w-3" />
-                              {project.team.name}
-                            </span>
-                          </>
-                        ) : null}
-                      </p>
+                  <Link
+                    href={`/projects/${project.key.toLowerCase()}/views`}
+                    className="surface-card surface-card-hover ease-snap group flex flex-col gap-3 rounded-lg p-5 transition-all duration-150 hover:-translate-y-0.5"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span
+                        className={`${tileClass} h-9 w-9 shrink-0 font-mono text-xs font-semibold`}
+                      >
+                        {initials}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-foreground group-hover:text-primary truncate text-sm font-semibold leading-tight transition-colors">
+                          {project.name}
+                        </p>
+                        <p className="text-muted-foreground font-mono text-[11px]">
+                          {project.key}
+                          {project.team ? (
+                            <>
+                              <span className="mx-1.5 opacity-40">·</span>
+                              <span className="inline-flex items-center gap-1 font-sans">
+                                <Layers3 className="h-3 w-3" />
+                                {project.team.name}
+                              </span>
+                            </>
+                          ) : null}
+                        </p>
+                      </div>
                     </div>
-                  </div>
 
-                  {project.description ? (
-                    <p className="line-clamp-2 text-sm text-muted-foreground">
-                      {project.description}
-                    </p>
-                  ) : null}
-
-                  <div className="mt-auto flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <span className="font-medium text-foreground">{issueCount}</span>
-                    <span>issue{issueCount === 1 ? '' : 's'}</span>
-                    <span className="opacity-40">·</span>
-                    <span className="font-medium text-foreground">{sprintCount}</span>
-                    <span>sprint{sprintCount === 1 ? '' : 's'}</span>
-                    {project.activeSprint ? (
-                      <>
-                        <span className="opacity-40">·</span>
-                        <span className="inline-flex items-center gap-1">
-                          <span className="status-dot status-live" />
-                          <span className="truncate text-accent-emerald">
-                            {project.activeSprint.name}
-                          </span>
-                        </span>
-                      </>
+                    {project.description ? (
+                      <p className="text-muted-foreground line-clamp-2 text-sm">
+                        {project.description}
+                      </p>
                     ) : null}
-                  </div>
-                </Link>
+
+                    <div className="text-muted-foreground mt-auto flex items-center gap-1.5 text-xs">
+                      <span className="text-foreground font-medium">{issueCount}</span>
+                      <span>{t('issueLabel', { count: issueCount })}</span>
+                      <span className="opacity-40">·</span>
+                      <span className="text-foreground font-medium">{sprintCount}</span>
+                      <span>{t('sprintLabel', { count: sprintCount })}</span>
+                      {project.activeSprint ? (
+                        <>
+                          <span className="opacity-40">·</span>
+                          <span className="inline-flex items-center gap-1">
+                            <span className="status-dot status-live" />
+                            <span className="text-accent-emerald truncate">
+                              {project.activeSprint.name}
+                            </span>
+                          </span>
+                        </>
+                      ) : null}
+                    </div>
+                  </Link>
                 </ViewTransition>
               );
             })}
@@ -228,10 +225,7 @@ export function ProjectsClient() {
         )}
       </div>
 
-      <CreateProjectDialog
-        open={showDialog}
-        onOpenChange={(open) => setShowDialog(open)}
-      />
+      <CreateProjectDialog open={showDialog} onOpenChange={(open) => setShowDialog(open)} />
     </div>
   );
 }
@@ -243,6 +237,7 @@ function CreateProjectDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useTranslations('pagesProjects');
   const onClose = () => onOpenChange(false);
   const router = useRouter();
   const createProject = useCreateProject();
@@ -275,7 +270,12 @@ function CreateProjectDialog({
 
   const handleKeyChange = (value: string) => {
     setKeyManual(true);
-    setKey(value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10));
+    setKey(
+      value
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '')
+        .slice(0, 10)
+    );
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -299,19 +299,19 @@ function CreateProjectDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[460px] rounded-lg border border-border bg-background p-6 shadow-md">
+      <DialogContent className="border-border bg-background w-full max-w-[460px] rounded-lg border p-6 shadow-md">
         <div className="mb-5 flex items-center justify-between">
           <div>
-            <DialogTitle className="text-lg font-semibold">Create Project</DialogTitle>
-            <DialogDescription className="mt-1 text-xs text-muted-foreground">
-              Projects inherit the current organization and can optionally live in a teamspace.
+            <DialogTitle className="text-lg font-semibold">{t('createProject')}</DialogTitle>
+            <DialogDescription className="text-muted-foreground mt-1 text-xs">
+              {t('dialogDescription')}
             </DialogDescription>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-1 transition-colors hover:bg-muted"
-            aria-label="Close dialog"
+            className="hover:bg-muted rounded-md p-1 transition-colors"
+            aria-label={t('closeDialog')}
           >
             <X className="h-4 w-4" />
           </button>
@@ -320,11 +320,11 @@ function CreateProjectDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="project-name" className="text-sm font-medium">
-              Project Name
+              {t('projectName')}
             </label>
             <Input
               id="project-name"
-              placeholder="My Awesome Project"
+              placeholder={t('projectNamePlaceholder')}
               value={name}
               onChange={(event) => handleNameChange(event.target.value)}
               required
@@ -334,7 +334,7 @@ function CreateProjectDialog({
 
           <div className="space-y-2">
             <label htmlFor="project-key" className="text-sm font-medium">
-              Project Key
+              {t('projectKey')}
             </label>
             <Input
               id="project-key"
@@ -345,21 +345,21 @@ function CreateProjectDialog({
               maxLength={10}
               className="uppercase"
             />
-            <p className="text-xs text-muted-foreground">
-              Used as issue prefix, for example {key || 'KEY'}-1.
+            <p className="text-muted-foreground text-xs">
+              {t('projectKeyHelp', { example: key || 'KEY' })}
             </p>
           </div>
 
           <div className="space-y-2">
             <label htmlFor="project-teamspace" className="text-sm font-medium">
-              Teamspace
+              {t('teamspace')}
             </label>
             <Select value={teamId} onValueChange={setTeamId}>
               <SelectTrigger id="project-teamspace">
-                <SelectValue placeholder="No teamspace" />
+                <SelectValue placeholder={t('noTeamspace')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No teamspace</SelectItem>
+                <SelectItem value="none">{t('noTeamspace')}</SelectItem>
                 {teamspaces.map((teamspace) => (
                   <SelectItem key={teamspace.id} value={teamspace.id}>
                     {teamspace.name}
@@ -367,38 +367,35 @@ function CreateProjectDialog({
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
-              Use teamspaces to group related projects without creating a duplicate top-level entity.
-            </p>
+            <p className="text-muted-foreground text-xs">{t('teamspaceHelp')}</p>
           </div>
 
           <div className="space-y-2">
             <label htmlFor="project-desc" className="text-sm font-medium">
-              Description <span className="text-muted-foreground">(optional)</span>
+              {t.rich('descriptionLabel', {
+                optional: (chunks) => <span className="text-muted-foreground">{chunks}</span>,
+              })}
             </label>
             <Input
               id="project-desc"
-              placeholder="Brief project description"
+              placeholder={t('descriptionPlaceholder')}
               value={description}
               onChange={(event) => setDescription(event.target.value)}
             />
           </div>
 
           {createProject.error ? (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
               {createProject.error.message}
             </div>
           ) : null}
 
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+              {t('cancel')}
             </Button>
-            <Button
-              type="submit"
-              disabled={createProject.isPending || !name.trim() || !key.trim()}
-            >
-              {createProject.isPending ? 'Creating...' : 'Create Project'}
+            <Button type="submit" disabled={createProject.isPending || !name.trim() || !key.trim()}>
+              {createProject.isPending ? t('creating') : t('createProject')}
             </Button>
           </div>
         </form>

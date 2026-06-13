@@ -10,6 +10,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Activity, GitBranch, ShieldAlert, Repeat, Timer } from 'lucide-react';
 import { KpiTile } from './KpiTile';
@@ -48,13 +49,12 @@ export interface DoraPanelProps {
 }
 
 export function DoraPanel({ organizationId }: DoraPanelProps) {
+  const t = useTranslations('charts');
   const { data, isLoading } = useQuery({
     queryKey: ['analytics', 'dora', organizationId],
     queryFn: async () => {
       if (!organizationId) return null;
-      const res = await fetch(
-        `/api/analytics/dora?organizationId=${organizationId}`
-      );
+      const res = await fetch(`/api/analytics/dora?organizationId=${organizationId}`);
       if (!res.ok) throw new Error('Failed to fetch DORA metrics');
       return (await res.json()) as DoraMetrics;
     },
@@ -67,8 +67,8 @@ export function DoraPanel({ organizationId }: DoraPanelProps) {
 
   if (isLoading || !data) {
     return (
-      <div className="surface-card p-6 animate-pulse">
-        <p className="text-sm text-muted-foreground">Loading DORA…</p>
+      <div className="surface-card animate-pulse p-6">
+        <p className="text-muted-foreground text-sm">{t('loadingDora')}</p>
       </div>
     );
   }
@@ -77,17 +77,14 @@ export function DoraPanel({ organizationId }: DoraPanelProps) {
     return (
       <div className="surface-card flex flex-col items-start gap-3 p-6">
         <div>
-          <p className="kicker">Engineering DORA</p>
-          <h3 className="mt-1 text-base font-semibold tracking-tight text-foreground">
-            Connect GitHub deployments
+          <p className="kicker">{t('engineeringDora')}</p>
+          <h3 className="text-foreground mt-1 text-base font-semibold tracking-tight">
+            {t('connectGithubDeployments')}
           </h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Deploy frequency, lead time, change failure rate, rework rate, and
-            recovery time are derived from GitHub deployments and linked issues.
-          </p>
+          <p className="text-muted-foreground mt-1 text-sm">{t('doraDerivedDescription')}</p>
         </div>
         <Link href="/settings/integrations">
-          <Button size="sm">Connect GitHub</Button>
+          <Button size="sm">{t('connectGithub')}</Button>
         </Link>
       </div>
     );
@@ -97,56 +94,56 @@ export function DoraPanel({ organizationId }: DoraPanelProps) {
     <div className="surface-card p-5">
       <div className="mb-4 flex items-end justify-between">
         <div>
-          <p className="kicker">Engineering DORA</p>
-          <h3 className="mt-1 text-base font-semibold tracking-tight text-foreground">
-            Delivery health
+          <p className="kicker">{t('engineeringDora')}</p>
+          <h3 className="text-foreground mt-1 text-base font-semibold tracking-tight">
+            {t('deliveryHealth')}
           </h3>
         </div>
-        <p className="text-xs text-muted-foreground">last 30 days</p>
+        <p className="text-muted-foreground text-xs">{t('last30Days')}</p>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <KpiTile
-          label="Deploy freq."
+          label={t('deployFreq')}
           value={`${data.deployFrequencyPerDay.toFixed(2)}/d`}
           delta={data.deployFrequencyDelta}
           sparkline={data.deployFrequencySpark}
-          hint="deploys per day"
+          hint={t('deploysPerDay')}
           icon={<GitBranch className="h-4 w-4" />}
         />
         <KpiTile
-          label="Lead time"
+          label={t('leadTime')}
           value={`${data.leadTimeHours.toFixed(1)}h`}
           delta={data.leadTimeDelta}
           invertDelta
           sparkline={data.leadTimeSpark}
-          hint="PR → deploy median"
+          hint={t('prToDeployMedian')}
           icon={<Timer className="h-4 w-4" />}
         />
         <KpiTile
-          label="Change failure rate"
+          label={t('changeFailureRate')}
           value={`${(data.changeFailureRate * 100).toFixed(1)}%`}
           delta={data.changeFailureRateDelta}
           invertDelta
           sparkline={data.changeFailureRateSpark}
-          hint="failed deploys / total"
+          hint={t('failedDeploysTotal')}
           icon={<ShieldAlert className="h-4 w-4" />}
         />
         <KpiTile
-          label="Rework rate"
+          label={t('reworkRate')}
           value={`${(data.reworkRate * 100).toFixed(1)}%`}
           delta={data.reworkRateDelta}
           invertDelta
           sparkline={data.reworkRateSpark}
-          hint="reopened / closed"
+          hint={t('reopenedClosed')}
           icon={<Repeat className="h-4 w-4" />}
         />
         <KpiTile
-          label="Recovery time"
+          label={t('recoveryTime')}
           value={`${data.recoveryHours.toFixed(1)}h`}
           delta={data.recoveryHoursDelta}
           invertDelta
           sparkline={data.recoveryHoursSpark}
-          hint="MTTR for failed deploys"
+          hint={t('mttrFailedDeploys')}
           icon={<Activity className="h-4 w-4" />}
         />
       </div>

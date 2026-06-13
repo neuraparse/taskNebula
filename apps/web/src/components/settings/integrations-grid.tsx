@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
@@ -71,7 +72,12 @@ function makeLetterGlyph(letter: string, color: string) {
 
 function GitHubIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className={className}>
+    <svg
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className={className}
+    >
       <path
         fill="#181717"
         d="M12 1.5A10.5 10.5 0 0 0 1.5 12c0 4.64 3.01 8.57 7.19 9.96.53.1.72-.23.72-.51v-1.78c-2.93.64-3.55-1.41-3.55-1.41-.48-1.21-1.16-1.54-1.16-1.54-.95-.65.07-.64.07-.64 1.05.07 1.6 1.08 1.6 1.08.93 1.6 2.45 1.14 3.05.87.09-.68.36-1.14.66-1.4-2.34-.27-4.8-1.17-4.8-5.21 0-1.15.41-2.09 1.08-2.83-.11-.27-.47-1.34.1-2.79 0 0 .88-.28 2.88 1.08a9.93 9.93 0 0 1 5.24 0c2-1.36 2.88-1.08 2.88-1.08.57 1.45.21 2.52.1 2.79.67.74 1.08 1.68 1.08 2.83 0 4.05-2.47 4.94-4.82 5.2.37.32.7.95.7 1.92v2.84c0 .28.19.61.73.51A10.5 10.5 0 0 0 22.5 12 10.5 10.5 0 0 0 12 1.5Z"
@@ -82,7 +88,12 @@ function GitHubIcon({ className }: { className?: string }) {
 
 function GitLabIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className={className}>
+    <svg
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className={className}
+    >
       <path fill="#FC6D26" d="m12 21.5-3.7-11.4h7.4L12 21.5Z" />
       <path fill="#E24329" d="m12 21.5-3.7-11.4H3.1L12 21.5Z" />
       <path fill="#FCA326" d="M3.1 10.1 2 13.5a.8.8 0 0 0 .3.9L12 21.5 3.1 10.1Z" />
@@ -96,18 +107,34 @@ function GitLabIcon({ className }: { className?: string }) {
 
 function SlackIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className={className}>
+    <svg
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className={className}
+    >
       <path fill="#36C5F0" d="M6.5 14.5a2 2 0 1 1-2-2h2v2Zm1 0a2 2 0 1 1 4 0v5a2 2 0 1 1-4 0v-5Z" />
       <path fill="#2EB67D" d="M9.5 6.5a2 2 0 1 1 2-2v2h-2Zm0 1a2 2 0 1 1 0 4h-5a2 2 0 1 1 0-4h5Z" />
-      <path fill="#ECB22E" d="M17.5 9.5a2 2 0 1 1 2 2h-2v-2Zm-1 0a2 2 0 1 1-4 0v-5a2 2 0 1 1 4 0v5Z" />
-      <path fill="#E01E5A" d="M14.5 17.5a2 2 0 1 1-2 2v-2h2Zm0-1a2 2 0 1 1 0-4h5a2 2 0 1 1 0 4h-5Z" />
+      <path
+        fill="#ECB22E"
+        d="M17.5 9.5a2 2 0 1 1 2 2h-2v-2Zm-1 0a2 2 0 1 1-4 0v-5a2 2 0 1 1 4 0v5Z"
+      />
+      <path
+        fill="#E01E5A"
+        d="M14.5 17.5a2 2 0 1 1-2 2v-2h2Zm0-1a2 2 0 1 1 0-4h5a2 2 0 1 1 0 4h-5Z"
+      />
     </svg>
   );
 }
 
 function SentryIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className={className}>
+    <svg
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className={className}
+    >
       <path
         fill="#362D59"
         d="M12 3.2c-.5 0-1 .27-1.27.74L2.95 17.4a1.45 1.45 0 0 0 1.25 2.18h3.4a8.5 8.5 0 0 0-5.13-7.34l1.4-2.43A11.3 11.3 0 0 1 10.5 19.6h2.6a13.9 13.9 0 0 0-7.86-12.14l1.4-2.42a16.5 16.5 0 0 1 9.1 14.56h4.06c.99 0 1.62-1.06 1.13-1.92L13.27 3.94A1.46 1.46 0 0 0 12 3.2Z"
@@ -118,7 +145,12 @@ function SentryIcon({ className }: { className?: string }) {
 
 function ClaudeIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className={className}>
+    <svg
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className={className}
+    >
       <rect x="2" y="2" width="20" height="20" rx="5" fill="#D97757" />
       <path
         d="M8.4 16.4 11 7.6h2l2.6 8.8h-1.7l-.6-2.1h-2.6l-.6 2.1H8.4Zm2.7-3.5h1.8L12 9.7l-.9 3.2Z"
@@ -130,7 +162,12 @@ function ClaudeIcon({ className }: { className?: string }) {
 
 function JiraIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className={className}>
+    <svg
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className={className}
+    >
       <path
         fill="#2684FF"
         d="M11.5 2.5h9.7c0 2.4-1.9 4.3-4.3 4.3h-1.9v1.8a4.3 4.3 0 0 1-4.3 4.3V3.4c0-.5.4-.9.8-.9Z"
@@ -151,7 +188,12 @@ function JiraIcon({ className }: { className?: string }) {
 
 function VSCodeIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className={className}>
+    <svg
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className={className}
+    >
       <path
         fill="#0078D4"
         d="m17.5 2.4-9.7 9.1L4 8.6 2 9.7v4.6l2 1.1 3.8-2.9 9.7 9.1L22 20V4l-4.5-1.6Zm0 5.7v7.8l-5-3.9 5-3.9Z"
@@ -162,7 +204,12 @@ function VSCodeIcon({ className }: { className?: string }) {
 
 function RaycastIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className={className}>
+    <svg
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className={className}
+    >
       <rect x="2" y="2" width="20" height="20" rx="5" fill="#FF6363" />
       <path
         fill="#fff"
@@ -174,7 +221,12 @@ function RaycastIcon({ className }: { className?: string }) {
 
 function DrawioIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className={className}>
+    <svg
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className={className}
+    >
       <rect x="2" y="2" width="20" height="20" rx="5" fill="#F08705" />
       <path
         fill="#fff"
@@ -286,14 +338,14 @@ export { makeLetterGlyph };
 // Filter chips
 // ---------------------------------------------------------------------------
 
-const CATEGORY_FILTERS: { value: IntegrationCategory | 'all'; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'source-control', label: 'Source control' },
-  { value: 'communication', label: 'Communication' },
-  { value: 'monitoring', label: 'Monitoring' },
-  { value: 'ai', label: 'AI' },
-  { value: 'productivity', label: 'Productivity' },
-  { value: 'design', label: 'Design' },
+const CATEGORY_FILTERS: { value: IntegrationCategory | 'all'; labelKey: string }[] = [
+  { value: 'all', labelKey: 'integrations.cat_all' },
+  { value: 'source-control', labelKey: 'integrations.cat_source_control' },
+  { value: 'communication', labelKey: 'integrations.cat_communication' },
+  { value: 'monitoring', labelKey: 'integrations.cat_monitoring' },
+  { value: 'ai', labelKey: 'integrations.cat_ai' },
+  { value: 'productivity', labelKey: 'integrations.cat_productivity' },
+  { value: 'design', labelKey: 'integrations.cat_design' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -307,6 +359,7 @@ interface IntegrationCardProps {
 }
 
 function IntegrationCard({ integration, footer, accountLabel }: IntegrationCardProps) {
+  const t = useTranslations('settingsConfig');
   if (integration.id === 'gitlab') {
     return <GitLabIntegrationCard integration={integration} />;
   }
@@ -320,25 +373,26 @@ function IntegrationCard({ integration, footer, accountLabel }: IntegrationCardP
     return <SentryIntegrationCard integration={integration} />;
   }
 
-  const { name, description, status, href, Icon } = integration;
+  const { id, name, status, href, Icon } = integration;
+  const description = t(`integrations.desc_${id}`);
   const isInteractive = href && status !== 'coming_soon' && !footer;
 
   const card = (
     <article
       className={cn(
-        'group relative rounded-xl border border-border bg-card p-5 transition-all',
+        'border-border bg-card group relative rounded-xl border p-5 transition-all',
         isInteractive && 'hover:border-foreground/20 hover:shadow-sm'
       )}
     >
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted/50">
+        <div className="bg-muted/50 flex h-11 w-11 items-center justify-center rounded-lg">
           <Icon className="h-6 w-6" />
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
-          <p className="mt-1 text-[12.5px] text-muted-foreground leading-snug">{description}</p>
+          <p className="text-muted-foreground mt-1 text-[12.5px] leading-snug">{description}</p>
           {accountLabel && (
-            <p className="mt-1 truncate text-[11.5px] font-medium text-foreground/80">
+            <p className="text-foreground/80 mt-1 truncate text-[11.5px] font-medium">
               {accountLabel}
             </p>
           )}
@@ -346,12 +400,12 @@ function IntegrationCard({ integration, footer, accountLabel }: IntegrationCardP
       </div>
       {status === 'connected' && (
         <Badge variant="success" className="absolute right-4 top-4">
-          Connected
+          {t('integrations.connected')}
         </Badge>
       )}
       {status === 'coming_soon' && (
         <Badge variant="muted" className="absolute right-4 top-4">
-          Coming soon
+          {t('integrations.coming_soon')}
         </Badge>
       )}
       {footer && <div className="mt-4 flex items-center gap-2">{footer}</div>}
@@ -362,7 +416,7 @@ function IntegrationCard({ integration, footer, accountLabel }: IntegrationCardP
     return (
       <Link
         href={href}
-        className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-xl"
+        className="focus-visible:ring-ring focus-visible:ring-offset-background block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
       >
         {card}
       </Link>
@@ -425,10 +479,10 @@ function useSlackConnection(organizationId: string | null) {
     if (!organizationId) return;
     setDisconnecting(true);
     try {
-      await fetch(
-        `/api/integrations/slack?organizationId=${encodeURIComponent(organizationId)}`,
-        { method: 'DELETE', credentials: 'same-origin' }
-      );
+      await fetch(`/api/integrations/slack?organizationId=${encodeURIComponent(organizationId)}`, {
+        method: 'DELETE',
+        credentials: 'same-origin',
+      });
       await load();
     } finally {
       setDisconnecting(false);
@@ -451,7 +505,9 @@ interface GitLabStatusResponse {
 }
 
 function GitLabIntegrationCard({ integration }: IntegrationCardProps) {
-  const { name, description, Icon } = integration;
+  const t = useTranslations('settingsConfig');
+  const { id, name, Icon } = integration;
+  const description = t(`integrations.desc_${id}`);
   const currentOrganizationId = useOrganization((state) => state.currentOrganizationId);
 
   const [connected, setConnected] = useState(false);
@@ -487,7 +543,7 @@ function GitLabIntegrationCard({ integration }: IntegrationCardProps) {
 
   const handleConnect = () => {
     if (!currentOrganizationId) {
-      setError('Select an organization first');
+      setError(t('integrations.select_org_first'));
       return;
     }
     window.location.href = `/api/integrations/gitlab/authorize?organizationId=${encodeURIComponent(currentOrganizationId)}`;
@@ -495,7 +551,7 @@ function GitLabIntegrationCard({ integration }: IntegrationCardProps) {
 
   const handleDisconnect = async () => {
     if (!currentOrganizationId) return;
-    const ok = window.confirm('Disconnect GitLab from this workspace? TaskNebula will stop syncing issues and merge requests.');
+    const ok = window.confirm(t('integrations.gitlab_disconnect_confirm'));
     if (!ok) return;
     setDisconnecting(true);
     setError(null);
@@ -509,27 +565,27 @@ function GitLabIntegrationCard({ integration }: IntegrationCardProps) {
       setAccountLabel(null);
     } catch (err) {
       console.error('GitLab disconnect failed', err);
-      setError('Failed to disconnect. Please try again.');
+      setError(t('integrations.disconnect_failed'));
     } finally {
       setDisconnecting(false);
     }
   };
 
   return (
-    <article className="group relative rounded-xl border border-border bg-card p-5 transition-all hover:border-foreground/20 hover:shadow-sm">
+    <article className="border-border bg-card hover:border-foreground/20 group relative rounded-xl border p-5 transition-all hover:shadow-sm">
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted/50">
+        <div className="bg-muted/50 flex h-11 w-11 items-center justify-center rounded-lg">
           <Icon className="h-6 w-6" />
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
-          <p className="mt-1 text-[12.5px] text-muted-foreground leading-snug">{description}</p>
+          <p className="text-muted-foreground mt-1 text-[12.5px] leading-snug">{description}</p>
           {connected && accountLabel && (
-            <p className="mt-1 text-[11.5px] text-muted-foreground">Account: {accountLabel}</p>
+            <p className="text-muted-foreground mt-1 text-[11.5px]">
+              {t('integrations.account', { label: accountLabel })}
+            </p>
           )}
-          {error && (
-            <p className="mt-1 text-[11.5px] text-destructive">{error}</p>
-          )}
+          {error && <p className="text-destructive mt-1 text-[11.5px]">{error}</p>}
           <div className="mt-3 flex items-center gap-2">
             {connected ? (
               <button
@@ -537,11 +593,11 @@ function GitLabIntegrationCard({ integration }: IntegrationCardProps) {
                 onClick={handleDisconnect}
                 disabled={disconnecting}
                 className={cn(
-                  'rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium',
+                  'border-border bg-background rounded-md border px-2.5 py-1 text-xs font-medium',
                   'hover:border-foreground/30 disabled:opacity-60'
                 )}
               >
-                {disconnecting ? 'Disconnecting...' : 'Disconnect'}
+                {disconnecting ? t('integrations.disconnecting') : t('integrations.disconnect')}
               </button>
             ) : (
               <button
@@ -549,11 +605,11 @@ function GitLabIntegrationCard({ integration }: IntegrationCardProps) {
                 onClick={handleConnect}
                 disabled={!currentOrganizationId || loading}
                 className={cn(
-                  'rounded-md border border-foreground bg-foreground px-2.5 py-1 text-xs font-medium text-background',
+                  'border-foreground bg-foreground text-background rounded-md border px-2.5 py-1 text-xs font-medium',
                   'hover:opacity-90 disabled:opacity-60'
                 )}
               >
-                {loading ? 'Checking...' : 'Connect'}
+                {loading ? t('integrations.checking') : t('integrations.connect')}
               </button>
             )}
           </div>
@@ -561,7 +617,7 @@ function GitLabIntegrationCard({ integration }: IntegrationCardProps) {
       </div>
       {connected && (
         <Badge variant="success" className="absolute right-4 top-4">
-          Connected
+          {t('integrations.connected')}
         </Badge>
       )}
     </article>
@@ -581,7 +637,9 @@ interface JiraStatusResponse {
 }
 
 function JiraIntegrationCard({ integration }: IntegrationCardProps) {
-  const { name, description, Icon } = integration;
+  const t = useTranslations('settingsConfig');
+  const { id, name, Icon } = integration;
+  const description = t(`integrations.desc_${id}`);
   const currentOrganizationId = useOrganization((s) => s.currentOrganizationId);
 
   const [connected, setConnected] = useState(false);
@@ -619,7 +677,7 @@ function JiraIntegrationCard({ integration }: IntegrationCardProps) {
 
   const handleConnect = () => {
     if (!currentOrganizationId) {
-      setError('Select an organization first');
+      setError(t('integrations.select_org_first'));
       return;
     }
     window.location.href = `/api/integrations/jira/authorize?organizationId=${encodeURIComponent(currentOrganizationId)}`;
@@ -627,7 +685,7 @@ function JiraIntegrationCard({ integration }: IntegrationCardProps) {
 
   const handleDisconnect = async () => {
     if (!currentOrganizationId) return;
-    const ok = window.confirm('Disconnect Jira from this workspace?');
+    const ok = window.confirm(t('integrations.jira_disconnect_confirm'));
     if (!ok) return;
     setDisconnecting(true);
     setError(null);
@@ -642,24 +700,24 @@ function JiraIntegrationCard({ integration }: IntegrationCardProps) {
       setSiteUrl(null);
     } catch (err) {
       console.error('Jira disconnect failed', err);
-      setError('Failed to disconnect. Please try again.');
+      setError(t('integrations.disconnect_failed'));
     } finally {
       setDisconnecting(false);
     }
   };
 
   return (
-    <article className="group relative rounded-xl border border-border bg-card p-5 transition-all hover:border-foreground/20 hover:shadow-sm">
+    <article className="border-border bg-card hover:border-foreground/20 group relative rounded-xl border p-5 transition-all hover:shadow-sm">
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted/50">
+        <div className="bg-muted/50 flex h-11 w-11 items-center justify-center rounded-lg">
           <Icon className="h-6 w-6" />
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
-          <p className="mt-1 text-[12.5px] text-muted-foreground leading-snug">{description}</p>
+          <p className="text-muted-foreground mt-1 text-[12.5px] leading-snug">{description}</p>
           {connected && accountLabel && (
-            <p className="mt-1 text-[11.5px] text-muted-foreground">
-              Site: {accountLabel}
+            <p className="text-muted-foreground mt-1 text-[11.5px]">
+              {t('integrations.site', { label: accountLabel })}
               {siteUrl && (
                 <>
                   {' · '}
@@ -669,15 +727,13 @@ function JiraIntegrationCard({ integration }: IntegrationCardProps) {
                     rel="noreferrer"
                     className="underline-offset-2 hover:underline"
                   >
-                    Open
+                    {t('integrations.open')}
                   </a>
                 </>
               )}
             </p>
           )}
-          {error && (
-            <p className="mt-1 text-[11.5px] text-destructive">{error}</p>
-          )}
+          {error && <p className="text-destructive mt-1 text-[11.5px]">{error}</p>}
           <div className="mt-3 flex items-center gap-2">
             {connected ? (
               <button
@@ -685,11 +741,11 @@ function JiraIntegrationCard({ integration }: IntegrationCardProps) {
                 onClick={handleDisconnect}
                 disabled={disconnecting}
                 className={cn(
-                  'rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium',
+                  'border-border bg-background rounded-md border px-2.5 py-1 text-xs font-medium',
                   'hover:border-foreground/30 disabled:opacity-60'
                 )}
               >
-                {disconnecting ? 'Disconnecting...' : 'Disconnect'}
+                {disconnecting ? t('integrations.disconnecting') : t('integrations.disconnect')}
               </button>
             ) : (
               <button
@@ -697,11 +753,11 @@ function JiraIntegrationCard({ integration }: IntegrationCardProps) {
                 onClick={handleConnect}
                 disabled={!currentOrganizationId || loading}
                 className={cn(
-                  'rounded-md border border-foreground bg-foreground px-2.5 py-1 text-xs font-medium text-background',
+                  'border-foreground bg-foreground text-background rounded-md border px-2.5 py-1 text-xs font-medium',
                   'hover:opacity-90 disabled:opacity-60'
                 )}
               >
-                {loading ? 'Checking...' : 'Connect Jira'}
+                {loading ? t('integrations.checking') : t('integrations.connect_jira')}
               </button>
             )}
           </div>
@@ -709,7 +765,7 @@ function JiraIntegrationCard({ integration }: IntegrationCardProps) {
       </div>
       {connected && (
         <Badge variant="success" className="absolute right-4 top-4">
-          Connected
+          {t('integrations.connected')}
         </Badge>
       )}
     </article>
@@ -730,7 +786,9 @@ interface GitHubStatusResponse {
 }
 
 function GitHubIntegrationCard({ integration }: IntegrationCardProps) {
-  const { name, description, Icon } = integration;
+  const t = useTranslations('settingsConfig');
+  const { id, name, Icon } = integration;
+  const description = t(`integrations.desc_${id}`);
   const currentOrganizationId = useOrganization((s) => s.currentOrganizationId);
 
   const [connected, setConnected] = useState(false);
@@ -781,7 +839,7 @@ function GitHubIntegrationCard({ integration }: IntegrationCardProps) {
 
   const handleConnect = () => {
     if (!currentOrganizationId) {
-      setError('Select an organization first');
+      setError(t('integrations.select_org_first'));
       return;
     }
     window.location.href = `/api/integrations/github/authorize?organizationId=${encodeURIComponent(currentOrganizationId)}`;
@@ -789,9 +847,7 @@ function GitHubIntegrationCard({ integration }: IntegrationCardProps) {
 
   const handleDisconnect = async () => {
     if (!currentOrganizationId) return;
-    const ok = window.confirm(
-      'Disconnect GitHub from this workspace? TaskNebula will stop syncing issues and pull requests.'
-    );
+    const ok = window.confirm(t('integrations.github_disconnect_confirm'));
     if (!ok) return;
     setDisconnecting(true);
     setError(null);
@@ -805,25 +861,27 @@ function GitHubIntegrationCard({ integration }: IntegrationCardProps) {
       setAccountLabel(null);
     } catch (err) {
       console.error('GitHub disconnect failed', err);
-      setError('Failed to disconnect. Please try again.');
+      setError(t('integrations.disconnect_failed'));
     } finally {
       setDisconnecting(false);
     }
   };
 
   return (
-    <article className="group relative rounded-xl border border-border bg-card p-5 transition-all hover:border-foreground/20 hover:shadow-sm">
+    <article className="border-border bg-card hover:border-foreground/20 group relative rounded-xl border p-5 transition-all hover:shadow-sm">
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted/50">
+        <div className="bg-muted/50 flex h-11 w-11 items-center justify-center rounded-lg">
           <Icon className="h-6 w-6" />
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
-          <p className="mt-1 text-[12.5px] text-muted-foreground leading-snug">{description}</p>
+          <p className="text-muted-foreground mt-1 text-[12.5px] leading-snug">{description}</p>
           {connected && accountLabel && (
-            <p className="mt-1 text-[11.5px] text-muted-foreground">Account: {accountLabel}</p>
+            <p className="text-muted-foreground mt-1 text-[11.5px]">
+              {t('integrations.account', { label: accountLabel })}
+            </p>
           )}
-          {error && <p className="mt-1 text-[11.5px] text-destructive">{error}</p>}
+          {error && <p className="text-destructive mt-1 text-[11.5px]">{error}</p>}
           <div className="mt-3 flex items-center gap-2">
             {connected ? (
               <button
@@ -831,11 +889,11 @@ function GitHubIntegrationCard({ integration }: IntegrationCardProps) {
                 onClick={handleDisconnect}
                 disabled={disconnecting}
                 className={cn(
-                  'rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium',
+                  'border-border bg-background rounded-md border px-2.5 py-1 text-xs font-medium',
                   'hover:border-foreground/30 disabled:opacity-60'
                 )}
               >
-                {disconnecting ? 'Disconnecting…' : 'Disconnect'}
+                {disconnecting ? t('integrations.disconnecting') : t('integrations.disconnect')}
               </button>
             ) : (
               <button
@@ -843,11 +901,11 @@ function GitHubIntegrationCard({ integration }: IntegrationCardProps) {
                 onClick={handleConnect}
                 disabled={!currentOrganizationId || loading}
                 className={cn(
-                  'rounded-md border border-foreground bg-foreground px-2.5 py-1 text-xs font-medium text-background',
+                  'border-foreground bg-foreground text-background rounded-md border px-2.5 py-1 text-xs font-medium',
                   'hover:opacity-90 disabled:opacity-60'
                 )}
               >
-                {loading ? 'Checking…' : 'Connect GitHub'}
+                {loading ? t('integrations.checking') : t('integrations.connect_github')}
               </button>
             )}
           </div>
@@ -855,7 +913,7 @@ function GitHubIntegrationCard({ integration }: IntegrationCardProps) {
       </div>
       {connected && (
         <Badge variant="success" className="absolute right-4 top-4">
-          Connected
+          {t('integrations.connected')}
         </Badge>
       )}
     </article>
@@ -878,7 +936,9 @@ interface SentryStatusResponse {
 }
 
 function SentryIntegrationCard({ integration }: IntegrationCardProps) {
-  const { name, description, Icon } = integration;
+  const t = useTranslations('settingsConfig');
+  const { id, name, Icon } = integration;
+  const description = t(`integrations.desc_${id}`);
   const currentOrganizationId = useOrganization((s) => s.currentOrganizationId);
 
   const [connected, setConnected] = useState(false);
@@ -929,7 +989,7 @@ function SentryIntegrationCard({ integration }: IntegrationCardProps) {
 
   const handleConnect = () => {
     if (!currentOrganizationId) {
-      setError('Select an organization first');
+      setError(t('integrations.select_org_first'));
       return;
     }
     window.location.href = `/api/integrations/sentry/authorize?organizationId=${encodeURIComponent(currentOrganizationId)}`;
@@ -937,7 +997,7 @@ function SentryIntegrationCard({ integration }: IntegrationCardProps) {
 
   const handleDisconnect = async () => {
     if (!currentOrganizationId) return;
-    const ok = window.confirm('Disconnect Sentry from this workspace?');
+    const ok = window.confirm(t('integrations.sentry_disconnect_confirm'));
     if (!ok) return;
     setDisconnecting(true);
     setError(null);
@@ -952,24 +1012,24 @@ function SentryIntegrationCard({ integration }: IntegrationCardProps) {
       setOrgSlug(null);
     } catch (err) {
       console.error('Sentry disconnect failed', err);
-      setError('Failed to disconnect. Please try again.');
+      setError(t('integrations.disconnect_failed'));
     } finally {
       setDisconnecting(false);
     }
   };
 
   return (
-    <article className="group relative rounded-xl border border-border bg-card p-5 transition-all hover:border-foreground/20 hover:shadow-sm">
+    <article className="border-border bg-card hover:border-foreground/20 group relative rounded-xl border p-5 transition-all hover:shadow-sm">
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted/50">
+        <div className="bg-muted/50 flex h-11 w-11 items-center justify-center rounded-lg">
           <Icon className="h-6 w-6" />
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
-          <p className="mt-1 text-[12.5px] text-muted-foreground leading-snug">{description}</p>
+          <p className="text-muted-foreground mt-1 text-[12.5px] leading-snug">{description}</p>
           {connected && accountLabel && (
-            <p className="mt-1 text-[11.5px] text-muted-foreground">
-              Sentry org: {accountLabel}
+            <p className="text-muted-foreground mt-1 text-[11.5px]">
+              {t('integrations.sentry_org', { label: accountLabel })}
               {orgSlug && (
                 <>
                   {' · '}
@@ -979,13 +1039,13 @@ function SentryIntegrationCard({ integration }: IntegrationCardProps) {
                     rel="noreferrer"
                     className="underline-offset-2 hover:underline"
                   >
-                    Open
+                    {t('integrations.open')}
                   </a>
                 </>
               )}
             </p>
           )}
-          {error && <p className="mt-1 text-[11.5px] text-destructive">{error}</p>}
+          {error && <p className="text-destructive mt-1 text-[11.5px]">{error}</p>}
           <div className="mt-3 flex items-center gap-2">
             {connected ? (
               <button
@@ -993,11 +1053,11 @@ function SentryIntegrationCard({ integration }: IntegrationCardProps) {
                 onClick={handleDisconnect}
                 disabled={disconnecting}
                 className={cn(
-                  'rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium',
+                  'border-border bg-background rounded-md border px-2.5 py-1 text-xs font-medium',
                   'hover:border-foreground/30 disabled:opacity-60'
                 )}
               >
-                {disconnecting ? 'Disconnecting…' : 'Disconnect'}
+                {disconnecting ? t('integrations.disconnecting') : t('integrations.disconnect')}
               </button>
             ) : (
               <button
@@ -1005,11 +1065,11 @@ function SentryIntegrationCard({ integration }: IntegrationCardProps) {
                 onClick={handleConnect}
                 disabled={!currentOrganizationId || loading}
                 className={cn(
-                  'rounded-md border border-foreground bg-foreground px-2.5 py-1 text-xs font-medium text-background',
+                  'border-foreground bg-foreground text-background rounded-md border px-2.5 py-1 text-xs font-medium',
                   'hover:opacity-90 disabled:opacity-60'
                 )}
               >
-                {loading ? 'Checking…' : 'Connect Sentry'}
+                {loading ? t('integrations.checking') : t('integrations.connect_sentry')}
               </button>
             )}
           </div>
@@ -1017,7 +1077,7 @@ function SentryIntegrationCard({ integration }: IntegrationCardProps) {
       </div>
       {connected && (
         <Badge variant="success" className="absolute right-4 top-4">
-          Connected
+          {t('integrations.connected')}
         </Badge>
       )}
     </article>
@@ -1033,6 +1093,7 @@ export interface IntegrationsGridProps {
 }
 
 export function IntegrationsGrid({ integrations = INTEGRATIONS }: IntegrationsGridProps) {
+  const t = useTranslations('settingsConfig');
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<IntegrationCategory | 'all'>('all');
   const currentOrganizationId = useOrganization((s) => s.currentOrganizationId);
@@ -1070,10 +1131,7 @@ export function IntegrationsGrid({ integrations = INTEGRATIONS }: IntegrationsGr
     return effectiveIntegrations.filter((item) => {
       if (activeCategory !== 'all' && item.category !== activeCategory) return false;
       if (!q) return true;
-      return (
-        item.name.toLowerCase().includes(q) ||
-        item.description.toLowerCase().includes(q)
-      );
+      return item.name.toLowerCase().includes(q) || item.description.toLowerCase().includes(q);
     });
   }, [effectiveIntegrations, search, activeCategory]);
 
@@ -1092,11 +1150,11 @@ export function IntegrationsGrid({ integrations = INTEGRATIONS }: IntegrationsGr
           onClick={() => void slack.disconnect()}
           disabled={slack.disconnecting || orgDisabled}
           className={cn(
-            'rounded-md border border-border px-3 py-1 text-xs font-medium',
-            'hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed'
+            'border-border rounded-md border px-3 py-1 text-xs font-medium',
+            'hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50'
           )}
         >
-          {slack.disconnecting ? 'Disconnecting…' : 'Disconnect'}
+          {slack.disconnecting ? t('integrations.disconnecting') : t('integrations.disconnect')}
         </button>
       ) : (
         <a
@@ -1106,12 +1164,12 @@ export function IntegrationsGrid({ integrations = INTEGRATIONS }: IntegrationsGr
             if (orgDisabled) e.preventDefault();
           }}
           className={cn(
-            'rounded-md border border-border bg-foreground px-3 py-1 text-xs font-medium text-background',
+            'border-border bg-foreground text-background rounded-md border px-3 py-1 text-xs font-medium',
             'hover:opacity-90',
             orgDisabled && 'pointer-events-none opacity-50'
           )}
         >
-          {slack.loading ? 'Checking…' : 'Connect'}
+          {slack.loading ? t('integrations.checking') : t('integrations.connect')}
         </a>
       );
 
@@ -1134,17 +1192,21 @@ export function IntegrationsGrid({ integrations = INTEGRATIONS }: IntegrationsGr
           type="search"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search integrations"
-          aria-label="Search integrations"
+          placeholder={t('integrations.search_placeholder')}
+          aria-label={t('integrations.search_placeholder')}
           className={cn(
-            'w-full rounded-lg border border-border bg-background px-3 py-2 text-sm',
+            'border-border bg-background w-full rounded-lg border px-3 py-2 text-sm',
             'placeholder:text-muted-foreground',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background'
+            'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2'
           )}
         />
       </div>
 
-      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Filter by category">
+      <div
+        className="flex flex-wrap gap-1.5"
+        role="tablist"
+        aria-label={t('integrations.filter_by_category')}
+      >
         {CATEGORY_FILTERS.map((chip) => {
           const isActive = activeCategory === chip.value;
           return (
@@ -1161,21 +1223,19 @@ export function IntegrationsGrid({ integrations = INTEGRATIONS }: IntegrationsGr
                   : 'border-border bg-background text-muted-foreground hover:text-foreground'
               )}
             >
-              {chip.label}
+              {t(chip.labelKey)}
             </button>
           );
         })}
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border bg-card/40 p-10 text-center">
-          <p className="text-sm font-medium text-foreground">No integrations match that search</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Try a different keyword or clear the category filter.
-          </p>
+        <div className="border-border bg-card/40 rounded-xl border border-dashed p-10 text-center">
+          <p className="text-foreground text-sm font-medium">{t('integrations.empty_title')}</p>
+          <p className="text-muted-foreground mt-1 text-xs">{t('integrations.empty_desc')}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((integration) => renderCard(integration))}
         </div>
       )}

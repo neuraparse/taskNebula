@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -20,13 +21,16 @@ export function ProjectSettingsDialog({
   open,
   onOpenChange,
 }: ProjectSettingsDialogProps) {
+  const t = useTranslations('projectsPages');
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex h-[90vh] max-h-[900px] w-[min(96vw,1100px)] max-w-none flex-col overflow-hidden p-0 sm:rounded-md">
-        <DialogHeader className="shrink-0 border-b border-border px-6 py-4">
-          <DialogTitle className="text-base font-semibold">Project settings</DialogTitle>
-          <DialogDescription className="text-xs text-muted-foreground">
-            Configure permissions, workflows, custom fields, and integrations.
+        <DialogHeader className="border-border shrink-0 border-b px-6 py-4">
+          <DialogTitle className="text-base font-semibold">
+            {t('settings_dialog_title')}
+          </DialogTitle>
+          <DialogDescription className="text-muted-foreground text-xs">
+            {t('settings_dialog_description')}
           </DialogDescription>
         </DialogHeader>
         <div className="flex min-h-0 flex-1 flex-col">

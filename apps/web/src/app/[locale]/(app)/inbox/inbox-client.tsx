@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import {
   Bell,
   Bot,
@@ -28,45 +29,32 @@ import {
   type InboxNotificationType,
 } from '@/lib/hooks/use-inbox';
 
-const ACTOR_CHIPS: { key: InboxActorType | 'all'; label: string; icon: typeof Bell }[] = [
-  { key: 'all', label: 'All', icon: InboxIcon },
-  { key: 'user', label: 'People', icon: Bell },
-  { key: 'agent', label: 'Agents', icon: Bot },
-  { key: 'webhook', label: 'Webhooks', icon: Webhook },
-  { key: 'system', label: 'System', icon: Zap },
+const ACTOR_CHIPS: { key: InboxActorType | 'all'; labelKey: string; icon: typeof Bell }[] = [
+  { key: 'all', labelKey: 'inbox_actor_all', icon: InboxIcon },
+  { key: 'user', labelKey: 'inbox_actor_people', icon: Bell },
+  { key: 'agent', labelKey: 'inbox_actor_agents', icon: Bot },
+  { key: 'webhook', labelKey: 'inbox_actor_webhooks', icon: Webhook },
+  { key: 'system', labelKey: 'inbox_actor_system', icon: Zap },
 ];
 
-const TYPE_CHIPS: { key: InboxNotificationType | 'all'; label: string }[] = [
-  { key: 'all', label: 'Any type' },
-  { key: 'mention', label: 'Mentions' },
-  { key: 'assignment', label: 'Assignments' },
-  { key: 'comment', label: 'Comments' },
-  { key: 'status', label: 'Status changes' },
-  { key: 'due', label: 'Due / sprint' },
+const TYPE_CHIPS: { key: InboxNotificationType | 'all'; labelKey: string }[] = [
+  { key: 'all', labelKey: 'inbox_type_all' },
+  { key: 'mention', labelKey: 'inbox_type_mention' },
+  { key: 'assignment', labelKey: 'inbox_type_assignment' },
+  { key: 'comment', labelKey: 'inbox_type_comment' },
+  { key: 'status', labelKey: 'inbox_type_status' },
+  { key: 'due', labelKey: 'inbox_type_due' },
 ];
 
-const SNOOZE_PRESETS: { label: string; offsetMs: number }[] = [
-  { label: '1 hour', offsetMs: 60 * 60 * 1000 },
-  { label: '4 hours', offsetMs: 4 * 60 * 60 * 1000 },
-  { label: 'Tomorrow', offsetMs: 24 * 60 * 60 * 1000 },
-  { label: 'Next week', offsetMs: 7 * 24 * 60 * 60 * 1000 },
+const SNOOZE_PRESETS: { labelKey: string; offsetMs: number }[] = [
+  { labelKey: 'inbox_snooze_1_hour', offsetMs: 60 * 60 * 1000 },
+  { labelKey: 'inbox_snooze_4_hours', offsetMs: 4 * 60 * 60 * 1000 },
+  { labelKey: 'inbox_snooze_tomorrow', offsetMs: 24 * 60 * 60 * 1000 },
+  { labelKey: 'inbox_snooze_next_week', offsetMs: 7 * 24 * 60 * 60 * 1000 },
 ];
 
 function getInitial(name: string | null | undefined, email: string | null | undefined) {
   return (name || email || '?')[0]?.toUpperCase() ?? '?';
-}
-
-function actorTypeLabel(actorType: InboxActorType): string {
-  switch (actorType) {
-    case 'agent':
-      return 'Agent';
-    case 'webhook':
-      return 'Webhook';
-    case 'system':
-      return 'System';
-    default:
-      return '';
-  }
 }
 
 function InboxRow({
@@ -80,12 +68,25 @@ function InboxRow({
   onSnooze: (id: string, untilIso: string | null) => void;
   isPending: boolean;
 }) {
+  const t = useTranslations('pagesHome');
   const [snoozeOpen, setSnoozeOpen] = useState(false);
+  const actorTypeLabel = (actorType: InboxActorType): string => {
+    switch (actorType) {
+      case 'agent':
+        return t('inbox_actor_type_agent');
+      case 'webhook':
+        return t('inbox_actor_type_webhook');
+      case 'system':
+        return t('inbox_actor_type_system');
+      default:
+        return '';
+    }
+  };
   const actorName =
     item.actor?.name ||
     item.actor?.email?.split('@')[0] ||
     actorTypeLabel(item.actorType) ||
-    'Someone';
+    t('inbox_actor_fallback');
   const isSnoozed = !!item.snoozedUntil && new Date(item.snoozedUntil).getTime() > Date.now();
   const issueHref = item.issue ? `/issues/${item.issue.id}` : null;
 
@@ -159,7 +160,7 @@ function InboxRow({
         {isSnoozed && (
           <p className="bg-muted/60 text-muted-foreground mt-1 inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[10px]">
             <Clock className="h-3 w-3" />
-            Snoozed until {new Date(item.snoozedUntil!).toLocaleString()}
+            {t('inbox_snoozed_until', { date: new Date(item.snoozedUntil!).toLocaleString() })}
           </p>
         )}
       </div>
@@ -172,10 +173,10 @@ function InboxRow({
             className="h-6 px-2 text-[11px]"
             onClick={() => onMarkRead(item.id)}
             disabled={isPending}
-            aria-label="Mark as read"
+            aria-label={t('inbox_mark_as_read')}
           >
             <CheckCheck className="mr-1 h-3 w-3" />
-            Read
+            {t('inbox_read')}
           </Button>
         )}
         <div className="relative">
@@ -186,10 +187,10 @@ function InboxRow({
             onClick={() => setSnoozeOpen((v) => !v)}
             aria-haspopup="menu"
             aria-expanded={snoozeOpen}
-            aria-label="Snooze"
+            aria-label={t('inbox_snooze')}
           >
             <Clock className="mr-1 h-3 w-3" />
-            Snooze
+            {t('inbox_snooze')}
           </Button>
           {snoozeOpen && (
             <div
@@ -198,13 +199,13 @@ function InboxRow({
             >
               {SNOOZE_PRESETS.map((preset) => (
                 <button
-                  key={preset.label}
+                  key={preset.labelKey}
                   type="button"
                   role="menuitem"
                   onClick={() => handleSnoozeClick(preset.offsetMs)}
                   className="hover:bg-accent block w-full rounded-sm px-2 py-1 text-left text-xs"
                 >
-                  {preset.label}
+                  {t(preset.labelKey)}
                 </button>
               ))}
               {isSnoozed && (
@@ -219,7 +220,7 @@ function InboxRow({
                     }}
                     className="hover:bg-accent block w-full rounded-sm px-2 py-1 text-left text-xs"
                   >
-                    Unsnooze
+                    {t('inbox_unsnooze')}
                   </button>
                 </>
               )}
@@ -232,6 +233,7 @@ function InboxRow({
 }
 
 export function InboxPageClient() {
+  const t = useTranslations('pagesHome');
   const [actorChip, setActorChip] = useState<InboxActorType | 'all'>('all');
   const [typeChip, setTypeChip] = useState<InboxNotificationType | 'all'>('all');
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
@@ -261,11 +263,9 @@ export function InboxPageClient() {
         <div>
           <h1 className="text-foreground flex items-center gap-2 text-xl font-semibold">
             <InboxIcon className="h-5 w-5" />
-            Inbox
+            {t('inbox_title')}
           </h1>
-          <p className="text-muted-foreground text-xs">
-            Mentions, agent runs, webhooks and system events — unified.
-          </p>
+          <p className="text-muted-foreground text-xs">{t('inbox_subtitle')}</p>
         </div>
         <Button
           size="sm"
@@ -274,14 +274,14 @@ export function InboxPageClient() {
           disabled={markAllRead.isPending || unreadVisible === 0}
         >
           <CheckCheck className="mr-1 h-3.5 w-3.5" />
-          Mark all read
+          {t('inbox_mark_all_read')}
         </Button>
       </div>
 
       <div
         className="border-border flex flex-wrap items-center gap-1.5 border-b px-6 py-3"
         role="toolbar"
-        aria-label="Filter chips"
+        aria-label={t('inbox_filter_chips')}
       >
         {ACTOR_CHIPS.map((chip) => {
           const Icon = chip.icon;
@@ -303,7 +303,7 @@ export function InboxPageClient() {
               data-active={active || undefined}
             >
               <Icon className="h-3 w-3" />
-              {chip.label}
+              {t(chip.labelKey)}
             </button>
           );
         })}
@@ -326,7 +326,7 @@ export function InboxPageClient() {
               data-chip={`type-${chip.key}`}
               data-active={active || undefined}
             >
-              {chip.label}
+              {t(chip.labelKey)}
             </button>
           );
         })}
@@ -343,7 +343,7 @@ export function InboxPageClient() {
               : 'bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground'
           )}
         >
-          Unread only
+          {t('inbox_unread_only')}
         </button>
         <button
           type="button"
@@ -357,7 +357,7 @@ export function InboxPageClient() {
               : 'bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground'
           )}
         >
-          Snoozed
+          {t('inbox_snoozed')}
         </button>
       </div>
 
@@ -365,20 +365,17 @@ export function InboxPageClient() {
         {isLoading ? (
           <div className="text-muted-foreground flex h-full items-center justify-center py-20">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Loading inbox…
+            {t('inbox_loading')}
           </div>
         ) : isError ? (
           <div className="text-destructive flex h-full items-center justify-center py-20">
-            Failed to load inbox. Refresh to try again.
+            {t('inbox_load_error')}
           </div>
         ) : items.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 py-20 text-center">
             <Sparkles className="text-muted-foreground h-6 w-6" />
-            <p className="text-foreground text-sm font-medium">Nothing here</p>
-            <p className="text-muted-foreground max-w-xs text-xs">
-              Adjust the filter chips above, or check back later — agent and webhook activity will
-              land here as it happens.
-            </p>
+            <p className="text-foreground text-sm font-medium">{t('inbox_empty_title')}</p>
+            <p className="text-muted-foreground max-w-xs text-xs">{t('inbox_empty_description')}</p>
           </div>
         ) : (
           <ul role="list">

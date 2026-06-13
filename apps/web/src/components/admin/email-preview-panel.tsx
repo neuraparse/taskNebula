@@ -11,14 +11,9 @@
  */
 
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -47,6 +42,7 @@ const TEMPLATES: ReadonlyArray<TemplateOption> = [
 ];
 
 export function EmailPreviewPanel() {
+  const t = useTranslations('adminPanels');
   const { toast } = useToast();
   const [selected, setSelected] = useState<string>('verify_email');
   const [sending, setSending] = useState(false);
@@ -55,11 +51,14 @@ export function EmailPreviewPanel() {
   // the admin picks a different template.
   const previewUrl = useMemo(
     () => `/api/admin/email-preview?template=${encodeURIComponent(selected)}`,
-    [selected],
+    [selected]
   );
 
-  const selectedLabel =
-    TEMPLATES.find((t) => t.value === selected)?.label || selected;
+  const templateLabel = (value: string) => t(`emailPreview.templates.${value}`);
+
+  const selectedLabel = TEMPLATES.some((tpl) => tpl.value === selected)
+    ? templateLabel(selected)
+    : selected;
 
   async function handleSendTest() {
     setSending(true);
@@ -78,19 +77,22 @@ export function EmailPreviewPanel() {
       };
       if (!res.ok || !data.success) {
         toast({
-          title: 'SMTP test failed',
+          title: t('emailPreview.smtpTestFailed'),
           description: data.error || `HTTP ${res.status}`,
           variant: 'destructive',
         });
         return;
       }
       toast({
-        title: 'SMTP test sent',
-        description: `Sent via ${data.source || 'configured SMTP'} to ${data.recipient || 'admin email'}.`,
+        title: t('emailPreview.smtpTestSent'),
+        description: t('emailPreview.smtpTestSentDescription', {
+          source: data.source || t('emailPreview.configuredSmtp'),
+          recipient: data.recipient || t('emailPreview.adminEmail'),
+        }),
       });
     } catch (err) {
       toast({
-        title: 'SMTP test failed',
+        title: t('emailPreview.smtpTestFailed'),
         description: err instanceof Error ? err.message : String(err),
         variant: 'destructive',
       });
@@ -106,30 +108,25 @@ export function EmailPreviewPanel() {
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2 text-base">
               <Mail className="h-4 w-4" />
-              Email preview
+              {t('emailPreview.title')}
             </CardTitle>
-            <CardDescription>
-              Render any TaskNebula transactional email with sample variables.
-              Diagnostic only — no emails are sent from this view.
-            </CardDescription>
+            <CardDescription>{t('emailPreview.description')}</CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap items-end gap-3">
-          <div className="flex-1 min-w-[240px] space-y-1.5">
-            <Label htmlFor="email-preview-template">Template</Label>
+          <div className="min-w-[240px] flex-1 space-y-1.5">
+            <Label htmlFor="email-preview-template">{t('emailPreview.template')}</Label>
             <Select value={selected} onValueChange={setSelected}>
               <SelectTrigger id="email-preview-template" className="w-full">
-                <SelectValue placeholder="Pick a template" />
+                <SelectValue placeholder={t('emailPreview.pickTemplate')} />
               </SelectTrigger>
               <SelectContent>
-                {TEMPLATES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      {t.value}
-                    </span>
+                {TEMPLATES.map((tpl) => (
+                  <SelectItem key={tpl.value} value={tpl.value}>
+                    {templateLabel(tpl.value)}
+                    <span className="text-muted-foreground ml-2 text-xs">{tpl.value}</span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -143,43 +140,43 @@ export function EmailPreviewPanel() {
               size="sm"
               onClick={() => window.open(previewUrl, '_blank', 'noopener')}
             >
-              <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-              Open in new tab
+              <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+              {t('emailPreview.openInNewTab')}
             </Button>
             <Button
               type="button"
               size="sm"
               onClick={handleSendTest}
               disabled={sending}
-              title="Send the generic SMTP test email to your admin address (not the previewed template — the /smtp/test endpoint only supports a fixed test message)."
+              title={t('emailPreview.sendSmtpTestTitle')}
             >
               {sending ? (
-                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Send className="h-3.5 w-3.5 mr-1.5" />
+                <Send className="mr-1.5 h-3.5 w-3.5" />
               )}
-              Send SMTP test
+              {t('emailPreview.sendSmtpTest')}
             </Button>
           </div>
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          Previewing <span className="font-mono text-foreground">{selected}</span>
+        <p className="text-muted-foreground text-xs">
+          {t('emailPreview.previewing')}{' '}
+          <span className="text-foreground font-mono">{selected}</span>
           {' — '}
-          {selectedLabel}. The iframe below renders the exact HTML the
-          recipient would see (sandboxed; external links disabled).
+          {t('emailPreview.previewingDetail', { label: selectedLabel })}
         </p>
 
-        <div className="rounded-md border bg-muted/30 overflow-hidden">
+        <div className="bg-muted/30 overflow-hidden rounded-md border">
           <iframe
             // Key on URL forces a fresh load when the template changes.
             key={previewUrl}
             src={previewUrl}
-            title={`Email preview: ${selectedLabel}`}
+            title={t('emailPreview.iframeTitle', { label: selectedLabel })}
             // Sandbox: no script execution, no top navigation, but allow
             // same-origin so the iframe can render our HTML normally.
             sandbox="allow-same-origin"
-            className="w-full h-[720px] bg-white"
+            className="h-[720px] w-full bg-white"
           />
         </div>
       </CardContent>

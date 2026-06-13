@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Building2, UserPlus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TeamMembersList, type TeamMemberRow } from './team-members-list';
@@ -12,10 +13,10 @@ import { useOrganizationMembers } from '@/lib/hooks/use-members';
 const TAB_VALUES = ['members', 'teamspaces', 'invites'] as const;
 type TabValue = (typeof TAB_VALUES)[number];
 
-const TAB_ITEMS: { value: TabValue; label: string; icon: typeof Users }[] = [
-  { value: 'members', label: 'Members', icon: Users },
-  { value: 'teamspaces', label: 'Teamspaces', icon: Building2 },
-  { value: 'invites', label: 'Pending invites', icon: UserPlus },
+const TAB_ITEMS: { value: TabValue; labelKey: string; icon: typeof Users }[] = [
+  { value: 'members', labelKey: 'team.tabs.members', icon: Users },
+  { value: 'teamspaces', labelKey: 'team.tabs.teamspaces', icon: Building2 },
+  { value: 'invites', labelKey: 'team.tabs.invites', icon: UserPlus },
 ];
 
 export interface TeamPageClientProps {
@@ -33,6 +34,7 @@ export function TeamPageClient({
   canManageTeamspaces,
   initialMembers,
 }: TeamPageClientProps) {
+  const t = useTranslations('pagesWork');
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -85,24 +87,24 @@ export function TeamPageClient({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="border-b bg-background px-6 py-4">
+      <div className="bg-background border-b px-6 py-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold tracking-tight">Team</h1>
-            <p className="text-sm text-muted-foreground">
-              {liveMembers.length} member{liveMembers.length !== 1 ? 's' : ''}
+            <h1 className="text-xl font-semibold tracking-tight">{t('team.title')}</h1>
+            <p className="text-muted-foreground text-sm">
+              {t('team.memberCount', { count: liveMembers.length })}
             </p>
           </div>
           <Link href="/settings?tab=members">
-            <Button size="sm">Invite member</Button>
+            <Button size="sm">{t('team.inviteMember')}</Button>
           </Link>
         </div>
         <div
           role="tablist"
-          aria-label="Team sections"
+          aria-label={t('team.sectionsLabel')}
           className="mt-3 flex gap-1 overflow-x-auto"
         >
-          {TAB_ITEMS.map(({ value, label, icon: Icon }) => (
+          {TAB_ITEMS.map(({ value, labelKey, icon: Icon }) => (
             <button
               key={value}
               type="button"
@@ -113,7 +115,7 @@ export function TeamPageClient({
               className="row-interactive shrink-0 gap-1.5 px-3 py-1.5 text-sm"
             >
               <Icon className="h-3.5 w-3.5" />
-              <span>{label}</span>
+              <span>{t(labelKey)}</span>
             </button>
           ))}
         </div>
@@ -122,10 +124,7 @@ export function TeamPageClient({
       <div className="min-h-0 flex-1 overflow-auto p-6">
         {activeTab === 'members' && <TeamMembersList members={liveMembers} />}
         {activeTab === 'teamspaces' && (
-          <TeamspaceManager
-            organizationId={organizationId}
-            canManage={canManageTeamspaces}
-          />
+          <TeamspaceManager organizationId={organizationId} canManage={canManageTeamspaces} />
         )}
         {activeTab === 'invites' && <InvitesPanel invites={pendingInvites} />}
       </div>
@@ -144,14 +143,15 @@ interface InvitesPanelProps {
 }
 
 function InvitesPanel({ invites }: InvitesPanelProps) {
+  const t = useTranslations('pagesWork');
   if (invites.length === 0) {
     return (
-      <div className="surface-card p-8 text-center space-y-3 animate-fade-up">
-        <UserPlus className="mx-auto h-8 w-8 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">No pending invitations.</p>
+      <div className="surface-card animate-fade-up space-y-3 p-8 text-center">
+        <UserPlus className="text-muted-foreground mx-auto h-8 w-8" />
+        <p className="text-muted-foreground text-sm">{t('team.invites.empty')}</p>
         <Link href="/settings?tab=members">
           <Button size="sm" variant="outline">
-            Invite member
+            {t('team.inviteMember')}
           </Button>
         </Link>
       </div>
@@ -161,20 +161,17 @@ function InvitesPanel({ invites }: InvitesPanelProps) {
   return (
     <div className="space-y-2">
       {invites.map((invite) => (
-        <div
-          key={invite.id}
-          className="surface-card rounded-lg flex items-center gap-3 px-4 py-3"
-        >
-          <UserPlus className="h-5 w-5 shrink-0 text-muted-foreground" />
+        <div key={invite.id} className="surface-card flex items-center gap-3 rounded-lg px-4 py-3">
+          <UserPlus className="text-muted-foreground h-5 w-5 shrink-0" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-foreground">
-              {invite.email || invite.name || 'Invited user'}
+            <p className="text-foreground truncate text-sm font-medium">
+              {invite.email || invite.name || t('team.invites.invitedUser')}
             </p>
-            <p className="truncate text-xs text-muted-foreground capitalize">
-              {invite.role} · Pending
+            <p className="text-muted-foreground truncate text-xs capitalize">
+              {t('team.invites.rolePending', { role: invite.role })}
             </p>
           </div>
-          <span className="chip">Invited</span>
+          <span className="chip">{t('team.invites.invited')}</span>
         </div>
       ))}
     </div>

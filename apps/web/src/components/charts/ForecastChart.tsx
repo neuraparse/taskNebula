@@ -5,6 +5,7 @@
  * sprints-to-ship. p50/p80/p95 reference lines are highlighted.
  */
 
+import { useTranslations } from 'next-intl';
 import {
   Bar,
   BarChart,
@@ -31,6 +32,7 @@ export function ForecastChart({
   p95Sprints,
   height = 200,
 }: ForecastChartProps) {
+  const t = useTranslations('charts');
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={histogram} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -54,8 +56,8 @@ export function ForecastChart({
             borderRadius: 8,
             fontSize: 12,
           }}
-          formatter={(v: number) => [`${v} trajectories`, 'Count']}
-          labelFormatter={(l) => `${l} sprints`}
+          formatter={(v: number) => [t('trajectoriesCount', { count: v }), t('count')]}
+          labelFormatter={(l) => t('sprintsLabel', { count: Number(l) })}
         />
         <Bar dataKey="count" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
         {typeof p50Sprints === 'number' ? (

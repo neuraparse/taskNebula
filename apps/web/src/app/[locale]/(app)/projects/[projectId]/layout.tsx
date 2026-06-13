@@ -3,6 +3,7 @@
 import { use, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -28,18 +29,19 @@ interface ProjectLayoutProps {
 }
 
 const tabs = [
-  { name: 'Views', href: 'views', icon: PanelsTopLeft },
-  { name: 'Board', href: 'board', icon: LayoutGrid },
-  { name: 'Backlog', href: 'backlog', icon: List },
-  { name: 'Sprints', href: 'sprints', icon: Timer },
-  { name: 'Modules', href: 'modules', icon: Layers },
-  { name: 'Docs', href: 'docs', icon: BookOpenText },
-  { name: 'Chat', href: 'chat', icon: MessagesSquare },
-  { name: 'Analytics', href: 'analytics', icon: BarChart3 },
-];
+  { labelKey: 'tabViews', href: 'views', icon: PanelsTopLeft },
+  { labelKey: 'tabBoard', href: 'board', icon: LayoutGrid },
+  { labelKey: 'tabBacklog', href: 'backlog', icon: List },
+  { labelKey: 'tabSprints', href: 'sprints', icon: Timer },
+  { labelKey: 'tabModules', href: 'modules', icon: Layers },
+  { labelKey: 'tabDocs', href: 'docs', icon: BookOpenText },
+  { labelKey: 'tabChat', href: 'chat', icon: MessagesSquare },
+  { labelKey: 'tabAnalytics', href: 'analytics', icon: BarChart3 },
+] as const;
 
 export default function ProjectLayout({ children, params }: ProjectLayoutProps) {
   const { projectId } = use(params);
+  const t = useTranslations('pagesProjects');
   const pathname = usePathname();
   const router = useRouter();
   const { permissions } = useProjectPermissions(projectId);
@@ -85,12 +87,12 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
         <div className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/60 shrink-0 border-b backdrop-blur">
           <div className="flex items-center gap-3 px-4 py-1.5">
             {/* Breadcrumb: Projects › name */}
-            <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1 text-xs">
+            <nav aria-label={t('breadcrumb')} className="flex min-w-0 items-center gap-1 text-xs">
               <Link
                 href="/projects"
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
-                Projects
+                {t('title')}
               </Link>
               <ChevronRight className="text-muted-foreground/50 h-3 w-3 shrink-0" />
               <span className="text-foreground truncate font-medium">{projectName}</span>
@@ -111,23 +113,24 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
             >
               <TabsList
                 className="h-auto max-w-full justify-start gap-0.5 overflow-x-auto bg-transparent p-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                aria-label="Project sections"
+                aria-label={t('sections')}
               >
                 {visibleTabs.map((tab) => {
                   const Icon = tab.icon;
+                  const tabLabel = t(tab.labelKey);
                   return (
                     <Tooltip key={tab.href}>
                       <TooltipTrigger asChild>
                         <TabsTrigger
                           value={tab.href}
-                          aria-label={tab.name}
+                          aria-label={tabLabel}
                           className="data-[state=active]:bg-accent/60 h-7 w-7 shrink-0 rounded-md px-0"
                         >
                           <Icon className="h-4 w-4" />
                         </TabsTrigger>
                       </TooltipTrigger>
                       <TooltipContent side="bottom" className="text-xs">
-                        {tab.name}
+                        {tabLabel}
                       </TooltipContent>
                     </Tooltip>
                   );
@@ -147,7 +150,7 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
                     </Link>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="text-xs">
-                    Active sprint · {activeSprint.issueCount ?? 0} issues
+                    {t('activeSprintTooltip', { count: activeSprint.issueCount ?? 0 })}
                   </TooltipContent>
                 </Tooltip>
               ) : null}
@@ -159,7 +162,7 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
                       type="button"
                       variant="ghost"
                       size="icon"
-                      aria-label="Project settings"
+                      aria-label={t('projectSettings')}
                       onClick={() => setIsSettingsOpen(true)}
                       className="h-7 w-7"
                     >
@@ -167,7 +170,7 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="text-xs">
-                    Settings
+                    {t('settings')}
                   </TooltipContent>
                 </Tooltip>
               )}

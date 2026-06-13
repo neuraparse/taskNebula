@@ -8,6 +8,7 @@
  * data-source-agnostic: pass any { date, ideal, actual } series.
  */
 
+import { useTranslations } from 'next-intl';
 import {
   Area,
   CartesianGrid,
@@ -32,6 +33,7 @@ export interface BurndownChartProps {
 }
 
 export function BurndownChart({ data, height = 280 }: BurndownChartProps) {
+  const t = useTranslations('charts');
   return (
     <ResponsiveContainer width="100%" height={height}>
       <ComposedChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -65,7 +67,7 @@ export function BurndownChart({ data, height = 280 }: BurndownChartProps) {
         <Line
           type="monotone"
           dataKey="ideal"
-          name="Ideal"
+          name={t('ideal')}
           stroke="hsl(var(--muted-foreground))"
           strokeDasharray="4 4"
           strokeWidth={1.5}
@@ -74,7 +76,7 @@ export function BurndownChart({ data, height = 280 }: BurndownChartProps) {
         <Area
           type="monotone"
           dataKey="actual"
-          name="Actual"
+          name={t('actual')}
           stroke="hsl(var(--primary))"
           strokeWidth={2}
           fill="url(#burndown-actual)"

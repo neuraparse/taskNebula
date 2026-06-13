@@ -11,10 +11,14 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { db, organizationMembers, eq } from '@tasknebula/db';
+import { getTranslations } from 'next-intl/server';
 import { requirePermission } from '@/lib/auth/permissions';
 import { AuditLogStreamingClient } from './audit-log-streaming-client';
 
-export const metadata = { title: 'Audit log streaming · TaskNebula' };
+export async function generateMetadata() {
+  const t = await getTranslations('pagesSettings');
+  return { title: t('auditStreaming.metaTitle') };
+}
 export const dynamic = 'force-dynamic';
 
 export default async function AuditLogStreamingPage() {
@@ -35,14 +39,13 @@ export default async function AuditLogStreamingPage() {
 
   await requirePermission(primaryOrg.organizationId, 'org:settings');
 
+  const t = await getTranslations('pagesSettings');
+
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-8 lg:px-8">
       <header className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight">Audit log streaming</h1>
-        <p className="text-muted-foreground mt-1.5 text-sm">
-          Forward every audit event to your SIEM. Supports HMAC-signed webhooks, Splunk HEC, Datadog
-          Logs, and S3 (JSONL).
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('auditStreaming.title')}</h1>
+        <p className="text-muted-foreground mt-1.5 text-sm">{t('auditStreaming.subtitle')}</p>
       </header>
       <AuditLogStreamingClient organizationId={primaryOrg.organizationId} />
     </div>

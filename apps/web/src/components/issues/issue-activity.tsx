@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -71,6 +72,7 @@ function getAgentName(item: MaybeAgentRecord): string {
 }
 
 export function IssueActivity({ issueId }: { issueId: string }) {
+  const t = useTranslations('issuePanels');
   const [newComment, setNewComment] = useState('');
   const [mentionedUsers, setMentionedUsers] = useState<string[]>([]);
   const [showAllComments, setShowAllComments] = useState(false);
@@ -107,11 +109,13 @@ export function IssueActivity({ issueId }: { issueId: string }) {
         <TabsList className="mb-4 w-fit">
           <TabsTrigger value="comments" className="gap-1.5 text-xs">
             <MessageSquare className="h-3.5 w-3.5" />
-            Comments {comments && comments.length > 0 ? `(${comments.length})` : ''}
+            {comments && comments.length > 0
+              ? t('activity.comments_with_count', { count: comments.length })
+              : t('activity.comments')}
           </TabsTrigger>
           <TabsTrigger value="history" className="gap-1.5 text-xs">
             <History className="h-3.5 w-3.5" />
-            History
+            {t('activity.history')}
           </TabsTrigger>
         </TabsList>
 
@@ -138,13 +142,15 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                   className="text-muted-foreground hover:text-foreground text-xs transition-colors duration-200"
                 >
                   {showAllComments
-                    ? 'Show fewer'
-                    : `Show ${comments.length - COMMENT_LIMIT} more comments`}
+                    ? t('activity.show_fewer')
+                    : t('activity.show_more_comments', {
+                        count: comments.length - COMMENT_LIMIT,
+                      })}
                 </button>
               )}
             </div>
           ) : (
-            <p className="text-muted-foreground py-4 text-sm">No comments yet</p>
+            <p className="text-muted-foreground py-4 text-sm">{t('activity.no_comments')}</p>
           )}
 
           {/* Comment Input */}
@@ -158,7 +164,7 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                     setMentionedUsers([...mentionedUsers, userId]);
                   }
                 }}
-                placeholder="Write a comment... (@ to mention)"
+                placeholder={t('activity.comment_placeholder')}
                 organizationId={issue.organizationId}
                 className="min-h-[72px] text-sm"
               />
@@ -171,7 +177,7 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                 disabled={createComment.isPending || !newComment.trim()}
               >
                 {createComment.isPending && <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />}
-                Comment
+                {t('activity.comment_action')}
               </Button>
             </div>
           </div>
@@ -215,7 +221,8 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                 }
 
                 return visibleActivities.map((activity, idx) => {
-                  const userName = activity.user?.name || activity.user?.email || 'Unknown';
+                  const userName =
+                    activity.user?.name || activity.user?.email || t('activity.unknown_user');
                   const actorIsAgent = isAgentActor(activity.user as MaybeAgentActor);
                   const timeAgo = formatDistanceToNow(new Date(activity.createdAt), {
                     addSuffix: true,
@@ -233,7 +240,7 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                   if (isAssignment && assignmentTargetIsAgent) {
                     activityNode = (
                       <span>
-                        {userName} assigned to{' '}
+                        {t('activity.assigned_to', { name: userName })}{' '}
                         <span className="inline-flex items-center gap-1 rounded-md bg-violet-100 px-1.5 py-0.5 text-[11.5px] font-medium text-violet-700">
                           <Bot className="h-3 w-3" />
                           {activity.newValue}
@@ -243,16 +250,24 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                   } else {
                     let activityText = '';
                     if (activity.type === 'created') {
-                      activityText = 'Issue created';
+                      activityText = t('activity.issue_created');
                     } else if (activity.type === 'updated' && activity.field) {
-                      activityText = `${activity.field} changed`;
                       if (activity.oldValue && activity.newValue) {
-                        activityText += ` from "${activity.oldValue}" to "${activity.newValue}"`;
+                        activityText = t('activity.field_changed_from_to', {
+                          field: activity.field,
+                          oldValue: activity.oldValue,
+                          newValue: activity.newValue,
+                        });
                       } else if (activity.newValue) {
-                        activityText += ` to "${activity.newValue}"`;
+                        activityText = t('activity.field_changed_to', {
+                          field: activity.field,
+                          newValue: activity.newValue,
+                        });
+                      } else {
+                        activityText = t('activity.field_changed', { field: activity.field });
                       }
                     } else if (activity.type === 'commented') {
-                      activityText = 'Added a comment';
+                      activityText = t('activity.added_comment');
                     } else {
                       activityText = activity.type;
                     }
@@ -263,7 +278,7 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                           {userName}
                           {actorIsAgent && (
                             <span className="ml-1 rounded-full bg-violet-100 px-1.5 align-middle text-[9px] font-semibold tracking-wider text-violet-700">
-                              AGENT
+                              {t('activity.agent_badge')}
                             </span>
                           )}
                           {' · '}
@@ -290,12 +305,14 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                           <div className="flex items-center gap-2">
                             <Bot className="h-3.5 w-3.5 text-violet-500" />
                             <span>
-                              Connected with{' '}
+                              {t('activity.connected_with')}{' '}
                               <span className="text-foreground font-medium">
                                 {connectedAgentName}
                               </span>
                             </span>
-                            <span className="text-amber-600">• Awaiting response</span>
+                            <span className="text-amber-600">
+                              {t('activity.awaiting_response')}
+                            </span>
                           </div>
                           <button
                             type="button"
@@ -308,7 +325,7 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                             }}
                             className="text-foreground font-medium hover:underline"
                           >
-                            Open sidecar
+                            {t('activity.open_sidecar')}
                           </button>
                         </div>
                       )}
@@ -323,13 +340,13 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                   className="text-muted-foreground hover:text-foreground text-xs transition-colors duration-200"
                 >
                   {showAllActivity
-                    ? 'Show fewer'
-                    : `Show ${activities.length - ACTIVITY_LIMIT} more`}
+                    ? t('activity.show_fewer')
+                    : t('activity.show_more', { count: activities.length - ACTIVITY_LIMIT })}
                 </button>
               )}
             </div>
           ) : (
-            <p className="text-muted-foreground py-4 text-sm">No activity yet</p>
+            <p className="text-muted-foreground py-4 text-sm">{t('activity.no_activity')}</p>
           )}
         </TabsContent>
       </Tabs>

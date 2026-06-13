@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -48,6 +49,8 @@ export function CreateCustomFieldDialog({
   projectId,
   fieldToEdit,
 }: CreateCustomFieldDialogProps) {
+  const t = useTranslations('projectConfig');
+  const tActions = useTranslations('actions');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState<string>('text');
@@ -111,82 +114,83 @@ export function CreateCustomFieldDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px] max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-[480px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>{isEditMode ? 'Edit custom field' : 'Create custom field'}</DialogTitle>
+            <DialogTitle>
+              {isEditMode ? t('dialog_edit_title') : t('dialog_create_title')}
+            </DialogTitle>
             <DialogDescription>
-              {isEditMode
-                ? 'Update the field details used across your issues.'
-                : 'Add a new custom field to capture additional information.'}
+              {isEditMode ? t('dialog_edit_description') : t('dialog_create_description')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="name">
-                Field name <span className="text-destructive">*</span>
+                {t('field_name_label')} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Customer Name"
+                placeholder={t('field_name_placeholder')}
                 required
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="description">
-                Description <span className="font-normal text-muted-foreground">(optional)</span>
+                {t('description_label')}{' '}
+                <span className="text-muted-foreground font-normal">{t('optional_suffix')}</span>
               </Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Help text shown to users filling this field"
+                placeholder={t('description_placeholder')}
                 rows={2}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="type">
-                Field type <span className="text-destructive">*</span>
+                {t('field_type_label')} <span className="text-destructive">*</span>
               </Label>
               <Select value={type} onValueChange={setType} disabled={isEditMode}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="text">Text</SelectItem>
-                  <SelectItem value="number">Number</SelectItem>
-                  <SelectItem value="date">Date</SelectItem>
-                  <SelectItem value="select">Select (dropdown)</SelectItem>
-                  <SelectItem value="multi_select">Multi-select</SelectItem>
-                  <SelectItem value="checkbox">Checkbox</SelectItem>
-                  <SelectItem value="url">URL</SelectItem>
-                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="text">{t('field_type_text')}</SelectItem>
+                  <SelectItem value="number">{t('field_type_number')}</SelectItem>
+                  <SelectItem value="date">{t('field_type_date')}</SelectItem>
+                  <SelectItem value="select">{t('field_type_select_dropdown')}</SelectItem>
+                  <SelectItem value="multi_select">{t('field_type_multi_select')}</SelectItem>
+                  <SelectItem value="checkbox">{t('field_type_checkbox')}</SelectItem>
+                  <SelectItem value="url">{t('field_type_url')}</SelectItem>
+                  <SelectItem value="email">{t('field_type_email')}</SelectItem>
                 </SelectContent>
               </Select>
               {isEditMode && (
-                <p className="text-xs text-muted-foreground">Field type cannot be changed after creation.</p>
+                <p className="text-muted-foreground text-xs">{t('field_type_locked')}</p>
               )}
             </div>
 
             {showOptionsField && (
               <div className="space-y-2">
                 <Label htmlFor="options">
-                  Options <span className="text-destructive">*</span>
+                  {t('options_label')} <span className="text-destructive">*</span>
                 </Label>
                 <Textarea
                   id="options"
                   value={options}
                   onChange={(e) => setOptions(e.target.value)}
-                  placeholder={'Option 1\nOption 2\nOption 3'}
+                  placeholder={t('options_placeholder')}
                   rows={4}
                   required={showOptionsField}
                 />
-                <p className="text-xs text-muted-foreground">Enter each option on a new line.</p>
+                <p className="text-muted-foreground text-xs">{t('options_hint')}</p>
               </div>
             )}
 
@@ -196,17 +200,17 @@ export function CreateCustomFieldDialog({
                 checked={isRequired}
                 onCheckedChange={(checked) => setIsRequired(checked as boolean)}
               />
-              <span className="text-sm">Required field</span>
+              <span className="text-sm">{t('required_field')}</span>
             </label>
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {tActions('cancel')}
             </Button>
             <Button type="submit" disabled={isPending || !name}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isEditMode ? 'Save changes' : 'Create field'}
+              {isEditMode ? t('save_changes') : t('create_field')}
             </Button>
           </DialogFooter>
         </form>

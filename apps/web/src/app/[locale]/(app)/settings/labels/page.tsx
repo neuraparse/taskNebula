@@ -9,9 +9,13 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { db, organizationMembers } from '@tasknebula/db';
 import { eq } from 'drizzle-orm';
+import { getTranslations } from 'next-intl/server';
 import { LabelsSettingsClient } from '@/components/settings/labels-settings-client';
 
-export const metadata = { title: 'Labels · TaskNebula' };
+export async function generateMetadata() {
+  const t = await getTranslations('pagesSettings');
+  return { title: t('labels.metaTitle') };
+}
 
 export default async function LabelsSettingsPage() {
   const session = await auth();

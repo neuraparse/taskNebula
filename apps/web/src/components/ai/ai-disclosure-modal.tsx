@@ -12,6 +12,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Sparkles, ShieldCheck, ExternalLink, Loader2 } from 'lucide-react';
 import {
@@ -26,6 +27,7 @@ import { useAiDisclosure } from '@/lib/hooks/use-ai-disclosure';
 import { USER_FACING_AI_FEATURES } from '@/config/ai-model-cards';
 
 export function AiDisclosureModal() {
+  const t = useTranslations('aiFeatures');
   const { needsAcknowledgement, version, acknowledge } = useAiDisclosure();
   const [busy, setBusy] = useState(false);
   // Local open state so the dialog can close immediately after click while
@@ -60,17 +62,16 @@ export function AiDisclosureModal() {
         <DialogHeader className="shrink-0 px-6 pb-3 pt-6">
           <DialogTitle className="flex items-center gap-2 tracking-normal">
             <Sparkles className="text-primary h-4 w-4" />
-            You are about to interact with AI
+            {t('disclosure.title')}
           </DialogTitle>
           <DialogDescription className="text-zinc-300">
-            Some TaskNebula features use third-party AI models to generate text, suggestions, and
-            summaries. Before you continue, please read what that means for you.
+            {t('disclosure.description')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="custom-scrollbar min-h-0 flex-1 space-y-3 overflow-y-auto px-6 py-2 text-sm">
           <div className="space-y-2 rounded-md border border-white/10 bg-white/5 p-3">
-            <p className="font-medium text-zinc-100">What runs in your workspace</p>
+            <p className="font-medium text-zinc-100">{t('disclosure.whatRunsTitle')}</p>
             <ul className="list-disc space-y-1 pl-5 text-zinc-300">
               {USER_FACING_AI_FEATURES.map((f) => (
                 <li key={f.id}>
@@ -83,41 +84,42 @@ export function AiDisclosureModal() {
           <div className="space-y-1 rounded-md border border-white/10 bg-white/5 p-3">
             <p className="flex items-center gap-1.5 font-medium text-zinc-100">
               <ShieldCheck className="h-3.5 w-3.5" />
-              Your rights
+              {t('disclosure.rightsTitle')}
             </p>
             <ul className="list-disc space-y-1 pl-5 text-zinc-300">
               <li>
-                Every AI output is labelled <em>Generated with AI</em>.
+                {t.rich('disclosure.rightLabelled', {
+                  label: (chunks) => <em>{chunks}</em>,
+                })}
               </li>
-              <li>You can review and reject any AI suggestion before it is applied.</li>
-              <li>Workspace admins can disable any AI feature in Settings → AI Transparency.</li>
-              <li>
-                Inputs/outputs are retained per the model card retention policy and never sold.
-              </li>
+              <li>{t('disclosure.rightReview')}</li>
+              <li>{t('disclosure.rightDisable')}</li>
+              <li>{t('disclosure.rightRetention')}</li>
             </ul>
           </div>
 
           <p className="text-xs text-zinc-300">
-            Read the{' '}
-            <Link
-              href="/ai-model-cards"
-              target="_blank"
-              className="inline-flex items-center gap-0.5 underline hover:text-zinc-100"
-            >
-              full model cards
-              <ExternalLink className="h-3 w-3" />
-            </Link>{' '}
-            for each feature, including model identity, data sent, and retention.
+            {t.rich('disclosure.modelCardsLine', {
+              link: (chunks) => (
+                <Link
+                  href="/ai-model-cards"
+                  target="_blank"
+                  className="inline-flex items-center gap-0.5 underline hover:text-zinc-100"
+                >
+                  {chunks}
+                  <ExternalLink className="h-3 w-3" />
+                </Link>
+              ),
+            })}
           </p>
 
-          <p className="text-[10px] text-zinc-400">
-            Disclosure version {version}. Required by EU AI Act Article 50.
-          </p>
+          <p className="text-[10px] text-zinc-400">{t('disclosure.versionLine', { version })}</p>
         </div>
 
         <div className="flex shrink-0 items-center justify-end gap-2 border-t border-white/10 bg-zinc-950/30 px-6 py-4">
           <Button onClick={handleAck} disabled={busy} data-testid="ai-disclosure-ack">
-            {busy && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}I understand, continue
+            {busy && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+            {t('disclosure.acknowledge')}
           </Button>
         </div>
       </DialogContent>

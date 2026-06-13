@@ -4,6 +4,7 @@
  * VelocityChart — bars for completed work per sprint, with a running average.
  */
 
+import { useTranslations } from 'next-intl';
 import {
   Bar,
   CartesianGrid,
@@ -29,6 +30,7 @@ export interface VelocityChartProps {
 }
 
 export function VelocityChart({ data, averagePoints, height = 260 }: VelocityChartProps) {
+  const t = useTranslations('charts');
   return (
     <ResponsiveContainer width="100%" height={height}>
       <ComposedChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -55,13 +57,13 @@ export function VelocityChart({ data, averagePoints, height = 260 }: VelocityCha
         <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
         <Bar
           dataKey="completedPoints"
-          name="Points"
+          name={t('points')}
           fill="hsl(var(--primary))"
           radius={[4, 4, 0, 0]}
         />
         <Bar
           dataKey="completedIssues"
-          name="Issues"
+          name={t('issues')}
           fill="hsl(var(--accent-cyan, 215 80% 60%))"
           radius={[4, 4, 0, 0]}
         />
@@ -72,7 +74,7 @@ export function VelocityChart({ data, averagePoints, height = 260 }: VelocityCha
             stroke="hsl(var(--accent-emerald, 142 76% 45%))"
             strokeWidth={2}
             strokeDasharray="5 5"
-            name="Avg Points"
+            name={t('avgPoints')}
             dot={false}
           />
         ) : null}

@@ -1,6 +1,7 @@
 'use client';
 
 import { VelocityData } from '@/lib/hooks/use-analytics';
+import { useTranslations } from 'next-intl';
 import { Hash, Sparkles, TrendingUp, Zap } from 'lucide-react';
 import {
   Bar,
@@ -22,16 +23,16 @@ interface VelocityChartProps {
 function VelocityTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="surface-card px-3 py-2 text-xs space-y-1">
+    <div className="surface-card space-y-1 px-3 py-2 text-xs">
       <p className="text-muted-foreground font-medium">{label}</p>
       {payload.map((entry: any) => (
         <div key={entry.name} className="flex items-center gap-2">
           <span
-            className="h-1.5 w-1.5 rounded-full inline-block"
+            className="inline-block h-1.5 w-1.5 rounded-full"
             style={{ backgroundColor: entry.color }}
           />
           <span className="text-muted-foreground">{entry.name}:</span>
-          <span className="font-semibold text-foreground tabular-nums">{entry.value}</span>
+          <span className="text-foreground font-semibold tabular-nums">{entry.value}</span>
         </div>
       ))}
     </div>
@@ -57,14 +58,12 @@ function StatTile({
     <div className="animate-scale-in flex items-start gap-2.5">
       <span className={`icon-tile icon-tile-accent-${tone}`}>{icon}</span>
       <div className="min-w-0 flex-1">
-        <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+        <div className="text-muted-foreground text-[10px] font-medium uppercase tracking-wide">
           {label}
         </div>
         <div className="mt-0.5 flex items-baseline gap-1.5">
-          <span className="text-xl font-semibold tabular-nums text-foreground">{value}</span>
-          {trend ? (
-            <span className={`chip-${trend.tone} text-[10px]`}>{trend.value}</span>
-          ) : null}
+          <span className="text-foreground text-xl font-semibold tabular-nums">{value}</span>
+          {trend ? <span className={`chip-${trend.tone} text-[10px]`}>{trend.value}</span> : null}
         </div>
       </div>
     </div>
@@ -72,6 +71,7 @@ function StatTile({
 }
 
 export function VelocityChart({ data }: VelocityChartProps) {
+  const t = useTranslations('charts');
   const chartData = data.sprints.map((sprint) => ({
     name: sprint.sprintName,
     issues: sprint.completedIssues,
@@ -89,14 +89,12 @@ export function VelocityChart({ data }: VelocityChartProps) {
   const todayKey: string | null = latest?.sprintName ?? null;
 
   return (
-    <div className="surface-card animate-fade-up p-5 space-y-3">
+    <div className="surface-card animate-fade-up space-y-3 p-5">
       {/* Header */}
       <div className="space-y-1">
-        <span className="kicker">Team Performance</span>
-        <h3 className="text-base font-semibold tracking-tight text-foreground">Velocity</h3>
-        <p className="text-sm text-muted-foreground">
-          Completed issues and story points across recent sprints.
-        </p>
+        <span className="kicker">{t('teamPerformance')}</span>
+        <h3 className="text-foreground text-base font-semibold tracking-tight">{t('velocity')}</h3>
+        <p className="text-muted-foreground text-sm">{t('velocityDescription')}</p>
       </div>
 
       {/* Stat tiles */}
@@ -104,12 +102,14 @@ export function VelocityChart({ data }: VelocityChartProps) {
         <StatTile
           tone="blue"
           icon={<Hash className="h-3.5 w-3.5" />}
-          label="Last Issues"
+          label={t('lastIssues')}
           value={latestIssues}
           trend={
             Number.isFinite(issuesDelta)
               ? {
-                  value: `${issuesDelta >= 0 ? '+' : ''}${issuesDelta.toFixed(0)} vs avg`,
+                  value: t('vsAvg', {
+                    delta: `${issuesDelta >= 0 ? '+' : ''}${issuesDelta.toFixed(0)}`,
+                  }),
                   tone: issuesDelta >= 0 ? 'emerald' : 'rose',
                 }
               : undefined
@@ -118,12 +118,14 @@ export function VelocityChart({ data }: VelocityChartProps) {
         <StatTile
           tone="cyan"
           icon={<Zap className="h-3.5 w-3.5" />}
-          label="Last Points"
+          label={t('lastPoints')}
           value={latestPoints}
           trend={
             Number.isFinite(pointsDelta)
               ? {
-                  value: `${pointsDelta >= 0 ? '+' : ''}${pointsDelta.toFixed(0)} vs avg`,
+                  value: t('vsAvg', {
+                    delta: `${pointsDelta >= 0 ? '+' : ''}${pointsDelta.toFixed(0)}`,
+                  }),
                   tone: pointsDelta >= 0 ? 'emerald' : 'rose',
                 }
               : undefined
@@ -132,13 +134,13 @@ export function VelocityChart({ data }: VelocityChartProps) {
         <StatTile
           tone="emerald"
           icon={<TrendingUp className="h-3.5 w-3.5" />}
-          label="Avg Issues"
+          label={t('avgIssues')}
           value={avgIssues.toFixed(1)}
         />
         <StatTile
           tone="amber"
           icon={<Sparkles className="h-3.5 w-3.5" />}
-          label="Avg Points"
+          label={t('avgPoints')}
           value={avgPoints.toFixed(1)}
         />
       </div>
@@ -166,10 +168,7 @@ export function VelocityChart({ data }: VelocityChartProps) {
             tickLine={false}
           />
           <Tooltip content={<VelocityTooltip />} />
-          <Legend
-            wrapperStyle={{ paddingTop: 12, fontSize: 12 }}
-            iconType="circle"
-          />
+          <Legend wrapperStyle={{ paddingTop: 12, fontSize: 12 }} iconType="circle" />
           {todayKey ? (
             <ReferenceLine
               yAxisId="left"
@@ -178,7 +177,7 @@ export function VelocityChart({ data }: VelocityChartProps) {
               strokeDasharray="4 4"
               strokeWidth={1}
               label={{
-                value: 'Today',
+                value: t('today'),
                 position: 'top',
                 fontSize: 10,
                 fill: 'hsl(var(--muted-foreground))',
@@ -189,14 +188,14 @@ export function VelocityChart({ data }: VelocityChartProps) {
             yAxisId="left"
             dataKey="issues"
             fill="hsl(var(--primary))"
-            name="Completed Issues"
+            name={t('completedIssues')}
             radius={[3, 3, 0, 0]}
           />
           <Bar
             yAxisId="right"
             dataKey="points"
             fill="hsl(var(--accent-cyan))"
-            name="Story Points"
+            name={t('storyPoints')}
             radius={[3, 3, 0, 0]}
           />
           <Line
@@ -206,7 +205,7 @@ export function VelocityChart({ data }: VelocityChartProps) {
             stroke="hsl(var(--accent-emerald))"
             strokeDasharray="5 5"
             strokeWidth={2}
-            name="Avg Issues"
+            name={t('avgIssues')}
             dot={{ r: 3, strokeWidth: 0 }}
             activeDot={{ r: 5, strokeWidth: 2 }}
           />
@@ -217,7 +216,7 @@ export function VelocityChart({ data }: VelocityChartProps) {
             stroke="hsl(var(--accent-amber))"
             strokeDasharray="5 5"
             strokeWidth={2}
-            name="Avg Points"
+            name={t('avgPoints')}
             dot={{ r: 3, strokeWidth: 0 }}
             activeDot={{ r: 5, strokeWidth: 2 }}
           />

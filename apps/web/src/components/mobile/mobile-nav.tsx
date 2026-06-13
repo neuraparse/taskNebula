@@ -3,43 +3,45 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FolderKanban, Home, Inbox, Settings } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { stripLocalePrefix } from '@/components/layout/nav-paths';
 
 const navItems = [
   {
-    name: 'Dashboard',
+    labelKey: 'dashboard',
     href: '/dashboard',
     match: '/dashboard',
     icon: Home,
   },
   {
-    name: 'My Issues',
+    labelKey: 'myIssues',
     href: '/my-issues',
     match: '/my-issues',
     icon: Inbox,
   },
   {
-    name: 'Projects',
+    labelKey: 'projects',
     href: '/projects',
     match: '/projects',
     icon: FolderKanban,
   },
   {
-    name: 'Settings',
+    labelKey: 'settings',
     href: '/settings',
     match: '/settings',
     icon: Settings,
   },
-];
+] as const;
 
 export function MobileNav() {
+  const t = useTranslations('mobileNav');
   const pathname = usePathname();
   const normalizedPathname = stripLocalePrefix(pathname);
 
   return (
     <nav
-      aria-label="Mobile primary"
+      aria-label={t('primaryNavAria')}
       className="border-border bg-background/90 fixed bottom-0 left-0 right-0 z-50 h-14 border-t backdrop-blur md:hidden"
     >
       <div className="flex h-full items-center justify-around px-1">
@@ -60,7 +62,7 @@ export function MobileNav() {
               aria-current={isActive ? 'page' : undefined}
             >
               <Icon className="h-4 w-4" />
-              <span>{item.name}</span>
+              <span>{t(item.labelKey)}</span>
               {isActive ? (
                 <span
                   aria-hidden="true"

@@ -1,8 +1,14 @@
+import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
+
 import { DocsShell } from '@/components/docs/docs-shell';
 
-export const metadata = {
-  title: 'Docs | TaskNebula',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('pagesWork');
+  return {
+    title: t('docs.metaTitle'),
+  };
+}
 
 export default function DocsPage() {
   return (

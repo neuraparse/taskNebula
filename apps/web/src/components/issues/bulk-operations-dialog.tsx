@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,7 +12,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useWorkflowStatuses } from '@/lib/hooks/use-workflow-statuses';
 import { Loader2 } from 'lucide-react';
@@ -24,12 +31,7 @@ interface BulkOperationsDialogProps {
   onSuccess: () => void;
 }
 
-const PRIORITY_OPTIONS = [
-  { value: 'critical', label: 'Critical' },
-  { value: 'high', label: 'High' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'low', label: 'Low' },
-];
+const PRIORITY_OPTION_VALUES = ['critical', 'high', 'medium', 'low'] as const;
 
 export function BulkOperationsDialog({
   selectedIssueIds,
@@ -38,6 +40,8 @@ export function BulkOperationsDialog({
   onOpenChange,
   onSuccess,
 }: BulkOperationsDialogProps) {
+  const t = useTranslations('issuesViews');
+  const tActions = useTranslations('actions');
   const [operation, setOperation] = useState<'update' | 'delete'>('update');
   const [updateField, setUpdateField] = useState<'statusId' | 'priority'>('statusId');
   const [newValue, setNewValue] = useState('');
@@ -50,11 +54,16 @@ export function BulkOperationsDialog({
     label: status.name,
   }));
 
+  const priorityOptions = PRIORITY_OPTION_VALUES.map((value) => ({
+    value,
+    label: t(`priority.${value}`),
+  }));
+
   const handleSubmit = async () => {
     if (operation === 'update' && !newValue) {
       toast({
-        title: 'Error',
-        description: 'Please select a value',
+        title: t('bulkOps.error_title'),
+        description: t('bulkOps.select_value'),
         variant: 'destructive',
       });
       return;
@@ -82,17 +91,17 @@ export function BulkOperationsDialog({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Operation failed');
+        throw new Error(error.error || t('bulkOps.operation_failed'));
       }
 
       const result = await response.json();
 
       toast({
-        title: 'Success',
+        title: t('bulkOps.success_title'),
         description:
           operation === 'update'
-            ? `Updated ${result.updatedCount} issue(s)`
-            : `Deleted ${result.deletedCount} issue(s)`,
+            ? t('bulkOps.updated_count', { count: result.updatedCount })
+            : t('bulkOps.deleted_count', { count: result.deletedCount }),
       });
 
       onSuccess();
@@ -104,8 +113,8 @@ export function BulkOperationsDialog({
       setNewValue('');
     } catch (error: any) {
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to perform bulk operation',
+        title: t('bulkOps.error_title'),
+        description: error.message || t('bulkOps.bulk_failed'),
         variant: 'destructive',
       });
     } finally {
@@ -117,15 +126,15 @@ export function BulkOperationsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto rounded-lg">
         <DialogHeader>
-          <DialogTitle>Bulk Operations</DialogTitle>
+          <DialogTitle>{t('bulkOps.title')}</DialogTitle>
           <DialogDescription>
-            Perform actions on {selectedIssueIds.length} selected issue(s)
+            {t('bulkOps.description', { count: selectedIssueIds.length })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Operation</Label>
+            <Label>{t('bulkOps.operation_label')}</Label>
             <Select
               value={operation}
               onValueChange={(value: 'update' | 'delete') => setOperation(value)}
@@ -134,8 +143,8 @@ export function BulkOperationsDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="update">Update Issues</SelectItem>
-                <SelectItem value="delete">Delete Issues</SelectItem>
+                <SelectItem value="update">{t('bulkOps.update_issues')}</SelectItem>
+                <SelectItem value="delete">{t('bulkOps.delete_issues')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -143,7 +152,7 @@ export function BulkOperationsDialog({
           {operation === 'update' && (
             <>
               <div className="space-y-2">
-                <Label>Field to Update</Label>
+                <Label>{t('bulkOps.field_to_update')}</Label>
                 <Select
                   value={updateField}
                   onValueChange={(value: 'statusId' | 'priority') => {
@@ -155,24 +164,26 @@ export function BulkOperationsDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="statusId">Status</SelectItem>
-                    <SelectItem value="priority">Priority</SelectItem>
+                    <SelectItem value="statusId">{t('field.status')}</SelectItem>
+                    <SelectItem value="priority">{t('field.priority')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label>New Value</Label>
+                <Label>{t('bulkOps.new_value_label')}</Label>
                 <Select value={newValue} onValueChange={setNewValue}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select value" />
+                    <SelectValue placeholder={t('bulkOps.value_placeholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {(updateField === 'statusId' ? statusOptions : PRIORITY_OPTIONS).map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
+                    {(updateField === 'statusId' ? statusOptions : priorityOptions).map(
+                      (option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      )
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -181,15 +192,15 @@ export function BulkOperationsDialog({
 
           {operation === 'delete' && (
             <div className="panel-danger rounded-md p-4 text-sm">
-              <strong>Warning:</strong> This action cannot be undone. This will permanently delete{' '}
-              {selectedIssueIds.length} issue(s).
+              <strong>{t('bulkOps.warning_label')}</strong>{' '}
+              {t('bulkOps.delete_warning', { count: selectedIssueIds.length })}
             </div>
           )}
         </div>
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isLoading}>
-            Cancel
+            {tActions('cancel')}
           </Button>
           <Button
             variant={operation === 'delete' ? 'destructive' : 'default'}
@@ -197,7 +208,7 @@ export function BulkOperationsDialog({
             disabled={isLoading}
           >
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {operation === 'update' ? 'Update issues' : 'Delete issues'}
+            {operation === 'update' ? t('bulkOps.update_submit') : t('bulkOps.delete_submit')}
           </Button>
         </DialogFooter>
       </DialogContent>

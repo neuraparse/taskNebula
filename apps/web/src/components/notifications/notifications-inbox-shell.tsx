@@ -3,14 +3,9 @@
 // QUAL-21 TS-strict-migration: file untouched intentionally; surfaces 3 errors
 // under `exactOptionalPropertyTypes`. See docs/TS_STRICT_MIGRATION.md.
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import {
-  AlertTriangle,
-  ArrowLeft,
-  BellOff,
-  Inbox,
-  Settings2,
-} from 'lucide-react';
+import { AlertTriangle, ArrowLeft, BellOff, Inbox, Settings2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { Button } from '@/components/ui/button';
@@ -49,10 +44,7 @@ function hasField(n: Notification, field: string): unknown {
   return (n as unknown as Record<string, unknown>)[field];
 }
 
-function matchesInvolvement(
-  notification: Notification,
-  involvement: InvolvementFilter
-): boolean {
+function matchesInvolvement(notification: Notification, involvement: InvolvementFilter): boolean {
   if (involvement === 'all') return true;
   if (involvement === 'mentions') {
     return notification.type === 'mention';
@@ -115,6 +107,7 @@ export function NotificationsInboxShell({
   className,
   onOpenNotification,
 }: NotificationsInboxShellProps) {
+  const t = useTranslations('notifications');
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -176,37 +169,37 @@ export function NotificationsInboxShell({
   const handleMarkUnread = useCallback(
     (id: string) => {
       toast({
-        title: 'Marked as unread',
-        description: 'This will sync once the unread endpoint ships.',
+        title: t('shell.toast.mark_unread_title'),
+        description: t('shell.toast.mark_unread_description'),
       });
       // eslint-disable-next-line no-console
       console.info('[notifications] mark-unread stub', { id });
     },
-    [toast]
+    [toast, t]
   );
 
   const handleArchive = useCallback(
     (id: string) => {
       toast({
-        title: 'Archived',
-        description: 'Archive action queued (backend stub).',
+        title: t('shell.toast.archive_title'),
+        description: t('shell.toast.archive_description'),
       });
       // eslint-disable-next-line no-console
       console.info('[notifications] archive stub', { id });
     },
-    [toast]
+    [toast, t]
   );
 
   const handleSnooze = useCallback(
     (id: string) => {
       toast({
-        title: 'Snoozed',
-        description: 'Snooze until tomorrow (backend stub).',
+        title: t('shell.toast.snooze_title'),
+        description: t('shell.toast.snooze_description'),
       });
       // eslint-disable-next-line no-console
       console.info('[notifications] snooze stub', { id });
     },
-    [toast]
+    [toast, t]
   );
 
   const handleRefresh = useCallback(() => {
@@ -224,12 +217,12 @@ export function NotificationsInboxShell({
   }, []);
 
   const emptyCopy = (() => {
-    if (involvement === 'mentions') return 'No mentions yet.';
-    if (status === 'unread') return 'Nothing unread.';
-    if (status === 'read') return 'No read notifications.';
-    if (status === 'archived') return 'No archived notifications.';
-    if (status === 'snoozed') return 'Nothing snoozed.';
-    return 'No notifications yet.';
+    if (involvement === 'mentions') return t('shell.empty.mentions');
+    if (status === 'unread') return t('shell.empty.unread');
+    if (status === 'read') return t('shell.empty.read');
+    if (status === 'archived') return t('shell.empty.archived');
+    if (status === 'snoozed') return t('shell.empty.snoozed');
+    return t('shell.empty.default');
   })();
 
   const filtersActive = involvement !== 'all' || status !== 'inbox';
@@ -244,23 +237,23 @@ export function NotificationsInboxShell({
       className={cn(
         'flex min-h-0 flex-col overflow-hidden',
         isPage
-          ? 'h-full bg-muted/20 md:p-4 lg:p-6'
-          : 'h-[560px] rounded-lg border border-border/60 bg-background',
+          ? 'bg-muted/20 h-full md:p-4 lg:p-6'
+          : 'border-border/60 bg-background h-[560px] rounded-lg border',
         className
       )}
     >
       {isPage && (
-        <header className="mb-3 flex flex-col gap-3 px-4 pt-4 md:mb-4 md:px-0 md:pt-0 md:flex-row md:items-center md:justify-between">
+        <header className="mb-3 flex flex-col gap-3 px-4 pt-4 md:mb-4 md:flex-row md:items-center md:justify-between md:px-0 md:pt-0">
           <div className="flex items-baseline gap-3">
-            <h1 className="text-xl font-semibold tracking-[-0.01em] text-foreground md:text-2xl">
-              Notifications
+            <h1 className="text-foreground text-xl font-semibold tracking-[-0.01em] md:text-2xl">
+              {t('shell.title')}
             </h1>
             {totalCount > 0 && (
-              <span className="text-sm text-muted-foreground tabular-nums">
+              <span className="text-muted-foreground text-sm tabular-nums">
                 {totalCount}
                 {unreadCount > 0 && (
-                  <span className="ml-1.5 inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                    {unreadCount} unread
+                  <span className="bg-primary/10 text-primary ml-1.5 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium">
+                    {t('shell.unread_count', { count: unreadCount })}
                   </span>
                 )}
               </span>
@@ -271,11 +264,11 @@ export function NotificationsInboxShell({
               asChild
               variant="ghost"
               size="sm"
-              className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground gap-1.5 text-xs"
             >
               <Link href={PREFERENCES_HREF}>
                 <Settings2 className="h-3.5 w-3.5" />
-                Preferences
+                {t('shell.preferences')}
               </Link>
             </Button>
           </div>
@@ -284,14 +277,14 @@ export function NotificationsInboxShell({
 
       <div
         className={cn(
-          'flex min-h-0 flex-1 overflow-hidden border border-border/60 bg-background',
-          isPage ? 'rounded-xl shadow-sm mx-4 mb-4 md:mx-0 md:mb-0' : 'rounded-lg'
+          'border-border/60 bg-background flex min-h-0 flex-1 overflow-hidden border',
+          isPage ? 'mx-4 mb-4 rounded-xl shadow-sm md:mx-0 md:mb-0' : 'rounded-lg'
         )}
       >
         {/* Left pane: list. Hidden on mobile when a detail is active. */}
         <div
           className={cn(
-            'flex min-h-0 flex-col border-r border-border/60 md:border-r',
+            'border-border/60 flex min-h-0 flex-col border-r md:border-r',
             isPage
               ? 'w-full md:w-[360px] md:shrink-0 lg:w-[400px]'
               : 'w-full md:w-[340px] md:shrink-0',
@@ -344,12 +337,12 @@ export function NotificationsInboxShell({
         {/* Right pane: detail. Full-width on mobile when active. */}
         <div
           className={cn(
-            'flex min-w-0 flex-1 flex-col bg-muted/10',
+            'bg-muted/10 flex min-w-0 flex-1 flex-col',
             showingDetailOnMobile ? 'flex' : 'hidden md:flex'
           )}
         >
           {showingDetailOnMobile && (
-            <div className="flex items-center gap-2 border-b border-border/60 px-3 py-2 md:hidden">
+            <div className="border-border/60 flex items-center gap-2 border-b px-3 py-2 md:hidden">
               <Button
                 variant="ghost"
                 size="sm"
@@ -358,7 +351,7 @@ export function NotificationsInboxShell({
                 onClick={() => setMobileView('list')}
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
-                Inbox
+                {t('shell.back_to_inbox')}
               </Button>
             </div>
           )}
@@ -390,14 +383,10 @@ export function NotificationsInboxShell({
 /* ---------------- internal state components ---------------- */
 
 function InboxListSkeleton() {
+  const t = useTranslations('notifications');
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      aria-busy="true"
-      className="divide-y divide-border/60"
-    >
-      <span className="sr-only">Loading notifications</span>
+    <div role="status" aria-live="polite" aria-busy="true" className="divide-border/60 divide-y">
+      <span className="sr-only">{t('loading')}</span>
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="flex items-start gap-3 px-4 py-3">
           <Skeleton className="h-8 w-8 rounded-full" />
@@ -413,15 +402,11 @@ function InboxListSkeleton() {
 }
 
 function InboxDetailSkeleton() {
+  const t = useTranslations('notifications');
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      aria-busy="true"
-      className="flex h-full flex-col"
-    >
-      <span className="sr-only">Loading notification</span>
-      <div className="flex items-start justify-between gap-3 border-b border-border/60 px-5 py-4">
+    <div role="status" aria-live="polite" aria-busy="true" className="flex h-full flex-col">
+      <span className="sr-only">{t('shell.loading_detail')}</span>
+      <div className="border-border/60 flex items-start justify-between gap-3 border-b px-5 py-4">
         <div className="flex min-w-0 items-start gap-3">
           <Skeleton className="h-8 w-8 rounded-full" />
           <div className="min-w-0 space-y-2">
@@ -446,26 +431,25 @@ function InboxDetailSkeleton() {
 }
 
 function InboxEmptyState() {
+  const t = useTranslations('notifications');
   return (
     <div className="flex h-full min-h-[320px] flex-col items-center justify-center gap-4 px-8 py-16 text-center">
       <div
         aria-hidden="true"
-        className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/15 via-violet-500/10 to-transparent ring-1 ring-border/60"
+        className="ring-border/60 relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/15 via-violet-500/10 to-transparent ring-1"
       >
         <Inbox className="h-7 w-7 text-indigo-500" strokeWidth={1.5} />
-        <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-violet-500/60 ring-2 ring-background" />
+        <span className="ring-background absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-violet-500/60 ring-2" />
       </div>
       <div className="space-y-1">
-        <p className="text-sm font-semibold text-foreground">You&apos;re all caught up</p>
-        <p className="max-w-xs text-xs text-muted-foreground">
-          New mentions, assignments, and activity on items you follow will show up here.
-        </p>
+        <p className="text-foreground text-sm font-semibold">{t('shell.empty_state.title')}</p>
+        <p className="text-muted-foreground max-w-xs text-xs">{t('shell.empty_state.hint')}</p>
       </div>
       <div className="flex items-center gap-2 pt-1">
         <Button asChild variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
           <Link href={PREFERENCES_HREF}>
             <Settings2 className="h-3.5 w-3.5" />
-            Notification preferences
+            {t('shell.empty_state.preferences')}
           </Link>
         </Button>
       </div>
@@ -480,20 +464,16 @@ function FilteredEmptyState({
   copy: string;
   onResetFilters?: () => void;
 }) {
+  const t = useTranslations('notifications');
   return (
     <div className="flex h-full min-h-[240px] flex-col items-center justify-center gap-3 px-8 py-14 text-center">
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+      <div className="bg-muted text-muted-foreground flex h-10 w-10 items-center justify-center rounded-full">
         <BellOff className="h-4 w-4" aria-hidden="true" />
       </div>
-      <p className="text-sm text-muted-foreground">{copy}</p>
+      <p className="text-muted-foreground text-sm">{copy}</p>
       {onResetFilters && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 text-xs"
-          onClick={onResetFilters}
-        >
-          Clear filters
+        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={onResetFilters}>
+          {t('shell.clear_filters')}
         </Button>
       )}
     </div>
@@ -509,6 +489,7 @@ function InboxErrorState({
   onRetry: () => void;
   variant?: 'list' | 'panel';
 }) {
+  const t = useTranslations('notifications');
   return (
     <div
       role="alert"
@@ -517,19 +498,17 @@ function InboxErrorState({
         variant === 'list' ? 'min-h-[280px] py-14' : 'h-full py-16'
       )}
     >
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 text-destructive ring-1 ring-destructive/30">
+      <div className="bg-destructive/10 text-destructive ring-destructive/30 flex h-10 w-10 items-center justify-center rounded-full ring-1">
         <AlertTriangle className="h-4 w-4" aria-hidden="true" />
       </div>
       <div className="space-y-1">
-        <p className="text-sm font-medium text-foreground">
-          Couldn&apos;t load notifications
-        </p>
-        <p className="max-w-xs text-xs text-muted-foreground">
-          {message || 'Something went wrong while fetching your inbox.'}
+        <p className="text-foreground text-sm font-medium">{t('shell.error.title')}</p>
+        <p className="text-muted-foreground max-w-xs text-xs">
+          {message || t('shell.error.description')}
         </p>
       </div>
       <Button size="sm" variant="outline" className="h-8 text-xs" onClick={onRetry}>
-        Try again
+        {t('shell.error.retry')}
       </Button>
     </div>
   );

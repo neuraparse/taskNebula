@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { createPortal } from 'react-dom';
 import { Textarea } from '@/components/ui/textarea';
 import { Command, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
@@ -24,6 +25,7 @@ export function MentionTextarea({
   organizationId,
   className,
 }: MentionTextareaProps) {
+  const t = useTranslations('issueMisc');
   const [showMentions, setShowMentions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
   const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 });
@@ -37,9 +39,10 @@ export function MentionTextarea({
 
   const members = data?.members || [];
 
-  const filteredMembers = members.filter((member: any) =>
-    member.name?.toLowerCase().includes(mentionSearch.toLowerCase()) ||
-    member.email?.toLowerCase().includes(mentionSearch.toLowerCase())
+  const filteredMembers = members.filter(
+    (member: any) =>
+      member.name?.toLowerCase().includes(mentionSearch.toLowerCase()) ||
+      member.email?.toLowerCase().includes(mentionSearch.toLowerCase())
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -82,10 +85,7 @@ export function MentionTextarea({
     const textAfterCursor = value.slice(cursorPosition);
     const lastAtIndex = textBeforeCursor.lastIndexOf('@');
 
-    const newValue =
-      textBeforeCursor.slice(0, lastAtIndex) +
-      `@${member.name} ` +
-      textAfterCursor;
+    const newValue = textBeforeCursor.slice(0, lastAtIndex) + `@${member.name} ` + textAfterCursor;
 
     onChange(newValue);
     setShowMentions(false);
@@ -115,23 +115,25 @@ export function MentionTextarea({
         className={className}
       />
 
-      {mounted && showMentions && filteredMembers.length > 0 &&
+      {mounted &&
+        showMentions &&
+        filteredMembers.length > 0 &&
         createPortal(
           <div
-            className="fixed z-[60] w-64 rounded-md border border-border bg-card p-1 shadow-md"
+            className="border-border bg-card fixed z-[60] w-64 rounded-md border p-1 shadow-md"
             style={{
               top: mentionPosition.top,
               left: mentionPosition.left,
             }}
           >
             <Command>
-              <CommandEmpty>No members found.</CommandEmpty>
+              <CommandEmpty>{t('no_members_found')}</CommandEmpty>
               <CommandGroup className="max-h-48 overflow-auto">
                 {filteredMembers.map((member: any) => (
                   <CommandItem
                     key={member.id}
                     onSelect={() => handleSelectMention(member)}
-                    className="flex items-center gap-2 cursor-pointer"
+                    className="flex cursor-pointer items-center gap-2"
                   >
                     <Avatar className="h-6 w-6">
                       <AvatarImage src={member.image || undefined} />
@@ -141,7 +143,7 @@ export function MentionTextarea({
                     </Avatar>
                     <div className="flex flex-col">
                       <span className="text-sm font-medium">{member.name}</span>
-                      <span className="text-xs text-muted-foreground">{member.email}</span>
+                      <span className="text-muted-foreground text-xs">{member.email}</span>
                     </div>
                   </CommandItem>
                 ))}
@@ -153,4 +155,3 @@ export function MentionTextarea({
     </div>
   );
 }
-

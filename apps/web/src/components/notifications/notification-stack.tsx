@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { BellOff } from 'lucide-react';
 import { differenceInCalendarDays, isToday, isYesterday } from 'date-fns';
 
@@ -56,9 +57,7 @@ export function groupNotifications(notifications: Notification[]): GroupedNotifi
   for (const key of Object.keys(byKey)) {
     const group = byKey[key];
     if (!group) continue;
-    group.items.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    group.items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   order.sort((a, b) => b.ts - a.ts);
@@ -78,11 +77,12 @@ export function groupNotifications(notifications: Notification[]): GroupedNotifi
 
 type DayBucket = 'today' | 'yesterday' | 'earlier-week' | 'older';
 
-const BUCKET_LABEL: Record<DayBucket, string> = {
-  today: 'Today',
-  yesterday: 'Yesterday',
-  'earlier-week': 'Earlier this week',
-  older: 'Older',
+/** Translation-key suffix (under `notifications.bucket`) per day bucket. */
+const BUCKET_LABEL_KEY: Record<DayBucket, string> = {
+  today: 'today',
+  yesterday: 'yesterday',
+  'earlier-week': 'earlier_week',
+  older: 'older',
 };
 
 const BUCKET_ORDER: DayBucket[] = ['today', 'yesterday', 'earlier-week', 'older'];
@@ -117,30 +117,23 @@ export interface NotificationStackProps {
  */
 function NotificationSkeletonRow() {
   return (
-    <div
-      aria-hidden="true"
-      className="flex items-start gap-3 px-4 py-3 animate-pulse"
-    >
+    <div aria-hidden="true" className="flex animate-pulse items-start gap-3 px-4 py-3">
       <span className="mt-0.5 h-5 w-5 shrink-0" />
-      <div className="h-8 w-8 shrink-0 rounded-full bg-gradient-to-br from-muted to-muted/40" />
+      <div className="from-muted to-muted/40 h-8 w-8 shrink-0 rounded-full bg-gradient-to-br" />
       <div className="min-w-0 flex-1 space-y-2 pt-1">
-        <div className="h-3 w-3/4 rounded-sm bg-gradient-to-r from-muted via-muted/60 to-muted/40" />
-        <div className="h-3 w-1/3 rounded-sm bg-gradient-to-r from-muted via-muted/60 to-muted/30" />
+        <div className="from-muted via-muted/60 to-muted/40 h-3 w-3/4 rounded-sm bg-gradient-to-r" />
+        <div className="from-muted via-muted/60 to-muted/30 h-3 w-1/3 rounded-sm bg-gradient-to-r" />
       </div>
-      <div className="h-3 w-10 shrink-0 rounded-sm bg-muted/50" />
+      <div className="bg-muted/50 h-3 w-10 shrink-0 rounded-sm" />
     </div>
   );
 }
 
 function NotificationStackLoading({ count = 5 }: { count?: number }) {
+  const t = useTranslations('notifications');
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      aria-busy="true"
-      className="divide-y divide-border/50"
-    >
-      <span className="sr-only">Loading notifications</span>
+    <div role="status" aria-live="polite" aria-busy="true" className="divide-border/50 divide-y">
+      <span className="sr-only">{t('loading')}</span>
       {Array.from({ length: count }).map((_, i) => (
         <NotificationSkeletonRow key={i} />
       ))}
@@ -149,18 +142,17 @@ function NotificationStackLoading({ count = 5 }: { count?: number }) {
 }
 
 function NotificationStackEmpty() {
+  const t = useTranslations('notifications');
   return (
     <div
       role="status"
       className="flex flex-col items-center justify-center gap-2 px-6 py-14 text-center"
     >
-      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary ring-1 ring-primary/20">
+      <span className="bg-primary/10 text-primary ring-primary/20 flex h-10 w-10 items-center justify-center rounded-full ring-1">
         <BellOff className="h-4 w-4" aria-hidden="true" />
       </span>
-      <p className="text-sm font-medium text-foreground">You&apos;re all caught up</p>
-      <p className="max-w-[14rem] text-xs text-muted-foreground">
-        New mentions and assignments will show here.
-      </p>
+      <p className="text-foreground text-sm font-medium">{t('stack.empty_title')}</p>
+      <p className="text-muted-foreground max-w-[14rem] text-xs">{t('stack.empty_hint')}</p>
     </div>
   );
 }
@@ -185,11 +177,11 @@ export function NotificationStack({
   onSnooze,
   loading,
 }: NotificationStackProps) {
+  const t = useTranslations('notifications');
   const grouped = useMemo(() => groupNotifications(notifications), [notifications]);
   const [openKeys, setOpenKeys] = useState<Record<string, boolean>>({});
 
-  const toggle = (key: string) =>
-    setOpenKeys((prev) => ({ ...prev, [key]: !prev[key] }));
+  const toggle = (key: string) => setOpenKeys((prev) => ({ ...prev, [key]: !prev[key] }));
 
   // Bucket stack-keys by their parent (latest) item's day.
   const bucketed = useMemo(() => {
@@ -205,10 +197,10 @@ export function NotificationStack({
     }
     return BUCKET_ORDER.filter((b) => (map.get(b)?.length ?? 0) > 0).map((b) => ({
       bucket: b,
-      label: BUCKET_LABEL[b],
+      label: t(`bucket.${BUCKET_LABEL_KEY[b]}`),
       keys: map.get(b)!,
     }));
-  }, [grouped]);
+  }, [grouped, t]);
 
   if (loading) {
     return <NotificationStackLoading />;
@@ -231,9 +223,9 @@ export function NotificationStack({
         key={key}
         tabIndex={-1}
         className={cn(
-          'group/row relative transition-colors duration-150 ease-snap',
+          'group/row ease-snap relative transition-colors duration-150',
           'hover:bg-accent/30',
-          'focus-within:ring-1 focus-within:ring-ring/40 focus-within:ring-inset'
+          'focus-within:ring-ring/40 focus-within:ring-1 focus-within:ring-inset'
         )}
       >
         <NotificationItem
@@ -253,15 +245,15 @@ export function NotificationStack({
           <ul
             role="list"
             className={cn(
-              'border-l-2 border-primary/30 bg-muted/20',
-              'ml-9 divide-y divide-border/40'
+              'border-primary/30 bg-muted/20 border-l-2',
+              'divide-border/40 ml-9 divide-y'
             )}
           >
             {group.items.slice(1).map((child) => (
               <li
                 key={child.id}
                 tabIndex={-1}
-                className="transition-colors duration-150 ease-snap hover:bg-accent/30"
+                className="ease-snap hover:bg-accent/30 transition-colors duration-150"
               >
                 <NotificationItem
                   notification={child}
@@ -287,21 +279,21 @@ export function NotificationStack({
         <section
           key={section.bucket}
           aria-label={section.label}
-          className={cn(idx > 0 && 'border-t border-border/60')}
+          className={cn(idx > 0 && 'border-border/60 border-t')}
         >
           <div
             className={cn(
               'sticky top-0 z-10 flex items-center gap-2 px-4 py-1.5',
-              'bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70',
-              'border-b border-border/50'
+              'bg-background/85 supports-[backdrop-filter]:bg-background/70 backdrop-blur',
+              'border-border/50 border-b'
             )}
           >
             <span className="kicker">{section.label}</span>
-            <span className="text-[10px] font-medium text-muted-foreground/70 tabular-nums">
+            <span className="text-muted-foreground/70 text-[10px] font-medium tabular-nums">
               {section.keys.length}
             </span>
           </div>
-          <ul role="list" className="divide-y divide-border/50">
+          <ul role="list" className="divide-border/50 divide-y">
             {section.keys.map((key) => renderRow(key))}
           </ul>
         </section>

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { TimeLogDialog } from './time-log-dialog';
 import { Clock, Plus, Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface Worklog {
   id: string;
@@ -30,6 +31,7 @@ export function TimeTrackingPanel({ issueId, canLog, canDelete }: TimeTrackingPa
   const [isLoading, setIsLoading] = useState(true);
   const [showLogDialog, setShowLogDialog] = useState(false);
   const { toast } = useToast();
+  const t = useTranslations('appShell');
 
   useEffect(() => {
     fetchWorklogs();
@@ -43,8 +45,8 @@ export function TimeTrackingPanel({ issueId, canLog, canDelete }: TimeTrackingPa
       setWorklogs(data);
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to load time logs',
+        title: t('common.errorTitle'),
+        description: t('timeTracking.loadFailed'),
         variant: 'destructive',
       });
     } finally {
@@ -53,7 +55,7 @@ export function TimeTrackingPanel({ issueId, canLog, canDelete }: TimeTrackingPa
   };
 
   const deleteWorklog = async (worklogId: string) => {
-    if (!confirm('Are you sure you want to delete this time log?')) {
+    if (!confirm(t('timeTracking.deleteConfirm'))) {
       return;
     }
 
@@ -65,15 +67,15 @@ export function TimeTrackingPanel({ issueId, canLog, canDelete }: TimeTrackingPa
       if (!response.ok) throw new Error('Failed to delete worklog');
 
       toast({
-        title: 'Success',
-        description: 'Time log deleted',
+        title: t('common.successTitle'),
+        description: t('timeTracking.deleted'),
       });
 
       fetchWorklogs();
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to delete time log',
+        title: t('common.errorTitle'),
+        description: t('timeTracking.deleteFailed'),
         variant: 'destructive',
       });
     }
@@ -91,63 +93,70 @@ export function TimeTrackingPanel({ issueId, canLog, canDelete }: TimeTrackingPa
   const totalTime = worklogs.reduce((sum, log) => sum + log.timeSpent, 0);
 
   if (isLoading) {
-    return <div className="p-4 text-sm text-muted-foreground">Loading time logs...</div>;
+    return <div className="text-muted-foreground p-4 text-sm">{t('timeTracking.loading')}</div>;
   }
 
   return (
     <>
-      <div className="space-y-3 animate-fade-up">
+      <div className="animate-fade-up space-y-3">
         {/* Compact timer/summary bar */}
         <div className="surface-card flex items-center gap-3 px-3 py-2">
-          <Clock className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-          <span className="text-sm font-medium">Time tracking</span>
-          <span className="chip text-[11px]">Paused</span>
-          <span className="font-mono text-xs tabular-nums text-muted-foreground">
+          <Clock className="text-muted-foreground h-4 w-4 shrink-0" aria-hidden="true" />
+          <span className="text-sm font-medium">{t('timeTracking.heading')}</span>
+          <span className="chip text-[11px]">{t('timeTracking.paused')}</span>
+          <span className="text-muted-foreground font-mono text-xs tabular-nums">
             {formatTime(totalTime)}
           </span>
           {canLog ? (
-            <Button size="sm" variant="ghost" className="ml-auto h-7" onClick={() => setShowLogDialog(true)}>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="ml-auto h-7"
+              onClick={() => setShowLogDialog(true)}
+            >
               <Plus className="mr-1 h-3.5 w-3.5" />
-              Log time
+              {t('timeTracking.logTime')}
             </Button>
           ) : null}
         </div>
 
         {/* Log rows */}
         {worklogs.length === 0 ? (
-          <div className="surface-card py-8 text-center space-y-2">
-            <Clock className="mx-auto h-6 w-6 text-muted-foreground/40" />
-            <p className="text-sm text-muted-foreground">No time logged yet.</p>
+          <div className="surface-card space-y-2 py-8 text-center">
+            <Clock className="text-muted-foreground/40 mx-auto h-6 w-6" />
+            <p className="text-muted-foreground text-sm">{t('timeTracking.empty')}</p>
           </div>
         ) : (
-          <div className="surface-card divide-y divide-border/60 stagger">
+          <div className="surface-card divide-border/60 stagger divide-y">
             {worklogs.map((log) => (
-              <div
-                key={log.id}
-                className="row-interactive flex items-center gap-3 px-4 py-2.5"
-              >
-                <span className="chip-accent shrink-0 font-mono text-[11px]">{formatTime(log.timeSpent)}</span>
+              <div key={log.id} className="row-interactive flex items-center gap-3 px-4 py-2.5">
+                <span className="chip-accent shrink-0 font-mono text-[11px]">
+                  {formatTime(log.timeSpent)}
+                </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs text-foreground">
+                  <p className="text-foreground truncate text-xs">
                     <span className="font-medium">{log.author.name}</span>
                     {log.description ? (
                       <>
-                        <span className="mx-1.5 text-muted-foreground">·</span>
+                        <span className="text-muted-foreground mx-1.5">·</span>
                         <span className="text-muted-foreground">{log.description}</span>
                       </>
                     ) : null}
                   </p>
                 </div>
-                <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
-                  {new Date(log.startedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                <span className="text-muted-foreground shrink-0 font-mono text-[11px]">
+                  {new Date(log.startedAt).toLocaleDateString([], {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
                 </span>
                 {canDelete ? (
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                    className="text-muted-foreground hover:text-destructive h-7 w-7 shrink-0"
                     onClick={() => deleteWorklog(log.id)}
-                    aria-label="Delete worklog"
+                    aria-label={t('timeTracking.deleteWorklog')}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>

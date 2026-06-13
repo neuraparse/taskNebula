@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Sparkles, CheckCircle2, Loader2, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -66,6 +67,7 @@ export function AiQuickSetup({
   savedProfiles = [],
   onManageProfiles,
 }: AiQuickSetupProps) {
+  const t = useTranslations('settingsConfig');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -99,17 +101,14 @@ export function AiQuickSetup({
       if (provider !== 'native' && apiKey.trim()) {
         payload.credential = { provider, apiKey: apiKey.trim() };
       }
-      const response = await fetch(
-        `/api/organizations/${organizationId}/ai-agents`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        }
-      );
+      const response = await fetch(`/api/organizations/${organizationId}/ai-agents`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
       if (!response.ok) {
         const err = (await response.json().catch(() => ({}))) as { error?: string };
-        throw new Error(err.error || 'Failed to enable AI Assistant');
+        throw new Error(err.error || t('aiQuickSetup.enable_failed'));
       }
       return response.json() as Promise<WorkspaceAgentsResponse>;
     },
@@ -118,13 +117,13 @@ export function AiQuickSetup({
       queryClient.invalidateQueries({ queryKey: ['ai-capability'] });
       setApiKey('');
       toast({
-        title: 'AI Assistant enabled',
-        description: `Draft-with-AI is live for this workspace using ${PROVIDER_LABELS[provider]}.`,
+        title: t('aiQuickSetup.enabled_toast_title'),
+        description: t('aiQuickSetup.enabled_toast_desc', { provider: PROVIDER_LABELS[provider] }),
       });
     },
     onError: (err: Error) => {
       toast({
-        title: 'Could not enable AI Assistant',
+        title: t('aiQuickSetup.enable_failed'),
         description: err.message,
         variant: 'destructive',
       });
@@ -141,15 +140,15 @@ export function AiQuickSetup({
   const keyHint = (() => {
     if (provider === 'native') return null;
     if (providerConfigured && providerSource === 'workspace') {
-      return 'A workspace key is already stored. Leave blank to keep it.';
+      return t('aiQuickSetup.key_hint_workspace');
     }
     if (providerConfigured && providerSource === 'platform') {
-      return 'Platform default key is available. Enter a workspace key only to override it.';
+      return t('aiQuickSetup.key_hint_platform');
     }
     if (providerConfigured && providerSource === 'server_env') {
-      return 'Server env key detected. Enter a workspace key only to override it.';
+      return t('aiQuickSetup.key_hint_server_env');
     }
-    return `No ${PROVIDER_LABELS[provider]} key configured yet — paste one below to activate.`;
+    return t('aiQuickSetup.key_hint_none', { provider: PROVIDER_LABELS[provider] });
   })();
 
   const submitDisabled =
@@ -158,31 +157,28 @@ export function AiQuickSetup({
     (provider !== 'native' && !providerConfigured && !apiKey.trim());
 
   return (
-    <div className="rounded-lg border border-primary/30 bg-primary/[0.03] p-5 space-y-4">
+    <div className="border-primary/30 bg-primary/[0.03] space-y-4 rounded-lg border p-5">
       <div className="flex items-start gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <span className="bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
           <Wand2 className="h-4 w-4" />
         </span>
         <div className="flex-1 space-y-1">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold">Quick setup — enable AI Assistant</h3>
+            <h3 className="text-sm font-semibold">{t('aiQuickSetup.title')}</h3>
             {assistantAlreadyOn && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-accent-emerald/10 px-2 py-0.5 text-[11px] font-medium text-accent-emerald">
+              <span className="bg-accent-emerald/10 text-accent-emerald inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium">
                 <CheckCircle2 className="h-3 w-3" />
-                Active
+                {t('aiQuickSetup.active')}
               </span>
             )}
           </div>
-          <p className="text-xs text-muted-foreground max-w-prose">
-            Pick a provider, we&apos;ll auto-fill a sensible model. Paste your API key (or leave
-            blank to use the platform default). One click — done. You can fine-tune below.
-          </p>
+          <p className="text-muted-foreground max-w-prose text-xs">{t('aiQuickSetup.intro')}</p>
         </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
         <div className="space-y-1.5">
-          <Label className="text-xs">Provider</Label>
+          <Label className="text-xs">{t('aiQuickSetup.provider_label')}</Label>
           <Select
             value={provider}
             onValueChange={(v) => handleProviderChange(v as QuickProvider)}
@@ -194,21 +190,21 @@ export function AiQuickSetup({
             <SelectContent>
               <SelectItem value="openai">OpenAI</SelectItem>
               <SelectItem value="anthropic">Anthropic (Claude)</SelectItem>
-              <SelectItem value="native">TaskNebula native (no LLM)</SelectItem>
+              <SelectItem value="native">{t('aiQuickSetup.provider_native')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <Label className="text-xs">Model</Label>
+            <Label className="text-xs">{t('aiQuickSetup.model_label')}</Label>
             {onManageProfiles && (
               <button
                 type="button"
                 onClick={onManageProfiles}
-                className="text-[11px] text-primary hover:underline"
+                className="text-primary text-[11px] hover:underline"
               >
-                Manage saved profiles
+                {t('aiQuickSetup.manage_profiles')}
               </button>
             )}
           </div>
@@ -219,13 +215,13 @@ export function AiQuickSetup({
               disabled={!canManage || mutation.isPending}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select a model" />
+                <SelectValue placeholder={t('aiQuickSetup.select_model')} />
               </SelectTrigger>
               <SelectContent>
                 {savedProfiles.filter((p) => p.provider === provider).length > 0 && (
                   <>
-                    <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      Your saved profiles
+                    <div className="text-muted-foreground px-2 py-1 text-[10px] font-semibold uppercase tracking-wider">
+                      {t('aiQuickSetup.your_saved_profiles')}
                     </div>
                     {savedProfiles
                       .filter((p) => p.provider === provider)
@@ -234,9 +230,11 @@ export function AiQuickSetup({
                           {profile.name} · {profile.model}
                         </SelectItem>
                       ))}
-                    <div className="my-1 border-t border-border/60" />
-                    <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      {provider === 'openai' ? 'OpenAI catalog' : 'Anthropic catalog'}
+                    <div className="border-border/60 my-1 border-t" />
+                    <div className="text-muted-foreground px-2 py-1 text-[10px] font-semibold uppercase tracking-wider">
+                      {provider === 'openai'
+                        ? t('aiQuickSetup.openai_catalog')
+                        : t('aiQuickSetup.anthropic_catalog')}
                     </div>
                   </>
                 )}
@@ -251,7 +249,11 @@ export function AiQuickSetup({
             <Input
               value={model}
               onChange={(e) => setModel(e.target.value)}
-              placeholder={provider === 'native' ? 'tasknebula-planner-v1' : 'model id'}
+              placeholder={
+                provider === 'native'
+                  ? 'tasknebula-planner-v1'
+                  : t('aiQuickSetup.model_id_placeholder')
+              }
               disabled={!canManage || mutation.isPending}
             />
           )}
@@ -269,7 +271,7 @@ export function AiQuickSetup({
             ) : (
               <Sparkles className="mr-1.5 h-4 w-4" />
             )}
-            {assistantAlreadyOn ? 'Update' : 'Enable AI Assistant'}
+            {assistantAlreadyOn ? t('aiQuickSetup.update') : t('aiQuickSetup.enable_button')}
           </Button>
         </div>
       </div>
@@ -277,7 +279,7 @@ export function AiQuickSetup({
       {provider !== 'native' && (
         <div className="space-y-1.5">
           <Label className="text-xs" htmlFor="quick-api-key">
-            API key
+            {t('aiQuickSetup.api_key_label')}
           </Label>
           <Input
             id="quick-api-key"
@@ -286,15 +288,13 @@ export function AiQuickSetup({
             onChange={(e) => setApiKey(e.target.value)}
             placeholder={
               providerConfigured
-                ? 'Leave blank to keep the existing key'
+                ? t('aiQuickSetup.api_key_keep_placeholder')
                 : PROVIDER_PLACEHOLDERS[provider]
             }
             autoComplete="off"
             disabled={!canManage || mutation.isPending}
           />
-          {keyHint && (
-            <p className="text-[11px] text-muted-foreground">{keyHint}</p>
-          )}
+          {keyHint && <p className="text-muted-foreground text-[11px]">{keyHint}</p>}
         </div>
       )}
     </div>

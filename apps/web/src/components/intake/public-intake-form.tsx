@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,6 +35,7 @@ type FormState =
  * and the form is short-lived (one submission per visitor).
  */
 export function PublicIntakeForm({ slug, fields, requiresCaptcha }: Props) {
+  const t = useTranslations('planning');
   const [values, setValues] = useState<Record<string, string>>({});
   const [state, setState] = useState<FormState>({ kind: 'idle' });
 
@@ -64,7 +66,7 @@ export function PublicIntakeForm({ slug, fields, requiresCaptcha }: Props) {
         }
         setState({
           kind: 'error',
-          message: data.error ?? 'Submission failed',
+          message: data.error ?? t('submission_failed'),
           fieldErrors,
         });
         return;
@@ -74,22 +76,22 @@ export function PublicIntakeForm({ slug, fields, requiresCaptcha }: Props) {
     } catch (err) {
       setState({
         kind: 'error',
-        message: err instanceof Error ? err.message : 'Network error',
+        message: err instanceof Error ? err.message : t('network_error'),
       });
     }
   }
 
   if (state.kind === 'success') {
     return (
-      <div className="rounded-md border border-border bg-card p-6 text-center space-y-3">
+      <div className="border-border bg-card space-y-3 rounded-md border p-6 text-center">
         <div className="flex justify-center">
           <CheckCircle2 className="h-10 w-10 text-emerald-500" aria-hidden="true" />
         </div>
-        <h2 className="text-lg font-medium text-foreground">Thanks for your submission</h2>
+        <h2 className="text-foreground text-lg font-medium">{t('thanks_submission')}</h2>
         {state.issueKey ? (
-          <p className="text-sm text-muted-foreground">
-            Tracking key:{' '}
-            <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">{state.issueKey}</code>
+          <p className="text-muted-foreground text-sm">
+            {t('tracking_key')}{' '}
+            <code className="bg-muted text-foreground rounded px-1.5 py-0.5">{state.issueKey}</code>
           </p>
         ) : null}
       </div>
@@ -105,7 +107,7 @@ export function PublicIntakeForm({ slug, fields, requiresCaptcha }: Props) {
         <div key={field.name} className="space-y-1.5">
           <Label htmlFor={`field-${field.name}`}>
             {field.label}
-            {field.required ? <span className="ml-1 text-destructive">*</span> : null}
+            {field.required ? <span className="text-destructive ml-1">*</span> : null}
           </Label>
 
           {field.type === 'textarea' ? (
@@ -119,12 +121,9 @@ export function PublicIntakeForm({ slug, fields, requiresCaptcha }: Props) {
               rows={5}
             />
           ) : field.type === 'select' ? (
-            <Select
-              value={values[field.name] ?? ''}
-              onValueChange={(v) => setValue(field.name, v)}
-            >
+            <Select value={values[field.name] ?? ''} onValueChange={(v) => setValue(field.name, v)}>
               <SelectTrigger id={`field-${field.name}`}>
-                <SelectValue placeholder={field.placeholder ?? 'Select an option'} />
+                <SelectValue placeholder={field.placeholder ?? t('select_option')} />
               </SelectTrigger>
               <SelectContent>
                 {(field.options ?? []).map((opt) => (
@@ -161,29 +160,27 @@ export function PublicIntakeForm({ slug, fields, requiresCaptcha }: Props) {
           )}
 
           {field.helpText ? (
-            <p className="text-xs text-muted-foreground">{field.helpText}</p>
+            <p className="text-muted-foreground text-xs">{field.helpText}</p>
           ) : null}
           {fieldError(field.name) ? (
-            <p className="text-xs text-destructive">{fieldError(field.name)}</p>
+            <p className="text-destructive text-xs">{fieldError(field.name)}</p>
           ) : null}
         </div>
       ))}
 
       {requiresCaptcha ? (
-        <p className="text-xs text-muted-foreground">
-          This form is protected against automated submissions.
-        </p>
+        <p className="text-muted-foreground text-xs">{t('captcha_notice')}</p>
       ) : null}
 
       {state.kind === 'error' && !state.fieldErrors ? (
-        <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+        <div className="border-destructive/30 bg-destructive/5 text-destructive flex items-start gap-2 rounded-md border p-3 text-sm">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           <span>{state.message}</span>
         </div>
       ) : null}
 
       <Button type="submit" disabled={state.kind === 'submitting'} className="w-full">
-        {state.kind === 'submitting' ? 'Submitting…' : 'Submit'}
+        {state.kind === 'submitting' ? t('submitting') : t('submit')}
       </Button>
     </form>
   );

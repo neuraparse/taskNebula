@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { formatDistanceToNow } from 'date-fns';
 import { Check, Edit3, Trash2, X } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -40,6 +41,7 @@ function relativeTime(ms: number): string {
 }
 
 export function TimeEntryRow({ entry, canEdit = false, onUpdate, onRemove }: TimeEntryRowProps) {
+  const t = useTranslations('issueMisc');
   const [isEditing, setIsEditing] = useState(false);
   const [hours, setHours] = useState<string>(String(entry.hours));
   const [minutes, setMinutes] = useState<string>(String(entry.minutes));
@@ -71,7 +73,7 @@ export function TimeEntryRow({ entry, canEdit = false, onUpdate, onRemove }: Tim
 
   if (isEditing) {
     return (
-      <div className="rounded-md border border-border/70 bg-card/60 p-3 space-y-2">
+      <div className="border-border/70 bg-card/60 space-y-2 rounded-md border p-3">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5">
             <Input
@@ -80,10 +82,10 @@ export function TimeEntryRow({ entry, canEdit = false, onUpdate, onRemove }: Tim
               max={99}
               value={hours}
               onChange={(e) => setHours(e.target.value)}
-              className="w-16 h-8 text-sm"
-              aria-label="Hours"
+              className="h-8 w-16 text-sm"
+              aria-label={t('hours_label')}
             />
-            <span className="text-xs text-muted-foreground">h</span>
+            <span className="text-muted-foreground text-xs">h</span>
           </div>
           <div className="flex items-center gap-1.5">
             <Input
@@ -93,17 +95,17 @@ export function TimeEntryRow({ entry, canEdit = false, onUpdate, onRemove }: Tim
               step={5}
               value={minutes}
               onChange={(e) => setMinutes(e.target.value)}
-              className="w-16 h-8 text-sm"
-              aria-label="Minutes"
+              className="h-8 w-16 text-sm"
+              aria-label={t('minutes_label')}
             />
-            <span className="text-xs text-muted-foreground">m</span>
+            <span className="text-muted-foreground text-xs">m</span>
           </div>
           <div className="ml-auto flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon-sm"
               onClick={handleCancel}
-              aria-label="Cancel edit"
+              aria-label={t('cancel_edit')}
             >
               <X className="h-3.5 w-3.5" />
             </Button>
@@ -111,7 +113,7 @@ export function TimeEntryRow({ entry, canEdit = false, onUpdate, onRemove }: Tim
               variant="default"
               size="icon-sm"
               onClick={handleSave}
-              aria-label="Save entry"
+              aria-label={t('save_entry')}
             >
               <Check className="h-3.5 w-3.5" />
             </Button>
@@ -120,7 +122,7 @@ export function TimeEntryRow({ entry, canEdit = false, onUpdate, onRemove }: Tim
         <Textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="What did you work on? (optional)"
+          placeholder={t('work_description_placeholder')}
           rows={2}
           className="text-sm"
         />
@@ -129,48 +131,37 @@ export function TimeEntryRow({ entry, canEdit = false, onUpdate, onRemove }: Tim
   }
 
   return (
-    <div
-      className={cn(
-        'row-interactive group flex items-start gap-3 rounded-md px-2 py-2',
-      )}
-    >
-      <Avatar className="h-6 w-6 mt-0.5 shrink-0">
+    <div className={cn('row-interactive group flex items-start gap-3 rounded-md px-2 py-2')}>
+      <Avatar className="mt-0.5 h-6 w-6 shrink-0">
         <AvatarImage src={avatarSrc(entry.userName)} alt={entry.userName} />
-        <AvatarFallback className="text-[10px] font-medium bg-muted">
+        <AvatarFallback className="bg-muted text-[10px] font-medium">
           {getInitials(entry.userName)}
         </AvatarFallback>
       </Avatar>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 text-[12.5px] flex-wrap">
-          <span className="font-medium text-foreground truncate">{entry.userName}</span>
-          <span className="text-muted-foreground">logged</span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-1.5 text-[12.5px]">
+          <span className="text-foreground truncate font-medium">{entry.userName}</span>
+          <span className="text-muted-foreground">{t('logged')}</span>
           <span className="chip text-[11px] font-medium">{durationLabel}</span>
-          <span className="text-muted-foreground text-[11px]">
-            {relativeTime(entry.loggedAt)}
-          </span>
+          <span className="text-muted-foreground text-[11px]">{relativeTime(entry.loggedAt)}</span>
         </div>
         {entry.description ? (
-          <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap break-words">
+          <p className="text-muted-foreground mt-1 whitespace-pre-wrap break-words text-sm">
             {entry.description}
           </p>
         ) : null}
       </div>
       {canEdit ? (
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+        <div className="flex items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
           <Button
             variant="ghost"
             size="icon-sm"
             onClick={() => setIsEditing(true)}
-            aria-label="Edit entry"
+            aria-label={t('edit_entry')}
           >
             <Edit3 className="h-3.5 w-3.5" />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={onRemove}
-            aria-label="Delete entry"
-          >
+          <Button variant="ghost" size="icon-sm" onClick={onRemove} aria-label={t('delete_entry')}>
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>

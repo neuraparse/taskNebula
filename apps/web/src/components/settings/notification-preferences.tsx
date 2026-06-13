@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Activity,
@@ -95,34 +96,36 @@ type EmailKey = Extract<keyof Preferences, `emailOn${string}`>;
 type InAppKey = Extract<keyof Preferences, `inAppOn${string}`>;
 
 type EventRow = {
-  label: string;
-  description: string;
+  labelKey: string;
+  descriptionKey: string;
   icon: LucideIcon;
   emailKey: EmailKey;
   inAppKey: InAppKey;
 };
 
 type EventGroup = {
-  heading: string;
+  key: string;
+  headingKey: string;
   recommended?: boolean;
   rows: ReadonlyArray<EventRow>;
 };
 
 const EVENT_GROUPS: ReadonlyArray<EventGroup> = [
   {
-    heading: 'Direct to you',
+    key: 'direct',
+    headingKey: 'notifications.group_direct',
     recommended: true,
     rows: [
       {
-        label: 'Assigned to you',
-        description: 'Someone assigns an issue to you.',
+        labelKey: 'notifications.row_assigned_label',
+        descriptionKey: 'notifications.row_assigned_desc',
         icon: UserPlus,
         emailKey: 'emailOnAssigned',
         inAppKey: 'inAppOnAssigned',
       },
       {
-        label: 'Mentions',
-        description: 'Someone @mentions you in a comment.',
+        labelKey: 'notifications.row_mentions_label',
+        descriptionKey: 'notifications.row_mentions_desc',
         icon: AtSign,
         emailKey: 'emailOnMentioned',
         inAppKey: 'inAppOnMentioned',
@@ -130,25 +133,26 @@ const EVENT_GROUPS: ReadonlyArray<EventGroup> = [
     ],
   },
   {
-    heading: 'Activity you follow',
+    key: 'activity',
+    headingKey: 'notifications.group_activity',
     rows: [
       {
-        label: 'Comments on watched issues',
-        description: 'New comments on issues you watch.',
+        labelKey: 'notifications.row_comments_label',
+        descriptionKey: 'notifications.row_comments_desc',
         icon: MessageSquare,
         emailKey: 'emailOnCommented',
         inAppKey: 'inAppOnCommented',
       },
       {
-        label: 'Status changes',
-        description: 'Status changes on issues you watch.',
+        labelKey: 'notifications.row_status_label',
+        descriptionKey: 'notifications.row_status_desc',
         icon: Activity,
         emailKey: 'emailOnStatusChanged',
         inAppKey: 'inAppOnStatusChanged',
       },
       {
-        label: 'New issues',
-        description: 'New issues in projects you watch.',
+        labelKey: 'notifications.row_new_issues_label',
+        descriptionKey: 'notifications.row_new_issues_desc',
         icon: PlusCircle,
         emailKey: 'emailOnIssueCreated',
         inAppKey: 'inAppOnIssueCreated',
@@ -156,18 +160,19 @@ const EVENT_GROUPS: ReadonlyArray<EventGroup> = [
     ],
   },
   {
-    heading: 'Sprint & Project',
+    key: 'sprint',
+    headingKey: 'notifications.group_sprint',
     rows: [
       {
-        label: 'Sprint starts',
-        description: "A sprint you're in starts.",
+        labelKey: 'notifications.row_sprint_start_label',
+        descriptionKey: 'notifications.row_sprint_start_desc',
         icon: Play,
         emailKey: 'emailOnSprintStarted',
         inAppKey: 'inAppOnSprintStarted',
       },
       {
-        label: 'Sprint completes',
-        description: "A sprint you're in ends.",
+        labelKey: 'notifications.row_sprint_complete_label',
+        descriptionKey: 'notifications.row_sprint_complete_desc',
         icon: CheckCircle2,
         emailKey: 'emailOnSprintCompleted',
         inAppKey: 'inAppOnSprintCompleted',
@@ -175,18 +180,19 @@ const EVENT_GROUPS: ReadonlyArray<EventGroup> = [
     ],
   },
   {
-    heading: 'Project lifecycle',
+    key: 'lifecycle',
+    headingKey: 'notifications.group_lifecycle',
     rows: [
       {
-        label: 'New projects in your organization',
-        description: 'Someone creates a new project in an organization you belong to.',
+        labelKey: 'notifications.row_new_projects_label',
+        descriptionKey: 'notifications.row_new_projects_desc',
         icon: FolderPlus,
         emailKey: 'emailOnProjectCreated',
         inAppKey: 'inAppOnProjectCreated',
       },
       {
-        label: 'Project archived',
-        description: "A project you're a member of is archived.",
+        labelKey: 'notifications.row_project_archived_label',
+        descriptionKey: 'notifications.row_project_archived_desc',
         icon: Archive,
         emailKey: 'emailOnProjectArchived',
         inAppKey: 'inAppOnProjectArchived',
@@ -196,13 +202,13 @@ const EVENT_GROUPS: ReadonlyArray<EventGroup> = [
 ];
 
 const WEEKDAYS = [
-  { key: 'mon', label: 'Mon' },
-  { key: 'tue', label: 'Tue' },
-  { key: 'wed', label: 'Wed' },
-  { key: 'thu', label: 'Thu' },
-  { key: 'fri', label: 'Fri' },
-  { key: 'sat', label: 'Sat' },
-  { key: 'sun', label: 'Sun' },
+  { key: 'mon', labelKey: 'notifications.weekday_mon' },
+  { key: 'tue', labelKey: 'notifications.weekday_tue' },
+  { key: 'wed', labelKey: 'notifications.weekday_wed' },
+  { key: 'thu', labelKey: 'notifications.weekday_thu' },
+  { key: 'fri', labelKey: 'notifications.weekday_fri' },
+  { key: 'sat', labelKey: 'notifications.weekday_sat' },
+  { key: 'sun', labelKey: 'notifications.weekday_sun' },
 ] as const;
 
 type WeekdayKey = (typeof WEEKDAYS)[number]['key'];
@@ -211,6 +217,7 @@ const AUTOSAVE_DEBOUNCE_MS = 400;
 const SAVED_CHIP_TIMEOUT_MS = 2000;
 
 export function NotificationPreferences() {
+  const t = useTranslations('settingsConfig');
   const { currentOrganizationId } = useOrganization();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -240,9 +247,11 @@ export function NotificationPreferences() {
       const response = await fetch(
         `/api/notification-preferences?organizationId=${currentOrganizationId}`
       );
-      const payload = await response.json().catch(() => ({ error: 'Failed to fetch preferences' }));
+      const payload = await response
+        .json()
+        .catch(() => ({ error: t('notifications.fetch_failed') }));
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to fetch preferences');
+        throw new Error(payload.error || t('notifications.fetch_failed'));
       }
       return payload as { preferences: Preferences };
     },
@@ -268,9 +277,9 @@ export function NotificationPreferences() {
       });
       const payload = await response
         .json()
-        .catch(() => ({ error: 'Failed to update preferences' }));
+        .catch(() => ({ error: t('notifications.update_failed') }));
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to update preferences');
+        throw new Error(payload.error || t('notifications.update_failed'));
       }
       return payload;
     },
@@ -287,15 +296,15 @@ export function NotificationPreferences() {
         setSavedFlash(false);
       }, SAVED_CHIP_TIMEOUT_MS);
       toast({
-        title: 'Preferences saved',
-        description: 'Your notification settings are up to date.',
+        title: t('notifications.saved_toast_title'),
+        description: t('notifications.saved_toast_desc'),
       });
     },
     onError: (mutationError: Error) => {
       setSaveError(mutationError.message);
       setSavedFlash(false);
       toast({
-        title: 'Failed to save preferences',
+        title: t('notifications.save_failed_title'),
         description: mutationError.message,
         variant: 'destructive',
       });
@@ -371,37 +380,37 @@ export function NotificationPreferences() {
   if (error) {
     return (
       <div className="panel-danger animate-alert-in text-sm">
-        {error instanceof Error ? error.message : 'Notification preferences could not be loaded.'}
+        {error instanceof Error ? error.message : t('notifications.load_error')}
       </div>
     );
   }
 
   const digestNote =
     preferences.digestFrequency === 'daily'
-      ? "You'll get one summary email each morning around 08:00."
+      ? t('notifications.digest_note_daily')
       : preferences.digestFrequency === 'weekly'
-        ? "You'll get one summary email each Monday morning."
+        ? t('notifications.digest_note_weekly')
         : null;
 
   const saveIndicator = updatePreferences.isPending ? (
     <span className="chip-amber inline-flex items-center gap-1.5">
       <span className="status-dot status-warn animate-dot-breathe" />
-      Saving
+      {t('notifications.indicator_saving')}
     </span>
   ) : saveError ? (
     <span className="chip-rose animate-alert-in inline-flex items-center gap-1.5">
       <span className="status-dot status-danger" />
-      Couldn&apos;t save
+      {t('notifications.indicator_save_failed')}
     </span>
   ) : savedFlash ? (
     <span className="chip-emerald inline-flex items-center gap-1.5">
       <span className="status-dot status-live" />
-      Saved
+      {t('notifications.indicator_saved')}
     </span>
   ) : (
-    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+    <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
       <span className="status-dot status-muted" />
-      Auto-saves as you change
+      {t('notifications.indicator_autosave')}
     </span>
   );
 
@@ -410,63 +419,57 @@ export function NotificationPreferences() {
       {/* Header */}
       <header className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between md:gap-4">
         <div className="space-y-2">
-          <span className="kicker">Notifications</span>
-          <h2 className="text-2xl font-semibold tracking-tight text-balance bg-gradient-to-r from-indigo-500 to-violet-500 bg-clip-text text-transparent">
-            How you want to be notified
+          <span className="kicker">{t('notifications.kicker')}</span>
+          <h2 className="text-balance bg-gradient-to-r from-indigo-500 to-violet-500 bg-clip-text text-2xl font-semibold tracking-tight text-transparent">
+            {t('notifications.title')}
           </h2>
-          <p className="max-w-2xl text-sm text-muted-foreground">
-            Email defaults are quiet. We only send you the essentials unless you turn more on.
-          </p>
+          <p className="text-muted-foreground max-w-2xl text-sm">{t('notifications.subtitle')}</p>
         </div>
-        <div className="flex min-h-[1.75rem] items-center gap-3 pt-1">
-          {saveIndicator}
-        </div>
+        <div className="flex min-h-[1.75rem] items-center gap-3 pt-1">{saveIndicator}</div>
       </header>
 
       {/* Channels card: master toggles */}
       <section
         aria-labelledby="channels-heading"
-        className="surface-card animate-fade-up rounded-xl border border-border/60 p-6"
+        className="surface-card animate-fade-up border-border/60 rounded-xl border p-6"
       >
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <h3 id="channels-heading" className="text-base font-semibold tracking-tight">
-              Channels
+              {t('notifications.channels_heading')}
             </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Turn a channel off to silence everything below it.
-            </p>
+            <p className="text-muted-foreground mt-1 text-sm">{t('notifications.channels_desc')}</p>
           </div>
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <ChannelMasterCard
             icon={Bell}
             tone="indigo"
-            title="In-app"
-            description="Live updates in your feed."
+            title={t('notifications.channel_inapp_title')}
+            description={t('notifications.channel_inapp_desc')}
             checked={preferences.enableInApp}
             onCheckedChange={(checked) => handleChange('enableInApp', checked)}
-            ariaLabel="Toggle in-app notifications"
+            ariaLabel={t('notifications.channel_inapp_aria')}
           />
           <ChannelMasterCard
             icon={Mail}
             tone="violet"
-            title="Email"
-            description="Only events you enable below."
+            title={t('notifications.channel_email_title')}
+            description={t('notifications.channel_email_desc')}
             checked={preferences.enableEmail}
             onCheckedChange={(checked) => handleChange('enableEmail', checked)}
-            ariaLabel="Toggle email notifications"
+            ariaLabel={t('notifications.channel_email_aria')}
           />
           <ChannelMasterCard
             icon={Smartphone}
             tone="muted"
-            title="Push"
-            description="Mobile push alerts."
+            title={t('notifications.channel_push_title')}
+            description={t('notifications.channel_push_desc')}
             checked={false}
             onCheckedChange={() => {}}
             disabled
-            badge="Soon"
-            ariaLabel="Toggle push notifications"
+            badge={t('notifications.channel_push_badge')}
+            ariaLabel={t('notifications.channel_push_aria')}
           />
         </div>
       </section>
@@ -474,45 +477,44 @@ export function NotificationPreferences() {
       {/* Events card: per-event rows with 3 channel toggles */}
       <section
         aria-labelledby="events-heading"
-        className="surface-card animate-fade-up rounded-xl border border-border/60 p-6"
+        className="surface-card animate-fade-up border-border/60 rounded-xl border p-6"
       >
         <div className="mb-6 flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
           <div>
             <h3 id="events-heading" className="text-base font-semibold tracking-tight">
-              Events
+              {t('notifications.events_heading')}
             </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Pick which events ping which channel.
-            </p>
+            <p className="text-muted-foreground mt-1 text-sm">{t('notifications.events_desc')}</p>
           </div>
           <div className="hidden md:grid md:w-60 md:grid-cols-3 md:gap-2 md:text-center">
-            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-              Email
+            <span className="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">
+              {t('notifications.col_email')}
             </span>
-            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-              In-app
+            <span className="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">
+              {t('notifications.col_inapp')}
             </span>
-            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-              Push
+            <span className="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">
+              {t('notifications.col_push')}
             </span>
           </div>
         </div>
 
         <div className="space-y-8">
           {EVENT_GROUPS.map((group) => (
-            <div key={group.heading} className="space-y-2">
+            <div key={group.key} className="space-y-2">
               <div className="flex items-center gap-2">
-                <span className="kicker">{group.heading}</span>
+                <span className="kicker">{t(group.headingKey)}</span>
                 {group.recommended ? (
-                  <span className="chip-emerald">Recommended</span>
+                  <span className="chip-emerald">{t('notifications.recommended')}</span>
                 ) : null}
               </div>
-              <div className="divide-y divide-border/60 rounded-lg border border-border/60 bg-background/40">
+              <div className="divide-border/60 border-border/60 bg-background/40 divide-y rounded-lg border">
                 {group.rows.map((row) => {
                   const Icon = row.icon;
+                  const rowLabel = t(row.labelKey);
                   return (
                     <div
-                      key={`${group.heading}-${row.label}`}
+                      key={`${group.key}-${row.labelKey}`}
                       className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:gap-4"
                     >
                       <div className="flex flex-1 items-start gap-3">
@@ -523,14 +525,14 @@ export function NotificationPreferences() {
                           <Icon className="h-4 w-4" />
                         </div>
                         <div className="min-w-0 flex-1 space-y-0.5">
-                          <div className="text-sm font-medium leading-tight">{row.label}</div>
-                          <p className="text-xs text-muted-foreground">{row.description}</p>
+                          <div className="text-sm font-medium leading-tight">{rowLabel}</div>
+                          <p className="text-muted-foreground text-xs">{t(row.descriptionKey)}</p>
                         </div>
                       </div>
                       <div className="grid w-full grid-cols-3 gap-2 md:w-60 md:justify-items-center">
                         <div className="flex flex-col items-center gap-1">
-                          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground md:hidden">
-                            Email
+                          <span className="text-muted-foreground text-[10px] font-medium uppercase tracking-wider md:hidden">
+                            {t('notifications.col_email')}
                           </span>
                           <Switch
                             checked={preferences[row.emailKey] as boolean}
@@ -538,12 +540,12 @@ export function NotificationPreferences() {
                               handleChange(row.emailKey, checked as never)
                             }
                             disabled={!preferences.enableEmail}
-                            aria-label={row.label}
+                            aria-label={rowLabel}
                           />
                         </div>
                         <div className="flex flex-col items-center gap-1">
-                          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground md:hidden">
-                            In-app
+                          <span className="text-muted-foreground text-[10px] font-medium uppercase tracking-wider md:hidden">
+                            {t('notifications.col_inapp')}
                           </span>
                           <Switch
                             checked={preferences[row.inAppKey] as boolean}
@@ -551,18 +553,18 @@ export function NotificationPreferences() {
                               handleChange(row.inAppKey, checked as never)
                             }
                             disabled={!preferences.enableInApp}
-                            aria-label={row.label}
+                            aria-label={rowLabel}
                           />
                         </div>
                         <div className="flex flex-col items-center gap-1">
-                          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground md:hidden">
-                            Push
+                          <span className="text-muted-foreground text-[10px] font-medium uppercase tracking-wider md:hidden">
+                            {t('notifications.col_push')}
                           </span>
                           <Switch
                             checked={false}
                             disabled
-                            aria-label={`Push: ${row.label} (coming soon)`}
-                            title="Push notifications are coming soon."
+                            aria-label={t('notifications.push_row_aria', { label: rowLabel })}
+                            title={t('notifications.push_coming_soon')}
                           />
                         </div>
                       </div>
@@ -578,16 +580,14 @@ export function NotificationPreferences() {
       {/* Email digest */}
       <section
         aria-labelledby="digest-heading"
-        className="surface-card animate-fade-up rounded-xl border border-border/60 p-6"
+        className="surface-card animate-fade-up border-border/60 rounded-xl border p-6"
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto] md:items-center">
           <div className="space-y-1">
             <h3 id="digest-heading" className="text-base font-semibold tracking-tight">
-              Email digest
+              {t('notifications.digest_heading')}
             </h3>
-            <p className="text-sm text-muted-foreground">
-              A scheduled summary of activity, on top of per-event emails.
-            </p>
+            <p className="text-muted-foreground text-sm">{t('notifications.digest_desc')}</p>
           </div>
           <Select
             value={preferences.digestFrequency}
@@ -599,21 +599,19 @@ export function NotificationPreferences() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">No digest</SelectItem>
-              <SelectItem value="daily">Daily</SelectItem>
-              <SelectItem value="weekly">Weekly</SelectItem>
+              <SelectItem value="none">{t('notifications.digest_none')}</SelectItem>
+              <SelectItem value="daily">{t('notifications.digest_daily')}</SelectItem>
+              <SelectItem value="weekly">{t('notifications.digest_weekly')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        {digestNote ? (
-          <p className="mt-4 text-xs text-muted-foreground">{digestNote}</p>
-        ) : null}
+        {digestNote ? <p className="text-muted-foreground mt-4 text-xs">{digestNote}</p> : null}
       </section>
 
       {/* Do not disturb */}
       <section
         aria-labelledby="dnd-heading"
-        className="surface-card animate-fade-up rounded-xl border border-border/60 p-6"
+        className="surface-card animate-fade-up border-border/60 rounded-xl border p-6"
       >
         <div className="flex items-start gap-4">
           <div
@@ -625,26 +623,24 @@ export function NotificationPreferences() {
           <div className="flex-1 space-y-1">
             <div className="flex items-center justify-between gap-3">
               <h3 id="dnd-heading" className="text-base font-semibold tracking-tight">
-                Do not disturb
+                {t('notifications.dnd_heading')}
               </h3>
               <Switch
                 checked={preferences.doNotDisturb}
                 onCheckedChange={(checked) => handleChange('doNotDisturb', checked)}
-                aria-label="Toggle do not disturb"
+                aria-label={t('notifications.dnd_aria')}
               />
             </div>
-            <p className="text-sm text-muted-foreground">
-              Pause emails during quiet hours.
-            </p>
+            <p className="text-muted-foreground text-sm">{t('notifications.dnd_desc')}</p>
           </div>
         </div>
 
         {preferences.doNotDisturb ? (
-          <div className="mt-6 space-y-5 border-t border-border/60 pt-5">
+          <div className="border-border/60 mt-6 space-y-5 border-t pt-5">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_auto] md:items-end">
               <div className="space-y-1">
-                <Label htmlFor="dnd-start" className="text-xs text-muted-foreground">
-                  From
+                <Label htmlFor="dnd-start" className="text-muted-foreground text-xs">
+                  {t('notifications.dnd_from')}
                 </Label>
                 <Input
                   id="dnd-start"
@@ -654,8 +650,8 @@ export function NotificationPreferences() {
                 />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="dnd-end" className="text-xs text-muted-foreground">
-                  To
+                <Label htmlFor="dnd-end" className="text-muted-foreground text-xs">
+                  {t('notifications.dnd_to')}
                 </Label>
                 <Input
                   id="dnd-end"
@@ -664,7 +660,7 @@ export function NotificationPreferences() {
                   onChange={(event) => handleChange('doNotDisturbEnd', event.target.value)}
                 />
               </div>
-              <div className="flex items-center gap-2 rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+              <div className="border-border/60 bg-muted/30 text-muted-foreground flex items-center gap-2 rounded-md border px-3 py-2 text-xs">
                 <Globe2 className="h-3.5 w-3.5" aria-hidden="true" />
                 <span className="truncate" title={timezone}>
                   {timezone}
@@ -673,7 +669,9 @@ export function NotificationPreferences() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Active days</Label>
+              <Label className="text-muted-foreground text-xs">
+                {t('notifications.active_days')}
+              </Label>
               <div className="flex flex-wrap gap-2">
                 {WEEKDAYS.map((day) => {
                   const active = dndDays.has(day.key);
@@ -687,24 +685,20 @@ export function NotificationPreferences() {
                         'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
                         active
                           ? 'bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-sm'
-                          : 'border border-border bg-background text-muted-foreground hover:bg-accent/40'
+                          : 'border-border bg-background text-muted-foreground hover:bg-accent/40 border'
                       )}
                     >
-                      {day.label}
+                      {t(day.labelKey)}
                     </button>
                   );
                 })}
               </div>
-              <p className="text-[11px] text-muted-foreground">
-                Weekday selection is a local preview. Quiet-hour days sync once the backend
-                supports it.
+              <p className="text-muted-foreground text-[11px]">
+                {t('notifications.weekday_preview_note')}
               </p>
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              During these hours, we won&apos;t send emails. Supports overnight ranges like
-              22:00&ndash;08:00.
-            </p>
+            <p className="text-muted-foreground text-xs">{t('notifications.quiet_hours_note')}</p>
           </div>
         ) : null}
       </section>
@@ -717,7 +711,9 @@ export function NotificationPreferences() {
           disabled={updatePreferences.isPending}
           className="bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg hover:from-indigo-600 hover:to-violet-600"
         >
-          {updatePreferences.isPending ? 'Working…' : 'Save changes'}
+          {updatePreferences.isPending
+            ? t('notifications.working')
+            : t('notifications.save_changes')}
         </Button>
       </div>
     </div>
@@ -757,7 +753,7 @@ function ChannelMasterCard({
   return (
     <div
       className={cn(
-        'flex items-start gap-3 rounded-lg border border-border/60 bg-background/40 p-4 transition-colors',
+        'border-border/60 bg-background/40 flex items-start gap-3 rounded-lg border p-4 transition-colors',
         disabled ? 'opacity-70' : 'hover:bg-background/70'
       )}
     >
@@ -775,7 +771,7 @@ function ChannelMasterCard({
           <div className="flex items-center gap-2">
             <Label className="text-sm font-medium">{title}</Label>
             {badge ? (
-              <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
                 {badge}
               </span>
             ) : null}
@@ -787,29 +783,27 @@ function ChannelMasterCard({
             aria-label={ariaLabel}
           />
         </div>
-        <p className="text-xs text-muted-foreground">{description}</p>
+        <p className="text-muted-foreground text-xs">{description}</p>
       </div>
     </div>
   );
 }
 
 function NotificationPreferencesSkeleton() {
+  const t = useTranslations('settingsConfig');
   return (
     <div className="space-y-6" role="status" aria-live="polite">
-      <p className="sr-only">Loading notification settings...</p>
+      <p className="sr-only">{t('notifications.skeleton_loading')}</p>
       <div className="space-y-2">
         <Skeleton className="h-3 w-24" />
         <Skeleton className="h-7 w-80" />
         <Skeleton className="h-4 w-96" />
       </div>
-      <div className="surface-card rounded-xl border border-border/60 p-6">
+      <div className="surface-card border-border/60 rounded-xl border p-6">
         <Skeleton className="mb-4 h-4 w-28" />
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-3 rounded-lg border border-border/60 p-4"
-            >
+            <div key={i} className="border-border/60 flex items-center gap-3 rounded-lg border p-4">
               <Skeleton className="h-10 w-10 rounded-lg" />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-3 w-16" />
@@ -820,17 +814,17 @@ function NotificationPreferencesSkeleton() {
           ))}
         </div>
       </div>
-      <div className="surface-card rounded-xl border border-border/60 p-6">
+      <div className="surface-card border-border/60 rounded-xl border p-6">
         <Skeleton className="mb-4 h-4 w-20" />
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, g) => (
             <div key={g} className="space-y-2">
               <Skeleton className="h-3 w-28" />
-              <div className="rounded-lg border border-border/60">
+              <div className="border-border/60 rounded-lg border">
                 {Array.from({ length: 2 }).map((_, r) => (
                   <div
                     key={r}
-                    className="flex items-center gap-4 border-b border-border/60 p-4 last:border-0"
+                    className="border-border/60 flex items-center gap-4 border-b p-4 last:border-0"
                   >
                     <Skeleton className="h-9 w-9 rounded-lg" />
                     <div className="flex-1 space-y-2">
@@ -849,7 +843,7 @@ function NotificationPreferencesSkeleton() {
           ))}
         </div>
       </div>
-      <div className="surface-card rounded-xl border border-border/60 p-6">
+      <div className="surface-card border-border/60 rounded-xl border p-6">
         <Skeleton className="h-4 w-40" />
         <Skeleton className="mt-3 h-8 w-48" />
       </div>

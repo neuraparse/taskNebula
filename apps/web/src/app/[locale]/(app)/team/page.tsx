@@ -1,5 +1,6 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { auth } from '@/auth';
 import { db, organizationMembers, users as usersTable } from '@tasknebula/db';
 import { eq, inArray } from 'drizzle-orm';
@@ -10,12 +11,16 @@ import { hasPermission } from '@/lib/auth/permissions';
 import { TeamPageClient } from './team-page-client';
 import type { TeamMemberRow } from './team-members-list';
 
-export const metadata: Metadata = {
-  title: 'Team | TaskNebula',
-  description: 'Manage your team members and settings',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('pagesWork');
+  return {
+    title: t('team.metaTitle'),
+    description: t('team.metaDescription'),
+  };
+}
 
 export default async function TeamPage() {
+  const t = await getTranslations('pagesWork');
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -31,17 +36,15 @@ export default async function TeamPage() {
   if (!primaryOrg) {
     return (
       <div className="flex h-full min-h-0 flex-col">
-        <div className="border-b bg-background px-6 py-4">
-          <h1 className="text-xl font-semibold tracking-tight">Team</h1>
+        <div className="bg-background border-b px-6 py-4">
+          <h1 className="text-xl font-semibold tracking-tight">{t('team.title')}</h1>
         </div>
         <div className="min-h-0 flex-1 p-6">
-          <div className="surface-card p-8 text-center space-y-3">
-            <Users className="mx-auto h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              You are not a member of any organization yet.
-            </p>
+          <div className="surface-card space-y-3 p-8 text-center">
+            <Users className="text-muted-foreground mx-auto h-8 w-8" />
+            <p className="text-muted-foreground text-sm">{t('team.noOrganization')}</p>
             <Link href="/settings?tab=organization">
-              <Button size="sm">Create organization</Button>
+              <Button size="sm">{t('team.createOrganization')}</Button>
             </Link>
           </div>
         </div>
@@ -80,10 +83,7 @@ export default async function TeamPage() {
     },
   }));
 
-  const canManageTeamspaces = await hasPermission(
-    primaryOrg.organizationId,
-    'org:settings'
-  );
+  const canManageTeamspaces = await hasPermission(primaryOrg.organizationId, 'org:settings');
 
   return (
     <TeamPageClient

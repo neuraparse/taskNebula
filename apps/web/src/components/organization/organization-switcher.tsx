@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Check, ChevronsUpDown, Building2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,7 +31,7 @@ function OrgAvatar({ name }: { name: string }) {
     .join('');
 
   return (
-    <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-[10px] font-semibold text-primary">
+    <span className="bg-primary/10 text-primary inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[10px] font-semibold">
       {initials}
     </span>
   );
@@ -41,6 +42,7 @@ export function OrganizationSwitcher() {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const { currentOrganizationId, setCurrentOrganization } = useOrganization();
+  const t = useTranslations('projectsPages');
 
   useEffect(() => {
     fetchOrganizations();
@@ -70,12 +72,12 @@ export function OrganizationSwitcher() {
       <Button
         variant="ghost"
         size="sm"
-        className="w-[180px] justify-between px-2 text-muted-foreground"
+        className="text-muted-foreground w-[180px] justify-between px-2"
         disabled
       >
         <span className="flex items-center gap-2 truncate">
           <Building2 className="h-4 w-4 shrink-0" />
-          <span className="truncate text-sm">Loading...</span>
+          <span className="truncate text-sm">{t('loading')}</span>
         </span>
       </Button>
     );
@@ -89,30 +91,30 @@ export function OrganizationSwitcher() {
           size="sm"
           role="combobox"
           aria-expanded={open}
-          aria-label="Switch organization"
+          aria-label={t('org_switch_aria')}
           className="h-9 w-[180px] justify-between gap-2 px-2 transition-colors duration-200"
         >
           <span className="flex min-w-0 items-center gap-2 truncate">
             {currentOrg ? (
               <OrgAvatar name={currentOrg.name} />
             ) : (
-              <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <Building2 className="text-muted-foreground h-4 w-4 shrink-0" />
             )}
             <span className="truncate text-sm font-medium">
-              {currentOrg?.name || 'Select org'}
+              {currentOrg?.name || t('org_select')}
             </span>
           </span>
-          <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <ChevronsUpDown className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-[200px] shadow-sm data-[state=open]:animate-scale-in"
+        className="data-[state=open]:animate-scale-in w-[200px] shadow-sm"
         align="start"
         sideOffset={4}
       >
         {organizations.length === 0 ? (
-          <DropdownMenuItem disabled className="text-sm text-muted-foreground">
-            No organizations
+          <DropdownMenuItem disabled className="text-muted-foreground text-sm">
+            {t('org_none')}
           </DropdownMenuItem>
         ) : (
           organizations.map((org) => {
@@ -132,7 +134,7 @@ export function OrganizationSwitcher() {
                 <OrgAvatar name={org.name} />
                 <span className="flex-1 truncate text-sm">{org.name}</span>
                 {isActive ? (
-                  <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
+                  <Check className="text-primary h-3.5 w-3.5 shrink-0" />
                 ) : org.memberCount != null ? (
                   <span className="chip text-[10px]">{org.memberCount}</span>
                 ) : null}
@@ -147,8 +149,8 @@ export function OrganizationSwitcher() {
               className="min-h-[36px] gap-2 px-2 text-sm transition-colors duration-200"
               onSelect={(e) => e.preventDefault()}
             >
-              <Plus className="h-4 w-4 shrink-0 text-muted-foreground" />
-              Create organization
+              <Plus className="text-muted-foreground h-4 w-4 shrink-0" />
+              {t('org_create_title')}
             </DropdownMenuItem>
           }
         />

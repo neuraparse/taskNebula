@@ -15,13 +15,9 @@
  */
 
 import { Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useAiTrace, type AiTrace } from '@/lib/hooks/use-ai-trace';
 
@@ -55,22 +51,25 @@ function formatTimestamp(value: string | Date | null | undefined): string | null
   return `${y}-${m}-${day} ${hh}:${mm}`;
 }
 
-function buildTooltipText(args: {
-  model?: string;
-  feature?: string;
-  generatedAt?: string | Date | null;
-}): string {
+function buildTooltipText(
+  args: {
+    model?: string;
+    feature?: string;
+    generatedAt?: string | Date | null;
+  },
+  fallback: string
+): string {
   const parts: string[] = [];
   if (args.model) parts.push(args.model);
   if (args.feature) parts.push(args.feature);
   const ts = formatTimestamp(args.generatedAt);
   if (ts) parts.push(ts);
-  if (parts.length === 0) return 'Generated with AI';
+  if (parts.length === 0) return fallback;
   return parts.join(' · ');
 }
 
 export function AiBadge({
-  label = 'Generated with AI',
+  label,
   feature,
   model,
   generatedAt,
@@ -78,17 +77,22 @@ export function AiBadge({
   className,
   size = 'sm',
 }: AiBadgeProps) {
+  const t = useTranslations('aiFeatures');
+  const resolvedLabel = label ?? t('badge.generatedWithAi');
   // When operationId is given the hook resolves model + feature + timestamp.
   const trace: AiTrace | null = useAiTrace(operationId);
   const resolvedModel = model ?? trace?.model;
   const resolvedFeature = feature ?? trace?.feature;
   const resolvedAt = generatedAt ?? trace?.generatedAt ?? null;
 
-  const tooltip = buildTooltipText({
-    model: resolvedModel,
-    feature: resolvedFeature,
-    generatedAt: resolvedAt,
-  });
+  const tooltip = buildTooltipText(
+    {
+      model: resolvedModel,
+      feature: resolvedFeature,
+      generatedAt: resolvedAt,
+    },
+    t('badge.generatedWithAi')
+  );
 
   return (
     <TooltipProvider delayDuration={120}>
@@ -97,7 +101,7 @@ export function AiBadge({
           <span
             data-testid="ai-badge"
             data-ai-generated="true"
-            aria-label={`AI-generated content. ${tooltip}`}
+            aria-label={t('badge.ariaLabel', { detail: tooltip })}
             className={cn('inline-flex', className)}
           >
             <Badge
@@ -106,25 +110,27 @@ export function AiBadge({
               className="cursor-help select-none"
             >
               <Sparkles className="h-2.5 w-2.5" aria-hidden="true" />
-              <span>{label}</span>
+              <span>{resolvedLabel}</span>
             </Badge>
           </span>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-xs">
           <div className="space-y-0.5">
-            <p className="font-medium">AI-generated output</p>
+            <p className="font-medium">{t('badge.tooltipTitle')}</p>
             <p className="text-muted-foreground">{tooltip}</p>
-            <p className="text-[10px] text-muted-foreground/80 pt-0.5">
-              EU AI Act Article 50 disclosure. See{' '}
-              <a
-                href="/ai-model-cards"
-                target="_blank"
-                rel="noreferrer noopener"
-                className="underline hover:text-foreground"
-              >
-                model cards
-              </a>
-              .
+            <p className="text-muted-foreground/80 pt-0.5 text-[10px]">
+              {t.rich('badge.disclosure', {
+                link: (chunks) => (
+                  <a
+                    href="/ai-model-cards"
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="hover:text-foreground underline"
+                  >
+                    {chunks}
+                  </a>
+                ),
+              })}
             </p>
           </div>
         </TooltipContent>

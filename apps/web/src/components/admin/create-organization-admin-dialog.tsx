@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,6 +26,7 @@ import {
 } from '@/components/ui/select';
 
 export function CreateOrganizationAdminDialog() {
+  const t = useTranslations('adminDialogs');
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -54,19 +56,26 @@ export function CreateOrganizationAdminDialog() {
       });
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to create organization');
+        throw new Error(error.error || t('createOrg.toastFailedTitle'));
       }
       return response.json();
     },
     onSuccess: () => {
-      toast({ title: 'Organization created', description: 'The organization was created successfully.' });
+      toast({
+        title: t('createOrg.toastCreatedTitle'),
+        description: t('createOrg.toastCreatedDescription'),
+      });
       queryClient.invalidateQueries({ queryKey: ['admin-organizations'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
       setOpen(false);
       setFormData({ name: '', slug: '', ownerId: '', plan: 'free' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Failed to create organization', description: error.message, variant: 'destructive' });
+      toast({
+        title: t('createOrg.toastFailedTitle'),
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 
@@ -74,8 +83,8 @@ export function CreateOrganizationAdminDialog() {
     e.preventDefault();
     if (!formData.name || !formData.slug || !formData.ownerId) {
       toast({
-        title: 'Missing fields',
-        description: 'Name, slug, and owner are required.',
+        title: t('common.missingFields'),
+        description: t('createOrg.missingFieldsDescription'),
         variant: 'destructive',
       });
       return;
@@ -94,18 +103,18 @@ export function CreateOrganizationAdminDialog() {
       <DialogTrigger asChild>
         <Button size="sm">
           <Plus className="mr-1.5 h-4 w-4" />
-          New organization
+          {t('createOrg.trigger')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create organization</DialogTitle>
-            <DialogDescription>Create a new organization and assign an owner.</DialogDescription>
+            <DialogTitle>{t('createOrg.title')}</DialogTitle>
+            <DialogDescription>{t('createOrg.description')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{t('orgForm.name')}</Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -121,25 +130,23 @@ export function CreateOrganizationAdminDialog() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="slug">Slug</Label>
+              <Label htmlFor="slug">{t('orgForm.slug')}</Label>
               <Input
                 id="slug"
                 value={formData.slug}
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                 placeholder="acme-inc"
               />
-              <p className="text-xs text-muted-foreground">
-                URL-friendly identifier (lowercase, hyphens only).
-              </p>
+              <p className="text-muted-foreground text-xs">{t('orgForm.slugHint')}</p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="owner">Owner</Label>
+              <Label htmlFor="owner">{t('createOrg.owner')}</Label>
               <Select
                 value={formData.ownerId}
                 onValueChange={(value) => setFormData({ ...formData, ownerId: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select owner" />
+                  <SelectValue placeholder={t('createOrg.ownerPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {usersData?.users?.map((user: any) => (
@@ -151,7 +158,7 @@ export function CreateOrganizationAdminDialog() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="plan">Plan</Label>
+              <Label htmlFor="plan">{t('orgForm.plan')}</Label>
               <Select
                 value={formData.plan}
                 onValueChange={(value: any) => setFormData({ ...formData, plan: value })}
@@ -160,21 +167,21 @@ export function CreateOrganizationAdminDialog() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value="starter">Starter</SelectItem>
-                  <SelectItem value="growth">Growth</SelectItem>
-                  <SelectItem value="enterprise">Enterprise</SelectItem>
+                  <SelectItem value="free">{t('orgForm.planFree')}</SelectItem>
+                  <SelectItem value="starter">{t('orgForm.planStarter')}</SelectItem>
+                  <SelectItem value="growth">{t('orgForm.planGrowth')}</SelectItem>
+                  <SelectItem value="enterprise">{t('orgForm.planEnterprise')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={createOrgMutation.isPending}>
               {createOrgMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create organization
+              {t('createOrg.submit')}
             </Button>
           </DialogFooter>
         </form>

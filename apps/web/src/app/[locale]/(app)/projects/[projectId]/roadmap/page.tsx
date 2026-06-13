@@ -2,6 +2,7 @@
 
 import { use, useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Lightbulb, ArrowDownUp } from 'lucide-react';
@@ -37,8 +38,18 @@ interface PeriodResult {
 }
 
 const MONTH_ABBR = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 // Pastel palette for stable bar colours.
@@ -79,7 +90,7 @@ function startOfWeek(d: Date): Date {
   // Monday-start week.
   const x = startOfDay(d);
   const day = x.getDay(); // 0=Sun .. 6=Sat
-  const diff = (day === 0 ? -6 : 1 - day);
+  const diff = day === 0 ? -6 : 1 - day;
   return addDays(x, diff);
 }
 
@@ -107,12 +118,14 @@ function getPeriod(mode: PeriodMode, today: Date = new Date()): PeriodResult {
     const start = t;
     const end = addDays(t, 1);
     return {
-      columns: [{
-        label: `${monthAbbr(start.getMonth())} ${start.getDate()}`,
-        start,
-        end,
-        isCurrent: true,
-      }],
+      columns: [
+        {
+          label: `${monthAbbr(start.getMonth())} ${start.getDate()}`,
+          start,
+          end,
+          isCurrent: true,
+        },
+      ],
       totalDays: 1,
       rangeStart: start,
       rangeEnd: end,
@@ -134,7 +147,12 @@ function getPeriod(mode: PeriodMode, today: Date = new Date()): PeriodResult {
     }
     const first = columns[0]!;
     const last = columns[columns.length - 1]!;
-    return { columns, totalDays: daysBetween(first.start, last.end), rangeStart: first.start, rangeEnd: last.end };
+    return {
+      columns,
+      totalDays: daysBetween(first.start, last.end),
+      rangeStart: first.start,
+      rangeEnd: last.end,
+    };
   }
 
   if (mode === 'monthly') {
@@ -154,7 +172,12 @@ function getPeriod(mode: PeriodMode, today: Date = new Date()): PeriodResult {
     }
     const first = columns[0]!;
     const last = columns[columns.length - 1]!;
-    return { columns, totalDays: daysBetween(first.start, last.end), rangeStart: first.start, rangeEnd: last.end };
+    return {
+      columns,
+      totalDays: daysBetween(first.start, last.end),
+      rangeStart: first.start,
+      rangeEnd: last.end,
+    };
   }
 
   // quarterly: current quarter (3 months)
@@ -174,7 +197,12 @@ function getPeriod(mode: PeriodMode, today: Date = new Date()): PeriodResult {
   }
   const first = columns[0]!;
   const last = columns[columns.length - 1]!;
-  return { columns, totalDays: daysBetween(first.start, last.end), rangeStart: first.start, rangeEnd: last.end };
+  return {
+    columns,
+    totalDays: daysBetween(first.start, last.end),
+    rangeStart: first.start,
+    rangeEnd: last.end,
+  };
 }
 
 /**
@@ -184,7 +212,7 @@ function getPeriod(mode: PeriodMode, today: Date = new Date()): PeriodResult {
 function computeBarPlacement(
   startDate: string | null,
   endDate: string | null,
-  period: PeriodResult,
+  period: PeriodResult
 ): { left: number; width: number } | null {
   if (!startDate || !endDate) return null;
   const s = startOfDay(new Date(startDate));
@@ -231,6 +259,7 @@ function pickEmoji(id: string) {
 export default function RoadmapPage({ params }: RoadmapPageProps) {
   const { projectId } = use(params);
   const router = useRouter();
+  const t = useTranslations('pagesProjectTabs');
   const [epics, setEpics] = useState<Epic[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [period, setPeriod] = useState<PeriodMode>('quarterly');
@@ -258,8 +287,8 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
       } catch (error) {
         if (!cancelled) {
           toast({
-            title: 'Error',
-            description: 'Failed to load initiatives',
+            title: t('roadmap.errorTitle'),
+            description: t('roadmap.loadFailed'),
             variant: 'destructive',
           });
         }
@@ -271,58 +300,67 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
     return () => {
       cancelled = true;
     };
-  }, [projectId, toast]);
+  }, [projectId, toast, t]);
 
   const periodData = useMemo(() => getPeriod(period), [period]);
 
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="text-muted-foreground">Loading initiatives...</div>
+        <div className="text-muted-foreground">{t('roadmap.loading')}</div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden animate-fade-in">
+    <div className="animate-fade-in flex h-full flex-col overflow-hidden">
       {/* Page Header */}
-      <div className="border-b border-border bg-background px-6 py-4 shrink-0">
+      <div className="border-border bg-background shrink-0 border-b px-6 py-4">
         <div className="flex items-center gap-2">
-          <Lightbulb className="h-5 w-5 text-accent-amber" />
-          <h1 className="text-xl font-semibold tracking-tight">Initiatives</h1>
+          <Lightbulb className="text-accent-amber h-5 w-5" />
+          <h1 className="text-xl font-semibold tracking-tight">{t('roadmap.title')}</h1>
         </div>
         <div className="mt-3">
           <Tabs value={period} onValueChange={(v) => setPeriod(v as PeriodMode)}>
-            <TabsList className="rounded-full bg-muted p-1">
-              <TabsTrigger value="today" className="rounded-full px-4">Today</TabsTrigger>
-              <TabsTrigger value="weekly" className="rounded-full px-4">Weekly</TabsTrigger>
-              <TabsTrigger value="monthly" className="rounded-full px-4">Monthly</TabsTrigger>
-              <TabsTrigger value="quarterly" className="rounded-full px-4">Quarterly</TabsTrigger>
+            <TabsList className="bg-muted rounded-full p-1">
+              <TabsTrigger value="today" className="rounded-full px-4">
+                {t('roadmap.period.today')}
+              </TabsTrigger>
+              <TabsTrigger value="weekly" className="rounded-full px-4">
+                {t('roadmap.period.weekly')}
+              </TabsTrigger>
+              <TabsTrigger value="monthly" className="rounded-full px-4">
+                {t('roadmap.period.monthly')}
+              </TabsTrigger>
+              <TabsTrigger value="quarterly" className="rounded-full px-4">
+                {t('roadmap.period.quarterly')}
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
       </div>
 
       {/* Two-pane Layout */}
-      <div className="flex flex-1 min-h-0">
+      <div className="flex min-h-0 flex-1">
         {/* Left Pane: Initiatives list */}
-        <aside className="w-[320px] shrink-0 border-r border-border bg-background flex flex-col min-h-0">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+        <aside className="border-border bg-background flex min-h-0 w-[320px] shrink-0 flex-col border-r">
+          <div className="border-border flex shrink-0 items-center justify-between border-b px-4 py-3">
             <p className="text-sm font-semibold">
-              Initiatives <span className="text-muted-foreground tabular-nums">{epics.length}</span>
+              {t('roadmap.title')}{' '}
+              <span className="text-muted-foreground tabular-nums">{epics.length}</span>
             </p>
             <button
               type="button"
-              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
-              aria-label="Sort initiatives"
+              className="text-muted-foreground hover:bg-accent/50 hover:text-foreground inline-flex h-7 w-7 items-center justify-center rounded-md transition-colors"
+              aria-label={t('roadmap.sortAriaLabel')}
             >
               <ArrowDownUp className="h-3.5 w-3.5" />
             </button>
           </div>
           <div className="flex-1 overflow-y-auto">
             {epics.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                No initiatives yet
+              <div className="text-muted-foreground px-4 py-8 text-center text-sm">
+                {t('roadmap.emptyList')}
               </div>
             ) : (
               <ul>
@@ -331,13 +369,13 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
                     <button
                       type="button"
                       onClick={() => router.push(`/issues/${epic.id}`)}
-                      className="flex w-full items-center gap-2 px-4 text-left transition-colors hover:bg-accent/50"
+                      className="hover:bg-accent/50 flex w-full items-center gap-2 px-4 text-left transition-colors"
                       style={{ height: ROW_HEIGHT_PX }}
                     >
-                      <span className="text-base leading-none shrink-0" aria-hidden>
+                      <span className="shrink-0 text-base leading-none" aria-hidden>
                         {pickEmoji(epic.id)}
                       </span>
-                      <span className="text-sm truncate">{epic.title}</span>
+                      <span className="truncate text-sm">{epic.title}</span>
                     </button>
                   </li>
                 ))}
@@ -347,24 +385,26 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
         </aside>
 
         {/* Right Pane: Gantt timeline */}
-        <section className="flex-1 overflow-x-auto overflow-y-auto bg-background min-h-0">
+        <section className="bg-background min-h-0 flex-1 overflow-x-auto overflow-y-auto">
           <div className="min-w-[640px]">
             {/* Timeline header */}
             <div
-              className="grid border-b border-border bg-background sticky top-0 z-10"
-              style={{ gridTemplateColumns: `repeat(${periodData.columns.length}, minmax(0, 1fr))` }}
+              className="border-border bg-background sticky top-0 z-10 grid border-b"
+              style={{
+                gridTemplateColumns: `repeat(${periodData.columns.length}, minmax(0, 1fr))`,
+              }}
             >
               {periodData.columns.map((col, idx) => (
                 <div
                   key={idx}
-                  className={`flex items-center gap-2 px-3 py-3 text-xs font-medium border-r border-border last:border-r-0 ${
+                  className={`border-border flex items-center gap-2 border-r px-3 py-3 text-xs font-medium last:border-r-0 ${
                     col.isCurrent ? 'bg-blue-50/30' : ''
                   }`}
                 >
                   <span className="text-muted-foreground">{col.label}</span>
                   {col.isCurrent && (
                     <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700">
-                      Current
+                      {t('roadmap.current')}
                     </span>
                   )}
                 </div>
@@ -375,14 +415,16 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
             <div className="relative">
               {/* Column backgrounds (current month tint behind rows) */}
               <div
-                className="absolute inset-0 grid pointer-events-none"
-                style={{ gridTemplateColumns: `repeat(${periodData.columns.length}, minmax(0, 1fr))` }}
+                className="pointer-events-none absolute inset-0 grid"
+                style={{
+                  gridTemplateColumns: `repeat(${periodData.columns.length}, minmax(0, 1fr))`,
+                }}
                 aria-hidden
               >
                 {periodData.columns.map((col, idx) => (
                   <div
                     key={idx}
-                    className={`border-r border-border/60 last:border-r-0 ${
+                    className={`border-border/60 border-r last:border-r-0 ${
                       col.isCurrent ? 'bg-blue-50/30' : ''
                     }`}
                   />
@@ -391,27 +433,31 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
 
               {epics.length === 0 ? (
                 <div
-                  className="relative flex items-center justify-center text-sm text-muted-foreground"
+                  className="text-muted-foreground relative flex items-center justify-center text-sm"
                   style={{ height: ROW_HEIGHT_PX * 4 }}
                 >
-                  No initiatives to display on the timeline
+                  {t('roadmap.emptyTimeline')}
                 </div>
               ) : (
                 <ul className="relative">
                   {epics.map((epic) => {
-                    const placement = computeBarPlacement(epic.startDate, epic.targetDate, periodData);
+                    const placement = computeBarPlacement(
+                      epic.startDate,
+                      epic.targetDate,
+                      periodData
+                    );
                     const palette = pickPalette(epic.id);
                     return (
                       <li
                         key={epic.id}
-                        className="relative border-b border-border/40"
+                        className="border-border/40 relative border-b"
                         style={{ height: ROW_HEIGHT_PX }}
                       >
                         {placement ? (
                           <button
                             type="button"
                             onClick={() => router.push(`/issues/${epic.id}`)}
-                            className={`absolute top-1/2 -translate-y-1/2 flex items-center rounded-full border ${palette.bg} ${palette.border} ${palette.text} px-3 text-xs font-medium shadow-xs transition-transform duration-150 ease-snap hover:scale-[1.01]`}
+                            className={`absolute top-1/2 flex -translate-y-1/2 items-center rounded-full border ${palette.bg} ${palette.border} ${palette.text} shadow-xs ease-snap px-3 text-xs font-medium transition-transform duration-150 hover:scale-[1.01]`}
                             style={{
                               left: `${placement.left}%`,
                               width: `${placement.width}%`,
@@ -422,8 +468,8 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
                             <span className="truncate">{epic.title}</span>
                           </button>
                         ) : (
-                          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground italic">
-                            No dates set
+                          <div className="text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 text-xs italic">
+                            {t('roadmap.noDatesSet')}
                           </div>
                         )}
                       </li>

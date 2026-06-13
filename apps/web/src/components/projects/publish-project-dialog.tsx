@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { Copy, ExternalLink, Globe, Layers, List, Lock } from 'lucide-react';
 import {
   Dialog,
@@ -15,10 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import {
-  useProjectPublish,
-  type PublishConfig,
-} from '@/lib/projects/use-project-publish';
+import { useProjectPublish, type PublishConfig } from '@/lib/projects/use-project-publish';
 
 export interface PublishProjectDialogProps {
   open: boolean;
@@ -37,40 +35,40 @@ type PermissionKey =
 
 interface PermissionRow {
   key: PermissionKey;
-  label: string;
-  helper: string;
+  labelKey: string;
+  helperKey: string;
 }
 
 const PERMISSION_ROWS: PermissionRow[] = [
   {
     key: 'allowComments',
-    label: 'Allow comments',
-    helper: 'Visitors can leave comments on issues.',
+    labelKey: 'perm_allow_comments',
+    helperKey: 'perm_allow_comments_helper',
   },
   {
     key: 'allowReactions',
-    label: 'Allow reactions',
-    helper: 'Visitors can react with emojis to issues and comments.',
+    labelKey: 'perm_allow_reactions',
+    helperKey: 'perm_allow_reactions_helper',
   },
   {
     key: 'allowVoting',
-    label: 'Allow voting',
-    helper: 'Visitors can upvote or downvote issues.',
+    labelKey: 'perm_allow_voting',
+    helperKey: 'perm_allow_voting_helper',
   },
   {
     key: 'showAttachments',
-    label: 'Show attachments',
-    helper: 'Display files and images attached to issues.',
+    labelKey: 'perm_show_attachments',
+    helperKey: 'perm_show_attachments_helper',
   },
   {
     key: 'showCycles',
-    label: 'Show cycles',
-    helper: 'Expose cycle information to visitors.',
+    labelKey: 'perm_show_cycles',
+    helperKey: 'perm_show_cycles_helper',
   },
   {
     key: 'showModules',
-    label: 'Show modules',
-    helper: 'Expose module groupings to visitors.',
+    labelKey: 'perm_show_modules',
+    helperKey: 'perm_show_modules_helper',
   },
 ];
 
@@ -82,7 +80,13 @@ interface RadioCardProps {
   description: string;
 }
 
-function RadioCard({ active, onSelect, icon, title, description }: RadioCardProps): React.ReactElement {
+function RadioCard({
+  active,
+  onSelect,
+  icon,
+  title,
+  description,
+}: RadioCardProps): React.ReactElement {
   return (
     <button
       type="button"
@@ -90,23 +94,23 @@ function RadioCard({ active, onSelect, icon, title, description }: RadioCardProp
       aria-checked={active}
       onClick={onSelect}
       className={cn(
-        'flex flex-1 flex-col items-start gap-2 rounded-md border p-3 text-left transition-all duration-150 ease-snap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+        'ease-snap focus-visible:ring-ring focus-visible:ring-offset-background flex flex-1 flex-col items-start gap-2 rounded-md border p-3 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
         active
           ? 'border-primary bg-primary/5 shadow-sm'
-          : 'border-border bg-card hover:bg-accent/40',
+          : 'border-border bg-card hover:bg-accent/40'
       )}
     >
       <div
         className={cn(
           'flex h-8 w-8 items-center justify-center rounded-md',
-          active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
+          active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
         )}
       >
         {icon}
       </div>
       <div className="space-y-0.5">
-        <div className="text-sm font-medium text-foreground">{title}</div>
-        <div className="text-xs text-muted-foreground">{description}</div>
+        <div className="text-foreground text-sm font-medium">{title}</div>
+        <div className="text-muted-foreground text-xs">{description}</div>
       </div>
     </button>
   );
@@ -128,10 +132,10 @@ function PermissionSwitchRow({
   disabled,
 }: PermissionSwitchRowProps): React.ReactElement {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-md border border-border/60 bg-card/40 p-3">
+    <div className="border-border/60 bg-card/40 flex items-start justify-between gap-4 rounded-md border p-3">
       <div className="min-w-0 space-y-0.5">
-        <div className="text-sm font-medium text-foreground">{label}</div>
-        <div className="text-xs text-muted-foreground">{helper}</div>
+        <div className="text-foreground text-sm font-medium">{label}</div>
+        <div className="text-muted-foreground text-xs">{helper}</div>
       </div>
       <Switch
         checked={checked}
@@ -149,12 +153,13 @@ export function PublishProjectDialog({
   projectId,
   projectName,
 }: PublishProjectDialogProps): React.ReactElement {
+  const t = useTranslations('projectsPages');
   const { config, publicUrl, updateConfig, publish, unpublish, copyLink } =
     useProjectPublish(projectId);
 
   const [isBusy, setIsBusy] = React.useState<boolean>(false);
   const [passwordProtected, setPasswordProtected] = React.useState<boolean>(
-    Boolean(config.password),
+    Boolean(config.password)
   );
 
   React.useEffect(() => {
@@ -176,17 +181,18 @@ export function PublishProjectDialog({
 
   const setLayout = React.useCallback(
     (layout: PublishConfig['layout']) => updateConfig({ layout }),
-    [updateConfig],
+    [updateConfig]
   );
 
   const setVisibility = React.useCallback(
     (visibility: PublishConfig['visibility']) => updateConfig({ visibility }),
-    [updateConfig],
+    [updateConfig]
   );
 
   const setPermission = React.useCallback(
-    (key: PermissionKey, value: boolean) => updateConfig({ [key]: value } as Partial<PublishConfig>),
-    [updateConfig],
+    (key: PermissionKey, value: boolean) =>
+      updateConfig({ [key]: value } as Partial<PublishConfig>),
+    [updateConfig]
   );
 
   const handlePasswordToggle = React.useCallback(
@@ -196,14 +202,14 @@ export function PublishProjectDialog({
         updateConfig({ password: null });
       }
     },
-    [updateConfig],
+    [updateConfig]
   );
 
   const handlePasswordChange = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       updateConfig({ password: event.target.value });
     },
-    [updateConfig],
+    [updateConfig]
   );
 
   return (
@@ -211,17 +217,19 @@ export function PublishProjectDialog({
       <DialogContent className="max-w-xl">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <DialogTitle>Publish project</DialogTitle>
+            <DialogTitle>{t('publish_project')}</DialogTitle>
             {config.enabled ? (
               <Badge variant="success" className="ml-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-accent-emerald" />
-                Live
+                <span className="bg-accent-emerald h-1.5 w-1.5 rounded-full" />
+                {t('live')}
               </Badge>
             ) : null}
           </div>
           <DialogDescription>
-            Make <span className="font-medium text-foreground">{projectName}</span> accessible to
-            anyone with the link.
+            {t.rich('publish_dialog_description', {
+              name: projectName,
+              strong: (chunks) => <span className="text-foreground font-medium">{chunks}</span>,
+            })}
           </DialogDescription>
         </DialogHeader>
 
@@ -229,57 +237,57 @@ export function PublishProjectDialog({
           {/* Layout */}
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-semibold text-foreground">Layout</h4>
-              <span className="text-xs text-muted-foreground">Default view for visitors</span>
+              <h4 className="text-foreground text-sm font-semibold">{t('layout_heading')}</h4>
+              <span className="text-muted-foreground text-xs">{t('layout_default_view')}</span>
             </div>
-            <div className="flex gap-2" role="radiogroup" aria-label="Layout">
+            <div className="flex gap-2" role="radiogroup" aria-label={t('layout_heading')}>
               <RadioCard
                 active={config.layout === 'list'}
                 onSelect={() => setLayout('list')}
                 icon={<List className="h-4 w-4" />}
-                title="List"
-                description="Compact vertical list of issues."
+                title={t('layout_list_title')}
+                description={t('layout_list_description')}
               />
               <RadioCard
                 active={config.layout === 'board'}
                 onSelect={() => setLayout('board')}
                 icon={<Layers className="h-4 w-4" />}
-                title="Board"
-                description="Kanban columns by status."
+                title={t('layout_board_title')}
+                description={t('layout_board_description')}
               />
             </div>
           </section>
 
           {/* Visibility */}
           <section className="space-y-2">
-            <h4 className="text-sm font-semibold text-foreground">Visibility</h4>
-            <div className="flex gap-2" role="radiogroup" aria-label="Visibility">
+            <h4 className="text-foreground text-sm font-semibold">{t('visibility_heading')}</h4>
+            <div className="flex gap-2" role="radiogroup" aria-label={t('visibility_heading')}>
               <RadioCard
                 active={config.visibility === 'public'}
                 onSelect={() => setVisibility('public')}
                 icon={<Globe className="h-4 w-4" />}
-                title="Public to internet"
-                description="Anyone with the link can view."
+                title={t('visibility_public_title')}
+                description={t('visibility_public_description')}
               />
               <RadioCard
                 active={config.visibility === 'team-only'}
                 onSelect={() => setVisibility('team-only')}
                 icon={<Lock className="h-4 w-4" />}
-                title="Team only"
-                description="Requires sign-in to view."
+                title={t('visibility_team_title')}
+                description={t('visibility_team_description')}
               />
             </div>
           </section>
 
           {/* Permissions */}
           <section className="space-y-2">
-            <h4 className="text-sm font-semibold text-foreground">Permissions</h4>
+            <h4 className="text-foreground text-sm font-semibold">{t('permissions_heading')}</h4>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {PERMISSION_ROWS.map((row) => (
                 <PermissionSwitchRow
                   key={row.key}
-                  label={row.label}
-                  helper={row.helper}
+                  label={t(row.labelKey)}
+                  helper={t(row.helperKey)}
                   checked={Boolean(config[row.key])}
                   onCheckedChange={(next) => setPermission(row.key, next)}
                 />
@@ -289,26 +297,26 @@ export function PublishProjectDialog({
 
           {/* Password protection */}
           <section className="space-y-2">
-            <div className="flex items-start justify-between gap-4 rounded-md border border-border/60 bg-card/40 p-3">
+            <div className="border-border/60 bg-card/40 flex items-start justify-between gap-4 rounded-md border p-3">
               <div className="min-w-0 space-y-0.5">
-                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <div className="text-foreground flex items-center gap-2 text-sm font-medium">
                   <Lock className="h-3.5 w-3.5" />
-                  Password protection
+                  {t('password_protection')}
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  Require a password to access the published page.
+                <div className="text-muted-foreground text-xs">
+                  {t('password_protection_helper')}
                 </div>
               </div>
               <Switch
                 checked={passwordProtected}
                 onCheckedChange={handlePasswordToggle}
-                aria-label="Password protection"
+                aria-label={t('password_protection')}
               />
             </div>
             {passwordProtected ? (
               <Input
                 type="text"
-                placeholder="Set a password"
+                placeholder={t('password_placeholder')}
                 value={config.password ?? ''}
                 onChange={handlePasswordChange}
               />
@@ -318,7 +326,7 @@ export function PublishProjectDialog({
           {/* Public URL */}
           {config.enabled ? (
             <section className="space-y-2">
-              <h4 className="text-sm font-semibold text-foreground">Public URL</h4>
+              <h4 className="text-foreground text-sm font-semibold">{t('public_url')}</h4>
               <div className="flex items-center gap-2">
                 <Input readOnly value={publicUrl} className="font-mono text-xs" />
                 <Button
@@ -326,7 +334,7 @@ export function PublishProjectDialog({
                   variant="outline"
                   size="icon"
                   onClick={copyLink}
-                  aria-label="Copy public URL"
+                  aria-label={t('copy_public_url')}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
@@ -335,7 +343,7 @@ export function PublishProjectDialog({
                   variant="outline"
                   size="icon"
                   asChild
-                  aria-label="Open public URL"
+                  aria-label={t('open_public_url')}
                 >
                   <a href={publicUrl} target="_blank" rel="noreferrer">
                     <ExternalLink className="h-4 w-4" />
@@ -348,7 +356,7 @@ export function PublishProjectDialog({
 
         <DialogFooter className="gap-2">
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t('cancel')}
           </Button>
           <Button
             type="button"
@@ -356,7 +364,7 @@ export function PublishProjectDialog({
             onClick={handleTogglePublish}
             disabled={isBusy}
           >
-            {config.enabled ? 'Unpublish' : 'Publish'}
+            {config.enabled ? t('unpublish') : t('publish')}
           </Button>
         </DialogFooter>
       </DialogContent>

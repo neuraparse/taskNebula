@@ -10,6 +10,7 @@
  */
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronDown, Filter, Plus, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -73,6 +74,8 @@ interface AddFilterPopoverProps {
 }
 
 function AddFilterPopover({ fields, existingFields, onAdd }: AddFilterPopoverProps) {
+  const t = useTranslations('issuesViews');
+  const tActions = useTranslations('actions');
   const [open, setOpen] = React.useState(false);
   const [step, setStep] = React.useState<'field' | 'value'>('field');
   const [selectedField, setSelectedField] = React.useState<FilterField | null>(null);
@@ -130,17 +133,17 @@ function AddFilterPopover({ fields, existingFields, onAdd }: AddFilterPopoverPro
           variant="outline"
           size="sm"
           className="h-7 gap-1 px-2 text-xs"
-          aria-label="Add filter"
+          aria-label={t('filter.add_filter')}
         >
           <Plus className="h-3 w-3" />
-          Filter
+          {t('filter.filter')}
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-64 p-0">
         {step === 'field' ? (
           <div className="flex max-h-72 flex-col">
-            <div className="border-b border-border px-3 py-2 text-xs font-medium text-muted-foreground">
-              Filter by
+            <div className="border-border text-muted-foreground border-b px-3 py-2 text-xs font-medium">
+              {t('filter.filter_by')}
             </div>
             <ul className="overflow-y-auto py-1">
               {fields.map((field) => {
@@ -151,12 +154,12 @@ function AddFilterPopover({ fields, existingFields, onAdd }: AddFilterPopoverPro
                       type="button"
                       onClick={() => handlePickField(field)}
                       className={cn(
-                        'flex w-full items-center justify-between px-3 py-1.5 text-left text-xs hover:bg-accent/60',
+                        'hover:bg-accent/60 flex w-full items-center justify-between px-3 py-1.5 text-left text-xs',
                         used && 'text-muted-foreground'
                       )}
                     >
                       <span>{field.label}</span>
-                      {used ? <span className="text-[10px]">in use</span> : null}
+                      {used ? <span className="text-[10px]">{t('filter.in_use')}</span> : null}
                     </button>
                   </li>
                 );
@@ -165,21 +168,21 @@ function AddFilterPopover({ fields, existingFields, onAdd }: AddFilterPopoverPro
           </div>
         ) : (
           <div className="flex flex-col">
-            <div className="flex items-center justify-between border-b border-border px-3 py-2">
+            <div className="border-border flex items-center justify-between border-b px-3 py-2">
               <button
                 type="button"
                 onClick={() => setStep('field')}
-                className="text-xs text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground text-xs"
               >
-                Back
+                {t('filter.back')}
               </button>
               <span className="text-xs font-medium">{selectedField?.label}</span>
               <span className="w-10" aria-hidden />
             </div>
 
-            <div className="border-b border-border px-3 py-2">
-              <label className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                Operator
+            <div className="border-border border-b px-3 py-2">
+              <label className="text-muted-foreground mb-1 block text-[10px] font-medium uppercase tracking-wide">
+                {t('filter.operator')}
               </label>
               <div className="flex flex-wrap gap-1">
                 {operators.map((operator) => (
@@ -208,7 +211,7 @@ function AddFilterPopover({ fields, existingFields, onAdd }: AddFilterPopoverPro
                       const checked = values.includes(option.value);
                       return (
                         <li key={option.value}>
-                          <label className="flex cursor-pointer items-center gap-2 rounded-md px-1 py-1 text-xs hover:bg-accent/60">
+                          <label className="hover:bg-accent/60 flex cursor-pointer items-center gap-2 rounded-md px-1 py-1 text-xs">
                             <Checkbox
                               checked={checked}
                               onCheckedChange={() => handleToggleValue(option.value)}
@@ -224,24 +227,26 @@ function AddFilterPopover({ fields, existingFields, onAdd }: AddFilterPopoverPro
                     autoFocus
                     value={freeText}
                     onChange={(event) => setFreeText(event.target.value)}
-                    placeholder={`Value for ${selectedField?.label.toLowerCase()}`}
+                    placeholder={t('filter.value_for', {
+                      field: selectedField?.label.toLowerCase() ?? '',
+                    })}
                     className="h-8 text-xs"
                   />
                 )}
               </div>
             ) : null}
 
-            <div className="flex items-center justify-end gap-2 border-t border-border px-3 py-2">
+            <div className="border-border flex items-center justify-end gap-2 border-t px-3 py-2">
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-7 text-xs"
                 onClick={() => handleOpenChange(false)}
               >
-                Cancel
+                {tActions('cancel')}
               </Button>
               <Button size="sm" className="h-7 text-xs" onClick={handleConfirm}>
-                Apply
+                {t('filter.apply')}
               </Button>
             </div>
           </div>
@@ -257,10 +262,8 @@ export function ViewFilterBar({
   availableFields = DEFAULT_FILTER_FIELDS,
   className,
 }: ViewFilterBarProps) {
-  const existingFields = React.useMemo(
-    () => new Set(filters.map((f) => f.field)),
-    [filters]
-  );
+  const t = useTranslations('issuesViews');
+  const existingFields = React.useMemo(() => new Set(filters.map((f) => f.field)), [filters]);
 
   const removeFilter = (index: number) => {
     onChange(filters.filter((_, i) => i !== index));
@@ -274,17 +277,11 @@ export function ViewFilterBar({
 
   return (
     <div
-      className={cn(
-        'flex flex-wrap items-center gap-1.5 py-1 text-xs',
-        className
-      )}
+      className={cn('flex flex-wrap items-center gap-1.5 py-1 text-xs', className)}
       role="toolbar"
-      aria-label="View filters"
+      aria-label={t('filter.toolbar_label')}
     >
-      <span
-        className="inline-flex h-6 items-center gap-1 text-muted-foreground"
-        aria-hidden
-      >
+      <span className="text-muted-foreground inline-flex h-6 items-center gap-1" aria-hidden>
         <Filter className="h-3 w-3" />
       </span>
 
@@ -293,15 +290,17 @@ export function ViewFilterBar({
         return (
           <span
             key={`${filter.field}-${index}`}
-            className="inline-flex h-6 items-center gap-1 rounded-md border border-border bg-card pl-2 pr-1 text-[11px] text-foreground"
+            className="border-border bg-card text-foreground inline-flex h-6 items-center gap-1 rounded-md border pl-2 pr-1 text-[11px]"
           >
             <ChevronDown className="h-3 w-3 opacity-60" aria-hidden />
             <span className="max-w-[16rem] truncate">{chipLabel(filter, field)}</span>
             <button
               type="button"
               onClick={() => removeFilter(index)}
-              className="ml-0.5 inline-grid h-4 w-4 place-content-center rounded-sm text-muted-foreground hover:bg-accent/60 hover:text-foreground"
-              aria-label={`Remove ${field?.label ?? filter.field} filter`}
+              className="text-muted-foreground hover:bg-accent/60 hover:text-foreground ml-0.5 inline-grid h-4 w-4 place-content-center rounded-sm"
+              aria-label={t('filter.remove_filter', {
+                field: field?.label ?? filter.field,
+              })}
             >
               <X className="h-3 w-3" />
             </button>
@@ -319,10 +318,10 @@ export function ViewFilterBar({
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground h-7 px-2 text-[11px]"
           onClick={() => onChange([])}
         >
-          Clear all
+          {t('filter.clear_all')}
         </Button>
       ) : null}
     </div>

@@ -1,10 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
-import { useThemeStore, themeInfo, type ColorTheme, type VisualStyle } from '@/lib/stores/theme-store';
+import {
+  useThemeStore,
+  themeInfo,
+  type ColorTheme,
+  type VisualStyle,
+} from '@/lib/stores/theme-store';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -14,15 +20,15 @@ import { Check, Moon, Sun, Monitor, RotateCcw, Cloud, CloudOff, Loader2 } from '
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 const COLOR_MODES = [
-  { value: 'light', label: 'Light', icon: Sun },
-  { value: 'dark', label: 'Dark', icon: Moon },
-  { value: 'system', label: 'System', icon: Monitor },
+  { value: 'light', labelKey: 'appearance.mode_light', icon: Sun },
+  { value: 'dark', labelKey: 'appearance.mode_dark', icon: Moon },
+  { value: 'system', labelKey: 'appearance.mode_system', icon: Monitor },
 ] as const;
 
-const VISUAL_STYLES: { value: VisualStyle; label: string }[] = [
-  { value: 'modern', label: 'Modern' },
-  { value: 'glass', label: 'Glass' },
-  { value: 'minimal', label: 'Minimal' },
+const VISUAL_STYLES: { value: VisualStyle; labelKey: string }[] = [
+  { value: 'modern', labelKey: 'appearance.style_modern' },
+  { value: 'glass', labelKey: 'appearance.style_glass' },
+  { value: 'minimal', labelKey: 'appearance.style_minimal' },
 ];
 
 const COLOR_THEMES: ColorTheme[] = ['default', 'ocean', 'forest', 'sunset', 'purple', 'rose'];
@@ -44,6 +50,7 @@ type SyncStatus = 'idle' | 'saving' | 'saved' | 'error';
 // ─── component ──────────────────────────────────────────────────────────────
 
 export function AppearanceSettings() {
+  const t = useTranslations('settingsConfig');
   const { theme, setTheme } = useTheme();
   const { status: authStatus } = useSession();
   const isAuthenticated = authStatus === 'authenticated';
@@ -69,7 +76,7 @@ export function AppearanceSettings() {
     queryKey: ['user-appearance'],
     queryFn: async () => {
       const res = await fetch('/api/user/appearance');
-      if (!res.ok) throw new Error('Failed to load appearance settings');
+      if (!res.ok) throw new Error(t('appearance.load_failed'));
       return res.json();
     },
     enabled: isAuthenticated,
@@ -144,14 +151,7 @@ export function AppearanceSettings() {
     return () => {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
-  }, [
-    isAuthenticated,
-    theme,
-    colorTheme,
-    visualStyle,
-    enableAnimations,
-    enableGradients,
-  ]);
+  }, [isAuthenticated, theme, colorTheme, visualStyle, enableAnimations, enableGradients]);
 
   useEffect(() => {
     return () => {
@@ -172,7 +172,7 @@ export function AppearanceSettings() {
   }, [reset, setColorTheme, setVisualStyle, setEnableAnimations, setEnableGradients, setTheme]);
 
   return (
-    <div className="animate-fade-up space-y-8 stagger">
+    <div className="animate-fade-up stagger space-y-8">
       {/* Sync indicator */}
       {isAuthenticated && (
         <div
@@ -189,25 +189,25 @@ export function AppearanceSettings() {
           {syncStatus === 'saving' && (
             <>
               <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
-              <span>Saving…</span>
+              <span>{t('appearance.sync_saving')}</span>
             </>
           )}
           {syncStatus === 'saved' && (
             <>
               <Cloud className="h-3 w-3" aria-hidden="true" />
-              <span>Synced</span>
+              <span>{t('appearance.sync_synced')}</span>
             </>
           )}
           {syncStatus === 'error' && (
             <>
               <CloudOff className="h-3 w-3" aria-hidden="true" />
-              <span>Sync failed — will retry on next change</span>
+              <span>{t('appearance.sync_error')}</span>
             </>
           )}
           {syncStatus === 'idle' && (
             <>
               <Cloud className="h-3 w-3" aria-hidden="true" />
-              <span>Synced across devices</span>
+              <span>{t('appearance.sync_idle')}</span>
             </>
           )}
         </div>
@@ -216,20 +216,18 @@ export function AppearanceSettings() {
       {/* Color Mode */}
       <section className="space-y-4">
         <div className="space-y-1">
-          <span className="kicker">Preference</span>
-          <h2 className="text-lg font-semibold tracking-tight">Color mode</h2>
-          <p className="text-sm text-muted-foreground max-w-prose">
-            Choose between light, dark, or match system preference.
+          <span className="kicker">{t('appearance.preference_kicker')}</span>
+          <h2 className="text-lg font-semibold tracking-tight">
+            {t('appearance.color_mode_heading')}
+          </h2>
+          <p className="text-muted-foreground max-w-prose text-sm">
+            {t('appearance.color_mode_desc')}
           </p>
         </div>
         <div className="surface-card rounded-lg p-6">
-          <div
-            role="group"
-            aria-labelledby="color-mode-heading"
-            className="grid grid-cols-3 gap-3"
-          >
+          <div role="group" aria-labelledby="color-mode-heading" className="grid grid-cols-3 gap-3">
             <span id="color-mode-heading" className="sr-only">
-              Color mode selection
+              {t('appearance.color_mode_sr')}
             </span>
             {COLOR_MODES.map((mode) => {
               const isActive = theme === mode.value;
@@ -240,15 +238,15 @@ export function AppearanceSettings() {
                   aria-pressed={isActive}
                   onClick={() => setTheme(mode.value)}
                   className={cn(
-                    'flex items-center justify-center gap-2 rounded-md border px-3 py-2.5 text-sm transition-all duration-150 ease-snap',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                    'ease-snap flex items-center justify-center gap-2 rounded-md border px-3 py-2.5 text-sm transition-all duration-150',
+                    'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
                     isActive
                       ? 'border-primary bg-primary/10 text-primary font-medium'
                       : 'border-border text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                   )}
                 >
                   <mode.icon className="h-4 w-4" />
-                  {mode.label}
+                  {t(mode.labelKey)}
                 </button>
               );
             })}
@@ -259,17 +257,19 @@ export function AppearanceSettings() {
       {/* Color Theme — swatch grid per spec */}
       <section className="space-y-4">
         <div className="space-y-1">
-          <span className="kicker">Palette</span>
-          <h2 className="text-lg font-semibold tracking-tight">Color theme</h2>
-          <p className="text-sm text-muted-foreground max-w-prose">
-            Primary hue used for interactive and brand accents.
+          <span className="kicker">{t('appearance.palette_kicker')}</span>
+          <h2 className="text-lg font-semibold tracking-tight">
+            {t('appearance.color_theme_heading')}
+          </h2>
+          <p className="text-muted-foreground max-w-prose text-sm">
+            {t('appearance.color_theme_desc')}
           </p>
         </div>
         <div className="surface-card rounded-lg p-6">
-          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[240px_1fr]">
             <div className="space-y-1">
-              <Label className="text-sm font-medium">Accent</Label>
-              <p className="text-xs text-muted-foreground mt-1">
+              <Label className="text-sm font-medium">{t('appearance.accent_label')}</Label>
+              <p className="text-muted-foreground mt-1 text-xs">
                 {themeInfo[colorTheme]?.name ?? colorTheme}
               </p>
             </div>
@@ -279,7 +279,7 @@ export function AppearanceSettings() {
               className="flex flex-wrap gap-3"
             >
               <span id="color-theme-heading" className="sr-only">
-                Color theme selection
+                {t('appearance.color_theme_sr')}
               </span>
               {COLOR_THEMES.map((t) => {
                 const info = themeInfo[t];
@@ -294,10 +294,9 @@ export function AppearanceSettings() {
                     data-theme={t}
                     onClick={() => setColorTheme(t)}
                     className={cn(
-                      'relative h-10 w-10 rounded-md border border-border transition-all duration-150 ease-snap',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                      isActive &&
-                        'ring-2 ring-ring ring-offset-2 ring-offset-background'
+                      'border-border ease-snap relative h-10 w-10 rounded-md border transition-all duration-150',
+                      'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+                      isActive && 'ring-ring ring-offset-background ring-2 ring-offset-2'
                     )}
                     style={{ background: primary }}
                   >
@@ -315,10 +314,12 @@ export function AppearanceSettings() {
       {/* Visual Style */}
       <section className="space-y-4">
         <div className="space-y-1">
-          <span className="kicker">Appearance</span>
-          <h2 className="text-lg font-semibold tracking-tight">Visual style</h2>
-          <p className="text-sm text-muted-foreground max-w-prose">
-            Overall surface treatment across the workspace.
+          <span className="kicker">{t('appearance.appearance_kicker')}</span>
+          <h2 className="text-lg font-semibold tracking-tight">
+            {t('appearance.visual_style_heading')}
+          </h2>
+          <p className="text-muted-foreground max-w-prose text-sm">
+            {t('appearance.visual_style_desc')}
           </p>
         </div>
         <div className="surface-card rounded-lg p-6">
@@ -328,7 +329,7 @@ export function AppearanceSettings() {
             className="grid grid-cols-3 gap-3"
           >
             <span id="visual-style-heading" className="sr-only">
-              Visual style selection
+              {t('appearance.visual_style_sr')}
             </span>
             {VISUAL_STYLES.map((style) => {
               const isActive = visualStyle === style.value;
@@ -339,14 +340,14 @@ export function AppearanceSettings() {
                   aria-pressed={isActive}
                   onClick={() => setVisualStyle(style.value)}
                   className={cn(
-                    'flex items-center justify-center rounded-md border px-3 py-2.5 text-sm transition-all duration-150 ease-snap',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                    'ease-snap flex items-center justify-center rounded-md border px-3 py-2.5 text-sm transition-all duration-150',
+                    'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
                     isActive
                       ? 'border-primary bg-primary/10 text-primary font-medium'
                       : 'border-border text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                   )}
                 >
-                  {style.label}
+                  {t(style.labelKey)}
                 </button>
               );
             })}
@@ -357,16 +358,18 @@ export function AppearanceSettings() {
       {/* Effects */}
       <section className="space-y-4">
         <div className="space-y-1">
-          <span className="kicker">Effects</span>
-          <h2 className="text-lg font-semibold tracking-tight">Motion & gradients</h2>
-          <p className="text-sm text-muted-foreground max-w-prose">
-            Toggle ambient animation and gradient surfaces.
+          <span className="kicker">{t('appearance.effects_kicker')}</span>
+          <h2 className="text-lg font-semibold tracking-tight">
+            {t('appearance.effects_heading')}
+          </h2>
+          <p className="text-muted-foreground max-w-prose text-sm">
+            {t('appearance.effects_desc')}
           </p>
         </div>
-        <div className="surface-card rounded-lg p-6 space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+        <div className="surface-card space-y-5 rounded-lg p-6">
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[240px_1fr]">
             <Label htmlFor="animations" className="text-sm font-medium">
-              Animations
+              {t('appearance.animations_label')}
             </Label>
             <div className="flex md:justify-end">
               <Switch
@@ -376,9 +379,9 @@ export function AppearanceSettings() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4 items-start">
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[240px_1fr]">
             <Label htmlFor="gradients" className="text-sm font-medium">
-              Gradients
+              {t('appearance.gradients_label')}
             </Label>
             <div className="flex md:justify-end">
               <Switch
@@ -398,10 +401,10 @@ export function AppearanceSettings() {
           variant="ghost"
           size="sm"
           onClick={handleReset}
-          className="gap-1.5 text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground gap-1.5"
         >
           <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-          Reset to defaults
+          {t('appearance.reset_to_defaults')}
         </Button>
       </div>
     </div>

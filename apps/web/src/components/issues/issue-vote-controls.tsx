@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -37,6 +38,7 @@ export function IssueVoteControls({
   size = 'md',
   className,
 }: IssueVoteControlsProps) {
+  const t = useTranslations('issuePanels');
   const dims = sizeMap[size];
   const score = upvotes - downvotes;
 
@@ -45,50 +47,42 @@ export function IssueVoteControls({
       const resolved: IssueVote = userVote === next ? null : next;
       onVote?.(resolved);
     },
-    [onVote, userVote],
+    [onVote, userVote]
   );
 
   const isUp = userVote === 'up';
   const isDown = userVote === 'down';
 
-  const scoreColor = isUp
-    ? 'text-primary'
-    : isDown
-      ? 'text-destructive'
-      : 'text-foreground';
+  const scoreColor = isUp ? 'text-primary' : isDown ? 'text-destructive' : 'text-foreground';
 
   return (
     <div
       className={cn(
-        'inline-flex flex-col items-center justify-center gap-0.5 rounded-md border border-border/60 bg-background/40 px-1 py-1',
-        className,
+        'border-border/60 bg-background/40 inline-flex flex-col items-center justify-center gap-0.5 rounded-md border px-1 py-1',
+        className
       )}
       role="group"
-      aria-label="Vote"
+      aria-label={t('vote.group_label')}
     >
       <button
         type="button"
         onClick={() => handle('up')}
-        aria-label={isUp ? 'Remove upvote' : 'Upvote'}
+        aria-label={isUp ? t('vote.remove_upvote') : t('vote.upvote')}
         aria-pressed={isUp}
         className={cn(
           'inline-flex items-center justify-center rounded-sm transition-colors duration-150',
-          'hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
+          'hover:bg-accent/60 focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
           dims.button,
-          isUp ? 'text-primary' : 'text-muted-foreground',
+          isUp ? 'text-primary' : 'text-muted-foreground'
         )}
       >
         <ChevronUp className={dims.icon} />
       </button>
 
       <span
-        className={cn(
-          'tabular-nums font-medium leading-none select-none',
-          dims.count,
-          scoreColor,
-        )}
+        className={cn('select-none font-medium tabular-nums leading-none', dims.count, scoreColor)}
         aria-live="polite"
-        aria-label={`Score ${score}, ${upvotes} upvotes, ${downvotes} downvotes`}
+        aria-label={t('vote.score_label', { score, upvotes, downvotes })}
       >
         {score}
       </span>
@@ -96,13 +90,13 @@ export function IssueVoteControls({
       <button
         type="button"
         onClick={() => handle('down')}
-        aria-label={isDown ? 'Remove downvote' : 'Downvote'}
+        aria-label={isDown ? t('vote.remove_downvote') : t('vote.downvote')}
         aria-pressed={isDown}
         className={cn(
           'inline-flex items-center justify-center rounded-sm transition-colors duration-150',
-          'hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
+          'hover:bg-accent/60 focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
           dims.button,
-          isDown ? 'text-destructive' : 'text-muted-foreground',
+          isDown ? 'text-destructive' : 'text-muted-foreground'
         )}
       >
         <ChevronDown className={dims.icon} />

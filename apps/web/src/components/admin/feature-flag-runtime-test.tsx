@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,6 +34,7 @@ interface FeatureFlagRuntimeTestProps {
 }
 
 export function FeatureFlagRuntimeTest({ defaultKey = '' }: FeatureFlagRuntimeTestProps) {
+  const t = useTranslations('adminPanels');
   const [open, setOpen] = useState(false);
   const [key, setKey] = useState(defaultKey);
   const [organizationId, setOrganizationId] = useState('');
@@ -51,11 +53,11 @@ export function FeatureFlagRuntimeTest({ defaultKey = '' }: FeatureFlagRuntimeTe
       const response = await fetch(`/api/admin/feature-flags/test?${params.toString()}`);
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to evaluate');
+        throw new Error(payload.error || t('flagTest.evaluateFailed'));
       }
       setResult(payload as TestResult);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to evaluate');
+      setError(err instanceof Error ? err.message : t('flagTest.evaluateFailed'));
     } finally {
       setLoading(false);
     }
@@ -74,26 +76,19 @@ export function FeatureFlagRuntimeTest({ defaultKey = '' }: FeatureFlagRuntimeTe
         }
       }}
     >
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => setOpen(true)}
-      >
+      <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>
         <Zap className="mr-1.5 h-4 w-4" />
-        Runtime test
+        {t('flagTest.runtimeTest')}
       </Button>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Runtime flag evaluation</DialogTitle>
-          <DialogDescription>
-            Evaluates the flag through the same codepath production uses — no restart needed.
-          </DialogDescription>
+          <DialogTitle>{t('flagTest.title')}</DialogTitle>
+          <DialogDescription>{t('flagTest.description')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="test-key">Flag key</Label>
+            <Label htmlFor="test-key">{t('flagTest.flagKey')}</Label>
             <Input
               id="test-key"
               value={key}
@@ -102,41 +97,41 @@ export function FeatureFlagRuntimeTest({ defaultKey = '' }: FeatureFlagRuntimeTe
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="test-org">Organization ID (optional)</Label>
+            <Label htmlFor="test-org">{t('flagTest.organizationIdOptional')}</Label>
             <Input
               id="test-org"
               value={organizationId}
               onChange={(e) => setOrganizationId(e.target.value)}
-              placeholder="Leave blank to use any active org"
+              placeholder={t('flagTest.organizationIdPlaceholder')}
             />
           </div>
 
           {error ? (
-            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-xs">
               {error}
             </div>
           ) : null}
 
           {result ? (
-            <div className="space-y-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs">
+            <div className="border-border bg-muted/30 space-y-2 rounded-md border px-3 py-2 text-xs">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Enabled</span>
+                <span className="text-muted-foreground">{t('flagTest.enabled')}</span>
                 <span className={result.enabled ? 'chip-emerald' : 'chip-rose'}>
                   {result.enabled ? 'true' : 'false'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Source</span>
+                <span className="text-muted-foreground">{t('flagTest.source')}</span>
                 <span className="chip font-mono">{result.source}</span>
               </div>
               {result.organizationId ? (
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-muted-foreground">Org</span>
+                  <span className="text-muted-foreground">{t('flagTest.org')}</span>
                   <span className="truncate font-mono">{result.organizationId}</span>
                 </div>
               ) : null}
               {result.flag ? (
-                <div className="mt-2 space-y-1 border-t border-border pt-2">
+                <div className="border-border mt-2 space-y-1 border-t pt-2">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">isEnabled</span>
                     <span className="font-mono">{String(result.flag.isEnabled)}</span>
@@ -146,7 +141,7 @@ export function FeatureFlagRuntimeTest({ defaultKey = '' }: FeatureFlagRuntimeTe
                     <span className="font-mono">{result.flag.rolloutPercentage}</span>
                   </div>
                   <div className="flex justify-between gap-2">
-                    <span className="text-muted-foreground">plans</span>
+                    <span className="text-muted-foreground">{t('flagTest.plans')}</span>
                     <span className="truncate font-mono">
                       {result.flag.enabledForPlans.length === 0
                         ? '—'
@@ -154,30 +149,22 @@ export function FeatureFlagRuntimeTest({ defaultKey = '' }: FeatureFlagRuntimeTe
                     </span>
                   </div>
                   <div className="flex justify-between gap-2">
-                    <span className="text-muted-foreground">targeted orgs</span>
-                    <span className="font-mono">
-                      {result.flag.enabledForOrganizations.length}
-                    </span>
+                    <span className="text-muted-foreground">{t('flagTest.targetedOrgs')}</span>
+                    <span className="font-mono">{result.flag.enabledForOrganizations.length}</span>
                   </div>
                 </div>
               ) : null}
-              {result.reason ? (
-                <p className="mt-2 text-muted-foreground">{result.reason}</p>
-              ) : null}
+              {result.reason ? <p className="text-muted-foreground mt-2">{result.reason}</p> : null}
             </div>
           ) : null}
         </div>
 
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setOpen(false)}
-          >
-            Close
+          <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            {t('flagTest.close')}
           </Button>
           <Button type="button" onClick={run} disabled={loading || !key.trim()}>
-            {loading ? 'Evaluating...' : 'Evaluate'}
+            {loading ? t('flagTest.evaluating') : t('flagTest.evaluate')}
           </Button>
         </DialogFooter>
       </DialogContent>

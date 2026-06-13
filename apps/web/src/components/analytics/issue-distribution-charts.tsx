@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { AlertTriangle, Layers, ListTodo } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
@@ -56,13 +57,15 @@ function DistributionTooltip({
   active?: boolean;
   payload?: { name?: string; value?: number }[];
 }) {
+  const t = useTranslations('charts');
   const item = payload?.[0];
   if (!active || !item) return null;
   return (
     <div className="surface-card space-y-0.5 px-3 py-2 text-xs">
       <p className="text-foreground font-medium capitalize">{item.name}</p>
       <p className="text-muted-foreground">
-        <span className="text-foreground font-semibold tabular-nums">{item.value}</span> issues
+        <span className="text-foreground font-semibold tabular-nums">{item.value}</span>{' '}
+        {t('issuesLabel')}
       </p>
     </div>
   );
@@ -88,6 +91,7 @@ function colorForDatum(entry: ChartDatum, index: number, colorMap: Record<string
 }
 
 function PieCard({ kicker, title, subtitle, data, colorMap, tone, icon }: PieCardProps) {
+  const t = useTranslations('charts');
   const total = data.reduce((sum, d) => sum + d.value, 0);
   return (
     <div className="surface-card animate-fade-up space-y-3 p-5">
@@ -100,7 +104,9 @@ function PieCard({ kicker, title, subtitle, data, colorMap, tone, icon }: PieCar
         </div>
         <div className="text-right">
           <div className="text-foreground text-xl font-semibold tabular-nums">{total}</div>
-          <div className="text-muted-foreground text-[10px] uppercase tracking-wide">Total</div>
+          <div className="text-muted-foreground text-[10px] uppercase tracking-wide">
+            {t('total')}
+          </div>
         </div>
       </div>
 
@@ -155,6 +161,7 @@ export function IssueDistributionCharts({
   issuesByPriority,
   issuesByType,
 }: IssueDistributionChartsProps) {
+  const t = useTranslations('charts');
   const statusData: ChartDatum[] = issuesByStatus.map((item) => ({
     // Resolve the workflow status name; fall back to the raw id only if the
     // status was deleted / not joinable.
@@ -176,27 +183,27 @@ export function IssueDistributionCharts({
   return (
     <div className="stagger grid gap-4 md:grid-cols-3">
       <PieCard
-        kicker="Distribution"
-        title="By Status"
-        subtitle="Where work currently sits."
+        kicker={t('distribution')}
+        title={t('byStatus')}
+        subtitle={t('byStatusSubtitle')}
         data={statusData}
         colorMap={{}}
         tone="blue"
         icon={<ListTodo className="h-3.5 w-3.5" />}
       />
       <PieCard
-        kicker="Distribution"
-        title="By Priority"
-        subtitle="How urgent the backlog is."
+        kicker={t('distribution')}
+        title={t('byPriority')}
+        subtitle={t('byPrioritySubtitle')}
         data={priorityData}
         colorMap={PRIORITY_COLORS}
         tone="amber"
         icon={<AlertTriangle className="h-3.5 w-3.5" />}
       />
       <PieCard
-        kicker="Distribution"
-        title="By Type"
-        subtitle="Mix of work categories."
+        kicker={t('distribution')}
+        title={t('byType')}
+        subtitle={t('byTypeSubtitle')}
         data={typeData}
         colorMap={TYPE_COLORS}
         tone="violet"

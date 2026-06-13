@@ -9,6 +9,7 @@
  */
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronDown, SlidersHorizontal } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -54,8 +55,8 @@ interface SectionProps {
 
 function Section({ title, children }: SectionProps) {
   return (
-    <section className="border-b border-border px-3 py-2 last:border-b-0">
-      <h4 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+    <section className="border-border border-b px-3 py-2 last:border-b-0">
+      <h4 className="text-muted-foreground mb-1.5 text-[10px] font-semibold uppercase tracking-wide">
         {title}
       </h4>
       {children}
@@ -83,7 +84,7 @@ function RadioRow<T extends string>({
   return (
     <label
       className={cn(
-        'flex cursor-pointer items-center gap-2 rounded-md px-1 py-1 text-xs hover:bg-accent/60',
+        'hover:bg-accent/60 flex cursor-pointer items-center gap-2 rounded-md px-1 py-1 text-xs',
         disabled && 'cursor-not-allowed opacity-50 hover:bg-transparent'
       )}
     >
@@ -94,18 +95,15 @@ function RadioRow<T extends string>({
         checked={current === value}
         disabled={disabled}
         onChange={() => onChange(value)}
-        className="h-3.5 w-3.5 cursor-pointer accent-primary disabled:cursor-not-allowed"
+        className="accent-primary h-3.5 w-3.5 cursor-pointer disabled:cursor-not-allowed"
       />
       <span>{label}</span>
     </label>
   );
 }
 
-export function ViewDisplayOptions({
-  options,
-  onChange,
-  className,
-}: ViewDisplayOptionsProps) {
+export function ViewDisplayOptions({ options, onChange, className }: ViewDisplayOptionsProps) {
+  const t = useTranslations('issuesViews');
   const update = <K extends keyof DisplayOptions>(key: K, value: DisplayOptions[K]) => {
     onChange({ ...options, [key]: value });
   };
@@ -136,21 +134,21 @@ export function ViewDisplayOptions({
           variant="outline"
           size="sm"
           className={cn('h-7 gap-1 px-2 text-xs', className)}
-          aria-label="Display options"
+          aria-label={t('display.options')}
         >
           <SlidersHorizontal className="h-3 w-3" />
-          Display
+          {t('display.label')}
           <ChevronDown className="h-3 w-3 opacity-60" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-72 p-0">
         <div className="max-h-[28rem] overflow-y-auto">
-          <Section title="Properties">
+          <Section title={t('display.properties')}>
             <div className="grid grid-cols-2 gap-x-2 gap-y-1">
               {PROPERTY_ORDER.map((key) => (
                 <label
                   key={key}
-                  className="flex cursor-pointer items-center gap-2 rounded-md px-1 py-1 text-xs hover:bg-accent/60"
+                  className="hover:bg-accent/60 flex cursor-pointer items-center gap-2 rounded-md px-1 py-1 text-xs"
                 >
                   <Checkbox
                     checked={options.properties[key]}
@@ -162,7 +160,7 @@ export function ViewDisplayOptions({
             </div>
           </Section>
 
-          <Section title="Group by">
+          <Section title={t('display.group_by')}>
             <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
               {GROUP_BY_OPTIONS.map((opt) => (
                 <RadioRow
@@ -177,7 +175,7 @@ export function ViewDisplayOptions({
             </div>
           </Section>
 
-          <Section title="Sub-group by">
+          <Section title={t('display.sub_group_by')}>
             <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
               {GROUP_BY_OPTIONS.map((opt) => {
                 const disabled =
@@ -197,7 +195,7 @@ export function ViewDisplayOptions({
             </div>
           </Section>
 
-          <Section title="Sort by">
+          <Section title={t('display.sort_by')}>
             <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
               {SORT_BY_OPTIONS.map((opt) => (
                 <RadioRow<SortByKey>
@@ -212,23 +210,23 @@ export function ViewDisplayOptions({
             </div>
           </Section>
 
-          <Section title="View options">
+          <Section title={t('display.view_options')}>
             <div className="space-y-2">
               <label className="flex cursor-pointer items-center justify-between gap-2 px-1 py-0.5 text-xs">
-                <span>Show empty groups</span>
+                <span>{t('display.show_empty_groups')}</span>
                 <Switch
                   checked={options.showEmptyGroups}
                   onCheckedChange={(checked) => update('showEmptyGroups', Boolean(checked))}
                   disabled={options.groupBy === 'none'}
-                  aria-label="Show empty groups"
+                  aria-label={t('display.show_empty_groups')}
                 />
               </label>
               <label className="flex cursor-pointer items-center justify-between gap-2 px-1 py-0.5 text-xs">
-                <span>Show sub-issues</span>
+                <span>{t('display.show_sub_issues')}</span>
                 <Switch
                   checked={options.showSubIssues}
                   onCheckedChange={(checked) => update('showSubIssues', Boolean(checked))}
-                  aria-label="Show sub-issues"
+                  aria-label={t('display.show_sub_issues')}
                 />
               </label>
             </div>

@@ -1,15 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  FileText,
-  FolderKanban,
-  Inbox,
-  MessageSquare,
-  Pin,
-  PinOff,
-} from 'lucide-react';
+import { FileText, FolderKanban, Inbox, MessageSquare, Pin, PinOff } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export type PinnedKind = 'issue' | 'doc' | 'project' | 'chat' | 'custom';
@@ -47,6 +41,7 @@ const KIND_ICON: Record<string, LucideIcon> = {
 };
 
 export function PinnedItemsWidget() {
+  const t = useTranslations('dashboardExtra');
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery<PinnedItem[]>({
@@ -65,14 +60,12 @@ export function PinnedItemsWidget() {
   const visible = items.slice(0, 7);
 
   return (
-    <div className="rounded-xl border bg-card p-5">
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-sm font-medium text-foreground">
-          Pinned items
-        </span>
+    <div className="bg-card rounded-xl border p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <span className="text-foreground text-sm font-medium">{t('pinned.heading')}</span>
         {items.length > visible.length ? (
-          <span className="text-xs text-muted-foreground">
-            {items.length} pinned
+          <span className="text-muted-foreground text-xs">
+            {t('pinned.count', { count: items.length })}
           </span>
         ) : null}
       </div>
@@ -80,22 +73,17 @@ export function PinnedItemsWidget() {
       {isLoading ? (
         <div className="space-y-2" aria-hidden>
           {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-3 rounded-md px-2 py-2 min-h-[40px]"
-            >
-              <span className="h-4 w-4 rounded bg-muted animate-pulse" />
-              <span className="h-3 flex-1 rounded bg-muted animate-pulse" />
+            <div key={i} className="flex min-h-[40px] items-center gap-3 rounded-md px-2 py-2">
+              <span className="bg-muted h-4 w-4 animate-pulse rounded" />
+              <span className="bg-muted h-3 flex-1 animate-pulse rounded" />
             </div>
           ))}
         </div>
       ) : visible.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-10 text-center">
-          <Pin className="h-7 w-7 text-muted-foreground mb-2" />
-          <p className="text-sm text-muted-foreground">No items</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Pin views, projects, or work items for quick access.
-          </p>
+          <Pin className="text-muted-foreground mb-2 h-7 w-7" />
+          <p className="text-muted-foreground text-sm">{t('empty_no_items')}</p>
+          <p className="text-muted-foreground mt-1 text-xs">{t('pinned.empty_hint')}</p>
         </div>
       ) : (
         <ul className="space-y-0.5">
@@ -104,24 +92,24 @@ export function PinnedItemsWidget() {
             return (
               <li
                 key={item.id}
-                className="group row-interactive flex items-center gap-3 rounded-md px-2 py-2 min-h-[40px] transition-all duration-150 ease-snap"
+                className="row-interactive ease-snap group flex min-h-[40px] items-center gap-3 rounded-md px-2 py-2 transition-all duration-150"
               >
-                <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+                <Icon className="text-muted-foreground h-4 w-4 shrink-0" />
                 <Link
                   href={item.href}
-                  className="text-sm truncate flex-1 text-foreground hover:underline"
+                  className="text-foreground flex-1 truncate text-sm hover:underline"
                 >
                   {item.title}
                 </Link>
                 <button
                   type="button"
-                  aria-label={`Unpin ${item.title}`}
+                  aria-label={t('pinned.unpin_aria', { title: item.title })}
                   onClick={() => unpinMutation.mutate(item.id)}
                   disabled={unpinMutation.isPending}
-                  className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-opacity duration-150 disabled:opacity-50"
+                  className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-[11px] opacity-0 transition-opacity duration-150 focus-visible:opacity-100 disabled:opacity-50 group-hover:opacity-100"
                 >
                   <PinOff className="h-3.5 w-3.5" />
-                  Unpin
+                  {t('pinned.unpin')}
                 </button>
               </li>
             );

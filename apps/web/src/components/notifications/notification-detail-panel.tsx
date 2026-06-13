@@ -1,16 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { format, formatDistanceToNow } from 'date-fns';
-import {
-  Archive,
-  Check,
-  Clock,
-  ExternalLink,
-  Inbox,
-  MoreHorizontal,
-  Quote,
-} from 'lucide-react';
+import { Archive, Check, Clock, ExternalLink, Inbox, MoreHorizontal, Quote } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -43,18 +36,21 @@ export interface NotificationDetailPanelProps {
 // Type → human label + chip flavor (indigo / violet leaning by default)
 // ---------------------------------------------------------------------------
 
-const TYPE_LABELS: Record<NotificationType, string> = {
-  mention: 'Mention',
-  comment: 'Comment',
-  assigned: 'Assigned',
-  status_changed: 'Status change',
-  issue_created: 'Issue created',
-  issue_updated: 'Issue updated',
-  issue_linked: 'Issue linked',
-  sprint_started: 'Sprint started',
-  sprint_completed: 'Sprint completed',
-  ai_draft_failed: 'AI draft failed',
-  agent_run_failed: 'Agent failed',
+type DetailTranslator = (key: string) => string;
+
+/** Translation-key suffix (under `notifications.detail.type_label`) per type. */
+const TYPE_LABEL_KEYS: Record<NotificationType, string> = {
+  mention: 'mention',
+  comment: 'comment',
+  assigned: 'assigned',
+  status_changed: 'status_changed',
+  issue_created: 'issue_created',
+  issue_updated: 'issue_updated',
+  issue_linked: 'issue_linked',
+  sprint_started: 'sprint_started',
+  sprint_completed: 'sprint_completed',
+  ai_draft_failed: 'ai_draft_failed',
+  agent_run_failed: 'agent_run_failed',
 };
 
 function typeChipClass(type: NotificationType): string {
@@ -86,9 +82,7 @@ function typeChipClass(type: NotificationType): string {
 // We don't invent data; we only recognize patterns already present.
 // ---------------------------------------------------------------------------
 
-function extractQuote(
-  notification: Notification
-): { quote: string; rest: string } | null {
+function extractQuote(notification: Notification): { quote: string; rest: string } | null {
   const msg = notification.message ?? '';
   if (!msg) return null;
 
@@ -126,29 +120,26 @@ interface MetaRow {
   href?: string;
 }
 
-function buildMeta(notification: Notification): MetaRow[] {
+function buildMeta(notification: Notification, t: DetailTranslator): MetaRow[] {
   const rows: MetaRow[] = [];
   if (notification.projectId) {
     rows.push({
-      label: 'Project',
+      label: t('detail.meta.project'),
       value: notification.projectId,
       href: `/projects/${notification.projectId}`,
     });
   }
   if (notification.issueId) {
     rows.push({
-      label: 'Issue',
+      label: t('detail.meta.issue'),
       value: notification.issueId,
       href: `/issues/${notification.issueId}`,
     });
   }
-  if (
-    notification.type === 'sprint_started' ||
-    notification.type === 'sprint_completed'
-  ) {
+  if (notification.type === 'sprint_started' || notification.type === 'sprint_completed') {
     rows.push({
-      label: 'Sprint',
-      value: TYPE_LABELS[notification.type],
+      label: t('detail.meta.sprint'),
+      value: t(`detail.type_label.${TYPE_LABEL_KEYS[notification.type]}`),
     });
   }
   return rows;
@@ -159,6 +150,7 @@ function buildMeta(notification: Notification): MetaRow[] {
 // ---------------------------------------------------------------------------
 
 function EmptyState() {
+  const t = useTranslations('notifications');
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4 px-8 py-16 text-center">
       <div
@@ -168,11 +160,8 @@ function EmptyState() {
         <Inbox className="h-6 w-6" />
       </div>
       <div className="space-y-1.5">
-        <p className="text-sm font-medium">Select a notification</p>
-        <p className="text-xs text-muted-foreground max-w-[240px]">
-          Pick an item from the list to see the full message, context, and quick
-          actions.
-        </p>
+        <p className="text-sm font-medium">{t('detail.empty_title')}</p>
+        <p className="text-muted-foreground max-w-[240px] text-xs">{t('detail.empty_hint')}</p>
       </div>
     </div>
   );
@@ -195,49 +184,44 @@ export function NotificationDetailPanel({
   onArchive,
   onSnooze,
 }: NotificationDetailPanelProps) {
+  const t = useTranslations('notifications');
   if (!notification) {
     return <EmptyState />;
   }
 
   const href = resolveHref(notification);
-  const actor = getActorName(notification);
+  const actor = getActorName(notification, t);
   const stackKey = resolveStackKey(notification);
   const history = related
-    .filter((n) =>
-      stackKey ? resolveStackKey(n) === stackKey : n.id === notification.id
-    )
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    .filter((n) => (stackKey ? resolveStackKey(n) === stackKey : n.id === notification.id))
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  const typeLabel = TYPE_LABELS[notification.type] ?? notification.type;
+  const typeLabelKey = TYPE_LABEL_KEYS[notification.type];
+  const typeLabel = typeLabelKey ? t(`detail.type_label.${typeLabelKey}`) : notification.type;
   const typeChip = typeChipClass(notification.type);
   const createdAt = new Date(notification.createdAt);
   const relative = formatDistanceToNow(createdAt, { addSuffix: true });
   const absolute = format(createdAt, 'PP p');
   const quote = extractQuote(notification);
-  const meta = buildMeta(notification);
+  const meta = buildMeta(notification, t);
 
   const markReadHandler = notification.isRead ? onMarkUnread : onMarkRead;
-  const markReadLabel = notification.isRead ? 'Mark as unread' : 'Mark as read';
+  const markReadLabel = notification.isRead ? t('detail.mark_unread') : t('detail.mark_read');
 
   return (
     <div className="flex h-full flex-col">
       {/* Sticky header */}
-      <header className="sticky top-0 z-10 flex items-start gap-3 border-b border-border/60 bg-background/80 px-5 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="border-border/60 bg-background/80 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 flex items-start gap-3 border-b px-5 py-4 backdrop-blur">
         <div className="shrink-0">
           <NotificationAvatar notification={notification} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="text-sm font-medium text-foreground">{actor}</span>
-            <span className={cn(typeChip, 'shrink-0 rounded-full')}>
-              {typeLabel}
-            </span>
+            <span className="text-foreground text-sm font-medium">{actor}</span>
+            <span className={cn(typeChip, 'shrink-0 rounded-full')}>{typeLabel}</span>
           </div>
           <time
-            className="mt-0.5 block text-xs text-muted-foreground"
+            className="text-muted-foreground mt-0.5 block text-xs"
             dateTime={createdAt.toISOString()}
             title={absolute}
           >
@@ -251,28 +235,26 @@ export function NotificationDetailPanel({
         <div className="space-y-6 px-5 py-5">
           {/* Title + body */}
           <section className="space-y-2">
-            <h2 className="text-base font-semibold leading-snug text-foreground">
+            <h2 className="text-foreground text-base font-semibold leading-snug">
               {notification.title}
             </h2>
             {quote ? (
               <>
                 {quote.rest && (
-                  <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                  <p className="text-foreground/90 whitespace-pre-wrap text-sm leading-relaxed">
                     {quote.rest}
                   </p>
                 )}
-                <blockquote className="relative rounded-sm border-l-2 border-indigo-500/60 bg-muted/40 py-3 pl-4 pr-3 text-sm italic text-foreground/85">
+                <blockquote className="bg-muted/40 text-foreground/85 relative rounded-sm border-l-2 border-indigo-500/60 py-3 pl-4 pr-3 text-sm italic">
                   <Quote
                     className="absolute -top-1.5 left-2 h-3 w-3 text-indigo-500/70"
                     aria-hidden="true"
                   />
-                  <p className="whitespace-pre-wrap leading-relaxed">
-                    {quote.quote}
-                  </p>
+                  <p className="whitespace-pre-wrap leading-relaxed">{quote.quote}</p>
                 </blockquote>
               </>
             ) : notification.message ? (
-              <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
+              <p className="text-foreground/90 whitespace-pre-wrap text-sm leading-relaxed">
                 {notification.message}
               </p>
             ) : null}
@@ -281,19 +263,14 @@ export function NotificationDetailPanel({
           {/* Metadata — compact key/value pairs */}
           {meta.length > 0 && (
             <section className="space-y-2">
-              <h3 className="kicker text-[11px]">Context</h3>
-              <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 rounded-md border border-border/60 bg-muted/20 px-3 py-2.5">
+              <h3 className="kicker text-[11px]">{t('detail.context')}</h3>
+              <dl className="border-border/60 bg-muted/20 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 rounded-md border px-3 py-2.5">
                 {meta.map((row) => (
                   <div key={row.label} className="contents">
-                    <dt className="text-xs text-muted-foreground">
-                      {row.label}
-                    </dt>
-                    <dd className="min-w-0 truncate text-xs font-medium text-foreground">
+                    <dt className="text-muted-foreground text-xs">{row.label}</dt>
+                    <dd className="text-foreground min-w-0 truncate text-xs font-medium">
                       {row.href ? (
-                        <Link
-                          href={row.href}
-                          className="hover:text-indigo-500 hover:underline"
-                        >
+                        <Link href={row.href} className="hover:text-indigo-500 hover:underline">
                           {row.value}
                         </Link>
                       ) : (
@@ -314,7 +291,7 @@ export function NotificationDetailPanel({
                 className="h-9 w-full gap-2 bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-sm hover:from-indigo-500/90 hover:to-violet-500/90 sm:w-auto"
               >
                 <Link href={href}>
-                  Open in context
+                  {t('detail.open_in_context')}
                   <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                 </Link>
               </Button>
@@ -322,7 +299,7 @@ export function NotificationDetailPanel({
           )}
 
           {/* Secondary actions — visible on wider panels, kebab on narrow */}
-          <section className="flex items-center justify-between gap-2 border-t border-border/60 pt-4">
+          <section className="border-border/60 flex items-center justify-between gap-2 border-t pt-4">
             {/* Inline row: hidden on narrow, visible on sm+ */}
             <div className="hidden items-center gap-1 sm:flex">
               {markReadHandler && (
@@ -330,7 +307,7 @@ export function NotificationDetailPanel({
                   variant="ghost"
                   size="sm"
                   type="button"
-                  className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground h-8 gap-1.5 text-xs"
                   onClick={() => markReadHandler(notification.id)}
                 >
                   <Check className="h-3.5 w-3.5" />
@@ -342,11 +319,11 @@ export function NotificationDetailPanel({
                   variant="ghost"
                   size="sm"
                   type="button"
-                  className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground h-8 gap-1.5 text-xs"
                   onClick={() => onSnooze(notification.id)}
                 >
                   <Clock className="h-3.5 w-3.5" />
-                  Snooze
+                  {t('detail.snooze')}
                 </Button>
               )}
               {onArchive && (
@@ -354,11 +331,11 @@ export function NotificationDetailPanel({
                   variant="ghost"
                   size="sm"
                   type="button"
-                  className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground h-8 gap-1.5 text-xs"
                   onClick={() => onArchive(notification.id)}
                 >
                   <Archive className="h-3.5 w-3.5" />
-                  Dismiss
+                  {t('detail.dismiss')}
                 </Button>
               )}
             </div>
@@ -371,27 +348,23 @@ export function NotificationDetailPanel({
                     variant="ghost"
                     size="icon"
                     type="button"
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                    aria-label="More actions"
+                    className="text-muted-foreground hover:text-foreground h-8 w-8"
+                    aria-label={t('detail.more_actions')}
                   >
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
                   {markReadHandler && (
-                    <DropdownMenuItem
-                      onSelect={() => markReadHandler(notification.id)}
-                    >
+                    <DropdownMenuItem onSelect={() => markReadHandler(notification.id)}>
                       <Check className="mr-2 h-3.5 w-3.5" />
                       {markReadLabel}
                     </DropdownMenuItem>
                   )}
                   {onSnooze && (
-                    <DropdownMenuItem
-                      onSelect={() => onSnooze(notification.id)}
-                    >
+                    <DropdownMenuItem onSelect={() => onSnooze(notification.id)}>
                       <Clock className="mr-2 h-3.5 w-3.5" />
-                      Snooze
+                      {t('detail.snooze')}
                     </DropdownMenuItem>
                   )}
                   {onArchive && (
@@ -402,7 +375,7 @@ export function NotificationDetailPanel({
                         className="text-destructive focus:text-destructive"
                       >
                         <Archive className="mr-2 h-3.5 w-3.5" />
-                        Dismiss
+                        {t('detail.dismiss')}
                       </DropdownMenuItem>
                     </>
                   )}
@@ -414,19 +387,19 @@ export function NotificationDetailPanel({
           {/* Activity history */}
           {history.length > 1 && (
             <section className="space-y-2">
-              <h3 className="kicker text-[11px]">Activity on this item</h3>
+              <h3 className="kicker text-[11px]">{t('detail.activity_heading')}</h3>
               <ul role="list" className="space-y-2">
                 {history.map((entry) => (
                   <li
                     key={entry.id}
-                    className="rounded-sm border border-border/60 bg-muted/20 px-3 py-2"
+                    className="border-border/60 bg-muted/20 rounded-sm border px-3 py-2"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-xs font-medium text-foreground">
-                        {getActorName(entry)}
+                      <p className="text-foreground text-xs font-medium">
+                        {getActorName(entry, t)}
                       </p>
                       <time
-                        className="shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground/70"
+                        className="text-muted-foreground/70 shrink-0 text-[10px] uppercase tracking-wide"
                         dateTime={new Date(entry.createdAt).toISOString()}
                       >
                         {formatDistanceToNow(new Date(entry.createdAt), {
@@ -434,7 +407,7 @@ export function NotificationDetailPanel({
                         })}
                       </time>
                     </div>
-                    <p className="mt-1 text-xs text-muted-foreground">
+                    <p className="text-muted-foreground mt-1 text-xs">
                       {entry.message || entry.title}
                     </p>
                   </li>
@@ -447,4 +420,3 @@ export function NotificationDetailPanel({
     </div>
   );
 }
-

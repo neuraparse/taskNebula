@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { CheckCircle2, Loader2, ShieldCheck, Workflow, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,7 @@ export interface WorkflowBuilderProps {
 
 function StateHeaderCell({ state }: { state: ProjectState }) {
   return (
-    <div className="flex flex-col items-center gap-1 px-1 py-2 text-[11px] font-medium text-muted-foreground">
+    <div className="text-muted-foreground flex flex-col items-center gap-1 px-1 py-2 text-[11px] font-medium">
       <span
         aria-hidden="true"
         className="inline-block h-2 w-2 rounded-full"
@@ -34,7 +35,7 @@ function StateHeaderCell({ state }: { state: ProjectState }) {
 
 function StateRowLabel({ state }: { state: ProjectState }) {
   return (
-    <div className="flex items-center gap-2 px-2 py-2 text-xs font-medium text-foreground">
+    <div className="text-foreground flex items-center gap-2 px-2 py-2 text-xs font-medium">
       <span
         aria-hidden="true"
         className="inline-block h-2 w-2 shrink-0 rounded-full"
@@ -49,7 +50,11 @@ function StateRowLabel({ state }: { state: ProjectState }) {
 
 type CellStatus = 'none' | 'allowed' | 'approval' | 'self';
 
-function getCellStatus(rule: TransitionRule | undefined, fromStateId: string, toStateId: string): CellStatus {
+function getCellStatus(
+  rule: TransitionRule | undefined,
+  fromStateId: string,
+  toStateId: string
+): CellStatus {
   if (fromStateId === toStateId) {
     return 'self';
   }
@@ -59,17 +64,23 @@ function getCellStatus(rule: TransitionRule | undefined, fromStateId: string, to
   return rule.requiresApproval ? 'approval' : 'allowed';
 }
 
-function CellIcon({ status }: { status: CellStatus }) {
+function CellIcon({
+  status,
+  labels,
+}: {
+  status: CellStatus;
+  labels: { allowed: string; approval: string; notAllowed: string };
+}) {
   if (status === 'self') {
     return <span className="text-muted-foreground/40">—</span>;
   }
   if (status === 'allowed') {
-    return <CheckCircle2 className="h-4 w-4 text-accent-emerald" aria-label="Allowed transition" />;
+    return <CheckCircle2 className="text-accent-emerald h-4 w-4" aria-label={labels.allowed} />;
   }
   if (status === 'approval') {
-    return <ShieldCheck className="h-4 w-4 text-accent-blue" aria-label="Approval required" />;
+    return <ShieldCheck className="text-accent-blue h-4 w-4" aria-label={labels.approval} />;
   }
-  return <XCircle className="h-4 w-4 text-muted-foreground/40" aria-label="Not allowed" />;
+  return <XCircle className="text-muted-foreground/40 h-4 w-4" aria-label={labels.notAllowed} />;
 }
 
 export function WorkflowBuilder({ projectId }: WorkflowBuilderProps) {
@@ -85,8 +96,16 @@ export function WorkflowBuilder({ projectId }: WorkflowBuilderProps) {
     save,
   } = useWorkflowBuilder(projectId);
 
+  const t = useTranslations('projectConfig');
+  const tActions = useTranslations('actions');
   const { toast } = useToast();
   const [selectedRuleId, setSelectedRuleId] = useState<string | null>(null);
+
+  const cellIconLabels = {
+    allowed: t('wf_allowed_transition'),
+    approval: t('wf_approval_required'),
+    notAllowed: t('wf_not_allowed'),
+  };
 
   const selectedRule = useMemo(
     () => transitions.find((rule) => rule.id === selectedRuleId) ?? null,
@@ -115,42 +134,43 @@ export function WorkflowBuilder({ projectId }: WorkflowBuilderProps) {
   async function handleSave() {
     try {
       await save();
-      toast({ title: 'Workflow saved', description: 'Transition rules updated.' });
+      toast({ title: t('wf_saved_title'), description: t('wf_saved_description') });
     } catch (error) {
       toast({
-        title: 'Save failed',
-        description: error instanceof Error ? error.message : 'Unable to save transitions.',
+        title: t('wf_save_failed_title'),
+        description: error instanceof Error ? error.message : t('wf_save_failed_description'),
         variant: 'destructive',
       });
     }
   }
 
   return (
-    <div className="space-y-6 animate-fade-up">
+    <div className="animate-fade-up space-y-6">
       {/* Top bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <nav
+            aria-label="Breadcrumb"
+            className="text-muted-foreground flex items-center gap-1.5 text-xs"
+          >
             <Link
               href={`/projects/${projectId}/settings`}
-              className="transition-colors hover:text-foreground"
+              className="hover:text-foreground transition-colors"
             >
-              Settings
+              {t('wf_breadcrumb_settings')}
             </Link>
             <span aria-hidden="true">/</span>
-            <span className="text-foreground">Workflows</span>
+            <span className="text-foreground">{t('wf_breadcrumb_workflows')}</span>
           </nav>
           <div className="flex items-center gap-2">
-            <Workflow className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-            <h1 className="text-xl font-semibold tracking-tight">Workflow &amp; Approvals</h1>
+            <Workflow className="text-muted-foreground h-5 w-5" aria-hidden="true" />
+            <h1 className="text-xl font-semibold tracking-tight">{t('wf_title')}</h1>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Define which state transitions are allowed, who can perform them, and whether approval is required.
-          </p>
+          <p className="text-muted-foreground text-xs">{t('wf_subtitle')}</p>
         </div>
         <Button onClick={handleSave} type="button" disabled={isSaving || isLoading}>
           {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          {isSaving ? 'Saving…' : 'Save'}
+          {isSaving ? t('wf_saving') : tActions('save')}
         </Button>
       </div>
 
@@ -158,26 +178,19 @@ export function WorkflowBuilder({ projectId }: WorkflowBuilderProps) {
         {/* Left pane: transition matrix */}
         <Card>
           <CardHeader className="space-y-1 p-5">
-            <CardTitle className="text-sm font-semibold">Allowed transitions</CardTitle>
-            <CardDescription className="text-xs">
-              Rows are the current (from) state, columns are the target (to) state. Click a cell to enable a
-              transition; click it again while selected to remove it.
-            </CardDescription>
+            <CardTitle className="text-sm font-semibold">{t('wf_allowed_transitions')}</CardTitle>
+            <CardDescription className="text-xs">{t('wf_matrix_help')}</CardDescription>
           </CardHeader>
           <CardContent className="p-5 pt-0">
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr>
-                    <th className="sticky left-0 z-10 border-b border-border bg-card px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      From \ To
+                    <th className="border-border bg-card text-muted-foreground sticky left-0 z-10 border-b px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">
+                      {t('wf_from_to_header')}
                     </th>
                     {states.map((state) => (
-                      <th
-                        key={state.id}
-                        scope="col"
-                        className="border-b border-border bg-card"
-                      >
+                      <th key={state.id} scope="col" className="border-border bg-card border-b">
                         <StateHeaderCell state={state} />
                       </th>
                     ))}
@@ -185,10 +198,10 @@ export function WorkflowBuilder({ projectId }: WorkflowBuilderProps) {
                 </thead>
                 <tbody>
                   {states.map((fromState) => (
-                    <tr key={fromState.id} className="border-b border-border/60 last:border-b-0">
+                    <tr key={fromState.id} className="border-border/60 border-b last:border-b-0">
                       <th
                         scope="row"
-                        className="sticky left-0 z-10 border-r border-border bg-card text-left"
+                        className="border-border bg-card sticky left-0 z-10 border-r text-left"
                       >
                         <StateRowLabel state={fromState} />
                       </th>
@@ -198,10 +211,7 @@ export function WorkflowBuilder({ projectId }: WorkflowBuilderProps) {
                         const isSelected = rule?.id === selectedRuleId;
                         const isSelf = fromState.id === toState.id;
                         return (
-                          <td
-                            key={toState.id}
-                            className="p-0 text-center align-middle"
-                          >
+                          <td key={toState.id} className="p-0 text-center align-middle">
                             <button
                               type="button"
                               disabled={isSelf}
@@ -209,18 +219,22 @@ export function WorkflowBuilder({ projectId }: WorkflowBuilderProps) {
                               className={[
                                 'flex h-10 w-full items-center justify-center border border-transparent transition-colors',
                                 isSelf
-                                  ? 'cursor-not-allowed bg-muted/30'
-                                  : 'cursor-pointer hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                                isSelected ? 'bg-primary/10 ring-1 ring-primary/40' : '',
+                                  ? 'bg-muted/30 cursor-not-allowed'
+                                  : 'hover:bg-accent/40 focus-visible:ring-ring cursor-pointer focus-visible:outline-none focus-visible:ring-2',
+                                isSelected ? 'bg-primary/10 ring-primary/40 ring-1' : '',
                               ].join(' ')}
                               aria-label={
                                 isSelf
-                                  ? `${fromState.name} to itself (not applicable)`
-                                  : `Transition from ${fromState.name} to ${toState.name} (${status})`
+                                  ? t('wf_cell_self_label', { name: fromState.name })
+                                  : t('wf_cell_label', {
+                                      from: fromState.name,
+                                      to: toState.name,
+                                      status,
+                                    })
                               }
                               aria-pressed={Boolean(rule)}
                             >
-                              <CellIcon status={status} />
+                              <CellIcon status={status} labels={cellIconLabels} />
                             </button>
                           </td>
                         );
@@ -231,18 +245,18 @@ export function WorkflowBuilder({ projectId }: WorkflowBuilderProps) {
               </table>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground">
+            <div className="text-muted-foreground mt-4 flex flex-wrap items-center gap-4 text-[11px]">
               <span className="inline-flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 text-accent-emerald" aria-hidden="true" />
-                Allowed
+                <CheckCircle2 className="text-accent-emerald h-3.5 w-3.5" aria-hidden="true" />
+                {t('wf_legend_allowed')}
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <ShieldCheck className="h-3.5 w-3.5 text-accent-blue" aria-hidden="true" />
-                Approval required
+                <ShieldCheck className="text-accent-blue h-3.5 w-3.5" aria-hidden="true" />
+                {t('wf_legend_approval')}
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <XCircle className="h-3.5 w-3.5 text-muted-foreground/60" aria-hidden="true" />
-                Not allowed
+                <XCircle className="text-muted-foreground/60 h-3.5 w-3.5" aria-hidden="true" />
+                {t('wf_legend_not_allowed')}
               </span>
             </div>
           </CardContent>
@@ -251,11 +265,9 @@ export function WorkflowBuilder({ projectId }: WorkflowBuilderProps) {
         {/* Right pane: selected transition details */}
         <Card>
           <CardHeader className="space-y-1 p-5">
-            <CardTitle className="text-sm font-semibold">Transition rule</CardTitle>
+            <CardTitle className="text-sm font-semibold">{t('wf_transition_rule')}</CardTitle>
             <CardDescription className="text-xs">
-              {selectedRule
-                ? 'Configure who can run this transition and its approval requirements.'
-                : 'Select a transition from the matrix to configure its rules.'}
+              {selectedRule ? t('wf_transition_rule_selected') : t('wf_transition_rule_none')}
             </CardDescription>
           </CardHeader>
           <CardContent className="p-5 pt-0">
@@ -273,12 +285,10 @@ export function WorkflowBuilder({ projectId }: WorkflowBuilderProps) {
                 }}
               />
             ) : (
-              <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border px-4 py-12 text-center">
-                <Workflow className="h-6 w-6 text-muted-foreground/60" aria-hidden="true" />
-                <p className="text-sm text-muted-foreground">No transition selected.</p>
-                <p className="text-xs text-muted-foreground">
-                  Click an empty cell to create one, or an existing one to edit.
-                </p>
+              <div className="border-border flex flex-col items-center justify-center gap-2 rounded-md border border-dashed px-4 py-12 text-center">
+                <Workflow className="text-muted-foreground/60 h-6 w-6" aria-hidden="true" />
+                <p className="text-muted-foreground text-sm">{t('wf_no_transition_selected')}</p>
+                <p className="text-muted-foreground text-xs">{t('wf_no_transition_hint')}</p>
               </div>
             )}
           </CardContent>

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { Loader2, Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -24,17 +25,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import {
-  TEMPLATE_KINDS,
-  useCreateTemplate,
-  type TemplateKind,
-} from './use-templates';
-
-const KIND_LABELS: Record<TemplateKind, string> = {
-  project: 'Project',
-  issue: 'Issue',
-  doc: 'Doc',
-};
+import { TEMPLATE_KINDS, useCreateTemplate, type TemplateKind } from './use-templates';
 
 const KIND_HINTS: Record<TemplateKind, string> = {
   project:
@@ -59,6 +50,8 @@ export function NewTemplateDialog({ trigger }: NewTemplateDialogProps) {
   const [payloadError, setPayloadError] = React.useState<string | null>(null);
 
   const { toast } = useToast();
+  const t = useTranslations('planning');
+  const tActions = useTranslations('actions');
   const createMutation = useCreateTemplate();
 
   const reset = React.useCallback(() => {
@@ -84,8 +77,8 @@ export function NewTemplateDialog({ trigger }: NewTemplateDialogProps) {
 
       if (!name.trim()) {
         toast({
-          title: 'Name is required',
-          description: 'Give your template a short, descriptive name.',
+          title: t('toast_name_required_title'),
+          description: t('toast_name_required_desc'),
           variant: 'destructive',
         });
         return;
@@ -97,16 +90,15 @@ export function NewTemplateDialog({ trigger }: NewTemplateDialogProps) {
         try {
           const parsed = JSON.parse(raw);
           if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
-            throw new Error('Payload must be a JSON object.');
+            throw new Error(t('payload_must_be_object'));
           }
           payload = parsed as Record<string, unknown>;
           setPayloadError(null);
         } catch (err) {
-          const message =
-            err instanceof Error ? err.message : 'Invalid JSON payload.';
+          const message = err instanceof Error ? err.message : t('payload_invalid_json');
           setPayloadError(message);
           toast({
-            title: 'Invalid payload JSON',
+            title: t('toast_invalid_payload_title'),
             description: message,
             variant: 'destructive',
           });
@@ -125,18 +117,15 @@ export function NewTemplateDialog({ trigger }: NewTemplateDialogProps) {
         {
           onSuccess: (template) => {
             toast({
-              title: 'Template created',
-              description: `"${template.name}" is ready to use.`,
+              title: t('toast_template_created_title'),
+              description: t('toast_template_created_desc', { name: template.name }),
             });
             handleOpenChange(false);
           },
           onError: (error: unknown) => {
-            const message =
-              error instanceof Error
-                ? error.message
-                : 'Could not create the template.';
+            const message = error instanceof Error ? error.message : t('toast_create_failed_desc');
             toast({
-              title: 'Failed to create template',
+              title: t('toast_create_failed_title'),
               description: message,
               variant: 'destructive',
             });
@@ -144,16 +133,7 @@ export function NewTemplateDialog({ trigger }: NewTemplateDialogProps) {
         }
       );
     },
-    [
-      createMutation,
-      description,
-      handleOpenChange,
-      icon,
-      kind,
-      name,
-      payloadText,
-      toast,
-    ]
+    [createMutation, description, handleOpenChange, icon, kind, name, payloadText, toast, t]
   );
 
   const submitting = createMutation.isPending;
@@ -164,65 +144,58 @@ export function NewTemplateDialog({ trigger }: NewTemplateDialogProps) {
         {trigger ?? (
           <Button size="sm">
             <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
-            New template
+            {t('new_template')}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create template</DialogTitle>
-            <DialogDescription>
-              Templates let your team spin up projects, issues, or docs with one
-              click. Payload is stored as JSON and used when someone presses
-              &ldquo;Use template&rdquo;.
-            </DialogDescription>
+            <DialogTitle>{t('create_template')}</DialogTitle>
+            <DialogDescription>{t('create_template_desc')}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="tpl-name">Name</Label>
+              <Label htmlFor="tpl-name">{t('label_name')}</Label>
               <Input
                 id="tpl-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Bug report, Sprint retro, Onboarding project…"
+                placeholder={t('name_placeholder')}
                 autoFocus
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tpl-description">Description</Label>
+              <Label htmlFor="tpl-description">{t('label_description')}</Label>
               <Textarea
                 id="tpl-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="What is this template for?"
+                placeholder={t('description_placeholder')}
                 rows={2}
               />
             </div>
 
             <div className="grid grid-cols-[1fr_6rem] gap-3">
               <div className="space-y-2">
-                <Label htmlFor="tpl-kind">Kind</Label>
-                <Select
-                  value={kind}
-                  onValueChange={(value) => setKind(value as TemplateKind)}
-                >
+                <Label htmlFor="tpl-kind">{t('label_kind')}</Label>
+                <Select value={kind} onValueChange={(value) => setKind(value as TemplateKind)}>
                   <SelectTrigger id="tpl-kind">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {TEMPLATE_KINDS.map((k) => (
                       <SelectItem key={k} value={k}>
-                        {KIND_LABELS[k]}
+                        {t(`kind_${k}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="tpl-icon">Icon</Label>
+                <Label htmlFor="tpl-icon">{t('label_icon')}</Label>
                 <Input
                   id="tpl-icon"
                   value={icon}
@@ -234,7 +207,7 @@ export function NewTemplateDialog({ trigger }: NewTemplateDialogProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tpl-payload">Payload (JSON)</Label>
+              <Label htmlFor="tpl-payload">{t('label_payload')}</Label>
               <Textarea
                 id="tpl-payload"
                 value={payloadText}
@@ -247,12 +220,8 @@ export function NewTemplateDialog({ trigger }: NewTemplateDialogProps) {
                 className="font-mono text-xs"
                 aria-invalid={payloadError ? true : undefined}
               />
-              <p className="text-[11px] text-muted-foreground">
-                {KIND_HINTS[kind]}
-              </p>
-              {payloadError ? (
-                <p className="text-[11px] text-destructive">{payloadError}</p>
-              ) : null}
+              <p className="text-muted-foreground text-[11px]">{KIND_HINTS[kind]}</p>
+              {payloadError ? <p className="text-destructive text-[11px]">{payloadError}</p> : null}
             </div>
           </div>
 
@@ -263,16 +232,16 @@ export function NewTemplateDialog({ trigger }: NewTemplateDialogProps) {
               onClick={() => handleOpenChange(false)}
               disabled={submitting}
             >
-              Cancel
+              {tActions('cancel')}
             </Button>
             <Button type="submit" disabled={submitting}>
               {submitting ? (
                 <>
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                  Creating…
+                  {t('creating')}
                 </>
               ) : (
-                'Create template'
+                t('create_template')
               )}
             </Button>
           </DialogFooter>

@@ -1,6 +1,7 @@
 'use client';
 
 import { use } from 'react';
+import { useTranslations } from 'next-intl';
 import { ArrowLeft, Calendar, Target, PlayCircle, CheckCircle2, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ export default function SprintDetailPage({
   params: Promise<{ projectId: string; sprintId: string }>;
 }) {
   const { projectId, sprintId } = use(params);
+  const t = useTranslations('pagesProjects');
   const { data: sprint, isLoading: sprintLoading } = useSprint(sprintId);
   const { data: issues, isLoading: issuesLoading } = useSprintIssues(sprintId);
   const { data: burndownData } = useBurndown(sprintId);
@@ -32,7 +34,7 @@ export default function SprintDetailPage({
     // Check if sprint has issues
     const issueCount = issues?.length || 0;
     if (issueCount === 0) {
-      if (!confirm('This sprint has no issues assigned. Start anyway?')) return;
+      if (!confirm(t('confirmStartNoIssues'))) return;
     }
 
     try {
@@ -43,7 +45,7 @@ export default function SprintDetailPage({
     } catch (error: unknown) {
       console.error('Error starting sprint:', error);
       // Show error message from API
-      const message = error instanceof Error ? error.message : 'Failed to start sprint';
+      const message = error instanceof Error ? error.message : t('startSprintFailed');
       alert(message);
     }
   };
@@ -58,14 +60,12 @@ export default function SprintDetailPage({
 
     let confirmMessage: string;
     if (incompleteCount > 0) {
-      confirmMessage = `Sprint Summary:\n` +
-        `✅ Completed: ${completedCount} issue(s)\n` +
-        `⏳ Incomplete: ${incompleteCount} issue(s)\n\n` +
-        `Incomplete issues will be moved to the Backlog.\n\n` +
-        `Do you want to complete the sprint?`;
+      confirmMessage = t('confirmCompleteWithIncomplete', {
+        completed: completedCount,
+        incomplete: incompleteCount,
+      });
     } else {
-      confirmMessage = `🎉 All ${completedCount} issues are completed!\n\n` +
-        `Complete this sprint?`;
+      confirmMessage = t('confirmCompleteAllDone', { completed: completedCount });
     }
 
     if (!confirm(confirmMessage)) return;
@@ -77,18 +77,18 @@ export default function SprintDetailPage({
       });
 
       if (incompleteCount > 0) {
-        alert(`Sprint completed! ${incompleteCount} incomplete issue(s) moved to Backlog.`);
+        alert(t('sprintCompletedMoved', { count: incompleteCount }));
       }
     } catch (error) {
       console.error('Error completing sprint:', error);
-      alert('Failed to complete sprint. Please try again.');
+      alert(t('completeSprintFailed'));
     }
   };
 
   if (sprintLoading || issuesLoading || permissionsLoading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="text-muted-foreground">Loading sprint...</div>
+        <div className="text-muted-foreground">{t('loadingSprint')}</div>
       </div>
     );
   }
@@ -97,11 +97,11 @@ export default function SprintDetailPage({
   if (!permissions.canBrowseProject && !permissions.isSuperAdmin && !permissions.isOrgOwner) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4">
-        <Lock className="h-12 w-12 text-muted-foreground" />
-        <div className="text-lg font-medium">Access Denied</div>
-        <div className="text-muted-foreground">You don&apos;t have permission to view this sprint.</div>
+        <Lock className="text-muted-foreground h-12 w-12" />
+        <div className="text-lg font-medium">{t('accessDenied')}</div>
+        <div className="text-muted-foreground">{t('noSprintPermission')}</div>
         <Link href="/projects">
-          <Button variant="outline">Back to Projects</Button>
+          <Button variant="outline">{t('backToProjects')}</Button>
         </Link>
       </div>
     );
@@ -110,7 +110,7 @@ export default function SprintDetailPage({
   if (!sprint) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="text-muted-foreground">Sprint not found</div>
+        <div className="text-muted-foreground">{t('sprintNotFound')}</div>
       </div>
     );
   }
@@ -120,15 +120,15 @@ export default function SprintDetailPage({
   const totalIssues = issues?.length || 0;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden animate-fade-in">
+    <div className="animate-fade-in flex h-full flex-col overflow-hidden">
       {/* Sprint Header */}
-      <div className="animate-blur-in border-b border-border bg-background px-6 py-4 shrink-0">
+      <div className="animate-blur-in border-border bg-background shrink-0 border-b px-6 py-4">
         <div className="space-y-3">
           {/* Back Button */}
           <Link href={`/projects/${projectId}/sprints`}>
             <Button variant="ghost" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Sprints
+              {t('backToSprints')}
             </Button>
           </Link>
 
@@ -139,25 +139,28 @@ export default function SprintDetailPage({
                 <h1 className="text-2xl font-semibold tracking-tight">{sprint.name}</h1>
                 {sprint.status === 'active' && (
                   <Badge className="bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20">
-                    <span className="status-dot status-live mr-1.5" />Active
+                    <span className="status-dot status-live mr-1.5" />
+                    {t('statusActive')}
                   </Badge>
                 )}
                 {sprint.status === 'completed' && (
                   <Badge className="bg-accent-blue/10 text-accent-blue border-accent-blue/20">
-                    Completed
+                    {t('statusCompleted')}
                   </Badge>
                 )}
-                {sprint.status === 'planned' && <Badge variant="outline">Planned</Badge>}
+                {sprint.status === 'planned' && (
+                  <Badge variant="outline">{t('statusPlanned')}</Badge>
+                )}
               </div>
 
               {sprint.goal && (
-                <div className="flex items-start gap-2 text-muted-foreground">
-                  <Target className="h-4 w-4 mt-0.5" />
+                <div className="text-muted-foreground flex items-start gap-2">
+                  <Target className="mt-0.5 h-4 w-4" />
                   <span>{sprint.goal}</span>
                 </div>
               )}
 
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <div className="text-muted-foreground flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   <span>
@@ -167,11 +170,13 @@ export default function SprintDetailPage({
                 </div>
                 {sprint.status === 'active' && (
                   <div>
-                    {daysRemaining > 0 ? `${daysRemaining} days remaining` : 'Sprint ended'}
+                    {daysRemaining > 0
+                      ? t('daysRemaining', { count: daysRemaining })
+                      : t('sprintEnded')}
                   </div>
                 )}
                 <div>
-                  {completedIssues} / {totalIssues} issues completed
+                  {t('issuesCompleted', { completed: completedIssues, total: totalIssues })}
                 </div>
               </div>
             </div>
@@ -184,11 +189,11 @@ export default function SprintDetailPage({
                     <TooltipTrigger asChild>
                       <Button onClick={handleStartSprint} disabled={updateSprint.isPending}>
                         <PlayCircle className="mr-2 h-4 w-4" />
-                        Start Sprint
+                        {t('startSprint')}
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Start this sprint and make it active</p>
+                      <p>{t('startSprintTooltip')}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -199,11 +204,11 @@ export default function SprintDetailPage({
                     <TooltipTrigger asChild>
                       <Button onClick={handleCompleteSprint} disabled={updateSprint.isPending}>
                         <CheckCircle2 className="mr-2 h-4 w-4" />
-                        Complete Sprint
+                        {t('completeSprint')}
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Complete this sprint. Incomplete issues will move to backlog.</p>
+                      <p>{t('completeSprintTooltip')}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -217,14 +222,12 @@ export default function SprintDetailPage({
       <div className="flex-1 overflow-y-auto">
         <div className="space-y-6 p-6">
           {/* Sprint Stats */}
-          {issues && issues.length > 0 && (
-            <SprintStats sprint={sprint} issues={issues} />
-          )}
+          {issues && issues.length > 0 && <SprintStats sprint={sprint} issues={issues} />}
 
           {/* Burndown Chart */}
           {burndownData && sprint.status === 'active' && (
             <div className="surface-card rounded-lg p-5">
-              <h2 className="mb-4 text-sm font-semibold">Sprint Burndown</h2>
+              <h2 className="mb-4 text-sm font-semibold">{t('sprintBurndown')}</h2>
               <BurndownChart data={burndownData} />
             </div>
           )}
@@ -236,4 +239,3 @@ export default function SprintDetailPage({
     </div>
   );
 }
-

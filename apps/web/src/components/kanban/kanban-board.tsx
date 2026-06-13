@@ -31,6 +31,7 @@ import {
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useState, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 
 interface KanbanBoardProps {
   projectId: string;
@@ -39,6 +40,7 @@ interface KanbanBoardProps {
 }
 
 export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) {
+  const t = useTranslations('kanban');
   const { data: issues, isLoading: issuesLoading, error } = useIssues({ projectId, sprintId });
   const { data: workflowStatuses = [], isLoading: statusesLoading } =
     useWorkflowStatuses(projectId);
@@ -96,31 +98,24 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
   };
 
   const announcements = {
-    onDragStart({ active }: { active: { id: string | number } }) {
-      return `Picked up issue. Use arrow keys to move between columns.`;
+    onDragStart() {
+      return t('dnd.pickedUp');
     },
     onDragOver({
-      active,
       over,
     }: {
       active: { id: string | number };
       over: { id: string | number } | null;
     }) {
-      if (over) return `Issue is over a drop target.`;
-      return `Issue is not over a drop target.`;
+      if (over) return t('dnd.overTarget');
+      return t('dnd.notOverTarget');
     },
-    onDragEnd({
-      active,
-      over,
-    }: {
-      active: { id: string | number };
-      over: { id: string | number } | null;
-    }) {
-      if (over) return `Issue was moved.`;
-      return `Issue drop was cancelled.`;
+    onDragEnd({ over }: { active: { id: string | number }; over: { id: string | number } | null }) {
+      if (over) return t('dnd.moved');
+      return t('dnd.dropCancelled');
     },
     onDragCancel() {
-      return `Dragging cancelled.`;
+      return t('dnd.dragCancelled');
     },
   };
 
@@ -171,7 +166,7 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <p className="text-destructive text-sm">Failed to load issues</p>
+          <p className="text-destructive text-sm">{t('loadFailed')}</p>
           <p className="text-muted-foreground text-xs">{error.message}</p>
         </div>
       </div>
@@ -182,10 +177,10 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
         <LayoutKanban className="text-muted-foreground/40 h-8 w-8" />
-        <p className="text-muted-foreground text-sm">No columns yet</p>
+        <p className="text-muted-foreground text-sm">{t('noColumns')}</p>
         <Button variant="outline" size="sm" onClick={() => setAddColumnOpen(true)}>
           <Plus className="mr-1.5 h-3.5 w-3.5" />
-          Add column
+          {t('addColumn')}
         </Button>
         <AddColumnDialog
           open={addColumnOpen}
@@ -272,7 +267,7 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
                 onClick={() => setAddColumnOpen(true)}
               >
                 <Plus className="mr-1.5 h-4 w-4" />
-                Add column
+                {t('addColumn')}
               </Button>
             </div>
 

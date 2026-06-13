@@ -13,6 +13,7 @@
  * IdP descriptor.
  */
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,11 +52,12 @@ type ScimTokenRow = {
 };
 
 export function SsoSettingsClient({ organizationId }: { organizationId: string }) {
+  const t = useTranslations('settingsConfig');
   return (
     <Tabs defaultValue="saml" className="space-y-6">
       <TabsList>
-        <TabsTrigger value="saml">SAML 2.0</TabsTrigger>
-        <TabsTrigger value="scim">SCIM 2.0 Tokens</TabsTrigger>
+        <TabsTrigger value="saml">{t('sso.tab_saml')}</TabsTrigger>
+        <TabsTrigger value="scim">{t('sso.tab_scim')}</TabsTrigger>
       </TabsList>
       <TabsContent value="saml">
         <SamlSection organizationId={organizationId} />
@@ -73,14 +75,10 @@ function parseIdpMetadataXml(xml: string): Partial<SsoConfig> {
   const ed = doc.getElementsByTagNameNS('*', 'EntityDescriptor')[0];
   if (!ed) return {};
   const issuer = ed.getAttribute('entityID') ?? undefined;
-  const ssoBindings = Array.from(
-    doc.getElementsByTagNameNS('*', 'SingleSignOnService')
-  );
+  const ssoBindings = Array.from(doc.getElementsByTagNameNS('*', 'SingleSignOnService'));
   const ssoNode =
     ssoBindings.find(
-      (n) =>
-        n.getAttribute('Binding') ===
-        'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect'
+      (n) => n.getAttribute('Binding') === 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect'
     ) ?? ssoBindings[0];
   const entryPointUrl = ssoNode?.getAttribute('Location') ?? undefined;
   const certNode = doc.getElementsByTagNameNS('*', 'X509Certificate')[0];
@@ -93,15 +91,14 @@ function parseIdpMetadataXml(xml: string): Partial<SsoConfig> {
 }
 
 function SamlSection({ organizationId }: { organizationId: string }) {
+  const t = useTranslations('settingsConfig');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data } = useQuery({
     queryKey: ['sso-config', organizationId],
     queryFn: async () => {
-      const r = await fetch(
-        `/api/sso/configs?organizationId=${organizationId}`
-      );
-      if (!r.ok) throw new Error('Failed to load SSO config');
+      const r = await fetch(`/api/sso/configs?organizationId=${organizationId}`);
+      if (!r.ok) throw new Error(t('sso.load_config_failed'));
       return (await r.json()) as { ssoConfig: SsoConfig | null };
     },
   });
@@ -145,34 +142,32 @@ function SamlSection({ organizationId }: { organizationId: string }) {
       });
       if (!r.ok) {
         const e = await r.json().catch(() => ({}));
-        throw new Error(e.error ?? 'Failed to save');
+        throw new Error(e.error ?? t('sso.save_failed'));
       }
     },
     onSuccess: () => {
-      toast({ title: 'SSO configuration saved' });
+      toast({ title: t('sso.config_saved') });
       queryClient.invalidateQueries({ queryKey: ['sso-config', organizationId] });
     },
     onError: (err: Error) =>
       toast({
-        title: 'Failed to save SSO configuration',
+        title: t('sso.config_save_failed'),
         description: err.message,
         variant: 'destructive',
       }),
   });
 
   return (
-    <div className="space-y-6 rounded-md border border-border bg-card p-6">
+    <div className="border-border bg-card space-y-6 rounded-md border p-6">
       <div>
-        <h2 className="text-lg font-semibold">SAML 2.0 Identity Provider</h2>
-        <p className="text-sm text-muted-foreground">
-          Service Provider metadata is exposed at <code>{metadataUrl}</code> — share
-          it with your IdP admin. Upload the IdP&apos;s metadata XML below to
-          auto-fill the form.
+        <h2 className="text-lg font-semibold">{t('sso.saml_heading')}</h2>
+        <p className="text-muted-foreground text-sm">
+          {t('sso.saml_metadata_prefix')} <code>{metadataUrl}</code> {t('sso.saml_metadata_suffix')}
         </p>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="metadata-upload">IdP metadata XML (paste or upload)</Label>
+        <Label htmlFor="metadata-upload">{t('sso.idp_metadata_label')}</Label>
         <Textarea
           id="metadata-upload"
           rows={4}
@@ -186,7 +181,7 @@ function SamlSection({ organizationId }: { organizationId: string }) {
                 entryPointUrl: parsed.entryPointUrl ?? prev.entryPointUrl,
                 cert: parsed.cert ?? prev.cert,
               }));
-              toast({ title: 'Parsed IdP metadata' });
+              toast({ title: t('sso.parsed_metadata') });
             }
           }}
         />
@@ -194,7 +189,7 @@ function SamlSection({ organizationId }: { organizationId: string }) {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="issuer">IdP Entity ID (Issuer)</Label>
+          <Label htmlFor="issuer">{t('sso.entity_id_label')}</Label>
           <Input
             id="issuer"
             value={form.issuer}
@@ -202,17 +197,15 @@ function SamlSection({ organizationId }: { organizationId: string }) {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="entry">SSO URL (SAML 2.0 HTTP-Redirect)</Label>
+          <Label htmlFor="entry">{t('sso.sso_url_label')}</Label>
           <Input
             id="entry"
             value={form.entryPointUrl}
-            onChange={(e) =>
-              setForm({ ...form, entryPointUrl: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, entryPointUrl: e.target.value })}
           />
         </div>
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="cert">IdP X.509 Certificate</Label>
+          <Label htmlFor="cert">{t('sso.cert_label')}</Label>
           <Textarea
             id="cert"
             rows={6}
@@ -222,7 +215,7 @@ function SamlSection({ organizationId }: { organizationId: string }) {
           />
         </div>
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="audience">Audience (SP Entity ID)</Label>
+          <Label htmlFor="audience">{t('sso.audience_label')}</Label>
           <Input
             id="audience"
             value={form.audience}
@@ -232,11 +225,13 @@ function SamlSection({ organizationId }: { organizationId: string }) {
       </div>
 
       <div>
-        <h3 className="mb-2 text-sm font-semibold">Attribute Mapping</h3>
+        <h3 className="mb-2 text-sm font-semibold">{t('sso.attribute_mapping')}</h3>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {(['email', 'first_name', 'last_name', 'groups'] as const).map((k) => (
             <div key={k} className="space-y-1">
-              <Label htmlFor={`attr-${k}`} className="text-xs">{k}</Label>
+              <Label htmlFor={`attr-${k}`} className="text-xs">
+                {k}
+              </Label>
               <Input
                 id={`attr-${k}`}
                 value={form.attributeMap[k] ?? ''}
@@ -255,18 +250,16 @@ function SamlSection({ organizationId }: { organizationId: string }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-4 border-t border-border pt-4">
+      <div className="border-border flex items-center justify-between gap-4 border-t pt-4">
         <div className="flex items-center gap-3">
           <Switch
             checked={form.enabled}
             onCheckedChange={(checked) => setForm({ ...form, enabled: checked })}
           />
-          <span className="text-sm text-muted-foreground">
-            Enable SSO for this workspace
-          </span>
+          <span className="text-muted-foreground text-sm">{t('sso.enable_label')}</span>
         </div>
         <Button onClick={() => save.mutate()} disabled={save.isPending}>
-          Save SSO configuration
+          {t('sso.save_config')}
         </Button>
       </div>
     </div>
@@ -274,13 +267,14 @@ function SamlSection({ organizationId }: { organizationId: string }) {
 }
 
 function ScimSection({ organizationId }: { organizationId: string }) {
+  const tr = useTranslations('settingsConfig');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data } = useQuery({
     queryKey: ['scim-tokens', organizationId],
     queryFn: async () => {
       const r = await fetch(`/api/sso/tokens?organizationId=${organizationId}`);
-      if (!r.ok) throw new Error('Failed to load tokens');
+      if (!r.ok) throw new Error(tr('sso.load_tokens_failed'));
       return (await r.json()) as { tokens: ScimTokenRow[] };
     },
   });
@@ -296,7 +290,7 @@ function ScimSection({ organizationId }: { organizationId: string }) {
       });
       if (!r.ok) {
         const e = await r.json().catch(() => ({}));
-        throw new Error(e.error ?? 'Failed');
+        throw new Error(e.error ?? tr('sso.token_create_failed'));
       }
       return (await r.json()) as { token: string };
     },
@@ -308,13 +302,17 @@ function ScimSection({ organizationId }: { organizationId: string }) {
       });
     },
     onError: (err: Error) =>
-      toast({ title: 'Failed', description: err.message, variant: 'destructive' }),
+      toast({
+        title: tr('sso.token_create_failed'),
+        description: err.message,
+        variant: 'destructive',
+      }),
   });
 
   const revoke = useMutation({
     mutationFn: async (id: string) => {
       const r = await fetch(`/api/sso/tokens/${id}`, { method: 'DELETE' });
-      if (!r.ok) throw new Error('Failed');
+      if (!r.ok) throw new Error(tr('sso.token_revoke_failed'));
     },
     onSuccess: () =>
       queryClient.invalidateQueries({
@@ -323,39 +321,34 @@ function ScimSection({ organizationId }: { organizationId: string }) {
   });
 
   return (
-    <div className="space-y-6 rounded-md border border-border bg-card p-6">
+    <div className="border-border bg-card space-y-6 rounded-md border p-6">
       <div>
-        <h2 className="text-lg font-semibold">SCIM 2.0 Provisioning Tokens</h2>
-        <p className="text-sm text-muted-foreground">
-          Issue Bearer tokens for your IdP to call our SCIM 2.0 API at{' '}
-          <code>/api/scim/v2/</code>. Tokens are hashed at rest and shown once.
+        <h2 className="text-lg font-semibold">{tr('sso.scim_heading')}</h2>
+        <p className="text-muted-foreground text-sm">
+          {tr('sso.scim_desc_prefix')} <code>/api/scim/v2/</code>
+          {tr('sso.scim_desc_suffix')}
         </p>
       </div>
 
       <div className="flex items-end gap-3">
         <div className="flex-1 space-y-1">
-          <Label htmlFor="token-name">Token name</Label>
+          <Label htmlFor="token-name">{tr('sso.token_name_label')}</Label>
           <Input
             id="token-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Okta production"
+            placeholder={tr('sso.token_name_placeholder')}
           />
         </div>
-        <Button
-          onClick={() => name && create.mutate(name)}
-          disabled={!name || create.isPending}
-        >
-          Generate SCIM token
+        <Button onClick={() => name && create.mutate(name)} disabled={!name || create.isPending}>
+          {tr('sso.generate_token')}
         </Button>
       </div>
 
       {createdToken && (
         <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-4">
-          <p className="text-sm font-medium">
-            Copy this token now — it will not be shown again.
-          </p>
-          <code className="mt-2 block break-all rounded bg-background px-2 py-1 text-xs">
+          <p className="text-sm font-medium">{tr('sso.token_copy_warning')}</p>
+          <code className="bg-background mt-2 block break-all rounded px-2 py-1 text-xs">
             {createdToken}
           </code>
           <Button
@@ -364,39 +357,30 @@ function ScimSection({ organizationId }: { organizationId: string }) {
             className="mt-3"
             onClick={() => setCreatedToken(null)}
           >
-            I&apos;ve copied it
+            {tr('sso.token_copied')}
           </Button>
         </div>
       )}
 
-      <ul className="divide-y divide-border rounded-md border border-border">
+      <ul className="divide-border border-border divide-y rounded-md border">
         {(data?.tokens ?? []).length === 0 && (
-          <li className="px-4 py-4 text-sm text-muted-foreground">
-            No SCIM tokens yet.
-          </li>
+          <li className="text-muted-foreground px-4 py-4 text-sm">{tr('sso.no_tokens')}</li>
         )}
         {(data?.tokens ?? []).map((t) => (
-          <li
-            key={t.id}
-            className="flex items-center justify-between px-4 py-3 text-sm"
-          >
+          <li key={t.id} className="flex items-center justify-between px-4 py-3 text-sm">
             <div>
               <div className="font-medium">{t.name}</div>
-              <div className="text-xs text-muted-foreground">
-                Created {new Date(t.createdAt).toLocaleString()}
+              <div className="text-muted-foreground text-xs">
+                {tr('sso.token_created', { date: new Date(t.createdAt).toLocaleString() })}
                 {t.lastUsedAt
-                  ? ` · Last used ${new Date(t.lastUsedAt).toLocaleString()}`
+                  ? ` · ${tr('sso.token_last_used', { date: new Date(t.lastUsedAt).toLocaleString() })}`
                   : ''}
-                {t.revokedAt ? ' · Revoked' : ''}
+                {t.revokedAt ? ` · ${tr('sso.token_revoked')}` : ''}
               </div>
             </div>
             {!t.revokedAt && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => revoke.mutate(t.id)}
-              >
-                Revoke
+              <Button variant="outline" size="sm" onClick={() => revoke.mutate(t.id)}>
+                {tr('sso.revoke')}
               </Button>
             )}
           </li>

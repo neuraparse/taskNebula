@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Check, ChevronsUpDown, AlertCircle, ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,11 +11,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
 interface PriorityPickerProps {
@@ -26,42 +23,43 @@ interface PriorityPickerProps {
 const priorities = [
   {
     value: 'critical',
-    label: 'Critical',
+    labelKey: 'priority_critical',
     icon: AlertCircle,
     color: 'text-accent-rose',
     dotClass: 'priority-critical',
   },
   {
     value: 'high',
-    label: 'High',
+    labelKey: 'priority_high',
     icon: ArrowUp,
     color: 'text-accent-amber',
     dotClass: 'priority-high',
   },
   {
     value: 'medium',
-    label: 'Medium',
+    labelKey: 'priority_medium',
     icon: Minus,
     color: 'text-accent-blue',
     dotClass: 'priority-medium',
   },
   {
     value: 'low',
-    label: 'Low',
+    labelKey: 'priority_low',
     icon: ArrowDown,
     color: 'text-muted-foreground',
     dotClass: 'priority-low',
   },
   {
     value: 'none',
-    label: 'None',
+    labelKey: 'priority_none',
     icon: Minus,
     color: 'text-muted-foreground',
     dotClass: 'priority-low',
   },
-];
+] as const;
 
 export function PriorityPicker({ value, onChange, disabled = false }: PriorityPickerProps) {
+  const t = useTranslations('issueMisc');
   const [open, setOpen] = useState(false);
 
   const selectedPriority = priorities.find((p) => p.value === value) || priorities[4];
@@ -75,13 +73,15 @@ export function PriorityPicker({ value, onChange, disabled = false }: PriorityPi
           role="combobox"
           aria-expanded={open}
           aria-haspopup="listbox"
-          aria-label="Priority"
-          className="w-full justify-between h-8 px-2 text-sm rounded-md hover:bg-accent transition-colors duration-150 ease-snap"
+          aria-label={t('priority_label')}
+          className="hover:bg-accent ease-snap h-8 w-full justify-between rounded-md px-2 text-sm transition-colors duration-150"
           disabled={disabled}
         >
           <div className="flex items-center gap-2">
             <span aria-hidden="true" className={selectedPriority?.dotClass || 'priority-low'} />
-            <span className="capitalize">{selectedPriority?.label || 'None'}</span>
+            <span className="capitalize">
+              {selectedPriority ? t(selectedPriority.labelKey) : t('priority_none')}
+            </span>
           </div>
           <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-40" />
         </Button>
@@ -89,7 +89,7 @@ export function PriorityPicker({ value, onChange, disabled = false }: PriorityPi
       <PopoverContent className="w-[200px] p-0">
         <Command>
           <CommandList>
-            <CommandEmpty>No priority found.</CommandEmpty>
+            <CommandEmpty>{t('no_priority_found')}</CommandEmpty>
             <CommandGroup>
               {priorities.map((priority) => {
                 const PriorityIcon = priority.icon;
@@ -110,7 +110,7 @@ export function PriorityPicker({ value, onChange, disabled = false }: PriorityPi
                     />
                     <span aria-hidden="true" className={`mr-2 ${priority.dotClass}`} />
                     <PriorityIcon className={`mr-1.5 h-3.5 w-3.5 ${priority.color}`} />
-                    <span className="capitalize">{priority.label}</span>
+                    <span className="capitalize">{t(priority.labelKey)}</span>
                   </CommandItem>
                 );
               })}
@@ -121,4 +121,3 @@ export function PriorityPicker({ value, onChange, disabled = false }: PriorityPi
     </Popover>
   );
 }
-

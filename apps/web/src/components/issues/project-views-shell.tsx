@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   addMonths,
@@ -175,19 +176,21 @@ function buildCriteria({
   };
 }
 
-function getScopeLabel(scope: ViewScope) {
+function getScopeLabel(scope: ViewScope, t: (key: string) => string) {
   if (scope === 'teamspace') {
-    return 'Teamspace';
+    return t('scope.teamspace');
   }
 
   if (scope === 'personal') {
-    return 'Personal';
+    return t('scope.personal');
   }
 
-  return 'Project';
+  return t('scope.project');
 }
 
 export function ProjectViewsShell({ projectId }: { projectId: string }) {
+  const t = useTranslations('issuesViews');
+  const tActions = useTranslations('actions');
   const queryClient = useQueryClient();
   const { currentOrganizationId, currentTeamId } = useOrganization();
   const { toast } = useToast();
@@ -350,13 +353,13 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
       setIsPinnedView(true);
       setIsDefaultView(false);
       toast({
-        title: 'View saved',
-        description: 'This view is now reusable from the project header.',
+        title: t('toast.view_saved_title'),
+        description: t('toast.view_saved_description'),
       });
     },
     onError: (error: Error) => {
       toast({
-        title: 'Failed to save view',
+        title: t('toast.save_failed_title'),
         description: error.message,
         variant: 'destructive',
       });
@@ -409,8 +412,8 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
       });
     } catch (error) {
       toast({
-        title: 'Failed to update view',
-        description: error instanceof Error ? error.message : 'Something went wrong',
+        title: t('toast.update_failed_title'),
+        description: error instanceof Error ? error.message : t('toast.something_went_wrong'),
         variant: 'destructive',
       });
     }
@@ -428,8 +431,8 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
       });
     } catch (error) {
       toast({
-        title: 'Failed to update default view',
-        description: error instanceof Error ? error.message : 'Something went wrong',
+        title: t('toast.update_default_failed_title'),
+        description: error instanceof Error ? error.message : t('toast.something_went_wrong'),
         variant: 'destructive',
       });
     }
@@ -439,13 +442,13 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
     try {
       await deleteViewMutation.mutateAsync(view.id);
       toast({
-        title: 'View deleted',
-        description: `"${view.name}" was removed from this project.`,
+        title: t('toast.view_deleted_title'),
+        description: t('toast.view_deleted_description', { name: view.name }),
       });
     } catch (error) {
       toast({
-        title: 'Failed to delete view',
-        description: error instanceof Error ? error.message : 'Something went wrong',
+        title: t('toast.delete_failed_title'),
+        description: error instanceof Error ? error.message : t('toast.something_went_wrong'),
         variant: 'destructive',
       });
     }
@@ -474,7 +477,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
     const seen = new Set<string>();
 
     // Triage group sits at the top for any issue without a workflow status mapping.
-    orderedStatuses.push({ id: TRIAGE_GROUP_ID, name: 'Triage', color: '#94a3b8' });
+    orderedStatuses.push({ id: TRIAGE_GROUP_ID, name: t('shell.triage'), color: '#94a3b8' });
     seen.add(TRIAGE_GROUP_ID);
 
     for (const status of workflowStatuses) {
@@ -509,7 +512,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
         // Keep the Triage group only when it has items to avoid empty noise at the top of mature projects.
         .filter((group) => group.status.id !== TRIAGE_GROUP_ID || group.issues.length > 0)
     );
-  }, [filteredIssues, workflowStatuses]);
+  }, [filteredIssues, workflowStatuses, t]);
 
   const toggleGroup = (groupId: string) => {
     setCollapsedGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
@@ -549,28 +552,28 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
               <TabsList className="bg-muted/30 h-7 gap-0.5 rounded-md p-0.5">
                 <TabsTrigger
                   value="list"
-                  aria-label="List"
+                  aria-label={t('shell.view_list')}
                   className="data-[state=active]:bg-card data-[state=active]:shadow-xs h-6 w-6 rounded-sm px-0"
                 >
                   <LayoutList className="h-3.5 w-3.5" />
                 </TabsTrigger>
                 <TabsTrigger
                   value="board"
-                  aria-label="Board"
+                  aria-label={t('shell.view_board')}
                   className="data-[state=active]:bg-card data-[state=active]:shadow-xs h-6 w-6 rounded-sm px-0"
                 >
                   <FolderKanban className="h-3.5 w-3.5" />
                 </TabsTrigger>
                 <TabsTrigger
                   value="timeline"
-                  aria-label="Timeline"
+                  aria-label={t('shell.view_timeline')}
                   className="data-[state=active]:bg-card data-[state=active]:shadow-xs h-6 w-6 rounded-sm px-0"
                 >
                   <GanttChartSquare className="h-3.5 w-3.5" />
                 </TabsTrigger>
                 <TabsTrigger
                   value="calendar"
-                  aria-label="Calendar"
+                  aria-label={t('shell.view_calendar')}
                   className="data-[state=active]:bg-card data-[state=active]:shadow-xs h-6 w-6 rounded-sm px-0"
                 >
                   <CalendarDays className="h-3.5 w-3.5" />
@@ -596,8 +599,8 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Save view"
-                title="Save view"
+                aria-label={t('shell.save_view')}
+                title={t('shell.save_view')}
                 onClick={() => setSaveViewOpen(true)}
                 className="h-7 w-7"
               >
@@ -606,8 +609,8 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
               <Button
                 variant="default"
                 size="icon"
-                aria-label="New issue"
-                title="New issue"
+                aria-label={t('shell.new_issue')}
+                title={t('shell.new_issue')}
                 onClick={() => setCreateIssueOpen(true)}
                 className="h-7 w-7"
               >
@@ -625,9 +628,9 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
           <div className="mt-2">
             <ScrollArea className="w-full whitespace-nowrap">
               <div className="flex items-center gap-1.5 pb-1">
-                <span className="kicker shrink-0">Views</span>
+                <span className="kicker shrink-0">{t('shell.views')}</span>
                 {viewsLoading ? (
-                  <span className="text-muted-foreground text-xs">Loading…</span>
+                  <span className="text-muted-foreground text-xs">{t('loading')}</span>
                 ) : visibleViews.length ? (
                   visibleViews.map((view) => (
                     <div
@@ -647,7 +650,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                         {view.isStarred ? <Star className="h-3 w-3 fill-current" /> : null}
                         {view.isDefault ? <Target className="h-3 w-3" /> : null}
                         <span className="chip text-[9px]">{view.viewType}</span>
-                        <span className="chip text-[9px]">{getScopeLabel(view.scope)}</span>
+                        <span className="chip text-[9px]">{getScopeLabel(view.scope, t)}</span>
                       </button>
                       {view.isOwned ? (
                         <DropdownMenu>
@@ -656,7 +659,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                               variant="ghost"
                               size="icon"
                               className="h-6 w-6 rounded-sm"
-                              aria-label={`Manage ${view.name}`}
+                              aria-label={t('shell.manage_view', { name: view.name })}
                             >
                               <MoreHorizontal className="h-3 w-3" />
                             </Button>
@@ -664,11 +667,13 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => void handleTogglePinned(view)}>
                               <Star className="mr-2 h-3.5 w-3.5" />
-                              {view.isStarred ? 'Unpin view' : 'Pin view'}
+                              {view.isStarred ? t('shell.unpin_view') : t('shell.pin_view')}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => void handleToggleDefault(view)}>
                               <Target className="mr-2 h-3.5 w-3.5" />
-                              {view.isDefault ? 'Clear default' : 'Set as default'}
+                              {view.isDefault
+                                ? t('shell.clear_default')
+                                : t('shell.set_as_default')}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
@@ -676,7 +681,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                               className="text-destructive focus:text-destructive"
                             >
                               <Trash2 className="mr-2 h-3.5 w-3.5" />
-                              Delete view
+                              {t('shell.delete_view')}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -685,7 +690,9 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                   ))
                 ) : (
                   <span className="text-muted-foreground text-xs">
-                    Save a view to reuse it across this {currentTeamId ? 'teamspace' : 'project'}.
+                    {t('shell.empty_views', {
+                      scope: currentTeamId ? 'teamspace' : 'project',
+                    })}
                   </span>
                 )}
               </div>
@@ -702,15 +709,15 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
             <div className="h-full overflow-auto px-5 py-4">
               <div className="border-border bg-card animate-fade-up overflow-hidden rounded-lg border">
                 {isLoading ? (
-                  <div className="text-muted-foreground px-4 py-8 text-sm">Loading issues…</div>
+                  <div className="text-muted-foreground px-4 py-8 text-sm">
+                    {t('shell.loading_issues')}
+                  </div>
                 ) : filteredIssues.length === 0 ? (
                   <div className="flex flex-col items-center gap-3 px-4 py-12 text-center">
-                    <p className="text-muted-foreground text-sm">
-                      No issues match the current view.
-                    </p>
+                    <p className="text-muted-foreground text-sm">{t('shell.no_issues_match')}</p>
                     <Button size="sm" onClick={() => setCreateIssueOpen(true)}>
                       <Plus className="mr-1.5 h-3.5 w-3.5" />
-                      New Issue
+                      {t('shell.new_issue_button')}
                     </Button>
                   </div>
                 ) : (
@@ -754,7 +761,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                           {!isCollapsed ? (
                             group.issues.length === 0 ? (
                               <div className="text-muted-foreground px-4 py-3 text-xs">
-                                No items
+                                {t('shell.no_items')}
                               </div>
                             ) : (
                               <ul className="divide-border/60 divide-y">
@@ -837,7 +844,9 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                                               priorityKey === 'medium' && 'bg-amber-400',
                                               priorityKey === 'low' && 'bg-muted-foreground/40'
                                             )}
-                                            title={`Priority: ${priorityKey}`}
+                                            title={t('shell.priority_tooltip', {
+                                              priority: priorityKey,
+                                            })}
                                           />
 
                                           {assignees.length > 0 ? (
@@ -884,11 +893,11 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
             <div className="h-full overflow-auto px-5 py-4">
               <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
                 <div className="animate-fade-up space-y-3">
-                  <span className="kicker">Scheduled</span>
+                  <span className="kicker">{t('shell.scheduled')}</span>
                   <div className="border-border bg-card overflow-hidden rounded-lg border">
                     {scheduledIssues.length === 0 ? (
                       <div className="text-muted-foreground px-4 py-8 text-sm">
-                        No scheduled issues in this view.
+                        {t('shell.no_scheduled')}
                       </div>
                     ) : (
                       <ul className="stagger divide-border/60 divide-y">
@@ -915,7 +924,9 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                                   <p className="truncate text-sm font-medium">{issue.title}</p>
                                   <p className="text-muted-foreground text-xs">
                                     <span className="font-mono">{issue.key}</span> ·{' '}
-                                    {issue.assignee?.name || issue.assignee?.email || 'Unassigned'}
+                                    {issue.assignee?.name ||
+                                      issue.assignee?.email ||
+                                      t('shell.unassigned')}
                                   </p>
                                 </div>
                                 <span className="text-muted-foreground shrink-0 text-xs font-medium">
@@ -931,11 +942,11 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                 </div>
 
                 <div className="animate-fade-up space-y-3">
-                  <span className="kicker">Unscheduled</span>
+                  <span className="kicker">{t('shell.unscheduled')}</span>
                   <div className="border-border bg-card overflow-hidden rounded-lg border">
                     {unscheduledIssues.length === 0 ? (
                       <div className="text-muted-foreground px-4 py-8 text-sm">
-                        Everything in this view is scheduled.
+                        {t('shell.all_scheduled')}
                       </div>
                     ) : (
                       <ul className="divide-border/60 divide-y">
@@ -973,7 +984,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                       size="icon"
                       className="h-7 w-7"
                       onClick={() => setCalendarMonth((value) => subMonths(value, 1))}
-                      aria-label="Previous month"
+                      aria-label={t('shell.previous_month')}
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -982,7 +993,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                       size="icon"
                       className="h-7 w-7"
                       onClick={() => setCalendarMonth((value) => addMonths(value, 1))}
-                      aria-label="Next month"
+                      aria-label={t('shell.next_month')}
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
@@ -990,12 +1001,12 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                 </div>
 
                 <div className="border-border grid grid-cols-7 border-b">
-                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+                  {(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const).map((day) => (
                     <div
                       key={day}
                       className="text-muted-foreground px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide"
                     >
-                      {day}
+                      {t(`shell.weekday.${day}`)}
                     </div>
                   ))}
                 </div>
@@ -1043,7 +1054,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                           ))}
                           {dayIssues.length > 3 ? (
                             <p className="text-muted-foreground text-[10px]">
-                              +{dayIssues.length - 3} more
+                              {t('shell.more_count', { count: dayIssues.length - 3 })}
                             </p>
                           ) : null}
                         </div>
@@ -1060,58 +1071,56 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
       <Dialog open={saveViewOpen} onOpenChange={setSaveViewOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Save current view</DialogTitle>
-            <DialogDescription>
-              Stores the active view type and filters as a reusable saved view.
-            </DialogDescription>
+            <DialogTitle>{t('save_dialog.title')}</DialogTitle>
+            <DialogDescription>{t('save_dialog.description')}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="view-name" className="text-sm font-medium">
-                View name
+                {t('save_dialog.name_label')}
               </label>
               <Input
                 id="view-name"
                 value={viewName}
                 onChange={(event) => setViewName(event.target.value)}
-                placeholder="Sprint planning board"
+                placeholder={t('save_dialog.name_placeholder')}
               />
             </div>
 
             <div className="space-y-2">
               <label htmlFor="view-description" className="text-sm font-medium">
-                Description
+                {t('save_dialog.description_label')}
               </label>
               <Input
                 id="view-description"
                 value={viewDescription}
                 onChange={(event) => setViewDescription(event.target.value)}
-                placeholder="Optional context for teammates"
+                placeholder={t('save_dialog.description_placeholder')}
               />
             </div>
 
             <div className="space-y-2">
               <label htmlFor="view-scope" className="text-sm font-medium">
-                Scope
+                {t('save_dialog.scope_label')}
               </label>
               <Select value={viewScope} onValueChange={(value) => setViewScope(value as ViewScope)}>
                 <SelectTrigger id="view-scope">
-                  <SelectValue placeholder="Select scope" />
+                  <SelectValue placeholder={t('save_dialog.scope_placeholder')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="personal">Personal</SelectItem>
-                  <SelectItem value="project">Project</SelectItem>
+                  <SelectItem value="personal">{t('scope.personal')}</SelectItem>
+                  <SelectItem value="project">{t('scope.project')}</SelectItem>
                   <SelectItem value="teamspace" disabled={!currentTeamId}>
                     {currentTeamId
-                      ? `Teamspace${activeTeamspace ? ` · ${activeTeamspace.name}` : ''}`
-                      : 'Teamspace'}
+                      ? activeTeamspace
+                        ? t('scope.teamspace_named', { name: activeTeamspace.name })
+                        : t('scope.teamspace')
+                      : t('scope.teamspace')}
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-muted-foreground text-xs">
-                Personal views stay private. Project and Teamspace views are shared.
-              </p>
+              <p className="text-muted-foreground text-xs">{t('save_dialog.scope_help')}</p>
             </div>
 
             <label className="flex items-center gap-3 text-sm">
@@ -1119,7 +1128,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                 checked={isPinnedView}
                 onCheckedChange={(checked) => setIsPinnedView(checked === true)}
               />
-              Pin this view in the header
+              {t('save_dialog.pin_label')}
             </label>
 
             <label className="flex items-center gap-3 text-sm">
@@ -1127,7 +1136,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                 checked={isDefaultView}
                 onCheckedChange={(checked) => setIsDefaultView(checked === true)}
               />
-              Set as default view for this scope
+              {t('save_dialog.default_label')}
             </label>
 
             {saveViewMutation.error ? (
@@ -1139,13 +1148,13 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setSaveViewOpen(false)}>
-              Cancel
+              {tActions('cancel')}
             </Button>
             <Button
               onClick={() => saveViewMutation.mutate()}
               disabled={!viewName.trim() || saveViewMutation.isPending}
             >
-              {saveViewMutation.isPending ? 'Saving…' : 'Save view'}
+              {saveViewMutation.isPending ? t('save_dialog.saving') : t('save_dialog.submit')}
             </Button>
           </DialogFooter>
         </DialogContent>

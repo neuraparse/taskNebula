@@ -1,9 +1,13 @@
 import { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: 'Project | TaskNebula',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('pagesProjects');
+  return {
+    title: t('metaTitleDetail'),
+  };
+}
 
 interface ProjectPageProps {
   params: Promise<{

@@ -1,7 +1,12 @@
 import NextAuth from 'next-auth';
 import { NextResponse, type NextRequest } from 'next/server';
 import { authConfig } from './auth.config';
-import { LOCALE_COOKIE, defaultLocale, isSupportedLocale } from './lib/i18n/config';
+import {
+  LOCALE_COOKIE,
+  defaultLocale,
+  isSupportedLocale,
+  matchLocaleFromAcceptLanguage,
+} from './lib/i18n/config';
 
 const { auth } = NextAuth(authConfig);
 
@@ -101,16 +106,35 @@ export default auth((req) => {
   // app/[locale]. Preserve unprefixed URLs such as /dashboard by rewriting
   // them internally to the active locale route. Explicit localized URLs
   // (/tr/dashboard, /de/projects, …) are already concrete app routes.
-  const resolvedLocale = hasLocalePrefix
+  // Locale resolution order: an explicit URL prefix or a previously chosen
+  // cookie always wins; otherwise negotiate from the device/browser
+  // `Accept-Language` header, then fall back to the default.
+  const cookieLocale = request.cookies.get(LOCALE_COOKIE)?.value;
+  const hasCookieLocale = isSupportedLocale(cookieLocale);
+  const resolvedLocale: string = hasLocalePrefix
     ? firstSegment
-    : request.cookies.get(LOCALE_COOKIE)?.value || defaultLocale;
+    : isSupportedLocale(cookieLocale)
+      ? cookieLocale
+      : (matchLocaleFromAcceptLanguage(request.headers.get('accept-language')) ?? defaultLocale);
+
   if (hasLocalePrefix) {
     return applyHtmlAttrs(NextResponse.next(), resolvedLocale);
   }
 
   const rewriteUrl = request.nextUrl.clone();
   rewriteUrl.pathname = `/${resolvedLocale}${pathWithoutLocale}`;
-  return applyHtmlAttrs(NextResponse.rewrite(rewriteUrl), resolvedLocale);
+  const response = applyHtmlAttrs(NextResponse.rewrite(rewriteUrl), resolvedLocale);
+  // Persist a device-detected locale so subsequent navigation is stable and
+  // the language switcher reflects it. Only set it when the visitor hasn't
+  // explicitly chosen one — an explicit pick (cookie) must always win.
+  if (!hasCookieLocale) {
+    response.cookies.set(LOCALE_COOKIE, resolvedLocale, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: 'lax',
+    });
+  }
+  return response;
 });
 
 export const config = {

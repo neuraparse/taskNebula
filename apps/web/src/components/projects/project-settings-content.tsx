@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CustomFieldManager } from '@/components/custom-fields/custom-field-manager';
 import { PermissionManager } from '@/components/permissions/permission-manager';
@@ -32,18 +33,18 @@ import {
 } from 'lucide-react';
 
 const TABS = [
-  { value: 'general', label: 'General', icon: Settings },
-  { value: 'permissions', label: 'Permissions', icon: Shield },
-  { value: 'schemes', label: 'Schemes', icon: Key },
-  { value: 'security', label: 'Security', icon: Lock },
-  { value: 'custom-fields', label: 'Custom Fields', icon: FileText },
-  { value: 'versions', label: 'Versions', icon: Rocket },
-  { value: 'components', label: 'Components', icon: Boxes },
-  { value: 'workflows', label: 'Workflows', icon: Workflow },
-  { value: 'automation', label: 'Automation', icon: Zap },
-  { value: 'ai-agents', label: 'AI Agents', icon: Bot },
-  { value: 'chat-calls', label: 'Chat & Calls', icon: MessageSquareText },
-  { value: 'webhooks', label: 'Webhooks', icon: Webhook },
+  { value: 'general', labelKey: 'tab_general', icon: Settings },
+  { value: 'permissions', labelKey: 'tab_permissions', icon: Shield },
+  { value: 'schemes', labelKey: 'tab_schemes', icon: Key },
+  { value: 'security', labelKey: 'tab_security', icon: Lock },
+  { value: 'custom-fields', labelKey: 'tab_custom_fields', icon: FileText },
+  { value: 'versions', labelKey: 'tab_versions', icon: Rocket },
+  { value: 'components', labelKey: 'tab_components', icon: Boxes },
+  { value: 'workflows', labelKey: 'tab_workflows', icon: Workflow },
+  { value: 'automation', labelKey: 'tab_automation', icon: Zap },
+  { value: 'ai-agents', labelKey: 'tab_ai_agents', icon: Bot },
+  { value: 'chat-calls', labelKey: 'tab_chat_calls', icon: MessageSquareText },
+  { value: 'webhooks', labelKey: 'tab_webhooks', icon: Webhook },
 ] as const;
 
 type TabValue = (typeof TABS)[number]['value'];
@@ -68,6 +69,7 @@ export function ProjectSettingsContent({
   initialTab = 'general',
   onTabChange,
 }: ProjectSettingsContentProps) {
+  const t = useTranslations('projectsPages');
   const { currentOrganizationId } = useOrganization();
   const { permissions, isLoading: permissionsLoading } = useProjectPermissions(projectId);
   const validTabs = useMemo(() => TABS.map((tab) => tab.value), []);
@@ -90,7 +92,7 @@ export function ProjectSettingsContent({
   if (!currentOrganizationId || permissionsLoading) {
     return (
       <div className="p-6">
-        <p className="text-muted-foreground text-sm">Loading…</p>
+        <p className="text-muted-foreground text-sm">{t('loading')}</p>
       </div>
     );
   }
@@ -99,9 +101,7 @@ export function ProjectSettingsContent({
     return (
       <div className="p-6">
         <div className="panel-danger rounded-lg p-6 text-center">
-          <p className="text-destructive text-sm">
-            You don&apos;t have permission to access project settings.
-          </p>
+          <p className="text-destructive text-sm">{t('no_settings_permission')}</p>
         </div>
       </div>
     );
@@ -115,7 +115,7 @@ export function ProjectSettingsContent({
     >
       <div className="border-border bg-background border-b">
         <TabsList
-          aria-label="Project settings sections"
+          aria-label={t('settings_sections_aria')}
           className="h-auto w-full justify-start gap-0 overflow-x-auto rounded-none bg-transparent p-0"
         >
           {TABS.map((tab) => {
@@ -127,7 +127,7 @@ export function ProjectSettingsContent({
                 className="text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-foreground flex items-center gap-1.5 rounded-none border-b-2 border-transparent px-3 py-2 text-sm data-[state=active]:bg-transparent"
               >
                 <Icon className="h-4 w-4" />
-                <span>{tab.label}</span>
+                <span>{t(tab.labelKey)}</span>
               </TabsTrigger>
             );
           })}

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { useIssueConversation } from '@/lib/hooks/use-chat';
 import { MessageSquareText, PhoneCall } from 'lucide-react';
@@ -13,6 +14,7 @@ export function IssueDiscussionCard({
   issueId: string;
   projectId: string;
 }) {
+  const t = useTranslations('collab');
   // Realtime hook — not modified.
   const { data, isLoading, error } = useIssueConversation(issueId);
 
@@ -20,44 +22,43 @@ export function IssueDiscussionCard({
     <div className="space-y-3">
       {/* Section label */}
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          Discussion
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-widest">
+          {t('discussion.title')}
         </span>
         {data?.room?.id && data.messages.length > 0 && (
           <span className="chip text-[11px]">
-            {data.messages.length} {data.messages.length === 1 ? 'message' : 'messages'}
+            {t('discussion.messageCount', { count: data.messages.length })}
           </span>
         )}
       </div>
 
       {/* Content */}
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading discussion…</p>
+        <p className="text-muted-foreground text-sm">{t('discussion.loading')}</p>
       ) : error ? (
-        <p className="text-sm text-muted-foreground">{error.message}</p>
+        <p className="text-muted-foreground text-sm">{error.message}</p>
       ) : data ? (
         <div className="space-y-2">
           {/* Last two messages — compact preview */}
           {data.messages.length === 0 ? (
-            <p className="text-sm text-muted-foreground border border-dashed border-border/60 rounded-md px-3 py-3">
-              No messages yet. Use the issue thread when the work needs quick alignment.
+            <p className="text-muted-foreground border-border/60 rounded-md border border-dashed px-3 py-3 text-sm">
+              {t('discussion.emptyIssue')}
             </p>
           ) : (
             data.messages.slice(-2).map((message) => (
-              <div
-                key={message.id}
-                className="border-l-2 border-primary/40 pl-3 py-1 space-y-1"
-              >
-                <p className="text-[11px] font-medium text-muted-foreground">
-                  {message.author.name || message.author.email || 'Unknown'}
+              <div key={message.id} className="border-primary/40 space-y-1 border-l-2 py-1 pl-3">
+                <p className="text-muted-foreground text-[11px] font-medium">
+                  {message.author.name || message.author.email || t('discussion.unknownAuthor')}
                 </p>
                 <p
                   className={cn(
-                    'text-sm leading-relaxed line-clamp-2',
-                    message.deletedAt && 'italic text-muted-foreground'
+                    'line-clamp-2 text-sm leading-relaxed',
+                    message.deletedAt && 'text-muted-foreground italic'
                   )}
                 >
-                  {message.deletedAt ? 'Message deleted' : message.body || 'Attachment-only update'}
+                  {message.deletedAt
+                    ? t('discussion.messageDeleted')
+                    : message.body || t('discussion.attachmentOnly')}
                 </p>
               </div>
             ))
@@ -68,19 +69,19 @@ export function IssueDiscussionCard({
             <Button asChild variant="outline" size="sm">
               <Link href={`/projects/${projectId}/chat?roomId=${data.room.id}`}>
                 <MessageSquareText className="mr-1.5 h-4 w-4" />
-                Open discussion
+                {t('discussion.openDiscussion')}
               </Link>
             </Button>
             <Button asChild size="sm">
               <Link href={`/projects/${projectId}/chat?roomId=${data.room.id}`}>
                 <PhoneCall className="mr-1.5 h-4 w-4" />
-                {data.activeCall ? 'Join call' : 'Start call'}
+                {data.activeCall ? t('call.join') : t('call.start')}
               </Link>
             </Button>
           </div>
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">Discussion is unavailable.</p>
+        <p className="text-muted-foreground text-sm">{t('discussion.unavailable')}</p>
       )}
     </div>
   );

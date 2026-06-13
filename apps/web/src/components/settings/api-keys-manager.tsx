@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,7 @@ type ApiKeyItem = {
 };
 
 export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
+  const t = useTranslations('settingsConfig');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newKeyName, setNewKeyName] = useState('');
   const [expiryPreset, setExpiryPreset] = useState('never');
@@ -52,9 +54,9 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
     queryKey: ['api-keys', organizationId],
     queryFn: async () => {
       const response = await fetch(`/api/api-keys?organizationId=${organizationId}`);
-      const payload = await response.json().catch(() => ({ error: 'Failed to fetch API keys' }));
+      const payload = await response.json().catch(() => ({ error: t('apiKeys.fetch_failed') }));
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to fetch API keys');
+        throw new Error(payload.error || t('apiKeys.fetch_failed'));
       }
       return payload as { apiKeys: ApiKeyItem[] };
     },
@@ -73,9 +75,9 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
           expiresAt: expiresAt?.toISOString(),
         }),
       });
-      const payload = await response.json().catch(() => ({ error: 'Failed to create API key' }));
+      const payload = await response.json().catch(() => ({ error: t('apiKeys.create_failed') }));
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to create API key');
+        throw new Error(payload.error || t('apiKeys.create_failed'));
       }
       return payload as { apiKey: { key: string } };
     },
@@ -85,13 +87,13 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
       setNewKeyName('');
       setExpiryPreset('never');
       toast({
-        title: 'API key created',
-        description: 'Copy the key now. It will not be shown again.',
+        title: t('apiKeys.created_toast_title'),
+        description: t('apiKeys.created_toast_desc'),
       });
     },
     onError: (mutationError: Error) => {
       toast({
-        title: 'Failed to create API key',
+        title: t('apiKeys.create_failed'),
         description: mutationError.message,
         variant: 'destructive',
       });
@@ -101,22 +103,22 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
   const revokeKey = useMutation({
     mutationFn: async (keyId: string) => {
       const response = await fetch(`/api/api-keys/${keyId}`, { method: 'DELETE' });
-      const payload = await response.json().catch(() => ({ error: 'Failed to revoke API key' }));
+      const payload = await response.json().catch(() => ({ error: t('apiKeys.revoke_failed') }));
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to revoke API key');
+        throw new Error(payload.error || t('apiKeys.revoke_failed'));
       }
       return payload;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['api-keys', organizationId] });
       toast({
-        title: 'API key revoked',
-        description: 'The key can no longer be used.',
+        title: t('apiKeys.revoked_toast_title'),
+        description: t('apiKeys.revoked_toast_desc'),
       });
     },
     onError: (mutationError: Error) => {
       toast({
-        title: 'Failed to revoke API key',
+        title: t('apiKeys.revoke_failed'),
         description: mutationError.message,
         variant: 'destructive',
       });
@@ -150,30 +152,28 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
       <section className="animate-fade-up space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
-            <span className="kicker">Integrations</span>
-            <h2 className="text-lg font-semibold tracking-tight">API keys</h2>
-            <p className="text-sm text-muted-foreground max-w-prose">
-              Create and revoke keys for service integrations and automation.
-            </p>
+            <span className="kicker">{t('apiKeys.kicker')}</span>
+            <h2 className="text-lg font-semibold tracking-tight">{t('apiKeys.heading')}</h2>
+            <p className="text-muted-foreground max-w-prose text-sm">{t('apiKeys.subtitle')}</p>
           </div>
           <Button onClick={() => setIsCreateDialogOpen(true)} size="sm">
             <Plus className="mr-1.5 h-4 w-4" />
-            Create key
+            {t('apiKeys.create_key')}
           </Button>
         </div>
 
         {isLoading ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">Loading API keys...</p>
+          <p className="text-muted-foreground py-6 text-center text-sm">{t('apiKeys.loading')}</p>
         ) : error ? (
           <div className="panel-warn text-sm">
-            {error instanceof Error ? error.message : 'API keys could not be loaded.'}
+            {error instanceof Error ? error.message : t('apiKeys.load_error')}
           </div>
         ) : apiKeys.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-12 text-center">
-            <Key className="h-8 w-8 text-muted-foreground/50" />
-            <p className="text-sm text-muted-foreground">No API keys yet.</p>
+            <Key className="text-muted-foreground/50 h-8 w-8" />
+            <p className="text-muted-foreground text-sm">{t('apiKeys.empty')}</p>
             <Button size="sm" onClick={() => setIsCreateDialogOpen(true)}>
-              Create your first key
+              {t('apiKeys.create_first')}
             </Button>
           </div>
         ) : (
@@ -187,25 +187,30 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-sm font-medium">{key.name}</span>
                     {key.isActive ? (
-                      <span className="chip-emerald">Active</span>
+                      <span className="chip-emerald">{t('apiKeys.status_active')}</span>
                     ) : (
-                      <span className="chip">Revoked</span>
+                      <span className="chip">{t('apiKeys.status_revoked')}</span>
                     )}
                     {key.expiresAt ? (
                       <span className="chip">
-                        Expires {new Date(key.expiresAt).toLocaleDateString()}
+                        {t('apiKeys.expires', {
+                          date: new Date(key.expiresAt).toLocaleDateString(),
+                        })}
                       </span>
                     ) : null}
                   </div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                    <code className="rounded bg-muted px-1.5 py-0.5">{key.keyPrefix}...</code>
+                  <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+                    <code className="bg-muted rounded px-1.5 py-0.5">{key.keyPrefix}...</code>
                     <span>
-                      Created {formatDistanceToNow(new Date(key.createdAt), { addSuffix: true })}
+                      {t('apiKeys.created', {
+                        ago: formatDistanceToNow(new Date(key.createdAt), { addSuffix: true }),
+                      })}
                     </span>
                     {key.lastUsedAt ? (
                       <span>
-                        Last used{' '}
-                        {formatDistanceToNow(new Date(key.lastUsedAt), { addSuffix: true })}
+                        {t('apiKeys.last_used', {
+                          ago: formatDistanceToNow(new Date(key.lastUsedAt), { addSuffix: true }),
+                        })}
                       </span>
                     ) : null}
                   </div>
@@ -214,14 +219,14 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    className="text-muted-foreground hover:text-destructive h-8 w-8 shrink-0"
                     onClick={() => {
-                      if (window.confirm(`Revoke "${key.name}"?`)) {
+                      if (window.confirm(t('apiKeys.revoke_confirm', { name: key.name }))) {
                         revokeKey.mutate(key.id);
                       }
                     }}
                     disabled={revokeKey.isPending}
-                    aria-label="Revoke key"
+                    aria-label={t('apiKeys.revoke_aria')}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -235,50 +240,46 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
       <Dialog open={isCreateDialogOpen} onOpenChange={handleCloseDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{createdKey ? 'API Key Created' : 'Create API Key'}</DialogTitle>
+            <DialogTitle>
+              {createdKey ? t('apiKeys.dialog_created_title') : t('apiKeys.dialog_create_title')}
+            </DialogTitle>
             <DialogDescription>
-              {createdKey
-                ? 'Copy this key now. It will only be shown once.'
-                : 'Choose a name and optional expiration for the new key.'}
+              {createdKey ? t('apiKeys.dialog_created_desc') : t('apiKeys.dialog_create_desc')}
             </DialogDescription>
           </DialogHeader>
 
           {createdKey ? (
             <div className="space-y-4">
-              <div className="rounded-md bg-surface p-4">
+              <div className="bg-surface rounded-md p-4">
                 <code className="break-all text-sm">{createdKey}</code>
               </div>
               <Button onClick={handleCopyKey} className="w-full">
-                {copiedKey ? (
-                  <Check className="mr-2 h-4 w-4" />
-                ) : (
-                  <Copy className="mr-2 h-4 w-4" />
-                )}
-                {copiedKey ? 'Copied' : 'Copy to clipboard'}
+                {copiedKey ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
+                {copiedKey ? t('apiKeys.copied') : t('apiKeys.copy_to_clipboard')}
               </Button>
             </div>
           ) : (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="keyName">Key name</Label>
+                <Label htmlFor="keyName">{t('apiKeys.key_name_label')}</Label>
                 <Input
                   id="keyName"
                   value={newKeyName}
                   onChange={(event) => setNewKeyName(event.target.value)}
-                  placeholder="Production automation"
+                  placeholder={t('apiKeys.key_name_placeholder')}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Expiration</Label>
+                <Label>{t('apiKeys.expiration_label')}</Label>
                 <Select value={expiryPreset} onValueChange={setExpiryPreset}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="never">Never expires</SelectItem>
-                    <SelectItem value="30d">30 days</SelectItem>
-                    <SelectItem value="90d">90 days</SelectItem>
-                    <SelectItem value="365d">1 year</SelectItem>
+                    <SelectItem value="never">{t('apiKeys.expiry_never')}</SelectItem>
+                    <SelectItem value="30d">{t('apiKeys.expiry_30d')}</SelectItem>
+                    <SelectItem value="90d">{t('apiKeys.expiry_90d')}</SelectItem>
+                    <SelectItem value="365d">{t('apiKeys.expiry_365d')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -287,17 +288,14 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
 
           <DialogFooter>
             {createdKey ? (
-              <Button onClick={handleCloseDialog}>Done</Button>
+              <Button onClick={handleCloseDialog}>{t('apiKeys.done')}</Button>
             ) : (
               <>
                 <Button variant="outline" onClick={handleCloseDialog}>
-                  Cancel
+                  {t('apiKeys.cancel')}
                 </Button>
-                <Button
-                  onClick={handleCreate}
-                  disabled={!newKeyName.trim() || createKey.isPending}
-                >
-                  {createKey.isPending ? 'Creating...' : 'Create key'}
+                <Button onClick={handleCreate} disabled={!newKeyName.trim() || createKey.isPending}>
+                  {createKey.isPending ? t('apiKeys.creating') : t('apiKeys.create_key')}
                 </Button>
               </>
             )}

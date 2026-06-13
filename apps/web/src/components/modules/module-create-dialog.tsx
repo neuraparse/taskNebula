@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { AlertCircle } from 'lucide-react';
 import {
   Dialog,
@@ -21,11 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type {
-  ModuleStatus,
-  ProjectModule,
-  UseModulesResult,
-} from '@/lib/modules/use-modules';
+import type { ModuleStatus, ProjectModule, UseModulesResult } from '@/lib/modules/use-modules';
 
 interface ModuleCreateDialogProps {
   open: boolean;
@@ -34,13 +31,13 @@ interface ModuleCreateDialogProps {
   onCreated?: (module: ProjectModule) => void;
 }
 
-const STATUS_OPTIONS: { value: ModuleStatus; label: string }[] = [
-  { value: 'backlog', label: 'Backlog' },
-  { value: 'planned', label: 'Planned' },
-  { value: 'in_progress', label: 'In progress' },
-  { value: 'paused', label: 'Paused' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'cancelled', label: 'Cancelled' },
+const STATUS_OPTIONS: { value: ModuleStatus; labelKey: string }[] = [
+  { value: 'backlog', labelKey: 'status_backlog' },
+  { value: 'planned', labelKey: 'status_planned' },
+  { value: 'in_progress', labelKey: 'status_in_progress' },
+  { value: 'paused', labelKey: 'status_paused' },
+  { value: 'completed', labelKey: 'status_completed' },
+  { value: 'cancelled', labelKey: 'status_cancelled' },
 ];
 
 const INITIAL_STATUS: ModuleStatus = 'planned';
@@ -51,6 +48,8 @@ export function ModuleCreateDialog({
   createModule,
   onCreated,
 }: ModuleCreateDialogProps) {
+  const t = useTranslations('planning');
+  const tActions = useTranslations('actions');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<ModuleStatus>(INITIAL_STATUS);
@@ -79,15 +78,15 @@ export function ModuleCreateDialog({
 
     const trimmedName = name.trim();
     if (!trimmedName) {
-      setError('Module name is required');
+      setError(t('error_module_name_required'));
       return;
     }
 
     if (startDate && targetDate) {
       const s = new Date(startDate);
-      const t = new Date(targetDate);
-      if (t < s) {
-        setError('Target date must be on or after the start date');
+      const target = new Date(targetDate);
+      if (target < s) {
+        setError(t('error_target_before_start'));
         return;
       }
     }
@@ -114,17 +113,17 @@ export function ModuleCreateDialog({
       onCreated?.(created);
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create module');
+      setError(err instanceof Error ? err.message : t('error_create_module'));
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px] max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-[520px]">
         <DialogHeader className="space-y-1">
-          <DialogTitle className="text-base font-semibold">New module</DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground">
-            Group related work into a feature area or mini-project.
+          <DialogTitle className="text-base font-semibold">{t('new_module')}</DialogTitle>
+          <DialogDescription className="text-muted-foreground text-sm">
+            {t('module_dialog_desc')}
           </DialogDescription>
         </DialogHeader>
 
@@ -139,11 +138,11 @@ export function ModuleCreateDialog({
           {/* Name */}
           <div className="space-y-1.5">
             <Label htmlFor="module-name" className="text-sm">
-              Name <span className="text-destructive">*</span>
+              {t('label_name')} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="module-name"
-              placeholder="e.g., Auth, Billing, Onboarding"
+              placeholder={t('module_name_placeholder')}
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -154,14 +153,14 @@ export function ModuleCreateDialog({
           {/* Description */}
           <div className="space-y-1.5">
             <Label htmlFor="module-description" className="text-sm">
-              Description
-              <span className="ml-1.5 text-xs text-muted-foreground font-normal">
-                (optional)
+              {t('label_description')}
+              <span className="text-muted-foreground ml-1.5 text-xs font-normal">
+                {t('optional')}
               </span>
             </Label>
             <Textarea
               id="module-description"
-              placeholder="What does this module cover?"
+              placeholder={t('module_description_placeholder')}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
@@ -171,18 +170,15 @@ export function ModuleCreateDialog({
 
           {/* Status */}
           <div className="space-y-1.5">
-            <Label className="text-sm">Status</Label>
-            <Select
-              value={status}
-              onValueChange={(v) => setStatus(v as ModuleStatus)}
-            >
+            <Label className="text-sm">{t('label_status')}</Label>
+            <Select value={status} onValueChange={(v) => setStatus(v as ModuleStatus)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {STATUS_OPTIONS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
+                    {t(opt.labelKey)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -193,7 +189,7 @@ export function ModuleCreateDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="module-start" className="text-sm">
-                Start date
+                {t('label_start_date')}
               </Label>
               <Input
                 id="module-start"
@@ -204,7 +200,7 @@ export function ModuleCreateDialog({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="module-target" className="text-sm">
-                Target date
+                {t('label_target_date')}
               </Label>
               <Input
                 id="module-target"
@@ -219,14 +215,14 @@ export function ModuleCreateDialog({
           {/* Lead (placeholder) */}
           <div className="space-y-1.5">
             <Label htmlFor="module-lead" className="text-sm">
-              Lead
-              <span className="ml-1.5 text-xs text-muted-foreground font-normal">
-                (placeholder)
+              {t('label_lead')}
+              <span className="text-muted-foreground ml-1.5 text-xs font-normal">
+                {t('placeholder_marker')}
               </span>
             </Label>
             <Input
               id="module-lead"
-              placeholder="Assign a lead (member picker coming soon)"
+              placeholder={t('lead_placeholder')}
               value={leadName}
               onChange={(e) => setLeadName(e.target.value)}
             />
@@ -235,14 +231,14 @@ export function ModuleCreateDialog({
           {/* Members (placeholder) */}
           <div className="space-y-1.5">
             <Label htmlFor="module-members" className="text-sm">
-              Members
-              <span className="ml-1.5 text-xs text-muted-foreground font-normal">
-                (placeholder — comma-separated IDs)
+              {t('label_members')}
+              <span className="text-muted-foreground ml-1.5 text-xs font-normal">
+                {t('members_placeholder_marker')}
               </span>
             </Label>
             <Input
               id="module-members"
-              placeholder="user-1, user-2"
+              placeholder={t('members_placeholder')}
               value={membersText}
               onChange={(e) => setMembersText(e.target.value)}
             />
@@ -250,16 +246,11 @@ export function ModuleCreateDialog({
 
           {/* Actions */}
           <div className="flex justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
+            <Button type="button" variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
+              {tActions('cancel')}
             </Button>
             <Button type="submit" size="sm">
-              Create module
+              {t('create_module')}
             </Button>
           </div>
         </form>

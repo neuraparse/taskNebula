@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,15 +21,9 @@ type CredentialsResponse = {
   credentials: Record<ProviderKey, PlatformCredential>;
 };
 
-const PROVIDER_LABELS: Record<ProviderKey, { label: string; hint: string }> = {
-  openai: {
-    label: 'OpenAI',
-    hint: 'Used when a workspace has not entered its own OpenAI key. Starts with sk-…',
-  },
-  anthropic: {
-    label: 'Anthropic',
-    hint: 'Used when a workspace has not entered its own Anthropic key. Starts with sk-ant-…',
-  },
+const PROVIDER_LABELS: Record<ProviderKey, { label: string }> = {
+  openai: { label: 'OpenAI' },
+  anthropic: { label: 'Anthropic' },
 };
 
 async function fetchCredentials(): Promise<CredentialsResponse> {
@@ -37,7 +32,10 @@ async function fetchCredentials(): Promise<CredentialsResponse> {
   return response.json();
 }
 
-async function upsertCredential(provider: ProviderKey, apiKey: string): Promise<CredentialsResponse> {
+async function upsertCredential(
+  provider: ProviderKey,
+  apiKey: string
+): Promise<CredentialsResponse> {
   const response = await fetch('/api/admin/agent-control/credentials', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -64,6 +62,7 @@ async function deleteCredential(provider: ProviderKey): Promise<CredentialsRespo
 }
 
 export function PlatformAiCredentials() {
+  const t = useTranslations('adminPanels');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -80,12 +79,18 @@ export function PlatformAiCredentials() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'agent-control', 'credentials'] });
       toast({
-        title: 'Platform key saved',
-        description: `${PROVIDER_LABELS[variables.provider].label} default key is now available to all workspaces.`,
+        title: t('platformAi.keySaved'),
+        description: t('platformAi.keySavedDescription', {
+          provider: PROVIDER_LABELS[variables.provider].label,
+        }),
       });
     },
     onError: (err: Error) => {
-      toast({ title: 'Save failed', description: err.message, variant: 'destructive' });
+      toast({
+        title: t('platformAi.saveFailed'),
+        description: err.message,
+        variant: 'destructive',
+      });
     },
   });
 
@@ -93,30 +98,31 @@ export function PlatformAiCredentials() {
     mutationFn: (provider: ProviderKey) => deleteCredential(provider),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'agent-control', 'credentials'] });
-      toast({ title: 'Platform key removed' });
+      toast({ title: t('platformAi.keyRemoved') });
     },
     onError: (err: Error) => {
-      toast({ title: 'Remove failed', description: err.message, variant: 'destructive' });
+      toast({
+        title: t('platformAi.removeFailed'),
+        description: err.message,
+        variant: 'destructive',
+      });
     },
   });
 
   return (
-    <div className="surface-card p-6 space-y-4">
+    <div className="surface-card space-y-4 p-6">
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <KeyRound className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold">Platform provider keys</h3>
+          <KeyRound className="text-muted-foreground h-4 w-4" />
+          <h3 className="text-sm font-semibold">{t('platformAi.title')}</h3>
         </div>
-        <p className="text-xs text-muted-foreground max-w-prose">
-          Optional defaults every workspace falls back to when it has not entered its own key.
-          Stored encrypted (AES-256-GCM) in the DB — never shown in plaintext after save.
-        </p>
+        <p className="text-muted-foreground max-w-prose text-xs">{t('platformAi.description')}</p>
       </div>
 
       {isLoading ? (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="text-muted-foreground flex items-center gap-2 text-xs">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          Loading keys…
+          {t('platformAi.loadingKeys')}
         </div>
       ) : (
         <div className="space-y-4">
@@ -152,15 +158,17 @@ function CredentialRow({
   onSave: (apiKey: string) => void;
   onDelete: () => void;
 }) {
-  const { label, hint } = PROVIDER_LABELS[provider];
+  const t = useTranslations('adminPanels');
+  const { label } = PROVIDER_LABELS[provider];
+  const hint = t(`platformAi.hint.${provider}`);
   const [value, setValue] = useState('');
 
   return (
-    <div className="rounded-md border border-border bg-background/50 p-4 space-y-3">
+    <div className="border-border bg-background/50 space-y-3 rounded-md border p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-medium">{label}</p>
-          <p className="text-xs text-muted-foreground">{hint}</p>
+          <p className="text-muted-foreground text-xs">{hint}</p>
         </div>
         {stored ? (
           <span className="chip text-[11px]">
@@ -168,13 +176,15 @@ function CredentialRow({
             {stored.preview}
           </span>
         ) : (
-          <span className="chip text-[11px] text-muted-foreground">Not configured</span>
+          <span className="chip text-muted-foreground text-[11px]">
+            {t('platformAi.notConfigured')}
+          </span>
         )}
       </div>
 
       <div className="space-y-2">
         <Label className="text-xs" htmlFor={`platform-${provider}-key`}>
-          {stored ? 'Replace key' : 'API key'}
+          {stored ? t('platformAi.replaceKey') : t('platformAi.apiKey')}
         </Label>
         <Input
           id={`platform-${provider}-key`}
@@ -198,26 +208,21 @@ function CredentialRow({
           disabled={value.trim().length < 20 || isSaving}
         >
           {isSaving && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-          {stored ? 'Rotate' : 'Save'}
+          {stored ? t('platformAi.rotate') : t('platformAi.save')}
         </Button>
         {stored && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onDelete()}
-            disabled={isDeleting}
-          >
+          <Button size="sm" variant="outline" onClick={() => onDelete()} disabled={isDeleting}>
             {isDeleting ? (
               <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
             ) : (
               <Trash2 className="mr-1.5 h-3.5 w-3.5" />
             )}
-            Remove
+            {t('platformAi.remove')}
           </Button>
         )}
         {stored?.updatedAt && (
-          <span className="ml-auto text-[11px] text-muted-foreground">
-            Updated {new Date(stored.updatedAt).toLocaleDateString()}
+          <span className="text-muted-foreground ml-auto text-[11px]">
+            {t('platformAi.updated', { date: new Date(stored.updatedAt).toLocaleDateString() })}
           </span>
         )}
       </div>

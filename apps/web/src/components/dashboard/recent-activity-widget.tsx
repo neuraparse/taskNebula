@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { ArrowUpRight, Activity as ActivityIcon } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
@@ -13,16 +14,20 @@ interface ActivityItem {
   at: Date;
 }
 
-function relative(now: number, at: Date): string {
+function relative(
+  now: number,
+  at: Date,
+  t: (key: string, values?: Record<string, number>) => string
+): string {
   const diff = Math.max(0, now - at.getTime());
   const s = Math.floor(diff / 1000);
-  if (s < 60) return `${s}s ago`;
+  if (s < 60) return t('activity.ago_seconds', { count: s });
   const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ago`;
+  if (m < 60) return t('activity.ago_minutes', { count: m });
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
+  if (h < 24) return t('activity.ago_hours', { count: h });
   const d = Math.floor(h / 24);
-  return `${d}d ago`;
+  return t('activity.ago_days', { count: d });
 }
 
 function initials(name: string): string {
@@ -94,62 +99,50 @@ const STUB: ActivityItem[] = [
 ];
 
 export function RecentActivityWidget() {
+  const t = useTranslations('dashboardExtra');
+  const tActions = useTranslations('actions');
   const now = Date.now();
   const items = STUB.slice(0, 7);
 
   return (
-    <div className="rounded-xl border bg-card p-5">
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-sm font-medium text-foreground">
-          Recent activity
-        </span>
+    <div className="bg-card rounded-xl border p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <span className="text-foreground text-sm font-medium">{t('activity.heading')}</span>
         <Link
           href="/activity"
-          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-all duration-150 ease-snap"
+          className="text-muted-foreground hover:text-foreground ease-snap inline-flex items-center gap-1 text-xs transition-all duration-150"
         >
-          View all
+          {tActions('view_all')}
           <ArrowUpRight className="h-3 w-3" />
         </Link>
       </div>
 
       {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-10 text-center">
-          <ActivityIcon className="h-7 w-7 text-muted-foreground mb-2" />
-          <p className="text-sm text-muted-foreground">No items</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Activity will appear here as your team works.
-          </p>
+          <ActivityIcon className="text-muted-foreground mb-2 h-7 w-7" />
+          <p className="text-muted-foreground text-sm">{t('empty_no_items')}</p>
+          <p className="text-muted-foreground mt-1 text-xs">{t('activity.empty_hint')}</p>
         </div>
       ) : (
         <ul className="space-y-2">
           {items.map((item) => (
-            <li
-              key={item.id}
-              className="flex items-start gap-3 rounded-md px-2 py-1.5"
-            >
-              <Avatar className="h-6 w-6 mt-0.5 shrink-0">
-                <AvatarFallback className="text-[10px]">
-                  {initials(item.actor)}
-                </AvatarFallback>
+            <li key={item.id} className="flex items-start gap-3 rounded-md px-2 py-1.5">
+              <Avatar className="mt-0.5 h-6 w-6 shrink-0">
+                <AvatarFallback className="text-[10px]">{initials(item.actor)}</AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
-                <p className="text-sm leading-tight text-foreground truncate">
+                <p className="text-foreground truncate text-sm leading-tight">
                   <span className="font-medium">{item.actor}</span>{' '}
                   <span className="text-muted-foreground">{item.verb}</span>{' '}
                   {item.href ? (
-                    <Link
-                      href={item.href}
-                      className="font-mono text-xs hover:underline"
-                    >
+                    <Link href={item.href} className="font-mono text-xs hover:underline">
                       {item.target}
                     </Link>
                   ) : (
                     <span className="font-mono text-xs">{item.target}</span>
                   )}
                 </p>
-                <p className="text-[11px] text-muted-foreground">
-                  {relative(now, item.at)}
-                </p>
+                <p className="text-muted-foreground text-[11px]">{relative(now, item.at, t)}</p>
               </div>
             </li>
           ))}

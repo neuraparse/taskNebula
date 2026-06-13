@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Loader2, Search, Trash2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -26,8 +27,8 @@ import {
 
 type FilterValue = 'all' | TemplateCategory;
 
-const FILTERS: ReadonlyArray<{ value: FilterValue; label: string }> = [
-  { value: 'all', label: 'All' },
+const FILTERS: ReadonlyArray<{ value: FilterValue; label: string | null }> = [
+  { value: 'all', label: null },
   ...TEMPLATE_CATEGORIES.map((c) => ({ value: c.value, label: c.label })),
 ];
 
@@ -57,13 +58,15 @@ function apiTemplateToCard(row: ApiTemplate): WorkItemTemplate {
     category,
     type,
     icon: row.icon ?? defaultIconForKind(row.kind),
-    body: typeof (row.payload as any)?.description === 'string'
-      ? ((row.payload as any).description as string)
-      : '',
+    body:
+      typeof (row.payload as any)?.description === 'string'
+        ? ((row.payload as any).description as string)
+        : '',
     labels,
-    estimatePoints: typeof (row.payload as any)?.estimate === 'number'
-      ? ((row.payload as any).estimate as number)
-      : undefined,
+    estimatePoints:
+      typeof (row.payload as any)?.estimate === 'number'
+        ? ((row.payload as any).estimate as number)
+        : undefined,
   };
 }
 
@@ -106,6 +109,7 @@ export function TemplatesGrid({
 }: TemplatesGridProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const t = useTranslations('planning');
   const [query, setQuery] = React.useState('');
   const [category, setCategory] = React.useState<FilterValue>('all');
 
@@ -128,16 +132,10 @@ export function TemplatesGrid({
     return byId;
   }, [apiTemplates, canAdminister, listQuery.data?.adminOrganizationIds]);
 
-  const dbCards = React.useMemo(
-    () => apiTemplates.map(apiTemplateToCard),
-    [apiTemplates]
-  );
+  const dbCards = React.useMemo(() => apiTemplates.map(apiTemplateToCard), [apiTemplates]);
 
   const registryCards = registryOverride ?? WORK_ITEM_TEMPLATES;
-  const allCards = React.useMemo(
-    () => [...dbCards, ...registryCards],
-    [dbCards, registryCards]
-  );
+  const allCards = React.useMemo(() => [...dbCards, ...registryCards], [dbCards, registryCards]);
 
   const filtered = React.useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -172,8 +170,8 @@ export function TemplatesGrid({
           if (result.kind === 'project' && result.resource) {
             const res = result.resource as { id: string; name?: string; key?: string };
             toast({
-              title: 'Project created',
-              description: res.name ?? 'Your new project is ready.',
+              title: t('toast_project_created_title'),
+              description: res.name ?? t('toast_project_created_desc'),
             });
             router.push(`/projects/${res.id}`);
             return;
@@ -181,29 +179,27 @@ export function TemplatesGrid({
           if (result.kind === 'issue' && result.resource) {
             const res = result.resource as { id: string; key?: string; title?: string };
             toast({
-              title: 'Issue created',
-              description: res.key ?? res.title ?? 'A new issue has been created.',
+              title: t('toast_issue_created_title'),
+              description: res.key ?? res.title ?? t('toast_issue_created_desc'),
             });
             if (res.key) router.push(`/issues/${res.key}`);
             return;
           }
           if (result.kind === 'doc') {
             toast({
-              title: 'Doc template ready',
-              description:
-                apiRow?.name ?? 'Open Docs to apply this template to a page.',
+              title: t('toast_doc_ready_title'),
+              description: apiRow?.name ?? t('toast_doc_ready_desc'),
             });
             return;
           }
           toast({
-            title: 'Template applied',
-            description: 'The template was processed.',
+            title: t('toast_template_applied_title'),
+            description: t('toast_template_applied_desc'),
           });
         } catch (error) {
-          const message =
-            error instanceof Error ? error.message : 'Could not apply template.';
+          const message = error instanceof Error ? error.message : t('toast_use_failed_desc');
           toast({
-            title: 'Failed to use template',
+            title: t('toast_use_failed_title'),
             description: message,
             variant: 'destructive',
           });
@@ -219,29 +215,28 @@ export function TemplatesGrid({
         console.debug('[templates] instantiated draft (stub)', draft);
       }
       toast({
-        title: 'Template ready',
-        description: `"${template.name}" is a starter — create a DB template to enable one-click instantiation.`,
+        title: t('toast_template_ready_title'),
+        description: t('toast_template_ready_desc', { name: template.name }),
       });
     },
-    [apiTemplates, instantiate, onUse, router, toast]
+    [apiTemplates, instantiate, onUse, router, toast, t]
   );
 
   const handleDelete = React.useCallback(
     async (templateId: string) => {
       try {
         await deleteMutation.mutateAsync(templateId);
-        toast({ title: 'Template deleted' });
+        toast({ title: t('toast_template_deleted_title') });
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Could not delete template.';
+        const message = error instanceof Error ? error.message : t('toast_delete_failed_desc');
         toast({
-          title: 'Failed to delete template',
+          title: t('toast_delete_failed_title'),
           description: message,
           variant: 'destructive',
         });
       }
     },
-    [deleteMutation, toast]
+    [deleteMutation, toast, t]
   );
 
   return (
@@ -249,15 +244,15 @@ export function TemplatesGrid({
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="relative w-full md:max-w-sm">
           <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
             aria-hidden="true"
           />
           <Input
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search templates"
-            aria-label="Search templates"
+            placeholder={t('search_placeholder')}
+            aria-label={t('search_placeholder')}
             className="pl-9"
           />
         </div>
@@ -265,7 +260,7 @@ export function TemplatesGrid({
         <div className="flex flex-wrap items-center gap-3">
           <div
             role="tablist"
-            aria-label="Filter by category"
+            aria-label={t('filter_by_category')}
             className="flex flex-wrap items-center gap-1.5"
           >
             {FILTERS.map((filter) => {
@@ -278,14 +273,14 @@ export function TemplatesGrid({
                   aria-selected={active}
                   onClick={() => setCategory(filter.value)}
                   className={cn(
-                    'inline-flex h-7 items-center rounded-full border px-3 text-xs font-medium transition-colors duration-150 ease-snap',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                    'ease-snap inline-flex h-7 items-center rounded-full border px-3 text-xs font-medium transition-colors duration-150',
+                    'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
                     active
-                      ? 'border-transparent bg-primary text-primary-foreground'
+                      ? 'bg-primary text-primary-foreground border-transparent'
                       : 'border-border bg-card text-muted-foreground hover:bg-accent/60 hover:text-accent-foreground'
                   )}
                 >
-                  {filter.label}
+                  {filter.label ?? t('filter_all')}
                 </button>
               );
             })}
@@ -295,16 +290,14 @@ export function TemplatesGrid({
       </div>
 
       {listQuery.isLoading ? (
-        <div className="flex items-center justify-center rounded-lg border border-dashed border-border bg-card/50 py-12 text-sm text-muted-foreground">
+        <div className="border-border bg-card/50 text-muted-foreground flex items-center justify-center rounded-lg border border-dashed py-12 text-sm">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-          Loading templates…
+          {t('loading_templates')}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-card/50 py-16 text-center">
-          <p className="text-sm font-medium text-foreground">No templates match</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Try a different search term or clear the category filter.
-          </p>
+        <div className="border-border bg-card/50 flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
+          <p className="text-foreground text-sm font-medium">{t('no_templates_match')}</p>
+          <p className="text-muted-foreground mt-1 text-xs">{t('no_templates_match_hint')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -321,13 +314,13 @@ export function TemplatesGrid({
                     size="sm"
                     variant="ghost"
                     className="absolute right-2 top-2 h-7 w-7 p-0 opacity-0 transition-opacity duration-150 hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100"
-                    aria-label={`Delete template ${template.name}`}
+                    aria-label={t('delete_template_aria', { name: template.name })}
                     disabled={deleteMutation.isPending}
                     onClick={(event) => {
                       event.stopPropagation();
                       if (
                         typeof window !== 'undefined' &&
-                        !window.confirm(`Delete template "${template.name}"?`)
+                        !window.confirm(t('delete_template_confirm', { name: template.name }))
                       ) {
                         return;
                       }

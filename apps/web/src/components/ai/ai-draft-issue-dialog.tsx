@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Sparkles,
@@ -99,6 +100,7 @@ async function createIssue(projectId: string, draft: IssueDraft) {
 }
 
 export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIssueDialogProps) {
+  const t = useTranslations('aiFeatures');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { canDraft } = useAiCapability();
@@ -136,16 +138,17 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
         {
           role: 'assistant',
           content:
-            ds.length === 0
-              ? 'No drafts produced — try refining the prompt.'
-              : `Drafted ${ds.length} ${ds.length === 1 ? 'issue' : 'issues'} from your prompt.`,
+            ds.length === 0 ? t('draft.noDrafts') : t('draft.draftedCount', { count: ds.length }),
         },
       ]);
     },
     onError: (err: Error) => {
       startedAtRef.current = null;
-      setChat((c) => [...c, { role: 'assistant', content: `Drafting failed: ${err.message}` }]);
-      toast({ title: 'Drafting failed', description: err.message, variant: 'destructive' });
+      setChat((c) => [
+        ...c,
+        { role: 'assistant', content: t('draft.draftingFailedChat', { message: err.message }) },
+      ]);
+      toast({ title: t('draft.draftingFailed'), description: err.message, variant: 'destructive' });
     },
   });
 
@@ -171,7 +174,7 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
         },
       });
       toast({
-        title: `${created.length} issue${created.length === 1 ? '' : 's'} created`,
+        title: t('draft.createdCount', { count: created.length }),
         description: created
           .map((c) => c.key || c.title)
           .slice(0, 3)
@@ -182,7 +185,7 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
     },
     onError: (err: Error) => {
       setCreatingIndex(null);
-      toast({ title: 'Create failed', description: err.message, variant: 'destructive' });
+      toast({ title: t('draft.createFailed'), description: err.message, variant: 'destructive' });
     },
   });
 
@@ -279,21 +282,16 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
         <DialogHeader className="border-border border-b px-5 pb-3 pt-5">
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="text-primary h-4 w-4" />
-            Draft issues with AI
+            {t('draft.title')}
           </DialogTitle>
-          <DialogDescription>
-            Describe what you need. AI splits it into editable drafts — preview on the right,
-            confirm to create.
-          </DialogDescription>
+          <DialogDescription>{t('draft.description')}</DialogDescription>
         </DialogHeader>
 
         <div className="grid max-h-[70vh] grid-cols-1 gap-0 overflow-hidden md:grid-cols-[1fr,360px]">
           {/* LEFT — chat thread */}
           <div className="border-border space-y-4 overflow-y-auto border-r p-5">
             {chat.length === 0 && drafts.length === 0 && !isDrafting && (
-              <p className="text-muted-foreground text-[13px]">
-                One prompt can describe a single bug OR a whole checklist — AI splits on its own.
-              </p>
+              <p className="text-muted-foreground text-[13px]">{t('draft.emptyHint')}</p>
             )}
 
             {chat.map((turn, i) =>
@@ -318,15 +316,18 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
                   className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-[12px]"
                 >
                   <Brain className="h-3.5 w-3.5" />
-                  <span>Thought for {isDrafting ? elapsedSeconds : lastThinkSeconds}s</span>
+                  <span>
+                    {t('draft.thoughtForSeconds', {
+                      seconds: isDrafting ? elapsedSeconds : (lastThinkSeconds ?? 0),
+                    })}
+                  </span>
                   <ChevronRight
                     className={`h-3 w-3 transition-transform ${thoughtsOpen ? 'rotate-90' : ''}`}
                   />
                 </button>
                 {thoughtsOpen && (
                   <div className="border-border bg-muted/30 text-muted-foreground rounded-md border p-3 text-[12px]">
-                    Reading prompt, classifying scope (single ticket vs checklist), then drafting
-                    titles, types, priorities, and labels for each item.
+                    {t('draft.thinkingTrace')}
                   </div>
                 )}
               </div>
@@ -337,12 +338,12 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
                 <div className="flex items-center justify-between">
                   <div className="flex min-w-0 items-center gap-2">
                     <AiBadge
-                      feature="Draft Issue"
+                      feature={t('draft.featureName')}
                       model={provider ?? undefined}
                       generatedAt={new Date()}
                     />
                     <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-                      {drafts.length === 1 ? 'Draft' : `${drafts.length} drafts`}
+                      {t('draft.draftsLabel', { count: drafts.length })}
                       {provider ? ` · ${provider}` : ''}
                     </span>
                   </div>
@@ -357,7 +358,7 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
                       }}
                       disabled={isCreating}
                     >
-                      Back
+                      {t('draft.back')}
                     </Button>
                     <Button
                       type="button"
@@ -370,7 +371,7 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
                       disabled={isCreating || isDrafting}
                     >
                       <Wand2 className="mr-1.5 h-3.5 w-3.5" />
-                      Re-draft
+                      {t('draft.reDraft')}
                     </Button>
                   </div>
                 </div>
@@ -407,23 +408,23 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
 
             {drafts.length === 0 && (
               <div className="space-y-2 pt-2">
-                <Label htmlFor="ai-prompt">Prompt</Label>
+                <Label htmlFor="ai-prompt">{t('draft.promptLabel')}</Label>
                 <Textarea
                   id="ai-prompt"
-                  placeholder={
-                    'Examples:\n• Navbar dropdown flickers on Safari below 640px.\n• Ship the mobile app: add offline mode, fix push delivery, refresh onboarding copy.'
-                  }
+                  placeholder={t('draft.promptPlaceholder')}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   rows={5}
                   disabled={isDrafting || isCreating}
                 />
                 <div className="flex items-center justify-between">
-                  <p className="text-muted-foreground text-xs">{prompt.length}/6000</p>
+                  <p className="text-muted-foreground text-xs">
+                    {t('draft.charCount', { count: prompt.length, max: 6000 })}
+                  </p>
                   <Button onClick={handleSubmitPrompt} disabled={!canSubmitPrompt} size="sm">
                     {isDrafting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     <Sparkles className="mr-1.5 h-4 w-4" />
-                    Draft
+                    {t('draft.draftButton')}
                   </Button>
                 </div>
               </div>
@@ -434,11 +435,11 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
           <aside className="bg-muted/20 overflow-y-auto p-5">
             <div className="mb-4 flex items-center justify-between">
               <div className="text-muted-foreground text-[11px] uppercase tracking-wider">
-                Live preview
+                {t('draft.livePreview')}
               </div>
               {previewDraft && (
                 <AiBadge
-                  feature="Draft Issue"
+                  feature={t('draft.featureName')}
                   model={provider ?? undefined}
                   generatedAt={new Date()}
                 />
@@ -448,7 +449,7 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
               <div className="space-y-4">
                 <div>
                   <label className="text-muted-foreground text-[11px] uppercase tracking-wider">
-                    Project icon
+                    {t('draft.projectIcon')}
                   </label>
                   <div className="bg-muted mt-1 flex h-12 w-12 items-center justify-center rounded-lg text-2xl">
                     {TYPE_ICON[previewDraft.type] ?? '📋'}
@@ -456,47 +457,51 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
                 </div>
                 <div>
                   <label className="text-muted-foreground text-[11px] uppercase tracking-wider">
-                    Title
+                    {t('draft.titleField')}
                   </label>
                   <div className="mt-1 text-[14px] font-medium">
                     {previewDraft.title || (
-                      <span className="text-muted-foreground italic">Generating…</span>
+                      <span className="text-muted-foreground italic">{t('draft.generating')}</span>
                     )}
                   </div>
                 </div>
                 <div>
                   <label className="text-muted-foreground text-[11px] uppercase tracking-wider">
-                    Description
+                    {t('draft.descriptionField')}
                   </label>
                   <div className="text-foreground/80 mt-1 whitespace-pre-wrap text-[13px]">
                     {previewDraft.description?.trim() ? (
                       previewDraft.description
                     ) : (
-                      <span className="text-muted-foreground italic">No description</span>
+                      <span className="text-muted-foreground italic">
+                        {t('draft.noDescription')}
+                      </span>
                     )}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-muted-foreground text-[11px] uppercase tracking-wider">
-                      Type
+                      {t('draft.typeField')}
                     </label>
                     <div className="mt-1 text-[13px] capitalize">{previewDraft.type}</div>
                   </div>
                   <div>
                     <label className="text-muted-foreground text-[11px] uppercase tracking-wider">
-                      Priority
+                      {t('draft.priorityField')}
                     </label>
                     <div className="mt-1 text-[13px] capitalize">{previewDraft.priority}</div>
                   </div>
                 </div>
                 <div>
                   <label className="text-muted-foreground text-[11px] uppercase tracking-wider">
-                    Labels
+                    {t('draft.labelsField')}
                   </label>
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     {previewDraft.labels.length === 0 ? (
-                      <span className="text-muted-foreground text-[13px] italic">None</span>
+                      <span className="text-muted-foreground text-[13px] italic">
+                        {t('draft.none')}
+                      </span>
                     ) : (
                       previewDraft.labels.map((l) => (
                         <span
@@ -512,7 +517,7 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
                 {typeof previewDraft.estimate === 'number' && (
                   <div>
                     <label className="text-muted-foreground text-[11px] uppercase tracking-wider">
-                      Estimate
+                      {t('draft.estimateField')}
                     </label>
                     <div className="mt-1 text-[13px]">{previewDraft.estimate}</div>
                   </div>
@@ -523,7 +528,7 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
                 <div className="space-y-2">
                   <Sparkles className="text-muted-foreground/60 mx-auto h-6 w-6" />
                   <p className="text-muted-foreground text-[13px]">
-                    {isDrafting ? 'Generating draft…' : 'Draft will appear here'}
+                    {isDrafting ? t('draft.generatingDraft') : t('draft.draftWillAppear')}
                   </p>
                 </div>
               </div>
@@ -535,10 +540,9 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
         {drafts.length > 0 ? (
           <div className="border-border bg-muted/40 flex items-center justify-between border-t px-5 py-3">
             <div className="text-[12.5px]">
-              <div className="font-medium">Awaiting response</div>
+              <div className="font-medium">{t('draft.awaitingResponse')}</div>
               <div className="text-muted-foreground">
-                {drafts.length} item{drafts.length !== 1 ? 's' : ''} ready to create. Confirm to
-                continue.
+                {t('draft.itemsReady', { count: drafts.length })}
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -548,7 +552,7 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
                 disabled={isCreating}
                 size="sm"
               >
-                Cancel
+                {t('draft.cancel')}
               </Button>
               <Button
                 onClick={() => bulkCreateMutation.mutate()}
@@ -556,7 +560,7 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
                 size="sm"
               >
                 {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Confirm
+                {t('draft.confirm')}
                 {selected.size > 0 && selected.size !== drafts.length
                   ? ` (${selected.size}/${drafts.length})`
                   : ''}
@@ -566,7 +570,7 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
         ) : (
           <div className="border-border flex items-center justify-end border-t px-5 py-3">
             <Button variant="outline" onClick={() => handleClose(false)} size="sm">
-              Cancel
+              {t('draft.cancel')}
             </Button>
           </div>
         )}
@@ -594,6 +598,7 @@ function DraftCard({
   onRemove: () => void;
   onChange: (patch: Partial<IssueDraft>) => void;
 }) {
+  const t = useTranslations('aiFeatures');
   return (
     <div className="border-border bg-muted/20 space-y-3 rounded-md border p-3">
       <div className="flex items-start gap-3">
@@ -605,7 +610,7 @@ function DraftCard({
               onToggle();
             }}
             className="text-muted-foreground hover:text-foreground mt-1 shrink-0"
-            aria-label={selected ? 'Deselect' : 'Select'}
+            aria-label={selected ? t('draft.deselect') : t('draft.select')}
           >
             {selected ? (
               <CheckSquare className="text-primary h-4 w-4" />
@@ -618,7 +623,7 @@ function DraftCard({
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground font-mono text-xs">#{index + 1}</span>
             <Input
-              aria-label={`Draft ${index + 1} title`}
+              aria-label={t('draft.draftTitleAria', { index: index + 1 })}
               value={draft.title}
               onChange={(e) => onChange({ title: e.target.value })}
               onClick={(e) => e.stopPropagation()}
@@ -635,7 +640,7 @@ function DraftCard({
               onRemove();
             }}
             className="text-muted-foreground hover:text-destructive shrink-0"
-            aria-label="Remove draft"
+            aria-label={t('draft.removeDraft')}
           >
             <X className="h-4 w-4" />
           </button>
@@ -644,7 +649,7 @@ function DraftCard({
 
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1">
-          <Label className="text-xs">Type</Label>
+          <Label className="text-xs">{t('draft.typeField')}</Label>
           <Select
             value={draft.type}
             onValueChange={(value) => onChange({ type: value as IssueDraft['type'] })}
@@ -653,16 +658,16 @@ function DraftCard({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="task">Task</SelectItem>
-              <SelectItem value="story">Story</SelectItem>
-              <SelectItem value="bug">Bug</SelectItem>
-              <SelectItem value="epic">Epic</SelectItem>
-              <SelectItem value="subtask">Subtask</SelectItem>
+              <SelectItem value="task">{t('draft.typeTask')}</SelectItem>
+              <SelectItem value="story">{t('draft.typeStory')}</SelectItem>
+              <SelectItem value="bug">{t('draft.typeBug')}</SelectItem>
+              <SelectItem value="epic">{t('draft.typeEpic')}</SelectItem>
+              <SelectItem value="subtask">{t('draft.typeSubtask')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Priority</Label>
+          <Label className="text-xs">{t('draft.priorityField')}</Label>
           <Select
             value={draft.priority}
             onValueChange={(value) => onChange({ priority: value as IssueDraft['priority'] })}
@@ -671,18 +676,18 @@ function DraftCard({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="critical">Critical</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
-              <SelectItem value="none">None</SelectItem>
+              <SelectItem value="critical">{t('draft.priorityCritical')}</SelectItem>
+              <SelectItem value="high">{t('draft.priorityHigh')}</SelectItem>
+              <SelectItem value="medium">{t('draft.priorityMedium')}</SelectItem>
+              <SelectItem value="low">{t('draft.priorityLow')}</SelectItem>
+              <SelectItem value="none">{t('draft.priorityNone')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
       <div className="space-y-1">
-        <Label className="text-xs">Description</Label>
+        <Label className="text-xs">{t('draft.descriptionField')}</Label>
         <Textarea
           value={draft.description ?? ''}
           onChange={(e) => onChange({ description: e.target.value || null })}
@@ -692,7 +697,7 @@ function DraftCard({
       </div>
 
       <div className="space-y-1">
-        <Label className="text-xs">Labels (comma-separated)</Label>
+        <Label className="text-xs">{t('draft.labelsCommaSeparated')}</Label>
         <Input
           value={draft.labels.join(', ')}
           onClick={(e) => e.stopPropagation()}
@@ -711,7 +716,7 @@ function DraftCard({
       {creating && (
         <div className="text-primary flex items-center gap-2 text-xs">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          Creating…
+          {t('draft.creating')}
         </div>
       )}
     </div>

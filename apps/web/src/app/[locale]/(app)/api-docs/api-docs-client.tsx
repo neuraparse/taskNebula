@@ -9,14 +9,20 @@
  */
 
 import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
 import 'swagger-ui-react/swagger-ui.css';
 // Scoped dark-theme overrides — must load after the base swagger CSS so the
 // `.swagger-ui-host` rules win the cascade.
 import './swagger-dark.css';
 
+function SwaggerLoading() {
+  const t = useTranslations('pagesWork');
+  return <div className="text-muted-foreground p-6 text-sm">{t('apiDocs.loading')}</div>;
+}
+
 const SwaggerUI = dynamic(() => import('swagger-ui-react'), {
   ssr: false,
-  loading: () => <div className="text-muted-foreground p-6 text-sm">Loading API reference…</div>,
+  loading: () => <SwaggerLoading />,
 });
 
 export function ApiDocsClient({ specUrl }: { specUrl: string }) {

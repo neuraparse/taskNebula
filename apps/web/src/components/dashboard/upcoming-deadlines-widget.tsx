@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { ArrowUpRight, CalendarClock } from 'lucide-react';
@@ -36,6 +37,8 @@ function initials(name: string | null | undefined, email?: string): string {
 }
 
 export function UpcomingDeadlinesWidget() {
+  const t = useTranslations('dashboardExtra');
+  const tActions = useTranslations('actions');
   const { data: session } = useSession();
   const { data: issues, isLoading } = useIssues({
     assigneeId: session?.user?.id,
@@ -56,16 +59,14 @@ export function UpcomingDeadlinesWidget() {
   const now = Date.now();
 
   return (
-    <div className="rounded-xl border bg-card p-5">
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-sm font-medium text-foreground">
-          Upcoming deadlines
-        </span>
+    <div className="bg-card rounded-xl border p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <span className="text-foreground text-sm font-medium">{t('deadlines.heading')}</span>
         <Link
           href="/my-issues"
-          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-all duration-150 ease-snap"
+          className="text-muted-foreground hover:text-foreground ease-snap inline-flex items-center gap-1 text-xs transition-all duration-150"
         >
-          View all
+          {tActions('view_all')}
           <ArrowUpRight className="h-3 w-3" />
         </Link>
       </div>
@@ -73,24 +74,19 @@ export function UpcomingDeadlinesWidget() {
       {isLoading ? (
         <div className="space-y-2" aria-hidden>
           {Array.from({ length: 5 }).map((_, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-3 rounded-md px-2 py-2 min-h-[40px]"
-            >
-              <span className="h-3 w-14 rounded bg-muted animate-pulse" />
-              <span className="h-3 w-12 rounded bg-muted animate-pulse" />
-              <span className="h-3 flex-1 rounded bg-muted animate-pulse" />
-              <span className="h-6 w-6 rounded-full bg-muted animate-pulse" />
+            <div key={i} className="flex min-h-[40px] items-center gap-3 rounded-md px-2 py-2">
+              <span className="bg-muted h-3 w-14 animate-pulse rounded" />
+              <span className="bg-muted h-3 w-12 animate-pulse rounded" />
+              <span className="bg-muted h-3 flex-1 animate-pulse rounded" />
+              <span className="bg-muted h-6 w-6 animate-pulse rounded-full" />
             </div>
           ))}
         </div>
       ) : upcoming.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-10 text-center">
-          <CalendarClock className="h-7 w-7 text-muted-foreground mb-2" />
-          <p className="text-sm text-muted-foreground">No items</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Nothing due in the next 14 days.
-          </p>
+          <CalendarClock className="text-muted-foreground mb-2 h-7 w-7" />
+          <p className="text-muted-foreground text-sm">{t('empty_no_items')}</p>
+          <p className="text-muted-foreground mt-1 text-xs">{t('deadlines.empty_hint')}</p>
         </div>
       ) : (
         <div className="space-y-0.5">
@@ -101,27 +97,20 @@ export function UpcomingDeadlinesWidget() {
               <Link
                 key={issue.id}
                 href={`/issues/${issue.id}`}
-                className="row-interactive flex items-center gap-3 rounded-md px-2 py-2 min-h-[40px] text-left transition-all duration-150 ease-snap"
+                className="row-interactive ease-snap flex min-h-[40px] items-center gap-3 rounded-md px-2 py-2 text-left transition-all duration-150"
               >
-                <span
-                  className={cn(
-                    'text-[11px] font-medium tabular-nums w-14 shrink-0',
-                    dueCls
-                  )}
-                >
+                <span className={cn('w-14 shrink-0 text-[11px] font-medium tabular-nums', dueCls)}>
                   {shortDate(due)}
                 </span>
-                <span className="text-xs font-mono text-muted-foreground shrink-0 w-16 truncate">
+                <span className="text-muted-foreground w-16 shrink-0 truncate font-mono text-xs">
                   {issue.key}
                 </span>
-                <p className="text-sm truncate flex-1 text-foreground">
-                  {issue.title}
-                </p>
+                <p className="text-foreground flex-1 truncate text-sm">{issue.title}</p>
                 <Avatar className="h-6 w-6 shrink-0">
                   {issue.assignee?.image ? (
                     <AvatarImage
                       src={issue.assignee.image}
-                      alt={issue.assignee.name ?? 'assignee'}
+                      alt={issue.assignee.name ?? t('deadlines.assignee_alt')}
                     />
                   ) : null}
                   <AvatarFallback className="text-[10px]">

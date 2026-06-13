@@ -1,7 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { type ComponentType, type KeyboardEvent, type ReactNode, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import {
+  type ComponentType,
+  type KeyboardEvent,
+  type ReactNode,
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { EditorContent, useEditor, type Editor } from '@tiptap/react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -82,6 +93,7 @@ export function DocumentEditor({
   onCreateChild,
   onUploadImage,
 }: DocumentEditorProps) {
+  const t = useTranslations('collab');
   const { toast } = useToast();
   const [title, setTitle] = useState(page.title);
   const [isDirty, setIsDirty] = useState(false);
@@ -118,7 +130,9 @@ export function DocumentEditor({
   const titleRef = useRef(page.title);
   const iconRef = useRef<string | null>(page.icon || null);
   const currentRevisionRef = useRef(page.currentRevision);
-  const lastServerSnapshotRef = useRef(serializeDocumentSnapshot(page.title, page.icon || null, page.contentJson));
+  const lastServerSnapshotRef = useRef(
+    serializeDocumentSnapshot(page.title, page.icon || null, page.contentJson)
+  );
   const lastAutosaveSnapshotRef = useRef<string | null>(null);
   const saveInFlightRef = useRef(false);
   const slashMenuRef = useRef(slashMenu);
@@ -131,7 +145,9 @@ export function DocumentEditor({
   const canEditRef = useRef(canEdit);
   const onUploadImageRef = useRef(onUploadImage);
   const editorRef = useRef<Editor | null>(null);
-  const handleImageUploadRef = useRef<(file: File | null) => Promise<void>>(() => Promise.resolve());
+  const handleImageUploadRef = useRef<(file: File | null) => Promise<void>>(() =>
+    Promise.resolve()
+  );
   const applySlashCommandRef = useRef<(command: any) => void>(() => {});
   const syncSlashMenuRef = useRef<(editor: Editor | null) => void>(() => {});
 
@@ -143,27 +159,34 @@ export function DocumentEditor({
     onUploadImageRef.current = onUploadImage;
   }, [onUploadImage]);
 
-  const handleImageUpload = useCallback(async (file: File | null) => {
-    const activeEditor = editorRef.current;
-    const uploader = onUploadImageRef.current;
-    if (!file || !activeEditor || !uploader) {
-      return;
-    }
+  const handleImageUpload = useCallback(
+    async (file: File | null) => {
+      const activeEditor = editorRef.current;
+      const uploader = onUploadImageRef.current;
+      if (!file || !activeEditor || !uploader) {
+        return;
+      }
 
-    try {
-      const url = await uploader(file);
-      activeEditor.chain().focus().setImage({ src: `/api/uploads/${url.split('/').pop()}`, alt: file.name }).run();
-      setIsDirty(true);
-      setSaveState('dirty');
-      setAutosaveVersion((version) => version + 1);
-    } catch (error) {
-      toast({
-        title: 'Image upload failed',
-        description: error instanceof Error ? error.message : 'Something went wrong',
-        variant: 'destructive',
-      });
-    }
-  }, [toast]);
+      try {
+        const url = await uploader(file);
+        activeEditor
+          .chain()
+          .focus()
+          .setImage({ src: `/api/uploads/${url.split('/').pop()}`, alt: file.name })
+          .run();
+        setIsDirty(true);
+        setSaveState('dirty');
+        setAutosaveVersion((version) => version + 1);
+      } catch (error) {
+        toast({
+          title: t('editor.toast.imageUploadFailed'),
+          description: error instanceof Error ? error.message : t('common.somethingWrong'),
+          variant: 'destructive',
+        });
+      }
+    },
+    [t, toast]
+  );
 
   useEffect(() => {
     handleImageUploadRef.current = handleImageUpload;
@@ -171,8 +194,8 @@ export function DocumentEditor({
 
   // Extensions: cached at module scope per-option-set, so this ref is stable across renders.
   const editorExtensions = useMemo(
-    () => createDocumentEditorExtensions({ placeholder: 'Start writing' }),
-    []
+    () => createDocumentEditorExtensions({ placeholder: t('editor.placeholder.startWriting') }),
+    [t]
   );
 
   const editorProps = useMemo(
@@ -300,8 +323,16 @@ export function DocumentEditor({
     editor.setEditable(canEdit);
     currentRevisionRef.current = page.currentRevision;
 
-    const incomingSnapshot = serializeDocumentSnapshot(page.title, page.icon || null, page.contentJson);
-    const currentSnapshot = serializeDocumentSnapshot(titleRef.current, iconRef.current, editor.getJSON());
+    const incomingSnapshot = serializeDocumentSnapshot(
+      page.title,
+      page.icon || null,
+      page.contentJson
+    );
+    const currentSnapshot = serializeDocumentSnapshot(
+      titleRef.current,
+      iconRef.current,
+      editor.getJSON()
+    );
     const isNewPage = activePageIdRef.current !== page.id;
     const isAutosaveEcho = incomingSnapshot === lastAutosaveSnapshotRef.current;
 
@@ -345,7 +376,16 @@ export function DocumentEditor({
 
     setIsDirty(false);
     setSaveState('saved');
-  }, [page.id, page.title, page.icon, page.contentJson, page.currentRevision, page.updatedAt, canEdit, editor]);
+  }, [
+    page.id,
+    page.title,
+    page.icon,
+    page.contentJson,
+    page.currentRevision,
+    page.updatedAt,
+    canEdit,
+    editor,
+  ]);
 
   useEffect(() => {
     if (!editor || !canEdit || !isDirty || isSaving) {
@@ -398,17 +438,36 @@ export function DocumentEditor({
     .sort(sortDocumentPages);
   const breadcrumbPages = buildDocumentBreadcrumbs(page, allPages);
 
-  const statusMeta = getSaveStateMeta(saveState, saveError, lastSavedAt);
+  const statusMeta = getSaveStateMeta(saveState, saveError);
   const StatusIcon = statusMeta.icon;
-  const internalSharePath = page.share?.internalPath || `/docs?pageId=${page.id}&spaceId=${page.spaceId}`;
+  const statusLabel =
+    statusMeta.labelKey === 'saving'
+      ? t('editor.status.saving')
+      : statusMeta.labelKey === 'paused'
+        ? t('editor.status.paused')
+        : statusMeta.labelKey === 'waiting'
+          ? t('editor.status.waiting')
+          : lastSavedAt
+            ? t('editor.status.savedAt', {
+                time: lastSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              })
+            : t('editor.status.allSaved');
+  const internalSharePath =
+    page.share?.internalPath || `/docs?pageId=${page.id}&spaceId=${page.spaceId}`;
   const publicSharePath = page.share?.public?.enabled ? page.share.public.urlPath : null;
   const canManagePublicShare = Boolean(page.share?.canManagePublic && onUpdateShare && canEdit);
   const sharePathForNative = publicSharePath || internalSharePath;
-  const documentScopeLabel = page.projectId ? 'Project note' : 'Workspace note';
+  const documentScopeLabel = page.projectId
+    ? t('editor.scope.projectNote')
+    : t('editor.scope.workspaceNote');
   const slashMenuLeft =
-    typeof window !== 'undefined' ? Math.max(16, Math.min(slashMenu.x, window.innerWidth - 464)) : slashMenu.x;
+    typeof window !== 'undefined'
+      ? Math.max(16, Math.min(slashMenu.x, window.innerWidth - 464))
+      : slashMenu.x;
   const slashMenuTop =
-    typeof window !== 'undefined' ? Math.max(16, Math.min(slashMenu.y, window.innerHeight - 520)) : slashMenu.y;
+    typeof window !== 'undefined'
+      ? Math.max(16, Math.min(slashMenu.y, window.innerHeight - 520))
+      : slashMenu.y;
   const slashMenuPosition = (() => {
     if (typeof window === 'undefined') {
       return { left: slashMenuLeft, top: slashMenuTop };
@@ -648,20 +707,23 @@ export function DocumentEditor({
       if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(value);
       } else if (typeof window !== 'undefined') {
-        window.prompt('Copy this share link', value);
+        window.prompt(t('editor.share.promptCopyShareLink'), value);
       }
 
       toast({
-        title: kind === 'markdown' ? 'Markdown link copied' : `${label} copied`,
+        title:
+          kind === 'markdown'
+            ? t('editor.share.toast.markdownCopied')
+            : t('editor.share.toast.linkCopied', { label }),
         description:
           kind === 'markdown'
-            ? 'You can paste it directly into notes or chat.'
-            : `${label} is now in your clipboard.`,
+            ? t('editor.share.toast.markdownCopiedBody')
+            : t('editor.share.toast.linkCopiedBody', { label }),
       });
     } catch {
       toast({
-        title: 'Could not copy link',
-        description: 'Clipboard access was blocked in this browser. Try the Open in new tab action instead.',
+        title: t('editor.share.toast.copyFailed'),
+        description: t('editor.share.toast.copyFailedBody'),
         variant: 'destructive',
       });
     }
@@ -676,13 +738,13 @@ export function DocumentEditor({
       setIsUpdatingShare(true);
       await onUpdateShare(data);
       toast({
-        title: 'Sharing updated',
+        title: t('editor.share.toast.sharingUpdated'),
         description: successMessage,
       });
     } catch (error) {
       toast({
-        title: 'Could not update sharing',
-        description: error instanceof Error ? error.message : 'Something went wrong',
+        title: t('editor.share.toast.sharingUpdateFailed'),
+        description: error instanceof Error ? error.message : t('common.somethingWrong'),
         variant: 'destructive',
       });
     } finally {
@@ -691,13 +753,16 @@ export function DocumentEditor({
   }
 
   async function sharePage() {
-    const url = typeof window !== 'undefined' ? `${window.location.origin}${sharePathForNative}` : sharePathForNative;
+    const url =
+      typeof window !== 'undefined'
+        ? `${window.location.origin}${sharePathForNative}`
+        : sharePathForNative;
 
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share({
           title: title.trim() || page.title,
-          text: 'Shared from TaskNebula Docs',
+          text: t('editor.share.nativeShareText'),
           url,
         });
         return;
@@ -706,7 +771,11 @@ export function DocumentEditor({
       }
     }
 
-    await copyUrlValue(sharePathForNative, 'link', publicSharePath ? 'Public link' : 'Page link');
+    await copyUrlValue(
+      sharePathForNative,
+      'link',
+      publicSharePath ? t('editor.share.publicLink') : t('editor.share.pageLink')
+    );
   }
 
   const insertInternalLink = (linkedPage: DocumentPage) => {
@@ -719,7 +788,12 @@ export function DocumentEditor({
     const selectedText = editor.state.doc.textBetween(from, to, ' ').trim();
 
     if (selectedText) {
-      editor.chain().focus().extendMarkRange('link').setMark('link', { href, pageId: linkedPage.id }).run();
+      editor
+        .chain()
+        .focus()
+        .extendMarkRange('link')
+        .setMark('link', { href, pageId: linkedPage.id })
+        .run();
     } else {
       editor
         .chain()
@@ -745,8 +819,8 @@ export function DocumentEditor({
       {
         id: 'text',
         group: 'basic',
-        title: 'Text',
-        description: 'Start writing in a plain paragraph.',
+        title: t('editor.slash.text.title'),
+        description: t('editor.slash.text.description'),
         keywords: ['paragraph', 'text', 'plain'],
         icon: NotebookText,
         run: (activeEditor) => activeEditor.chain().focus().setParagraph().run(),
@@ -754,8 +828,8 @@ export function DocumentEditor({
       {
         id: 'heading-1',
         group: 'basic',
-        title: 'Heading 1',
-        description: 'Large page section title.',
+        title: t('editor.slash.heading1.title'),
+        description: t('editor.slash.heading1.description'),
         keywords: ['h1', 'title', 'section'],
         icon: Heading1,
         run: (activeEditor) => activeEditor.chain().focus().toggleHeading({ level: 1 }).run(),
@@ -763,8 +837,8 @@ export function DocumentEditor({
       {
         id: 'heading-2',
         group: 'basic',
-        title: 'Heading 2',
-        description: 'Medium section heading.',
+        title: t('editor.slash.heading2.title'),
+        description: t('editor.slash.heading2.description'),
         keywords: ['h2', 'subtitle'],
         icon: Heading2,
         run: (activeEditor) => activeEditor.chain().focus().toggleHeading({ level: 2 }).run(),
@@ -772,8 +846,8 @@ export function DocumentEditor({
       {
         id: 'heading-3',
         group: 'basic',
-        title: 'Heading 3',
-        description: 'Compact subsection heading.',
+        title: t('editor.slash.heading3.title'),
+        description: t('editor.slash.heading3.description'),
         keywords: ['h3', 'subheading'],
         icon: Heading3,
         run: (activeEditor) => activeEditor.chain().focus().toggleHeading({ level: 3 }).run(),
@@ -781,8 +855,8 @@ export function DocumentEditor({
       {
         id: 'bullet-list',
         group: 'lists',
-        title: 'Bullet List',
-        description: 'Create an unordered list.',
+        title: t('editor.slash.bulletList.title'),
+        description: t('editor.slash.bulletList.description'),
         keywords: ['list', 'bullet', 'ul'],
         icon: List,
         run: (activeEditor) => activeEditor.chain().focus().toggleBulletList().run(),
@@ -790,8 +864,8 @@ export function DocumentEditor({
       {
         id: 'ordered-list',
         group: 'lists',
-        title: 'Numbered List',
-        description: 'Create a ranked or step-by-step list.',
+        title: t('editor.slash.orderedList.title'),
+        description: t('editor.slash.orderedList.description'),
         keywords: ['list', 'ordered', 'numbered', 'ol'],
         icon: ListOrdered,
         run: (activeEditor) => activeEditor.chain().focus().toggleOrderedList().run(),
@@ -799,8 +873,8 @@ export function DocumentEditor({
       {
         id: 'task-list',
         group: 'lists',
-        title: 'Checklist',
-        description: 'Track tasks with checkboxes.',
+        title: t('editor.slash.taskList.title'),
+        description: t('editor.slash.taskList.description'),
         keywords: ['task', 'todo', 'check', 'checklist'],
         icon: CheckSquare,
         run: (activeEditor) => activeEditor.chain().focus().toggleTaskList().run(),
@@ -808,8 +882,8 @@ export function DocumentEditor({
       {
         id: 'link-page',
         group: 'media',
-        title: 'Page Link',
-        description: 'Search and link another doc page.',
+        title: t('editor.slash.pageLink.title'),
+        description: t('editor.slash.pageLink.description'),
         keywords: ['link', 'page', 'doc', 'reference'],
         icon: Link2,
         run: () => {
@@ -820,8 +894,8 @@ export function DocumentEditor({
       {
         id: 'image',
         group: 'media',
-        title: 'Image',
-        description: 'Upload an image or paste it directly.',
+        title: t('editor.slash.image.title'),
+        description: t('editor.slash.image.description'),
         keywords: ['image', 'photo', 'upload', 'media'],
         icon: ImagePlus,
         run: () => {
@@ -831,8 +905,8 @@ export function DocumentEditor({
       {
         id: 'quote',
         group: 'basic',
-        title: 'Callout Quote',
-        description: 'Highlight a key decision or note.',
+        title: t('editor.slash.quote.title'),
+        description: t('editor.slash.quote.description'),
         keywords: ['quote', 'callout', 'note'],
         icon: Quote,
         run: (activeEditor) => activeEditor.chain().focus().toggleBlockquote().run(),
@@ -840,8 +914,8 @@ export function DocumentEditor({
       {
         id: 'code',
         group: 'structure',
-        title: 'Code Block',
-        description: 'Insert formatted code or terminal output.',
+        title: t('editor.slash.code.title'),
+        description: t('editor.slash.code.description'),
         keywords: ['code', 'snippet', 'terminal'],
         icon: Code2,
         run: (activeEditor) => activeEditor.chain().focus().toggleCodeBlock().run(),
@@ -849,8 +923,8 @@ export function DocumentEditor({
       {
         id: 'divider',
         group: 'structure',
-        title: 'Divider',
-        description: 'Separate sections with a rule.',
+        title: t('editor.slash.divider.title'),
+        description: t('editor.slash.divider.description'),
         keywords: ['divider', 'separator', 'hr'],
         icon: Minus,
         run: (activeEditor) => activeEditor.chain().focus().setHorizontalRule().run(),
@@ -858,17 +932,18 @@ export function DocumentEditor({
       {
         id: 'table',
         group: 'structure',
-        title: 'Table',
-        description: 'Insert a 3x3 table.',
+        title: t('editor.slash.table.title'),
+        description: t('editor.slash.table.description'),
         keywords: ['table', 'grid'],
         icon: Table2,
-        run: (activeEditor) => activeEditor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+        run: (activeEditor) =>
+          activeEditor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
       },
       {
         id: 'meeting-notes',
         group: 'templates',
-        title: 'Meeting Notes',
-        description: 'Drop in a quick meeting notes template.',
+        title: t('editor.slash.meetingNotes.title'),
+        description: t('editor.slash.meetingNotes.description'),
         keywords: ['template', 'meeting', 'notes', 'agenda'],
         icon: NotebookText,
         run: (activeEditor) =>
@@ -876,23 +951,53 @@ export function DocumentEditor({
             .chain()
             .focus()
             .insertContent([
-              { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Agenda' }] },
+              {
+                type: 'heading',
+                attrs: { level: 2 },
+                content: [{ type: 'text', text: t('editor.template.meeting.agenda') }],
+              },
               {
                 type: 'bulletList',
                 content: [
-                  { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Add agenda item' }] }] },
+                  {
+                    type: 'listItem',
+                    content: [
+                      {
+                        type: 'paragraph',
+                        content: [{ type: 'text', text: t('editor.template.meeting.agendaItem') }],
+                      },
+                    ],
+                  },
                 ],
               },
-              { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Notes' }] },
-              { type: 'paragraph', content: [{ type: 'text', text: 'Capture the key discussion points and outcomes.' }] },
-              { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Follow-ups' }] },
+              {
+                type: 'heading',
+                attrs: { level: 2 },
+                content: [{ type: 'text', text: t('editor.template.meeting.notes') }],
+              },
+              {
+                type: 'paragraph',
+                content: [{ type: 'text', text: t('editor.template.meeting.notesBody') }],
+              },
+              {
+                type: 'heading',
+                attrs: { level: 2 },
+                content: [{ type: 'text', text: t('editor.template.meeting.followUps') }],
+              },
               {
                 type: 'taskList',
                 content: [
                   {
                     type: 'taskItem',
                     attrs: { checked: false },
-                    content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Assign next step' }] }],
+                    content: [
+                      {
+                        type: 'paragraph',
+                        content: [
+                          { type: 'text', text: t('editor.template.meeting.followUpItem') },
+                        ],
+                      },
+                    ],
                   },
                 ],
               },
@@ -902,8 +1007,8 @@ export function DocumentEditor({
       {
         id: 'decision-log',
         group: 'templates',
-        title: 'Decision Log',
-        description: 'Add a lightweight decision record.',
+        title: t('editor.slash.decisionLog.title'),
+        description: t('editor.slash.decisionLog.description'),
         keywords: ['decision', 'adr', 'record'],
         icon: Sparkles,
         run: (activeEditor) =>
@@ -911,16 +1016,52 @@ export function DocumentEditor({
             .chain()
             .focus()
             .insertContent([
-              { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Decision' }] },
-              { type: 'paragraph', content: [{ type: 'text', text: 'Summarize the decision in one sentence.' }] },
-              { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: 'Context' }] },
-              { type: 'paragraph', content: [{ type: 'text', text: 'Why this change matters and what constraints shaped it.' }] },
-              { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: 'Impact' }] },
+              {
+                type: 'heading',
+                attrs: { level: 2 },
+                content: [{ type: 'text', text: t('editor.template.decision.decision') }],
+              },
+              {
+                type: 'paragraph',
+                content: [{ type: 'text', text: t('editor.template.decision.decisionBody') }],
+              },
+              {
+                type: 'heading',
+                attrs: { level: 3 },
+                content: [{ type: 'text', text: t('editor.template.decision.context') }],
+              },
+              {
+                type: 'paragraph',
+                content: [{ type: 'text', text: t('editor.template.decision.contextBody') }],
+              },
+              {
+                type: 'heading',
+                attrs: { level: 3 },
+                content: [{ type: 'text', text: t('editor.template.decision.impact') }],
+              },
               {
                 type: 'bulletList',
                 content: [
-                  { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Teams affected' }] }] },
-                  { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Risks or trade-offs' }] }] },
+                  {
+                    type: 'listItem',
+                    content: [
+                      {
+                        type: 'paragraph',
+                        content: [
+                          { type: 'text', text: t('editor.template.decision.teamsAffected') },
+                        ],
+                      },
+                    ],
+                  },
+                  {
+                    type: 'listItem',
+                    content: [
+                      {
+                        type: 'paragraph',
+                        content: [{ type: 'text', text: t('editor.template.decision.risks') }],
+                      },
+                    ],
+                  },
                 ],
               },
             ])
@@ -930,64 +1071,64 @@ export function DocumentEditor({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
+    <div className="bg-background flex h-full min-h-0 flex-col overflow-hidden">
       {canEdit && editor && (
-        <div className="shrink-0 border-b border-border bg-background px-4 py-1.5">
+        <div className="border-border bg-background shrink-0 border-b px-4 py-1.5">
           <div className="flex flex-wrap items-center gap-0.5">
             <MenuBarButton
               onClick={() => editor.chain().focus().toggleBold().run()}
               isActive={editor.isActive('bold')}
-              aria-label="Bold"
-              title="Bold"
+              aria-label={t('editor.toolbar.bold')}
+              title={t('editor.toolbar.bold')}
             >
-              <span className="font-bold text-sm leading-none">B</span>
+              <span className="text-sm font-bold leading-none">B</span>
             </MenuBarButton>
             <MenuBarButton
               onClick={() => editor.chain().focus().toggleItalic().run()}
               isActive={editor.isActive('italic')}
-              aria-label="Italic"
-              title="Italic"
+              aria-label={t('editor.toolbar.italic')}
+              title={t('editor.toolbar.italic')}
             >
-              <span className="italic text-sm leading-none">I</span>
+              <span className="text-sm italic leading-none">I</span>
             </MenuBarButton>
             <MenuBarButton
               onClick={() => editor.chain().focus().toggleUnderline().run()}
               isActive={editor.isActive('underline')}
-              aria-label="Underline"
-              title="Underline"
+              aria-label={t('editor.toolbar.underline')}
+              title={t('editor.toolbar.underline')}
             >
-              <span className="underline text-sm leading-none">U</span>
+              <span className="text-sm leading-none underline">U</span>
             </MenuBarButton>
             <MenuBarButton
               onClick={() => editor.chain().focus().toggleStrike().run()}
               isActive={editor.isActive('strike')}
-              aria-label="Strikethrough"
-              title="Strikethrough"
+              aria-label={t('editor.toolbar.strikethrough')}
+              title={t('editor.toolbar.strikethrough')}
             >
-              <span className="line-through text-sm leading-none">S</span>
+              <span className="text-sm leading-none line-through">S</span>
             </MenuBarButton>
             <MenuBarDivider />
             <MenuBarButton
               onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
               isActive={editor.isActive('heading', { level: 1 })}
-              aria-label="Heading 1"
-              title="Heading 1"
+              aria-label={t('editor.toolbar.heading1')}
+              title={t('editor.toolbar.heading1')}
             >
               <Heading1 className="h-4 w-4" />
             </MenuBarButton>
             <MenuBarButton
               onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
               isActive={editor.isActive('heading', { level: 2 })}
-              aria-label="Heading 2"
-              title="Heading 2"
+              aria-label={t('editor.toolbar.heading2')}
+              title={t('editor.toolbar.heading2')}
             >
               <Heading2 className="h-4 w-4" />
             </MenuBarButton>
             <MenuBarButton
               onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
               isActive={editor.isActive('heading', { level: 3 })}
-              aria-label="Heading 3"
-              title="Heading 3"
+              aria-label={t('editor.toolbar.heading3')}
+              title={t('editor.toolbar.heading3')}
             >
               <Heading3 className="h-4 w-4" />
             </MenuBarButton>
@@ -995,24 +1136,24 @@ export function DocumentEditor({
             <MenuBarButton
               onClick={() => editor.chain().focus().toggleBulletList().run()}
               isActive={editor.isActive('bulletList')}
-              aria-label="Bullet list"
-              title="Bullet list"
+              aria-label={t('editor.toolbar.bulletList')}
+              title={t('editor.toolbar.bulletList')}
             >
               <List className="h-4 w-4" />
             </MenuBarButton>
             <MenuBarButton
               onClick={() => editor.chain().focus().toggleOrderedList().run()}
               isActive={editor.isActive('orderedList')}
-              aria-label="Numbered list"
-              title="Numbered list"
+              aria-label={t('editor.toolbar.numberedList')}
+              title={t('editor.toolbar.numberedList')}
             >
               <ListOrdered className="h-4 w-4" />
             </MenuBarButton>
             <MenuBarButton
               onClick={() => editor.chain().focus().toggleTaskList().run()}
               isActive={editor.isActive('taskList')}
-              aria-label="Checklist"
-              title="Checklist"
+              aria-label={t('editor.toolbar.checklist')}
+              title={t('editor.toolbar.checklist')}
             >
               <CheckSquare className="h-4 w-4" />
             </MenuBarButton>
@@ -1020,75 +1161,86 @@ export function DocumentEditor({
             <MenuBarButton
               onClick={() => editor.chain().focus().toggleBlockquote().run()}
               isActive={editor.isActive('blockquote')}
-              aria-label="Blockquote"
-              title="Blockquote"
+              aria-label={t('editor.toolbar.blockquote')}
+              title={t('editor.toolbar.blockquote')}
             >
               <Quote className="h-4 w-4" />
             </MenuBarButton>
             <MenuBarButton
               onClick={() => editor.chain().focus().toggleCodeBlock().run()}
               isActive={editor.isActive('codeBlock')}
-              aria-label="Code block"
-              title="Code block"
+              aria-label={t('editor.toolbar.codeBlock')}
+              title={t('editor.toolbar.codeBlock')}
             >
               <Code2 className="h-4 w-4" />
             </MenuBarButton>
             <MenuBarButton
               onClick={() => editor.chain().focus().setHorizontalRule().run()}
               isActive={false}
-              aria-label="Divider"
-              title="Divider"
+              aria-label={t('editor.toolbar.divider')}
+              title={t('editor.toolbar.divider')}
             >
               <Minus className="h-4 w-4" />
             </MenuBarButton>
             <MenuBarDivider />
             <MenuBarButton
-              onClick={() => { setLinkSearch(''); setIsLinkDialogOpen(true); }}
+              onClick={() => {
+                setLinkSearch('');
+                setIsLinkDialogOpen(true);
+              }}
               isActive={editor.isActive('link')}
-              aria-label="Insert page link"
-              title="Insert page link"
+              aria-label={t('editor.toolbar.insertPageLink')}
+              title={t('editor.toolbar.insertPageLink')}
             >
               <Link2 className="h-4 w-4" />
             </MenuBarButton>
             <MenuBarButton
               onClick={() => imageInputRef.current?.click()}
               isActive={false}
-              aria-label="Upload image"
-              title="Upload image"
+              aria-label={t('editor.toolbar.uploadImage')}
+              title={t('editor.toolbar.uploadImage')}
             >
               <ImagePlus className="h-4 w-4" />
             </MenuBarButton>
           </div>
         </div>
       )}
-      <div ref={editorScrollRef} className="animate-fade-in relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-8 md:px-8 md:py-10">
+      <div
+        ref={editorScrollRef}
+        className="animate-fade-in relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-8 md:px-8 md:py-10"
+      >
         {slashMenu.open && (
           <div
             className="surface-card absolute z-50 flex max-h-[440px] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden shadow-md"
             style={{ left: slashMenuPosition.left, top: slashMenuPosition.top }}
           >
-            <div className="shrink-0 border-b border-border px-3 py-2">
+            <div className="border-border shrink-0 border-b px-3 py-2">
               <div className="flex items-center gap-2">
-                <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <Search className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
                 <input
                   value={slashSearch}
                   onChange={(event) => setSlashSearch(event.target.value)}
                   onKeyDown={handleSlashSearchKeyDown}
-                  placeholder="Search blocks"
-                  className="h-8 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                  placeholder={t('editor.slash.searchPlaceholder')}
+                  className="placeholder:text-muted-foreground h-8 flex-1 bg-transparent text-sm outline-none"
                 />
               </div>
             </div>
-            <div ref={slashMenuListRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1.5 py-1.5">
+            <div
+              ref={slashMenuListRef}
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1.5 py-1.5"
+            >
               {groupedSlashCommands.length > 0 ? (
                 groupedSlashCommands.map((group) => (
                   <div key={group.id} className="pb-1.5 last:pb-0">
-                    <div className="px-3 pb-1 pt-2 text-[11px] font-medium text-muted-foreground">
-                      {group.label}
+                    <div className="text-muted-foreground px-3 pb-1 pt-2 text-[11px] font-medium">
+                      {t(`editor.group.${group.id}`)}
                     </div>
                     <div className="space-y-0.5">
                       {group.commands.map((command) => {
-                        const index = filteredSlashCommands.findIndex((candidate) => candidate.id === command.id);
+                        const index = filteredSlashCommands.findIndex(
+                          (candidate) => candidate.id === command.id
+                        );
                         const isSelected = index === selectedSlashIndex;
 
                         return (
@@ -1098,7 +1250,7 @@ export function DocumentEditor({
                             data-slash-index={index}
                             data-selected={isSelected || undefined}
                             className={cn(
-                              'flex w-full items-start gap-2.5 rounded-sm px-3 py-1.5 text-left text-sm transition-colors duration-150 hover:bg-accent/60',
+                              'hover:bg-accent/60 flex w-full items-start gap-2.5 rounded-sm px-3 py-1.5 text-left text-sm transition-colors duration-150',
                               isSelected && 'bg-primary/10 text-primary'
                             )}
                             onMouseDown={(event) => {
@@ -1106,10 +1258,12 @@ export function DocumentEditor({
                               applySlashCommand(command);
                             }}
                           >
-                            <command.icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                            <command.icon className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
                             <div className="min-w-0 flex-1">
                               <div className="truncate text-sm font-medium">{command.title}</div>
-                              <div className="truncate text-xs text-muted-foreground">{command.description}</div>
+                              <div className="text-muted-foreground truncate text-xs">
+                                {command.description}
+                              </div>
                             </div>
                           </button>
                         );
@@ -1118,8 +1272,8 @@ export function DocumentEditor({
                   </div>
                 ))
               ) : (
-                <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-                  No matching blocks.
+                <div className="text-muted-foreground px-4 py-10 text-center text-sm">
+                  {t('editor.slash.noMatches')}
                 </div>
               )}
             </div>
@@ -1131,19 +1285,19 @@ export function DocumentEditor({
             <div className="mb-6 flex justify-center">
               <span className="chip-emerald">
                 <Globe2 className="h-3 w-3" />
-                This page is public
+                {t('editor.publicBadge')}
               </span>
             </div>
           )}
 
           <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1 space-y-2">
-              <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+              <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs">
                 <Link
                   href="/docs"
-                  className="inline-flex items-center gap-1.5 rounded-sm px-1 py-0.5 transition-colors duration-150 hover:bg-accent/60 hover:text-foreground"
+                  className="hover:bg-accent/60 hover:text-foreground inline-flex items-center gap-1.5 rounded-sm px-1 py-0.5 transition-colors duration-150"
                 >
-                  <span>Pages</span>
+                  <span>{t('editor.breadcrumbPages')}</span>
                 </Link>
                 {breadcrumbPages.length > 0 ? (
                   breadcrumbPages.map((breadcrumb) => (
@@ -1155,7 +1309,7 @@ export function DocumentEditor({
                           spaceId: breadcrumb.spaceId,
                           projectId: breadcrumb.projectId,
                         })}
-                        className="inline-flex items-center gap-1.5 rounded-sm px-1 py-0.5 transition-colors duration-150 hover:bg-accent/60 hover:text-foreground"
+                        className="hover:bg-accent/60 hover:text-foreground inline-flex items-center gap-1.5 rounded-sm px-1 py-0.5 transition-colors duration-150"
                       >
                         <span className="max-w-[180px] truncate">{breadcrumb.title}</span>
                       </Link>
@@ -1174,139 +1328,161 @@ export function DocumentEditor({
               <div
                 aria-live="polite"
                 className={cn(
-                  'inline-flex items-center gap-1.5 transition-all duration-150 ease-snap',
+                  'ease-snap inline-flex items-center gap-1.5 transition-all duration-150',
                   statusMeta.chipClassName
                 )}
               >
                 <StatusIcon className={cn('h-3 w-3', statusMeta.iconClassName)} />
-                <span>{statusMeta.label}</span>
+                <span>{statusLabel}</span>
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8"
-                    disabled={isUpdatingShare}
-                  >
+                  <Button variant="outline" size="sm" className="h-8" disabled={isUpdatingShare}>
                     <Share2 className="mr-2 h-4 w-4" />
-                    Share
+                    {t('editor.share.button')}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-64">
-                        <DropdownMenuItem onClick={() => void sharePage()}>
-                          <Share2 className="mr-2 h-4 w-4" />
-                          Share page
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => void copyUrlValue(internalSharePath, 'link', 'Page link')}>
-                          <Link2 className="mr-2 h-4 w-4" />
-                          Copy workspace link
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => void copyUrlValue(internalSharePath, 'markdown', 'Workspace markdown link')}>
-                          <NotebookText className="mr-2 h-4 w-4" />
-                          Copy markdown link
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => {
-                            if (typeof window !== 'undefined') {
-                              window.open(internalSharePath, '_blank', 'noopener,noreferrer');
-                            }
-                          }}
-                        >
-                          <ExternalLink className="mr-2 h-4 w-4" />
-                          Open workspace page
-                        </DropdownMenuItem>
-                        {publicSharePath && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => void copyUrlValue(publicSharePath, 'link', 'Public link')}>
-                              <Globe2 className="mr-2 h-4 w-4" />
-                              Copy public link
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                if (typeof window !== 'undefined') {
-                                  window.open(publicSharePath, '_blank', 'noopener,noreferrer');
-                                }
-                              }}
-                            >
-                              <ExternalLink className="mr-2 h-4 w-4" />
-                              Open public page
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                        {canManagePublicShare && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() =>
-                                void updateShareSettings(
-                                  { enablePublic: !page.share?.public?.enabled },
-                                  page.share?.public?.enabled
-                                    ? 'Public access has been disabled for this page.'
-                                    : 'This page is now available on a public link.'
-                                )
-                              }
-                            >
-                              <Globe2 className="mr-2 h-4 w-4" />
-                              {page.share?.public?.enabled ? 'Disable public access' : 'Enable public access'}
-                            </DropdownMenuItem>
-                            <DropdownMenuCheckboxItem
-                              checked={page.share?.public?.allowSearchIndexing}
-                              disabled={!page.share?.public?.enabled || isUpdatingShare}
-                              onCheckedChange={(checked) =>
-                                void updateShareSettings(
-                                  { allowSearchIndexing: Boolean(checked) },
-                                  checked
-                                    ? 'Search indexing is enabled for the public page.'
-                                    : 'Search indexing is disabled for the public page.'
-                                )
-                              }
-                            >
-                              Allow search indexing
-                            </DropdownMenuCheckboxItem>
-                            <DropdownMenuCheckboxItem
-                              checked={page.share?.public?.includeAttachments}
-                              disabled={!page.share?.public?.enabled || isUpdatingShare}
-                              onCheckedChange={(checked) =>
-                                void updateShareSettings(
-                                  { includeAttachments: Boolean(checked) },
-                                  checked
-                                    ? 'Uploaded attachments can now appear on the public page.'
-                                    : 'Uploaded attachments are now hidden from the public page.'
-                                )
-                              }
-                            >
-                              Include uploaded attachments
-                            </DropdownMenuCheckboxItem>
-                            <DropdownMenuItem
-                              disabled={!page.share?.public?.enabled || isUpdatingShare}
-                              onClick={() =>
-                                void updateShareSettings(
-                                  { regenerateToken: true, enablePublic: true },
-                                  'A fresh public link has been generated and the previous one no longer works.'
-                                )
-                              }
-                            >
-                              <RefreshCcw className="mr-2 h-4 w-4" />
-                              Regenerate public link
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                  <DropdownMenuItem onClick={() => void sharePage()}>
+                    <Share2 className="mr-2 h-4 w-4" />
+                    {t('editor.share.sharePage')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() =>
+                      void copyUrlValue(internalSharePath, 'link', t('editor.share.pageLink'))
+                    }
+                  >
+                    <Link2 className="mr-2 h-4 w-4" />
+                    {t('editor.share.copyWorkspaceLink')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() =>
+                      void copyUrlValue(
+                        internalSharePath,
+                        'markdown',
+                        t('editor.share.workspaceMarkdownLink')
+                      )
+                    }
+                  >
+                    <NotebookText className="mr-2 h-4 w-4" />
+                    {t('editor.share.copyMarkdownLink')}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        window.open(internalSharePath, '_blank', 'noopener,noreferrer');
+                      }
+                    }}
+                  >
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    {t('editor.share.openWorkspacePage')}
+                  </DropdownMenuItem>
+                  {publicSharePath && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() =>
+                          void copyUrlValue(publicSharePath, 'link', t('editor.share.publicLink'))
+                        }
+                      >
+                        <Globe2 className="mr-2 h-4 w-4" />
+                        {t('editor.share.copyPublicLink')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          if (typeof window !== 'undefined') {
+                            window.open(publicSharePath, '_blank', 'noopener,noreferrer');
+                          }
+                        }}
+                      >
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        {t('editor.share.openPublicPage')}
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  {canManagePublicShare && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() =>
+                          void updateShareSettings(
+                            { enablePublic: !page.share?.public?.enabled },
+                            page.share?.public?.enabled
+                              ? t('editor.share.msg.publicDisabled')
+                              : t('editor.share.msg.publicEnabled')
+                          )
+                        }
+                      >
+                        <Globe2 className="mr-2 h-4 w-4" />
+                        {page.share?.public?.enabled
+                          ? t('editor.share.disablePublic')
+                          : t('editor.share.enablePublic')}
+                      </DropdownMenuItem>
+                      <DropdownMenuCheckboxItem
+                        checked={page.share?.public?.allowSearchIndexing}
+                        disabled={!page.share?.public?.enabled || isUpdatingShare}
+                        onCheckedChange={(checked) =>
+                          void updateShareSettings(
+                            { allowSearchIndexing: Boolean(checked) },
+                            checked
+                              ? t('editor.share.msg.indexingEnabled')
+                              : t('editor.share.msg.indexingDisabled')
+                          )
+                        }
+                      >
+                        {t('editor.share.allowIndexing')}
+                      </DropdownMenuCheckboxItem>
+                      <DropdownMenuCheckboxItem
+                        checked={page.share?.public?.includeAttachments}
+                        disabled={!page.share?.public?.enabled || isUpdatingShare}
+                        onCheckedChange={(checked) =>
+                          void updateShareSettings(
+                            { includeAttachments: Boolean(checked) },
+                            checked
+                              ? t('editor.share.msg.attachmentsShown')
+                              : t('editor.share.msg.attachmentsHidden')
+                          )
+                        }
+                      >
+                        {t('editor.share.includeAttachments')}
+                      </DropdownMenuCheckboxItem>
+                      <DropdownMenuItem
+                        disabled={!page.share?.public?.enabled || isUpdatingShare}
+                        onClick={() =>
+                          void updateShareSettings(
+                            { regenerateToken: true, enablePublic: true },
+                            t('editor.share.msg.regenerated')
+                          )
+                        }
+                      >
+                        <RefreshCcw className="mr-2 h-4 w-4" />
+                        {t('editor.share.regeneratePublic')}
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {onCreateChild && canEdit && (
                 <Button variant="outline" size="sm" className="h-8" onClick={onCreateChild}>
                   <FilePlus2 className="mr-2 h-4 w-4" />
-                  Sub-note
+                  {t('editor.subNote')}
                 </Button>
               )}
               {saveState === 'error' && canEdit && (
-                <Button size="sm" className="h-8" onClick={retrySaveNow} disabled={isSaving || !title.trim()}>
-                  {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                  Retry save
+                <Button
+                  size="sm"
+                  className="h-8"
+                  onClick={retrySaveNow}
+                  disabled={isSaving || !title.trim()}
+                >
+                  {isSaving ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Check className="mr-2 h-4 w-4" />
+                  )}
+                  {t('editor.retrySave')}
                 </Button>
               )}
             </div>
@@ -1316,7 +1492,7 @@ export function DocumentEditor({
             {page.icon && (
               <div className="mb-3">
                 <span
-                  aria-label="Page icon"
+                  aria-label={t('editor.pageIcon')}
                   className="inline-flex select-none items-center justify-center rounded-lg p-1 text-[56px] leading-none transition-colors"
                 >
                   {page.icon}
@@ -1331,22 +1507,28 @@ export function DocumentEditor({
                   setTitle(nextTitle);
                   titleRef.current = nextTitle;
 
-                  const snapshot = serializeDocumentSnapshot(nextTitle, iconRef.current, editor?.getJSON() || page.contentJson);
+                  const snapshot = serializeDocumentSnapshot(
+                    nextTitle,
+                    iconRef.current,
+                    editor?.getJSON() || page.contentJson
+                  );
                   const dirty = snapshot !== lastServerSnapshotRef.current;
                   setIsDirty(dirty);
                   setSaveState(dirty ? 'dirty' : 'saved');
                   setAutosaveVersion((version) => version + 1);
                 }}
-                className="h-auto border-none bg-transparent px-0 text-3xl font-semibold tracking-tight text-foreground shadow-none focus-visible:ring-0"
-                placeholder="Untitled page"
+                className="text-foreground h-auto border-none bg-transparent px-0 text-3xl font-semibold tracking-tight shadow-none focus-visible:ring-0"
+                placeholder={t('editor.untitledPage')}
               />
             ) : (
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground text-balance">{page.title}</h1>
+              <h1 className="text-foreground text-balance text-3xl font-semibold tracking-tight">
+                {page.title}
+              </h1>
             )}
           </div>
 
           {saveError && (
-            <div className="mt-4 flex items-start gap-2 rounded-md border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            <div className="border-destructive/20 bg-destructive/5 text-destructive mt-4 flex items-start gap-2 rounded-md border px-4 py-3 text-sm">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{saveError}</span>
             </div>
@@ -1371,14 +1553,16 @@ export function DocumentEditor({
             <div className="mt-12">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm font-semibold tracking-tight">
-                  <FolderTree className="h-4 w-4 text-muted-foreground" />
-                  <span>Sub-notes</span>
-                  <span className="text-xs font-normal text-muted-foreground">{childPages.length}</span>
+                  <FolderTree className="text-muted-foreground h-4 w-4" />
+                  <span>{t('editor.subNotes')}</span>
+                  <span className="text-muted-foreground text-xs font-normal">
+                    {childPages.length}
+                  </span>
                 </div>
                 {canEdit && onCreateChild && (
                   <Button variant="outline" size="sm" className="h-8" onClick={onCreateChild}>
                     <FilePlus2 className="mr-2 h-4 w-4" />
-                    Add
+                    {t('editor.add')}
                   </Button>
                 )}
               </div>
@@ -1396,11 +1580,19 @@ export function DocumentEditor({
                       className="surface-card surface-card-hover p-5"
                     >
                       <div className="flex items-start gap-3">
-                        <DocumentIcon icon={childPage.icon} className="h-8 w-8 rounded-sm text-sm" />
+                        <DocumentIcon
+                          icon={childPage.icon}
+                          className="h-8 w-8 rounded-sm text-sm"
+                        />
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-semibold tracking-tight">{childPage.title}</div>
-                          <div className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                            {childPage.excerpt || `Updated ${new Date(childPage.updatedAt).toLocaleDateString()}`}
+                          <div className="truncate text-sm font-semibold tracking-tight">
+                            {childPage.title}
+                          </div>
+                          <div className="text-muted-foreground mt-1 line-clamp-2 text-xs leading-5">
+                            {childPage.excerpt ||
+                              t('editor.updatedOn', {
+                                date: new Date(childPage.updatedAt).toLocaleDateString(),
+                              })}
                           </div>
                         </div>
                       </div>
@@ -1408,7 +1600,7 @@ export function DocumentEditor({
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">No sub-notes yet.</p>
+                <p className="text-muted-foreground text-sm">{t('editor.noSubNotes')}</p>
               )}
             </div>
           )}
@@ -1418,11 +1610,11 @@ export function DocumentEditor({
       <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Link a page</DialogTitle>
+            <DialogTitle>{t('editor.linkDialog.title')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <Input
-              placeholder="Search pages"
+              placeholder={t('editor.linkDialog.searchPages')}
               value={linkSearch}
               onChange={(event) => setLinkSearch(event.target.value)}
               autoFocus
@@ -1442,12 +1634,16 @@ export function DocumentEditor({
                     <DocumentIcon icon={linkedPage.icon} className="h-7 w-7 rounded-sm text-xs" />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium">{linkedPage.title}</div>
-                      <div className="truncate text-xs text-muted-foreground">{linkedPage.slug}</div>
+                      <div className="text-muted-foreground truncate text-xs">
+                        {linkedPage.slug}
+                      </div>
                     </div>
                   </button>
                 ))
               ) : (
-                <p className="px-3 py-6 text-center text-sm text-muted-foreground">No matching pages.</p>
+                <p className="text-muted-foreground px-3 py-6 text-center text-sm">
+                  {t('editor.linkDialog.noMatches')}
+                </p>
               )}
             </div>
           </div>
@@ -1508,7 +1704,11 @@ function getSlashMenuState(editor: Editor) {
   };
 }
 
-function serializeDocumentSnapshot(title: string, icon: string | null, contentJson: Record<string, any>) {
+function serializeDocumentSnapshot(
+  title: string,
+  icon: string | null,
+  contentJson: Record<string, any>
+) {
   return JSON.stringify({
     title: title.trim(),
     icon: icon || null,
@@ -1536,7 +1736,9 @@ function isDocumentVisuallyEmpty(contentJson: Record<string, any>) {
       return true;
     }
 
-    return childContent.every((child: any) => typeof child?.text === 'string' && !child.text.trim());
+    return childContent.every(
+      (child: any) => typeof child?.text === 'string' && !child.text.trim()
+    );
   });
 }
 
@@ -1562,13 +1764,13 @@ function buildDocumentBreadcrumbs(page: DocumentPage, pages: DocumentPage[]) {
   return breadcrumbs;
 }
 
-function getSaveStateMeta(saveState: SaveState, saveError: string | null | undefined, lastSavedAt: Date | null) {
+function getSaveStateMeta(saveState: SaveState, saveError: string | null | undefined) {
   if (saveState === 'saving') {
     return {
       icon: Loader2,
       iconClassName: 'animate-spin',
       chipClassName: 'chip-amber',
-      label: 'Saving...',
+      labelKey: 'saving' as const,
     };
   }
 
@@ -1577,7 +1779,7 @@ function getSaveStateMeta(saveState: SaveState, saveError: string | null | undef
       icon: AlertTriangle,
       iconClassName: 'text-destructive',
       chipClassName: 'chip-rose',
-      label: 'Autosave paused',
+      labelKey: 'paused' as const,
     };
   }
 
@@ -1586,7 +1788,7 @@ function getSaveStateMeta(saveState: SaveState, saveError: string | null | undef
       icon: Check,
       iconClassName: 'text-accent-amber',
       chipClassName: 'chip-amber',
-      label: 'Waiting to save...',
+      labelKey: 'waiting' as const,
     };
   }
 
@@ -1594,9 +1796,7 @@ function getSaveStateMeta(saveState: SaveState, saveError: string | null | undef
     icon: CheckCheck,
     iconClassName: 'text-accent-emerald',
     chipClassName: 'chip-emerald',
-    label: lastSavedAt
-      ? `Saved at ${lastSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-      : 'All changes saved',
+    labelKey: 'saved' as const,
   };
 }
 
@@ -1620,7 +1820,7 @@ function MenuBarButton({
       aria-label={ariaLabel}
       title={title}
       className={cn(
-        'inline-flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground transition-colors duration-150 hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+        'text-muted-foreground hover:bg-accent/60 focus-visible:ring-ring inline-flex h-7 w-7 items-center justify-center rounded-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
         isActive && 'bg-primary/10 text-primary'
       )}
     >
@@ -1630,5 +1830,5 @@ function MenuBarButton({
 }
 
 function MenuBarDivider() {
-  return <div className="mx-1 h-5 w-px bg-border" aria-hidden="true" />;
+  return <div className="bg-border mx-1 h-5 w-px" aria-hidden="true" />;
 }

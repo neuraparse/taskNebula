@@ -12,7 +12,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import enMessages from '../../../../messages/en.json';
 import trMessages from '../../../../messages/tr.json';
-import { defaultLocale, isRtlLocale, isSupportedLocale, locales } from '../config';
+import { defaultLocale, isRtlLocale, isSupportedLocale, localeLabels, locales } from '../config';
 
 type Messages = Record<string, Record<string, string>>;
 const MessagesContext = React.createContext<{ locale: string; messages: Messages }>({
@@ -32,15 +32,15 @@ jest.mock('next-intl', () => {
       locale: string;
       messages: Messages;
     }) => (
-      <MessagesContext.Provider value={{ locale, messages }}>
-        {children}
-      </MessagesContext.Provider>
+      <MessagesContext.Provider value={{ locale, messages }}>{children}</MessagesContext.Provider>
     ),
     useTranslations: (namespace?: string) => {
       const ctx = React.useContext(MessagesContext);
       return (key: string, values?: Record<string, string | number>) => {
         const ns = namespace ? ctx.messages[namespace] : undefined;
-        let value = ns ? ns[key] : ((ctx.messages as unknown as Record<string, string>)[key] ?? key);
+        let value = ns
+          ? ns[key]
+          : ((ctx.messages as unknown as Record<string, string>)[key] ?? key);
         if (typeof value !== 'string') return key;
         if (values) {
           for (const [k, v] of Object.entries(values)) {
@@ -61,7 +61,9 @@ const { NextIntlClientProvider, useTranslations } = require('next-intl') as {
     locale: string;
     messages: Messages;
   }>;
-  useTranslations: (namespace?: string) => (key: string, values?: Record<string, string | number>) => string;
+  useTranslations: (
+    namespace?: string
+  ) => (key: string, values?: Record<string, string | number>) => string;
 };
 
 function Greeting({ name }: { name: string }) {
@@ -75,8 +77,17 @@ function NavLabel() {
 }
 
 describe('i18n config', () => {
-  it('lists exactly the four scaffolded locales', () => {
-    expect(locales).toEqual(['en', 'tr', 'de', 'es']);
+  it('ships 30 locales with a native label for each, English first/default', () => {
+    expect(defaultLocale).toBe('en');
+    expect(locales[0]).toBe('en');
+    expect(locales).toHaveLength(30);
+    // the originally scaffolded locales are still present
+    expect(locales).toEqual(expect.arrayContaining(['en', 'tr', 'de', 'es']));
+    // no duplicates, and every locale has a non-empty native label
+    expect(new Set(locales).size).toBe(locales.length);
+    for (const code of locales) {
+      expect(localeLabels[code]).toBeTruthy();
+    }
   });
 
   it('treats arabic/hebrew/persian/urdu as RTL', () => {

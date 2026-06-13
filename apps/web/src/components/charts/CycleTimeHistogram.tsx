@@ -8,15 +8,8 @@
  */
 
 import { useMemo } from 'react';
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { useTranslations } from 'next-intl';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 export interface CycleTimeHistogramProps {
   /** Raw cycle times in days. The component buckets them. */
@@ -43,11 +36,8 @@ function bucketize(values: number[], maxDays = DEFAULT_MAX_DAYS) {
   return out;
 }
 
-export function CycleTimeHistogram({
-  values,
-  buckets,
-  height = 240,
-}: CycleTimeHistogramProps) {
+export function CycleTimeHistogram({ values, buckets, height = 240 }: CycleTimeHistogramProps) {
+  const t = useTranslations('charts');
   const data = useMemo(() => {
     if (buckets && buckets.length > 0) return buckets;
     return bucketize(values ?? []);
@@ -77,8 +67,8 @@ export function CycleTimeHistogram({
             borderRadius: 8,
             fontSize: 12,
           }}
-          formatter={(v: number) => [`${v} issues`, 'Count']}
-          labelFormatter={(l) => `Cycle ${l}`}
+          formatter={(v: number) => [t('issuesCount', { count: v }), t('count')]}
+          labelFormatter={(l) => t('cycleLabel', { bucket: String(l) })}
         />
         <Bar dataKey="count" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
       </BarChart>

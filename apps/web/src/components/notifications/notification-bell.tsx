@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Bell,
   BellOff,
@@ -13,11 +14,7 @@ import {
   Inbox,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -33,11 +30,7 @@ import { cn } from '@/lib/utils';
 
 type TabKey = 'all' | 'unread' | 'mentions';
 
-const TABS: { key: TabKey; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'unread', label: 'Unread' },
-  { key: 'mentions', label: 'Mentions' },
-];
+const TABS: { key: TabKey }[] = [{ key: 'all' }, { key: 'unread' }, { key: 'mentions' }];
 
 const LIST_PREVIEW_LIMIT = 8;
 
@@ -59,46 +52,45 @@ function NotificationRow({
   onSelect: () => void;
   onMarkRead: (id: string) => void;
 }) {
+  const t = useTranslations('notifications');
   const actorName =
     notification.type === 'ai_draft_failed'
-      ? 'AI draft'
+      ? t('actor.ai_draft')
       : notification.type === 'agent_run_failed'
-        ? 'Agent run'
+        ? t('actor.agent_run')
         : notification.actor?.name ||
           notification.actor?.email?.split('@')[0] ||
-          'Someone';
+          t('actor.someone');
   const initial =
-    (notification.actor?.name || notification.actor?.email || '?')[0]?.toUpperCase() ??
-    '?';
+    (notification.actor?.name || notification.actor?.email || '?')[0]?.toUpperCase() ?? '?';
 
-  const isMention =
-    notification.type === 'mention' || notification.type === 'comment';
+  const isMention = notification.type === 'mention' || notification.type === 'comment';
 
   const body = (
     <div
       className={cn(
-        'row-interactive relative flex items-start gap-3 px-4 py-3 pr-3 transition-all duration-150 ease-snap',
+        'row-interactive ease-snap relative flex items-start gap-3 px-4 py-3 pr-3 transition-all duration-150',
         !notification.isRead && 'bg-primary/[0.04]'
       )}
     >
       {!notification.isRead && (
         <span
           aria-hidden="true"
-          className="absolute left-0 top-0 bottom-0 w-[2px] bg-gradient-to-b from-primary to-primary/60"
+          className="from-primary to-primary/60 absolute bottom-0 left-0 top-0 w-[2px] bg-gradient-to-b"
         />
       )}
 
       <div className={cn('relative shrink-0', !notification.isRead && 'realtime-ping')}>
         {notification.type === 'ai_draft_failed' ? (
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/10 text-destructive ring-1 ring-destructive/30">
+          <span className="bg-destructive/10 text-destructive ring-destructive/30 flex h-8 w-8 items-center justify-center rounded-full ring-1">
             <Sparkles className="h-3.5 w-3.5" />
           </span>
         ) : notification.type === 'agent_run_failed' ? (
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/10 text-destructive ring-1 ring-destructive/30">
+          <span className="bg-destructive/10 text-destructive ring-destructive/30 flex h-8 w-8 items-center justify-center rounded-full ring-1">
             <Bot className="h-3.5 w-3.5" />
           </span>
         ) : (
-          <Avatar className="h-8 w-8 ring-1 ring-border">
+          <Avatar className="ring-border h-8 w-8 ring-1">
             <AvatarImage src={notification.actor?.image || undefined} alt="" />
             <AvatarFallback className="text-[10px] font-semibold">{initial}</AvatarFallback>
           </Avatar>
@@ -106,7 +98,7 @@ function NotificationRow({
         {isMention && (
           <span
             aria-hidden="true"
-            className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-primary-foreground ring-2 ring-background"
+            className="bg-primary text-primary-foreground ring-background absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full ring-2"
           >
             <AtSign className="h-2 w-2" />
           </span>
@@ -114,8 +106,8 @@ function NotificationRow({
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="text-sm leading-snug line-clamp-2">
-          <span className="font-medium text-foreground">{actorName}</span>{' '}
+        <p className="line-clamp-2 text-sm leading-snug">
+          <span className="text-foreground font-medium">{actorName}</span>{' '}
           <span className="text-muted-foreground">
             {notification.message || notification.title}
           </span>
@@ -124,7 +116,7 @@ function NotificationRow({
 
       <div className="flex shrink-0 flex-col items-end gap-1.5">
         <time
-          className="text-[11px] text-muted-foreground tabular-nums"
+          className="text-muted-foreground text-[11px] tabular-nums"
           dateTime={new Date(notification.createdAt).toISOString()}
         >
           {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: false })}
@@ -132,16 +124,16 @@ function NotificationRow({
         {!notification.isRead && (
           <button
             type="button"
-            aria-label="Mark read"
+            aria-label={t('row.mark_read')}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               onMarkRead(notification.id);
             }}
-            className="inline-flex h-5 items-center gap-1 rounded-sm px-1.5 text-[10px] font-medium text-muted-foreground opacity-0 transition-all duration-150 ease-snap hover:bg-muted hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover/row:opacity-100"
+            className="text-muted-foreground ease-snap hover:bg-muted hover:text-foreground focus-visible:ring-ring inline-flex h-5 items-center gap-1 rounded-sm px-1.5 text-[10px] font-medium opacity-0 transition-all duration-150 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 group-hover/row:opacity-100"
           >
             <Check className="h-3 w-3" />
-            Mark read
+            {t('row.mark_read')}
           </button>
         )}
       </div>
@@ -222,20 +214,21 @@ function ShimmerRow() {
 }
 
 function EmptyState({ tab }: { tab: TabKey }) {
+  const t = useTranslations('notifications');
   const copy: Record<TabKey, { title: string; hint: string; Icon: typeof Inbox }> = {
     all: {
-      title: 'No notifications yet',
-      hint: 'Mentions, updates, and AI run alerts will show up here.',
+      title: t('bell.empty.all.title'),
+      hint: t('bell.empty.all.hint'),
       Icon: Inbox,
     },
     unread: {
-      title: 'You are all caught up',
-      hint: 'Nothing unread — nice work staying on top of things.',
+      title: t('bell.empty.unread.title'),
+      hint: t('bell.empty.unread.hint'),
       Icon: BellOff,
     },
     mentions: {
-      title: 'No mentions yet',
-      hint: 'When teammates @mention or comment on you, they appear here.',
+      title: t('bell.empty.mentions.title'),
+      hint: t('bell.empty.mentions.hint'),
       Icon: AtSign,
     },
   };
@@ -247,17 +240,24 @@ function EmptyState({ tab }: { tab: TabKey }) {
     >
       <div
         aria-hidden="true"
-        className="relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-primary/[0.02] ring-1 ring-border"
+        className="from-primary/10 to-primary/[0.02] ring-border relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br ring-1"
       >
-        <Icon className="h-5 w-5 text-muted-foreground" />
+        <Icon className="text-muted-foreground h-5 w-5" />
       </div>
-      <p className="text-sm font-medium text-foreground">{title}</p>
-      <p className="max-w-[220px] text-xs text-muted-foreground">{hint}</p>
+      <p className="text-foreground text-sm font-medium">{title}</p>
+      <p className="text-muted-foreground max-w-[220px] text-xs">{hint}</p>
     </div>
   );
 }
 
+const DAY_GROUP_KEY: Record<DayGroup, string> = {
+  Today: 'today',
+  Yesterday: 'yesterday',
+  Earlier: 'earlier',
+};
+
 export function NotificationBell() {
+  const t = useTranslations('notifications');
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<TabKey>('all');
   const { data, isLoading } = useNotifications();
@@ -268,9 +268,8 @@ export function NotificationBell() {
   const notifications = data?.notifications || [];
   const mentionsCount = useMemo(
     () =>
-      notifications.filter(
-        (n) => (n.type === 'mention' || n.type === 'comment') && !n.isRead
-      ).length,
+      notifications.filter((n) => (n.type === 'mention' || n.type === 'comment') && !n.isRead)
+        .length,
     [notifications]
   );
 
@@ -285,10 +284,7 @@ export function NotificationBell() {
     }
   }, [notifications, tab]);
 
-  const visible = useMemo(
-    () => filtered.slice(0, LIST_PREVIEW_LIMIT),
-    [filtered]
-  );
+  const visible = useMemo(() => filtered.slice(0, LIST_PREVIEW_LIMIT), [filtered]);
   const hasMore = filtered.length > LIST_PREVIEW_LIMIT;
 
   const grouped = useMemo(() => {
@@ -319,8 +315,12 @@ export function NotificationBell() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative transition-all duration-150 ease-snap focus-visible:ring-2 focus-visible:ring-ring"
-          aria-label={`Notifications${hasUnread ? `, ${unreadCount} unread` : ''}`}
+          className="ease-snap focus-visible:ring-ring relative transition-all duration-150 focus-visible:ring-2"
+          aria-label={
+            hasUnread
+              ? t('bell.trigger_aria_unread', { count: unreadCount })
+              : t('bell.trigger_aria')
+          }
           aria-haspopup="menu"
           aria-expanded={open}
         >
@@ -335,8 +335,8 @@ export function NotificationBell() {
               aria-hidden="true"
               key={unreadCount}
               className={cn(
-                'absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums',
-                'bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-sm ring-2 ring-background',
+                'absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums',
+                'from-primary to-primary/80 text-primary-foreground ring-background bg-gradient-to-br shadow-sm ring-2',
                 'animate-pop-in'
               )}
             >
@@ -346,7 +346,7 @@ export function NotificationBell() {
           {hasUnread && (
             <span
               aria-hidden="true"
-              className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary/60 animate-ping"
+              className="bg-primary/60 absolute -right-1 -top-1 h-4 w-4 animate-ping rounded-full"
             />
           )}
         </Button>
@@ -355,41 +355,39 @@ export function NotificationBell() {
       <PopoverContent
         align="end"
         role="menu"
-        aria-label="Notifications"
+        aria-label={t('bell.title')}
         data-state={open ? 'open' : 'closed'}
-        className="surface-card shadow-lg w-[380px] max-h-[520px] overflow-hidden flex flex-col rounded-lg p-0 animate-pop-in"
+        className="surface-card animate-pop-in flex max-h-[520px] w-[380px] flex-col overflow-hidden rounded-lg p-0 shadow-lg"
       >
         {/* Header */}
-        <div className="flex items-center justify-between gap-3 border-b border-border/60 px-4 py-2.5">
-          <div className="flex items-center gap-2 min-w-0">
-            <h2 className="text-sm font-semibold text-foreground">Notifications</h2>
+        <div className="border-border/60 flex items-center justify-between gap-3 border-b px-4 py-2.5">
+          <div className="flex min-w-0 items-center gap-2">
+            <h2 className="text-foreground text-sm font-semibold">{t('bell.title')}</h2>
             {hasUnread && (
-              <span className="chip-accent">
-                {displayCount} new
-              </span>
+              <span className="chip-accent">{t('bell.new_count', { count: displayCount })}</span>
             )}
           </div>
           <div className="flex items-center gap-0.5">
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground transition-all duration-150 ease-snap"
+              className="text-muted-foreground hover:text-foreground ease-snap h-7 px-2 text-xs transition-all duration-150"
               onClick={handleMarkAllAsRead}
               disabled={markAllAsRead.isPending || !hasUnread}
-              aria-label="Mark all as read"
+              aria-label={t('bell.mark_all_read')}
             >
               <CheckCheck className="mr-1.5 h-3.5 w-3.5" />
-              Mark all as read
+              {t('bell.mark_all_read')}
             </Button>
             <Button
               asChild
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-muted-foreground hover:text-foreground transition-all duration-150 ease-snap"
+              className="text-muted-foreground hover:text-foreground ease-snap h-7 w-7 transition-all duration-150"
             >
               <Link
                 href="/settings?tab=notifications"
-                aria-label="Notification settings"
+                aria-label={t('bell.settings_aria')}
                 onClick={() => setOpen(false)}
               >
                 <Settings className="h-3.5 w-3.5" />
@@ -401,40 +399,38 @@ export function NotificationBell() {
         {/* Tabs */}
         <div
           role="tablist"
-          aria-label="Notification filter"
-          className="flex items-center gap-1 px-4 pt-2.5 pb-2"
+          aria-label={t('bell.tabs_aria')}
+          className="flex items-center gap-1 px-4 pb-2 pt-2.5"
         >
-          {TABS.map((t) => {
-            const active = tab === t.key;
+          {TABS.map((tabItem) => {
+            const active = tab === tabItem.key;
             const count =
-              t.key === 'unread'
+              tabItem.key === 'unread'
                 ? unreadCount
-                : t.key === 'mentions'
+                : tabItem.key === 'mentions'
                   ? mentionsCount
                   : 0;
             return (
               <button
-                key={t.key}
+                key={tabItem.key}
                 type="button"
                 role="tab"
                 aria-selected={active}
                 data-active={active ? 'true' : undefined}
-                onClick={() => setTab(t.key)}
+                onClick={() => setTab(tabItem.key)}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-all duration-150 ease-snap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  'ease-snap focus-visible:ring-ring inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2',
                   active
-                    ? 'bg-primary/10 text-primary ring-1 ring-primary/20'
+                    ? 'bg-primary/10 text-primary ring-primary/20 ring-1'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 )}
               >
-                {t.label}
+                {t(`bell.tabs.${tabItem.key}`)}
                 {count > 0 && (
                   <span
                     className={cn(
                       'inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] tabular-nums',
-                      active
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-foreground/70'
+                      active ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground/70'
                     )}
                   >
                     {count > 9 ? '9+' : count}
@@ -446,10 +442,10 @@ export function NotificationBell() {
         </div>
 
         {/* List */}
-        <ScrollArea className="flex-1 min-h-0">
+        <ScrollArea className="min-h-0 flex-1">
           {isLoading ? (
             <div role="status" aria-live="polite" aria-busy="true">
-              <span className="sr-only">Loading notifications</span>
+              <span className="sr-only">{t('loading')}</span>
               <ShimmerRow />
               <ShimmerRow />
               <ShimmerRow />
@@ -461,8 +457,8 @@ export function NotificationBell() {
             <div>
               {grouped.map((group) => (
                 <section key={group.label}>
-                  <div className="px-4 pt-3 pb-1">
-                    <span className="kicker">{group.label}</span>
+                  <div className="px-4 pb-1 pt-3">
+                    <span className="kicker">{t(`day_group.${DAY_GROUP_KEY[group.label]}`)}</span>
                   </div>
                   <ul role="list" className="stagger">
                     {group.items.map((notification) => (
@@ -495,23 +491,21 @@ export function NotificationBell() {
 
         {/* Footer */}
         {(visible.length > 0 || hasMore) && (
-          <div className="border-t border-border/60 px-2 py-1.5">
+          <div className="border-border/60 border-t px-2 py-1.5">
             <Button
               asChild
               variant="ghost"
               size="sm"
-              className="w-full justify-center text-xs text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground w-full justify-center text-xs"
             >
               <Link
                 href="/notifications"
                 onClick={() => setOpen(false)}
-                aria-label="View all notifications"
+                aria-label={t('bell.view_all_aria')}
               >
-                View all
+                {t('bell.view_all')}
                 {hasMore && (
-                  <span className="ml-1.5 text-muted-foreground/70">
-                    ({filtered.length})
-                  </span>
+                  <span className="text-muted-foreground/70 ml-1.5">({filtered.length})</span>
                 )}
               </Link>
             </Button>

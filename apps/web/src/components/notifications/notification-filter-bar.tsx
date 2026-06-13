@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { CheckCheck, RefreshCw, Search } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -14,29 +15,24 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
-export type InvolvementFilter =
-  | 'all'
-  | 'assigned'
-  | 'created'
-  | 'subscribed'
-  | 'mentions';
+export type InvolvementFilter = 'all' | 'assigned' | 'created' | 'subscribed' | 'mentions';
 
 export type StatusFilter = 'inbox' | 'read' | 'unread' | 'archived' | 'snoozed';
 
 export type NotificationSort = 'newest' | 'oldest' | 'priority';
 
-export const INVOLVEMENT_FILTERS: { key: InvolvementFilter; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'assigned', label: 'Assigned' },
-  { key: 'created', label: 'Created' },
-  { key: 'subscribed', label: 'Subscribed' },
-  { key: 'mentions', label: 'Mentions' },
+export const INVOLVEMENT_FILTERS: { key: InvolvementFilter }[] = [
+  { key: 'all' },
+  { key: 'assigned' },
+  { key: 'created' },
+  { key: 'subscribed' },
+  { key: 'mentions' },
 ];
 
-const SORT_OPTIONS: { key: NotificationSort; label: string }[] = [
-  { key: 'newest', label: 'Newest first' },
-  { key: 'oldest', label: 'Oldest first' },
-  { key: 'priority', label: 'By priority' },
+const SORT_OPTIONS: { key: NotificationSort }[] = [
+  { key: 'newest' },
+  { key: 'oldest' },
+  { key: 'priority' },
 ];
 
 export interface NotificationFilterBarProps {
@@ -85,6 +81,8 @@ export function NotificationFilterBar({
   onSortChange,
   totalCount,
 }: NotificationFilterBarProps) {
+  const t = useTranslations('notifications');
+
   // `status` is still consumed by the parent shell; we keep it in the props
   // contract so the shell's filter state stays source-of-truth even though
   // the redesigned bar no longer exposes the legacy status dropdown.
@@ -96,18 +94,17 @@ export function NotificationFilterBar({
   const showSort = typeof onSortChange === 'function' && sort !== undefined;
   const hasSearch = typeof search === 'string' && search.trim().length > 0;
   const filtersActive = involvement !== 'all' || hasSearch;
-  const showCounter =
-    filtersActive && typeof totalCount === 'number' && totalCount > 0;
+  const showCounter = filtersActive && typeof totalCount === 'number' && totalCount > 0;
   const canMarkAllRead = !markAllDisabled && unreadCount > 0;
 
   return (
-    <div className="flex flex-col gap-2 border-b border-border/60 bg-background/60 px-4 pb-2 pt-3">
+    <div className="border-border/60 bg-background/60 flex flex-col gap-2 border-b px-4 pb-2 pt-3">
       {/* Row 1 — search + actions */}
       <div className="flex items-center gap-2">
         {showSearch ? (
           <div className="relative min-w-0 flex-1">
             <Search
-              className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+              className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2"
               aria-hidden="true"
             />
             <Input
@@ -115,9 +112,9 @@ export function NotificationFilterBar({
               type="search"
               value={search ?? ''}
               onChange={(e) => onSearchChange?.(e.target.value)}
-              placeholder="Search notifications…"
-              aria-label="Search notifications"
-              className="h-8 rounded-sm bg-muted/40 pl-8 pr-2 text-[12px] placeholder:text-muted-foreground/70 focus-visible:bg-background"
+              placeholder={t('filter.search_placeholder')}
+              aria-label={t('filter.search_aria')}
+              className="bg-muted/40 placeholder:text-muted-foreground/70 focus-visible:bg-background h-8 rounded-sm pl-8 pr-2 text-[12px]"
             />
           </div>
         ) : (
@@ -125,24 +122,17 @@ export function NotificationFilterBar({
         )}
 
         {showSort ? (
-          <Select
-            value={sort}
-            onValueChange={(v) => onSortChange?.(v as NotificationSort)}
-          >
+          <Select value={sort} onValueChange={(v) => onSortChange?.(v as NotificationSort)}>
             <SelectTrigger
-              aria-label="Sort notifications"
-              className="h-8 w-[140px] rounded-sm bg-muted/40 px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground"
+              aria-label={t('filter.sort_aria')}
+              className="bg-muted/40 text-muted-foreground hover:text-foreground h-8 w-[140px] rounded-sm px-2 text-[11px] font-medium"
             >
-              <SelectValue placeholder="Sort" />
+              <SelectValue placeholder={t('filter.sort_placeholder')} />
             </SelectTrigger>
             <SelectContent align="end" className="min-w-[160px]">
               {SORT_OPTIONS.map((opt) => (
-                <SelectItem
-                  key={opt.key}
-                  value={opt.key}
-                  className="text-[12px]"
-                >
-                  {opt.label}
+                <SelectItem key={opt.key} value={opt.key} className="text-[12px]">
+                  {t(`filter.sort.${opt.key}`)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -155,12 +145,12 @@ export function NotificationFilterBar({
             size="sm"
             type="button"
             onClick={onMarkAllRead}
-            className="h-8 gap-1.5 rounded-sm px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground"
-            aria-label="Mark all as read"
-            title="Mark all as read"
+            className="text-muted-foreground hover:text-foreground h-8 gap-1.5 rounded-sm px-2 text-[11px] font-medium"
+            aria-label={t('filter.mark_all_read_aria')}
+            title={t('filter.mark_all_read_aria')}
           >
             <CheckCheck className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Mark all read</span>
+            <span className="hidden sm:inline">{t('filter.mark_all_read')}</span>
           </Button>
         ) : null}
 
@@ -168,23 +158,21 @@ export function NotificationFilterBar({
           variant="ghost"
           size="icon"
           type="button"
-          className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-          aria-label="Refresh notifications"
-          title="Refresh"
+          className="text-muted-foreground hover:text-foreground h-8 w-8 shrink-0"
+          aria-label={t('filter.refresh_aria')}
+          title={t('filter.refresh')}
           onClick={onRefresh}
           disabled={isRefreshing}
         >
-          <RefreshCw
-            className={cn('h-3.5 w-3.5', isRefreshing && 'animate-spin')}
-          />
+          <RefreshCw className={cn('h-3.5 w-3.5', isRefreshing && 'animate-spin')} />
         </Button>
       </div>
 
       {/* Row 2 — segmented chips (horizontally scrollable on narrow) */}
       <div
         role="tablist"
-        aria-label="Filter by involvement"
-        className="flex items-center gap-1.5 overflow-x-auto scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        aria-label={t('filter.involvement_aria')}
+        className="scrollbar-none flex items-center gap-1.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {INVOLVEMENT_FILTERS.map((f) => {
           const active = involvement === f.key;
@@ -197,23 +185,23 @@ export function NotificationFilterBar({
               data-active={active ? 'true' : undefined}
               onClick={() => onInvolvementChange(f.key)}
               className={cn(
-                'shrink-0 rounded-sm px-2.5 py-1 text-[11px] font-medium transition-all duration-150 ease-snap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                'ease-snap focus-visible:ring-ring shrink-0 rounded-sm px-2.5 py-1 text-[11px] font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2',
                 active
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
-              {f.label}
+              {t(`filter.involvement.${f.key}`)}
               {f.key === 'mentions' && active && (
-                <span className="sr-only"> (isolates @-tag notifications)</span>
+                <span className="sr-only"> {t('filter.mentions_hint')}</span>
               )}
             </button>
           );
         })}
 
         {showCounter ? (
-          <span className="ml-auto shrink-0 pl-2 text-[11px] text-muted-foreground">
-            {unreadCount} unread of {totalCount}
+          <span className="text-muted-foreground ml-auto shrink-0 pl-2 text-[11px]">
+            {t('filter.unread_of_total', { unread: unreadCount, total: totalCount })}
           </span>
         ) : null}
       </div>

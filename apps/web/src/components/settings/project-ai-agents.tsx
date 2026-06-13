@@ -4,6 +4,7 @@
 // under `exactOptionalPropertyTypes`. See docs/TS_STRICT_MIGRATION.md.
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,12 +12,41 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { useProjectAgents, useProjectAgentStream, useRunProjectAgent, useUpdateProjectAgents } from '@/lib/hooks/use-agents';
-import { AGENT_CAPABILITY_DETAILS, normalizeProjectAgentSettings, type ProjectAgentSettings } from '@/lib/agents/config';
-import { Activity, ArrowRight, Bot, Clock3, Cpu, Loader2, Play, Radar, ShieldCheck, Sparkles, Wand2, Wifi, WifiOff } from 'lucide-react';
+import {
+  useProjectAgents,
+  useProjectAgentStream,
+  useRunProjectAgent,
+  useUpdateProjectAgents,
+} from '@/lib/hooks/use-agents';
+import {
+  AGENT_CAPABILITY_DETAILS,
+  normalizeProjectAgentSettings,
+  type ProjectAgentSettings,
+} from '@/lib/agents/config';
+import {
+  Activity,
+  ArrowRight,
+  Bot,
+  Clock3,
+  Cpu,
+  Loader2,
+  Play,
+  Radar,
+  ShieldCheck,
+  Sparkles,
+  Wand2,
+  Wifi,
+  WifiOff,
+} from 'lucide-react';
 
 const EMPTY_SETTINGS: ProjectAgentSettings = {
   enabled: false,
@@ -39,27 +69,27 @@ function formatRunKind(kind: string) {
   return kind.replaceAll('_', ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function formatCredentialSource(source: 'workspace' | 'platform' | 'server_env' | null) {
+function credentialSourceKey(source: 'workspace' | 'platform' | 'server_env' | null) {
   if (source === 'workspace') {
-    return 'Workspace secret';
+    return 'projectAi.cred_workspace_secret';
   }
 
   if (source === 'platform') {
-    return 'Platform default';
+    return 'projectAi.cred_platform_default';
   }
 
   if (source === 'server_env') {
-    return 'Server env';
+    return 'projectAi.cred_server_env';
   }
 
-  return 'Not configured';
+  return 'projectAi.cred_not_configured';
 }
 
-function formatServiceStateLabel(state: 'ready' | 'blocked' | 'disabled' | 'preview') {
-  if (state === 'ready') return 'Ready';
-  if (state === 'blocked') return 'Blocked';
-  if (state === 'disabled') return 'Disabled';
-  return 'Preview';
+function serviceStateLabelKey(state: 'ready' | 'blocked' | 'disabled' | 'preview') {
+  if (state === 'ready') return 'projectAi.state_ready';
+  if (state === 'blocked') return 'projectAi.state_blocked';
+  if (state === 'disabled') return 'projectAi.state_disabled';
+  return 'projectAi.state_preview';
 }
 
 function getServiceBadgeVariant(state: 'ready' | 'blocked' | 'disabled' | 'preview') {
@@ -84,21 +114,21 @@ function getProjectIssueAction(
   if (issue.code === 'global_paused') {
     return {
       href: '/admin?tab=agents',
-      label: 'Open AI Ops',
+      labelKey: 'projectAi.open_ai_ops',
     };
   }
 
   if (issue.scope === 'workspace' || issue.scope === 'provider') {
     return {
       href: '/settings?tab=ai-agents',
-      label: 'Open workspace AI settings',
+      labelKey: 'projectAi.open_workspace_settings',
     };
   }
 
   if (issue.scope === 'project') {
     return {
       href: `/projects/${projectId}/settings?tab=ai-agents`,
-      label: 'Open project AI settings',
+      labelKey: 'projectAi.open_project_settings',
     };
   }
 
@@ -106,6 +136,7 @@ function getProjectIssueAction(
 }
 
 export function ProjectAiAgents({ projectId }: { projectId: string }) {
+  const t = useTranslations('settingsConfig');
   const { data, isLoading, error } = useProjectAgents(projectId);
   const stream = useProjectAgentStream(projectId, Boolean(data?.access.canView));
   const updateAgents = useUpdateProjectAgents(projectId);
@@ -128,43 +159,52 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
     try {
       await updateAgents.mutateAsync(formState);
       toast({
-        title: 'Project AI agents updated',
-        description: 'Project-level execution and capability rules were saved.',
+        title: t('projectAi.updated_toast_title'),
+        description: t('projectAi.updated_toast_desc'),
       });
     } catch (mutationError) {
       toast({
-        title: 'Failed to save project AI agents',
-        description: mutationError instanceof Error ? mutationError.message : 'Failed to save project AI agents',
+        title: t('projectAi.save_failed_title'),
+        description:
+          mutationError instanceof Error ? mutationError.message : t('projectAi.save_failed_title'),
         variant: 'destructive',
       });
     }
   }
 
-  async function handleRun(kind: 'project_tracking' | 'backlog_triage' | 'sprint_planning' | 'bulk_sprint_creation', dryRun = true) {
+  async function handleRun(
+    kind: 'project_tracking' | 'backlog_triage' | 'sprint_planning' | 'bulk_sprint_creation',
+    dryRun = true
+  ) {
     try {
       const result = await runAgent.mutateAsync({ kind, dryRun });
       toast({
-        title: dryRun || result.forcedDryRun ? 'Preview ready' : 'Agent run completed',
-        description: result.run.summary || `${formatRunKind(kind)} finished.`,
+        title:
+          dryRun || result.forcedDryRun
+            ? t('projectAi.preview_ready')
+            : t('projectAi.run_completed'),
+        description:
+          result.run.summary || t('projectAi.run_finished', { kind: formatRunKind(kind) }),
       });
     } catch (mutationError) {
       toast({
-        title: 'Failed to run project agent',
-        description: mutationError instanceof Error ? mutationError.message : 'Failed to run project agent',
+        title: t('projectAi.run_failed_title'),
+        description:
+          mutationError instanceof Error ? mutationError.message : t('projectAi.run_failed_title'),
         variant: 'destructive',
       });
     }
   }
 
   if (isLoading) {
-    return <div className="p-4 text-sm text-muted-foreground">Loading project AI agents...</div>;
+    return <div className="text-muted-foreground p-4 text-sm">{t('projectAi.loading')}</div>;
   }
 
   if (error || !data) {
     return (
       <Card>
-        <CardContent className="py-8 text-sm text-destructive">
-          {error instanceof Error ? error.message : 'Failed to load project AI agents.'}
+        <CardContent className="text-destructive py-8 text-sm">
+          {error instanceof Error ? error.message : t('projectAi.load_error')}
         </CardContent>
       </Card>
     );
@@ -173,17 +213,19 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
   const canManage = data.access.canManage;
   const recentRunsById = new Map(data.recentRuns.map((run) => [run.id, run]));
   const runBlockedReason = !canManage
-    ? 'You need project management access to run agents.'
+    ? t('projectAi.need_manage_access')
     : data.runAvailability.reason;
   const blockingIssues = data.configIssues.filter((issue) => issue.blocksRuns);
   const nonBlockingIssues = data.configIssues.filter((issue) => !issue.blocksRuns);
 
-  function getRunDisabledReason(capabilityKey: keyof NonNullable<typeof data>['effectiveSettings']['capabilities']) {
+  function getRunDisabledReason(
+    capabilityKey: keyof NonNullable<typeof data>['effectiveSettings']['capabilities']
+  ) {
     if (!data) {
-      return 'Loading project AI agents.';
+      return t('projectAi.loading');
     }
     if (!data.effectiveSettings.capabilities[capabilityKey]) {
-      return 'This capability is disabled in project policy.';
+      return t('projectAi.capability_disabled');
     }
 
     if (runBlockedReason) {
@@ -191,7 +233,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
     }
 
     if (runAgent.isPending) {
-      return 'A run is already in progress.';
+      return t('projectAi.run_in_progress');
     }
 
     return null;
@@ -204,55 +246,62 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <CardTitle>Project agents</CardTitle>
+                <CardTitle>{t('projectAi.title')}</CardTitle>
                 <Badge variant="outline">{data.project.key}</Badge>
               </div>
-              <CardDescription>
-                Shape how AI handles backlog triage, planning, and project follow-up inside this project.
-              </CardDescription>
+              <CardDescription>{t('projectAi.subtitle')}</CardDescription>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant={data.effectiveSettings.enabled ? 'default' : 'secondary'}>
-                {data.effectiveSettings.enabled ? 'Active' : 'Inactive'}
+                {data.effectiveSettings.enabled ? t('projectAi.active') : t('projectAi.inactive')}
               </Badge>
               <Badge variant="outline">{data.effectiveSettings.provider}</Badge>
               <Badge variant="outline">{data.effectiveSettings.executionMode}</Badge>
-              {data.selectedModelConfig ? <Badge variant="outline">{data.selectedModelConfig.name}</Badge> : null}
+              {data.selectedModelConfig ? (
+                <Badge variant="outline">{data.selectedModelConfig.name}</Badge>
+              ) : null}
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle className="text-base">Run gate</CardTitle>
-              <CardDescription>These checks decide whether a project run can start right now and where to fix blocked prerequisites.</CardDescription>
+              <CardTitle className="text-base">{t('projectAi.run_gate')}</CardTitle>
+              <CardDescription>{t('projectAi.run_gate_desc')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {data.configIssues.length === 0 ? (
-                <div className="rounded-lg border border-border/60 bg-muted/10 px-4 py-3 text-sm text-muted-foreground">
-                  This project is fully configured for AI runs. Start with a preview and then move into live writes when needed.
+                <div className="border-border/60 bg-muted/10 text-muted-foreground rounded-lg border px-4 py-3 text-sm">
+                  {t('projectAi.run_gate_ok')}
                 </div>
               ) : (
                 data.configIssues.map((issue) => {
                   const action = getProjectIssueAction(projectId, issue);
 
                   return (
-                    <div key={`${issue.code}-${issue.scope}`} className="rounded-lg border border-border/60 p-4">
+                    <div
+                      key={`${issue.code}-${issue.scope}`}
+                      className="border-border/60 rounded-lg border p-4"
+                    >
                       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="font-medium">{issue.title}</span>
                             <Badge variant={getIssueBadgeVariant(issue.severity)}>
-                              {issue.blocksRuns ? 'Blocks runs' : issue.severity === 'warning' ? 'Needs review' : 'Policy note'}
+                              {issue.blocksRuns
+                                ? t('projectAi.blocks_runs')
+                                : issue.severity === 'warning'
+                                  ? t('projectAi.needs_review')
+                                  : t('projectAi.policy_note')}
                             </Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground">{issue.detail}</p>
-                          <p className="text-xs text-muted-foreground">{issue.resolution}</p>
+                          <p className="text-muted-foreground text-sm">{issue.detail}</p>
+                          <p className="text-muted-foreground text-xs">{issue.resolution}</p>
                         </div>
                         {action ? (
                           <Button asChild variant="outline" size="sm">
                             <Link href={action.href}>
-                              {action.label}
+                              {t(action.labelKey)}
                               <ArrowRight className="h-3.5 w-3.5" />
                             </Link>
                           </Button>
@@ -264,7 +313,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
               )}
 
               {runBlockedReason ? (
-                <div className="rounded-lg border border-accent-amber/30 bg-accent-amber/10 px-4 py-3 text-sm text-accent-amber">
+                <div className="border-accent-amber/30 bg-accent-amber/10 text-accent-amber rounded-lg border px-4 py-3 text-sm">
                   {runBlockedReason}
                 </div>
               ) : null}
@@ -274,36 +323,44 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <RuntimeStatCard
               icon={Activity}
-              label="Running now"
+              label={t('projectAi.stat_running_now')}
               value={String(data.runtimeSummary.runningRuns)}
-              detail="Active runs for this project"
+              detail={t('projectAi.stat_running_now_detail')}
             />
             <RuntimeStatCard
               icon={Cpu}
-              label="Provider"
+              label={t('projectAi.stat_provider')}
               value={data.effectiveSettings.provider}
-              detail={data.providerStatus.ready ? 'Runnable now' : 'Blocked'}
+              detail={
+                data.providerStatus.ready ? t('projectAi.runnable_now') : t('projectAi.blocked')
+              }
             />
             <RuntimeStatCard
               icon={Clock3}
-              label="Last completed"
+              label={t('projectAi.stat_last_completed')}
               value={
                 data.runtimeSummary.lastCompletedAt
-                  ? formatDistanceToNow(new Date(data.runtimeSummary.lastCompletedAt), { addSuffix: true })
-                  : 'None yet'
+                  ? formatDistanceToNow(new Date(data.runtimeSummary.lastCompletedAt), {
+                      addSuffix: true,
+                    })
+                  : t('projectAi.none_yet')
               }
-              detail="Most recent successful or preview completion"
+              detail={t('projectAi.stat_last_completed_detail')}
             />
             <RuntimeStatCard
               icon={ShieldCheck}
-              label="Write mode"
-              value={data.effectiveSettings.allowWriteActions ? 'Enabled' : 'Preview'}
+              label={t('projectAi.stat_write_mode')}
+              value={
+                data.effectiveSettings.allowWriteActions
+                  ? t('projectAi.enabled')
+                  : t('projectAi.preview')
+              }
               detail={
                 data.effectiveSettings.allowWriteActions
                   ? data.effectiveSettings.requireApprovalForWrites
-                    ? 'Approval still required'
-                    : 'Live writes available'
-                  : 'Writes are forced into preview'
+                    ? t('projectAi.approval_required')
+                    : t('projectAi.live_writes_available')
+                  : t('projectAi.writes_forced_preview')
               }
             />
           </div>
@@ -311,39 +368,50 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
             <Card className="border-border/60">
               <CardHeader>
-                <CardTitle className="text-base">Runtime policy</CardTitle>
-                <CardDescription>Project overrides can further restrict what the workspace allows.</CardDescription>
+                <CardTitle className="text-base">{t('projectAi.runtime_policy')}</CardTitle>
+                <CardDescription>{t('projectAi.runtime_policy_desc')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
                 <div className="grid gap-3">
-                  <div className="flex items-center justify-between rounded-lg border border-border/60 p-4">
+                  <div className="border-border/60 flex items-center justify-between rounded-lg border p-4">
                     <div>
-                      <div className="font-medium">Enable project agents</div>
-                      <p className="text-sm text-muted-foreground">Turns agent runs on for this project.</p>
+                      <div className="font-medium">{t('projectAi.enable_agents')}</div>
+                      <p className="text-muted-foreground text-sm">
+                        {t('projectAi.enable_agents_desc')}
+                      </p>
                     </div>
                     <Switch
                       checked={formState.enabled}
-                      onCheckedChange={(checked) => setFormState((current) => ({ ...current, enabled: checked }))}
-                      disabled={!canManage}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between rounded-lg border border-border/60 p-4">
-                    <div>
-                      <div className="font-medium">Inherit workspace defaults</div>
-                      <p className="text-sm text-muted-foreground">Keep provider, execution mode, and capabilities aligned with workspace policy.</p>
-                    </div>
-                    <Switch
-                      checked={formState.inheritWorkspaceDefaults}
                       onCheckedChange={(checked) =>
-                        setFormState((current) => ({ ...current, inheritWorkspaceDefaults: checked }))
+                        setFormState((current) => ({ ...current, enabled: checked }))
                       }
                       disabled={!canManage}
                     />
                   </div>
-                  <div className="flex items-center justify-between rounded-lg border border-border/60 p-4">
+                  <div className="border-border/60 flex items-center justify-between rounded-lg border p-4">
                     <div>
-                      <div className="font-medium">Allow write actions</div>
-                      <p className="text-sm text-muted-foreground">Required for backlog edits and creating sprint batches.</p>
+                      <div className="font-medium">{t('projectAi.inherit_defaults')}</div>
+                      <p className="text-muted-foreground text-sm">
+                        {t('projectAi.inherit_defaults_desc')}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formState.inheritWorkspaceDefaults}
+                      onCheckedChange={(checked) =>
+                        setFormState((current) => ({
+                          ...current,
+                          inheritWorkspaceDefaults: checked,
+                        }))
+                      }
+                      disabled={!canManage}
+                    />
+                  </div>
+                  <div className="border-border/60 flex items-center justify-between rounded-lg border p-4">
+                    <div>
+                      <div className="font-medium">{t('projectAi.allow_writes')}</div>
+                      <p className="text-muted-foreground text-sm">
+                        {t('projectAi.allow_writes_desc')}
+                      </p>
                     </div>
                     <Switch
                       checked={formState.allowWriteActions}
@@ -357,11 +425,14 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label>Execution mode</Label>
+                    <Label>{t('projectAi.execution_mode')}</Label>
                     <Select
                       value={formState.executionMode}
                       onValueChange={(value) =>
-                        setFormState((current) => ({ ...current, executionMode: value as ProjectAgentSettings['executionMode'] }))
+                        setFormState((current) => ({
+                          ...current,
+                          executionMode: value as ProjectAgentSettings['executionMode'],
+                        }))
                       }
                       disabled={!canManage}
                     >
@@ -369,14 +440,14 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="manual">Manual</SelectItem>
-                        <SelectItem value="assistive">Assistive</SelectItem>
-                        <SelectItem value="auto">Autonomous</SelectItem>
+                        <SelectItem value="manual">{t('projectAi.mode_manual')}</SelectItem>
+                        <SelectItem value="assistive">{t('projectAi.mode_assistive')}</SelectItem>
+                        <SelectItem value="auto">{t('projectAi.mode_autonomous')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="issue-capacity">Issues per sprint</Label>
+                    <Label htmlFor="issue-capacity">{t('projectAi.issues_per_sprint')}</Label>
                     <Input
                       id="issue-capacity"
                       type="number"
@@ -386,7 +457,10 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                       onChange={(event) =>
                         setFormState((current) => ({
                           ...current,
-                          issueCapacityPerSprint: Math.max(3, Number.parseInt(event.target.value || '3', 10) || 3),
+                          issueCapacityPerSprint: Math.max(
+                            3,
+                            Number.parseInt(event.target.value || '3', 10) || 3
+                          ),
                         }))
                       }
                       disabled={!canManage}
@@ -396,7 +470,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
 
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="space-y-2">
-                    <Label htmlFor="batch-size">Sprint batch size</Label>
+                    <Label htmlFor="batch-size">{t('projectAi.sprint_batch_size')}</Label>
                     <Input
                       id="batch-size"
                       type="number"
@@ -406,14 +480,17 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                       onChange={(event) =>
                         setFormState((current) => ({
                           ...current,
-                          sprintBatchSize: Math.max(1, Number.parseInt(event.target.value || '1', 10) || 1),
+                          sprintBatchSize: Math.max(
+                            1,
+                            Number.parseInt(event.target.value || '1', 10) || 1
+                          ),
                         }))
                       }
                       disabled={!canManage}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="sprint-length">Sprint length (days)</Label>
+                    <Label htmlFor="sprint-length">{t('projectAi.sprint_length')}</Label>
                     <Input
                       id="sprint-length"
                       type="number"
@@ -423,17 +500,22 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                       onChange={(event) =>
                         setFormState((current) => ({
                           ...current,
-                          sprintLengthDays: Math.max(7, Number.parseInt(event.target.value || '7', 10) || 7),
+                          sprintLengthDays: Math.max(
+                            7,
+                            Number.parseInt(event.target.value || '7', 10) || 7
+                          ),
                         }))
                       }
                       disabled={!canManage}
                     />
                   </div>
                   <div className="flex items-end">
-                    <div className="flex w-full items-center justify-between rounded-lg border border-border/60 p-4">
+                    <div className="border-border/60 flex w-full items-center justify-between rounded-lg border p-4">
                       <div>
-                        <div className="font-medium">Auto-assign backlog</div>
-                        <p className="text-sm text-muted-foreground">Place issues into planned sprints when batches are created.</p>
+                        <div className="font-medium">{t('projectAi.auto_assign')}</div>
+                        <p className="text-muted-foreground text-sm">
+                          {t('projectAi.auto_assign_desc')}
+                        </p>
                       </div>
                       <Switch
                         checked={formState.autoAssignToPlannedSprints}
@@ -451,100 +533,151 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
               </CardContent>
             </Card>
 
-              <Card className="border-border/60">
-                <CardHeader>
-                  <CardTitle className="text-base">Effective controls</CardTitle>
-                  <CardDescription>The final policy after workspace and admin safeguards are applied.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                  <MetricRow label="Enabled" value={data.effectiveSettings.enabled ? 'Yes' : 'No'} />
-                  <MetricRow label="Provider" value={`${data.effectiveSettings.provider} · ${data.effectiveSettings.model}`} />
+            <Card className="border-border/60">
+              <CardHeader>
+                <CardTitle className="text-base">{t('projectAi.effective_controls')}</CardTitle>
+                <CardDescription>{t('projectAi.effective_controls_desc')}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <MetricRow
+                  label={t('projectAi.metric_enabled')}
+                  value={data.effectiveSettings.enabled ? t('projectAi.yes') : t('projectAi.no')}
+                />
+                <MetricRow
+                  label={t('projectAi.metric_provider')}
+                  value={`${data.effectiveSettings.provider} · ${data.effectiveSettings.model}`}
+                />
+                <MetricRow
+                  label={t('projectAi.metric_model_profile')}
+                  value={
+                    data.selectedModelConfig
+                      ? `${data.selectedModelConfig.name} · ${t('projectAi.rev_count', { count: data.selectedModelConfig.revisionCount })}`
+                      : t('projectAi.manual_workspace_model')
+                  }
+                />
+                <MetricRow
+                  label={t('projectAi.metric_provider_readiness')}
+                  value={
+                    data.providerStatus.ready
+                      ? t('projectAi.ready')
+                      : t('projectAi.needs_attention')
+                  }
+                />
+                <MetricRow
+                  label={t('projectAi.metric_credential_source')}
+                  value={t(credentialSourceKey(data.providerStatus.source))}
+                />
+                <MetricRow
+                  label={t('projectAi.metric_credential')}
+                  value={data.providerStatus.label || t('projectAi.none')}
+                />
+                <MetricRow
+                  label={t('projectAi.metric_write_actions')}
+                  value={
+                    data.effectiveSettings.allowWriteActions
+                      ? t('projectAi.allowed')
+                      : t('projectAi.preview_only')
+                  }
+                />
+                <MetricRow
+                  label={t('projectAi.metric_approval_guard')}
+                  value={
+                    data.effectiveSettings.requireApprovalForWrites
+                      ? t('projectAi.required')
+                      : t('projectAi.not_required')
+                  }
+                />
+                <MetricRow
+                  label={t('projectAi.metric_daily_limit')}
+                  value={String(data.effectiveSettings.dailyRunLimit)}
+                />
+                <MetricRow
+                  label={t('projectAi.metric_project_role')}
+                  value={data.access.projectRole || data.access.orgRole || 'viewer'}
+                />
+                {data.providerStatus.updatedAt ? (
                   <MetricRow
-                    label="Model profile"
-                    value={
-                      data.selectedModelConfig
-                        ? `${data.selectedModelConfig.name} · ${data.selectedModelConfig.revisionCount} rev`
-                        : 'Manual workspace model'
-                    }
+                    label={t('projectAi.metric_credential_updated')}
+                    value={new Date(data.providerStatus.updatedAt).toLocaleString()}
                   />
-                  <MetricRow label="Provider readiness" value={data.providerStatus.ready ? 'Ready' : 'Needs attention'} />
-                  <MetricRow label="Credential source" value={formatCredentialSource(data.providerStatus.source)} />
-                  <MetricRow label="Credential" value={data.providerStatus.label || 'None'} />
-                  <MetricRow label="Write actions" value={data.effectiveSettings.allowWriteActions ? 'Allowed' : 'Preview only'} />
-                  <MetricRow label="Approval guard" value={data.effectiveSettings.requireApprovalForWrites ? 'Required' : 'Not required'} />
-                  <MetricRow label="Daily run limit" value={String(data.effectiveSettings.dailyRunLimit)} />
-                  <MetricRow label="Project role" value={data.access.projectRole || data.access.orgRole || 'viewer'} />
-                  {data.providerStatus.updatedAt ? (
-                    <MetricRow label="Credential updated" value={new Date(data.providerStatus.updatedAt).toLocaleString()} />
-                  ) : null}
-                  {data.selectedModelConfig ? (
-                    <div className="rounded-lg border border-border/60 bg-muted/10 px-3 py-3 text-xs text-muted-foreground">
-                      Workspace is using the saved profile <span className="font-medium text-foreground">{data.selectedModelConfig.name}</span>.
-                      {data.selectedModelConfig.description ? ` ${data.selectedModelConfig.description}` : ''}
-                    </div>
-                  ) : null}
-                  {!data.providerStatus.ready ? (
-                    <div className="rounded-lg border border-accent-amber/30 bg-accent-amber/10 px-3 py-2 text-xs text-accent-amber">
-                      {data.providerStatus.summary}
-                    </div>
-                  ) : null}
-                  {blockingIssues.length > 0 ? (
-                    <div className="rounded-lg border border-border/60 bg-muted/10 px-3 py-3 text-xs text-muted-foreground">
-                      {blockingIssues.length} blocking setup item{blockingIssues.length === 1 ? '' : 's'} must be fixed before a run can start.
-                    </div>
-                  ) : null}
-                  {nonBlockingIssues.length > 0 ? (
-                    <div className="rounded-lg border border-border/60 bg-muted/10 px-3 py-3 text-xs text-muted-foreground">
-                      {nonBlockingIssues.length} policy note{nonBlockingIssues.length === 1 ? '' : 's'} still affect write behavior and autonomy.
-                    </div>
-                  ) : null}
-                </CardContent>
-              </Card>
+                ) : null}
+                {data.selectedModelConfig ? (
+                  <div className="border-border/60 bg-muted/10 text-muted-foreground rounded-lg border px-3 py-3 text-xs">
+                    {t('projectAi.using_profile_prefix')}{' '}
+                    <span className="text-foreground font-medium">
+                      {data.selectedModelConfig.name}
+                    </span>
+                    .
+                    {data.selectedModelConfig.description
+                      ? ` ${data.selectedModelConfig.description}`
+                      : ''}
+                  </div>
+                ) : null}
+                {!data.providerStatus.ready ? (
+                  <div className="border-accent-amber/30 bg-accent-amber/10 text-accent-amber rounded-lg border px-3 py-2 text-xs">
+                    {data.providerStatus.summary}
+                  </div>
+                ) : null}
+                {blockingIssues.length > 0 ? (
+                  <div className="border-border/60 bg-muted/10 text-muted-foreground rounded-lg border px-3 py-3 text-xs">
+                    {t('projectAi.blocking_items_note', { count: blockingIssues.length })}
+                  </div>
+                ) : null}
+                {nonBlockingIssues.length > 0 ? (
+                  <div className="border-border/60 bg-muted/10 text-muted-foreground rounded-lg border px-3 py-3 text-xs">
+                    {t('projectAi.policy_notes_note', { count: nonBlockingIssues.length })}
+                  </div>
+                ) : null}
+              </CardContent>
+            </Card>
 
-              <Card className="border-border/60">
-                <CardHeader>
-                  <CardTitle className="text-base">Service status</CardTitle>
-                  <CardDescription>Concrete execution gates for this project.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {data.serviceStatus.map((service) => (
-                    <div key={service.key} className="rounded-lg border border-border/60 p-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="font-medium">{service.label}</span>
-                        <Badge variant={getServiceBadgeVariant(service.state)}>
-                          {formatServiceStateLabel(service.state)}
-                        </Badge>
-                      </div>
-                      <p className="mt-2 text-sm text-muted-foreground">{service.detail}</p>
+            <Card className="border-border/60">
+              <CardHeader>
+                <CardTitle className="text-base">{t('projectAi.service_status')}</CardTitle>
+                <CardDescription>{t('projectAi.service_status_desc')}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {data.serviceStatus.map((service) => (
+                  <div key={service.key} className="border-border/60 rounded-lg border p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-medium">{service.label}</span>
+                      <Badge variant={getServiceBadgeVariant(service.state)}>
+                        {t(serviceStateLabelKey(service.state))}
+                      </Badge>
                     </div>
-                  ))}
-                  {data.runtimeSummary.lastFailure ? (
-                    <div className="rounded-lg border border-accent-amber/30 bg-accent-amber/10 px-3 py-2 text-xs text-accent-amber">
-                      Last failure: {data.runtimeSummary.lastFailure}
-                    </div>
-                  ) : null}
-                </CardContent>
-              </Card>
-            </div>
+                    <p className="text-muted-foreground mt-2 text-sm">{service.detail}</p>
+                  </div>
+                ))}
+                {data.runtimeSummary.lastFailure ? (
+                  <div className="border-accent-amber/30 bg-accent-amber/10 text-accent-amber rounded-lg border px-3 py-2 text-xs">
+                    {t('projectAi.last_failure', { error: data.runtimeSummary.lastFailure })}
+                  </div>
+                ) : null}
+              </CardContent>
+            </Card>
+          </div>
 
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle className="text-base">Capabilities</CardTitle>
-              <CardDescription>Each capability can be narrowed further than the workspace default.</CardDescription>
+              <CardTitle className="text-base">{t('projectAi.capabilities')}</CardTitle>
+              <CardDescription>{t('projectAi.capabilities_desc')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {Object.entries(AGENT_CAPABILITY_DETAILS).map(([key, details]) => (
-                <div key={key} className="flex flex-col gap-4 rounded-lg border border-border/60 p-4 lg:flex-row lg:items-center lg:justify-between">
+                <div
+                  key={key}
+                  className="border-border/60 flex flex-col gap-4 rounded-lg border p-4 lg:flex-row lg:items-center lg:justify-between"
+                >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{details.label}</span>
                       {details.writes.length > 0 ? (
                         <Badge variant="outline">{details.writes.join(' · ')}</Badge>
                       ) : (
-                        <Badge variant="secondary">Read only</Badge>
+                        <Badge variant="secondary">{t('projectAi.read_only')}</Badge>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">{details.description}</p>
+                    <p className="text-muted-foreground text-sm">{details.description}</p>
                   </div>
                   <Switch
                     checked={formState.capabilities[key as keyof typeof formState.capabilities]}
@@ -566,45 +699,49 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
 
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle className="text-base">Manual runs</CardTitle>
-              <CardDescription>Run previews safely, then move to live writes when the project is ready.</CardDescription>
+              <CardTitle className="text-base">{t('projectAi.manual_runs')}</CardTitle>
+              <CardDescription>{t('projectAi.manual_runs_desc')}</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 lg:grid-cols-2">
               <RunCard
-                title="Project health scan"
-                description="Read-only scan for overdue, blocked, and unassigned work."
+                title={t('projectAi.run_health_title')}
+                description={t('projectAi.run_health_desc')}
                 icon={Activity}
                 onPreview={() => handleRun('project_tracking', true)}
-                previewLabel="Run scan"
+                previewLabel={t('projectAi.run_scan')}
                 reason={getRunDisabledReason('project_tracking')}
                 lastRun={data.lastRunByKind.project_tracking}
+                t={t}
               />
               <RunCard
-                title="Backlog triage"
-                description="Refresh issue priority and add triage labels across the backlog."
+                title={t('projectAi.run_triage_title')}
+                description={t('projectAi.run_triage_desc')}
                 icon={Radar}
                 onPreview={() => handleRun('backlog_triage', true)}
                 onLive={() => handleRun('backlog_triage', false)}
                 reason={getRunDisabledReason('backlog_triage')}
                 lastRun={data.lastRunByKind.backlog_triage}
+                t={t}
               />
               <RunCard
-                title="Sprint planning preview"
-                description="Prepare the next sprint batch without writing to the project."
+                title={t('projectAi.run_planning_title')}
+                description={t('projectAi.run_planning_desc')}
                 icon={Bot}
                 onPreview={() => handleRun('sprint_planning', true)}
-                previewLabel="Preview plan"
+                previewLabel={t('projectAi.preview_plan')}
                 reason={getRunDisabledReason('sprint_planning')}
                 lastRun={data.lastRunByKind.sprint_planning}
+                t={t}
               />
               <RunCard
-                title="Bulk sprint creation"
-                description="Create planned sprints in sequence and optionally pre-assign backlog issues."
+                title={t('projectAi.run_bulk_title')}
+                description={t('projectAi.run_bulk_desc')}
                 icon={Wand2}
                 onPreview={() => handleRun('bulk_sprint_creation', true)}
                 onLive={() => handleRun('bulk_sprint_creation', false)}
                 reason={getRunDisabledReason('bulk_sprint_creation')}
                 lastRun={data.lastRunByKind.bulk_sprint_creation}
+                t={t}
               />
             </CardContent>
           </Card>
@@ -613,17 +750,25 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
             <CardHeader>
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <CardTitle className="text-base">Live runtime</CardTitle>
-                  <CardDescription>Real-time status and logs for runs happening in this project right now.</CardDescription>
+                  <CardTitle className="text-base">{t('projectAi.live_runtime')}</CardTitle>
+                  <CardDescription>{t('projectAi.live_runtime_desc')}</CardDescription>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant={stream.isConnected ? 'outline' : 'secondary'} className="gap-1">
-                    {stream.isConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                    {stream.isConnected ? 'Stream connected' : 'Stream reconnecting'}
+                    {stream.isConnected ? (
+                      <Wifi className="h-3 w-3" />
+                    ) : (
+                      <WifiOff className="h-3 w-3" />
+                    )}
+                    {stream.isConnected
+                      ? t('projectAi.stream_connected')
+                      : t('projectAi.stream_reconnecting')}
                   </Badge>
                   {stream.lastEventAt ? (
                     <Badge variant="outline">
-                      Last event {formatDistanceToNow(new Date(stream.lastEventAt), { addSuffix: true })}
+                      {t('projectAi.last_event', {
+                        ago: formatDistanceToNow(new Date(stream.lastEventAt), { addSuffix: true }),
+                      })}
                     </Badge>
                   ) : null}
                 </div>
@@ -631,20 +776,22 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
             </CardHeader>
             <CardContent className="space-y-4">
               {stream.liveRuns.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-border/60 p-6 text-sm text-muted-foreground">
-                  No active runs right now. Start a preview to watch progress and logs appear here.
+                <div className="border-border/60 text-muted-foreground rounded-lg border border-dashed p-6 text-sm">
+                  {t('projectAi.no_active_runs')}
                 </div>
               ) : (
                 stream.liveRuns.map((run) => {
                   const runMeta = recentRunsById.get(run.executionId);
 
                   return (
-                    <div key={run.executionId} className="rounded-lg border border-border/60 p-4">
+                    <div key={run.executionId} className="border-border/60 rounded-lg border p-4">
                       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                         <div className="space-y-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="font-medium">
-                              {runMeta ? formatRunKind(runMeta.kind) : `Run ${run.executionId.slice(0, 8)}`}
+                              {runMeta
+                                ? formatRunKind(runMeta.kind)
+                                : t('projectAi.run_label', { id: run.executionId.slice(0, 8) })}
                             </span>
                             <Badge
                               variant={
@@ -657,40 +804,51 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                             >
                               {run.status}
                             </Badge>
-                            {runMeta ? <Badge variant="outline">{runMeta.dryRun ? 'Preview' : 'Live'}</Badge> : null}
+                            {runMeta ? (
+                              <Badge variant="outline">
+                                {runMeta.dryRun ? t('projectAi.preview') : t('projectAi.live')}
+                              </Badge>
+                            ) : null}
                           </div>
-                          <p className="text-sm text-muted-foreground">
-                            {runMeta?.summary || 'Run is active. Logs will stream below as the agent works.'}
+                          <p className="text-muted-foreground text-sm">
+                            {runMeta?.summary || t('projectAi.run_active_logs')}
                           </p>
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          Updated {formatDistanceToNow(new Date(run.updatedAt), { addSuffix: true })}
+                        <div className="text-muted-foreground text-xs">
+                          {t('projectAi.updated_ago', {
+                            ago: formatDistanceToNow(new Date(run.updatedAt), { addSuffix: true }),
+                          })}
                         </div>
                       </div>
 
                       <div className="mt-4 space-y-2">
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>Progress</span>
+                        <div className="text-muted-foreground flex items-center justify-between text-xs">
+                          <span>{t('projectAi.progress')}</span>
                           <span>{Math.max(0, Math.min(100, Math.round(run.progress)))}%</span>
                         </div>
                         <Progress value={Math.max(0, Math.min(100, Math.round(run.progress)))} />
                       </div>
 
-                      <div className="mt-4 max-h-56 overflow-y-auto rounded-lg border border-border/60 bg-muted/10">
+                      <div className="border-border/60 bg-muted/10 mt-4 max-h-56 overflow-y-auto rounded-lg border">
                         {run.logs.length === 0 ? (
-                          <div className="p-3 text-sm text-muted-foreground">Waiting for agent logs…</div>
+                          <div className="text-muted-foreground p-3 text-sm">
+                            {t('projectAi.waiting_logs')}
+                          </div>
                         ) : (
-                          <div className="divide-y divide-border/50">
+                          <div className="divide-border/50 divide-y">
                             {run.logs.map((log) => (
-                              <div key={`${run.executionId}-${log.logIndex}`} className="flex gap-3 px-3 py-2 text-xs">
-                                <span className="w-16 shrink-0 text-muted-foreground">
+                              <div
+                                key={`${run.executionId}-${log.logIndex}`}
+                                className="flex gap-3 px-3 py-2 text-xs"
+                              >
+                                <span className="text-muted-foreground w-16 shrink-0">
                                   {new Date(log.timestamp).toLocaleTimeString()}
                                 </span>
                                 <span
                                   className={
                                     log.type === 'stderr'
-                                      ? 'font-mono text-destructive'
-                                      : 'font-mono text-foreground/90'
+                                      ? 'text-destructive font-mono'
+                                      : 'text-foreground/90 font-mono'
                                   }
                                 >
                                   {log.content}
@@ -701,7 +859,9 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                         )}
                       </div>
 
-                      {run.error ? <p className="mt-3 text-sm text-destructive">{run.error}</p> : null}
+                      {run.error ? (
+                        <p className="text-destructive mt-3 text-sm">{run.error}</p>
+                      ) : null}
                     </div>
                   );
                 })
@@ -713,27 +873,32 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
             <CardHeader>
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <CardTitle className="text-base">Recent runs</CardTitle>
-                  <CardDescription>Most recent agent runs for this project, including previews and live writes.</CardDescription>
+                  <CardTitle className="text-base">{t('projectAi.recent_runs')}</CardTitle>
+                  <CardDescription>{t('projectAi.recent_runs_desc')}</CardDescription>
                 </div>
                 <div className="flex items-center justify-end gap-2">
                   <Button
                     variant="outline"
-                    onClick={() => setFormState(normalizeProjectAgentSettings(data.projectSettings))}
+                    onClick={() =>
+                      setFormState(normalizeProjectAgentSettings(data.projectSettings))
+                    }
                     disabled={!hasChanges || updateAgents.isPending}
                   >
-                    Reset
+                    {t('projectAi.reset')}
                   </Button>
-                  <Button onClick={handleSave} disabled={!hasChanges || !canManage || updateAgents.isPending}>
+                  <Button
+                    onClick={handleSave}
+                    disabled={!hasChanges || !canManage || updateAgents.isPending}
+                  >
                     {updateAgents.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving
+                        {t('projectAi.saving')}
                       </>
                     ) : (
                       <>
                         <Sparkles className="mr-2 h-4 w-4" />
-                        Save project policy
+                        {t('projectAi.save_project_policy')}
                       </>
                     )}
                   </Button>
@@ -742,29 +907,47 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
             </CardHeader>
             <CardContent className="space-y-3">
               {data.recentRuns.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-border/60 p-6 text-sm text-muted-foreground">
-                  No agent runs yet. Start with a project health scan or sprint planning preview.
+                <div className="border-border/60 text-muted-foreground rounded-lg border border-dashed p-6 text-sm">
+                  {t('projectAi.no_runs')}
                 </div>
               ) : (
                 data.recentRuns.map((run) => (
-                  <div key={run.id} className="rounded-lg border border-border/60 p-4">
+                  <div key={run.id} className="border-border/60 rounded-lg border p-4">
                     <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-medium">{formatRunKind(run.kind)}</span>
-                          <Badge variant={run.status === 'completed' ? 'default' : run.status === 'failed' ? 'destructive' : 'secondary'}>
+                          <Badge
+                            variant={
+                              run.status === 'completed'
+                                ? 'default'
+                                : run.status === 'failed'
+                                  ? 'destructive'
+                                  : 'secondary'
+                            }
+                          >
                             {run.status}
                           </Badge>
-                          <Badge variant="outline">{run.dryRun ? 'Preview' : 'Live'}</Badge>
-                          {run.writeActionsCount > 0 ? <Badge variant="outline">{run.writeActionsCount} writes</Badge> : null}
+                          <Badge variant="outline">
+                            {run.dryRun ? t('projectAi.preview') : t('projectAi.live')}
+                          </Badge>
+                          {run.writeActionsCount > 0 ? (
+                            <Badge variant="outline">
+                              {t('projectAi.writes_count', { count: run.writeActionsCount })}
+                            </Badge>
+                          ) : null}
                         </div>
-                        <p className="text-sm text-muted-foreground">{run.summary || 'No summary recorded.'}</p>
+                        <p className="text-muted-foreground text-sm">
+                          {run.summary || t('projectAi.no_summary')}
+                        </p>
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-muted-foreground text-xs">
                         {formatDistanceToNow(new Date(run.createdAt), { addSuffix: true })}
                       </div>
                     </div>
-                    {run.error ? <p className="mt-3 text-sm text-destructive">{run.error}</p> : null}
+                    {run.error ? (
+                      <p className="text-destructive mt-3 text-sm">{run.error}</p>
+                    ) : null}
                   </div>
                 ))
               )}
@@ -782,9 +965,10 @@ function RunCard({
   icon: Icon,
   onPreview,
   onLive,
-  previewLabel = 'Preview',
+  previewLabel,
   reason,
   lastRun,
+  t,
 }: {
   title: string;
   description: string;
@@ -800,40 +984,54 @@ function RunCard({
     createdAt: string;
     error: string | null;
   };
+  t: (key: string, values?: Record<string, string | number>) => string;
 }) {
   const disabled = Boolean(reason);
+  const resolvedPreviewLabel = previewLabel ?? t('projectAi.preview');
 
   return (
-    <div className="rounded-lg border border-border/60 p-4">
+    <div className="border-border/60 rounded-lg border p-4">
       <div className="mb-3 flex items-center gap-2 font-medium">
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <Icon className="text-muted-foreground h-4 w-4" />
         {title}
       </div>
-      <p className="text-sm text-muted-foreground">{description}</p>
+      <p className="text-muted-foreground text-sm">{description}</p>
       {lastRun ? (
-        <div className="mt-3 rounded-lg border border-border/60 px-3 py-2">
+        <div className="border-border/60 mt-3 rounded-lg border px-3 py-2">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={lastRun.status === 'completed' ? 'default' : lastRun.status === 'failed' ? 'destructive' : 'secondary'}>
+            <Badge
+              variant={
+                lastRun.status === 'completed'
+                  ? 'default'
+                  : lastRun.status === 'failed'
+                    ? 'destructive'
+                    : 'secondary'
+              }
+            >
               {lastRun.status}
             </Badge>
-            <Badge variant="outline">{lastRun.dryRun ? 'Preview' : 'Live'}</Badge>
-            <span className="text-xs text-muted-foreground">
+            <Badge variant="outline">
+              {lastRun.dryRun ? t('projectAi.preview') : t('projectAi.live')}
+            </Badge>
+            <span className="text-muted-foreground text-xs">
               {formatDistanceToNow(new Date(lastRun.createdAt), { addSuffix: true })}
             </span>
           </div>
-          {lastRun.summary ? <p className="mt-2 text-sm text-muted-foreground">{lastRun.summary}</p> : null}
-          {lastRun.error ? <p className="mt-2 text-sm text-destructive">{lastRun.error}</p> : null}
+          {lastRun.summary ? (
+            <p className="text-muted-foreground mt-2 text-sm">{lastRun.summary}</p>
+          ) : null}
+          {lastRun.error ? <p className="text-destructive mt-2 text-sm">{lastRun.error}</p> : null}
         </div>
       ) : null}
-      {reason ? <p className="mt-3 text-xs text-muted-foreground">{reason}</p> : null}
+      {reason ? <p className="text-muted-foreground mt-3 text-xs">{reason}</p> : null}
       <div className="mt-4 flex flex-wrap gap-2">
         <Button variant="outline" size="sm" onClick={onPreview} disabled={disabled}>
           <Play className="mr-2 h-3.5 w-3.5" />
-          {previewLabel}
+          {resolvedPreviewLabel}
         </Button>
         {onLive ? (
           <Button size="sm" onClick={onLive} disabled={disabled}>
-            Run live
+            {t('projectAi.run_live')}
           </Button>
         ) : null}
       </div>
@@ -843,7 +1041,7 @@ function RunCard({
 
 function MetricRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-lg border border-border/60 px-3 py-2">
+    <div className="border-border/60 flex items-center justify-between gap-4 rounded-lg border px-3 py-2">
       <span className="text-muted-foreground">{label}</span>
       <span className="text-right font-medium">{value}</span>
     </div>
@@ -862,13 +1060,13 @@ function RuntimeStatCard({
   detail: string;
 }) {
   return (
-    <div className="rounded-lg border border-border/60 p-4">
+    <div className="border-border/60 rounded-lg border p-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <p className="text-muted-foreground text-xs uppercase tracking-[0.16em]">{label}</p>
+        <Icon className="text-muted-foreground h-4 w-4" />
       </div>
       <p className="mt-2 text-2xl font-semibold">{value}</p>
-      <p className="mt-1 text-sm text-muted-foreground">{detail}</p>
+      <p className="text-muted-foreground mt-1 text-sm">{detail}</p>
     </div>
   );
 }

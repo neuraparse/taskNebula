@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, ChevronRight, Layers3, Loader2, Plus, Target } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,6 +68,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function InitiativeRow({ node, depth }: { node: InitiativeNode; depth: number }) {
+  const t = useTranslations('pagesHome');
   const [expanded, setExpanded] = useState(true);
   const hasChildren = node.children.length > 0;
 
@@ -89,7 +91,7 @@ function InitiativeRow({ node, depth }: { node: InitiativeNode; depth: number })
       >
         <button
           type="button"
-          aria-label={expanded ? 'Collapse' : 'Expand'}
+          aria-label={expanded ? t('initiative_collapse') : t('initiative_expand')}
           onClick={() => setExpanded((v) => !v)}
           className={cn('text-muted-foreground h-4 w-4 shrink-0', !hasChildren && 'invisible')}
         >
@@ -130,6 +132,7 @@ function InitiativeRow({ node, depth }: { node: InitiativeNode; depth: number })
 }
 
 export function InitiativesClient() {
+  const t = useTranslations('pagesHome');
   const queryClient = useQueryClient();
   const { currentOrganizationId } = useOrganization();
   const { toast } = useToast();
@@ -150,7 +153,7 @@ export function InitiativesClient() {
   const createInitiative = useMutation({
     mutationFn: async (input: { name: string; description: string }) => {
       if (!currentOrganizationId) {
-        throw new Error('No workspace selected');
+        throw new Error(t('initiatives_error_no_workspace'));
       }
       const res = await fetch('/api/initiatives', {
         method: 'POST',
@@ -163,7 +166,7 @@ export function InitiativesClient() {
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(payload?.error || 'Failed to create initiative');
+        throw new Error(payload?.error || t('initiatives_error_create'));
       }
       return payload;
     },
@@ -172,12 +175,15 @@ export function InitiativesClient() {
       setIsCreateOpen(false);
       setName('');
       setDescription('');
-      toast({ title: 'Initiative created', description: 'Your initiative is ready.' });
+      toast({
+        title: t('initiatives_toast_created_title'),
+        description: t('initiatives_toast_created_description'),
+      });
     },
     onError: (error) => {
       toast({
-        title: 'Could not create initiative',
-        description: error instanceof Error ? error.message : 'Something went wrong',
+        title: t('initiatives_toast_error_title'),
+        description: error instanceof Error ? error.message : t('initiatives_error_generic'),
         variant: 'destructive',
       });
     },
@@ -197,20 +203,17 @@ export function InitiativesClient() {
       <div className="border-border bg-background border-b px-6 py-5">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
-            <span className="kicker">Workspace</span>
+            <span className="kicker">{t('initiatives_kicker')}</span>
             <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
               <Layers3 className="text-muted-foreground h-5 w-5" />
-              Initiatives
+              {t('initiatives_title')}
             </h1>
-            <p className="text-muted-foreground text-sm">
-              Multi-project workstreams. Initiatives can have sub-initiatives (up to 5 levels) and
-              roll up progress from every linked project.
-            </p>
+            <p className="text-muted-foreground text-sm">{t('initiatives_subtitle')}</p>
           </div>
           {canCreate ? (
             <Button size="sm" className="shrink-0" onClick={() => setIsCreateOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
-              New initiative
+              {t('initiatives_new')}
             </Button>
           ) : null}
         </div>
@@ -221,7 +224,7 @@ export function InitiativesClient() {
           <Card>
             <CardContent className="text-muted-foreground flex items-center justify-center py-12">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Loading initiatives...
+              {t('initiatives_loading')}
             </CardContent>
           </Card>
         ) : isEmpty ? (
@@ -231,20 +234,21 @@ export function InitiativesClient() {
                 <Layers3 className="h-5 w-5" />
               </div>
               <div className="space-y-1">
-                <p className="text-foreground text-sm font-medium">No initiatives yet</p>
+                <p className="text-foreground text-sm font-medium">
+                  {t('initiatives_empty_title')}
+                </p>
                 <p className="text-muted-foreground mx-auto max-w-sm text-sm">
-                  Group related projects into a workstream and track rolled-up progress in one
-                  place.
+                  {t('initiatives_empty_description')}
                 </p>
               </div>
               {canCreate ? (
                 <Button size="sm" onClick={() => setIsCreateOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" />
-                  New initiative
+                  {t('initiatives_new')}
                 </Button>
               ) : (
                 <p className="text-muted-foreground text-xs">
-                  Select a workspace to create an initiative.
+                  {t('initiatives_empty_no_workspace')}
                 </p>
               )}
             </CardContent>
@@ -252,17 +256,17 @@ export function InitiativesClient() {
         ) : (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Tree</CardTitle>
+              <CardTitle className="text-base">{t('initiatives_tree')}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <div className="border-border bg-surface text-muted-foreground flex items-center gap-3 border-b px-3 py-2 text-[10px] font-medium uppercase tracking-wider">
                 <div className="h-4 w-4 shrink-0" />
                 <div className="h-4 w-4 shrink-0" />
-                <div className="flex-1">Name</div>
-                <div className="w-[68px] shrink-0">Status</div>
-                <div className="w-40 shrink-0">Progress</div>
-                <div className="w-12 shrink-0 text-right">%</div>
-                <div className="w-24 shrink-0 text-right">Target</div>
+                <div className="flex-1">{t('initiatives_col_name')}</div>
+                <div className="w-[68px] shrink-0">{t('initiatives_col_status')}</div>
+                <div className="w-40 shrink-0">{t('initiatives_col_progress')}</div>
+                <div className="w-12 shrink-0 text-right">{t('initiatives_col_percent')}</div>
+                <div className="w-24 shrink-0 text-right">{t('initiatives_col_target')}</div>
               </div>
               {data!.initiatives.map((node) => (
                 <InitiativeRow key={node.id} node={node} depth={0} />
@@ -278,33 +282,33 @@ export function InitiativesClient() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>New initiative</DialogTitle>
+            <DialogTitle>{t('initiatives_new')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="initiative-name">Name</Label>
+              <Label htmlFor="initiative-name">{t('initiatives_form_name')}</Label>
               <Input
                 id="initiative-name"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="Q3 platform reliability, Mobile launch..."
+                placeholder={t('initiatives_form_name_placeholder')}
                 autoFocus
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="initiative-description">Description</Label>
+              <Label htmlFor="initiative-description">{t('initiatives_form_description')}</Label>
               <Textarea
                 id="initiative-description"
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
-                placeholder="What is this workstream about? (optional)"
+                placeholder={t('initiatives_form_description_placeholder')}
                 rows={3}
               />
             </div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={resetDialog}>
-              Cancel
+              {t('initiatives_form_cancel')}
             </Button>
             <Button
               onClick={() =>
@@ -312,7 +316,9 @@ export function InitiativesClient() {
               }
               disabled={!name.trim() || !canCreate || createInitiative.isPending}
             >
-              {createInitiative.isPending ? 'Creating...' : 'Create initiative'}
+              {createInitiative.isPending
+                ? t('initiatives_form_creating')
+                : t('initiatives_form_submit')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -9,11 +10,7 @@ import {
   CommandInput,
   CommandItem,
 } from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -32,6 +29,7 @@ interface StatusPickerProps {
 }
 
 export function StatusPicker({ projectId, value, onChange, disabled }: StatusPickerProps) {
+  const t = useTranslations('issueMisc');
   const [open, setOpen] = useState(false);
   const [statuses, setStatuses] = useState<WorkflowStatus[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,7 +60,7 @@ export function StatusPicker({ projectId, value, onChange, disabled }: StatusPic
           variant="ghost"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between h-8 px-2 text-sm rounded-md hover:bg-accent transition-colors duration-150 ease-snap"
+          className="hover:bg-accent ease-snap h-8 w-full justify-between rounded-md px-2 text-sm transition-colors duration-150"
           disabled={disabled || loading}
         >
           {selectedStatus ? (
@@ -74,15 +72,15 @@ export function StatusPicker({ projectId, value, onChange, disabled }: StatusPic
               {selectedStatus.name}
             </div>
           ) : (
-            'Select status...'
+            t('select_status_placeholder')
           )}
           <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-40" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[300px] p-0">
         <Command>
-          <CommandInput placeholder="Search status..." />
-          <CommandEmpty>No status found.</CommandEmpty>
+          <CommandInput placeholder={t('search_status_placeholder')} />
+          <CommandEmpty>{t('no_status_found')}</CommandEmpty>
           <CommandGroup>
             {statuses.map((status) => (
               <CommandItem
@@ -94,10 +92,7 @@ export function StatusPicker({ projectId, value, onChange, disabled }: StatusPic
                 }}
               >
                 <Check
-                  className={cn(
-                    'mr-2 h-4 w-4',
-                    value === status.id ? 'opacity-100' : 'opacity-0'
-                  )}
+                  className={cn('mr-2 h-4 w-4', value === status.id ? 'opacity-100' : 'opacity-0')}
                 />
                 <div
                   className="mr-2 h-2 w-2 rounded-full"
@@ -112,4 +107,3 @@ export function StatusPicker({ projectId, value, onChange, disabled }: StatusPic
     </Popover>
   );
 }
-
