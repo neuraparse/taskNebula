@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.6.4] - 2026-06-13
+
+### Fixed
+
+- **Light (day) mode legibility across all overlay surfaces.** The shared `.glass-panel` surface — which backs every modal/dialog, the Cmd+K command palette, and popovers — was hardcoded as a dark glass slab in _both_ themes, so in light mode dark panels with light text floated over the bright app (illegible icons/text/backgrounds). `.glass-panel` is now theme-aware: a frosted-white surface in light mode and the original dark glass in dark mode (preserved byte-for-byte, no night-mode regression). The dark-coupled internals of the command palette and the AI disclosure modal, plus non-adaptive `slate`/`white`-opacity fills in module cards, notification items, label pills, and sticky notes, were converted to semantic design-system tokens (`foreground`/`muted-foreground`/`muted`/`accent`/`border`) so they resolve correctly in both themes. Verified in light and dark via screenshots; 204 web test suites green.
+
 ## [0.6.3] - 2026-06-13
 
 ### Changed
