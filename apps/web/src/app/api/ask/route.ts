@@ -36,7 +36,10 @@ function sseFrame(event: unknown): Uint8Array {
   return new TextEncoder().encode(`data: ${JSON.stringify(event)}\n\n`);
 }
 
-async function resolveOrganizationId(userId: string, requested?: string | null): Promise<string | null> {
+async function resolveOrganizationId(
+  userId: string,
+  requested?: string | null
+): Promise<string | null> {
   if (requested) {
     const [member] = await db
       .select({ organizationId: organizationMembers.organizationId })
@@ -75,16 +78,18 @@ export async function POST(request: NextRequest) {
     payload = bodySchema.parse(await request.json());
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: err.errors },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid input', details: err.errors }, { status: 400 });
     }
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
   // --- rate limit -----------------------------------------------------------
-  const rl = await consumeRateLimit({ bucket: 'ask', key: session.user.id, limit: 10, windowSec: 60 });
+  const rl = await consumeRateLimit({
+    bucket: 'ask',
+    key: session.user.id,
+    limit: 10,
+    windowSec: 60,
+  });
   if (!rl.allowed) {
     return NextResponse.json(
       {
@@ -208,7 +213,7 @@ export async function POST(request: NextRequest) {
             userId,
             feature: 'ask',
             provider: 'anthropic',
-            model: lastUsage.model || (process.env.CLAUDE_ASK_MODEL ?? 'claude-sonnet-4-7'),
+            model: lastUsage.model || (process.env.CLAUDE_ASK_MODEL ?? 'claude-sonnet-4-6'),
             promptHash: lastUsage.promptHash || '',
             inputTokens: lastUsage.inputTokens || 0,
             outputTokens: lastUsage.outputTokens || 0,

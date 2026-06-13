@@ -34,7 +34,7 @@ export interface AskOptions {
   organizationId: string;
   projectId?: string | null;
   scope?: AskScope;
-  /** Override the Claude model. Defaults to env CLAUDE_ASK_MODEL or claude-sonnet-4-7. */
+  /** Override the Claude model. Defaults to env CLAUDE_ASK_MODEL or claude-sonnet-4-6. */
   model?: string;
   /** Inject the Anthropic API key (test/admin). Defaults to ANTHROPIC_API_KEY. */
   anthropicApiKey?: string | null;
@@ -80,10 +80,12 @@ export class AskError extends Error {
 // --- pricing (USD per 1M tokens) -------------------------------------------
 
 const CLAUDE_PRICING: Record<string, { in: number; out: number }> = {
-  // Sonnet-class models. Conservative defaults; admins can override via env.
-  'claude-sonnet-4-7': { in: 3, out: 15 },
+  // USD per 1M tokens (input / output). Conservative defaults; admins can override via env.
+  'claude-fable-5': { in: 10, out: 50 },
+  'claude-opus-4-8': { in: 5, out: 25 },
+  'claude-opus-4-7': { in: 5, out: 25 },
   'claude-sonnet-4-6': { in: 3, out: 15 },
-  'claude-3-5-sonnet': { in: 3, out: 15 },
+  'claude-haiku-4-5': { in: 1, out: 5 },
 };
 
 function estimateCost(model: string, inTok: number, outTok: number): number {
@@ -511,7 +513,7 @@ export async function runAsk(options: AskOptions): Promise<AskBundle> {
   const start = Date.now();
   const fetchImpl = options.fetchImpl ?? fetch;
   const scope: AskScope = options.scope ?? 'all';
-  const model = options.model || process.env.CLAUDE_ASK_MODEL || 'claude-sonnet-4-7';
+  const model = options.model || process.env.CLAUDE_ASK_MODEL || 'claude-sonnet-4-6';
 
   if (!options.query || options.query.trim().length === 0) {
     throw new AskError('invalid_query', 'Query is required.');

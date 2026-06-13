@@ -53,7 +53,7 @@ export interface CatchMeUpRequest {
 // Cheapest Claude tier that still produces decent prose. Operators can
 // override via aiAgents.model in workspace settings; tasks gravitate to
 // Haiku unless the org pays for something heftier.
-export const CATCH_ME_UP_DEFAULT_MODEL = 'claude-haiku-4-7';
+export const CATCH_ME_UP_DEFAULT_MODEL = 'claude-haiku-4-5';
 
 /**
  * Deterministic fallback — buckets notifications by urgency heuristic so the
@@ -64,8 +64,7 @@ export function catchMeUpNative(request: CatchMeUpRequest): CatchMeUpResponse {
   const { notifications, since } = request;
   if (notifications.length === 0) {
     return {
-      summary_markdown:
-        'No new activity since your last visit. You are fully caught up.',
+      summary_markdown: 'No new activity since your last visit. You are fully caught up.',
       action_items: [],
     };
   }
@@ -83,7 +82,9 @@ export function catchMeUpNative(request: CatchMeUpRequest): CatchMeUpResponse {
   const lines: string[] = [];
   lines.push(`### Since ${since.toISOString().slice(0, 10)}`);
   lines.push('');
-  lines.push(`**${notifications.length} update${notifications.length === 1 ? '' : 's'}** across **${byProject.size} project${byProject.size === 1 ? '' : 's'}**.`);
+  lines.push(
+    `**${notifications.length} update${notifications.length === 1 ? '' : 's'}** across **${byProject.size} project${byProject.size === 1 ? '' : 's'}**.`
+  );
   lines.push('');
 
   for (const [projectKey, items] of byProject.entries()) {

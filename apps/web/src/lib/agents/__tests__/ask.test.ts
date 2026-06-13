@@ -95,7 +95,9 @@ describe('runAsk — Claude streaming (mocked)', () => {
     expect(types).toContain('token');
     expect(types[types.length - 1]).toBe('done');
 
-    const tokens = events.filter((e): e is Extract<AskEvent, { type: 'token' }> => e.type === 'token');
+    const tokens = events.filter(
+      (e): e is Extract<AskEvent, { type: 'token' }> => e.type === 'token'
+    );
     const joined = tokens.map((t) => t.text).join('');
     expect(joined).toBe('Hello [Source: TN-A].');
 
@@ -108,16 +110,16 @@ describe('runAsk — Claude streaming (mocked)', () => {
   });
 
   it('emits an error frame when Anthropic returns 401', async () => {
-    const fetchImpl = jest.fn(async () =>
-      new Response('forbidden', { status: 401 })
-    );
+    const fetchImpl = jest.fn(async () => new Response('forbidden', { status: 401 }));
     const bundle = await runAsk({
       query: 'anything',
       organizationId: 'org_1',
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
     const events = await collect(bundle.events);
-    const err = events.find((e) => e.type === 'error') as Extract<AskEvent, { type: 'error' }> | undefined;
+    const err = events.find((e) => e.type === 'error') as
+      | Extract<AskEvent, { type: 'error' }>
+      | undefined;
     expect(err).toBeDefined();
     expect(err!.code).toBe('provider_auth_failed');
   });
@@ -137,12 +139,44 @@ describe('runAsk — Claude streaming (mocked)', () => {
 describe('runAsk — internal helpers', () => {
   it('mergeHybrid dedupes by (type,id) and ranks by combined score', () => {
     const bm25 = [
-      { type: 'issue' as const, id: 'a', key: 'TASK-1', title: 'A', snippet: '', score: 10, signal: 'bm25' as const },
-      { type: 'issue' as const, id: 'b', key: 'TASK-2', title: 'B', snippet: '', score: 5, signal: 'bm25' as const },
+      {
+        type: 'issue' as const,
+        id: 'a',
+        key: 'TASK-1',
+        title: 'A',
+        snippet: '',
+        score: 10,
+        signal: 'bm25' as const,
+      },
+      {
+        type: 'issue' as const,
+        id: 'b',
+        key: 'TASK-2',
+        title: 'B',
+        snippet: '',
+        score: 5,
+        signal: 'bm25' as const,
+      },
     ];
     const vector = [
-      { type: 'issue' as const, id: 'a', key: 'TASK-1', title: 'A', snippet: '', score: 0.9, signal: 'vector' as const },
-      { type: 'issue' as const, id: 'c', key: 'TASK-3', title: 'C', snippet: '', score: 0.8, signal: 'vector' as const },
+      {
+        type: 'issue' as const,
+        id: 'a',
+        key: 'TASK-1',
+        title: 'A',
+        snippet: '',
+        score: 0.9,
+        signal: 'vector' as const,
+      },
+      {
+        type: 'issue' as const,
+        id: 'c',
+        key: 'TASK-3',
+        title: 'C',
+        snippet: '',
+        score: 0.8,
+        signal: 'vector' as const,
+      },
     ];
     const merged = __internal.mergeHybrid([bm25, vector]);
     expect(merged[0]!.id).toBe('a');
@@ -156,11 +190,13 @@ describe('runAsk — internal helpers', () => {
     ]);
     expect(message).toContain('[TN-TASK-9]');
     expect(message).toContain('[DOC-d1]');
-    expect(message).toContain('Now answer the question. Remember: every claim ends with [Source: ...].');
+    expect(message).toContain(
+      'Now answer the question. Remember: every claim ends with [Source: ...].'
+    );
   });
 
   it('estimateCost applies the per-model price table', () => {
-    const sonnet = __internal.estimateCost('claude-sonnet-4-7', 1_000_000, 1_000_000);
+    const sonnet = __internal.estimateCost('claude-sonnet-4-6', 1_000_000, 1_000_000);
     expect(sonnet).toBeCloseTo(18, 5);
   });
 

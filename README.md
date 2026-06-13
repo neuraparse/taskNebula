@@ -211,11 +211,11 @@ redeploy when you rotate a key.
 
 ### Supported providers & models
 
-| Provider      | Models out of the box                                                                                                     |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| **OpenAI**    | `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-4`, `gpt-3.5-turbo`, `o1`, `o1-mini`, plus the speculative `gpt-5.x` family  |
-| **Anthropic** | `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5`, plus `claude-3-5-sonnet`, `claude-3-5-haiku`, `claude-3-opus` |
-| **Native**    | Built-in heuristic planner (no API calls)                                                                                 |
+| Provider      | Models out of the box                                                                                                           |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **OpenAI**    | `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-4`, `gpt-3.5-turbo`, `o1`, `o1-mini`, plus the speculative `gpt-5.x` family        |
+| **Anthropic** | `claude-fable-5`, `claude-opus-4-8`, `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5` (defaults to `claude-opus-4-8`) |
+| **Native**    | Built-in heuristic planner (no API calls)                                                                                       |
 
 ### Fails gracefully
 
@@ -265,6 +265,29 @@ The 2026.05 roadmap merge introduced 34 features in a single push.
 - Native charts dashboard (Recharts) with AI-generated insights.
 
 See the [CHANGELOG](CHANGELOG.md) for the complete list.
+
+---
+
+## Languages
+
+TaskNebula ships **30 languages** out of the box. On a visitor's first load the
+app auto-selects their language from the browser/device (`Accept-Language`,
+quality-weighted with regional → base fallback) and persists it; they can switch
+any time from the in-app language picker, which lists every locale by its native
+name. An explicit choice always wins over auto-detection.
+
+> English · Türkçe · Deutsch · Español · Français · Italiano · Português ·
+> Nederlands · Polski · Русский · Українська · Čeština · Svenska · Dansk · Suomi ·
+> Norsk Bokmål · Română · Magyar · Ελληνικά · Български · 简体中文 · 繁體中文 ·
+> 日本語 · 한국어 · हिन्दी · Bahasa Indonesia · ไทย · Tiếng Việt · العربية · עברית
+
+- **Right-to-left** layout for Arabic and Hebrew (Radix `DirectionProvider`).
+- **Zero hardcoded strings**: every user-facing string goes through `next-intl`;
+  a lint gate (`react/jsx-no-literals`) blocks new hardcoded text, and all 30
+  catalogs are key-parity verified (`node scripts/i18n-check.mjs`).
+- Add or change a locale in `apps/web/src/lib/i18n/config.ts` +
+  `apps/web/messages/<locale>.json`. The marketing landing page is intentionally
+  English-only.
 
 ---
 

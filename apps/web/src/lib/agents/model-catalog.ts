@@ -197,66 +197,57 @@ export const OPENAI_MODEL_CATALOG: AgentModelCatalogEntry[] = [
 ];
 
 export const ANTHROPIC_MODEL_CATALOG: AgentModelCatalogEntry[] = [
-  // Latest (Claude 4.x)
+  // Current Claude lineup. Opus 4.8 is the default. Opus 4.7/4.8 and Fable 5
+  // are adaptive-thinking only (no temperature/top_p). Retired 3.x models are
+  // intentionally omitted — they 404 at the API.
+  {
+    id: 'claude-opus-4-8',
+    provider: 'anthropic',
+    label: 'Claude Opus 4.8',
+    summary: 'Default Claude — most capable Opus-tier model, 1M context, adaptive thinking.',
+    group: 'latest',
+    reasoningOptions: ['none', 'low', 'medium', 'high', 'xhigh'],
+    maxOutputTokensLimit: 128000,
+    supportsTemperature: false,
+  },
+  {
+    id: 'claude-fable-5',
+    provider: 'anthropic',
+    label: 'Claude Fable 5',
+    summary: 'Most capable model for the hardest long-horizon reasoning (premium pricing).',
+    group: 'latest',
+    reasoningOptions: ['low', 'medium', 'high', 'xhigh'],
+    maxOutputTokensLimit: 128000,
+    supportsTemperature: false,
+  },
   {
     id: 'claude-opus-4-7',
     provider: 'anthropic',
     label: 'Claude Opus 4.7',
-    summary: 'Frontier Claude model — highest reasoning quality, supports 1M context.',
+    summary: 'Previous-generation Opus — highly autonomous, 1M context.',
     group: 'latest',
-    reasoningOptions: ['none'],
-    maxOutputTokensLimit: 8192,
-    supportsTemperature: true,
+    reasoningOptions: ['none', 'low', 'medium', 'high', 'xhigh'],
+    maxOutputTokensLimit: 128000,
+    supportsTemperature: false,
   },
   {
     id: 'claude-sonnet-4-6',
     provider: 'anthropic',
     label: 'Claude Sonnet 4.6',
-    summary: 'Balanced Claude Sonnet — strong reasoning at lower cost than Opus.',
+    summary: 'Balanced Claude — strong reasoning at lower cost than Opus, 1M context.',
     group: 'latest',
-    reasoningOptions: ['none'],
-    maxOutputTokensLimit: 8192,
+    reasoningOptions: ['none', 'low', 'medium', 'high', 'xhigh'],
+    maxOutputTokensLimit: 64000,
     supportsTemperature: true,
   },
   {
-    id: 'claude-haiku-4-5-20251001',
+    id: 'claude-haiku-4-5',
     provider: 'anthropic',
     label: 'Claude Haiku 4.5',
-    summary: 'Fast, cheap Claude Haiku for high-volume automation.',
+    summary: 'Fastest, cheapest Claude for high-volume automation and triage.',
     group: 'high-throughput',
     reasoningOptions: ['none'],
-    maxOutputTokensLimit: 8192,
-    supportsTemperature: true,
-  },
-  // Older Claude 3.x variants (kept for teams on older Anthropic SDK / policy)
-  {
-    id: 'claude-3-5-sonnet-20241022',
-    provider: 'anthropic',
-    label: 'Claude 3.5 Sonnet (2024-10)',
-    summary: 'Widely-deployed Sonnet 3.5. Use only if your org policy mandates the 3.x line.',
-    group: 'legacy',
-    reasoningOptions: ['none'],
-    maxOutputTokensLimit: 8192,
-    supportsTemperature: true,
-  },
-  {
-    id: 'claude-3-5-haiku-20241022',
-    provider: 'anthropic',
-    label: 'Claude 3.5 Haiku',
-    summary: 'Cheap 3.5 Haiku — fastest/cheapest on the 3.x line.',
-    group: 'legacy',
-    reasoningOptions: ['none'],
-    maxOutputTokensLimit: 8192,
-    supportsTemperature: true,
-  },
-  {
-    id: 'claude-3-opus-20240229',
-    provider: 'anthropic',
-    label: 'Claude 3 Opus',
-    summary: 'Previous-generation top-tier Claude. Prefer 4.x unless pinned by policy.',
-    group: 'legacy',
-    reasoningOptions: ['none'],
-    maxOutputTokensLimit: 4096,
+    maxOutputTokensLimit: 64000,
     supportsTemperature: true,
   },
 ];
@@ -386,7 +377,9 @@ export function getSupportedReasoningOptions(
   provider: AgentProvider,
   model: string
 ): AgentReasoningEffortOption[] {
-  return getModelCatalogEntry(provider, model)?.reasoningOptions || ['none', 'low', 'medium', 'high'];
+  return (
+    getModelCatalogEntry(provider, model)?.reasoningOptions || ['none', 'low', 'medium', 'high']
+  );
 }
 
 export function getModelMaxOutputTokensLimit(provider: AgentProvider, model: string) {

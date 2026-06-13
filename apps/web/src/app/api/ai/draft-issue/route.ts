@@ -219,7 +219,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Respect the workspace-configured model when it's set; if the admin
-  // picked, say, claude-opus-4-7, the draft should use that, not the
+  // picked, say, claude-opus-4-8, the draft should use that, not the
   // adapter's hardcoded fallback. Empty string → adapter falls back to a
   // sensible default.
   const modelToUse = workspace.model?.trim() || null;
