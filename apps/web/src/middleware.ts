@@ -117,13 +117,26 @@ export default auth((req) => {
       ? cookieLocale
       : (matchLocaleFromAcceptLanguage(request.headers.get('accept-language')) ?? defaultLocale);
 
+  // Forward the resolved locale to server components as a REQUEST header.
+  // This app uses a custom middleware (not next-intl's createMiddleware), so
+  // next-intl's `requestLocale` isn't populated — `request.ts` reads this
+  // header to load the correct catalog for getMessages()/getTranslations().
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-tasknebula-locale', resolvedLocale);
+
   if (hasLocalePrefix) {
-    return applyHtmlAttrs(NextResponse.next(), resolvedLocale);
+    return applyHtmlAttrs(
+      NextResponse.next({ request: { headers: requestHeaders } }),
+      resolvedLocale
+    );
   }
 
   const rewriteUrl = request.nextUrl.clone();
   rewriteUrl.pathname = `/${resolvedLocale}${pathWithoutLocale}`;
-  const response = applyHtmlAttrs(NextResponse.rewrite(rewriteUrl), resolvedLocale);
+  const response = applyHtmlAttrs(
+    NextResponse.rewrite(rewriteUrl, { request: { headers: requestHeaders } }),
+    resolvedLocale
+  );
   // Persist a device-detected locale so subsequent navigation is stable and
   // the language switcher reflects it. Only set it when the visitor hasn't
   // explicitly chosen one — an explicit pick (cookie) must always win.
