@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-06-13
+
+### Added
+
+- **Full app-wide internationalization across 30 languages.** Every user-facing surface of the authenticated app is now localized via next-intl: navigation, dashboard, issues (board/list/detail/pickers), projects, settings, admin, notifications, search/command palette, docs/chat, sprints, analytics, AI features, page-level headings, and the auth/setup/error pages. ~3,900 UI strings were extracted into 55 message namespaces and translated into all 30 locales (English, Turkish, German, Spanish, French, Italian, Portuguese, Dutch, Polish, Russian, Ukrainian, Czech, Swedish, Danish, Finnish, Norwegian, Romanian, Hungarian, Greek, Bulgarian, Simplified & Traditional Chinese, Japanese, Korean, Hindi, Indonesian, Thai, Vietnamese, Arabic, Hebrew). Catalogs are key-parity verified across every locale; Arabic and Hebrew render right-to-left.
+- **Device/browser language auto-detection.** The middleware negotiates the best supported locale from the `Accept-Language` header (quality-weighted, with regional→base fallback such as `fr-FR`→`fr` and `zh`→`zh-CN`) for first-time visitors and persists the choice; an explicit pick in the language switcher always wins. The switcher now lists all 30 languages by their native names.
+
+### Changed
+
+- The Jest i18n test harness mock now resolves ICU plural/select/`#`, `t.rich`, and `next-intl/server` `getTranslations`, and returns a stable per-namespace translator — so localized components are covered without a real next-intl runtime.
+
 ## [0.5.1] - 2026-06-13
 
 ### Fixed
