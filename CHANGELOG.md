@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-13
+
+### Added
+
+- **Landing page redesign + logo refresh.** Reworked hero (AI-native, "for teams _and_ agents" framing), feature grid, comparison, proof/CTA/nav/footer/FAQ/self-host, plus new **workflow-narrative**, **migrate-from-Jira**, and **AI/MCP-server** sections. Refined the TaskNebula logo mark (brand + mono variants) with a synced `public/icon.svg`.
+- **Jira/Plane-parity issue-detail fields.** `flagged` (impediment) and `storyPoints` surfaced in the sidebar (real columns), plus `environment` and `startDate` stored in `customFields` (no migration). Header flag indicator and a flag/unflag quick action.
+- **Inline "type-to-create" pickers.** Create a new Sprint, Epic, or Sub-issue directly from the picker input (mirroring the existing label/component/version pattern); sub-issues inherit the parent's project/sprint/epic.
+- **Admin version-update notification.** Super-admin panel + dismissible banner that surfaces new TaskNebula releases, with automatic background polling (6h, matching the server cache) and tests for the panel/banner/route.
+- New i18n namespaces (`issueFields`, `sprintPicker`, `epicPicker`, `subtaskCreate`, `issueRelations`, `timeTrio`, `issueQuickActions`, `issueHeaderExtra`) across en/de/es/tr.
+- Refreshed README screenshots (home, board, dashboard, issue detail).
+
+### Changed
+
+- **Issue relations & time-tracking polish.** Relationship types (blocks / is blocked by / relates to / duplicates) grouped with semantic chips in the links list; time-tracking panel now shows the Original Estimate / Logged / Remaining trio with a progress bar.
+
 ## [0.4.0] - 2026-06-12
 
 ### Added
