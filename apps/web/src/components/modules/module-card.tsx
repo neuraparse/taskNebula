@@ -35,8 +35,8 @@ const STATUS_PALETTE: Record<ModuleStatus, StatusPalette> = {
   },
   paused: {
     labelKey: 'status_paused',
-    dot: 'bg-slate-400',
-    badge: 'bg-slate-400/10 text-slate-400 border-slate-400/20',
+    dot: 'bg-muted-foreground/60',
+    badge: 'bg-muted text-muted-foreground border-border',
   },
   completed: {
     labelKey: 'status_completed',

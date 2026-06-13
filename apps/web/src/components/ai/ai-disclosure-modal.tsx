@@ -64,29 +64,29 @@ export function AiDisclosureModal() {
             <Sparkles className="text-primary h-4 w-4" />
             {t('disclosure.title')}
           </DialogTitle>
-          <DialogDescription className="text-zinc-300">
+          <DialogDescription className="text-muted-foreground">
             {t('disclosure.description')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="custom-scrollbar min-h-0 flex-1 space-y-3 overflow-y-auto px-6 py-2 text-sm">
-          <div className="space-y-2 rounded-md border border-white/10 bg-white/5 p-3">
-            <p className="font-medium text-zinc-100">{t('disclosure.whatRunsTitle')}</p>
-            <ul className="list-disc space-y-1 pl-5 text-zinc-300">
+          <div className="border-border bg-muted space-y-2 rounded-md border p-3">
+            <p className="text-foreground font-medium">{t('disclosure.whatRunsTitle')}</p>
+            <ul className="text-muted-foreground list-disc space-y-1 pl-5">
               {USER_FACING_AI_FEATURES.map((f) => (
                 <li key={f.id}>
-                  <span className="text-zinc-100">{f.name}</span> — {f.summary}
+                  <span className="text-foreground">{f.name}</span> — {f.summary}
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="space-y-1 rounded-md border border-white/10 bg-white/5 p-3">
-            <p className="flex items-center gap-1.5 font-medium text-zinc-100">
+          <div className="border-border bg-muted space-y-1 rounded-md border p-3">
+            <p className="text-foreground flex items-center gap-1.5 font-medium">
               <ShieldCheck className="h-3.5 w-3.5" />
               {t('disclosure.rightsTitle')}
             </p>
-            <ul className="list-disc space-y-1 pl-5 text-zinc-300">
+            <ul className="text-muted-foreground list-disc space-y-1 pl-5">
               <li>
                 {t.rich('disclosure.rightLabelled', {
                   label: (chunks) => <em>{chunks}</em>,
@@ -98,13 +98,13 @@ export function AiDisclosureModal() {
             </ul>
           </div>
 
-          <p className="text-xs text-zinc-300">
+          <p className="text-muted-foreground text-xs">
             {t.rich('disclosure.modelCardsLine', {
               link: (chunks) => (
                 <Link
                   href="/ai-model-cards"
                   target="_blank"
-                  className="inline-flex items-center gap-0.5 underline hover:text-zinc-100"
+                  className="hover:text-foreground inline-flex items-center gap-0.5 underline"
                 >
                   {chunks}
                   <ExternalLink className="h-3 w-3" />
@@ -113,10 +113,12 @@ export function AiDisclosureModal() {
             })}
           </p>
 
-          <p className="text-[10px] text-zinc-400">{t('disclosure.versionLine', { version })}</p>
+          <p className="text-muted-foreground text-[10px]">
+            {t('disclosure.versionLine', { version })}
+          </p>
         </div>
 
-        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-white/10 bg-zinc-950/30 px-6 py-4">
+        <div className="border-border bg-muted/40 flex shrink-0 items-center justify-end gap-2 border-t px-6 py-4">
           <Button onClick={handleAck} disabled={busy} data-testid="ai-disclosure-ack">
             {busy && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
             {t('disclosure.acknowledge')}

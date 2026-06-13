@@ -114,7 +114,7 @@ const TYPE_VISUALS: Record<NotificationType, TypeVisual> = {
   issue_linked: {
     Icon: Link2,
     labelKey: 'linked',
-    tone: 'bg-slate-500/10 text-slate-600 ring-slate-500/30 dark:text-slate-300',
+    tone: 'bg-muted text-muted-foreground ring-border',
   },
   sprint_started: {
     Icon: Flag,

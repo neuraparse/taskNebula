@@ -36,7 +36,7 @@ const TONE_STYLES: Record<LabelTone, ToneStyles> = {
   rose: { pill: 'bg-rose-50 text-rose-700', dot: 'bg-rose-500' },
   violet: { pill: 'bg-violet-50 text-violet-700', dot: 'bg-violet-500' },
   cyan: { pill: 'bg-cyan-50 text-cyan-700', dot: 'bg-cyan-500' },
-  slate: { pill: 'bg-slate-100 text-slate-700', dot: 'bg-slate-500' },
+  slate: { pill: 'bg-muted text-foreground', dot: 'bg-slate-500' },
 };
 
 /**
@@ -72,10 +72,7 @@ export function LabelPill({
   const resolvedTone: LabelTone = tone ?? (hashSeed ? hashTone(hashSeed) : hashTone(label));
   const styles = TONE_STYLES[resolvedTone];
 
-  const sizeClass =
-    size === 'md'
-      ? 'h-5 text-[12px] gap-1.5'
-      : 'h-[18px] text-[11.5px] gap-1';
+  const sizeClass = size === 'md' ? 'h-5 text-[12px] gap-1.5' : 'h-[18px] text-[11.5px] gap-1';
 
   const interactive = typeof onClick === 'function';
 
@@ -84,19 +81,15 @@ export function LabelPill({
     sizeClass,
     styles.pill,
     interactive && 'cursor-pointer transition-colors hover:brightness-95',
-    className,
+    className
   );
 
   if (interactive) {
     return (
-      <button
-        type="button"
-        onClick={onClick}
-        className={baseClass}
-      >
+      <button type="button" onClick={onClick} className={baseClass}>
         <span
           aria-hidden="true"
-          className={cn('inline-block h-1.5 w-1.5 rounded-full shrink-0', styles.dot)}
+          className={cn('inline-block h-1.5 w-1.5 shrink-0 rounded-full', styles.dot)}
         />
         <span className="truncate">{label}</span>
       </button>
@@ -107,7 +100,7 @@ export function LabelPill({
     <span className={baseClass}>
       <span
         aria-hidden="true"
-        className={cn('inline-block h-1.5 w-1.5 rounded-full shrink-0', styles.dot)}
+        className={cn('inline-block h-1.5 w-1.5 shrink-0 rounded-full', styles.dot)}
       />
       <span className="truncate">{label}</span>
     </span>
@@ -121,12 +114,7 @@ export interface LabelPillGroupProps {
   className?: string;
 }
 
-export function LabelPillGroup({
-  labels,
-  max = 3,
-  size = 'sm',
-  className,
-}: LabelPillGroupProps) {
+export function LabelPillGroup({ labels, max = 3, size = 'sm', className }: LabelPillGroupProps) {
   const visible = labels.slice(0, max);
   const overflow = labels.length - visible.length;
 
@@ -135,13 +123,7 @@ export function LabelPillGroup({
       {visible.map((label) => (
         <LabelPill key={label} label={label} hashSeed={label} size={size} />
       ))}
-      {overflow > 0 ? (
-        <LabelPill
-          label={`+${overflow} more`}
-          tone="slate"
-          size={size}
-        />
-      ) : null}
+      {overflow > 0 ? <LabelPill label={`+${overflow} more`} tone="slate" size={size} /> : null}
     </div>
   );
 }

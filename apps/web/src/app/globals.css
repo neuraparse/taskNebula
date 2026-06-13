@@ -417,33 +417,49 @@
     border-radius: var(--radius-lg);
   }
 
-  /* FEAT-31 — dark glassmorphism panel for modals, command palette, and
-     popovers. Renders the same in both themes (intentionally dark) so the
-     palette feels like a system-level surface floating above the app.
+  /* FEAT-31 — glassmorphism panel for modals, command palette, and popovers.
+     Theme-aware: a frosted *light* surface in day mode and a frosted *dark*
+     surface in night mode, so overlays always read as elevated system-level
+     surfaces floating above the app — never a dark slab over a light page.
 
-     Layers:
-       1. zinc-900 @ 70% opacity background
+     Layers (per theme):
+       1. translucent surface background (white in light, zinc-900 in dark)
        2. saturated backdrop-blur for depth
-       3. 1px subtle white ring for edge definition
+       3. 1px subtle ring for edge definition
        4. soft inner glow (top-edge highlight) for tactile feel
        5. matching drop shadow that doesn't compete with the ring
+
+     IMPORTANT: the `.dark .glass-panel` block below preserves the original
+     dark glass byte-for-byte — do not regress night mode when touching light.
   */
   .glass-panel {
-    background: rgb(24 24 27 / 0.7); /* zinc-900/70 */
+    background: rgb(255 255 255 / 0.82); /* frosted white */
     backdrop-filter: saturate(160%) blur(20px);
     -webkit-backdrop-filter: saturate(160%) blur(20px);
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.7),
+      0 0 0 1px rgb(15 23 42 / 0.08),
+      0 24px 48px -12px rgb(15 23 42 / 0.18),
+      0 8px 20px -8px rgb(15 23 42 / 0.12);
+    border-radius: var(--radius-lg);
+    color: hsl(var(--foreground)); /* readable text on light glass */
+  }
+  .dark .glass-panel {
+    background: rgb(24 24 27 / 0.7); /* zinc-900/70 */
     box-shadow:
       inset 0 1px 0 0 rgb(255 255 255 / 0.06),
       0 0 0 1px rgb(255 255 255 / 0.08),
       0 24px 48px -12px rgb(0 0 0 / 0.55),
       0 8px 20px -8px rgb(0 0 0 / 0.4);
-    border-radius: var(--radius-lg);
     color: rgb(244 244 245); /* zinc-100 — readable text on dark glass */
   }
   /* Fallback for browsers without backdrop-filter (Firefox in some
      configurations): drop the translucency and lean on the solid surface. */
   @supports not (backdrop-filter: blur(1px)) {
     .glass-panel {
+      background: rgb(255 255 255 / 0.98);
+    }
+    .dark .glass-panel {
       background: rgb(24 24 27 / 0.96);
     }
   }

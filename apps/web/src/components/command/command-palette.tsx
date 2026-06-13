@@ -118,20 +118,20 @@ function FacetChip({ facet, onRemove }: FacetChipProps) {
   const Icon = FACET_ICON[facet.key] ?? Hash;
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 text-[11px] text-zinc-200 backdrop-blur"
+      className="border-border bg-muted text-foreground inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] backdrop-blur"
       data-testid={`facet-chip-${facet.key}`}
     >
-      <Icon className="h-3 w-3 text-zinc-400" aria-hidden />
-      <span className="font-medium text-zinc-300">
+      <Icon className="text-muted-foreground h-3 w-3" aria-hidden />
+      <span className="text-muted-foreground font-medium">
         {facet.key}
         {':'}
       </span>
-      <span className="truncate text-zinc-100">{facet.value}</span>
+      <span className="text-foreground truncate">{facet.value}</span>
       <button
         type="button"
         onClick={onRemove}
         aria-label={t('removeFacetFilter', { key: facet.key })}
-        className="ml-0.5 rounded-sm p-0.5 text-zinc-400 hover:text-zinc-100"
+        className="text-muted-foreground hover:text-foreground ml-0.5 rounded-sm p-0.5"
       >
         <X className="h-3 w-3" />
       </button>
@@ -154,7 +154,7 @@ function OmnibarTabs({ active, onChange }: OmnibarTabsProps) {
     <div
       role="tablist"
       aria-label={t('searchScope')}
-      className="flex items-center gap-1 border-b border-white/5 bg-zinc-900/40 px-3 py-2"
+      className="border-border bg-muted flex items-center gap-1 border-b px-3 py-2"
     >
       {TABS.map((tab) => {
         const isActive = tab.key === active;
@@ -168,12 +168,12 @@ function OmnibarTabs({ active, onChange }: OmnibarTabsProps) {
             className={cn(
               'ease-snap group inline-flex items-center gap-2 rounded-md px-2.5 py-1 text-xs font-medium transition-all duration-150',
               isActive
-                ? 'bg-white/10 text-zinc-50 ring-1 ring-white/15'
-                : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
+                ? 'bg-accent text-foreground ring-border ring-1'
+                : 'text-muted-foreground hover:bg-accent hover:text-foreground'
             )}
           >
             {t(tab.labelKey)}
-            <kbd className="hidden rounded border border-white/10 bg-zinc-950/60 px-1 font-mono text-[10px] text-zinc-500 group-hover:inline-block">
+            <kbd className="border-border bg-muted text-muted-foreground hidden rounded border px-1 font-mono text-[10px] group-hover:inline-block">
               {tab.hotkey}
             </kbd>
           </button>
@@ -209,21 +209,21 @@ function FacetPicker({ facetKey, onPick, onCancel }: FacetPickerProps) {
     <div
       role="listbox"
       aria-label={t('facetValues', { key: facetKey })}
-      className="mx-3 mb-2 mt-1 flex flex-wrap gap-1 rounded-md border border-white/10 bg-zinc-900/60 p-2 backdrop-blur-xl"
+      className="border-border bg-muted mx-3 mb-2 mt-1 flex flex-wrap gap-1 rounded-md border p-2 backdrop-blur-xl"
     >
-      <span className="text-[10px] uppercase tracking-wider text-zinc-500">
+      <span className="text-muted-foreground text-[10px] uppercase tracking-wider">
         {facetKey}
         {':'}
       </span>
       {presets.length === 0 ? (
-        <span className="text-[11px] text-zinc-500">{t('typeToFilter')}</span>
+        <span className="text-muted-foreground text-[11px]">{t('typeToFilter')}</span>
       ) : (
         presets.map((value) => (
           <button
             key={value}
             type="button"
             onClick={() => onPick(value)}
-            className="rounded-md border border-white/5 bg-white/5 px-1.5 py-0.5 text-[11px] text-zinc-200 transition hover:border-white/15 hover:bg-white/10"
+            className="border-border bg-muted text-foreground hover:border-border hover:bg-accent rounded-md border px-1.5 py-0.5 text-[11px] transition"
           >
             {value}
           </button>
@@ -232,7 +232,7 @@ function FacetPicker({ facetKey, onPick, onCancel }: FacetPickerProps) {
       <button
         type="button"
         onClick={onCancel}
-        className="ml-auto rounded-md p-1 text-zinc-500 hover:text-zinc-200"
+        className="text-muted-foreground hover:text-foreground ml-auto rounded-md p-1"
         aria-label={t('closeFacetPicker')}
       >
         <X className="h-3 w-3" />
@@ -435,8 +435,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         className={cn(
           'w-[92vw] max-w-2xl gap-0 overflow-hidden border-0 p-0',
           'left-[50%] top-[18vh] translate-x-[-50%] translate-y-0',
-          // Dark glassmorphism per FEAT-25 spec.
-          'bg-zinc-900/70 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset,0_24px_48px_-12px_rgba(0,0,0,0.5)] ring-1 ring-white/10 backdrop-blur-xl'
+          // Theme-aware glass surface (light: frosted white, dark: frosted dark).
+          'glass-panel'
         )}
       >
         <DialogTitle className="sr-only">{t('paletteTitle')}</DialogTitle>
@@ -444,13 +444,13 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
         <OmnibarTabs active={tab} onChange={setTab} />
 
-        <Command shouldFilter={false} className="bg-transparent text-zinc-100">
+        <Command shouldFilter={false} className="text-foreground bg-transparent">
           {/* ---- Input row with inline chips ---- */}
           <div
-            className="flex items-center gap-2 border-b border-white/5 px-3 py-2"
+            className="border-border flex items-center gap-2 border-b px-3 py-2"
             data-cmdk-input-wrapper=""
           >
-            <Search className="h-4 w-4 shrink-0 text-zinc-400" aria-hidden />
+            <Search className="text-muted-foreground h-4 w-4 shrink-0" aria-hidden />
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
               {facets.map((facet, index) => (
                 <FacetChip
@@ -467,10 +467,10 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 placeholder={tab === 'ask' ? t('askPlaceholder') : t('searchPlaceholder')}
                 autoFocus
                 aria-label={t('queryLabel')}
-                className="min-w-[120px] flex-1 bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-500"
+                className="text-foreground placeholder:text-muted-foreground min-w-[120px] flex-1 bg-transparent text-sm outline-none"
               />
             </div>
-            <kbd className="hidden rounded border border-white/10 bg-zinc-950/40 px-1 font-mono text-[10px] text-zinc-500 sm:inline-block">
+            <kbd className="border-border bg-muted text-muted-foreground hidden rounded border px-1 font-mono text-[10px] sm:inline-block">
               {'esc'}
             </kbd>
           </div>
@@ -498,44 +498,46 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           <CommandList className="max-h-[480px]">
             <CommandEmpty>
               <div className="flex flex-col items-center gap-1 py-8 text-center">
-                <span className="text-sm text-zinc-400">{t('noResults')}</span>
-                <span className="text-[11px] text-zinc-600">{t('noResultsHint')}</span>
+                <span className="text-muted-foreground text-sm">{t('noResults')}</span>
+                <span className="text-muted-foreground/60 text-[11px]">{t('noResultsHint')}</span>
               </div>
             </CommandEmpty>
 
             {/* ---- Ask AI CTA ---- */}
             {showAskCta ? (
               <CommandGroup
-                heading={<span className="kicker text-zinc-500">{t('aiHeading')}</span>}
+                heading={<span className="kicker text-muted-foreground">{t('aiHeading')}</span>}
               >
                 <CommandItem
                   value={`ask:${askPrompt}`}
                   onSelect={() => askAi(askPrompt)}
-                  className="group flex items-center gap-2 rounded-md text-zinc-100 data-[selected=true]:bg-violet-500/10 data-[selected=true]:text-violet-100"
+                  className="text-foreground group flex items-center gap-2 rounded-md data-[selected=true]:bg-violet-500/10 data-[selected=true]:text-violet-100"
                 >
                   <Sparkles className="h-4 w-4 text-violet-400" aria-hidden />
                   <span className="flex-1 truncate">
                     {t('askLabel')}{' '}
-                    <span className="text-zinc-300">
+                    <span className="text-muted-foreground">
                       {'“'}
                       {askPrompt}
                       {'”'}
                     </span>
                   </span>
-                  <ArrowRight className="h-3 w-3 text-zinc-500 group-data-[selected=true]:text-violet-300" />
+                  <ArrowRight className="text-muted-foreground h-3 w-3 group-data-[selected=true]:text-violet-300" />
                 </CommandItem>
               </CommandGroup>
             ) : null}
 
             {/* ---- Pinned + recents when input is empty ---- */}
             {showRecents && history.pinned.length > 0 ? (
-              <CommandGroup heading={<span className="kicker text-zinc-500">{t('pinned')}</span>}>
+              <CommandGroup
+                heading={<span className="kicker text-muted-foreground">{t('pinned')}</span>}
+              >
                 {history.pinned.map((entry) => (
                   <CommandItem
                     key={entry.id}
                     value={`pinned:${entry.id}`}
                     onSelect={() => setRawInput(entry.query)}
-                    className="group flex items-center gap-2 rounded-md text-zinc-100 data-[selected=true]:bg-white/5"
+                    className="text-foreground data-[selected=true]:bg-accent group flex items-center gap-2 rounded-md"
                   >
                     <Pin className="h-3.5 w-3.5 shrink-0 text-amber-400" aria-hidden />
                     <span className="flex-1 truncate">{entry.query}</span>
@@ -548,7 +550,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                       aria-label={t('unpinQuery')}
                       className="opacity-0 transition hover:opacity-100 group-data-[selected=true]:opacity-100"
                     >
-                      <PinOff className="h-3 w-3 text-zinc-400" />
+                      <PinOff className="text-muted-foreground h-3 w-3" />
                     </button>
                   </CommandItem>
                 ))}
@@ -557,18 +559,21 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
             {showRecents && history.recents.length > 0 ? (
               <>
-                <CommandSeparator className="bg-white/5" />
+                <CommandSeparator className="bg-border" />
                 <CommandGroup
-                  heading={<span className="kicker text-zinc-500">{t('recents')}</span>}
+                  heading={<span className="kicker text-muted-foreground">{t('recents')}</span>}
                 >
                   {history.recents.map((entry) => (
                     <CommandItem
                       key={entry.id}
                       value={`recent:${entry.id}`}
                       onSelect={() => setRawInput(entry.query)}
-                      className="group flex items-center gap-2 rounded-md text-zinc-200 data-[selected=true]:bg-white/5"
+                      className="text-foreground data-[selected=true]:bg-accent group flex items-center gap-2 rounded-md"
                     >
-                      <FileText className="h-3.5 w-3.5 shrink-0 text-zinc-500" aria-hidden />
+                      <FileText
+                        className="text-muted-foreground h-3.5 w-3.5 shrink-0"
+                        aria-hidden
+                      />
                       <span className="flex-1 truncate">{entry.query}</span>
                       <button
                         type="button"
@@ -579,7 +584,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                         aria-label={t('pinQuery')}
                         className="opacity-0 transition hover:opacity-100 group-data-[selected=true]:opacity-100"
                       >
-                        <Pin className="h-3 w-3 text-zinc-400" />
+                        <Pin className="text-muted-foreground h-3 w-3" />
                       </button>
                     </CommandItem>
                   ))}
@@ -591,10 +596,10 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             {!showRecents && search.results.length > 0 ? (
               <CommandGroup
                 heading={
-                  <span className="kicker flex items-center gap-2 text-zinc-500">
+                  <span className="kicker text-muted-foreground flex items-center gap-2">
                     {t('results')}
                     {search.loading ? (
-                      <span className="text-[10px] text-zinc-600">{t('searching')}</span>
+                      <span className="text-muted-foreground/60 text-[10px]">{t('searching')}</span>
                     ) : null}
                   </span>
                 }
@@ -604,13 +609,13 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     key={result.id}
                     value={`result:${result.id}`}
                     onSelect={() => navigate(result.href ?? '#')}
-                    className="flex items-center gap-2 rounded-md text-zinc-100 data-[selected=true]:bg-white/5"
+                    className="text-foreground data-[selected=true]:bg-accent flex items-center gap-2 rounded-md"
                   >
                     <CircleDot className="h-3.5 w-3.5 shrink-0 text-blue-400" aria-hidden />
                     <div className="flex min-w-0 flex-col">
                       <span className="truncate">{result.title}</span>
                       {result.subtitle ? (
-                        <span className="truncate text-[11px] text-zinc-500">
+                        <span className="text-muted-foreground truncate text-[11px]">
                           {result.subtitle}
                         </span>
                       ) : null}
@@ -623,18 +628,21 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             {/* ---- Quick navigation (always visible while empty) ---- */}
             {showRecents ? (
               <>
-                <CommandSeparator className="bg-white/5" />
+                <CommandSeparator className="bg-border" />
                 <CommandGroup
-                  heading={<span className="kicker text-zinc-500">{t('navigate')}</span>}
+                  heading={<span className="kicker text-muted-foreground">{t('navigate')}</span>}
                 >
                   {QUICK_NAV.map((nav) => (
                     <CommandItem
                       key={nav.id}
                       value={nav.id}
                       onSelect={() => navigate(nav.href)}
-                      className="flex items-center gap-2 rounded-md text-zinc-200 data-[selected=true]:bg-white/5"
+                      className="text-foreground data-[selected=true]:bg-accent flex items-center gap-2 rounded-md"
                     >
-                      <nav.icon className="h-3.5 w-3.5 shrink-0 text-zinc-500" aria-hidden />
+                      <nav.icon
+                        className="text-muted-foreground h-3.5 w-3.5 shrink-0"
+                        aria-hidden
+                      />
                       <span className="flex-1 truncate">{t(nav.labelKey)}</span>
                     </CommandItem>
                   ))}
@@ -644,27 +652,19 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           </CommandList>
 
           {/* ---- Footer hint strip ---- */}
-          <div className="flex items-center justify-between gap-3 border-t border-white/5 bg-zinc-950/40 px-3 py-1.5 text-[10px] text-zinc-500">
+          <div className="border-border bg-muted text-muted-foreground flex items-center justify-between gap-3 border-t px-3 py-1.5 text-[10px]">
             <div className="flex items-center gap-3">
               <span>
-                <kbd className="rounded border border-white/10 bg-zinc-900/70 px-1 font-mono">
-                  {'↑'}
-                </kbd>{' '}
-                <kbd className="rounded border border-white/10 bg-zinc-900/70 px-1 font-mono">
-                  {'↓'}
-                </kbd>{' '}
+                <kbd className="border-border bg-muted rounded border px-1 font-mono">{'↑'}</kbd>{' '}
+                <kbd className="border-border bg-muted rounded border px-1 font-mono">{'↓'}</kbd>{' '}
                 {t('hintNavigate')}
               </span>
               <span>
-                <kbd className="rounded border border-white/10 bg-zinc-900/70 px-1 font-mono">
-                  {'⏎'}
-                </kbd>{' '}
+                <kbd className="border-border bg-muted rounded border px-1 font-mono">{'⏎'}</kbd>{' '}
                 {t('hintOpen')}
               </span>
               <span>
-                <kbd className="rounded border border-white/10 bg-zinc-900/70 px-1 font-mono">
-                  {'tab'}
-                </kbd>{' '}
+                <kbd className="border-border bg-muted rounded border px-1 font-mono">{'tab'}</kbd>{' '}
                 {t('hintCycleTabs')}
               </span>
             </div>
