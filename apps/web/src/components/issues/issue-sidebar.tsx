@@ -6,16 +6,24 @@ import {
   Bug,
   Calendar,
   CalendarClock,
+  CalendarPlus,
   CheckCircle2,
   ChevronRight,
   CircleDot,
+  Flag,
   Gauge,
+  GitBranch,
+  Globe,
+  Hash,
   Milestone,
+  RefreshCw,
+  Shapes,
   Tag,
   User,
   UserCircle2,
+  Zap,
 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PriorityBars, type PriorityLevel } from '@/components/ui/priority-bars';
 import { AssigneePicker } from './assignee-picker';
@@ -25,6 +33,15 @@ import { LabelPicker } from './label-picker';
 import { ComponentPicker } from './component-picker';
 import { VersionPicker } from './version-picker';
 import { ResolutionSelect, type IssueResolution } from './resolution-select';
+import { DueDatePicker } from './due-date-picker';
+import { FlaggedToggle } from './flagged-toggle';
+import { StoryPointsField } from './story-points-field';
+import { EnvironmentField } from './environment-field';
+import { StartDateField } from './start-date-field';
+import { SprintPicker } from './sprint-picker';
+import { EpicPicker } from './epic-picker';
+import { ParentPicker } from './parent-picker';
+import { TypePicker } from './type-picker';
 import { IssueCustomFields } from '@/components/custom-fields/issue-custom-fields';
 import { WatchersList } from '@/components/watchers/watchers-list';
 import { AiIssueAssistPanel } from '@/components/ai/ai-issue-assist-panel';
@@ -35,13 +52,21 @@ import { useIssue, useUpdateIssue, type Issue } from '@/lib/hooks/use-issues';
 import { useIssueVersions, useSetIssueVersions } from '@/lib/hooks/use-issue-versions';
 import { useIssueComponents, useSetIssueComponents } from '@/lib/hooks/use-issue-components';
 
-// Reserved for future fields (not yet rendered but part of the design vocabulary):
-// CalendarPlus (Start date), GitBranch (Parent), RefreshCw (Cycle / Sprint), Users (multi-assignee)
-
 /** Fields the detail GET returns beyond the shared `Issue` hook shape. */
 type IssueDetailExtras = Issue & {
   resolution?: string | null;
   resolvedAt?: string | null;
+  epicId?: string | null;
+  parentId?: string | null;
+  flagged?: boolean | null;
+  storyPoints?: number | null;
+  customFields?: Record<string, unknown> | null;
+};
+
+/** Shape of the customFields keys the sidebar reads/writes (Jira parity). */
+type IssueCustomFieldsShape = {
+  environment?: string | null;
+  startDate?: string | null;
 };
 
 interface IssueSidebarProps {
@@ -63,6 +88,8 @@ interface IssueSidebarProps {
 
 export function IssueSidebar({ issue }: IssueSidebarProps) {
   const t = useTranslations('issueSidebar');
+  const tFields = useTranslations('issueFields');
+  const format = useFormatter();
   const { currentOrganizationId } = useOrganization();
   const updateIssue = useUpdateIssue();
   const { data: membersData } = useOrganizationMembers(currentOrganizationId);
@@ -127,6 +154,81 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
     }
   };
 
+  const handleDueDateChange = async (dueDate: string | null) => {
+    try {
+      await updateIssue.mutateAsync({ issueId: issue.id, data: { dueDate } });
+    } catch (error) {
+      console.error('Error updating due date:', error);
+    }
+  };
+
+  const handleFlaggedChange = async (flagged: boolean) => {
+    try {
+      // `flagged` is accepted by the PATCH route but isn't part of the shared
+      // `Issue` hook shape — widen the payload type explicitly.
+      const data: Partial<Issue> & { flagged: boolean } = { flagged };
+      await updateIssue.mutateAsync({ issueId: issue.id, data });
+    } catch (error) {
+      console.error('Error updating flagged:', error);
+    }
+  };
+
+  const handleStoryPointsChange = async (storyPoints: number | null) => {
+    try {
+      const data: Partial<Issue> & { storyPoints: number | null } = { storyPoints };
+      await updateIssue.mutateAsync({ issueId: issue.id, data });
+    } catch (error) {
+      console.error('Error updating story points:', error);
+    }
+  };
+
+  // Merge a single key into customFields without clobbering other keys.
+  const patchCustomField = async (key: keyof IssueCustomFieldsShape, value: string | null) => {
+    const current = (issueDetail?.customFields ?? {}) as Record<string, unknown>;
+    const next: Record<string, unknown> = { ...current };
+    if (value === null) {
+      delete next[key];
+    } else {
+      next[key] = value;
+    }
+    try {
+      const data: Partial<Issue> & { customFields: Record<string, unknown> } = {
+        customFields: next,
+      };
+      await updateIssue.mutateAsync({ issueId: issue.id, data });
+    } catch (error) {
+      console.error(`Error updating ${String(key)}:`, error);
+    }
+  };
+
+  const handleSprintChange = async (sprintId: string | null) => {
+    try {
+      await updateIssue.mutateAsync({ issueId: issue.id, data: { sprintId } });
+    } catch (error) {
+      console.error('Error updating sprint:', error);
+    }
+  };
+
+  const handleEpicChange = async (epicId: string | null) => {
+    try {
+      // `epicId` is accepted by the PATCH route but isn't part of the shared
+      // `Issue` hook shape — widen the payload type like `resolution` above.
+      const data: Partial<Issue> & { epicId: string | null } = { epicId };
+      await updateIssue.mutateAsync({ issueId: issue.id, data });
+    } catch (error) {
+      console.error('Error updating epic:', error);
+    }
+  };
+
+  const handleParentChange = async (parentId: string | null) => {
+    try {
+      const data: Partial<Issue> & { parentId: string | null } = { parentId };
+      await updateIssue.mutateAsync({ issueId: issue.id, data });
+    } catch (error) {
+      console.error('Error updating parent:', error);
+    }
+  };
+
   const handleComponentsChange = (componentIds: string[]) => {
     setIssueComponents.mutate(
       { issueId: issue.id, componentIds },
@@ -150,6 +252,17 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
 
   const priorityLevel = toPriorityLevel(issue.priority);
 
+  // Locale-aware replacement for the old hardcoded 'en-US' toLocaleDateString.
+  const formatDay = (date: string | Date) =>
+    format.dateTime(new Date(date), { month: 'short', day: 'numeric', year: 'numeric' });
+
+  const customFields = (issueDetail?.customFields ?? {}) as IssueCustomFieldsShape;
+  const environment =
+    typeof customFields.environment === 'string' ? customFields.environment : null;
+  const startDate = typeof customFields.startDate === 'string' ? customFields.startDate : null;
+  const flagged = issueDetail?.flagged ?? false;
+  const storyPoints = issueDetail?.storyPoints ?? null;
+
   const fixVersions = issueVersions?.fixVersions ?? [];
   const affectsVersions = issueVersions?.affectsVersions ?? [];
   const components = issueComponents ?? [];
@@ -161,11 +274,16 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
   return (
     <div className="space-y-6">
       <section className="space-y-2">
-        <span className="kicker">Details</span>
+        <span className="kicker">{t('detailsKicker')}</span>
 
-        {/* Group 1: Status & Priority */}
+        {/* Group 1: Type, Status & Priority */}
         <div>
-          <PropertyRow icon={<CircleDot className="h-3.5 w-3.5" />} label="State">
+          <PropertyRow icon={<Shapes className="h-3.5 w-3.5" />} label={t('rows.type')}>
+            {/* Read-only: PATCH /api/issues/[issueId] doesn't accept `type`. */}
+            <TypePicker value={issueDetail?.type ?? ''} />
+          </PropertyRow>
+
+          <PropertyRow icon={<CircleDot className="h-3.5 w-3.5" />} label={t('rows.state')}>
             <StatusPicker
               projectId={issue.projectId}
               value={issue.statusId}
@@ -176,7 +294,7 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
 
           <PropertyRow
             icon={<PriorityBars level={priorityLevel} size={14} className="shrink-0" />}
-            label="Priority"
+            label={t('rows.priority')}
           >
             <PriorityPicker
               value={issue.priority}
@@ -185,13 +303,21 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
             />
           </PropertyRow>
 
-          <PropertyRow icon={<Tag className="h-3.5 w-3.5" />} label="Labels">
+          <PropertyRow icon={<Tag className="h-3.5 w-3.5" />} label={t('rows.labels')}>
             <LabelPicker
               value={issue.labels}
               onChange={handleLabelsChange}
               disabled={updateIssue.isPending}
               organizationId={currentOrganizationId}
               projectId={issue.projectId}
+            />
+          </PropertyRow>
+
+          <PropertyRow icon={<Flag className="h-3.5 w-3.5" />} label={tFields('flagged')}>
+            <FlaggedToggle
+              value={flagged}
+              onChange={handleFlaggedChange}
+              disabled={updateIssue.isPending}
             />
           </PropertyRow>
         </div>
@@ -251,7 +377,7 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
 
         {/* Group 3: People */}
         <div className="border-border/50 mt-3 border-t pt-3">
-          <PropertyRow icon={<User className="h-3.5 w-3.5" />} label="Assignee">
+          <PropertyRow icon={<User className="h-3.5 w-3.5" />} label={t('rows.assignee')}>
             <AssigneePicker
               organizationId={currentOrganizationId}
               value={issue.assigneeId || null}
@@ -278,33 +404,84 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
           </PropertyRow>
         </div>
 
-        {/* Group 4: Dates & Hierarchy */}
+        {/* Group 4: Planning — sprint, epic, parent */}
         <div className="border-border/50 mt-3 border-t pt-3">
-          <PropertyRow icon={<CalendarClock className="h-3.5 w-3.5" />} label="Due date">
-            <span className="text-foreground">
-              {issue.dueDate ? (
-                new Date(issue.dueDate).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                })
-              ) : (
-                <span className="text-muted-foreground">None</span>
-              )}
-            </span>
+          <PropertyRow icon={<RefreshCw className="h-3.5 w-3.5" />} label={t('rows.sprint')}>
+            <SprintPicker
+              projectId={issue.projectId}
+              value={issueDetail?.sprintId ?? null}
+              onChange={handleSprintChange}
+              disabled={updateIssue.isPending}
+            />
           </PropertyRow>
 
-          <PropertyRow icon={<Calendar className="h-3.5 w-3.5" />} label="Created on">
-            <span className="text-foreground">{formatDate(issue.createdAt)}</span>
+          <PropertyRow icon={<Zap className="h-3.5 w-3.5" />} label={t('rows.epic')}>
+            <EpicPicker
+              projectId={issue.projectId}
+              value={issueDetail?.epicId ?? null}
+              onChange={handleEpicChange}
+              excludeIssueId={issue.id}
+              disabled={updateIssue.isPending}
+            />
           </PropertyRow>
 
-          <PropertyRow icon={<Gauge className="h-3.5 w-3.5" />} label="Estimate">
+          <PropertyRow icon={<GitBranch className="h-3.5 w-3.5" />} label={t('rows.parent')}>
+            <ParentPicker
+              projectId={issue.projectId}
+              issueId={issue.id}
+              value={issueDetail?.parentId ?? null}
+              onChange={handleParentChange}
+              disabled={updateIssue.isPending}
+            />
+          </PropertyRow>
+        </div>
+
+        {/* Group 5: Dates & Estimate */}
+        <div className="border-border/50 mt-3 border-t pt-3">
+          <PropertyRow icon={<CalendarPlus className="h-3.5 w-3.5" />} label={tFields('startDate')}>
+            <StartDateField
+              value={startDate}
+              onChange={(value) => patchCustomField('startDate', value)}
+              disabled={updateIssue.isPending}
+            />
+          </PropertyRow>
+
+          <PropertyRow icon={<CalendarClock className="h-3.5 w-3.5" />} label={t('rows.dueDate')}>
+            <DueDatePicker
+              value={issue.dueDate ?? null}
+              onChange={handleDueDateChange}
+              disabled={updateIssue.isPending}
+            />
+          </PropertyRow>
+
+          <PropertyRow icon={<Calendar className="h-3.5 w-3.5" />} label={t('rows.createdOn')}>
+            <span className="text-foreground">{formatDay(issue.createdAt)}</span>
+          </PropertyRow>
+
+          <PropertyRow icon={<Gauge className="h-3.5 w-3.5" />} label={t('rows.estimate')}>
             <span className="text-foreground">
               {issue.estimate ? (
                 `${issue.estimate}h`
               ) : (
-                <span className="text-muted-foreground">None</span>
+                <span className="text-muted-foreground">{t('rows.none')}</span>
               )}
             </span>
+          </PropertyRow>
+
+          <PropertyRow icon={<Hash className="h-3.5 w-3.5" />} label={tFields('storyPoints')}>
+            <StoryPointsField
+              value={storyPoints}
+              onChange={handleStoryPointsChange}
+              disabled={updateIssue.isPending}
+            />
+          </PropertyRow>
+
+          <PropertyRow icon={<Globe className="h-3.5 w-3.5" />} label={tFields('environment')}>
+            <EnvironmentField
+              value={environment}
+              onChange={(value) => patchCustomField('environment', value)}
+              disabled={updateIssue.isPending}
+            />
           </PropertyRow>
         </div>
       </section>
@@ -339,12 +516,12 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
 
       <section className="border-border/60 space-y-1 border-t pt-3">
         <div className="text-muted-foreground flex justify-between text-xs">
-          <span>Created</span>
-          <span>{formatDate(issue.createdAt)}</span>
+          <span>{t('meta.created')}</span>
+          <span>{formatDay(issue.createdAt)}</span>
         </div>
         <div className="text-muted-foreground flex justify-between text-xs">
-          <span>Updated</span>
-          <span>{formatDate(issue.updatedAt)}</span>
+          <span>{t('meta.updated')}</span>
+          <span>{formatDay(issue.updatedAt)}</span>
         </div>
       </section>
     </div>
@@ -376,12 +553,4 @@ function toPriorityLevel(value: string): PriorityLevel {
   return (PRIORITY_LEVELS as ReadonlyArray<string>).includes(normalized)
     ? (normalized as PriorityLevel)
     : 'none';
-}
-
-function formatDate(date: string | Date): string {
-  return new Date(date).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
 }

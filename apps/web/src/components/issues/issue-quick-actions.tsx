@@ -1,6 +1,18 @@
 'use client';
 
+/**
+ * Compact quick-action toolbar for the issue detail header (Jira's
+ * quick-add/actions row analogue): copy ID / link / branch name / Markdown,
+ * a flag toggle, open in a new tab, plus an overflow menu for heavier or
+ * destructive actions.
+ *
+ * Delete renders only when a callback is provided. Duplicate / Archive have no
+ * backend yet, so they render as clearly-disabled "coming soon" items (never
+ * dead buttons) unless a real callback is supplied.
+ */
+
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Hash,
   Link as LinkIcon,
@@ -10,6 +22,8 @@ import {
   Copy,
   Archive,
   Trash2,
+  Flag,
+  FileText,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -20,17 +34,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useToast } from '@/hooks/use-toast';
+import { useUpdateIssue, type Issue } from '@/lib/hooks/use-issues';
 import { cn } from '@/lib/utils';
 
 export interface IssueQuickActionsProps {
   issueKey: string;
   title: string;
+  /** Issue id (CUID2) — required for the flag toggle PATCH. */
+  issueId?: string;
+  /** Current flagged state; drives the flag/unflag toggle affordance. */
+  flagged?: boolean;
+  /** Optional branch prefix, e.g. the current user's handle. */
   username?: string;
   onDuplicate?: () => void;
   onArchive?: () => void;
@@ -55,28 +71,6 @@ function slugify(input: string, maxLength = MAX_BRANCH_LENGTH): string {
   return slug.slice(0, maxLength).replace(/-+$/g, '');
 }
 
-type ToastFn = (message: string) => void;
-
-function resolveToast(): ToastFn {
-  // Lazy resolve sonner if it's available; otherwise fall back gracefully.
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-    const sonner = require('sonner') as { toast?: (msg: string) => void };
-    if (sonner && typeof sonner.toast === 'function') {
-      return (msg: string) => sonner.toast?.(msg);
-    }
-  } catch {
-    // sonner not installed — fall through
-  }
-  return (msg: string) => {
-    // eslint-disable-next-line no-console
-    console.log('[issue-quick-actions]', msg);
-    if (typeof window !== 'undefined' && typeof window.alert === 'function') {
-      window.alert(msg);
-    }
-  };
-}
-
 async function copyToClipboard(value: string): Promise<boolean> {
   if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
     try {
@@ -92,10 +86,12 @@ async function copyToClipboard(value: string): Promise<boolean> {
 interface IconActionProps {
   label: string;
   onClick: () => void;
+  disabled?: boolean;
+  active?: boolean;
   children: React.ReactNode;
 }
 
-function IconAction({ label, onClick, children }: IconActionProps) {
+function IconAction({ label, onClick, disabled, active, children }: IconActionProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -104,7 +100,10 @@ function IconAction({ label, onClick, children }: IconActionProps) {
           variant="ghost"
           size="icon-sm"
           onClick={onClick}
+          disabled={disabled}
           aria-label={label}
+          aria-pressed={active}
+          className={cn(active && 'text-accent-amber')}
         >
           {children}
         </Button>
@@ -117,39 +116,76 @@ function IconAction({ label, onClick, children }: IconActionProps) {
 export function IssueQuickActions({
   issueKey,
   title,
-  username = 'user',
+  issueId,
+  flagged = false,
+  username,
   onDuplicate,
   onArchive,
   onDelete,
   className,
 }: IssueQuickActionsProps) {
-  const toast = React.useMemo(resolveToast, []);
+  const t = useTranslations('issueDetail.quickActions');
+  const tq = useTranslations('issueQuickActions');
+  const { toast } = useToast();
+  const updateIssue = useUpdateIssue();
 
   const branchName = React.useMemo(() => {
+    const prefix = username ? `${slugify(username, 20)}/` : '';
     const remaining = Math.max(8, MAX_BRANCH_LENGTH - issueKey.length - 1);
     const titleSlug = slugify(title, remaining);
-    return `${username}/${issueKey}-${titleSlug}`.replace(/-+$/g, '');
+    return `${prefix}${issueKey.toLowerCase()}-${titleSlug}`.replace(/-+$/g, '');
   }, [issueKey, title, username]);
 
   const handleCopyId = React.useCallback(async () => {
     const ok = await copyToClipboard(issueKey);
-    toast(ok ? `Copied ${issueKey}` : `Could not copy ${issueKey}`);
-  }, [issueKey, toast]);
+    toast({
+      title: ok ? t('copiedId', { key: issueKey }) : t('copyFailed'),
+      ...(ok ? {} : { variant: 'destructive' as const }),
+    });
+  }, [issueKey, t, toast]);
 
   const handleCopyUrl = React.useCallback(async () => {
-    if (typeof window === 'undefined') {
-      toast('URL unavailable');
-      return;
-    }
-    const url = window.location.href;
-    const ok = await copyToClipboard(url);
-    toast(ok ? 'Copied link to clipboard' : 'Could not copy link');
-  }, [toast]);
+    const ok = typeof window !== 'undefined' && (await copyToClipboard(window.location.href));
+    toast({
+      title: ok ? t('copiedLink') : t('copyFailed'),
+      ...(ok ? {} : { variant: 'destructive' as const }),
+    });
+  }, [t, toast]);
 
   const handleCopyBranch = React.useCallback(async () => {
     const ok = await copyToClipboard(branchName);
-    toast(ok ? `Copied branch ${branchName}` : 'Could not copy branch name');
-  }, [branchName, toast]);
+    toast({
+      title: ok ? t('copiedBranch', { branch: branchName }) : t('copyFailed'),
+      ...(ok ? {} : { variant: 'destructive' as const }),
+    });
+  }, [branchName, t, toast]);
+
+  const handleCopyMarkdown = React.useCallback(async () => {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    const markdown = `[${issueKey}: ${title}](${url})`;
+    const ok = await copyToClipboard(markdown);
+    toast({
+      title: ok ? tq('copied') : t('copyFailed'),
+      ...(ok ? {} : { variant: 'destructive' as const }),
+    });
+  }, [issueKey, title, tq, t, toast]);
+
+  const handleToggleFlag = React.useCallback(() => {
+    if (!issueId) {
+      return;
+    }
+    // `flagged` is a server-side issue column the sidebar-fields agent adds to
+    // the PATCH route; it is not yet on the shared client `Issue` type, so cast
+    // the optimistic patch through `Partial<Issue>` rather than widen the type.
+    updateIssue.mutate(
+      { issueId, data: { flagged: !flagged } as unknown as Partial<Issue> },
+      {
+        onError: () => {
+          toast({ title: tq('flagFailed'), variant: 'destructive' });
+        },
+      }
+    );
+  }, [issueId, flagged, updateIssue, toast, tq]);
 
   const handleOpenInNewTab = React.useCallback(() => {
     if (typeof window === 'undefined') {
@@ -158,53 +194,39 @@ export function IssueQuickActions({
     window.open(window.location.href, '_blank', 'noopener,noreferrer');
   }, []);
 
-  const handleDuplicate = React.useCallback(() => {
-    if (onDuplicate) {
-      onDuplicate();
-    } else {
-      // eslint-disable-next-line no-console
-      console.info('[issue-quick-actions] duplicate', { issueKey });
-    }
-  }, [issueKey, onDuplicate]);
-
-  const handleArchive = React.useCallback(() => {
-    if (onArchive) {
-      onArchive();
-    } else {
-      // eslint-disable-next-line no-console
-      console.info('[issue-quick-actions] archive', { issueKey });
-    }
-  }, [issueKey, onArchive]);
-
-  const handleDelete = React.useCallback(() => {
-    if (onDelete) {
-      onDelete();
-    } else {
-      // eslint-disable-next-line no-console
-      console.info('[issue-quick-actions] delete', { issueKey });
-    }
-  }, [issueKey, onDelete]);
-
   return (
     <TooltipProvider delayDuration={150}>
       <div
         className={cn(
-          'inline-flex items-center gap-0.5 rounded-md border border-border/60 bg-background/40 p-0.5',
-          className,
+          'border-border/60 bg-background/40 inline-flex items-center gap-0.5 rounded-md border p-0.5',
+          className
         )}
         role="toolbar"
-        aria-label="Issue quick actions"
+        aria-label={t('toolbarLabel')}
       >
-        <IconAction label={`Copy ID (${issueKey})`} onClick={handleCopyId}>
+        <IconAction label={t('copyId', { key: issueKey })} onClick={handleCopyId}>
           <Hash />
         </IconAction>
-        <IconAction label="Copy link" onClick={handleCopyUrl}>
+        <IconAction label={t('copyLink')} onClick={handleCopyUrl}>
           <LinkIcon />
         </IconAction>
-        <IconAction label={`Copy branch name`} onClick={handleCopyBranch}>
+        <IconAction label={tq('copyMarkdown')} onClick={handleCopyMarkdown}>
+          <FileText />
+        </IconAction>
+        <IconAction label={t('copyBranch')} onClick={handleCopyBranch}>
           <GitBranch />
         </IconAction>
-        <IconAction label="Open in new tab" onClick={handleOpenInNewTab}>
+        {issueId && (
+          <IconAction
+            label={flagged ? tq('unflag') : tq('flag')}
+            onClick={handleToggleFlag}
+            active={flagged}
+            disabled={updateIssue.isPending}
+          >
+            <Flag className={cn(flagged && 'fill-current')} />
+          </IconAction>
+        )}
+        <IconAction label={t('openInNewTab')} onClick={handleOpenInNewTab}>
           <ExternalLink />
         </IconAction>
 
@@ -212,35 +234,66 @@ export function IssueQuickActions({
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="More actions"
-                >
+                <Button type="button" variant="ghost" size="icon-sm" aria-label={t('more')}>
                   <MoreHorizontal />
                 </Button>
               </DropdownMenuTrigger>
             </TooltipTrigger>
-            <TooltipContent side="bottom">More actions</TooltipContent>
+            <TooltipContent side="bottom">{t('more')}</TooltipContent>
           </Tooltip>
           <DropdownMenuContent align="end" className="min-w-[10rem]">
-            <DropdownMenuItem onSelect={handleDuplicate}>
-              <Copy className="mr-2 h-4 w-4" />
-              Duplicate
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={handleArchive}>
-              <Archive className="mr-2 h-4 w-4" />
-              Archive
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onSelect={handleDelete}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
+            {onDuplicate ? (
+              <DropdownMenuItem onSelect={() => onDuplicate()}>
+                <Copy className="mr-2 h-4 w-4" />
+                {t('duplicate')}
+              </DropdownMenuItem>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <DropdownMenuItem disabled className="justify-between">
+                      <span className="flex items-center">
+                        <Copy className="mr-2 h-4 w-4" />
+                        {t('duplicate')}
+                      </span>
+                    </DropdownMenuItem>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left">{tq('comingSoon')}</TooltipContent>
+              </Tooltip>
+            )}
+            {onArchive ? (
+              <DropdownMenuItem onSelect={() => onArchive()}>
+                <Archive className="mr-2 h-4 w-4" />
+                {t('archive')}
+              </DropdownMenuItem>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <DropdownMenuItem disabled className="justify-between">
+                      <span className="flex items-center">
+                        <Archive className="mr-2 h-4 w-4" />
+                        {t('archive')}
+                      </span>
+                    </DropdownMenuItem>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left">{tq('comingSoon')}</TooltipContent>
+              </Tooltip>
+            )}
+            {onDelete && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={() => onDelete()}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  {t('delete')}
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -165,6 +165,67 @@ export async function createComment(data: typeof issueComments.$inferInsert) {
   return result[0];
 }
 
+// Get single comment by ID
+export async function getCommentById(commentId: string) {
+  const result = await db
+    .select()
+    .from(issueComments)
+    .where(eq(issueComments.id, commentId))
+    .limit(1);
+
+  return result[0] || null;
+}
+
+// Update comment (bumps updatedAt — used for content/mentions edits)
+export async function updateComment(
+  commentId: string,
+  data: Partial<typeof issueComments.$inferInsert>
+) {
+  const result = await db
+    .update(issueComments)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(issueComments.id, commentId))
+    .returning();
+
+  return result[0];
+}
+
+// Replace a comment's reactions WITHOUT bumping updatedAt/updatedBy.
+// The "edited" flag is derived from updatedAt > createdAt, so reaction
+// toggles must not make a comment look edited.
+export async function updateCommentReactions(commentId: string, reactions: unknown[]) {
+  const result = await db
+    .update(issueComments)
+    .set({ reactions })
+    .where(eq(issueComments.id, commentId))
+    .returning();
+
+  return result[0];
+}
+
+// True when the comment has threaded replies (parentId children).
+// parent_id is ON DELETE CASCADE, so callers should check this before a
+// hard delete to avoid silently destroying a thread.
+export async function hasCommentReplies(commentId: string): Promise<boolean> {
+  const result = await db
+    .select({ id: issueComments.id })
+    .from(issueComments)
+    .where(eq(issueComments.parentId, commentId))
+    .limit(1);
+
+  return result.length > 0;
+}
+
+// Hard-delete a comment (callers must enforce the no-replies rule first)
+export async function deleteComment(commentId: string) {
+  const result = await db
+    .delete(issueComments)
+    .where(eq(issueComments.id, commentId))
+    .returning({ id: issueComments.id });
+
+  return result[0] || null;
+}
+
 // Get issue activities
 export async function getIssueActivities(issueId: string) {
   const results = await db

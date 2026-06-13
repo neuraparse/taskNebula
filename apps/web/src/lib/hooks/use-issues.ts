@@ -26,6 +26,9 @@ export interface Issue {
   estimate: number | null;
   labels?: string[];
   dueDate?: string | null;
+  flagged?: boolean | null;
+  storyPoints?: number | null;
+  customFields?: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
   assignee?: {

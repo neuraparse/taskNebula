@@ -1438,6 +1438,40 @@
 }
 
 /* ----------------------------------------------------------------------------
+   Landing marketing sections (src/components/marketing) — additive tokens only.
+   Scoped to .landing-dark; do not reuse outside the landing page.
+   ---------------------------------------------------------------------------- */
+.landing-dark {
+  --landing-terminal-bg: #08090c;
+}
+
+@layer utilities {
+  /* Terminal / code snippet card used by the hero and self-host sections */
+  .landing-terminal {
+    background: var(--landing-terminal-bg, #08090c);
+    border: 1px solid var(--landing-border);
+    border-radius: var(--radius-lg);
+  }
+
+  /* Keycap for keyboard-shortcut vignettes (Cmd+K mock) */
+  .landing-kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.4rem;
+    height: 1.4rem;
+    padding: 0 0.3rem;
+    border: 1px solid var(--landing-border-strong);
+    border-bottom-width: 2px;
+    border-radius: var(--radius-sm);
+    background: var(--landing-bg-elevated);
+    font-family: var(--font-mono), monospace;
+    font-size: 10px;
+    color: var(--landing-text-body);
+  }
+}
+
+/* ----------------------------------------------------------------------------
    Reduced-motion
    ---------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {

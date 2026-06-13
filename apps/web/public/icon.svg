@@ -1,5 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="TaskNebula">
-  <rect width="512" height="512" rx="96" fill="#050505"/>
-  <path d="M148 148h216v56h-80v160h-56V204h-80z" fill="#ffffff"/>
-  <path d="M146 346h220v26H146z" fill="#38bdf8"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 24 24" role="img" aria-label="TaskNebula">
+  <defs>
+    <linearGradient id="tn-tile" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#8F51EC"/>
+    </linearGradient>
+    <radialGradient id="tn-sheen" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(5 4) rotate(48) scale(22)">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.32"/>
+      <stop offset="55%" stop-color="#FFFFFF" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="1" y="1" width="22" height="22" rx="6" fill="url(#tn-tile)"/>
+  <rect x="1" y="1" width="22" height="22" rx="6" fill="url(#tn-sheen)"/>
+  <rect x="1.6" y="1.6" width="20.8" height="20.8" rx="5.4" fill="none" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="0.85"/>
+  <ellipse cx="12" cy="12" rx="8.2" ry="3.3" transform="rotate(30 12 12)" fill="none" stroke="#FFFFFF" stroke-width="1.1" opacity="0.5"/>
+  <path d="M7.1 12.5 10.6 15.9 17 8.6" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="18.55" cy="16.1" r="2.1" fill="#FFFFFF" opacity="0.25"/>
+  <circle cx="18.55" cy="16.1" r="1.2" fill="#FFFFFF"/>
+  <circle cx="5.45" cy="7.9" r="0.85" fill="#FFFFFF" opacity="0.8"/>
 </svg>

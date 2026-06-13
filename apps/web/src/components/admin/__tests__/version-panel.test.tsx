@@ -1,0 +1,218 @@
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import type { VersionInfo } from '@/lib/hooks/use-version-info';
+
+// next-intl + scrollIntoView are handled by jest.setup.js.
+
+const useVersionInfoMock = jest.fn();
+const useRefreshVersionInfoMock = jest.fn();
+jest.mock('@/lib/hooks/use-version-info', () => ({
+  useVersionInfo: () => useVersionInfoMock(),
+  useRefreshVersionInfo: () => useRefreshVersionInfoMock(),
+}));
+
+const toastMock = jest.fn();
+jest.mock('@/hooks/use-toast', () => ({
+  useToast: () => ({ toast: toastMock }),
+}));
+
+import { VersionPanel } from '../version-panel';
+
+function info(overrides: Partial<VersionInfo> = {}): VersionInfo {
+  return {
+    current: '0.4.0',
+    latest: null,
+    updateAvailable: false,
+    releaseUrl: null,
+    publishedAt: null,
+    notes: null,
+    checkedAt: null,
+    checkDisabled: false,
+    ...overrides,
+  };
+}
+
+function mockQuery(overrides: Partial<{ data: VersionInfo; isLoading: boolean; error: unknown }>) {
+  useVersionInfoMock.mockReturnValue({
+    data: undefined,
+    isLoading: false,
+    error: null,
+    ...overrides,
+  });
+}
+
+const mutate = jest.fn();
+function mockRefresh(overrides: Partial<{ isPending: boolean }> = {}) {
+  useRefreshVersionInfoMock.mockReturnValue({
+    mutate,
+    isPending: false,
+    ...overrides,
+  });
+}
+
+beforeEach(() => {
+  useVersionInfoMock.mockReset();
+  useRefreshVersionInfoMock.mockReset();
+  toastMock.mockReset();
+  mutate.mockReset();
+  mockRefresh();
+});
+
+describe('VersionPanel', () => {
+  it('renders a loading state while the query is in flight', () => {
+    mockQuery({ isLoading: true });
+    render(<VersionPanel />);
+    expect(screen.getByText('Loading…')).toBeInTheDocument();
+  });
+
+  it('renders the query error message', () => {
+    mockQuery({ error: new Error('Super admin access required') });
+    render(<VersionPanel />);
+    expect(screen.getByText('Super admin access required')).toBeInTheDocument();
+  });
+
+  it('shows current and latest versions with the up-to-date status when current === latest', () => {
+    mockQuery({ data: info({ latest: '0.4.0', updateAvailable: false }) });
+    render(<VersionPanel />);
+
+    // Both current and latest render as v-prefixed chips.
+    const chips = screen.getAllByText('v0.4.0');
+    expect(chips.length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText('Up to date')).toBeInTheDocument();
+  });
+
+  it('shows the update-available status and how-to-update commands', () => {
+    mockQuery({
+      data: info({ latest: '0.5.0', updateAvailable: true, notes: 'New stuff' }),
+    });
+    render(<VersionPanel />);
+
+    expect(screen.getByText('Update available')).toBeInTheDocument();
+    expect(screen.getByText('v0.5.0')).toBeInTheDocument();
+    expect(screen.getByText('Release notes')).toBeInTheDocument();
+    expect(screen.getByText('New stuff')).toBeInTheDocument();
+    expect(screen.getByText(/docker compose pull/)).toBeInTheDocument();
+  });
+
+  it('renders a View release link only over an https release URL', () => {
+    mockQuery({
+      data: info({
+        latest: '0.5.0',
+        updateAvailable: true,
+        releaseUrl: 'https://github.com/neuraparse/taskNebula/releases/tag/v0.5.0',
+      }),
+    });
+    render(<VersionPanel />);
+
+    const link = screen.getByRole('link', { name: /View release on GitHub/i });
+    expect(link).toHaveAttribute(
+      'href',
+      'https://github.com/neuraparse/taskNebula/releases/tag/v0.5.0'
+    );
+  });
+
+  it('does not render the View release link for a non-https URL', () => {
+    mockQuery({
+      data: info({
+        latest: '0.5.0',
+        updateAvailable: true,
+        releaseUrl: 'javascript:alert(1)' as unknown as string,
+      }),
+    });
+    render(<VersionPanel />);
+
+    expect(screen.queryByRole('link', { name: /View release/i })).not.toBeInTheDocument();
+  });
+
+  it('shows the checks-disabled state and disables the Check now button', () => {
+    mockQuery({ data: info({ checkDisabled: true }) });
+    render(<VersionPanel />);
+
+    expect(screen.getByText('Checks disabled')).toBeInTheDocument();
+    expect(screen.getByText(/Update checks are disabled/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Check now/i })).toBeDisabled();
+  });
+
+  it('hints when no release has been checked yet', () => {
+    mockQuery({ data: info({ latest: null, checkDisabled: false }) });
+    render(<VersionPanel />);
+
+    expect(screen.getByText(/No release information yet/)).toBeInTheDocument();
+    expect(screen.getByText('Not checked yet')).toBeInTheDocument();
+  });
+
+  it('triggers a refresh when Check now is clicked', async () => {
+    const user = userEvent.setup();
+    mockQuery({ data: info({ latest: '0.4.0' }) });
+    render(<VersionPanel />);
+
+    await user.click(screen.getByRole('button', { name: /Check now/i }));
+
+    expect(mutate).toHaveBeenCalledTimes(1);
+  });
+
+  it('toasts an update-available message when the refresh finds a newer version', async () => {
+    const user = userEvent.setup();
+    mockQuery({ data: info({ latest: '0.4.0' }) });
+    // Drive the mutation's onSuccess callback directly.
+    mutate.mockImplementation((_vars, opts) => {
+      opts?.onSuccess?.(info({ latest: '0.5.0', updateAvailable: true }));
+    });
+    render(<VersionPanel />);
+
+    await user.click(screen.getByRole('button', { name: /Check now/i }));
+
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Update available',
+        description: 'TaskNebula v0.5.0 is ready to install.',
+      })
+    );
+  });
+
+  it('toasts an up-to-date message when the refresh finds no newer version', async () => {
+    const user = userEvent.setup();
+    mockQuery({ data: info({ latest: '0.4.0' }) });
+    mutate.mockImplementation((_vars, opts) => {
+      opts?.onSuccess?.(info({ latest: '0.4.0', updateAvailable: false }));
+    });
+    render(<VersionPanel />);
+
+    await user.click(screen.getByRole('button', { name: /Check now/i }));
+
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Up to date',
+        description: 'You are running the latest version.',
+      })
+    );
+  });
+
+  it('toasts a destructive error when the refresh fails', async () => {
+    const user = userEvent.setup();
+    mockQuery({ data: info({ latest: '0.4.0' }) });
+    mutate.mockImplementation((_vars, opts) => {
+      opts?.onError?.(new Error('Could not reach GitHub'));
+    });
+    render(<VersionPanel />);
+
+    await user.click(screen.getByRole('button', { name: /Check now/i }));
+
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Check failed',
+        description: 'Could not reach GitHub',
+        variant: 'destructive',
+      })
+    );
+  });
+
+  it('shows a checking state and disabled button while a refresh is pending', () => {
+    mockQuery({ data: info({ latest: '0.4.0' }) });
+    mockRefresh({ isPending: true });
+    render(<VersionPanel />);
+
+    const button = screen.getByRole('button', { name: /Checking…/i });
+    expect(button).toBeDisabled();
+  });
+});

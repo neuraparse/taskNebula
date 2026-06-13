@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
+import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MessageSquare, History, Loader2, Bot } from 'lucide-react';
 import { useComments, useCreateComment } from '@/lib/hooks/use-comments';
 import { useActivities } from '@/lib/hooks/use-activities';
 import { useIssue } from '@/lib/hooks/use-issues';
+import { CommentItem } from './comment-item';
 import { MentionTextarea } from './mention-textarea';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -15,12 +16,15 @@ const COMMENT_LIMIT = 5;
 const ACTIVITY_LIMIT = 7;
 
 // Loose shape for runtime fields that may not be in the strict TS interfaces.
-type MaybeAgentActor = {
-  id?: string;
-  name?: string | null;
-  email?: string | null;
-  kind?: string | null;
-} | null | undefined;
+type MaybeAgentActor =
+  | {
+      id?: string;
+      name?: string | null;
+      email?: string | null;
+      kind?: string | null;
+    }
+  | null
+  | undefined;
 
 type MaybeAgentRecord = {
   author?: MaybeAgentActor;
@@ -62,11 +66,7 @@ function isAgentEvent(item: MaybeAgentRecord): boolean {
 
 function getAgentName(item: MaybeAgentRecord): string {
   return (
-    item.metadata?.agentName ||
-    item.newValue ||
-    item.author?.name ||
-    item.user?.name ||
-    'Agent'
+    item.metadata?.agentName || item.newValue || item.author?.name || item.user?.name || 'Agent'
   );
 }
 
@@ -75,6 +75,8 @@ export function IssueActivity({ issueId }: { issueId: string }) {
   const [mentionedUsers, setMentionedUsers] = useState<string[]>([]);
   const [showAllComments, setShowAllComments] = useState(false);
   const [showAllActivity, setShowAllActivity] = useState(false);
+  const { data: session } = useSession();
+  const currentUserId = session?.user?.id ?? null;
   const { data: issue } = useIssue(issueId);
   const { data: comments, isLoading: commentsLoading } = useComments(issueId);
   const { data: activities, isLoading: activitiesLoading } = useActivities(issueId);
@@ -84,20 +86,25 @@ export function IssueActivity({ issueId }: { issueId: string }) {
     if (!newComment.trim()) return;
 
     try {
-      await createComment.mutateAsync(newComment.trim());
+      await createComment.mutateAsync({ content: newComment.trim(), mentions: mentionedUsers });
       setNewComment('');
+      setMentionedUsers([]);
     } catch (error) {
       console.error('Error adding comment:', error);
     }
   };
 
-  const visibleComments = showAllComments ? (comments || []) : (comments || []).slice(0, COMMENT_LIMIT);
-  const visibleActivities = showAllActivity ? (activities || []) : (activities || []).slice(0, ACTIVITY_LIMIT);
+  const visibleComments = showAllComments
+    ? comments || []
+    : (comments || []).slice(0, COMMENT_LIMIT);
+  const visibleActivities = showAllActivity
+    ? activities || []
+    : (activities || []).slice(0, ACTIVITY_LIMIT);
 
   return (
     <section className="animate-fade-in">
       <Tabs defaultValue="comments" className="flex flex-col">
-        <TabsList className="w-fit mb-4">
+        <TabsList className="mb-4 w-fit">
           <TabsTrigger value="comments" className="gap-1.5 text-xs">
             <MessageSquare className="h-3.5 w-3.5" />
             Comments {comments && comments.length > 0 ? `(${comments.length})` : ''}
@@ -108,79 +115,36 @@ export function IssueActivity({ issueId }: { issueId: string }) {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="comments" className="space-y-4 mt-0">
+        <TabsContent value="comments" className="mt-0 space-y-4">
           {commentsLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
             </div>
           ) : comments && comments.length > 0 ? (
             <div className="space-y-4">
-              {visibleComments.map((comment) => {
-                const authorName = comment.author.name || comment.author.email;
-                const initials = authorName
-                  .split(' ')
-                  .map((n) => n[0])
-                  .join('')
-                  .toUpperCase()
-                  .slice(0, 2);
-                const isAgent = isAgentActor(comment.author as MaybeAgentActor);
-
-                if (isAgent) {
-                  return (
-                    <div key={comment.id} className="flex gap-3">
-                      <div className="h-7 w-7 shrink-0 rounded-full bg-gradient-to-br from-violet-400 to-blue-500 flex items-center justify-center text-white">
-                        <Bot className="h-3.5 w-3.5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-baseline gap-2">
-                          <span className="font-medium text-sm">{authorName}</span>
-                          <span className="rounded-full px-1.5 text-[9px] font-semibold tracking-wider bg-violet-100 text-violet-700">
-                            AGENT
-                          </span>
-                          <span className="text-[11px] text-muted-foreground">
-                            {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
-                          </span>
-                        </div>
-                        <p className="mt-1 text-sm text-foreground/90 leading-relaxed rounded-md bg-violet-50/40 border border-violet-100 px-2.5 py-1.5">
-                          {comment.content}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                }
-
-                return (
-                  <div key={comment.id} className="flex gap-3">
-                    <Avatar className="h-7 w-7 shrink-0">
-                      <AvatarImage src={`https://avatar.vercel.sh/${authorName}`} />
-                      <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2">
-                        <span className="font-medium text-sm">{authorName}</span>
-                        <span className="text-[11px] text-muted-foreground">
-                          {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
-                        </span>
-                      </div>
-                      <p className="mt-0.5 text-sm text-foreground/90 leading-relaxed">{comment.content}</p>
-                    </div>
-                  </div>
-                );
-              })}
+              {visibleComments.map((comment) => (
+                <CommentItem
+                  key={comment.id}
+                  comment={comment}
+                  issueId={issueId}
+                  currentUserId={currentUserId}
+                  isAgent={isAgentActor(comment.author as MaybeAgentActor)}
+                />
+              ))}
               {comments.length > COMMENT_LIMIT && (
                 <button
                   type="button"
                   onClick={() => setShowAllComments(!showAllComments)}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-200"
+                  className="text-muted-foreground hover:text-foreground text-xs transition-colors duration-200"
                 >
-                  {showAllComments ? 'Show fewer' : `Show ${comments.length - COMMENT_LIMIT} more comments`}
+                  {showAllComments
+                    ? 'Show fewer'
+                    : `Show ${comments.length - COMMENT_LIMIT} more comments`}
                 </button>
               )}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground py-4">
-              No comments yet
-            </p>
+            <p className="text-muted-foreground py-4 text-sm">No comments yet</p>
           )}
 
           {/* Comment Input */}
@@ -216,7 +180,7 @@ export function IssueActivity({ issueId }: { issueId: string }) {
         <TabsContent value="history" className="mt-0">
           {activitiesLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
             </div>
           ) : activities && activities.length > 0 ? (
             <div className="space-y-3">
@@ -231,8 +195,7 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                   const isAssign =
                     (a.type || '').toLowerCase() === 'updated' &&
                     (a.field || '').toLowerCase() === 'assignee';
-                  const targetIsAgent =
-                    !!a.newValue && a.newValue.toLowerCase().includes('cursor');
+                  const targetIsAgent = !!a.newValue && a.newValue.toLowerCase().includes('cursor');
                   if (isAssign && targetIsAgent) {
                     // Check no later agent comment/reply event after i.
                     const hasFollowup = visibleActivities.slice(i + 1).some((later) => {
@@ -252,10 +215,11 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                 }
 
                 return visibleActivities.map((activity, idx) => {
-                  const a = activity as unknown as MaybeAgentRecord;
                   const userName = activity.user?.name || activity.user?.email || 'Unknown';
                   const actorIsAgent = isAgentActor(activity.user as MaybeAgentActor);
-                  const timeAgo = formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true });
+                  const timeAgo = formatDistanceToNow(new Date(activity.createdAt), {
+                    addSuffix: true,
+                  });
 
                   const isAssignment =
                     (activity.type || '').toLowerCase() === 'updated' &&
@@ -270,7 +234,7 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                     activityNode = (
                       <span>
                         {userName} assigned to{' '}
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-700 text-[11.5px] font-medium">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-violet-100 px-1.5 py-0.5 text-[11.5px] font-medium text-violet-700">
                           <Bot className="h-3 w-3" />
                           {activity.newValue}
                         </span>
@@ -295,10 +259,10 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                     activityNode = (
                       <>
                         <span className="text-foreground/80">{activityText}</span>
-                        <span className="text-[11px] text-muted-foreground ml-2">
+                        <span className="text-muted-foreground ml-2 text-[11px]">
                           {userName}
                           {actorIsAgent && (
-                            <span className="ml-1 rounded-full px-1.5 text-[9px] font-semibold tracking-wider bg-violet-100 text-violet-700 align-middle">
+                            <span className="ml-1 rounded-full bg-violet-100 px-1.5 align-middle text-[9px] font-semibold tracking-wider text-violet-700">
                               AGENT
                             </span>
                           )}
@@ -313,21 +277,23 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                     <div key={activity.id}>
                       <div className="flex gap-2.5 text-sm">
                         {actorIsAgent || (isAssignment && assignmentTargetIsAgent) ? (
-                          <div className="h-3.5 w-3.5 mt-0.5 shrink-0 rounded-full bg-gradient-to-br from-violet-400 to-blue-500 flex items-center justify-center text-white">
+                          <div className="bg-gradient-primary mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-white">
                             <Bot className="h-2.5 w-2.5" />
                           </div>
                         ) : (
-                          <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 mt-1.5 shrink-0"></div>
+                          <div className="bg-muted-foreground/40 mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"></div>
                         )}
                         <div className="flex-1">{activityNode}</div>
                       </div>
                       {idx === connectedStripIndex && (
-                        <div className="my-3 flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2 text-[12px]">
+                        <div className="border-border bg-muted/30 my-3 flex items-center justify-between rounded-lg border px-3 py-2 text-[12px]">
                           <div className="flex items-center gap-2">
                             <Bot className="h-3.5 w-3.5 text-violet-500" />
                             <span>
                               Connected with{' '}
-                              <span className="font-medium text-foreground">{connectedAgentName}</span>
+                              <span className="text-foreground font-medium">
+                                {connectedAgentName}
+                              </span>
                             </span>
                             <span className="text-amber-600">• Awaiting response</span>
                           </div>
@@ -340,7 +306,7 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                                 window.dispatchEvent(new CustomEvent('tasknebula:open-ai-sidecar'));
                               }
                             }}
-                            className="text-foreground hover:underline font-medium"
+                            className="text-foreground font-medium hover:underline"
                           >
                             Open sidecar
                           </button>
@@ -354,16 +320,16 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                 <button
                   type="button"
                   onClick={() => setShowAllActivity(!showAllActivity)}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-200"
+                  className="text-muted-foreground hover:text-foreground text-xs transition-colors duration-200"
                 >
-                  {showAllActivity ? 'Show fewer' : `Show ${activities.length - ACTIVITY_LIMIT} more`}
+                  {showAllActivity
+                    ? 'Show fewer'
+                    : `Show ${activities.length - ACTIVITY_LIMIT} more`}
                 </button>
               )}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground py-4">
-              No activity yet
-            </p>
+            <p className="text-muted-foreground py-4 text-sm">No activity yet</p>
           )}
         </TabsContent>
       </Tabs>

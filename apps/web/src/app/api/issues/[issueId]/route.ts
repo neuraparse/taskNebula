@@ -189,6 +189,10 @@ const updateIssueSchema = z.object({
   epicId: z.string().nullable().optional(),
   parentId: z.string().nullable().optional(),
   estimate: z.number().nullable().optional(),
+  // Agile story points (issues.story_points). Non-negative integer or null.
+  storyPoints: z.number().int().nonnegative().nullable().optional(),
+  // Jira-style impediment marker (issues.flagged boolean).
+  flagged: z.boolean().optional(),
   // Time-tracking estimate (in hours) and its provenance — `manual` when the
   // user typed it, `ai_suggest` when the AI estimator wrote it. The
   // TimeTrackingPanel posts both fields together; without them in the
@@ -289,7 +293,10 @@ export const PATCH = withValidation({
       validatedData.labels ||
       validatedData.estimate !== undefined ||
       validatedData.dueDate !== undefined ||
-      validatedData.resolution !== undefined
+      validatedData.resolution !== undefined ||
+      validatedData.flagged !== undefined ||
+      validatedData.storyPoints !== undefined ||
+      validatedData.customFields !== undefined
     ) {
       permissionChecks.push('edit');
     }
@@ -464,6 +471,19 @@ export const PATCH = withValidation({
       );
     }
 
+    if (updateData.flagged !== undefined && updateData.flagged !== currentIssue.flagged) {
+      activityPromises.push(
+        createActivity({
+          issueId,
+          userId: session.user.id,
+          type: 'updated',
+          field: 'flagged',
+          oldValue: String(currentIssue.flagged ?? false),
+          newValue: String(updateData.flagged),
+        })
+      );
+    }
+
     if (
       updateData.description !== undefined &&
       updateData.description !== currentIssue.description
@@ -599,6 +619,8 @@ export const PATCH = withValidation({
       'dueDate',
       'customFields',
       'resolution',
+      'flagged',
+      'storyPoints',
     ];
     for (const field of trackedFields) {
       if (updateData[field] === undefined) continue;

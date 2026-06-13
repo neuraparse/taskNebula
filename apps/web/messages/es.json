@@ -204,20 +204,93 @@
       "error_generic": "Something went wrong. Please try again."
     }
   },
+  "issueHeader": {
+    "breadcrumb": "Work items",
+    "star": "Star",
+    "starred": "Starred",
+    "watch": "Watch",
+    "watching": "Watching",
+    "copyLink": "Copy link",
+    "copied": "Copied",
+    "editTitle": "Edit title",
+    "titleInputAria": "Issue title"
+  },
+  "issueTypes": {
+    "story": "Story",
+    "task": "Task",
+    "bug": "Bug",
+    "epic": "Epic",
+    "subtask": "Subtask",
+    "issue": "Work item",
+    "readOnly": "Type is set when the work item is created"
+  },
   "issueSidebar": {
+    "detailsKicker": "Details",
+    "rows": {
+      "type": "Type",
+      "state": "State",
+      "priority": "Priority",
+      "labels": "Labels",
+      "assignee": "Assignee",
+      "sprint": "Sprint",
+      "epic": "Epic",
+      "parent": "Parent",
+      "dueDate": "Due date",
+      "createdOn": "Created on",
+      "estimate": "Estimate",
+      "none": "None"
+    },
+    "meta": {
+      "created": "Created",
+      "updated": "Updated"
+    },
+    "dueDate": {
+      "set": "Set due date",
+      "clear": "Clear due date",
+      "overdue": "Overdue",
+      "pickAria": "Due date"
+    },
+    "sprint": {
+      "backlog": "Backlog",
+      "search": "Search sprints…",
+      "empty": "No sprints found",
+      "status": {
+        "active": "Active",
+        "planned": "Planned",
+        "completed": "Completed"
+      }
+    },
+    "epic": {
+      "none": "None",
+      "search": "Search epics…",
+      "empty": "No epics found"
+    },
+    "parent": {
+      "none": "None",
+      "search": "Search work items…",
+      "empty": "No work items found"
+    },
     "labels": {
       "add": "Add label",
       "searchOrCreate": "Search or create labels…",
       "create": "Create \"{name}\"",
       "noResults": "No matching labels",
       "loading": "Loading…",
-      "remove": "Remove label {name}"
+      "remove": "Remove label {name}",
+      "created": "Label \"{name}\" created",
+      "noPermission": "You don't have permission to create labels",
+      "createFailed": "Couldn't create label"
     },
     "components": {
       "label": "Components",
       "search": "Search components…",
       "empty": "No components found",
-      "none": "None"
+      "none": "None",
+      "create": "Create \"{name}\"",
+      "created": "Component \"{name}\" created",
+      "duplicate": "Component \"{name}\" already exists",
+      "noPermission": "You don't have permission to create components",
+      "createFailed": "Couldn't create component"
     },
     "versions": {
       "fixLabel": "Fix versions",
@@ -228,7 +301,12 @@
       "unreleased": "Unreleased",
       "released": "Released",
       "archived": "Archived",
-      "showAffects": "Show affects versions"
+      "showAffects": "Show affects versions",
+      "create": "Create \"{name}\"",
+      "created": "Version \"{name}\" created",
+      "duplicate": "Version \"{name}\" already exists",
+      "noPermission": "You don't have permission to create versions",
+      "createFailed": "Couldn't create version"
     },
     "resolution": {
       "label": "Resolution",
@@ -248,5 +326,195 @@
       "unknown": "Unknown user",
       "label": "Reporter"
     }
+  },
+  "issueDetail": {
+    "comments": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel",
+      "edited": "(edited)",
+      "editHint": "Cmd/Ctrl+Enter to save · Esc to cancel",
+      "deleteConfirmTitle": "Delete comment?",
+      "deleteConfirmBody": "This cannot be undone.",
+      "addReaction": "Add reaction",
+      "updateFailed": "Failed to update comment",
+      "deleteFailed": "Failed to delete comment",
+      "deleteBlockedReplies": "Cannot delete a comment that has replies",
+      "reactionFailed": "Failed to update reaction"
+    },
+    "sections": {
+      "timeTracking": "Time tracking",
+      "triage": "AI triage"
+    },
+    "quickActions": {
+      "toolbarLabel": "Issue quick actions",
+      "copyId": "Copy ID ({key})",
+      "copiedId": "Copied {key}",
+      "copyFailed": "Could not copy to clipboard",
+      "copyLink": "Copy link",
+      "copiedLink": "Link copied to clipboard",
+      "copyBranch": "Copy branch name",
+      "copiedBranch": "Copied branch {branch}",
+      "openInNewTab": "Open in new tab",
+      "more": "More actions",
+      "duplicate": "Duplicate",
+      "archive": "Archive",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this issue? This cannot be undone.",
+      "deleteFailed": "Failed to delete issue"
+    },
+    "timeTracking": {
+      "estimateLabel": "Estimate (h)",
+      "sourceManual": "manual",
+      "sourceAi": "AI",
+      "actualLabel": "Logged (h)",
+      "saveEstimate": "Save estimate",
+      "startTimer": "Start timer",
+      "stopTimer": "Stop",
+      "aiSuggest": "AI suggest",
+      "timerAlreadyRunning": "You already have a running timer.",
+      "startFailed": "Failed to start timer",
+      "stopFailed": "Failed to stop timer",
+      "suggestFailed": "Failed to fetch estimate",
+      "saveEstimateFailed": "Failed to save estimate",
+      "invalidEstimate": "Estimate must be a number of hours.",
+      "logFailed": "Failed to log time",
+      "parseFailed": "Could not parse duration. Try \"30m\" or \"1h 15m\".",
+      "suggested": "Suggested ~{hours}h",
+      "suggestedRange": "(p25 {p25}h · p75 {p75}h)",
+      "noSuggestion": "No suggestion yet",
+      "logLabel": "Log time",
+      "logPlaceholder": "e.g. 30m or 1h 15m",
+      "notePlaceholder": "What did you do? (optional)",
+      "logButton": "Log"
+    },
+    "triage": {
+      "runAgain": "Run again",
+      "working": "Working…",
+      "loading": "Loading…",
+      "empty": "No pending suggestion. Press “Run again” to ask the agent.",
+      "confidence": "Confidence: {value}%",
+      "priority": "Priority",
+      "labels": "Labels",
+      "apply": "Apply",
+      "applyOverride": "Apply (override threshold)",
+      "loadFailed": "Failed to load suggestions",
+      "runFailed": "Failed to run triage",
+      "applyFailed": "Failed to apply suggestion"
+    },
+    "view": {
+      "loadFailed": "Failed to load issue",
+      "notFound": "Issue not found",
+      "notFoundHint": "The issue you're looking for doesn't exist."
+    }
+  },
+  "adminUpdates": {
+    "title": "Updates",
+    "description": "Track the platform version and pick up new TaskNebula releases.",
+    "statusUpdateAvailable": "Update available",
+    "statusUpToDate": "Up to date",
+    "statusUnknown": "Not checked yet",
+    "statusChecksDisabled": "Checks disabled",
+    "currentVersion": "Current version",
+    "latestVersion": "Latest version",
+    "published": "Published {date}",
+    "lastChecked": "Last checked {time}",
+    "checksDisabledHint": "Update checks are disabled via the TASKNEBULA_DISABLE_UPDATE_CHECK environment variable. Remove it to see new releases here.",
+    "notCheckedHint": "No release information yet. Run a check to compare against the latest published release.",
+    "releaseNotes": "Release notes",
+    "viewRelease": "View release on GitHub",
+    "howToUpdate": "How to update",
+    "howToUpdateHint": "Pull the new image and restart the web service:",
+    "checkNow": "Check now",
+    "checking": "Checking…",
+    "loading": "Loading…",
+    "loadError": "Failed to load version information",
+    "checkFailedTitle": "Check failed",
+    "checkFailedDescription": "Could not reach the update server. Try again later.",
+    "toastUpdateAvailable": "TaskNebula {version} is ready to install.",
+    "toastUpToDate": "You are running the latest version.",
+    "banner": {
+      "title": "TaskNebula {version} is available",
+      "body": "You are running {current}. Review the release notes and update when convenient.",
+      "view": "View update",
+      "dismiss": "Dismiss"
+    }
+  },
+  "issueFields": {
+    "flagged": "Marcado",
+    "flag": "Marcar",
+    "unflag": "Quitar marca",
+    "storyPoints": "Puntos de historia",
+    "storyPointsShort": "Puntos",
+    "environment": "Entorno",
+    "environmentPlaceholder": "p. ej. Producción, Staging, iOS 17",
+    "startDate": "Fecha de inicio"
+  },
+  "sprintPicker": {
+    "createSprint": "Crear \"{name}\"",
+    "creating": "Sprint \"{name}\" creado",
+    "noPermission": "No tienes permiso para crear sprints.",
+    "createFailed": "No se pudo crear el sprint. Inténtalo de nuevo.",
+    "exists": "Ya existe un sprint llamado \"{name}\": se ha seleccionado."
+  },
+  "epicPicker": {
+    "createEpic": "Crear \"{name}\"",
+    "creating": "Creando \"{name}\"…",
+    "createFailed": "No se pudo crear la épica. Inténtalo de nuevo.",
+    "noPermission": "No tienes permiso para crear épicas."
+  },
+  "subtaskCreate": {
+    "addSubIssue": "Añadir subtarea",
+    "placeholder": "Título de la subtarea...",
+    "creating": "Creando subtarea...",
+    "createFailed": "No se pudo crear la subtarea. Inténtalo de nuevo."
+  },
+  "issueRelations": {
+    "dialogTitle": "Vincular incidencia",
+    "dialogDescription": "Crea una relación entre esta incidencia y otra.",
+    "relationshipLabel": "Esta incidencia",
+    "issueLabel": "Incidencia",
+    "selectIssue": "Seleccionar incidencia…",
+    "searchPlaceholder": "Buscar por clave o título…",
+    "noIssueFound": "No se encontró ninguna incidencia.",
+    "preview": "Esta incidencia {relationship} {key}.",
+    "cancel": "Cancelar",
+    "createLink": "Crear vínculo",
+    "creating": "Creando…",
+    "loading": "Cargando…",
+    "addLink": "Añadir vínculo",
+    "removeLink": "Eliminar vínculo",
+    "emptyPrefix": "No hay incidencias vinculadas.",
+    "emptyCta": "Añadir un vínculo",
+    "blockedBadge": "{count} bloqueando",
+    "blockedHint": "Esta incidencia está bloqueada por estas incidencias.",
+    "type": {
+      "blocks": "bloquea",
+      "blockedBy": "está bloqueada por",
+      "relatesTo": "se relaciona con",
+      "duplicates": "duplica",
+      "duplicatedBy": "está duplicada por",
+      "parentOf": "es superior de",
+      "childOf": "es subordinada de"
+    }
+  },
+  "timeTrio": {
+    "originalEstimate": "{hours}h estimadas",
+    "logged": "{hours}h registradas",
+    "remaining": "{hours}h restantes",
+    "overLogged": "{hours}h de más"
+  },
+  "issueQuickActions": {
+    "flag": "Marcar como impedimento",
+    "unflag": "Quitar marca",
+    "copyMarkdown": "Copiar como Markdown",
+    "copied": "Copiado al portapapeles",
+    "comingSoon": "Próximamente",
+    "flagFailed": "No se pudo actualizar la marca"
+  },
+  "issueHeaderExtra": {
+    "flagged": "Marcada",
+    "flaggedHint": "Esta incidencia está marcada para atención"
   }
 }

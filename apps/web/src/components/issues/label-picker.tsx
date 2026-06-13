@@ -13,7 +13,13 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useLabels, type OrgLabel } from '@/lib/hooks/use-labels';
+import { useCreateLabel, useLabels, type OrgLabel } from '@/lib/hooks/use-labels';
+import {
+  getCreateErrorStatus,
+  PickerCreateItem,
+  PickerInlineError,
+  PickerLiveRegion,
+} from '@/components/issues/picker-create-item';
 import { cn } from '@/lib/utils';
 
 interface LabelPickerProps {
@@ -59,7 +65,10 @@ export function LabelPicker({
   const t = useTranslations('issueSidebar.labels');
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState('');
   const deferredSearch = useDeferredValue(search);
+  const createLabel = useCreateLabel();
 
   const orgId = organizationId ?? null;
   const labelScope = projectId ? { projectId } : {};
@@ -104,10 +113,33 @@ export function LabelPicker({
     }
   };
 
-  const handleCreateLabel = () => {
-    if (!showCreate) return;
-    onChange([...value, trimmedSearch]);
+  const handleCreateLabel = async () => {
+    if (!showCreate || createLabel.isPending) return;
+    const name = trimmedSearch;
+    setCreateError(null);
+
+    if (orgId) {
+      // Persist first so the label is born with a DS accent color (the
+      // issue-PATCH write-through would otherwise create it default-gray).
+      try {
+        await createLabel.mutateAsync({ organizationId: orgId, name });
+      } catch (error) {
+        const status = getCreateErrorStatus(error);
+        if (status === 403) {
+          setCreateError(t('noPermission'));
+          return;
+        }
+        if (status !== 409) {
+          setCreateError(t('createFailed'));
+          return;
+        }
+        // 409: the label already exists org-wide — selecting the name links it.
+      }
+    }
+
+    onChange([...value, name]);
     setSearch('');
+    setAnnouncement(t('created', { name }));
   };
 
   const handleRemoveLabel = (name: string) => {
@@ -142,7 +174,13 @@ export function LabelPicker({
       )}
 
       {/* Add label button */}
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover
+        open={open}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen);
+          if (!nextOpen) setCreateError(null);
+        }}
+      >
         <PopoverTrigger asChild>
           <Button
             variant="ghost"
@@ -192,16 +230,20 @@ export function LabelPicker({
               )}
               {showCreate && (
                 <CommandGroup>
-                  <CommandItem value={`__create__${trimmedSearch}`} onSelect={handleCreateLabel}>
-                    <Plus className="text-muted-foreground mr-2 h-4 w-4" />
-                    <span className="truncate">{t('create', { name: trimmedSearch })}</span>
-                  </CommandItem>
+                  <PickerCreateItem
+                    name={trimmedSearch}
+                    label={t('create', { name: trimmedSearch })}
+                    creating={createLabel.isPending}
+                    onCreate={handleCreateLabel}
+                  />
                 </CommandGroup>
               )}
             </CommandList>
+            <PickerInlineError message={createError} />
           </Command>
         </PopoverContent>
       </Popover>
+      <PickerLiveRegion message={announcement} />
     </div>
   );
 }

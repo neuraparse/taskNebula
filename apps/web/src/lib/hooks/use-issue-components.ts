@@ -47,6 +47,49 @@ export function useProjectComponents(projectId: string | null) {
   });
 }
 
+/**
+ * Create a project component (POST /api/projects/[projectId]/components).
+ * Thrown errors carry the HTTP `status` (403 = not project admin,
+ * 409 = duplicate name) so pickers can branch on the failure mode.
+ */
+export function useCreateProjectComponent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      projectId,
+      name,
+    }: {
+      projectId: string;
+      name: string;
+    }): Promise<ProjectComponent> => {
+      const response = await fetch(`/api/projects/${projectId}/components`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (!response.ok) {
+        const err = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw Object.assign(new Error(err?.error || 'Failed to create component'), {
+          status: response.status,
+        });
+      }
+      const data = (await response.json()) as { component: ProjectComponent };
+      return data.component;
+    },
+    onSuccess: (created, { projectId }) => {
+      // Seed the list cache so the new option renders before the refetch lands.
+      queryClient.setQueryData<ProjectComponentWithCount[]>(
+        ['project-components', projectId],
+        (old) => (old ? [...old, { ...created, issueCount: 0 }] : old)
+      );
+    },
+    onSettled: (_data, _error, { projectId }) => {
+      queryClient.invalidateQueries({ queryKey: ['project-components', projectId] });
+    },
+  });
+}
+
 /** Components linked to an issue. */
 export function useIssueComponents(issueId: string | null) {
   return useQuery({

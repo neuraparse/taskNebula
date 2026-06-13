@@ -17,16 +17,17 @@ interface IssueDetailModalProps {
 export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2 !transform flex h-[88vh] max-h-[920px] w-[92vw] max-w-6xl flex-col gap-0 overflow-hidden rounded-lg border-border p-0 shadow-lg animate-fade-in">
+      <DialogContent className="border-border animate-fade-in !left-1/2 !top-1/2 flex h-[88vh] max-h-[920px] w-[92vw] max-w-6xl !-translate-x-1/2 !-translate-y-1/2 !transform flex-col gap-0 overflow-hidden rounded-lg p-0 shadow-lg">
         <VisuallyHidden>
           <DialogTitle>Issue Details</DialogTitle>
         </VisuallyHidden>
         <VisuallyHidden>
           <DialogDescription>
-            View and update the selected issue, including fields, comments, activity, and linked records.
+            View and update the selected issue, including fields, comments, activity, and linked
+            records.
           </DialogDescription>
         </VisuallyHidden>
-        <IssueDetailView issueId={issueId} />
+        <IssueDetailView issueId={issueId} onClose={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
   );

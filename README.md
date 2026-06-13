@@ -34,7 +34,7 @@ AI disabled by default, or run fully offline with the native planner.
 
 <br/>
 
-<img src="images/readme-home-2026-05-19.png" alt="TaskNebula home" width="100%"/>
+<img src="images/readme-home-2026-06-13.png" alt="TaskNebula home" width="100%"/>
 
 <table>
 <tr>
@@ -43,17 +43,17 @@ AI disabled by default, or run fully offline with the native planner.
 <p align="center"><b>Draft issues from a prompt</b></p>
 </td>
 <td width="50%">
-<img src="images/readme-ai-assist-2026-05-19.png" alt="Per-issue AI assist" width="100%"/>
-<p align="center"><b>Per-issue AI assist</b></p>
+<img src="images/readme-ai-assist-2026-06-13.png" alt="Rich issue detail" width="100%"/>
+<p align="center"><b>Rich issue detail — labels, versions, components, sub-issues</b></p>
 </td>
 </tr>
 <tr>
 <td width="50%">
-<img src="images/readme-board-2026-05-19.png" alt="Kanban board" width="100%"/>
+<img src="images/readme-board-2026-06-13.png" alt="Kanban board" width="100%"/>
 <p align="center"><b>Real-time Kanban board</b></p>
 </td>
 <td width="50%">
-<img src="images/readme-dashboard-2026-05-19.png" alt="Dashboard" width="100%"/>
+<img src="images/readme-dashboard-2026-06-13.png" alt="Dashboard" width="100%"/>
 <p align="center"><b>Workspace dashboard</b></p>
 </td>
 </tr>

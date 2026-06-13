@@ -118,18 +118,63 @@ export function useCreateSprint() {
   });
 }
 
+/**
+ * Inline "type-to-create" mutation for the Sprint picker (Jira/Plane style),
+ * mirroring `useCreateProjectComponent`. Callers pass only `projectId + name`;
+ * the API requires start/end dates, so we default a sensible two-week window
+ * (today → +14 days). Thrown errors carry the HTTP `status` via
+ * `Object.assign` so the picker can branch on 403 (no permission) /
+ * 409 (duplicate) like the other inline-create pickers.
+ */
+export function useInlineCreateSprint() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      projectId,
+      name,
+    }: {
+      projectId: string;
+      name: string;
+    }): Promise<Sprint> => {
+      const start = new Date();
+      const end = new Date(start.getTime() + 14 * 24 * 60 * 60 * 1000);
+      const response = await fetch('/api/sprints', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          name,
+          startDate: start.toISOString(),
+          endDate: end.toISOString(),
+        }),
+      });
+      if (!response.ok) {
+        const err = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw Object.assign(new Error(err?.error || 'Failed to create sprint'), {
+          status: response.status,
+        });
+      }
+      return response.json() as Promise<Sprint>;
+    },
+    onSuccess: (created, { projectId }) => {
+      // Seed the list cache so the new option renders before the refetch lands.
+      queryClient.setQueryData<Sprint[]>(['sprints', projectId], (old) =>
+        old ? [...old, { ...created, issueCount: 0 }] : old
+      );
+    },
+    onSettled: (_data, _error, { projectId }) => {
+      queryClient.invalidateQueries({ queryKey: ['sprints', projectId] });
+    },
+  });
+}
+
 // Update sprint
 export function useUpdateSprint() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      sprintId,
-      data,
-    }: {
-      sprintId: string;
-      data: Partial<Sprint>;
-    }) => {
+    mutationFn: async ({ sprintId, data }: { sprintId: string; data: Partial<Sprint> }) => {
       const response = await fetch(`/api/sprints/${sprintId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -214,4 +259,3 @@ export function useAssignIssueToSprint() {
     },
   });
 }
-

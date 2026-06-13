@@ -55,6 +55,49 @@ export function useProjectVersions(projectId: string | null) {
   });
 }
 
+/**
+ * Create a project version (POST /api/projects/[projectId]/versions).
+ * Thrown errors carry the HTTP `status` (403 = not project admin,
+ * 409 = duplicate name) so pickers can branch on the failure mode.
+ */
+export function useCreateProjectVersion() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      projectId,
+      name,
+    }: {
+      projectId: string;
+      name: string;
+    }): Promise<ProjectVersion> => {
+      const response = await fetch(`/api/projects/${projectId}/versions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (!response.ok) {
+        const err = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw Object.assign(new Error(err?.error || 'Failed to create version'), {
+          status: response.status,
+        });
+      }
+      const data = (await response.json()) as { version: ProjectVersion };
+      return data.version;
+    },
+    onSuccess: (created, { projectId }) => {
+      // Seed the list cache so the new option renders before the refetch lands.
+      queryClient.setQueryData<ProjectVersionWithCounts[]>(
+        ['project-versions', projectId],
+        (old) => (old ? [...old, { ...created, issueCount: 0, doneIssueCount: 0 }] : old)
+      );
+    },
+    onSettled: (_data, _error, { projectId }) => {
+      queryClient.invalidateQueries({ queryKey: ['project-versions', projectId] });
+    },
+  });
+}
+
 /** Fix + affects versions linked to an issue. */
 export function useIssueVersions(issueId: string | null) {
   return useQuery({

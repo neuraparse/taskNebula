@@ -44,7 +44,13 @@ import { IntegrationsAdminPanel } from '@/components/admin/integrations-admin-pa
 import { RealtimeHealthPanel } from '@/components/admin/realtime-health-panel';
 import { SystemCredentialsPanel } from '@/components/admin/system-credentials-panel';
 import { EmailPreviewPanel } from '@/components/admin/email-preview-panel';
-import { useDeleteFeatureFlag, useFeatureFlags, useUpdateFeatureFlag } from '@/lib/hooks/use-feature-flags';
+import { VersionPanel } from '@/components/admin/version-panel';
+import { VersionUpdateBanner } from '@/components/admin/version-update-banner';
+import {
+  useDeleteFeatureFlag,
+  useFeatureFlags,
+  useUpdateFeatureFlag,
+} from '@/lib/hooks/use-feature-flags';
 import { cn } from '@/lib/utils';
 import {
   Activity,
@@ -58,6 +64,7 @@ import {
   MoreVertical,
   Plug,
   Radio,
+  Rocket,
   Scroll,
   ShieldCheck,
   Search,
@@ -112,7 +119,12 @@ type AdminAuditLog = {
   changes: Record<string, { from?: unknown; to?: unknown }> | null;
   metadata: Record<string, unknown> | null;
   createdAt: string;
-  user: { id: string | null; name: string | null; email: string | null; image?: string | null } | null;
+  user: {
+    id: string | null;
+    name: string | null;
+    email: string | null;
+    image?: string | null;
+  } | null;
 };
 
 type NavItem = {
@@ -129,6 +141,7 @@ const NAV: NavItem[] = [
   { key: 'agents', label: 'Agent control', icon: Bot },
   { key: 'integrations', label: 'Integrations', icon: Plug },
   { key: 'system', label: 'System', icon: ShieldCheck },
+  { key: 'updates', label: 'Updates', icon: Rocket },
   { key: 'realtime', label: 'Realtime health', icon: Radio },
   { key: 'audit', label: 'Audit logs', icon: Scroll },
 ];
@@ -207,7 +220,11 @@ export function AdminDashboardClient() {
     },
   });
 
-  const { data: orgsData, isLoading: orgsLoading, error: orgsError } = useQuery({
+  const {
+    data: orgsData,
+    isLoading: orgsLoading,
+    error: orgsError,
+  } = useQuery({
     queryKey: ['admin-organizations', orgSearch, orgStatus, orgPlan],
     queryFn: async () => {
       const params = new URLSearchParams({ limit: '50' });
@@ -223,7 +240,11 @@ export function AdminDashboardClient() {
     },
   });
 
-  const { data: usersData, isLoading: usersLoading, error: usersError } = useQuery({
+  const {
+    data: usersData,
+    isLoading: usersLoading,
+    error: usersError,
+  } = useQuery({
     queryKey: ['admin-users', userSearch, userStatus],
     queryFn: async () => {
       const params = new URLSearchParams({ limit: '50' });
@@ -236,16 +257,18 @@ export function AdminDashboardClient() {
     },
   });
 
-  const { data: auditData, isLoading: auditLoading, error: auditError } = useQuery({
+  const {
+    data: auditData,
+    isLoading: auditLoading,
+    error: auditError,
+  } = useQuery({
     queryKey: ['admin-audit-logs', auditSearch, auditResourceType],
     queryFn: async () => {
       const params = new URLSearchParams({ limit: '50' });
       if (auditSearch.trim()) params.set('search', auditSearch.trim());
       if (auditResourceType !== 'all') params.set('resourceType', auditResourceType);
       const response = await fetch(`/api/admin/audit-logs?${params.toString()}`);
-      const payload = await response
-        .json()
-        .catch(() => ({ error: 'Failed to fetch audit logs' }));
+      const payload = await response.json().catch(() => ({ error: 'Failed to fetch audit logs' }));
       if (!response.ok) throw new Error(payload.error || 'Failed to fetch audit logs');
       return payload as { auditLogs: AdminAuditLog[] };
     },
@@ -271,7 +294,10 @@ export function AdminDashboardClient() {
       queryClient.invalidateQueries({ queryKey: ['admin-organizations'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
       queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
-      toast({ title: 'Organization deleted', description: 'The organization was removed permanently.' });
+      toast({
+        title: 'Organization deleted',
+        description: 'The organization was removed permanently.',
+      });
       setDeleteOrg(null);
     },
     onError: (mutationError: Error) => {
@@ -386,7 +412,7 @@ export function AdminDashboardClient() {
       />
 
       <div className="flex h-full min-h-0">
-        <div className="flex-1 min-w-0 animate-fade-up space-y-6 overflow-y-auto p-6">
+        <div className="animate-fade-up min-w-0 flex-1 space-y-6 overflow-y-auto p-6">
           {/* Mobile nav */}
           <div className="lg:hidden">
             <Select value={activeTab} onValueChange={handleTabChange}>
@@ -403,19 +429,24 @@ export function AdminDashboardClient() {
             </Select>
           </div>
 
+          {/* Update-available banner (dismiss persists per release version) */}
+          {activeTab !== 'updates' && (
+            <VersionUpdateBanner onView={() => handleTabChange('updates')} />
+          )}
+
           {/* Header */}
           <div className="flex flex-col gap-1">
             <span className="kicker">Admin</span>
-            <h1 className="text-2xl font-semibold tracking-tight text-balance">{currentNav.label}</h1>
-            <p className="text-sm text-muted-foreground max-w-2xl">
+            <h1 className="text-balance text-2xl font-semibold tracking-tight">
+              {currentNav.label}
+            </h1>
+            <p className="text-muted-foreground max-w-2xl text-sm">
               System-wide organizations, users, rollout flags, agent control, and audit activity.
             </p>
           </div>
 
           {/* Section body */}
-          {activeTab === 'overview' && (
-            <OverviewSection stats={stats} loading={statsLoading} />
-          )}
+          {activeTab === 'overview' && <OverviewSection stats={stats} loading={statsLoading} />}
 
           {activeTab === 'organizations' && (
             <OrganizationsSection
@@ -473,6 +504,8 @@ export function AdminDashboardClient() {
             </div>
           )}
 
+          {activeTab === 'updates' && <VersionPanel />}
+
           {activeTab === 'realtime' && <RealtimeHealthPanel />}
 
           {activeTab === 'audit' && (
@@ -507,10 +540,30 @@ function OverviewSection({
     icon: ComponentType<{ className?: string }>;
     tone: 'blue' | 'violet' | 'emerald' | 'amber';
   }> = [
-    { label: 'Organizations', value: loading ? '—' : stats?.overview?.totalOrganizations ?? 0, icon: Building2, tone: 'blue' },
-    { label: 'Users', value: loading ? '—' : stats?.overview?.totalUsers ?? 0, icon: Users, tone: 'violet' },
-    { label: 'Active users', value: loading ? '—' : stats?.overview?.activeUsers ?? 0, icon: Activity, tone: 'emerald' },
-    { label: 'Super admins', value: loading ? '—' : stats?.overview?.superAdmins ?? 0, icon: Crown, tone: 'amber' },
+    {
+      label: 'Organizations',
+      value: loading ? '—' : (stats?.overview?.totalOrganizations ?? 0),
+      icon: Building2,
+      tone: 'blue',
+    },
+    {
+      label: 'Users',
+      value: loading ? '—' : (stats?.overview?.totalUsers ?? 0),
+      icon: Users,
+      tone: 'violet',
+    },
+    {
+      label: 'Active users',
+      value: loading ? '—' : (stats?.overview?.activeUsers ?? 0),
+      icon: Activity,
+      tone: 'emerald',
+    },
+    {
+      label: 'Super admins',
+      value: loading ? '—' : (stats?.overview?.superAdmins ?? 0),
+      icon: Crown,
+      tone: 'amber',
+    },
   ];
 
   return (
@@ -522,10 +575,10 @@ function OverviewSection({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="surface-card p-6 space-y-3">
+        <div className="surface-card space-y-3 p-6">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold">Organization health</h3>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            <BarChart3 className="text-muted-foreground h-4 w-4" />
           </div>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
             <MetricRow label="Active" value={stats?.organizations?.byStatus?.active ?? 0} />
@@ -538,10 +591,10 @@ function OverviewSection({
           </dl>
         </div>
 
-        <div className="surface-card p-6 space-y-3">
+        <div className="surface-card space-y-3 p-6">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold">Last 30 days</h3>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <Activity className="text-muted-foreground h-4 w-4" />
           </div>
           <dl className="space-y-2 text-sm">
             <MetricRow label="New organizations" value={stats?.growth?.newOrganizations30d ?? 0} />
@@ -587,16 +640,18 @@ function OrganizationsSection({
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           {orgsData?.pagination?.total ?? 0} matching workspaces
         </p>
         <CreateOrganizationAdminDialog />
       </div>
 
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_180px] animate-blur-in">
+      <div className="animate-blur-in grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_180px]">
         <SearchInput value={orgSearch} onChange={setOrgSearch} placeholder="Search organizations" />
         <Select value={orgStatus} onValueChange={setOrgStatus}>
-          <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
             <SelectItem value="active">Active</SelectItem>
@@ -605,7 +660,9 @@ function OrganizationsSection({
           </SelectContent>
         </Select>
         <Select value={orgPlan} onValueChange={setOrgPlan}>
-          <SelectTrigger><SelectValue placeholder="Plan" /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue placeholder="Plan" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All plans</SelectItem>
             <SelectItem value="free">Free</SelectItem>
@@ -620,18 +677,32 @@ function OrganizationsSection({
         {orgsLoading ? (
           <EmptyState icon={Building2} message="Loading organizations..." />
         ) : orgsError ? (
-          <ErrorState message={orgsError instanceof Error ? orgsError.message : 'Failed to load organizations'} />
+          <ErrorState
+            message={
+              orgsError instanceof Error ? orgsError.message : 'Failed to load organizations'
+            }
+          />
         ) : orgs.length === 0 ? (
           <EmptyState icon={Building2} message="No organizations match the current filters." />
         ) : (
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-border">
-                <th className="px-4 py-2 text-left text-xs uppercase tracking-wider font-medium text-muted-foreground">Name</th>
-                <th className="px-4 py-2 text-left text-xs uppercase tracking-wider font-medium text-muted-foreground">Status</th>
-                <th className="px-4 py-2 text-left text-xs uppercase tracking-wider font-medium text-muted-foreground">Plan</th>
-                <th className="px-4 py-2 text-left text-xs uppercase tracking-wider font-medium text-muted-foreground">Owner</th>
-                <th className="px-4 py-2 text-right text-xs uppercase tracking-wider font-medium text-muted-foreground">Members</th>
+              <tr className="border-border border-b">
+                <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
+                  Name
+                </th>
+                <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
+                  Plan
+                </th>
+                <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
+                  Owner
+                </th>
+                <th className="text-muted-foreground px-4 py-2 text-right text-xs font-medium uppercase tracking-wider">
+                  Members
+                </th>
                 <th className="px-4 py-2" />
               </tr>
             </thead>
@@ -639,16 +710,21 @@ function OrganizationsSection({
               {orgs.map((org) => (
                 <tr
                   key={org.id}
-                  className="row-interactive border-b border-border/50 last:border-b-0"
+                  className="row-interactive border-border/50 border-b last:border-b-0"
                 >
                   <td className="px-4 py-3">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{org.name}</p>
-                      <p className="text-xs text-muted-foreground font-mono truncate">{org.slug}</p>
+                      <p className="truncate text-sm font-medium">{org.name}</p>
+                      <p className="text-muted-foreground truncate font-mono text-xs">{org.slug}</p>
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={cn(orgStatusChipClass[org.status] ?? DEFAULT_CHIP_CLASS, 'capitalize')}>
+                    <span
+                      className={cn(
+                        orgStatusChipClass[org.status] ?? DEFAULT_CHIP_CLASS,
+                        'capitalize'
+                      )}
+                    >
                       {org.status}
                     </span>
                   </td>
@@ -656,7 +732,7 @@ function OrganizationsSection({
                     <span className="chip capitalize">{org.plan}</span>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="text-sm truncate max-w-[200px]">
+                    <p className="max-w-[200px] truncate text-sm">
                       {org.owner?.name || org.owner?.email || (
                         <span className="text-muted-foreground">No owner</span>
                       )}
@@ -725,16 +801,18 @@ function UsersSection({
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           {usersData?.pagination?.total ?? 0} matching users
         </p>
         <CreateUserDialog />
       </div>
 
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px] animate-blur-in">
+      <div className="animate-blur-in grid gap-3 md:grid-cols-[minmax(0,1fr)_180px]">
         <SearchInput value={userSearch} onChange={setUserSearch} placeholder="Search users" />
         <Select value={userStatus} onValueChange={setUserStatus}>
-          <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
             <SelectItem value="active">Active</SelectItem>
@@ -748,17 +826,27 @@ function UsersSection({
         {usersLoading ? (
           <EmptyState icon={Users} message="Loading users..." />
         ) : usersError ? (
-          <ErrorState message={usersError instanceof Error ? usersError.message : 'Failed to load users'} />
+          <ErrorState
+            message={usersError instanceof Error ? usersError.message : 'Failed to load users'}
+          />
         ) : users.length === 0 ? (
           <EmptyState icon={Users} message="No users match the current filters." />
         ) : (
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-border">
-                <th className="px-4 py-2 text-left text-xs uppercase tracking-wider font-medium text-muted-foreground">User</th>
-                <th className="px-4 py-2 text-left text-xs uppercase tracking-wider font-medium text-muted-foreground">Role</th>
-                <th className="px-4 py-2 text-left text-xs uppercase tracking-wider font-medium text-muted-foreground">Status</th>
-                <th className="px-4 py-2 text-right text-xs uppercase tracking-wider font-medium text-muted-foreground">Orgs</th>
+              <tr className="border-border border-b">
+                <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
+                  User
+                </th>
+                <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
+                  Role
+                </th>
+                <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="text-muted-foreground px-4 py-2 text-right text-xs font-medium uppercase tracking-wider">
+                  Orgs
+                </th>
                 <th className="px-4 py-2" />
               </tr>
             </thead>
@@ -769,12 +857,12 @@ function UsersSection({
                 return (
                   <tr
                     key={user.id}
-                    className="row-interactive border-b border-border/50 last:border-b-0"
+                    className="row-interactive border-border/50 border-b last:border-b-0"
                   >
                     <td className="px-4 py-3">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{user.name || user.email}</p>
-                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                        <p className="truncate text-sm font-medium">{user.name || user.email}</p>
+                        <p className="text-muted-foreground truncate text-xs">{user.email}</p>
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -792,7 +880,12 @@ function UsersSection({
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={cn(userStatusChipClass[user.status] ?? DEFAULT_CHIP_CLASS, 'capitalize')}>
+                      <span
+                        className={cn(
+                          userStatusChipClass[user.status] ?? DEFAULT_CHIP_CLASS,
+                          'capitalize'
+                        )}
+                      >
                         {user.status}
                       </span>
                     </td>
@@ -857,17 +950,19 @@ function FeatureFlagsSection({
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <p className="text-xs text-muted-foreground">{flags.length} matching flags</p>
+        <p className="text-muted-foreground text-xs">{flags.length} matching flags</p>
         <div className="flex items-center gap-2">
           <FeatureFlagRuntimeTest />
           <CreateFeatureFlagDialog />
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px] animate-blur-in">
+      <div className="animate-blur-in grid gap-3 md:grid-cols-[minmax(0,1fr)_180px]">
         <SearchInput value={search} onChange={setSearch} placeholder="Search feature flags" />
         <Select value={state} onValueChange={setState}>
-          <SelectTrigger><SelectValue placeholder="State" /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue placeholder="State" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All flags</SelectItem>
             <SelectItem value="enabled">Enabled</SelectItem>
@@ -880,26 +975,27 @@ function FeatureFlagsSection({
         {loading ? (
           <EmptyState icon={Flag} message="Loading feature flags..." />
         ) : error ? (
-          <ErrorState message={error instanceof Error ? error.message : 'Failed to load feature flags'} />
+          <ErrorState
+            message={error instanceof Error ? error.message : 'Failed to load feature flags'}
+          />
         ) : flags.length === 0 ? (
           <EmptyState icon={Flag} message="No feature flags match the current filters." />
         ) : (
-          <ul className="stagger divide-y divide-border/50">
+          <ul className="stagger divide-border/50 divide-y">
             {flags.map((flag: any) => (
-              <li
-                key={flag.id}
-                className="row-interactive flex items-center gap-4 px-4 py-3"
-              >
+              <li key={flag.id} className="row-interactive flex items-center gap-4 px-4 py-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-medium truncate">{flag.name}</span>
+                    <span className="truncate text-sm font-medium">{flag.name}</span>
                     <span className="chip font-mono text-[11px]">{flag.key}</span>
                     {flag.rolloutPercentage < 100 && (
                       <span className="chip">{flag.rolloutPercentage}%</span>
                     )}
                   </div>
                   {flag.description ? (
-                    <p className="mt-0.5 text-xs text-muted-foreground truncate">{flag.description}</p>
+                    <p className="text-muted-foreground mt-0.5 truncate text-xs">
+                      {flag.description}
+                    </p>
                   ) : null}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
@@ -963,10 +1059,16 @@ function AuditSection({
 }) {
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px] animate-blur-in">
-        <SearchInput value={search} onChange={setSearch} placeholder="Search by action, resource, or user" />
+      <div className="animate-blur-in grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search by action, resource, or user"
+        />
         <Select value={resourceType} onValueChange={setResourceType}>
-          <SelectTrigger><SelectValue placeholder="Resource type" /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue placeholder="Resource type" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All resources</SelectItem>
             <SelectItem value="organization">Organization</SelectItem>
@@ -980,21 +1082,20 @@ function AuditSection({
         {loading ? (
           <EmptyState icon={Scroll} message="Loading audit logs..." />
         ) : error ? (
-          <ErrorState message={error instanceof Error ? error.message : 'Failed to load audit logs'} />
+          <ErrorState
+            message={error instanceof Error ? error.message : 'Failed to load audit logs'}
+          />
         ) : logs.length === 0 ? (
           <EmptyState icon={Scroll} message="No audit events match the current filters." />
         ) : (
-          <ul className="stagger divide-y divide-border/50">
+          <ul className="stagger divide-border/50 divide-y">
             {logs.map((log) => {
               const severity = auditSeverity(log.action);
               return (
-                <li
-                  key={log.id}
-                  className="row-interactive flex items-center gap-3 px-4 py-3"
-                >
+                <li key={log.id} className="row-interactive flex items-center gap-3 px-4 py-3">
                   <span
                     className={cn(
-                      'priority-indicator self-stretch min-h-[1.75rem] shrink-0',
+                      'priority-indicator min-h-[1.75rem] shrink-0 self-stretch',
                       severity === 'critical' && 'priority-critical',
                       severity === 'high' && 'priority-high',
                       severity === 'medium' && 'priority-medium',
@@ -1002,15 +1103,15 @@ function AuditSection({
                     )}
                     aria-hidden="true"
                   />
-                  <div className="min-w-0 flex-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
-                    <span className="text-sm font-medium text-foreground truncate">
+                  <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-0.5">
+                    <span className="text-foreground truncate text-sm font-medium">
                       {log.user?.name || log.user?.email || 'Unknown user'}
                     </span>
-                    <span className="text-sm text-muted-foreground truncate">
+                    <span className="text-muted-foreground truncate text-sm">
                       {formatAdminAction(log.action)}
                     </span>
                   </div>
-                  <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                  <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
                     {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
                   </span>
                 </li>
@@ -1067,7 +1168,7 @@ function MetricRow({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-center justify-between">
       <dt className="text-muted-foreground">{label}</dt>
-      <dd className="font-medium text-foreground tabular-nums">{value}</dd>
+      <dd className="text-foreground font-medium tabular-nums">{value}</dd>
     </div>
   );
 }
@@ -1083,7 +1184,7 @@ function SearchInput({
 }) {
   return (
     <div className="relative">
-      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <Search className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
       <Input
         className="pl-9"
         placeholder={placeholder}
@@ -1105,19 +1206,15 @@ function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
-      <Icon className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
-      <p className="text-sm text-muted-foreground">{message}</p>
+      <Icon className="text-muted-foreground h-6 w-6" aria-hidden="true" />
+      <p className="text-muted-foreground text-sm">{message}</p>
       {action}
     </div>
   );
 }
 
 function ErrorState({ message }: { message: string }) {
-  return (
-    <div className="px-6 py-6 text-sm text-destructive">
-      {message}
-    </div>
-  );
+  return <div className="text-destructive px-6 py-6 text-sm">{message}</div>;
 }
 
 function ConfirmDialog({

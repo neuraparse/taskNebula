@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -20,10 +20,30 @@ jest.mock('../issue-sidebar', () => ({
 jest.mock('../time-in-status-panel', () => ({
   TimeInStatusPanel: () => <div data-testid="time-in-status-panel" />,
 }));
+jest.mock('../time-tracking-panel', () => ({
+  TimeTrackingPanel: () => <div data-testid="time-tracking-panel" />,
+}));
+jest.mock('../issue-triage-panel', () => ({
+  IssueTriagePanel: () => <div data-testid="issue-triage-panel" />,
+}));
+jest.mock('../issue-quick-actions', () => ({
+  IssueQuickActions: () => <div data-testid="issue-quick-actions" />,
+}));
 
 const useIssueMock = jest.fn();
+const deleteMutateMock = jest.fn();
 jest.mock('@/lib/hooks/use-issues', () => ({
   useIssue: (id: string | null) => useIssueMock(id),
+  useDeleteIssue: () => ({ mutate: deleteMutateMock, isPending: false }),
+}));
+
+const useAiCapabilityMock = jest.fn();
+jest.mock('@/lib/hooks/use-ai-capability', () => ({
+  useAiCapability: () => useAiCapabilityMock(),
+}));
+
+jest.mock('@/hooks/use-toast', () => ({
+  useToast: () => ({ toast: jest.fn() }),
 }));
 
 import { IssueDetailView } from '../issue-detail-view';
@@ -61,6 +81,9 @@ const mockIssue = {
 describe('IssueDetailView', () => {
   beforeEach(() => {
     useIssueMock.mockReset();
+    deleteMutateMock.mockReset();
+    useAiCapabilityMock.mockReset();
+    useAiCapabilityMock.mockReturnValue({ canRunAgents: false, isLoading: false });
   });
 
   it('renders issue title and child panels when data resolves', () => {
@@ -82,6 +105,78 @@ describe('IssueDetailView', () => {
     expect(screen.getByTestId('issue-content')).toBeInTheDocument();
     expect(screen.getByTestId('issue-activity')).toBeInTheDocument();
     expect(screen.getByTestId('issue-sidebar')).toBeInTheDocument();
+    expect(screen.getByTestId('issue-quick-actions')).toBeInTheDocument();
+    // Time tracking section is open by default, so the panel mounts immediately.
+    expect(screen.getByTestId('time-tracking-panel')).toBeInTheDocument();
+  });
+
+  it('hides the AI triage section when the AI capability is disabled', () => {
+    useIssueMock.mockReturnValue({
+      data: mockIssue,
+      isLoading: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+
+    const Wrapper = wrapper();
+    render(
+      <Wrapper>
+        <IssueDetailView issueId="issue-1" />
+      </Wrapper>
+    );
+
+    expect(screen.queryByRole('button', { name: /ai triage/i })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('issue-triage-panel')).not.toBeInTheDocument();
+  });
+
+  it('shows the AI triage section (collapsed by default) when agents can run', () => {
+    useAiCapabilityMock.mockReturnValue({ canRunAgents: true, isLoading: false });
+    useIssueMock.mockReturnValue({
+      data: mockIssue,
+      isLoading: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+
+    const Wrapper = wrapper();
+    render(
+      <Wrapper>
+        <IssueDetailView issueId="issue-1" />
+      </Wrapper>
+    );
+
+    const toggle = screen.getByRole('button', { name: /ai triage/i });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByTestId('issue-triage-panel')).not.toBeInTheDocument();
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('issue-triage-panel')).toBeInTheDocument();
+  });
+
+  it('collapses and re-opens the time tracking section', () => {
+    useIssueMock.mockReturnValue({
+      data: mockIssue,
+      isLoading: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+
+    const Wrapper = wrapper();
+    render(
+      <Wrapper>
+        <IssueDetailView issueId="issue-1" />
+      </Wrapper>
+    );
+
+    const toggle = screen.getByRole('button', { name: /time tracking/i });
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+    fireEvent.click(toggle);
+    expect(screen.queryByTestId('time-tracking-panel')).not.toBeInTheDocument();
+
+    fireEvent.click(toggle);
+    expect(screen.getByTestId('time-tracking-panel')).toBeInTheDocument();
   });
 
   it('shows a "not found" state when the issue is null (404)', () => {

@@ -24,6 +24,21 @@ export async function register() {
     return;
   }
 
+  // Boot-time version detection: when the running version differs from the
+  // last booted one (system_settings key `last_boot_version`), super admins
+  // get an in-app "TaskNebula updated to vX.Y.Z" notification. Deliberately
+  // fire-and-forget (not awaited): a slow or unavailable database must never
+  // delay or crash server boot. Idempotent across multi-replica boots — see
+  // src/lib/version/boot.ts.
+  if (process.env.NEXT_PHASE !== 'phase-production-build') {
+    void import('@/lib/version/boot')
+      .then(({ handleBootVersionChange }) => handleBootVersionChange())
+      .catch((err) => {
+        // eslint-disable-next-line no-console
+        console.warn('[instrumentation] boot version detection failed:', err);
+      });
+  }
+
   const otlpEndpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
   if (!otlpEndpoint) {
     // No collector configured — keep the runtime cost at zero.
@@ -66,7 +81,11 @@ export async function onRequestError(
     if (!Sentry) return;
     // Cast: Sentry's RequestInfo requires `path` to be defined; we accept
     // partial info from Next.js and let Sentry coerce.
-    Sentry.captureRequestError(error, request as Parameters<typeof Sentry.captureRequestError>[1], context);
+    Sentry.captureRequestError(
+      error,
+      request as Parameters<typeof Sentry.captureRequestError>[1],
+      context
+    );
   } catch (err) {
     // eslint-disable-next-line no-console
     console.warn('[instrumentation] Failed to forward error to Sentry:', err);

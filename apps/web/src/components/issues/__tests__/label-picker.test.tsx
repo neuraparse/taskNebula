@@ -2,8 +2,11 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 const useLabelsMock = jest.fn();
+const createLabelMutateAsyncMock = jest.fn();
+const useCreateLabelMock = jest.fn();
 jest.mock('@/lib/hooks/use-labels', () => ({
   useLabels: (...args: unknown[]) => useLabelsMock(...args),
+  useCreateLabel: () => useCreateLabelMock(),
 }));
 
 import { LabelPicker } from '../label-picker';
@@ -29,6 +32,17 @@ beforeAll(() => {
 beforeEach(() => {
   useLabelsMock.mockReset();
   useLabelsMock.mockReturnValue({ data: orgLabels, isLoading: false });
+  createLabelMutateAsyncMock.mockReset();
+  createLabelMutateAsyncMock.mockResolvedValue({
+    id: 'label-1',
+    name: 'custom-tag',
+    color: '#2385F6',
+  });
+  useCreateLabelMock.mockReset();
+  useCreateLabelMock.mockReturnValue({
+    mutateAsync: createLabelMutateAsyncMock,
+    isPending: false,
+  });
 });
 
 describe('LabelPicker', () => {
@@ -90,6 +104,13 @@ describe('LabelPicker', () => {
     const createItem = await screen.findByText('Create "custom-tag"');
     await user.click(createItem);
 
+    // The label is persisted first (so it gets a DS accent color) …
+    expect(await screen.findByRole('status')).toHaveTextContent('Label "custom-tag" created');
+    expect(createLabelMutateAsyncMock).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      name: 'custom-tag',
+    });
+    // … then selected by name (the issue PATCH links it server-side).
     expect(onChange).toHaveBeenCalledWith(['custom-tag']);
   });
 
