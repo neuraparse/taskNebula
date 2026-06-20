@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 ### Changed
 
 - **Project view switcher shows view names on desktop.** The List/Board/Timeline/Calendar tabs stay compact icon-only on mobile and tablet, and now show the translated label beside the icon on wide (`lg`+) screens. No new strings — reuses the existing `issuesViews.shell.view_*` keys (already in all 30 locales); accessibility unchanged (the `aria-label` still names each icon-only tab).
+- **Project nav tabs show labels on desktop too.** The project header tabs (Views/Board/Backlog/Sprints/Modules/Docs/Chat/Analytics) were icon-only at every size; they now reveal their label beside the icon on `lg`+ while staying compact icon-only on mobile/tablet. The hover tooltip is suppressed on desktop where the label is already visible (no redundant label), and kept on smaller screens. Reuses existing `pagesProjects.tab*` keys — no new strings.
 
 ## [0.6.5] - 2026-06-20
 

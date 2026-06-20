@@ -124,12 +124,15 @@ export default function ProjectLayout({ children, params }: ProjectLayoutProps) 
                         <TabsTrigger
                           value={tab.href}
                           aria-label={tabLabel}
-                          className="data-[state=active]:bg-accent/60 h-7 w-7 shrink-0 rounded-md px-0"
+                          className="data-[state=active]:bg-accent/60 h-7 w-7 shrink-0 gap-1.5 rounded-md px-0 lg:w-auto lg:px-2.5"
                         >
-                          <Icon className="h-4 w-4" />
+                          <Icon className="h-4 w-4 shrink-0" />
+                          {/* Icon-only on mobile/tablet; label on desktop (lg+). */}
+                          <span className="hidden text-xs font-medium lg:inline">{tabLabel}</span>
                         </TabsTrigger>
                       </TooltipTrigger>
-                      <TooltipContent side="bottom" className="text-xs">
+                      {/* Tooltip only when the label is hidden — no redundant hover label on desktop. */}
+                      <TooltipContent side="bottom" className="text-xs lg:hidden">
                         {tabLabel}
                       </TooltipContent>
                     </Tooltip>
