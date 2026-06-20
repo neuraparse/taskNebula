@@ -37,7 +37,7 @@ Per the audit's executive summary — these are real, current, and being worked 
 2. **Last-mile wiring**: Cmd+K search 405 and the `/api/search` 500 are fixed in the current change-set; still dark: embedding worker (vector features inert), AI Sidecar stub over the finished `/api/ask`, API keys minted but accepted by no route (blocks public API + MCP server), OAuth sign-in mints sessions matching no DB user, chat attachment downloads.
 3. **Enforcement gaps**: workflow transitions stored but never enforced; permission/security schemes configurable but enforced nowhere; feature flags gate nothing.
 4. **Notifications**: mentions/watchers notify no one; core events are email-only; digests/push never send.
-5. **Scale**: core list endpoints unpaginated; no board/list virtualization; in-process event bus breaks at >1 web replica.
+5. **Scale**: core list endpoints unpaginated; no board/list virtualization. (The in-process event bus that broke at >1 web replica is **fixed in the current change-set** — the realtime SSE bus now fans out over Redis pub/sub with an in-process fallback.)
 6. **Ops**: CI absent until the current change-set (a minimal `ci.yml` now exists); `pnpm db:generate` broken (snapshots frozen at 0012); near-zero DB-integration tests.
 
 ## Where to contribute

@@ -107,6 +107,8 @@ Most backends are real and substantial; the recurring failure mode is **last-mil
 
 `services/hocuspocus` hosts Yjs docs backing collaborative editing. Web connects via `NEXT_PUBLIC_HOCUSPOCUS_URL`; JWTs minted at `/api/collab/token` (verified with `AUTH_SECRET`/`NEXTAUTH_SECRET`). State persists to Postgres; Redis pub/sub for multi-instance scale-out.
 
+Separately — and distinct from the Yjs collab above — lightweight **issue/sprint/project events** that keep boards and lists live flow over a **Server-Sent Events** stream at `/api/events/stream`. Mutating API routes call `publishEvent` (`apps/web/src/lib/realtime/events.ts`); delivery is in-process by default and **fans out over Redis pub/sub when `REDIS_URL` is set** (origin-tagged per process to avoid double-delivery), so realtime survives multi-replica/restart deploys. The stream is org-scoped (events without an `organizationId` are dropped, fail-closed). On the client, every issue create/update/delete and the SSE consumer (`use-realtime-sync.ts`) invalidate caches through the shared `invalidateIssueCaches` helper, which is **key/CUID-agnostic** — boards are keyed by the project _key_, never scope issue-cache invalidation by a server CUID (see `apps/web/src/lib/realtime/issue-cache.ts`).
+
 ## Per-package guides
 
 Each major workspace has its own nested `CLAUDE.md` (with a sibling `AGENTS.md` pointer for codex-convention tools) — read the one for the package you're editing:

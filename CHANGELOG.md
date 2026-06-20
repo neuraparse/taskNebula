@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.6.5] - 2026-06-20
+
+### Fixed
+
+- **New and updated issues now appear instantly — no page refresh.** Creating, editing, or moving an issue (Kanban/list, epics, sub-issues, AI-drafted issues, draft promotion, triage apply) now reflects the moment you act, instead of only after a manual reload. Root cause: the cache-invalidation predicate compared the server's project CUID against React Query caches keyed by the project **key** (boards are routed `/projects/<key>/board`), so the match never fired and the board never refetched. Every issue create/update/delete and the SSE realtime consumer now route through a single, key/CUID-agnostic `invalidateIssueCaches` helper (`apps/web/src/lib/realtime/issue-cache.ts`), and `useCreateIssue`/`useUpdateIssue`/`useDeleteIssue` do optimistic cache mutations so the card shows the instant the form is submitted and reconciles with the server row on success.
+
+### Changed
+
+- **Realtime event bus upgraded to Redis pub/sub (with an in-process fallback).** The SSE stream (`/api/events/stream`) that pushes issue/sprint/project events to other clients was an in-memory `EventEmitter` confined to a single Node process — it broke at >1 web replica and did not survive restarts. Events are now fanned out over Redis (origin-tagged so the publisher never double-delivers) and a per-process bridge pumps cross-instance events back into the local bus, so cross-client realtime survives multi-replica/restart deploys. Single-instance and no-Redis behaviour is byte-for-byte unchanged, and the 75 `publishEvent` call-sites are untouched. Mirrors the existing chat realtime transport.
+
+### Added
+
+- Unit tests for the issue-cache invalidation helpers (`matchesIssueList`, `issueBelongsInSprintList`, `issueMatchesListFilters`, `invalidateIssueCaches`) and the realtime event bus. Full web suite: 1409 unit tests green.
+
 ## [0.6.4] - 2026-06-13
 
 ### Fixed
