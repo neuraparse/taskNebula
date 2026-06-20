@@ -63,7 +63,6 @@ export function PriorityPicker({ value, onChange, disabled = false }: PriorityPi
   const [open, setOpen] = useState(false);
 
   const selectedPriority = priorities.find((p) => p.value === value) || priorities[4];
-  const Icon = selectedPriority?.icon || Minus;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -77,9 +76,12 @@ export function PriorityPicker({ value, onChange, disabled = false }: PriorityPi
           className="hover:bg-accent ease-snap h-8 w-full justify-between rounded-md px-2 text-sm transition-colors duration-150"
           disabled={disabled}
         >
-          <div className="flex items-center gap-2">
-            <span aria-hidden="true" className={selectedPriority?.dotClass || 'priority-low'} />
-            <span className="capitalize">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <span
+              aria-hidden="true"
+              className={cn('shrink-0', selectedPriority?.dotClass || 'priority-low')}
+            />
+            <span className="truncate capitalize">
               {selectedPriority ? t(selectedPriority.labelKey) : t('priority_none')}
             </span>
           </div>

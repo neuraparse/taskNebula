@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Issue detail modal: the close (X) no longer collides with the header, and right-sidebar field values no longer overflow.** The modal header (title + Star/Watch/Copy actions) is now padded clear of the Dialog's absolute close button in modal mode (full-page view is unchanged). In the details sidebar, every picker trigger (status, priority, assignee, components, fix/affects versions, resolution, due/start date, sprint, epic, parent, type) now truncates long values consistently instead of sliding past the control — fixed the flexbox truncation chain (`min-w-0 flex-1` on the value wrapper, `truncate` on the text, `shrink-0` on the icon/chevron) and dropped two dead imports surfaced along the way.
+
 ## [0.6.5] - 2026-06-20
 
 ### Fixed

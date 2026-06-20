@@ -77,7 +77,7 @@ export function ResolutionSelect({
             className="hover:bg-accent ease-snap h-8 w-full justify-between rounded-md px-2 text-sm transition-colors duration-150"
             disabled={disabled}
           >
-            <span className="text-muted-foreground">{t('unresolved')}</span>
+            <span className="text-muted-foreground min-w-0 flex-1 truncate">{t('unresolved')}</span>
             <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-40" />
           </Button>
         </DropdownMenuTrigger>

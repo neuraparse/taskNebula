@@ -190,7 +190,9 @@ export function VersionPicker({
                 <span className="truncate">{value.map((v) => v.name).join(', ')}</span>
               </span>
             ) : (
-              <span className="text-muted-foreground">{placeholder ?? t('none')}</span>
+              <span className="text-muted-foreground min-w-0 flex-1 truncate">
+                {placeholder ?? t('none')}
+              </span>
             )}
             <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-40" />
           </Button>

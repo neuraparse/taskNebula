@@ -155,9 +155,9 @@ export function SprintPicker({ projectId, value, onChange, disabled = false }: S
                 <span className="truncate">{selected.name}</span>
               </span>
             ) : (
-              <span className="text-muted-foreground flex items-center gap-2">
-                <Inbox className="h-3.5 w-3.5" />
-                {t('backlog')}
+              <span className="text-muted-foreground flex min-w-0 flex-1 items-center gap-2">
+                <Inbox className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{t('backlog')}</span>
               </span>
             )}
             <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-40" />

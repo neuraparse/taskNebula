@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Check, ChevronsUpDown, User, X } from 'lucide-react';
+import { Check, ChevronsUpDown, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -49,7 +49,7 @@ export function AssigneePicker({
           disabled={disabled || isLoading}
         >
           {selectedMember ? (
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
               <Avatar className="h-5 w-5">
                 <AvatarImage
                   src={selectedMember.image || undefined}
@@ -62,9 +62,9 @@ export function AssigneePicker({
               <span className="truncate">{selectedMember.name || selectedMember.email}</span>
             </div>
           ) : (
-            <div className="text-muted-foreground flex items-center gap-2">
-              <User className="h-4 w-4" />
-              <span>{t('unassigned')}</span>
+            <div className="text-muted-foreground flex min-w-0 flex-1 items-center gap-2">
+              <User className="h-4 w-4 shrink-0" />
+              <span className="truncate">{t('unassigned')}</span>
             </div>
           )}
           <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-40" />

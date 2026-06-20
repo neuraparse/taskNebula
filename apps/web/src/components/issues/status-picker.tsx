@@ -64,15 +64,15 @@ export function StatusPicker({ projectId, value, onChange, disabled }: StatusPic
           disabled={disabled || loading}
         >
           {selectedStatus ? (
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
               <div
-                className="h-2 w-2 rounded-full"
+                className="h-2 w-2 shrink-0 rounded-full"
                 style={{ backgroundColor: selectedStatus.color }}
               />
-              {selectedStatus.name}
+              <span className="truncate">{selectedStatus.name}</span>
             </div>
           ) : (
-            t('select_status_placeholder')
+            <span className="text-muted-foreground truncate">{t('select_status_placeholder')}</span>
           )}
           <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-40" />
         </Button>

@@ -206,7 +206,15 @@ export function IssueDetailView({
       {/* FEAT-31: morph target — pairs with `issue-${id}` on the source card
           (kanban / dashboard list) so navigation feels continuous. */}
       <ViewTransition name={`issue-${issue.id}`}>
-        <div className="border-border bg-background shrink-0 border-b px-6 py-4">
+        <div
+          className={cn(
+            'border-border bg-background shrink-0 border-b px-6 py-4',
+            // In modal mode the Dialog's absolute close (X) sits at top-right;
+            // pad the header so the title row / action buttons never slip
+            // underneath it. Full-page view (no onClose) keeps the normal inset.
+            onClose && 'pr-14'
+          )}
+        >
           <IssueHeader issue={issue} />
           {/* Jira-style quick-action row under the title. Duplicate/Archive
               callbacks are intentionally not passed — no backend yet. */}

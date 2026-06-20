@@ -56,11 +56,11 @@ export function StartDateField({ value, onChange, disabled = false }: StartDateF
           disabled={disabled}
         >
           {valid ? (
-            <span className="text-foreground">
+            <span className="text-foreground min-w-0 flex-1 truncate">
               {format.dateTime(new Date(value as string), { month: 'short', day: 'numeric' })}
             </span>
           ) : (
-            <span className="text-muted-foreground">{t('startDate')}</span>
+            <span className="text-muted-foreground min-w-0 flex-1 truncate">{t('startDate')}</span>
           )}
           <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-40" />
         </Button>

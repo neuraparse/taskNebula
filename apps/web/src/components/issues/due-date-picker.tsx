@@ -70,19 +70,21 @@ export function DueDatePicker({ value, onChange, disabled = false }: DueDatePick
           {value ? (
             <span
               className={cn(
-                'flex items-center gap-1.5',
+                'flex min-w-0 flex-1 items-center gap-1.5',
                 overdue ? 'text-accent-rose' : 'text-foreground'
               )}
             >
-              {format.dateTime(new Date(value), { month: 'short', day: 'numeric' })}
+              <span className="truncate">
+                {format.dateTime(new Date(value), { month: 'short', day: 'numeric' })}
+              </span>
               {overdue && (
-                <span className="bg-accent-rose/10 text-accent-rose rounded-sm px-1.5 py-0.5 text-[10px] font-medium">
+                <span className="bg-accent-rose/10 text-accent-rose shrink-0 rounded-sm px-1.5 py-0.5 text-[10px] font-medium">
                   {t('overdue')}
                 </span>
               )}
             </span>
           ) : (
-            <span className="text-muted-foreground">{t('set')}</span>
+            <span className="text-muted-foreground truncate">{t('set')}</span>
           )}
           <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-40" />
         </Button>

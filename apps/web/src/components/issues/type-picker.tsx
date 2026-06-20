@@ -39,7 +39,7 @@ export function TypePicker({ value, className }: TypePickerProps) {
 
   return (
     <div
-      className={cn('flex h-8 items-center gap-2 px-2 text-sm', className)}
+      className={cn('flex h-8 min-w-0 items-center gap-2 px-2 text-sm', className)}
       title={t('readOnly')}
     >
       <TypeIcon className={cn('h-3.5 w-3.5 shrink-0', config.color)} />
