@@ -1,19 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { db, organizations, organizationMembers, workflows, workflowStatuses } from '@tasknebula/db';
+import {
+  db,
+  organizations,
+  organizationMembers,
+  workflows,
+  workflowStatuses,
+  users,
+} from '@tasknebula/db';
 import { auth } from '@/auth';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
 // GET /api/organizations - Get user's organizations
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get organizations where user is a member
+    const [actor] = await db
+      .select({ isSuperAdmin: users.isSuperAdmin })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1);
+
+    // Get organizations where user is an active member.
     const userOrgs = await db
       .select({
         organization: organizations,
@@ -21,9 +34,15 @@ export async function GET(request: NextRequest) {
       })
       .from(organizationMembers)
       .innerJoin(organizations, eq(organizationMembers.organizationId, organizations.id))
-      .where(eq(organizationMembers.userId, session.user.id));
+      .where(
+        and(
+          eq(organizationMembers.userId, session.user.id),
+          eq(organizationMembers.status, 'active')
+        )
+      );
 
     return NextResponse.json({
+      canCreateOrganizations: actor?.isSuperAdmin || false,
       organizations: userOrgs.map((org) => ({
         ...org.organization,
         role: org.role,
@@ -38,7 +57,11 @@ export async function GET(request: NextRequest) {
 // POST /api/organizations - Create new organization
 const createOrgSchema = z.object({
   name: z.string().min(1).max(255),
-  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens'),
+  slug: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens'),
 });
 
 export async function POST(request: NextRequest) {
@@ -46,6 +69,19 @@ export async function POST(request: NextRequest) {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const [actor] = await db
+      .select({ isSuperAdmin: users.isSuperAdmin })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1);
+
+    if (!actor?.isSuperAdmin) {
+      return NextResponse.json(
+        { error: 'Only platform admins can create organizations. Ask an admin for an invite.' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
@@ -137,9 +173,6 @@ export async function POST(request: NextRequest) {
     }
 
     console.error('Failed to create organization:', error);
-    return NextResponse.json(
-      { error: 'Failed to create organization' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to create organization' }, { status: 500 });
   }
 }

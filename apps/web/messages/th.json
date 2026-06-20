@@ -344,9 +344,9 @@
     },
     "reporter": {
       "unknown": "ผู้ใช้ที่ไม่รู้จัก",
-      "label": "ผู้รายงาน"
-    },
-    "reporter.avatarAlt": "รูปโปรไฟล์ผู้รายงาน"
+      "label": "ผู้รายงาน",
+      "avatarAlt": "รูปโปรไฟล์ผู้รายงาน"
+    }
   },
   "issueDetail": {
     "comments": {
@@ -440,6 +440,15 @@
     "statusChecksDisabled": "ปิดการตรวจสอบ",
     "currentVersion": "เวอร์ชันปัจจุบัน",
     "latestVersion": "เวอร์ชันล่าสุด",
+    "latestDockerImage": "อิมเมจ Docker ล่าสุด",
+    "imagePushed": "พุชเมื่อ {date}",
+    "dockerImage": "อิมเมจ Docker",
+    "dockerImageDescription": "ตรวจสอบจากรีโพ Docker Hub {repository}",
+    "imageUpdateAvailable": "มีอัปเดตอิมเมจ",
+    "repository": "รีโพ",
+    "imageDigest": "Digest ของอิมเมจ",
+    "imageSize": "ขนาดอิมเมจ",
+    "viewDockerTag": "ดูแท็ก Docker",
     "published": "เผยแพร่เมื่อ {date}",
     "lastChecked": "ตรวจสอบล่าสุดเมื่อ {time}",
     "checksDisabledHint": "การตรวจสอบการอัปเดตถูกปิดผ่านตัวแปรสภาพแวดล้อม TASKNEBULA_DISABLE_UPDATE_CHECK ลบออกเพื่อดูการเผยแพร่ใหม่ที่นี่",
@@ -2257,6 +2266,45 @@
       "writes_count": "{count} การเขียน",
       "no_summary": "ไม่มีการบันทึกสรุป",
       "run_live": "รันแบบสด"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS governance",
+      "description": "Control which AI agents can write, what needs approval, and what is blocked.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading agent governance...",
+      "loadFailed": "Failed to load agent governance.",
+      "policySource": "Policy source",
+      "noPolicy": "No AGENTOWNERS file found",
+      "lastParsedAt": "Last parsed at",
+      "validationErrors": "Validation errors",
+      "validationTitle": "Policy validation needs attention",
+      "line": "Line {line}",
+      "rulesTitle": "Policy preview",
+      "rulesDescription": "Parsed rules are evaluated by specificity before effect precedence.",
+      "noRules": "No policy rules are active.",
+      "table": {
+        "line": "Line",
+        "actor": "Actor",
+        "action": "Action",
+        "effect": "Effect"
+      },
+      "effect": {
+        "allow": "Allow",
+        "deny": "Deny",
+        "requireApproval": "Approval"
+      },
+      "queueTitle": "Approval queue",
+      "queueDescription": "Pending AI actions wait here until an admin or maintainer approves them.",
+      "queueLoading": "Loading approval queue...",
+      "queueEmpty": "No pending AI actions.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "behaviorTitle": "Approval behavior",
+      "behaviorDescription": "Safe defaults used when no explicit rule matches.",
+      "unknownAgents": "Unknown agents",
+      "destructiveActions": "Destructive actions",
+      "requireApprovalDefault": "Require approval by default"
     }
   },
   "collab": {
@@ -2609,10 +2657,10 @@
         "noPermission": "คุณไม่มีสิทธิ์สร้างเอกสารในพื้นที่นี้",
         "creating": "กำลังสร้าง...",
         "createPage": "สร้างหน้า"
-      }
-    },
-    "shell.collapse": "ยุบ",
-    "shell.expand": "ขยาย"
+      },
+      "collapse": "ยุบ",
+      "expand": "ขยาย"
+    }
   },
   "planning": {
     "search_placeholder": "ค้นหาเทมเพลต",
@@ -3264,7 +3312,9 @@
       "hint": {
         "openai": "ใช้เมื่อพื้นที่ทำงานยังไม่ได้กรอกคีย์ OpenAI ของตัวเอง ขึ้นต้นด้วย sk-…",
         "anthropic": "ใช้เมื่อพื้นที่ทำงานยังไม่ได้กรอกคีย์ Anthropic ของตัวเอง ขึ้นต้นด้วย sk-ant-…"
-      }
+      },
+      "saveFailedDescription": "ไม่สามารถบันทึกข้อมูลรับรองได้ โปรดลองอีกครั้ง",
+      "removeFailedDescription": "ไม่สามารถลบข้อมูลรับรองได้ โปรดลองอีกครั้ง"
     },
     "realtimeHealth": {
       "loading": "กำลังโหลดสุขภาพเรียลไทม์...",
@@ -3394,12 +3444,10 @@
       "targetedOrgs": "องค์กรเป้าหมาย",
       "close": "ปิด",
       "evaluate": "ประเมิน",
-      "evaluating": "กำลังประเมิน..."
-    },
-    "flagTest.isEnabled": "isEnabled",
-    "flagTest.rolloutPercent": "rollout%",
-    "platformAi.saveFailedDescription": "ไม่สามารถบันทึกข้อมูลรับรองได้ โปรดลองอีกครั้ง",
-    "platformAi.removeFailedDescription": "ไม่สามารถลบข้อมูลรับรองได้ โปรดลองอีกครั้ง"
+      "evaluating": "กำลังประเมิน...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "rollout%"
+    }
   },
   "adminDialogs": {
     "common": {
@@ -3440,7 +3488,8 @@
       "plansHint": "เว้นว่างไว้เพื่อเปิดใช้งานสำหรับทุกแผน",
       "targetOrganizations": "องค์กรเป้าหมาย",
       "targetOrganizationsHint": "เว้นว่างไว้เพื่อเปิดใช้งานสำหรับทุกองค์กรที่ตรงกับแผน + การเปิดตัว",
-      "rollout": "การเปิดตัว: {percentage}%"
+      "rollout": "การเปิดตัว: {percentage}%",
+      "namePlaceholder": "Advanced Analytics"
     },
     "createOrg": {
       "trigger": "องค์กรใหม่",
@@ -3464,7 +3513,8 @@
       "domain": "โดเมน (ไม่บังคับ)",
       "toastUpdatedTitle": "อัปเดของค์กรแล้ว",
       "toastUpdatedDescription": "บันทึกการเปลี่ยนแปลงเรียบร้อยแล้ว",
-      "toastFailedTitle": "อัปเดององค์กรไม่สำเร็จ"
+      "toastFailedTitle": "อัปเดององค์กรไม่สำเร็จ",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "ชื่อ",
@@ -3474,7 +3524,9 @@
       "planFree": "ฟรี",
       "planStarter": "Starter",
       "planGrowth": "Growth",
-      "planEnterprise": "Enterprise"
+      "planEnterprise": "Enterprise",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "ผู้ใช้ใหม่",
@@ -3487,7 +3539,9 @@
       "missingFieldsDescription": "ต้องระบุชื่อ อีเมล และรหัสผ่าน",
       "toastCreatedTitle": "สร้างผู้ใช้แล้ว",
       "toastCreatedDescription": "สร้างผู้ใช้เรียบร้อยแล้ว",
-      "toastFailedTitle": "สร้างผู้ใช้ไม่สำเร็จ"
+      "toastFailedTitle": "สร้างผู้ใช้ไม่สำเร็จ",
+      "fullNamePlaceholder": "Jane Smith",
+      "emailPlaceholder": "jane@example.com"
     },
     "editUser": {
       "title": "แก้ไขผู้ใช้",
@@ -3511,13 +3565,7 @@
       "searchPlaceholder": "ค้นหาองค์กร...",
       "empty": "ไม่พบองค์กร",
       "remove": "นำ {name} ออก"
-    },
-    "orgForm.namePlaceholder": "Acme Inc",
-    "orgForm.slugPlaceholder": "acme-inc",
-    "editOrg.domainPlaceholder": "example.com",
-    "createUser.fullNamePlaceholder": "Jane Smith",
-    "createUser.emailPlaceholder": "jane@example.com",
-    "flagForm.namePlaceholder": "Advanced Analytics"
+    }
   },
   "charts": {
     "issues": "งาน",
@@ -3691,7 +3739,8 @@
       "priorityLow": "ต่ำ",
       "priorityNone": "ไม่มี",
       "labelsCommaSeparated": "ป้ายกำกับ (คั่นด้วยจุลภาค)",
-      "creating": "กำลังสร้าง…"
+      "creating": "กำลังสร้าง…",
+      "queuedForApprovalCount": "{count, plural, one {1 draft is waiting for approval} other {# drafts are waiting for approval}}"
     },
     "assist": {
       "title": "ผู้ช่วย AI",
@@ -3963,7 +4012,9 @@
     "startSprintTooltip": "เริ่มสปรินต์นี้และทำให้ใช้งานอยู่",
     "completeSprint": "เสร็จสิ้นสปรินต์",
     "completeSprintTooltip": "เสร็จสิ้นสปรินต์นี้ งานที่ไม่เสร็จสิ้นจะย้ายไปยัง backlog",
-    "sprintBurndown": "Burndown ของสปรินต์"
+    "sprintBurndown": "Burndown ของสปรินต์",
+    "projectInviteRequiredTitle": "Invitation required",
+    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4499,7 +4550,10 @@
         "status": "สถานะ",
         "priority": "ลำดับความสำคัญ",
         "assignee": "ผู้รับผิดชอบ"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "การเข้าถึง",
@@ -4555,7 +4609,12 @@
         "qa_engineer": "วิศวกร QA",
         "designer": "นักออกแบบ",
         "viewer": "ผู้ชม"
-      }
+      },
+      "inviteExpiry": "Invitation expires",
+      "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
+      "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
+      "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
+      "invitationResent": "Invitation resent"
     },
     "org": {
       "selectOrg": "เลือกองค์กรเพื่อโหลดการตั้งค่า",
@@ -4664,10 +4723,7 @@
         "datadog": "กำหนด { apiKey, site? }",
         "s3": "กำหนด { bucket, region, prefix? } ต้องตั้งค่า AWS_ACCESS_KEY_ID/SECRET ในตัวแปรสภาพแวดล้อม"
       }
-    },
-    "import.projectIdPlaceholder": "prj_xxx",
-    "import.linearTeamPlaceholder": "ENG",
-    "import.jiraSitePlaceholder": "acme.atlassian.net"
+    }
   },
   "sprints": {
     "defaultName": "สปรินต์ {number}",
@@ -5126,18 +5182,20 @@
           "connecting": "กำลังเชื่อมต่อ",
           "reconnecting": "กำลังเชื่อมต่อใหม่",
           "disconnected": "ตัดการเชื่อมต่อแล้ว"
+        },
+        "permissionDeniedRetry": "ไมโครโฟนถูกปฏิเสธสิทธิ์ โปรดอนุญาตการเข้าถึงไมโครโฟนในเบราว์เซอร์ของคุณแล้วลองอีกครั้ง",
+        "micCouldNotStartBusy": "ไม่สามารถเริ่มไมโครโฟนของคุณได้ อาจมีแอปอื่นกำลังใช้งานอยู่",
+        "audioEngineFailed": "เอนจินเสียงของเบราว์เซอร์ทำงานล้มเหลวบนอุปกรณ์นี้ โปรดหยุดแอปเสียงอื่นหรือเปลี่ยนไมโครโฟนแล้วลองอีกครั้ง",
+        "noMicForSession": "ไม่พบไมโครโฟนสำหรับเซสชันเบราว์เซอร์นี้",
+        "runtimeError": {
+          "serverUnreachable": "ไม่สามารถเข้าถึงเซิร์ฟเวอร์เสียงบนพอร์ตสื่อ (UDP 50000-50020 / 3478, TCP 7881) โปรดตรวจสอบไฟร์วอลล์ / NAT แล้วลองอีกครั้ง",
+          "permissionDenied": "ไมโครโฟนถูกปฏิเสธสิทธิ์ โปรดอนุญาตการเข้าถึงไมโครโฟนในเบราว์เซอร์ของคุณแล้วลองอีกครั้ง",
+          "micNotStarted": "ไม่สามารถเริ่มไมโครโฟนของคุณได้ อาจมีแอปอื่นกำลังใช้งานอยู่",
+          "audioEngineFailed": "เอนจินเสียงของเบราว์เซอร์ทำงานล้มเหลวบนอุปกรณ์นี้ โปรดหยุดแอปเสียงอื่นหรือเปลี่ยนไมโครโฟนแล้วลองอีกครั้ง",
+          "micNotFound": "ไม่พบไมโครโฟนสำหรับเซสชันเบราว์เซอร์นี้"
         }
       }
-    },
-    "chat.voice.permissionDeniedRetry": "ไมโครโฟนถูกปฏิเสธสิทธิ์ โปรดอนุญาตการเข้าถึงไมโครโฟนในเบราว์เซอร์ของคุณแล้วลองอีกครั้ง",
-    "chat.voice.micCouldNotStartBusy": "ไม่สามารถเริ่มไมโครโฟนของคุณได้ อาจมีแอปอื่นกำลังใช้งานอยู่",
-    "chat.voice.audioEngineFailed": "เอนจินเสียงของเบราว์เซอร์ทำงานล้มเหลวบนอุปกรณ์นี้ โปรดหยุดแอปเสียงอื่นหรือเปลี่ยนไมโครโฟนแล้วลองอีกครั้ง",
-    "chat.voice.noMicForSession": "ไม่พบไมโครโฟนสำหรับเซสชันเบราว์เซอร์นี้",
-    "chat.voice.runtimeError.serverUnreachable": "ไม่สามารถเข้าถึงเซิร์ฟเวอร์เสียงบนพอร์ตสื่อ (UDP 50000-50020 / 3478, TCP 7881) โปรดตรวจสอบไฟร์วอลล์ / NAT แล้วลองอีกครั้ง",
-    "chat.voice.runtimeError.permissionDenied": "ไมโครโฟนถูกปฏิเสธสิทธิ์ โปรดอนุญาตการเข้าถึงไมโครโฟนในเบราว์เซอร์ของคุณแล้วลองอีกครั้ง",
-    "chat.voice.runtimeError.micNotStarted": "ไม่สามารถเริ่มไมโครโฟนของคุณได้ อาจมีแอปอื่นกำลังใช้งานอยู่",
-    "chat.voice.runtimeError.audioEngineFailed": "เอนจินเสียงของเบราว์เซอร์ทำงานล้มเหลวบนอุปกรณ์นี้ โปรดหยุดแอปเสียงอื่นหรือเปลี่ยนไมโครโฟนแล้วลองอีกครั้ง",
-    "chat.voice.runtimeError.micNotFound": "ไม่พบไมโครโฟนสำหรับเซสชันเบราว์เซอร์นี้"
+    }
   },
   "userSecurity": {
     "accountMenu": "เมนูบัญชี",

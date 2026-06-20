@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, users, organizationMembers, eq } from '@tasknebula/db';
+import { db, users, organizationMembers, eq, and } from '@tasknebula/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,21 +11,26 @@ export async function GET(request: NextRequest) {
 
     // Get user super admin status
     const [user] = await db
-      .select({ 
+      .select({
         isSuperAdmin: users.isSuperAdmin,
       })
       .from(users)
       .where(eq(users.id, session.user.id))
       .limit(1);
 
-    // Get first organization membership (for now, users belong to one org)
+    // Get first active organization membership (for now, users belong to one org)
     const [orgMember] = await db
-      .select({ 
+      .select({
         role: organizationMembers.role,
         organizationId: organizationMembers.organizationId,
       })
       .from(organizationMembers)
-      .where(eq(organizationMembers.userId, session.user.id))
+      .where(
+        and(
+          eq(organizationMembers.userId, session.user.id),
+          eq(organizationMembers.status, 'active')
+        )
+      )
       .limit(1);
 
     return NextResponse.json({
@@ -35,10 +40,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching user role:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch user role' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch user role' }, { status: 500 });
   }
 }
-

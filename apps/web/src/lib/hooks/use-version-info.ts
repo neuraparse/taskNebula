@@ -4,11 +4,22 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 export interface VersionInfo {
   current: string;
   latest: string | null;
+  releaseUpdateAvailable: boolean;
   updateAvailable: boolean;
   releaseUrl: string | null;
   publishedAt: string | null;
   notes: string | null;
   checkedAt: string | null;
+  image: {
+    repository: string;
+    latestTag: string | null;
+    latestTagUrl: string | null;
+    latestPushedAt: string | null;
+    latestDigest: string | null;
+    latestSizeBytes: number | null;
+    updateAvailable: boolean;
+    checkedAt: string | null;
+  };
   checkDisabled: boolean;
 }
 

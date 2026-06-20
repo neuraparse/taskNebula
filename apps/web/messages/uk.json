@@ -344,9 +344,9 @@
     },
     "reporter": {
       "unknown": "Невідомий користувач",
-      "label": "Автор"
-    },
-    "reporter.avatarAlt": "Аватар автора"
+      "label": "Автор",
+      "avatarAlt": "Аватар автора"
+    }
   },
   "issueDetail": {
     "comments": {
@@ -440,6 +440,15 @@
     "statusChecksDisabled": "Перевірки вимкнено",
     "currentVersion": "Поточна версія",
     "latestVersion": "Остання версія",
+    "latestDockerImage": "Найновіший Docker-образ",
+    "imagePushed": "Опубліковано {date}",
+    "dockerImage": "Docker-образ",
+    "dockerImageDescription": "Перевірено з репозиторію Docker Hub {repository}.",
+    "imageUpdateAvailable": "Доступне оновлення образу",
+    "repository": "Репозиторій",
+    "imageDigest": "Digest образу",
+    "imageSize": "Розмір образу",
+    "viewDockerTag": "Переглянути Docker-тег",
     "published": "Опубліковано {date}",
     "lastChecked": "Остання перевірка {time}",
     "checksDisabledHint": "Перевірки оновлень вимкнено за допомогою змінної середовища TASKNEBULA_DISABLE_UPDATE_CHECK. Видаліть її, щоб бачити нові релізи тут.",
@@ -2257,6 +2266,45 @@
       "writes_count": "{count} записів",
       "no_summary": "Підсумок не записано.",
       "run_live": "Запустити наживо"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS governance",
+      "description": "Control which AI agents can write, what needs approval, and what is blocked.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading agent governance...",
+      "loadFailed": "Failed to load agent governance.",
+      "policySource": "Policy source",
+      "noPolicy": "No AGENTOWNERS file found",
+      "lastParsedAt": "Last parsed at",
+      "validationErrors": "Validation errors",
+      "validationTitle": "Policy validation needs attention",
+      "line": "Line {line}",
+      "rulesTitle": "Policy preview",
+      "rulesDescription": "Parsed rules are evaluated by specificity before effect precedence.",
+      "noRules": "No policy rules are active.",
+      "table": {
+        "line": "Line",
+        "actor": "Actor",
+        "action": "Action",
+        "effect": "Effect"
+      },
+      "effect": {
+        "allow": "Allow",
+        "deny": "Deny",
+        "requireApproval": "Approval"
+      },
+      "queueTitle": "Approval queue",
+      "queueDescription": "Pending AI actions wait here until an admin or maintainer approves them.",
+      "queueLoading": "Loading approval queue...",
+      "queueEmpty": "No pending AI actions.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "behaviorTitle": "Approval behavior",
+      "behaviorDescription": "Safe defaults used when no explicit rule matches.",
+      "unknownAgents": "Unknown agents",
+      "destructiveActions": "Destructive actions",
+      "requireApprovalDefault": "Require approval by default"
     }
   },
   "collab": {
@@ -2609,10 +2657,10 @@
         "noPermission": "У вас немає дозволу створювати документи в цьому просторі.",
         "creating": "Створення...",
         "createPage": "Створити сторінку"
-      }
-    },
-    "shell.collapse": "Згорнути",
-    "shell.expand": "Розгорнути"
+      },
+      "collapse": "Згорнути",
+      "expand": "Розгорнути"
+    }
   },
   "planning": {
     "search_placeholder": "Пошук шаблонів",
@@ -3264,7 +3312,9 @@
       "hint": {
         "openai": "Використовується, коли робочий простір не ввів власний ключ OpenAI. Починається з sk-…",
         "anthropic": "Використовується, коли робочий простір не ввів власний ключ Anthropic. Починається з sk-ant-…"
-      }
+      },
+      "saveFailedDescription": "Не вдалося зберегти облікові дані. Спробуйте ще раз.",
+      "removeFailedDescription": "Не вдалося видалити облікові дані. Спробуйте ще раз."
     },
     "realtimeHealth": {
       "loading": "Завантаження стану реального часу...",
@@ -3394,12 +3444,10 @@
       "targetedOrgs": "цільові організації",
       "close": "Закрити",
       "evaluate": "Оцінити",
-      "evaluating": "Оцінювання..."
-    },
-    "flagTest.isEnabled": "isEnabled",
-    "flagTest.rolloutPercent": "відсоток розгортання",
-    "platformAi.saveFailedDescription": "Не вдалося зберегти облікові дані. Спробуйте ще раз.",
-    "platformAi.removeFailedDescription": "Не вдалося видалити облікові дані. Спробуйте ще раз."
+      "evaluating": "Оцінювання...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "відсоток розгортання"
+    }
   },
   "adminDialogs": {
     "common": {
@@ -3440,7 +3488,8 @@
       "plansHint": "Залиште порожнім, щоб увімкнути для всіх планів.",
       "targetOrganizations": "Цільові організації",
       "targetOrganizationsHint": "Залиште порожнім, щоб увімкнути для всіх організацій, що відповідають плану + розгортанню.",
-      "rollout": "Розгортання: {percentage}%"
+      "rollout": "Розгортання: {percentage}%",
+      "namePlaceholder": "Розширена аналітика"
     },
     "createOrg": {
       "trigger": "Нова організація",
@@ -3464,7 +3513,8 @@
       "domain": "Домен (необов’язково)",
       "toastUpdatedTitle": "Організацію оновлено",
       "toastUpdatedDescription": "Зміни успішно збережено.",
-      "toastFailedTitle": "Не вдалося оновити організацію"
+      "toastFailedTitle": "Не вдалося оновити організацію",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "Назва",
@@ -3474,7 +3524,9 @@
       "planFree": "Безкоштовний",
       "planStarter": "Початковий",
       "planGrowth": "Зростання",
-      "planEnterprise": "Корпоративний"
+      "planEnterprise": "Корпоративний",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "Новий користувач",
@@ -3487,7 +3539,9 @@
       "missingFieldsDescription": "Потрібні ім’я, електронна пошта та пароль.",
       "toastCreatedTitle": "Користувача створено",
       "toastCreatedDescription": "Користувача успішно створено.",
-      "toastFailedTitle": "Не вдалося створити користувача"
+      "toastFailedTitle": "Не вдалося створити користувача",
+      "fullNamePlaceholder": "Jane Smith",
+      "emailPlaceholder": "jane@example.com"
     },
     "editUser": {
       "title": "Редагувати користувача",
@@ -3511,13 +3565,7 @@
       "searchPlaceholder": "Пошук організацій...",
       "empty": "Організацій не знайдено.",
       "remove": "Прибрати {name}"
-    },
-    "orgForm.namePlaceholder": "Acme Inc",
-    "orgForm.slugPlaceholder": "acme-inc",
-    "editOrg.domainPlaceholder": "example.com",
-    "createUser.fullNamePlaceholder": "Jane Smith",
-    "createUser.emailPlaceholder": "jane@example.com",
-    "flagForm.namePlaceholder": "Розширена аналітика"
+    }
   },
   "charts": {
     "issues": "Задачі",
@@ -3691,7 +3739,8 @@
       "priorityLow": "Низький",
       "priorityNone": "Немає",
       "labelsCommaSeparated": "Мітки (через кому)",
-      "creating": "Створення…"
+      "creating": "Створення…",
+      "queuedForApprovalCount": "{count, plural, one {1 draft is waiting for approval} other {# drafts are waiting for approval}}"
     },
     "assist": {
       "title": "AI-помічник",
@@ -3963,7 +4012,9 @@
     "startSprintTooltip": "Розпочати цей спринт і зробити його активним",
     "completeSprint": "Завершити спринт",
     "completeSprintTooltip": "Завершити цей спринт. Незавершені задачі перейдуть до беклогу.",
-    "sprintBurndown": "Burndown спринту"
+    "sprintBurndown": "Burndown спринту",
+    "projectInviteRequiredTitle": "Invitation required",
+    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4499,7 +4550,10 @@
         "status": "Статус",
         "priority": "Пріоритет",
         "assignee": "Виконавець"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "Доступ",
@@ -4555,7 +4609,12 @@
         "qa_engineer": "Інженер QA",
         "designer": "Дизайнер",
         "viewer": "Глядач"
-      }
+      },
+      "inviteExpiry": "Invitation expires",
+      "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
+      "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
+      "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
+      "invitationResent": "Invitation resent"
     },
     "org": {
       "selectOrg": "Виберіть організацію, щоб завантажити налаштування.",
@@ -4664,10 +4723,7 @@
         "datadog": "Встановіть { apiKey, site? }.",
         "s3": "Встановіть { bucket, region, prefix? }. У середовищі мають бути задані AWS_ACCESS_KEY_ID/SECRET."
       }
-    },
-    "import.projectIdPlaceholder": "prj_xxx",
-    "import.linearTeamPlaceholder": "ENG",
-    "import.jiraSitePlaceholder": "acme.atlassian.net"
+    }
   },
   "sprints": {
     "defaultName": "Спринт {number}",
@@ -5126,18 +5182,20 @@
           "connecting": "Підключення",
           "reconnecting": "Повторне підключення",
           "disconnected": "Відключено"
+        },
+        "permissionDeniedRetry": "У доступі до мікрофона відмовлено. Дозвольте доступ до мікрофона у браузері та спробуйте ще раз.",
+        "micCouldNotStartBusy": "Не вдалося запустити мікрофон. Можливо, його використовує інший застосунок.",
+        "audioEngineFailed": "Аудіорушій браузера дав збій на цьому пристрої. Закрийте інші аудіозастосунки або змініть мікрофон і спробуйте ще раз.",
+        "noMicForSession": "Для цього сеансу браузера не знайдено мікрофона.",
+        "runtimeError": {
+          "serverUnreachable": "Голосовий сервер недоступний на медіапортах (UDP 50000-50020 / 3478, TCP 7881). Перевірте брандмауер / NAT і спробуйте ще раз.",
+          "permissionDenied": "У доступі до мікрофона відмовлено. Дозвольте доступ до мікрофона у браузері та спробуйте ще раз.",
+          "micNotStarted": "Не вдалося запустити мікрофон. Можливо, його використовує інший застосунок.",
+          "audioEngineFailed": "Аудіорушій браузера дав збій на цьому пристрої. Закрийте інші аудіозастосунки або змініть мікрофон і спробуйте ще раз.",
+          "micNotFound": "Для цього сеансу браузера не знайдено мікрофона."
         }
       }
-    },
-    "chat.voice.permissionDeniedRetry": "У доступі до мікрофона відмовлено. Дозвольте доступ до мікрофона у браузері та спробуйте ще раз.",
-    "chat.voice.micCouldNotStartBusy": "Не вдалося запустити мікрофон. Можливо, його використовує інший застосунок.",
-    "chat.voice.audioEngineFailed": "Аудіорушій браузера дав збій на цьому пристрої. Закрийте інші аудіозастосунки або змініть мікрофон і спробуйте ще раз.",
-    "chat.voice.noMicForSession": "Для цього сеансу браузера не знайдено мікрофона.",
-    "chat.voice.runtimeError.serverUnreachable": "Голосовий сервер недоступний на медіапортах (UDP 50000-50020 / 3478, TCP 7881). Перевірте брандмауер / NAT і спробуйте ще раз.",
-    "chat.voice.runtimeError.permissionDenied": "У доступі до мікрофона відмовлено. Дозвольте доступ до мікрофона у браузері та спробуйте ще раз.",
-    "chat.voice.runtimeError.micNotStarted": "Не вдалося запустити мікрофон. Можливо, його використовує інший застосунок.",
-    "chat.voice.runtimeError.audioEngineFailed": "Аудіорушій браузера дав збій на цьому пристрої. Закрийте інші аудіозастосунки або змініть мікрофон і спробуйте ще раз.",
-    "chat.voice.runtimeError.micNotFound": "Для цього сеансу браузера не знайдено мікрофона."
+    }
   },
   "userSecurity": {
     "accountMenu": "Меню облікового запису",

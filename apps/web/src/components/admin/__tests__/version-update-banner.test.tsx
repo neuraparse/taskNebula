@@ -17,11 +17,22 @@ function info(overrides: Partial<VersionInfo> = {}): VersionInfo {
   return {
     current: '0.4.0',
     latest: null,
+    releaseUpdateAvailable: false,
     updateAvailable: false,
     releaseUrl: null,
     publishedAt: null,
     notes: null,
     checkedAt: null,
+    image: {
+      repository: 'neuraparse/tasknebula',
+      latestTag: null,
+      latestTagUrl: null,
+      latestPushedAt: null,
+      latestDigest: null,
+      latestSizeBytes: null,
+      updateAvailable: false,
+      checkedAt: null,
+    },
     checkDisabled: false,
     ...overrides,
   };

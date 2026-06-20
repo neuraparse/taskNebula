@@ -1,15 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import {
-  and,
-  asc,
-  db,
-  eq,
-  organizationMembers,
-  teamMembers,
-  teams,
-  users,
-} from '@tasknebula/db';
+import { and, asc, db, eq, organizationMembers, teamMembers, teams, users } from '@tasknebula/db';
 import { auth } from '@/auth';
 import { hasPermission } from '@/lib/auth/permissions';
 
@@ -35,7 +26,8 @@ async function ensureOrgMember(organizationId: string, userId: string) {
     .where(
       and(
         eq(organizationMembers.organizationId, organizationId),
-        eq(organizationMembers.userId, userId)
+        eq(organizationMembers.userId, userId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);

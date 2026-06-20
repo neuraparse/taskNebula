@@ -12,6 +12,22 @@ function formatVersion(version: string) {
   return `v${version.replace(/^v/, '')}`;
 }
 
+function formatBytes(bytes: number) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return null;
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let size = bytes;
+  let unitIndex = 0;
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex += 1;
+  }
+  return `${size.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+}
+
+function formatDigest(digest: string) {
+  return digest.length > 24 ? `${digest.slice(0, 24)}…` : digest;
+}
+
 // Release URLs come from the GitHub API via our backend; render only https links.
 function isHttpsUrl(url: string | null): url is string {
   return typeof url === 'string' && url.startsWith('https://');
@@ -69,7 +85,7 @@ export function VersionPanel() {
       ) : data ? (
         <>
           {/* Version summary */}
-          <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+          <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
             <div className="flex items-center justify-between gap-3">
               <dt className="text-muted-foreground">{t('currentVersion')}</dt>
               <dd>
@@ -91,7 +107,62 @@ export function VersionPanel() {
                 ) : null}
               </dd>
             </div>
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-muted-foreground">{t('latestDockerImage')}</dt>
+              <dd className="flex items-center gap-2">
+                {data.image.latestTag ? (
+                  <span className="chip font-mono text-[11px]">
+                    {formatVersion(data.image.latestTag)}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground text-xs">—</span>
+                )}
+                {data.image.latestPushedAt ? (
+                  <span className="text-muted-foreground text-[11px]">
+                    {t('imagePushed', {
+                      date: new Date(data.image.latestPushedAt).toLocaleDateString(),
+                    })}
+                  </span>
+                ) : null}
+              </dd>
+            </div>
           </dl>
+
+          {data.image.latestTag ? (
+            <div className="border-border bg-muted/30 space-y-3 rounded-md border p-3">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="space-y-1">
+                  <h4 className="text-xs font-medium">{t('dockerImage')}</h4>
+                  <p className="text-muted-foreground text-xs">
+                    {t('dockerImageDescription', { repository: data.image.repository })}
+                  </p>
+                </div>
+                {data.image.updateAvailable ? (
+                  <span className="chip-amber text-[11px]">{t('imageUpdateAvailable')}</span>
+                ) : null}
+              </div>
+              <dl className="grid gap-x-6 gap-y-2 text-xs sm:grid-cols-3">
+                <div className="min-w-0">
+                  <dt className="text-muted-foreground">{t('repository')}</dt>
+                  <dd className="truncate font-mono">{data.image.repository}</dd>
+                </div>
+                {data.image.latestDigest ? (
+                  <div className="min-w-0">
+                    <dt className="text-muted-foreground">{t('imageDigest')}</dt>
+                    <dd className="truncate font-mono" title={data.image.latestDigest}>
+                      {formatDigest(data.image.latestDigest)}
+                    </dd>
+                  </div>
+                ) : null}
+                {data.image.latestSizeBytes ? (
+                  <div>
+                    <dt className="text-muted-foreground">{t('imageSize')}</dt>
+                    <dd>{formatBytes(data.image.latestSizeBytes) ?? '—'}</dd>
+                  </div>
+                ) : null}
+              </dl>
+            </div>
+          ) : null}
 
           {data.checkDisabled ? (
             <p className="text-muted-foreground max-w-prose text-xs">{t('checksDisabledHint')}</p>
@@ -145,6 +216,14 @@ export function VersionPanel() {
                 <a href={data.releaseUrl} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
                   {t('viewRelease')}
+                </a>
+              </Button>
+            ) : null}
+            {isHttpsUrl(data.image.latestTagUrl) ? (
+              <Button size="sm" variant="outline" asChild>
+                <a href={data.image.latestTagUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+                  {t('viewDockerTag')}
                 </a>
               </Button>
             ) : null}

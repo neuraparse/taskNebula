@@ -344,9 +344,9 @@
     },
     "reporter": {
       "unknown": "Ismeretlen felhasználó",
-      "label": "Bejelentő"
-    },
-    "reporter.avatarAlt": "Bejelentő profilképe"
+      "label": "Bejelentő",
+      "avatarAlt": "Bejelentő profilképe"
+    }
   },
   "issueDetail": {
     "comments": {
@@ -440,6 +440,15 @@
     "statusChecksDisabled": "Ellenőrzések letiltva",
     "currentVersion": "Jelenlegi verzió",
     "latestVersion": "Legújabb verzió",
+    "latestDockerImage": "Legújabb Docker image",
+    "imagePushed": "Feltöltve: {date}",
+    "dockerImage": "Docker image",
+    "dockerImageDescription": "Ellenőrizve a Docker Hub {repository} tárolójából.",
+    "imageUpdateAvailable": "Image-frissítés elérhető",
+    "repository": "Tároló",
+    "imageDigest": "Image digest",
+    "imageSize": "Image mérete",
+    "viewDockerTag": "Docker tag megnyitása",
     "published": "Közzétéve: {date}",
     "lastChecked": "Utoljára ellenőrizve: {time}",
     "checksDisabledHint": "A frissítések ellenőrzése a TASKNEBULA_DISABLE_UPDATE_CHECK környezeti változóval le van tiltva. Távolítsd el, hogy itt láthasd az új kiadásokat.",
@@ -2257,6 +2266,45 @@
       "writes_count": "{count} írás",
       "no_summary": "Nincs rögzített összefoglaló.",
       "run_live": "Élő futtatás"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS governance",
+      "description": "Control which AI agents can write, what needs approval, and what is blocked.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading agent governance...",
+      "loadFailed": "Failed to load agent governance.",
+      "policySource": "Policy source",
+      "noPolicy": "No AGENTOWNERS file found",
+      "lastParsedAt": "Last parsed at",
+      "validationErrors": "Validation errors",
+      "validationTitle": "Policy validation needs attention",
+      "line": "Line {line}",
+      "rulesTitle": "Policy preview",
+      "rulesDescription": "Parsed rules are evaluated by specificity before effect precedence.",
+      "noRules": "No policy rules are active.",
+      "table": {
+        "line": "Line",
+        "actor": "Actor",
+        "action": "Action",
+        "effect": "Effect"
+      },
+      "effect": {
+        "allow": "Allow",
+        "deny": "Deny",
+        "requireApproval": "Approval"
+      },
+      "queueTitle": "Approval queue",
+      "queueDescription": "Pending AI actions wait here until an admin or maintainer approves them.",
+      "queueLoading": "Loading approval queue...",
+      "queueEmpty": "No pending AI actions.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "behaviorTitle": "Approval behavior",
+      "behaviorDescription": "Safe defaults used when no explicit rule matches.",
+      "unknownAgents": "Unknown agents",
+      "destructiveActions": "Destructive actions",
+      "requireApprovalDefault": "Require approval by default"
     }
   },
   "collab": {
@@ -2609,10 +2657,10 @@
         "noPermission": "Nincs jogosultságod dokumentumok létrehozására ebben a térben.",
         "creating": "Létrehozás...",
         "createPage": "Oldal létrehozása"
-      }
-    },
-    "shell.collapse": "Összecsukás",
-    "shell.expand": "Kibontás"
+      },
+      "collapse": "Összecsukás",
+      "expand": "Kibontás"
+    }
   },
   "planning": {
     "search_placeholder": "Sablonok keresése",
@@ -3264,7 +3312,9 @@
       "hint": {
         "openai": "Akkor használatos, ha egy munkaterület nem adta meg a saját OpenAI-kulcsát. sk-… kezdetű",
         "anthropic": "Akkor használatos, ha egy munkaterület nem adta meg a saját Anthropic-kulcsát. sk-ant-… kezdetű"
-      }
+      },
+      "saveFailedDescription": "Nem sikerült menteni a hitelesítő adatot. Kérjük, próbálja újra.",
+      "removeFailedDescription": "Nem sikerült eltávolítani a hitelesítő adatot. Kérjük, próbálja újra."
     },
     "realtimeHealth": {
       "loading": "Valós idejű állapot betöltése...",
@@ -3394,12 +3444,10 @@
       "targetedOrgs": "célzott szervezetek",
       "close": "Bezárás",
       "evaluate": "Kiértékelés",
-      "evaluating": "Kiértékelés..."
-    },
-    "flagTest.isEnabled": "isEnabled",
-    "flagTest.rolloutPercent": "kivezetés%",
-    "platformAi.saveFailedDescription": "Nem sikerült menteni a hitelesítő adatot. Kérjük, próbálja újra.",
-    "platformAi.removeFailedDescription": "Nem sikerült eltávolítani a hitelesítő adatot. Kérjük, próbálja újra."
+      "evaluating": "Kiértékelés...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "kivezetés%"
+    }
   },
   "adminDialogs": {
     "common": {
@@ -3440,7 +3488,8 @@
       "plansHint": "Hagyd üresen az összes csomaghoz való engedélyezéshez.",
       "targetOrganizations": "Célszervezetek",
       "targetOrganizationsHint": "Hagyd üresen minden olyan szervezethez való engedélyezéshez, amely megfelel a csomagnak + bevezetésnek.",
-      "rollout": "Bevezetés: {percentage}%"
+      "rollout": "Bevezetés: {percentage}%",
+      "namePlaceholder": "Speciális elemzés"
     },
     "createOrg": {
       "trigger": "Új szervezet",
@@ -3464,7 +3513,8 @@
       "domain": "Domain (opcionális)",
       "toastUpdatedTitle": "Szervezet frissítve",
       "toastUpdatedDescription": "A módosítások sikeresen mentve.",
-      "toastFailedTitle": "Nem sikerült frissíteni a szervezetet"
+      "toastFailedTitle": "Nem sikerült frissíteni a szervezetet",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "Név",
@@ -3474,7 +3524,9 @@
       "planFree": "Ingyenes",
       "planStarter": "Kezdő",
       "planGrowth": "Növekedési",
-      "planEnterprise": "Vállalati"
+      "planEnterprise": "Vállalati",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "Új felhasználó",
@@ -3487,7 +3539,9 @@
       "missingFieldsDescription": "A név, az e-mail-cím és a jelszó kötelező.",
       "toastCreatedTitle": "Felhasználó létrehozva",
       "toastCreatedDescription": "A felhasználó sikeresen létrejött.",
-      "toastFailedTitle": "Nem sikerült létrehozni a felhasználót"
+      "toastFailedTitle": "Nem sikerült létrehozni a felhasználót",
+      "fullNamePlaceholder": "Jane Smith",
+      "emailPlaceholder": "jane@example.com"
     },
     "editUser": {
       "title": "Felhasználó szerkesztése",
@@ -3511,13 +3565,7 @@
       "searchPlaceholder": "Szervezetek keresése...",
       "empty": "Nem található szervezet.",
       "remove": "{name} eltávolítása"
-    },
-    "orgForm.namePlaceholder": "Acme Inc",
-    "orgForm.slugPlaceholder": "acme-inc",
-    "editOrg.domainPlaceholder": "example.com",
-    "createUser.fullNamePlaceholder": "Jane Smith",
-    "createUser.emailPlaceholder": "jane@example.com",
-    "flagForm.namePlaceholder": "Speciális elemzés"
+    }
   },
   "charts": {
     "issues": "Feladatok",
@@ -3652,7 +3700,8 @@
       "priorityLow": "Alacsony",
       "priorityNone": "Nincs",
       "labelsCommaSeparated": "Címkék (vesszővel elválasztva)",
-      "creating": "Létrehozás…"
+      "creating": "Létrehozás…",
+      "queuedForApprovalCount": "{count, plural, one {1 draft is waiting for approval} other {# drafts are waiting for approval}}"
     },
     "assist": {
       "title": "AI-segítség",
@@ -3963,7 +4012,9 @@
     "startSprintTooltip": "Indítsd el ezt a sprintet, és tedd aktívvá",
     "completeSprint": "Sprint befejezése",
     "completeSprintTooltip": "Fejezd be ezt a sprintet. A befejezetlen feladatok a teendőlistára kerülnek.",
-    "sprintBurndown": "Sprint burndown"
+    "sprintBurndown": "Sprint burndown",
+    "projectInviteRequiredTitle": "Invitation required",
+    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4499,7 +4550,10 @@
         "status": "Állapot",
         "priority": "Prioritás",
         "assignee": "Felelős"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "Hozzáférés",
@@ -4555,7 +4609,12 @@
         "qa_engineer": "QA-mérnök",
         "designer": "Tervező",
         "viewer": "Megtekintő"
-      }
+      },
+      "inviteExpiry": "Invitation expires",
+      "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
+      "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
+      "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
+      "invitationResent": "Invitation resent"
     },
     "org": {
       "selectOrg": "Válasszon egy szervezetet a beállítások betöltéséhez.",
@@ -4664,10 +4723,7 @@
         "datadog": "Állítsa be: { apiKey, site? }.",
         "s3": "Állítsa be: { bucket, region, prefix? }. Az AWS_ACCESS_KEY_ID/SECRET értékeknek be kell lenniük állítva a környezeti változókban."
       }
-    },
-    "import.projectIdPlaceholder": "prj_xxx",
-    "import.linearTeamPlaceholder": "ENG",
-    "import.jiraSitePlaceholder": "acme.atlassian.net"
+    }
   },
   "sprints": {
     "defaultName": "{number}. sprint",
@@ -5126,18 +5182,20 @@
           "connecting": "Kapcsolódás",
           "reconnecting": "Újrakapcsolódás",
           "disconnected": "Kapcsolat bontva"
+        },
+        "permissionDeniedRetry": "A mikrofonhasználat engedélyezése meg lett tagadva. Engedélyezze a mikrofon-hozzáférést a böngészőben, majd próbálja újra.",
+        "micCouldNotStartBusy": "Nem sikerült elindítani a mikrofont. Lehet, hogy egy másik alkalmazás használja.",
+        "audioEngineFailed": "A böngésző hangmotorja meghibásodott ezen az eszközön. Állítsa le a többi hangalkalmazást, vagy váltson mikrofont, majd próbálja újra.",
+        "noMicForSession": "Nem található mikrofon ehhez a böngészőmenethez.",
+        "runtimeError": {
+          "serverUnreachable": "A hangkiszolgáló nem érhető el a médiaportokon (UDP 50000-50020 / 3478, TCP 7881). Ellenőrizze a tűzfalat / NAT-ot, majd próbálja újra.",
+          "permissionDenied": "A mikrofonhasználat engedélyezése meg lett tagadva. Engedélyezze a mikrofon-hozzáférést a böngészőben, majd próbálja újra.",
+          "micNotStarted": "Nem sikerült elindítani a mikrofont. Lehet, hogy egy másik alkalmazás használja.",
+          "audioEngineFailed": "A böngésző hangmotorja meghibásodott ezen az eszközön. Állítsa le a többi hangalkalmazást, vagy váltson mikrofont, majd próbálja újra.",
+          "micNotFound": "Nem található mikrofon ehhez a böngészőmenethez."
         }
       }
-    },
-    "chat.voice.permissionDeniedRetry": "A mikrofonhasználat engedélyezése meg lett tagadva. Engedélyezze a mikrofon-hozzáférést a böngészőben, majd próbálja újra.",
-    "chat.voice.micCouldNotStartBusy": "Nem sikerült elindítani a mikrofont. Lehet, hogy egy másik alkalmazás használja.",
-    "chat.voice.audioEngineFailed": "A böngésző hangmotorja meghibásodott ezen az eszközön. Állítsa le a többi hangalkalmazást, vagy váltson mikrofont, majd próbálja újra.",
-    "chat.voice.noMicForSession": "Nem található mikrofon ehhez a böngészőmenethez.",
-    "chat.voice.runtimeError.serverUnreachable": "A hangkiszolgáló nem érhető el a médiaportokon (UDP 50000-50020 / 3478, TCP 7881). Ellenőrizze a tűzfalat / NAT-ot, majd próbálja újra.",
-    "chat.voice.runtimeError.permissionDenied": "A mikrofonhasználat engedélyezése meg lett tagadva. Engedélyezze a mikrofon-hozzáférést a böngészőben, majd próbálja újra.",
-    "chat.voice.runtimeError.micNotStarted": "Nem sikerült elindítani a mikrofont. Lehet, hogy egy másik alkalmazás használja.",
-    "chat.voice.runtimeError.audioEngineFailed": "A böngésző hangmotorja meghibásodott ezen az eszközön. Állítsa le a többi hangalkalmazást, vagy váltson mikrofont, majd próbálja újra.",
-    "chat.voice.runtimeError.micNotFound": "Nem található mikrofon ehhez a böngészőmenethez."
+    }
   },
   "userSecurity": {
     "accountMenu": "Fiókmenü",

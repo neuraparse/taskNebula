@@ -206,16 +206,45 @@ describe('/api/auth/signup route', () => {
     expect(bcryptHashMock).toHaveBeenCalledWith('abcdefgh', 10);
   });
 
-  it('creates a new user on happy path', async () => {
-    findFirstMock.mockResolvedValue(undefined);
-    dbInsertMock.mockReturnValueOnce(
-      insertReturning([{ id: 'u2', name: 'Bob', email: 'b@e.com' }])
-    );
+  it('rejects an expired invited-user token', async () => {
+    const inviteToken = 'invite-token-1';
+    findFirstMock.mockResolvedValue({
+      id: 'u1',
+      email: 'a@e.com',
+      status: 'invited',
+      password: null,
+      inviteTokenHash: createHash('sha256').update(inviteToken).digest('hex'),
+      inviteTokenExpiresAt: new Date(Date.now() - 60_000),
+    });
 
     const response = await POST(
       new NextRequestCtor('http://localhost:3002/api/auth/signup', {
         method: 'POST',
-        body: JSON.stringify({ name: 'Bob', email: 'b@e.com', password: 'secret12' }),
+        body: JSON.stringify({
+          name: 'Alice',
+          email: 'a@e.com',
+          password: 'abcdefgh',
+          inviteToken,
+        }),
+      })
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: 'Invalid or expired invitation',
+    });
+    expect(dbUpdateMock).not.toHaveBeenCalled();
+  });
+
+  it('creates a new user on happy path', async () => {
+    findFirstMock.mockResolvedValue(undefined);
+    const insertBuilder = insertReturning([{ id: 'u2', name: 'Bob', email: 'b@e.com' }]);
+    dbInsertMock.mockReturnValueOnce(insertBuilder);
+
+    const response = await POST(
+      new NextRequestCtor('http://localhost:3002/api/auth/signup', {
+        method: 'POST',
+        body: JSON.stringify({ name: 'Bob', email: ' B@E.COM ', password: 'secret12' }),
       })
     );
     expect(response.status).toBe(201);
@@ -226,5 +255,11 @@ describe('/api/auth/signup route', () => {
     expect(body.message).toBe('User created successfully');
     expect(body.user).toEqual({ id: 'u2', name: 'Bob', email: 'b@e.com' });
     expect(bcryptHashMock).toHaveBeenCalledWith('secret12', 10);
+    expect(findFirstMock).toHaveBeenCalledWith({
+      where: expect.objectContaining({ right: 'b@e.com' }),
+    });
+    expect(insertBuilder.values).toHaveBeenCalledWith(
+      expect.objectContaining({ email: 'b@e.com' })
+    );
   });
 });

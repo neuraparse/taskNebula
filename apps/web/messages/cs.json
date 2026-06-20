@@ -344,9 +344,9 @@
     },
     "reporter": {
       "unknown": "Neznámý uživatel",
-      "label": "Nahlásil"
-    },
-    "reporter.avatarAlt": "Avatar nahlašovatele"
+      "label": "Nahlásil",
+      "avatarAlt": "Avatar nahlašovatele"
+    }
   },
   "issueDetail": {
     "comments": {
@@ -440,6 +440,15 @@
     "statusChecksDisabled": "Kontroly zakázány",
     "currentVersion": "Aktuální verze",
     "latestVersion": "Nejnovější verze",
+    "latestDockerImage": "Nejnovější Docker image",
+    "imagePushed": "Odesláno {date}",
+    "dockerImage": "Docker image",
+    "dockerImageDescription": "Zkontrolováno z repozitáře Docker Hub {repository}.",
+    "imageUpdateAvailable": "Je dostupná aktualizace image",
+    "repository": "Repozitář",
+    "imageDigest": "Digest image",
+    "imageSize": "Velikost image",
+    "viewDockerTag": "Zobrazit Docker tag",
     "published": "Publikováno {date}",
     "lastChecked": "Naposledy zkontrolováno {time}",
     "checksDisabledHint": "Kontroly aktualizací jsou zakázány proměnnou prostředí TASKNEBULA_DISABLE_UPDATE_CHECK. Odeberte ji, abyste zde viděli nová vydání.",
@@ -2257,6 +2266,45 @@
       "writes_count": "{count} zápisů",
       "no_summary": "Žádné shrnutí nebylo zaznamenáno.",
       "run_live": "Spustit živě"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS governance",
+      "description": "Control which AI agents can write, what needs approval, and what is blocked.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading agent governance...",
+      "loadFailed": "Failed to load agent governance.",
+      "policySource": "Policy source",
+      "noPolicy": "No AGENTOWNERS file found",
+      "lastParsedAt": "Last parsed at",
+      "validationErrors": "Validation errors",
+      "validationTitle": "Policy validation needs attention",
+      "line": "Line {line}",
+      "rulesTitle": "Policy preview",
+      "rulesDescription": "Parsed rules are evaluated by specificity before effect precedence.",
+      "noRules": "No policy rules are active.",
+      "table": {
+        "line": "Line",
+        "actor": "Actor",
+        "action": "Action",
+        "effect": "Effect"
+      },
+      "effect": {
+        "allow": "Allow",
+        "deny": "Deny",
+        "requireApproval": "Approval"
+      },
+      "queueTitle": "Approval queue",
+      "queueDescription": "Pending AI actions wait here until an admin or maintainer approves them.",
+      "queueLoading": "Loading approval queue...",
+      "queueEmpty": "No pending AI actions.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "behaviorTitle": "Approval behavior",
+      "behaviorDescription": "Safe defaults used when no explicit rule matches.",
+      "unknownAgents": "Unknown agents",
+      "destructiveActions": "Destructive actions",
+      "requireApprovalDefault": "Require approval by default"
     }
   },
   "collab": {
@@ -2609,10 +2657,10 @@
         "noPermission": "Nemáte oprávnění vytvářet dokumenty v tomto prostoru.",
         "creating": "Vytváření...",
         "createPage": "Vytvořit stránku"
-      }
-    },
-    "shell.collapse": "Sbalit",
-    "shell.expand": "Rozbalit"
+      },
+      "collapse": "Sbalit",
+      "expand": "Rozbalit"
+    }
   },
   "planning": {
     "search_placeholder": "Hledat šablony",
@@ -3264,7 +3312,9 @@
       "hint": {
         "openai": "Použito, když pracovní prostor nezadal vlastní klíč OpenAI. Začíná na sk-…",
         "anthropic": "Použito, když pracovní prostor nezadal vlastní klíč Anthropic. Začíná na sk-ant-…"
-      }
+      },
+      "saveFailedDescription": "Přihlašovací údaje se nepodařilo uložit. Zkuste to prosím znovu.",
+      "removeFailedDescription": "Přihlašovací údaje se nepodařilo odebrat. Zkuste to prosím znovu."
     },
     "realtimeHealth": {
       "loading": "Načítání stavu reálného času...",
@@ -3394,12 +3444,10 @@
       "targetedOrgs": "cílené organizace",
       "close": "Zavřít",
       "evaluate": "Vyhodnotit",
-      "evaluating": "Vyhodnocování..."
-    },
-    "flagTest.isEnabled": "isEnabled",
-    "flagTest.rolloutPercent": "rollout%",
-    "platformAi.saveFailedDescription": "Přihlašovací údaje se nepodařilo uložit. Zkuste to prosím znovu.",
-    "platformAi.removeFailedDescription": "Přihlašovací údaje se nepodařilo odebrat. Zkuste to prosím znovu."
+      "evaluating": "Vyhodnocování...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "rollout%"
+    }
   },
   "adminDialogs": {
     "common": {
@@ -3440,7 +3488,8 @@
       "plansHint": "Ponechte prázdné pro povolení pro všechny plány.",
       "targetOrganizations": "Cílové organizace",
       "targetOrganizationsHint": "Ponechte prázdné pro povolení pro všechny organizace odpovídající plánu + zavedení.",
-      "rollout": "Zavedení: {percentage} %"
+      "rollout": "Zavedení: {percentage} %",
+      "namePlaceholder": "Pokročilá analytika"
     },
     "createOrg": {
       "trigger": "Nová organizace",
@@ -3464,7 +3513,8 @@
       "domain": "Doména (volitelné)",
       "toastUpdatedTitle": "Organizace aktualizována",
       "toastUpdatedDescription": "Změny byly úspěšně uloženy.",
-      "toastFailedTitle": "Organizaci se nepodařilo aktualizovat"
+      "toastFailedTitle": "Organizaci se nepodařilo aktualizovat",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "Název",
@@ -3474,7 +3524,9 @@
       "planFree": "Zdarma",
       "planStarter": "Starter",
       "planGrowth": "Growth",
-      "planEnterprise": "Enterprise"
+      "planEnterprise": "Enterprise",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "Nový uživatel",
@@ -3487,7 +3539,9 @@
       "missingFieldsDescription": "Jméno, e-mail a heslo jsou povinné.",
       "toastCreatedTitle": "Uživatel vytvořen",
       "toastCreatedDescription": "Uživatel byl úspěšně vytvořen.",
-      "toastFailedTitle": "Uživatele se nepodařilo vytvořit"
+      "toastFailedTitle": "Uživatele se nepodařilo vytvořit",
+      "fullNamePlaceholder": "Jana Nováková",
+      "emailPlaceholder": "jana@example.com"
     },
     "editUser": {
       "title": "Upravit uživatele",
@@ -3511,13 +3565,7 @@
       "searchPlaceholder": "Hledat organizace...",
       "empty": "Žádné organizace nenalezeny.",
       "remove": "Odebrat {name}"
-    },
-    "orgForm.namePlaceholder": "Acme Inc",
-    "orgForm.slugPlaceholder": "acme-inc",
-    "editOrg.domainPlaceholder": "example.com",
-    "createUser.fullNamePlaceholder": "Jana Nováková",
-    "createUser.emailPlaceholder": "jana@example.com",
-    "flagForm.namePlaceholder": "Pokročilá analytika"
+    }
   },
   "charts": {
     "issues": "Úkoly",
@@ -3652,7 +3700,8 @@
       "priorityLow": "Nízká",
       "priorityNone": "Žádná",
       "labelsCommaSeparated": "Štítky (oddělené čárkou)",
-      "creating": "Vytváření…"
+      "creating": "Vytváření…",
+      "queuedForApprovalCount": "{count, plural, one {1 draft is waiting for approval} other {# drafts are waiting for approval}}"
     },
     "assist": {
       "title": "AI asistence",
@@ -3963,7 +4012,9 @@
     "startSprintTooltip": "Zahájit tento sprint a nastavit jej jako aktivní",
     "completeSprint": "Dokončit sprint",
     "completeSprintTooltip": "Dokončit tento sprint. Nedokončené úkoly se přesunou do backlogu.",
-    "sprintBurndown": "Burndown sprintu"
+    "sprintBurndown": "Burndown sprintu",
+    "projectInviteRequiredTitle": "Invitation required",
+    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4499,7 +4550,10 @@
         "status": "Stav",
         "priority": "Priorita",
         "assignee": "Řešitel"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "Přístup",
@@ -4555,7 +4609,12 @@
         "qa_engineer": "QA inženýr",
         "designer": "Designér",
         "viewer": "Pozorovatel"
-      }
+      },
+      "inviteExpiry": "Invitation expires",
+      "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
+      "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
+      "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
+      "invitationResent": "Invitation resent"
     },
     "org": {
       "selectOrg": "Vyberte organizaci pro načtení nastavení.",
@@ -4664,10 +4723,7 @@
         "datadog": "Nastavte { apiKey, site? }.",
         "s3": "Nastavte { bucket, region, prefix? }. V prostředí musí být nastaveny AWS_ACCESS_KEY_ID/SECRET."
       }
-    },
-    "import.projectIdPlaceholder": "prj_xxx",
-    "import.linearTeamPlaceholder": "ENG",
-    "import.jiraSitePlaceholder": "acme.atlassian.net"
+    }
   },
   "sprints": {
     "defaultName": "Sprint {number}",
@@ -5126,18 +5182,20 @@
           "connecting": "Připojování",
           "reconnecting": "Opětovné připojování",
           "disconnected": "Odpojeno"
+        },
+        "permissionDeniedRetry": "Přístup k mikrofonu byl odepřen. Povolte přístup k mikrofonu ve svém prohlížeči a zkuste to znovu.",
+        "micCouldNotStartBusy": "Mikrofon se nepodařilo spustit. Možná jej používá jiná aplikace.",
+        "audioEngineFailed": "Zvukový engine prohlížeče pro toto zařízení selhal. Ukončete ostatní zvukové aplikace nebo změňte mikrofon a zkuste to znovu.",
+        "noMicForSession": "Pro tuto relaci prohlížeče nebyl nalezen žádný mikrofon.",
+        "runtimeError": {
+          "serverUnreachable": "Hlasový server je na mediálních portech (UDP 50000-50020 / 3478, TCP 7881) nedostupný. Zkontrolujte firewall / NAT a zkuste to znovu.",
+          "permissionDenied": "Přístup k mikrofonu byl odepřen. Povolte přístup k mikrofonu ve svém prohlížeči a zkuste to znovu.",
+          "micNotStarted": "Mikrofon se nepodařilo spustit. Možná jej používá jiná aplikace.",
+          "audioEngineFailed": "Zvukový engine prohlížeče pro toto zařízení selhal. Ukončete ostatní zvukové aplikace nebo změňte mikrofon a zkuste to znovu.",
+          "micNotFound": "Pro tuto relaci prohlížeče nebyl nalezen žádný mikrofon."
         }
       }
-    },
-    "chat.voice.permissionDeniedRetry": "Přístup k mikrofonu byl odepřen. Povolte přístup k mikrofonu ve svém prohlížeči a zkuste to znovu.",
-    "chat.voice.micCouldNotStartBusy": "Mikrofon se nepodařilo spustit. Možná jej používá jiná aplikace.",
-    "chat.voice.audioEngineFailed": "Zvukový engine prohlížeče pro toto zařízení selhal. Ukončete ostatní zvukové aplikace nebo změňte mikrofon a zkuste to znovu.",
-    "chat.voice.noMicForSession": "Pro tuto relaci prohlížeče nebyl nalezen žádný mikrofon.",
-    "chat.voice.runtimeError.serverUnreachable": "Hlasový server je na mediálních portech (UDP 50000-50020 / 3478, TCP 7881) nedostupný. Zkontrolujte firewall / NAT a zkuste to znovu.",
-    "chat.voice.runtimeError.permissionDenied": "Přístup k mikrofonu byl odepřen. Povolte přístup k mikrofonu ve svém prohlížeči a zkuste to znovu.",
-    "chat.voice.runtimeError.micNotStarted": "Mikrofon se nepodařilo spustit. Možná jej používá jiná aplikace.",
-    "chat.voice.runtimeError.audioEngineFailed": "Zvukový engine prohlížeče pro toto zařízení selhal. Ukončete ostatní zvukové aplikace nebo změňte mikrofon a zkuste to znovu.",
-    "chat.voice.runtimeError.micNotFound": "Pro tuto relaci prohlížeče nebyl nalezen žádný mikrofon."
+    }
   },
   "userSecurity": {
     "accountMenu": "Nabídka účtu",

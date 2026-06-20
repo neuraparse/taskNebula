@@ -36,11 +36,7 @@ function slugifyTeamspaceName(value: string) {
   return slug || 'teamspace';
 }
 
-async function ensureTeamspaceSlug(
-  organizationId: string,
-  input: string,
-  excludeTeamId?: string
-) {
+async function ensureTeamspaceSlug(organizationId: string, input: string, excludeTeamId?: string) {
   const baseSlug = slugifyTeamspaceName(input);
   let candidate = baseSlug;
   let suffix = 2;
@@ -80,7 +76,8 @@ async function validateLeadMembership(organizationId: string, leadId?: string | 
     .where(
       and(
         eq(organizationMembers.organizationId, organizationId),
-        eq(organizationMembers.userId, leadId)
+        eq(organizationMembers.userId, leadId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
@@ -90,7 +87,11 @@ async function validateLeadMembership(organizationId: string, leadId?: string | 
   }
 }
 
-async function syncLeadMembership(teamId: string, previousLeadId: string | null, nextLeadId: string | null) {
+async function syncLeadMembership(
+  teamId: string,
+  previousLeadId: string | null,
+  nextLeadId: string | null
+) {
   if (previousLeadId && previousLeadId !== nextLeadId) {
     const [previousLeadMembership] = await db
       .select({ id: teamMembers.id })
@@ -170,7 +171,9 @@ async function serializeTeamspaces(organizationId: string, userId: string) {
     db
       .select({ teamId: projects.teamId })
       .from(projects)
-      .where(and(eq(projects.organizationId, organizationId), inArray(projects.teamId, teamspaceIds))),
+      .where(
+        and(eq(projects.organizationId, organizationId), inArray(projects.teamId, teamspaceIds))
+      ),
     leadIds.length > 0
       ? db
           .select({
@@ -209,7 +212,7 @@ async function serializeTeamspaces(organizationId: string, userId: string) {
     currentUserRole: currentUserMemberships.get(teamspace.id) ?? null,
     memberCount: membershipCounts.get(teamspace.id) ?? 0,
     projectCount: projectCounts.get(teamspace.id) ?? 0,
-    lead: teamspace.leadId ? leadById.get(teamspace.leadId) ?? null : null,
+    lead: teamspace.leadId ? (leadById.get(teamspace.leadId) ?? null) : null,
   }));
 }
 
@@ -264,10 +267,7 @@ export async function POST(
 
     await validateLeadMembership(organizationId, data.leadId);
 
-    const slug = await ensureTeamspaceSlug(
-      organizationId,
-      data.slug?.trim() || data.name
-    );
+    const slug = await ensureTeamspaceSlug(organizationId, data.slug?.trim() || data.name);
 
     const [createdTeamspace] = await db
       .insert(teams)
@@ -319,7 +319,10 @@ export async function POST(
       );
     }
 
-    if (error instanceof Error && error.message === 'Selected lead must be an organization member') {
+    if (
+      error instanceof Error &&
+      error.message === 'Selected lead must be an organization member'
+    ) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 

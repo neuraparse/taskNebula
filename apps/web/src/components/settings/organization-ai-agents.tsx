@@ -28,6 +28,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { AiQuickSetup } from './ai-quick-setup';
+import { AgentGovernancePanel } from './agent-governance-panel';
 import {
   useArchiveOrganizationAgentModelConfig,
   useCreateOrganizationAgentModelConfig,
@@ -761,6 +762,8 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
               </CardContent>
             </Card>
           </div>
+
+          <AgentGovernancePanel organizationId={organizationId} />
 
           <Card id="workspace-model-profiles" className="border-border/60">
             <CardHeader>

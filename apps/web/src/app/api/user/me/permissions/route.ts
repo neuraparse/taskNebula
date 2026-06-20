@@ -54,7 +54,8 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(organizationMembers.userId, session.user.id),
-          eq(organizationMembers.organizationId, organizationId)
+          eq(organizationMembers.organizationId, organizationId),
+          eq(organizationMembers.status, 'active')
         )
       )
       .limit(1);
@@ -85,9 +86,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Failed to fetch user permissions:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch user permissions' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch user permissions' }, { status: 500 });
   }
 }

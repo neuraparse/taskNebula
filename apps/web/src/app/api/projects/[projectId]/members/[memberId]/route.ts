@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, schema, eq, and, ROLE_DEFAULT_PERMISSIONS, PERMISSION_KEYS, type ProjectRole, type PermissionKey } from '@tasknebula/db';
+import {
+  db,
+  schema,
+  eq,
+  and,
+  ROLE_DEFAULT_PERMISSIONS,
+  PERMISSION_KEYS,
+  type ProjectRole,
+  type PermissionKey,
+} from '@tasknebula/db';
 
 // Helper to resolve project key or id
 async function resolveProjectId(projectIdOrKey: string): Promise<string | null> {
@@ -33,7 +42,8 @@ async function canChangeRolesAndPermissions(userId: string, projectId: string): 
   const orgMember = await db.query.organizationMembers.findFirst({
     where: and(
       eq(schema.organizationMembers.userId, userId),
-      eq(schema.organizationMembers.organizationId, project.organizationId)
+      eq(schema.organizationMembers.organizationId, project.organizationId),
+      eq(schema.organizationMembers.status, 'active')
     ),
     columns: { role: true },
   });
@@ -69,7 +79,8 @@ async function canRemoveProjectMembers(userId: string, projectId: string): Promi
   const orgMember = await db.query.organizationMembers.findFirst({
     where: and(
       eq(schema.organizationMembers.userId, userId),
-      eq(schema.organizationMembers.organizationId, project.organizationId)
+      eq(schema.organizationMembers.organizationId, project.organizationId),
+      eq(schema.organizationMembers.status, 'active')
     ),
     columns: { role: true },
   });
@@ -108,7 +119,10 @@ export async function PATCH(
     // Check permission
     const canChange = await canChangeRolesAndPermissions(session.user.id, projectId);
     if (!canChange) {
-      return NextResponse.json({ error: 'You do not have permission to change roles/permissions' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'You do not have permission to change roles/permissions' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
@@ -142,14 +156,17 @@ export async function PATCH(
       });
     }
 
-    if (Object.keys(updateData).length <= 1) { // Only updatedAt
+    if (Object.keys(updateData).length <= 1) {
+      // Only updatedAt
       return NextResponse.json({ error: 'No update data provided' }, { status: 400 });
     }
 
     const [updated] = await db
       .update(schema.projectMembers)
       .set(updateData)
-      .where(and(eq(schema.projectMembers.id, memberId), eq(schema.projectMembers.projectId, projectId)))
+      .where(
+        and(eq(schema.projectMembers.id, memberId), eq(schema.projectMembers.projectId, projectId))
+      )
       .returning();
 
     if (!updated) {
@@ -183,7 +200,10 @@ export async function DELETE(
 
     // Get the member to be deleted
     const memberToDelete = await db.query.projectMembers.findFirst({
-      where: and(eq(schema.projectMembers.id, memberId), eq(schema.projectMembers.projectId, projectId)),
+      where: and(
+        eq(schema.projectMembers.id, memberId),
+        eq(schema.projectMembers.projectId, projectId)
+      ),
     });
 
     if (!memberToDelete) {
@@ -194,7 +214,10 @@ export async function DELETE(
     if (memberToDelete.userId !== session.user.id) {
       const canRemove = await canRemoveProjectMembers(session.user.id, projectId);
       if (!canRemove) {
-        return NextResponse.json({ error: 'You do not have permission to remove members' }, { status: 403 });
+        return NextResponse.json(
+          { error: 'You do not have permission to remove members' },
+          { status: 403 }
+        );
       }
     }
 
@@ -207,13 +230,18 @@ export async function DELETE(
         ),
       });
       if (productOwners.length <= 1) {
-        return NextResponse.json({ error: 'Cannot remove the last Product Owner' }, { status: 400 });
+        return NextResponse.json(
+          { error: 'Cannot remove the last Product Owner' },
+          { status: 400 }
+        );
       }
     }
 
     const [deleted] = await db
       .delete(schema.projectMembers)
-      .where(and(eq(schema.projectMembers.id, memberId), eq(schema.projectMembers.projectId, projectId)))
+      .where(
+        and(eq(schema.projectMembers.id, memberId), eq(schema.projectMembers.projectId, projectId))
+      )
       .returning();
 
     return NextResponse.json({ success: true, deleted });
@@ -222,4 +250,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Failed to remove project member' }, { status: 500 });
   }
 }
-

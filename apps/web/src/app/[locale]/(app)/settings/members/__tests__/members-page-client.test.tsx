@@ -67,6 +67,19 @@ beforeAll(() => {
     writable: true,
     value: ResizeObserverMock,
   });
+
+  Object.defineProperty(HTMLElement.prototype, 'hasPointerCapture', {
+    configurable: true,
+    value: () => false,
+  });
+  Object.defineProperty(HTMLElement.prototype, 'setPointerCapture', {
+    configurable: true,
+    value: () => undefined,
+  });
+  Object.defineProperty(HTMLElement.prototype, 'releasePointerCapture', {
+    configurable: true,
+    value: () => undefined,
+  });
 });
 
 function renderWithClient(ui: React.ReactElement) {
@@ -271,9 +284,65 @@ describe('MembersPageClient — invite with project assignment', () => {
     // When the peer has wired the picker, projectIds will be present with the
     // selection. We assert the NEW shape here.
     expect(parsed.projectIds).toEqual(['proj-a']);
+    expect(parsed.inviteExpiresInDays).toBe(7);
   });
 
-  it('(d) with no projects selected, projectIds is omitted or an empty array', async () => {
+  it('(d) selecting an invitation expiry sends inviteExpiresInDays in the POST body', async () => {
+    let capturedBody: string | null = null;
+    installMembersListFetch({
+      invitePostHandler: (body) => {
+        capturedBody = body;
+        return {
+          ok: true,
+          status: 200,
+          payload: {
+            member: {
+              id: 'u-1',
+              name: 'new',
+              email: 'new@example.com',
+              image: null,
+              status: 'invited',
+              role: 'member',
+              memberStatus: 'invited',
+              joinedAt: new Date().toISOString(),
+            },
+            addedToProjects: [],
+            skippedProjects: [],
+            inviteExpiresInDays: 30,
+          },
+        };
+      },
+    });
+
+    const user = userEvent.setup();
+    renderWithClient(<MembersPageClient />);
+
+    const inviteTrigger = await screen.findByRole('button', { name: /invite/i });
+    await waitFor(() => expect(inviteTrigger).toBeEnabled());
+    await user.click(inviteTrigger);
+
+    const emailInput = await screen.findByLabelText(/email/i);
+    await user.type(emailInput, 'new@example.com');
+
+    const dialog = await screen.findByRole('dialog');
+    const expiryTrigger = within(dialog)
+      .getByText(/7 days/i)
+      .closest('button');
+    expect(expiryTrigger).not.toBeNull();
+    await user.click(expiryTrigger as HTMLButtonElement);
+    await user.click(await screen.findByRole('option', { name: /30 days/i }));
+
+    await user.click(await screen.findByRole('button', { name: /send invitation/i }));
+
+    await waitFor(() => {
+      expect(capturedBody).not.toBeNull();
+    });
+
+    const parsed = capturedBody ? JSON.parse(capturedBody) : {};
+    expect(parsed.inviteExpiresInDays).toBe(30);
+  });
+
+  it('(e) with no projects selected, projectIds is omitted or an empty array', async () => {
     useProjectsMock.mockReturnValue(
       defaultUseProjectsReturn([{ id: 'proj-a', name: 'Alpha', key: 'ALPHA' }])
     );
@@ -323,6 +392,7 @@ describe('MembersPageClient — invite with project assignment', () => {
 
     const parsed = capturedBody ? JSON.parse(capturedBody) : {};
     expect(parsed.email).toBe('new@example.com');
+    expect(parsed.inviteExpiresInDays).toBe(7);
 
     // Contract: either projectIds is absent, or it's an empty array.
     const projectIds = parsed.projectIds;

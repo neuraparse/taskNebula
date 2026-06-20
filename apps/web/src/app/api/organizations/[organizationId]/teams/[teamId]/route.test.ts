@@ -66,6 +66,7 @@ jest.mock('@tasknebula/db', () => ({
     id: 'organizationMembers.id',
     organizationId: 'organizationMembers.organizationId',
     userId: 'organizationMembers.userId',
+    status: 'organizationMembers.status',
   },
   teamMembers: {
     id: 'teamMembers.id',
@@ -181,7 +182,7 @@ describe('teamspace detail route', () => {
         ])
       )
       .mockReturnValueOnce(updateWhereBuilder());
-      dbInsertMock.mockReturnValueOnce({ values: jest.fn().mockResolvedValue(undefined) });
+    dbInsertMock.mockReturnValueOnce({ values: jest.fn().mockResolvedValue(undefined) });
     dbDeleteMock.mockReturnValueOnce(deleteWhereBuilder());
 
     const patchResponse = await PATCH(

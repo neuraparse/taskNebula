@@ -11,7 +11,11 @@ const slugRegex = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
 
 const createIntakeFormSchema = z.object({
   projectId: z.string().min(1),
-  slug: z.string().min(2).max(64).regex(slugRegex, 'slug must be lowercase letters, digits, and hyphens'),
+  slug: z
+    .string()
+    .min(2)
+    .max(64)
+    .regex(slugRegex, 'slug must be lowercase letters, digits, and hyphens'),
   title: z.string().min(1).max(200),
   description: z.string().max(2000).optional().nullable(),
   fields: intakeFieldsArraySchema,
@@ -43,7 +47,12 @@ export async function GET(request: NextRequest) {
     const orgMemberships = await db
       .select({ organizationId: organizationMembers.organizationId })
       .from(organizationMembers)
-      .where(eq(organizationMembers.userId, session.user.id));
+      .where(
+        and(
+          eq(organizationMembers.userId, session.user.id),
+          eq(organizationMembers.status, 'active')
+        )
+      );
 
     const accessibleOrgIds = orgMemberships.map((m) => m.organizationId);
     if (accessibleOrgIds.length === 0) {
@@ -101,7 +110,8 @@ export async function POST(request: NextRequest) {
         and(
           eq(organizationMembers.userId, session.user.id),
           eq(organizationMembers.organizationId, project.organizationId),
-        ),
+          eq(organizationMembers.status, 'active')
+        )
       )
       .limit(1);
 
@@ -115,10 +125,7 @@ export async function POST(request: NextRequest) {
       .where(eq(intakeForms.slug, data.slug))
       .limit(1);
     if (existing) {
-      return NextResponse.json(
-        { error: 'A form with that slug already exists' },
-        { status: 409 },
-      );
+      return NextResponse.json({ error: 'A form with that slug already exists' }, { status: 409 });
     }
 
     const [created] = await db
@@ -143,7 +150,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Invalid request data', details: error.errors },
-        { status: 400 },
+        { status: 400 }
       );
     }
     console.error('Create intake form error:', error);

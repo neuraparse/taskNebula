@@ -440,6 +440,15 @@
     "statusChecksDisabled": "Verificações desativadas",
     "currentVersion": "Versão atual",
     "latestVersion": "Versão mais recente",
+    "latestDockerImage": "Imagem Docker mais recente",
+    "imagePushed": "Enviada em {date}",
+    "dockerImage": "Imagem Docker",
+    "dockerImageDescription": "Verificado no repositório Docker Hub {repository}.",
+    "imageUpdateAvailable": "Atualização da imagem disponível",
+    "repository": "Repositório",
+    "imageDigest": "Digest da imagem",
+    "imageSize": "Tamanho da imagem",
+    "viewDockerTag": "Ver tag Docker",
     "published": "Publicada em {date}",
     "lastChecked": "Última verificação {time}",
     "checksDisabledHint": "As verificações de atualização estão desativadas através da variável de ambiente TASKNEBULA_DISABLE_UPDATE_CHECK. Remova-a para ver aqui os novos lançamentos.",
@@ -2257,6 +2266,45 @@
       "writes_count": "{count} escritas",
       "no_summary": "Nenhum resumo registado.",
       "run_live": "Executar em direto"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS governance",
+      "description": "Control which AI agents can write, what needs approval, and what is blocked.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading agent governance...",
+      "loadFailed": "Failed to load agent governance.",
+      "policySource": "Policy source",
+      "noPolicy": "No AGENTOWNERS file found",
+      "lastParsedAt": "Last parsed at",
+      "validationErrors": "Validation errors",
+      "validationTitle": "Policy validation needs attention",
+      "line": "Line {line}",
+      "rulesTitle": "Policy preview",
+      "rulesDescription": "Parsed rules are evaluated by specificity before effect precedence.",
+      "noRules": "No policy rules are active.",
+      "table": {
+        "line": "Line",
+        "actor": "Actor",
+        "action": "Action",
+        "effect": "Effect"
+      },
+      "effect": {
+        "allow": "Allow",
+        "deny": "Deny",
+        "requireApproval": "Approval"
+      },
+      "queueTitle": "Approval queue",
+      "queueDescription": "Pending AI actions wait here until an admin or maintainer approves them.",
+      "queueLoading": "Loading approval queue...",
+      "queueEmpty": "No pending AI actions.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "behaviorTitle": "Approval behavior",
+      "behaviorDescription": "Safe defaults used when no explicit rule matches.",
+      "unknownAgents": "Unknown agents",
+      "destructiveActions": "Destructive actions",
+      "requireApprovalDefault": "Require approval by default"
     }
   },
   "collab": {
@@ -3652,7 +3700,8 @@
       "priorityLow": "Baixa",
       "priorityNone": "Nenhuma",
       "labelsCommaSeparated": "Etiquetas (separadas por vírgulas)",
-      "creating": "A criar…"
+      "creating": "A criar…",
+      "queuedForApprovalCount": "{count, plural, one {1 draft is waiting for approval} other {# drafts are waiting for approval}}"
     },
     "assist": {
       "title": "Assistência de IA",
@@ -3963,7 +4012,9 @@
     "startSprintTooltip": "Inicie este sprint e torne-o ativo",
     "completeSprint": "Concluir sprint",
     "completeSprintTooltip": "Conclua este sprint. As tarefas incompletas passarão para o backlog.",
-    "sprintBurndown": "Burndown do sprint"
+    "sprintBurndown": "Burndown do sprint",
+    "projectInviteRequiredTitle": "Invitation required",
+    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4558,7 +4609,12 @@
         "qa_engineer": "Engenheiro de QA",
         "designer": "Designer",
         "viewer": "Visualizador"
-      }
+      },
+      "inviteExpiry": "Invitation expires",
+      "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
+      "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
+      "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
+      "invitationResent": "Invitation resent"
     },
     "org": {
       "selectOrg": "Selecione uma organização para carregar as configurações.",

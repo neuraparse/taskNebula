@@ -15,7 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, organizationMembers, users } from '@tasknebula/db';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import {
   generateWorkspaceSeed,
   BootstrapperError,
@@ -48,14 +48,10 @@ export async function POST(request: NextRequest) {
     typeof bodyObj.projectDescription === 'string' ? bodyObj.projectDescription.trim() : '';
   const teamSize =
     typeof bodyObj.teamSize === 'string' ? (bodyObj.teamSize as TeamSizeBucket) : undefined;
-  const role =
-    typeof bodyObj.role === 'string' ? (bodyObj.role as OnboardingRole) : undefined;
+  const role = typeof bodyObj.role === 'string' ? (bodyObj.role as OnboardingRole) : undefined;
 
   if (!projectDescription) {
-    return NextResponse.json(
-      { error: 'projectDescription is required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'projectDescription is required' }, { status: 400 });
   }
   if (!teamSize || !TEAM_SIZE_BUCKETS.includes(teamSize)) {
     return NextResponse.json(
@@ -81,7 +77,7 @@ export async function POST(request: NextRequest) {
     const memberships = await db
       .select({ role: organizationMembers.role })
       .from(organizationMembers)
-      .where(eq(organizationMembers.userId, userId));
+      .where(and(eq(organizationMembers.userId, userId), eq(organizationMembers.status, 'active')));
     const isAdmin = memberships.some((m) => m.role === 'owner' || m.role === 'admin');
     if (!isAdmin) {
       return NextResponse.json(
@@ -108,10 +104,7 @@ export async function POST(request: NextRequest) {
             : err.code === 'schema_violation' || err.code === 'invalid_json'
               ? 502
               : 500;
-      return NextResponse.json(
-        { error: err.message, code: err.code },
-        { status }
-      );
+      return NextResponse.json({ error: err.message, code: err.code }, { status });
     }
     console.error('seed-preview error', err);
     return NextResponse.json({ error: 'Failed to generate workspace seed.' }, { status: 500 });

@@ -28,7 +28,10 @@ import { createId } from '@paralleldrive/cuid2';
 import { workspaceSeedSchema, type WorkspaceSeed } from './bootstrapper';
 
 export class ApplySeedError extends Error {
-  constructor(public code: string, message: string) {
+  constructor(
+    public code: string,
+    message: string
+  ) {
     super(message);
     this.name = 'ApplySeedError';
   }
@@ -52,9 +55,7 @@ export interface ApplySeedResult {
  * Applies the validated seed transactionally. Throws on any failure so the
  * caller can return a 5xx and the DB will roll back.
  */
-export async function applyWorkspaceSeed(
-  input: ApplySeedInput
-): Promise<ApplySeedResult> {
+export async function applyWorkspaceSeed(input: ApplySeedInput): Promise<ApplySeedResult> {
   const parsed = workspaceSeedSchema.safeParse(input.seed);
   if (!parsed.success) {
     throw new ApplySeedError(
@@ -82,7 +83,8 @@ export async function applyWorkspaceSeed(
     .where(
       and(
         eq(organizationMembers.organizationId, input.organizationId),
-        eq(organizationMembers.userId, input.userId)
+        eq(organizationMembers.userId, input.userId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
@@ -91,8 +93,7 @@ export async function applyWorkspaceSeed(
     .from(users)
     .where(eq(users.id, input.userId))
     .limit(1);
-  const canApply =
-    actor?.isSuperAdmin || member?.role === 'owner' || member?.role === 'admin';
+  const canApply = actor?.isSuperAdmin || member?.role === 'owner' || member?.role === 'admin';
   if (!canApply) {
     throw new ApplySeedError('forbidden', 'Only org admins/owners may apply a workspace seed.');
   }
@@ -102,9 +103,7 @@ export async function applyWorkspaceSeed(
   const [existingWorkflow] = await db
     .select({ id: workflows.id })
     .from(workflows)
-    .where(
-      and(eq(workflows.organizationId, input.organizationId), eq(workflows.isDefault, true))
-    )
+    .where(and(eq(workflows.organizationId, input.organizationId), eq(workflows.isDefault, true)))
     .limit(1);
 
   return db.transaction(async (tx) => {
@@ -236,10 +235,7 @@ export async function applyWorkspaceSeed(
       const startDate = new Date(cycle.startDate);
       const endDate = new Date(cycle.endDate);
       if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-        throw new ApplySeedError(
-          'invalid_input',
-          `cycle "${cycle.name}" has invalid dates.`
-        );
+        throw new ApplySeedError('invalid_input', `cycle "${cycle.name}" has invalid dates.`);
       }
       if (endDate <= startDate) {
         throw new ApplySeedError(
@@ -269,8 +265,7 @@ export async function applyWorkspaceSeed(
       // Convert estimateHours -> integer hours (the existing `estimate` field
       // is integer and the rest of the app treats it as story points / hours
       // depending on workspace settings; we store hours here).
-      const estimate =
-        typeof item.estimateHours === 'number' ? item.estimateHours : null;
+      const estimate = typeof item.estimateHours === 'number' ? item.estimateHours : null;
       await tx.insert(issues).values({
         id: issueId,
         organizationId: input.organizationId,

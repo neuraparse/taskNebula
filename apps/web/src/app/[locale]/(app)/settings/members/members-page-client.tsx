@@ -71,6 +71,7 @@ const PROJECT_ROLE_VALUES: ProjectRole[] = [
   'designer',
   'viewer',
 ];
+const INVITE_EXPIRY_OPTIONS = [1, 7, 14, 30, 90] as const;
 
 type Member = {
   id: string;
@@ -104,6 +105,8 @@ export function MembersPageClient() {
   const [projectPickerOpen, setProjectPickerOpen] = useState(false);
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
   const [projectRole, setProjectRole] = useState<ProjectRole>('developer');
+  const [inviteExpiresInDays, setInviteExpiresInDays] =
+    useState<(typeof INVITE_EXPIRY_OPTIONS)[number]>(7);
 
   const { data: orgProjects = [], isLoading: projectsLoading } = useProjects({
     organizationId: currentOrganizationId ?? undefined,
@@ -127,6 +130,7 @@ export function MembersPageClient() {
   const resetInviteForm = () => {
     setInviteEmail('');
     setInviteRole('member');
+    setInviteExpiresInDays(7);
     setSelectedProjectIds([]);
     setProjectRole('developer');
     setProjectsExpanded(false);
@@ -158,6 +162,7 @@ export function MembersPageClient() {
     mutationFn: async (data: {
       email: string;
       role: Member['role'];
+      inviteExpiresInDays?: number;
       projectIds?: string[];
       projectRole?: ProjectRole;
     }) => {
@@ -173,6 +178,8 @@ export function MembersPageClient() {
       return response.json() as Promise<{
         addedToProjects?: string[];
         skippedProjects?: string[];
+        invitationResent?: boolean;
+        inviteExpiresInDays?: number | null;
       }>;
     },
     onSuccess: (result, variables) => {
@@ -182,15 +189,22 @@ export function MembersPageClient() {
       const hasProjectSummary =
         (result?.addedToProjects !== undefined || result?.skippedProjects !== undefined) &&
         (variables.projectIds?.length ?? 0) > 0;
+      const title = result?.invitationResent
+        ? t('members.invitationResent')
+        : t('members.invitationSent');
+      const expiry =
+        result?.inviteExpiresInDays ?? variables.inviteExpiresInDays ?? inviteExpiresInDays;
+      const expirySummary = t('members.inviteExpiresSummary', { count: expiry });
       if (hasProjectSummary) {
         const parts = [t('members.invitedEmail', { email: variables.email })];
         if (added > 0) parts.push(t('members.addedToProjects', { count: added }));
         if (skipped > 0) parts.push(t('members.skippedProjects', { count: skipped }));
-        toast({ title: t('members.invitationSent'), description: parts.join(' ') });
+        parts.push(expirySummary);
+        toast({ title, description: parts.join(' ') });
       } else {
         toast({
-          title: t('members.invitationSent'),
-          description: t('members.memberInvited'),
+          title,
+          description: `${t('members.memberInvited')} ${expirySummary}`,
         });
       }
       setInviteOpen(false);
@@ -209,9 +223,10 @@ export function MembersPageClient() {
     const payload: {
       email: string;
       role: Member['role'];
+      inviteExpiresInDays?: number;
       projectIds?: string[];
       projectRole?: ProjectRole;
-    } = { email: inviteEmail, role: inviteRole };
+    } = { email: inviteEmail, role: inviteRole, inviteExpiresInDays };
     if (selectedProjectIds.length > 0) {
       payload.projectIds = selectedProjectIds;
       payload.projectRole = projectRole;
@@ -359,6 +374,29 @@ export function MembersPageClient() {
                         <SelectItem value="guest">{t('members.role.guest')}</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="invite-expiry">{t('members.inviteExpiry')}</Label>
+                    <Select
+                      value={String(inviteExpiresInDays)}
+                      onValueChange={(value) =>
+                        setInviteExpiresInDays(
+                          Number(value) as (typeof INVITE_EXPIRY_OPTIONS)[number]
+                        )
+                      }
+                    >
+                      <SelectTrigger id="invite-expiry">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {INVITE_EXPIRY_OPTIONS.map((days) => (
+                          <SelectItem key={days} value={String(days)}>
+                            {t('members.inviteExpiryOption', { count: days })}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-muted-foreground text-xs">{t('members.inviteExpiryHelp')}</p>
                   </div>
 
                   <div className="border-border bg-muted/20 space-y-2 rounded-md border p-3">

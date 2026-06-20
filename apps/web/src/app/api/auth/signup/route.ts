@@ -6,10 +6,15 @@ import { createHash, timingSafeEqual } from 'crypto';
 
 const GENERIC_SIGNUP_MESSAGE = 'If that email is available, an account will be created';
 
+function normalizeEmail(email: unknown): string {
+  return typeof email === 'string' ? email.trim().toLowerCase() : '';
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, password, inviteToken } = body;
+    const { name, password, inviteToken } = body;
+    const email = normalizeEmail(body.email);
 
     // Validate input
     if (!name || !email || !password) {

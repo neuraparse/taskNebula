@@ -26,6 +26,8 @@ import {
   checkLatestVersion,
   getUpdateStatus,
   getCurrentVersion,
+  DOCKER_HUB_REPOSITORY,
+  DOCKER_HUB_TAGS_URL,
   RELEASES_LATEST_URL,
   type VersionCheckState,
 } from '../index';
@@ -64,12 +66,33 @@ function githubResponse(overrides: Record<string, unknown> = {}, ok = true) {
   };
 }
 
+function dockerResponse(overrides: Record<string, unknown> = {}, ok = true) {
+  return {
+    ok,
+    json: jest.fn().mockResolvedValue({
+      results: [
+        {
+          name: '9.9.9',
+          tag_last_pushed: '2026-06-01T00:01:00.000Z',
+          last_updated: '2026-06-01T00:01:00.000Z',
+          digest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          full_size: 123456789,
+          ...overrides,
+        },
+      ],
+    }),
+  };
+}
+
 function cachedState(ageMs: number, overrides: Partial<VersionCheckState> = {}): VersionCheckState {
   return {
-    latest: '8.8.8',
-    htmlUrl: 'https://github.com/neuraparse/taskNebula/releases/tag/v8.8.8',
-    publishedAt: '2026-01-01T00:00:00.000Z',
-    notes: 'old notes',
+    release: {
+      latest: '8.8.8',
+      htmlUrl: 'https://github.com/neuraparse/taskNebula/releases/tag/v8.8.8',
+      publishedAt: '2026-01-01T00:00:00.000Z',
+      notes: 'old notes',
+    },
+    docker: null,
     fetchedAt: new Date(Date.now() - ageMs).toISOString(),
     ...overrides,
   };
@@ -165,17 +188,28 @@ describe('checkLatestVersion', () => {
   it('refetches and persists when the cache is stale (> 6h)', async () => {
     mockCachedRows([{ value: cachedState(7 * HOUR_MS) }]);
     const { values } = mockInsertChain();
-    fetchMock.mockResolvedValue(githubResponse());
+    fetchMock.mockResolvedValueOnce(githubResponse()).mockResolvedValueOnce(dockerResponse());
 
     const result = await checkLatestVersion();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe(RELEASES_LATEST_URL);
     expect((init.headers as Record<string, string>)['User-Agent']).toMatch(/^tasknebula\//);
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(DOCKER_HUB_TAGS_URL);
 
-    expect(result?.latest).toBe('9.9.9'); // leading v stripped
-    expect(result?.htmlUrl).toBe('https://github.com/neuraparse/taskNebula/releases/tag/v9.9.9');
-    expect(result?.notes).toBe('Release notes');
+    expect(result?.release?.latest).toBe('9.9.9'); // leading v stripped
+    expect(result?.release?.htmlUrl).toBe(
+      'https://github.com/neuraparse/taskNebula/releases/tag/v9.9.9'
+    );
+    expect(result?.release?.notes).toBe('Release notes');
+    expect(result?.docker).toEqual({
+      repository: DOCKER_HUB_REPOSITORY,
+      latestTag: '9.9.9',
+      tagUrl: 'https://hub.docker.com/r/neuraparse/tasknebula/tags?name=9.9.9',
+      pushedAt: '2026-06-01T00:01:00.000Z',
+      digest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      sizeBytes: 123456789,
+    });
     // Persisted via upsert with the same state.
     expect(values).toHaveBeenCalledWith(
       expect.objectContaining({ key: 'version_check', value: result })
@@ -185,11 +219,11 @@ describe('checkLatestVersion', () => {
   it('bypasses a fresh cache when forceRefresh is set', async () => {
     mockCachedRows([{ value: cachedState(1 * HOUR_MS) }]);
     mockInsertChain();
-    fetchMock.mockResolvedValue(githubResponse());
+    fetchMock.mockResolvedValueOnce(githubResponse()).mockResolvedValueOnce(dockerResponse());
 
     const result = await checkLatestVersion({ forceRefresh: true });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(result?.latest).toBe('9.9.9');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result?.release?.latest).toBe('9.9.9');
   });
 
   it('falls back to the stale cache on network failure', async () => {
@@ -220,7 +254,9 @@ describe('checkLatestVersion', () => {
 
   it('rejects a non-semver tag_name instead of storing it', async () => {
     mockCachedRows([]);
-    fetchMock.mockResolvedValue(githubResponse({ tag_name: '<script>alert(1)</script>' }));
+    fetchMock
+      .mockResolvedValueOnce(githubResponse({ tag_name: '<script>alert(1)</script>' }))
+      .mockResolvedValueOnce({ ok: true, json: jest.fn().mockResolvedValue({ results: [] }) });
     expect(await checkLatestVersion()).toBeNull();
     expect(dbInsertMock).not.toHaveBeenCalled();
   });
@@ -228,10 +264,41 @@ describe('checkLatestVersion', () => {
   it('truncates release notes to 2000 chars', async () => {
     mockCachedRows([]);
     mockInsertChain();
-    fetchMock.mockResolvedValue(githubResponse({ body: 'x'.repeat(5000) }));
+    fetchMock
+      .mockResolvedValueOnce(githubResponse({ body: 'x'.repeat(5000) }))
+      .mockResolvedValueOnce(dockerResponse());
 
     const result = await checkLatestVersion();
-    expect(result?.notes).toHaveLength(2000);
+    expect(result?.release?.notes).toHaveLength(2000);
+  });
+
+  it('uses the most recently pushed Docker Hub semver tag, not the largest stale semver', async () => {
+    mockCachedRows([]);
+    mockInsertChain();
+    fetchMock.mockResolvedValueOnce(githubResponse()).mockResolvedValueOnce({
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        results: [
+          {
+            name: '0.12.0',
+            tag_last_pushed: '2026-04-21T07:21:33.745Z',
+            digest: 'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+            full_size: 320439109,
+          },
+          {
+            name: '0.6.5',
+            tag_last_pushed: '2026-06-20T02:13:49.101Z',
+            digest: 'sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
+            full_size: 434303186,
+          },
+        ],
+      }),
+    });
+
+    const result = await checkLatestVersion();
+
+    expect(result?.docker?.latestTag).toBe('0.6.5');
+    expect(result?.docker?.pushedAt).toBe('2026-06-20T02:13:49.101Z');
   });
 
   it('still works (fetch path) when the cache read throws', async () => {
@@ -240,10 +307,10 @@ describe('checkLatestVersion', () => {
       throw new Error('db down');
     });
     mockInsertChain();
-    fetchMock.mockResolvedValue(githubResponse());
+    fetchMock.mockResolvedValueOnce(githubResponse()).mockResolvedValueOnce(dockerResponse());
 
     const result = await checkLatestVersion();
-    expect(result?.latest).toBe('9.9.9');
+    expect(result?.release?.latest).toBe('9.9.9');
     warnSpy.mockRestore();
   });
 });
@@ -255,18 +322,36 @@ describe('getUpdateStatus', () => {
     expect(status).toEqual({
       current: getCurrentVersion(),
       latest: null,
+      releaseUpdateAvailable: false,
       updateAvailable: false,
       releaseUrl: null,
       publishedAt: null,
       notes: null,
       checkedAt: null,
+      image: {
+        repository: DOCKER_HUB_REPOSITORY,
+        latestTag: null,
+        latestTagUrl: null,
+        latestPushedAt: null,
+        latestDigest: null,
+        latestSizeBytes: null,
+        updateAvailable: false,
+        checkedAt: null,
+      },
       checkDisabled: true,
     });
   });
 
   it('flags updateAvailable only when latest is newer than current', async () => {
     process.env.TASKNEBULA_VERSION = '9.9.9';
-    const sameVersion = cachedState(1 * HOUR_MS, { latest: '9.9.9' });
+    const sameVersion = cachedState(1 * HOUR_MS, {
+      release: {
+        latest: '9.9.9',
+        htmlUrl: 'https://github.com/neuraparse/taskNebula/releases/tag/v9.9.9',
+        publishedAt: '2026-06-01T00:00:00.000Z',
+        notes: 'same notes',
+      },
+    });
     mockCachedRows([{ value: sameVersion }]);
     let status = await getUpdateStatus();
     expect(status.updateAvailable).toBe(false);
@@ -278,5 +363,40 @@ describe('getUpdateStatus', () => {
     expect(status.current).toBe('9.9.8');
     expect(status.checkedAt).toBe(sameVersion.fetchedAt);
     expect(status.checkDisabled).toBe(false);
+  });
+
+  it('flags image updates when Docker Hub has a newer semver tag than the running version', async () => {
+    process.env.TASKNEBULA_VERSION = '1.2.3';
+    const cached = cachedState(1 * HOUR_MS, {
+      release: {
+        latest: '1.2.3',
+        htmlUrl: 'https://github.com/neuraparse/taskNebula/releases/tag/v1.2.3',
+        publishedAt: '2026-06-01T00:00:00.000Z',
+        notes: null,
+      },
+      docker: {
+        repository: DOCKER_HUB_REPOSITORY,
+        latestTag: '1.2.4',
+        tagUrl: 'https://hub.docker.com/r/neuraparse/tasknebula/tags?name=1.2.4',
+        pushedAt: '2026-06-02T00:00:00.000Z',
+        digest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        sizeBytes: 987654321,
+      },
+    });
+    mockCachedRows([{ value: cached }]);
+
+    const status = await getUpdateStatus();
+
+    expect(status.releaseUpdateAvailable).toBe(false);
+    expect(status.updateAvailable).toBe(true);
+    expect(status.latest).toBe('1.2.4');
+    expect(status.image).toMatchObject({
+      repository: DOCKER_HUB_REPOSITORY,
+      latestTag: '1.2.4',
+      updateAvailable: true,
+      latestPushedAt: '2026-06-02T00:00:00.000Z',
+      latestDigest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      latestSizeBytes: 987654321,
+    });
   });
 });

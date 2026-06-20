@@ -1,5 +1,6 @@
 const authMock = jest.fn();
 const dbSelectMock = jest.fn();
+const dbInsertMock = jest.fn();
 
 class MockNextRequest {
   private readonly bodyValue: string;
@@ -61,9 +62,10 @@ jest.mock('@paralleldrive/cuid2', () => ({
 jest.mock('@tasknebula/db', () => ({
   db: {
     select: (...args: unknown[]) => dbSelectMock(...args),
-    insert: jest.fn(),
+    insert: (...args: unknown[]) => dbInsertMock(...args),
   },
   projects: {
+    id: 'projects.id',
     organizationId: 'projects.organizationId',
     key: 'projects.key',
     teamId: 'projects.teamId',
@@ -73,6 +75,7 @@ jest.mock('@tasknebula/db', () => ({
     userId: 'organizationMembers.userId',
     organizationId: 'organizationMembers.organizationId',
     role: 'organizationMembers.role',
+    status: 'organizationMembers.status',
   },
   projectMembers: {
     projectId: 'projectMembers.projectId',
@@ -122,6 +125,55 @@ function whereBuilder(result: unknown) {
     from: jest.fn().mockReturnValue({
       where: jest.fn().mockResolvedValue(result),
     }),
+  };
+}
+
+type ProjectRow = {
+  project: {
+    id: string;
+    organizationId: string;
+    [key: string]: unknown;
+  };
+  organizationName: string | null;
+  teamId: string | null;
+  teamName: string | null;
+  teamSlug: string | null;
+};
+
+function collectInArrayValues(condition: unknown, left: string): unknown[] | null {
+  if (!condition || typeof condition !== 'object') return null;
+  const node = condition as { type?: string; left?: unknown; right?: unknown; args?: unknown[] };
+  if (node.type === 'inArray' && node.left === left) {
+    return Array.isArray(node.right) ? node.right : [];
+  }
+  if (Array.isArray(node.args)) {
+    for (const arg of node.args) {
+      const values = collectInArrayValues(arg, left);
+      if (values) return values;
+    }
+  }
+  return null;
+}
+
+function projectListBuilder(rows: ProjectRow[]) {
+  const chain = {
+    leftJoin: jest.fn(() => chain),
+    where: jest.fn((condition: unknown) => ({
+      orderBy: jest.fn().mockResolvedValue(
+        rows.filter((row) => {
+          const orgIds = collectInArrayValues(condition, 'projects.organizationId');
+          const projectIds = collectInArrayValues(condition, 'projects.id');
+          return (
+            (!orgIds || orgIds.includes(row.project.organizationId)) &&
+            (!projectIds || projectIds.includes(row.project.id))
+          );
+        })
+      ),
+    })),
+  };
+
+  return {
+    from: jest.fn().mockReturnValue(chain),
   };
 }
 
@@ -253,16 +305,95 @@ describe('/api/projects route', () => {
     await expect(response.json()).resolves.toEqual({ error: 'Forbidden' });
   });
 
+  it('keeps organization admin visibility scoped to the organization where the role is held', async () => {
+    authMock.mockResolvedValue({ user: { id: 'user-1' } });
+    const rows: ProjectRow[] = [
+      {
+        project: {
+          id: 'project-admin-org',
+          organizationId: 'org-admin',
+          name: 'Admin org project',
+          updatedAt: '2026-01-03T00:00:00.000Z',
+        },
+        organizationName: 'Admin Org',
+        teamId: null,
+        teamName: null,
+        teamSlug: null,
+      },
+      {
+        project: {
+          id: 'project-member-org',
+          organizationId: 'org-member',
+          name: 'Member org project',
+          updatedAt: '2026-01-02T00:00:00.000Z',
+        },
+        organizationName: 'Member Org',
+        teamId: null,
+        teamName: null,
+        teamSlug: null,
+      },
+      {
+        project: {
+          id: 'project-hidden',
+          organizationId: 'org-member',
+          name: 'Hidden member org project',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+        organizationName: 'Member Org',
+        teamId: null,
+        teamName: null,
+        teamSlug: null,
+      },
+    ];
+
+    dbSelectMock
+      .mockReturnValueOnce(limitBuilder([{ isSuperAdmin: false }]))
+      .mockReturnValueOnce(
+        whereBuilder([
+          { organizationId: 'org-admin', role: 'admin' },
+          { organizationId: 'org-member', role: 'member' },
+        ])
+      )
+      .mockReturnValueOnce(projectListBuilder(rows))
+      .mockReturnValueOnce(whereBuilder([{ projectId: 'project-member-org' }]))
+      .mockReturnValueOnce(projectListBuilder(rows));
+
+    const response = await GET(new NextRequestCtor('http://localhost:3002/api/projects'));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual([
+      {
+        id: 'project-admin-org',
+        organizationId: 'org-admin',
+        name: 'Admin org project',
+        updatedAt: '2026-01-03T00:00:00.000Z',
+        organizationName: 'Admin Org',
+        team: null,
+      },
+      {
+        id: 'project-member-org',
+        organizationId: 'org-member',
+        name: 'Member org project',
+        updatedAt: '2026-01-02T00:00:00.000Z',
+        organizationName: 'Member Org',
+        team: null,
+      },
+    ]);
+  });
+
   it('rejects a teamspace that belongs to a different organization during project creation', async () => {
     authMock.mockResolvedValue({ user: { id: 'user-1' } });
-    dbSelectMock.mockReturnValueOnce(
-      limitBuilder([
-        {
-          id: 'team-2',
-          organizationId: 'org-2',
-        },
-      ])
-    );
+    dbSelectMock
+      .mockReturnValueOnce(limitBuilder([{ role: 'admin', status: 'active' }]))
+      .mockReturnValueOnce(limitBuilder([{ isSuperAdmin: false }]))
+      .mockReturnValueOnce(
+        limitBuilder([
+          {
+            id: 'team-2',
+            organizationId: 'org-2',
+          },
+        ])
+      );
 
     const response = await POST(
       new NextRequestCtor('http://localhost:3002/api/projects', {
@@ -280,5 +411,29 @@ describe('/api/projects route', () => {
     await expect(response.json()).resolves.toEqual({
       error: 'Selected teamspace does not belong to this organization',
     });
+  });
+
+  it('rejects project creation for active non-admin organization members', async () => {
+    authMock.mockResolvedValue({ user: { id: 'user-1' } });
+    dbSelectMock
+      .mockReturnValueOnce(limitBuilder([{ role: 'member', status: 'active' }]))
+      .mockReturnValueOnce(limitBuilder([{ isSuperAdmin: false }]));
+
+    const response = await POST(
+      new NextRequestCtor('http://localhost:3002/api/projects', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: 'API Platform',
+          key: 'API',
+          organizationId: 'org-1',
+        }),
+      })
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      error: 'You need an owner or admin invite to create projects in this organization',
+    });
+    expect(dbInsertMock).not.toHaveBeenCalled();
   });
 });

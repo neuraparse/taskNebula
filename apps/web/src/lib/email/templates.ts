@@ -10,14 +10,7 @@
  * handler methods + a small allowlist of config symbols are permitted.
  */
 
-import {
-  renderShell,
-  paragraph,
-  infoCard,
-  bulletList,
-  chip,
-  textFooter,
-} from '@tasknebula/db';
+import { renderShell, paragraph, infoCard, bulletList, chip, textFooter } from '@tasknebula/db';
 
 /**
  * Render the password-reset message (subject/html/text).
@@ -68,8 +61,7 @@ export function renderPasswordResetMessage(args: {
     kicker: 'SECURITY',
     heading: 'Reset your password',
     subheading: 'A reset link was requested for your TaskNebula account.',
-    preheader:
-      "This link expires in 1 hour. If you didn't request this, ignore this email.",
+    preheader: "This link expires in 1 hour. If you didn't request this, ignore this email.",
     body: bodyHtml,
     ctaLabel: 'Reset password',
     ctaUrl: resetUrl,
@@ -94,24 +86,26 @@ export function renderInvitationMessage(args: {
   role: string;
   addedProjectNames: string[];
   signupUrl: string;
+  expiresAt?: Date;
+  expiresInDays?: number;
 }): { subject: string; html: string; text: string } {
-  const { inviteeEmail, inviterName, orgName, role, addedProjectNames, signupUrl } =
-    args;
+  const { inviteeEmail, inviterName, orgName, role, addedProjectNames, signupUrl } = args;
+  const expiryText = args.expiresAt
+    ? `This invitation expires on ${args.expiresAt.toUTCString()}.`
+    : '';
 
   const projectsSection =
     addedProjectNames.length > 0
       ? infoCard({
           tone: 'info',
           title: "You'll be added to",
-          body: addedProjectNames
-            .map((n) => chip(n, { tone: 'brand' }))
-            .join(' '),
+          body: addedProjectNames.map((n) => chip(n, { tone: 'brand' })).join(' '),
         })
       : '';
 
   const emailBody =
     paragraph(
-      `<strong>${inviterName}</strong> has invited you to join <strong>${orgName}</strong> on TaskNebula. Accept the invitation to start collaborating on projects, sprints, and issues with your team.`,
+      `<strong>${inviterName}</strong> has invited you to join <strong>${orgName}</strong> on TaskNebula. Accept the invitation to start collaborating on projects, sprints, and issues with your team.`
     ) +
     infoCard({
       tone: 'info',
@@ -124,6 +118,13 @@ export function renderInvitationMessage(args: {
       'Real-time notifications',
       'Integrated chat and calls',
     ]) +
+    (expiryText
+      ? infoCard({
+          tone: 'warning',
+          title: 'Invitation expiry',
+          body: `${expiryText} Ask your team admin to resend it if the link expires.`,
+        })
+      : '') +
     paragraph(`Sign up with ${inviteeEmail} to accept.`, {
       muted: true,
       spacingTop: 14,
@@ -133,22 +134,21 @@ export function renderInvitationMessage(args: {
     kicker: 'INVITATION',
     heading: `You're invited to ${orgName}`,
     subheading: `${inviterName} wants you on their team.`,
-    preheader:
-      'Join your team on TaskNebula to collaborate on projects, sprints, and issues.',
+    preheader: 'Join your team on TaskNebula to collaborate on projects, sprints, and issues.',
     body: emailBody,
     ctaLabel: 'Accept invitation',
     ctaUrl: signupUrl,
   });
 
   const projectsTextLine =
-    addedProjectNames.length > 0
-      ? `You'll be added to: ${addedProjectNames.join(', ')}\n\n`
-      : '';
+    addedProjectNames.length > 0 ? `You'll be added to: ${addedProjectNames.join(', ')}\n\n` : '';
+  const expiryTextLine = expiryText ? `${expiryText}\n\n` : '';
 
   const text =
     `${inviterName} invited you to ${orgName} on TaskNebula.\n\n` +
     `Role: ${role}\n\n` +
     projectsTextLine +
+    expiryTextLine +
     `You'll get:\n- Track projects and sprints\n- Real-time notifications\n- Integrated chat and calls\n\n` +
     `Accept your invitation: ${signupUrl}\n` +
     `Sign up with ${inviteeEmail} to accept.` +

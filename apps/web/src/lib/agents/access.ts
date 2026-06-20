@@ -7,14 +7,19 @@ function toBool(value: string | null | undefined) {
 
 export async function getOrgAgentAccess(userId: string, organizationId: string) {
   const [[user], [membership]] = await Promise.all([
-    db.select({ isSuperAdmin: users.isSuperAdmin }).from(users).where(eq(users.id, userId)).limit(1),
+    db
+      .select({ isSuperAdmin: users.isSuperAdmin })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1),
     db
       .select({ role: organizationMembers.role })
       .from(organizationMembers)
       .where(
         and(
           eq(organizationMembers.userId, userId),
-          eq(organizationMembers.organizationId, organizationId)
+          eq(organizationMembers.organizationId, organizationId),
+          eq(organizationMembers.status, 'active')
         )
       )
       .limit(1),
@@ -45,7 +50,11 @@ export async function getProjectAgentAccess(userId: string, projectId: string) {
       .from(projects)
       .where(eq(projects.id, projectId))
       .limit(1),
-    db.select({ isSuperAdmin: users.isSuperAdmin }).from(users).where(eq(users.id, userId)).limit(1),
+    db
+      .select({ isSuperAdmin: users.isSuperAdmin })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1),
   ]);
 
   if (!project) {
@@ -77,7 +86,8 @@ export async function getProjectAgentAccess(userId: string, projectId: string) {
       .where(
         and(
           eq(organizationMembers.userId, userId),
-          eq(organizationMembers.organizationId, project.organizationId)
+          eq(organizationMembers.organizationId, project.organizationId),
+          eq(organizationMembers.status, 'active')
         )
       )
       .limit(1),
@@ -97,19 +107,19 @@ export async function getProjectAgentAccess(userId: string, projectId: string) {
   const orgRole = orgMembership?.role ?? null;
   const projectRole = projectMembership?.role ?? null;
   const canView = Boolean(
-    orgRole === 'owner'
-      || orgRole === 'admin'
-      || (projectMembership && toBool(projectMembership.canBrowseProject))
-      || projectMembership
+    orgRole === 'owner' ||
+      orgRole === 'admin' ||
+      (projectMembership && toBool(projectMembership.canBrowseProject)) ||
+      projectMembership
   );
 
   const canManage = Boolean(
-    orgRole === 'owner'
-      || orgRole === 'admin'
-      || (projectMembership && toBool(projectMembership.canAdministerProject))
-      || (projectMembership && toBool(projectMembership.canManageSprints))
-      || (projectMembership && toBool(projectMembership.canManageWorkflow))
-      || ['product_owner', 'scrum_master', 'tech_lead'].includes(projectRole || '')
+    orgRole === 'owner' ||
+      orgRole === 'admin' ||
+      (projectMembership && toBool(projectMembership.canAdministerProject)) ||
+      (projectMembership && toBool(projectMembership.canManageSprints)) ||
+      (projectMembership && toBool(projectMembership.canManageWorkflow)) ||
+      ['product_owner', 'scrum_master', 'tech_lead'].includes(projectRole || '')
   );
 
   return {

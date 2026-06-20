@@ -4,10 +4,11 @@
  * The entire outbound update-check surface lives in this one file so
  * security-conscious self-hosters can audit it quickly:
  *
- *   - One HTTPS GET to the GitHub releases API (`RELEASES_LATEST_URL`), at
- *     most once per `VERSION_CHECK_TTL_MS` (6h), only when an admin surface
- *     asks for update status. No instance data is sent beyond a
- *     `tasknebula/<version>` User-Agent. This is not telemetry.
+ *   - HTTPS GETs to the GitHub releases API (`RELEASES_LATEST_URL`) and the
+ *     Docker Hub tags API (`DOCKER_HUB_TAGS_URL`), at most once per
+ *     `VERSION_CHECK_TTL_MS` (6h), only when an admin surface asks for update
+ *     status. No instance data is sent beyond a `tasknebula/<version>`
+ *     User-Agent. This is not telemetry.
  *   - `TASKNEBULA_DISABLE_UPDATE_CHECK=true` disables all outbound calls.
  *   - Results are cached in the `system_settings` table (key
  *     `version_check`) so multi-replica deployments share one cache.
@@ -22,6 +23,9 @@ export const VERSION_CHECK_KEY = 'version_check';
 export const GITHUB_REPO_URL = 'https://github.com/neuraparse/taskNebula';
 export const RELEASES_LATEST_URL =
   'https://api.github.com/repos/neuraparse/taskNebula/releases/latest';
+export const DOCKER_HUB_REPOSITORY = 'neuraparse/tasknebula';
+export const DOCKER_HUB_TAGS_URL =
+  'https://hub.docker.com/v2/namespaces/neuraparse/repositories/tasknebula/tags?page_size=100';
 
 /** Cached check is considered fresh for 6 hours. */
 export const VERSION_CHECK_TTL_MS = 6 * 60 * 60 * 1000;
@@ -37,25 +41,51 @@ const NOTES_MAX_CHARS = 2000;
  */
 const SEMVERISH = /^v?\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 
-export type VersionCheckState = {
+export type ReleaseCheckState = {
   /** Latest published version, normalized without the leading `v`. */
   latest: string;
   htmlUrl: string | null;
   publishedAt: string | null;
   /** First {@link NOTES_MAX_CHARS} chars of the release body. */
   notes: string | null;
-  /** ISO timestamp of the successful upstream fetch. */
+};
+
+export type DockerImageCheckState = {
+  repository: string;
+  /** Most recently pushed semver image tag, normalized without the leading `v`. */
+  latestTag: string;
+  tagUrl: string | null;
+  pushedAt: string | null;
+  digest: string | null;
+  sizeBytes: number | null;
+};
+
+export type VersionCheckState = {
+  release: ReleaseCheckState | null;
+  docker: DockerImageCheckState | null;
+  /** ISO timestamp of the successful upstream fetch batch. */
   fetchedAt: string;
 };
 
 export type UpdateStatus = {
   current: string;
   latest: string | null;
+  releaseUpdateAvailable: boolean;
   updateAvailable: boolean;
   releaseUrl: string | null;
   publishedAt: string | null;
   notes: string | null;
   checkedAt: string | null;
+  image: {
+    repository: string;
+    latestTag: string | null;
+    latestTagUrl: string | null;
+    latestPushedAt: string | null;
+    latestDigest: string | null;
+    latestSizeBytes: number | null;
+    updateAvailable: boolean;
+    checkedAt: string | null;
+  };
   /** True when TASKNEBULA_DISABLE_UPDATE_CHECK suppresses all checks. */
   checkDisabled: boolean;
 };
@@ -172,16 +202,67 @@ export function compareSemver(a: string, b: string): number {
 // system_settings cache (key: version_check)
 // ---------------------------------------------------------------------------
 
-function normalizeVersionCheckState(value: unknown): VersionCheckState | null {
+function isIsoDateString(value: unknown): value is string {
+  return typeof value === 'string' && !Number.isNaN(Date.parse(value));
+}
+
+function normalizeReleaseCheckState(value: unknown): ReleaseCheckState | null {
   if (!value || typeof value !== 'object') return null;
   const raw = value as Record<string, unknown>;
   if (typeof raw.latest !== 'string' || !SEMVERISH.test(raw.latest)) return null;
-  if (typeof raw.fetchedAt !== 'string' || Number.isNaN(Date.parse(raw.fetchedAt))) return null;
   return {
     latest: stripV(raw.latest),
     htmlUrl: typeof raw.htmlUrl === 'string' ? raw.htmlUrl : null,
     publishedAt: typeof raw.publishedAt === 'string' ? raw.publishedAt : null,
     notes: typeof raw.notes === 'string' ? raw.notes.slice(0, NOTES_MAX_CHARS) : null,
+  };
+}
+
+function normalizeDockerImageCheckState(value: unknown): DockerImageCheckState | null {
+  if (!value || typeof value !== 'object') return null;
+  const raw = value as Record<string, unknown>;
+  if (typeof raw.latestTag !== 'string' || !SEMVERISH.test(raw.latestTag)) return null;
+  return {
+    repository:
+      typeof raw.repository === 'string' && raw.repository ? raw.repository : DOCKER_HUB_REPOSITORY,
+    latestTag: stripV(raw.latestTag),
+    tagUrl: typeof raw.tagUrl === 'string' && raw.tagUrl.startsWith('https://') ? raw.tagUrl : null,
+    pushedAt: typeof raw.pushedAt === 'string' ? raw.pushedAt : null,
+    digest:
+      typeof raw.digest === 'string' && /^sha256:[0-9a-f]{64}$/i.test(raw.digest)
+        ? raw.digest
+        : null,
+    sizeBytes:
+      typeof raw.sizeBytes === 'number' && Number.isFinite(raw.sizeBytes) ? raw.sizeBytes : null,
+  };
+}
+
+function normalizeVersionCheckState(value: unknown): VersionCheckState | null {
+  if (!value || typeof value !== 'object') return null;
+  const raw = value as Record<string, unknown>;
+
+  // Back-compat for the pre-Docker-Hub cache shape:
+  // { latest, htmlUrl, publishedAt, notes, fetchedAt }.
+  if (typeof raw.latest === 'string') {
+    if (!isIsoDateString(raw.fetchedAt)) return null;
+    const release = normalizeReleaseCheckState(raw);
+    if (!release) return null;
+    return {
+      release,
+      docker: null,
+      fetchedAt: raw.fetchedAt,
+    };
+  }
+
+  if (!isIsoDateString(raw.fetchedAt)) return null;
+  const release = raw.release === null ? null : normalizeReleaseCheckState(raw.release);
+  const docker = raw.docker === null ? null : normalizeDockerImageCheckState(raw.docker);
+
+  if (!release && !docker) return null;
+
+  return {
+    release,
+    docker,
     fetchedAt: raw.fetchedAt,
   };
 }
@@ -209,7 +290,7 @@ async function writeVersionCheck(state: VersionCheckState): Promise<void> {
         value: state,
         category: 'general',
         description:
-          'Cached result of the GitHub releases update check (see apps/web/src/lib/version).',
+          'Cached result of the GitHub release and Docker Hub image update checks (see apps/web/src/lib/version).',
       })
       .onConflictDoUpdate({
         target: systemSettings.key,
@@ -225,7 +306,7 @@ async function writeVersionCheck(state: VersionCheckState): Promise<void> {
 // Upstream fetch
 // ---------------------------------------------------------------------------
 
-async function fetchLatestRelease(currentVersion: string): Promise<VersionCheckState | null> {
+async function fetchLatestRelease(currentVersion: string): Promise<ReleaseCheckState | null> {
   // Manual AbortController instead of AbortSignal.timeout for jsdom/test
   // compatibility; the timer is always cleared.
   const controller = new AbortController();
@@ -257,7 +338,6 @@ async function fetchLatestRelease(currentVersion: string): Promise<VersionCheckS
       htmlUrl,
       publishedAt: typeof raw.published_at === 'string' ? raw.published_at : null,
       notes: typeof raw.body === 'string' ? raw.body.slice(0, NOTES_MAX_CHARS) : null,
-      fetchedAt: new Date().toISOString(),
     };
   } catch {
     // Network error / timeout — silent by design; callers fall back to cache.
@@ -267,12 +347,111 @@ async function fetchLatestRelease(currentVersion: string): Promise<VersionCheckS
   }
 }
 
+function dockerTagUrl(tag: string): string {
+  return `https://hub.docker.com/r/${DOCKER_HUB_REPOSITORY}/tags?name=${encodeURIComponent(tag)}`;
+}
+
+function readDockerTagTimestamp(raw: Record<string, unknown>): string | null {
+  const candidates = [raw.tag_last_pushed, raw.last_updated];
+  for (const candidate of candidates) {
+    if (isIsoDateString(candidate)) return candidate;
+  }
+  return null;
+}
+
+function readDockerTagDigest(raw: Record<string, unknown>): string | null {
+  const candidate = typeof raw.digest === 'string' ? raw.digest : null;
+  if (candidate && /^sha256:[0-9a-f]{64}$/i.test(candidate)) return candidate;
+  const images = Array.isArray(raw.images) ? raw.images : [];
+  for (const image of images) {
+    if (!image || typeof image !== 'object') continue;
+    const digest = (image as Record<string, unknown>).digest;
+    if (typeof digest === 'string' && /^sha256:[0-9a-f]{64}$/i.test(digest)) {
+      return digest;
+    }
+  }
+  return null;
+}
+
+function normalizeDockerTag(raw: unknown): DockerImageCheckState | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const tag = raw as Record<string, unknown>;
+  const name = typeof tag.name === 'string' ? tag.name.trim() : '';
+  if (!SEMVERISH.test(name)) return null;
+
+  return {
+    repository: DOCKER_HUB_REPOSITORY,
+    latestTag: stripV(name),
+    tagUrl: dockerTagUrl(name),
+    pushedAt: readDockerTagTimestamp(tag),
+    digest: readDockerTagDigest(tag),
+    sizeBytes:
+      typeof tag.full_size === 'number' && Number.isFinite(tag.full_size) ? tag.full_size : null,
+  };
+}
+
+function compareDockerImageFreshness(a: DockerImageCheckState, b: DockerImageCheckState): number {
+  const aTime = a.pushedAt ? Date.parse(a.pushedAt) : 0;
+  const bTime = b.pushedAt ? Date.parse(b.pushedAt) : 0;
+  if (aTime !== bTime) return bTime - aTime;
+  return compareSemver(b.latestTag, a.latestTag);
+}
+
+async function fetchLatestDockerImage(
+  currentVersion: string
+): Promise<DockerImageCheckState | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(DOCKER_HUB_TAGS_URL, {
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': `tasknebula/${currentVersion}`,
+      },
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+    if (!res.ok) return null;
+
+    const payload: unknown = await res.json().catch(() => null);
+    if (!payload || typeof payload !== 'object') return null;
+    const results = (payload as Record<string, unknown>).results;
+    if (!Array.isArray(results)) return null;
+
+    return (
+      results
+        .map((tag) => normalizeDockerTag(tag))
+        .filter((tag): tag is DockerImageCheckState => Boolean(tag))
+        .sort(compareDockerImageFreshness)[0] ?? null
+    );
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fetchLatestVersionState(currentVersion: string): Promise<VersionCheckState | null> {
+  const [release, docker] = await Promise.all([
+    fetchLatestRelease(currentVersion),
+    fetchLatestDockerImage(currentVersion),
+  ]);
+
+  if (!release && !docker) return null;
+
+  return {
+    release,
+    docker,
+    fetchedAt: new Date().toISOString(),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
 /**
- * Returns the latest published release, honoring the 6h cache TTL.
+ * Returns the latest published release/image metadata, honoring the 6h cache TTL.
  *
  * - Disabled via env → `null`, no network and no DB access.
  * - Fresh cache → cached state, no network.
@@ -293,11 +472,19 @@ export async function checkLatestVersion(
     }
   }
 
-  const fresh = await fetchLatestRelease(getCurrentVersion());
+  const fresh = await fetchLatestVersionState(getCurrentVersion());
   if (!fresh) return cached;
 
   await writeVersionCheck(fresh);
   return fresh;
+}
+
+function pickNewestKnownVersion(...versions: Array<string | null | undefined>): string | null {
+  const valid = versions.filter(
+    (version): version is string => typeof version === 'string' && SEMVERISH.test(version)
+  );
+  if (valid.length === 0) return null;
+  return valid.sort((a, b) => compareSemver(b, a))[0] ?? null;
 }
 
 /**
@@ -310,24 +497,51 @@ export async function getUpdateStatus(options: { refresh?: boolean } = {}): Prom
     return {
       current,
       latest: null,
+      releaseUpdateAvailable: false,
       updateAvailable: false,
       releaseUrl: null,
       publishedAt: null,
       notes: null,
       checkedAt: null,
+      image: {
+        repository: DOCKER_HUB_REPOSITORY,
+        latestTag: null,
+        latestTagUrl: null,
+        latestPushedAt: null,
+        latestDigest: null,
+        latestSizeBytes: null,
+        updateAvailable: false,
+        checkedAt: null,
+      },
       checkDisabled: true,
     };
   }
 
   const state = await checkLatestVersion({ forceRefresh: options.refresh === true });
+  const release = state?.release ?? null;
+  const docker = state?.docker ?? null;
+  const releaseUpdateAvailable = release ? compareSemver(release.latest, current) > 0 : false;
+  const imageUpdateAvailable = docker ? compareSemver(docker.latestTag, current) > 0 : false;
+
   return {
     current,
-    latest: state?.latest ?? null,
-    updateAvailable: state ? compareSemver(state.latest, current) > 0 : false,
-    releaseUrl: state?.htmlUrl ?? null,
-    publishedAt: state?.publishedAt ?? null,
-    notes: state?.notes ?? null,
+    latest: pickNewestKnownVersion(release?.latest, docker?.latestTag),
+    releaseUpdateAvailable,
+    updateAvailable: releaseUpdateAvailable || imageUpdateAvailable,
+    releaseUrl: release?.htmlUrl ?? null,
+    publishedAt: release?.publishedAt ?? null,
+    notes: release?.notes ?? null,
     checkedAt: state?.fetchedAt ?? null,
+    image: {
+      repository: docker?.repository ?? DOCKER_HUB_REPOSITORY,
+      latestTag: docker?.latestTag ?? null,
+      latestTagUrl: docker?.tagUrl ?? null,
+      latestPushedAt: docker?.pushedAt ?? null,
+      latestDigest: docker?.digest ?? null,
+      latestSizeBytes: docker?.sizeBytes ?? null,
+      updateAvailable: imageUpdateAvailable,
+      checkedAt: state?.fetchedAt ?? null,
+    },
     checkDisabled: false,
   };
 }

@@ -344,9 +344,9 @@
     },
     "reporter": {
       "unknown": "مستخدم غير معروف",
-      "label": "المُبلِّغ"
-    },
-    "reporter.avatarAlt": "صورة المُبلِّغ"
+      "label": "المُبلِّغ",
+      "avatarAlt": "صورة المُبلِّغ"
+    }
   },
   "issueDetail": {
     "comments": {
@@ -440,6 +440,15 @@
     "statusChecksDisabled": "عمليات التحقق معطّلة",
     "currentVersion": "الإصدار الحالي",
     "latestVersion": "أحدث إصدار",
+    "latestDockerImage": "أحدث صورة Docker",
+    "imagePushed": "تم الدفع {date}",
+    "dockerImage": "صورة Docker",
+    "dockerImageDescription": "تم الفحص من مستودع Docker Hub {repository}.",
+    "imageUpdateAvailable": "تحديث الصورة متاح",
+    "repository": "المستودع",
+    "imageDigest": "بصمة الصورة",
+    "imageSize": "حجم الصورة",
+    "viewDockerTag": "عرض وسم Docker",
     "published": "نُشر في {date}",
     "lastChecked": "آخر تحقق {time}",
     "checksDisabledHint": "عمليات التحقق من التحديثات معطّلة عبر متغير البيئة TASKNEBULA_DISABLE_UPDATE_CHECK. أزِله لرؤية الإصدارات الجديدة هنا.",
@@ -2257,6 +2266,45 @@
       "writes_count": "{count} عملية كتابة",
       "no_summary": "لم يتم تسجيل ملخص.",
       "run_live": "تشغيل مباشر"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS governance",
+      "description": "Control which AI agents can write, what needs approval, and what is blocked.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading agent governance...",
+      "loadFailed": "Failed to load agent governance.",
+      "policySource": "Policy source",
+      "noPolicy": "No AGENTOWNERS file found",
+      "lastParsedAt": "Last parsed at",
+      "validationErrors": "Validation errors",
+      "validationTitle": "Policy validation needs attention",
+      "line": "Line {line}",
+      "rulesTitle": "Policy preview",
+      "rulesDescription": "Parsed rules are evaluated by specificity before effect precedence.",
+      "noRules": "No policy rules are active.",
+      "table": {
+        "line": "Line",
+        "actor": "Actor",
+        "action": "Action",
+        "effect": "Effect"
+      },
+      "effect": {
+        "allow": "Allow",
+        "deny": "Deny",
+        "requireApproval": "Approval"
+      },
+      "queueTitle": "Approval queue",
+      "queueDescription": "Pending AI actions wait here until an admin or maintainer approves them.",
+      "queueLoading": "Loading approval queue...",
+      "queueEmpty": "No pending AI actions.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "behaviorTitle": "Approval behavior",
+      "behaviorDescription": "Safe defaults used when no explicit rule matches.",
+      "unknownAgents": "Unknown agents",
+      "destructiveActions": "Destructive actions",
+      "requireApprovalDefault": "Require approval by default"
     }
   },
   "collab": {
@@ -2609,10 +2657,10 @@
         "noPermission": "ليس لديك إذن لإنشاء مستندات في هذه المساحة.",
         "creating": "جارٍ الإنشاء...",
         "createPage": "إنشاء صفحة"
-      }
-    },
-    "shell.collapse": "طي",
-    "shell.expand": "توسيع"
+      },
+      "collapse": "طي",
+      "expand": "توسيع"
+    }
   },
   "planning": {
     "search_placeholder": "ابحث في القوالب",
@@ -3264,7 +3312,9 @@
       "hint": {
         "openai": "يُستخدم عندما لا تكون مساحة العمل قد أدخلت مفتاح OpenAI الخاص بها. يبدأ بـ sk-…",
         "anthropic": "يُستخدم عندما لا تكون مساحة العمل قد أدخلت مفتاح Anthropic الخاص بها. يبدأ بـ sk-ant-…"
-      }
+      },
+      "saveFailedDescription": "تعذّر حفظ بيانات الاعتماد. يرجى المحاولة مرة أخرى.",
+      "removeFailedDescription": "تعذّرت إزالة بيانات الاعتماد. يرجى المحاولة مرة أخرى."
     },
     "realtimeHealth": {
       "loading": "جارٍ تحميل صحة الوقت الفعلي...",
@@ -3394,12 +3444,10 @@
       "targetedOrgs": "المؤسسات المستهدفة",
       "close": "إغلاق",
       "evaluate": "تقييم",
-      "evaluating": "جارٍ التقييم..."
-    },
-    "flagTest.isEnabled": "isEnabled",
-    "flagTest.rolloutPercent": "rollout%",
-    "platformAi.saveFailedDescription": "تعذّر حفظ بيانات الاعتماد. يرجى المحاولة مرة أخرى.",
-    "platformAi.removeFailedDescription": "تعذّرت إزالة بيانات الاعتماد. يرجى المحاولة مرة أخرى."
+      "evaluating": "جارٍ التقييم...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "rollout%"
+    }
   },
   "adminDialogs": {
     "common": {
@@ -3440,7 +3488,8 @@
       "plansHint": "اتركه فارغًا للتمكين لجميع الخطط.",
       "targetOrganizations": "المؤسسات المستهدفة",
       "targetOrganizationsHint": "اتركه فارغًا للتمكين لجميع المؤسسات المطابقة للخطة + الطرح.",
-      "rollout": "الطرح: {percentage}%"
+      "rollout": "الطرح: {percentage}%",
+      "namePlaceholder": "التحليلات المتقدمة"
     },
     "createOrg": {
       "trigger": "مؤسسة جديدة",
@@ -3464,7 +3513,8 @@
       "domain": "النطاق (اختياري)",
       "toastUpdatedTitle": "تم تحديث المؤسسة",
       "toastUpdatedDescription": "تم حفظ التغييرات بنجاح.",
-      "toastFailedTitle": "فشل تحديث المؤسسة"
+      "toastFailedTitle": "فشل تحديث المؤسسة",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "الاسم",
@@ -3474,7 +3524,9 @@
       "planFree": "مجانية",
       "planStarter": "المبتدئة",
       "planGrowth": "النمو",
-      "planEnterprise": "المؤسسات"
+      "planEnterprise": "المؤسسات",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "مستخدم جديد",
@@ -3487,7 +3539,9 @@
       "missingFieldsDescription": "الاسم والبريد الإلكتروني وكلمة المرور مطلوبة.",
       "toastCreatedTitle": "تم إنشاء المستخدم",
       "toastCreatedDescription": "تم إنشاء المستخدم بنجاح.",
-      "toastFailedTitle": "فشل إنشاء المستخدم"
+      "toastFailedTitle": "فشل إنشاء المستخدم",
+      "fullNamePlaceholder": "Jane Smith",
+      "emailPlaceholder": "jane@example.com"
     },
     "editUser": {
       "title": "تعديل المستخدم",
@@ -3511,13 +3565,7 @@
       "searchPlaceholder": "ابحث في المؤسسات...",
       "empty": "لم يتم العثور على مؤسسات.",
       "remove": "إزالة {name}"
-    },
-    "orgForm.namePlaceholder": "Acme Inc",
-    "orgForm.slugPlaceholder": "acme-inc",
-    "editOrg.domainPlaceholder": "example.com",
-    "createUser.fullNamePlaceholder": "Jane Smith",
-    "createUser.emailPlaceholder": "jane@example.com",
-    "flagForm.namePlaceholder": "التحليلات المتقدمة"
+    }
   },
   "charts": {
     "issues": "المهام",
@@ -3652,7 +3700,8 @@
       "priorityLow": "منخفضة",
       "priorityNone": "بلا",
       "labelsCommaSeparated": "التسميات (مفصولة بفواصل)",
-      "creating": "جارٍ الإنشاء…"
+      "creating": "جارٍ الإنشاء…",
+      "queuedForApprovalCount": "{count, plural, one {1 draft is waiting for approval} other {# drafts are waiting for approval}}"
     },
     "assist": {
       "title": "مساعدة الذكاء الاصطناعي",
@@ -3963,7 +4012,9 @@
     "startSprintTooltip": "ابدأ هذا السباق واجعله نشطًا",
     "completeSprint": "إكمال السباق",
     "completeSprintTooltip": "أكمِل هذا السباق. ستُنقل المهام غير المكتملة إلى قائمة الأعمال المتراكمة.",
-    "sprintBurndown": "مخطط إنجاز السباق"
+    "sprintBurndown": "مخطط إنجاز السباق",
+    "projectInviteRequiredTitle": "Invitation required",
+    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4499,7 +4550,10 @@
         "status": "الحالة",
         "priority": "الأولوية",
         "assignee": "المكلَّف"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "الوصول",
@@ -4555,7 +4609,12 @@
         "qa_engineer": "مهندس ضمان الجودة",
         "designer": "مصمّم",
         "viewer": "مُشاهِد"
-      }
+      },
+      "inviteExpiry": "Invitation expires",
+      "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
+      "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
+      "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
+      "invitationResent": "Invitation resent"
     },
     "org": {
       "selectOrg": "اختر مؤسسة لتحميل الإعدادات.",
@@ -4664,10 +4723,7 @@
         "datadog": "اضبط { apiKey, site? }.",
         "s3": "اضبط { bucket, region, prefix? }. يجب ضبط AWS_ACCESS_KEY_ID/SECRET في البيئة."
       }
-    },
-    "import.projectIdPlaceholder": "prj_xxx",
-    "import.linearTeamPlaceholder": "ENG",
-    "import.jiraSitePlaceholder": "acme.atlassian.net"
+    }
   },
   "sprints": {
     "defaultName": "سباق {number}",
@@ -5126,18 +5182,20 @@
           "connecting": "جارٍ الاتصال",
           "reconnecting": "جارٍ إعادة الاتصال",
           "disconnected": "غير متصل"
+        },
+        "permissionDeniedRetry": "تم رفض إذن الميكروفون. اسمح بالوصول إلى الميكروفون في متصفحك وحاول مرة أخرى.",
+        "micCouldNotStartBusy": "تعذّر تشغيل الميكروفون. قد يكون تطبيق آخر يستخدمه.",
+        "audioEngineFailed": "فشل محرك الصوت في المتصفح لهذا الجهاز. أوقف تطبيقات الصوت الأخرى أو غيّر الميكروفون، ثم حاول مرة أخرى.",
+        "noMicForSession": "لم يتم العثور على ميكروفون لجلسة المتصفح هذه.",
+        "runtimeError": {
+          "serverUnreachable": "خادم الصوت غير قابل للوصول على منافذ الوسائط (UDP 50000-50020 / 3478، TCP 7881). تحقق من الجدار الناري / NAT وحاول مرة أخرى.",
+          "permissionDenied": "تم رفض إذن الميكروفون. اسمح بالوصول إلى الميكروفون في متصفحك وحاول مرة أخرى.",
+          "micNotStarted": "تعذّر تشغيل الميكروفون. قد يكون تطبيق آخر يستخدمه.",
+          "audioEngineFailed": "فشل محرك الصوت في المتصفح لهذا الجهاز. أوقف تطبيقات الصوت الأخرى أو غيّر الميكروفون، ثم حاول مرة أخرى.",
+          "micNotFound": "لم يتم العثور على ميكروفون لجلسة المتصفح هذه."
         }
       }
-    },
-    "chat.voice.permissionDeniedRetry": "تم رفض إذن الميكروفون. اسمح بالوصول إلى الميكروفون في متصفحك وحاول مرة أخرى.",
-    "chat.voice.micCouldNotStartBusy": "تعذّر تشغيل الميكروفون. قد يكون تطبيق آخر يستخدمه.",
-    "chat.voice.audioEngineFailed": "فشل محرك الصوت في المتصفح لهذا الجهاز. أوقف تطبيقات الصوت الأخرى أو غيّر الميكروفون، ثم حاول مرة أخرى.",
-    "chat.voice.noMicForSession": "لم يتم العثور على ميكروفون لجلسة المتصفح هذه.",
-    "chat.voice.runtimeError.serverUnreachable": "خادم الصوت غير قابل للوصول على منافذ الوسائط (UDP 50000-50020 / 3478، TCP 7881). تحقق من الجدار الناري / NAT وحاول مرة أخرى.",
-    "chat.voice.runtimeError.permissionDenied": "تم رفض إذن الميكروفون. اسمح بالوصول إلى الميكروفون في متصفحك وحاول مرة أخرى.",
-    "chat.voice.runtimeError.micNotStarted": "تعذّر تشغيل الميكروفون. قد يكون تطبيق آخر يستخدمه.",
-    "chat.voice.runtimeError.audioEngineFailed": "فشل محرك الصوت في المتصفح لهذا الجهاز. أوقف تطبيقات الصوت الأخرى أو غيّر الميكروفون، ثم حاول مرة أخرى.",
-    "chat.voice.runtimeError.micNotFound": "لم يتم العثور على ميكروفون لجلسة المتصفح هذه."
+    }
   },
   "userSecurity": {
     "accountMenu": "قائمة الحساب",

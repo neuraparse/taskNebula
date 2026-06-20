@@ -8,12 +8,14 @@ import { getUpdateStatus } from '@/lib/version';
  *
  * Response: {
  *   current: string,            // running version (from the build)
- *   latest: string | null,      // latest GitHub release, null when unknown
+ *   latest: string | null,      // latest known GitHub/Docker Hub semver, null when unknown
+ *   releaseUpdateAvailable: boolean,
  *   updateAvailable: boolean,
  *   releaseUrl: string | null,
  *   publishedAt: string | null, // ISO timestamp from GitHub
  *   notes: string | null,       // release body, first 2000 chars
  *   checkedAt: string | null,   // ISO timestamp of the last upstream fetch
+ *   image: object,              // Docker Hub tag metadata for neuraparse/tasknebula
  *   checkDisabled: boolean      // TASKNEBULA_DISABLE_UPDATE_CHECK=true
  * }
  *

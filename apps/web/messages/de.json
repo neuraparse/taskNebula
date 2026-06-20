@@ -344,9 +344,9 @@
     },
     "reporter": {
       "unknown": "Unknown user",
-      "label": "Reporter"
-    },
-    "reporter.avatarAlt": "Avatar des Melders"
+      "label": "Reporter",
+      "avatarAlt": "Avatar des Melders"
+    }
   },
   "issueDetail": {
     "comments": {
@@ -440,6 +440,15 @@
     "statusChecksDisabled": "Checks disabled",
     "currentVersion": "Current version",
     "latestVersion": "Latest version",
+    "latestDockerImage": "Neuestes Docker-Image",
+    "imagePushed": "Gepusht am {date}",
+    "dockerImage": "Docker-Image",
+    "dockerImageDescription": "Geprüft aus dem Docker-Hub-Repository {repository}.",
+    "imageUpdateAvailable": "Image-Update verfügbar",
+    "repository": "Repository",
+    "imageDigest": "Image-Digest",
+    "imageSize": "Image-Größe",
+    "viewDockerTag": "Docker-Tag ansehen",
     "published": "Published {date}",
     "lastChecked": "Last checked {time}",
     "checksDisabledHint": "Update checks are disabled via the TASKNEBULA_DISABLE_UPDATE_CHECK environment variable. Remove it to see new releases here.",
@@ -2257,6 +2266,45 @@
       "writes_count": "{count} Schreibvorgänge",
       "no_summary": "Keine Zusammenfassung erfasst.",
       "run_live": "Live ausführen"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS governance",
+      "description": "Control which AI agents can write, what needs approval, and what is blocked.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading agent governance...",
+      "loadFailed": "Failed to load agent governance.",
+      "policySource": "Policy source",
+      "noPolicy": "No AGENTOWNERS file found",
+      "lastParsedAt": "Last parsed at",
+      "validationErrors": "Validation errors",
+      "validationTitle": "Policy validation needs attention",
+      "line": "Line {line}",
+      "rulesTitle": "Policy preview",
+      "rulesDescription": "Parsed rules are evaluated by specificity before effect precedence.",
+      "noRules": "No policy rules are active.",
+      "table": {
+        "line": "Line",
+        "actor": "Actor",
+        "action": "Action",
+        "effect": "Effect"
+      },
+      "effect": {
+        "allow": "Allow",
+        "deny": "Deny",
+        "requireApproval": "Approval"
+      },
+      "queueTitle": "Approval queue",
+      "queueDescription": "Pending AI actions wait here until an admin or maintainer approves them.",
+      "queueLoading": "Loading approval queue...",
+      "queueEmpty": "No pending AI actions.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "behaviorTitle": "Approval behavior",
+      "behaviorDescription": "Safe defaults used when no explicit rule matches.",
+      "unknownAgents": "Unknown agents",
+      "destructiveActions": "Destructive actions",
+      "requireApprovalDefault": "Require approval by default"
     }
   },
   "collab": {
@@ -2609,10 +2657,10 @@
         "noPermission": "Du hast keine Berechtigung, Dokumente in diesem Bereich zu erstellen.",
         "creating": "Wird erstellt...",
         "createPage": "Seite erstellen"
-      }
-    },
-    "shell.collapse": "Einklappen",
-    "shell.expand": "Ausklappen"
+      },
+      "collapse": "Einklappen",
+      "expand": "Ausklappen"
+    }
   },
   "planning": {
     "search_placeholder": "Vorlagen suchen",
@@ -3264,7 +3312,9 @@
       "hint": {
         "openai": "Wird verwendet, wenn ein Arbeitsbereich keinen eigenen OpenAI-Schlüssel eingegeben hat. Beginnt mit sk-…",
         "anthropic": "Wird verwendet, wenn ein Arbeitsbereich keinen eigenen Anthropic-Schlüssel eingegeben hat. Beginnt mit sk-ant-…"
-      }
+      },
+      "saveFailedDescription": "Die Anmeldedaten konnten nicht gespeichert werden. Bitte versuche es erneut.",
+      "removeFailedDescription": "Die Anmeldedaten konnten nicht entfernt werden. Bitte versuche es erneut."
     },
     "realtimeHealth": {
       "loading": "Echtzeitzustand wird geladen...",
@@ -3394,12 +3444,10 @@
       "targetedOrgs": "Ziel-Organisationen",
       "close": "Schließen",
       "evaluate": "Auswerten",
-      "evaluating": "Wird ausgewertet..."
-    },
-    "flagTest.isEnabled": "isEnabled",
-    "flagTest.rolloutPercent": "Rollout%",
-    "platformAi.saveFailedDescription": "Die Anmeldedaten konnten nicht gespeichert werden. Bitte versuche es erneut.",
-    "platformAi.removeFailedDescription": "Die Anmeldedaten konnten nicht entfernt werden. Bitte versuche es erneut."
+      "evaluating": "Wird ausgewertet...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "Rollout%"
+    }
   },
   "adminDialogs": {
     "common": {
@@ -3440,7 +3488,8 @@
       "plansHint": "Leer lassen, um für alle Tarife zu aktivieren.",
       "targetOrganizations": "Ziel-Organisationen",
       "targetOrganizationsHint": "Leer lassen, um für alle Organisationen zu aktivieren, die zu Tarif + Rollout passen.",
-      "rollout": "Rollout: {percentage} %"
+      "rollout": "Rollout: {percentage} %",
+      "namePlaceholder": "Erweiterte Analysen"
     },
     "createOrg": {
       "trigger": "Neue Organisation",
@@ -3464,7 +3513,8 @@
       "domain": "Domain (optional)",
       "toastUpdatedTitle": "Organisation aktualisiert",
       "toastUpdatedDescription": "Die Änderungen wurden erfolgreich gespeichert.",
-      "toastFailedTitle": "Organisation konnte nicht aktualisiert werden"
+      "toastFailedTitle": "Organisation konnte nicht aktualisiert werden",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "Name",
@@ -3474,7 +3524,9 @@
       "planFree": "Free",
       "planStarter": "Starter",
       "planGrowth": "Growth",
-      "planEnterprise": "Enterprise"
+      "planEnterprise": "Enterprise",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "Neuer Benutzer",
@@ -3487,7 +3539,9 @@
       "missingFieldsDescription": "Name, E-Mail und Passwort sind erforderlich.",
       "toastCreatedTitle": "Benutzer erstellt",
       "toastCreatedDescription": "Der Benutzer wurde erfolgreich erstellt.",
-      "toastFailedTitle": "Benutzer konnte nicht erstellt werden"
+      "toastFailedTitle": "Benutzer konnte nicht erstellt werden",
+      "fullNamePlaceholder": "Jane Smith",
+      "emailPlaceholder": "jane@example.com"
     },
     "editUser": {
       "title": "Benutzer bearbeiten",
@@ -3511,13 +3565,7 @@
       "searchPlaceholder": "Organisationen suchen...",
       "empty": "Keine Organisationen gefunden.",
       "remove": "{name} entfernen"
-    },
-    "orgForm.namePlaceholder": "Acme Inc",
-    "orgForm.slugPlaceholder": "acme-inc",
-    "editOrg.domainPlaceholder": "example.com",
-    "createUser.fullNamePlaceholder": "Jane Smith",
-    "createUser.emailPlaceholder": "jane@example.com",
-    "flagForm.namePlaceholder": "Erweiterte Analysen"
+    }
   },
   "charts": {
     "issues": "Aufgaben",
@@ -3652,7 +3700,8 @@
       "priorityLow": "Niedrig",
       "priorityNone": "Keine",
       "labelsCommaSeparated": "Labels (durch Kommas getrennt)",
-      "creating": "Wird erstellt…"
+      "creating": "Wird erstellt…",
+      "queuedForApprovalCount": "{count, plural, one {1 draft is waiting for approval} other {# drafts are waiting for approval}}"
     },
     "assist": {
       "title": "KI-Unterstützung",
@@ -3963,7 +4012,9 @@
     "startSprintTooltip": "Diesen Sprint starten und aktiv setzen",
     "completeSprint": "Sprint abschließen",
     "completeSprintTooltip": "Diesen Sprint abschließen. Unvollständige Aufgaben werden in den Backlog verschoben.",
-    "sprintBurndown": "Sprint-Burndown"
+    "sprintBurndown": "Sprint-Burndown",
+    "projectInviteRequiredTitle": "Invitation required",
+    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4499,7 +4550,10 @@
         "status": "Status",
         "priority": "Priorität",
         "assignee": "Bearbeiter"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "Zugriff",
@@ -4555,7 +4609,12 @@
         "qa_engineer": "QA-Ingenieur",
         "designer": "Designer",
         "viewer": "Betrachter"
-      }
+      },
+      "inviteExpiry": "Invitation expires",
+      "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
+      "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
+      "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
+      "invitationResent": "Invitation resent"
     },
     "org": {
       "selectOrg": "Wählen Sie eine Organisation aus, um die Einstellungen zu laden.",
@@ -4664,10 +4723,7 @@
         "datadog": "Setzen Sie { apiKey, site? }.",
         "s3": "Setzen Sie { bucket, region, prefix? }. AWS_ACCESS_KEY_ID/SECRET müssen in der Umgebung gesetzt sein."
       }
-    },
-    "import.projectIdPlaceholder": "prj_xxx",
-    "import.linearTeamPlaceholder": "ENG",
-    "import.jiraSitePlaceholder": "acme.atlassian.net"
+    }
   },
   "sprints": {
     "defaultName": "Sprint {number}",
@@ -5126,18 +5182,20 @@
           "connecting": "Verbindung wird hergestellt",
           "reconnecting": "Verbindung wird wiederhergestellt",
           "disconnected": "Getrennt"
+        },
+        "permissionDeniedRetry": "Die Mikrofonberechtigung wurde verweigert. Erlaube den Mikrofonzugriff in deinem Browser und versuche es erneut.",
+        "micCouldNotStartBusy": "Dein Mikrofon konnte nicht gestartet werden. Möglicherweise wird es von einer anderen App verwendet.",
+        "audioEngineFailed": "Die Audio-Engine des Browsers ist auf diesem Gerät fehlgeschlagen. Beende andere Audio-Apps oder wechsle dein Mikrofon und versuche es erneut.",
+        "noMicForSession": "Für diese Browsersitzung wurde kein Mikrofon gefunden.",
+        "runtimeError": {
+          "serverUnreachable": "Der Voice-Server ist über die Medienports nicht erreichbar (UDP 50000-50020 / 3478, TCP 7881). Überprüfe Firewall / NAT und versuche es erneut.",
+          "permissionDenied": "Die Mikrofonberechtigung wurde verweigert. Erlaube den Mikrofonzugriff in deinem Browser und versuche es erneut.",
+          "micNotStarted": "Dein Mikrofon konnte nicht gestartet werden. Möglicherweise wird es von einer anderen App verwendet.",
+          "audioEngineFailed": "Die Audio-Engine des Browsers ist auf diesem Gerät fehlgeschlagen. Beende andere Audio-Apps oder wechsle dein Mikrofon und versuche es erneut.",
+          "micNotFound": "Für diese Browsersitzung wurde kein Mikrofon gefunden."
         }
       }
-    },
-    "chat.voice.permissionDeniedRetry": "Die Mikrofonberechtigung wurde verweigert. Erlaube den Mikrofonzugriff in deinem Browser und versuche es erneut.",
-    "chat.voice.micCouldNotStartBusy": "Dein Mikrofon konnte nicht gestartet werden. Möglicherweise wird es von einer anderen App verwendet.",
-    "chat.voice.audioEngineFailed": "Die Audio-Engine des Browsers ist auf diesem Gerät fehlgeschlagen. Beende andere Audio-Apps oder wechsle dein Mikrofon und versuche es erneut.",
-    "chat.voice.noMicForSession": "Für diese Browsersitzung wurde kein Mikrofon gefunden.",
-    "chat.voice.runtimeError.serverUnreachable": "Der Voice-Server ist über die Medienports nicht erreichbar (UDP 50000-50020 / 3478, TCP 7881). Überprüfe Firewall / NAT und versuche es erneut.",
-    "chat.voice.runtimeError.permissionDenied": "Die Mikrofonberechtigung wurde verweigert. Erlaube den Mikrofonzugriff in deinem Browser und versuche es erneut.",
-    "chat.voice.runtimeError.micNotStarted": "Dein Mikrofon konnte nicht gestartet werden. Möglicherweise wird es von einer anderen App verwendet.",
-    "chat.voice.runtimeError.audioEngineFailed": "Die Audio-Engine des Browsers ist auf diesem Gerät fehlgeschlagen. Beende andere Audio-Apps oder wechsle dein Mikrofon und versuche es erneut.",
-    "chat.voice.runtimeError.micNotFound": "Für diese Browsersitzung wurde kein Mikrofon gefunden."
+    }
   },
   "userSecurity": {
     "accountMenu": "Kontomenü",

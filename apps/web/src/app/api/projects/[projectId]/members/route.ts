@@ -24,7 +24,8 @@ async function canManageProjectMembers(userId: string, projectId: string): Promi
   const orgMember = await db.query.organizationMembers.findFirst({
     where: and(
       eq(schema.organizationMembers.userId, userId),
-      eq(schema.organizationMembers.organizationId, project.organizationId)
+      eq(schema.organizationMembers.organizationId, project.organizationId),
+      eq(schema.organizationMembers.status, 'active')
     ),
     columns: { role: true },
   });
@@ -195,6 +196,22 @@ export async function POST(
 
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
+    }
+
+    const targetOrgMember = await db.query.organizationMembers.findFirst({
+      where: and(
+        eq(schema.organizationMembers.userId, userId),
+        eq(schema.organizationMembers.organizationId, project.organizationId),
+        eq(schema.organizationMembers.status, 'active')
+      ),
+      columns: { id: true },
+    });
+
+    if (!targetOrgMember) {
+      return NextResponse.json(
+        { error: 'Invite this user to the organization before adding them to a project' },
+        { status: 400 }
+      );
     }
 
     // Check if member already exists

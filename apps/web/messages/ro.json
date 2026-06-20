@@ -344,9 +344,9 @@
     },
     "reporter": {
       "unknown": "Utilizator necunoscut",
-      "label": "Raportor"
-    },
-    "reporter.avatarAlt": "Avatar raportor"
+      "label": "Raportor",
+      "avatarAlt": "Avatar raportor"
+    }
   },
   "issueDetail": {
     "comments": {
@@ -440,6 +440,15 @@
     "statusChecksDisabled": "Verificări dezactivate",
     "currentVersion": "Versiunea curentă",
     "latestVersion": "Cea mai recentă versiune",
+    "latestDockerImage": "Cea mai nouă imagine Docker",
+    "imagePushed": "Publicată la {date}",
+    "dockerImage": "Imagine Docker",
+    "dockerImageDescription": "Verificat din repository-ul Docker Hub {repository}.",
+    "imageUpdateAvailable": "Actualizare de imagine disponibilă",
+    "repository": "Repository",
+    "imageDigest": "Digest imagine",
+    "imageSize": "Dimensiune imagine",
+    "viewDockerTag": "Vezi tagul Docker",
     "published": "Publicată pe {date}",
     "lastChecked": "Verificat ultima dată la {time}",
     "checksDisabledHint": "Verificările de actualizare sunt dezactivate prin variabila de mediu TASKNEBULA_DISABLE_UPDATE_CHECK. Elimin-o pentru a vedea aici noile lansări.",
@@ -2357,6 +2366,45 @@
       "writes_count": "{count} scrieri",
       "no_summary": "Niciun rezumat înregistrat.",
       "run_live": "Rulează live"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS governance",
+      "description": "Control which AI agents can write, what needs approval, and what is blocked.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading agent governance...",
+      "loadFailed": "Failed to load agent governance.",
+      "policySource": "Policy source",
+      "noPolicy": "No AGENTOWNERS file found",
+      "lastParsedAt": "Last parsed at",
+      "validationErrors": "Validation errors",
+      "validationTitle": "Policy validation needs attention",
+      "line": "Line {line}",
+      "rulesTitle": "Policy preview",
+      "rulesDescription": "Parsed rules are evaluated by specificity before effect precedence.",
+      "noRules": "No policy rules are active.",
+      "table": {
+        "line": "Line",
+        "actor": "Actor",
+        "action": "Action",
+        "effect": "Effect"
+      },
+      "effect": {
+        "allow": "Allow",
+        "deny": "Deny",
+        "requireApproval": "Approval"
+      },
+      "queueTitle": "Approval queue",
+      "queueDescription": "Pending AI actions wait here until an admin or maintainer approves them.",
+      "queueLoading": "Loading approval queue...",
+      "queueEmpty": "No pending AI actions.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "behaviorTitle": "Approval behavior",
+      "behaviorDescription": "Safe defaults used when no explicit rule matches.",
+      "unknownAgents": "Unknown agents",
+      "destructiveActions": "Destructive actions",
+      "requireApprovalDefault": "Require approval by default"
     }
   },
   "collab": {
@@ -2709,10 +2757,10 @@
         "noPermission": "Nu ai permisiunea de a crea documente în acest spațiu.",
         "creating": "Se creează...",
         "createPage": "Creează pagină"
-      }
-    },
-    "shell.collapse": "Restrânge",
-    "shell.expand": "Extinde"
+      },
+      "collapse": "Restrânge",
+      "expand": "Extinde"
+    }
   },
   "planning": {
     "search_placeholder": "Caută șabloane",
@@ -3364,7 +3412,9 @@
       "hint": {
         "openai": "Folosită când un spațiu de lucru nu și-a introdus propria cheie OpenAI. Începe cu sk-…",
         "anthropic": "Folosită când un spațiu de lucru nu și-a introdus propria cheie Anthropic. Începe cu sk-ant-…"
-      }
+      },
+      "saveFailedDescription": "Acreditarea nu a putut fi salvată. Încearcă din nou.",
+      "removeFailedDescription": "Acreditarea nu a putut fi eliminată. Încearcă din nou."
     },
     "realtimeHealth": {
       "loading": "Se încarcă sănătatea timp real...",
@@ -3494,12 +3544,10 @@
       "targetedOrgs": "organizații vizate",
       "close": "Închide",
       "evaluate": "Evaluează",
-      "evaluating": "Se evaluează..."
-    },
-    "flagTest.isEnabled": "isEnabled",
-    "flagTest.rolloutPercent": "rollout%",
-    "platformAi.saveFailedDescription": "Acreditarea nu a putut fi salvată. Încearcă din nou.",
-    "platformAi.removeFailedDescription": "Acreditarea nu a putut fi eliminată. Încearcă din nou."
+      "evaluating": "Se evaluează...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "rollout%"
+    }
   },
   "adminDialogs": {
     "common": {
@@ -3540,7 +3588,8 @@
       "plansHint": "Lasă gol pentru a activa pentru toate planurile.",
       "targetOrganizations": "Organizații țintă",
       "targetOrganizationsHint": "Lasă gol pentru a activa pentru toate organizațiile care corespund planului + lansării.",
-      "rollout": "Lansare: {percentage}%"
+      "rollout": "Lansare: {percentage}%",
+      "namePlaceholder": "Analize avansate"
     },
     "createOrg": {
       "trigger": "Organizație nouă",
@@ -3564,7 +3613,8 @@
       "domain": "Domeniu (opțional)",
       "toastUpdatedTitle": "Organizație actualizată",
       "toastUpdatedDescription": "Modificările au fost salvate cu succes.",
-      "toastFailedTitle": "Actualizarea organizației a eșuat"
+      "toastFailedTitle": "Actualizarea organizației a eșuat",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "Nume",
@@ -3574,7 +3624,9 @@
       "planFree": "Gratuit",
       "planStarter": "Starter",
       "planGrowth": "Growth",
-      "planEnterprise": "Enterprise"
+      "planEnterprise": "Enterprise",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "Utilizator nou",
@@ -3587,7 +3639,9 @@
       "missingFieldsDescription": "Numele, e-mailul și parola sunt obligatorii.",
       "toastCreatedTitle": "Utilizator creat",
       "toastCreatedDescription": "Utilizatorul a fost creat cu succes.",
-      "toastFailedTitle": "Crearea utilizatorului a eșuat"
+      "toastFailedTitle": "Crearea utilizatorului a eșuat",
+      "fullNamePlaceholder": "Jane Smith",
+      "emailPlaceholder": "jane@example.com"
     },
     "editUser": {
       "title": "Editează utilizatorul",
@@ -3611,13 +3665,7 @@
       "searchPlaceholder": "Caută organizații...",
       "empty": "Nicio organizație găsită.",
       "remove": "Elimină {name}"
-    },
-    "orgForm.namePlaceholder": "Acme Inc",
-    "orgForm.slugPlaceholder": "acme-inc",
-    "editOrg.domainPlaceholder": "example.com",
-    "createUser.fullNamePlaceholder": "Jane Smith",
-    "createUser.emailPlaceholder": "jane@example.com",
-    "flagForm.namePlaceholder": "Analize avansate"
+    }
   },
   "aiFeatures": {
     "badge": {
@@ -3691,7 +3739,8 @@
       "priorityLow": "Scăzută",
       "priorityNone": "Niciuna",
       "labelsCommaSeparated": "Etichete (separate prin virgulă)",
-      "creating": "Se creează…"
+      "creating": "Se creează…",
+      "queuedForApprovalCount": "{count, plural, one {1 draft is waiting for approval} other {# drafts are waiting for approval}}"
     },
     "assist": {
       "title": "Asistență AI",
@@ -3963,7 +4012,9 @@
     "startSprintTooltip": "Începe acest sprint și fă-l activ",
     "completeSprint": "Finalizează sprintul",
     "completeSprintTooltip": "Finalizează acest sprint. Problemele nefinalizate se vor muta în backlog.",
-    "sprintBurndown": "Burndown sprint"
+    "sprintBurndown": "Burndown sprint",
+    "projectInviteRequiredTitle": "Invitation required",
+    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4499,7 +4550,10 @@
         "status": "Stare",
         "priority": "Prioritate",
         "assignee": "Persoană desemnată"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "Acces",
@@ -4555,7 +4609,12 @@
         "qa_engineer": "Inginer QA",
         "designer": "Designer",
         "viewer": "Vizualizator"
-      }
+      },
+      "inviteExpiry": "Invitation expires",
+      "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
+      "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
+      "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
+      "invitationResent": "Invitation resent"
     },
     "org": {
       "selectOrg": "Selectează o organizație pentru a încărca setările.",
@@ -4664,10 +4723,7 @@
         "datadog": "Setează { apiKey, site? }.",
         "s3": "Setează { bucket, region, prefix? }. AWS_ACCESS_KEY_ID/SECRET trebuie setate în env."
       }
-    },
-    "import.projectIdPlaceholder": "prj_xxx",
-    "import.linearTeamPlaceholder": "ENG",
-    "import.jiraSitePlaceholder": "acme.atlassian.net"
+    }
   },
   "sprints": {
     "defaultName": "Sprint {number}",
@@ -5126,18 +5182,20 @@
           "connecting": "Se conectează",
           "reconnecting": "Se reconectează",
           "disconnected": "Deconectat"
+        },
+        "permissionDeniedRetry": "Permisiunea pentru microfon a fost refuzată. Permite accesul la microfon în browser și încearcă din nou.",
+        "micCouldNotStartBusy": "Microfonul nu a putut fi pornit. Este posibil ca o altă aplicație să îl folosească.",
+        "audioEngineFailed": "Motorul audio al browserului a eșuat pe acest dispozitiv. Oprește alte aplicații audio sau schimbă microfonul, apoi încearcă din nou.",
+        "noMicForSession": "Nu a fost găsit niciun microfon pentru această sesiune de browser.",
+        "runtimeError": {
+          "serverUnreachable": "Serverul de voce este inaccesibil pe porturile media (UDP 50000-50020 / 3478, TCP 7881). Verifică firewall-ul / NAT și încearcă din nou.",
+          "permissionDenied": "Permisiunea pentru microfon a fost refuzată. Permite accesul la microfon în browser și încearcă din nou.",
+          "micNotStarted": "Microfonul nu a putut fi pornit. Este posibil ca o altă aplicație să îl folosească.",
+          "audioEngineFailed": "Motorul audio al browserului a eșuat pe acest dispozitiv. Oprește alte aplicații audio sau schimbă microfonul, apoi încearcă din nou.",
+          "micNotFound": "Nu a fost găsit niciun microfon pentru această sesiune de browser."
         }
       }
-    },
-    "chat.voice.permissionDeniedRetry": "Permisiunea pentru microfon a fost refuzată. Permite accesul la microfon în browser și încearcă din nou.",
-    "chat.voice.micCouldNotStartBusy": "Microfonul nu a putut fi pornit. Este posibil ca o altă aplicație să îl folosească.",
-    "chat.voice.audioEngineFailed": "Motorul audio al browserului a eșuat pe acest dispozitiv. Oprește alte aplicații audio sau schimbă microfonul, apoi încearcă din nou.",
-    "chat.voice.noMicForSession": "Nu a fost găsit niciun microfon pentru această sesiune de browser.",
-    "chat.voice.runtimeError.serverUnreachable": "Serverul de voce este inaccesibil pe porturile media (UDP 50000-50020 / 3478, TCP 7881). Verifică firewall-ul / NAT și încearcă din nou.",
-    "chat.voice.runtimeError.permissionDenied": "Permisiunea pentru microfon a fost refuzată. Permite accesul la microfon în browser și încearcă din nou.",
-    "chat.voice.runtimeError.micNotStarted": "Microfonul nu a putut fi pornit. Este posibil ca o altă aplicație să îl folosească.",
-    "chat.voice.runtimeError.audioEngineFailed": "Motorul audio al browserului a eșuat pe acest dispozitiv. Oprește alte aplicații audio sau schimbă microfonul, apoi încearcă din nou.",
-    "chat.voice.runtimeError.micNotFound": "Nu a fost găsit niciun microfon pentru această sesiune de browser."
+    }
   },
   "userSecurity": {
     "accountMenu": "Meniul contului",

@@ -24,6 +24,11 @@ import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { runAutomations } from '@/lib/automation/evaluator';
 import { withValidation } from '@/lib/api-validation';
 import { syncIssueLabelsBestEffort } from '@/lib/labels/sync';
+import {
+  guardAgentAction,
+  readAgentPolicyMarker,
+  stripAgentPolicyMarker,
+} from '@/lib/agent-policy/guard';
 
 // Params schema for /api/issues/[issueId] — kept loose (`min(1)`) to allow
 // the existing dataset of mixed-format ids; tighten to `id` from
@@ -220,6 +225,15 @@ const updateIssueSchema = z.object({
     .enum(['fixed', 'wont_do', 'duplicate', 'cannot_reproduce', 'done'])
     .nullable()
     .optional(),
+  agentPolicy: z
+    .object({
+      actor: z.string().min(1).max(120),
+      source: z.string().max(120).optional(),
+      resource: z.string().max(80).optional(),
+      action: z.string().max(80).optional(),
+      targetType: z.string().max(80).optional(),
+    })
+    .optional(),
 });
 
 // GET /api/issues/[issueId] - Get a single issue
@@ -282,43 +296,43 @@ export const PATCH = withValidation({
       return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
     }
 
+    const agentPolicy = readAgentPolicyMarker(validatedData.agentPolicy);
+    const issueInput = stripAgentPolicyMarker(validatedData);
+
     // Determine required permissions based on what's being changed
     const permissionChecks: IssueAction[] = [];
 
     // Basic edit permission for title, description, priority, labels, estimate, dueDate
     if (
-      validatedData.title ||
-      validatedData.description !== undefined ||
-      validatedData.priority ||
-      validatedData.labels ||
-      validatedData.estimate !== undefined ||
-      validatedData.dueDate !== undefined ||
-      validatedData.resolution !== undefined ||
-      validatedData.flagged !== undefined ||
-      validatedData.storyPoints !== undefined ||
-      validatedData.customFields !== undefined
+      issueInput.title ||
+      issueInput.description !== undefined ||
+      issueInput.priority ||
+      issueInput.labels ||
+      issueInput.estimate !== undefined ||
+      issueInput.dueDate !== undefined ||
+      issueInput.resolution !== undefined ||
+      issueInput.flagged !== undefined ||
+      issueInput.storyPoints !== undefined ||
+      issueInput.customFields !== undefined
     ) {
       permissionChecks.push('edit');
     }
 
     // Assign permission for assignee changes
-    if (
-      validatedData.assigneeId !== undefined &&
-      validatedData.assigneeId !== currentIssue.assigneeId
-    ) {
+    if (issueInput.assigneeId !== undefined && issueInput.assigneeId !== currentIssue.assigneeId) {
       permissionChecks.push('assign');
     }
 
     // Transition permission for status changes
     if (
-      (validatedData.status || validatedData.statusId) &&
-      validatedData.statusId !== currentIssue.statusId
+      (issueInput.status || issueInput.statusId) &&
+      issueInput.statusId !== currentIssue.statusId
     ) {
       permissionChecks.push('transition');
     }
 
     // Schedule permission for sprint changes
-    if (validatedData.sprintId !== undefined && validatedData.sprintId !== currentIssue.sprintId) {
+    if (issueInput.sprintId !== undefined && issueInput.sprintId !== currentIssue.sprintId) {
       permissionChecks.push('schedule');
     }
 
@@ -338,9 +352,57 @@ export const PATCH = withValidation({
       }
     }
 
+    if (agentPolicy) {
+      let policyResource = agentPolicy.resource || 'issues';
+      let policyAction = agentPolicy.action || 'update';
+      if (!agentPolicy.resource && !agentPolicy.action) {
+        if (
+          issueInput.assigneeId !== undefined &&
+          issueInput.assigneeId !== currentIssue.assigneeId
+        ) {
+          policyAction = 'assign';
+        } else if (issueInput.labels !== undefined) {
+          policyAction = 'label';
+        } else if (
+          issueInput.statusId !== undefined &&
+          issueInput.statusId !== currentIssue.statusId
+        ) {
+          policyResource = 'boards';
+          policyAction = 'move-card';
+        } else if (issueInput.resolution !== undefined) {
+          policyAction = 'close';
+        }
+      }
+
+      const guard = await guardAgentAction({
+        workspaceId: currentIssue.organizationId,
+        projectId: currentIssue.projectId,
+        requestedBy: session.user.id!,
+        actor: agentPolicy.actor,
+        resource: policyResource,
+        action: policyAction,
+        targetType: agentPolicy.targetType || 'issue',
+        targetId: issueId,
+        proposedPayload: {
+          executor: 'issues:update',
+          data: {
+            issueId,
+            data: issueInput,
+          },
+        },
+        context: {
+          source: agentPolicy.source,
+          issueKey: currentIssue.key,
+        },
+      });
+      if (!guard.allowed) {
+        return NextResponse.json(guard.body, { status: guard.httpStatus });
+      }
+    }
+
     // If status category is provided instead of statusId, convert it
-    const updateData = { ...validatedData };
-    if (validatedData.status && !validatedData.statusId) {
+    const updateData = { ...issueInput };
+    if (issueInput.status && !issueInput.statusId) {
       // Get the workflow for this project's organization
       const workflowResults = await db
         .select()
@@ -365,7 +427,7 @@ export const PATCH = withValidation({
         .where(eq(workflowStatuses.workflowId, workflow.id));
 
       const matchingStatuses = statusResults
-        .filter((s) => s.category === validatedData.status)
+        .filter((s) => s.category === issueInput.status)
         .sort((a, b) => a.position - b.position);
 
       const firstMatching = matchingStatuses[0];
@@ -394,11 +456,11 @@ export const PATCH = withValidation({
     // Write-through to the first-class labels layer. The jsonb write above
     // (`issues.labels`) stays the REST contract; this mirrors the names into
     // labels/issue_labels and never fails the update (best-effort).
-    if (validatedData.labels !== undefined) {
+    if (issueInput.labels !== undefined) {
       await syncIssueLabelsBestEffort({
         organizationId: currentIssue.organizationId,
         issueId,
-        labels: validatedData.labels,
+        labels: issueInput.labels,
         createdBy: session.user.id ?? null,
       });
     }

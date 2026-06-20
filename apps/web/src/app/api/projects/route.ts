@@ -61,7 +61,12 @@ export async function GET(request: NextRequest) {
         role: organizationMembers.role,
       })
       .from(organizationMembers)
-      .where(eq(organizationMembers.userId, session.user.id));
+      .where(
+        and(
+          eq(organizationMembers.userId, session.user.id),
+          eq(organizationMembers.status, 'active')
+        )
+      );
 
     if (userOrgMemberships.length === 0 && !user?.isSuperAdmin) {
       return NextResponse.json([]);
@@ -75,12 +80,15 @@ export async function GET(request: NextRequest) {
       orgIds = [requestedOrganizationId];
     }
 
-    const isOrgOwnerOrAdmin = userOrgMemberships.some(
-      (m) => m.role === 'owner' || m.role === 'admin'
-    );
-    const teamFilter = requestedTeamId
-      ? eq(projects.teamId, requestedTeamId)
-      : undefined;
+    const teamFilter = requestedTeamId ? eq(projects.teamId, requestedTeamId) : undefined;
+
+    type ProjectListRow = {
+      project: typeof projects.$inferSelect;
+      organizationName: string | null;
+      teamId: string | null;
+      teamName: string | null;
+      teamSlug: string | null;
+    };
 
     const mapProjects = <
       T extends {
@@ -105,9 +113,21 @@ export async function GET(request: NextRequest) {
           : null,
       }));
 
-    // Super admins and org owners/admins see all projects in their orgs
-    if (user?.isSuperAdmin || isOrgOwnerOrAdmin) {
-      const userProjects = await db
+    const selectProjectsForOrgIds = async (
+      visibleOrgIds: string[],
+      visibleProjectIds?: string[]
+    ): Promise<ProjectListRow[]> => {
+      if (visibleOrgIds.length === 0) {
+        return [];
+      }
+
+      const filters = [
+        inArray(projects.organizationId, visibleOrgIds),
+        ...(visibleProjectIds ? [inArray(projects.id, visibleProjectIds)] : []),
+        ...(teamFilter ? [teamFilter] : []),
+      ];
+
+      return db
         .select({
           project: projects,
           organizationName: organizations.name,
@@ -118,50 +138,44 @@ export async function GET(request: NextRequest) {
         .from(projects)
         .leftJoin(organizations, eq(projects.organizationId, organizations.id))
         .leftJoin(teams, eq(projects.teamId, teams.id))
-        .where(
-          and(
-            inArray(projects.organizationId, orgIds),
-            ...(teamFilter ? [teamFilter] : [])
-          )
-        )
+        .where(and(...filters))
         .orderBy(desc(projects.updatedAt));
+    };
+
+    if (user?.isSuperAdmin) {
+      const userProjects = await selectProjectsForOrgIds(orgIds);
 
       return NextResponse.json(mapProjects(userProjects));
     }
 
-    // Regular users only see projects they are members of
+    const scopedMemberships = requestedOrganizationId
+      ? userOrgMemberships.filter((m) => m.organizationId === requestedOrganizationId)
+      : userOrgMemberships;
+
+    const adminOrgIds = scopedMemberships
+      .filter((m) => m.role === 'owner' || m.role === 'admin')
+      .map((m) => m.organizationId);
+    const memberOrgIds = scopedMemberships
+      .filter((m) => m.role !== 'owner' && m.role !== 'admin')
+      .map((m) => m.organizationId);
+
+    const visibleProjects: ProjectListRow[] = [];
+
+    // Org owners/admins see every project only inside the orgs where they hold that role.
+    visibleProjects.push(...(await selectProjectsForOrgIds(adminOrgIds)));
+
+    // Regular organization users only see projects they are explicitly members of.
     const userProjectMemberships = await db
       .select({ projectId: projectMembers.projectId })
       .from(projectMembers)
       .where(eq(projectMembers.userId, session.user.id));
 
-    if (userProjectMemberships.length === 0) {
-      return NextResponse.json([]);
+    if (memberOrgIds.length > 0 && userProjectMemberships.length > 0) {
+      const projectIds = userProjectMemberships.map((m) => m.projectId);
+      visibleProjects.push(...(await selectProjectsForOrgIds(memberOrgIds, projectIds)));
     }
 
-    const projectIds = userProjectMemberships.map((m) => m.projectId);
-
-    const userProjects = await db
-      .select({
-        project: projects,
-        organizationName: organizations.name,
-        teamId: teams.id,
-        teamName: teams.name,
-        teamSlug: teams.slug,
-      })
-      .from(projects)
-      .leftJoin(organizations, eq(projects.organizationId, organizations.id))
-      .leftJoin(teams, eq(projects.teamId, teams.id))
-      .where(
-        and(
-          inArray(projects.organizationId, orgIds),
-          inArray(projects.id, projectIds),
-          ...(teamFilter ? [teamFilter] : [])
-        )
-      )
-      .orderBy(desc(projects.updatedAt));
-
-    return NextResponse.json(mapProjects(userProjects));
+    return NextResponse.json(mapProjects(visibleProjects));
   } catch (error) {
     console.error('Error fetching projects:', error);
     return NextResponse.json({ error: 'Failed to fetch projects' }, { status: 500 });
@@ -171,10 +185,7 @@ export async function GET(request: NextRequest) {
 // POST /api/projects - Create a new project
 // Migrated to withValidation (FEAT-29). The wrapper enforces the schema
 // (replacing the manual `if (!name || !key)` check) before we touch the DB.
-export const POST = withValidation({ body: createProjectSchema })(async (
-  request,
-  { body }
-) => {
+export const POST = withValidation({ body: createProjectSchema })(async (request, { body }) => {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -185,11 +196,21 @@ export const POST = withValidation({ body: createProjectSchema })(async (
 
     // Get user's first organization if not specified
     let orgId = organizationId;
+    let organizationRole: string | null = null;
     if (!orgId) {
       const [membership] = await db
-        .select()
+        .select({
+          organizationId: organizationMembers.organizationId,
+          role: organizationMembers.role,
+          status: organizationMembers.status,
+        })
         .from(organizationMembers)
-        .where(eq(organizationMembers.userId, session.user.id))
+        .where(
+          and(
+            eq(organizationMembers.userId, session.user.id),
+            eq(organizationMembers.status, 'active')
+          )
+        )
         .limit(1);
 
       if (!membership) {
@@ -199,6 +220,39 @@ export const POST = withValidation({ body: createProjectSchema })(async (
         );
       }
       orgId = membership.organizationId;
+      organizationRole = membership.role;
+    } else {
+      const [membership] = await db
+        .select({
+          role: organizationMembers.role,
+          status: organizationMembers.status,
+        })
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.userId, session.user.id),
+            eq(organizationMembers.organizationId, orgId),
+            eq(organizationMembers.status, 'active')
+          )
+        )
+        .limit(1);
+
+      organizationRole = membership?.role ?? null;
+    }
+
+    const [actor] = await db
+      .select({ isSuperAdmin: users.isSuperAdmin })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1);
+
+    const canCreateProject =
+      actor?.isSuperAdmin || organizationRole === 'owner' || organizationRole === 'admin';
+    if (!canCreateProject) {
+      return NextResponse.json(
+        { error: 'You need an owner or admin invite to create projects in this organization' },
+        { status: 403 }
+      );
     }
 
     const normalizedTeamId: string | null = teamId || null;
@@ -224,12 +278,7 @@ export const POST = withValidation({ body: createProjectSchema })(async (
     const [existingProject] = await db
       .select()
       .from(projects)
-      .where(
-        and(
-          eq(projects.organizationId, orgId),
-          eq(projects.key, key.toUpperCase())
-        )
-      )
+      .where(and(eq(projects.organizationId, orgId), eq(projects.key, key.toUpperCase())))
       .limit(1);
 
     if (existingProject) {
@@ -317,9 +366,7 @@ export const POST = withValidation({ body: createProjectSchema })(async (
       projectId: createdProject.id,
       payload: { project: createdProject },
       actorUserId: session.user.id,
-    }).catch((err) =>
-      console.error('Failed to run project.created automations:', err)
-    );
+    }).catch((err) => console.error('Failed to run project.created automations:', err));
 
     return NextResponse.json(createdProject, { status: 201 });
   } catch (error) {

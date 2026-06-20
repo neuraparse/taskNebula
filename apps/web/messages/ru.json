@@ -344,9 +344,9 @@
     },
     "reporter": {
       "unknown": "Неизвестный пользователь",
-      "label": "Автор"
-    },
-    "reporter.avatarAlt": "Аватар автора"
+      "label": "Автор",
+      "avatarAlt": "Аватар автора"
+    }
   },
   "issueDetail": {
     "comments": {
@@ -440,6 +440,15 @@
     "statusChecksDisabled": "Проверки отключены",
     "currentVersion": "Текущая версия",
     "latestVersion": "Последняя версия",
+    "latestDockerImage": "Последний Docker-образ",
+    "imagePushed": "Опубликовано {date}",
+    "dockerImage": "Docker-образ",
+    "dockerImageDescription": "Проверено из репозитория Docker Hub {repository}.",
+    "imageUpdateAvailable": "Доступно обновление образа",
+    "repository": "Репозиторий",
+    "imageDigest": "Digest образа",
+    "imageSize": "Размер образа",
+    "viewDockerTag": "Открыть Docker-тег",
     "published": "Опубликовано {date}",
     "lastChecked": "Последняя проверка {time}",
     "checksDisabledHint": "Проверка обновлений отключена через переменную окружения TASKNEBULA_DISABLE_UPDATE_CHECK. Удалите её, чтобы видеть новые релизы здесь.",
@@ -2257,6 +2266,45 @@
       "writes_count": "{count} записей",
       "no_summary": "Сводка не записана.",
       "run_live": "Запустить вживую"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS governance",
+      "description": "Control which AI agents can write, what needs approval, and what is blocked.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading agent governance...",
+      "loadFailed": "Failed to load agent governance.",
+      "policySource": "Policy source",
+      "noPolicy": "No AGENTOWNERS file found",
+      "lastParsedAt": "Last parsed at",
+      "validationErrors": "Validation errors",
+      "validationTitle": "Policy validation needs attention",
+      "line": "Line {line}",
+      "rulesTitle": "Policy preview",
+      "rulesDescription": "Parsed rules are evaluated by specificity before effect precedence.",
+      "noRules": "No policy rules are active.",
+      "table": {
+        "line": "Line",
+        "actor": "Actor",
+        "action": "Action",
+        "effect": "Effect"
+      },
+      "effect": {
+        "allow": "Allow",
+        "deny": "Deny",
+        "requireApproval": "Approval"
+      },
+      "queueTitle": "Approval queue",
+      "queueDescription": "Pending AI actions wait here until an admin or maintainer approves them.",
+      "queueLoading": "Loading approval queue...",
+      "queueEmpty": "No pending AI actions.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "behaviorTitle": "Approval behavior",
+      "behaviorDescription": "Safe defaults used when no explicit rule matches.",
+      "unknownAgents": "Unknown agents",
+      "destructiveActions": "Destructive actions",
+      "requireApprovalDefault": "Require approval by default"
     }
   },
   "collab": {
@@ -2609,10 +2657,10 @@
         "noPermission": "У вас нет прав на создание документов в этом пространстве.",
         "creating": "Создание...",
         "createPage": "Создать страницу"
-      }
-    },
-    "shell.collapse": "Свернуть",
-    "shell.expand": "Развернуть"
+      },
+      "collapse": "Свернуть",
+      "expand": "Развернуть"
+    }
   },
   "planning": {
     "search_placeholder": "Поиск шаблонов",
@@ -3264,7 +3312,9 @@
       "hint": {
         "openai": "Используется, когда рабочее пространство не ввело собственный ключ OpenAI. Начинается с sk-…",
         "anthropic": "Используется, когда рабочее пространство не ввело собственный ключ Anthropic. Начинается с sk-ant-…"
-      }
+      },
+      "saveFailedDescription": "Не удалось сохранить учётные данные. Попробуйте ещё раз.",
+      "removeFailedDescription": "Не удалось удалить учётные данные. Попробуйте ещё раз."
     },
     "realtimeHealth": {
       "loading": "Загрузка состояния реального времени...",
@@ -3394,12 +3444,10 @@
       "targetedOrgs": "целевые организации",
       "close": "Закрыть",
       "evaluate": "Оценить",
-      "evaluating": "Оценка..."
-    },
-    "flagTest.isEnabled": "isEnabled",
-    "flagTest.rolloutPercent": "rollout%",
-    "platformAi.saveFailedDescription": "Не удалось сохранить учётные данные. Попробуйте ещё раз.",
-    "platformAi.removeFailedDescription": "Не удалось удалить учётные данные. Попробуйте ещё раз."
+      "evaluating": "Оценка...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "rollout%"
+    }
   },
   "adminDialogs": {
     "common": {
@@ -3440,7 +3488,8 @@
       "plansHint": "Оставьте пустым, чтобы включить для всех планов.",
       "targetOrganizations": "Целевые организации",
       "targetOrganizationsHint": "Оставьте пустым, чтобы включить для всех организаций, соответствующих плану + развёртыванию.",
-      "rollout": "Развёртывание: {percentage}%"
+      "rollout": "Развёртывание: {percentage}%",
+      "namePlaceholder": "Расширенная аналитика"
     },
     "createOrg": {
       "trigger": "Новая организация",
@@ -3464,7 +3513,8 @@
       "domain": "Домен (необязательно)",
       "toastUpdatedTitle": "Организация обновлена",
       "toastUpdatedDescription": "Изменения успешно сохранены.",
-      "toastFailedTitle": "Не удалось обновить организацию"
+      "toastFailedTitle": "Не удалось обновить организацию",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "Название",
@@ -3474,7 +3524,9 @@
       "planFree": "Бесплатный",
       "planStarter": "Начальный",
       "planGrowth": "Рост",
-      "planEnterprise": "Корпоративный"
+      "planEnterprise": "Корпоративный",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "Новый пользователь",
@@ -3487,7 +3539,9 @@
       "missingFieldsDescription": "Требуются имя, email и пароль.",
       "toastCreatedTitle": "Пользователь создан",
       "toastCreatedDescription": "Пользователь успешно создан.",
-      "toastFailedTitle": "Не удалось создать пользователя"
+      "toastFailedTitle": "Не удалось создать пользователя",
+      "fullNamePlaceholder": "Иван Иванов",
+      "emailPlaceholder": "jane@example.com"
     },
     "editUser": {
       "title": "Изменить пользователя",
@@ -3511,13 +3565,7 @@
       "searchPlaceholder": "Поиск организаций...",
       "empty": "Организации не найдены.",
       "remove": "Удалить {name}"
-    },
-    "orgForm.namePlaceholder": "Acme Inc",
-    "orgForm.slugPlaceholder": "acme-inc",
-    "editOrg.domainPlaceholder": "example.com",
-    "createUser.fullNamePlaceholder": "Иван Иванов",
-    "createUser.emailPlaceholder": "jane@example.com",
-    "flagForm.namePlaceholder": "Расширенная аналитика"
+    }
   },
   "charts": {
     "issues": "Задачи",
@@ -3652,7 +3700,8 @@
       "priorityLow": "Низкий",
       "priorityNone": "Нет",
       "labelsCommaSeparated": "Метки (через запятую)",
-      "creating": "Создание…"
+      "creating": "Создание…",
+      "queuedForApprovalCount": "{count, plural, one {1 draft is waiting for approval} other {# drafts are waiting for approval}}"
     },
     "assist": {
       "title": "AI-помощь",
@@ -3963,7 +4012,9 @@
     "startSprintTooltip": "Начать этот спринт и сделать его активным",
     "completeSprint": "Завершить спринт",
     "completeSprintTooltip": "Завершить этот спринт. Незавершённые задачи перейдут в бэклог.",
-    "sprintBurndown": "Сгорание спринта"
+    "sprintBurndown": "Сгорание спринта",
+    "projectInviteRequiredTitle": "Invitation required",
+    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4499,7 +4550,10 @@
         "status": "Статус",
         "priority": "Приоритет",
         "assignee": "Исполнитель"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "Доступ",
@@ -4555,7 +4609,12 @@
         "qa_engineer": "QA-инженер",
         "designer": "Дизайнер",
         "viewer": "Наблюдатель"
-      }
+      },
+      "inviteExpiry": "Invitation expires",
+      "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
+      "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
+      "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
+      "invitationResent": "Invitation resent"
     },
     "org": {
       "selectOrg": "Выберите организацию для загрузки настроек.",
@@ -4664,10 +4723,7 @@
         "datadog": "Укажите { apiKey, site? }.",
         "s3": "Укажите { bucket, region, prefix? }. В переменных окружения должны быть заданы AWS_ACCESS_KEY_ID/SECRET."
       }
-    },
-    "import.projectIdPlaceholder": "prj_xxx",
-    "import.linearTeamPlaceholder": "ENG",
-    "import.jiraSitePlaceholder": "acme.atlassian.net"
+    }
   },
   "sprints": {
     "defaultName": "Спринт {number}",
@@ -5126,18 +5182,20 @@
           "connecting": "Подключение",
           "reconnecting": "Переподключение",
           "disconnected": "Отключено"
+        },
+        "permissionDeniedRetry": "Доступ к микрофону запрещён. Разрешите доступ к микрофону в браузере и попробуйте снова.",
+        "micCouldNotStartBusy": "Не удалось запустить микрофон. Возможно, его использует другое приложение.",
+        "audioEngineFailed": "Аудиодвижок браузера дал сбой на этом устройстве. Остановите другие аудиоприложения или смените микрофон, затем попробуйте снова.",
+        "noMicForSession": "Для этой сессии браузера микрофон не найден.",
+        "runtimeError": {
+          "serverUnreachable": "Голосовой сервер недоступен на медиапортах (UDP 50000-50020 / 3478, TCP 7881). Проверьте брандмауэр / NAT и попробуйте снова.",
+          "permissionDenied": "Доступ к микрофону запрещён. Разрешите доступ к микрофону в браузере и попробуйте снова.",
+          "micNotStarted": "Не удалось запустить микрофон. Возможно, его использует другое приложение.",
+          "audioEngineFailed": "Аудиодвижок браузера дал сбой на этом устройстве. Остановите другие аудиоприложения или смените микрофон, затем попробуйте снова.",
+          "micNotFound": "Для этой сессии браузера микрофон не найден."
         }
       }
-    },
-    "chat.voice.permissionDeniedRetry": "Доступ к микрофону запрещён. Разрешите доступ к микрофону в браузере и попробуйте снова.",
-    "chat.voice.micCouldNotStartBusy": "Не удалось запустить микрофон. Возможно, его использует другое приложение.",
-    "chat.voice.audioEngineFailed": "Аудиодвижок браузера дал сбой на этом устройстве. Остановите другие аудиоприложения или смените микрофон, затем попробуйте снова.",
-    "chat.voice.noMicForSession": "Для этой сессии браузера микрофон не найден.",
-    "chat.voice.runtimeError.serverUnreachable": "Голосовой сервер недоступен на медиапортах (UDP 50000-50020 / 3478, TCP 7881). Проверьте брандмауэр / NAT и попробуйте снова.",
-    "chat.voice.runtimeError.permissionDenied": "Доступ к микрофону запрещён. Разрешите доступ к микрофону в браузере и попробуйте снова.",
-    "chat.voice.runtimeError.micNotStarted": "Не удалось запустить микрофон. Возможно, его использует другое приложение.",
-    "chat.voice.runtimeError.audioEngineFailed": "Аудиодвижок браузера дал сбой на этом устройстве. Остановите другие аудиоприложения или смените микрофон, затем попробуйте снова.",
-    "chat.voice.runtimeError.micNotFound": "Для этой сессии браузера микрофон не найден."
+    }
   },
   "userSecurity": {
     "accountMenu": "Меню аккаунта",

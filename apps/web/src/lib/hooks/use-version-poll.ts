@@ -6,7 +6,7 @@ const POLL_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
 async function fetchVersionInfo(): Promise<VersionInfo> {
   // Non-forced read: hits the server's 6h cache, so the poll never triggers
-  // an upstream GitHub fetch more often than the TTL allows.
+  // upstream GitHub/Docker Hub fetches more often than the TTL allows.
   const response = await fetch('/api/admin/version');
   const payload = await response
     .json()
@@ -18,7 +18,7 @@ async function fetchVersionInfo(): Promise<VersionInfo> {
 }
 
 /**
- * Version info with a gentle background poll so a freshly-pulled image surfaces
+ * Version info with a gentle background poll so newly published updates surface
  * the update banner without a manual "Check now" click.
  *
  * Shares the `VERSION_INFO_QUERY_KEY` cache with `useVersionInfo`, so the

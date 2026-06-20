@@ -344,9 +344,9 @@
     },
     "reporter": {
       "unknown": "Okänd användare",
-      "label": "Rapportör"
-    },
-    "reporter.avatarAlt": "Rapportörens avatar"
+      "label": "Rapportör",
+      "avatarAlt": "Rapportörens avatar"
+    }
   },
   "issueDetail": {
     "comments": {
@@ -440,6 +440,15 @@
     "statusChecksDisabled": "Kontroller inaktiverade",
     "currentVersion": "Aktuell version",
     "latestVersion": "Senaste version",
+    "latestDockerImage": "Senaste Docker-image",
+    "imagePushed": "Pushad {date}",
+    "dockerImage": "Docker-image",
+    "dockerImageDescription": "Kontrollerad från Docker Hub-repositoryt {repository}.",
+    "imageUpdateAvailable": "Imageuppdatering tillgänglig",
+    "repository": "Repository",
+    "imageDigest": "Image-digest",
+    "imageSize": "Image-storlek",
+    "viewDockerTag": "Visa Docker-tagg",
     "published": "Publicerad {date}",
     "lastChecked": "Senast kontrollerad {time}",
     "checksDisabledHint": "Uppdateringskontroller är inaktiverade via miljövariabeln TASKNEBULA_DISABLE_UPDATE_CHECK. Ta bort den för att se nya versioner här.",
@@ -2296,6 +2305,45 @@
       "writes_count": "{count} skrivningar",
       "no_summary": "Ingen sammanfattning registrerad.",
       "run_live": "Kör live"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS governance",
+      "description": "Control which AI agents can write, what needs approval, and what is blocked.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading agent governance...",
+      "loadFailed": "Failed to load agent governance.",
+      "policySource": "Policy source",
+      "noPolicy": "No AGENTOWNERS file found",
+      "lastParsedAt": "Last parsed at",
+      "validationErrors": "Validation errors",
+      "validationTitle": "Policy validation needs attention",
+      "line": "Line {line}",
+      "rulesTitle": "Policy preview",
+      "rulesDescription": "Parsed rules are evaluated by specificity before effect precedence.",
+      "noRules": "No policy rules are active.",
+      "table": {
+        "line": "Line",
+        "actor": "Actor",
+        "action": "Action",
+        "effect": "Effect"
+      },
+      "effect": {
+        "allow": "Allow",
+        "deny": "Deny",
+        "requireApproval": "Approval"
+      },
+      "queueTitle": "Approval queue",
+      "queueDescription": "Pending AI actions wait here until an admin or maintainer approves them.",
+      "queueLoading": "Loading approval queue...",
+      "queueEmpty": "No pending AI actions.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "behaviorTitle": "Approval behavior",
+      "behaviorDescription": "Safe defaults used when no explicit rule matches.",
+      "unknownAgents": "Unknown agents",
+      "destructiveActions": "Destructive actions",
+      "requireApprovalDefault": "Require approval by default"
     }
   },
   "collab": {
@@ -2648,10 +2696,10 @@
         "noPermission": "Du har inte behörighet att skapa dokument i det här utrymmet.",
         "creating": "Skapar...",
         "createPage": "Skapa sida"
-      }
-    },
-    "shell.collapse": "Fäll ihop",
-    "shell.expand": "Expandera"
+      },
+      "collapse": "Fäll ihop",
+      "expand": "Expandera"
+    }
   },
   "planning": {
     "search_placeholder": "Sök mallar",
@@ -3303,7 +3351,9 @@
       "hint": {
         "openai": "Används när en arbetsyta inte har angett sin egen OpenAI-nyckel. Börjar med sk-…",
         "anthropic": "Används när en arbetsyta inte har angett sin egen Anthropic-nyckel. Börjar med sk-ant-…"
-      }
+      },
+      "saveFailedDescription": "Det gick inte att spara autentiseringsuppgiften. Försök igen.",
+      "removeFailedDescription": "Det gick inte att ta bort autentiseringsuppgiften. Försök igen."
     },
     "realtimeHealth": {
       "loading": "Läser in realtidshälsa...",
@@ -3433,12 +3483,10 @@
       "targetedOrgs": "riktade organisationer",
       "close": "Stäng",
       "evaluate": "Utvärdera",
-      "evaluating": "Utvärderar..."
-    },
-    "flagTest.isEnabled": "isEnabled",
-    "flagTest.rolloutPercent": "utrullning%",
-    "platformAi.saveFailedDescription": "Det gick inte att spara autentiseringsuppgiften. Försök igen.",
-    "platformAi.removeFailedDescription": "Det gick inte att ta bort autentiseringsuppgiften. Försök igen."
+      "evaluating": "Utvärderar...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "utrullning%"
+    }
   },
   "adminDialogs": {
     "common": {
@@ -3479,7 +3527,8 @@
       "plansHint": "Lämna tomt för att aktivera för alla planer.",
       "targetOrganizations": "Målorganisationer",
       "targetOrganizationsHint": "Lämna tomt för att aktivera för alla organisationer som matchar planen + utrullningen.",
-      "rollout": "Utrullning: {percentage} %"
+      "rollout": "Utrullning: {percentage} %",
+      "namePlaceholder": "Avancerad analys"
     },
     "createOrg": {
       "trigger": "Ny organisation",
@@ -3503,7 +3552,8 @@
       "domain": "Domän (valfritt)",
       "toastUpdatedTitle": "Organisation uppdaterad",
       "toastUpdatedDescription": "Ändringarna sparades.",
-      "toastFailedTitle": "Det gick inte att uppdatera organisationen"
+      "toastFailedTitle": "Det gick inte att uppdatera organisationen",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "Namn",
@@ -3513,7 +3563,9 @@
       "planFree": "Gratis",
       "planStarter": "Starter",
       "planGrowth": "Growth",
-      "planEnterprise": "Enterprise"
+      "planEnterprise": "Enterprise",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "Ny användare",
@@ -3526,7 +3578,9 @@
       "missingFieldsDescription": "Namn, e-post och lösenord krävs.",
       "toastCreatedTitle": "Användare skapad",
       "toastCreatedDescription": "Användaren skapades.",
-      "toastFailedTitle": "Det gick inte att skapa användaren"
+      "toastFailedTitle": "Det gick inte att skapa användaren",
+      "fullNamePlaceholder": "Jane Smith",
+      "emailPlaceholder": "jane@example.com"
     },
     "editUser": {
       "title": "Redigera användare",
@@ -3550,13 +3604,7 @@
       "searchPlaceholder": "Sök organisationer...",
       "empty": "Inga organisationer hittades.",
       "remove": "Ta bort {name}"
-    },
-    "orgForm.namePlaceholder": "Acme Inc",
-    "orgForm.slugPlaceholder": "acme-inc",
-    "editOrg.domainPlaceholder": "example.com",
-    "createUser.fullNamePlaceholder": "Jane Smith",
-    "createUser.emailPlaceholder": "jane@example.com",
-    "flagForm.namePlaceholder": "Avancerad analys"
+    }
   },
   "charts": {
     "issues": "Ärenden",
@@ -3691,7 +3739,8 @@
       "priorityLow": "Låg",
       "priorityNone": "Ingen",
       "labelsCommaSeparated": "Etiketter (kommaseparerade)",
-      "creating": "Skapar…"
+      "creating": "Skapar…",
+      "queuedForApprovalCount": "{count, plural, one {1 draft is waiting for approval} other {# drafts are waiting for approval}}"
     },
     "assist": {
       "title": "AI-assistans",
@@ -3963,7 +4012,9 @@
     "startSprintTooltip": "Starta den här sprinten och gör den aktiv",
     "completeSprint": "Slutför sprint",
     "completeSprintTooltip": "Slutför den här sprinten. Ofullständiga ärenden flyttas till backloggen.",
-    "sprintBurndown": "Sprint-burndown"
+    "sprintBurndown": "Sprint-burndown",
+    "projectInviteRequiredTitle": "Invitation required",
+    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4499,7 +4550,10 @@
         "status": "Status",
         "priority": "Prioritet",
         "assignee": "Tilldelad till"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "Åtkomst",
@@ -4555,7 +4609,12 @@
         "qa_engineer": "QA-ingenjör",
         "designer": "Designer",
         "viewer": "Granskare"
-      }
+      },
+      "inviteExpiry": "Invitation expires",
+      "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
+      "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
+      "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
+      "invitationResent": "Invitation resent"
     },
     "org": {
       "selectOrg": "Välj en organisation för att läsa in inställningar.",
@@ -4664,10 +4723,7 @@
         "datadog": "Ange { apiKey, site? }.",
         "s3": "Ange { bucket, region, prefix? }. AWS_ACCESS_KEY_ID/SECRET måste anges i miljön."
       }
-    },
-    "import.projectIdPlaceholder": "prj_xxx",
-    "import.linearTeamPlaceholder": "ENG",
-    "import.jiraSitePlaceholder": "acme.atlassian.net"
+    }
   },
   "sprints": {
     "defaultName": "Sprint {number}",
@@ -5126,18 +5182,20 @@
           "connecting": "Ansluter",
           "reconnecting": "Återansluter",
           "disconnected": "Frånkopplad"
+        },
+        "permissionDeniedRetry": "Mikrofonbehörighet nekades. Tillåt mikrofonåtkomst i din webbläsare och försök igen.",
+        "micCouldNotStartBusy": "Din mikrofon kunde inte startas. En annan app kanske använder den.",
+        "audioEngineFailed": "Webbläsarens ljudmotor misslyckades för den här enheten. Stäng andra ljudappar eller byt mikrofon och försök igen.",
+        "noMicForSession": "Ingen mikrofon hittades för den här webbläsarsessionen.",
+        "runtimeError": {
+          "serverUnreachable": "Röstservern går inte att nå på medieportarna (UDP 50000-50020 / 3478, TCP 7881). Kontrollera brandvägg/NAT och försök igen.",
+          "permissionDenied": "Mikrofonbehörighet nekades. Tillåt mikrofonåtkomst i din webbläsare och försök igen.",
+          "micNotStarted": "Din mikrofon kunde inte startas. En annan app kanske använder den.",
+          "audioEngineFailed": "Webbläsarens ljudmotor misslyckades för den här enheten. Stäng andra ljudappar eller byt mikrofon och försök igen.",
+          "micNotFound": "Ingen mikrofon hittades för den här webbläsarsessionen."
         }
       }
-    },
-    "chat.voice.permissionDeniedRetry": "Mikrofonbehörighet nekades. Tillåt mikrofonåtkomst i din webbläsare och försök igen.",
-    "chat.voice.micCouldNotStartBusy": "Din mikrofon kunde inte startas. En annan app kanske använder den.",
-    "chat.voice.audioEngineFailed": "Webbläsarens ljudmotor misslyckades för den här enheten. Stäng andra ljudappar eller byt mikrofon och försök igen.",
-    "chat.voice.noMicForSession": "Ingen mikrofon hittades för den här webbläsarsessionen.",
-    "chat.voice.runtimeError.serverUnreachable": "Röstservern går inte att nå på medieportarna (UDP 50000-50020 / 3478, TCP 7881). Kontrollera brandvägg/NAT och försök igen.",
-    "chat.voice.runtimeError.permissionDenied": "Mikrofonbehörighet nekades. Tillåt mikrofonåtkomst i din webbläsare och försök igen.",
-    "chat.voice.runtimeError.micNotStarted": "Din mikrofon kunde inte startas. En annan app kanske använder den.",
-    "chat.voice.runtimeError.audioEngineFailed": "Webbläsarens ljudmotor misslyckades för den här enheten. Stäng andra ljudappar eller byt mikrofon och försök igen.",
-    "chat.voice.runtimeError.micNotFound": "Ingen mikrofon hittades för den här webbläsarsessionen."
+    }
   },
   "userSecurity": {
     "accountMenu": "Kontomeny",

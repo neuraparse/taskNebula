@@ -22,6 +22,11 @@ import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { runAutomations } from '@/lib/automation/evaluator';
 import { withValidation } from '@/lib/api-validation';
 import { syncIssueLabelsBestEffort } from '@/lib/labels/sync';
+import {
+  guardAgentAction,
+  readAgentPolicyMarker,
+  stripAgentPolicyMarker,
+} from '@/lib/agent-policy/guard';
 
 // Permission check helper for issues
 async function checkIssuePermission(
@@ -61,7 +66,8 @@ async function checkIssuePermission(
     .where(
       and(
         eq(organizationMembers.userId, userId),
-        eq(organizationMembers.organizationId, project.organizationId)
+        eq(organizationMembers.organizationId, project.organizationId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
@@ -137,6 +143,15 @@ const createIssueSchema = z.object({
   dueDate: z.string().datetime().optional(),
   customFields: z.record(z.any()).default({}),
   statusId: z.string().optional(),
+  agentPolicy: z
+    .object({
+      actor: z.string().min(1).max(120),
+      source: z.string().max(120).optional(),
+      resource: z.string().max(80).optional(),
+      action: z.string().max(80).optional(),
+      targetType: z.string().max(80).optional(),
+    })
+    .optional(),
 });
 
 // GET /api/issues - List issues with filters
@@ -183,7 +198,12 @@ export async function GET(request: NextRequest) {
     const orgMemberships = await db
       .select({ organizationId: organizationMembers.organizationId })
       .from(organizationMembers)
-      .where(eq(organizationMembers.userId, session.user.id));
+      .where(
+        and(
+          eq(organizationMembers.userId, session.user.id),
+          eq(organizationMembers.status, 'active')
+        )
+      );
     const accessibleOrgIds = orgMemberships.map((m) => m.organizationId);
 
     // If projectId was given, verify the caller can access that project's org
@@ -355,6 +375,34 @@ export const POST = withValidation({ body: createIssueSchema })(async (
       );
     }
 
+    const agentPolicy = readAgentPolicyMarker(validatedData.agentPolicy);
+    const issueInput = stripAgentPolicyMarker(validatedData);
+    if (agentPolicy) {
+      const guard = await guardAgentAction({
+        workspaceId: project.organizationId,
+        projectId: actualProjectId,
+        requestedBy: session.user.id!,
+        actor: agentPolicy.actor,
+        resource: agentPolicy.resource || 'issues',
+        action: agentPolicy.action || 'create',
+        targetType: agentPolicy.targetType || 'issue',
+        proposedPayload: {
+          executor: 'issues:create',
+          data: {
+            ...issueInput,
+            projectId: actualProjectId,
+          },
+        },
+        context: {
+          source: agentPolicy.source,
+          issueType: issueInput.type,
+        },
+      });
+      if (!guard.allowed) {
+        return NextResponse.json(guard.body, { status: guard.httpStatus });
+      }
+    }
+
     // Get default workflow for the project
     let workflowId = project.defaultWorkflowId;
 
@@ -385,8 +433,8 @@ export const POST = withValidation({ body: createIssueSchema })(async (
     // Resolve the final status: prefer the client-supplied statusId when it
     // belongs to this workflow; otherwise fall back to the first backlog status.
     let finalStatusId: string | undefined;
-    if (validatedData.statusId) {
-      const match = allStatuses.find((s) => s.id === validatedData.statusId);
+    if (issueInput.statusId) {
+      const match = allStatuses.find((s) => s.id === issueInput.statusId);
       if (match) {
         finalStatusId = match.id;
       }
@@ -427,18 +475,18 @@ export const POST = withValidation({ body: createIssueSchema })(async (
           projectId: actualProjectId,
           key: issueKey,
           number: nextNumber,
-          title: validatedData.title,
-          description: validatedData.description || null,
+          title: issueInput.title,
+          description: issueInput.description || null,
           statusId: finalStatusId,
-          priority: validatedData.priority,
-          type: validatedData.type,
+          priority: issueInput.priority,
+          type: issueInput.type,
           reporterId: session.user.id,
-          assigneeId: validatedData.assigneeId || null,
-          sprintId: validatedData.sprintId || null,
-          parentId: validatedData.parentId || null,
-          estimate: validatedData.estimate || null,
-          labels: validatedData.labels || [],
-          customFields: validatedData.customFields || {},
+          assigneeId: issueInput.assigneeId || null,
+          sprintId: issueInput.sprintId || null,
+          parentId: issueInput.parentId || null,
+          estimate: issueInput.estimate ?? null,
+          labels: issueInput.labels || [],
+          customFields: issueInput.customFields || {},
           metadata: {},
           createdBy: session.user.id,
           updatedBy: session.user.id,
@@ -468,11 +516,11 @@ export const POST = withValidation({ body: createIssueSchema })(async (
     // Write-through to the first-class labels layer. The jsonb write above
     // (`issues.labels`) stays the REST contract; this mirrors the names into
     // labels/issue_labels and never fails the create (best-effort).
-    if (validatedData.labels && validatedData.labels.length > 0) {
+    if (issueInput.labels && issueInput.labels.length > 0) {
       await syncIssueLabelsBestEffort({
         organizationId: newIssue.organizationId,
         issueId: newIssue.id,
-        labels: validatedData.labels,
+        labels: issueInput.labels,
         createdBy: session.user.id ?? null,
       });
     }

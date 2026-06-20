@@ -42,6 +42,7 @@ import { and, isNull } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { publishEvent } from '@/lib/realtime/events';
 import type { TriageSuggestionPayload } from '@/lib/agents/triage';
+import { guardAgentAction } from '@/lib/agent-policy/guard';
 
 const applyBodySchema = z.object({
   suggestionId: z.string().optional(),
@@ -50,10 +51,7 @@ const applyBodySchema = z.object({
 
 const DEFAULT_AUTO_APPLY_CONFIDENCE = 90;
 
-async function callerCanEdit(
-  userId: string,
-  projectId: string,
-): Promise<boolean> {
+async function callerCanEdit(userId: string, projectId: string): Promise<boolean> {
   const [user] = await db
     .select({ isSuperAdmin: users.isSuperAdmin })
     .from(users)
@@ -74,8 +72,8 @@ async function callerCanEdit(
     .where(
       and(
         eq(organizationMembers.userId, userId),
-        eq(organizationMembers.organizationId, project.organizationId),
-      ),
+        eq(organizationMembers.organizationId, project.organizationId)
+      )
     )
     .limit(1);
   if (orgMember?.role === 'owner' || orgMember?.role === 'admin') return true;
@@ -83,17 +81,12 @@ async function callerCanEdit(
   const [pm] = await db
     .select({ role: projectMembers.role })
     .from(projectMembers)
-    .where(
-      and(
-        eq(projectMembers.userId, userId),
-        eq(projectMembers.projectId, projectId),
-      ),
-    )
+    .where(and(eq(projectMembers.userId, userId), eq(projectMembers.projectId, projectId)))
     .limit(1);
   if (!pm) return false;
   // Mirror the "editor-tier" allowlist from /api/issues/[issueId] PATCH.
   return ['product_owner', 'scrum_master', 'tech_lead', 'developer', 'qa_engineer'].includes(
-    pm.role,
+    pm.role
   );
 }
 
@@ -113,7 +106,7 @@ async function autoApplyConfidenceFor(organizationId: string): Promise<number> {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ issueId: string }> },
+  { params }: { params: Promise<{ issueId: string }> }
 ) {
   try {
     const session = await auth();
@@ -136,41 +129,39 @@ export async function POST(
 
     // Load the target suggestion (specific id, or most recent pending).
     const targetRow = body.suggestionId
-      ? (await db
-          .select()
-          .from(issueTriageSuggestions)
-          .where(eq(issueTriageSuggestions.id, body.suggestionId))
-          .limit(1))[0]
-      : (await db
-          .select()
-          .from(issueTriageSuggestions)
-          .where(
-            and(
-              eq(issueTriageSuggestions.issueId, issueId),
-              isNull(issueTriageSuggestions.appliedAt),
-              isNull(issueTriageSuggestions.dismissedAt),
-            ),
-          )
-          .orderBy(desc(issueTriageSuggestions.createdAt))
-          .limit(1))[0];
+      ? (
+          await db
+            .select()
+            .from(issueTriageSuggestions)
+            .where(eq(issueTriageSuggestions.id, body.suggestionId))
+            .limit(1)
+        )[0]
+      : (
+          await db
+            .select()
+            .from(issueTriageSuggestions)
+            .where(
+              and(
+                eq(issueTriageSuggestions.issueId, issueId),
+                isNull(issueTriageSuggestions.appliedAt),
+                isNull(issueTriageSuggestions.dismissedAt)
+              )
+            )
+            .orderBy(desc(issueTriageSuggestions.createdAt))
+            .limit(1)
+        )[0];
 
     if (!targetRow) {
-      return NextResponse.json(
-        { error: 'No pending triage suggestion found' },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: 'No pending triage suggestion found' }, { status: 404 });
     }
     if (targetRow.issueId !== issueId) {
       return NextResponse.json(
         { error: 'Suggestion does not belong to this issue' },
-        { status: 400 },
+        { status: 400 }
       );
     }
     if (targetRow.appliedAt || targetRow.dismissedAt) {
-      return NextResponse.json(
-        { error: 'Suggestion has already been resolved' },
-        { status: 409 },
-      );
+      return NextResponse.json({ error: 'Suggestion has already been resolved' }, { status: 409 });
     }
 
     // Confidence gate: either auto-applicable, or human-approved.
@@ -183,7 +174,7 @@ export async function POST(
           confidence: targetRow.confidence,
           threshold,
         },
-        { status: 412 },
+        { status: 412 }
       );
     }
 
@@ -196,9 +187,7 @@ export async function POST(
       update.priority = payload.priority;
     }
     if (Array.isArray(payload.labels) && payload.labels.length > 0) {
-      const existing = Array.isArray(currentIssue.labels)
-        ? (currentIssue.labels as string[])
-        : [];
+      const existing = Array.isArray(currentIssue.labels) ? (currentIssue.labels as string[]) : [];
       const merged = Array.from(new Set([...existing, ...payload.labels])).slice(0, 16);
       update.labels = merged;
     }
@@ -211,11 +200,40 @@ export async function POST(
     }
 
     if (Object.keys(update).length > 0) {
+      let policyAction = 'update';
+      if (update.assigneeId !== undefined) policyAction = 'assign';
+      else if (update.labels !== undefined) policyAction = 'label';
+
+      const guard = await guardAgentAction({
+        workspaceId: currentIssue.organizationId,
+        projectId: currentIssue.projectId,
+        requestedBy: userId,
+        actor: 'tasknebula-ai',
+        resource: 'issues',
+        action: policyAction,
+        targetType: 'issue',
+        targetId: issueId,
+        proposedPayload: {
+          executor: 'issues:update',
+          data: {
+            issueId,
+            data: update,
+          },
+        },
+        context: {
+          source: 'triage-agent',
+          suggestionId: targetRow.id,
+          confidence: targetRow.confidence,
+        },
+      });
+      if (!guard.allowed) {
+        return NextResponse.json(guard.body, { status: guard.httpStatus });
+      }
+    }
+
+    if (Object.keys(update).length > 0) {
       update.updatedBy = userId;
-      await db
-        .update(issues)
-        .set(update)
-        .where(eq(issues.id, issueId));
+      await db.update(issues).set(update).where(eq(issues.id, issueId));
     }
 
     await db
@@ -271,14 +289,11 @@ export async function POST(
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Validation failed', details: error.errors },
-        { status: 400 },
+        { status: 400 }
       );
     }
     console.error('triage apply failed:', error);
-    return NextResponse.json(
-      { error: 'Failed to apply triage suggestion' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Failed to apply triage suggestion' }, { status: 500 });
   }
 }
 

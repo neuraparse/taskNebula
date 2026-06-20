@@ -42,6 +42,7 @@ function mockFetchResponse(url: string) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  window.history.pushState({}, '', '/auth/signup');
   fetchMock.mockImplementation((url: string) => {
     const setup = mockFetchResponse(url);
     if (setup) return setup;
@@ -106,6 +107,48 @@ describe('SignUpForm', () => {
         redirect: false,
       });
     });
+  });
+
+  it('prefills invite email and sends invite token with normalized signup email', async () => {
+    window.history.pushState(
+      {},
+      '',
+      '/auth/signup?email=Invited%40Example.COM&token=invite-token-1'
+    );
+    signInMock.mockResolvedValue({ ok: true, error: null });
+
+    const user = userEvent.setup();
+    render(<SignUpForm />);
+
+    const emailInput = await screen.findByLabelText(/email address/i);
+    await waitFor(() => expect(emailInput).toHaveValue('invited@example.com'));
+
+    await user.type(await screen.findByLabelText(/full name/i), 'Invited User');
+    await user.type(screen.getByLabelText(/^password$/i), 'hunter2hunter2');
+    await user.click(screen.getByRole('button', { name: /create account/i }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/auth/signup',
+        expect.objectContaining({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: 'Invited User',
+            email: 'invited@example.com',
+            password: 'hunter2hunter2',
+            inviteToken: 'invite-token-1',
+          }),
+        })
+      );
+    });
+
+    expect(signInMock).toHaveBeenCalledWith('credentials', {
+      email: 'invited@example.com',
+      password: 'hunter2hunter2',
+      redirect: false,
+    });
+    expect(pushMock).toHaveBeenCalledWith('/auth/verify-request?email=invited%40example.com');
   });
 
   it('shows the server error on failed signup', async () => {

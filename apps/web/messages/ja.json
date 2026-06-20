@@ -344,9 +344,9 @@
     },
     "reporter": {
       "unknown": "不明なユーザー",
-      "label": "報告者"
-    },
-    "reporter.avatarAlt": "報告者のアバター"
+      "label": "報告者",
+      "avatarAlt": "報告者のアバター"
+    }
   },
   "issueDetail": {
     "comments": {
@@ -440,6 +440,15 @@
     "statusChecksDisabled": "チェック無効",
     "currentVersion": "現在のバージョン",
     "latestVersion": "最新のバージョン",
+    "latestDockerImage": "最新の Docker イメージ",
+    "imagePushed": "{date} にプッシュ",
+    "dockerImage": "Docker イメージ",
+    "dockerImageDescription": "Docker Hub リポジトリ {repository} から確認しました。",
+    "imageUpdateAvailable": "イメージ更新があります",
+    "repository": "リポジトリ",
+    "imageDigest": "イメージ digest",
+    "imageSize": "イメージサイズ",
+    "viewDockerTag": "Docker タグを表示",
     "published": "{date} に公開",
     "lastChecked": "最終確認 {time}",
     "checksDisabledHint": "アップデートチェックは TASKNEBULA_DISABLE_UPDATE_CHECK 環境変数によって無効になっています。新しいリリースをここで確認するには、この変数を削除してください。",
@@ -2257,6 +2266,45 @@
       "writes_count": "{count} 件の書き込み",
       "no_summary": "記録された要約はありません。",
       "run_live": "ライブ実行"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS governance",
+      "description": "Control which AI agents can write, what needs approval, and what is blocked.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading agent governance...",
+      "loadFailed": "Failed to load agent governance.",
+      "policySource": "Policy source",
+      "noPolicy": "No AGENTOWNERS file found",
+      "lastParsedAt": "Last parsed at",
+      "validationErrors": "Validation errors",
+      "validationTitle": "Policy validation needs attention",
+      "line": "Line {line}",
+      "rulesTitle": "Policy preview",
+      "rulesDescription": "Parsed rules are evaluated by specificity before effect precedence.",
+      "noRules": "No policy rules are active.",
+      "table": {
+        "line": "Line",
+        "actor": "Actor",
+        "action": "Action",
+        "effect": "Effect"
+      },
+      "effect": {
+        "allow": "Allow",
+        "deny": "Deny",
+        "requireApproval": "Approval"
+      },
+      "queueTitle": "Approval queue",
+      "queueDescription": "Pending AI actions wait here until an admin or maintainer approves them.",
+      "queueLoading": "Loading approval queue...",
+      "queueEmpty": "No pending AI actions.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "behaviorTitle": "Approval behavior",
+      "behaviorDescription": "Safe defaults used when no explicit rule matches.",
+      "unknownAgents": "Unknown agents",
+      "destructiveActions": "Destructive actions",
+      "requireApprovalDefault": "Require approval by default"
     }
   },
   "collab": {
@@ -2609,10 +2657,10 @@
         "noPermission": "このスペースでドキュメントを作成する権限がありません。",
         "creating": "作成中...",
         "createPage": "ページを作成"
-      }
-    },
-    "shell.collapse": "折りたたむ",
-    "shell.expand": "展開する"
+      },
+      "collapse": "折りたたむ",
+      "expand": "展開する"
+    }
   },
   "planning": {
     "search_placeholder": "テンプレートを検索",
@@ -3264,7 +3312,9 @@
       "hint": {
         "openai": "ワークスペースが独自の OpenAI キーを入力していないときに使用されます。sk-… で始まります",
         "anthropic": "ワークスペースが独自の Anthropic キーを入力していないときに使用されます。sk-ant-… で始まります"
-      }
+      },
+      "saveFailedDescription": "認証情報を保存できませんでした。もう一度お試しください。",
+      "removeFailedDescription": "認証情報を削除できませんでした。もう一度お試しください。"
     },
     "realtimeHealth": {
       "loading": "リアルタイムの状態を読み込み中...",
@@ -3394,12 +3444,10 @@
       "targetedOrgs": "対象の組織",
       "close": "閉じる",
       "evaluate": "評価",
-      "evaluating": "評価中..."
-    },
-    "flagTest.isEnabled": "isEnabled",
-    "flagTest.rolloutPercent": "rollout%",
-    "platformAi.saveFailedDescription": "認証情報を保存できませんでした。もう一度お試しください。",
-    "platformAi.removeFailedDescription": "認証情報を削除できませんでした。もう一度お試しください。"
+      "evaluating": "評価中...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "rollout%"
+    }
   },
   "adminDialogs": {
     "common": {
@@ -3440,7 +3488,8 @@
       "plansHint": "すべてのプランで有効にするには空欄のままにしてください。",
       "targetOrganizations": "対象の組織",
       "targetOrganizationsHint": "プラン + ロールアウトに一致するすべての組織で有効にするには空欄のままにしてください。",
-      "rollout": "ロールアウト: {percentage}%"
+      "rollout": "ロールアウト: {percentage}%",
+      "namePlaceholder": "高度な分析"
     },
     "createOrg": {
       "trigger": "新しい組織",
@@ -3464,7 +3513,8 @@
       "domain": "ドメイン（任意）",
       "toastUpdatedTitle": "組織を更新しました",
       "toastUpdatedDescription": "変更を正常に保存しました。",
-      "toastFailedTitle": "組織の更新に失敗しました"
+      "toastFailedTitle": "組織の更新に失敗しました",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "名前",
@@ -3474,7 +3524,9 @@
       "planFree": "Free",
       "planStarter": "Starter",
       "planGrowth": "Growth",
-      "planEnterprise": "Enterprise"
+      "planEnterprise": "Enterprise",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "新しいユーザー",
@@ -3487,7 +3539,9 @@
       "missingFieldsDescription": "名前、メール、パスワードは必須です。",
       "toastCreatedTitle": "ユーザーを作成しました",
       "toastCreatedDescription": "ユーザーを正常に作成しました。",
-      "toastFailedTitle": "ユーザーの作成に失敗しました"
+      "toastFailedTitle": "ユーザーの作成に失敗しました",
+      "fullNamePlaceholder": "山田 花子",
+      "emailPlaceholder": "jane@example.com"
     },
     "editUser": {
       "title": "ユーザーを編集",
@@ -3511,13 +3565,7 @@
       "searchPlaceholder": "組織を検索...",
       "empty": "組織が見つかりません。",
       "remove": "{name} を削除"
-    },
-    "orgForm.namePlaceholder": "Acme Inc",
-    "orgForm.slugPlaceholder": "acme-inc",
-    "editOrg.domainPlaceholder": "example.com",
-    "createUser.fullNamePlaceholder": "山田 花子",
-    "createUser.emailPlaceholder": "jane@example.com",
-    "flagForm.namePlaceholder": "高度な分析"
+    }
   },
   "charts": {
     "issues": "課題",
@@ -3691,7 +3739,8 @@
       "priorityLow": "低",
       "priorityNone": "なし",
       "labelsCommaSeparated": "ラベル（カンマ区切り）",
-      "creating": "作成中…"
+      "creating": "作成中…",
+      "queuedForApprovalCount": "{count, plural, one {1 draft is waiting for approval} other {# drafts are waiting for approval}}"
     },
     "assist": {
       "title": "AI アシスト",
@@ -4046,7 +4095,9 @@
     "startSprintTooltip": "このスプリントを開始してアクティブにします",
     "completeSprint": "スプリントを完了",
     "completeSprintTooltip": "このスプリントを完了します。未完了の課題はバックログに移動します。",
-    "sprintBurndown": "スプリントバーンダウン"
+    "sprintBurndown": "スプリントバーンダウン",
+    "projectInviteRequiredTitle": "Invitation required",
+    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
   },
   "pagesSettings": {
     "loading": "読み込み中...",
@@ -4499,7 +4550,10 @@
         "status": "ステータス",
         "priority": "優先度",
         "assignee": "担当者"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "アクセス",
@@ -4555,7 +4609,12 @@
         "qa_engineer": "QAエンジニア",
         "designer": "デザイナー",
         "viewer": "閲覧者"
-      }
+      },
+      "inviteExpiry": "Invitation expires",
+      "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
+      "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
+      "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
+      "invitationResent": "Invitation resent"
     },
     "org": {
       "selectOrg": "組織を選択して設定を読み込みます。",
@@ -4664,10 +4723,7 @@
         "datadog": "{ apiKey, site? } を設定します。",
         "s3": "{ bucket, region, prefix? } を設定します。AWS_ACCESS_KEY_ID/SECRET を環境変数に設定する必要があります。"
       }
-    },
-    "import.projectIdPlaceholder": "prj_xxx",
-    "import.linearTeamPlaceholder": "ENG",
-    "import.jiraSitePlaceholder": "acme.atlassian.net"
+    }
   },
   "sprints": {
     "defaultName": "スプリント {number}",
@@ -5126,18 +5182,20 @@
           "connecting": "接続中",
           "reconnecting": "再接続中",
           "disconnected": "切断されました"
+        },
+        "permissionDeniedRetry": "マイクの使用が拒否されました。ブラウザでマイクへのアクセスを許可してから、もう一度お試しください。",
+        "micCouldNotStartBusy": "マイクを開始できませんでした。他のアプリが使用している可能性があります。",
+        "audioEngineFailed": "このデバイスでブラウザのオーディオエンジンが失敗しました。他のオーディオアプリを停止するか、マイクを変更してから、もう一度お試しください。",
+        "noMicForSession": "このブラウザセッションでマイクが見つかりませんでした。",
+        "runtimeError": {
+          "serverUnreachable": "メディアポート（UDP 50000-50020 / 3478、TCP 7881）でボイスサーバーに到達できません。ファイアウォール／NATを確認してから、もう一度お試しください。",
+          "permissionDenied": "マイクの使用が拒否されました。ブラウザでマイクへのアクセスを許可してから、もう一度お試しください。",
+          "micNotStarted": "マイクを開始できませんでした。他のアプリが使用している可能性があります。",
+          "audioEngineFailed": "このデバイスでブラウザのオーディオエンジンが失敗しました。他のオーディオアプリを停止するか、マイクを変更してから、もう一度お試しください。",
+          "micNotFound": "このブラウザセッションでマイクが見つかりませんでした。"
         }
       }
-    },
-    "chat.voice.permissionDeniedRetry": "マイクの使用が拒否されました。ブラウザでマイクへのアクセスを許可してから、もう一度お試しください。",
-    "chat.voice.micCouldNotStartBusy": "マイクを開始できませんでした。他のアプリが使用している可能性があります。",
-    "chat.voice.audioEngineFailed": "このデバイスでブラウザのオーディオエンジンが失敗しました。他のオーディオアプリを停止するか、マイクを変更してから、もう一度お試しください。",
-    "chat.voice.noMicForSession": "このブラウザセッションでマイクが見つかりませんでした。",
-    "chat.voice.runtimeError.serverUnreachable": "メディアポート（UDP 50000-50020 / 3478、TCP 7881）でボイスサーバーに到達できません。ファイアウォール／NATを確認してから、もう一度お試しください。",
-    "chat.voice.runtimeError.permissionDenied": "マイクの使用が拒否されました。ブラウザでマイクへのアクセスを許可してから、もう一度お試しください。",
-    "chat.voice.runtimeError.micNotStarted": "マイクを開始できませんでした。他のアプリが使用している可能性があります。",
-    "chat.voice.runtimeError.audioEngineFailed": "このデバイスでブラウザのオーディオエンジンが失敗しました。他のオーディオアプリを停止するか、マイクを変更してから、もう一度お試しください。",
-    "chat.voice.runtimeError.micNotFound": "このブラウザセッションでマイクが見つかりませんでした。"
+    }
   },
   "userSecurity": {
     "accountMenu": "アカウントメニュー",

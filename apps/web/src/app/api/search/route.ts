@@ -81,7 +81,8 @@ export const GET = withValidation({ query: searchQuerySchema })(async (request, 
       .where(
         and(
           eq(organizationMembers.userId, session.user.id),
-          eq(organizationMembers.organizationId, organizationId)
+          eq(organizationMembers.organizationId, organizationId),
+          eq(organizationMembers.status, 'active')
         )
       )
       .limit(1);

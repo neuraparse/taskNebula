@@ -33,11 +33,22 @@ function request(url = 'http://localhost/api/admin/version') {
 const upToDateStatus: UpdateStatus = {
   current: '0.4.0',
   latest: '0.4.0',
+  releaseUpdateAvailable: false,
   updateAvailable: false,
   releaseUrl: null,
   publishedAt: '2026-06-01T00:00:00.000Z',
   notes: null,
   checkedAt: '2026-06-12T08:00:00.000Z',
+  image: {
+    repository: 'neuraparse/tasknebula',
+    latestTag: '0.4.0',
+    latestTagUrl: 'https://hub.docker.com/r/neuraparse/tasknebula/tags?name=0.4.0',
+    latestPushedAt: '2026-06-01T00:00:00.000Z',
+    latestDigest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    latestSizeBytes: 123456789,
+    updateAvailable: false,
+    checkedAt: '2026-06-12T08:00:00.000Z',
+  },
   checkDisabled: false,
 };
 

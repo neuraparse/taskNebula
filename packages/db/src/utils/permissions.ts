@@ -74,11 +74,25 @@ export type PermissionKey = keyof typeof PERMISSION_KEYS;
 export const PERMISSION_CATEGORIES = {
   project: {
     label: 'Project',
-    permissions: ['canBrowseProject', 'canAdministerProject', 'canBrowseDocs', 'canCreateDocs', 'canEditDocs', 'canDeleteDocs'],
+    permissions: [
+      'canBrowseProject',
+      'canAdministerProject',
+      'canBrowseDocs',
+      'canCreateDocs',
+      'canEditDocs',
+      'canDeleteDocs',
+    ],
   },
   chat: {
     label: 'Chat & Calls',
-    permissions: ['canBrowseChat', 'canCreateChannels', 'canPostMessages', 'canModerateMessages', 'canStartCalls', 'canManageCalls'],
+    permissions: [
+      'canBrowseChat',
+      'canCreateChannels',
+      'canPostMessages',
+      'canModerateMessages',
+      'canStartCalls',
+      'canManageCalls',
+    ],
   },
   sprint: {
     label: 'Sprint Management',
@@ -87,15 +101,30 @@ export const PERMISSION_CATEGORIES = {
   issue: {
     label: 'Issues',
     permissions: [
-      'canCreateIssues', 'canEditIssues', 'canEditOwnIssues',
-      'canDeleteIssues', 'canDeleteOwnIssues', 'canAssignIssues',
-      'canAssigneeIssues', 'canTransitionIssues', 'canScheduleIssues',
-      'canMoveIssues', 'canLinkIssues', 'canCloseIssues', 'canReopenIssues'
+      'canCreateIssues',
+      'canEditIssues',
+      'canEditOwnIssues',
+      'canDeleteIssues',
+      'canDeleteOwnIssues',
+      'canAssignIssues',
+      'canAssigneeIssues',
+      'canTransitionIssues',
+      'canScheduleIssues',
+      'canMoveIssues',
+      'canLinkIssues',
+      'canCloseIssues',
+      'canReopenIssues',
     ],
   },
   comment: {
     label: 'Comments',
-    permissions: ['canAddComments', 'canEditOwnComments', 'canEditAllComments', 'canDeleteOwnComments', 'canDeleteAllComments'],
+    permissions: [
+      'canAddComments',
+      'canEditOwnComments',
+      'canEditAllComments',
+      'canDeleteOwnComments',
+      'canDeleteAllComments',
+    ],
   },
   attachment: {
     label: 'Attachments',
@@ -115,23 +144,50 @@ export const PERMISSION_CATEGORIES = {
   },
   timeTracking: {
     label: 'Time Tracking',
-    permissions: ['canLogWork', 'canEditOwnWorklogs', 'canEditAllWorklogs', 'canDeleteOwnWorklogs', 'canDeleteAllWorklogs'],
+    permissions: [
+      'canLogWork',
+      'canEditOwnWorklogs',
+      'canEditAllWorklogs',
+      'canDeleteOwnWorklogs',
+      'canDeleteAllWorklogs',
+    ],
   },
 } as const;
 
 // Permission descriptions for UI
-export const PERMISSION_DESCRIPTIONS: Record<PermissionKey, { label: string; description: string }> = {
+export const PERMISSION_DESCRIPTIONS: Record<
+  PermissionKey,
+  { label: string; description: string }
+> = {
   canBrowseProject: { label: 'Browse Project', description: 'View project, issues, and sprints' },
-  canAdministerProject: { label: 'Administer Project', description: 'Full project administration access' },
+  canAdministerProject: {
+    label: 'Administer Project',
+    description: 'Full project administration access',
+  },
   canBrowseDocs: { label: 'Browse Docs', description: 'View project documents and wiki content' },
   canCreateDocs: { label: 'Create Docs', description: 'Create new project documents' },
   canEditDocs: { label: 'Edit Docs', description: 'Edit project documents' },
   canDeleteDocs: { label: 'Delete Docs', description: 'Archive or delete project documents' },
-  canBrowseChat: { label: 'Browse Chat', description: 'Open project channels, issue threads, and doc discussions' },
-  canCreateChannels: { label: 'Create Channels', description: 'Create and rename project channels' },
-  canPostMessages: { label: 'Post Messages', description: 'Send, edit, and react to chat messages' },
-  canModerateMessages: { label: 'Moderate Messages', description: 'Delete or moderate other members’ messages' },
-  canStartCalls: { label: 'Start Calls', description: 'Start project voice rooms and issue/doc calls' },
+  canBrowseChat: {
+    label: 'Browse Chat',
+    description: 'Open project channels, issue threads, and doc discussions',
+  },
+  canCreateChannels: {
+    label: 'Create Channels',
+    description: 'Create and rename project channels',
+  },
+  canPostMessages: {
+    label: 'Post Messages',
+    description: 'Send, edit, and react to chat messages',
+  },
+  canModerateMessages: {
+    label: 'Moderate Messages',
+    description: 'Delete or moderate other members’ messages',
+  },
+  canStartCalls: {
+    label: 'Start Calls',
+    description: 'Start project voice rooms and issue/doc calls',
+  },
   canManageCalls: { label: 'Manage Calls', description: 'End active calls and manage call access' },
   canManageSprints: { label: 'Manage Sprints', description: 'Create and edit sprints' },
   canStartSprint: { label: 'Start Sprint', description: 'Start a sprint' },
@@ -139,7 +195,10 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionKey, { label: string; des
   canDeleteSprint: { label: 'Delete Sprint', description: 'Delete sprints' },
   canCreateIssues: { label: 'Create Issues', description: 'Create new issues' },
   canEditIssues: { label: 'Edit All Issues', description: 'Edit any issue in the project' },
-  canEditOwnIssues: { label: 'Edit Own Issues', description: 'Edit issues you created or are assigned to' },
+  canEditOwnIssues: {
+    label: 'Edit Own Issues',
+    description: 'Edit issues you created or are assigned to',
+  },
   canDeleteIssues: { label: 'Delete All Issues', description: 'Delete any issue' },
   canDeleteOwnIssues: { label: 'Delete Own Issues', description: 'Delete issues you created' },
   canAssignIssues: { label: 'Assign Issues', description: 'Assign issues to team members' },
@@ -156,8 +215,14 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionKey, { label: string; des
   canDeleteOwnComments: { label: 'Delete Own Comments', description: 'Delete your own comments' },
   canDeleteAllComments: { label: 'Delete All Comments', description: 'Delete any comment' },
   canCreateAttachments: { label: 'Create Attachments', description: 'Upload attachments' },
-  canDeleteOwnAttachments: { label: 'Delete Own Attachments', description: 'Delete your own attachments' },
-  canDeleteAllAttachments: { label: 'Delete All Attachments', description: 'Delete any attachment' },
+  canDeleteOwnAttachments: {
+    label: 'Delete Own Attachments',
+    description: 'Delete your own attachments',
+  },
+  canDeleteAllAttachments: {
+    label: 'Delete All Attachments',
+    description: 'Delete any attachment',
+  },
   canManageWatchers: { label: 'Manage Watchers', description: 'Add/remove watchers on issues' },
   canViewWatchers: { label: 'View Watchers', description: 'See who is watching issues' },
   canManageMembers: { label: 'Manage Members', description: 'Full member management access' },
@@ -241,43 +306,106 @@ export type Permission =
 export const ORGANIZATION_ROLE_PERMISSIONS: Record<string, Permission[]> = {
   owner: [
     // All organization permissions
-    'org:view', 'org:manage', 'org:delete', 'org:settings', 'org:billing',
+    'org:view',
+    'org:manage',
+    'org:delete',
+    'org:settings',
+    'org:billing',
     // All team permissions
-    'team:view', 'team:create', 'team:manage', 'team:delete',
+    'team:view',
+    'team:create',
+    'team:manage',
+    'team:delete',
     // All project permissions
-    'project:view', 'project:create', 'project:manage', 'project:delete', 'project:settings',
+    'project:view',
+    'project:create',
+    'project:manage',
+    'project:delete',
+    'project:settings',
     // All issue permissions
-    'issue:view', 'issue:create', 'issue:edit', 'issue:delete', 'issue:assign', 'issue:comment', 'issue:transition',
+    'issue:view',
+    'issue:create',
+    'issue:edit',
+    'issue:delete',
+    'issue:assign',
+    'issue:comment',
+    'issue:transition',
     // All member permissions
-    'member:view', 'member:invite', 'member:manage', 'member:remove',
+    'member:view',
+    'member:invite',
+    'member:manage',
+    'member:remove',
     // All workflow permissions
-    'workflow:view', 'workflow:create', 'workflow:manage', 'workflow:delete',
+    'workflow:view',
+    'workflow:create',
+    'workflow:manage',
+    'workflow:delete',
     // All sprint permissions
-    'sprint:view', 'sprint:create', 'sprint:manage', 'sprint:delete',
+    'sprint:view',
+    'sprint:create',
+    'sprint:manage',
+    'sprint:delete',
     // All custom field permissions
-    'custom_field:view', 'custom_field:create', 'custom_field:manage', 'custom_field:delete',
+    'custom_field:view',
+    'custom_field:create',
+    'custom_field:manage',
+    'custom_field:delete',
     // All webhook permissions
-    'webhook:view', 'webhook:create', 'webhook:manage', 'webhook:delete',
+    'webhook:view',
+    'webhook:create',
+    'webhook:manage',
+    'webhook:delete',
     // All API key permissions
-    'api_key:view', 'api_key:create', 'api_key:manage', 'api_key:delete',
+    'api_key:view',
+    'api_key:create',
+    'api_key:manage',
+    'api_key:delete',
   ],
   admin: [
-    'org:view', 'org:manage', 'org:settings',
-    'team:view', 'team:create', 'team:manage',
-    'project:view', 'project:create', 'project:manage', 'project:settings',
-    'issue:view', 'issue:create', 'issue:edit', 'issue:delete', 'issue:assign', 'issue:comment', 'issue:transition',
-    'member:view', 'member:invite', 'member:manage',
-    'workflow:view', 'workflow:create', 'workflow:manage',
-    'sprint:view', 'sprint:create', 'sprint:manage',
-    'custom_field:view', 'custom_field:create', 'custom_field:manage',
-    'webhook:view', 'webhook:create', 'webhook:manage',
-    'api_key:view', 'api_key:create',
+    'org:view',
+    'org:manage',
+    'org:settings',
+    'team:view',
+    'team:create',
+    'team:manage',
+    'project:view',
+    'project:create',
+    'project:manage',
+    'project:settings',
+    'issue:view',
+    'issue:create',
+    'issue:edit',
+    'issue:delete',
+    'issue:assign',
+    'issue:comment',
+    'issue:transition',
+    'member:view',
+    'member:invite',
+    'member:manage',
+    'workflow:view',
+    'workflow:create',
+    'workflow:manage',
+    'sprint:view',
+    'sprint:create',
+    'sprint:manage',
+    'custom_field:view',
+    'custom_field:create',
+    'custom_field:manage',
+    'webhook:view',
+    'webhook:create',
+    'webhook:manage',
+    'api_key:view',
+    'api_key:create',
   ],
   member: [
     'org:view',
     'team:view',
-    'project:view', 'project:create',
-    'issue:view', 'issue:create', 'issue:edit', 'issue:comment', 'issue:transition',
+    'project:view',
+    'issue:view',
+    'issue:create',
+    'issue:edit',
+    'issue:comment',
+    'issue:transition',
     'member:view',
     'workflow:view',
     'sprint:view',
@@ -293,11 +421,7 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<string, Permission[]> = {
     'sprint:view',
     'custom_field:view',
   ],
-  guest: [
-    'project:view',
-    'issue:view',
-    'issue:comment',
-  ],
+  guest: ['project:view', 'issue:view', 'issue:comment'],
 };
 
 // Super admin permissions (all permissions)
@@ -324,32 +448,74 @@ export type ProjectRole =
 // Project role permissions - specific to project context
 export const PROJECT_ROLE_PERMISSIONS: Record<ProjectRole, Permission[]> = {
   product_owner: [
-    'project:view', 'project:manage', 'project:settings',
-    'issue:view', 'issue:create', 'issue:edit', 'issue:delete', 'issue:assign', 'issue:comment', 'issue:transition',
-    'sprint:view', 'sprint:create', 'sprint:manage',
-    'member:view', 'member:invite', 'member:manage',
-    'workflow:view', 'workflow:manage',
-    'custom_field:view', 'custom_field:create', 'custom_field:manage',
+    'project:view',
+    'project:manage',
+    'project:settings',
+    'issue:view',
+    'issue:create',
+    'issue:edit',
+    'issue:delete',
+    'issue:assign',
+    'issue:comment',
+    'issue:transition',
+    'sprint:view',
+    'sprint:create',
+    'sprint:manage',
+    'member:view',
+    'member:invite',
+    'member:manage',
+    'workflow:view',
+    'workflow:manage',
+    'custom_field:view',
+    'custom_field:create',
+    'custom_field:manage',
   ],
   scrum_master: [
-    'project:view', 'project:manage',
-    'issue:view', 'issue:create', 'issue:edit', 'issue:assign', 'issue:comment', 'issue:transition',
-    'sprint:view', 'sprint:create', 'sprint:manage', 'sprint:delete',
-    'member:view', 'member:invite', 'member:manage',
+    'project:view',
+    'project:manage',
+    'issue:view',
+    'issue:create',
+    'issue:edit',
+    'issue:assign',
+    'issue:comment',
+    'issue:transition',
+    'sprint:view',
+    'sprint:create',
+    'sprint:manage',
+    'sprint:delete',
+    'member:view',
+    'member:invite',
+    'member:manage',
     'workflow:view',
     'custom_field:view',
   ],
   tech_lead: [
-    'project:view', 'project:settings',
-    'issue:view', 'issue:create', 'issue:edit', 'issue:delete', 'issue:assign', 'issue:comment', 'issue:transition',
-    'sprint:view', 'sprint:create', 'sprint:manage',
-    'member:view', 'member:invite',
-    'workflow:view', 'workflow:manage',
-    'custom_field:view', 'custom_field:create',
+    'project:view',
+    'project:settings',
+    'issue:view',
+    'issue:create',
+    'issue:edit',
+    'issue:delete',
+    'issue:assign',
+    'issue:comment',
+    'issue:transition',
+    'sprint:view',
+    'sprint:create',
+    'sprint:manage',
+    'member:view',
+    'member:invite',
+    'workflow:view',
+    'workflow:manage',
+    'custom_field:view',
+    'custom_field:create',
   ],
   developer: [
     'project:view',
-    'issue:view', 'issue:create', 'issue:edit', 'issue:comment', 'issue:transition',
+    'issue:view',
+    'issue:create',
+    'issue:edit',
+    'issue:comment',
+    'issue:transition',
     'sprint:view',
     'member:view',
     'workflow:view',
@@ -357,7 +523,11 @@ export const PROJECT_ROLE_PERMISSIONS: Record<ProjectRole, Permission[]> = {
   ],
   qa_engineer: [
     'project:view',
-    'issue:view', 'issue:create', 'issue:edit', 'issue:comment', 'issue:transition',
+    'issue:view',
+    'issue:create',
+    'issue:edit',
+    'issue:comment',
+    'issue:transition',
     'sprint:view',
     'member:view',
     'workflow:view',
@@ -365,7 +535,10 @@ export const PROJECT_ROLE_PERMISSIONS: Record<ProjectRole, Permission[]> = {
   ],
   designer: [
     'project:view',
-    'issue:view', 'issue:create', 'issue:edit', 'issue:comment',
+    'issue:view',
+    'issue:create',
+    'issue:edit',
+    'issue:comment',
     'sprint:view',
     'member:view',
     'workflow:view',
@@ -373,7 +546,8 @@ export const PROJECT_ROLE_PERMISSIONS: Record<ProjectRole, Permission[]> = {
   ],
   viewer: [
     'project:view',
-    'issue:view', 'issue:comment',
+    'issue:view',
+    'issue:comment',
     'sprint:view',
     'member:view',
     'workflow:view',
@@ -382,7 +556,10 @@ export const PROJECT_ROLE_PERMISSIONS: Record<ProjectRole, Permission[]> = {
 };
 
 // Project role display info
-export const PROJECT_ROLE_INFO: Record<ProjectRole, { label: string; description: string; color: string }> = {
+export const PROJECT_ROLE_INFO: Record<
+  ProjectRole,
+  { label: string; description: string; color: string }
+> = {
   product_owner: {
     label: 'Product Owner',
     description: 'Manages product backlog, priorities, and accepts/rejects work',
@@ -857,10 +1034,7 @@ export function getDefaultPermissionsForRole(role: ProjectRole): GranularPermiss
 /**
  * Check if a project role has a specific permission
  */
-export function hasProjectPermission(
-  projectRole: ProjectRole,
-  permission: Permission
-): boolean {
+export function hasProjectPermission(projectRole: ProjectRole, permission: Permission): boolean {
   const rolePermissions = PROJECT_ROLE_PERMISSIONS[projectRole];
   if (!rolePermissions) {
     return false;
@@ -909,7 +1083,7 @@ export function hasAnyPermission(
     return true;
   }
 
-  return permissions.some(permission => hasPermission(role, permission, isSuperAdmin));
+  return permissions.some((permission) => hasPermission(role, permission, isSuperAdmin));
 }
 
 /**
@@ -924,16 +1098,13 @@ export function hasAllPermissions(
     return true;
   }
 
-  return permissions.every(permission => hasPermission(role, permission, isSuperAdmin));
+  return permissions.every((permission) => hasPermission(role, permission, isSuperAdmin));
 }
 
 /**
  * Get all permissions for a role
  */
-export function getRolePermissions(
-  role: string,
-  isSuperAdmin: boolean = false
-): Permission[] {
+export function getRolePermissions(role: string, isSuperAdmin: boolean = false): Permission[] {
   if (isSuperAdmin) {
     return SUPER_ADMIN_PERMISSIONS;
   }

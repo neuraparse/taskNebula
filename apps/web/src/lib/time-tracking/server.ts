@@ -47,7 +47,7 @@ export interface IssueAccessFailure {
  */
 export async function assertIssueAccess(
   userId: string | undefined,
-  issueId: string,
+  issueId: string
 ): Promise<IssueAccessResult | IssueAccessFailure> {
   if (!userId) return { ok: false, status: 401, reason: 'Unauthorized' };
 
@@ -80,7 +80,8 @@ export async function assertIssueAccess(
       and(
         eq(organizationMembers.userId, userId),
         eq(organizationMembers.organizationId, issue.organizationId),
-      ),
+        eq(organizationMembers.status, 'active')
+      )
     )
     .limit(1);
   if (orgMember?.role === 'owner' || orgMember?.role === 'admin') {
@@ -92,12 +93,7 @@ export async function assertIssueAccess(
     .select({ projectId: projectMembers.projectId })
     .from(projectMembers)
     .innerJoin(projects, eq(projects.id, projectMembers.projectId))
-    .where(
-      and(
-        eq(projectMembers.userId, userId),
-        eq(projectMembers.projectId, issue.projectId),
-      ),
-    )
+    .where(and(eq(projectMembers.userId, userId), eq(projectMembers.projectId, issue.projectId)))
     .limit(1);
   if (!member) {
     return { ok: false, status: 403, reason: 'Not a project member' };

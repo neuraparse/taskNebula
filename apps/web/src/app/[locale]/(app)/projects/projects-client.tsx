@@ -67,6 +67,12 @@ export function ProjectsClient() {
   });
 
   const firstOrganizationId = orgsData?.organizations?.[0]?.id ?? null;
+  const currentOrganization = orgsData?.organizations?.find(
+    (organization) => organization.id === currentOrganizationId
+  );
+  const canCreateProject =
+    currentOrganization?.role === 'owner' || currentOrganization?.role === 'admin';
+
   useEffect(() => {
     if (!currentOrganizationId && firstOrganizationId) {
       setCurrentOrganization(firstOrganizationId);
@@ -102,10 +108,12 @@ export function ProjectsClient() {
                   : t('activeCount', { count: projects.length })}
             </p>
           </div>
-          <Button onClick={() => setShowDialog(true)}>
-            <Plus className="mr-1.5 h-4 w-4" />
-            {t('createProject')}
-          </Button>
+          {canCreateProject ? (
+            <Button onClick={() => setShowDialog(true)}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              {t('createProject')}
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -120,32 +128,38 @@ export function ProjectsClient() {
             </div>
             <div className="space-y-1">
               <p className="text-foreground text-base font-semibold">
-                {activeTeamspace
-                  ? t('emptyTitleTeamspace', { teamspace: activeTeamspace.name })
-                  : t('emptyTitle')}
+                {!canCreateProject
+                  ? t('projectInviteRequiredTitle')
+                  : activeTeamspace
+                    ? t('emptyTitleTeamspace', { teamspace: activeTeamspace.name })
+                    : t('emptyTitle')}
               </p>
-              <p className="text-muted-foreground text-sm">{t('emptyDescription')}</p>
+              <p className="text-muted-foreground text-sm">
+                {canCreateProject ? t('emptyDescription') : t('projectInviteRequiredDescription')}
+              </p>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button onClick={() => setShowDialog(true)}>
-                <Plus className="mr-1.5 h-4 w-4" />
-                {t('createProject')}
-              </Button>
-              <Button
-                variant="outline"
-                // TODO(ai): hook into /api/ai/projects/scaffold once available.
-                // It should accept a 1-line goal and return a draft project
-                // (name, key, description, default columns).
-                onClick={() => {
-                  // eslint-disable-next-line no-console
-                  console.info('[ai-generate] projects empty state — TODO scaffold flow');
-                  setShowDialog(true);
-                }}
-              >
-                <Sparkles className="mr-1.5 h-4 w-4" />
-                {t('generateWithAi')}
-              </Button>
-            </div>
+            {canCreateProject ? (
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button onClick={() => setShowDialog(true)}>
+                  <Plus className="mr-1.5 h-4 w-4" />
+                  {t('createProject')}
+                </Button>
+                <Button
+                  variant="outline"
+                  // TODO(ai): hook into /api/ai/projects/scaffold once available.
+                  // It should accept a 1-line goal and return a draft project
+                  // (name, key, description, default columns).
+                  onClick={() => {
+                    // eslint-disable-next-line no-console
+                    console.info('[ai-generate] projects empty state — TODO scaffold flow');
+                    setShowDialog(true);
+                  }}
+                >
+                  <Sparkles className="mr-1.5 h-4 w-4" />
+                  {t('generateWithAi')}
+                </Button>
+              </div>
+            ) : null}
           </div>
         ) : (
           <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -225,7 +239,9 @@ export function ProjectsClient() {
         )}
       </div>
 
-      <CreateProjectDialog open={showDialog} onOpenChange={(open) => setShowDialog(open)} />
+      {canCreateProject ? (
+        <CreateProjectDialog open={showDialog} onOpenChange={(open) => setShowDialog(open)} />
+      ) : null}
     </div>
   );
 }

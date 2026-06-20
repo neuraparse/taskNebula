@@ -45,10 +45,7 @@ const useTemplateSchema = z.object({
 type UsePayload = Record<string, any>;
 
 // POST /api/templates/[id]/use — instantiate a template.
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -115,10 +112,7 @@ export async function POST(
     );
   } catch (error) {
     console.error('[api/templates/:id/use] failed', error);
-    return NextResponse.json(
-      { error: 'Failed to instantiate template' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to instantiate template' }, { status: 500 });
   } finally {
     // Best-effort usage bookkeeping. Counter increment must not fail the
     // primary instantiation; swallow + log any errors.
@@ -148,14 +142,15 @@ async function instantiateProject({
     );
   }
 
-  // Verify caller is still a member.
+  // Verify caller can create projects in this organization.
   const [member] = await db
     .select({ role: organizationMembers.role })
     .from(organizationMembers)
     .where(
       and(
         eq(organizationMembers.userId, userId),
-        eq(organizationMembers.organizationId, organizationId)
+        eq(organizationMembers.organizationId, organizationId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
@@ -166,12 +161,16 @@ async function instantiateProject({
     .where(eq(users.id, userId))
     .limit(1);
 
-  if (!member && !user?.isSuperAdmin) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const canCreateProject =
+    user?.isSuperAdmin || member?.role === 'owner' || member?.role === 'admin';
+  if (!canCreateProject) {
+    return NextResponse.json(
+      { error: 'You need an owner or admin invite to create projects in this organization' },
+      { status: 403 }
+    );
   }
 
-  const name =
-    overrides.name ?? payload.name ?? template.name ?? 'Untitled project';
+  const name = overrides.name ?? payload.name ?? template.name ?? 'Untitled project';
   const rawKey = overrides.key ?? payload.key ?? deriveKey(name);
   const key = rawKey.toUpperCase().slice(0, 10);
   const description = overrides.description ?? payload.description ?? null;
@@ -246,10 +245,7 @@ async function instantiateProject({
     })
     .catch((err) => console.error('[templates] usage insert failed', err));
 
-  return NextResponse.json(
-    { kind: 'project', resource: created },
-    { status: 201 }
-  );
+  return NextResponse.json({ kind: 'project', resource: created }, { status: 201 });
 }
 
 async function instantiateIssue({
@@ -266,7 +262,10 @@ async function instantiateIssue({
   const projectIdInput = overrides.projectId ?? payload.projectId;
   if (!projectIdInput) {
     return NextResponse.json(
-      { error: 'An issue template requires overrides.projectId (or payload.projectId) to know where to create the issue.' },
+      {
+        error:
+          'An issue template requires overrides.projectId (or payload.projectId) to know where to create the issue.',
+      },
       { status: 400 }
     );
   }
@@ -318,20 +317,14 @@ async function instantiateIssue({
       .select()
       .from(workflows)
       .where(
-        and(
-          eq(workflows.organizationId, project.organizationId),
-          eq(workflows.isDefault, true)
-        )
+        and(eq(workflows.organizationId, project.organizationId), eq(workflows.isDefault, true))
       )
       .limit(1);
     workflowId = wf?.id ?? null;
   }
 
   if (!workflowId) {
-    return NextResponse.json(
-      { error: 'No workflow found for project' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'No workflow found for project' }, { status: 500 });
   }
 
   const allStatuses = await db
@@ -344,10 +337,7 @@ async function instantiateIssue({
     .sort((a, b) => a.position - b.position);
   const defaultStatus = backlog[0];
   if (!defaultStatus) {
-    return NextResponse.json(
-      { error: 'No backlog status found in workflow' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'No backlog status found in workflow' }, { status: 500 });
   }
 
   const [lastIssue] = await db
@@ -394,10 +384,7 @@ async function instantiateIssue({
     })
     .returning();
 
-  return NextResponse.json(
-    { kind: 'issue', resource: newIssue },
-    { status: 201 }
-  );
+  return NextResponse.json({ kind: 'issue', resource: newIssue }, { status: 201 });
 }
 
 function deriveKey(name: string): string {

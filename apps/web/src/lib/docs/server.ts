@@ -75,14 +75,18 @@ export async function getUserFlags(userId: string) {
   };
 }
 
-export async function getOrganizationRole(userId: string, organizationId: string): Promise<OrgDocumentRole> {
+export async function getOrganizationRole(
+  userId: string,
+  organizationId: string
+): Promise<OrgDocumentRole> {
   const [member] = await db
     .select({ role: organizationMembers.role })
     .from(organizationMembers)
     .where(
       and(
         eq(organizationMembers.userId, userId),
-        eq(organizationMembers.organizationId, organizationId)
+        eq(organizationMembers.organizationId, organizationId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
@@ -98,13 +102,16 @@ export async function resolveOrganizationIdForUser(userId: string, organizationI
   const [membership] = await db
     .select({ organizationId: organizationMembers.organizationId })
     .from(organizationMembers)
-    .where(eq(organizationMembers.userId, userId))
+    .where(and(eq(organizationMembers.userId, userId), eq(organizationMembers.status, 'active')))
     .limit(1);
 
   return membership?.organizationId || null;
 }
 
-export function getOrgDocumentPermissions(role: OrgDocumentRole, isSuperAdmin = false): DocumentPermissionSet {
+export function getOrgDocumentPermissions(
+  role: OrgDocumentRole,
+  isSuperAdmin = false
+): DocumentPermissionSet {
   if (isSuperAdmin || role === 'owner' || role === 'admin') {
     return { canBrowse: true, canCreate: true, canEdit: true, canDelete: true };
   }
@@ -120,7 +127,11 @@ export function getOrgDocumentPermissions(role: OrgDocumentRole, isSuperAdmin = 
   return { canBrowse: false, canCreate: false, canEdit: false, canDelete: false };
 }
 
-export async function getProjectDocumentPermissions(userId: string, projectId: string, isSuperAdmin = false): Promise<DocumentPermissionSet> {
+export async function getProjectDocumentPermissions(
+  userId: string,
+  projectId: string,
+  isSuperAdmin = false
+): Promise<DocumentPermissionSet> {
   if (isSuperAdmin) {
     return { canBrowse: true, canCreate: true, canEdit: true, canDelete: true };
   }
@@ -128,23 +139,21 @@ export async function getProjectDocumentPermissions(userId: string, projectId: s
   const [member] = await db
     .select()
     .from(projectMembers)
-    .where(
-      and(
-        eq(projectMembers.userId, userId),
-        eq(projectMembers.projectId, projectId)
-      )
-    )
+    .where(and(eq(projectMembers.userId, userId), eq(projectMembers.projectId, projectId)))
     .limit(1);
 
   if (!member) {
     return { canBrowse: false, canCreate: false, canEdit: false, canDelete: false };
   }
 
-  const roleDefaults = ROLE_DEFAULT_PERMISSIONS[member.role as ProjectRole] || ROLE_DEFAULT_PERMISSIONS.viewer;
+  const roleDefaults =
+    ROLE_DEFAULT_PERMISSIONS[member.role as ProjectRole] || ROLE_DEFAULT_PERMISSIONS.viewer;
   const toBool = (value: string | null | undefined) => value === 'true';
 
   return {
-    canBrowse: (toBool(member.canBrowseProject) || roleDefaults.canBrowseProject) && (toBool(member.canBrowseDocs) || roleDefaults.canBrowseDocs),
+    canBrowse:
+      (toBool(member.canBrowseProject) || roleDefaults.canBrowseProject) &&
+      (toBool(member.canBrowseDocs) || roleDefaults.canBrowseDocs),
     canCreate: toBool(member.canCreateDocs) || roleDefaults.canCreateDocs,
     canEdit: toBool(member.canEditDocs) || roleDefaults.canEditDocs,
     canDelete: toBool(member.canDeleteDocs) || roleDefaults.canDeleteDocs,
@@ -197,12 +206,7 @@ export async function ensureProjectDocumentSpace(
   const [existing] = await db
     .select()
     .from(documentSpaces)
-    .where(
-      and(
-        eq(documentSpaces.projectId, projectId),
-        eq(documentSpaces.scope, 'project')
-      )
-    )
+    .where(and(eq(documentSpaces.projectId, projectId), eq(documentSpaces.scope, 'project')))
     .limit(1);
 
   if (existing) {
@@ -243,7 +247,11 @@ export async function ensureProjectDocumentSpace(
   return space ?? null;
 }
 
-export async function listAccessibleDocumentSpaces(userId: string, organizationId: string, projectId?: string | null) {
+export async function listAccessibleDocumentSpaces(
+  userId: string,
+  organizationId: string,
+  projectId?: string | null
+) {
   const { isSuperAdmin } = await getUserFlags(userId);
   const orgRole = await getOrganizationRole(userId, organizationId);
   const spaces: Array<{
@@ -287,7 +295,12 @@ export async function listAccessibleDocumentSpaces(userId: string, organizationI
       .where(eq(projects.organizationId, organizationId));
 
     for (const project of allProjects) {
-      accessibleProjects.set(project.id, { canBrowse: true, canCreate: true, canEdit: true, canDelete: true });
+      accessibleProjects.set(project.id, {
+        canBrowse: true,
+        canCreate: true,
+        canEdit: true,
+        canDelete: true,
+      });
     }
   } else {
     const memberships = await db
@@ -302,19 +315,17 @@ export async function listAccessibleDocumentSpaces(userId: string, organizationI
       })
       .from(projectMembers)
       .innerJoin(projects, eq(projectMembers.projectId, projects.id))
-      .where(
-        and(
-          eq(projectMembers.userId, userId),
-          eq(projects.organizationId, organizationId)
-        )
-      );
+      .where(and(eq(projectMembers.userId, userId), eq(projects.organizationId, organizationId)));
 
     const toBool = (value: string | null | undefined) => value === 'true';
 
     for (const membership of memberships) {
-      const roleDefaults = ROLE_DEFAULT_PERMISSIONS[membership.role as ProjectRole] || ROLE_DEFAULT_PERMISSIONS.viewer;
+      const roleDefaults =
+        ROLE_DEFAULT_PERMISSIONS[membership.role as ProjectRole] || ROLE_DEFAULT_PERMISSIONS.viewer;
       const permissions = {
-        canBrowse: (toBool(membership.canBrowseProject) || roleDefaults.canBrowseProject) && (toBool(membership.canBrowseDocs) || roleDefaults.canBrowseDocs),
+        canBrowse:
+          (toBool(membership.canBrowseProject) || roleDefaults.canBrowseProject) &&
+          (toBool(membership.canBrowseDocs) || roleDefaults.canBrowseDocs),
         canCreate: toBool(membership.canCreateDocs) || roleDefaults.canCreateDocs,
         canEdit: toBool(membership.canEditDocs) || roleDefaults.canEditDocs,
         canDelete: toBool(membership.canDeleteDocs) || roleDefaults.canDeleteDocs,
@@ -377,11 +388,7 @@ export async function resolveDocumentSpaceAccess(userId: string, spaceId: string
 }
 
 export async function resolveDocumentPageAccess(userId: string, pageId: string) {
-  const [page] = await db
-    .select()
-    .from(documentPages)
-    .where(eq(documentPages.id, pageId))
-    .limit(1);
+  const [page] = await db.select().from(documentPages).where(eq(documentPages.id, pageId)).limit(1);
 
   if (!page) {
     return null;
@@ -435,7 +442,9 @@ export function buildDocumentShareSettings(
   canManagePublic: boolean
 ): DocumentShareSettings {
   const publicUrlPath =
-    page.publicShareEnabled && page.publicShareToken ? createPublicDocumentHref(page.publicShareToken) : null;
+    page.publicShareEnabled && page.publicShareToken
+      ? createPublicDocumentHref(page.publicShareToken)
+      : null;
 
   return {
     canManagePublic,
@@ -561,7 +570,12 @@ export async function getNextDocumentPosition(spaceId: string, parentId: string 
   return row?.nextPosition ?? 0;
 }
 
-export async function ensureUniqueDocumentSlug(spaceId: string, parentId: string | null, title: string, excludePageId?: string) {
+export async function ensureUniqueDocumentSlug(
+  spaceId: string,
+  parentId: string | null,
+  title: string,
+  excludePageId?: string
+) {
   const baseSlug = slugifyDocumentTitle(title);
   let slug = baseSlug;
   let suffix = 1;
@@ -603,8 +617,14 @@ export async function getLatestRevision(pageId: string) {
   return revision || null;
 }
 
-export async function replaceDocumentLinks(pageId: string, linkedPageIds: string[], userId: string) {
-  const uniquePageIds = [...new Set(linkedPageIds)].filter((linkedPageId) => linkedPageId && linkedPageId !== pageId);
+export async function replaceDocumentLinks(
+  pageId: string,
+  linkedPageIds: string[],
+  userId: string
+) {
+  const uniquePageIds = [...new Set(linkedPageIds)].filter(
+    (linkedPageId) => linkedPageId && linkedPageId !== pageId
+  );
 
   await db.delete(documentPageLinks).where(eq(documentPageLinks.sourcePageId, pageId));
 

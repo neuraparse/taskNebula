@@ -47,6 +47,12 @@ export type AuditLogAction =
   | 'agent.run_requested'
   | 'agent.run_completed'
   | 'agent.run_failed'
+  | 'agent.policy.allow'
+  | 'agent.policy.deny'
+  | 'agent.policy.require_approval'
+  | 'agent.approval.created'
+  | 'agent.approval.approved'
+  | 'agent.approval.rejected'
   | 'project.created'
   | 'project.updated'
   | 'project.deleted'
@@ -241,11 +247,7 @@ export async function triggerWebhooks(params: {
 /**
  * Deliver webhook to endpoint
  */
-async function deliverWebhook(
-  webhook: any,
-  deliveryId: string,
-  payload: Record<string, any>
-) {
+async function deliverWebhook(webhook: any, deliveryId: string, payload: Record<string, any>) {
   try {
     // Create HMAC signature
     const signature = crypto

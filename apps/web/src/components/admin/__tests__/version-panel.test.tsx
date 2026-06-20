@@ -22,11 +22,22 @@ function info(overrides: Partial<VersionInfo> = {}): VersionInfo {
   return {
     current: '0.4.0',
     latest: null,
+    releaseUpdateAvailable: false,
     updateAvailable: false,
     releaseUrl: null,
     publishedAt: null,
     notes: null,
     checkedAt: null,
+    image: {
+      repository: 'neuraparse/tasknebula',
+      latestTag: null,
+      latestTagUrl: null,
+      latestPushedAt: null,
+      latestDigest: null,
+      latestSizeBytes: null,
+      updateAvailable: false,
+      checkedAt: null,
+    },
     checkDisabled: false,
     ...overrides,
   };
@@ -92,6 +103,35 @@ describe('VersionPanel', () => {
     expect(screen.getByText('Release notes')).toBeInTheDocument();
     expect(screen.getByText('New stuff')).toBeInTheDocument();
     expect(screen.getByText(/docker compose pull/)).toBeInTheDocument();
+  });
+
+  it('shows Docker Hub image metadata when available', () => {
+    mockQuery({
+      data: info({
+        latest: '0.5.0',
+        updateAvailable: true,
+        image: {
+          repository: 'neuraparse/tasknebula',
+          latestTag: '0.5.0',
+          latestTagUrl: 'https://hub.docker.com/r/neuraparse/tasknebula/tags?name=0.5.0',
+          latestPushedAt: '2026-06-20T02:13:49.101Z',
+          latestDigest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          latestSizeBytes: 123456789,
+          updateAvailable: true,
+          checkedAt: '2026-06-20T02:14:00.000Z',
+        },
+      }),
+    });
+    render(<VersionPanel />);
+
+    expect(screen.getByText('Docker image')).toBeInTheDocument();
+    expect(screen.getAllByText('neuraparse/tasknebula').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Image update available')).toBeInTheDocument();
+    expect(screen.getByText('117.7 MB')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /View Docker tag/i })).toHaveAttribute(
+      'href',
+      'https://hub.docker.com/r/neuraparse/tasknebula/tags?name=0.5.0'
+    );
   });
 
   it('renders a View release link only over an https release URL', () => {

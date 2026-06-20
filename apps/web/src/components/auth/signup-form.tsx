@@ -33,6 +33,12 @@ export function SignUpForm() {
       .catch(() => setCheckingSetup(false));
   }, [router]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const invitedEmail = new URLSearchParams(window.location.search).get('email');
+    if (invitedEmail) setEmail(invitedEmail.trim().toLowerCase());
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -45,6 +51,7 @@ export function SignUpForm() {
     setLoading(true);
 
     try {
+      const normalizedEmail = email.trim().toLowerCase();
       const inviteToken =
         typeof window !== 'undefined'
           ? new URLSearchParams(window.location.search).get('token')
@@ -54,7 +61,7 @@ export function SignUpForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
-          email,
+          email: normalizedEmail,
           password,
           ...(inviteToken ? { inviteToken } : {}),
         }),
@@ -73,7 +80,7 @@ export function SignUpForm() {
       // the ?email= query param keeps the resend flow working.
       try {
         await signIn('credentials', {
-          email,
+          email: normalizedEmail,
           password,
           redirect: false,
         });
@@ -81,7 +88,7 @@ export function SignUpForm() {
         // Ignore — we degrade to the email-query-param path below.
       }
 
-      router.push(`/auth/verify-request?email=${encodeURIComponent(email)}`);
+      router.push(`/auth/verify-request?email=${encodeURIComponent(normalizedEmail)}`);
       router.refresh();
     } catch {
       setError(t('generic_error'));

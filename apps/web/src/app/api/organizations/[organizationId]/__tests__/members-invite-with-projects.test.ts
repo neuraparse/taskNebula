@@ -103,11 +103,17 @@ jest.mock('@tasknebula/db', () => ({
     id: 'users.id',
     email: 'users.email',
     name: 'users.name',
+    image: 'users.image',
+    status: 'users.status',
   },
   organizationMembers: {
     id: 'organizationMembers.id',
     organizationId: 'organizationMembers.organizationId',
     userId: 'organizationMembers.userId',
+    role: 'organizationMembers.role',
+    status: 'organizationMembers.status',
+    createdAt: 'organizationMembers.createdAt',
+    updatedAt: 'organizationMembers.updatedAt',
   },
   organizations: {
     id: 'organizations.id',
@@ -120,6 +126,7 @@ jest.mock('@tasknebula/db', () => ({
     id: 'projects.id',
     organizationId: 'projects.organizationId',
     name: 'projects.name',
+    leadId: 'projects.leadId',
   },
   projectMembers: {
     id: 'projectMembers.id',
@@ -162,6 +169,16 @@ function valuesReturningBuilder(result: unknown) {
   return {
     values: jest.fn().mockReturnValue({
       returning: jest.fn().mockResolvedValue(result),
+    }),
+  };
+}
+
+function updateReturningBuilder(result: unknown) {
+  return {
+    set: jest.fn().mockReturnValue({
+      where: jest.fn().mockReturnValue({
+        returning: jest.fn().mockResolvedValue(result),
+      }),
     }),
   };
 }
@@ -214,9 +231,15 @@ describe('POST /api/organizations/[organizationId]/members — invite with proje
       name: string;
       image: string | null;
       status: string;
+      password?: string | null;
     } | null;
-    existingOrgMember?: { id: string } | null;
-    projectsInOrg?: Array<{ id: string; organizationId: string }>;
+    existingOrgMember?: {
+      id: string;
+      role?: string;
+      status?: string;
+      createdAt?: Date | string;
+    } | null;
+    projectsInOrg?: Array<{ id: string; organizationId: string; leadId?: string | null }>;
     existingProjectMembers?: Array<{ projectId: string; userId: string }>;
     orgName?: string;
     inviterName?: string;
@@ -258,6 +281,7 @@ describe('POST /api/organizations/[organizationId]/members — invite with proje
       name: 'new',
       image: null,
       status: 'invited',
+      password: null,
     };
     const newOrgMember = {
       id: 'org-member-1',
@@ -317,6 +341,86 @@ describe('POST /api/organizations/[organizationId]/members — invite with proje
       expect(payload.addedToProjects).toEqual([]);
       expect(payload.skippedProjects).toEqual([]);
     }
+  });
+
+  it('resends a pending invitation with a fresh expiry instead of returning already-member', async () => {
+    const existingUser = {
+      id: 'user-new',
+      email: 'new@example.com',
+      name: 'new',
+      image: null,
+      status: 'invited',
+      password: null,
+    };
+    const existingOrgMember = {
+      id: 'org-member-1',
+      role: 'member',
+      status: 'invited',
+      createdAt: new Date('2025-01-01T00:00:00Z'),
+    };
+    queueInviteSelects({ existingUser, existingOrgMember });
+    dbUpdateMock
+      .mockReturnValueOnce(updateReturningBuilder([existingUser]))
+      .mockReturnValueOnce(
+        updateReturningBuilder([{ ...existingOrgMember, role: 'admin', status: 'invited' }])
+      );
+    dbInsertMock.mockReturnValue(valuesBuilder());
+
+    const response = await POST(
+      buildRequest({
+        email: 'NEW@example.com',
+        role: 'admin',
+        inviteExpiresInDays: 30,
+      }),
+      routeParams
+    );
+
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload.invitationResent).toBe(true);
+    expect(payload.inviteExpiresInDays).toBe(30);
+    expect(payload.member).toEqual(
+      expect.objectContaining({
+        email: 'new@example.com',
+        role: 'admin',
+        memberStatus: 'invited',
+      })
+    );
+    expect(sendEmailMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'new@example.com',
+        text: expect.stringContaining('This invitation expires on'),
+      })
+    );
+  });
+
+  it('still blocks inviting an active existing organization member', async () => {
+    queueInviteSelects({
+      existingUser: {
+        id: 'user-active',
+        email: 'active@example.com',
+        name: 'Active User',
+        image: null,
+        status: 'active',
+        password: 'hashed-password',
+      },
+      existingOrgMember: {
+        id: 'org-member-active',
+        role: 'member',
+        status: 'active',
+        createdAt: new Date('2025-01-01T00:00:00Z'),
+      },
+    });
+
+    const response = await POST(
+      buildRequest({ email: 'active@example.com', role: 'member' }),
+      routeParams
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: 'User is already a member' });
+    expect(sendEmailMock).not.toHaveBeenCalled();
+    expect(dbUpdateMock).not.toHaveBeenCalled();
   });
 
   it('(b) invite with valid projectIds inserts projectMembers rows and reports them in addedToProjects', async () => {

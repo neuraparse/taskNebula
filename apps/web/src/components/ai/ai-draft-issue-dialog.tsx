@@ -48,6 +48,10 @@ type IssueDraft = {
 
 type ChatTurn = { role: 'user'; content: string } | { role: 'assistant'; content: string };
 
+type CreateIssueResult =
+  | { approvalRequired: false; key?: string; title: string }
+  | { approvalRequired: true; approvalRequestId?: string | null; title: string };
+
 interface AiDraftIssueDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -79,7 +83,7 @@ async function draftMany(
   return r.json();
 }
 
-async function createIssue(projectId: string, draft: IssueDraft) {
+async function createIssue(projectId: string, draft: IssueDraft): Promise<CreateIssueResult> {
   const r = await fetch('/api/issues', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -91,13 +95,26 @@ async function createIssue(projectId: string, draft: IssueDraft) {
       priority: draft.priority,
       labels: draft.labels,
       estimate: draft.estimate ?? undefined,
+      agentPolicy: {
+        actor: 'tasknebula-ai',
+        source: 'draft-with-ai',
+      },
     }),
   });
+  if (r.status === 202) {
+    const payload = (await r.json().catch(() => ({}))) as { approvalRequestId?: string | null };
+    return {
+      approvalRequired: true,
+      approvalRequestId: payload.approvalRequestId ?? null,
+      title: draft.title,
+    };
+  }
   if (!r.ok) {
     const err = (await r.json().catch(() => ({}))) as { error?: string };
     throw new Error(err.error || 'Failed to create issue');
   }
-  return r.json();
+  const issue = (await r.json()) as { key?: string };
+  return { approvalRequired: false, key: issue?.key, title: draft.title };
 }
 
 export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIssueDialogProps) {
@@ -155,13 +172,13 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
 
   const bulkCreateMutation = useMutation({
     mutationFn: async () => {
-      const created: Array<{ title: string; key?: string }> = [];
+      const created: CreateIssueResult[] = [];
       for (const idx of Array.from(selected).sort((a, b) => a - b)) {
         const draft = drafts[idx];
         if (!draft) continue;
         setCreatingIndex(idx);
-        const issue = await createIssue(projectId, draft);
-        created.push({ title: draft.title, key: issue?.key });
+        const result = await createIssue(projectId, draft);
+        created.push(result);
       }
       setCreatingIndex(null);
       return created;
@@ -170,9 +187,17 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
       // Bulk AI creation lands several issues at once — refresh every
       // issue-derived surface so they appear without a manual page refresh.
       invalidateIssueCaches(queryClient, { projectId });
+      const approvedNow = created.filter(
+        (item): item is Extract<CreateIssueResult, { approvalRequired: false }> =>
+          !item.approvalRequired
+      );
+      const queued = created.filter((item) => item.approvalRequired);
       toast({
-        title: t('draft.createdCount', { count: created.length }),
-        description: created
+        title:
+          queued.length > 0
+            ? t('draft.queuedForApprovalCount', { count: queued.length })
+            : t('draft.createdCount', { count: approvedNow.length }),
+        description: approvedNow
           .map((c) => c.key || c.title)
           .slice(0, 3)
           .join(', '),

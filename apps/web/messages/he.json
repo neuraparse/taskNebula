@@ -344,9 +344,9 @@
     },
     "reporter": {
       "unknown": "משתמש לא ידוע",
-      "label": "מדווח"
-    },
-    "reporter.avatarAlt": "תמונת המדווח"
+      "label": "מדווח",
+      "avatarAlt": "תמונת המדווח"
+    }
   },
   "issueDetail": {
     "comments": {
@@ -440,6 +440,15 @@
     "statusChecksDisabled": "הבדיקות מושבתות",
     "currentVersion": "גרסה נוכחית",
     "latestVersion": "גרסה אחרונה",
+    "latestDockerImage": "תמונת Docker האחרונה",
+    "imagePushed": "נדחף בתאריך {date}",
+    "dockerImage": "תמונת Docker",
+    "dockerImageDescription": "נבדק ממאגר Docker Hub {repository}.",
+    "imageUpdateAvailable": "עדכון תמונה זמין",
+    "repository": "מאגר",
+    "imageDigest": "Digest של התמונה",
+    "imageSize": "גודל התמונה",
+    "viewDockerTag": "הצג תג Docker",
     "published": "פורסם ב-{date}",
     "lastChecked": "נבדק לאחרונה {time}",
     "checksDisabledHint": "בדיקות עדכון מושבתות באמצעות משתנה הסביבה TASKNEBULA_DISABLE_UPDATE_CHECK. הסירו אותו כדי לראות כאן גרסאות חדשות.",
@@ -2257,6 +2266,45 @@
       "writes_count": "{count} כתיבות",
       "no_summary": "לא נרשם סיכום.",
       "run_live": "הרצה חיה"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS governance",
+      "description": "Control which AI agents can write, what needs approval, and what is blocked.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading agent governance...",
+      "loadFailed": "Failed to load agent governance.",
+      "policySource": "Policy source",
+      "noPolicy": "No AGENTOWNERS file found",
+      "lastParsedAt": "Last parsed at",
+      "validationErrors": "Validation errors",
+      "validationTitle": "Policy validation needs attention",
+      "line": "Line {line}",
+      "rulesTitle": "Policy preview",
+      "rulesDescription": "Parsed rules are evaluated by specificity before effect precedence.",
+      "noRules": "No policy rules are active.",
+      "table": {
+        "line": "Line",
+        "actor": "Actor",
+        "action": "Action",
+        "effect": "Effect"
+      },
+      "effect": {
+        "allow": "Allow",
+        "deny": "Deny",
+        "requireApproval": "Approval"
+      },
+      "queueTitle": "Approval queue",
+      "queueDescription": "Pending AI actions wait here until an admin or maintainer approves them.",
+      "queueLoading": "Loading approval queue...",
+      "queueEmpty": "No pending AI actions.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "behaviorTitle": "Approval behavior",
+      "behaviorDescription": "Safe defaults used when no explicit rule matches.",
+      "unknownAgents": "Unknown agents",
+      "destructiveActions": "Destructive actions",
+      "requireApprovalDefault": "Require approval by default"
     }
   },
   "collab": {
@@ -2609,10 +2657,10 @@
         "noPermission": "אין לכם הרשאה ליצור מסמכים במרחב זה.",
         "creating": "יוצר...",
         "createPage": "יצירת עמוד"
-      }
-    },
-    "shell.collapse": "כיווץ",
-    "shell.expand": "הרחבה"
+      },
+      "collapse": "כיווץ",
+      "expand": "הרחבה"
+    }
   },
   "planning": {
     "search_placeholder": "חיפוש תבניות",
@@ -3264,7 +3312,9 @@
       "hint": {
         "openai": "משמש כאשר סביבת עבודה לא הזינה מפתח OpenAI משלה. מתחיל ב-sk-…",
         "anthropic": "משמש כאשר סביבת עבודה לא הזינה מפתח Anthropic משלה. מתחיל ב-sk-ant-…"
-      }
+      },
+      "saveFailedDescription": "לא ניתן היה לשמור את האישור. נסו שוב.",
+      "removeFailedDescription": "לא ניתן היה להסיר את האישור. נסו שוב."
     },
     "realtimeHealth": {
       "loading": "טוען תקינות זמן אמת...",
@@ -3394,12 +3444,10 @@
       "targetedOrgs": "ארגונים ממוקדים",
       "close": "סגירה",
       "evaluate": "הערכה",
-      "evaluating": "מעריך..."
-    },
-    "flagTest.isEnabled": "isEnabled",
-    "flagTest.rolloutPercent": "rollout%",
-    "platformAi.saveFailedDescription": "לא ניתן היה לשמור את האישור. נסו שוב.",
-    "platformAi.removeFailedDescription": "לא ניתן היה להסיר את האישור. נסו שוב."
+      "evaluating": "מעריך...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "rollout%"
+    }
   },
   "adminDialogs": {
     "common": {
@@ -3440,7 +3488,8 @@
       "plansHint": "השאירו ריק כדי להפעיל עבור כל התוכניות.",
       "targetOrganizations": "ארגונים ממוקדים",
       "targetOrganizationsHint": "השאירו ריק כדי להפעיל עבור כל הארגונים התואמים לתוכנית + ההשקה.",
-      "rollout": "השקה: {percentage}%"
+      "rollout": "השקה: {percentage}%",
+      "namePlaceholder": "Advanced Analytics"
     },
     "createOrg": {
       "trigger": "ארגון חדש",
@@ -3464,7 +3513,8 @@
       "domain": "דומיין (אופציונלי)",
       "toastUpdatedTitle": "הארגון עודכן",
       "toastUpdatedDescription": "השינויים נשמרו בהצלחה.",
-      "toastFailedTitle": "עדכון הארגון נכשל"
+      "toastFailedTitle": "עדכון הארגון נכשל",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "שם",
@@ -3474,7 +3524,9 @@
       "planFree": "חינם",
       "planStarter": "Starter",
       "planGrowth": "Growth",
-      "planEnterprise": "Enterprise"
+      "planEnterprise": "Enterprise",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "משתמש חדש",
@@ -3487,7 +3539,9 @@
       "missingFieldsDescription": "שם, אימייל וסיסמה נדרשים.",
       "toastCreatedTitle": "המשתמש נוצר",
       "toastCreatedDescription": "המשתמש נוצר בהצלחה.",
-      "toastFailedTitle": "יצירת המשתמש נכשלה"
+      "toastFailedTitle": "יצירת המשתמש נכשלה",
+      "fullNamePlaceholder": "Jane Smith",
+      "emailPlaceholder": "jane@example.com"
     },
     "editUser": {
       "title": "עריכת משתמש",
@@ -3511,13 +3565,7 @@
       "searchPlaceholder": "חיפוש ארגונים...",
       "empty": "לא נמצאו ארגונים.",
       "remove": "הסרת {name}"
-    },
-    "orgForm.namePlaceholder": "Acme Inc",
-    "orgForm.slugPlaceholder": "acme-inc",
-    "editOrg.domainPlaceholder": "example.com",
-    "createUser.fullNamePlaceholder": "Jane Smith",
-    "createUser.emailPlaceholder": "jane@example.com",
-    "flagForm.namePlaceholder": "Advanced Analytics"
+    }
   },
   "charts": {
     "issues": "משימות",
@@ -3691,7 +3739,8 @@
       "priorityLow": "נמוכה",
       "priorityNone": "ללא",
       "labelsCommaSeparated": "תוויות (מופרדות בפסיקים)",
-      "creating": "יוצר…"
+      "creating": "יוצר…",
+      "queuedForApprovalCount": "{count, plural, one {1 draft is waiting for approval} other {# drafts are waiting for approval}}"
     },
     "assist": {
       "title": "סיוע AI",
@@ -3999,7 +4048,9 @@
     "startSprintTooltip": "התחילו ספרינט זה והפכו אותו לפעיל",
     "completeSprint": "השלמת ספרינט",
     "completeSprintTooltip": "השלימו ספרינט זה. משימות שלא הושלמו יועברו למאגר המשימות.",
-    "sprintBurndown": "Burndown של ספרינט"
+    "sprintBurndown": "Burndown של ספרינט",
+    "projectInviteRequiredTitle": "Invitation required",
+    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
   },
   "pagesWork": {
     "team": {
@@ -4499,7 +4550,10 @@
         "status": "סטטוס",
         "priority": "עדיפות",
         "assignee": "אחראי"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "גישה",
@@ -4555,7 +4609,12 @@
         "qa_engineer": "מהנדס QA",
         "designer": "מעצב",
         "viewer": "צופה"
-      }
+      },
+      "inviteExpiry": "Invitation expires",
+      "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
+      "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
+      "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
+      "invitationResent": "Invitation resent"
     },
     "org": {
       "selectOrg": "בחרו ארגון כדי לטעון הגדרות.",
@@ -4664,10 +4723,7 @@
         "datadog": "הגדירו { apiKey, site? }.",
         "s3": "הגדירו { bucket, region, prefix? }. יש להגדיר AWS_ACCESS_KEY_ID/SECRET בסביבה."
       }
-    },
-    "import.projectIdPlaceholder": "prj_xxx",
-    "import.linearTeamPlaceholder": "ENG",
-    "import.jiraSitePlaceholder": "acme.atlassian.net"
+    }
   },
   "sprints": {
     "defaultName": "ספרינט {number}",
@@ -5126,18 +5182,20 @@
           "connecting": "מתחבר",
           "reconnecting": "מתחבר מחדש",
           "disconnected": "מנותק"
+        },
+        "permissionDeniedRetry": "ההרשאה למיקרופון נדחתה. אפשרו גישה למיקרופון בדפדפן ונסו שוב.",
+        "micCouldNotStartBusy": "לא ניתן היה להפעיל את המיקרופון. ייתכן שאפליקציה אחרת משתמשת בו.",
+        "audioEngineFailed": "מנוע השמע של הדפדפן נכשל במכשיר זה. עצרו אפליקציות שמע אחרות או החליפו מיקרופון, ואז נסו שוב.",
+        "noMicForSession": "לא נמצא מיקרופון עבור הפעלת דפדפן זו.",
+        "runtimeError": {
+          "serverUnreachable": "שרת הקול אינו זמין ביציאות המדיה (UDP 50000-50020 / 3478, TCP 7881). בדקו את חומת האש / NAT ונסו שוב.",
+          "permissionDenied": "ההרשאה למיקרופון נדחתה. אפשרו גישה למיקרופון בדפדפן ונסו שוב.",
+          "micNotStarted": "לא ניתן היה להפעיל את המיקרופון. ייתכן שאפליקציה אחרת משתמשת בו.",
+          "audioEngineFailed": "מנוע השמע של הדפדפן נכשל במכשיר זה. עצרו אפליקציות שמע אחרות או החליפו מיקרופון, ואז נסו שוב.",
+          "micNotFound": "לא נמצא מיקרופון עבור הפעלת דפדפן זו."
         }
       }
-    },
-    "chat.voice.permissionDeniedRetry": "ההרשאה למיקרופון נדחתה. אפשרו גישה למיקרופון בדפדפן ונסו שוב.",
-    "chat.voice.micCouldNotStartBusy": "לא ניתן היה להפעיל את המיקרופון. ייתכן שאפליקציה אחרת משתמשת בו.",
-    "chat.voice.audioEngineFailed": "מנוע השמע של הדפדפן נכשל במכשיר זה. עצרו אפליקציות שמע אחרות או החליפו מיקרופון, ואז נסו שוב.",
-    "chat.voice.noMicForSession": "לא נמצא מיקרופון עבור הפעלת דפדפן זו.",
-    "chat.voice.runtimeError.serverUnreachable": "שרת הקול אינו זמין ביציאות המדיה (UDP 50000-50020 / 3478, TCP 7881). בדקו את חומת האש / NAT ונסו שוב.",
-    "chat.voice.runtimeError.permissionDenied": "ההרשאה למיקרופון נדחתה. אפשרו גישה למיקרופון בדפדפן ונסו שוב.",
-    "chat.voice.runtimeError.micNotStarted": "לא ניתן היה להפעיל את המיקרופון. ייתכן שאפליקציה אחרת משתמשת בו.",
-    "chat.voice.runtimeError.audioEngineFailed": "מנוע השמע של הדפדפן נכשל במכשיר זה. עצרו אפליקציות שמע אחרות או החליפו מיקרופון, ואז נסו שוב.",
-    "chat.voice.runtimeError.micNotFound": "לא נמצא מיקרופון עבור הפעלת דפדפן זו."
+    }
   },
   "userSecurity": {
     "accountMenu": "תפריט חשבון",

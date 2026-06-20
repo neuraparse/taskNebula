@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.6.6] - 2026-06-20
+
+### Added
+
+- **AGENTOWNERS governance for AI-driven actions.** Added a local policy parser/evaluator for `AGENTOWNERS`, `.github/AGENTOWNERS`, and `.tasknebula/AGENTOWNERS`, with explicit `allow`, `deny`, and `require-approval` decisions for agent actors and project-management actions. AI issue and board actions now pass through the central policy guard before execution, denied actions return clear explanations, approval-required actions create pending approval requests, and every policy decision is audit-logged. A sample policy ships at `docs/examples/AGENTOWNERS.example`.
+- **Admin approval queue and governance UI.** Admin AI settings now include policy status, parsed-rule previews, validation errors, default approval behavior, pending AI approval requests, and approve/reject controls that execute the original proposed payload only after approval.
+- **Docker Hub update visibility for admins.** The admin Updates panel now checks the published `neuraparse/tasknebula` Docker Hub image in addition to GitHub releases, showing the latest tag, pushed time, digest, size, and Docker tag link. The check uses Docker Hub tag metadata, keeps the existing six-hour cache/manual refresh behavior, and chooses the most recently pushed semver tag instead of a stale larger semver.
+
+### Changed
+
+- **Self-signup is now invite-first for workspace access.** New registered users no longer gain broad organization/project power by default: organization creation is restricted to platform super-admins, organization/project listings only include active memberships, project creation/visibility is scoped by organization role or explicit project membership, and project membership changes require the target user to already be an active organization member.
+- **Organization invites are safer and renewable.** Invite emails are normalized case-insensitively, expiry is configurable through `INVITE_TOKEN_TTL_DAYS` with a bounded 1-90 day range, resend refreshes pending invited-member tokens instead of leaving users stuck on expired links, and invite emails include the expiry window.
+
 ### Fixed
 
 - **Issue detail modal: the close (X) no longer collides with the header, and right-sidebar field values no longer overflow.** The modal header (title + Star/Watch/Copy actions) is now padded clear of the Dialog's absolute close button in modal mode (full-page view is unchanged). In the details sidebar, every picker trigger (status, priority, assignee, components, fix/affects versions, resolution, due/start date, sprint, epic, parent, type) now truncates long values consistently instead of sliding past the control — fixed the flexbox truncation chain (`min-w-0 flex-1` on the value wrapper, `truncate` on the text, `shrink-0` on the icon/chevron) and dropped two dead imports surfaced along the way.
@@ -297,7 +310,16 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Internal alpha release. [See git log] for details.
 
-[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.6.6...HEAD
+[0.6.6]: https://github.com/neuraparse/tasknebula/compare/v0.6.5...v0.6.6
+[0.6.5]: https://github.com/neuraparse/tasknebula/compare/v0.6.4...v0.6.5
+[0.6.4]: https://github.com/neuraparse/tasknebula/compare/v0.6.3...v0.6.4
+[0.6.3]: https://github.com/neuraparse/tasknebula/compare/v0.6.2...v0.6.3
+[0.6.2]: https://github.com/neuraparse/tasknebula/compare/v0.6.1...v0.6.2
+[0.6.1]: https://github.com/neuraparse/tasknebula/compare/v0.6.0...v0.6.1
+[0.6.0]: https://github.com/neuraparse/tasknebula/compare/v0.5.1...v0.6.0
+[0.5.1]: https://github.com/neuraparse/tasknebula/compare/v0.5.0...v0.5.1
+[0.5.0]: https://github.com/neuraparse/tasknebula/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/neuraparse/tasknebula/compare/v0.3.4...v0.4.0
 [0.3.4]: https://github.com/neuraparse/tasknebula/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/neuraparse/tasknebula/compare/v0.3.2...v0.3.3

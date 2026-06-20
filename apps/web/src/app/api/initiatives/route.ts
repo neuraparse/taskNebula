@@ -34,7 +34,9 @@ export async function GET(request: NextRequest) {
   const memberships = await db
     .select({ organizationId: organizationMembers.organizationId })
     .from(organizationMembers)
-    .where(eq(organizationMembers.userId, session.user.id));
+    .where(
+      and(eq(organizationMembers.userId, session.user.id), eq(organizationMembers.status, 'active'))
+    );
 
   if (memberships.length === 0) {
     return NextResponse.json({ initiatives: [] });
@@ -122,7 +124,8 @@ export async function POST(request: NextRequest) {
     .where(
       and(
         eq(organizationMembers.userId, session.user.id),
-        eq(organizationMembers.organizationId, workspaceId)
+        eq(organizationMembers.organizationId, workspaceId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);

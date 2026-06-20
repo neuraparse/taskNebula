@@ -9,6 +9,10 @@ import {
   StaleIssue,
 } from '../janitor';
 
+jest.mock('@/lib/ai/budget', () => ({
+  commitUsage: jest.fn().mockResolvedValue(undefined),
+}));
+
 function mkIssue(overrides: Partial<StaleIssue> = {}): StaleIssue {
   return {
     id: 'i1',
@@ -28,9 +32,7 @@ function mkIssue(overrides: Partial<StaleIssue> = {}): StaleIssue {
 
 describe('decideJanitorActionHeuristic', () => {
   it('always pings for critical priority', () => {
-    const out = decideJanitorActionHeuristic(
-      mkIssue({ priority: 'critical', staleDays: 120 })
-    );
+    const out = decideJanitorActionHeuristic(mkIssue({ priority: 'critical', staleDays: 120 }));
     expect(out.action).toBe('ping_assignee');
   });
 
@@ -43,9 +45,7 @@ describe('decideJanitorActionHeuristic', () => {
   });
 
   it('snoozes mid-stale assigned non-critical issues', () => {
-    const out = decideJanitorActionHeuristic(
-      mkIssue({ staleDays: 50, priority: 'medium' })
-    );
+    const out = decideJanitorActionHeuristic(mkIssue({ staleDays: 50, priority: 'medium' }));
     expect(out.action).toBe('snooze');
     expect(out.snoozeDays).toBe(14);
   });
@@ -71,10 +71,7 @@ describe('sweepStaleIssues without LLM credential', () => {
         }),
       ],
     });
-    expect(decisions.map((d) => d.action)).toEqual([
-      'ping_assignee',
-      'auto_close_with_label',
-    ]);
+    expect(decisions.map((d) => d.action)).toEqual(['ping_assignee', 'auto_close_with_label']);
   });
 });
 

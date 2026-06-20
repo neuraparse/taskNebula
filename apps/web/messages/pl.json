@@ -344,9 +344,9 @@
     },
     "reporter": {
       "unknown": "Nieznany użytkownik",
-      "label": "Zgłaszający"
-    },
-    "reporter.avatarAlt": "Awatar zgłaszającego"
+      "label": "Zgłaszający",
+      "avatarAlt": "Awatar zgłaszającego"
+    }
   },
   "issueDetail": {
     "comments": {
@@ -440,6 +440,15 @@
     "statusChecksDisabled": "Sprawdzanie wyłączone",
     "currentVersion": "Bieżąca wersja",
     "latestVersion": "Najnowsza wersja",
+    "latestDockerImage": "Najnowszy obraz Docker",
+    "imagePushed": "Wypchnięto {date}",
+    "dockerImage": "Obraz Docker",
+    "dockerImageDescription": "Sprawdzono z repozytorium Docker Hub {repository}.",
+    "imageUpdateAvailable": "Dostępna aktualizacja obrazu",
+    "repository": "Repozytorium",
+    "imageDigest": "Digest obrazu",
+    "imageSize": "Rozmiar obrazu",
+    "viewDockerTag": "Zobacz tag Docker",
     "published": "Opublikowano {date}",
     "lastChecked": "Ostatnio sprawdzono {time}",
     "checksDisabledHint": "Sprawdzanie aktualizacji jest wyłączone przez zmienną środowiskową TASKNEBULA_DISABLE_UPDATE_CHECK. Usuń ją, aby zobaczyć tutaj nowe wydania.",
@@ -2257,6 +2266,45 @@
       "writes_count": "{count} zapisów",
       "no_summary": "Brak zarejestrowanego podsumowania.",
       "run_live": "Uruchom na żywo"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS governance",
+      "description": "Control which AI agents can write, what needs approval, and what is blocked.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading agent governance...",
+      "loadFailed": "Failed to load agent governance.",
+      "policySource": "Policy source",
+      "noPolicy": "No AGENTOWNERS file found",
+      "lastParsedAt": "Last parsed at",
+      "validationErrors": "Validation errors",
+      "validationTitle": "Policy validation needs attention",
+      "line": "Line {line}",
+      "rulesTitle": "Policy preview",
+      "rulesDescription": "Parsed rules are evaluated by specificity before effect precedence.",
+      "noRules": "No policy rules are active.",
+      "table": {
+        "line": "Line",
+        "actor": "Actor",
+        "action": "Action",
+        "effect": "Effect"
+      },
+      "effect": {
+        "allow": "Allow",
+        "deny": "Deny",
+        "requireApproval": "Approval"
+      },
+      "queueTitle": "Approval queue",
+      "queueDescription": "Pending AI actions wait here until an admin or maintainer approves them.",
+      "queueLoading": "Loading approval queue...",
+      "queueEmpty": "No pending AI actions.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "behaviorTitle": "Approval behavior",
+      "behaviorDescription": "Safe defaults used when no explicit rule matches.",
+      "unknownAgents": "Unknown agents",
+      "destructiveActions": "Destructive actions",
+      "requireApprovalDefault": "Require approval by default"
     }
   },
   "collab": {
@@ -2609,10 +2657,10 @@
         "noPermission": "Nie masz uprawnień do tworzenia dokumentów w tej przestrzeni.",
         "creating": "Tworzenie...",
         "createPage": "Utwórz stronę"
-      }
-    },
-    "shell.collapse": "Zwiń",
-    "shell.expand": "Rozwiń"
+      },
+      "collapse": "Zwiń",
+      "expand": "Rozwiń"
+    }
   },
   "planning": {
     "search_placeholder": "Szukaj szablonów",
@@ -3264,7 +3312,9 @@
       "hint": {
         "openai": "Używany, gdy obszar roboczy nie wprowadził własnego klucza OpenAI. Zaczyna się od sk-…",
         "anthropic": "Używany, gdy obszar roboczy nie wprowadził własnego klucza Anthropic. Zaczyna się od sk-ant-…"
-      }
+      },
+      "saveFailedDescription": "Nie udało się zapisać poświadczenia. Spróbuj ponownie.",
+      "removeFailedDescription": "Nie udało się usunąć poświadczenia. Spróbuj ponownie."
     },
     "realtimeHealth": {
       "loading": "Ładowanie kondycji czasu rzeczywistego...",
@@ -3394,12 +3444,10 @@
       "targetedOrgs": "docelowe organizacje",
       "close": "Zamknij",
       "evaluate": "Oceń",
-      "evaluating": "Ocenianie..."
-    },
-    "flagTest.isEnabled": "isEnabled",
-    "flagTest.rolloutPercent": "rollout%",
-    "platformAi.saveFailedDescription": "Nie udało się zapisać poświadczenia. Spróbuj ponownie.",
-    "platformAi.removeFailedDescription": "Nie udało się usunąć poświadczenia. Spróbuj ponownie."
+      "evaluating": "Ocenianie...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "rollout%"
+    }
   },
   "adminDialogs": {
     "common": {
@@ -3440,7 +3488,8 @@
       "plansHint": "Pozostaw puste, aby włączyć dla wszystkich planów.",
       "targetOrganizations": "Docelowe organizacje",
       "targetOrganizationsHint": "Pozostaw puste, aby włączyć dla wszystkich organizacji pasujących do planu + wdrożenia.",
-      "rollout": "Wdrożenie: {percentage}%"
+      "rollout": "Wdrożenie: {percentage}%",
+      "namePlaceholder": "Zaawansowana analityka"
     },
     "createOrg": {
       "trigger": "Nowa organizacja",
@@ -3464,7 +3513,8 @@
       "domain": "Domena (opcjonalnie)",
       "toastUpdatedTitle": "Organizacja zaktualizowana",
       "toastUpdatedDescription": "Zmiany zostały pomyślnie zapisane.",
-      "toastFailedTitle": "Nie udało się zaktualizować organizacji"
+      "toastFailedTitle": "Nie udało się zaktualizować organizacji",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "Nazwa",
@@ -3474,7 +3524,9 @@
       "planFree": "Darmowy",
       "planStarter": "Starter",
       "planGrowth": "Wzrost",
-      "planEnterprise": "Enterprise"
+      "planEnterprise": "Enterprise",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "Nowy użytkownik",
@@ -3487,7 +3539,9 @@
       "missingFieldsDescription": "Imię i nazwisko, e-mail oraz hasło są wymagane.",
       "toastCreatedTitle": "Użytkownik utworzony",
       "toastCreatedDescription": "Użytkownik został pomyślnie utworzony.",
-      "toastFailedTitle": "Nie udało się utworzyć użytkownika"
+      "toastFailedTitle": "Nie udało się utworzyć użytkownika",
+      "fullNamePlaceholder": "Jane Smith",
+      "emailPlaceholder": "jane@example.com"
     },
     "editUser": {
       "title": "Edytuj użytkownika",
@@ -3511,13 +3565,7 @@
       "searchPlaceholder": "Szukaj organizacji...",
       "empty": "Nie znaleziono organizacji.",
       "remove": "Usuń {name}"
-    },
-    "orgForm.namePlaceholder": "Acme Inc",
-    "orgForm.slugPlaceholder": "acme-inc",
-    "editOrg.domainPlaceholder": "example.com",
-    "createUser.fullNamePlaceholder": "Jane Smith",
-    "createUser.emailPlaceholder": "jane@example.com",
-    "flagForm.namePlaceholder": "Zaawansowana analityka"
+    }
   },
   "charts": {
     "issues": "Zadania",
@@ -3652,7 +3700,8 @@
       "priorityLow": "Niski",
       "priorityNone": "Brak",
       "labelsCommaSeparated": "Etykiety (oddzielone przecinkami)",
-      "creating": "Tworzenie…"
+      "creating": "Tworzenie…",
+      "queuedForApprovalCount": "{count, plural, one {1 draft is waiting for approval} other {# drafts are waiting for approval}}"
     },
     "assist": {
       "title": "Asystent AI",
@@ -3963,7 +4012,9 @@
     "startSprintTooltip": "Rozpocznij ten sprint i ustaw go jako aktywny",
     "completeSprint": "Ukończ sprint",
     "completeSprintTooltip": "Ukończ ten sprint. Nieukończone zadania zostaną przeniesione do rejestru zadań.",
-    "sprintBurndown": "Wykres spalania sprintu"
+    "sprintBurndown": "Wykres spalania sprintu",
+    "projectInviteRequiredTitle": "Invitation required",
+    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4499,7 +4550,10 @@
         "status": "Status",
         "priority": "Priorytet",
         "assignee": "Osoba przypisana"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "Dostęp",
@@ -4555,7 +4609,12 @@
         "qa_engineer": "Inżynier QA",
         "designer": "Projektant",
         "viewer": "Obserwator"
-      }
+      },
+      "inviteExpiry": "Invitation expires",
+      "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
+      "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
+      "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
+      "invitationResent": "Invitation resent"
     },
     "org": {
       "selectOrg": "Wybierz organizację, aby załadować ustawienia.",
@@ -4664,10 +4723,7 @@
         "datadog": "Ustaw { apiKey, site? }.",
         "s3": "Ustaw { bucket, region, prefix? }. AWS_ACCESS_KEY_ID/SECRET muszą być ustawione w środowisku."
       }
-    },
-    "import.projectIdPlaceholder": "prj_xxx",
-    "import.linearTeamPlaceholder": "ENG",
-    "import.jiraSitePlaceholder": "acme.atlassian.net"
+    }
   },
   "sprints": {
     "defaultName": "Sprint {number}",
@@ -5126,18 +5182,20 @@
           "connecting": "Łączenie",
           "reconnecting": "Ponowne łączenie",
           "disconnected": "Rozłączono"
+        },
+        "permissionDeniedRetry": "Odmówiono dostępu do mikrofonu. Zezwól na dostęp do mikrofonu w przeglądarce i spróbuj ponownie.",
+        "micCouldNotStartBusy": "Nie udało się uruchomić mikrofonu. Może być używany przez inną aplikację.",
+        "audioEngineFailed": "Silnik dźwięku przeglądarki nie zadziałał na tym urządzeniu. Zamknij inne aplikacje audio lub zmień mikrofon, a następnie spróbuj ponownie.",
+        "noMicForSession": "Nie znaleziono mikrofonu dla tej sesji przeglądarki.",
+        "runtimeError": {
+          "serverUnreachable": "Serwer głosowy jest nieosiągalny na portach mediów (UDP 50000-50020 / 3478, TCP 7881). Sprawdź zaporę / NAT i spróbuj ponownie.",
+          "permissionDenied": "Odmówiono dostępu do mikrofonu. Zezwól na dostęp do mikrofonu w przeglądarce i spróbuj ponownie.",
+          "micNotStarted": "Nie udało się uruchomić mikrofonu. Może być używany przez inną aplikację.",
+          "audioEngineFailed": "Silnik dźwięku przeglądarki nie zadziałał na tym urządzeniu. Zamknij inne aplikacje audio lub zmień mikrofon, a następnie spróbuj ponownie.",
+          "micNotFound": "Nie znaleziono mikrofonu dla tej sesji przeglądarki."
         }
       }
-    },
-    "chat.voice.permissionDeniedRetry": "Odmówiono dostępu do mikrofonu. Zezwól na dostęp do mikrofonu w przeglądarce i spróbuj ponownie.",
-    "chat.voice.micCouldNotStartBusy": "Nie udało się uruchomić mikrofonu. Może być używany przez inną aplikację.",
-    "chat.voice.audioEngineFailed": "Silnik dźwięku przeglądarki nie zadziałał na tym urządzeniu. Zamknij inne aplikacje audio lub zmień mikrofon, a następnie spróbuj ponownie.",
-    "chat.voice.noMicForSession": "Nie znaleziono mikrofonu dla tej sesji przeglądarki.",
-    "chat.voice.runtimeError.serverUnreachable": "Serwer głosowy jest nieosiągalny na portach mediów (UDP 50000-50020 / 3478, TCP 7881). Sprawdź zaporę / NAT i spróbuj ponownie.",
-    "chat.voice.runtimeError.permissionDenied": "Odmówiono dostępu do mikrofonu. Zezwól na dostęp do mikrofonu w przeglądarce i spróbuj ponownie.",
-    "chat.voice.runtimeError.micNotStarted": "Nie udało się uruchomić mikrofonu. Może być używany przez inną aplikację.",
-    "chat.voice.runtimeError.audioEngineFailed": "Silnik dźwięku przeglądarki nie zadziałał na tym urządzeniu. Zamknij inne aplikacje audio lub zmień mikrofon, a następnie spróbuj ponownie.",
-    "chat.voice.runtimeError.micNotFound": "Nie znaleziono mikrofonu dla tej sesji przeglądarki."
+    }
   },
   "userSecurity": {
     "accountMenu": "Menu konta",

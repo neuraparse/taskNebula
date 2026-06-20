@@ -16,14 +16,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, organizationMembers } from '@tasknebula/db';
-import { eq } from 'drizzle-orm';
-import {
-  workspaceSeedSchema,
-} from '@/lib/onboarding/bootstrapper';
-import {
-  applyWorkspaceSeed,
-  ApplySeedError,
-} from '@/lib/onboarding/apply-seed';
+import { and, eq } from 'drizzle-orm';
+import { workspaceSeedSchema } from '@/lib/onboarding/bootstrapper';
+import { applyWorkspaceSeed, ApplySeedError } from '@/lib/onboarding/apply-seed';
 
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -48,22 +43,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'Seed failed validation',
-        details: parsed.error.errors
-          .slice(0, 5)
-          .map((e) => `${e.path.join('.')} ${e.message}`),
+        details: parsed.error.errors.slice(0, 5).map((e) => `${e.path.join('.')} ${e.message}`),
       },
       { status: 400 }
     );
   }
 
   // Resolve organizationId — explicit body override or the user's first org.
-  let organizationId =
-    typeof bodyObj.organizationId === 'string' ? bodyObj.organizationId : null;
+  let organizationId = typeof bodyObj.organizationId === 'string' ? bodyObj.organizationId : null;
   if (!organizationId) {
     const [membership] = await db
       .select({ organizationId: organizationMembers.organizationId })
       .from(organizationMembers)
-      .where(eq(organizationMembers.userId, userId))
+      .where(and(eq(organizationMembers.userId, userId), eq(organizationMembers.status, 'active')))
       .limit(1);
     if (!membership) {
       return NextResponse.json(

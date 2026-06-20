@@ -1,0 +1,35 @@
+# TaskNebula AGENTOWNERS example
+#
+# Syntax:
+#   agent:<actor> <resource>:<action> allow
+#   agent:<actor> <resource>:<action> deny
+#   agent:<actor> <resource>:<action> require-approval @group
+#
+# Discovery order:
+#   .tasknebula/AGENTOWNERS
+#   .github/AGENTOWNERS
+#   AGENTOWNERS
+
+# Native TaskNebula AI may draft and triage issues
+agent:tasknebula-ai issues:create allow
+agent:tasknebula-ai issues:triage allow
+agent:tasknebula-ai issues:assign allow
+agent:tasknebula-ai issues:label allow
+agent:tasknebula-ai issues:comment allow
+
+# Closing or deleting issues needs human approval
+agent:tasknebula-ai issues:close require-approval @maintainers
+agent:tasknebula-ai issues:delete deny
+
+# External coding agents are more restricted
+agent:claude-code issues:comment allow
+agent:claude-code issues:update require-approval @maintainers
+agent:codex issues:update require-approval @maintainers
+agent:gemini issues:update require-approval @maintainers
+
+# Boards
+agent:tasknebula-ai boards:create-card allow
+agent:tasknebula-ai boards:move-card require-approval @maintainers
+
+# Unknown agents are never trusted by default
+unknown:* * require-approval @admins

@@ -344,9 +344,9 @@
     },
     "reporter": {
       "unknown": "Unknown user",
-      "label": "Reporter"
-    },
-    "reporter.avatarAlt": "Bildiren avatarı"
+      "label": "Reporter",
+      "avatarAlt": "Bildiren avatarı"
+    }
   },
   "issueDetail": {
     "comments": {
@@ -440,6 +440,15 @@
     "statusChecksDisabled": "Checks disabled",
     "currentVersion": "Current version",
     "latestVersion": "Latest version",
+    "latestDockerImage": "En son Docker imajı",
+    "imagePushed": "{date} tarihinde yayınlandı",
+    "dockerImage": "Docker imajı",
+    "dockerImageDescription": "Docker Hub deposu {repository} üzerinden kontrol edildi.",
+    "imageUpdateAvailable": "İmaj güncellemesi var",
+    "repository": "Depo",
+    "imageDigest": "İmaj digest",
+    "imageSize": "İmaj boyutu",
+    "viewDockerTag": "Docker tagini görüntüle",
     "published": "Published {date}",
     "lastChecked": "Last checked {time}",
     "checksDisabledHint": "Update checks are disabled via the TASKNEBULA_DISABLE_UPDATE_CHECK environment variable. Remove it to see new releases here.",
@@ -2257,6 +2266,45 @@
       "writes_count": "{count} yazma",
       "no_summary": "Özet kaydedilmedi.",
       "run_live": "Canlı çalıştır"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS yönetişimi",
+      "description": "Hangi AI ajanlarının yazabileceğini, nelerin onay istediğini ve nelerin engelleneceğini yönetin.",
+      "enabled": "Etkin",
+      "disabled": "Devre dışı",
+      "loading": "Ajan yönetişimi yükleniyor...",
+      "loadFailed": "Ajan yönetişimi yüklenemedi.",
+      "policySource": "Policy kaynağı",
+      "noPolicy": "AGENTOWNERS dosyası bulunamadı",
+      "lastParsedAt": "Son ayrıştırma",
+      "validationErrors": "Doğrulama hataları",
+      "validationTitle": "Policy doğrulaması dikkat istiyor",
+      "line": "Satır {line}",
+      "rulesTitle": "Policy önizlemesi",
+      "rulesDescription": "Ayrıştırılan kurallar önce özgüllüğe, sonra etki önceliğine göre değerlendirilir.",
+      "noRules": "Etkin policy kuralı yok.",
+      "table": {
+        "line": "Satır",
+        "actor": "Aktör",
+        "action": "Aksiyon",
+        "effect": "Etki"
+      },
+      "effect": {
+        "allow": "İzin ver",
+        "deny": "Reddet",
+        "requireApproval": "Onay"
+      },
+      "queueTitle": "Onay kuyruğu",
+      "queueDescription": "Bekleyen AI aksiyonları bir admin veya maintainer onaylayana kadar burada kalır.",
+      "queueLoading": "Onay kuyruğu yükleniyor...",
+      "queueEmpty": "Bekleyen AI aksiyonu yok.",
+      "approve": "Onayla",
+      "reject": "Reddet",
+      "behaviorTitle": "Onay davranışı",
+      "behaviorDescription": "Kural eşleşmediğinde kullanılan güvenli varsayılanlar.",
+      "unknownAgents": "Bilinmeyen ajanlar",
+      "destructiveActions": "Yıkıcı aksiyonlar",
+      "requireApprovalDefault": "Varsayılan olarak onay ister"
     }
   },
   "collab": {
@@ -2609,10 +2657,10 @@
         "noPermission": "Bu alanda belge oluşturma izniniz yok.",
         "creating": "Oluşturuluyor...",
         "createPage": "Sayfa oluştur"
-      }
-    },
-    "shell.collapse": "Daralt",
-    "shell.expand": "Genişlet"
+      },
+      "collapse": "Daralt",
+      "expand": "Genişlet"
+    }
   },
   "planning": {
     "search_placeholder": "Şablonları ara",
@@ -3264,7 +3312,9 @@
       "hint": {
         "openai": "Bir çalışma alanı kendi OpenAI anahtarını girmediğinde kullanılır. sk-… ile başlar",
         "anthropic": "Bir çalışma alanı kendi Anthropic anahtarını girmediğinde kullanılır. sk-ant-… ile başlar"
-      }
+      },
+      "saveFailedDescription": "Kimlik bilgisi kaydedilemedi. Lütfen tekrar deneyin.",
+      "removeFailedDescription": "Kimlik bilgisi kaldırılamadı. Lütfen tekrar deneyin."
     },
     "realtimeHealth": {
       "loading": "Gerçek zamanlı durum yükleniyor...",
@@ -3394,12 +3444,10 @@
       "targetedOrgs": "hedeflenen kuruluş",
       "close": "Kapat",
       "evaluate": "Değerlendir",
-      "evaluating": "Değerlendiriliyor..."
-    },
-    "flagTest.isEnabled": "isEnabled",
-    "flagTest.rolloutPercent": "yayılım%",
-    "platformAi.saveFailedDescription": "Kimlik bilgisi kaydedilemedi. Lütfen tekrar deneyin.",
-    "platformAi.removeFailedDescription": "Kimlik bilgisi kaldırılamadı. Lütfen tekrar deneyin."
+      "evaluating": "Değerlendiriliyor...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "yayılım%"
+    }
   },
   "adminDialogs": {
     "common": {
@@ -3440,7 +3488,8 @@
       "plansHint": "Tüm planlar için etkinleştirmek üzere boş bırakın.",
       "targetOrganizations": "Hedef kuruluşlar",
       "targetOrganizationsHint": "Plan + dağıtımla eşleşen tüm kuruluşlar için etkinleştirmek üzere boş bırakın.",
-      "rollout": "Dağıtım: %{percentage}"
+      "rollout": "Dağıtım: %{percentage}",
+      "namePlaceholder": "Gelişmiş Analitik"
     },
     "createOrg": {
       "trigger": "Yeni kuruluş",
@@ -3464,7 +3513,8 @@
       "domain": "Alan adı (isteğe bağlı)",
       "toastUpdatedTitle": "Kuruluş güncellendi",
       "toastUpdatedDescription": "Değişiklikler başarıyla kaydedildi.",
-      "toastFailedTitle": "Kuruluş güncellenemedi"
+      "toastFailedTitle": "Kuruluş güncellenemedi",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "Ad",
@@ -3474,7 +3524,9 @@
       "planFree": "Ücretsiz",
       "planStarter": "Başlangıç",
       "planGrowth": "Büyüme",
-      "planEnterprise": "Kurumsal"
+      "planEnterprise": "Kurumsal",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "Yeni kullanıcı",
@@ -3487,7 +3539,9 @@
       "missingFieldsDescription": "Ad, e-posta ve parola gereklidir.",
       "toastCreatedTitle": "Kullanıcı oluşturuldu",
       "toastCreatedDescription": "Kullanıcı başarıyla oluşturuldu.",
-      "toastFailedTitle": "Kullanıcı oluşturulamadı"
+      "toastFailedTitle": "Kullanıcı oluşturulamadı",
+      "fullNamePlaceholder": "Jane Smith",
+      "emailPlaceholder": "jane@example.com"
     },
     "editUser": {
       "title": "Kullanıcıyı düzenle",
@@ -3511,13 +3565,7 @@
       "searchPlaceholder": "Kuruluşları ara...",
       "empty": "Kuruluş bulunamadı.",
       "remove": "{name} kaldır"
-    },
-    "orgForm.namePlaceholder": "Acme Inc",
-    "orgForm.slugPlaceholder": "acme-inc",
-    "editOrg.domainPlaceholder": "example.com",
-    "createUser.fullNamePlaceholder": "Jane Smith",
-    "createUser.emailPlaceholder": "jane@example.com",
-    "flagForm.namePlaceholder": "Gelişmiş Analitik"
+    }
   },
   "charts": {
     "issues": "İşler",
@@ -3652,7 +3700,8 @@
       "priorityLow": "Düşük",
       "priorityNone": "Yok",
       "labelsCommaSeparated": "Etiketler (virgülle ayrılmış)",
-      "creating": "Oluşturuluyor…"
+      "creating": "Oluşturuluyor…",
+      "queuedForApprovalCount": "{count, plural, one {1 taslak onay bekliyor} other {# taslak onay bekliyor}}"
     },
     "assist": {
       "title": "AI yardımı",
@@ -3963,7 +4012,9 @@
     "startSprintTooltip": "Bu sprinti başlat ve aktif hale getir",
     "completeSprint": "Sprinti Tamamla",
     "completeSprintTooltip": "Bu sprinti tamamla. Tamamlanmayan işler iş listesine taşınacak.",
-    "sprintBurndown": "Sprint Tükenme Grafiği"
+    "sprintBurndown": "Sprint Tükenme Grafiği",
+    "projectInviteRequiredTitle": "Davet gerekli",
+    "projectInviteRequiredDescription": "Projelerde çalışmak için bir organizasyon sahibi veya adminin sizi projeye davet etmesi ya da proje oluşturmak için owner/admin rolü vermesi gerekir."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4499,7 +4550,10 @@
         "status": "Durum",
         "priority": "Öncelik",
         "assignee": "Atanan kişi"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "Erişim",
@@ -4555,7 +4609,12 @@
         "qa_engineer": "QA Mühendisi",
         "designer": "Tasarımcı",
         "viewer": "İzleyici"
-      }
+      },
+      "inviteExpiry": "Davet süresi",
+      "inviteExpiryHelp": "Bekleyen davet yeniden gönderilirse bu süreyle yeni bağlantı oluşturulur.",
+      "inviteExpiryOption": "{count, plural, one {# gün} other {# gün}}",
+      "inviteExpiresSummary": "{count, plural, one {# gün geçerli.} other {# gün geçerli.}}",
+      "invitationResent": "Davet yeniden gönderildi"
     },
     "org": {
       "selectOrg": "Ayarları yüklemek için bir kuruluş seçin.",
@@ -4664,10 +4723,7 @@
         "datadog": "{ apiKey, site? } ayarlayın.",
         "s3": "{ bucket, region, prefix? } ayarlayın. AWS_ACCESS_KEY_ID/SECRET ortam değişkenlerinde ayarlanmalıdır."
       }
-    },
-    "import.projectIdPlaceholder": "prj_xxx",
-    "import.linearTeamPlaceholder": "ENG",
-    "import.jiraSitePlaceholder": "acme.atlassian.net"
+    }
   },
   "sprints": {
     "defaultName": "Sprint {number}",
@@ -5126,18 +5182,20 @@
           "connecting": "Bağlanıyor",
           "reconnecting": "Yeniden bağlanıyor",
           "disconnected": "Bağlantı kesildi"
+        },
+        "permissionDeniedRetry": "Mikrofon izni reddedildi. Tarayıcınızda mikrofon erişimine izin verip tekrar deneyin.",
+        "micCouldNotStartBusy": "Mikrofonunuz başlatılamadı. Başka bir uygulama onu kullanıyor olabilir.",
+        "audioEngineFailed": "Bu cihaz için tarayıcı ses motoru başarısız oldu. Diğer ses uygulamalarını durdurun veya mikrofonunuzu değiştirip tekrar deneyin.",
+        "noMicForSession": "Bu tarayıcı oturumu için mikrofon bulunamadı.",
+        "runtimeError": {
+          "serverUnreachable": "Sesli sunucuya medya bağlantı noktalarından erişilemiyor (UDP 50000-50020 / 3478, TCP 7881). Güvenlik duvarını / NAT'ı kontrol edip tekrar deneyin.",
+          "permissionDenied": "Mikrofon izni reddedildi. Tarayıcınızda mikrofon erişimine izin verip tekrar deneyin.",
+          "micNotStarted": "Mikrofonunuz başlatılamadı. Başka bir uygulama onu kullanıyor olabilir.",
+          "audioEngineFailed": "Bu cihaz için tarayıcı ses motoru başarısız oldu. Diğer ses uygulamalarını durdurun veya mikrofonunuzu değiştirip tekrar deneyin.",
+          "micNotFound": "Bu tarayıcı oturumu için mikrofon bulunamadı."
         }
       }
-    },
-    "chat.voice.permissionDeniedRetry": "Mikrofon izni reddedildi. Tarayıcınızda mikrofon erişimine izin verip tekrar deneyin.",
-    "chat.voice.micCouldNotStartBusy": "Mikrofonunuz başlatılamadı. Başka bir uygulama onu kullanıyor olabilir.",
-    "chat.voice.audioEngineFailed": "Bu cihaz için tarayıcı ses motoru başarısız oldu. Diğer ses uygulamalarını durdurun veya mikrofonunuzu değiştirip tekrar deneyin.",
-    "chat.voice.noMicForSession": "Bu tarayıcı oturumu için mikrofon bulunamadı.",
-    "chat.voice.runtimeError.serverUnreachable": "Sesli sunucuya medya bağlantı noktalarından erişilemiyor (UDP 50000-50020 / 3478, TCP 7881). Güvenlik duvarını / NAT'ı kontrol edip tekrar deneyin.",
-    "chat.voice.runtimeError.permissionDenied": "Mikrofon izni reddedildi. Tarayıcınızda mikrofon erişimine izin verip tekrar deneyin.",
-    "chat.voice.runtimeError.micNotStarted": "Mikrofonunuz başlatılamadı. Başka bir uygulama onu kullanıyor olabilir.",
-    "chat.voice.runtimeError.audioEngineFailed": "Bu cihaz için tarayıcı ses motoru başarısız oldu. Diğer ses uygulamalarını durdurun veya mikrofonunuzu değiştirip tekrar deneyin.",
-    "chat.voice.runtimeError.micNotFound": "Bu tarayıcı oturumu için mikrofon bulunamadı."
+    }
   },
   "userSecurity": {
     "accountMenu": "Hesap menüsü",

@@ -440,6 +440,15 @@
     "statusChecksDisabled": "Tarkistukset poistettu käytöstä",
     "currentVersion": "Nykyinen versio",
     "latestVersion": "Uusin versio",
+    "latestDockerImage": "Uusin Docker-image",
+    "imagePushed": "Julkaistu {date}",
+    "dockerImage": "Docker-image",
+    "dockerImageDescription": "Tarkistettu Docker Hub -repositoriosta {repository}.",
+    "imageUpdateAvailable": "Image-päivitys saatavilla",
+    "repository": "Repositorio",
+    "imageDigest": "Imagen digest",
+    "imageSize": "Imagen koko",
+    "viewDockerTag": "Näytä Docker-tagi",
     "published": "Julkaistu {date}",
     "lastChecked": "Viimeksi tarkistettu {time}",
     "checksDisabledHint": "Päivitystarkistukset on poistettu käytöstä TASKNEBULA_DISABLE_UPDATE_CHECK-ympäristömuuttujalla. Poista se nähdäksesi uudet julkaisut täällä.",
@@ -2257,6 +2266,45 @@
       "writes_count": "{count} kirjoitusta",
       "no_summary": "Yhteenvetoa ei tallennettu.",
       "run_live": "Suorita live"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS governance",
+      "description": "Control which AI agents can write, what needs approval, and what is blocked.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading agent governance...",
+      "loadFailed": "Failed to load agent governance.",
+      "policySource": "Policy source",
+      "noPolicy": "No AGENTOWNERS file found",
+      "lastParsedAt": "Last parsed at",
+      "validationErrors": "Validation errors",
+      "validationTitle": "Policy validation needs attention",
+      "line": "Line {line}",
+      "rulesTitle": "Policy preview",
+      "rulesDescription": "Parsed rules are evaluated by specificity before effect precedence.",
+      "noRules": "No policy rules are active.",
+      "table": {
+        "line": "Line",
+        "actor": "Actor",
+        "action": "Action",
+        "effect": "Effect"
+      },
+      "effect": {
+        "allow": "Allow",
+        "deny": "Deny",
+        "requireApproval": "Approval"
+      },
+      "queueTitle": "Approval queue",
+      "queueDescription": "Pending AI actions wait here until an admin or maintainer approves them.",
+      "queueLoading": "Loading approval queue...",
+      "queueEmpty": "No pending AI actions.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "behaviorTitle": "Approval behavior",
+      "behaviorDescription": "Safe defaults used when no explicit rule matches.",
+      "unknownAgents": "Unknown agents",
+      "destructiveActions": "Destructive actions",
+      "requireApprovalDefault": "Require approval by default"
     }
   },
   "collab": {
@@ -3652,7 +3700,8 @@
       "priorityLow": "Matala",
       "priorityNone": "Ei mitään",
       "labelsCommaSeparated": "Tunnisteet (pilkuilla erotettuna)",
-      "creating": "Luodaan…"
+      "creating": "Luodaan…",
+      "queuedForApprovalCount": "{count, plural, one {1 draft is waiting for approval} other {# drafts are waiting for approval}}"
     },
     "assist": {
       "title": "Tekoälyavustus",
@@ -3963,7 +4012,9 @@
     "startSprintTooltip": "Aloita tämä sprintti ja tee siitä aktiivinen",
     "completeSprint": "Päätä sprintti",
     "completeSprintTooltip": "Päätä tämä sprintti. Keskeneräiset työt siirtyvät työjonoon.",
-    "sprintBurndown": "Sprintin palamiskäyrä"
+    "sprintBurndown": "Sprintin palamiskäyrä",
+    "projectInviteRequiredTitle": "Invitation required",
+    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4558,7 +4609,12 @@
         "qa_engineer": "QA-insinööri",
         "designer": "Suunnittelija",
         "viewer": "Katselija"
-      }
+      },
+      "inviteExpiry": "Invitation expires",
+      "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
+      "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
+      "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
+      "invitationResent": "Invitation resent"
     },
     "org": {
       "selectOrg": "Valitse organisaatio ladataksesi asetukset.",

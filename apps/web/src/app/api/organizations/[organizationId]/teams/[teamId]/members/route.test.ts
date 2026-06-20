@@ -64,6 +64,7 @@ jest.mock('@tasknebula/db', () => ({
     id: 'organizationMembers.id',
     organizationId: 'organizationMembers.organizationId',
     userId: 'organizationMembers.userId',
+    status: 'organizationMembers.status',
   },
   teamMembers: {
     id: 'teamMembers.id',
@@ -166,9 +167,12 @@ describe('teamspace members route', () => {
         ])
       );
 
-    const response = await GET(new NextRequestCtor('http://localhost:3002/api/organizations/org-1/teams/team-1/members'), {
-      params: Promise.resolve({ organizationId: 'org-1', teamId: 'team-1' }),
-    });
+    const response = await GET(
+      new NextRequestCtor('http://localhost:3002/api/organizations/org-1/teams/team-1/members'),
+      {
+        params: Promise.resolve({ organizationId: 'org-1', teamId: 'team-1' }),
+      }
+    );
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({

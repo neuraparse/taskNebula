@@ -344,9 +344,9 @@
     },
     "reporter": {
       "unknown": "Неизвестен потребител",
-      "label": "Докладвал"
-    },
-    "reporter.avatarAlt": "Аватар на подателя"
+      "label": "Докладвал",
+      "avatarAlt": "Аватар на подателя"
+    }
   },
   "issueDetail": {
     "comments": {
@@ -440,6 +440,15 @@
     "statusChecksDisabled": "Проверките са изключени",
     "currentVersion": "Текуща версия",
     "latestVersion": "Най-нова версия",
+    "latestDockerImage": "Най-нов Docker образ",
+    "imagePushed": "Публикувано на {date}",
+    "dockerImage": "Docker образ",
+    "dockerImageDescription": "Проверено от Docker Hub хранилище {repository}.",
+    "imageUpdateAvailable": "Налична е актуализация на образа",
+    "repository": "Хранилище",
+    "imageDigest": "Digest на образа",
+    "imageSize": "Размер на образа",
+    "viewDockerTag": "Виж Docker тага",
     "published": "Публикувана на {date}",
     "lastChecked": "Последна проверка {time}",
     "checksDisabledHint": "Проверките за актуализации са изключени чрез променливата на средата TASKNEBULA_DISABLE_UPDATE_CHECK. Премахнете я, за да виждате новите издания тук.",
@@ -2257,6 +2266,45 @@
       "writes_count": "{count} записа",
       "no_summary": "Няма записано обобщение.",
       "run_live": "Изпълни на живо"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS governance",
+      "description": "Control which AI agents can write, what needs approval, and what is blocked.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading agent governance...",
+      "loadFailed": "Failed to load agent governance.",
+      "policySource": "Policy source",
+      "noPolicy": "No AGENTOWNERS file found",
+      "lastParsedAt": "Last parsed at",
+      "validationErrors": "Validation errors",
+      "validationTitle": "Policy validation needs attention",
+      "line": "Line {line}",
+      "rulesTitle": "Policy preview",
+      "rulesDescription": "Parsed rules are evaluated by specificity before effect precedence.",
+      "noRules": "No policy rules are active.",
+      "table": {
+        "line": "Line",
+        "actor": "Actor",
+        "action": "Action",
+        "effect": "Effect"
+      },
+      "effect": {
+        "allow": "Allow",
+        "deny": "Deny",
+        "requireApproval": "Approval"
+      },
+      "queueTitle": "Approval queue",
+      "queueDescription": "Pending AI actions wait here until an admin or maintainer approves them.",
+      "queueLoading": "Loading approval queue...",
+      "queueEmpty": "No pending AI actions.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "behaviorTitle": "Approval behavior",
+      "behaviorDescription": "Safe defaults used when no explicit rule matches.",
+      "unknownAgents": "Unknown agents",
+      "destructiveActions": "Destructive actions",
+      "requireApprovalDefault": "Require approval by default"
     }
   },
   "collab": {
@@ -2609,10 +2657,10 @@
         "noPermission": "Нямате разрешение да създавате документи в това пространство.",
         "creating": "Създаване...",
         "createPage": "Създай страница"
-      }
-    },
-    "shell.collapse": "Свиване",
-    "shell.expand": "Разгъване"
+      },
+      "collapse": "Свиване",
+      "expand": "Разгъване"
+    }
   },
   "planning": {
     "search_placeholder": "Търсене на шаблони",
@@ -3264,7 +3312,9 @@
       "hint": {
         "openai": "Използва се, когато работно пространство не е въвело собствен OpenAI ключ. Започва с sk-…",
         "anthropic": "Използва се, когато работно пространство не е въвело собствен Anthropic ключ. Започва с sk-ant-…"
-      }
+      },
+      "saveFailedDescription": "Идентификационните данни не можаха да бъдат запазени. Моля, опитайте отново.",
+      "removeFailedDescription": "Идентификационните данни не можаха да бъдат премахнати. Моля, опитайте отново."
     },
     "realtimeHealth": {
       "loading": "Зареждане на състоянието в реално време...",
@@ -3394,12 +3444,10 @@
       "targetedOrgs": "целеви организации",
       "close": "Затвори",
       "evaluate": "Оцени",
-      "evaluating": "Оценяване..."
-    },
-    "flagTest.isEnabled": "isEnabled",
-    "flagTest.rolloutPercent": "rollout%",
-    "platformAi.saveFailedDescription": "Идентификационните данни не можаха да бъдат запазени. Моля, опитайте отново.",
-    "platformAi.removeFailedDescription": "Идентификационните данни не можаха да бъдат премахнати. Моля, опитайте отново."
+      "evaluating": "Оценяване...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "rollout%"
+    }
   },
   "adminDialogs": {
     "common": {
@@ -3440,7 +3488,8 @@
       "plansHint": "Оставете празно, за да включите за всички планове.",
       "targetOrganizations": "Целеви организации",
       "targetOrganizationsHint": "Оставете празно, за да включите за всички организации, съответстващи на плана + внедряването.",
-      "rollout": "Внедряване: {percentage}%"
+      "rollout": "Внедряване: {percentage}%",
+      "namePlaceholder": "Advanced Analytics"
     },
     "createOrg": {
       "trigger": "Нова организация",
@@ -3464,7 +3513,8 @@
       "domain": "Домейн (по избор)",
       "toastUpdatedTitle": "Организацията е обновена",
       "toastUpdatedDescription": "Промените бяха запазени успешно.",
-      "toastFailedTitle": "Организацията не можа да бъде обновена"
+      "toastFailedTitle": "Организацията не можа да бъде обновена",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "Име",
@@ -3474,7 +3524,9 @@
       "planFree": "Безплатен",
       "planStarter": "Начален",
       "planGrowth": "Растеж",
-      "planEnterprise": "Корпоративен"
+      "planEnterprise": "Корпоративен",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "Нов потребител",
@@ -3487,7 +3539,9 @@
       "missingFieldsDescription": "Изискват се име, имейл и парола.",
       "toastCreatedTitle": "Потребителят е създаден",
       "toastCreatedDescription": "Потребителят беше създаден успешно.",
-      "toastFailedTitle": "Потребителят не можа да бъде създаден"
+      "toastFailedTitle": "Потребителят не можа да бъде създаден",
+      "fullNamePlaceholder": "Jane Smith",
+      "emailPlaceholder": "jane@example.com"
     },
     "editUser": {
       "title": "Редактиране на потребител",
@@ -3511,13 +3565,7 @@
       "searchPlaceholder": "Търсене на организации...",
       "empty": "Няма намерени организации.",
       "remove": "Премахни {name}"
-    },
-    "orgForm.namePlaceholder": "Acme Inc",
-    "orgForm.slugPlaceholder": "acme-inc",
-    "editOrg.domainPlaceholder": "example.com",
-    "createUser.fullNamePlaceholder": "Jane Smith",
-    "createUser.emailPlaceholder": "jane@example.com",
-    "flagForm.namePlaceholder": "Advanced Analytics"
+    }
   },
   "charts": {
     "issues": "Задачи",
@@ -3691,7 +3739,8 @@
       "priorityLow": "Нисък",
       "priorityNone": "Няма",
       "labelsCommaSeparated": "Етикети (разделени със запетая)",
-      "creating": "Създаване…"
+      "creating": "Създаване…",
+      "queuedForApprovalCount": "{count, plural, one {1 draft is waiting for approval} other {# drafts are waiting for approval}}"
     },
     "assist": {
       "title": "AI помощ",
@@ -4046,7 +4095,9 @@
     "startSprintTooltip": "Започнете този спринт и го направете активен",
     "completeSprint": "Завърши спринта",
     "completeSprintTooltip": "Завършете този спринт. Незавършените задачи ще се преместят в бек лога.",
-    "sprintBurndown": "Burndown на спринта"
+    "sprintBurndown": "Burndown на спринта",
+    "projectInviteRequiredTitle": "Invitation required",
+    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
   },
   "pagesSettings": {
     "loading": "Зареждане...",
@@ -4499,7 +4550,10 @@
         "status": "Статус",
         "priority": "Приоритет",
         "assignee": "Изпълнител"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "Достъп",
@@ -4555,7 +4609,12 @@
         "qa_engineer": "QA инженер",
         "designer": "Дизайнер",
         "viewer": "Наблюдател"
-      }
+      },
+      "inviteExpiry": "Invitation expires",
+      "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
+      "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
+      "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
+      "invitationResent": "Invitation resent"
     },
     "org": {
       "selectOrg": "Изберете организация, за да заредите настройките.",
@@ -4664,10 +4723,7 @@
         "datadog": "Задайте { apiKey, site? }.",
         "s3": "Задайте { bucket, region, prefix? }. AWS_ACCESS_KEY_ID/SECRET трябва да са зададени в средата."
       }
-    },
-    "import.projectIdPlaceholder": "prj_xxx",
-    "import.linearTeamPlaceholder": "ENG",
-    "import.jiraSitePlaceholder": "acme.atlassian.net"
+    }
   },
   "sprints": {
     "defaultName": "Спринт {number}",
@@ -5126,18 +5182,20 @@
           "connecting": "Свързване",
           "reconnecting": "Повторно свързване",
           "disconnected": "Прекъснат"
+        },
+        "permissionDeniedRetry": "Достъпът до микрофона беше отказан. Разрешете достъпа до микрофона в браузъра си и опитайте отново.",
+        "micCouldNotStartBusy": "Микрофонът ви не можа да бъде стартиран. Възможно е друго приложение да го използва.",
+        "audioEngineFailed": "Аудио ядрото на браузъра отказа за това устройство. Спрете другите аудио приложения или сменете микрофона си, след което опитайте отново.",
+        "noMicForSession": "Не беше намерен микрофон за тази сесия на браузъра.",
+        "runtimeError": {
+          "serverUnreachable": "Гласовият сървър е недостъпен на медийните портове (UDP 50000-50020 / 3478, TCP 7881). Проверете защитната стена / NAT и опитайте отново.",
+          "permissionDenied": "Достъпът до микрофона беше отказан. Разрешете достъпа до микрофона в браузъра си и опитайте отново.",
+          "micNotStarted": "Микрофонът ви не можа да бъде стартиран. Възможно е друго приложение да го използва.",
+          "audioEngineFailed": "Аудио ядрото на браузъра отказа за това устройство. Спрете другите аудио приложения или сменете микрофона си, след което опитайте отново.",
+          "micNotFound": "Не беше намерен микрофон за тази сесия на браузъра."
         }
       }
-    },
-    "chat.voice.permissionDeniedRetry": "Достъпът до микрофона беше отказан. Разрешете достъпа до микрофона в браузъра си и опитайте отново.",
-    "chat.voice.micCouldNotStartBusy": "Микрофонът ви не можа да бъде стартиран. Възможно е друго приложение да го използва.",
-    "chat.voice.audioEngineFailed": "Аудио ядрото на браузъра отказа за това устройство. Спрете другите аудио приложения или сменете микрофона си, след което опитайте отново.",
-    "chat.voice.noMicForSession": "Не беше намерен микрофон за тази сесия на браузъра.",
-    "chat.voice.runtimeError.serverUnreachable": "Гласовият сървър е недостъпен на медийните портове (UDP 50000-50020 / 3478, TCP 7881). Проверете защитната стена / NAT и опитайте отново.",
-    "chat.voice.runtimeError.permissionDenied": "Достъпът до микрофона беше отказан. Разрешете достъпа до микрофона в браузъра си и опитайте отново.",
-    "chat.voice.runtimeError.micNotStarted": "Микрофонът ви не можа да бъде стартиран. Възможно е друго приложение да го използва.",
-    "chat.voice.runtimeError.audioEngineFailed": "Аудио ядрото на браузъра отказа за това устройство. Спрете другите аудио приложения или сменете микрофона си, след което опитайте отново.",
-    "chat.voice.runtimeError.micNotFound": "Не беше намерен микрофон за тази сесия на браузъра."
+    }
   },
   "userSecurity": {
     "accountMenu": "Меню на профила",

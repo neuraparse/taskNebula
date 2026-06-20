@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { ProjectsClient } from '../projects-client';
 import { useProjects, useCreateProject } from '@/lib/hooks/use-projects';
 import { useTeamspaces } from '@/lib/hooks/use-teamspaces';
@@ -38,12 +38,7 @@ function Wrapper({ children }: { children: ReactNode }) {
 
 describe('ProjectsClient', () => {
   beforeAll(() => {
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: async () => ({ organizations: [] }),
-      } as unknown as Response)
-    ) as unknown as typeof fetch;
+    global.fetch = jest.fn() as unknown as typeof fetch;
   });
 
   afterAll(() => {
@@ -52,6 +47,7 @@ describe('ProjectsClient', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockOrganizations('owner');
     useOrganization.setState({
       currentOrganizationId: 'org-1',
       currentTeamId: null,
@@ -68,6 +64,15 @@ describe('ProjectsClient', () => {
       error: null,
     } as unknown as ReturnType<typeof useCreateProject>);
   });
+
+  function mockOrganizations(role: 'owner' | 'admin' | 'member' | 'viewer' | 'guest') {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        organizations: [{ id: 'org-1', name: 'Acme', slug: 'acme', role }],
+      }),
+    } as unknown as Response);
+  }
 
   it('renders a list of projects fetched from the API', () => {
     mockUseProjects.mockReturnValue({
@@ -116,7 +121,7 @@ describe('ProjectsClient', () => {
     expect(alphaLink).toHaveAttribute('href', '/projects/alpha/views');
   });
 
-  it('renders the empty state when no projects are returned', () => {
+  it('renders the empty state when no projects are returned', async () => {
     mockUseProjects.mockReturnValue({
       data: [],
       isLoading: false,
@@ -124,13 +129,31 @@ describe('ProjectsClient', () => {
 
     render(<ProjectsClient />, { wrapper: Wrapper });
 
-    expect(screen.getByText('Spin up your first project')).toBeInTheDocument();
+    expect(await screen.findByText('Spin up your first project')).toBeInTheDocument();
     expect(screen.getByText(/Projects collect issues, sprints, docs/i)).toBeInTheDocument();
     // Header shows "0 active projects"
     expect(screen.getByText('0 active projects')).toBeInTheDocument();
     // Empty-state CTA + header CTA both present
-    const createButtons = screen.getAllByRole('button', { name: /create project/i });
-    expect(createButtons.length).toBeGreaterThanOrEqual(2);
+    await waitFor(() => {
+      const createButtons = screen.getAllByRole('button', { name: /create project/i });
+      expect(createButtons.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  it('hides project creation for regular organization members', async () => {
+    mockOrganizations('member');
+    mockUseProjects.mockReturnValue({
+      data: [],
+      isLoading: false,
+    } as unknown as ReturnType<typeof useProjects>);
+
+    render(<ProjectsClient />, { wrapper: Wrapper });
+
+    expect(await screen.findByText('Invitation required')).toBeInTheDocument();
+    expect(
+      screen.getByText(/Ask an organization owner or admin to invite you to a project/i)
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /create project/i })).not.toBeInTheDocument();
   });
 
   it('shows the loading message while projects are loading', () => {

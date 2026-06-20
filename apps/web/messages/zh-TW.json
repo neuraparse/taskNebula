@@ -344,9 +344,9 @@
     },
     "reporter": {
       "unknown": "未知使用者",
-      "label": "回報者"
-    },
-    "reporter.avatarAlt": "回報者頭像"
+      "label": "回報者",
+      "avatarAlt": "回報者頭像"
+    }
   },
   "issueDetail": {
     "comments": {
@@ -440,6 +440,15 @@
     "statusChecksDisabled": "已停用檢查",
     "currentVersion": "目前版本",
     "latestVersion": "最新版本",
+    "latestDockerImage": "最新 Docker 映像",
+    "imagePushed": "推送於 {date}",
+    "dockerImage": "Docker 映像",
+    "dockerImageDescription": "已從 Docker Hub 儲存庫 {repository} 檢查。",
+    "imageUpdateAvailable": "映像更新可用",
+    "repository": "儲存庫",
+    "imageDigest": "映像摘要",
+    "imageSize": "映像大小",
+    "viewDockerTag": "查看 Docker 標籤",
     "published": "於 {date} 發布",
     "lastChecked": "上次檢查於 {time}",
     "checksDisabledHint": "更新檢查已透過 TASKNEBULA_DISABLE_UPDATE_CHECK 環境變數停用。請移除該變數以在此查看新的發行版本。",
@@ -2257,6 +2266,45 @@
       "writes_count": "{count} 次寫入",
       "no_summary": "未記錄摘要。",
       "run_live": "即時執行"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS governance",
+      "description": "Control which AI agents can write, what needs approval, and what is blocked.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading agent governance...",
+      "loadFailed": "Failed to load agent governance.",
+      "policySource": "Policy source",
+      "noPolicy": "No AGENTOWNERS file found",
+      "lastParsedAt": "Last parsed at",
+      "validationErrors": "Validation errors",
+      "validationTitle": "Policy validation needs attention",
+      "line": "Line {line}",
+      "rulesTitle": "Policy preview",
+      "rulesDescription": "Parsed rules are evaluated by specificity before effect precedence.",
+      "noRules": "No policy rules are active.",
+      "table": {
+        "line": "Line",
+        "actor": "Actor",
+        "action": "Action",
+        "effect": "Effect"
+      },
+      "effect": {
+        "allow": "Allow",
+        "deny": "Deny",
+        "requireApproval": "Approval"
+      },
+      "queueTitle": "Approval queue",
+      "queueDescription": "Pending AI actions wait here until an admin or maintainer approves them.",
+      "queueLoading": "Loading approval queue...",
+      "queueEmpty": "No pending AI actions.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "behaviorTitle": "Approval behavior",
+      "behaviorDescription": "Safe defaults used when no explicit rule matches.",
+      "unknownAgents": "Unknown agents",
+      "destructiveActions": "Destructive actions",
+      "requireApprovalDefault": "Require approval by default"
     }
   },
   "collab": {
@@ -2609,10 +2657,10 @@
         "noPermission": "你沒有權限在此空間中建立文件。",
         "creating": "建立中...",
         "createPage": "建立頁面"
-      }
-    },
-    "shell.collapse": "收合",
-    "shell.expand": "展開"
+      },
+      "collapse": "收合",
+      "expand": "展開"
+    }
   },
   "planning": {
     "search_placeholder": "搜尋範本",
@@ -3264,7 +3312,9 @@
       "hint": {
         "openai": "當工作區尚未輸入自有 OpenAI 金鑰時使用。以 sk-… 開頭",
         "anthropic": "當工作區尚未輸入自有 Anthropic 金鑰時使用。以 sk-ant-… 開頭"
-      }
+      },
+      "saveFailedDescription": "無法儲存憑證，請再試一次。",
+      "removeFailedDescription": "無法移除憑證，請再試一次。"
     },
     "realtimeHealth": {
       "loading": "正在載入即時健康狀態...",
@@ -3394,12 +3444,10 @@
       "targetedOrgs": "目標組織",
       "close": "關閉",
       "evaluate": "評估",
-      "evaluating": "評估中..."
-    },
-    "flagTest.isEnabled": "isEnabled",
-    "flagTest.rolloutPercent": "推出百分比%",
-    "platformAi.saveFailedDescription": "無法儲存憑證，請再試一次。",
-    "platformAi.removeFailedDescription": "無法移除憑證，請再試一次。"
+      "evaluating": "評估中...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "推出百分比%"
+    }
   },
   "adminDialogs": {
     "common": {
@@ -3440,7 +3488,8 @@
       "plansHint": "留空以為所有方案啟用。",
       "targetOrganizations": "目標組織",
       "targetOrganizationsHint": "留空以為所有符合方案 + 推出條件的組織啟用。",
-      "rollout": "推出：{percentage}%"
+      "rollout": "推出：{percentage}%",
+      "namePlaceholder": "進階分析"
     },
     "createOrg": {
       "trigger": "新增組織",
@@ -3464,7 +3513,8 @@
       "domain": "網域（選填）",
       "toastUpdatedTitle": "組織已更新",
       "toastUpdatedDescription": "變更已成功儲存。",
-      "toastFailedTitle": "更新組織失敗"
+      "toastFailedTitle": "更新組織失敗",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "名稱",
@@ -3474,7 +3524,9 @@
       "planFree": "免費",
       "planStarter": "入門",
       "planGrowth": "成長",
-      "planEnterprise": "企業"
+      "planEnterprise": "企業",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "新增使用者",
@@ -3487,7 +3539,9 @@
       "missingFieldsDescription": "名稱、電子郵件與密碼為必填。",
       "toastCreatedTitle": "使用者已建立",
       "toastCreatedDescription": "使用者已成功建立。",
-      "toastFailedTitle": "建立使用者失敗"
+      "toastFailedTitle": "建立使用者失敗",
+      "fullNamePlaceholder": "王小明",
+      "emailPlaceholder": "jane@example.com"
     },
     "editUser": {
       "title": "編輯使用者",
@@ -3511,13 +3565,7 @@
       "searchPlaceholder": "搜尋組織...",
       "empty": "找不到組織。",
       "remove": "移除 {name}"
-    },
-    "orgForm.namePlaceholder": "Acme Inc",
-    "orgForm.slugPlaceholder": "acme-inc",
-    "editOrg.domainPlaceholder": "example.com",
-    "createUser.fullNamePlaceholder": "王小明",
-    "createUser.emailPlaceholder": "jane@example.com",
-    "flagForm.namePlaceholder": "進階分析"
+    }
   },
   "charts": {
     "issues": "議題",
@@ -3652,7 +3700,8 @@
       "priorityLow": "低",
       "priorityNone": "無",
       "labelsCommaSeparated": "標籤（以逗號分隔）",
-      "creating": "建立中…"
+      "creating": "建立中…",
+      "queuedForApprovalCount": "{count, plural, one {1 draft is waiting for approval} other {# drafts are waiting for approval}}"
     },
     "assist": {
       "title": "AI 協助",
@@ -3963,7 +4012,9 @@
     "startSprintTooltip": "開始此衝刺並將其設為使用中",
     "completeSprint": "完成衝刺",
     "completeSprintTooltip": "完成此衝刺。未完成的議題將移至待辦清單。",
-    "sprintBurndown": "衝刺燃盡圖"
+    "sprintBurndown": "衝刺燃盡圖",
+    "projectInviteRequiredTitle": "Invitation required",
+    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4499,7 +4550,10 @@
         "status": "狀態",
         "priority": "優先順序",
         "assignee": "受指派人"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "存取權",
@@ -4555,7 +4609,12 @@
         "qa_engineer": "QA 工程師",
         "designer": "設計師",
         "viewer": "檢視者"
-      }
+      },
+      "inviteExpiry": "Invitation expires",
+      "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
+      "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
+      "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
+      "invitationResent": "Invitation resent"
     },
     "org": {
       "selectOrg": "選擇一個組織以載入設定。",
@@ -4664,10 +4723,7 @@
         "datadog": "設定 { apiKey, site? }。",
         "s3": "設定 { bucket, region, prefix? }。必須在環境變數中設定 AWS_ACCESS_KEY_ID/SECRET。"
       }
-    },
-    "import.projectIdPlaceholder": "prj_xxx",
-    "import.linearTeamPlaceholder": "ENG",
-    "import.jiraSitePlaceholder": "acme.atlassian.net"
+    }
   },
   "sprints": {
     "defaultName": "衝刺 {number}",
@@ -5126,18 +5182,20 @@
           "connecting": "連線中",
           "reconnecting": "重新連線中",
           "disconnected": "已中斷連線"
+        },
+        "permissionDeniedRetry": "麥克風權限遭拒。請在瀏覽器中允許麥克風存取後再試一次。",
+        "micCouldNotStartBusy": "無法啟動您的麥克風，可能有其他應用程式正在使用它。",
+        "audioEngineFailed": "此裝置的瀏覽器音訊引擎發生故障。請停止其他音訊應用程式或更換麥克風後再試一次。",
+        "noMicForSession": "找不到適用於此瀏覽器工作階段的麥克風。",
+        "runtimeError": {
+          "serverUnreachable": "無法透過媒體連接埠連線至語音伺服器（UDP 50000-50020 / 3478，TCP 7881）。請檢查防火牆 / NAT 後再試一次。",
+          "permissionDenied": "麥克風權限遭拒。請在瀏覽器中允許麥克風存取後再試一次。",
+          "micNotStarted": "無法啟動您的麥克風，可能有其他應用程式正在使用它。",
+          "audioEngineFailed": "此裝置的瀏覽器音訊引擎發生故障。請停止其他音訊應用程式或更換麥克風後再試一次。",
+          "micNotFound": "找不到適用於此瀏覽器工作階段的麥克風。"
         }
       }
-    },
-    "chat.voice.permissionDeniedRetry": "麥克風權限遭拒。請在瀏覽器中允許麥克風存取後再試一次。",
-    "chat.voice.micCouldNotStartBusy": "無法啟動您的麥克風，可能有其他應用程式正在使用它。",
-    "chat.voice.audioEngineFailed": "此裝置的瀏覽器音訊引擎發生故障。請停止其他音訊應用程式或更換麥克風後再試一次。",
-    "chat.voice.noMicForSession": "找不到適用於此瀏覽器工作階段的麥克風。",
-    "chat.voice.runtimeError.serverUnreachable": "無法透過媒體連接埠連線至語音伺服器（UDP 50000-50020 / 3478，TCP 7881）。請檢查防火牆 / NAT 後再試一次。",
-    "chat.voice.runtimeError.permissionDenied": "麥克風權限遭拒。請在瀏覽器中允許麥克風存取後再試一次。",
-    "chat.voice.runtimeError.micNotStarted": "無法啟動您的麥克風，可能有其他應用程式正在使用它。",
-    "chat.voice.runtimeError.audioEngineFailed": "此裝置的瀏覽器音訊引擎發生故障。請停止其他音訊應用程式或更換麥克風後再試一次。",
-    "chat.voice.runtimeError.micNotFound": "找不到適用於此瀏覽器工作階段的麥克風。"
+    }
   },
   "userSecurity": {
     "accountMenu": "帳戶選單",

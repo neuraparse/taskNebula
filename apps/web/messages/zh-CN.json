@@ -344,9 +344,9 @@
     },
     "reporter": {
       "unknown": "未知用户",
-      "label": "报告人"
-    },
-    "reporter.avatarAlt": "报告人头像"
+      "label": "报告人",
+      "avatarAlt": "报告人头像"
+    }
   },
   "issueDetail": {
     "comments": {
@@ -440,6 +440,15 @@
     "statusChecksDisabled": "检查已禁用",
     "currentVersion": "当前版本",
     "latestVersion": "最新版本",
+    "latestDockerImage": "最新 Docker 镜像",
+    "imagePushed": "推送于 {date}",
+    "dockerImage": "Docker 镜像",
+    "dockerImageDescription": "已从 Docker Hub 仓库 {repository} 检查。",
+    "imageUpdateAvailable": "镜像更新可用",
+    "repository": "仓库",
+    "imageDigest": "镜像摘要",
+    "imageSize": "镜像大小",
+    "viewDockerTag": "查看 Docker 标签",
     "published": "于 {date} 发布",
     "lastChecked": "上次检查于 {time}",
     "checksDisabledHint": "更新检查已通过 TASKNEBULA_DISABLE_UPDATE_CHECK 环境变量禁用。移除它即可在此处查看新版本。",
@@ -2257,6 +2266,45 @@
       "writes_count": "{count} 次写入",
       "no_summary": "未记录摘要。",
       "run_live": "实时运行"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS governance",
+      "description": "Control which AI agents can write, what needs approval, and what is blocked.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading agent governance...",
+      "loadFailed": "Failed to load agent governance.",
+      "policySource": "Policy source",
+      "noPolicy": "No AGENTOWNERS file found",
+      "lastParsedAt": "Last parsed at",
+      "validationErrors": "Validation errors",
+      "validationTitle": "Policy validation needs attention",
+      "line": "Line {line}",
+      "rulesTitle": "Policy preview",
+      "rulesDescription": "Parsed rules are evaluated by specificity before effect precedence.",
+      "noRules": "No policy rules are active.",
+      "table": {
+        "line": "Line",
+        "actor": "Actor",
+        "action": "Action",
+        "effect": "Effect"
+      },
+      "effect": {
+        "allow": "Allow",
+        "deny": "Deny",
+        "requireApproval": "Approval"
+      },
+      "queueTitle": "Approval queue",
+      "queueDescription": "Pending AI actions wait here until an admin or maintainer approves them.",
+      "queueLoading": "Loading approval queue...",
+      "queueEmpty": "No pending AI actions.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "behaviorTitle": "Approval behavior",
+      "behaviorDescription": "Safe defaults used when no explicit rule matches.",
+      "unknownAgents": "Unknown agents",
+      "destructiveActions": "Destructive actions",
+      "requireApprovalDefault": "Require approval by default"
     }
   },
   "collab": {
@@ -2609,10 +2657,10 @@
         "noPermission": "你没有权限在此空间中创建文档。",
         "creating": "正在创建...",
         "createPage": "创建页面"
-      }
-    },
-    "shell.collapse": "折叠",
-    "shell.expand": "展开"
+      },
+      "collapse": "折叠",
+      "expand": "展开"
+    }
   },
   "planning": {
     "search_placeholder": "搜索模板",
@@ -3264,7 +3312,9 @@
       "hint": {
         "openai": "当工作区尚未输入自己的 OpenAI 密钥时使用。以 sk-… 开头",
         "anthropic": "当工作区尚未输入自己的 Anthropic 密钥时使用。以 sk-ant-… 开头"
-      }
+      },
+      "saveFailedDescription": "无法保存凭据。请重试。",
+      "removeFailedDescription": "无法移除凭据。请重试。"
     },
     "realtimeHealth": {
       "loading": "正在加载实时健康状况...",
@@ -3394,12 +3444,10 @@
       "targetedOrgs": "目标组织",
       "close": "关闭",
       "evaluate": "评估",
-      "evaluating": "正在评估..."
-    },
-    "flagTest.isEnabled": "isEnabled",
-    "flagTest.rolloutPercent": "rollout%",
-    "platformAi.saveFailedDescription": "无法保存凭据。请重试。",
-    "platformAi.removeFailedDescription": "无法移除凭据。请重试。"
+      "evaluating": "正在评估...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "rollout%"
+    }
   },
   "adminDialogs": {
     "common": {
@@ -3440,7 +3488,8 @@
       "plansHint": "留空以对所有套餐启用。",
       "targetOrganizations": "目标组织",
       "targetOrganizationsHint": "留空以对所有符合套餐 + 发布比例的组织启用。",
-      "rollout": "发布比例：{percentage}%"
+      "rollout": "发布比例：{percentage}%",
+      "namePlaceholder": "高级分析"
     },
     "createOrg": {
       "trigger": "新建组织",
@@ -3464,7 +3513,8 @@
       "domain": "域名（可选）",
       "toastUpdatedTitle": "组织已更新",
       "toastUpdatedDescription": "更改已成功保存。",
-      "toastFailedTitle": "更新组织失败"
+      "toastFailedTitle": "更新组织失败",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "名称",
@@ -3474,7 +3524,9 @@
       "planFree": "免费版",
       "planStarter": "入门版",
       "planGrowth": "成长版",
-      "planEnterprise": "企业版"
+      "planEnterprise": "企业版",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "新建用户",
@@ -3487,7 +3539,9 @@
       "missingFieldsDescription": "名称、邮箱和密码为必填项。",
       "toastCreatedTitle": "用户已创建",
       "toastCreatedDescription": "用户已成功创建。",
-      "toastFailedTitle": "创建用户失败"
+      "toastFailedTitle": "创建用户失败",
+      "fullNamePlaceholder": "Jane Smith",
+      "emailPlaceholder": "jane@example.com"
     },
     "editUser": {
       "title": "编辑用户",
@@ -3511,13 +3565,7 @@
       "searchPlaceholder": "搜索组织...",
       "empty": "未找到组织。",
       "remove": "移除 {name}"
-    },
-    "orgForm.namePlaceholder": "Acme Inc",
-    "orgForm.slugPlaceholder": "acme-inc",
-    "editOrg.domainPlaceholder": "example.com",
-    "createUser.fullNamePlaceholder": "Jane Smith",
-    "createUser.emailPlaceholder": "jane@example.com",
-    "flagForm.namePlaceholder": "高级分析"
+    }
   },
   "charts": {
     "issues": "问题",
@@ -3652,7 +3700,8 @@
       "priorityLow": "低",
       "priorityNone": "无",
       "labelsCommaSeparated": "标签（以逗号分隔）",
-      "creating": "正在创建…"
+      "creating": "正在创建…",
+      "queuedForApprovalCount": "{count, plural, one {1 draft is waiting for approval} other {# drafts are waiting for approval}}"
     },
     "assist": {
       "title": "AI 辅助",
@@ -3963,7 +4012,9 @@
     "startSprintTooltip": "开始此冲刺并将其设为活动状态",
     "completeSprint": "完成冲刺",
     "completeSprintTooltip": "完成此冲刺。未完成的问题将移至待办。",
-    "sprintBurndown": "冲刺燃尽图"
+    "sprintBurndown": "冲刺燃尽图",
+    "projectInviteRequiredTitle": "Invitation required",
+    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4499,7 +4550,10 @@
         "status": "状态",
         "priority": "优先级",
         "assignee": "经办人"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "访问",
@@ -4555,7 +4609,12 @@
         "qa_engineer": "QA 工程师",
         "designer": "设计师",
         "viewer": "查看者"
-      }
+      },
+      "inviteExpiry": "Invitation expires",
+      "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
+      "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
+      "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
+      "invitationResent": "Invitation resent"
     },
     "org": {
       "selectOrg": "选择一个组织以加载设置。",
@@ -4664,10 +4723,7 @@
         "datadog": "设置 { apiKey, site? }。",
         "s3": "设置 { bucket, region, prefix? }。必须在环境变量中设置 AWS_ACCESS_KEY_ID/SECRET。"
       }
-    },
-    "import.projectIdPlaceholder": "prj_xxx",
-    "import.linearTeamPlaceholder": "ENG",
-    "import.jiraSitePlaceholder": "acme.atlassian.net"
+    }
   },
   "sprints": {
     "defaultName": "冲刺 {number}",
@@ -5126,18 +5182,20 @@
           "connecting": "正在连接",
           "reconnecting": "正在重新连接",
           "disconnected": "已断开连接"
+        },
+        "permissionDeniedRetry": "麦克风权限已被拒绝。请在浏览器中允许麦克风访问后重试。",
+        "micCouldNotStartBusy": "无法启动麦克风。可能有其他应用正在使用它。",
+        "audioEngineFailed": "此设备的浏览器音频引擎出现故障。请停止其他音频应用或更换麦克风后重试。",
+        "noMicForSession": "未找到适用于此浏览器会话的麦克风。",
+        "runtimeError": {
+          "serverUnreachable": "无法通过媒体端口连接到语音服务器（UDP 50000-50020 / 3478，TCP 7881）。请检查防火墙 / NAT 后重试。",
+          "permissionDenied": "麦克风权限已被拒绝。请在浏览器中允许麦克风访问后重试。",
+          "micNotStarted": "无法启动麦克风。可能有其他应用正在使用它。",
+          "audioEngineFailed": "此设备的浏览器音频引擎出现故障。请停止其他音频应用或更换麦克风后重试。",
+          "micNotFound": "未找到适用于此浏览器会话的麦克风。"
         }
       }
-    },
-    "chat.voice.permissionDeniedRetry": "麦克风权限已被拒绝。请在浏览器中允许麦克风访问后重试。",
-    "chat.voice.micCouldNotStartBusy": "无法启动麦克风。可能有其他应用正在使用它。",
-    "chat.voice.audioEngineFailed": "此设备的浏览器音频引擎出现故障。请停止其他音频应用或更换麦克风后重试。",
-    "chat.voice.noMicForSession": "未找到适用于此浏览器会话的麦克风。",
-    "chat.voice.runtimeError.serverUnreachable": "无法通过媒体端口连接到语音服务器（UDP 50000-50020 / 3478，TCP 7881）。请检查防火墙 / NAT 后重试。",
-    "chat.voice.runtimeError.permissionDenied": "麦克风权限已被拒绝。请在浏览器中允许麦克风访问后重试。",
-    "chat.voice.runtimeError.micNotStarted": "无法启动麦克风。可能有其他应用正在使用它。",
-    "chat.voice.runtimeError.audioEngineFailed": "此设备的浏览器音频引擎出现故障。请停止其他音频应用或更换麦克风后重试。",
-    "chat.voice.runtimeError.micNotFound": "未找到适用于此浏览器会话的麦克风。"
+    }
   },
   "userSecurity": {
     "accountMenu": "账户菜单",

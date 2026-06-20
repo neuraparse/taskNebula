@@ -344,9 +344,9 @@
     },
     "reporter": {
       "unknown": "Người dùng không xác định",
-      "label": "Người báo cáo"
-    },
-    "reporter.avatarAlt": "Ảnh đại diện người báo cáo"
+      "label": "Người báo cáo",
+      "avatarAlt": "Ảnh đại diện người báo cáo"
+    }
   },
   "issueDetail": {
     "comments": {
@@ -440,6 +440,15 @@
     "statusChecksDisabled": "Đã tắt kiểm tra",
     "currentVersion": "Phiên bản hiện tại",
     "latestVersion": "Phiên bản mới nhất",
+    "latestDockerImage": "Ảnh Docker mới nhất",
+    "imagePushed": "Đã đẩy vào {date}",
+    "dockerImage": "Ảnh Docker",
+    "dockerImageDescription": "Đã kiểm tra từ kho Docker Hub {repository}.",
+    "imageUpdateAvailable": "Có bản cập nhật ảnh",
+    "repository": "Kho",
+    "imageDigest": "Digest ảnh",
+    "imageSize": "Kích thước ảnh",
+    "viewDockerTag": "Xem tag Docker",
     "published": "Phát hành {date}",
     "lastChecked": "Kiểm tra lần cuối {time}",
     "checksDisabledHint": "Kiểm tra cập nhật bị tắt thông qua biến môi trường TASKNEBULA_DISABLE_UPDATE_CHECK. Hãy gỡ bỏ nó để xem các bản phát hành mới tại đây.",
@@ -2257,6 +2266,45 @@
       "writes_count": "{count} lần ghi",
       "no_summary": "Không có tóm tắt nào được ghi nhận.",
       "run_live": "Chạy trực tiếp"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS governance",
+      "description": "Control which AI agents can write, what needs approval, and what is blocked.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading agent governance...",
+      "loadFailed": "Failed to load agent governance.",
+      "policySource": "Policy source",
+      "noPolicy": "No AGENTOWNERS file found",
+      "lastParsedAt": "Last parsed at",
+      "validationErrors": "Validation errors",
+      "validationTitle": "Policy validation needs attention",
+      "line": "Line {line}",
+      "rulesTitle": "Policy preview",
+      "rulesDescription": "Parsed rules are evaluated by specificity before effect precedence.",
+      "noRules": "No policy rules are active.",
+      "table": {
+        "line": "Line",
+        "actor": "Actor",
+        "action": "Action",
+        "effect": "Effect"
+      },
+      "effect": {
+        "allow": "Allow",
+        "deny": "Deny",
+        "requireApproval": "Approval"
+      },
+      "queueTitle": "Approval queue",
+      "queueDescription": "Pending AI actions wait here until an admin or maintainer approves them.",
+      "queueLoading": "Loading approval queue...",
+      "queueEmpty": "No pending AI actions.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "behaviorTitle": "Approval behavior",
+      "behaviorDescription": "Safe defaults used when no explicit rule matches.",
+      "unknownAgents": "Unknown agents",
+      "destructiveActions": "Destructive actions",
+      "requireApprovalDefault": "Require approval by default"
     }
   },
   "collab": {
@@ -2609,10 +2657,10 @@
         "noPermission": "Bạn không có quyền tạo tài liệu trong không gian này.",
         "creating": "Đang tạo...",
         "createPage": "Tạo trang"
-      }
-    },
-    "shell.collapse": "Thu gọn",
-    "shell.expand": "Mở rộng"
+      },
+      "collapse": "Thu gọn",
+      "expand": "Mở rộng"
+    }
   },
   "planning": {
     "search_placeholder": "Tìm kiếm mẫu",
@@ -3264,7 +3312,9 @@
       "hint": {
         "openai": "Được dùng khi một không gian làm việc chưa nhập khóa OpenAI riêng của mình. Bắt đầu bằng sk-…",
         "anthropic": "Được dùng khi một không gian làm việc chưa nhập khóa Anthropic riêng của mình. Bắt đầu bằng sk-ant-…"
-      }
+      },
+      "saveFailedDescription": "Không thể lưu thông tin xác thực. Vui lòng thử lại.",
+      "removeFailedDescription": "Không thể xóa thông tin xác thực. Vui lòng thử lại."
     },
     "realtimeHealth": {
       "loading": "Đang tải tình trạng thời gian thực...",
@@ -3394,12 +3444,10 @@
       "targetedOrgs": "tổ chức được nhắm tới",
       "close": "Đóng",
       "evaluate": "Đánh giá",
-      "evaluating": "Đang đánh giá..."
-    },
-    "flagTest.isEnabled": "isEnabled",
-    "flagTest.rolloutPercent": "rollout%",
-    "platformAi.saveFailedDescription": "Không thể lưu thông tin xác thực. Vui lòng thử lại.",
-    "platformAi.removeFailedDescription": "Không thể xóa thông tin xác thực. Vui lòng thử lại."
+      "evaluating": "Đang đánh giá...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "rollout%"
+    }
   },
   "adminDialogs": {
     "common": {
@@ -3440,7 +3488,8 @@
       "plansHint": "Để trống để bật cho mọi gói.",
       "targetOrganizations": "Tổ chức mục tiêu",
       "targetOrganizationsHint": "Để trống để bật cho mọi tổ chức khớp với gói + triển khai.",
-      "rollout": "Triển khai: {percentage}%"
+      "rollout": "Triển khai: {percentage}%",
+      "namePlaceholder": "Advanced Analytics"
     },
     "createOrg": {
       "trigger": "Tổ chức mới",
@@ -3464,7 +3513,8 @@
       "domain": "Tên miền (tùy chọn)",
       "toastUpdatedTitle": "Đã cập nhật tổ chức",
       "toastUpdatedDescription": "Các thay đổi đã được lưu thành công.",
-      "toastFailedTitle": "Cập nhật tổ chức thất bại"
+      "toastFailedTitle": "Cập nhật tổ chức thất bại",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "Tên",
@@ -3474,7 +3524,9 @@
       "planFree": "Miễn phí",
       "planStarter": "Khởi đầu",
       "planGrowth": "Tăng trưởng",
-      "planEnterprise": "Doanh nghiệp"
+      "planEnterprise": "Doanh nghiệp",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "Người dùng mới",
@@ -3487,7 +3539,9 @@
       "missingFieldsDescription": "Tên, email và mật khẩu là bắt buộc.",
       "toastCreatedTitle": "Đã tạo người dùng",
       "toastCreatedDescription": "Người dùng đã được tạo thành công.",
-      "toastFailedTitle": "Tạo người dùng thất bại"
+      "toastFailedTitle": "Tạo người dùng thất bại",
+      "fullNamePlaceholder": "Jane Smith",
+      "emailPlaceholder": "jane@example.com"
     },
     "editUser": {
       "title": "Chỉnh sửa người dùng",
@@ -3511,13 +3565,7 @@
       "searchPlaceholder": "Tìm kiếm tổ chức...",
       "empty": "Không tìm thấy tổ chức nào.",
       "remove": "Gỡ bỏ {name}"
-    },
-    "orgForm.namePlaceholder": "Acme Inc",
-    "orgForm.slugPlaceholder": "acme-inc",
-    "editOrg.domainPlaceholder": "example.com",
-    "createUser.fullNamePlaceholder": "Jane Smith",
-    "createUser.emailPlaceholder": "jane@example.com",
-    "flagForm.namePlaceholder": "Advanced Analytics"
+    }
   },
   "charts": {
     "issues": "Vấn đề",
@@ -3652,7 +3700,8 @@
       "priorityLow": "Thấp",
       "priorityNone": "Không có",
       "labelsCommaSeparated": "Nhãn (cách nhau bằng dấu phẩy)",
-      "creating": "Đang tạo…"
+      "creating": "Đang tạo…",
+      "queuedForApprovalCount": "{count, plural, one {1 draft is waiting for approval} other {# drafts are waiting for approval}}"
     },
     "assist": {
       "title": "Trợ giúp AI",
@@ -3963,7 +4012,9 @@
     "startSprintTooltip": "Bắt đầu sprint này và đặt nó thành đang hoạt động",
     "completeSprint": "Hoàn thành sprint",
     "completeSprintTooltip": "Hoàn thành sprint này. Các vấn đề chưa hoàn thành sẽ chuyển sang tồn đọng.",
-    "sprintBurndown": "Burndown sprint"
+    "sprintBurndown": "Burndown sprint",
+    "projectInviteRequiredTitle": "Invitation required",
+    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4499,7 +4550,10 @@
         "status": "Trạng thái",
         "priority": "Mức ưu tiên",
         "assignee": "Người được giao"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "Truy cập",
@@ -4555,7 +4609,12 @@
         "qa_engineer": "Kỹ sư QA",
         "designer": "Nhà thiết kế",
         "viewer": "Người xem"
-      }
+      },
+      "inviteExpiry": "Invitation expires",
+      "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
+      "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
+      "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
+      "invitationResent": "Invitation resent"
     },
     "org": {
       "selectOrg": "Chọn một tổ chức để tải cài đặt.",
@@ -4664,10 +4723,7 @@
         "datadog": "Đặt { apiKey, site? }.",
         "s3": "Đặt { bucket, region, prefix? }. AWS_ACCESS_KEY_ID/SECRET phải được đặt trong env."
       }
-    },
-    "import.projectIdPlaceholder": "prj_xxx",
-    "import.linearTeamPlaceholder": "ENG",
-    "import.jiraSitePlaceholder": "acme.atlassian.net"
+    }
   },
   "sprints": {
     "defaultName": "Sprint {number}",
@@ -5126,18 +5182,20 @@
           "connecting": "Đang kết nối",
           "reconnecting": "Đang kết nối lại",
           "disconnected": "Đã ngắt kết nối"
+        },
+        "permissionDeniedRetry": "Quyền truy cập micrô đã bị từ chối. Hãy cho phép truy cập micrô trong trình duyệt và thử lại.",
+        "micCouldNotStartBusy": "Không thể khởi động micrô của bạn. Có thể một ứng dụng khác đang sử dụng nó.",
+        "audioEngineFailed": "Bộ máy âm thanh của trình duyệt gặp lỗi với thiết bị này. Hãy dừng các ứng dụng âm thanh khác hoặc đổi micrô, rồi thử lại.",
+        "noMicForSession": "Không tìm thấy micrô nào cho phiên trình duyệt này.",
+        "runtimeError": {
+          "serverUnreachable": "Không thể kết nối tới máy chủ thoại trên các cổng media (UDP 50000-50020 / 3478, TCP 7881). Hãy kiểm tra tường lửa / NAT và thử lại.",
+          "permissionDenied": "Quyền truy cập micrô đã bị từ chối. Hãy cho phép truy cập micrô trong trình duyệt và thử lại.",
+          "micNotStarted": "Không thể khởi động micrô của bạn. Có thể một ứng dụng khác đang sử dụng nó.",
+          "audioEngineFailed": "Bộ máy âm thanh của trình duyệt gặp lỗi với thiết bị này. Hãy dừng các ứng dụng âm thanh khác hoặc đổi micrô, rồi thử lại.",
+          "micNotFound": "Không tìm thấy micrô nào cho phiên trình duyệt này."
         }
       }
-    },
-    "chat.voice.permissionDeniedRetry": "Quyền truy cập micrô đã bị từ chối. Hãy cho phép truy cập micrô trong trình duyệt và thử lại.",
-    "chat.voice.micCouldNotStartBusy": "Không thể khởi động micrô của bạn. Có thể một ứng dụng khác đang sử dụng nó.",
-    "chat.voice.audioEngineFailed": "Bộ máy âm thanh của trình duyệt gặp lỗi với thiết bị này. Hãy dừng các ứng dụng âm thanh khác hoặc đổi micrô, rồi thử lại.",
-    "chat.voice.noMicForSession": "Không tìm thấy micrô nào cho phiên trình duyệt này.",
-    "chat.voice.runtimeError.serverUnreachable": "Không thể kết nối tới máy chủ thoại trên các cổng media (UDP 50000-50020 / 3478, TCP 7881). Hãy kiểm tra tường lửa / NAT và thử lại.",
-    "chat.voice.runtimeError.permissionDenied": "Quyền truy cập micrô đã bị từ chối. Hãy cho phép truy cập micrô trong trình duyệt và thử lại.",
-    "chat.voice.runtimeError.micNotStarted": "Không thể khởi động micrô của bạn. Có thể một ứng dụng khác đang sử dụng nó.",
-    "chat.voice.runtimeError.audioEngineFailed": "Bộ máy âm thanh của trình duyệt gặp lỗi với thiết bị này. Hãy dừng các ứng dụng âm thanh khác hoặc đổi micrô, rồi thử lại.",
-    "chat.voice.runtimeError.micNotFound": "Không tìm thấy micrô nào cho phiên trình duyệt này."
+    }
   },
   "userSecurity": {
     "accountMenu": "Menu tài khoản",

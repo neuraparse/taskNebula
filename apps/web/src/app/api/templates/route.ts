@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
         role: organizationMembers.role,
       })
       .from(organizationMembers)
-      .where(eq(organizationMembers.userId, userId));
+      .where(and(eq(organizationMembers.userId, userId), eq(organizationMembers.status, 'active')));
 
     let orgIds = orgMemberships.map((m) => m.organizationId);
     if (organizationIdParam) {
@@ -121,10 +121,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('[api/templates] GET failed', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch templates' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch templates' }, { status: 500 });
   }
 }
 
@@ -149,7 +146,8 @@ export async function POST(request: NextRequest) {
         .where(
           and(
             eq(organizationMembers.userId, userId),
-            inArray(organizationMembers.role, ['owner', 'admin'])
+            inArray(organizationMembers.role, ['owner', 'admin']),
+            eq(organizationMembers.status, 'active')
           )
         )
         .limit(1);
@@ -195,9 +193,6 @@ export async function POST(request: NextRequest) {
       );
     }
     console.error('[api/templates] POST failed', error);
-    return NextResponse.json(
-      { error: 'Failed to create template' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to create template' }, { status: 500 });
   }
 }

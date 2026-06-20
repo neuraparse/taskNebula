@@ -344,9 +344,9 @@
     },
     "reporter": {
       "unknown": "Onbekende gebruiker",
-      "label": "Melder"
-    },
-    "reporter.avatarAlt": "Avatar van melder"
+      "label": "Melder",
+      "avatarAlt": "Avatar van melder"
+    }
   },
   "issueDetail": {
     "comments": {
@@ -440,6 +440,15 @@
     "statusChecksDisabled": "Controles uitgeschakeld",
     "currentVersion": "Huidige versie",
     "latestVersion": "Nieuwste versie",
+    "latestDockerImage": "Nieuwste Docker-image",
+    "imagePushed": "Gepusht op {date}",
+    "dockerImage": "Docker-image",
+    "dockerImageDescription": "Gecontroleerd vanuit Docker Hub-repository {repository}.",
+    "imageUpdateAvailable": "Image-update beschikbaar",
+    "repository": "Repository",
+    "imageDigest": "Image-digest",
+    "imageSize": "Imagegrootte",
+    "viewDockerTag": "Docker-tag bekijken",
     "published": "Gepubliceerd op {date}",
     "lastChecked": "Laatst gecontroleerd {time}",
     "checksDisabledHint": "Updatecontroles zijn uitgeschakeld via de omgevingsvariabele TASKNEBULA_DISABLE_UPDATE_CHECK. Verwijder deze om hier nieuwe releases te zien.",
@@ -2257,6 +2266,45 @@
       "writes_count": "{count} schrijfacties",
       "no_summary": "Geen samenvatting vastgelegd.",
       "run_live": "Live uitvoeren"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS governance",
+      "description": "Control which AI agents can write, what needs approval, and what is blocked.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading agent governance...",
+      "loadFailed": "Failed to load agent governance.",
+      "policySource": "Policy source",
+      "noPolicy": "No AGENTOWNERS file found",
+      "lastParsedAt": "Last parsed at",
+      "validationErrors": "Validation errors",
+      "validationTitle": "Policy validation needs attention",
+      "line": "Line {line}",
+      "rulesTitle": "Policy preview",
+      "rulesDescription": "Parsed rules are evaluated by specificity before effect precedence.",
+      "noRules": "No policy rules are active.",
+      "table": {
+        "line": "Line",
+        "actor": "Actor",
+        "action": "Action",
+        "effect": "Effect"
+      },
+      "effect": {
+        "allow": "Allow",
+        "deny": "Deny",
+        "requireApproval": "Approval"
+      },
+      "queueTitle": "Approval queue",
+      "queueDescription": "Pending AI actions wait here until an admin or maintainer approves them.",
+      "queueLoading": "Loading approval queue...",
+      "queueEmpty": "No pending AI actions.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "behaviorTitle": "Approval behavior",
+      "behaviorDescription": "Safe defaults used when no explicit rule matches.",
+      "unknownAgents": "Unknown agents",
+      "destructiveActions": "Destructive actions",
+      "requireApprovalDefault": "Require approval by default"
     }
   },
   "collab": {
@@ -2609,10 +2657,10 @@
         "noPermission": "Je hebt geen rechten om documenten in deze ruimte aan te maken.",
         "creating": "Aanmaken...",
         "createPage": "Pagina aanmaken"
-      }
-    },
-    "shell.collapse": "Inklappen",
-    "shell.expand": "Uitklappen"
+      },
+      "collapse": "Inklappen",
+      "expand": "Uitklappen"
+    }
   },
   "planning": {
     "search_placeholder": "Sjablonen zoeken",
@@ -3264,7 +3312,9 @@
       "hint": {
         "openai": "Gebruikt wanneer een werkruimte geen eigen OpenAI-sleutel heeft ingevoerd. Begint met sk-…",
         "anthropic": "Gebruikt wanneer een werkruimte geen eigen Anthropic-sleutel heeft ingevoerd. Begint met sk-ant-…"
-      }
+      },
+      "saveFailedDescription": "Kan de credential niet opslaan. Probeer het opnieuw.",
+      "removeFailedDescription": "Kan de credential niet verwijderen. Probeer het opnieuw."
     },
     "realtimeHealth": {
       "loading": "Realtime-gezondheid laden...",
@@ -3394,12 +3444,10 @@
       "targetedOrgs": "gerichte organisaties",
       "close": "Sluiten",
       "evaluate": "Evalueren",
-      "evaluating": "Evalueren..."
-    },
-    "flagTest.isEnabled": "isEnabled",
-    "flagTest.rolloutPercent": "uitrol%",
-    "platformAi.saveFailedDescription": "Kan de credential niet opslaan. Probeer het opnieuw.",
-    "platformAi.removeFailedDescription": "Kan de credential niet verwijderen. Probeer het opnieuw."
+      "evaluating": "Evalueren...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "uitrol%"
+    }
   },
   "adminDialogs": {
     "common": {
@@ -3440,7 +3488,8 @@
       "plansHint": "Laat leeg om voor alle plannen in te schakelen.",
       "targetOrganizations": "Doelorganisaties",
       "targetOrganizationsHint": "Laat leeg om in te schakelen voor alle organisaties die overeenkomen met het plan + de uitrol.",
-      "rollout": "Uitrol: {percentage}%"
+      "rollout": "Uitrol: {percentage}%",
+      "namePlaceholder": "Geavanceerde analyse"
     },
     "createOrg": {
       "trigger": "Nieuwe organisatie",
@@ -3464,7 +3513,8 @@
       "domain": "Domein (optioneel)",
       "toastUpdatedTitle": "Organisatie bijgewerkt",
       "toastUpdatedDescription": "Wijzigingen zijn succesvol opgeslagen.",
-      "toastFailedTitle": "Organisatie bijwerken mislukt"
+      "toastFailedTitle": "Organisatie bijwerken mislukt",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "Naam",
@@ -3474,7 +3524,9 @@
       "planFree": "Gratis",
       "planStarter": "Starter",
       "planGrowth": "Growth",
-      "planEnterprise": "Enterprise"
+      "planEnterprise": "Enterprise",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "Nieuwe gebruiker",
@@ -3487,7 +3539,9 @@
       "missingFieldsDescription": "Naam, e-mail en wachtwoord zijn verplicht.",
       "toastCreatedTitle": "Gebruiker aangemaakt",
       "toastCreatedDescription": "De gebruiker is succesvol aangemaakt.",
-      "toastFailedTitle": "Gebruiker aanmaken mislukt"
+      "toastFailedTitle": "Gebruiker aanmaken mislukt",
+      "fullNamePlaceholder": "Jane Smith",
+      "emailPlaceholder": "jane@example.com"
     },
     "editUser": {
       "title": "Gebruiker bewerken",
@@ -3511,13 +3565,7 @@
       "searchPlaceholder": "Organisaties zoeken...",
       "empty": "Geen organisaties gevonden.",
       "remove": "{name} verwijderen"
-    },
-    "orgForm.namePlaceholder": "Acme Inc",
-    "orgForm.slugPlaceholder": "acme-inc",
-    "editOrg.domainPlaceholder": "example.com",
-    "createUser.fullNamePlaceholder": "Jane Smith",
-    "createUser.emailPlaceholder": "jane@example.com",
-    "flagForm.namePlaceholder": "Geavanceerde analyse"
+    }
   },
   "charts": {
     "issues": "Issues",
@@ -3652,7 +3700,8 @@
       "priorityLow": "Laag",
       "priorityNone": "Geen",
       "labelsCommaSeparated": "Labels (door komma's gescheiden)",
-      "creating": "Aanmaken…"
+      "creating": "Aanmaken…",
+      "queuedForApprovalCount": "{count, plural, one {1 draft is waiting for approval} other {# drafts are waiting for approval}}"
     },
     "assist": {
       "title": "AI-assistentie",
@@ -3963,7 +4012,9 @@
     "startSprintTooltip": "Start deze sprint en maak hem actief",
     "completeSprint": "Sprint voltooien",
     "completeSprintTooltip": "Voltooi deze sprint. Onvoltooide issues worden naar de backlog verplaatst.",
-    "sprintBurndown": "Sprintburndown"
+    "sprintBurndown": "Sprintburndown",
+    "projectInviteRequiredTitle": "Invitation required",
+    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4499,7 +4550,10 @@
         "status": "Status",
         "priority": "Prioriteit",
         "assignee": "Toegewezene"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "Toegang",
@@ -4555,7 +4609,12 @@
         "qa_engineer": "QA-engineer",
         "designer": "Designer",
         "viewer": "Kijker"
-      }
+      },
+      "inviteExpiry": "Invitation expires",
+      "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
+      "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
+      "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
+      "invitationResent": "Invitation resent"
     },
     "org": {
       "selectOrg": "Selecteer een organisatie om de instellingen te laden.",
@@ -4664,10 +4723,7 @@
         "datadog": "Stel { apiKey, site? } in.",
         "s3": "Stel { bucket, region, prefix? } in. AWS_ACCESS_KEY_ID/SECRET moeten in de env zijn ingesteld."
       }
-    },
-    "import.projectIdPlaceholder": "prj_xxx",
-    "import.linearTeamPlaceholder": "ENG",
-    "import.jiraSitePlaceholder": "acme.atlassian.net"
+    }
   },
   "sprints": {
     "defaultName": "Sprint {number}",
@@ -5126,18 +5182,20 @@
           "connecting": "Verbinden",
           "reconnecting": "Opnieuw verbinden",
           "disconnected": "Verbinding verbroken"
+        },
+        "permissionDeniedRetry": "Toegang tot de microfoon is geweigerd. Sta microfoontoegang toe in je browser en probeer het opnieuw.",
+        "micCouldNotStartBusy": "Je microfoon kon niet worden gestart. Mogelijk gebruikt een andere app deze.",
+        "audioEngineFailed": "De audio-engine van de browser werkte niet op dit apparaat. Sluit andere audio-apps of wijzig je microfoon en probeer het opnieuw.",
+        "noMicForSession": "Er is geen microfoon gevonden voor deze browsersessie.",
+        "runtimeError": {
+          "serverUnreachable": "Spraakserver is onbereikbaar op de mediapoorten (UDP 50000-50020 / 3478, TCP 7881). Controleer firewall / NAT en probeer het opnieuw.",
+          "permissionDenied": "Toegang tot de microfoon is geweigerd. Sta microfoontoegang toe in je browser en probeer het opnieuw.",
+          "micNotStarted": "Je microfoon kon niet worden gestart. Mogelijk gebruikt een andere app deze.",
+          "audioEngineFailed": "De audio-engine van de browser werkte niet op dit apparaat. Sluit andere audio-apps of wijzig je microfoon en probeer het opnieuw.",
+          "micNotFound": "Er is geen microfoon gevonden voor deze browsersessie."
         }
       }
-    },
-    "chat.voice.permissionDeniedRetry": "Toegang tot de microfoon is geweigerd. Sta microfoontoegang toe in je browser en probeer het opnieuw.",
-    "chat.voice.micCouldNotStartBusy": "Je microfoon kon niet worden gestart. Mogelijk gebruikt een andere app deze.",
-    "chat.voice.audioEngineFailed": "De audio-engine van de browser werkte niet op dit apparaat. Sluit andere audio-apps of wijzig je microfoon en probeer het opnieuw.",
-    "chat.voice.noMicForSession": "Er is geen microfoon gevonden voor deze browsersessie.",
-    "chat.voice.runtimeError.serverUnreachable": "Spraakserver is onbereikbaar op de mediapoorten (UDP 50000-50020 / 3478, TCP 7881). Controleer firewall / NAT en probeer het opnieuw.",
-    "chat.voice.runtimeError.permissionDenied": "Toegang tot de microfoon is geweigerd. Sta microfoontoegang toe in je browser en probeer het opnieuw.",
-    "chat.voice.runtimeError.micNotStarted": "Je microfoon kon niet worden gestart. Mogelijk gebruikt een andere app deze.",
-    "chat.voice.runtimeError.audioEngineFailed": "De audio-engine van de browser werkte niet op dit apparaat. Sluit andere audio-apps of wijzig je microfoon en probeer het opnieuw.",
-    "chat.voice.runtimeError.micNotFound": "Er is geen microfoon gevonden voor deze browsersessie."
+    }
   },
   "userSecurity": {
     "accountMenu": "Accountmenu",

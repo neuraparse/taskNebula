@@ -47,7 +47,8 @@ async function resolveOrganizationId(
       .where(
         and(
           eq(organizationMembers.userId, userId),
-          eq(organizationMembers.organizationId, requested)
+          eq(organizationMembers.organizationId, requested),
+          eq(organizationMembers.status, 'active')
         )
       )
       .limit(1);
@@ -58,7 +59,7 @@ async function resolveOrganizationId(
   const [member] = await db
     .select({ organizationId: organizationMembers.organizationId })
     .from(organizationMembers)
-    .where(eq(organizationMembers.userId, userId))
+    .where(and(eq(organizationMembers.userId, userId), eq(organizationMembers.status, 'active')))
     .limit(1);
   return member?.organizationId ?? null;
 }

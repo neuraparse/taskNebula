@@ -344,9 +344,9 @@
     },
     "reporter": {
       "unknown": "Άγνωστος χρήστης",
-      "label": "Αναφέρων"
-    },
-    "reporter.avatarAlt": "Άβαταρ αναφέροντος"
+      "label": "Αναφέρων",
+      "avatarAlt": "Άβαταρ αναφέροντος"
+    }
   },
   "issueDetail": {
     "comments": {
@@ -440,6 +440,15 @@
     "statusChecksDisabled": "Οι έλεγχοι είναι απενεργοποιημένοι",
     "currentVersion": "Τρέχουσα έκδοση",
     "latestVersion": "Πιο πρόσφατη έκδοση",
+    "latestDockerImage": "Νεότερη εικόνα Docker",
+    "imagePushed": "Δημοσιεύτηκε {date}",
+    "dockerImage": "Εικόνα Docker",
+    "dockerImageDescription": "Ελέγχθηκε από το αποθετήριο Docker Hub {repository}.",
+    "imageUpdateAvailable": "Διαθέσιμη ενημέρωση εικόνας",
+    "repository": "Αποθετήριο",
+    "imageDigest": "Digest εικόνας",
+    "imageSize": "Μέγεθος εικόνας",
+    "viewDockerTag": "Προβολή Docker tag",
     "published": "Δημοσιεύτηκε {date}",
     "lastChecked": "Τελευταίος έλεγχος {time}",
     "checksDisabledHint": "Οι έλεγχοι ενημερώσεων είναι απενεργοποιημένοι μέσω της μεταβλητής περιβάλλοντος TASKNEBULA_DISABLE_UPDATE_CHECK. Αφαιρέστε την για να βλέπετε εδώ νέες κυκλοφορίες.",
@@ -2257,6 +2266,45 @@
       "writes_count": "{count} εγγραφές",
       "no_summary": "Δεν καταγράφηκε σύνοψη.",
       "run_live": "Ζωντανή εκτέλεση"
+    },
+    "agentGovernance": {
+      "title": "AGENTOWNERS governance",
+      "description": "Control which AI agents can write, what needs approval, and what is blocked.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading agent governance...",
+      "loadFailed": "Failed to load agent governance.",
+      "policySource": "Policy source",
+      "noPolicy": "No AGENTOWNERS file found",
+      "lastParsedAt": "Last parsed at",
+      "validationErrors": "Validation errors",
+      "validationTitle": "Policy validation needs attention",
+      "line": "Line {line}",
+      "rulesTitle": "Policy preview",
+      "rulesDescription": "Parsed rules are evaluated by specificity before effect precedence.",
+      "noRules": "No policy rules are active.",
+      "table": {
+        "line": "Line",
+        "actor": "Actor",
+        "action": "Action",
+        "effect": "Effect"
+      },
+      "effect": {
+        "allow": "Allow",
+        "deny": "Deny",
+        "requireApproval": "Approval"
+      },
+      "queueTitle": "Approval queue",
+      "queueDescription": "Pending AI actions wait here until an admin or maintainer approves them.",
+      "queueLoading": "Loading approval queue...",
+      "queueEmpty": "No pending AI actions.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "behaviorTitle": "Approval behavior",
+      "behaviorDescription": "Safe defaults used when no explicit rule matches.",
+      "unknownAgents": "Unknown agents",
+      "destructiveActions": "Destructive actions",
+      "requireApprovalDefault": "Require approval by default"
     }
   },
   "collab": {
@@ -2609,10 +2657,10 @@
         "noPermission": "Δεν έχετε δικαίωμα δημιουργίας εγγράφων σε αυτόν τον χώρο.",
         "creating": "Δημιουργία...",
         "createPage": "Δημιουργία σελίδας"
-      }
-    },
-    "shell.collapse": "Σύμπτυξη",
-    "shell.expand": "Ανάπτυξη"
+      },
+      "collapse": "Σύμπτυξη",
+      "expand": "Ανάπτυξη"
+    }
   },
   "planning": {
     "search_placeholder": "Αναζήτηση προτύπων",
@@ -3264,7 +3312,9 @@
       "hint": {
         "openai": "Χρησιμοποιείται όταν ένας χώρος εργασίας δεν έχει εισαγάγει το δικό του κλειδί OpenAI. Ξεκινά με sk-…",
         "anthropic": "Χρησιμοποιείται όταν ένας χώρος εργασίας δεν έχει εισαγάγει το δικό του κλειδί Anthropic. Ξεκινά με sk-ant-…"
-      }
+      },
+      "saveFailedDescription": "Δεν ήταν δυνατή η αποθήκευση του διαπιστευτηρίου. Δοκιμάστε ξανά.",
+      "removeFailedDescription": "Δεν ήταν δυνατή η αφαίρεση του διαπιστευτηρίου. Δοκιμάστε ξανά."
     },
     "realtimeHealth": {
       "loading": "Φόρτωση υγείας πραγματικού χρόνου...",
@@ -3394,12 +3444,10 @@
       "targetedOrgs": "στοχευμένοι οργανισμοί",
       "close": "Κλείσιμο",
       "evaluate": "Αξιολόγηση",
-      "evaluating": "Αξιολόγηση..."
-    },
-    "flagTest.isEnabled": "isEnabled",
-    "flagTest.rolloutPercent": "rollout%",
-    "platformAi.saveFailedDescription": "Δεν ήταν δυνατή η αποθήκευση του διαπιστευτηρίου. Δοκιμάστε ξανά.",
-    "platformAi.removeFailedDescription": "Δεν ήταν δυνατή η αφαίρεση του διαπιστευτηρίου. Δοκιμάστε ξανά."
+      "evaluating": "Αξιολόγηση...",
+      "isEnabled": "isEnabled",
+      "rolloutPercent": "rollout%"
+    }
   },
   "adminDialogs": {
     "common": {
@@ -3440,7 +3488,8 @@
       "plansHint": "Αφήστε το κενό για ενεργοποίηση σε όλα τα πλάνα.",
       "targetOrganizations": "Στοχευμένοι οργανισμοί",
       "targetOrganizationsHint": "Αφήστε το κενό για ενεργοποίηση σε όλους τους οργανισμούς που ταιριάζουν με το πλάνο + την ανάπτυξη.",
-      "rollout": "Ανάπτυξη: {percentage}%"
+      "rollout": "Ανάπτυξη: {percentage}%",
+      "namePlaceholder": "Advanced Analytics"
     },
     "createOrg": {
       "trigger": "Νέος οργανισμός",
@@ -3464,7 +3513,8 @@
       "domain": "Τομέας (προαιρετικό)",
       "toastUpdatedTitle": "Ο οργανισμός ενημερώθηκε",
       "toastUpdatedDescription": "Οι αλλαγές αποθηκεύτηκαν με επιτυχία.",
-      "toastFailedTitle": "Αποτυχία ενημέρωσης οργανισμού"
+      "toastFailedTitle": "Αποτυχία ενημέρωσης οργανισμού",
+      "domainPlaceholder": "example.com"
     },
     "orgForm": {
       "name": "Όνομα",
@@ -3474,7 +3524,9 @@
       "planFree": "Δωρεάν",
       "planStarter": "Starter",
       "planGrowth": "Growth",
-      "planEnterprise": "Enterprise"
+      "planEnterprise": "Enterprise",
+      "namePlaceholder": "Acme Inc",
+      "slugPlaceholder": "acme-inc"
     },
     "createUser": {
       "trigger": "Νέος χρήστης",
@@ -3487,7 +3539,9 @@
       "missingFieldsDescription": "Απαιτούνται όνομα, email και κωδικός πρόσβασης.",
       "toastCreatedTitle": "Ο χρήστης δημιουργήθηκε",
       "toastCreatedDescription": "Ο χρήστης δημιουργήθηκε με επιτυχία.",
-      "toastFailedTitle": "Αποτυχία δημιουργίας χρήστη"
+      "toastFailedTitle": "Αποτυχία δημιουργίας χρήστη",
+      "fullNamePlaceholder": "Jane Smith",
+      "emailPlaceholder": "jane@example.com"
     },
     "editUser": {
       "title": "Επεξεργασία χρήστη",
@@ -3511,13 +3565,7 @@
       "searchPlaceholder": "Αναζήτηση οργανισμών...",
       "empty": "Δεν βρέθηκαν οργανισμοί.",
       "remove": "Αφαίρεση {name}"
-    },
-    "orgForm.namePlaceholder": "Acme Inc",
-    "orgForm.slugPlaceholder": "acme-inc",
-    "editOrg.domainPlaceholder": "example.com",
-    "createUser.fullNamePlaceholder": "Jane Smith",
-    "createUser.emailPlaceholder": "jane@example.com",
-    "flagForm.namePlaceholder": "Advanced Analytics"
+    }
   },
   "charts": {
     "issues": "Ζητήματα",
@@ -3652,7 +3700,8 @@
       "priorityLow": "Χαμηλή",
       "priorityNone": "Καμία",
       "labelsCommaSeparated": "Ετικέτες (χωρισμένες με κόμμα)",
-      "creating": "Δημιουργία…"
+      "creating": "Δημιουργία…",
+      "queuedForApprovalCount": "{count, plural, one {1 draft is waiting for approval} other {# drafts are waiting for approval}}"
     },
     "assist": {
       "title": "Βοήθεια AI",
@@ -3963,7 +4012,9 @@
     "startSprintTooltip": "Ξεκινήστε αυτό το sprint και κάντε το ενεργό",
     "completeSprint": "Ολοκλήρωση sprint",
     "completeSprintTooltip": "Ολοκληρώστε αυτό το sprint. Τα ημιτελή ζητήματα θα μετακινηθούν στο backlog.",
-    "sprintBurndown": "Burndown sprint"
+    "sprintBurndown": "Burndown sprint",
+    "projectInviteRequiredTitle": "Invitation required",
+    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4499,7 +4550,10 @@
         "status": "Κατάσταση",
         "priority": "Προτεραιότητα",
         "assignee": "Ανατέθηκε σε"
-      }
+      },
+      "projectIdPlaceholder": "prj_xxx",
+      "linearTeamPlaceholder": "ENG",
+      "jiraSitePlaceholder": "acme.atlassian.net"
     },
     "members": {
       "kicker": "Πρόσβαση",
@@ -4555,7 +4609,12 @@
         "qa_engineer": "Μηχανικός QA",
         "designer": "Σχεδιαστής",
         "viewer": "Θεατής"
-      }
+      },
+      "inviteExpiry": "Invitation expires",
+      "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
+      "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
+      "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
+      "invitationResent": "Invitation resent"
     },
     "org": {
       "selectOrg": "Επιλέξτε έναν οργανισμό για να φορτώσετε τις ρυθμίσεις.",
@@ -4664,10 +4723,7 @@
         "datadog": "Ορίστε { apiKey, site? }.",
         "s3": "Ορίστε { bucket, region, prefix? }. Τα AWS_ACCESS_KEY_ID/SECRET πρέπει να οριστούν στο env."
       }
-    },
-    "import.projectIdPlaceholder": "prj_xxx",
-    "import.linearTeamPlaceholder": "ENG",
-    "import.jiraSitePlaceholder": "acme.atlassian.net"
+    }
   },
   "sprints": {
     "defaultName": "Sprint {number}",
@@ -5126,18 +5182,20 @@
           "connecting": "Σύνδεση",
           "reconnecting": "Επανασύνδεση",
           "disconnected": "Αποσυνδέθηκε"
+        },
+        "permissionDeniedRetry": "Η άδεια μικροφώνου απορρίφθηκε. Επιτρέψτε την πρόσβαση στο μικρόφωνο στο πρόγραμμα περιήγησής σας και δοκιμάστε ξανά.",
+        "micCouldNotStartBusy": "Δεν ήταν δυνατή η εκκίνηση του μικροφώνου σας. Ίσως το χρησιμοποιεί άλλη εφαρμογή.",
+        "audioEngineFailed": "Η μηχανή ήχου του προγράμματος περιήγησης απέτυχε για αυτή τη συσκευή. Σταματήστε άλλες εφαρμογές ήχου ή αλλάξτε μικρόφωνο και δοκιμάστε ξανά.",
+        "noMicForSession": "Δεν βρέθηκε μικρόφωνο για αυτή τη συνεδρία του προγράμματος περιήγησης.",
+        "runtimeError": {
+          "serverUnreachable": "Ο διακομιστής φωνής δεν είναι προσβάσιμος στις θύρες μέσων (UDP 50000-50020 / 3478, TCP 7881). Ελέγξτε το τείχος προστασίας / NAT και δοκιμάστε ξανά.",
+          "permissionDenied": "Η άδεια μικροφώνου απορρίφθηκε. Επιτρέψτε την πρόσβαση στο μικρόφωνο στο πρόγραμμα περιήγησής σας και δοκιμάστε ξανά.",
+          "micNotStarted": "Δεν ήταν δυνατή η εκκίνηση του μικροφώνου σας. Ίσως το χρησιμοποιεί άλλη εφαρμογή.",
+          "audioEngineFailed": "Η μηχανή ήχου του προγράμματος περιήγησης απέτυχε για αυτή τη συσκευή. Σταματήστε άλλες εφαρμογές ήχου ή αλλάξτε μικρόφωνο και δοκιμάστε ξανά.",
+          "micNotFound": "Δεν βρέθηκε μικρόφωνο για αυτή τη συνεδρία του προγράμματος περιήγησης."
         }
       }
-    },
-    "chat.voice.permissionDeniedRetry": "Η άδεια μικροφώνου απορρίφθηκε. Επιτρέψτε την πρόσβαση στο μικρόφωνο στο πρόγραμμα περιήγησής σας και δοκιμάστε ξανά.",
-    "chat.voice.micCouldNotStartBusy": "Δεν ήταν δυνατή η εκκίνηση του μικροφώνου σας. Ίσως το χρησιμοποιεί άλλη εφαρμογή.",
-    "chat.voice.audioEngineFailed": "Η μηχανή ήχου του προγράμματος περιήγησης απέτυχε για αυτή τη συσκευή. Σταματήστε άλλες εφαρμογές ήχου ή αλλάξτε μικρόφωνο και δοκιμάστε ξανά.",
-    "chat.voice.noMicForSession": "Δεν βρέθηκε μικρόφωνο για αυτή τη συνεδρία του προγράμματος περιήγησης.",
-    "chat.voice.runtimeError.serverUnreachable": "Ο διακομιστής φωνής δεν είναι προσβάσιμος στις θύρες μέσων (UDP 50000-50020 / 3478, TCP 7881). Ελέγξτε το τείχος προστασίας / NAT και δοκιμάστε ξανά.",
-    "chat.voice.runtimeError.permissionDenied": "Η άδεια μικροφώνου απορρίφθηκε. Επιτρέψτε την πρόσβαση στο μικρόφωνο στο πρόγραμμα περιήγησής σας και δοκιμάστε ξανά.",
-    "chat.voice.runtimeError.micNotStarted": "Δεν ήταν δυνατή η εκκίνηση του μικροφώνου σας. Ίσως το χρησιμοποιεί άλλη εφαρμογή.",
-    "chat.voice.runtimeError.audioEngineFailed": "Η μηχανή ήχου του προγράμματος περιήγησης απέτυχε για αυτή τη συσκευή. Σταματήστε άλλες εφαρμογές ήχου ή αλλάξτε μικρόφωνο και δοκιμάστε ξανά.",
-    "chat.voice.runtimeError.micNotFound": "Δεν βρέθηκε μικρόφωνο για αυτή τη συνεδρία του προγράμματος περιήγησης."
+    }
   },
   "userSecurity": {
     "accountMenu": "Μενού λογαριασμού",

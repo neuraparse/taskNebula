@@ -13,6 +13,11 @@ import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { publishEvent } from '@/lib/realtime/events';
 import { withValidation } from '@/lib/api-validation';
 import { canCommentOnIssue, canReadIssue } from '@/lib/auth/access-control';
+import {
+  guardAgentAction,
+  readAgentPolicyMarker,
+  stripAgentPolicyMarker,
+} from '@/lib/agent-policy/guard';
 
 // Validation schema for creating a comment
 const createCommentSchema = z.object({
@@ -20,6 +25,15 @@ const createCommentSchema = z.object({
   parentId: z.string().optional(),
   mentions: z.array(z.string()).default([]),
   isInternal: z.boolean().default(false),
+  agentPolicy: z
+    .object({
+      actor: z.string().min(1).max(120),
+      source: z.string().max(120).optional(),
+      resource: z.string().max(80).optional(),
+      action: z.string().max(80).optional(),
+      targetType: z.string().max(80).optional(),
+    })
+    .optional(),
 });
 
 const commentsParamsSchema = z.object({ issueId: z.string().min(1) });
@@ -78,14 +92,43 @@ export const POST = withValidation({
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    const agentPolicy = readAgentPolicyMarker(validatedData.agentPolicy);
+    const commentInput = stripAgentPolicyMarker(validatedData);
+    if (agentPolicy) {
+      const guard = await guardAgentAction({
+        workspaceId: access.issue.organizationId,
+        projectId: access.issue.projectId,
+        requestedBy: session.user.id!,
+        actor: agentPolicy.actor,
+        resource: agentPolicy.resource || 'issues',
+        action: agentPolicy.action || 'comment',
+        targetType: agentPolicy.targetType || 'issue',
+        targetId: issueId,
+        proposedPayload: {
+          executor: 'comments:create',
+          data: {
+            issueId,
+            data: commentInput,
+          },
+        },
+        context: {
+          source: agentPolicy.source,
+          issueKey: access.issue.key,
+        },
+      });
+      if (!guard.allowed) {
+        return NextResponse.json(guard.body, { status: guard.httpStatus });
+      }
+    }
+
     const newComment = await createComment({
       id: createId(),
       issueId,
-      content: validatedData.content,
-      parentId: validatedData.parentId || null,
-      mentions: validatedData.mentions,
+      content: commentInput.content,
+      parentId: commentInput.parentId || null,
+      mentions: commentInput.mentions,
       reactions: [],
-      isInternal: validatedData.isInternal ? 'true' : 'false',
+      isInternal: commentInput.isInternal ? 'true' : 'false',
       createdBy: session.user.id,
       updatedBy: session.user.id,
     });
@@ -98,7 +141,7 @@ export const POST = withValidation({
     // emails until after the response ships. The caller only needs the
     // newly-created comment payload to render optimistically.
     const actorUserId = session.user.id!;
-    const commentSnippet = validatedData.content.substring(0, 200);
+    const commentSnippet = commentInput.content.substring(0, 200);
     after(async () => {
       try {
         await createActivity({

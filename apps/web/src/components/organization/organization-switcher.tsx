@@ -40,6 +40,7 @@ function OrgAvatar({ name }: { name: string }) {
 export function OrganizationSwitcher() {
   const [open, setOpen] = useState(false);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [canCreateOrganizations, setCanCreateOrganizations] = useState(false);
   const [loading, setLoading] = useState(true);
   const { currentOrganizationId, setCurrentOrganization } = useOrganization();
   const t = useTranslations('projectsPages');
@@ -54,6 +55,7 @@ export function OrganizationSwitcher() {
       if (response.ok) {
         const data = await response.json();
         setOrganizations(data.organizations);
+        setCanCreateOrganizations(data.canCreateOrganizations === true);
         if (!currentOrganizationId && data.organizations.length > 0) {
           setCurrentOrganization(data.organizations[0].id);
         }
@@ -142,18 +144,22 @@ export function OrganizationSwitcher() {
             );
           })
         )}
-        <DropdownMenuSeparator />
-        <CreateOrganizationDialog
-          trigger={
-            <DropdownMenuItem
-              className="min-h-[36px] gap-2 px-2 text-sm transition-colors duration-200"
-              onSelect={(e) => e.preventDefault()}
-            >
-              <Plus className="text-muted-foreground h-4 w-4 shrink-0" />
-              {t('org_create_title')}
-            </DropdownMenuItem>
-          }
-        />
+        {canCreateOrganizations ? (
+          <>
+            <DropdownMenuSeparator />
+            <CreateOrganizationDialog
+              trigger={
+                <DropdownMenuItem
+                  className="min-h-[36px] gap-2 px-2 text-sm transition-colors duration-200"
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <Plus className="text-muted-foreground h-4 w-4 shrink-0" />
+                  {t('org_create_title')}
+                </DropdownMenuItem>
+              }
+            />
+          </>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -18,6 +18,24 @@ import { publishEvent } from '@/lib/realtime/events';
 import { sendEmail } from '@/lib/email/sender';
 import { renderInvitationMessage } from '@/lib/email/templates';
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+const FALLBACK_INVITE_EXPIRES_IN_DAYS = 7;
+const MAX_INVITE_EXPIRES_IN_DAYS = 90;
+
+function getDefaultInviteExpiresInDays() {
+  const raw = Number(process.env.INVITE_TOKEN_TTL_DAYS);
+  if (!Number.isFinite(raw)) return FALLBACK_INVITE_EXPIRES_IN_DAYS;
+  return Math.min(Math.max(Math.trunc(raw), 1), MAX_INVITE_EXPIRES_IN_DAYS);
+}
+
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
+function hashInviteToken(token: string) {
+  return createHash('sha256').update(token).digest('hex');
+}
+
 // GET /api/organizations/[organizationId]/members - List members
 export async function GET(
   request: NextRequest,
@@ -76,6 +94,7 @@ export async function GET(
 const inviteMemberSchema = z.object({
   email: z.string().email(),
   role: z.enum(['owner', 'admin', 'member', 'viewer', 'guest']).default('member'),
+  inviteExpiresInDays: z.number().int().min(1).max(MAX_INVITE_EXPIRES_IN_DAYS).optional(),
   projectIds: z.array(z.string()).optional().default([]),
   projectRole: z
     .enum([
@@ -110,12 +129,14 @@ export async function POST(
 
     const body = await request.json();
     const data = inviteMemberSchema.parse(body);
+    const email = normalizeEmail(data.email);
+    const inviteExpiresInDays = data.inviteExpiresInDays ?? getDefaultInviteExpiresInDays();
     const inviteToken = randomBytes(32).toString('base64url');
-    const inviteTokenHash = createHash('sha256').update(inviteToken).digest('hex');
-    const inviteTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const inviteTokenHash = hashInviteToken(inviteToken);
+    const inviteTokenExpiresAt = new Date(Date.now() + inviteExpiresInDays * DAY_MS);
 
     // Find or create user
-    let [user] = await db.select().from(users).where(eq(users.email, data.email)).limit(1);
+    let [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
     if (!user) {
       // Create invited user
@@ -123,8 +144,8 @@ export async function POST(
         .insert(users)
         .values({
           id: createId(),
-          email: data.email,
-          name: data.email.split('@')[0],
+          email,
+          name: email.split('@')[0],
           status: 'invited',
           inviteTokenHash,
           inviteTokenExpiresAt,
@@ -145,7 +166,11 @@ export async function POST(
       throw new Error('Failed to find or create user');
     }
 
-    // Check if already a member
+    const userCanAcceptInvite = user.status === 'invited' && !user.password;
+
+    // Check if already a member. Pending invitations are idempotent: resending
+    // refreshes the token/expiry and sends a new email instead of trapping the
+    // user on an expired old link.
     const [existingMember] = await db
       .select()
       .from(organizationMembers)
@@ -157,21 +182,49 @@ export async function POST(
       )
       .limit(1);
 
-    if (existingMember) {
-      return NextResponse.json({ error: 'User is already a member' }, { status: 400 });
-    }
+    let invitationResent = false;
+    let newMember:
+      | {
+          id: string;
+          role: typeof data.role;
+          status: string;
+          createdAt: Date | string;
+        }
+      | undefined;
 
-    // Add member
-    const [newMember] = await db
-      .insert(organizationMembers)
-      .values({
-        id: createId(),
-        organizationId,
-        userId: user.id,
-        role: data.role,
-        status: user.status === 'invited' ? 'invited' : 'active',
-      })
-      .returning();
+    if (existingMember) {
+      if (!(existingMember.status === 'invited' && userCanAcceptInvite)) {
+        return NextResponse.json({ error: 'User is already a member' }, { status: 400 });
+      }
+
+      [newMember] = await db
+        .update(organizationMembers)
+        .set({
+          role: data.role,
+          status: 'invited',
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(organizationMembers.organizationId, organizationId),
+            eq(organizationMembers.userId, user.id)
+          )
+        )
+        .returning();
+      invitationResent = true;
+    } else {
+      // Add member
+      [newMember] = await db
+        .insert(organizationMembers)
+        .values({
+          id: createId(),
+          organizationId,
+          userId: user.id,
+          role: data.role,
+          status: userCanAcceptInvite ? 'invited' : 'active',
+        })
+        .returning();
+    }
 
     if (!newMember) {
       throw new Error('Failed to add member');
@@ -186,8 +239,11 @@ export async function POST(
       resourceType: 'organization_member',
       resourceId: newMember.id,
       metadata: {
-        invitedEmail: data.email,
+        invitedEmail: email,
         role: data.role,
+        inviteExpiresAt: inviteTokenExpiresAt.toISOString(),
+        inviteExpiresInDays,
+        invitationResent,
       },
     });
 
@@ -302,31 +358,32 @@ export async function POST(
 
     const orgName = org?.name || 'their organization';
     const inviterName = inviter?.name || 'A team member';
-    const signupUrl =
-      user.status === 'invited'
-        ? `${appUrl}/auth/signup?email=${encodeURIComponent(data.email)}&token=${encodeURIComponent(inviteToken)}`
-        : `${appUrl}/auth/signin?email=${encodeURIComponent(data.email)}`;
+    const signupUrl = userCanAcceptInvite
+      ? `${appUrl}/auth/signup?email=${encodeURIComponent(email)}&token=${encodeURIComponent(inviteToken)}`
+      : `${appUrl}/auth/signin?email=${encodeURIComponent(email)}`;
 
     const { subject, html, text } = renderInvitationMessage({
-      inviteeEmail: data.email,
+      inviteeEmail: email,
       inviterName,
       orgName,
       role: data.role,
       addedProjectNames,
       signupUrl,
+      expiresAt: userCanAcceptInvite ? inviteTokenExpiresAt : undefined,
+      expiresInDays: userCanAcceptInvite ? inviteExpiresInDays : undefined,
     });
 
     sendEmail({
-      to: data.email,
+      to: email,
       subject,
       html,
       text,
     })
       .then((result) => {
         if (result.sent) {
-          console.log('Invite email sent to:', data.email, result.messageId);
+          console.log('Invite email sent to:', email, result.messageId);
         } else if (result.skipped) {
-          console.log('Invite email skipped (SMTP not configured) for:', data.email);
+          console.log('Invite email skipped (SMTP not configured) for:', email);
         } else if (result.error) {
           console.error('Invite email error:', result.error);
         }
@@ -348,6 +405,9 @@ export async function POST(
       },
       addedToProjects,
       skippedProjects,
+      invitationResent,
+      inviteExpiresAt: userCanAcceptInvite ? inviteTokenExpiresAt.toISOString() : null,
+      inviteExpiresInDays: userCanAcceptInvite ? inviteExpiresInDays : null,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

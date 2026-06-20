@@ -55,7 +55,8 @@ async function ensureLeadMembership(organizationId: string, leadId?: string | nu
     .where(
       and(
         eq(organizationMembers.organizationId, organizationId),
-        eq(organizationMembers.userId, leadId)
+        eq(organizationMembers.userId, leadId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
@@ -65,7 +66,11 @@ async function ensureLeadMembership(organizationId: string, leadId?: string | nu
   }
 }
 
-async function syncLeadMembership(teamId: string, previousLeadId: string | null, nextLeadId: string | null) {
+async function syncLeadMembership(
+  teamId: string,
+  previousLeadId: string | null,
+  nextLeadId: string | null
+) {
   if (previousLeadId && previousLeadId !== nextLeadId) {
     const [previousLeadMembership] = await db
       .select({ id: teamMembers.id })
@@ -156,8 +161,7 @@ export async function PATCH(
       ? await ensureAvailableSlug(organizationId, data.slug, teamId)
       : existingTeamspace.slug;
 
-    const nextLeadId =
-      data.leadId === undefined ? existingTeamspace.leadId : data.leadId;
+    const nextLeadId = data.leadId === undefined ? existingTeamspace.leadId : data.leadId;
 
     const [updatedTeamspace] = await db
       .update(teams)
@@ -192,7 +196,10 @@ export async function PATCH(
     }
 
     if (error instanceof Error) {
-      if (error.message === 'A teamspace with this slug already exists' || error.message === 'Selected lead must be an organization member') {
+      if (
+        error.message === 'A teamspace with this slug already exists' ||
+        error.message === 'Selected lead must be an organization member'
+      ) {
         return NextResponse.json({ error: error.message }, { status: 400 });
       }
     }
