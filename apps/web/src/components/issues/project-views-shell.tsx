@@ -549,34 +549,48 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
               onValueChange={(value) => setActiveViewType(value as ViewType)}
               className="shrink-0"
             >
+              {/* Icon-only on mobile/tablet (compact squares); icon + label on
+                  desktop (lg+). aria-label keeps the icon-only state accessible. */}
               <TabsList className="bg-muted/30 h-7 gap-0.5 rounded-md p-0.5">
                 <TabsTrigger
                   value="list"
                   aria-label={t('shell.view_list')}
-                  className="data-[state=active]:bg-card data-[state=active]:shadow-xs h-6 w-6 rounded-sm px-0"
+                  className="data-[state=active]:bg-card data-[state=active]:shadow-xs h-6 w-6 gap-1.5 rounded-sm px-0 lg:w-auto lg:px-2"
                 >
-                  <LayoutList className="h-3.5 w-3.5" />
+                  <LayoutList className="h-3.5 w-3.5 shrink-0" />
+                  <span className="hidden text-xs font-medium lg:inline">
+                    {t('shell.view_list')}
+                  </span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="board"
                   aria-label={t('shell.view_board')}
-                  className="data-[state=active]:bg-card data-[state=active]:shadow-xs h-6 w-6 rounded-sm px-0"
+                  className="data-[state=active]:bg-card data-[state=active]:shadow-xs h-6 w-6 gap-1.5 rounded-sm px-0 lg:w-auto lg:px-2"
                 >
-                  <FolderKanban className="h-3.5 w-3.5" />
+                  <FolderKanban className="h-3.5 w-3.5 shrink-0" />
+                  <span className="hidden text-xs font-medium lg:inline">
+                    {t('shell.view_board')}
+                  </span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="timeline"
                   aria-label={t('shell.view_timeline')}
-                  className="data-[state=active]:bg-card data-[state=active]:shadow-xs h-6 w-6 rounded-sm px-0"
+                  className="data-[state=active]:bg-card data-[state=active]:shadow-xs h-6 w-6 gap-1.5 rounded-sm px-0 lg:w-auto lg:px-2"
                 >
-                  <GanttChartSquare className="h-3.5 w-3.5" />
+                  <GanttChartSquare className="h-3.5 w-3.5 shrink-0" />
+                  <span className="hidden text-xs font-medium lg:inline">
+                    {t('shell.view_timeline')}
+                  </span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="calendar"
                   aria-label={t('shell.view_calendar')}
-                  className="data-[state=active]:bg-card data-[state=active]:shadow-xs h-6 w-6 rounded-sm px-0"
+                  className="data-[state=active]:bg-card data-[state=active]:shadow-xs h-6 w-6 gap-1.5 rounded-sm px-0 lg:w-auto lg:px-2"
                 >
-                  <CalendarDays className="h-3.5 w-3.5" />
+                  <CalendarDays className="h-3.5 w-3.5 shrink-0" />
+                  <span className="hidden text-xs font-medium lg:inline">
+                    {t('shell.view_calendar')}
+                  </span>
                 </TabsTrigger>
               </TabsList>
             </Tabs>
