@@ -12,8 +12,6 @@ import { ProjectSettingsDialog } from '@/components/projects/project-settings-di
 import { useProjectPermissions } from '@/lib/hooks/use-project-permissions';
 import {
   PanelsTopLeft,
-  LayoutGrid,
-  List,
   Timer,
   BarChart3,
   Settings,
@@ -28,10 +26,11 @@ interface ProjectLayoutProps {
   params: Promise<{ projectId: string }>;
 }
 
+// Board + Backlog are reachable as view modes inside "Views" (and via direct
+// URL); keeping them out of the top nav avoids the duplicate "Board"/"Backlog"
+// entry points and keeps the project header focused.
 const tabs = [
   { labelKey: 'tabViews', href: 'views', icon: PanelsTopLeft },
-  { labelKey: 'tabBoard', href: 'board', icon: LayoutGrid },
-  { labelKey: 'tabBacklog', href: 'backlog', icon: List },
   { labelKey: 'tabSprints', href: 'sprints', icon: Timer },
   { labelKey: 'tabModules', href: 'modules', icon: Layers },
   { labelKey: 'tabDocs', href: 'docs', icon: BookOpenText },

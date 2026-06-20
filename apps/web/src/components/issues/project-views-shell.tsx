@@ -39,14 +39,6 @@ import {
 import { KanbanBoard } from '@/components/kanban/kanban-board';
 import { CreateIssueModal } from '@/components/issues/create-issue-modal';
 import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
-import { ViewFilterBar } from '@/components/issues/view-filter-bar';
-import { ViewDisplayOptions } from '@/components/issues/view-display-options';
-import {
-  DEFAULT_DISPLAY_OPTIONS,
-  defaultFilters,
-  type DisplayOptions,
-  type ViewFilter,
-} from '@/lib/issues/view-state';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -197,8 +189,6 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
   const { data: teamspaces = [] } = useTeamspaces(currentOrganizationId);
   const [activeViewType, setActiveViewType] = useState<ViewType>('list');
   const [filters, setFilters] = useState<BoardFilters>(DEFAULT_BOARD_FILTERS);
-  const [viewFilters, setViewFilters] = useState<ViewFilter[]>(() => defaultFilters());
-  const [displayOptions, setDisplayOptions] = useState<DisplayOptions>(DEFAULT_DISPLAY_OPTIONS);
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [createIssueOpen, setCreateIssueOpen] = useState(false);
   const [saveViewOpen, setSaveViewOpen] = useState(false);
@@ -607,9 +597,6 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
             </div>
 
             <div className="ml-auto flex items-center gap-1 sm:ml-0">
-              {activeViewType === 'list' || activeViewType === 'board' ? (
-                <ViewDisplayOptions options={displayOptions} onChange={setDisplayOptions} />
-              ) : null}
               <Button
                 variant="ghost"
                 size="icon"
@@ -632,12 +619,6 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
               </Button>
             </div>
           </div>
-
-          {activeViewType === 'list' || activeViewType === 'board' ? (
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <ViewFilterBar filters={viewFilters} onChange={setViewFilters} />
-            </div>
-          ) : null}
 
           <div className="mt-2">
             <ScrollArea className="w-full whitespace-nowrap">

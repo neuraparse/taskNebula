@@ -9,7 +9,12 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 ### Changed
 
 - **Project view switcher shows view names on desktop.** The List/Board/Timeline/Calendar tabs stay compact icon-only on mobile and tablet, and now show the translated label beside the icon on wide (`lg`+) screens. No new strings — reuses the existing `issuesViews.shell.view_*` keys (already in all 30 locales); accessibility unchanged (the `aria-label` still names each icon-only tab).
-- **Project nav tabs show labels on desktop too.** The project header tabs (Views/Board/Backlog/Sprints/Modules/Docs/Chat/Analytics) were icon-only at every size; they now reveal their label beside the icon on `lg`+ while staying compact icon-only on mobile/tablet. The hover tooltip is suppressed on desktop where the label is already visible (no redundant label), and kept on smaller screens. Reuses existing `pagesProjects.tab*` keys — no new strings.
+- **Project nav tabs show labels on desktop too.** The project header tabs were icon-only at every size; they now reveal their label beside the icon on `lg`+ while staying compact icon-only on mobile/tablet. The hover tooltip is suppressed on desktop where the label is already visible (no redundant label), and kept on smaller screens. Reuses existing `pagesProjects.tab*` keys — no new strings.
+- **De-cluttered the project view page (removed duplicate menus + dead UI).** Trimmed the project header nav to `Views / Sprints / Modules / Docs / Chat / Analytics` — the **Board** and **Backlog** tabs were removed because both are reachable as view modes inside "Views" (and still via direct URL); the header no longer mirrors the in-page view switcher. Inside the Views page, two toolbar sections that **never actually affected the issue list** were removed: the "advanced filter" bar (`ViewFilterBar` — its state was never applied to `filteredIssues`) and the "display options" control (`ViewDisplayOptions` — likewise inert). The real search/priority filter, Save view, and New issue actions are untouched, so the page keeps every working control while dropping the redundant ones.
+
+### Removed
+
+- Dead UI with no remaining consumers after the Views toolbar cleanup: `components/issues/view-filter-bar.tsx`, `components/issues/view-display-options.tsx`, and `lib/issues/view-state.ts`.
 
 ## [0.6.5] - 2026-06-20
 
