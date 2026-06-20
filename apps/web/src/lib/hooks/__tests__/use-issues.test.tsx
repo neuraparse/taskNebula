@@ -1,13 +1,7 @@
 import type { ReactNode } from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import {
-  useCreateIssue,
-  useDeleteIssue,
-  useIssue,
-  useIssues,
-  useUpdateIssue,
-} from '../use-issues';
+import { useCreateIssue, useDeleteIssue, useIssue, useIssues, useUpdateIssue } from '../use-issues';
 
 const fetchMock = jest.fn();
 
@@ -44,10 +38,9 @@ describe('use-issues hooks', () => {
         }),
       });
 
-      const { result } = renderHook(
-        () => useIssues({ projectId: 'project-1', status: 'open' }),
-        { wrapper: createWrapper(createQueryClient()) }
-      );
+      const { result } = renderHook(() => useIssues({ projectId: 'project-1', status: 'open' }), {
+        wrapper: createWrapper(createQueryClient()),
+      });
 
       await waitFor(() => {
         expect(result.current.data).toHaveLength(2);
@@ -183,6 +176,199 @@ describe('use-issues hooks', () => {
         })
       ).rejects.toThrow('Title is required');
     });
+
+    it('optimistically inserts the new issue into the project list before the server responds', async () => {
+      const queryClient = createQueryClient();
+      // A board/list is already showing this project's issues, plus its columns.
+      queryClient.setQueryData(['issues', { projectId: 'p1' }], []);
+      queryClient.setQueryData(
+        ['workflow-statuses', 'p1'],
+        [{ id: 'st-backlog', name: 'Backlog', category: 'backlog', color: '#ccc', position: 0 }]
+      );
+
+      // Hold the POST open so we can observe the UI *before* the server answers.
+      let resolveFetch: (value: unknown) => void = () => {};
+      fetchMock.mockReturnValue(
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        })
+      );
+
+      const { result } = renderHook(() => useCreateIssue(), {
+        wrapper: createWrapper(queryClient),
+      });
+
+      act(() => {
+        result.current.mutate({ title: 'Instant task', projectId: 'p1', priority: 'high' });
+      });
+
+      // The card appears immediately — no refetch, no page refresh.
+      await waitFor(() => {
+        const list = queryClient.getQueryData<Array<{ title: string }>>([
+          'issues',
+          { projectId: 'p1' },
+        ]);
+        expect(list).toHaveLength(1);
+      });
+      const optimistic = queryClient.getQueryData<
+        Array<{ title: string; optimistic?: boolean; statusId?: string }>
+      >(['issues', { projectId: 'p1' }])![0];
+      expect(optimistic.title).toBe('Instant task');
+      expect(optimistic.optimistic).toBe(true);
+      // Defaults to the backlog workflow status so it lands in the right column.
+      expect(optimistic.statusId).toBe('st-backlog');
+
+      // Server responds → the temp row is replaced in place by the real row.
+      resolveFetch({
+        ok: true,
+        json: async () => ({
+          id: 'real-1',
+          key: 'P1-1',
+          title: 'Instant task',
+          projectId: 'p1',
+          statusId: 'st-backlog',
+        }),
+      });
+
+      await waitFor(() => {
+        const list = queryClient.getQueryData<Array<{ id: string }>>([
+          'issues',
+          { projectId: 'p1' },
+        ]);
+        expect(list?.[0]?.id).toBe('real-1');
+      });
+      const reconciled = queryClient.getQueryData<Array<{ optimistic?: boolean }>>([
+        'issues',
+        { projectId: 'p1' },
+      ])![0];
+      expect(reconciled.optimistic).toBeUndefined();
+    });
+
+    it('reconciles the optimistic row when the routed key differs from the server CUID', async () => {
+      // Boards are routed by project KEY (e.g. /projects/demo/board), so the
+      // list cache is keyed ['issues', { projectId: 'demo' }] — but the server
+      // resolves "demo" → a CUID and returns that. The swap must still find and
+      // replace the temp row (this was the original "needs refresh" root cause).
+      const queryClient = createQueryClient();
+      queryClient.setQueryData(['issues', { projectId: 'demo' }], []);
+      queryClient.setQueryData(
+        ['workflow-statuses', 'demo'],
+        [{ id: 'st', name: 'Backlog', category: 'backlog', color: '#ccc', position: 0 }]
+      );
+
+      let resolveFetch: (value: unknown) => void = () => {};
+      fetchMock.mockReturnValue(
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        })
+      );
+
+      const { result } = renderHook(() => useCreateIssue(), {
+        wrapper: createWrapper(queryClient),
+      });
+
+      act(() => {
+        result.current.mutate({ title: 'Cross-id task', projectId: 'demo' });
+      });
+
+      await waitFor(() => {
+        expect(queryClient.getQueryData<unknown[]>(['issues', { projectId: 'demo' }])).toHaveLength(
+          1
+        );
+      });
+
+      // Server response carries the CUID, not the routed "demo" key.
+      resolveFetch({
+        ok: true,
+        json: async () => ({
+          id: 'real-cuid',
+          key: 'DEMO-1',
+          title: 'Cross-id task',
+          projectId: 'proj_realcuid',
+          statusId: 'st',
+        }),
+      });
+
+      await waitFor(() => {
+        const list = queryClient.getQueryData<Array<{ id: string }>>([
+          'issues',
+          { projectId: 'demo' },
+        ]);
+        expect(list?.[0]?.id).toBe('real-cuid');
+      });
+      const reconciled = queryClient.getQueryData<Array<{ optimistic?: boolean }>>([
+        'issues',
+        { projectId: 'demo' },
+      ])![0];
+      expect(reconciled.optimistic).toBeUndefined();
+    });
+
+    it('does not insert the optimistic issue into a non-matching filtered list', async () => {
+      const queryClient = createQueryClient();
+      // A widget showing only issues assigned to someone else.
+      queryClient.setQueryData(
+        ['issues', { projectId: 'p1', assigneeId: 'someone-else' }],
+        [{ id: 'x', title: 'Theirs' }]
+      );
+      // The plain project board.
+      queryClient.setQueryData(['issues', { projectId: 'p1' }], []);
+
+      let resolveFetch: (value: unknown) => void = () => {};
+      fetchMock.mockReturnValue(
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        })
+      );
+
+      const { result } = renderHook(() => useCreateIssue(), {
+        wrapper: createWrapper(queryClient),
+      });
+
+      act(() => {
+        // New issue is unassigned → must not appear in the someone-else list.
+        result.current.mutate({ title: 'Unassigned task', projectId: 'p1' });
+      });
+
+      await waitFor(() => {
+        expect(queryClient.getQueryData<unknown[]>(['issues', { projectId: 'p1' }])).toHaveLength(
+          1
+        );
+      });
+      // The assignee-filtered list is untouched.
+      expect(
+        queryClient.getQueryData<unknown[]>([
+          'issues',
+          { projectId: 'p1', assigneeId: 'someone-else' },
+        ])
+      ).toHaveLength(1);
+
+      resolveFetch({ ok: true, json: async () => ({ id: 'real', projectId: 'p1' }) });
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    });
+
+    it('rolls back the optimistic insert when the server rejects the create', async () => {
+      const queryClient = createQueryClient();
+      queryClient.setQueryData(['issues', { projectId: 'p1' }], [{ id: 'existing', title: 'Old' }]);
+
+      fetchMock.mockResolvedValue({
+        ok: false,
+        json: async () => ({ error: 'Boom' }),
+      });
+
+      const { result } = renderHook(() => useCreateIssue(), {
+        wrapper: createWrapper(queryClient),
+      });
+
+      await act(async () => {
+        await result.current
+          .mutateAsync({ title: 'Doomed', projectId: 'p1' })
+          .catch(() => undefined);
+      });
+
+      const list = queryClient.getQueryData<Array<{ id: string }>>(['issues', { projectId: 'p1' }]);
+      expect(list).toHaveLength(1);
+      expect(list?.[0]?.id).toBe('existing');
+    });
   });
 
   describe('useUpdateIssue', () => {
@@ -229,6 +415,76 @@ describe('use-issues hooks', () => {
       expect(fetchMock).toHaveBeenCalledWith('/api/issues/issue-1', {
         method: 'DELETE',
       });
+    });
+
+    it('optimistically removes the issue from the list immediately', async () => {
+      const queryClient = createQueryClient();
+      queryClient.setQueryData(['issue', 'i1'], { id: 'i1', projectId: 'p1', sprintId: null });
+      queryClient.setQueryData(
+        ['issues', { projectId: 'p1' }],
+        [
+          { id: 'i1', title: 'Delete me' },
+          { id: 'i2', title: 'Keep me' },
+        ]
+      );
+
+      let resolveFetch: (value: unknown) => void = () => {};
+      fetchMock.mockReturnValue(
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        })
+      );
+
+      const { result } = renderHook(() => useDeleteIssue(), {
+        wrapper: createWrapper(queryClient),
+      });
+
+      act(() => {
+        result.current.mutate('i1');
+      });
+
+      await waitFor(() => {
+        const list = queryClient.getQueryData<Array<{ id: string }>>([
+          'issues',
+          { projectId: 'p1' },
+        ]);
+        expect(list).toHaveLength(1);
+      });
+      expect(
+        queryClient.getQueryData<Array<{ id: string }>>(['issues', { projectId: 'p1' }])![0].id
+      ).toBe('i2');
+
+      resolveFetch({ ok: true, json: async () => ({ success: true }) });
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    });
+
+    it('rolls back the optimistic delete when the server rejects it', async () => {
+      const queryClient = createQueryClient();
+      queryClient.setQueryData(['issue', 'i1'], { id: 'i1', projectId: 'p1', sprintId: null });
+      queryClient.setQueryData(
+        ['issues', { projectId: 'p1' }],
+        [
+          { id: 'i1', title: 'Delete me' },
+          { id: 'i2', title: 'Keep me' },
+        ]
+      );
+
+      fetchMock.mockResolvedValue({ ok: false });
+
+      const { result } = renderHook(() => useDeleteIssue(), {
+        wrapper: createWrapper(queryClient),
+      });
+
+      act(() => {
+        result.current.mutate('i1');
+      });
+
+      await waitFor(() => expect(result.current.isError).toBe(true));
+
+      // The row is restored — nothing silently vanishes on failure.
+      const list = queryClient.getQueryData<Array<{ id: string }>>(['issues', { projectId: 'p1' }]);
+      expect(list).toHaveLength(2);
+      expect(list?.map((i) => i.id)).toEqual(['i1', 'i2']);
     });
   });
 });

@@ -147,6 +147,15 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
 
   const activeIssue = filteredIssues?.find((i) => i.id === activeId);
 
+  // Orphan-status issues (no statusId, or a stale/unknown one — e.g. a pending
+  // optimistic create whose status couldn't be guessed) must surface somewhere
+  // rather than silently vanish. Route them into the first column.
+  const knownStatusIds = useMemo(
+    () => new Set(workflowStatuses.map((s) => s.id)),
+    [workflowStatuses]
+  );
+  const firstStatusId = workflowStatuses[0]?.id;
+
   const isLoading = issuesLoading || statusesLoading;
 
   if (isLoading) {
@@ -210,7 +219,14 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
         >
           <div className="custom-scrollbar flex flex-1 items-stretch gap-3 overflow-x-auto px-4 py-4">
             {workflowStatuses.map((status) => {
-              const columnIssues = filteredIssues.filter((issue) => issue.statusId === status.id);
+              const columnIssues = filteredIssues.filter((issue) => {
+                if (issue.statusId === status.id) return true;
+                // Orphans land in the first column instead of disappearing.
+                return (
+                  status.id === firstStatusId &&
+                  (!issue.statusId || !knownStatusIds.has(issue.statusId))
+                );
+              });
               return (
                 <KanbanColumn
                   key={status.id}
@@ -252,6 +268,7 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
                           : undefined,
                         labels: issue.labels ?? [],
                         dueDate: issue.dueDate,
+                        optimistic: issue.optimistic,
                       }}
                       onClick={() => setSelectedIssueId(issue.id)}
                     />

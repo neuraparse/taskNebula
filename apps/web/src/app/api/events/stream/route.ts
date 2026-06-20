@@ -1,15 +1,15 @@
 import { auth } from '@/auth';
 import { db, organizationMembers, users } from '@tasknebula/db';
 import { and, eq } from 'drizzle-orm';
-import { eventBus, type RealtimeEvent } from '@/lib/realtime/events';
+import { eventBus, ensureRealtimeBridge, type RealtimeEvent } from '@/lib/realtime/events';
 
 export const dynamic = 'force-dynamic';
 // SSE stream: one membership snapshot query at connect, then pure async
 // iteration. Auth happens via JWT (next-auth).
-// NOTE: kept on the Node runtime — `eventBus` is an in-process EventEmitter
-// (and we query Drizzle at connect time); on edge the route would not see
-// events from Node API routes. Once the bus is moved to Redis pub/sub we can
-// revisit.
+// NOTE: kept on the Node runtime — we subscribe to the in-process `eventBus`
+// and query Drizzle at connect time; on edge the route would see neither.
+// `ensureRealtimeBridge()` pumps events published by OTHER instances (via Redis
+// pub/sub) into that in-process bus, so this stays correct across replicas.
 // export const runtime = 'edge';
 
 export async function GET(request: Request) {
@@ -38,6 +38,10 @@ export async function GET(request: Request) {
           and(eq(organizationMembers.userId, userId), eq(organizationMembers.status, 'active'))
         );
   const memberOrgIds = new Set(memberships.map((m) => m.organizationId));
+
+  // Ensure cross-instance events (published over Redis by other web replicas)
+  // are bridged into this process's in-memory bus. No-op without REDIS_URL.
+  await ensureRealtimeBridge();
 
   const encoder = new TextEncoder();
   let cleanup = () => {};

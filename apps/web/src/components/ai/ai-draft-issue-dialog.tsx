@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAiCapability } from '@/lib/hooks/use-ai-capability';
+import { invalidateIssueCaches } from '@/lib/realtime/issue-cache';
 import { AiBadge } from '@/components/ai/AiBadge';
 
 type IssueDraft = {
@@ -166,13 +167,9 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
       return created;
     },
     onSuccess: (created) => {
-      queryClient.invalidateQueries({
-        queryKey: ['issues'],
-        predicate: (query) => {
-          const filters = query.queryKey[1] as { projectId?: string } | undefined;
-          return filters?.projectId === projectId;
-        },
-      });
+      // Bulk AI creation lands several issues at once — refresh every
+      // issue-derived surface so they appear without a manual page refresh.
+      invalidateIssueCaches(queryClient, { projectId });
       toast({
         title: t('draft.createdCount', { count: created.length }),
         description: created

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { invalidateIssueCaches } from '@/lib/realtime/issue-cache';
 
 /**
  * Minimal shape of the parent issue's inheritable context. A child sub-issue
@@ -77,17 +78,15 @@ export function useCreateSubIssue() {
       }
       return response.json();
     },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['subtasks', variables.parentId] });
-      queryClient.invalidateQueries({
-        queryKey: ['issues'],
-        predicate: (query) => {
-          const filters = query.queryKey[1] as { projectId?: string } | undefined;
-          return filters?.projectId === variables.context.projectId;
-        },
+    onSuccess: (data, variables) => {
+      const created = data as { projectId?: string; sprintId?: string | null } | undefined;
+      // Centralised invalidation covers subtasks + all issue-derived surfaces
+      // (lists, sprint-issues, my-issues, your-work, dashboards, ...).
+      invalidateIssueCaches(queryClient, {
+        projectId: created?.projectId ?? variables.context.projectId,
+        sprintId: created?.sprintId ?? variables.context.sprintId ?? null,
+        parentId: variables.parentId,
       });
-      queryClient.invalidateQueries({ queryKey: ['my-issues'] });
-      queryClient.invalidateQueries({ queryKey: ['your-work'] });
     },
   });
 }

@@ -1,6 +1,12 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  invalidateIssueCaches,
+  matchesIssueList,
+  issueMatchesListFilters,
+} from '@/lib/realtime/issue-cache';
+import type { WorkflowStatus } from '@/lib/hooks/use-workflow-statuses';
 
 export interface Issue {
   id: string;
@@ -31,6 +37,10 @@ export interface Issue {
   customFields?: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
+  /** True while an optimistic create is in flight; cleared once the server
+   *  responds and the real row replaces it. UI can use this to render the card
+   *  in a pending/dimmed state. */
+  optimistic?: boolean;
   assignee?: {
     id: string;
     name: string | null;
@@ -99,12 +109,27 @@ export function useIssue(issueId: string | null) {
   });
 }
 
-// Create issue mutation
+// Monotonic counter for optimistic temp ids. Module-scoped so concurrent
+// creates (e.g. rapid keyboard entry) never collide.
+let optimisticIssueSeq = 0;
+
+type CreateIssueInput = Partial<Issue> & { parentId?: string };
+
+interface CreateIssueContext {
+  /** Snapshot of every issue-list cache we touched, for rollback on error. */
+  prevLists: Array<[readonly unknown[], Issue[] | undefined]>;
+  tempId: string;
+}
+
+// Create issue mutation — optimistic: the new card appears the instant the
+// form is submitted (no waiting on the POST + refetch round-trip), then is
+// reconciled with the server row on success and re-validated on settle. This
+// is what makes "add a task" feel instant instead of requiring a page refresh.
 export function useCreateIssue() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<Issue> & { parentId?: string }) => {
+    mutationFn: async (data: CreateIssueInput) => {
       const response = await fetch('/api/issues', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -117,31 +142,109 @@ export function useCreateIssue() {
       }
       return response.json();
     },
-    onSuccess: (data, variables) => {
-      // Scope invalidation to the affected project when possible
-      const createdProjectId = (data as Issue | undefined)?.projectId || variables.projectId;
-      if (createdProjectId) {
-        queryClient.invalidateQueries({
-          queryKey: ['issues'],
-          predicate: (query) => {
-            const filters = query.queryKey[1] as { projectId?: string } | undefined;
-            return filters?.projectId === createdProjectId;
-          },
-        });
-        // Keep column counts fresh
-        queryClient.invalidateQueries({ queryKey: ['workflow-statuses', createdProjectId] });
-      } else {
-        queryClient.invalidateQueries({ queryKey: ['issues'] });
-        queryClient.invalidateQueries({ queryKey: ['workflow-statuses'] });
+
+    onMutate: async (variables): Promise<CreateIssueContext> => {
+      const projectId = variables.projectId;
+
+      // Stop in-flight list refetches from clobbering the optimistic insert.
+      await queryClient.cancelQueries({
+        predicate: (query) => matchesIssueList(query.queryKey, projectId),
+      });
+
+      // Best-effort status guess so the card lands in the right Kanban column
+      // immediately. The API assigns the backlog status when none is given, so
+      // mirror that by falling back to the first/backlog workflow status.
+      const wfStatuses = projectId
+        ? queryClient.getQueryData<WorkflowStatus[]>(['workflow-statuses', projectId])
+        : undefined;
+      const orderedStatuses = wfStatuses
+        ? [...wfStatuses].sort((a, b) => a.position - b.position)
+        : [];
+      const fallbackStatusId =
+        variables.statusId ??
+        orderedStatuses.find((s) => s.category === 'backlog' || s.category === 'todo')?.id ??
+        orderedStatuses[0]?.id;
+
+      const tempId = `optimistic-${++optimisticIssueSeq}`;
+      const now = new Date().toISOString();
+      const optimisticIssue: Issue = {
+        id: tempId,
+        key: '',
+        title: variables.title ?? '',
+        description: variables.description ?? null,
+        type: variables.type ?? 'task',
+        status: '',
+        statusId: fallbackStatusId,
+        priority: variables.priority ?? 'medium',
+        assigneeId: variables.assigneeId ?? null,
+        reporterId: '',
+        organizationId: '',
+        projectId: projectId ?? '',
+        sprintId: variables.sprintId ?? null,
+        estimate: null,
+        labels: variables.labels ?? [],
+        createdAt: now,
+        updatedAt: now,
+        optimistic: true,
+      };
+
+      // Insert into every matching list cache, respecting each list's sprint
+      // filter so the card doesn't flash into the wrong sprint/backlog view.
+      const prevLists = queryClient.getQueriesData<Issue[]>({
+        predicate: (query) => matchesIssueList(query.queryKey, projectId),
+      });
+      for (const [key, data] of prevLists) {
+        if (!data) continue;
+        const filters = key[1] as
+          | { assigneeId?: string; sprintId?: string; type?: string; status?: string }
+          | undefined;
+        if (!issueMatchesListFilters(optimisticIssue, filters)) continue;
+        queryClient.setQueryData<Issue[]>(key, [optimisticIssue, ...data]);
       }
-      // Also invalidate subtasks if this was a subtask
-      if (variables.parentId) {
-        queryClient.invalidateQueries({ queryKey: ['subtasks', variables.parentId] });
+
+      return { prevLists, tempId };
+    },
+
+    onError: (_err, _variables, context) => {
+      // Roll back every list we mutated.
+      if (context?.prevLists) {
+        for (const [key, data] of context.prevLists) {
+          queryClient.setQueryData(key, data);
+        }
       }
-      // Dashboard/home widgets derived from the same data must reflect new work.
-      queryClient.invalidateQueries({ queryKey: ['my-issues'] });
-      queryClient.invalidateQueries({ queryKey: ['your-work'] });
-      queryClient.invalidateQueries({ queryKey: ['recent-activities'] });
+    },
+
+    onSuccess: (data, _variables, context) => {
+      const created = data as Issue | undefined;
+      if (context?.tempId && created?.id) {
+        // Swap the temp row for the real server row in place (keeps position).
+        // Match by the globally-unique tempId across ALL issue lists rather than
+        // by project id: the list was keyed by the project *key* the caller used,
+        // while `created.projectId` is the server CUID — a project-scoped
+        // predicate would miss the very list holding the temp row. Merge so any
+        // client-side fields the bare insert row carries aren't dropped, and
+        // clear the pending flag.
+        queryClient.setQueriesData<Issue[]>(
+          { predicate: (query) => matchesIssueList(query.queryKey) },
+          (old) =>
+            old
+              ? old.map((i) =>
+                  i.id === context.tempId ? { ...i, ...created, optimistic: undefined } : i
+                )
+              : old
+        );
+        queryClient.setQueryData<Issue>(['issue', created.id], created);
+      }
+    },
+
+    onSettled: (data, _error, variables) => {
+      const created = data as Issue | undefined;
+      // Lists + project families are invalidated broadly (key/CUID-agnostic);
+      // only sprint/parent ids (real CUIDs) need to be passed through.
+      invalidateIssueCaches(queryClient, {
+        sprintId: created?.sprintId ?? variables.sprintId,
+        parentId: variables.parentId,
+      });
     },
   });
 }
@@ -206,22 +309,25 @@ export function useUpdateIssue() {
       }
     },
 
-    onSettled: (_data, _error, { issueId }) => {
-      // Always refetch after mutation resolves to ensure server truth
-      queryClient.invalidateQueries({ queryKey: ['issues'] });
-      queryClient.invalidateQueries({ queryKey: ['issue', issueId] });
-      queryClient.invalidateQueries({ queryKey: ['sprints'] });
-      queryClient.invalidateQueries({ queryKey: ['sprint-issues'] });
-      queryClient.invalidateQueries({ queryKey: ['workflow-statuses'] });
-      // Dashboard/home widgets rely on these keys for live-looking data.
-      queryClient.invalidateQueries({ queryKey: ['my-issues'] });
-      queryClient.invalidateQueries({ queryKey: ['your-work'] });
-      queryClient.invalidateQueries({ queryKey: ['recent-activities'] });
+    onSettled: (data, _error, { issueId }) => {
+      // Always reconcile with server truth. Lists/project families invalidate
+      // broadly; issueId/sprintId (real CUIDs) match exactly.
+      const updated = data as Issue | undefined;
+      invalidateIssueCaches(queryClient, {
+        issueId,
+        sprintId: updated?.sprintId,
+      });
     },
   });
 }
 
-// Delete issue mutation
+interface DeleteIssueContext {
+  prevLists: Array<[readonly unknown[], Issue[] | undefined]>;
+  sprintId?: string | null;
+}
+
+// Delete issue mutation — optimistic: the card disappears immediately, with
+// rollback if the server rejects the delete.
 export function useDeleteIssue() {
   const queryClient = useQueryClient();
 
@@ -237,27 +343,44 @@ export function useDeleteIssue() {
       }
       return { ...(await response.json()), projectId: cached?.projectId };
     },
-    onSuccess: (data: { projectId?: string }) => {
-      const projectId = data?.projectId;
-      if (projectId) {
-        queryClient.invalidateQueries({
-          queryKey: ['issues'],
-          predicate: (query) => {
-            const filters = query.queryKey[1] as { projectId?: string } | undefined;
-            return filters?.projectId === projectId;
-          },
-        });
-        queryClient.invalidateQueries({ queryKey: ['sprints', projectId] });
-      } else {
-        queryClient.invalidateQueries({ queryKey: ['issues'] });
-        queryClient.invalidateQueries({ queryKey: ['sprints'] });
+
+    onMutate: async (issueId): Promise<DeleteIssueContext> => {
+      const cached = queryClient.getQueryData<Issue>(['issue', issueId]);
+      // Remove by id across ALL issue lists. We can't scope by project id: the
+      // cached issue carries the CUID while boards are keyed by the project key,
+      // so a scoped match would miss the very list the card is shown in.
+      // Removing a non-present id from other lists is a harmless no-op.
+      await queryClient.cancelQueries({
+        predicate: (query) => matchesIssueList(query.queryKey),
+      });
+      const prevLists = queryClient.getQueriesData<Issue[]>({
+        predicate: (query) => matchesIssueList(query.queryKey),
+      });
+      for (const [key, data] of prevLists) {
+        if (!data) continue;
+        queryClient.setQueryData<Issue[]>(
+          key,
+          data.filter((i) => i.id !== issueId)
+        );
       }
-      queryClient.invalidateQueries({ queryKey: ['sprint-issues'] });
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      // Keep dashboard/home widgets in sync after removals too.
-      queryClient.invalidateQueries({ queryKey: ['my-issues'] });
-      queryClient.invalidateQueries({ queryKey: ['your-work'] });
-      queryClient.invalidateQueries({ queryKey: ['recent-activities'] });
+      return { prevLists, sprintId: cached?.sprintId ?? null };
+    },
+
+    onError: (_err, _issueId, context) => {
+      if (context?.prevLists) {
+        for (const [key, data] of context.prevLists) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+    },
+
+    onSettled: (_data, _error, issueId, context) => {
+      // issueId is the real CUID; invalidating ['issue', issueId] clears the
+      // now-deleted detail cache. Lists/project families invalidate broadly.
+      invalidateIssueCaches(queryClient, {
+        issueId,
+        sprintId: context?.sprintId,
+      });
     },
   });
 }

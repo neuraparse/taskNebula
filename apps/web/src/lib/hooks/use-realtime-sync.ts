@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
+import { invalidateIssueCaches } from '@/lib/realtime/issue-cache';
 
 interface RealtimeEvent {
   type: string;
@@ -65,44 +66,16 @@ export function useRealtimeSync() {
       };
     }
 
-    function invalidateIssuesForProject(projectId: string | undefined) {
-      if (projectId) {
-        queryClient.invalidateQueries({
-          queryKey: ['issues'],
-          predicate: (query) => {
-            const filters = query.queryKey[1] as { projectId?: string } | undefined;
-            return filters?.projectId === projectId;
-          },
-        });
-      } else {
-        queryClient.invalidateQueries({ queryKey: ['issues'] });
-      }
-    }
-
     function handleEvent(event: RealtimeEvent) {
       const { type, projectId, sprintId, issueId } = event;
 
       switch (type) {
         case 'issue.created':
         case 'issue.deleted':
-          invalidateIssuesForProject(projectId);
-          if (sprintId) {
-            queryClient.invalidateQueries({ queryKey: ['sprint-issues', sprintId] });
-          }
-          if (projectId) {
-            queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-          }
-          break;
-
         case 'issue.updated':
-          invalidateIssuesForProject(projectId);
-          if (issueId) {
-            queryClient.invalidateQueries({ queryKey: ['issue', issueId] });
-            queryClient.invalidateQueries({ queryKey: ['subtasks', issueId] });
-          }
-          if (sprintId) {
-            queryClient.invalidateQueries({ queryKey: ['sprint-issues', sprintId] });
-          }
+          // Route every issue-shaped event through the shared cache helper so
+          // the SSE path stays in lock-step with the mutation hooks.
+          invalidateIssueCaches(queryClient, { projectId, sprintId, issueId });
           break;
 
         case 'issue.commented':
@@ -126,11 +99,7 @@ export function useRealtimeSync() {
           break;
 
         case 'sprint.issues.changed':
-          invalidateIssuesForProject(projectId);
-          if (sprintId) {
-            queryClient.invalidateQueries({ queryKey: ['sprint-issues', sprintId] });
-            queryClient.invalidateQueries({ queryKey: ['sprint', sprintId] });
-          }
+          invalidateIssueCaches(queryClient, { projectId, sprintId });
           break;
 
         case 'project.created':

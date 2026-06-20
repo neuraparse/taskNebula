@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
 import { useToast } from '@/hooks/use-toast';
+import { invalidateIssueCaches } from '@/lib/realtime/issue-cache';
 
 /**
  * Draft type as exposed to the rest of the web app. This is a stable UI
@@ -37,9 +38,7 @@ interface UseDraftsResult {
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
-  addDraft: (
-    input: Partial<Draft> & { type: Draft['type'] },
-  ) => Promise<Draft | null>;
+  addDraft: (input: Partial<Draft> & { type: Draft['type'] }) => Promise<Draft | null>;
   updateDraft: (id: string, patch: Partial<Draft>) => Promise<void>;
   removeDraft: (id: string) => Promise<void>;
   promoteDraft: (id: string) => Promise<void>;
@@ -80,9 +79,7 @@ async function fetchDrafts(): Promise<Draft[]> {
   return (json.drafts ?? []).map(rowToDraft);
 }
 
-async function createDraftRequest(
-  input: Partial<Draft> & { type: Draft['type'] },
-): Promise<Draft> {
+async function createDraftRequest(input: Partial<Draft> & { type: Draft['type'] }): Promise<Draft> {
   const res = await fetch('/api/drafts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -100,10 +97,7 @@ async function createDraftRequest(
   return rowToDraft(json.draft);
 }
 
-async function patchDraftRequest(
-  id: string,
-  patch: Partial<Draft>,
-): Promise<Draft> {
+async function patchDraftRequest(id: string, patch: Partial<Draft>): Promise<Draft> {
   const body: Record<string, unknown> = {};
   if (patch.title !== undefined) body.title = patch.title;
   if (patch.body !== undefined) body.content = patch.body;
@@ -138,9 +132,7 @@ async function pickDefaultProjectId(): Promise<string | null> {
   try {
     const res = await fetch('/api/projects');
     if (!res.ok) return null;
-    const json = (await res.json()) as
-      | { projects?: Array<{ id: string }> }
-      | Array<{ id: string }>;
+    const json = (await res.json()) as { projects?: Array<{ id: string }> } | Array<{ id: string }>;
     const list = Array.isArray(json) ? json : (json.projects ?? []);
     return list[0]?.id ?? null;
   } catch {
@@ -162,20 +154,12 @@ export function useDrafts(): UseDraftsResult {
     void queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
   };
 
-  const createMutation = useMutation<
-    Draft,
-    Error,
-    Partial<Draft> & { type: Draft['type'] }
-  >({
+  const createMutation = useMutation<Draft, Error, Partial<Draft> & { type: Draft['type'] }>({
     mutationFn: createDraftRequest,
     onSuccess: invalidate,
   });
 
-  const patchMutation = useMutation<
-    Draft,
-    Error,
-    { id: string; patch: Partial<Draft> }
-  >({
+  const patchMutation = useMutation<Draft, Error, { id: string; patch: Partial<Draft> }>({
     mutationFn: ({ id, patch }) => patchDraftRequest(id, patch),
     onSuccess: invalidate,
   });
@@ -198,7 +182,7 @@ export function useDrafts(): UseDraftsResult {
         return null;
       }
     },
-    [createMutation, toast],
+    [createMutation, toast]
   );
 
   const updateDraft = useCallback<UseDraftsResult['updateDraft']>(
@@ -213,7 +197,7 @@ export function useDrafts(): UseDraftsResult {
         });
       }
     },
-    [patchMutation, toast],
+    [patchMutation, toast]
   );
 
   const removeDraft = useCallback<UseDraftsResult['removeDraft']>(
@@ -228,7 +212,7 @@ export function useDrafts(): UseDraftsResult {
         });
       }
     },
-    [deleteMutation, toast],
+    [deleteMutation, toast]
   );
 
   const promoteDraft = useCallback<UseDraftsResult['promoteDraft']>(
@@ -261,8 +245,7 @@ export function useDrafts(): UseDraftsResult {
       if (!projectId) {
         toast({
           title: 'No project available',
-          description:
-            'Join or create a project before promoting drafts to work items.',
+          description: 'Join or create a project before promoting drafts to work items.',
           variant: 'destructive',
         });
         return;
@@ -290,23 +273,34 @@ export function useDrafts(): UseDraftsResult {
           throw new Error(payload.error || 'Failed to create work item');
         }
 
-        const issue = (await res.json()) as { id: string; key?: string };
+        const issue = (await res.json()) as {
+          id: string;
+          key?: string;
+          projectId?: string;
+          sprintId?: string | null;
+        };
+
+        // The promoted draft is now a real issue — refresh every issue-derived
+        // surface (project lists, my-issues, your-work, dashboards) so it shows
+        // up immediately instead of after a manual page refresh.
+        invalidateIssueCaches(queryClient, {
+          projectId: issue.projectId ?? projectId,
+          sprintId: issue.sprintId ?? null,
+          issueId: issue.id,
+        });
 
         // Draft promoted — delete original so it doesn't linger.
         await deleteMutation.mutateAsync(id).catch(() => {
           // Non-fatal: issue was created. Surface but don't abort.
           toast({
             title: 'Draft kept',
-            description:
-              'Work item created, but the draft could not be removed.',
+            description: 'Work item created, but the draft could not be removed.',
           });
         });
 
         toast({
           title: 'Promoted to work item',
-          description: issue.key
-            ? `Created ${issue.key}.`
-            : 'Work item created successfully.',
+          description: issue.key ? `Created ${issue.key}.` : 'Work item created successfully.',
         });
 
         if (issue.id) {
@@ -320,7 +314,7 @@ export function useDrafts(): UseDraftsResult {
         });
       }
     },
-    [query.data, deleteMutation, toast, router],
+    [query.data, deleteMutation, toast, router, queryClient]
   );
 
   return {

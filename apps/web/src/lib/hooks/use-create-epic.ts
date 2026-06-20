@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { invalidateIssueCaches } from '@/lib/realtime/issue-cache';
 
 /**
  * Minimal shape returned by POST /api/issues (the raw inserted issue row).
@@ -47,16 +48,10 @@ export function useCreateEpic() {
       }
       return (await response.json()) as CreatedEpic;
     },
-    onSettled: (_data, _error, { projectId }) => {
-      // Refresh the epic list that backs the picker, plus the broader issue
-      // lists for this project so the new epic shows up everywhere.
-      queryClient.invalidateQueries({
-        queryKey: ['issues'],
-        predicate: (query) => {
-          const filters = query.queryKey[1] as { projectId?: string } | undefined;
-          return filters?.projectId === projectId;
-        },
-      });
+    onSettled: (data, _error, { projectId }) => {
+      // Refresh every issue-derived surface (lists, my-issues, your-work,
+      // dashboards, ...) so the new epic shows up everywhere without a refresh.
+      invalidateIssueCaches(queryClient, { projectId: data?.projectId ?? projectId });
     },
   });
 }

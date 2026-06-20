@@ -27,6 +27,8 @@ interface KanbanCardProps {
     dueDate?: string | null;
     subtaskCount?: number;
     subtaskDone?: number;
+    /** True while an optimistic create is in flight (no server id yet). */
+    optimistic?: boolean;
   };
   draggableId?: string;
   statusId?: string;
@@ -156,7 +158,8 @@ export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: K
       statusId,
       issueId: issueId || draggableId || issue.id,
     },
-    disabled: !draggableId,
+    // Pending optimistic cards have no server id yet — not draggable.
+    disabled: !draggableId || Boolean(issue.optimistic),
   });
 
   const style: React.CSSProperties = {
@@ -226,9 +229,12 @@ export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: K
         {...attributes}
         {...listeners}
         onClick={handleClick}
+        aria-busy={issue.optimistic ? true : undefined}
         className={cn(
           'kanban-card group/card touch-manipulation select-none py-3.5 pl-4',
-          isDragging ? 'opacity-40 [&_*]:pointer-events-none' : 'cursor-grab'
+          isDragging ? 'opacity-40 [&_*]:pointer-events-none' : 'cursor-grab',
+          // Pending optimistic create: dim + non-interactive until the server row lands.
+          issue.optimistic && 'pointer-events-none animate-pulse opacity-60'
         )}
       >
         {/* Priority indicator bar — left edge, full height */}

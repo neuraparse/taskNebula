@@ -16,6 +16,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
+import { invalidateIssueCaches } from '@/lib/realtime/issue-cache';
 
 type Suggestion = {
   id: string;
@@ -96,9 +97,17 @@ export function IssueTriagePanel({ issueId }: { issueId: string }) {
         }
         await refresh();
         // Applying mutates priority / labels / assignee on the issue itself —
-        // refresh the issue caches so the sidebar reflects the change.
-        queryClient.invalidateQueries({ queryKey: ['issue', issueId] });
-        queryClient.invalidateQueries({ queryKey: ['issues'] });
+        // refresh every issue-derived surface (lists, sprint-issues, my-issues,
+        // your-work, dashboards) so the change reflects everywhere instantly.
+        const cached = queryClient.getQueryData<{ projectId?: string; sprintId?: string | null }>([
+          'issue',
+          issueId,
+        ]);
+        invalidateIssueCaches(queryClient, {
+          issueId,
+          projectId: cached?.projectId,
+          sprintId: cached?.sprintId ?? null,
+        });
       } catch (err) {
         setError(err instanceof Error ? err.message : t('applyFailed'));
       } finally {
