@@ -466,10 +466,12 @@
     "toastUpdateAvailable": "Το TaskNebula {version} είναι έτοιμο για εγκατάσταση.",
     "toastUpToDate": "Εκτελείτε την πιο πρόσφατη έκδοση.",
     "banner": {
-      "title": "Το TaskNebula {version} είναι διαθέσιμο",
-      "body": "Εκτελείτε την έκδοση {current}. Δείτε τις σημειώσεις κυκλοφορίας και ενημερώστε όποτε σας βολεύει.",
-      "view": "Προβολή ενημέρωσης",
-      "dismiss": "Παράβλεψη"
+      "title": "TaskNebula {version} is available",
+      "body": "You are running {current}. Open Admin > Updates for release notes and Docker update commands.",
+      "view": "Open updates",
+      "dismiss": "Dismiss",
+      "dockerTitle": "Docker image {tag} is available",
+      "dockerBody": "Docker Hub published {repository}:{tag}. You are running {current}; open Admin > Updates to pull and restart."
     }
   },
   "issueFields": {

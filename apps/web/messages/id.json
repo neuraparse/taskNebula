@@ -466,10 +466,12 @@
     "toastUpdateAvailable": "TaskNebula {version} siap untuk dipasang.",
     "toastUpToDate": "Anda menjalankan versi terbaru.",
     "banner": {
-      "title": "TaskNebula {version} tersedia",
-      "body": "Anda menjalankan {current}. Tinjau catatan rilis dan perbarui saat memungkinkan.",
-      "view": "Lihat pembaruan",
-      "dismiss": "Tutup"
+      "title": "TaskNebula {version} is available",
+      "body": "You are running {current}. Open Admin > Updates for release notes and Docker update commands.",
+      "view": "Open updates",
+      "dismiss": "Dismiss",
+      "dockerTitle": "Docker image {tag} is available",
+      "dockerBody": "Docker Hub published {repository}:{tag}. You are running {current}; open Admin > Updates to pull and restart."
     }
   },
   "issueFields": {

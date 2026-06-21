@@ -466,10 +466,12 @@
     "toastUpdateAvailable": "TaskNebula {version} jest gotowa do zainstalowania.",
     "toastUpToDate": "Używasz najnowszej wersji.",
     "banner": {
-      "title": "TaskNebula {version} jest dostępna",
-      "body": "Używasz wersji {current}. Zapoznaj się z informacjami o wydaniu i zaktualizuj w dogodnym momencie.",
-      "view": "Zobacz aktualizację",
-      "dismiss": "Odrzuć"
+      "title": "TaskNebula {version} is available",
+      "body": "You are running {current}. Open Admin > Updates for release notes and Docker update commands.",
+      "view": "Open updates",
+      "dismiss": "Dismiss",
+      "dockerTitle": "Docker image {tag} is available",
+      "dockerBody": "Docker Hub published {repository}:{tag}. You are running {current}; open Admin > Updates to pull and restart."
     }
   },
   "issueFields": {

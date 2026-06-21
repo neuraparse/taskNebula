@@ -466,10 +466,12 @@
     "toastUpdateAvailable": "TaskNebula {version} พร้อมติดตั้งแล้ว",
     "toastUpToDate": "คุณกำลังใช้เวอร์ชันล่าสุดอยู่",
     "banner": {
-      "title": "TaskNebula {version} พร้อมใช้งานแล้ว",
-      "body": "คุณกำลังใช้ {current} อยู่ ตรวจสอบบันทึกการเผยแพร่และอัปเดตเมื่อสะดวก",
-      "view": "ดูการอัปเดต",
-      "dismiss": "ปิด"
+      "title": "TaskNebula {version} is available",
+      "body": "You are running {current}. Open Admin > Updates for release notes and Docker update commands.",
+      "view": "Open updates",
+      "dismiss": "Dismiss",
+      "dockerTitle": "Docker image {tag} is available",
+      "dockerBody": "Docker Hub published {repository}:{tag}. You are running {current}; open Admin > Updates to pull and restart."
     }
   },
   "issueFields": {

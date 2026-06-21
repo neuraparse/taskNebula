@@ -106,7 +106,7 @@ describe('handleBootVersionChange', () => {
       expect(row.actorType).toBe('system');
       expect(row.title).toBe('TaskNebula updated to v9.9.9');
       expect(row.message).toContain('previously v9.9.8');
-      expect(row.message).toContain('/admin?tab=system');
+      expect(row.message).toContain('/admin?tab=updates');
       expect(row.message).toContain('https://github.com/neuraparse/taskNebula/releases/tag/v9.9.9');
     }
     // No baseline re-seed when the update already changed the row.

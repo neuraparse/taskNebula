@@ -466,10 +466,12 @@
     "toastUpdateAvailable": "TaskNebula {version} е готова за инсталиране.",
     "toastUpToDate": "Използвате най-новата версия.",
     "banner": {
-      "title": "TaskNebula {version} е налична",
-      "body": "Използвате {current}. Прегледайте бележките към изданието и актуализирайте, когато ви е удобно.",
-      "view": "Преглед на актуализацията",
-      "dismiss": "Отхвърли"
+      "title": "TaskNebula {version} is available",
+      "body": "You are running {current}. Open Admin > Updates for release notes and Docker update commands.",
+      "view": "Open updates",
+      "dismiss": "Dismiss",
+      "dockerTitle": "Docker image {tag} is available",
+      "dockerBody": "Docker Hub published {repository}:{tag}. You are running {current}; open Admin > Updates to pull and restart."
     }
   },
   "issueFields": {

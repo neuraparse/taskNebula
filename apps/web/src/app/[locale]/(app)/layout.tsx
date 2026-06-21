@@ -9,13 +9,15 @@ import { KeyboardShortcutsProvider } from '@/components/help/keyboard-shortcuts-
 import { AiSidecarProvider } from '@/components/ai/ai-sidecar-provider';
 import { EmailVerificationBanner } from '@/components/auth/email-verification-banner';
 import { MobileNav } from '@/components/mobile/mobile-nav';
+import { GlobalVersionUpdateBanner } from '@/components/admin/global-version-update-banner';
+import { isSuperAdmin } from '@/lib/auth/permissions';
 import { getTranslations } from 'next-intl/server';
 
 // Force dynamic rendering for authenticated routes
 export const dynamic = 'force-dynamic';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const t = await getTranslations('common');
+  const [t, showUpdateBanner] = await Promise.all([getTranslations('common'), isSuperAdmin()]);
   return (
     <GlobalVoiceProvider>
       <AppUiScope />
@@ -40,6 +42,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                   <div className="hidden md:block">
                     <AppHeader />
                   </div>
+                  {showUpdateBanner ? <GlobalVersionUpdateBanner /> : null}
 
                   <main
                     id="main-content"

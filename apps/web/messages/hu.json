@@ -466,10 +466,12 @@
     "toastUpdateAvailable": "A TaskNebula {version} készen áll a telepítésre.",
     "toastUpToDate": "A legújabb verziót futtatod.",
     "banner": {
-      "title": "A TaskNebula {version} elérhető",
-      "body": "A(z) {current} verziót futtatod. Tekintsd át a kiadási megjegyzéseket, és frissíts, amikor kényelmes.",
-      "view": "Frissítés megtekintése",
-      "dismiss": "Elvetés"
+      "title": "TaskNebula {version} is available",
+      "body": "You are running {current}. Open Admin > Updates for release notes and Docker update commands.",
+      "view": "Open updates",
+      "dismiss": "Dismiss",
+      "dockerTitle": "Docker image {tag} is available",
+      "dockerBody": "Docker Hub published {repository}:{tag}. You are running {current}; open Admin > Updates to pull and restart."
     }
   },
   "issueFields": {

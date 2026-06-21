@@ -466,10 +466,12 @@
     "toastUpdateAvailable": "TaskNebula {version} đã sẵn sàng để cài đặt.",
     "toastUpToDate": "Bạn đang dùng phiên bản mới nhất.",
     "banner": {
-      "title": "TaskNebula {version} đã có sẵn",
-      "body": "Bạn đang dùng {current}. Hãy xem lại ghi chú phát hành và cập nhật khi thuận tiện.",
-      "view": "Xem cập nhật",
-      "dismiss": "Bỏ qua"
+      "title": "TaskNebula {version} is available",
+      "body": "You are running {current}. Open Admin > Updates for release notes and Docker update commands.",
+      "view": "Open updates",
+      "dismiss": "Dismiss",
+      "dockerTitle": "Docker image {tag} is available",
+      "dockerBody": "Docker Hub published {repository}:{tag}. You are running {current}; open Admin > Updates to pull and restart."
     }
   },
   "issueFields": {

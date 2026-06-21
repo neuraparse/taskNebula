@@ -68,19 +68,52 @@ describe('VersionUpdateBanner', () => {
     expect(await screen.findByText('TaskNebula v0.5.0 is available')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'You are running v0.4.0. Review the release notes and update when convenient.'
+        'You are running v0.4.0. Open Admin > Updates for release notes and Docker update commands.'
       )
     ).toBeInTheDocument();
   });
 
-  it('renders a View update button only when onView is provided', async () => {
+  it('shows a Docker Hub-specific banner when only the image tag is newer', async () => {
+    const base = info();
+    mockData(
+      info({
+        latest: '0.5.0',
+        releaseUpdateAvailable: false,
+        updateAvailable: true,
+        image: {
+          ...base.image,
+          latestTag: '0.5.0',
+          updateAvailable: true,
+        },
+      })
+    );
+    render(<VersionUpdateBanner />);
+
+    expect(await screen.findByText('Docker image v0.5.0 is available')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Docker Hub published neuraparse/tasknebula:v0.5.0. You are running v0.4.0; open Admin > Updates to pull and restart.'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('renders an Updates link by default', async () => {
+    mockData(info({ latest: '0.5.0', updateAvailable: true }));
+    render(<VersionUpdateBanner />);
+
+    const link = await screen.findByRole('link', { name: 'Open updates' });
+    expect(link).toHaveAttribute('href', '/admin?tab=updates');
+  });
+
+  it('calls onView instead of rendering a link when provided', async () => {
     mockData(info({ latest: '0.5.0', updateAvailable: true }));
     const onView = jest.fn();
     render(<VersionUpdateBanner onView={onView} />);
 
-    const button = await screen.findByRole('button', { name: 'View update' });
+    const button = await screen.findByRole('button', { name: 'Open updates' });
     await userEvent.setup().click(button);
     expect(onView).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('link', { name: 'Open updates' })).not.toBeInTheDocument();
   });
 
   it('persists the dismissed version to localStorage and hides the banner', async () => {

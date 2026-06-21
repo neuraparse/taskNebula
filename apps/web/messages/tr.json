@@ -466,10 +466,12 @@
     "toastUpdateAvailable": "TaskNebula {version} is ready to install.",
     "toastUpToDate": "You are running the latest version.",
     "banner": {
-      "title": "TaskNebula {version} is available",
-      "body": "You are running {current}. Review the release notes and update when convenient.",
-      "view": "View update",
-      "dismiss": "Dismiss"
+      "title": "TaskNebula {version} hazır",
+      "body": "{current} çalışıyor. Sürüm notları ve Docker güncelleme komutları için Admin > Updates ekranını açın.",
+      "view": "Updates ekranını aç",
+      "dismiss": "Kapat",
+      "dockerTitle": "Docker imajı {tag} hazır",
+      "dockerBody": "Docker Hub {repository}:{tag} imajını yayınladı. Şu anda {current} çalışıyor; pull ve restart için Admin > Updates ekranını açın."
     }
   },
   "issueFields": {

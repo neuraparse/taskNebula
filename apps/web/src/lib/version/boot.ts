@@ -87,7 +87,7 @@ async function notifySuperAdminsOfUpgrade(current: string, previous: string | nu
   // updates path and the GitHub release URL ride along in the message body.
   const message =
     `This instance is now running TaskNebula v${current}${fromPart}. ` +
-    `Review what changed under Admin → System (/admin?tab=system) or on GitHub: ${releaseUrl}`;
+    `Review what changed under Admin > Updates (/admin?tab=updates) or on GitHub: ${releaseUrl}`;
 
   try {
     await db.insert(notifications).values(

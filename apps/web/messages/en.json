@@ -467,9 +467,11 @@
     "toastUpToDate": "You are running the latest version.",
     "banner": {
       "title": "TaskNebula {version} is available",
-      "body": "You are running {current}. Review the release notes and update when convenient.",
-      "view": "View update",
-      "dismiss": "Dismiss"
+      "body": "You are running {current}. Open Admin > Updates for release notes and Docker update commands.",
+      "view": "Open updates",
+      "dismiss": "Dismiss",
+      "dockerTitle": "Docker image {tag} is available",
+      "dockerBody": "Docker Hub published {repository}:{tag}. You are running {current}; open Admin > Updates to pull and restart."
     }
   },
   "issueFields": {

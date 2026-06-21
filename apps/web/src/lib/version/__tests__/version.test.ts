@@ -21,6 +21,7 @@ jest.mock('@tasknebula/db', () => ({
   sql: (...args: unknown[]) => ({ type: 'sql', args }),
 }));
 
+import { systemSettings as systemSettingsTable } from '@tasknebula/db';
 import {
   compareSemver,
   checkLatestVersion,
@@ -29,20 +30,35 @@ import {
   DOCKER_HUB_REPOSITORY,
   DOCKER_HUB_TAGS_URL,
   RELEASES_LATEST_URL,
+  UPDATE_NOTIFICATION_KEY,
   type VersionCheckState,
 } from '../index';
 
 const fetchMock = jest.fn();
 
 /** db.select(...).from(...).where(...).limit(1) → rows */
-function mockCachedRows(rows: Array<{ value: unknown }>) {
-  dbSelectMock.mockReturnValue({
+function cacheSelectChain(rows: Array<{ value: unknown }>) {
+  return {
     from: jest.fn().mockReturnValue({
       where: jest.fn().mockReturnValue({
         limit: jest.fn().mockResolvedValue(rows),
       }),
     }),
-  });
+  };
+}
+
+/** db.select(...).from(...).where(...).limit(1) → rows */
+function mockCachedRows(rows: Array<{ value: unknown }>) {
+  dbSelectMock.mockReturnValue(cacheSelectChain(rows));
+}
+
+/** db.select({...}).from(users).where(...) → rows */
+function adminsSelectChain(rows: Array<{ id: string }>) {
+  return {
+    from: jest.fn().mockReturnValue({
+      where: jest.fn().mockResolvedValue(rows),
+    }),
+  };
 }
 
 /** db.insert(...).values(...).onConflictDoUpdate(...) → undefined */
@@ -51,6 +67,30 @@ function mockInsertChain() {
   const values = jest.fn().mockReturnValue({ onConflictDoUpdate });
   dbInsertMock.mockReturnValue({ values });
   return { values, onConflictDoUpdate };
+}
+
+function mockUpdateReturning(rows: Array<{ id: string }>) {
+  dbUpdateMock.mockReturnValue({
+    set: jest.fn().mockReturnValue({
+      where: jest.fn().mockReturnValue({
+        returning: jest.fn().mockResolvedValue(rows),
+      }),
+    }),
+  });
+}
+
+function mockUpdateNotificationAlreadyMarked() {
+  dbInsertMock.mockImplementation((table: unknown) => ({
+    values:
+      table === systemSettingsTable
+        ? jest.fn().mockReturnValue({
+            onConflictDoNothing: jest.fn().mockReturnValue({
+              returning: jest.fn().mockResolvedValue([]),
+            }),
+          })
+        : jest.fn().mockResolvedValue(undefined),
+  }));
+  mockUpdateReturning([]);
 }
 
 function githubResponse(overrides: Record<string, unknown> = {}, ok = true) {
@@ -353,6 +393,7 @@ describe('getUpdateStatus', () => {
       },
     });
     mockCachedRows([{ value: sameVersion }]);
+    mockUpdateNotificationAlreadyMarked();
     let status = await getUpdateStatus();
     expect(status.updateAvailable).toBe(false);
     expect(status.latest).toBe('9.9.9');
@@ -384,6 +425,7 @@ describe('getUpdateStatus', () => {
       },
     });
     mockCachedRows([{ value: cached }]);
+    mockUpdateNotificationAlreadyMarked();
 
     const status = await getUpdateStatus();
 
@@ -398,5 +440,104 @@ describe('getUpdateStatus', () => {
       latestDigest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
       latestSizeBytes: 987654321,
     });
+  });
+
+  it('notifies super admins once when Docker Hub has a newer image tag', async () => {
+    process.env.TASKNEBULA_VERSION = '1.2.3';
+    const cached = cachedState(1 * HOUR_MS, {
+      release: {
+        latest: '1.2.3',
+        htmlUrl: 'https://github.com/neuraparse/taskNebula/releases/tag/v1.2.3',
+        publishedAt: '2026-06-01T00:00:00.000Z',
+        notes: null,
+      },
+      docker: {
+        repository: DOCKER_HUB_REPOSITORY,
+        latestTag: '1.2.4',
+        tagUrl: 'https://hub.docker.com/r/neuraparse/tasknebula/tags?name=1.2.4',
+        pushedAt: '2026-06-02T00:00:00.000Z',
+        digest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        sizeBytes: 987654321,
+      },
+    });
+    dbSelectMock
+      .mockReturnValueOnce(cacheSelectChain([{ value: cached }]))
+      .mockReturnValueOnce(adminsSelectChain([{ id: 'admin-1' }, { id: 'admin-2' }]));
+    const notificationRows: unknown[] = [];
+    const markerValues = jest.fn().mockReturnValue({
+      onConflictDoNothing: jest.fn().mockReturnValue({
+        returning: jest.fn().mockResolvedValue([{ id: 'marker-1' }]),
+      }),
+    });
+    const notificationValues = jest.fn().mockImplementation((rows: unknown) => {
+      notificationRows.push(rows);
+      return Promise.resolve(undefined);
+    });
+    dbInsertMock.mockImplementation((table: unknown) => ({
+      values: table === systemSettingsTable ? markerValues : notificationValues,
+    }));
+
+    const status = await getUpdateStatus();
+
+    expect(status.updateAvailable).toBe(true);
+    expect(markerValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        key: UPDATE_NOTIFICATION_KEY,
+        value: expect.objectContaining({
+          version: '1.2.4',
+          current: '1.2.3',
+          source: 'docker',
+          repository: DOCKER_HUB_REPOSITORY,
+        }),
+      })
+    );
+    expect(notificationRows).toHaveLength(1);
+    expect(notificationRows[0]).toEqual([
+      expect.objectContaining({
+        userId: 'admin-1',
+        type: 'issue_updated',
+        actorType: 'system',
+        title: 'TaskNebula v1.2.4 is available',
+        message: expect.stringContaining('Docker Hub published neuraparse/tasknebula:1.2.4'),
+      }),
+      expect.objectContaining({
+        userId: 'admin-2',
+        title: 'TaskNebula v1.2.4 is available',
+      }),
+    ]);
+  });
+
+  it('does not re-notify when the same latest update was already marked', async () => {
+    process.env.TASKNEBULA_VERSION = '1.2.3';
+    const cached = cachedState(1 * HOUR_MS, {
+      release: null,
+      docker: {
+        repository: DOCKER_HUB_REPOSITORY,
+        latestTag: '1.2.4',
+        tagUrl: 'https://hub.docker.com/r/neuraparse/tasknebula/tags?name=1.2.4',
+        pushedAt: '2026-06-02T00:00:00.000Z',
+        digest: null,
+        sizeBytes: null,
+      },
+    });
+    dbSelectMock.mockReturnValueOnce(cacheSelectChain([{ value: cached }]));
+    dbInsertMock.mockImplementation((table: unknown) => ({
+      values:
+        table === systemSettingsTable
+          ? jest.fn().mockReturnValue({
+              onConflictDoNothing: jest.fn().mockReturnValue({
+                returning: jest.fn().mockResolvedValue([]),
+              }),
+            })
+          : jest.fn().mockResolvedValue(undefined),
+    }));
+    mockUpdateReturning([]);
+
+    const status = await getUpdateStatus();
+
+    expect(status.updateAvailable).toBe(true);
+    expect(dbUpdateMock).toHaveBeenCalledTimes(1);
+    expect(dbInsertMock).toHaveBeenCalledTimes(1);
+    expect(dbSelectMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -466,10 +466,12 @@
     "toastUpdateAvailable": "TaskNebula {version} इंस्टॉल करने के लिए तैयार है।",
     "toastUpToDate": "आप नवीनतम वर्शन चला रहे हैं।",
     "banner": {
-      "title": "TaskNebula {version} उपलब्ध है",
-      "body": "आप {current} चला रहे हैं। रिलीज़ नोट्स देखें और सुविधानुसार अपडेट करें।",
-      "view": "अपडेट देखें",
-      "dismiss": "खारिज करें"
+      "title": "TaskNebula {version} is available",
+      "body": "You are running {current}. Open Admin > Updates for release notes and Docker update commands.",
+      "view": "Open updates",
+      "dismiss": "Dismiss",
+      "dockerTitle": "Docker image {tag} is available",
+      "dockerBody": "Docker Hub published {repository}:{tag}. You are running {current}; open Admin > Updates to pull and restart."
     }
   },
   "issueFields": {

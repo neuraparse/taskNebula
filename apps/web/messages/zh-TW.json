@@ -466,10 +466,12 @@
     "toastUpdateAvailable": "TaskNebula {version} 已可安裝。",
     "toastUpToDate": "您正在執行最新版本。",
     "banner": {
-      "title": "TaskNebula {version} 已推出",
-      "body": "您目前執行的是 {current}。請查看發行說明並於方便時更新。",
-      "view": "查看更新",
-      "dismiss": "關閉"
+      "title": "TaskNebula {version} is available",
+      "body": "You are running {current}. Open Admin > Updates for release notes and Docker update commands.",
+      "view": "Open updates",
+      "dismiss": "Dismiss",
+      "dockerTitle": "Docker image {tag} is available",
+      "dockerBody": "Docker Hub published {repository}:{tag}. You are running {current}; open Admin > Updates to pull and restart."
     }
   },
   "issueFields": {

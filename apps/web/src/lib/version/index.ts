@@ -16,10 +16,11 @@
  *     callers get the last cached value or `null`, never an exception.
  */
 
-import { db, systemSettings, eq } from '@tasknebula/db';
+import { db, systemSettings, notifications, users, eq, and, sql } from '@tasknebula/db';
 import pkg from '../../../package.json';
 
 export const VERSION_CHECK_KEY = 'version_check';
+export const UPDATE_NOTIFICATION_KEY = 'version_update_notification';
 export const GITHUB_REPO_URL = 'https://github.com/neuraparse/taskNebula';
 export const RELEASES_LATEST_URL =
   'https://api.github.com/repos/neuraparse/taskNebula/releases/latest';
@@ -487,6 +488,107 @@ function pickNewestKnownVersion(...versions: Array<string | null | undefined>): 
   return valid.sort((a, b) => compareSemver(b, a))[0] ?? null;
 }
 
+type UpdateNotificationSource = 'release' | 'docker' | 'release_and_docker';
+
+function getUpdateNotificationSource(status: UpdateStatus): UpdateNotificationSource {
+  if (status.releaseUpdateAvailable && status.image.updateAvailable) return 'release_and_docker';
+  if (status.image.updateAvailable) return 'docker';
+  return 'release';
+}
+
+async function rememberUpdateNotification(
+  status: UpdateStatus,
+  source: UpdateNotificationSource
+): Promise<boolean> {
+  if (!status.latest) return false;
+
+  const now = new Date();
+  const value = {
+    version: status.latest,
+    current: status.current,
+    source,
+    repository: status.image.repository,
+    detectedAt: now.toISOString(),
+  };
+
+  const inserted = await db
+    .insert(systemSettings)
+    .values({
+      key: UPDATE_NOTIFICATION_KEY,
+      value,
+      category: 'general',
+      description: 'Last upstream version update notification sent to super admins.',
+    })
+    .onConflictDoNothing({ target: systemSettings.key })
+    .returning({ id: systemSettings.id });
+
+  if (inserted.length > 0) return true;
+
+  const updated = await db
+    .update(systemSettings)
+    .set({ value, updatedAt: now })
+    .where(
+      and(
+        eq(systemSettings.key, UPDATE_NOTIFICATION_KEY),
+        sql`${systemSettings.value}->>'version' IS DISTINCT FROM ${status.latest}`
+      )
+    )
+    .returning({ id: systemSettings.id });
+
+  return updated.length > 0;
+}
+
+function buildAvailableUpdateMessage(
+  status: UpdateStatus,
+  source: UpdateNotificationSource
+): string {
+  const latest = status.latest ? `v${status.latest}` : 'a new version';
+  const dockerTag = status.image.latestTag ? `:${status.image.latestTag}` : '';
+  const sourceSentence =
+    source === 'docker'
+      ? `Docker Hub published ${status.image.repository}${dockerTag}.`
+      : source === 'release_and_docker'
+        ? `GitHub and Docker Hub published TaskNebula ${latest}.`
+        : `GitHub published TaskNebula ${latest}.`;
+
+  return (
+    `${sourceSentence} This instance is running v${status.current}. ` +
+    'Open Admin > Updates (/admin?tab=updates) to review release notes and run: ' +
+    'docker compose pull && docker compose up -d web.'
+  );
+}
+
+async function notifySuperAdminsOfAvailableUpdate(status: UpdateStatus): Promise<void> {
+  if (!status.updateAvailable || !status.latest) return;
+
+  const source = getUpdateNotificationSource(status);
+
+  try {
+    const shouldNotify = await rememberUpdateNotification(status, source);
+    if (!shouldNotify) return;
+
+    const admins = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.isSuperAdmin, true));
+    if (!Array.isArray(admins) || admins.length === 0) return;
+
+    await db.insert(notifications).values(
+      admins.map((admin) => ({
+        userId: admin.id,
+        // Reuse an existing enum value so this notification works without a
+        // database enum migration; the inbox still marks it as a system actor.
+        type: 'issue_updated' as const,
+        title: `TaskNebula v${status.latest} is available`,
+        message: buildAvailableUpdateMessage(status, source),
+        actorType: 'system' as const,
+      }))
+    );
+  } catch (err) {
+    console.warn('[version] failed to insert available-update notifications:', err);
+  }
+}
+
 /**
  * Assembles the admin-facing update status (consumed by
  * `GET /api/admin/version`).
@@ -522,10 +624,11 @@ export async function getUpdateStatus(options: { refresh?: boolean } = {}): Prom
   const docker = state?.docker ?? null;
   const releaseUpdateAvailable = release ? compareSemver(release.latest, current) > 0 : false;
   const imageUpdateAvailable = docker ? compareSemver(docker.latestTag, current) > 0 : false;
+  const latest = pickNewestKnownVersion(release?.latest, docker?.latestTag);
 
-  return {
+  const status: UpdateStatus = {
     current,
-    latest: pickNewestKnownVersion(release?.latest, docker?.latestTag),
+    latest,
     releaseUpdateAvailable,
     updateAvailable: releaseUpdateAvailable || imageUpdateAvailable,
     releaseUrl: release?.htmlUrl ?? null,
@@ -544,4 +647,8 @@ export async function getUpdateStatus(options: { refresh?: boolean } = {}): Prom
     },
     checkDisabled: false,
   };
+
+  await notifySuperAdminsOfAvailableUpdate(status);
+
+  return status;
 }

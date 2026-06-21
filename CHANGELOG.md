@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.6.9] - 2026-06-21
+
+### Added
+
+- **Docker Hub update alerts for self-hosted super-admins.** The authenticated app shell now mounts the version-update banner for super-admins outside the Admin dashboard too, so Docker Hub/GitHub updates surface while admins are using the product instead of only after opening Admin → Updates. Docker Hub-only updates get Docker-specific banner copy and link back to the Updates panel.
+- **One-time in-app notifications for newly detected upstream updates.** When the existing version check detects a newer GitHub release or `neuraparse/tasknebula` Docker Hub image, TaskNebula records an idempotent `system_settings` marker and inserts a single unread bell notification for each super-admin, avoiding repeated noise for the same version.
+
+### Changed
+
+- Post-upgrade system notifications now point admins to Admin → Updates instead of Admin → System, matching the actual version/update control surface.
+
 ## [0.6.8] - 2026-06-21
 
 ### Added
