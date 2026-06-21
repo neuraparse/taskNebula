@@ -5424,5 +5424,10 @@
     "status_viewing": "görüntülüyor",
     "overflow_more": "{count} tane daha",
     "overflow_more_viewing": "{count} kişi daha görüntülüyor"
-  }
+  },
+  "apm_description": "Bir workspace üyesi veya kayıtlı kullanıcı seçin ve ona proje rolü verin. Kayıtlı kullanıcılar workspace’e otomatik eklenir.",
+  "apm_no_matches": "Eşleşme yok. Mevcut workspace üyelerinden veya kayıtlı kullanıcılardan ad ya da e-posta deneyin.",
+  "apm_everyone_member": "Size açık olan herkes zaten bu projenin üyesi.",
+  "apm_registered_user": "Kayıtlı kullanıcı",
+  "apm_workspace_member": "Workspace üyesi"
 }

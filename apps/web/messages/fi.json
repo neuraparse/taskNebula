@@ -5424,5 +5424,10 @@
     "status_viewing": "katselee",
     "overflow_more": "{count} lisää",
     "overflow_more_viewing": "{count} katselee lisää"
-  }
+  },
+  "apm_description": "Valitse workspacen jäsen tai rekisteröity käyttäjä ja anna hänelle projektin rooli. Rekisteröidyt käyttäjät lisätään workspaceen automaattisesti.",
+  "apm_no_matches": "Ei osumia. Kokeile workspacen jäsenten tai rekisteröityjen käyttäjien nimeä tai sähköpostia.",
+  "apm_everyone_member": "Kaikki käytettävissäsi olevat henkilöt ovat jo tämän projektin jäseniä.",
+  "apm_registered_user": "Rekisteröity käyttäjä",
+  "apm_workspace_member": "Workspacen jäsen"
 }

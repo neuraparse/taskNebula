@@ -5424,5 +5424,10 @@
     "status_viewing": "vizualizează",
     "overflow_more": "încă {count}",
     "overflow_more_viewing": "încă {count} vizualizează"
-  }
+  },
+  "apm_description": "Alege un membru al workspace-ului sau un utilizator înregistrat și atribuie-i un rol de proiect. Utilizatorii înregistrați sunt adăugați automat în workspace.",
+  "apm_no_matches": "Nicio potrivire. Încearcă un nume sau e-mail de la membrii workspace-ului ori utilizatori înregistrați.",
+  "apm_everyone_member": "Toate persoanele disponibile pentru tine sunt deja membre ale acestui proiect.",
+  "apm_registered_user": "Utilizator înregistrat",
+  "apm_workspace_member": "Membru workspace"
 }

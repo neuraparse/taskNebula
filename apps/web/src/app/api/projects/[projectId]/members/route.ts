@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, schema, eq, and, type ProjectRole } from '@tasknebula/db';
+import { db, schema, eq, and, auditLogs, type ProjectRole } from '@tasknebula/db';
+import { createId } from '@paralleldrive/cuid2';
 import { resolveProjectByIdOrKey } from '@/lib/projects/server';
 import { canReadProject } from '@/lib/auth/access-control';
 import { getProjectMemberPermissionValues } from '@/lib/projects/member-permissions';
 import { canManageProjectMembers } from '@/lib/projects/member-access';
+import { hasPermission } from '@/lib/auth/permissions';
+import { publishEvent } from '@/lib/realtime/events';
+
+type DbExecutor = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 // GET /api/projects/[projectId]/members - Get project members
 export async function GET(
@@ -162,43 +167,155 @@ export async function POST(
       columns: { id: true },
     });
 
+    let targetUser: { id: string; email: string } | null = null;
+    const shouldEnsureOrgMember = !targetOrgMember;
+
     if (!targetOrgMember) {
-      return NextResponse.json(
-        { error: 'Invite this user to the organization before adding them to a project' },
-        { status: 400 }
-      );
+      targetUser =
+        (await db.query.users.findFirst({
+          where: and(eq(schema.users.id, userId), eq(schema.users.status, 'active')),
+          columns: { id: true, email: true },
+        })) ?? null;
+
+      if (!targetUser) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      }
+
+      const canInviteToWorkspace = await hasPermission(project.organizationId, 'member:invite');
+      if (!canInviteToWorkspace) {
+        return NextResponse.json(
+          { error: 'Invite this user to the organization before adding them to a project' },
+          { status: 400 }
+        );
+      }
     }
 
-    // Check if member already exists
-    const existing = await db.query.projectMembers.findFirst({
-      where: and(
-        eq(schema.projectMembers.projectId, projectId),
-        eq(schema.projectMembers.userId, userId)
-      ),
+    const result = await db.transaction(async (tx) => {
+      const [existingProjectMember] = await tx
+        .select({ id: schema.projectMembers.id })
+        .from(schema.projectMembers)
+        .where(
+          and(
+            eq(schema.projectMembers.projectId, projectId),
+            eq(schema.projectMembers.userId, userId)
+          )
+        )
+        .limit(1);
+
+      if (existingProjectMember) {
+        return { status: 'already_member' as const };
+      }
+
+      if (shouldEnsureOrgMember) {
+        await ensureOrganizationMemberForProjectAdd(tx, {
+          organizationId: project.organizationId,
+          userId,
+          actorUserId: session.user.id,
+          targetUserEmail: targetUser?.email ?? null,
+        });
+      }
+
+      const [member] = await tx
+        .insert(schema.projectMembers)
+        .values({
+          projectId,
+          userId,
+          role,
+          invitedBy: session.user.id,
+          ...getProjectMemberPermissionValues(role as ProjectRole),
+        })
+        .onConflictDoNothing({
+          target: [schema.projectMembers.projectId, schema.projectMembers.userId],
+        })
+        .returning();
+
+      if (!member) {
+        return { status: 'already_member' as const };
+      }
+
+      return { status: 'created' as const, member };
     });
 
-    if (existing) {
+    if (result.status === 'already_member') {
       return NextResponse.json(
         { error: 'User is already a member of this project' },
         { status: 409 }
       );
     }
 
-    // Create member with role default permissions
-    const [member] = await db
-      .insert(schema.projectMembers)
-      .values({
-        projectId,
-        userId,
-        role,
-        invitedBy: session.user.id,
-        ...getProjectMemberPermissionValues(role as ProjectRole),
-      })
-      .returning();
+    publishEvent('member.added', session.user.id, { organizationId: project.organizationId });
 
-    return NextResponse.json(member, { status: 201 });
+    return NextResponse.json(result.member, { status: 201 });
   } catch (error) {
     console.error('Error adding project member:', error);
     return NextResponse.json({ error: 'Failed to add project member' }, { status: 500 });
+  }
+}
+
+async function ensureOrganizationMemberForProjectAdd(
+  tx: DbExecutor,
+  {
+    organizationId,
+    userId,
+    actorUserId,
+    targetUserEmail,
+  }: {
+    organizationId: string;
+    userId: string;
+    actorUserId: string;
+    targetUserEmail: string | null;
+  }
+) {
+  const [createdOrgMember] = await tx
+    .insert(schema.organizationMembers)
+    .values({
+      id: createId(),
+      organizationId,
+      userId,
+      role: 'member',
+      status: 'active',
+    })
+    .onConflictDoNothing({
+      target: [schema.organizationMembers.organizationId, schema.organizationMembers.userId],
+    })
+    .returning({ id: schema.organizationMembers.id });
+
+  if (createdOrgMember) {
+    await tx.insert(auditLogs).values({
+      id: createId(),
+      organizationId,
+      userId: actorUserId,
+      action: 'organization.member_added',
+      resourceType: 'organization_member',
+      resourceId: createdOrgMember.id,
+      metadata: {
+        addedRegisteredUserId: userId,
+        addedRegisteredUserEmail: targetUserEmail,
+        source: 'project_member_add',
+      },
+    });
+    return;
+  }
+
+  const [existingOrgMember] = await tx
+    .select({ id: schema.organizationMembers.id, status: schema.organizationMembers.status })
+    .from(schema.organizationMembers)
+    .where(
+      and(
+        eq(schema.organizationMembers.organizationId, organizationId),
+        eq(schema.organizationMembers.userId, userId)
+      )
+    )
+    .limit(1);
+
+  if (!existingOrgMember) {
+    throw new Error('Failed to add user to organization');
+  }
+
+  if (existingOrgMember.status !== 'active') {
+    await tx
+      .update(schema.organizationMembers)
+      .set({ status: 'active', updatedAt: new Date() })
+      .where(eq(schema.organizationMembers.id, existingOrgMember.id));
   }
 }

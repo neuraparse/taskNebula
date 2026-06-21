@@ -5424,5 +5424,10 @@
     "status_viewing": "προβάλλει",
     "overflow_more": "{count} ακόμη",
     "overflow_more_viewing": "{count} ακόμη προβάλλουν"
-  }
+  },
+  "apm_description": "Επιλέξτε μέλος workspace ή εγγεγραμμένο χρήστη και δώστε του ρόλο έργου. Οι εγγεγραμμένοι χρήστες προστίθενται αυτόματα στο workspace.",
+  "apm_no_matches": "Δεν υπάρχουν αποτελέσματα. Δοκιμάστε όνομα ή email από μέλη workspace ή εγγεγραμμένους χρήστες.",
+  "apm_everyone_member": "Όλα τα διαθέσιμα άτομα είναι ήδη μέλη αυτού του έργου.",
+  "apm_registered_user": "Εγγεγραμμένος χρήστης",
+  "apm_workspace_member": "Μέλος workspace"
 }

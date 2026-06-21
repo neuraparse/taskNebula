@@ -5424,5 +5424,10 @@
     "status_viewing": "viendo",
     "overflow_more": "{count} más",
     "overflow_more_viewing": "{count} más viendo"
-  }
+  },
+  "apm_description": "Elige un miembro del espacio de trabajo o un usuario registrado y asígnale un rol de proyecto. Los usuarios registrados se agregan automáticamente al espacio de trabajo.",
+  "apm_no_matches": "No hay coincidencias. Prueba con un nombre o correo de miembros del espacio de trabajo o usuarios registrados.",
+  "apm_everyone_member": "Todas las personas disponibles para ti ya son miembros de este proyecto.",
+  "apm_registered_user": "Usuario registrado",
+  "apm_workspace_member": "Miembro del espacio de trabajo"
 }

@@ -5424,5 +5424,10 @@
     "status_viewing": "sleduje",
     "overflow_more": "{count} dalších",
     "overflow_more_viewing": "{count} dalších sleduje"
-  }
+  },
+  "apm_description": "Vyberte člena workspace nebo registrovaného uživatele a přiřaďte mu projektovou roli. Registrovaní uživatelé se do workspace přidají automaticky.",
+  "apm_no_matches": "Žádné shody. Zkuste jméno nebo e-mail člena workspace nebo registrovaného uživatele.",
+  "apm_everyone_member": "Všichni dostupní uživatelé už jsou členy tohoto projektu.",
+  "apm_registered_user": "Registrovaný uživatel",
+  "apm_workspace_member": "Člen workspace"
 }

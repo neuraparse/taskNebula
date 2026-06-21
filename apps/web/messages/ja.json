@@ -5424,5 +5424,10 @@
     "status_viewing": "閲覧中",
     "overflow_more": "他 {count} 件",
     "overflow_more_viewing": "他 {count} 人が閲覧中"
-  }
+  },
+  "apm_description": "ワークスペースメンバーまたは登録済みユーザーを選び、プロジェクトロールを付与します。登録済みユーザーは自動的にワークスペースへ追加されます。",
+  "apm_no_matches": "一致するユーザーがいません。既存のワークスペースメンバーまたは登録済みユーザーの名前やメールで検索してください。",
+  "apm_everyone_member": "利用可能なユーザーはすでにこのプロジェクトのメンバーです。",
+  "apm_registered_user": "登録済みユーザー",
+  "apm_workspace_member": "ワークスペースメンバー"
 }

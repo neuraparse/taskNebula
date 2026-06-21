@@ -5424,5 +5424,10 @@
     "status_viewing": "bekijkt",
     "overflow_more": "{count} meer",
     "overflow_more_viewing": "{count} bekijken dit ook"
-  }
+  },
+  "apm_description": "Kies een workspacelid of geregistreerde gebruiker en geef die persoon een projectrol. Geregistreerde gebruikers worden automatisch aan de workspace toegevoegd.",
+  "apm_no_matches": "Geen resultaten. Probeer een naam of e-mailadres van bestaande workspaceleden of geregistreerde gebruikers.",
+  "apm_everyone_member": "Iedereen die voor jou beschikbaar is, is al lid van dit project.",
+  "apm_registered_user": "Geregistreerde gebruiker",
+  "apm_workspace_member": "Workspacelid"
 }

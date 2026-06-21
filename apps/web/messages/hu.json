@@ -5424,5 +5424,10 @@
     "status_viewing": "nézi",
     "overflow_more": "még {count}",
     "overflow_more_viewing": "még {count} nézi"
-  }
+  },
+  "apm_description": "Válassz egy workspace-tagot vagy regisztrált felhasználót, és adj neki projekt szerepkört. A regisztrált felhasználók automatikusan bekerülnek a workspace-be.",
+  "apm_no_matches": "Nincs találat. Próbálj workspace-tag vagy regisztrált felhasználó nevére vagy e-mail-címére keresni.",
+  "apm_everyone_member": "Minden számodra elérhető személy már tagja ennek a projektnek.",
+  "apm_registered_user": "Regisztrált felhasználó",
+  "apm_workspace_member": "Workspace-tag"
 }

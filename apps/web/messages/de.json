@@ -5424,5 +5424,10 @@
     "status_viewing": "sieht zu",
     "overflow_more": "{count} weitere",
     "overflow_more_viewing": "{count} weitere sehen zu"
-  }
+  },
+  "apm_description": "Wähle ein Workspace-Mitglied oder einen registrierten Benutzer aus und vergib eine Projektrolle. Registrierte Benutzer werden automatisch zum Workspace hinzugefügt.",
+  "apm_no_matches": "Keine Treffer. Suche nach Name oder E-Mail bei bestehenden Workspace-Mitgliedern oder registrierten Benutzern.",
+  "apm_everyone_member": "Alle für dich verfügbaren Personen sind bereits Mitglied dieses Projekts.",
+  "apm_registered_user": "Registrierter Benutzer",
+  "apm_workspace_member": "Workspace-Mitglied"
 }

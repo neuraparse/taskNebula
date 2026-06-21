@@ -5424,5 +5424,10 @@
     "status_viewing": "in visualizzazione",
     "overflow_more": "{count} in più",
     "overflow_more_viewing": "{count} altri in visualizzazione"
-  }
+  },
+  "apm_description": "Scegli un membro dello workspace o un utente registrato e assegnagli un ruolo di progetto. Gli utenti registrati vengono aggiunti automaticamente allo workspace.",
+  "apm_no_matches": "Nessuna corrispondenza. Prova con un nome o un’e-mail tra membri dello workspace o utenti registrati.",
+  "apm_everyone_member": "Tutte le persone disponibili per te sono già membri di questo progetto.",
+  "apm_registered_user": "Utente registrato",
+  "apm_workspace_member": "Membro dello workspace"
 }

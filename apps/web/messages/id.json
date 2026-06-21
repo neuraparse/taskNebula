@@ -5424,5 +5424,10 @@
     "status_viewing": "melihat",
     "overflow_more": "{count} lainnya",
     "overflow_more_viewing": "{count} lainnya melihat"
-  }
+  },
+  "apm_description": "Pilih anggota workspace atau pengguna terdaftar dan beri mereka peran proyek. Pengguna terdaftar otomatis ditambahkan ke workspace.",
+  "apm_no_matches": "Tidak ada hasil. Coba nama atau email dari anggota workspace atau pengguna terdaftar.",
+  "apm_everyone_member": "Semua orang yang tersedia untuk Anda sudah menjadi anggota proyek ini.",
+  "apm_registered_user": "Pengguna terdaftar",
+  "apm_workspace_member": "Anggota workspace"
 }

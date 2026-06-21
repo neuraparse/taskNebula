@@ -5424,5 +5424,10 @@
     "status_viewing": "ser på",
     "overflow_more": "{count} til",
     "overflow_more_viewing": "{count} til ser på"
-  }
+  },
+  "apm_description": "Velg et workspace-medlem eller en registrert bruker og gi dem en prosjektrolle. Registrerte brukere legges automatisk til i workspacet.",
+  "apm_no_matches": "Ingen treff. Prøv et navn eller en e-post fra workspace-medlemmer eller registrerte brukere.",
+  "apm_everyone_member": "Alle som er tilgjengelige for deg er allerede medlem av dette prosjektet.",
+  "apm_registered_user": "Registrert bruker",
+  "apm_workspace_member": "Workspace-medlem"
 }

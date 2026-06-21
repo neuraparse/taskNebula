@@ -5424,5 +5424,10 @@
     "status_viewing": "देख रहा है",
     "overflow_more": "{count} और",
     "overflow_more_viewing": "{count} और देख रहे हैं"
-  }
+  },
+  "apm_description": "किसी workspace सदस्य या पंजीकृत उपयोगकर्ता को चुनें और उन्हें प्रोजेक्ट भूमिका दें। पंजीकृत उपयोगकर्ता workspace में अपने-आप जोड़े जाते हैं।",
+  "apm_no_matches": "कोई मिलान नहीं। मौजूदा workspace सदस्यों या पंजीकृत उपयोगकर्ताओं का नाम या ईमेल आज़माएँ।",
+  "apm_everyone_member": "आपके लिए उपलब्ध सभी लोग पहले से इस प्रोजेक्ट के सदस्य हैं।",
+  "apm_registered_user": "पंजीकृत उपयोगकर्ता",
+  "apm_workspace_member": "Workspace सदस्य"
 }

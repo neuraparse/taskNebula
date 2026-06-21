@@ -5424,5 +5424,10 @@
     "status_viewing": "보는 중",
     "overflow_more": "외 {count}명",
     "overflow_more_viewing": "외 {count}명 보는 중"
-  }
+  },
+  "apm_description": "워크스페이스 멤버 또는 등록된 사용자를 선택하고 프로젝트 역할을 부여하세요. 등록된 사용자는 워크스페이스에 자동으로 추가됩니다.",
+  "apm_no_matches": "일치하는 사용자가 없습니다. 기존 워크스페이스 멤버나 등록된 사용자의 이름 또는 이메일을 입력해 보세요.",
+  "apm_everyone_member": "사용 가능한 모든 사용자가 이미 이 프로젝트의 멤버입니다.",
+  "apm_registered_user": "등록된 사용자",
+  "apm_workspace_member": "워크스페이스 멤버"
 }

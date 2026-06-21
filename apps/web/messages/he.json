@@ -5424,5 +5424,10 @@
     "status_viewing": "צופה",
     "overflow_more": "{count} נוספים",
     "overflow_more_viewing": "{count} נוספים צופים"
-  }
+  },
+  "apm_description": "בחרו חבר workspace או משתמש רשום והקצו לו תפקיד בפרויקט. משתמשים רשומים יתווספו אוטומטית ל-workspace.",
+  "apm_no_matches": "אין התאמות. נסו שם או אימייל של חברי workspace או משתמשים רשומים.",
+  "apm_everyone_member": "כל מי שזמין לכם כבר חבר בפרויקט הזה.",
+  "apm_registered_user": "משתמש רשום",
+  "apm_workspace_member": "חבר workspace"
 }

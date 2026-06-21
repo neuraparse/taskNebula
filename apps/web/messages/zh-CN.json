@@ -5424,5 +5424,10 @@
     "status_viewing": "查看中",
     "overflow_more": "另有 {count} 人",
     "overflow_more_viewing": "另有 {count} 人正在查看"
-  }
+  },
+  "apm_description": "选择一个工作区成员或已注册用户，并为其分配项目角色。已注册用户会自动加入工作区。",
+  "apm_no_matches": "没有匹配结果。请尝试输入现有工作区成员或已注册用户的姓名或邮箱。",
+  "apm_everyone_member": "你可选择的所有人都已经是此项目成员。",
+  "apm_registered_user": "已注册用户",
+  "apm_workspace_member": "工作区成员"
 }

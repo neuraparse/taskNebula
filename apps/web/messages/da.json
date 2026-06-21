@@ -5424,5 +5424,10 @@
     "status_viewing": "ser",
     "overflow_more": "{count} mere",
     "overflow_more_viewing": "{count} ser mere"
-  }
+  },
+  "apm_description": "Vælg et workspace-medlem eller en registreret bruger, og giv dem en projektrolle. Registrerede brugere føjes automatisk til workspacet.",
+  "apm_no_matches": "Ingen resultater. Prøv et navn eller en mail fra workspace-medlemmer eller registrerede brugere.",
+  "apm_everyone_member": "Alle, der er tilgængelige for dig, er allerede medlem af dette projekt.",
+  "apm_registered_user": "Registreret bruger",
+  "apm_workspace_member": "Workspace-medlem"
 }

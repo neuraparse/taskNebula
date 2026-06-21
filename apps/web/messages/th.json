@@ -5424,5 +5424,10 @@
     "status_viewing": "กำลังดู",
     "overflow_more": "อีก {count} คน",
     "overflow_more_viewing": "อีก {count} คนกำลังดู"
-  }
+  },
+  "apm_description": "เลือกสมาชิก workspace หรือผู้ใช้ที่ลงทะเบียนแล้วและกำหนดบทบาทโปรเจกต์ให้ ผู้ใช้ที่ลงทะเบียนแล้วจะถูกเพิ่มเข้า workspace โดยอัตโนมัติ",
+  "apm_no_matches": "ไม่พบรายการที่ตรงกัน ลองค้นหาชื่อหรืออีเมลของสมาชิก workspace หรือผู้ใช้ที่ลงทะเบียนแล้ว",
+  "apm_everyone_member": "ทุกคนที่คุณสามารถเลือกได้เป็นสมาชิกของโปรเจกต์นี้แล้ว",
+  "apm_registered_user": "ผู้ใช้ที่ลงทะเบียนแล้ว",
+  "apm_workspace_member": "สมาชิก workspace"
 }

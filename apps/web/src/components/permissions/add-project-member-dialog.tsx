@@ -34,7 +34,29 @@ interface OrgMember {
   name: string | null;
   email: string | null;
   image: string | null;
-  role: string;
+  role: string | null;
+  source?: 'organization_member' | 'registered_user';
+}
+
+interface MemberCandidatePayload {
+  id?: string;
+  userId?: string;
+  user?: {
+    id?: string;
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+  };
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  role?: string | null;
+  source?: 'organization_member' | 'registered_user';
+}
+
+interface MemberCandidatesResponse {
+  members: MemberCandidatePayload[];
+  canInviteRegisteredUsers?: boolean;
 }
 
 interface ProjectInviteLink {
@@ -91,12 +113,20 @@ export function AddProjectMemberDialog({
   const [createdInviteUrl, setCreatedInviteUrl] = useState<string | null>(null);
 
   const { data: orgMembersData, isLoading } = useQuery({
-    queryKey: ['org-members-for-project-add', currentOrganizationId],
+    queryKey: ['org-members-for-project-add', currentOrganizationId, projectId, search.trim()],
     queryFn: async () => {
-      if (!currentOrganizationId) return { members: [] as OrgMember[] };
-      const res = await fetch(`/api/organizations/${currentOrganizationId}/members?limit=200`);
+      if (!currentOrganizationId) return { members: [] } satisfies MemberCandidatesResponse;
+      const params = new URLSearchParams({
+        projectId,
+        limit: '300',
+      });
+      const trimmedSearch = search.trim();
+      if (trimmedSearch) params.set('q', trimmedSearch);
+      const res = await fetch(
+        `/api/organizations/${currentOrganizationId}/member-candidates?${params.toString()}`
+      );
       if (!res.ok) await throwApiResponseError(res);
-      return res.json();
+      return res.json() as Promise<MemberCandidatesResponse>;
     },
     enabled: !!currentOrganizationId && open,
   });
@@ -116,17 +146,20 @@ export function AddProjectMemberDialog({
   });
 
   const candidates = useMemo<OrgMember[]>(() => {
-    const list: OrgMember[] = Array.isArray(orgMembersData?.members) ? orgMembersData.members : [];
+    const list = Array.isArray(orgMembersData?.members) ? orgMembersData.members : [];
     const existing = new Set(existingMemberUserIds);
     const needle = search.trim().toLowerCase();
     return list
-      .map((m: any) => ({
-        id: m.user?.id ?? m.userId ?? m.id,
-        name: m.user?.name ?? m.name ?? null,
-        email: m.user?.email ?? m.email ?? null,
-        image: m.user?.image ?? m.image ?? null,
-        role: m.role ?? 'member',
-      }))
+      .map(
+        (m): OrgMember => ({
+          id: m.user?.id ?? m.userId ?? m.id ?? '',
+          name: m.user?.name ?? m.name ?? null,
+          email: m.user?.email ?? m.email ?? null,
+          image: m.user?.image ?? m.image ?? null,
+          role: m.role ?? null,
+          source: m.source ?? 'organization_member',
+        })
+      )
       .filter((m) => m.id && !existing.has(m.id))
       .filter((m) => {
         if (!needle) return true;
@@ -316,9 +349,13 @@ export function AddProjectMemberDialog({
                           </div>
                           {active ? (
                             <Check className="text-primary h-4 w-4" aria-hidden="true" />
+                          ) : m.source === 'registered_user' ? (
+                            <span className="text-muted-foreground text-[10px] uppercase tracking-wider">
+                              {t('apm_registered_user')}
+                            </span>
                           ) : (
                             <span className="text-muted-foreground text-[10px] uppercase tracking-wider">
-                              {m.role}
+                              {m.role ?? t('apm_workspace_member')}
                             </span>
                           )}
                         </button>

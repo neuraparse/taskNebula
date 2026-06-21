@@ -5424,5 +5424,10 @@
     "status_viewing": "переглядає",
     "overflow_more": "ще {count}",
     "overflow_more_viewing": "ще {count} переглядають"
-  }
+  },
+  "apm_description": "Виберіть учасника workspace або зареєстрованого користувача й призначте йому роль у проєкті. Зареєстровані користувачі автоматично додаються до workspace.",
+  "apm_no_matches": "Збігів немає. Спробуйте ім’я або email учасника workspace чи зареєстрованого користувача.",
+  "apm_everyone_member": "Усі доступні вам користувачі вже є учасниками цього проєкту.",
+  "apm_registered_user": "Зареєстрований користувач",
+  "apm_workspace_member": "Учасник workspace"
 }

@@ -5424,5 +5424,10 @@
     "status_viewing": "consulte",
     "overflow_more": "{count} de plus",
     "overflow_more_viewing": "{count} autres consultent"
-  }
+  },
+  "apm_description": "Choisissez un membre de l’espace de travail ou un utilisateur inscrit et attribuez-lui un rôle de projet. Les utilisateurs inscrits sont ajoutés automatiquement à l’espace de travail.",
+  "apm_no_matches": "Aucun résultat. Essayez un nom ou un e-mail parmi les membres de l’espace de travail ou les utilisateurs inscrits.",
+  "apm_everyone_member": "Toutes les personnes disponibles pour vous sont déjà membres de ce projet.",
+  "apm_registered_user": "Utilisateur inscrit",
+  "apm_workspace_member": "Membre de l’espace de travail"
 }

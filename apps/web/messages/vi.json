@@ -5424,5 +5424,10 @@
     "status_viewing": "đang xem",
     "overflow_more": "thêm {count}",
     "overflow_more_viewing": "thêm {count} người đang xem"
-  }
+  },
+  "apm_description": "Chọn một thành viên workspace hoặc người dùng đã đăng ký và gán vai trò dự án cho họ. Người dùng đã đăng ký sẽ được tự động thêm vào workspace.",
+  "apm_no_matches": "Không có kết quả. Hãy thử tên hoặc email của thành viên workspace hoặc người dùng đã đăng ký.",
+  "apm_everyone_member": "Mọi người có sẵn cho bạn đều đã là thành viên của dự án này.",
+  "apm_registered_user": "Người dùng đã đăng ký",
+  "apm_workspace_member": "Thành viên workspace"
 }
