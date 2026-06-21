@@ -978,7 +978,9 @@
     "toast_verified_description": "Velkommen om bord.",
     "toast_not_verified_title": "Fortsatt ikke bekreftet",
     "toast_not_verified_description": "Vi fant ingen fullført bekreftelse. Klikk på lenken i innboksen din eller send på nytt.",
-    "toast_refresh_failed_title": "Kunne ikke oppdatere status"
+    "toast_refresh_failed_title": "Kunne ikke oppdatere status",
+    "registration_invite_required": "Registrering er kun med invitasjon. Be en administrator om en invitasjon.",
+    "registration_admin_only": "Registrering er stengt. Be en administrator opprette kontoen din."
   },
   "issuesViews": {
     "loading": "Laster …",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "S3-hemmelig nøkkel",
         "s3SecretKeyStored": "S3-hemmelig nøkkel (lagret: {preview})",
         "s3SecretPlaceholder": "S3-hemmelighet"
+      },
+      "registration": {
+        "title": "Registrering",
+        "description": "Velg hvem som kan opprette nye kontoer i denne installasjonen.",
+        "loadError": "Kunne ikke laste registreringspolicy",
+        "saveError": "Kunne ikke lagre registreringspolicy",
+        "saved": "Registreringspolicy lagret",
+        "savedDescription": "Oppretting av nye kontoer følger nå valgt policy.",
+        "allowRegistration": "Tillat registrering",
+        "allowRegistrationDescription": "Alle kan opprette en konto fra den offentlige registreringssiden.",
+        "inviteOnly": "Kun invitasjon",
+        "inviteOnlyDescription": "Bare brukere med gyldig invitasjonstoken kan fullføre registrering.",
+        "adminCreatedOnly": "Kun kontoer opprettet av administrator",
+        "adminCreatedOnlyDescription": "Offentlig registrering er deaktivert; superadministratorer oppretter kontoer fra Brukere-fanen."
       }
     },
     "emailPreview": {

@@ -978,7 +978,9 @@
     "toast_verified_description": "ברוכים הבאים.",
     "toast_not_verified_title": "עדיין לא אומת",
     "toast_not_verified_description": "לא הצלחנו למצוא אימות שהושלם. אנא לחצו על הקישור בדואר הנכנס שלכם או שלחו מחדש.",
-    "toast_refresh_failed_title": "לא ניתן היה לרענן את המצב"
+    "toast_refresh_failed_title": "לא ניתן היה לרענן את המצב",
+    "registration_invite_required": "ההרשמה היא בהזמנה בלבד. בקשו הזמנה ממנהל.",
+    "registration_admin_only": "ההרשמה סגורה. בקשו ממנהל ליצור עבורכם חשבון."
   },
   "issuesViews": {
     "loading": "טוען…",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "מפתח סודי של S3",
         "s3SecretKeyStored": "מפתח סודי של S3 (מאוחסן: {preview})",
         "s3SecretPlaceholder": "סוד S3"
+      },
+      "registration": {
+        "title": "הרשמה",
+        "description": "בחרו מי יכול ליצור חשבונות חדשים בהתקנה הזו.",
+        "loadError": "טעינת מדיניות ההרשמה נכשלה",
+        "saveError": "שמירת מדיניות ההרשמה נכשלה",
+        "saved": "מדיניות ההרשמה נשמרה",
+        "savedDescription": "יצירת חשבונות חדשים פועלת כעת לפי המדיניות שנבחרה.",
+        "allowRegistration": "לאפשר הרשמה",
+        "allowRegistrationDescription": "כל אחד יכול ליצור חשבון מעמוד ההרשמה הציבורי.",
+        "inviteOnly": "בהזמנה בלבד",
+        "inviteOnlyDescription": "רק משתמשים עם אסימון הזמנה תקף יכולים להשלים הרשמה.",
+        "adminCreatedOnly": "חשבונות שנוצרו על ידי מנהל בלבד",
+        "adminCreatedOnlyDescription": "הרשמה ציבורית מושבתת; מנהלי-על יוצרים חשבונות מלשונית המשתמשים."
       }
     },
     "emailPreview": {

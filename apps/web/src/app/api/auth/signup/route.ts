@@ -3,8 +3,11 @@ import { db, users, organizationMembers } from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { createHash, timingSafeEqual } from 'crypto';
+import { getRegistrationPolicy } from '@/lib/auth/registration-policy';
 
 const GENERIC_SIGNUP_MESSAGE = 'If that email is available, an account will be created';
+const REGISTRATION_INVITE_REQUIRED = 'REGISTRATION_INVITE_REQUIRED';
+const REGISTRATION_ADMIN_ONLY = 'REGISTRATION_ADMIN_ONLY';
 
 function normalizeEmail(email: unknown): string {
   return typeof email === 'string' ? email.trim().toLowerCase() : '';
@@ -28,6 +31,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const registrationPolicy = await getRegistrationPolicy();
+
     // Check if user already exists
     const existingUser = await db.query.users.findFirst({
       where: eq(users.email, email),
@@ -36,6 +41,13 @@ export async function POST(request: NextRequest) {
     if (existingUser) {
       // Allow invited users to complete signup by setting their password
       if (existingUser.status === 'invited' && !existingUser.password) {
+        if (registrationPolicy.mode === 'admin_created_only') {
+          return NextResponse.json(
+            { error: REGISTRATION_ADMIN_ONLY, code: REGISTRATION_ADMIN_ONLY },
+            { status: 403 }
+          );
+        }
+
         if (
           !isValidInviteToken(
             inviteToken,
@@ -91,6 +103,20 @@ export async function POST(request: NextRequest) {
       // delay so timing doesn't reveal the duplicate branch either.
       await new Promise((r) => setTimeout(r, 50 + Math.random() * 100));
       return NextResponse.json({ message: GENERIC_SIGNUP_MESSAGE }, { status: 200 });
+    }
+
+    if (registrationPolicy.mode === 'invite_only') {
+      return NextResponse.json(
+        { error: REGISTRATION_INVITE_REQUIRED, code: REGISTRATION_INVITE_REQUIRED },
+        { status: 403 }
+      );
+    }
+
+    if (registrationPolicy.mode === 'admin_created_only') {
+      return NextResponse.json(
+        { error: REGISTRATION_ADMIN_ONLY, code: REGISTRATION_ADMIN_ONLY },
+        { status: 403 }
+      );
     }
 
     // Hash password

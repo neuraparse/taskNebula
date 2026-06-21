@@ -795,7 +795,9 @@
     "toast_verified_description": "欢迎加入。",
     "toast_not_verified_title": "仍未验证",
     "toast_not_verified_description": "我们未找到已完成的验证。请点击收件箱中的链接或重新发送。",
-    "toast_refresh_failed_title": "无法刷新状态"
+    "toast_refresh_failed_title": "无法刷新状态",
+    "registration_invite_required": "注册仅限邀请。请向管理员索取邀请。",
+    "registration_admin_only": "注册已关闭。请让管理员为你创建账户。"
   },
   "notifications": {
     "loading": "正在加载通知",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "S3 密钥",
         "s3SecretKeyStored": "S3 密钥（已存储：{preview}）",
         "s3SecretPlaceholder": "S3 secret"
+      },
+      "registration": {
+        "title": "注册",
+        "description": "选择谁可以在此安装中创建新账户。",
+        "loadError": "无法加载注册策略",
+        "saveError": "无法保存注册策略",
+        "saved": "注册策略已保存",
+        "savedDescription": "新账户创建现在将遵循所选策略。",
+        "allowRegistration": "允许注册",
+        "allowRegistrationDescription": "任何人都可以从公共注册页面创建账户。",
+        "inviteOnly": "仅限邀请",
+        "inviteOnlyDescription": "只有拥有有效邀请令牌的用户才能完成注册。",
+        "adminCreatedOnly": "仅限管理员创建的账户",
+        "adminCreatedOnlyDescription": "公共注册已禁用；超级管理员可在用户标签页创建账户。"
       }
     },
     "emailPreview": {

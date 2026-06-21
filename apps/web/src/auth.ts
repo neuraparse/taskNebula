@@ -7,6 +7,7 @@ import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { authConfig } from './auth.config';
 import { consumeSamlExchangeToken } from '@/lib/sso/session';
+import { getRegistrationPolicy } from '@/lib/auth/registration-policy';
 
 /**
  * Full auth configuration with database operations
@@ -14,6 +15,31 @@ import { consumeSamlExchangeToken } from '@/lib/sso/session';
  */
 const nextAuth = NextAuth({
   ...authConfig,
+  callbacks: {
+    ...(authConfig.callbacks ?? {}),
+    async signIn({ user, account }) {
+      const provider = account?.provider;
+      if (!provider || provider === 'credentials' || provider === 'saml-bridge') {
+        return true;
+      }
+
+      const email = typeof user.email === 'string' ? user.email.trim().toLowerCase() : '';
+      if (!email) {
+        return false;
+      }
+
+      const existingUser = await db.query.users.findFirst({
+        where: eq(users.email, email),
+      });
+
+      if (existingUser?.status === 'active') {
+        return true;
+      }
+
+      const registrationPolicy = await getRegistrationPolicy();
+      return registrationPolicy.mode === 'allow_registration';
+    },
+  },
   providers: [
     // Override Credentials provider with actual authorize logic
     Credentials({

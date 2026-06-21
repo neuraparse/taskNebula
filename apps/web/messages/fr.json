@@ -978,7 +978,9 @@
     "toast_verified_description": "Bienvenue à bord.",
     "toast_not_verified_title": "Toujours pas vérifié",
     "toast_not_verified_description": "Nous n'avons pas trouvé de vérification terminée. Veuillez cliquer sur le lien dans votre boîte de réception ou le renvoyer.",
-    "toast_refresh_failed_title": "Impossible d'actualiser l'état"
+    "toast_refresh_failed_title": "Impossible d'actualiser l'état",
+    "registration_invite_required": "L’inscription se fait uniquement sur invitation. Demandez une invitation à un administrateur.",
+    "registration_admin_only": "L’inscription est fermée. Demandez à un administrateur de créer votre compte."
   },
   "issuesViews": {
     "loading": "Chargement…",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "Clé secrète S3",
         "s3SecretKeyStored": "Clé secrète S3 (stockée : {preview})",
         "s3SecretPlaceholder": "Secret S3"
+      },
+      "registration": {
+        "title": "Inscription",
+        "description": "Choisissez qui peut créer de nouveaux comptes sur cette installation.",
+        "loadError": "Impossible de charger la politique d’inscription",
+        "saveError": "Impossible d’enregistrer la politique d’inscription",
+        "saved": "Politique d’inscription enregistrée",
+        "savedDescription": "La création de nouveaux comptes suit désormais la politique sélectionnée.",
+        "allowRegistration": "Autoriser l’inscription",
+        "allowRegistrationDescription": "Tout le monde peut créer un compte depuis la page d’inscription publique.",
+        "inviteOnly": "Invitation uniquement",
+        "inviteOnlyDescription": "Seuls les utilisateurs avec un jeton d’invitation valide peuvent terminer l’inscription.",
+        "adminCreatedOnly": "Comptes créés par administrateur uniquement",
+        "adminCreatedOnlyDescription": "L’inscription publique est désactivée ; les super administrateurs créent les comptes depuis l’onglet Utilisateurs."
       }
     },
     "emailPreview": {

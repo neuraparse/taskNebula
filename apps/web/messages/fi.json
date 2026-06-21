@@ -978,7 +978,9 @@
     "toast_verified_description": "Tervetuloa mukaan.",
     "toast_not_verified_title": "Edelleen vahvistamatta",
     "toast_not_verified_description": "Emme löytäneet valmista vahvistusta. Napsauta saapuneissa olevaa linkkiä tai lähetä uudelleen.",
-    "toast_refresh_failed_title": "Tilaa ei voitu päivittää"
+    "toast_refresh_failed_title": "Tilaa ei voitu päivittää",
+    "registration_invite_required": "Rekisteröityminen on vain kutsulla. Pyydä kutsu ylläpitäjältä.",
+    "registration_admin_only": "Rekisteröityminen on suljettu. Pyydä ylläpitäjää luomaan tilisi."
   },
   "issuesViews": {
     "loading": "Ladataan…",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "S3-salaisuusavain",
         "s3SecretKeyStored": "S3-salaisuusavain (tallennettu: {preview})",
         "s3SecretPlaceholder": "S3-salaisuus"
+      },
+      "registration": {
+        "title": "Rekisteröityminen",
+        "description": "Valitse, kuka voi luoda uusia tilejä tässä asennuksessa.",
+        "loadError": "Rekisteröitymiskäytännön lataus epäonnistui",
+        "saveError": "Rekisteröitymiskäytännön tallennus epäonnistui",
+        "saved": "Rekisteröitymiskäytäntö tallennettu",
+        "savedDescription": "Uusien tilien luonti noudattaa nyt valittua käytäntöä.",
+        "allowRegistration": "Salli rekisteröityminen",
+        "allowRegistrationDescription": "Kuka tahansa voi luoda tilin julkiselta rekisteröitymissivulta.",
+        "inviteOnly": "Vain kutsulla",
+        "inviteOnlyDescription": "Vain käyttäjät, joilla on kelvollinen kutsutunnus, voivat viimeistellä rekisteröitymisen.",
+        "adminCreatedOnly": "Vain ylläpitäjän luomat tilit",
+        "adminCreatedOnlyDescription": "Julkinen rekisteröityminen on pois käytöstä; pääylläpitäjät luovat tilit Käyttäjät-välilehdeltä."
       }
     },
     "emailPreview": {

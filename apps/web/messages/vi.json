@@ -978,7 +978,9 @@
     "toast_verified_description": "Chào mừng bạn đến với chúng tôi.",
     "toast_not_verified_title": "Vẫn chưa được xác minh",
     "toast_not_verified_description": "Chúng tôi không tìm thấy việc xác minh đã hoàn tất. Vui lòng nhấp vào liên kết trong hộp thư hoặc gửi lại.",
-    "toast_refresh_failed_title": "Không thể làm mới trạng thái"
+    "toast_refresh_failed_title": "Không thể làm mới trạng thái",
+    "registration_invite_required": "Đăng ký chỉ dành cho người được mời. Hãy yêu cầu quản trị viên gửi lời mời.",
+    "registration_admin_only": "Đăng ký đã đóng. Hãy yêu cầu quản trị viên tạo tài khoản cho bạn."
   },
   "issuesViews": {
     "loading": "Đang tải…",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "Khóa bí mật S3",
         "s3SecretKeyStored": "Khóa bí mật S3 (đã lưu: {preview})",
         "s3SecretPlaceholder": "Secret của S3"
+      },
+      "registration": {
+        "title": "Đăng ký",
+        "description": "Chọn ai có thể tạo tài khoản mới trên bản cài đặt này.",
+        "loadError": "Không tải được chính sách đăng ký",
+        "saveError": "Không lưu được chính sách đăng ký",
+        "saved": "Đã lưu chính sách đăng ký",
+        "savedDescription": "Việc tạo tài khoản mới hiện tuân theo chính sách đã chọn.",
+        "allowRegistration": "Cho phép đăng ký",
+        "allowRegistrationDescription": "Bất kỳ ai cũng có thể tạo tài khoản từ trang đăng ký công khai.",
+        "inviteOnly": "Chỉ lời mời",
+        "inviteOnlyDescription": "Chỉ người dùng có token lời mời hợp lệ mới có thể hoàn tất đăng ký.",
+        "adminCreatedOnly": "Chỉ tài khoản do quản trị viên tạo",
+        "adminCreatedOnlyDescription": "Đăng ký công khai bị tắt; siêu quản trị viên tạo tài khoản từ tab Người dùng."
       }
     },
     "emailPreview": {

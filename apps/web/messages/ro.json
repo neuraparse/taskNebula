@@ -984,7 +984,9 @@
     "toast_verified_description": "Bun venit la bord.",
     "toast_not_verified_title": "Încă neverificat",
     "toast_not_verified_description": "Nu am găsit o verificare finalizată. Te rugăm să apeși pe linkul din inbox sau să-l retrimiți.",
-    "toast_refresh_failed_title": "Nu s-a putut reîmprospăta starea"
+    "toast_refresh_failed_title": "Nu s-a putut reîmprospăta starea",
+    "registration_invite_required": "Înregistrarea este doar pe bază de invitație. Cereți o invitație de la un administrator.",
+    "registration_admin_only": "Înregistrarea este închisă. Cereți unui administrator să vă creeze contul."
   },
   "issuesViews": {
     "loading": "Se încarcă…",
@@ -3499,6 +3501,20 @@
         "s3SecretKey": "Cheie secretă S3",
         "s3SecretKeyStored": "Cheie secretă S3 (stocată: {preview})",
         "s3SecretPlaceholder": "Secret S3"
+      },
+      "registration": {
+        "title": "Înregistrare",
+        "description": "Alegeți cine poate crea conturi noi în această instalare.",
+        "loadError": "Politica de înregistrare nu a putut fi încărcată",
+        "saveError": "Politica de înregistrare nu a putut fi salvată",
+        "saved": "Politica de înregistrare a fost salvată",
+        "savedDescription": "Crearea de conturi noi urmează acum politica selectată.",
+        "allowRegistration": "Permite înregistrarea",
+        "allowRegistrationDescription": "Oricine poate crea un cont din pagina publică de înscriere.",
+        "inviteOnly": "Doar invitație",
+        "inviteOnlyDescription": "Doar utilizatorii cu un token de invitație valid pot finaliza înscrierea.",
+        "adminCreatedOnly": "Doar conturi create de administrator",
+        "adminCreatedOnlyDescription": "Înscrierea publică este dezactivată; super administratorii creează conturi din fila Utilizatori."
       }
     },
     "emailPreview": {

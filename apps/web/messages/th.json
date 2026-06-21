@@ -978,7 +978,9 @@
     "toast_verified_description": "ยินดีต้อนรับ",
     "toast_not_verified_title": "ยังไม่ได้ยืนยัน",
     "toast_not_verified_description": "เราไม่พบการยืนยันที่เสร็จสมบูรณ์ กรุณาคลิกลิงก์ในกล่องข้อความของคุณหรือส่งใหม่",
-    "toast_refresh_failed_title": "ไม่สามารถรีเฟรชสถานะได้"
+    "toast_refresh_failed_title": "ไม่สามารถรีเฟรชสถานะได้",
+    "registration_invite_required": "การลงทะเบียนทำได้เฉพาะผู้ได้รับคำเชิญเท่านั้น โปรดขอคำเชิญจากผู้ดูแลระบบ",
+    "registration_admin_only": "ปิดการลงทะเบียนแล้ว โปรดขอให้ผู้ดูแลระบบสร้างบัญชีให้คุณ"
   },
   "issuesViews": {
     "loading": "กำลังโหลด…",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "S3 secret key",
         "s3SecretKeyStored": "S3 secret key (จัดเก็บ: {preview})",
         "s3SecretPlaceholder": "S3 secret"
+      },
+      "registration": {
+        "title": "การลงทะเบียน",
+        "description": "เลือกว่าใครสามารถสร้างบัญชีใหม่ในการติดตั้งนี้ได้",
+        "loadError": "โหลดนโยบายการลงทะเบียนไม่สำเร็จ",
+        "saveError": "บันทึกนโยบายการลงทะเบียนไม่สำเร็จ",
+        "saved": "บันทึกนโยบายการลงทะเบียนแล้ว",
+        "savedDescription": "การสร้างบัญชีใหม่จะเป็นไปตามนโยบายที่เลือกแล้ว",
+        "allowRegistration": "อนุญาตการลงทะเบียน",
+        "allowRegistrationDescription": "ทุกคนสามารถสร้างบัญชีจากหน้าสมัครสาธารณะได้",
+        "inviteOnly": "เฉพาะคำเชิญ",
+        "inviteOnlyDescription": "เฉพาะผู้ใช้ที่มีโทเค็นคำเชิญที่ถูกต้องเท่านั้นที่สมัครให้เสร็จได้",
+        "adminCreatedOnly": "เฉพาะบัญชีที่ผู้ดูแลสร้าง",
+        "adminCreatedOnlyDescription": "ปิดการสมัครสาธารณะแล้ว; ผู้ดูแลขั้นสูงสร้างบัญชีจากแท็บผู้ใช้"
       }
     },
     "emailPreview": {

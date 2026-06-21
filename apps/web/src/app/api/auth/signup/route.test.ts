@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
 
 const dbInsertMock = jest.fn();
+const dbSelectMock = jest.fn();
 const dbUpdateMock = jest.fn();
 const findFirstMock = jest.fn();
 const bcryptHashMock = jest.fn(async () => 'hashed');
@@ -67,8 +68,10 @@ jest.mock('@tasknebula/db', () => ({
       },
     },
     insert: (...args: unknown[]) => dbInsertMock(...args),
+    select: (...args: unknown[]) => dbSelectMock(...args),
     update: (...args: unknown[]) => dbUpdateMock(...args),
   },
+  eq: (left: unknown, right: unknown) => ({ type: 'eq', left, right }),
   users: {
     id: 'users.id',
     name: 'users.name',
@@ -79,6 +82,11 @@ jest.mock('@tasknebula/db', () => ({
   organizationMembers: {
     userId: 'organizationMembers.userId',
     status: 'organizationMembers.status',
+  },
+  systemSettings: {
+    id: 'systemSettings.id',
+    key: 'systemSettings.key',
+    value: 'systemSettings.value',
   },
 }));
 
@@ -117,6 +125,16 @@ function updateResolving(result?: unknown) {
   };
 }
 
+function selectRegistrationPolicy(mode?: string) {
+  return {
+    from: jest.fn().mockReturnValue({
+      where: jest.fn().mockReturnValue({
+        limit: jest.fn().mockResolvedValue(mode ? [{ value: { mode } }] : []),
+      }),
+    }),
+  };
+}
+
 describe('/api/auth/signup route', () => {
   let NextRequestCtor: typeof import('next/server').NextRequest;
   let POST: typeof import('./route').POST;
@@ -128,6 +146,7 @@ describe('/api/auth/signup route', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    dbSelectMock.mockReturnValue(selectRegistrationPolicy());
   });
 
   it('returns 400 when required fields missing', async () => {
@@ -232,6 +251,57 @@ describe('/api/auth/signup route', () => {
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({
       error: 'Invalid or expired invitation',
+    });
+    expect(dbUpdateMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects new public signups when registration is invite-only', async () => {
+    dbSelectMock.mockReturnValue(selectRegistrationPolicy('invite_only'));
+    findFirstMock.mockResolvedValue(undefined);
+
+    const response = await POST(
+      new NextRequestCtor('http://localhost:3002/api/auth/signup', {
+        method: 'POST',
+        body: JSON.stringify({ name: 'Bob', email: 'b@e.com', password: 'secret12' }),
+      })
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      error: 'REGISTRATION_INVITE_REQUIRED',
+      code: 'REGISTRATION_INVITE_REQUIRED',
+    });
+    expect(dbInsertMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects invited-user activation when registration is admin-created only', async () => {
+    dbSelectMock.mockReturnValue(selectRegistrationPolicy('admin_created_only'));
+    const inviteToken = 'invite-token-1';
+    findFirstMock.mockResolvedValue({
+      id: 'u1',
+      email: 'a@e.com',
+      status: 'invited',
+      password: null,
+      inviteTokenHash: createHash('sha256').update(inviteToken).digest('hex'),
+      inviteTokenExpiresAt: new Date(Date.now() + 60_000),
+    });
+
+    const response = await POST(
+      new NextRequestCtor('http://localhost:3002/api/auth/signup', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: 'Alice',
+          email: 'a@e.com',
+          password: 'abcdefgh',
+          inviteToken,
+        }),
+      })
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      error: 'REGISTRATION_ADMIN_ONLY',
+      code: 'REGISTRATION_ADMIN_ONLY',
     });
     expect(dbUpdateMock).not.toHaveBeenCalled();
   });

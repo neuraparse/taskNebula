@@ -978,7 +978,9 @@
     "toast_verified_description": "स्वागत है।",
     "toast_not_verified_title": "अभी भी सत्यापित नहीं",
     "toast_not_verified_description": "हमें कोई पूर्ण सत्यापन नहीं मिला। कृपया अपने इनबॉक्स में लिंक पर क्लिक करें या पुनः भेजें।",
-    "toast_refresh_failed_title": "स्थिति रीफ़्रेश नहीं की जा सकी"
+    "toast_refresh_failed_title": "स्थिति रीफ़्रेश नहीं की जा सकी",
+    "registration_invite_required": "पंजीकरण केवल आमंत्रण से है। किसी व्यवस्थापक से आमंत्रण मांगें।",
+    "registration_admin_only": "पंजीकरण बंद है। अपना खाता बनवाने के लिए व्यवस्थापक से कहें।"
   },
   "issuesViews": {
     "loading": "लोड हो रहा है…",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "S3 सीक्रेट कुंजी",
         "s3SecretKeyStored": "S3 सीक्रेट कुंजी (संग्रहित: {preview})",
         "s3SecretPlaceholder": "S3 सीक्रेट"
+      },
+      "registration": {
+        "title": "पंजीकरण",
+        "description": "चुनें कि इस इंस्टॉलेशन पर नए खाते कौन बना सकता है।",
+        "loadError": "पंजीकरण नीति लोड नहीं हो सकी",
+        "saveError": "पंजीकरण नीति सहेजी नहीं जा सकी",
+        "saved": "पंजीकरण नीति सहेजी गई",
+        "savedDescription": "नए खाते बनाना अब चुनी गई नीति का पालन करेगा।",
+        "allowRegistration": "पंजीकरण की अनुमति दें",
+        "allowRegistrationDescription": "कोई भी सार्वजनिक साइनअप पेज से खाता बना सकता है।",
+        "inviteOnly": "केवल आमंत्रण",
+        "inviteOnlyDescription": "केवल मान्य आमंत्रण टोकन वाले उपयोगकर्ता साइनअप पूरा कर सकते हैं।",
+        "adminCreatedOnly": "केवल व्यवस्थापक द्वारा बनाए गए खाते",
+        "adminCreatedOnlyDescription": "सार्वजनिक साइनअप बंद है; सुपर एडमिन उपयोगकर्ता टैब से खाते बनाते हैं।"
       }
     },
     "emailPreview": {

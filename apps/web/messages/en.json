@@ -978,7 +978,9 @@
     "toast_verified_description": "Welcome aboard.",
     "toast_not_verified_title": "Still not verified",
     "toast_not_verified_description": "We couldn't find a completed verification. Please click the link in your inbox or resend.",
-    "toast_refresh_failed_title": "Could not refresh status"
+    "toast_refresh_failed_title": "Could not refresh status",
+    "registration_invite_required": "Registration is invite-only. Ask an admin for an invitation.",
+    "registration_admin_only": "Registration is closed. Ask an admin to create your account."
   },
   "issuesViews": {
     "loading": "Loading…",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "S3 secret key",
         "s3SecretKeyStored": "S3 secret key (stored: {preview})",
         "s3SecretPlaceholder": "S3 secret"
+      },
+      "registration": {
+        "title": "Registration",
+        "description": "Choose who can create new accounts on this installation.",
+        "loadError": "Failed to load registration policy",
+        "saveError": "Failed to save registration policy",
+        "saved": "Registration policy saved",
+        "savedDescription": "New account creation now follows the selected policy.",
+        "allowRegistration": "Allow registration",
+        "allowRegistrationDescription": "Anyone can create an account from the public signup page.",
+        "inviteOnly": "Invite only",
+        "inviteOnlyDescription": "Only users with a valid invitation token can complete signup.",
+        "adminCreatedOnly": "Admin-created accounts only",
+        "adminCreatedOnlyDescription": "Public signup is disabled; super admins create accounts from the Users tab."
       }
     },
     "emailPreview": {

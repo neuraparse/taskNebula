@@ -978,7 +978,9 @@
     "toast_verified_description": "Benvenuto a bordo.",
     "toast_not_verified_title": "Ancora non verificata",
     "toast_not_verified_description": "Non abbiamo trovato una verifica completata. Clicca sul link nella tua posta in arrivo o invialo di nuovo.",
-    "toast_refresh_failed_title": "Impossibile aggiornare lo stato"
+    "toast_refresh_failed_title": "Impossibile aggiornare lo stato",
+    "registration_invite_required": "La registrazione è solo su invito. Chiedi un invito a un amministratore.",
+    "registration_admin_only": "La registrazione è chiusa. Chiedi a un amministratore di creare il tuo account."
   },
   "issuesViews": {
     "loading": "Caricamento…",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "Secret key S3",
         "s3SecretKeyStored": "Secret key S3 (memorizzata: {preview})",
         "s3SecretPlaceholder": "Secret S3"
+      },
+      "registration": {
+        "title": "Registrazione",
+        "description": "Scegli chi può creare nuovi account in questa installazione.",
+        "loadError": "Impossibile caricare la policy di registrazione",
+        "saveError": "Impossibile salvare la policy di registrazione",
+        "saved": "Policy di registrazione salvata",
+        "savedDescription": "La creazione di nuovi account ora segue la policy selezionata.",
+        "allowRegistration": "Consenti registrazione",
+        "allowRegistrationDescription": "Chiunque può creare un account dalla pagina pubblica di registrazione.",
+        "inviteOnly": "Solo invito",
+        "inviteOnlyDescription": "Solo gli utenti con un token di invito valido possono completare la registrazione.",
+        "adminCreatedOnly": "Solo account creati da amministratori",
+        "adminCreatedOnlyDescription": "La registrazione pubblica è disattivata; i super amministratori creano account dalla scheda Utenti."
       }
     },
     "emailPreview": {

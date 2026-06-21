@@ -10,6 +10,13 @@ import { Github } from 'lucide-react';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 
+type SignupResponse = {
+  error?: string;
+  code?: string;
+};
+
+type SignupErrorKey = 'registration_invite_required' | 'registration_admin_only' | 'signup_failed';
+
 export function SignUpForm() {
   const t = useTranslations('authExtra');
   const router = useRouter();
@@ -67,10 +74,10 @@ export function SignUpForm() {
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as SignupResponse;
 
       if (!response.ok) {
-        setError(data.error || t('signup_failed'));
+        setError(getSignupErrorMessage(data, t));
         return;
       }
 
@@ -270,4 +277,15 @@ export function SignUpForm() {
       </p>
     </div>
   );
+}
+
+function getSignupErrorMessage(data: SignupResponse, t: (key: SignupErrorKey) => string) {
+  const code = data.code || data.error;
+  if (code === 'REGISTRATION_INVITE_REQUIRED') {
+    return t('registration_invite_required');
+  }
+  if (code === 'REGISTRATION_ADMIN_ONLY') {
+    return t('registration_admin_only');
+  }
+  return data.error || t('signup_failed');
 }

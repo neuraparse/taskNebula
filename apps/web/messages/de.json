@@ -978,7 +978,9 @@
     "toast_verified_description": "Willkommen an Bord.",
     "toast_not_verified_title": "Noch nicht bestätigt",
     "toast_not_verified_description": "Wir konnten keine abgeschlossene Bestätigung finden. Bitte klicke auf den Link in deinem Posteingang oder sende ihn erneut.",
-    "toast_refresh_failed_title": "Status konnte nicht aktualisiert werden"
+    "toast_refresh_failed_title": "Status konnte nicht aktualisiert werden",
+    "registration_invite_required": "Die Registrierung ist nur per Einladung möglich. Bitte einen Admin um eine Einladung.",
+    "registration_admin_only": "Die Registrierung ist geschlossen. Bitte einen Admin, dein Konto zu erstellen."
   },
   "issuesViews": {
     "loading": "Wird geladen…",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "S3-Secret-Key",
         "s3SecretKeyStored": "S3-Secret-Key (gespeichert: {preview})",
         "s3SecretPlaceholder": "S3-Secret"
+      },
+      "registration": {
+        "title": "Registrierung",
+        "description": "Wähle, wer in dieser Installation neue Konten erstellen kann.",
+        "loadError": "Registrierungsrichtlinie konnte nicht geladen werden",
+        "saveError": "Registrierungsrichtlinie konnte nicht gespeichert werden",
+        "saved": "Registrierungsrichtlinie gespeichert",
+        "savedDescription": "Neue Kontoerstellungen folgen jetzt der ausgewählten Richtlinie.",
+        "allowRegistration": "Registrierung erlauben",
+        "allowRegistrationDescription": "Jeder kann über die öffentliche Registrierungsseite ein Konto erstellen.",
+        "inviteOnly": "Nur Einladung",
+        "inviteOnlyDescription": "Nur Benutzer mit einem gültigen Einladungstoken können die Registrierung abschließen.",
+        "adminCreatedOnly": "Nur von Admins erstellte Konten",
+        "adminCreatedOnlyDescription": "Die öffentliche Registrierung ist deaktiviert; Super-Admins erstellen Konten im Tab Benutzer."
       }
     },
     "emailPreview": {

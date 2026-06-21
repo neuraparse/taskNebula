@@ -178,4 +178,35 @@ describe('SignUpForm', () => {
     expect(alert).toHaveTextContent(/email already in use/i);
     expect(signInMock).not.toHaveBeenCalled();
   });
+
+  it('maps registration policy error codes to localized messages', async () => {
+    fetchMock.mockImplementation((url: string) => {
+      if (url === '/api/setup') {
+        return Promise.resolve({ ok: true, json: async () => ({ setupRequired: false }) });
+      }
+      if (url === '/api/auth/signup') {
+        return Promise.resolve({
+          ok: false,
+          status: 403,
+          json: async () => ({
+            error: 'REGISTRATION_INVITE_REQUIRED',
+            code: 'REGISTRATION_INVITE_REQUIRED',
+          }),
+        });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({}) });
+    });
+
+    const user = userEvent.setup();
+    render(<SignUpForm />);
+
+    await user.type(await screen.findByLabelText(/full name/i), 'Alice');
+    await user.type(screen.getByLabelText(/email address/i), 'alice@example.com');
+    await user.type(screen.getByLabelText(/^password$/i), 'hunter2hunter2');
+    await user.click(screen.getByRole('button', { name: /create account/i }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(/invitation/i);
+    expect(signInMock).not.toHaveBeenCalled();
+  });
 });

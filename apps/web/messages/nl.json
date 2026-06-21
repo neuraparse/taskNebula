@@ -978,7 +978,9 @@
     "toast_verified_description": "Welkom aan boord.",
     "toast_not_verified_title": "Nog niet geverifieerd",
     "toast_not_verified_description": "We konden geen voltooide verificatie vinden. Klik op de link in je postvak of verstuur opnieuw.",
-    "toast_refresh_failed_title": "Kon status niet vernieuwen"
+    "toast_refresh_failed_title": "Kon status niet vernieuwen",
+    "registration_invite_required": "Registratie is alleen op uitnodiging. Vraag een beheerder om een uitnodiging.",
+    "registration_admin_only": "Registratie is gesloten. Vraag een beheerder om je account te maken."
   },
   "issuesViews": {
     "loading": "Laden…",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "S3-geheime sleutel",
         "s3SecretKeyStored": "S3-geheime sleutel (opgeslagen: {preview})",
         "s3SecretPlaceholder": "S3-secret"
+      },
+      "registration": {
+        "title": "Registratie",
+        "description": "Kies wie nieuwe accounts kan maken op deze installatie.",
+        "loadError": "Registratiebeleid kon niet worden geladen",
+        "saveError": "Registratiebeleid kon niet worden opgeslagen",
+        "saved": "Registratiebeleid opgeslagen",
+        "savedDescription": "Nieuwe accounts worden nu aangemaakt volgens het geselecteerde beleid.",
+        "allowRegistration": "Registratie toestaan",
+        "allowRegistrationDescription": "Iedereen kan een account maken via de openbare registratiepagina.",
+        "inviteOnly": "Alleen uitnodiging",
+        "inviteOnlyDescription": "Alleen gebruikers met een geldige uitnodigingstoken kunnen registratie voltooien.",
+        "adminCreatedOnly": "Alleen door beheerders gemaakte accounts",
+        "adminCreatedOnlyDescription": "Openbare registratie is uitgeschakeld; superbeheerders maken accounts via het tabblad Gebruikers."
       }
     },
     "emailPreview": {

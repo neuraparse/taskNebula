@@ -978,7 +978,9 @@
     "toast_verified_description": "أهلًا بك معنا.",
     "toast_not_verified_title": "لم يتم التحقق بعد",
     "toast_not_verified_description": "لم نتمكن من العثور على عملية تحقق مكتملة. يُرجى النقر على الرابط في بريدك الوارد أو إعادة الإرسال.",
-    "toast_refresh_failed_title": "تعذّر تحديث الحالة"
+    "toast_refresh_failed_title": "تعذّر تحديث الحالة",
+    "registration_invite_required": "التسجيل بالدعوة فقط. اطلب دعوة من مسؤول.",
+    "registration_admin_only": "التسجيل مغلق. اطلب من مسؤول إنشاء حسابك."
   },
   "issuesViews": {
     "loading": "جارٍ التحميل…",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "مفتاح سر S3",
         "s3SecretKeyStored": "مفتاح سر S3 (مخزّن: {preview})",
         "s3SecretPlaceholder": "سر S3"
+      },
+      "registration": {
+        "title": "التسجيل",
+        "description": "اختر من يمكنه إنشاء حسابات جديدة في هذا التثبيت.",
+        "loadError": "تعذر تحميل سياسة التسجيل",
+        "saveError": "تعذر حفظ سياسة التسجيل",
+        "saved": "تم حفظ سياسة التسجيل",
+        "savedDescription": "إنشاء الحسابات الجديدة يتبع الآن السياسة المحددة.",
+        "allowRegistration": "السماح بالتسجيل",
+        "allowRegistrationDescription": "يمكن لأي شخص إنشاء حساب من صفحة التسجيل العامة.",
+        "inviteOnly": "بالدعوة فقط",
+        "inviteOnlyDescription": "يمكن فقط للمستخدمين الذين لديهم رمز دعوة صالح إكمال التسجيل.",
+        "adminCreatedOnly": "حسابات ينشئها المسؤول فقط",
+        "adminCreatedOnlyDescription": "تم تعطيل التسجيل العام؛ ينشئ المسؤولون الفائقون الحسابات من تبويب المستخدمين."
       }
     },
     "emailPreview": {

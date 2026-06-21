@@ -978,7 +978,9 @@
     "toast_verified_description": "Bem-vindo a bordo.",
     "toast_not_verified_title": "Ainda não verificado",
     "toast_not_verified_description": "Não conseguimos encontrar uma verificação concluída. Clique na ligação na sua caixa de entrada ou reenvie.",
-    "toast_refresh_failed_title": "Não foi possível atualizar o estado"
+    "toast_refresh_failed_title": "Não foi possível atualizar o estado",
+    "registration_invite_required": "O cadastro é apenas por convite. Peça um convite a um administrador.",
+    "registration_admin_only": "O cadastro está fechado. Peça a um administrador para criar sua conta."
   },
   "issuesViews": {
     "loading": "A carregar…",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "Chave secreta S3",
         "s3SecretKeyStored": "Chave secreta S3 (armazenada: {preview})",
         "s3SecretPlaceholder": "Segredo S3"
+      },
+      "registration": {
+        "title": "Cadastro",
+        "description": "Escolha quem pode criar novas contas nesta instalação.",
+        "loadError": "Falha ao carregar a política de cadastro",
+        "saveError": "Falha ao salvar a política de cadastro",
+        "saved": "Política de cadastro salva",
+        "savedDescription": "A criação de novas contas agora segue a política selecionada.",
+        "allowRegistration": "Permitir cadastro",
+        "allowRegistrationDescription": "Qualquer pessoa pode criar uma conta pela página pública de cadastro.",
+        "inviteOnly": "Somente convite",
+        "inviteOnlyDescription": "Somente usuários com um token de convite válido podem concluir o cadastro.",
+        "adminCreatedOnly": "Somente contas criadas por administradores",
+        "adminCreatedOnlyDescription": "O cadastro público está desativado; superadministradores criam contas na aba Usuários."
       }
     },
     "emailPreview": {

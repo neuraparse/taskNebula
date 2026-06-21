@@ -978,7 +978,9 @@
     "toast_verified_description": "Üdvözlünk a fedélzeten.",
     "toast_not_verified_title": "Még nincs megerősítve",
     "toast_not_verified_description": "Nem találtunk befejezett megerősítést. Kattints a beérkezett üzeneteidben lévő hivatkozásra, vagy küldd újra.",
-    "toast_refresh_failed_title": "Nem sikerült frissíteni az állapotot"
+    "toast_refresh_failed_title": "Nem sikerült frissíteni az állapotot",
+    "registration_invite_required": "A regisztráció csak meghívóval lehetséges. Kérj meghívót egy admintól.",
+    "registration_admin_only": "A regisztráció zárva van. Kérj meg egy admint, hogy hozza létre a fiókodat."
   },
   "issuesViews": {
     "loading": "Betöltés…",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "S3 titkos kulcs",
         "s3SecretKeyStored": "S3 titkos kulcs (tárolva: {preview})",
         "s3SecretPlaceholder": "S3-titok"
+      },
+      "registration": {
+        "title": "Regisztráció",
+        "description": "Válaszd ki, ki hozhat létre új fiókokat ebben a telepítésben.",
+        "loadError": "Nem sikerült betölteni a regisztrációs szabályzatot",
+        "saveError": "Nem sikerült menteni a regisztrációs szabályzatot",
+        "saved": "Regisztrációs szabályzat mentve",
+        "savedDescription": "Az új fiókok létrehozása mostantól a kiválasztott szabályzatot követi.",
+        "allowRegistration": "Regisztráció engedélyezése",
+        "allowRegistrationDescription": "Bárki létrehozhat fiókot a nyilvános regisztrációs oldalon.",
+        "inviteOnly": "Csak meghívóval",
+        "inviteOnlyDescription": "Csak érvényes meghívó tokennel rendelkező felhasználók fejezhetik be a regisztrációt.",
+        "adminCreatedOnly": "Csak admin által létrehozott fiókok",
+        "adminCreatedOnlyDescription": "A nyilvános regisztráció ki van kapcsolva; a szuperadminok a Felhasználók lapon hoznak létre fiókokat."
       }
     },
     "emailPreview": {

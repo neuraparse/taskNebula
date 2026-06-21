@@ -978,7 +978,9 @@
     "toast_verified_description": "Aramıza hoş geldiniz.",
     "toast_not_verified_title": "Hâlâ doğrulanmadı",
     "toast_not_verified_description": "Tamamlanmış bir doğrulama bulamadık. Lütfen gelen kutunuzdaki bağlantıya tıklayın veya yeniden gönderin.",
-    "toast_refresh_failed_title": "Durum yenilenemedi"
+    "toast_refresh_failed_title": "Durum yenilenemedi",
+    "registration_invite_required": "Kayıt yalnızca davetle yapılabilir. Bir yöneticiden davet isteyin.",
+    "registration_admin_only": "Kayıt kapalı. Hesabınızı oluşturması için bir yöneticiye başvurun."
   },
   "issuesViews": {
     "loading": "Yükleniyor…",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "S3 gizli anahtarı",
         "s3SecretKeyStored": "S3 gizli anahtarı (saklanan: {preview})",
         "s3SecretPlaceholder": "S3 gizli anahtarı"
+      },
+      "registration": {
+        "title": "Kayıt",
+        "description": "Bu kurulumda yeni hesapları kimlerin oluşturabileceğini seçin.",
+        "loadError": "Kayıt ilkesi yüklenemedi",
+        "saveError": "Kayıt ilkesi kaydedilemedi",
+        "saved": "Kayıt ilkesi kaydedildi",
+        "savedDescription": "Yeni hesap oluşturma artık seçilen ilkeye göre çalışır.",
+        "allowRegistration": "Kayda izin ver",
+        "allowRegistrationDescription": "Herkes herkese açık kayıt sayfasından hesap oluşturabilir.",
+        "inviteOnly": "Yalnızca davet",
+        "inviteOnlyDescription": "Yalnızca geçerli davet belirtecine sahip kullanıcılar kaydı tamamlayabilir.",
+        "adminCreatedOnly": "Yalnızca admin tarafından oluşturulan hesaplar",
+        "adminCreatedOnlyDescription": "Herkese açık kayıt devre dışıdır; süper adminler hesapları Kullanıcılar sekmesinden oluşturur."
       }
     },
     "emailPreview": {

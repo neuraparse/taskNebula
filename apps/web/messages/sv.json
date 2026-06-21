@@ -795,7 +795,9 @@
     "toast_verified_description": "Välkommen ombord.",
     "toast_not_verified_title": "Fortfarande inte verifierad",
     "toast_not_verified_description": "Vi kunde inte hitta någon slutförd verifiering. Klicka på länken i din inkorg eller skicka den igen.",
-    "toast_refresh_failed_title": "Det gick inte att uppdatera statusen"
+    "toast_refresh_failed_title": "Det gick inte att uppdatera statusen",
+    "registration_invite_required": "Registrering är endast via inbjudan. Be en administratör om en inbjudan.",
+    "registration_admin_only": "Registrering är stängd. Be en administratör skapa ditt konto."
   },
   "notifications": {
     "loading": "Läser in aviseringar",
@@ -3438,6 +3440,20 @@
         "s3SecretKey": "S3-hemlig nyckel",
         "s3SecretKeyStored": "S3-hemlig nyckel (lagrad: {preview})",
         "s3SecretPlaceholder": "S3-hemlighet"
+      },
+      "registration": {
+        "title": "Registrering",
+        "description": "Välj vem som kan skapa nya konton i den här installationen.",
+        "loadError": "Det gick inte att läsa in registreringspolicyn",
+        "saveError": "Det gick inte att spara registreringspolicyn",
+        "saved": "Registreringspolicy sparad",
+        "savedDescription": "Skapande av nya konton följer nu den valda policyn.",
+        "allowRegistration": "Tillåt registrering",
+        "allowRegistrationDescription": "Vem som helst kan skapa ett konto från den offentliga registreringssidan.",
+        "inviteOnly": "Endast inbjudan",
+        "inviteOnlyDescription": "Endast användare med en giltig inbjudningstoken kan slutföra registreringen.",
+        "adminCreatedOnly": "Endast administratörsskapade konton",
+        "adminCreatedOnlyDescription": "Offentlig registrering är inaktiverad; superadministratörer skapar konton från fliken Användare."
       }
     },
     "emailPreview": {

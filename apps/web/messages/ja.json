@@ -978,7 +978,9 @@
     "toast_verified_description": "ようこそ。",
     "toast_not_verified_title": "まだ確認されていません",
     "toast_not_verified_description": "完了した確認が見つかりませんでした。受信トレイのリンクをクリックするか、再送信してください。",
-    "toast_refresh_failed_title": "ステータスを更新できませんでした"
+    "toast_refresh_failed_title": "ステータスを更新できませんでした",
+    "registration_invite_required": "登録は招待制です。管理者に招待を依頼してください。",
+    "registration_admin_only": "登録は閉じられています。管理者にアカウント作成を依頼してください。"
   },
   "issuesViews": {
     "loading": "読み込み中…",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "S3 シークレットキー",
         "s3SecretKeyStored": "S3 シークレットキー（保存済み: {preview}）",
         "s3SecretPlaceholder": "S3 シークレット"
+      },
+      "registration": {
+        "title": "登録",
+        "description": "このインストールで新しいアカウントを作成できるユーザーを選択します。",
+        "loadError": "登録ポリシーを読み込めませんでした",
+        "saveError": "登録ポリシーを保存できませんでした",
+        "saved": "登録ポリシーを保存しました",
+        "savedDescription": "新しいアカウント作成は選択したポリシーに従います。",
+        "allowRegistration": "登録を許可",
+        "allowRegistrationDescription": "誰でも公開サインアップページからアカウントを作成できます。",
+        "inviteOnly": "招待のみ",
+        "inviteOnlyDescription": "有効な招待トークンを持つユーザーだけがサインアップを完了できます。",
+        "adminCreatedOnly": "管理者作成アカウントのみ",
+        "adminCreatedOnlyDescription": "公開サインアップは無効です。スーパー管理者がユーザータブからアカウントを作成します。"
       }
     },
     "emailPreview": {

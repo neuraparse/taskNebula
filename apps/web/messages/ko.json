@@ -978,7 +978,9 @@
     "toast_verified_description": "환영합니다.",
     "toast_not_verified_title": "아직 인증되지 않음",
     "toast_not_verified_description": "완료된 인증을 찾을 수 없습니다. 받은함의 링크를 클릭하거나 다시 보내주세요.",
-    "toast_refresh_failed_title": "상태를 새로고침할 수 없습니다"
+    "toast_refresh_failed_title": "상태를 새로고침할 수 없습니다",
+    "registration_invite_required": "등록은 초대 전용입니다. 관리자에게 초대를 요청하세요.",
+    "registration_admin_only": "등록이 닫혀 있습니다. 관리자에게 계정 생성을 요청하세요."
   },
   "issuesViews": {
     "loading": "불러오는 중…",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "S3 시크릿 키",
         "s3SecretKeyStored": "S3 시크릿 키 (저장됨: {preview})",
         "s3SecretPlaceholder": "S3 시크릿"
+      },
+      "registration": {
+        "title": "등록",
+        "description": "이 설치에서 새 계정을 만들 수 있는 사용자를 선택합니다.",
+        "loadError": "등록 정책을 불러오지 못했습니다",
+        "saveError": "등록 정책을 저장하지 못했습니다",
+        "saved": "등록 정책이 저장되었습니다",
+        "savedDescription": "새 계정 생성은 이제 선택한 정책을 따릅니다.",
+        "allowRegistration": "등록 허용",
+        "allowRegistrationDescription": "누구나 공개 가입 페이지에서 계정을 만들 수 있습니다.",
+        "inviteOnly": "초대 전용",
+        "inviteOnlyDescription": "유효한 초대 토큰이 있는 사용자만 가입을 완료할 수 있습니다.",
+        "adminCreatedOnly": "관리자가 만든 계정만",
+        "adminCreatedOnlyDescription": "공개 가입은 비활성화되어 있습니다. 최고 관리자가 사용자 탭에서 계정을 만듭니다."
       }
     },
     "emailPreview": {

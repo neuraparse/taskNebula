@@ -978,7 +978,9 @@
     "toast_verified_description": "Velkommen om bord.",
     "toast_not_verified_title": "Stadig ikke bekræftet",
     "toast_not_verified_description": "Vi kunne ikke finde en gennemført bekræftelse. Klik på linket i din indbakke, eller send igen.",
-    "toast_refresh_failed_title": "Kunne ikke opdatere status"
+    "toast_refresh_failed_title": "Kunne ikke opdatere status",
+    "registration_invite_required": "Registrering er kun med invitation. Bed en administrator om en invitation.",
+    "registration_admin_only": "Registrering er lukket. Bed en administrator om at oprette din konto."
   },
   "issuesViews": {
     "loading": "Indlæser …",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "S3-hemmelig nøgle",
         "s3SecretKeyStored": "S3-hemmelig nøgle (gemt: {preview})",
         "s3SecretPlaceholder": "S3-hemmelighed"
+      },
+      "registration": {
+        "title": "Registrering",
+        "description": "Vælg, hvem der kan oprette nye konti i denne installation.",
+        "loadError": "Kunne ikke indlæse registreringspolitik",
+        "saveError": "Kunne ikke gemme registreringspolitik",
+        "saved": "Registreringspolitik gemt",
+        "savedDescription": "Oprettelse af nye konti følger nu den valgte politik.",
+        "allowRegistration": "Tillad registrering",
+        "allowRegistrationDescription": "Alle kan oprette en konto fra den offentlige tilmeldingsside.",
+        "inviteOnly": "Kun invitation",
+        "inviteOnlyDescription": "Kun brugere med et gyldigt invitationstoken kan fuldføre tilmelding.",
+        "adminCreatedOnly": "Kun admin-oprettede konti",
+        "adminCreatedOnlyDescription": "Offentlig tilmelding er deaktiveret; superadministratorer opretter konti fra fanen Brugere."
       }
     },
     "emailPreview": {

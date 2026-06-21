@@ -978,7 +978,9 @@
     "toast_verified_description": "歡迎加入。",
     "toast_not_verified_title": "仍未驗證",
     "toast_not_verified_description": "我們找不到已完成的驗證。請點擊收件匣中的連結或重新傳送。",
-    "toast_refresh_failed_title": "無法重新整理狀態"
+    "toast_refresh_failed_title": "無法重新整理狀態",
+    "registration_invite_required": "註冊僅限邀請。請向管理員索取邀請。",
+    "registration_admin_only": "註冊已關閉。請讓管理員為你建立帳號。"
   },
   "issuesViews": {
     "loading": "載入中…",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "S3 secret 金鑰",
         "s3SecretKeyStored": "S3 secret 金鑰（已儲存：{preview}）",
         "s3SecretPlaceholder": "S3 secret"
+      },
+      "registration": {
+        "title": "註冊",
+        "description": "選擇誰可以在此安裝中建立新帳號。",
+        "loadError": "無法載入註冊政策",
+        "saveError": "無法儲存註冊政策",
+        "saved": "註冊政策已儲存",
+        "savedDescription": "新帳號建立現在會遵循所選政策。",
+        "allowRegistration": "允許註冊",
+        "allowRegistrationDescription": "任何人都可以從公開註冊頁面建立帳號。",
+        "inviteOnly": "僅限邀請",
+        "inviteOnlyDescription": "只有擁有有效邀請權杖的使用者才能完成註冊。",
+        "adminCreatedOnly": "僅限管理員建立的帳號",
+        "adminCreatedOnlyDescription": "公開註冊已停用；超級管理員可從使用者分頁建立帳號。"
       }
     },
     "emailPreview": {

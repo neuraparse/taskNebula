@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Check, HardDrive, Loader2, Mail, Radio, Save, ShieldCheck } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Check, HardDrive, Loader2, Mail, Radio, Save, ShieldCheck, UserPlus } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
 /*  Shared types                                                              */
@@ -52,6 +53,42 @@ type StorageResponse = {
   };
 };
 
+type RegistrationMode = 'allow_registration' | 'invite_only' | 'admin_created_only';
+
+type RegistrationResponse = {
+  registration: {
+    mode: RegistrationMode;
+    updatedAt?: string | null;
+    updatedBy?: string | null;
+  };
+};
+
+const REGISTRATION_OPTIONS: Array<{
+  mode: RegistrationMode;
+  labelKey: string;
+  descriptionKey: string;
+  icon: React.ComponentType<{ className?: string }>;
+}> = [
+  {
+    mode: 'allow_registration',
+    labelKey: 'systemCredentials.registration.allowRegistration',
+    descriptionKey: 'systemCredentials.registration.allowRegistrationDescription',
+    icon: UserPlus,
+  },
+  {
+    mode: 'invite_only',
+    labelKey: 'systemCredentials.registration.inviteOnly',
+    descriptionKey: 'systemCredentials.registration.inviteOnlyDescription',
+    icon: Mail,
+  },
+  {
+    mode: 'admin_created_only',
+    labelKey: 'systemCredentials.registration.adminCreatedOnly',
+    descriptionKey: 'systemCredentials.registration.adminCreatedOnlyDescription',
+    icon: ShieldCheck,
+  },
+];
+
 /* -------------------------------------------------------------------------- */
 /*  Panel                                                                     */
 /* -------------------------------------------------------------------------- */
@@ -68,9 +105,134 @@ export function SystemCredentialsPanel() {
           })}
         </p>
       </div>
+      <RegistrationSection />
       <SmtpSection />
       <LivekitSection />
       <StorageSection />
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Registration                                                              */
+/* -------------------------------------------------------------------------- */
+
+function RegistrationSection() {
+  const t = useTranslations('adminPanels');
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data, isLoading } = useQuery<RegistrationResponse>({
+    queryKey: ['admin', 'system', 'registration'],
+    queryFn: async () => {
+      const res = await fetch('/api/admin/system/registration');
+      if (!res.ok) throw new Error(t('systemCredentials.registration.loadError'));
+      return res.json();
+    },
+    refetchOnWindowFocus: false,
+  });
+
+  const savedMode = data?.registration.mode ?? 'allow_registration';
+  const [mode, setMode] = useState<RegistrationMode>('allow_registration');
+
+  useEffect(() => {
+    if (data?.registration.mode) setMode(data.registration.mode);
+  }, [data?.registration.mode]);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/admin/system/registration', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode }),
+      });
+      const payload = await res
+        .json()
+        .catch(() => ({ error: t('systemCredentials.registration.saveError') }));
+      if (!res.ok) {
+        throw new Error(payload.error || t('systemCredentials.registration.saveError'));
+      }
+      return payload as RegistrationResponse;
+    },
+    onSuccess: (result) => {
+      setMode(result.registration.mode);
+      queryClient.invalidateQueries({ queryKey: ['admin', 'system', 'registration'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
+      toast({
+        title: t('systemCredentials.registration.saved'),
+        description: t('systemCredentials.registration.savedDescription'),
+      });
+    },
+    onError: (err: Error) => {
+      toast({
+        title: t('systemCredentials.saveFailed'),
+        description: err.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  return (
+    <div className="surface-card space-y-4 p-6">
+      <SectionHeader
+        icon={ShieldCheck}
+        title={t('systemCredentials.registration.title')}
+        description={t('systemCredentials.registration.description')}
+        stored={t(registrationModeLabelKey(savedMode))}
+        updatedAt={data?.registration.updatedAt ?? null}
+      />
+
+      {isLoading ? (
+        <SectionSkeleton />
+      ) : (
+        <div
+          className="grid gap-3 md:grid-cols-3"
+          role="radiogroup"
+          aria-label={t('systemCredentials.registration.title')}
+        >
+          {REGISTRATION_OPTIONS.map((option) => {
+            const Icon = option.icon;
+            const selected = mode === option.mode;
+            return (
+              <button
+                key={option.mode}
+                type="button"
+                className={cn(
+                  'ease-snap focus-visible:ring-ring flex min-h-28 flex-col items-start gap-2 rounded-md border p-4 text-left text-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-60',
+                  selected
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-card hover:border-foreground/30'
+                )}
+                role="radio"
+                aria-checked={selected}
+                disabled={saveMutation.isPending}
+                onClick={() => setMode(option.mode)}
+              >
+                <Icon className="h-4 w-4" />
+                <span className="font-medium">{t(option.labelKey)}</span>
+                <span className="text-muted-foreground text-xs leading-5">
+                  {t(option.descriptionKey)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          size="sm"
+          onClick={() => saveMutation.mutate()}
+          disabled={isLoading || saveMutation.isPending || mode === savedMode}
+        >
+          {saveMutation.isPending ? (
+            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Save className="mr-1.5 h-3.5 w-3.5" />
+          )}
+          {t('systemCredentials.save')}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -695,4 +857,16 @@ function SectionSkeleton() {
       {t('systemCredentials.loading')}
     </div>
   );
+}
+
+function registrationModeLabelKey(mode: RegistrationMode) {
+  switch (mode) {
+    case 'invite_only':
+      return 'systemCredentials.registration.inviteOnly';
+    case 'admin_created_only':
+      return 'systemCredentials.registration.adminCreatedOnly';
+    case 'allow_registration':
+    default:
+      return 'systemCredentials.registration.allowRegistration';
+  }
 }

@@ -978,7 +978,9 @@
     "toast_verified_description": "Selamat bergabung.",
     "toast_not_verified_title": "Masih belum diverifikasi",
     "toast_not_verified_description": "Kami tidak menemukan verifikasi yang selesai. Silakan klik tautan di kotak masuk Anda atau kirim ulang.",
-    "toast_refresh_failed_title": "Tidak dapat menyegarkan status"
+    "toast_refresh_failed_title": "Tidak dapat menyegarkan status",
+    "registration_invite_required": "Pendaftaran hanya dengan undangan. Minta undangan dari admin.",
+    "registration_admin_only": "Pendaftaran ditutup. Minta admin membuat akun Anda."
   },
   "issuesViews": {
     "loading": "Memuat…",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "Kunci secret S3",
         "s3SecretKeyStored": "Kunci secret S3 (tersimpan: {preview})",
         "s3SecretPlaceholder": "Secret S3"
+      },
+      "registration": {
+        "title": "Pendaftaran",
+        "description": "Pilih siapa yang dapat membuat akun baru pada instalasi ini.",
+        "loadError": "Gagal memuat kebijakan pendaftaran",
+        "saveError": "Gagal menyimpan kebijakan pendaftaran",
+        "saved": "Kebijakan pendaftaran disimpan",
+        "savedDescription": "Pembuatan akun baru sekarang mengikuti kebijakan yang dipilih.",
+        "allowRegistration": "Izinkan pendaftaran",
+        "allowRegistrationDescription": "Siapa pun dapat membuat akun dari halaman pendaftaran publik.",
+        "inviteOnly": "Hanya undangan",
+        "inviteOnlyDescription": "Hanya pengguna dengan token undangan yang valid yang dapat menyelesaikan pendaftaran.",
+        "adminCreatedOnly": "Hanya akun yang dibuat admin",
+        "adminCreatedOnlyDescription": "Pendaftaran publik dinonaktifkan; super admin membuat akun dari tab Pengguna."
       }
     },
     "emailPreview": {

@@ -978,7 +978,9 @@
     "toast_verified_description": "Witamy na pokładzie.",
     "toast_not_verified_title": "Nadal niezweryfikowano",
     "toast_not_verified_description": "Nie udało się znaleźć ukończonej weryfikacji. Kliknij link w skrzynce odbiorczej lub wyślij go ponownie.",
-    "toast_refresh_failed_title": "Nie udało się odświeżyć statusu"
+    "toast_refresh_failed_title": "Nie udało się odświeżyć statusu",
+    "registration_invite_required": "Rejestracja jest tylko na zaproszenie. Poproś administratora o zaproszenie.",
+    "registration_admin_only": "Rejestracja jest zamknięta. Poproś administratora o utworzenie konta."
   },
   "issuesViews": {
     "loading": "Ładowanie…",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "Klucz tajny S3",
         "s3SecretKeyStored": "Klucz tajny S3 (zapisany: {preview})",
         "s3SecretPlaceholder": "Sekret S3"
+      },
+      "registration": {
+        "title": "Rejestracja",
+        "description": "Wybierz, kto może tworzyć nowe konta w tej instalacji.",
+        "loadError": "Nie udało się wczytać zasad rejestracji",
+        "saveError": "Nie udało się zapisać zasad rejestracji",
+        "saved": "Zasady rejestracji zapisane",
+        "savedDescription": "Tworzenie nowych kont działa teraz zgodnie z wybraną zasadą.",
+        "allowRegistration": "Zezwól na rejestrację",
+        "allowRegistrationDescription": "Każdy może utworzyć konto z publicznej strony rejestracji.",
+        "inviteOnly": "Tylko zaproszenie",
+        "inviteOnlyDescription": "Tylko użytkownicy z prawidłowym tokenem zaproszenia mogą dokończyć rejestrację.",
+        "adminCreatedOnly": "Tylko konta utworzone przez administratora",
+        "adminCreatedOnlyDescription": "Publiczna rejestracja jest wyłączona; superadministratorzy tworzą konta w karcie Użytkownicy."
       }
     },
     "emailPreview": {

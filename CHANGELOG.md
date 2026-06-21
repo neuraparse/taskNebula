@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.6.7] - 2026-06-21
+
+### Added
+
+- **Self-hosted registration policy controls.** Super admins can now choose the platform-wide signup mode from Admin → System: allow public registration, require valid invitations, or restrict account creation to super admins. The policy is stored in `system_settings`, defaults to open registration for backward compatibility, and every update is audit-logged.
+
+### Changed
+
+- **Public signup and OAuth now honor the registration policy.** Invite-only mode still lets invited users complete signup with a valid invite token, while admin-created-only mode blocks public signup paths entirely. Signup errors are localized across all 30 shipped languages.
+
 ## [0.6.6] - 2026-06-20
 
 ### Added
@@ -310,7 +320,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Internal alpha release. [See git log] for details.
 
-[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.6.6...HEAD
+[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.6.7...HEAD
+[0.6.7]: https://github.com/neuraparse/tasknebula/compare/v0.6.6...v0.6.7
 [0.6.6]: https://github.com/neuraparse/tasknebula/compare/v0.6.5...v0.6.6
 [0.6.5]: https://github.com/neuraparse/tasknebula/compare/v0.6.4...v0.6.5
 [0.6.4]: https://github.com/neuraparse/tasknebula/compare/v0.6.3...v0.6.4

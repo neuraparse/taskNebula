@@ -978,7 +978,9 @@
     "toast_verified_description": "Vítejte na palubě.",
     "toast_not_verified_title": "Stále neověřeno",
     "toast_not_verified_description": "Nenašli jsme dokončené ověření. Klikněte prosím na odkaz v doručené poště nebo jej odešlete znovu.",
-    "toast_refresh_failed_title": "Stav se nepodařilo obnovit"
+    "toast_refresh_failed_title": "Stav se nepodařilo obnovit",
+    "registration_invite_required": "Registrace je pouze na pozvánku. Požádejte správce o pozvánku.",
+    "registration_admin_only": "Registrace je uzavřena. Požádejte správce o vytvoření účtu."
   },
   "issuesViews": {
     "loading": "Načítání…",
@@ -3399,6 +3401,20 @@
         "s3SecretKey": "S3 tajný klíč",
         "s3SecretKeyStored": "S3 tajný klíč (uloženo: {preview})",
         "s3SecretPlaceholder": "Tajný klíč S3"
+      },
+      "registration": {
+        "title": "Registrace",
+        "description": "Vyberte, kdo může v této instalaci vytvářet nové účty.",
+        "loadError": "Nepodařilo se načíst zásady registrace",
+        "saveError": "Nepodařilo se uložit zásady registrace",
+        "saved": "Zásady registrace byly uloženy",
+        "savedDescription": "Vytváření nových účtů se nyní řídí vybranými zásadami.",
+        "allowRegistration": "Povolit registraci",
+        "allowRegistrationDescription": "Kdokoli si může vytvořit účet z veřejné registrační stránky.",
+        "inviteOnly": "Pouze na pozvánku",
+        "inviteOnlyDescription": "Registraci mohou dokončit pouze uživatelé s platným tokenem pozvánky.",
+        "adminCreatedOnly": "Pouze účty vytvořené správcem",
+        "adminCreatedOnlyDescription": "Veřejná registrace je vypnutá; super správci vytvářejí účty na kartě Uživatelé."
       }
     },
     "emailPreview": {
