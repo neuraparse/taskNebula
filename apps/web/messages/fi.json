@@ -4126,7 +4126,8 @@
       "appearance": "Ulkoasu",
       "aiAgents": "AI ja agentit",
       "communications": "Viestintä",
-      "activity": "Toiminta"
+      "activity": "Toiminta",
+      "labels": "Tunnisteet"
     },
     "aiDisabled": {
       "title": "Tekoälyominaisuudet on keskeytetty koko alustalla",

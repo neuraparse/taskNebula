@@ -4126,7 +4126,8 @@
       "appearance": "Зовнішній вигляд",
       "aiAgents": "AI та агенти",
       "communications": "Комунікації",
-      "activity": "Активність"
+      "activity": "Активність",
+      "labels": "Мітки"
     },
     "aiDisabled": {
       "title": "Функції AI призупинено на рівні всієї платформи",

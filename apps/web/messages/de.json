@@ -4126,7 +4126,8 @@
       "appearance": "Darstellung",
       "aiAgents": "KI & Agenten",
       "communications": "Kommunikation",
-      "activity": "Aktivität"
+      "activity": "Aktivität",
+      "labels": "Labels"
     },
     "aiDisabled": {
       "title": "KI-Funktionen sind plattformweit pausiert",

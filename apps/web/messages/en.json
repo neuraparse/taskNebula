@@ -4126,7 +4126,8 @@
       "appearance": "Appearance",
       "aiAgents": "AI & Agents",
       "communications": "Communications",
-      "activity": "Activity"
+      "activity": "Activity",
+      "labels": "Labels"
     },
     "aiDisabled": {
       "title": "AI features are paused platform-wide",

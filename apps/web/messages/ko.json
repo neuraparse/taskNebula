@@ -4126,7 +4126,8 @@
       "appearance": "모양",
       "aiAgents": "AI 및 에이전트",
       "communications": "커뮤니케이션",
-      "activity": "활동"
+      "activity": "활동",
+      "labels": "라벨"
     },
     "aiDisabled": {
       "title": "AI 기능이 플랫폼 전체에서 일시 중지됨",

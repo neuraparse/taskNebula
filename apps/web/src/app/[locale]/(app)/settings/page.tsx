@@ -10,6 +10,7 @@ import { NotificationPreferences } from '@/components/settings/notification-pref
 import { AppearanceSettings } from '@/components/settings/appearance-settings';
 import { OrganizationAiAgentsSettings } from '@/components/settings/organization-ai-agents';
 import { OrganizationCommunicationsSettings } from '@/components/settings/organization-communications-settings';
+import { LabelsManager } from '@/components/settings/labels-manager';
 import { MembersPageClient } from './members/members-page-client';
 import { OrganizationSettingsClient } from './organization/organization-settings-client';
 import { useOrganization } from '@/lib/hooks/use-organization';
@@ -26,6 +27,7 @@ import {
   ScrollText,
   Bot,
   MessageSquareText,
+  Tags,
 } from 'lucide-react';
 
 type NavItem = {
@@ -34,6 +36,7 @@ type NavItem = {
     | 'members'
     | 'api-keys'
     | 'webhooks'
+    | 'labels'
     | 'notifications'
     | 'appearance'
     | 'ai-agents'
@@ -71,6 +74,7 @@ const NAV_ITEMS: readonly NavItem[] = [
     icon: Webhook,
     requiredPermissions: 'webhook:view',
   },
+  { value: 'labels', labelKey: 'nav.labels', icon: Tags },
   { value: 'notifications', labelKey: 'nav.notifications', icon: Bell },
   { value: 'appearance', labelKey: 'nav.appearance', icon: Palette },
   {
@@ -112,7 +116,7 @@ export default function SettingsPage() {
       if (!item.requiredPermissions) return true;
       return perms.has(item.requiredPermissions);
     });
-  }, [perms.isLoading, perms]);
+  }, [perms]);
 
   const validTabs = useMemo(() => visibleNavItems.map((item) => item.value), [visibleNavItems]);
 
@@ -205,6 +209,8 @@ function renderContent(tab: TabValue, organizationId: string, aiEnabled: boolean
       return <OrganizationAiAgentsSettings organizationId={organizationId} />;
     case 'communications':
       return <OrganizationCommunicationsSettings organizationId={organizationId} />;
+    case 'labels':
+      return <LabelsManager organizationId={organizationId} />;
     case 'notifications':
       return <NotificationPreferences />;
     case 'api-keys':

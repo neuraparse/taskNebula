@@ -4126,7 +4126,8 @@
       "appearance": "外观",
       "aiAgents": "AI 与智能体",
       "communications": "沟通",
-      "activity": "活动"
+      "activity": "活动",
+      "labels": "标签"
     },
     "aiDisabled": {
       "title": "AI 功能已在平台范围内暂停",

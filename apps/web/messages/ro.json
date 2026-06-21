@@ -4126,7 +4126,8 @@
       "appearance": "Aspect",
       "aiAgents": "AI și agenți",
       "communications": "Comunicări",
-      "activity": "Activitate"
+      "activity": "Activitate",
+      "labels": "Etichete"
     },
     "aiDisabled": {
       "title": "Funcționalitățile AI sunt în pauză la nivel de platformă",

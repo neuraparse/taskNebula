@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.6.8] - 2026-06-21
+
+### Added
+
+- **UI visibility for recent admin controls.** Organization labels now appear in the main Settings tab flow, not only as a standalone sidebar route, so admins can manage first-class labels from the normal settings surface.
+- **Agent approval queue surfaced in Admin.** The AGENTOWNERS governance and pending approval queue now also appears in Admin → Agent control, giving super-admins a direct review surface instead of hiding approvals inside workspace AI settings.
+
 ## [0.6.7] - 2026-06-21
 
 ### Added
@@ -320,7 +327,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Internal alpha release. [See git log] for details.
 
-[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.6.7...HEAD
+[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.6.8...HEAD
+[0.6.8]: https://github.com/neuraparse/tasknebula/compare/v0.6.7...v0.6.8
 [0.6.7]: https://github.com/neuraparse/tasknebula/compare/v0.6.6...v0.6.7
 [0.6.6]: https://github.com/neuraparse/tasknebula/compare/v0.6.5...v0.6.6
 [0.6.5]: https://github.com/neuraparse/tasknebula/compare/v0.6.4...v0.6.5

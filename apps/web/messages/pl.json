@@ -4126,7 +4126,8 @@
       "appearance": "Wygląd",
       "aiAgents": "AI i agenci",
       "communications": "Komunikacja",
-      "activity": "Aktywność"
+      "activity": "Aktywność",
+      "labels": "Etykiety"
     },
     "aiDisabled": {
       "title": "Funkcje AI są wstrzymane w skali całej platformy",

@@ -4126,7 +4126,8 @@
       "appearance": "Внешний вид",
       "aiAgents": "AI и агенты",
       "communications": "Коммуникации",
-      "activity": "Активность"
+      "activity": "Активность",
+      "labels": "Метки"
     },
     "aiDisabled": {
       "title": "Функции AI приостановлены на уровне всей платформы",

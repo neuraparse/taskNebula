@@ -4126,7 +4126,8 @@
       "appearance": "Utseende",
       "aiAgents": "AI och agenter",
       "communications": "Kommunikation",
-      "activity": "Aktivitet"
+      "activity": "Aktivitet",
+      "labels": "Etiketter"
     },
     "aiDisabled": {
       "title": "AI-funktioner är pausade plattformsövergripande",

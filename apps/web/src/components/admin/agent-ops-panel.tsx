@@ -16,6 +16,8 @@ import {
   useUpdateAdminAgentControl,
 } from '@/lib/hooks/use-agents';
 import { PlatformAiCredentials } from './platform-ai-credentials';
+import { AgentGovernancePanel } from '@/components/settings/agent-governance-panel';
+import { useOrganization } from '@/lib/hooks/use-organization';
 import { cn } from '@/lib/utils';
 import type { ComponentType } from 'react';
 import {
@@ -67,6 +69,7 @@ export function AgentOpsPanel() {
   const { data, isLoading, error } = useAdminAgentControl();
   const stream = useAdminAgentStream();
   const updateControl = useUpdateAdminAgentControl();
+  const { currentOrganizationId } = useOrganization();
   const { toast } = useToast();
   const [formState, setFormState] = useState<AgentControlForm>(EMPTY_FORM);
 
@@ -258,6 +261,12 @@ export function AgentOpsPanel() {
           </div>
         </div>
       </section>
+
+      {currentOrganizationId ? (
+        <section>
+          <AgentGovernancePanel organizationId={currentOrganizationId} />
+        </section>
+      ) : null}
 
       {/* Platform-default provider keys */}
       <section>

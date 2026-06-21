@@ -4126,7 +4126,8 @@
       "appearance": "外觀",
       "aiAgents": "AI 與代理程式",
       "communications": "通訊",
-      "activity": "活動"
+      "activity": "活動",
+      "labels": "標籤"
     },
     "aiDisabled": {
       "title": "AI 功能已在整個平台暫停",

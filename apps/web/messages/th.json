@@ -4126,7 +4126,8 @@
       "appearance": "รูปลักษณ์",
       "aiAgents": "AI และเอเจนต์",
       "communications": "การสื่อสาร",
-      "activity": "กิจกรรม"
+      "activity": "กิจกรรม",
+      "labels": "ป้ายกำกับ"
     },
     "aiDisabled": {
       "title": "ฟีเจอร์ AI ถูกหยุดชั่วคราวทั่วทั้งแพลตฟอร์ม",

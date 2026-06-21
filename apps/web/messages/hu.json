@@ -4126,7 +4126,8 @@
       "appearance": "Megjelenés",
       "aiAgents": "AI és ügynökök",
       "communications": "Kommunikáció",
-      "activity": "Tevékenység"
+      "activity": "Tevékenység",
+      "labels": "Címkék"
     },
     "aiDisabled": {
       "title": "Az AI-funkciók platformszerte szüneteltetve vannak",

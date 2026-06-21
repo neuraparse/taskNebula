@@ -4126,7 +4126,8 @@
       "appearance": "Vzhled",
       "aiAgents": "AI a agenti",
       "communications": "Komunikace",
-      "activity": "Aktivita"
+      "activity": "Aktivita",
+      "labels": "Štítky"
     },
     "aiDisabled": {
       "title": "Funkce AI jsou pozastaveny pro celou platformu",

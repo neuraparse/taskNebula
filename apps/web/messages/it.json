@@ -4126,7 +4126,8 @@
       "appearance": "Aspetto",
       "aiAgents": "AI e agenti",
       "communications": "Comunicazioni",
-      "activity": "Attività"
+      "activity": "Attività",
+      "labels": "Etichette"
     },
     "aiDisabled": {
       "title": "Le funzionalità AI sono in pausa a livello di piattaforma",

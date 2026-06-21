@@ -4126,7 +4126,8 @@
       "appearance": "Görünüm",
       "aiAgents": "AI ve Aracılar",
       "communications": "İletişimler",
-      "activity": "Etkinlik"
+      "activity": "Etkinlik",
+      "labels": "Etiketler"
     },
     "aiDisabled": {
       "title": "AI özellikleri platform genelinde duraklatıldı",

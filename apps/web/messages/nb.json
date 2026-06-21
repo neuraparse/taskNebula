@@ -4126,7 +4126,8 @@
       "appearance": "Utseende",
       "aiAgents": "AI og agenter",
       "communications": "Kommunikasjon",
-      "activity": "Aktivitet"
+      "activity": "Aktivitet",
+      "labels": "Etiketter"
     },
     "aiDisabled": {
       "title": "AI-funksjoner er satt på pause for hele plattformen",

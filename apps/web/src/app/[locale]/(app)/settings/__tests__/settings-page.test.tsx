@@ -45,6 +45,9 @@ jest.mock('@/components/settings/api-keys-manager', () => ({
 jest.mock('@/components/settings/webhooks-manager', () => ({
   WebhooksManager: () => <div data-testid="manager-webhooks">webhooks</div>,
 }));
+jest.mock('@/components/settings/labels-manager', () => ({
+  LabelsManager: () => <div data-testid="manager-labels">labels</div>,
+}));
 jest.mock('@/components/audit/audit-log-viewer', () => ({
   AuditLogViewer: () => <div data-testid="manager-audit-log">audit-log</div>,
 }));
@@ -58,7 +61,9 @@ jest.mock('@/components/settings/organization-ai-agents', () => ({
   OrganizationAiAgentsSettings: () => <div data-testid="manager-ai-agents">ai-agents</div>,
 }));
 jest.mock('@/components/settings/organization-communications-settings', () => ({
-  OrganizationCommunicationsSettings: () => <div data-testid="manager-communications">communications</div>,
+  OrganizationCommunicationsSettings: () => (
+    <div data-testid="manager-communications">communications</div>
+  ),
 }));
 jest.mock('../members/members-page-client', () => ({
   MembersPageClient: () => <div data-testid="manager-members">members</div>,
@@ -106,6 +111,15 @@ describe('SettingsPage (/settings)', () => {
     renderWithProviders(<SettingsPage />);
 
     expect(screen.getByTestId('manager-webhooks')).toBeInTheDocument();
+    expect(screen.queryByTestId('manager-organization')).not.toBeInTheDocument();
+  });
+
+  it('mounts the labels manager from the normal settings tab flow', () => {
+    mockSearchParamsGet.mockImplementation((key) => (key === 'tab' ? 'labels' : null));
+
+    renderWithProviders(<SettingsPage />);
+
+    expect(screen.getByTestId('manager-labels')).toBeInTheDocument();
     expect(screen.queryByTestId('manager-organization')).not.toBeInTheDocument();
   });
 

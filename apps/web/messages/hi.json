@@ -4126,7 +4126,8 @@
       "appearance": "उपस्थिति",
       "aiAgents": "AI और एजेंट्स",
       "communications": "संचार",
-      "activity": "गतिविधि"
+      "activity": "गतिविधि",
+      "labels": "लेबल"
     },
     "aiDisabled": {
       "title": "AI फ़ीचर प्लेटफ़ॉर्म-व्यापी रूप से रोके गए हैं",

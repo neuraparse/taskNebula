@@ -4126,7 +4126,8 @@
       "appearance": "Weergave",
       "aiAgents": "AI & agents",
       "communications": "Communicatie",
-      "activity": "Activiteit"
+      "activity": "Activiteit",
+      "labels": "Labels"
     },
     "aiDisabled": {
       "title": "AI-functies zijn platformbreed gepauzeerd",

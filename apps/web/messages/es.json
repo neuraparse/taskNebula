@@ -4126,7 +4126,8 @@
       "appearance": "Apariencia",
       "aiAgents": "IA y agentes",
       "communications": "Comunicaciones",
-      "activity": "Actividad"
+      "activity": "Actividad",
+      "labels": "Etiquetas"
     },
     "aiDisabled": {
       "title": "Las funciones de IA están pausadas en toda la plataforma",

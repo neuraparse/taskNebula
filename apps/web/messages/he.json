@@ -4126,7 +4126,8 @@
       "appearance": "מראה",
       "aiAgents": "AI וסוכנים",
       "communications": "תקשורת",
-      "activity": "פעילות"
+      "activity": "פעילות",
+      "labels": "תוויות"
     },
     "aiDisabled": {
       "title": "תכונות ה-AI מושהות בכל הפלטפורמה",

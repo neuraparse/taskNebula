@@ -4126,7 +4126,8 @@
       "appearance": "Giao diện",
       "aiAgents": "AI & Tác nhân",
       "communications": "Giao tiếp",
-      "activity": "Hoạt động"
+      "activity": "Hoạt động",
+      "labels": "Nhãn"
     },
     "aiDisabled": {
       "title": "Các tính năng AI đã tạm dừng trên toàn nền tảng",

@@ -4126,7 +4126,8 @@
       "appearance": "Външен вид",
       "aiAgents": "AI и агенти",
       "communications": "Комуникации",
-      "activity": "Активност"
+      "activity": "Активност",
+      "labels": "Етикети"
     },
     "aiDisabled": {
       "title": "AI функциите са на пауза в цялата платформа",

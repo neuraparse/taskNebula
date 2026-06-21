@@ -4126,7 +4126,8 @@
       "appearance": "外観",
       "aiAgents": "AI とエージェント",
       "communications": "コミュニケーション",
-      "activity": "アクティビティ"
+      "activity": "アクティビティ",
+      "labels": "ラベル"
     },
     "aiDisabled": {
       "title": "AI 機能はプラットフォーム全体で一時停止されています",

@@ -4126,7 +4126,8 @@
       "appearance": "Tampilan",
       "aiAgents": "AI & Agen",
       "communications": "Komunikasi",
-      "activity": "Aktivitas"
+      "activity": "Aktivitas",
+      "labels": "Label"
     },
     "aiDisabled": {
       "title": "Fitur AI dijeda di seluruh platform",
