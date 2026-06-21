@@ -1938,7 +1938,15 @@
       "effects_desc": "एम्बिएंट एनिमेशन और ग्रेडिएंट सतहें टॉगल करें।",
       "animations_label": "एनिमेशन",
       "gradients_label": "ग्रेडिएंट",
-      "reset_to_defaults": "डिफ़ॉल्ट पर रीसेट करें"
+      "reset_to_defaults": "डिफ़ॉल्ट पर रीसेट करें",
+      "interface_font_heading": "Interface font",
+      "interface_font_desc": "Choose the typeface used across dashboard and workspace surfaces.",
+      "interface_font_sr": "Interface font selection",
+      "font_brand": "TaskNebula classic",
+      "font_brand_desc": "Previous dashboard font. Clean, compact, and the default.",
+      "font_ibm": "IBM Plex",
+      "font_ibm_desc": "IBM-style technical interface font used by the landing page.",
+      "font_sample": "Aa"
     },
     "orgComms": {
       "toggle_enabled_label": "मॉड्यूल सक्षम करें",

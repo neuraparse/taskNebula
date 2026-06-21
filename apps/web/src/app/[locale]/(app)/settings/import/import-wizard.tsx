@@ -228,7 +228,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
       </div>
 
       {/* Source-specific form */}
-      <div className="border-border bg-card space-y-3 rounded-lg border p-4">
+      <div className="surface-card space-y-3 p-4">
         <Label htmlFor="projectId">{t('import.targetProjectId')}</Label>
         <Input
           id="projectId"
@@ -321,7 +321,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
 
       {/* Column mapping (CSV only) */}
       {source === 'csv' && csvHeaders.length > 0 && (
-        <div className="border-border bg-card space-y-2 rounded-lg border p-4">
+        <div className="surface-card space-y-2 p-4">
           <div className="text-sm font-medium">{t('import.columnMapping')}</div>
           <p className="text-muted-foreground text-xs">{t('import.columnMappingHint')}</p>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -351,7 +351,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
 
       {/* Preview */}
       {preview && preview.length > 0 && (
-        <div className="border-border bg-card space-y-2 rounded-lg border p-4">
+        <div className="surface-card space-y-2 p-4">
           <div className="flex items-center justify-between">
             <div className="text-sm font-medium">
               {t('import.previewCount', { shown: preview.length, total: previewTotal })}
@@ -389,7 +389,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
 
       {/* Progress */}
       {jobStatus && (
-        <div className="border-border bg-card space-y-2 rounded-lg border p-4">
+        <div className="surface-card space-y-2 p-4">
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium">
               {jobStatus.status === 'completed'

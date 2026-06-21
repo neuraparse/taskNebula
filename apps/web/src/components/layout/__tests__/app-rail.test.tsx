@@ -51,7 +51,7 @@ describe('AppRail', () => {
     render(<AppRail />);
 
     const myIssues = screen.getByRole('link', { name: /my issues/i });
-    expect(myIssues).toHaveClass('h-[52px]', 'w-12', 'justify-center');
+    expect(myIssues).toHaveClass('h-[50px]', 'w-12', 'justify-center');
     expect(screen.getByText('My Issues')).toHaveClass(
       'line-clamp-2',
       'h-5',

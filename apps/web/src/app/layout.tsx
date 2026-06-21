@@ -84,11 +84,26 @@ export default async function RootLayout({
                   var state = raw ? (JSON.parse(raw).state || {}) : {};
                   var theme = state.colorTheme || 'default';
                   var visual = state.visualStyle || 'modern';
+                  var font = state.interfaceFont === 'ibm' ? 'ibm' : 'brand';
                   var anims = state.enableAnimations === false ? 'false' : 'true';
+                  var fontStacks = {
+                    brand: {
+                      sans: "'Plus Jakarta Sans'",
+                      mono: "'JetBrains Mono'"
+                    },
+                    ibm: {
+                      sans: "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif",
+                      mono: "'IBM Plex Mono', 'IBM Plex Sans', ui-monospace, monospace"
+                    }
+                  };
+                  var activeFont = fontStacks[font] || fontStacks.brand;
                   var root = document.documentElement;
                   root.setAttribute('data-theme', theme);
                   root.setAttribute('data-visual', visual);
+                  root.setAttribute('data-interface-font', font);
                   root.setAttribute('data-animations', anims);
+                  root.style.setProperty('--app-font-sans', activeFont.sans);
+                  root.style.setProperty('--app-font-mono', activeFont.mono);
                 } catch (e) {}
               })();
             `,

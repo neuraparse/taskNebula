@@ -12,6 +12,9 @@ import { ActivityFeed } from '@/components/activity/activity-feed';
 import { YourWorkWidget } from '@/components/dashboard/your-work-widget';
 import { UpcomingDeadlinesWidget } from '@/components/dashboard/upcoming-deadlines-widget';
 import { PinnedItemsWidget } from '@/components/dashboard/pinned-items-widget';
+import { CatchMeUpBanner } from '@/components/dashboard/catch-me-up-banner';
+import { StandupWidget } from '@/components/dashboard/standup-widget';
+import { AnalyticsBento } from '@/components/dashboard/analytics-bento';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useProjects } from '@/lib/hooks/use-projects';
 import {
@@ -162,25 +165,27 @@ export function DashboardClient() {
 
   return (
     <>
-      <div className="bg-background flex h-full min-h-0 flex-col">
+      <div className="bg-surface flex h-full min-h-0 flex-col">
         <div className="custom-scrollbar flex-1 overflow-y-auto">
-          <div className="space-y-8 p-6">
+          <div className="mx-auto w-full max-w-[1600px] space-y-5 p-4 sm:p-5 lg:p-6">
+            <CatchMeUpBanner />
+
             {/* Greeting */}
-            <div className="animate-fade-up flex items-end justify-between gap-4">
+            <div className="surface-card animate-fade-up flex items-end justify-between gap-4 p-5">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="kicker">{tDash('kicker')}</span>
                   <span className="live-pill">{tDash('live')}</span>
                 </div>
-                <h1 className="text-foreground text-balance text-2xl font-semibold tracking-tight">
+                <h1 className="text-foreground text-balance text-[28px] font-[400] leading-tight tracking-tight">
                   {tDash('welcome_back', { name: firstName })}
                 </h1>
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground max-w-2xl text-sm">
                   {currentTeamId ? tDash('subtitle_team') : tDash('subtitle_personal')}
                 </p>
               </div>
               <Link href="/my-issues">
-                <Button size="sm" className="gap-2">
+                <Button size="sm" className="gap-2 rounded-md">
                   <Target className="h-4 w-4" />
                   {tNav('my_issues')}
                 </Button>
@@ -188,7 +193,7 @@ export function DashboardClient() {
             </div>
 
             {/* KPI Summary Row */}
-            <div className="stagger grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="stagger grid gap-3 md:grid-cols-2 lg:grid-cols-4">
               <StatTile
                 label={tDash('stat_active')}
                 value={stats.active}
@@ -216,9 +221,9 @@ export function DashboardClient() {
             </div>
 
             {/* Main Content */}
-            <div className="stagger grid gap-6 lg:grid-cols-3">
+            <div className="stagger grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
               {/* My Issues */}
-              <div className="surface-card animate-fade-up p-6 lg:col-span-2">
+              <div className="surface-card animate-fade-up p-5">
                 <div className="mb-4 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Inbox className="text-muted-foreground h-4 w-4" />
@@ -257,7 +262,7 @@ export function DashboardClient() {
                   </div>
                 ) : (
                   <div className="space-y-0.5">
-                    {myIssues.slice(0, 5).map((issue) => (
+                    {myIssues.slice(0, 7).map((issue) => (
                       <IssueRow
                         key={issue.id}
                         issue={issue}
@@ -268,20 +273,22 @@ export function DashboardClient() {
                 )}
               </div>
 
-              {/* Recent Activity */}
-              {currentOrganizationId && (
-                <div className="surface-card animate-fade-up p-6">
-                  <ActivityFeed organizationId={currentOrganizationId} limit={5} />
-                </div>
-              )}
+              <div className="space-y-4">
+                <StandupWidget />
+                {currentOrganizationId ? (
+                  <ActivityFeed organizationId={currentOrganizationId} limit={6} />
+                ) : null}
+              </div>
             </div>
 
             {/* Workspace widgets */}
-            <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
               <YourWorkWidget />
               <UpcomingDeadlinesWidget />
               <PinnedItemsWidget />
             </div>
+
+            <AnalyticsBento organizationId={currentOrganizationId} projectId={firstProjectId} />
           </div>
         </div>
       </div>
@@ -317,14 +324,16 @@ function StatTile({
   icon: LucideIcon;
 }) {
   return (
-    <div className="surface-card surface-card-hover ease-snap max-h-[140px] p-4 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
-      <span className={cn('icon-tile', `icon-tile-accent-${hue}`)}>
-        <Icon className="h-4 w-4" />
-      </span>
-      <p className="text-foreground mt-3 text-2xl font-semibold tabular-nums tracking-tight">
+    <div className="surface-card surface-card-hover ease-snap flex min-h-[118px] flex-col justify-between p-4 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-muted-foreground text-[11px] uppercase tracking-[0.14em]">{label}</p>
+        <span className={cn('icon-tile h-8 w-8', `icon-tile-accent-${hue}`)}>
+          <Icon className="h-4 w-4" />
+        </span>
+      </div>
+      <p className="text-foreground text-[34px] font-[400] tabular-nums leading-none tracking-tight">
         {value}
       </p>
-      <p className="text-muted-foreground mt-0.5 text-[11px] uppercase tracking-wide">{label}</p>
     </div>
   );
 }
@@ -351,7 +360,7 @@ function IssueRow({ issue, onClick }: { issue: Issue; onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="row-interactive ease-snap flex min-h-[40px] w-full cursor-pointer items-center gap-3 rounded-md py-2.5 pl-2 pr-3 text-left transition-all duration-150"
+      className="row-interactive ease-snap hover:border-border-strong flex min-h-[40px] w-full cursor-pointer items-center gap-3 rounded-md border border-transparent py-2.5 pl-2 pr-3 text-left transition-all duration-150"
     >
       <span className={cn('priority-indicator h-6 shrink-0', priorityCls)} />
 

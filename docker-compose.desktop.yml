@@ -43,7 +43,7 @@ services:
       retries: 10
 
   web:
-    image: ${TASKNEBULA_IMAGE:-neuraparse/tasknebula:0.7.0}
+    image: ${TASKNEBULA_IMAGE:-neuraparse/tasknebula:0.7.1}
     restart: unless-stopped
     depends_on:
       postgres:

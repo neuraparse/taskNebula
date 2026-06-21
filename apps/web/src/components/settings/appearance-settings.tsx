@@ -9,6 +9,7 @@ import {
   useThemeStore,
   themeInfo,
   type ColorTheme,
+  type InterfaceFont,
   type VisualStyle,
 } from '@/lib/stores/theme-store';
 import { Label } from '@/components/ui/label';
@@ -31,6 +32,26 @@ const VISUAL_STYLES: { value: VisualStyle; labelKey: string }[] = [
   { value: 'minimal', labelKey: 'appearance.style_minimal' },
 ];
 
+const INTERFACE_FONTS: {
+  value: InterfaceFont;
+  labelKey: string;
+  descKey: string;
+  sampleClassName: string;
+}[] = [
+  {
+    value: 'brand',
+    labelKey: 'appearance.font_brand',
+    descKey: 'appearance.font_brand_desc',
+    sampleClassName: "font-['Plus_Jakarta_Sans']",
+  },
+  {
+    value: 'ibm',
+    labelKey: 'appearance.font_ibm',
+    descKey: 'appearance.font_ibm_desc',
+    sampleClassName: "font-['IBM_Plex_Sans']",
+  },
+];
+
 const COLOR_THEMES: ColorTheme[] = ['default', 'ocean', 'forest', 'sunset', 'purple', 'rose'];
 
 interface ServerAppearanceResponse {
@@ -39,6 +60,7 @@ interface ServerAppearanceResponse {
     theme: 'light' | 'dark' | 'system' | null;
     colorTheme: string | null;
     visualStyle: string | null;
+    interfaceFont: string | null;
     animationsEnabled: boolean;
     gradientsEnabled: boolean;
     updatedAt: string | null;
@@ -58,10 +80,12 @@ export function AppearanceSettings() {
   const {
     colorTheme,
     visualStyle,
+    interfaceFont,
     enableAnimations,
     enableGradients,
     setColorTheme,
     setVisualStyle,
+    setInterfaceFont,
     setEnableAnimations,
     setEnableGradients,
     hydrateFromServer,
@@ -93,6 +117,7 @@ export function AppearanceSettings() {
     hydrateFromServer({
       colorTheme: s.colorTheme,
       visualStyle: s.visualStyle,
+      interfaceFont: s.interfaceFont,
       animationsEnabled: s.animationsEnabled,
       gradientsEnabled: s.gradientsEnabled,
     });
@@ -125,6 +150,7 @@ export function AppearanceSettings() {
       theme,
       colorTheme,
       visualStyle,
+      interfaceFont,
       animationsEnabled: enableAnimations,
       gradientsEnabled: enableGradients,
     };
@@ -151,7 +177,15 @@ export function AppearanceSettings() {
     return () => {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
-  }, [isAuthenticated, theme, colorTheme, visualStyle, enableAnimations, enableGradients]);
+  }, [
+    isAuthenticated,
+    theme,
+    colorTheme,
+    visualStyle,
+    interfaceFont,
+    enableAnimations,
+    enableGradients,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -165,11 +199,20 @@ export function AppearanceSettings() {
     } catch {
       setColorTheme('default');
       setVisualStyle('modern');
+      setInterfaceFont('brand');
       setEnableAnimations(true);
       setEnableGradients(true);
     }
     setTheme('system');
-  }, [reset, setColorTheme, setVisualStyle, setEnableAnimations, setEnableGradients, setTheme]);
+  }, [
+    reset,
+    setColorTheme,
+    setVisualStyle,
+    setInterfaceFont,
+    setEnableAnimations,
+    setEnableGradients,
+    setTheme,
+  ]);
 
   return (
     <div className="animate-fade-up stagger space-y-8">
@@ -348,6 +391,69 @@ export function AppearanceSettings() {
                   )}
                 >
                   {t(style.labelKey)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Interface Font */}
+      <section className="space-y-4">
+        <div className="space-y-1">
+          <span className="kicker">{t('appearance.appearance_kicker')}</span>
+          <h2 className="text-lg font-semibold tracking-tight">
+            {t('appearance.interface_font_heading')}
+          </h2>
+          <p className="text-muted-foreground max-w-prose text-sm">
+            {t('appearance.interface_font_desc')}
+          </p>
+        </div>
+        <div className="surface-card rounded-lg p-6">
+          <div
+            role="group"
+            aria-labelledby="interface-font-heading"
+            className="grid grid-cols-1 gap-3 md:grid-cols-2"
+          >
+            <span id="interface-font-heading" className="sr-only">
+              {t('appearance.interface_font_sr')}
+            </span>
+            {INTERFACE_FONTS.map((font) => {
+              const isActive = interfaceFont === font.value;
+              return (
+                <button
+                  key={font.value}
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={() => setInterfaceFont(font.value)}
+                  className={cn(
+                    'ease-snap flex min-h-[112px] flex-col items-start justify-between rounded-md border p-4 text-left transition-all duration-150',
+                    'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+                    isActive
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                  )}
+                >
+                  <span className="flex w-full items-start justify-between gap-3">
+                    <span>
+                      <span className="text-foreground block text-sm font-semibold">
+                        {t(font.labelKey)}
+                      </span>
+                      <span className="text-muted-foreground mt-1 block text-xs leading-5">
+                        {t(font.descKey)}
+                      </span>
+                    </span>
+                    {isActive ? <Check className="text-primary h-4 w-4 shrink-0" /> : null}
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      'text-foreground mt-4 block text-2xl font-semibold leading-none',
+                      font.sampleClassName
+                    )}
+                  >
+                    {t('appearance.font_sample')}
+                  </span>
                 </button>
               );
             })}

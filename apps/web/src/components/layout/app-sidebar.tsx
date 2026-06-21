@@ -447,7 +447,7 @@ function isHomeSectionPath(pathname: string | null | undefined): boolean {
 }
 
 const SIDEBAR_NAV_LINK_CLASS =
-  'row-interactive text-muted-foreground ease-snap hover:text-foreground data-[active=true]:text-primary min-h-9 w-full min-w-0 rounded-md text-sm font-medium transition-all duration-150';
+  'row-interactive text-muted-foreground ease-snap border border-transparent hover:text-foreground data-[active=true]:border-primary/20 data-[active=true]:bg-primary/10 data-[active=true]:text-primary min-h-8 w-full min-w-0 rounded-md text-[13px] font-medium transition-all duration-150';
 const SIDEBAR_NAV_LABEL_CLASS = 'min-w-0 flex-1 truncate';
 
 export function AppSidebar() {
@@ -579,10 +579,10 @@ export function AppSidebar() {
   return (
     <div className="flex h-screen">
       <AppRail />
-      <aside className="border-border bg-card flex w-60 flex-col border-r">
-        <div className="flex h-14 items-center px-4">
+      <aside className="border-border bg-surface flex w-64 flex-col border-r">
+        <div className="border-border flex h-12 items-center border-b px-3">
           <button
-            className="ease-snap hover:bg-accent/60 flex w-full items-center justify-between rounded-md py-1.5 text-sm font-medium transition-all duration-150"
+            className="ease-snap hover:bg-accent/60 flex w-full items-center justify-between rounded-md px-1 py-1.5 text-sm font-medium transition-all duration-150"
             aria-label={tActions('switch_workspace')}
           >
             <div className="flex items-center gap-2.5">
@@ -611,10 +611,10 @@ export function AppSidebar() {
             )}
           />
 
-          <div className={cn('px-3', hasPageSidebar && 'hidden')}>
+          <div className={cn('px-2.5 py-3', hasPageSidebar && 'hidden')}>
             {normalizedPathname.startsWith('/settings') ||
             normalizedPathname.startsWith('/admin') ? null : (
-              <div className="mb-3 mt-1 px-3">
+              <div className="mb-2 px-3">
                 <div className="kicker">{tNav(getSectionKey(pathname))}</div>
               </div>
             )}
@@ -711,7 +711,7 @@ export function AppSidebar() {
               <>
                 {visibleSettingsLinks.length > 0 ? (
                   <>
-                    <div className="mb-1 flex items-center gap-2 px-3">
+                    <div className="mb-1 flex items-center gap-2 px-3 pt-1">
                       <Settings className="text-muted-foreground h-3 w-3" />
                       <span className="kicker">{tNav('settings')}</span>
                     </div>
@@ -803,7 +803,7 @@ export function AppSidebar() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-muted-foreground hover:text-foreground h-5 w-5"
+                    className="text-muted-foreground hover:text-foreground h-6 w-6 rounded-sm"
                     aria-label={tNav('projects')}
                   >
                     <Plus className="h-3 w-3" />
@@ -831,7 +831,7 @@ export function AppSidebar() {
                           data-active={isActive ? 'true' : undefined}
                           className={cn(SIDEBAR_NAV_LINK_CLASS, 'group')}
                         >
-                          <div className="bg-muted flex h-5 w-5 shrink-0 items-center justify-center rounded-sm">
+                          <div className="bg-card border-border flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border">
                             {projectIcon ? (
                               <span className="text-xs leading-none" aria-hidden="true">
                                 {projectIcon}
@@ -869,7 +869,7 @@ export function AppSidebar() {
         </nav>
 
         {currentTarget || otherActiveCalls.length > 0 || sidebarRuntimeError ? (
-          <div className="space-y-1.5 px-3 py-3">
+          <div className="border-border bg-card/70 space-y-1.5 border-t px-3 py-3">
             <button
               type="button"
               onClick={() => setIsLiveCallsOpen((open) => !open)}

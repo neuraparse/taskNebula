@@ -90,9 +90,11 @@ export function YourWorkWidget() {
   const list = (data ?? []).slice(0, 7);
 
   return (
-    <div className="bg-card rounded-xl border p-5">
+    <div className="surface-card p-4">
       <div className="mb-4 flex items-center justify-between">
-        <span className="text-foreground text-sm font-medium">{t('your_work.heading')}</span>
+        <span className="text-foreground text-sm font-semibold tracking-tight">
+          {t('your_work.heading')}
+        </span>
         <Link
           href="/my-issues"
           className="text-muted-foreground hover:text-foreground ease-snap inline-flex items-center gap-1 text-xs transition-all duration-150"
@@ -103,7 +105,7 @@ export function YourWorkWidget() {
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-        <TabsList className="mb-3">
+        <TabsList className="mb-3 h-8">
           <TabsTrigger value="assigned">{t('your_work.tab_assigned')}</TabsTrigger>
           <TabsTrigger value="created">{t('your_work.tab_created')}</TabsTrigger>
           <TabsTrigger value="subscribed">{t('your_work.tab_subscribed')}</TabsTrigger>

@@ -6,6 +6,38 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-06-21
+
+### Added
+
+- **Dashboard interface font setting.** Settings → Appearance now includes an
+  Interface font control with TaskNebula classic as the default dashboard and
+  workspace font, while IBM Plex remains available as an optional app-surface
+  font. The preference is stored per user through `user_appearance_settings`
+  and ships with migration `0057_user_appearance_interface_font`.
+- **Denser dashboard workspace widgets.** The dashboard now surfaces catch-up,
+  standup, analytics, recent activity, personal work, deadlines, and pinned
+  items in the first workspace view instead of leaving those entry points
+  scattered across lower-priority pages.
+
+### Changed
+
+- **Classic app typography restored by default.** The IBM-inspired visual
+  language remains on the landing page and as an optional Appearance setting,
+  but authenticated dashboard/workspace screens default back to the previous
+  TaskNebula font stack for readability.
+- **Dashboard and app-shell polish.** The main dashboard, side rail, sidebar,
+  header, loading shells, KPI tiles, activity feed, import wizard, audit-log
+  streaming, and dashboard widgets were tightened for the current square IBM
+  layout without duplicating controls.
+- **README and install docs now pin `0.7.1`.** Docker Desktop and production
+  pinning examples point at the new release tag.
+
+### Fixed
+
+- **Recent activity status labels.** Activity feed status-change messages now
+  resolve workflow status names instead of rendering raw status IDs.
+
 ## [0.7.0] - 2026-06-21
 
 ### Added
@@ -382,7 +414,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Internal alpha release. [See git log] for details.
 
-[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/neuraparse/tasknebula/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/neuraparse/tasknebula/compare/v0.6.9...v0.7.0
 [0.6.9]: https://github.com/neuraparse/tasknebula/compare/v0.6.8...v0.6.9
 [0.6.8]: https://github.com/neuraparse/tasknebula/compare/v0.6.7...v0.6.8

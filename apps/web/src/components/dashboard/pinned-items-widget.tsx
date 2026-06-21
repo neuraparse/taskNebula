@@ -60,9 +60,11 @@ export function PinnedItemsWidget() {
   const visible = items.slice(0, 7);
 
   return (
-    <div className="bg-card rounded-xl border p-5">
+    <div className="surface-card p-4">
       <div className="mb-4 flex items-center justify-between">
-        <span className="text-foreground text-sm font-medium">{t('pinned.heading')}</span>
+        <span className="text-foreground text-sm font-semibold tracking-tight">
+          {t('pinned.heading')}
+        </span>
         {items.length > visible.length ? (
           <span className="text-muted-foreground text-xs">
             {t('pinned.count', { count: items.length })}

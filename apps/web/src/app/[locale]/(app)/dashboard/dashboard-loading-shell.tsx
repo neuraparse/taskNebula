@@ -7,18 +7,23 @@ import {
 
 export function DashboardLoadingShell() {
   return (
-    <div className="custom-scrollbar flex h-full flex-col overflow-y-auto">
-      <div className="space-y-6 px-6 py-6">
-        <SkeletonPageHeader />
+    <div className="custom-scrollbar bg-surface flex h-full flex-col overflow-y-auto">
+      <div className="mx-auto w-full max-w-[1600px] space-y-5 p-4 sm:p-5 lg:p-6">
+        <div className="surface-card p-5">
+          <SkeletonPageHeader />
+        </div>
         <SkeletonStats count={4} />
-        <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-          <div className="space-y-3">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+          <div className="surface-card space-y-3 p-5">
             <Skeleton className="h-5 w-40" />
             <SkeletonList items={5} />
           </div>
-          <div className="space-y-3">
-            <Skeleton className="h-5 w-32" />
-            <div className="border-border bg-card space-y-3 rounded-lg border p-4">
+          <div className="space-y-4">
+            <div className="surface-card space-y-3 p-4">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+            <div className="surface-card space-y-3 p-4">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <Skeleton className="h-8 w-8 rounded-full" />

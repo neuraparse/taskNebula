@@ -94,7 +94,7 @@ export function AnalyticsBento({
   const tpSpark = (throughput?.data ?? []).map((d) => d.count);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* KPI strip — bento-style 4-up */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <KpiTile
@@ -146,7 +146,7 @@ export function AnalyticsBento({
 
       {/* Main charts — 2-up */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <section className="surface-card space-y-3 p-5">
+        <section className="surface-card space-y-3 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="kicker">{t('analytics.kicker_delivery')}</p>
@@ -169,7 +169,7 @@ export function AnalyticsBento({
           )}
         </section>
 
-        <section className="surface-card space-y-3 p-5">
+        <section className="surface-card space-y-3 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="kicker">{t('analytics.kicker_flow')}</p>
@@ -192,7 +192,7 @@ export function AnalyticsBento({
 
       {/* Forecast */}
       {forecast && forecast.histogram.length > 0 ? (
-        <section className="surface-card space-y-3 p-5">
+        <section className="surface-card space-y-3 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="kicker">{t('analytics.kicker_forecast')}</p>

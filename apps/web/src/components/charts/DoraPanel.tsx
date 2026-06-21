@@ -67,7 +67,7 @@ export function DoraPanel({ organizationId }: DoraPanelProps) {
 
   if (isLoading || !data) {
     return (
-      <div className="surface-card animate-pulse p-6">
+      <div className="surface-card animate-pulse p-4">
         <p className="text-muted-foreground text-sm">{t('loadingDora')}</p>
       </div>
     );
@@ -75,7 +75,7 @@ export function DoraPanel({ organizationId }: DoraPanelProps) {
 
   if (!data.connected) {
     return (
-      <div className="surface-card flex flex-col items-start gap-3 p-6">
+      <div className="surface-card flex flex-col items-start gap-3 p-4">
         <div>
           <p className="kicker">{t('engineeringDora')}</p>
           <h3 className="text-foreground mt-1 text-base font-semibold tracking-tight">
@@ -91,7 +91,7 @@ export function DoraPanel({ organizationId }: DoraPanelProps) {
   }
 
   return (
-    <div className="surface-card p-5">
+    <div className="surface-card p-4">
       <div className="mb-4 flex items-end justify-between">
         <div>
           <p className="kicker">{t('engineeringDora')}</p>

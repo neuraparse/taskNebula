@@ -2,7 +2,7 @@
 
 exports[`KpiTile renders a flat delta when none provided 1`] = `
 <div
-  class="surface-card group relative flex h-full w-full flex-col gap-2 p-4 text-left transition-all duration-150 ease-snap"
+  class="surface-card ease-snap group relative flex h-full min-h-[128px] w-full flex-col gap-2 p-4 text-left transition-all duration-150"
 >
   <div
     class="flex items-start justify-between gap-3"
@@ -11,12 +11,12 @@ exports[`KpiTile renders a flat delta when none provided 1`] = `
       class="min-w-0 flex-1"
     >
       <p
-        class="text-[11px] uppercase tracking-wide text-muted-foreground"
+        class="text-muted-foreground text-[11px] uppercase tracking-[0.14em]"
       >
         Backlog
       </p>
       <p
-        class="mt-1 text-2xl font-semibold tabular-nums text-foreground"
+        class="text-foreground mt-1 text-[30px] font-[400] tabular-nums leading-none tracking-tight"
       >
         120
       </p>
@@ -26,7 +26,7 @@ exports[`KpiTile renders a flat delta when none provided 1`] = `
     class="mt-1 flex items-end justify-between gap-3"
   >
     <span
-      class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium bg-muted text-muted-foreground"
+      class="inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-[11px] font-medium bg-muted text-muted-foreground"
     >
       <svg
         class="lucide lucide-minus h-3 w-3"
@@ -52,7 +52,7 @@ exports[`KpiTile renders a flat delta when none provided 1`] = `
 
 exports[`KpiTile renders value, delta, and sparkline (snapshot) 1`] = `
 <div
-  class="surface-card group relative flex h-full w-full flex-col gap-2 p-4 text-left transition-all duration-150 ease-snap"
+  class="surface-card ease-snap group relative flex h-full min-h-[128px] w-full flex-col gap-2 p-4 text-left transition-all duration-150"
 >
   <div
     class="flex items-start justify-between gap-3"
@@ -61,17 +61,17 @@ exports[`KpiTile renders value, delta, and sparkline (snapshot) 1`] = `
       class="min-w-0 flex-1"
     >
       <p
-        class="text-[11px] uppercase tracking-wide text-muted-foreground"
+        class="text-muted-foreground text-[11px] uppercase tracking-[0.14em]"
       >
         Velocity
       </p>
       <p
-        class="mt-1 text-2xl font-semibold tabular-nums text-foreground"
+        class="text-foreground mt-1 text-[30px] font-[400] tabular-nums leading-none tracking-tight"
       >
         42
       </p>
       <p
-        class="mt-0.5 text-xs text-muted-foreground"
+        class="text-muted-foreground mt-0.5 text-xs"
       >
         points / sprint
       </p>
@@ -81,7 +81,7 @@ exports[`KpiTile renders value, delta, and sparkline (snapshot) 1`] = `
     class="mt-1 flex items-end justify-between gap-3"
   >
     <span
-      class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+      class="inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-[11px] font-medium bg-accent-emerald/10 text-accent-emerald border border-accent-emerald/20"
     >
       <svg
         class="lucide lucide-trending-up h-3 w-3"

@@ -24,7 +24,7 @@ interface ActivityItem {
     title: string;
   } | null;
   createdAt: string | Date;
-  metadata?: any;
+  metadata?: unknown;
 }
 
 interface ActivityFeedProps {
@@ -67,7 +67,7 @@ export function ActivityFeed({ organizationId, limit = 20 }: ActivityFeedProps) 
     staleTime: 5 * 60 * 1000,
   });
 
-  const activities = data?.activities || [];
+  const activities = useMemo(() => data?.activities ?? [], [data?.activities]);
   const dayLabels = useMemo(
     () => ({ today: t('activity.today'), yesterday: t('activity.yesterday') }),
     [t]
@@ -76,7 +76,7 @@ export function ActivityFeed({ organizationId, limit = 20 }: ActivityFeedProps) 
 
   if (isLoading) {
     return (
-      <div className="surface-card p-6">
+      <div className="surface-card p-4">
         <div className="mb-4 space-y-0.5">
           <span className="kicker">{t('activity.kicker')}</span>
           <h3 className="text-foreground text-sm font-semibold tracking-tight">
@@ -91,7 +91,7 @@ export function ActivityFeed({ organizationId, limit = 20 }: ActivityFeedProps) 
   }
 
   return (
-    <div className="surface-card p-6">
+    <div className="surface-card p-4">
       <div className="mb-5 flex items-center justify-between">
         <div className="space-y-0.5">
           <span className="kicker">{t('activity.kicker')}</span>

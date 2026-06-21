@@ -1938,7 +1938,15 @@
       "effects_desc": "切换环境动画和渐变表面。",
       "animations_label": "动画",
       "gradients_label": "渐变",
-      "reset_to_defaults": "恢复默认"
+      "reset_to_defaults": "恢复默认",
+      "interface_font_heading": "Interface font",
+      "interface_font_desc": "Choose the typeface used across dashboard and workspace surfaces.",
+      "interface_font_sr": "Interface font selection",
+      "font_brand": "TaskNebula classic",
+      "font_brand_desc": "Previous dashboard font. Clean, compact, and the default.",
+      "font_ibm": "IBM Plex",
+      "font_ibm_desc": "IBM-style technical interface font used by the landing page.",
+      "font_sample": "Aa"
     },
     "orgComms": {
       "toggle_enabled_label": "启用模块",

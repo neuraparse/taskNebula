@@ -1938,7 +1938,15 @@
       "effects_desc": "주변 애니메이션과 그라데이션 표면을 전환합니다.",
       "animations_label": "애니메이션",
       "gradients_label": "그라데이션",
-      "reset_to_defaults": "기본값으로 재설정"
+      "reset_to_defaults": "기본값으로 재설정",
+      "interface_font_heading": "Interface font",
+      "interface_font_desc": "Choose the typeface used across dashboard and workspace surfaces.",
+      "interface_font_sr": "Interface font selection",
+      "font_brand": "TaskNebula classic",
+      "font_brand_desc": "Previous dashboard font. Clean, compact, and the default.",
+      "font_ibm": "IBM Plex",
+      "font_ibm_desc": "IBM-style technical interface font used by the landing page.",
+      "font_sample": "Aa"
     },
     "orgComms": {
       "toggle_enabled_label": "모듈 활성화",

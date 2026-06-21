@@ -82,15 +82,15 @@ export function CatchMeUpBanner() {
   const lastSeenDate = new Date(previousLastSeen);
 
   return (
-    <div className="border-primary/30 from-primary/[0.04] via-background to-background animate-fade-up rounded-lg border bg-gradient-to-br p-4 shadow-sm">
+    <div className="surface-card animate-fade-up border-primary/20 bg-card p-4">
       <div className="flex items-start gap-3">
-        <div className="bg-primary/10 text-primary ring-primary/20 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ring-1">
+        <div className="icon-tile shrink-0">
           <Sparkles className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h2 className="text-foreground text-sm font-semibold">{t('catchup.welcome_back')}</h2>
-            <span className="bg-muted text-muted-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px]">
+            <span className="chip rounded-sm px-2 py-0.5 text-[10px]">
               <Clock className="h-2.5 w-2.5" />
               {t('catchup.away', { gap: formatGap(lastSeenDate, t) })}
             </span>
@@ -119,7 +119,7 @@ export function CatchMeUpBanner() {
                 </div>
               ) : digest ? (
                 <>
-                  <pre className="bg-muted/40 text-foreground whitespace-pre-wrap rounded-md p-3 font-sans text-xs leading-relaxed">
+                  <pre className="surface-inset text-foreground whitespace-pre-wrap p-3 font-sans text-xs leading-relaxed">
                     {digest.summary_markdown}
                   </pre>
                   {digest.action_items.length > 0 && (

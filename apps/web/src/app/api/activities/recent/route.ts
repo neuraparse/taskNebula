@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, auditLogs, users, issues } from '@tasknebula/db';
-import { eq, desc, and, inArray } from 'drizzle-orm';
+import { db, auditLogs, users, issues, workflowStatuses } from '@tasknebula/db';
+import { eq, desc, inArray } from 'drizzle-orm';
 import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
@@ -53,11 +53,9 @@ export async function GET(request: NextRequest) {
       .limit(limit);
 
     // Get issue details for activities that have issueId
-    const issueIds = logs
-      .filter((log) => log.issueId)
-      .map((log) => log.issueId as string);
+    const issueIds = logs.filter((log) => log.issueId).map((log) => log.issueId as string);
 
-    let issuesMap: Record<string, any> = {};
+    let issuesMap: Record<string, { id: string; key: string; title: string }> = {};
     if (issueIds.length > 0) {
       const issuesData = await db
         .select({
@@ -68,29 +66,71 @@ export async function GET(request: NextRequest) {
         .from(issues)
         .where(inArray(issues.id, issueIds));
 
-      issuesMap = issuesData.reduce((acc, issue) => {
-        acc[issue.id] = issue;
-        return acc;
-      }, {} as Record<string, any>);
+      issuesMap = issuesData.reduce(
+        (acc, issue) => {
+          acc[issue.id] = issue;
+          return acc;
+        },
+        {} as Record<string, { id: string; key: string; title: string }>
+      );
+    }
+
+    const statusIds = Array.from(
+      new Set(logs.map((log) => getStatusTargetId(log.changes)).filter(isNonEmptyString))
+    );
+
+    const statusNameMap = new Map<string, string>();
+    if (statusIds.length > 0) {
+      const statuses = await db
+        .select({
+          id: workflowStatuses.id,
+          name: workflowStatuses.name,
+        })
+        .from(workflowStatuses)
+        .where(inArray(workflowStatuses.id, statusIds));
+
+      statuses.forEach((status) => {
+        statusNameMap.set(status.id, status.name);
+      });
     }
 
     // Map logs to activity format
-    const activities = logs.map((log) => ({
-      id: log.id,
-      action: log.action,
-      type: getActivityType(log.action),
-      message: getActivityMessage(log.action, log.changes),
-      user: log.user,
-      issue: log.issueId ? issuesMap[log.issueId] : null,
-      createdAt: log.createdAt,
-      metadata: log.metadata,
-    }));
+    const activities = logs.map((log) => {
+      const statusTargetId = getStatusTargetId(log.changes);
+      return {
+        id: log.id,
+        action: log.action,
+        type: getActivityType(log.action),
+        message: getActivityMessage(log.action, log.changes, {
+          toStatusName: statusTargetId ? statusNameMap.get(statusTargetId) : undefined,
+        }),
+        user: log.user,
+        issue: log.issueId ? issuesMap[log.issueId] : null,
+        createdAt: log.createdAt,
+        metadata: log.metadata,
+      };
+    });
 
     return NextResponse.json({ activities });
   } catch (error) {
     console.error('Error fetching recent activities:', error);
     return NextResponse.json({ error: 'Failed to fetch activities' }, { status: 500 });
   }
+}
+
+type RecordLike = Record<string, unknown>;
+
+function isRecord(value: unknown): value is RecordLike {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function getStatusTargetId(changes: unknown): string | null {
+  if (!isRecord(changes) || !isRecord(changes.status)) return null;
+  return isNonEmptyString(changes.status.to) ? changes.status.to : null;
 }
 
 function getActivityType(action: string): string {
@@ -105,15 +145,25 @@ function getActivityType(action: string): string {
   return 'other';
 }
 
-function getActivityMessage(action: string, changes: any): string {
+function getChangeTarget(changes: unknown, key: string): string | null {
+  if (!isRecord(changes) || !isRecord(changes[key])) return null;
+  const target = changes[key].to;
+  return isNonEmptyString(target) ? target : null;
+}
+
+function getActivityMessage(
+  action: string,
+  changes: unknown,
+  labels: { toStatusName?: string } = {}
+): string {
   switch (action) {
     case 'issue.created':
       return 'created issue';
     case 'issue.updated':
       return 'updated issue';
     case 'issue.status_changed':
-      if (changes?.status) {
-        return `moved to ${changes.status.to}`;
+      if (labels.toStatusName) {
+        return `moved to ${labels.toStatusName}`;
       }
       return 'changed status';
     case 'issue.assigned':
@@ -121,8 +171,9 @@ function getActivityMessage(action: string, changes: any): string {
     case 'issue.unassigned':
       return 'unassigned issue';
     case 'issue.priority_changed':
-      if (changes?.priority) {
-        return `changed priority to ${changes.priority.to}`;
+      {
+        const priorityTarget = getChangeTarget(changes, 'priority');
+        if (priorityTarget) return `changed priority to ${priorityTarget}`;
       }
       return 'changed priority';
     case 'issue.commented':
@@ -141,4 +192,3 @@ function getActivityMessage(action: string, changes: any): string {
       return action.replace(/\./g, ' ').replace(/_/g, ' ');
   }
 }
-

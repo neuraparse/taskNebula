@@ -61,7 +61,7 @@ export function AppRail() {
     <TooltipProvider delayDuration={150}>
       <nav
         aria-label={tLayout('workspaceRail')}
-        className="border-border bg-background flex h-screen w-14 shrink-0 flex-col items-center border-r py-2"
+        className="border-border bg-card flex h-screen w-14 shrink-0 flex-col items-center border-r py-2"
       >
         <ul className="flex flex-1 flex-col items-center gap-1">
           {railItems.map((item) => {
@@ -88,8 +88,9 @@ export function AppRail() {
                       aria-label={showInboxBadge ? `${label} · ${unreadLabel}` : label}
                       aria-current={isActive ? 'page' : undefined}
                       className={cn(
-                        'text-muted-foreground ease-snap hover:bg-accent/60 hover:text-foreground relative mx-auto flex h-[52px] w-12 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1.5 transition-all duration-150',
-                        isActive && 'bg-accent text-foreground'
+                        'text-muted-foreground ease-snap hover:bg-accent/60 hover:text-foreground group relative mx-auto flex h-[50px] w-12 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1.5 transition-all duration-150',
+                        isActive &&
+                          'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground shadow-sm'
                       )}
                     >
                       <Icon className="h-4 w-4 shrink-0" />
@@ -102,7 +103,7 @@ export function AppRail() {
                           {unreadInboxCount > 9 ? '9+' : unreadInboxCount}
                         </span>
                       )}
-                      <span className="text-muted-foreground line-clamp-2 h-5 w-full break-normal text-center text-[9px] leading-[10px]">
+                      <span className="text-muted-foreground group-data-[active=true]:text-primary-foreground/90 line-clamp-2 h-5 w-full break-normal text-center text-[9px] leading-[10px]">
                         {label}
                       </span>
                     </Link>
@@ -123,14 +124,16 @@ export function AppRail() {
               <TooltipTrigger asChild>
                 <Link
                   href="/admin"
+                  data-active={normalizedPathname.startsWith('/admin') ? 'true' : undefined}
                   aria-label={tNav('admin')}
                   className={cn(
-                    'text-muted-foreground ease-snap hover:bg-accent/60 hover:text-foreground mx-auto flex h-[52px] w-12 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1.5 transition-all duration-150',
-                    normalizedPathname.startsWith('/admin') && 'bg-accent text-foreground'
+                    'text-muted-foreground ease-snap hover:bg-accent/60 hover:text-foreground group mx-auto flex h-[50px] w-12 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1.5 transition-all duration-150',
+                    normalizedPathname.startsWith('/admin') &&
+                      'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground shadow-sm'
                   )}
                 >
                   <Shield className="h-4 w-4 shrink-0" />
-                  <span className="text-muted-foreground line-clamp-2 h-5 w-full break-normal text-center text-[9px] leading-[10px]">
+                  <span className="text-muted-foreground group-data-[active=true]:text-primary-foreground/90 line-clamp-2 h-5 w-full break-normal text-center text-[9px] leading-[10px]">
                     {tNav('admin')}
                   </span>
                 </Link>

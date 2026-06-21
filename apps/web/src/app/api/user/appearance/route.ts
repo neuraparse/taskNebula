@@ -19,20 +19,15 @@ export const dynamic = 'force-dynamic';
 // Enum values mirror the client Zustand store. Kept permissive with nullable
 // so the client can clear a preference and fall back to its own defaults.
 const themeEnum = z.enum(['light', 'dark', 'system']);
-const colorThemeEnum = z.enum([
-  'default',
-  'ocean',
-  'forest',
-  'sunset',
-  'purple',
-  'rose',
-]);
+const colorThemeEnum = z.enum(['default', 'ocean', 'forest', 'sunset', 'purple', 'rose']);
 const visualStyleEnum = z.enum(['modern', 'minimal', 'glass']);
+const interfaceFontEnum = z.enum(['brand', 'ibm']);
 
 const updateAppearanceSchema = z.object({
   theme: themeEnum.nullable().optional(),
   colorTheme: colorThemeEnum.nullable().optional(),
   visualStyle: visualStyleEnum.nullable().optional(),
+  interfaceFont: interfaceFontEnum.nullable().optional(),
   animationsEnabled: z.boolean().optional(),
   gradientsEnabled: z.boolean().optional(),
 });
@@ -43,6 +38,7 @@ const DEFAULT_APPEARANCE = {
   theme: 'system' as const,
   colorTheme: 'default' as const,
   visualStyle: 'modern' as const,
+  interfaceFont: 'brand' as const,
   animationsEnabled: true,
   gradientsEnabled: true,
 };
@@ -73,10 +69,7 @@ export async function GET() {
     return NextResponse.json({ settings: row });
   } catch (error) {
     console.error('Error fetching user appearance settings:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch appearance settings' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch appearance settings' }, { status: 500 });
   }
 }
 
@@ -96,6 +89,7 @@ export async function PUT(request: NextRequest) {
     if ('theme' in patch) updateSet.theme = patch.theme ?? null;
     if ('colorTheme' in patch) updateSet.colorTheme = patch.colorTheme ?? null;
     if ('visualStyle' in patch) updateSet.visualStyle = patch.visualStyle ?? null;
+    if ('interfaceFont' in patch) updateSet.interfaceFont = patch.interfaceFont ?? null;
     if ('animationsEnabled' in patch && patch.animationsEnabled !== undefined) {
       updateSet.animationsEnabled = patch.animationsEnabled;
     }
@@ -110,6 +104,7 @@ export async function PUT(request: NextRequest) {
         theme: patch.theme ?? null,
         colorTheme: patch.colorTheme ?? null,
         visualStyle: patch.visualStyle ?? null,
+        interfaceFont: patch.interfaceFont ?? null,
         animationsEnabled: patch.animationsEnabled ?? true,
         gradientsEnabled: patch.gradientsEnabled ?? true,
       })
@@ -128,9 +123,6 @@ export async function PUT(request: NextRequest) {
       );
     }
     console.error('Error updating user appearance settings:', error);
-    return NextResponse.json(
-      { error: 'Failed to update appearance settings' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to update appearance settings' }, { status: 500 });
   }
 }

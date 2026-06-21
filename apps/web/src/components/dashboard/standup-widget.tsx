@@ -89,7 +89,9 @@ export function StandupWidget() {
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Sparkles className="text-accent-violet h-4 w-4" />
+          <span className="icon-tile icon-tile-accent-violet h-7 w-7">
+            <Sparkles className="h-3.5 w-3.5" />
+          </span>
           <h3 className="text-sm font-semibold">{t('standup.heading')}</h3>
         </div>
         <div className="flex items-center gap-2">

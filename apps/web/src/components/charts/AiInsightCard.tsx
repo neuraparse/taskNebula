@@ -62,8 +62,8 @@ export function AiInsightCard({ metric, period, scopeId, className }: AiInsightC
       disabled={loading}
       aria-label={t('getInsightFor', { metric })}
       className={cn(
-        'surface-card ease-snap group flex w-full items-start gap-3 rounded-lg px-3 py-2 text-left transition-all duration-150',
-        'hover:bg-muted/40 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
+        'surface-inset ease-snap group flex w-full items-start gap-3 px-3 py-2 text-left transition-all duration-150',
+        'hover:bg-accent/50 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
         className
       )}
     >

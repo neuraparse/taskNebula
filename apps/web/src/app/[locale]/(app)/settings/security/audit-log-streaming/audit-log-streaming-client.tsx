@@ -278,7 +278,7 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
       </div>
 
       {showForm ? (
-        <form onSubmit={handleCreate} className="bg-card space-y-4 rounded-lg border p-5">
+        <form onSubmit={handleCreate} className="surface-card space-y-4 p-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="font-medium">{t('audit.name')}</span>
@@ -349,18 +349,18 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
 
       <div className="space-y-3">
         {sinks.map((sink) => (
-          <div key={sink.id} className="bg-card rounded-lg border p-5">
+          <div key={sink.id} className="surface-card p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="flex items-center gap-3">
                   <p className="text-sm font-semibold">{sink.name}</p>
-                  <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
+                  <span className="chip rounded-sm px-2 py-0.5 text-[11px]">
                     {t(`audit.type.${sink.type}`)}
                   </span>
                   <span
-                    className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                    className={`rounded-sm px-2 py-0.5 text-[11px] font-medium ${
                       sink.enabled
-                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                        ? 'border-accent-emerald/20 bg-accent-emerald/10 text-accent-emerald border'
                         : 'bg-muted text-muted-foreground'
                     }`}
                   >

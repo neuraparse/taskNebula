@@ -61,18 +61,19 @@ export function KpiTile({
   const dir = directionFromDelta(delta);
 
   // For "good = down" metrics, swap the visual tone.
-  const tone =
-    dir === 'flat'
-      ? 'muted'
-      : (dir === 'up') !== invertDelta
-        ? 'emerald'
-        : 'rose';
+  const tone = dir === 'flat' ? 'muted' : (dir === 'up') !== invertDelta ? 'emerald' : 'rose';
 
   const toneClass: Record<string, string> = {
-    emerald: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-    rose: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+    emerald: 'bg-accent-emerald/10 text-accent-emerald border border-accent-emerald/20',
+    rose: 'bg-accent-rose/10 text-accent-rose border border-accent-rose/20',
     muted: 'bg-muted text-muted-foreground',
   };
+  const sparkColor =
+    tone === 'rose'
+      ? 'hsl(var(--accent-rose))'
+      : tone === 'emerald'
+        ? 'hsl(var(--accent-emerald))'
+        : 'hsl(var(--muted-foreground))';
 
   const sparkData = useMemo(
     () =>
@@ -90,31 +91,28 @@ export function KpiTile({
       type={onClick ? 'button' : undefined}
       onClick={onClick}
       className={cn(
-        'surface-card group relative flex h-full w-full flex-col gap-2 p-4 text-left transition-all duration-150 ease-snap',
-        onClick && 'hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'surface-card ease-snap group relative flex h-full min-h-[128px] w-full flex-col gap-2 p-4 text-left transition-all duration-150',
+        onClick &&
+          'focus-visible:ring-ring hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2',
         className
       )}
       aria-label={onClick ? `${label}: ${value}` : undefined}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-            {label}
-          </p>
-          <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">
+          <p className="text-muted-foreground text-[11px] uppercase tracking-[0.14em]">{label}</p>
+          <p className="text-foreground mt-1 text-[30px] font-[400] tabular-nums leading-none tracking-tight">
             {value}
           </p>
-          {hint ? (
-            <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
-          ) : null}
+          {hint ? <p className="text-muted-foreground mt-0.5 text-xs">{hint}</p> : null}
         </div>
-        {icon ? <div className="shrink-0 text-muted-foreground">{icon}</div> : null}
+        {icon ? <div className="text-muted-foreground shrink-0">{icon}</div> : null}
       </div>
 
       <div className="mt-1 flex items-end justify-between gap-3">
         <span
           className={cn(
-            'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium',
+            'inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-[11px] font-medium',
             toneClass[tone]
           )}
         >
@@ -135,17 +133,15 @@ export function KpiTile({
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={sparkData} margin={{ top: 4, bottom: 0, left: 0, right: 0 }}>
                 <defs>
-                  <linearGradient id={`spark-${label.replace(/\s+/g, '-')}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                      offset="0%"
-                      stopColor={tone === 'rose' ? '#f43f5e' : tone === 'emerald' ? '#10b981' : '#94a3b8'}
-                      stopOpacity={0.6}
-                    />
-                    <stop
-                      offset="100%"
-                      stopColor={tone === 'rose' ? '#f43f5e' : tone === 'emerald' ? '#10b981' : '#94a3b8'}
-                      stopOpacity={0}
-                    />
+                  <linearGradient
+                    id={`spark-${label.replace(/\s+/g, '-')}`}
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="0%" stopColor={sparkColor} stopOpacity={0.6} />
+                    <stop offset="100%" stopColor={sparkColor} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <Tooltip
@@ -156,7 +152,7 @@ export function KpiTile({
                 <Area
                   type="monotone"
                   dataKey="v"
-                  stroke={tone === 'rose' ? '#f43f5e' : tone === 'emerald' ? '#10b981' : '#94a3b8'}
+                  stroke={sparkColor}
                   strokeWidth={1.5}
                   fill={`url(#spark-${label.replace(/\s+/g, '-')})`}
                   isAnimationActive={false}

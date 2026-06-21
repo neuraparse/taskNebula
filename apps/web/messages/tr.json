@@ -1938,7 +1938,15 @@
       "effects_desc": "Ortam animasyonunu ve gradyan yüzeyleri aç/kapat.",
       "animations_label": "Animasyonlar",
       "gradients_label": "Gradyanlar",
-      "reset_to_defaults": "Varsayılanlara sıfırla"
+      "reset_to_defaults": "Varsayılanlara sıfırla",
+      "interface_font_heading": "Arayüz yazı tipi",
+      "interface_font_desc": "Dashboard ve çalışma alanı yüzeylerinde kullanılan yazı tipini seçin.",
+      "interface_font_sr": "Arayüz yazı tipi seçimi",
+      "font_brand": "TaskNebula klasik",
+      "font_brand_desc": "Önceki dashboard yazı tipi. Temiz, kompakt ve varsayılan.",
+      "font_ibm": "IBM Plex",
+      "font_ibm_desc": "Ana sayfada kullanılan IBM tarzı teknik arayüz yazı tipi.",
+      "font_sample": "Aa"
     },
     "orgComms": {
       "toggle_enabled_label": "Modülü etkinleştir",

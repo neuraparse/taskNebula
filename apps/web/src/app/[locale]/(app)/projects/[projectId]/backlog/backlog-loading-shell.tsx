@@ -8,14 +8,14 @@ export function BacklogLoadingShell() {
           <Skeleton className="h-6 w-40" />
           <Skeleton className="h-9 w-28 rounded-md" />
         </div>
-        <div className="border-border bg-card rounded-lg border">
+        <div className="surface-card">
           <div className="border-border flex items-center justify-between border-b px-4 py-3">
             <Skeleton className="h-4 w-28" />
             <Skeleton className="h-4 w-20" />
           </div>
           <SkeletonList items={6} className="p-2" />
         </div>
-        <div className="border-border bg-card rounded-lg border">
+        <div className="surface-card">
           <div className="border-border flex items-center justify-between border-b px-4 py-3">
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-4 w-20" />

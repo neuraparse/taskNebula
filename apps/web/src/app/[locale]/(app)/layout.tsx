@@ -12,12 +12,24 @@ import { MobileNav } from '@/components/mobile/mobile-nav';
 import { GlobalVersionUpdateBanner } from '@/components/admin/global-version-update-banner';
 import { isSuperAdmin } from '@/lib/auth/permissions';
 import { getTranslations } from 'next-intl/server';
+import type { CSSProperties } from 'react';
+
+type AppCarbonStyle = CSSProperties & {
+  '--font-sans': string;
+  '--font-mono': string;
+};
 
 // Force dynamic rendering for authenticated routes
 export const dynamic = 'force-dynamic';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const [t, showUpdateBanner] = await Promise.all([getTranslations('common'), isSuperAdmin()]);
+  const appCarbonStyle = {
+    '--font-sans': "var(--app-font-sans, 'Plus Jakarta Sans')",
+    '--font-mono': "var(--app-font-mono, 'JetBrains Mono')",
+    fontFamily: 'var(--font-sans)',
+  } satisfies AppCarbonStyle;
+
   return (
     <GlobalVoiceProvider>
       <AppUiScope />
@@ -31,7 +43,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               >
                 {t('skipToContent')}
               </a>
-              <div className="app-square-ui bg-background flex h-dvh overflow-hidden">
+              <div
+                className="app-square-ui bg-surface text-foreground flex h-dvh overflow-hidden"
+                style={appCarbonStyle}
+              >
                 <div className="hidden md:flex">
                   <AppSidebar />
                 </div>

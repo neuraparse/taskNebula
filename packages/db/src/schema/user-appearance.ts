@@ -25,6 +25,9 @@ export const userAppearanceSettings = pgTable('user_appearance_settings', {
   // Zustand store: VisualStyle ('modern' | 'minimal' | 'glass')
   visualStyle: text('visual_style'),
 
+  // Zustand store: InterfaceFont ('brand' | 'ibm')
+  interfaceFont: text('interface_font'),
+
   // Zustand store: enableAnimations
   animationsEnabled: boolean('animations_enabled').notNull().default(true),
 

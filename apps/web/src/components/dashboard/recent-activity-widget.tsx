@@ -105,9 +105,11 @@ export function RecentActivityWidget() {
   const items = STUB.slice(0, 7);
 
   return (
-    <div className="bg-card rounded-xl border p-5">
+    <div className="surface-card p-4">
       <div className="mb-4 flex items-center justify-between">
-        <span className="text-foreground text-sm font-medium">{t('activity.heading')}</span>
+        <span className="text-foreground text-sm font-semibold tracking-tight">
+          {t('activity.heading')}
+        </span>
         <Link
           href="/activity"
           className="text-muted-foreground hover:text-foreground ease-snap inline-flex items-center gap-1 text-xs transition-all duration-150"
