@@ -56,6 +56,11 @@ describe('stripLocalePrefix', () => {
     expect(stripLocalePrefix('/tr/projects/abc')).toBe('/projects/abc');
   });
 
+  it('strips a locale prefix with a region code', () => {
+    expect(stripLocalePrefix('/zh-CN/inbox')).toBe('/inbox');
+    expect(stripLocalePrefix('/zh-TW/team')).toBe('/team');
+  });
+
   it('returns a non-prefixed path unchanged', () => {
     expect(stripLocalePrefix('/projects')).toBe('/projects');
   });
@@ -73,9 +78,6 @@ describe('stripLocalePrefix', () => {
   });
 
   it('does not strip when the 2-char prefix is not followed by "/" or end (e.g. /api-docs)', () => {
-    // Regex is /^\/[a-z]{2}(?=\/|$)/ — the lookahead requires the boundary to
-    // be a slash or end-of-string. In `/api-docs` the third character is `i`,
-    // so `ap` is *not* a locale and the path must be returned untouched.
     expect(stripLocalePrefix('/api-docs')).toBe('/api-docs');
   });
 
@@ -85,8 +87,13 @@ describe('stripLocalePrefix', () => {
 });
 
 describe('getSectionKey', () => {
-  it('maps /tr/inbox to "my_issues" (inbox lives in the My Issues section)', () => {
-    expect(getSectionKey('/tr/inbox')).toBe('my_issues');
+  it('maps /tr/inbox to the dedicated Inbox section', () => {
+    expect(getSectionKey('/tr/inbox')).toBe('inbox');
+  });
+
+  it('maps region-coded locale paths to the correct section', () => {
+    expect(getSectionKey('/zh-CN/inbox')).toBe('inbox');
+    expect(getSectionKey('/zh-TW/team')).toBe('team');
   });
 
   it('maps /de/initiatives to "projects"', () => {

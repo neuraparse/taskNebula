@@ -387,23 +387,28 @@ export function TimeTrackingPanel({
         </div>
       ) : null}
 
-      <div className="border-border/60 space-y-1 border-t pt-2">
+      <div className="border-border/60 space-y-2 border-t pt-2">
         <Label className="text-muted-foreground text-xs">{t('logLabel')}</Label>
-        <div className="flex gap-2">
+        <div className="grid gap-2">
           <Input
             placeholder={t('logPlaceholder')}
             value={manualDuration}
             onChange={(e) => setManualDuration(e.target.value)}
-            className="w-32"
+            className="h-9 min-w-0"
           />
           <Textarea
             placeholder={t('notePlaceholder')}
             value={manualNote}
             onChange={(e) => setManualNote(e.target.value)}
-            rows={1}
-            className="min-h-[2rem] flex-1"
+            rows={2}
+            className="min-h-16 resize-none"
           />
-          <Button size="sm" onClick={logManual} disabled={busy || !manualDuration}>
+          <Button
+            size="sm"
+            onClick={logManual}
+            disabled={busy || !manualDuration}
+            className="h-8 w-full"
+          >
             {t('logButton')}
           </Button>
         </div>

@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Lightbulb, ArrowDownUp } from 'lucide-react';
+import { RoadmapLoadingShell } from './roadmap-loading-shell';
 
 interface Epic {
   id: string;
@@ -15,6 +16,22 @@ interface Epic {
   priority: string;
   startDate: string | null;
   targetDate: string | null;
+}
+
+interface ApiEpic {
+  id: string;
+  title: string;
+  description?: string | null;
+  status: string;
+  priority: string;
+  startDate?: string | null;
+  createdAt?: string | null;
+  targetDate?: string | null;
+  dueDate?: string | null;
+}
+
+interface EpicsResponse {
+  issues?: ApiEpic[];
 }
 
 interface RoadmapPageProps {
@@ -96,10 +113,6 @@ function startOfWeek(d: Date): Date {
 
 function isSameMonth(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
-}
-
-function isSameDay(a: Date, b: Date): boolean {
-  return startOfDay(a).getTime() === startOfDay(b).getTime();
 }
 
 /**
@@ -271,12 +284,12 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
       try {
         const response = await fetch(`/api/issues?projectId=${projectId}&type=epic`);
         if (!response.ok) throw new Error('Failed to fetch epics');
-        const data = await response.json();
+        const data = (await response.json()) as EpicsResponse;
         const epicIssues = data.issues || [];
-        const mapped: Epic[] = epicIssues.map((epic: any) => ({
+        const mapped: Epic[] = epicIssues.map((epic) => ({
           id: epic.id,
           title: epic.title,
-          description: epic.description,
+          description: epic.description ?? null,
           status: epic.status,
           priority: epic.priority,
           // Treat createdAt as start (matches prior behaviour) and dueDate as targetDate.
@@ -305,11 +318,7 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
   const periodData = useMemo(() => getPeriod(period), [period]);
 
   if (isLoading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-muted-foreground">{t('roadmap.loading')}</div>
-      </div>
-    );
+    return <RoadmapLoadingShell />;
   }
 
   return (

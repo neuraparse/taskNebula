@@ -6,9 +6,11 @@ import type { VersionInfo } from '@/lib/hooks/use-version-info';
 
 const useVersionInfoMock = jest.fn();
 const useRefreshVersionInfoMock = jest.fn();
+const useStartSelfUpdateMock = jest.fn();
 jest.mock('@/lib/hooks/use-version-info', () => ({
   useVersionInfo: () => useVersionInfoMock(),
   useRefreshVersionInfo: () => useRefreshVersionInfoMock(),
+  useStartSelfUpdate: () => useStartSelfUpdateMock(),
 }));
 
 const toastMock = jest.fn();
@@ -53,6 +55,7 @@ function mockQuery(overrides: Partial<{ data: VersionInfo; isLoading: boolean; e
 }
 
 const mutate = jest.fn();
+const startMutate = jest.fn();
 function mockRefresh(overrides: Partial<{ isPending: boolean }> = {}) {
   useRefreshVersionInfoMock.mockReturnValue({
     mutate,
@@ -61,12 +64,23 @@ function mockRefresh(overrides: Partial<{ isPending: boolean }> = {}) {
   });
 }
 
+function mockStartUpdate(overrides: Partial<{ isPending: boolean }> = {}) {
+  useStartSelfUpdateMock.mockReturnValue({
+    mutate: startMutate,
+    isPending: false,
+    ...overrides,
+  });
+}
+
 beforeEach(() => {
   useVersionInfoMock.mockReset();
   useRefreshVersionInfoMock.mockReset();
+  useStartSelfUpdateMock.mockReset();
   toastMock.mockReset();
   mutate.mockReset();
+  startMutate.mockReset();
   mockRefresh();
+  mockStartUpdate();
 });
 
 describe('VersionPanel', () => {
@@ -103,6 +117,75 @@ describe('VersionPanel', () => {
     expect(screen.getByText('Release notes')).toBeInTheDocument();
     expect(screen.getByText('New stuff')).toBeInTheDocument();
     expect(screen.getByText(/docker compose pull/)).toBeInTheDocument();
+    expect(screen.getByText('Self-update')).toBeInTheDocument();
+  });
+
+  it('requires acknowledgement before starting an available self-update', async () => {
+    const user = userEvent.setup();
+    mockQuery({
+      data: info({
+        latest: '0.5.0',
+        updateAvailable: true,
+        image: {
+          repository: 'neuraparse/tasknebula',
+          latestTag: '0.5.0',
+          latestTagUrl: 'https://hub.docker.com/r/neuraparse/tasknebula/tags?name=0.5.0',
+          latestPushedAt: '2026-06-20T02:13:49.101Z',
+          latestDigest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          latestSizeBytes: 123456789,
+          updateAvailable: true,
+          checkedAt: '2026-06-20T02:14:00.000Z',
+        },
+        selfUpdate: {
+          enabled: true,
+          available: true,
+          mode: 'external-webhook',
+          blockedReason: null,
+          targetVersion: '0.5.0',
+          repository: 'neuraparse/tasknebula',
+          digest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          webhookConfigured: true,
+          manualCommands: 'docker compose pull web',
+          job: null,
+        },
+      }),
+    });
+    render(<VersionPanel />);
+
+    const startButton = screen.getByRole('button', { name: /Start update to v0.5.0/i });
+    expect(startButton).toBeDisabled();
+
+    await user.click(screen.getByRole('checkbox', { name: /I have reviewed the release notes/i }));
+    expect(startButton).toBeEnabled();
+
+    await user.click(startButton);
+    expect(startMutate).toHaveBeenCalledWith('0.5.0', expect.any(Object));
+  });
+
+  it('keeps manual commands visible when self-update is disabled', () => {
+    mockQuery({
+      data: info({
+        latest: '0.5.0',
+        updateAvailable: true,
+        selfUpdate: {
+          enabled: false,
+          available: false,
+          mode: 'manual',
+          blockedReason: 'disabled',
+          targetVersion: '0.5.0',
+          repository: 'neuraparse/tasknebula',
+          digest: null,
+          webhookConfigured: false,
+          manualCommands: 'docker compose pull web',
+          job: null,
+        },
+      }),
+    });
+    render(<VersionPanel />);
+
+    expect(screen.getByText('Manual only')).toBeInTheDocument();
+    expect(screen.getAllByText(/docker compose pull/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByRole('button', { name: /Start update/i })).not.toBeInTheDocument();
   });
 
   it('shows Docker Hub image metadata when available', () => {

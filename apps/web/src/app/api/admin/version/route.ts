@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { isSuperAdmin } from '@/lib/auth/permissions';
 import { getUpdateStatus } from '@/lib/version';
+import { getSelfUpdateStatus } from '@/lib/version/self-update';
 
 /**
  * GET /api/admin/version — super-admin-only update status.
@@ -16,7 +17,8 @@ import { getUpdateStatus } from '@/lib/version';
  *   notes: string | null,       // release body, first 2000 chars
  *   checkedAt: string | null,   // ISO timestamp of the last upstream fetch
  *   image: object,              // Docker Hub tag metadata for neuraparse/tasknebula
- *   checkDisabled: boolean      // TASKNEBULA_DISABLE_UPDATE_CHECK=true
+ *   checkDisabled: boolean,     // TASKNEBULA_DISABLE_UPDATE_CHECK=true
+ *   selfUpdate: object          // opt-in external-updater capability/status
  * }
  *
  * `?refresh=true` forces a fetch past the 6h cache TTL. Upstream failures
@@ -43,6 +45,7 @@ export async function GET(request: NextRequest) {
 
   const refresh = request.nextUrl.searchParams.get('refresh') === 'true';
   const status = await getUpdateStatus({ refresh });
+  const selfUpdate = await getSelfUpdateStatus(status);
 
-  return NextResponse.json(status);
+  return NextResponse.json({ ...status, selfUpdate });
 }

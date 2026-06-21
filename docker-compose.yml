@@ -154,6 +154,12 @@ services:
       # comments and updates; without it the janitor runs in dry-run mode.
       CRON_SECRET: ${CRON_SECRET:-}
       JANITOR_SYSTEM_USER_ID: ${JANITOR_SYSTEM_USER_ID:-}
+      # Optional self-update handoff. Disabled by default: the web container
+      # never receives Docker socket access and only sends a signed request to
+      # an operator-managed updater endpoint when explicitly configured.
+      TASKNEBULA_SELF_UPDATE_ENABLED: ${TASKNEBULA_SELF_UPDATE_ENABLED:-false}
+      TASKNEBULA_SELF_UPDATE_WEBHOOK_URL: ${TASKNEBULA_SELF_UPDATE_WEBHOOK_URL:-}
+      TASKNEBULA_SELF_UPDATE_WEBHOOK_SECRET: ${TASKNEBULA_SELF_UPDATE_WEBHOOK_SECRET:-}
     ports:
       - '127.0.0.1:${PORT:-3000}:3000'
     volumes:

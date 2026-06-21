@@ -4,8 +4,9 @@ import type { ReactNode } from 'react';
  * Shared layout primitives for the marketing landing page.
  *
  * Server-safe (no hooks, no state) — every section component composes these so
- * the page keeps one container rhythm and one typographic voice. Colors go
- * through the `--landing-*` tokens scoped by `.landing-dark` in globals.css.
+ * the page keeps one container rhythm and one typographic voice. Colors and
+ * fonts go through the `--landing-*` tokens scoped by `.landing-dark` in
+ * globals.css.
  */
 
 export const GITHUB_URL = 'https://github.com/neuraparse/tasknebula';
@@ -74,8 +75,8 @@ export function SectionHeader({
 export const focusRingClass =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]';
 
-/** Canonical primary CTA classes — keep in sync with the app-wide idiom. */
-export const primaryCtaClass = `inline-flex h-11 items-center gap-2 rounded-md bg-primary px-4 text-sm font-[430] text-primary-foreground transition-all duration-150 ease-snap hover:-translate-y-0.5 hover:shadow-glow-primary hover:opacity-95 ${focusRingClass}`;
+/** Canonical primary CTA classes for the landing IBM/Carbon palette. */
+export const primaryCtaClass = `inline-flex h-11 items-center gap-2 rounded-md bg-[var(--landing-accent-blue)] px-4 text-sm font-[450] text-white transition-all duration-150 ease-snap hover:-translate-y-0.5 hover:bg-[var(--landing-accent-blue-hover)] ${focusRingClass}`;
 
 /** Canonical secondary (outline) CTA classes. */
-export const secondaryCtaClass = `inline-flex h-11 items-center gap-2 rounded-md border border-[var(--landing-border-strong)] px-4 text-sm font-[430] text-[var(--landing-text)] transition-all duration-150 ease-snap hover:-translate-y-0.5 hover:bg-[var(--landing-bg-elevated)] ${focusRingClass}`;
+export const secondaryCtaClass = `inline-flex h-11 items-center gap-2 rounded-md border border-[var(--landing-border-strong)] bg-[var(--landing-bg-elevated)] px-4 text-sm font-[450] text-[var(--landing-text)] transition-all duration-150 ease-snap hover:-translate-y-0.5 hover:bg-[var(--landing-bg-hover)] ${focusRingClass}`;

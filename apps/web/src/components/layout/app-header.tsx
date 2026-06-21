@@ -4,7 +4,6 @@ import { Search, HelpCircle, Command } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { OrganizationSwitcher } from '@/components/organization/organization-switcher';
-import { UserProfileDropdown } from '@/components/user/user-profile-dropdown';
 import { NotificationBell } from '@/components/notifications/notification-bell';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { useCommandPalette } from '@/lib/command/use-command-palette';
@@ -46,7 +45,6 @@ export function AppHeader() {
         >
           <HelpCircle className="h-4 w-4" />
         </Button>
-        <UserProfileDropdown />
       </div>
     </header>
   );

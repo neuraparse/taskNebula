@@ -2,9 +2,12 @@ import type { ReactNode } from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
+  SELF_UPDATE_QUERY_KEY,
   VERSION_INFO_QUERY_KEY,
   useRefreshVersionInfo,
+  useStartSelfUpdate,
   useVersionInfo,
+  type SelfUpdateStatus,
   type VersionInfo,
 } from '../use-version-info';
 
@@ -162,6 +165,75 @@ describe('use-version-info hooks', () => {
       });
 
       expect(queryClient.getQueryData(VERSION_INFO_QUERY_KEY)).toEqual(baseInfo);
+    });
+  });
+
+  describe('useStartSelfUpdate', () => {
+    it('posts the target version and stores the returned self-update status', async () => {
+      const queryClient = createQueryClient();
+      queryClient.setQueryData(VERSION_INFO_QUERY_KEY, baseInfo);
+      const selfUpdate: SelfUpdateStatus = {
+        enabled: true,
+        available: false,
+        mode: 'external-webhook',
+        blockedReason: 'active_job',
+        targetVersion: '0.5.0',
+        repository: 'neuraparse/tasknebula',
+        digest: null,
+        webhookConfigured: true,
+        manualCommands: 'docker compose pull web',
+        job: {
+          id: 'job-1',
+          status: 'requested',
+          currentVersion: '0.4.0',
+          targetVersion: '0.5.0',
+          repository: 'neuraparse/tasknebula',
+          imageTag: '0.5.0',
+          digest: null,
+          releaseUrl: null,
+          triggeredBy: 'admin-1',
+          createdAt: '2026-06-21T00:00:00.000Z',
+          updatedAt: '2026-06-21T00:00:01.000Z',
+          requestedAt: '2026-06-21T00:00:01.000Z',
+          completedAt: null,
+          failureReason: null,
+          webhookStatus: 202,
+        },
+      };
+      fetchMock.mockResolvedValue({ ok: true, json: async () => selfUpdate });
+
+      const { result } = renderHook(() => useStartSelfUpdate(), {
+        wrapper: createWrapper(queryClient),
+      });
+
+      await act(async () => {
+        await result.current.mutateAsync('0.5.0');
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith('/api/admin/version/self-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetVersion: '0.5.0', acknowledged: true }),
+      });
+      expect(queryClient.getQueryData(SELF_UPDATE_QUERY_KEY)).toEqual(selfUpdate);
+      expect(queryClient.getQueryState(VERSION_INFO_QUERY_KEY)?.isInvalidated).toBe(true);
+    });
+
+    it('surfaces self-update API errors', async () => {
+      fetchMock.mockResolvedValue({
+        ok: false,
+        json: async () => ({ error: 'Self-update is not available: disabled' }),
+      });
+
+      const { result } = renderHook(() => useStartSelfUpdate(), {
+        wrapper: createWrapper(createQueryClient()),
+      });
+
+      await act(async () => {
+        await expect(result.current.mutateAsync('0.5.0')).rejects.toThrow(
+          'Self-update is not available: disabled'
+        );
+      });
     });
   });
 });

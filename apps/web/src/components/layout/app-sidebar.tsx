@@ -36,6 +36,7 @@ import {
   Volume2,
   Bell,
   Building2,
+  Clock,
   Eye,
   FileText,
   KeyRound,
@@ -47,8 +48,14 @@ import {
   UserCog,
   UserPlus,
   Webhook,
+  Zap,
+  Bot,
+  Flag,
+  Gauge,
+  MessageSquareText,
+  Scroll,
+  ScrollText,
 } from 'lucide-react';
-import { Bot, Flag, Gauge, MessageSquareText, Scroll, ScrollText } from 'lucide-react';
 import { TaskNebulaLogo } from '@/components/branding/tasknebula-logo';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -104,6 +111,58 @@ const MY_ISSUES_VIEWS: Array<{
   { value: 'mentioned', label: 'Mentioned', i18nKey: 'mentioned', icon: Sparkles },
 ];
 
+const INBOX_LINKS: Array<{
+  href: string;
+  label: string;
+  pageHomeKey: string;
+  icon: typeof Inbox;
+  match?: { actor?: string; unread?: boolean; snoozed?: boolean };
+}> = [
+  { href: '/inbox', label: 'All', pageHomeKey: 'inbox_actor_all', icon: Inbox },
+  {
+    href: '/inbox?unread=1',
+    label: 'Unread only',
+    pageHomeKey: 'inbox_unread_only',
+    icon: Bell,
+    match: { unread: true },
+  },
+  {
+    href: '/inbox?actor=user',
+    label: 'People',
+    pageHomeKey: 'inbox_actor_people',
+    icon: Users,
+    match: { actor: 'user' },
+  },
+  {
+    href: '/inbox?actor=agent',
+    label: 'Agents',
+    pageHomeKey: 'inbox_actor_agents',
+    icon: Bot,
+    match: { actor: 'agent' },
+  },
+  {
+    href: '/inbox?actor=webhook',
+    label: 'Webhooks',
+    pageHomeKey: 'inbox_actor_webhooks',
+    icon: Webhook,
+    match: { actor: 'webhook' },
+  },
+  {
+    href: '/inbox?actor=system',
+    label: 'System',
+    pageHomeKey: 'inbox_actor_system',
+    icon: Zap,
+    match: { actor: 'system' },
+  },
+  {
+    href: '/inbox?snoozed=1',
+    label: 'Snoozed',
+    pageHomeKey: 'inbox_snoozed',
+    icon: Clock,
+    match: { snoozed: true },
+  },
+];
+
 const DASHBOARD_LINKS: Array<{ href: string; label: string; i18nKey: string; icon: typeof Home }> =
   [
     { href: '/dashboard', label: 'Overview', i18nKey: 'overview', icon: Home },
@@ -112,12 +171,19 @@ const DASHBOARD_LINKS: Array<{ href: string; label: string; i18nKey: string; ico
   ];
 
 const TEAM_LINKS: NavLink[] = [
-  { href: '/team', label: 'Members', i18nKey: 'members', icon: Users },
+  {
+    href: '/team',
+    label: 'Members',
+    i18nKey: 'members',
+    icon: Users,
+    match: { path: '/team', tab: 'members' },
+  },
   {
     href: '/team?tab=teamspaces',
     label: 'Teamspaces',
     i18nKey: 'teamspaces',
     icon: Building2,
+    match: { path: '/team', tab: 'teamspaces' },
     requiredPermission: 'team:view',
   },
   {
@@ -125,6 +191,7 @@ const TEAM_LINKS: NavLink[] = [
     label: 'Pending invites',
     i18nKey: 'pending_invites',
     icon: UserPlus,
+    match: { path: '/team', tab: 'invites' },
     requiredPermission: 'member:view',
   },
 ];
@@ -165,11 +232,11 @@ const SETTINGS_LINKS: NavLink[] = [
   {
     // Every active member may manage labels (the /api/labels routes only
     // require org membership), so no requiredPermission gate here.
-    href: '/settings/labels',
+    href: '/settings?tab=labels',
     label: 'Labels',
     i18nKey: 'labels',
     icon: Tags,
-    match: { path: '/settings/labels' },
+    match: { path: '/settings', tab: 'labels' },
   },
   {
     href: '/settings/integrations',
@@ -270,6 +337,20 @@ const ADMIN_LINKS: Array<{
     match: { path: '/admin', tab: 'agents' },
   },
   {
+    href: '/admin?tab=system',
+    label: 'System',
+    i18nKey: 'system',
+    icon: Shield,
+    match: { path: '/admin', tab: 'system' },
+  },
+  {
+    href: '/admin?tab=updates',
+    label: 'Updates',
+    i18nKey: 'updates',
+    icon: RefreshCw,
+    match: { path: '/admin', tab: 'updates' },
+  },
+  {
     href: '/admin?tab=realtime',
     label: 'Realtime health',
     i18nKey: 'realtime_health',
@@ -299,6 +380,7 @@ type NavLink = {
 const DEFAULT_TAB_BY_PATH: Record<string, string> = {
   '/settings': 'organization',
   '/admin': 'overview',
+  '/team': 'members',
 };
 
 function isNavLinkActive(
@@ -327,7 +409,7 @@ function getSectionKey(pathname: string | null | undefined): string {
   )
     return 'dashboard';
   if (path.startsWith('/my-issues') || path.startsWith('/issues')) return 'my_issues';
-  if (path.startsWith('/inbox')) return 'my_issues';
+  if (path.startsWith('/inbox')) return 'inbox';
   if (path.startsWith('/initiatives')) return 'projects';
   if (path.startsWith('/projects')) return 'projects';
   if (path.startsWith('/docs')) return 'docs';
@@ -335,6 +417,23 @@ function getSectionKey(pathname: string | null | undefined): string {
   if (path.startsWith('/admin')) return 'admin';
   if (path.startsWith('/settings')) return 'settings';
   return 'dashboard';
+}
+
+function isInboxLinkActive(
+  link: (typeof INBOX_LINKS)[number],
+  searchParams: ReturnType<typeof useSearchParams>
+): boolean {
+  const actor = searchParams?.get('actor') ?? null;
+  const unread = searchParams?.get('unread') === '1';
+  const snoozed = searchParams?.get('snoozed') === '1';
+  const type = searchParams?.get('type') ?? null;
+
+  if (!link.match) return actor === null && !unread && !snoozed && !type;
+  if (type) return false;
+  if (link.match.actor) return actor === link.match.actor && !unread && !snoozed;
+  if (link.match.unread) return unread && actor === null && !snoozed;
+  if (link.match.snoozed) return snoozed && actor === null && !unread;
+  return false;
 }
 
 function isHomeSectionPath(pathname: string | null | undefined): boolean {
@@ -356,6 +455,7 @@ export function AppSidebar() {
   const searchParams = useSearchParams();
   const normalizedPathname = stripLocalePrefix(pathname);
   const tNav = useTranslations('nav');
+  const tHome = useTranslations('pagesHome');
   const tActions = useTranslations('actions');
   const tCommon = useTranslations('common');
   const tLayout = useTranslations('layoutNav');
@@ -543,6 +643,25 @@ export function AppSidebar() {
               </div>
             ) : null}
 
+            {normalizedPathname.startsWith('/inbox') ? (
+              <div className="space-y-0.5">
+                {INBOX_LINKS.map((link) => {
+                  const isActive = isInboxLinkActive(link, searchParams);
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      data-active={isActive ? 'true' : undefined}
+                      className={SIDEBAR_NAV_LINK_CLASS}
+                    >
+                      <link.icon className="h-4 w-4 shrink-0" />
+                      <span className={SIDEBAR_NAV_LABEL_CLASS}>{tHome(link.pageHomeKey)}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : null}
+
             {isHomeSectionPath(pathname) ? (
               <div className="space-y-0.5">
                 {DASHBOARD_LINKS.map((link) => {
@@ -568,14 +687,22 @@ export function AppSidebar() {
 
             {normalizedPathname.startsWith('/team') ? (
               <div className="space-y-0.5">
-                {visibleTeamLinks.map((link) => (
-                  <Link key={link.href} href={link.href} className={SIDEBAR_NAV_LINK_CLASS}>
-                    <link.icon className="h-4 w-4 shrink-0" />
-                    <span className={SIDEBAR_NAV_LABEL_CLASS}>
-                      {link.i18nKey ? tNav(link.i18nKey) : link.label}
-                    </span>
-                  </Link>
-                ))}
+                {visibleTeamLinks.map((link) => {
+                  const isActive = isNavLinkActive(link, pathname, searchParams?.get('tab'));
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      data-active={isActive ? 'true' : undefined}
+                      className={SIDEBAR_NAV_LINK_CLASS}
+                    >
+                      <link.icon className="h-4 w-4 shrink-0" />
+                      <span className={SIDEBAR_NAV_LABEL_CLASS}>
+                        {link.i18nKey ? tNav(link.i18nKey) : link.label}
+                      </span>
+                    </Link>
+                  );
+                })}
               </div>
             ) : null}
 

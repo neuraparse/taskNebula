@@ -12,7 +12,7 @@ const { auth } = NextAuth(authConfig);
 
 // Routes that are explicitly served from the top-level (no /[locale]/ prefix).
 // These match the directory structure under apps/web/src/app/.
-const UN_LOCALIZED_PREFIXES = ['/api', '/auth', '/share', '/setup', '/offline'];
+const UN_LOCALIZED_PREFIXES = ['/api', '/auth', '/join', '/share', '/setup', '/offline'];
 
 function isUnLocalizedPath(pathname: string): boolean {
   return UN_LOCALIZED_PREFIXES.some(

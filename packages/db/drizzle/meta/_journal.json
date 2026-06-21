@@ -393,6 +393,13 @@
       "when": 1779000000014,
       "tag": "0055_agent_policy_approvals",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1779000000015,
+      "tag": "0056_project_invite_links",
+      "breakpoints": true
     }
   ]
 }

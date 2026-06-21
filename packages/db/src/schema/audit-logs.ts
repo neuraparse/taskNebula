@@ -65,6 +65,10 @@ export const auditLogActionEnum = pgEnum('audit_log_action', [
   'project.deleted',
   'project.member_added',
   'project.member_removed',
+  'project.invite_link_created',
+  'project.invite_link_revoked',
+  'project.invite_link_accepted',
+  'project.invite_link_signup',
 
   // Sprint actions
   'sprint.created',

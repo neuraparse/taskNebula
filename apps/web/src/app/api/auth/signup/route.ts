@@ -4,10 +4,16 @@ import { eq, and } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { createHash, timingSafeEqual } from 'crypto';
 import { getRegistrationPolicy } from '@/lib/auth/registration-policy';
+import {
+  createUserWithProjectInviteLink,
+  isProjectInviteLinkUsable,
+  ProjectInviteLinkError,
+} from '@/lib/invitations/project-invite-links';
 
 const GENERIC_SIGNUP_MESSAGE = 'If that email is available, an account will be created';
 const REGISTRATION_INVITE_REQUIRED = 'REGISTRATION_INVITE_REQUIRED';
 const REGISTRATION_ADMIN_ONLY = 'REGISTRATION_ADMIN_ONLY';
+const INVALID_PROJECT_INVITE = 'INVALID_PROJECT_INVITE';
 
 function normalizeEmail(email: unknown): string {
   return typeof email === 'string' ? email.trim().toLowerCase() : '';
@@ -16,7 +22,7 @@ function normalizeEmail(email: unknown): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, password, inviteToken } = body;
+    const { name, password, inviteToken, projectInviteToken } = body;
     const email = normalizeEmail(body.email);
 
     // Validate input
@@ -32,6 +38,19 @@ export async function POST(request: NextRequest) {
     }
 
     const registrationPolicy = await getRegistrationPolicy();
+    const hasProjectInviteToken =
+      typeof projectInviteToken === 'string' && projectInviteToken.trim().length > 0;
+    let projectInviteUsable = false;
+
+    if (hasProjectInviteToken) {
+      projectInviteUsable = await isProjectInviteLinkUsable(projectInviteToken);
+      if (!projectInviteUsable) {
+        return NextResponse.json(
+          { error: INVALID_PROJECT_INVITE, code: INVALID_PROJECT_INVITE },
+          { status: 400 }
+        );
+      }
+    }
 
     // Check if user already exists
     const existingUser = await db.query.users.findFirst({
@@ -105,7 +124,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: GENERIC_SIGNUP_MESSAGE }, { status: 200 });
     }
 
-    if (registrationPolicy.mode === 'invite_only') {
+    if (registrationPolicy.mode === 'invite_only' && !projectInviteUsable) {
       return NextResponse.json(
         { error: REGISTRATION_INVITE_REQUIRED, code: REGISTRATION_INVITE_REQUIRED },
         { status: 403 }
@@ -121,6 +140,40 @@ export async function POST(request: NextRequest) {
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    if (projectInviteUsable) {
+      try {
+        const result = await createUserWithProjectInviteLink({
+          name,
+          email,
+          passwordHash: hashedPassword,
+          token: projectInviteToken,
+        });
+
+        import('@/lib/auth/email-verification')
+          .then(({ issueEmailVerificationToken }) => issueEmailVerificationToken(result.user.id))
+          .catch((err) => {
+            console.error('[signup] verification email dispatch failed:', err);
+          });
+
+        return NextResponse.json(
+          {
+            message: 'User created successfully',
+            user: result.user,
+            projectInvite: result.invite,
+          },
+          { status: 201 }
+        );
+      } catch (error) {
+        if (error instanceof ProjectInviteLinkError) {
+          return NextResponse.json(
+            { error: INVALID_PROJECT_INVITE, code: INVALID_PROJECT_INVITE },
+            { status: 400 }
+          );
+        }
+        throw error;
+      }
+    }
 
     // Create user
     const [newUser] = await db

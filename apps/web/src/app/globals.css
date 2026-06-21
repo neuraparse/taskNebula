@@ -53,6 +53,145 @@
     u+2000-206f, u+20ac, u+2122, u+2191, u+2193, u+2212, u+2215, u+feff, u+fffd;
 }
 
+/* Landing-only IBM Plex faces. Keep them local for self-hosted installs. */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-sans-latin-ext-300-normal.woff2') format('woff2');
+  unicode-range:
+    u+0100-02ba, u+02bd-02c5, u+02c7-02cc, u+02ce-02d7, u+02dd-02ff, u+0304, u+0308, u+0329,
+    u+1d00-1dbf, u+1e00-1e9f, u+1ef2-1eff, u+2020, u+20a0-20ab, u+20ad-20c0, u+2113, u+2c60-2c7f,
+    u+a720-a7ff;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-sans-latin-300-normal.woff2') format('woff2');
+  unicode-range:
+    u+0000-00ff, u+0131, u+0152-0153, u+02bb-02bc, u+02c6, u+02da, u+02dc, u+0304, u+0308, u+0329,
+    u+2000-206f, u+20ac, u+2122, u+2191, u+2193, u+2212, u+2215, u+feff, u+fffd;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-sans-latin-ext-400-normal.woff2') format('woff2');
+  unicode-range:
+    u+0100-02ba, u+02bd-02c5, u+02c7-02cc, u+02ce-02d7, u+02dd-02ff, u+0304, u+0308, u+0329,
+    u+1d00-1dbf, u+1e00-1e9f, u+1ef2-1eff, u+2020, u+20a0-20ab, u+20ad-20c0, u+2113, u+2c60-2c7f,
+    u+a720-a7ff;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-sans-latin-400-normal.woff2') format('woff2');
+  unicode-range:
+    u+0000-00ff, u+0131, u+0152-0153, u+02bb-02bc, u+02c6, u+02da, u+02dc, u+0304, u+0308, u+0329,
+    u+2000-206f, u+20ac, u+2122, u+2191, u+2193, u+2212, u+2215, u+feff, u+fffd;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-sans-latin-ext-500-normal.woff2') format('woff2');
+  unicode-range:
+    u+0100-02ba, u+02bd-02c5, u+02c7-02cc, u+02ce-02d7, u+02dd-02ff, u+0304, u+0308, u+0329,
+    u+1d00-1dbf, u+1e00-1e9f, u+1ef2-1eff, u+2020, u+20a0-20ab, u+20ad-20c0, u+2113, u+2c60-2c7f,
+    u+a720-a7ff;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-sans-latin-500-normal.woff2') format('woff2');
+  unicode-range:
+    u+0000-00ff, u+0131, u+0152-0153, u+02bb-02bc, u+02c6, u+02da, u+02dc, u+0304, u+0308, u+0329,
+    u+2000-206f, u+20ac, u+2122, u+2191, u+2193, u+2212, u+2215, u+feff, u+fffd;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-sans-latin-ext-600-normal.woff2') format('woff2');
+  unicode-range:
+    u+0100-02ba, u+02bd-02c5, u+02c7-02cc, u+02ce-02d7, u+02dd-02ff, u+0304, u+0308, u+0329,
+    u+1d00-1dbf, u+1e00-1e9f, u+1ef2-1eff, u+2020, u+20a0-20ab, u+20ad-20c0, u+2113, u+2c60-2c7f,
+    u+a720-a7ff;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-sans-latin-600-normal.woff2') format('woff2');
+  unicode-range:
+    u+0000-00ff, u+0131, u+0152-0153, u+02bb-02bc, u+02c6, u+02da, u+02dc, u+0304, u+0308, u+0329,
+    u+2000-206f, u+20ac, u+2122, u+2191, u+2193, u+2212, u+2215, u+feff, u+fffd;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-mono-latin-ext-400-normal.woff2') format('woff2');
+  unicode-range:
+    u+0100-02ba, u+02bd-02c5, u+02c7-02cc, u+02ce-02d7, u+02dd-02ff, u+0304, u+0308, u+0329,
+    u+1d00-1dbf, u+1e00-1e9f, u+1ef2-1eff, u+2020, u+20a0-20ab, u+20ad-20c0, u+2113, u+2c60-2c7f,
+    u+a720-a7ff;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-mono-latin-400-normal.woff2') format('woff2');
+  unicode-range:
+    u+0000-00ff, u+0131, u+0152-0153, u+02bb-02bc, u+02c6, u+02da, u+02dc, u+0304, u+0308, u+0329,
+    u+2000-206f, u+20ac, u+2122, u+2191, u+2193, u+2212, u+2215, u+feff, u+fffd;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-mono-latin-ext-500-normal.woff2') format('woff2');
+  unicode-range:
+    u+0100-02ba, u+02bd-02c5, u+02c7-02cc, u+02ce-02d7, u+02dd-02ff, u+0304, u+0308, u+0329,
+    u+1d00-1dbf, u+1e00-1e9f, u+1ef2-1eff, u+2020, u+20a0-20ab, u+20ad-20c0, u+2113, u+2c60-2c7f,
+    u+a720-a7ff;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-mono-latin-500-normal.woff2') format('woff2');
+  unicode-range:
+    u+0000-00ff, u+0131, u+0152-0153, u+02bb-02bc, u+02c6, u+02da, u+02dc, u+0304, u+0308, u+0329,
+    u+2000-206f, u+20ac, u+2122, u+2191, u+2193, u+2212, u+2215, u+feff, u+fffd;
+}
+
 /* ----------------------------------------------------------------------------
    Core tokens — shadcn-compatible HSL variables
    Light: warm off-white; Dark: soft near-black with subtle blue undertone
@@ -195,6 +334,14 @@
       'calt' 1,
       'ss01' 1;
     letter-spacing: 0;
+    word-spacing: 0.08em;
+  }
+  code,
+  kbd,
+  pre,
+  samp,
+  .font-mono {
+    word-spacing: 0;
   }
   /* Default focus ring (keyboard-first) */
   :focus-visible {
@@ -663,44 +810,59 @@
 }
 
 /* ----------------------------------------------------------------------------
-   Landing page — keep sim.ai-inspired dark scope, unified with app accents
+   Landing page - IBM Carbon-inspired light scope
    ---------------------------------------------------------------------------- */
 .landing-dark {
-  --landing-bg: #0a0a0c;
-  --landing-bg-elevated: #14141a;
-  --landing-bg-card: #101014;
-  --landing-bg-surface: #0d0d11;
-  --landing-bg-hover: #18181f;
-  --landing-bg-section: #0a0a0c;
+  --landing-font-sans: 'IBM Plex Sans', 'Helvetica Neue', Arial, var(--font-sans), sans-serif;
+  --landing-font-mono: 'IBM Plex Mono', var(--font-mono), ui-monospace, monospace;
 
-  --landing-border: rgba(255, 255, 255, 0.06);
-  --landing-border-strong: rgba(255, 255, 255, 0.12);
-  --landing-border-light: rgba(255, 255, 255, 0.2);
+  --landing-bg: #f4f4f4;
+  --landing-bg-elevated: #ffffff;
+  --landing-bg-card: #ffffff;
+  --landing-bg-surface: #f4f4f4;
+  --landing-bg-hover: #e0e0e0;
+  --landing-bg-section: #f4f4f4;
 
-  --landing-text: #eaeaf0;
-  --landing-text-dark: #fafafa;
-  --landing-text-body: #c8c8d0;
-  --landing-text-muted: rgba(234, 234, 240, 0.45);
-  --landing-text-subtle: rgba(234, 234, 240, 0.62);
-  --landing-text-icon: #8f8fa0;
+  --landing-border: #e0e0e0;
+  --landing-border-strong: #c6c6c6;
+  --landing-border-light: #8d8d8d;
 
-  /* Unified accents — match app */
-  --landing-accent-blue: #3b9dff;
-  --landing-accent-violet: #8a6dff;
-  --landing-accent-cyan: #2dd4bf;
-  --landing-accent-emerald: #34d399;
-  --landing-accent-amber: #f5b44c;
-  --landing-accent-rose: #f25c84;
-  --landing-accent-green: #34d399;
-  --landing-accent-pink: #f472d6;
+  --landing-text: #161616;
+  --landing-text-dark: #000000;
+  --landing-text-body: #393939;
+  --landing-text-muted: #8d8d8d;
+  --landing-text-subtle: #525252;
+  --landing-text-icon: #525252;
 
-  --landing-shadow: 0 10px 30px -20px rgba(0, 0, 0, 0.8);
-  --landing-glow: 0 0 60px -20px rgba(138, 109, 255, 0.35);
+  /* IBM-style constrained palette: blue + neutral grays. */
+  --landing-accent-blue: #0f62fe;
+  --landing-accent-blue-hover: #0043ce;
+  --landing-accent-violet: #0f62fe;
+  --landing-accent-cyan: #0f62fe;
+  --landing-accent-emerald: #0f62fe;
+  --landing-accent-amber: #0f62fe;
+  --landing-accent-rose: #0f62fe;
+  --landing-accent-green: #0f62fe;
+  --landing-accent-pink: #0f62fe;
 
-  --divider: rgba(255, 255, 255, 0.06);
+  --landing-shadow: 0 24px 48px -36px rgb(0 0 0 / 0.36);
+  --landing-glow: none;
+
+  --divider: #e0e0e0;
   --white: #ffffff;
 
-  color-scheme: dark;
+  color-scheme: light;
+  font-family: var(--landing-font-sans);
+  word-spacing: 0;
+  overflow-x: clip;
+}
+
+body:has(> .landing-dark) {
+  overflow-x: hidden;
+}
+
+html:has(body > .landing-dark) {
+  overflow-x: hidden;
 }
 
 /* ----------------------------------------------------------------------------
@@ -728,24 +890,28 @@
   }
 
   .landing-display {
-    font-weight: 560;
-    line-height: 0.94;
-    letter-spacing: -0.045em;
+    font-family: var(--landing-font-sans);
+    font-weight: 300;
+    line-height: 0.98;
+    letter-spacing: 0;
   }
   .landing-title {
-    font-weight: 520;
-    line-height: 1.02;
-    letter-spacing: -0.034em;
+    font-family: var(--landing-font-sans);
+    font-weight: 400;
+    line-height: 1.08;
+    letter-spacing: 0;
   }
   .landing-kicker {
-    font-family: var(--font-mono), monospace;
+    font-family: var(--landing-font-mono);
     font-size: 0.7rem;
-    letter-spacing: 0.18em;
+    font-weight: 500;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
   }
   .landing-body {
-    line-height: 1.7;
-    letter-spacing: 0.005em;
+    font-family: var(--landing-font-sans);
+    line-height: 1.62;
+    letter-spacing: 0;
   }
 
   .text-balance {
@@ -764,27 +930,14 @@
 
   /* Gradient text */
   .text-gradient-primary {
-    background: linear-gradient(
-      135deg,
-      hsl(var(--accent-indigo)) 0%,
-      hsl(var(--accent-violet)) 45%,
-      hsl(var(--accent-blue)) 100%
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    color: var(--landing-accent-blue);
   }
   .text-gradient-accent {
-    background: linear-gradient(
-      135deg,
-      hsl(var(--accent-emerald)) 0%,
-      hsl(var(--accent-cyan)) 100%
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    color: var(--landing-accent-blue);
   }
 
   /* Subtle glow halos */
@@ -819,6 +972,55 @@
       radial-gradient(at 80% 0%, hsl(var(--accent-blue) / 0.15) 0px, transparent 50%),
       radial-gradient(at 0% 80%, hsl(var(--accent-cyan) / 0.12) 0px, transparent 50%),
       radial-gradient(at 80% 80%, hsl(var(--accent-emerald) / 0.1) 0px, transparent 50%);
+  }
+
+  .landing-dark .bg-aurora {
+    background:
+      linear-gradient(90deg, rgb(15 98 254 / 0.08) 1px, transparent 1px),
+      linear-gradient(180deg, rgb(15 98 254 / 0.08) 1px, transparent 1px);
+    background-position: -1px -1px;
+    background-size: 64px 64px;
+    -webkit-mask-image: linear-gradient(to bottom, black, transparent 86%);
+    mask-image: linear-gradient(to bottom, black, transparent 86%);
+    opacity: 0.68;
+  }
+
+  .landing-dark :is(.font-mono, .landing-kbd) {
+    font-family: var(--landing-font-mono);
+  }
+
+  .landing-dark .scrollbar-none {
+    contain: layout paint;
+  }
+
+  .landing-dark :is(.chip-blue, .chip-violet, .chip-cyan, .chip-emerald, .chip-amber, .chip-rose) {
+    background: color-mix(in srgb, var(--landing-accent-blue) 9%, transparent);
+    border-color: color-mix(in srgb, var(--landing-accent-blue) 22%, transparent);
+    color: var(--landing-accent-blue);
+  }
+
+  .landing-dark
+    :is(
+      .icon-tile-accent-blue,
+      .icon-tile-accent-violet,
+      .icon-tile-accent-cyan,
+      .icon-tile-accent-emerald,
+      .icon-tile-accent-amber,
+      .icon-tile-accent-rose
+    ) {
+    background: color-mix(in srgb, var(--landing-accent-blue) 9%, transparent);
+    border-color: color-mix(in srgb, var(--landing-accent-blue) 22%, transparent);
+    color: var(--landing-accent-blue);
+  }
+
+  .landing-dark .live-pill {
+    background: color-mix(in srgb, var(--landing-accent-blue) 9%, transparent);
+    border-color: color-mix(in srgb, var(--landing-accent-blue) 24%, transparent);
+    color: var(--landing-accent-blue);
+  }
+
+  .landing-dark .live-pill::before {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--landing-accent-blue) 18%, transparent);
   }
 
   /* Animated shimmer (skeletons) */
@@ -1458,7 +1660,7 @@
    Scoped to .landing-dark; do not reuse outside the landing page.
    ---------------------------------------------------------------------------- */
 .landing-dark {
-  --landing-terminal-bg: #08090c;
+  --landing-terminal-bg: #ffffff;
 }
 
 @layer utilities {
@@ -1467,6 +1669,7 @@
     background: var(--landing-terminal-bg, #08090c);
     border: 1px solid var(--landing-border);
     border-radius: var(--radius-lg);
+    box-shadow: 0 18px 42px -36px rgb(0 0 0 / 0.45);
   }
 
   /* Keycap for keyboard-shortcut vignettes (Cmd+K mock) */
@@ -1481,7 +1684,7 @@
     border-bottom-width: 2px;
     border-radius: var(--radius-sm);
     background: var(--landing-bg-elevated);
-    font-family: var(--font-mono), monospace;
+    font-family: var(--landing-font-mono);
     font-size: 10px;
     color: var(--landing-text-body);
   }

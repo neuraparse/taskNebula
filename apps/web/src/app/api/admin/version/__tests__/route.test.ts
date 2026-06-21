@@ -22,6 +22,11 @@ jest.mock('@/lib/version', () => ({
   getUpdateStatus: (...args: any[]) => getUpdateStatusMock(...args),
 }));
 
+const getSelfUpdateStatusMock = jest.fn();
+jest.mock('@/lib/version/self-update', () => ({
+  getSelfUpdateStatus: (...args: any[]) => getSelfUpdateStatusMock(...args),
+}));
+
 import { NextRequest } from 'next/server';
 import { GET } from '../route';
 import type { UpdateStatus } from '@/lib/version';
@@ -52,8 +57,22 @@ const upToDateStatus: UpdateStatus = {
   checkDisabled: false,
 };
 
+const selfUpdateStatus = {
+  enabled: false,
+  available: false,
+  mode: 'manual',
+  blockedReason: 'disabled',
+  targetVersion: null,
+  repository: 'neuraparse/tasknebula',
+  digest: null,
+  webhookConfigured: false,
+  manualCommands: 'docker compose pull web',
+  job: null,
+};
+
 beforeEach(() => {
   jest.clearAllMocks();
+  getSelfUpdateStatusMock.mockResolvedValue(selfUpdateStatus);
 });
 
 describe('GET /api/admin/version', () => {
@@ -87,9 +106,10 @@ describe('GET /api/admin/version', () => {
     const res = await GET(request());
 
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual(upToDateStatus);
+    expect(await res.json()).toEqual({ ...upToDateStatus, selfUpdate: selfUpdateStatus });
     // Default (no ?refresh) → honor the server-side cache TTL.
     expect(getUpdateStatusMock).toHaveBeenCalledWith({ refresh: false });
+    expect(getSelfUpdateStatusMock).toHaveBeenCalledWith(upToDateStatus);
   });
 
   it('forwards ?refresh=true to getUpdateStatus', async () => {

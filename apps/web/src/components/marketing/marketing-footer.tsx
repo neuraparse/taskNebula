@@ -49,7 +49,7 @@ export function MarketingFooter() {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))]">
           <div className="max-w-sm sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-3">
-              <TaskNebulaLogo />
+              <TaskNebulaLogo variant="mono" className="text-[var(--landing-accent-blue)]" />
               <div>
                 <p className="landing-title text-[15px] text-[var(--landing-text-dark)]">
                   TaskNebula

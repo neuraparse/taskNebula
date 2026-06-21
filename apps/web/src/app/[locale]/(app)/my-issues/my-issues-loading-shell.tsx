@@ -1,12 +1,8 @@
-import {
-  Skeleton,
-  SkeletonPageHeader,
-  SkeletonList,
-} from '@/components/ui/skeleton';
+import { Skeleton, SkeletonPageHeader, SkeletonList } from '@/components/ui/skeleton';
 
-export default function MyIssuesLoading() {
+export function MyIssuesLoadingShell() {
   return (
-    <div className="flex h-full flex-col overflow-y-auto custom-scrollbar">
+    <div className="custom-scrollbar flex h-full flex-col overflow-y-auto">
       <div className="space-y-6 px-6 py-6">
         <div className="flex items-center justify-between">
           <SkeletonPageHeader />

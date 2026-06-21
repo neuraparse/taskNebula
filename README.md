@@ -11,11 +11,14 @@
 [![Next.js 15](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
+[![30 languages](https://img.shields.io/badge/i18n-30%20languages-8b5cf6?style=for-the-badge)](#languages)
 [![License MIT](https://img.shields.io/badge/License-MIT-16a34a?style=for-the-badge)](LICENSE)
 
 A self-hosted issue tracker that feels like Linear, scales like Jira, and
-ships with a real AI copilot. Bring your own OpenAI / Anthropic key, keep
-AI disabled by default, or run fully offline with the native planner.
+ships with a real AI copilot. It is localized in 30 languages with
+browser/device auto-detection, native-name switching, and right-to-left
+support for Arabic and Hebrew. Bring your own OpenAI / Anthropic key, keep AI
+disabled by default, or run fully offline with the native planner.
 
 <p>
   <a href="#quick-start"><img src="https://img.shields.io/badge/Run%20with-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Run with Docker"/></a>
@@ -24,6 +27,7 @@ AI disabled by default, or run fully offline with the native planner.
   <a href="https://raw.githubusercontent.com/neuraparse/tasknebula/main/docker-compose.yml"><img src="https://img.shields.io/badge/View-compose.yml-111827?style=for-the-badge&logo=yaml&logoColor=white" alt="View compose file"/></a>
 </p>
 
+[Languages](#languages) ·
 [Quick start](#quick-start) ·
 [Docker image](#docker-image) ·
 [Architecture](#architecture) ·
@@ -34,32 +38,55 @@ AI disabled by default, or run fully offline with the native planner.
 
 <br/>
 
-<img src="images/readme-home-2026-06-13.png" alt="TaskNebula home" width="100%"/>
+<img src="images/readme-home-2026-06-21.png" alt="TaskNebula home" width="100%"/>
 
 <table>
 <tr>
 <td width="50%">
-<img src="images/readme-ai-draft-2026-05-19.png" alt="Draft issues from a prompt" width="100%"/>
+<img src="images/readme-ai-draft-2026-06-21.png" alt="Draft issues from a prompt" width="100%"/>
 <p align="center"><b>Draft issues from a prompt</b></p>
 </td>
 <td width="50%">
-<img src="images/readme-ai-assist-2026-06-13.png" alt="Rich issue detail" width="100%"/>
+<img src="images/readme-ai-assist-2026-06-21.png" alt="Rich issue detail" width="100%"/>
 <p align="center"><b>Rich issue detail — labels, versions, components, sub-issues</b></p>
 </td>
 </tr>
 <tr>
 <td width="50%">
-<img src="images/readme-board-2026-06-13.png" alt="Kanban board" width="100%"/>
+<img src="images/readme-board-2026-06-21.png" alt="Kanban board" width="100%"/>
 <p align="center"><b>Real-time Kanban board</b></p>
 </td>
 <td width="50%">
-<img src="images/readme-dashboard-2026-06-13.png" alt="Dashboard" width="100%"/>
+<img src="images/readme-dashboard-2026-06-21.png" alt="Dashboard" width="100%"/>
 <p align="center"><b>Workspace dashboard</b></p>
 </td>
 </tr>
 </table>
 
 </div>
+
+---
+
+## Languages
+
+TaskNebula ships **30 languages** out of the box. On a visitor's first load the
+app auto-selects their language from the browser/device (`Accept-Language`,
+quality-weighted with regional → base fallback) and persists it; they can switch
+any time from the in-app language picker, which lists every locale by its native
+name. An explicit choice always wins over auto-detection.
+
+> English · Türkçe · Deutsch · Español · Français · Italiano · Português ·
+> Nederlands · Polski · Русский · Українська · Čeština · Svenska · Dansk · Suomi ·
+> Norsk Bokmål · Română · Magyar · Ελληνικά · Български · 简体中文 · 繁體中文 ·
+> 日本語 · 한국어 · हिन्दी · Bahasa Indonesia · ไทย · Tiếng Việt · العربية · עברית
+
+- **Right-to-left** layout for Arabic and Hebrew (Radix `DirectionProvider`).
+- **Zero hardcoded strings**: every user-facing string goes through `next-intl`;
+  a lint gate (`react/jsx-no-literals`) blocks new hardcoded text, and all 30
+  catalogs are key-parity verified (`node scripts/i18n-check.mjs`).
+- Add or change a locale in `apps/web/src/lib/i18n/config.ts` +
+  `apps/web/messages/<locale>.json`. The marketing landing page is intentionally
+  English-only.
 
 ---
 
@@ -71,7 +98,7 @@ Pick the path that matches where you are deploying.
 | ---------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | **One-command Docker** | A fresh Linux VM or homelab box                     | `curl -fsSL https://raw.githubusercontent.com/neuraparse/tasknebula/main/scripts/quickstart.sh \| bash`                                   |
 | **Docker Desktop**     | Local Mac, Windows, or Linux PC with Docker Desktop | `curl -fsSLo compose.yml https://raw.githubusercontent.com/neuraparse/tasknebula/main/docker-compose.desktop.yml && docker compose up -d` |
-| **Pinned production**  | Repeatable self-hosted releases                     | `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.6.9 docker compose up -d`                                                                       |
+| **Pinned production**  | Repeatable self-hosted releases                     | `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.7.0 docker compose up -d`                                                                       |
 | **Source build**       | Local development or patching                       | `docker compose up -d --build`                                                                                                            |
 
 > 2026 note: Play with Docker is intentionally removed. Docker's
@@ -137,7 +164,7 @@ docker compose up -d
 
 ```bash
 docker compose pull web && docker compose up -d    # update published image
-TASKNEBULA_IMAGE=neuraparse/tasknebula:0.6.9 \
+TASKNEBULA_IMAGE=neuraparse/tasknebula:0.7.0 \
   docker compose up -d                             # pin a release
 docker compose up -d --build                       # build local source
 docker compose --profile cron up -d cron           # enable optional cron sidecar
@@ -145,6 +172,14 @@ docker compose --profile cron up -d cron           # enable optional cron sideca
 
 Release notes live on the
 [GitHub releases page](https://github.com/neuraparse/tasknebula/releases).
+Super-admins also see Docker Hub update notifications in `Admin → Updates`.
+Automatic self-update is deliberately opt-in: configure
+`TASKNEBULA_SELF_UPDATE_ENABLED=true`,
+`TASKNEBULA_SELF_UPDATE_WEBHOOK_URL`, and
+`TASKNEBULA_SELF_UPDATE_WEBHOOK_SECRET` only after you have a separate
+host-side updater that verifies the signed request, backs up Postgres/uploads,
+pulls the target image, recreates `web`, and checks `/api/health`. The web
+container is never given Docker socket access by the default Compose files.
 
 ---
 
@@ -153,13 +188,13 @@ Release notes live on the
 | Item              | Value                                                                                                          |
 | ----------------- | -------------------------------------------------------------------------------------------------------------- |
 | Repository        | [`neuraparse/tasknebula`](https://hub.docker.com/r/neuraparse/tasknebula)                                      |
-| Recommended tag   | `0.6.9` for pinned installs, `latest` for quickstart demos                                                     |
+| Recommended tag   | `0.7.0` for pinned installs, `latest` for quickstart demos                                                     |
 | Current platform  | `linux/amd64`                                                                                                  |
 | Runtime port      | `3000`                                                                                                         |
 | Health endpoint   | `GET /api/health`                                                                                              |
 | Required services | PostgreSQL 16 + `pgvector`, Redis 7                                                                            |
 | Optional services | LiveKit voice rooms, cron sidecar, SMTP, OAuth providers, OpenAI / Anthropic keys                              |
-| Immutable pulls   | Inspect the tag digest with `docker buildx imagetools inspect neuraparse/tasknebula:0.6.9` before pinning hard |
+| Immutable pulls   | Inspect the tag digest with `docker buildx imagetools inspect neuraparse/tasknebula:0.7.0` before pinning hard |
 
 The production Compose file keeps core services always-on and gates optional
 automation behind Docker Compose profiles. This keeps `docker compose up -d`
@@ -229,46 +264,31 @@ the relevant project AI settings. Full audit trail in
 
 ## What's new
 
-Latest release: **v0.6.9**. Highlights from the recent line — see the
-[CHANGELOG](CHANGELOG.md) for the complete history:
+Latest release: **v0.7.0**. Highlights from the latest 15 commits
+(`v0.6.5` → `v0.7.0`) — see the [CHANGELOG](CHANGELOG.md) for the complete
+history:
 
-- **30-language internationalization.** The entire authenticated app is
-  localized via `next-intl` (~3,900 strings across 55 namespaces) with
-  device/browser auto-detection and a native-name language switcher; Arabic
-  and Hebrew render right-to-left.
-- **Jira-parity work graph.** First-class **labels**, project
-  **versions/releases**, **components**, and a **resolution** model (plus
-  `flagged`) landed as one coherent schema wave (migration `0054`).
-- **Refreshed AI model catalog.** Current Anthropic lineup — Claude Opus 4.8
-  (default), Fable 5, Opus 4.7, Sonnet 4.6, Haiku 4.5 — with correct output
-  limits and reasoning-effort options.
-- **Inline type-to-create pickers** for sprints, epics, and sub-issues, more
-  Jira/Plane-parity issue-detail fields, and an admin version-update banner.
+- **Global-first UI.** The authenticated app is localized in 30 languages via
+  `next-intl`, auto-detects the browser/device language, persists the user's
+  explicit choice, and supports native-name switching plus RTL Arabic/Hebrew.
+- **Self-hosted update awareness and safe handoff.** Admins can see when their
+  running instance is behind the latest Docker Hub release, review image digest
+  metadata, use manual Docker commands, or send an opt-in signed request to an
+  external updater without granting Docker socket access to the web container.
+- **Registration controls for private installs.** Super-admins can choose
+  **Allow registration**, **Invite only**, or **Admin-created accounts only** so
+  personal/self-hosted deployments do not accumulate unwanted user accounts.
+- **Agent governance and approval gates.** The recent line adds policy parsing,
+  approval permissions, agent approval routes, governance UI, audit-friendly
+  agent actions, and tighter organization/project permission checks.
+- **Realtime issue sync that survives scale-out.** Issue create/update/delete
+  now invalidates the right caches instantly, and the SSE event bus uses Redis
+  pub/sub with an in-process fallback for single-instance installs.
+- **Cleaner project and issue UI.** Project navigation labels are visible on
+  desktop, duplicate/dead view toolbar controls were removed, and issue-detail
+  picker values truncate cleanly without overlapping modal actions.
 - **Light/dark theming fix.** Modals, the Cmd+K palette, and popovers are now
-  legible in day mode (theme-aware surfaces) with no dark-mode regression.
-
----
-
-## Languages
-
-TaskNebula ships **30 languages** out of the box. On a visitor's first load the
-app auto-selects their language from the browser/device (`Accept-Language`,
-quality-weighted with regional → base fallback) and persists it; they can switch
-any time from the in-app language picker, which lists every locale by its native
-name. An explicit choice always wins over auto-detection.
-
-> English · Türkçe · Deutsch · Español · Français · Italiano · Português ·
-> Nederlands · Polski · Русский · Українська · Čeština · Svenska · Dansk · Suomi ·
-> Norsk Bokmål · Română · Magyar · Ελληνικά · Български · 简体中文 · 繁體中文 ·
-> 日本語 · 한국어 · हिन्दी · Bahasa Indonesia · ไทย · Tiếng Việt · العربية · עברית
-
-- **Right-to-left** layout for Arabic and Hebrew (Radix `DirectionProvider`).
-- **Zero hardcoded strings**: every user-facing string goes through `next-intl`;
-  a lint gate (`react/jsx-no-literals`) blocks new hardcoded text, and all 30
-  catalogs are key-parity verified (`node scripts/i18n-check.mjs`).
-- Add or change a locale in `apps/web/src/lib/i18n/config.ts` +
-  `apps/web/messages/<locale>.json`. The marketing landing page is intentionally
-  English-only.
+  legible in day mode with theme-aware surfaces and no dark-mode regression.
 
 ---
 
@@ -312,9 +332,12 @@ name. An explicit choice always wins over auto-detection.
 
 - 30+ granular permission types
 - Role-based access + issue security levels
+- Registration modes: open, invite-only, admin-created
 - 63+ audit-log action types
 - API keys + signed webhooks (HMAC)
 - OAuth (GitHub / Google / custom)
+- Agent policy + approval gates
+- Self-hosted version/update banner
 - **SAML SSO + SCIM 2.0** scaffolding
 - **Trust center** + SIEM streaming
 - **EU AI Act Article 50** disclosures
@@ -471,7 +494,7 @@ sed -i "s|^LIVEKIT_API_SECRET=.*|LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}|" .env
 Then start the stack:
 
 ```bash
-TASKNEBULA_IMAGE=neuraparse/tasknebula:0.6.9 docker compose up -d
+TASKNEBULA_IMAGE=neuraparse/tasknebula:0.7.0 docker compose up -d
 ```
 
 ### Reverse proxy
@@ -492,15 +515,15 @@ fallback for dev.
 
 ### Production checklist
 
-| Area         | Recommendation                                                                  |
-| ------------ | ------------------------------------------------------------------------------- |
-| Image        | Pin `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.6.9`; use `latest` only for demos |
-| Secrets      | Generate `AUTH_SECRET`, `REDIS_PASSWORD`, and `LIVEKIT_API_SECRET` per install  |
-| Network      | Keep Compose ports bound to `127.0.0.1`; expose through your reverse proxy      |
-| Persistence  | Back up `postgres_data`, `redis_data`, and `uploads_data`                       |
-| Updates      | Pull, restart, then verify `/api/health`                                        |
-| Automation   | Enable scheduled agents only with `docker compose --profile cron up -d cron`    |
-| AI providers | Prefer Admin → Agent control over long-lived env keys                           |
+| Area         | Recommendation                                                                                  |
+| ------------ | ----------------------------------------------------------------------------------------------- |
+| Image        | Pin `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.7.0`; use `latest` only for demos                 |
+| Secrets      | Generate `AUTH_SECRET`, `REDIS_PASSWORD`, and `LIVEKIT_API_SECRET` per install                  |
+| Network      | Keep Compose ports bound to `127.0.0.1`; expose through your reverse proxy                      |
+| Persistence  | Back up `postgres_data`, `redis_data`, and `uploads_data`                                       |
+| Updates      | Pull, restart, then verify `/api/health`; enable self-update only via a separate signed updater |
+| Automation   | Enable scheduled agents only with `docker compose --profile cron up -d cron`                    |
+| AI providers | Prefer Admin → Agent control over long-lived env keys                                           |
 
 ### Voice rooms behind HTTPS
 
@@ -542,10 +565,10 @@ WebSocket upgrade headers + 24h idle timeout LiveKit needs.
 | Check containers    | `docker compose ps`                                            |
 | Check app health    | `curl -fsS http://localhost:3000/api/health`                   |
 | Enable cron sidecar | `docker compose --profile cron up -d cron`                     |
-| Inspect image tag   | `docker buildx imagetools inspect neuraparse/tasknebula:0.6.9` |
+| Inspect image tag   | `docker buildx imagetools inspect neuraparse/tasknebula:0.7.0` |
 
 > `docker-compose.yml` defaults to `image: neuraparse/tasknebula:latest`.
-> Set `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.6.9` in `.env` to pin.
+> Set `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.7.0` in `.env` to pin.
 
 ---
 

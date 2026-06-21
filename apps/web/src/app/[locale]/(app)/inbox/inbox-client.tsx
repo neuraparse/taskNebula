@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   Bell,
@@ -42,6 +43,7 @@ const TYPE_CHIPS: { key: InboxNotificationType | 'all'; labelKey: string }[] = [
   { key: 'mention', labelKey: 'inbox_type_mention' },
   { key: 'assignment', labelKey: 'inbox_type_assignment' },
   { key: 'comment', labelKey: 'inbox_type_comment' },
+  { key: 'reaction', labelKey: 'inbox_type_reaction' },
   { key: 'status', labelKey: 'inbox_type_status' },
   { key: 'due', labelKey: 'inbox_type_due' },
 ];
@@ -52,6 +54,30 @@ const SNOOZE_PRESETS: { labelKey: string; offsetMs: number }[] = [
   { labelKey: 'inbox_snooze_tomorrow', offsetMs: 24 * 60 * 60 * 1000 },
   { labelKey: 'inbox_snooze_next_week', offsetMs: 7 * 24 * 60 * 60 * 1000 },
 ];
+
+const ACTOR_VALUES: readonly InboxActorType[] = ['user', 'agent', 'webhook', 'system'];
+const TYPE_VALUES: readonly InboxNotificationType[] = [
+  'mention',
+  'assignment',
+  'due',
+  'status',
+  'comment',
+  'reaction',
+];
+
+function parseActorParam(value: string | null): InboxActorType | 'all' {
+  return ACTOR_VALUES.includes(value as InboxActorType) ? (value as InboxActorType) : 'all';
+}
+
+function parseTypeParam(value: string | null): InboxNotificationType | 'all' {
+  return TYPE_VALUES.includes(value as InboxNotificationType)
+    ? (value as InboxNotificationType)
+    : 'all';
+}
+
+function isEnabledParam(value: string | null): boolean {
+  return value === '1' || value === 'true';
+}
 
 function getInitial(name: string | null | undefined, email: string | null | undefined) {
   return (name || email || '?')[0]?.toUpperCase() ?? '?';
@@ -234,10 +260,69 @@ function InboxRow({
 
 export function InboxPageClient() {
   const t = useTranslations('pagesHome');
-  const [actorChip, setActorChip] = useState<InboxActorType | 'all'>('all');
-  const [typeChip, setTypeChip] = useState<InboxNotificationType | 'all'>('all');
-  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
-  const [showSnoozed, setShowSnoozed] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlActorChip = parseActorParam(searchParams?.get('actor') ?? null);
+  const urlTypeChip = parseTypeParam(searchParams?.get('type') ?? null);
+  const urlUnreadOnly = isEnabledParam(searchParams?.get('unread') ?? null);
+  const urlSnoozed = isEnabledParam(searchParams?.get('snoozed') ?? null);
+  const [actorChip, setActorChip] = useState<InboxActorType | 'all'>(urlActorChip);
+  const [typeChip, setTypeChip] = useState<InboxNotificationType | 'all'>(urlTypeChip);
+  const [showUnreadOnly, setShowUnreadOnly] = useState(urlUnreadOnly);
+  const [showSnoozed, setShowSnoozed] = useState(urlSnoozed);
+
+  useEffect(() => {
+    setActorChip(urlActorChip);
+    setTypeChip(urlTypeChip);
+    setShowUnreadOnly(urlUnreadOnly);
+    setShowSnoozed(urlSnoozed);
+  }, [urlActorChip, urlTypeChip, urlUnreadOnly, urlSnoozed]);
+
+  const updateUrlFilters = useCallback(
+    (next: {
+      actor?: InboxActorType | 'all';
+      type?: InboxNotificationType | 'all';
+      unread?: boolean;
+      snoozed?: boolean;
+    }) => {
+      const nextActor = next.actor ?? actorChip;
+      const nextType = next.type ?? typeChip;
+      const nextUnread = next.unread ?? showUnreadOnly;
+      const nextSnoozed = next.snoozed ?? showSnoozed;
+
+      setActorChip(nextActor);
+      setTypeChip(nextType);
+      setShowUnreadOnly(nextUnread);
+      setShowSnoozed(nextSnoozed);
+
+      const params = new URLSearchParams(searchParams?.toString() ?? '');
+      if (nextActor === 'all') {
+        params.delete('actor');
+      } else {
+        params.set('actor', nextActor);
+      }
+      if (nextType === 'all') {
+        params.delete('type');
+      } else {
+        params.set('type', nextType);
+      }
+      if (nextUnread) {
+        params.set('unread', '1');
+      } else {
+        params.delete('unread');
+      }
+      if (nextSnoozed) {
+        params.set('snoozed', '1');
+      } else {
+        params.delete('snoozed');
+      }
+
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    },
+    [actorChip, pathname, router, searchParams, showSnoozed, showUnreadOnly, typeChip]
+  );
 
   const filters: InboxFilters = useMemo(
     () => ({
@@ -292,7 +377,7 @@ export function InboxPageClient() {
               type="button"
               role="radio"
               aria-checked={active}
-              onClick={() => setActorChip(chip.key)}
+              onClick={() => updateUrlFilters({ actor: chip.key })}
               className={cn(
                 'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors',
                 active
@@ -316,7 +401,7 @@ export function InboxPageClient() {
               type="button"
               role="radio"
               aria-checked={active}
-              onClick={() => setTypeChip(chip.key)}
+              onClick={() => updateUrlFilters({ type: chip.key })}
               className={cn(
                 'rounded-full px-2.5 py-1 text-xs transition-colors',
                 active
@@ -335,7 +420,7 @@ export function InboxPageClient() {
           type="button"
           role="checkbox"
           aria-checked={showUnreadOnly}
-          onClick={() => setShowUnreadOnly((v) => !v)}
+          onClick={() => updateUrlFilters({ unread: !showUnreadOnly })}
           className={cn(
             'rounded-full px-2.5 py-1 text-xs transition-colors',
             showUnreadOnly
@@ -349,7 +434,7 @@ export function InboxPageClient() {
           type="button"
           role="checkbox"
           aria-checked={showSnoozed}
-          onClick={() => setShowSnoozed((v) => !v)}
+          onClick={() => updateUrlFilters({ snoozed: !showSnoozed })}
           className={cn(
             'rounded-full px-2.5 py-1 text-xs transition-colors',
             showSnoozed

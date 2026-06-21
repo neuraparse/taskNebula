@@ -2,7 +2,7 @@
 
 import { use, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useIssues, useUpdateIssue } from '@/lib/hooks/use-issues';
+import { useIssues } from '@/lib/hooks/use-issues';
 import { useSprints, useAssignIssueToSprint } from '@/lib/hooks/use-sprints';
 import { CreateIssueModal } from '@/components/issues/create-issue-modal';
 import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
@@ -26,8 +26,6 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Plus,
-  List,
-  MoreHorizontal,
   Timer,
   AlertCircle,
   Circle,
@@ -39,11 +37,11 @@ import {
   Bug,
   Zap,
   FileText,
-  Loader2,
   Inbox,
   Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { BacklogLoadingShell } from './backlog-loading-shell';
 
 const typeConfig: Record<string, { icon: React.ElementType; color: string }> = {
   story: { icon: BookOpen, color: 'text-accent-emerald' },
@@ -106,11 +104,7 @@ export default function BacklogPage({ params }: { params: Promise<{ projectId: s
   };
 
   if (issuesLoading || sprintsLoading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
-      </div>
-    );
+    return <BacklogLoadingShell />;
   }
 
   return (

@@ -95,6 +95,7 @@ export function SignInForm() {
   const [dismissedBannerKey, setDismissedBannerKey] = useState<string | null>(null);
 
   const statusBanner = useMemo(() => resolveStatusBanner(searchParams), [searchParams]);
+  const projectInviteToken = searchParams?.get('projectInviteToken') || null;
   const activeBanner =
     statusBanner && statusBanner.key !== dismissedBannerKey ? statusBanner : null;
 
@@ -127,7 +128,8 @@ export function SignInForm() {
       if (result?.error) {
         setError(tAuth('invalid_credentials'));
       } else {
-        router.push('/dashboard');
+        const redirectTo = await acceptProjectInviteAfterSignIn(projectInviteToken);
+        router.push(redirectTo);
         router.refresh();
       }
     } catch {
@@ -138,11 +140,11 @@ export function SignInForm() {
   };
 
   const handleGitHubSignIn = async () => {
-    await signIn('github', { callbackUrl: '/dashboard' });
+    await signIn('github', { callbackUrl: getPostAuthUrl(projectInviteToken) });
   };
 
   const handleGoogleSignIn = async () => {
-    await signIn('google', { callbackUrl: '/dashboard' });
+    await signIn('google', { callbackUrl: getPostAuthUrl(projectInviteToken) });
   };
 
   if (checkingSetup) {
@@ -295,7 +297,11 @@ export function SignInForm() {
       <p className="text-muted-foreground text-center text-sm">
         {tAuth('no_account')}{' '}
         <Link
-          href="/auth/signup"
+          href={
+            projectInviteToken
+              ? `/auth/signup?projectInviteToken=${encodeURIComponent(projectInviteToken)}`
+              : '/auth/signup'
+          }
           className="text-foreground hover:text-primary ease-snap font-medium transition-colors duration-150"
         >
           {tAuth('signup')}
@@ -303,4 +309,25 @@ export function SignInForm() {
       </p>
     </div>
   );
+}
+
+async function acceptProjectInviteAfterSignIn(projectInviteToken: string | null) {
+  if (!projectInviteToken) return '/dashboard';
+
+  const response = await fetch('/api/project-invite-links/accept', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ projectInviteToken }),
+  });
+
+  if (!response.ok) return '/dashboard';
+
+  const data = (await response.json().catch(() => ({}))) as { redirectTo?: string };
+  return data.redirectTo || '/dashboard';
+}
+
+function getPostAuthUrl(projectInviteToken: string | null) {
+  return projectInviteToken
+    ? `/join/project/${encodeURIComponent(projectInviteToken)}`
+    : '/dashboard';
 }

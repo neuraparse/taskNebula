@@ -1,12 +1,28 @@
 'use client';
 
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { useRefreshVersionInfo, useVersionInfo } from '@/lib/hooks/use-version-info';
-import { ArrowUpCircle, Check, ExternalLink, Loader2, RefreshCw, Rocket } from 'lucide-react';
-
-const UPDATE_COMMANDS = 'docker compose pull\ndocker compose up -d web';
+import {
+  useRefreshVersionInfo,
+  useStartSelfUpdate,
+  useVersionInfo,
+  type SelfUpdateStatus,
+  type VersionInfo,
+} from '@/lib/hooks/use-version-info';
+import {
+  AlertTriangle,
+  ArrowUpCircle,
+  Check,
+  ExternalLink,
+  Loader2,
+  RefreshCw,
+  Rocket,
+  ShieldCheck,
+  Terminal,
+} from 'lucide-react';
 
 function formatVersion(version: string) {
   return `v${version.replace(/^v/, '')}`;
@@ -25,7 +41,7 @@ function formatBytes(bytes: number) {
 }
 
 function formatDigest(digest: string) {
-  return digest.length > 24 ? `${digest.slice(0, 24)}…` : digest;
+  return digest.length > 24 ? `${digest.slice(0, 24)}...` : digest;
 }
 
 // Release URLs come from the GitHub API via our backend; render only https links.
@@ -38,6 +54,8 @@ export function VersionPanel() {
   const { toast } = useToast();
   const { data, isLoading, error } = useVersionInfo();
   const refresh = useRefreshVersionInfo();
+  const startUpdate = useStartSelfUpdate();
+  const [acknowledged, setAcknowledged] = useState(false);
 
   function handleCheckNow() {
     refresh.mutate(undefined, {
@@ -55,6 +73,25 @@ export function VersionPanel() {
       },
       onError: (err: Error) => {
         toast({ title: t('checkFailedTitle'), description: err.message, variant: 'destructive' });
+      },
+    });
+  }
+
+  function handleStartSelfUpdate(targetVersion: string) {
+    startUpdate.mutate(targetVersion, {
+      onSuccess: () => {
+        setAcknowledged(false);
+        toast({
+          title: t('selfUpdate.startedTitle'),
+          description: t('selfUpdate.startedDescription'),
+        });
+      },
+      onError: (err: Error) => {
+        toast({
+          title: t('selfUpdate.failedTitle'),
+          description: err.message,
+          variant: 'destructive',
+        });
       },
     });
   }
@@ -189,9 +226,18 @@ export function VersionPanel() {
                 <h4 className="text-xs font-medium">{t('howToUpdate')}</h4>
                 <p className="text-muted-foreground text-xs">{t('howToUpdateHint')}</p>
                 <pre className="border-border bg-muted/50 rounded-md border px-3 py-2 font-mono text-xs">
-                  {UPDATE_COMMANDS}
+                  {data.selfUpdate?.manualCommands ?? manualUpdateCommands(data)}
                 </pre>
               </div>
+
+              <SelfUpdateCard
+                info={data}
+                selfUpdate={data.selfUpdate}
+                acknowledged={acknowledged}
+                pending={startUpdate.isPending}
+                onAcknowledgeChange={setAcknowledged}
+                onStart={handleStartSelfUpdate}
+              />
             </div>
           ) : null}
 
@@ -235,6 +281,116 @@ export function VersionPanel() {
           </div>
         </>
       ) : null}
+    </div>
+  );
+}
+
+function manualUpdateCommands(info: VersionInfo) {
+  const repository = info.image.repository;
+  const tag = info.image.latestTag ?? info.latest ?? '<version>';
+  return [
+    `# Set TASKNEBULA_IMAGE=${repository}:${tag} in .env for pinned installs.`,
+    `TASKNEBULA_IMAGE=${repository}:${tag} docker compose pull web`,
+    `TASKNEBULA_IMAGE=${repository}:${tag} docker compose up -d web`,
+    'docker compose ps web',
+  ].join('\n');
+}
+
+function SelfUpdateCard({
+  info,
+  selfUpdate,
+  acknowledged,
+  pending,
+  onAcknowledgeChange,
+  onStart,
+}: {
+  info: VersionInfo;
+  selfUpdate: SelfUpdateStatus | undefined;
+  acknowledged: boolean;
+  pending: boolean;
+  onAcknowledgeChange: (checked: boolean) => void;
+  onStart: (targetVersion: string) => void;
+}) {
+  const t = useTranslations('adminUpdates');
+  const targetVersion = selfUpdate?.targetVersion ?? info.image.latestTag ?? info.latest;
+  const canStart = Boolean(selfUpdate?.available && targetVersion && acknowledged && !pending);
+  const blockedReason = selfUpdate?.blockedReason;
+  const job = selfUpdate?.job ?? null;
+
+  return (
+    <div className="border-border bg-muted/30 space-y-3 rounded-md border p-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            {selfUpdate?.available ? (
+              <ShieldCheck className="h-4 w-4 text-emerald-500" />
+            ) : (
+              <AlertTriangle className="text-muted-foreground h-4 w-4" />
+            )}
+            <h4 className="text-xs font-medium">{t('selfUpdate.title')}</h4>
+          </div>
+          <p className="text-muted-foreground max-w-prose text-xs">
+            {selfUpdate?.available
+              ? t('selfUpdate.readyDescription')
+              : t('selfUpdate.manualFallbackDescription')}
+          </p>
+        </div>
+        <span className={selfUpdate?.available ? 'chip-emerald text-[11px]' : 'chip text-[11px]'}>
+          {selfUpdate?.available ? t('selfUpdate.available') : t('selfUpdate.manualOnly')}
+        </span>
+      </div>
+
+      {blockedReason ? (
+        <p className="text-muted-foreground text-xs">{t(`selfUpdate.blocked.${blockedReason}`)}</p>
+      ) : null}
+
+      {job ? (
+        <div className="border-border bg-background/50 space-y-1 rounded-md border p-2 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="font-medium">
+              {t('selfUpdate.jobTitle', { version: formatVersion(job.targetVersion) })}
+            </span>
+            <span className="chip text-[11px]">{t(`selfUpdate.jobStatus.${job.status}`)}</span>
+          </div>
+          {job.failureReason ? (
+            <p className="text-destructive whitespace-pre-wrap">{job.failureReason}</p>
+          ) : (
+            <p className="text-muted-foreground">
+              {t('selfUpdate.jobUpdated', {
+                time: new Date(job.updatedAt).toLocaleString(),
+              })}
+            </p>
+          )}
+        </div>
+      ) : null}
+
+      {selfUpdate?.available && targetVersion ? (
+        <div className="space-y-3">
+          <label className="flex items-start gap-2 text-xs">
+            <Checkbox
+              checked={acknowledged}
+              onCheckedChange={(checked) => onAcknowledgeChange(checked === true)}
+              aria-label={t('selfUpdate.acknowledge')}
+            />
+            <span className="text-muted-foreground">{t('selfUpdate.acknowledge')}</span>
+          </label>
+          <Button size="sm" onClick={() => onStart(targetVersion)} disabled={!canStart}>
+            {pending ? (
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Rocket className="mr-1.5 h-3.5 w-3.5" />
+            )}
+            {pending
+              ? t('selfUpdate.starting')
+              : t('selfUpdate.start', { version: formatVersion(targetVersion) })}
+          </Button>
+        </div>
+      ) : (
+        <div className="text-muted-foreground flex items-center gap-2 text-xs">
+          <Terminal className="h-3.5 w-3.5" />
+          {t('selfUpdate.manualOption')}
+        </div>
+      )}
     </div>
   );
 }

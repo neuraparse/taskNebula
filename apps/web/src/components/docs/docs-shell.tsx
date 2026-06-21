@@ -99,7 +99,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
   const [isPagesSheetOpen, setIsPagesSheetOpen] = useState(false);
   const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
 
-  const selectedPageId = searchParams.get('pageId');
+  const requestedPageId = searchParams.get('pageId');
   const selectedSpaceId = searchParams.get('spaceId');
 
   // Ref-capture router/pathname/searchParams to avoid effects re-firing when
@@ -127,6 +127,9 @@ export function DocsShell({ projectId }: DocsShellProps) {
     organizationId: currentOrganizationId,
     projectId: projectId || null,
   });
+
+  const defaultPageId = !requestedPageId ? (pagesData?.pages?.[0]?.id ?? null) : null;
+  const selectedPageId = requestedPageId ?? defaultPageId;
 
   const { data: currentPage, isLoading: pageLoading } = useDocumentPage(selectedPageId);
   const { data: revisions = [] } = useDocumentRevisions(selectedPageId);
@@ -205,14 +208,14 @@ export function DocsShell({ projectId }: DocsShellProps) {
       return;
     }
     const firstPage = pagesData?.pages?.[0];
-    if (!selectedPageId && firstPage) {
+    if (!requestedPageId && firstPage) {
       isSyncingUrlRef.current = true;
       updateQueryParams({
         pageId: firstPage.id,
         spaceId: pagesData.space?.id || selectedSpaceId || undefined,
       });
     }
-  }, [pagesData?.pages, pagesData?.space?.id, selectedPageId, selectedSpaceId]);
+  }, [pagesData?.pages, pagesData?.space?.id, requestedPageId, selectedSpaceId]);
 
   useEffect(() => {
     if (isSyncingUrlRef.current) {

@@ -1,55 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, schema, eq, and, ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from '@tasknebula/db';
+import { db, schema, eq, and, type ProjectRole } from '@tasknebula/db';
 import { resolveProjectByIdOrKey } from '@/lib/projects/server';
 import { canReadProject } from '@/lib/auth/access-control';
-
-// Check if user can manage members in this project
-async function canManageProjectMembers(userId: string, projectId: string): Promise<boolean> {
-  // Check if super admin
-  const user = await db.query.users.findFirst({
-    where: eq(schema.users.id, userId),
-    columns: { isSuperAdmin: true },
-  });
-  if (user?.isSuperAdmin) return true;
-
-  // Get project to check org
-  const project = await db.query.projects.findFirst({
-    where: eq(schema.projects.id, projectId),
-    columns: { organizationId: true },
-  });
-  if (!project) return false;
-
-  // Check org role
-  const orgMember = await db.query.organizationMembers.findFirst({
-    where: and(
-      eq(schema.organizationMembers.userId, userId),
-      eq(schema.organizationMembers.organizationId, project.organizationId),
-      eq(schema.organizationMembers.status, 'active')
-    ),
-    columns: { role: true },
-  });
-  if (orgMember?.role === 'owner' || orgMember?.role === 'admin') return true;
-
-  // Check project role
-  const projectMember = await db.query.projectMembers.findFirst({
-    where: and(
-      eq(schema.projectMembers.userId, userId),
-      eq(schema.projectMembers.projectId, projectId)
-    ),
-  });
-  if (!projectMember) return false;
-
-  // Check if has permission to manage members
-  const roleDefaults = ROLE_DEFAULT_PERMISSIONS[projectMember.role as ProjectRole];
-  return (
-    projectMember.canManageMembers === 'true' ||
-    projectMember.canInviteMembers === 'true' ||
-    roleDefaults?.canManageMembers ||
-    roleDefaults?.canInviteMembers ||
-    false
-  );
-}
+import { getProjectMemberPermissionValues } from '@/lib/projects/member-permissions';
+import { canManageProjectMembers } from '@/lib/projects/member-access';
 
 // GET /api/projects/[projectId]/members - Get project members
 export async function GET(
@@ -229,10 +184,6 @@ export async function POST(
       );
     }
 
-    // Get default permissions for the role
-    const roleDefaults =
-      ROLE_DEFAULT_PERMISSIONS[role as ProjectRole] || ROLE_DEFAULT_PERMISSIONS.developer;
-
     // Create member with role default permissions
     const [member] = await db
       .insert(schema.projectMembers)
@@ -241,56 +192,7 @@ export async function POST(
         userId,
         role,
         invitedBy: session.user.id,
-        // Set all permissions based on role defaults
-        canBrowseProject: roleDefaults.canBrowseProject ? 'true' : 'false',
-        canAdministerProject: roleDefaults.canAdministerProject ? 'true' : 'false',
-        canBrowseDocs: roleDefaults.canBrowseDocs ? 'true' : 'false',
-        canCreateDocs: roleDefaults.canCreateDocs ? 'true' : 'false',
-        canEditDocs: roleDefaults.canEditDocs ? 'true' : 'false',
-        canDeleteDocs: roleDefaults.canDeleteDocs ? 'true' : 'false',
-        canBrowseChat: roleDefaults.canBrowseChat ? 'true' : 'false',
-        canCreateChannels: roleDefaults.canCreateChannels ? 'true' : 'false',
-        canPostMessages: roleDefaults.canPostMessages ? 'true' : 'false',
-        canModerateMessages: roleDefaults.canModerateMessages ? 'true' : 'false',
-        canStartCalls: roleDefaults.canStartCalls ? 'true' : 'false',
-        canManageCalls: roleDefaults.canManageCalls ? 'true' : 'false',
-        canManageSprints: roleDefaults.canManageSprints ? 'true' : 'false',
-        canStartSprint: roleDefaults.canStartSprint ? 'true' : 'false',
-        canCompleteSprint: roleDefaults.canCompleteSprint ? 'true' : 'false',
-        canDeleteSprint: roleDefaults.canDeleteSprint ? 'true' : 'false',
-        canCreateIssues: roleDefaults.canCreateIssues ? 'true' : 'false',
-        canEditIssues: roleDefaults.canEditIssues ? 'true' : 'false',
-        canEditOwnIssues: roleDefaults.canEditOwnIssues ? 'true' : 'false',
-        canDeleteIssues: roleDefaults.canDeleteIssues ? 'true' : 'false',
-        canDeleteOwnIssues: roleDefaults.canDeleteOwnIssues ? 'true' : 'false',
-        canAssignIssues: roleDefaults.canAssignIssues ? 'true' : 'false',
-        canAssigneeIssues: roleDefaults.canAssigneeIssues ? 'true' : 'false',
-        canTransitionIssues: roleDefaults.canTransitionIssues ? 'true' : 'false',
-        canScheduleIssues: roleDefaults.canScheduleIssues ? 'true' : 'false',
-        canMoveIssues: roleDefaults.canMoveIssues ? 'true' : 'false',
-        canLinkIssues: roleDefaults.canLinkIssues ? 'true' : 'false',
-        canCloseIssues: roleDefaults.canCloseIssues ? 'true' : 'false',
-        canReopenIssues: roleDefaults.canReopenIssues ? 'true' : 'false',
-        canAddComments: roleDefaults.canAddComments ? 'true' : 'false',
-        canEditOwnComments: roleDefaults.canEditOwnComments ? 'true' : 'false',
-        canEditAllComments: roleDefaults.canEditAllComments ? 'true' : 'false',
-        canDeleteOwnComments: roleDefaults.canDeleteOwnComments ? 'true' : 'false',
-        canDeleteAllComments: roleDefaults.canDeleteAllComments ? 'true' : 'false',
-        canCreateAttachments: roleDefaults.canCreateAttachments ? 'true' : 'false',
-        canDeleteOwnAttachments: roleDefaults.canDeleteOwnAttachments ? 'true' : 'false',
-        canDeleteAllAttachments: roleDefaults.canDeleteAllAttachments ? 'true' : 'false',
-        canManageWatchers: roleDefaults.canManageWatchers ? 'true' : 'false',
-        canViewWatchers: roleDefaults.canViewWatchers ? 'true' : 'false',
-        canManageMembers: roleDefaults.canManageMembers ? 'true' : 'false',
-        canInviteMembers: roleDefaults.canInviteMembers ? 'true' : 'false',
-        canRemoveMembers: roleDefaults.canRemoveMembers ? 'true' : 'false',
-        canChangeRoles: roleDefaults.canChangeRoles ? 'true' : 'false',
-        canManageWorkflow: roleDefaults.canManageWorkflow ? 'true' : 'false',
-        canLogWork: roleDefaults.canLogWork ? 'true' : 'false',
-        canEditOwnWorklogs: roleDefaults.canEditOwnWorklogs ? 'true' : 'false',
-        canEditAllWorklogs: roleDefaults.canEditAllWorklogs ? 'true' : 'false',
-        canDeleteOwnWorklogs: roleDefaults.canDeleteOwnWorklogs ? 'true' : 'false',
-        canDeleteAllWorklogs: roleDefaults.canDeleteAllWorklogs ? 'true' : 'false',
+        ...getProjectMemberPermissionValues(role as ProjectRole),
       })
       .returning();
 

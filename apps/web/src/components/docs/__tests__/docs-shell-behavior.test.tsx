@@ -141,11 +141,15 @@ let mockPagesData: { space: Record<string, unknown> | null; pages: MockPage[] } 
 let mockPagesLoading = false;
 let mockCurrentPage: MockPage | null = null;
 let mockPageLoading = false;
+let lastDocumentPageId: string | null = null;
 
 jest.mock('@/lib/hooks/use-docs', () => ({
   useDocumentSpaces: () => ({ data: mockSpaces }),
   useDocumentPages: () => ({ data: mockPagesData, isLoading: mockPagesLoading }),
-  useDocumentPage: () => ({ data: mockCurrentPage, isLoading: mockPageLoading }),
+  useDocumentPage: (pageId: string | null) => {
+    lastDocumentPageId = pageId;
+    return { data: mockCurrentPage, isLoading: mockPageLoading };
+  },
   useDocumentTree: () => ({ data: null, isLoading: false }),
   useDocumentRevisions: () => ({ data: [] }),
   useDocumentSearch: () => ({ data: [] }),
@@ -155,7 +159,11 @@ jest.mock('@/lib/hooks/use-docs', () => ({
   useRestoreDocumentPage: () => ({ mutateAsync: jest.fn(), isPending: false }),
   useUpdateDocumentShare: () => ({ mutateAsync: jest.fn(), isPending: false }),
   useUploadDocumentAttachment: () => ({ mutateAsync: jest.fn(), isPending: false }),
-  useDeleteDocumentAttachment: () => ({ mutate: jest.fn(), mutateAsync: jest.fn(), isPending: false }),
+  useDeleteDocumentAttachment: () => ({
+    mutate: jest.fn(),
+    mutateAsync: jest.fn(),
+    isPending: false,
+  }),
 }));
 
 function createQueryClient() {
@@ -195,6 +203,7 @@ describe('DocsShell behavior', () => {
     mockPagesLoading = false;
     mockCurrentPage = null;
     mockPageLoading = false;
+    lastDocumentPageId = null;
   });
 
   it('renders a shimmer skeleton while page data is loading', () => {
@@ -235,6 +244,20 @@ describe('DocsShell behavior', () => {
     expect(screen.queryByTestId('docs-shell-skeleton')).not.toBeInTheDocument();
   });
 
+  it('uses the first listed page while the URL catches up so docs do not flash the empty state', () => {
+    currentSearchParamsString = 'spaceId=space-1';
+    const page = buildMockPage();
+    mockPagesData = { space: page.space!, pages: [page] };
+    mockCurrentPage = null;
+    mockPageLoading = true;
+
+    renderDocsShell();
+
+    expect(lastDocumentPageId).toBe('page-1');
+    expect(screen.getByTestId('docs-shell-skeleton')).toBeInTheDocument();
+    expect(screen.queryByText(/No pages yet in this space\./i)).not.toBeInTheDocument();
+  });
+
   it('renders the empty-state getting-started panel when no page is selected', () => {
     currentSearchParamsString = '';
     mockPagesData = { space: null, pages: [] };
@@ -253,7 +276,12 @@ describe('DocsShell behavior', () => {
   it('calls router.replace exactly once per user-click when selecting a page in the tree', async () => {
     currentSearchParamsString = 'pageId=page-1&spaceId=space-1';
     const page1 = buildMockPage();
-    const page2 = buildMockPage({ id: 'page-2', title: 'Release Notes', slug: 'release-notes', position: 1 });
+    const page2 = buildMockPage({
+      id: 'page-2',
+      title: 'Release Notes',
+      slug: 'release-notes',
+      position: 1,
+    });
     mockPagesData = { space: page1.space!, pages: [page1, page2] };
     mockCurrentPage = page1;
     mockPageLoading = false;
@@ -282,7 +310,12 @@ describe('DocsShell behavior', () => {
   it('does not call router.replace on its own when searchParams rerenders with a new pageId', async () => {
     currentSearchParamsString = 'pageId=page-1&spaceId=space-1';
     const page1 = buildMockPage();
-    const page2 = buildMockPage({ id: 'page-2', title: 'Release Notes', slug: 'release-notes', position: 1 });
+    const page2 = buildMockPage({
+      id: 'page-2',
+      title: 'Release Notes',
+      slug: 'release-notes',
+      position: 1,
+    });
     mockPagesData = { space: page1.space!, pages: [page1, page2] };
     mockCurrentPage = page1;
     mockPageLoading = false;

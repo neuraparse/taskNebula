@@ -41,7 +41,9 @@
     "feature_flags": "Indicadores de funciones",
     "agent_control": "Control de agentes",
     "realtime_health": "Estado en tiempo real",
-    "audit_logs": "Registros de auditoría"
+    "audit_logs": "Registros de auditoría",
+    "system": "Sistema",
+    "updates": "Actualizaciones"
   },
   "actions": {
     "create_issue": "Crear incidencia",
@@ -472,6 +474,38 @@
       "dismiss": "Dismiss",
       "dockerTitle": "Docker image {tag} is available",
       "dockerBody": "Docker Hub published {repository}:{tag}. You are running {current}; open Admin > Updates to pull and restart."
+    },
+    "selfUpdate": {
+      "title": "Self-update",
+      "readyDescription": "Send a signed request to the external updater. The app may restart while the updater pulls the Docker image and recreates the web service.",
+      "manualFallbackDescription": "Automatic update is not active for this install. Use the manual Docker commands below, or configure an external updater when you are ready.",
+      "available": "Ready",
+      "manualOnly": "Manual only",
+      "manualOption": "Manual update remains available below.",
+      "acknowledge": "I have reviewed the release notes, backed up Postgres and uploads, and understand the app may restart.",
+      "start": "Start update to {version}",
+      "starting": "Starting update...",
+      "startedTitle": "Update requested",
+      "startedDescription": "The external updater accepted the request. The app may restart while it installs the Docker image.",
+      "failedTitle": "Update request failed",
+      "jobTitle": "Last update request: {version}",
+      "jobUpdated": "Last updated {time}",
+      "blocked": {
+        "disabled": "Self-update is disabled. Set TASKNEBULA_SELF_UPDATE_ENABLED=true and configure the updater webhook to enable it.",
+        "missing_webhook": "Self-update is enabled, but TASKNEBULA_SELF_UPDATE_WEBHOOK_URL is missing or invalid.",
+        "missing_secret": "Self-update is enabled, but TASKNEBULA_SELF_UPDATE_WEBHOOK_SECRET is missing.",
+        "checks_disabled": "Update checks are disabled, so the app cannot safely choose a target Docker image.",
+        "no_update": "No newer Docker image is available.",
+        "missing_docker_image": "Docker Hub did not return a semver image tag to install.",
+        "invalid_target": "The selected target version is not valid for this install.",
+        "active_job": "Another update request is already active. Wait for it to finish before starting a new one."
+      },
+      "jobStatus": {
+        "queued": "Queued",
+        "requested": "Requested",
+        "succeeded": "Succeeded",
+        "failed": "Failed"
+      }
     }
   },
   "issueFields": {
@@ -982,7 +1016,8 @@
     "toast_not_verified_description": "No encontramos una verificación completada. Haz clic en el enlace de tu bandeja de entrada o reenvíalo.",
     "toast_refresh_failed_title": "No se pudo actualizar el estado",
     "registration_invite_required": "El registro es solo con invitación. Pide una invitación a un administrador.",
-    "registration_admin_only": "El registro está cerrado. Pide a un administrador que cree tu cuenta."
+    "registration_admin_only": "El registro está cerrado. Pide a un administrador que cree tu cuenta.",
+    "project_invite_invalid": "This project invite link is expired, revoked, or has no remaining uses."
   },
   "issuesViews": {
     "loading": "Cargando…",
@@ -3160,7 +3195,32 @@
     "pm_perm_canEditOwnWorklogs": "Editar los registros de trabajo propios",
     "pm_perm_canEditAllWorklogs": "Editar todos los registros de trabajo",
     "pm_perm_canDeleteOwnWorklogs": "Eliminar los registros de trabajo propios",
-    "pm_perm_canDeleteAllWorklogs": "Eliminar todos los registros de trabajo"
+    "pm_perm_canDeleteAllWorklogs": "Eliminar todos los registros de trabajo",
+    "apm_invite_link_title": "Invite by link",
+    "apm_invite_link_description": "Create a limited project signup link. It expires automatically and can be revoked at any time.",
+    "apm_invite_link_expiry": "Expires in",
+    "apm_invite_link_max_uses": "Max uses",
+    "apm_invite_link_days": "{count, plural, one {# day} other {# days}}",
+    "apm_invite_link_uses": "{count, plural, one {# use} other {# uses}}",
+    "apm_invite_link_create": "Create link",
+    "apm_invite_link_created_title": "Invite link created",
+    "apm_invite_link_created_description": "The link was copied to your clipboard.",
+    "apm_invite_link_create_failed_title": "Could not create link",
+    "apm_invite_link_create_failed": "Failed to create project invite link",
+    "apm_invite_link_copied_title": "Invite link copied",
+    "apm_invite_link_copy": "Copy invite link",
+    "apm_invite_link_active": "Recent invite links",
+    "apm_invite_link_loading": "Loading invite links...",
+    "apm_invite_link_empty": "No invite links yet.",
+    "apm_invite_link_status_active": "Active",
+    "apm_invite_link_status_revoked": "Revoked",
+    "apm_invite_link_status_expired": "Expired",
+    "apm_invite_link_status_used": "Used",
+    "apm_invite_link_meta": "{used}/{max} used · expires {date}",
+    "apm_invite_link_revoke": "Revoke",
+    "apm_invite_link_revoked_title": "Invite link revoked",
+    "apm_invite_link_revoke_failed_title": "Could not revoke link",
+    "apm_invite_link_revoke_failed": "Failed to revoke project invite link"
   },
   "adminPanels": {
     "agentOps": {
@@ -3839,6 +3899,7 @@
     "inbox_type_mention": "Menciones",
     "inbox_type_assignment": "Asignaciones",
     "inbox_type_comment": "Comentarios",
+    "inbox_type_reaction": "Reacciones",
     "inbox_type_status": "Cambios de estado",
     "inbox_type_due": "Vencimiento / sprint",
     "inbox_unread_only": "Solo sin leer",

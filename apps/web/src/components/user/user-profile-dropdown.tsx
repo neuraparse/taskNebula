@@ -1,6 +1,6 @@
 'use client';
 
-import { LogOut, Settings, User } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
@@ -14,21 +14,39 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useUser } from '@/lib/hooks/use-user';
+import { cn } from '@/lib/utils';
 
-export function UserProfileDropdown() {
+type DropdownSide = 'top' | 'right' | 'bottom' | 'left';
+type DropdownAlign = 'start' | 'center' | 'end';
+
+interface UserProfileDropdownProps {
+  side?: DropdownSide;
+  align?: DropdownAlign;
+  sideOffset?: number;
+  triggerClassName?: string;
+  avatarClassName?: string;
+}
+
+export function UserProfileDropdown({
+  side = 'bottom',
+  align = 'end',
+  sideOffset = 8,
+  triggerClassName,
+  avatarClassName,
+}: UserProfileDropdownProps = {}) {
   const { user, isLoading } = useUser();
   const t = useTranslations('userSecurity');
+  const tNav = useTranslations('nav');
+  const triggerClasses = cn(
+    'focus-visible:ring-ring relative h-8 w-8 rounded-full p-0 transition-opacity duration-200 hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+    triggerClassName
+  );
+  const avatarClasses = cn('h-8 w-8', avatarClassName);
 
   if (isLoading || !user) {
     return (
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 rounded-full"
-        disabled
-        aria-label={t('accountMenu')}
-      >
-        <Avatar className="h-8 w-8">
+      <Button variant="ghost" className={triggerClasses} disabled aria-label={t('accountMenu')}>
+        <Avatar className={avatarClasses}>
           <AvatarFallback className="bg-muted text-muted-foreground text-xs">--</AvatarFallback>
         </Avatar>
       </Button>
@@ -49,10 +67,10 @@ export function UserProfileDropdown() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="focus-visible:ring-ring relative h-8 w-8 rounded-full p-0 transition-opacity duration-200 hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+          className={triggerClasses}
           aria-label={t('accountMenuFor', { name: user.name ?? user.email ?? '' })}
         >
-          <Avatar className="h-8 w-8">
+          <Avatar className={avatarClasses}>
             <AvatarImage src={user.image || undefined} alt={user.name || t('userAlt')} />
             <AvatarFallback className="text-xs font-medium">{initials}</AvatarFallback>
           </Avatar>
@@ -60,8 +78,9 @@ export function UserProfileDropdown() {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         className="data-[state=open]:animate-pop-in w-60 rounded-lg shadow-sm"
-        align="end"
-        sideOffset={8}
+        align={align}
+        side={side}
+        sideOffset={sideOffset}
         forceMount
       >
         {/* Avatar header */}
@@ -79,15 +98,9 @@ export function UserProfileDropdown() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem className="ease-snap gap-2 px-3 transition-all duration-150" asChild>
-          <Link href="/settings?tab=organization">
-            <User className="text-muted-foreground h-4 w-4 shrink-0" />
-            {t('profile')}
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem className="ease-snap gap-2 px-3 transition-all duration-150" asChild>
           <Link href="/settings">
             <Settings className="text-muted-foreground h-4 w-4 shrink-0" />
-            {t('settings')}
+            {tNav('account_settings')}
           </Link>
         </DropdownMenuItem>
 
@@ -98,7 +111,7 @@ export function UserProfileDropdown() {
           onClick={() => signOut({ callbackUrl: '/auth/signin' })}
         >
           <LogOut className="h-4 w-4 shrink-0" />
-          {t('signOut')}
+          {tNav('sign_out')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

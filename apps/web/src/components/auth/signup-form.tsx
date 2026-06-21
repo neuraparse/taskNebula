@@ -13,9 +13,16 @@ import { signIn } from 'next-auth/react';
 type SignupResponse = {
   error?: string;
   code?: string;
+  projectInvite?: {
+    projectKey: string;
+  };
 };
 
-type SignupErrorKey = 'registration_invite_required' | 'registration_admin_only' | 'signup_failed';
+type SignupErrorKey =
+  | 'registration_invite_required'
+  | 'registration_admin_only'
+  | 'project_invite_invalid'
+  | 'signup_failed';
 
 export function SignUpForm() {
   const t = useTranslations('authExtra');
@@ -26,6 +33,7 @@ export function SignUpForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [checkingSetup, setCheckingSetup] = useState(true);
+  const [projectInviteToken, setProjectInviteToken] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/setup')
@@ -43,7 +51,9 @@ export function SignUpForm() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const invitedEmail = new URLSearchParams(window.location.search).get('email');
+    const projectToken = new URLSearchParams(window.location.search).get('projectInviteToken');
     if (invitedEmail) setEmail(invitedEmail.trim().toLowerCase());
+    if (projectToken) setProjectInviteToken(projectToken);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,6 +73,11 @@ export function SignUpForm() {
         typeof window !== 'undefined'
           ? new URLSearchParams(window.location.search).get('token')
           : null;
+      const activeProjectInviteToken =
+        projectInviteToken ||
+        (typeof window !== 'undefined'
+          ? new URLSearchParams(window.location.search).get('projectInviteToken')
+          : null);
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -71,6 +86,7 @@ export function SignUpForm() {
           email: normalizedEmail,
           password,
           ...(inviteToken ? { inviteToken } : {}),
+          ...(activeProjectInviteToken ? { projectInviteToken: activeProjectInviteToken } : {}),
         }),
       });
 
@@ -95,7 +111,12 @@ export function SignUpForm() {
         // Ignore — we degrade to the email-query-param path below.
       }
 
-      router.push(`/auth/verify-request?email=${encodeURIComponent(normalizedEmail)}`);
+      const projectKey = data.projectInvite?.projectKey;
+      router.push(
+        projectKey
+          ? `/projects/${encodeURIComponent(projectKey)}`
+          : `/auth/verify-request?email=${encodeURIComponent(normalizedEmail)}`
+      );
       router.refresh();
     } catch {
       setError(t('generic_error'));
@@ -105,11 +126,11 @@ export function SignUpForm() {
   };
 
   const handleGitHubSignIn = async () => {
-    await signIn('github', { callbackUrl: '/dashboard' });
+    await signIn('github', { callbackUrl: getPostAuthUrl(projectInviteToken) });
   };
 
   const handleGoogleSignIn = async () => {
-    await signIn('google', { callbackUrl: '/dashboard' });
+    await signIn('google', { callbackUrl: getPostAuthUrl(projectInviteToken) });
   };
 
   if (checkingSetup) {
@@ -269,7 +290,11 @@ export function SignUpForm() {
       <p className="text-muted-foreground text-center text-sm">
         {t('have_account')}{' '}
         <Link
-          href="/auth/signin"
+          href={
+            projectInviteToken
+              ? `/auth/signin?projectInviteToken=${encodeURIComponent(projectInviteToken)}`
+              : '/auth/signin'
+          }
           className="text-foreground hover:text-primary ease-snap font-medium transition-colors duration-150"
         >
           {t('signin')}
@@ -287,5 +312,14 @@ function getSignupErrorMessage(data: SignupResponse, t: (key: SignupErrorKey) =>
   if (code === 'REGISTRATION_ADMIN_ONLY') {
     return t('registration_admin_only');
   }
+  if (code === 'INVALID_PROJECT_INVITE') {
+    return t('project_invite_invalid');
+  }
   return data.error || t('signup_failed');
+}
+
+function getPostAuthUrl(projectInviteToken: string | null) {
+  return projectInviteToken
+    ? `/join/project/${encodeURIComponent(projectInviteToken)}`
+    : '/dashboard';
 }

@@ -25,7 +25,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/lib/hooks/use-organization';
-import { Loader2, Search, UserPlus, Check } from 'lucide-react';
+import { Ban, Check, Copy, Link2, Loader2, Search, UserPlus } from 'lucide-react';
 import type { ProjectRole } from '@/lib/hooks/use-project-permissions';
 
 interface OrgMember {
@@ -34,6 +34,16 @@ interface OrgMember {
   email: string | null;
   image: string | null;
   role: string;
+}
+
+interface ProjectInviteLink {
+  id: string;
+  role: ProjectRole;
+  maxUses: number;
+  usedCount: number;
+  expiresAt: string;
+  revokedAt: string | null;
+  createdAt: string;
 }
 
 const PROJECT_ROLES: Array<{ value: ProjectRole; labelKey: string; descriptionKey: string }> = [
@@ -45,6 +55,9 @@ const PROJECT_ROLES: Array<{ value: ProjectRole; labelKey: string; descriptionKe
   { value: 'designer', labelKey: 'pr_designer', descriptionKey: 'pr_designer_desc' },
   { value: 'viewer', labelKey: 'pr_viewer', descriptionKey: 'pr_viewer_desc' },
 ];
+
+const INVITE_EXPIRY_OPTIONS = [1, 7, 14, 30, 90] as const;
+const INVITE_MAX_USE_OPTIONS = [1, 2, 5, 10, 25] as const;
 
 interface AddProjectMemberDialogProps {
   projectId: string;
@@ -69,6 +82,12 @@ export function AddProjectMemberDialog({
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [role, setRole] = useState<ProjectRole>('developer');
   const [submitting, setSubmitting] = useState(false);
+  const [linkRole, setLinkRole] = useState<ProjectRole>('developer');
+  const [linkExpiresInDays, setLinkExpiresInDays] = useState(7);
+  const [linkMaxUses, setLinkMaxUses] = useState(1);
+  const [creatingLink, setCreatingLink] = useState(false);
+  const [revokingLinkId, setRevokingLinkId] = useState<string | null>(null);
+  const [createdInviteUrl, setCreatedInviteUrl] = useState<string | null>(null);
 
   const { data: orgMembersData, isLoading } = useQuery({
     queryKey: ['org-members-for-project-add', currentOrganizationId],
@@ -79,6 +98,20 @@ export function AddProjectMemberDialog({
       return res.json();
     },
     enabled: !!currentOrganizationId && open,
+  });
+
+  const {
+    data: inviteLinksData,
+    isLoading: inviteLinksLoading,
+    refetch: refetchInviteLinks,
+  } = useQuery({
+    queryKey: ['project-invite-links', projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${projectId}/invite-links`);
+      if (!res.ok) throw new Error('Failed to load project invite links');
+      return res.json() as Promise<{ links: ProjectInviteLink[] }>;
+    },
+    enabled: open,
   });
 
   const candidates = useMemo<OrgMember[]>(() => {
@@ -108,6 +141,12 @@ export function AddProjectMemberDialog({
     setSelectedUserId(null);
     setRole('developer');
     setSubmitting(false);
+    setLinkRole('developer');
+    setLinkExpiresInDays(7);
+    setLinkMaxUses(1);
+    setCreatingLink(false);
+    setRevokingLinkId(null);
+    setCreatedInviteUrl(null);
   };
 
   const handleClose = (next: boolean) => {
@@ -139,9 +178,76 @@ export function AddProjectMemberDialog({
     }
   };
 
+  const handleCreateInviteLink = async () => {
+    setCreatingLink(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/invite-links`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          role: linkRole,
+          expiresInDays: linkExpiresInDays,
+          maxUses: linkMaxUses,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { inviteUrl?: string; error?: string };
+      if (!res.ok || !data.inviteUrl) {
+        throw new Error(data.error || t('apm_invite_link_create_failed'));
+      }
+      setCreatedInviteUrl(data.inviteUrl);
+      await navigator.clipboard?.writeText(data.inviteUrl).catch(() => undefined);
+      toast({
+        title: t('apm_invite_link_created_title'),
+        description: t('apm_invite_link_created_description'),
+      });
+      refetchInviteLinks();
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : t('apm_invite_link_create_failed');
+      toast({
+        title: t('apm_invite_link_create_failed_title'),
+        description: msg,
+        variant: 'destructive',
+      });
+    } finally {
+      setCreatingLink(false);
+    }
+  };
+
+  const handleCopyInviteLink = async () => {
+    if (!createdInviteUrl) return;
+    await navigator.clipboard?.writeText(createdInviteUrl).catch(() => undefined);
+    toast({ title: t('apm_invite_link_copied_title') });
+  };
+
+  const handleRevokeInviteLink = async (linkId: string) => {
+    setRevokingLinkId(linkId);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/invite-links/${linkId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error || t('apm_invite_link_revoke_failed'));
+      }
+      toast({ title: t('apm_invite_link_revoked_title') });
+      refetchInviteLinks();
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : t('apm_invite_link_revoke_failed');
+      toast({
+        title: t('apm_invite_link_revoke_failed_title'),
+        description: msg,
+        variant: 'destructive',
+      });
+    } finally {
+      setRevokingLinkId(null);
+    }
+  };
+
+  const inviteLinks = Array.isArray(inviteLinksData?.links) ? inviteLinksData.links : [];
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <UserPlus className="h-4 w-4" />
@@ -235,6 +341,151 @@ export function AddProjectMemberDialog({
               </SelectContent>
             </Select>
           </div>
+
+          <div className="border-border space-y-3 rounded-md border p-3">
+            <div className="flex items-start gap-2">
+              <Link2 className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium">{t('apm_invite_link_title')}</p>
+                <p className="text-muted-foreground text-xs">{t('apm_invite_link_description')}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="project-link-role">{t('apm_project_role')}</Label>
+                <Select value={linkRole} onValueChange={(v) => setLinkRole(v as ProjectRole)}>
+                  <SelectTrigger id="project-link-role">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PROJECT_ROLES.map((r) => (
+                      <SelectItem key={r.value} value={r.value}>
+                        {t(r.labelKey)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="project-link-expiry">{t('apm_invite_link_expiry')}</Label>
+                <Select
+                  value={String(linkExpiresInDays)}
+                  onValueChange={(v) => setLinkExpiresInDays(Number(v))}
+                >
+                  <SelectTrigger id="project-link-expiry">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INVITE_EXPIRY_OPTIONS.map((days) => (
+                      <SelectItem key={days} value={String(days)}>
+                        {t('apm_invite_link_days', { count: days })}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="project-link-max-uses">{t('apm_invite_link_max_uses')}</Label>
+                <Select
+                  value={String(linkMaxUses)}
+                  onValueChange={(v) => setLinkMaxUses(Number(v))}
+                >
+                  <SelectTrigger id="project-link-max-uses">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INVITE_MAX_USE_OPTIONS.map((uses) => (
+                      <SelectItem key={uses} value={String(uses)}>
+                        {t('apm_invite_link_uses', { count: uses })}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCreateInviteLink}
+                disabled={creatingLink}
+              >
+                {creatingLink ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {t('apm_invite_link_create')}
+              </Button>
+            </div>
+
+            {createdInviteUrl ? (
+              <div className="flex gap-2">
+                <Input value={createdInviteUrl} readOnly className="font-mono text-xs" />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={handleCopyInviteLink}
+                  aria-label={t('apm_invite_link_copy')}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : null}
+
+            <div className="space-y-2">
+              <p className="text-muted-foreground text-xs">{t('apm_invite_link_active')}</p>
+              {inviteLinksLoading ? (
+                <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  {t('apm_invite_link_loading')}
+                </div>
+              ) : inviteLinks.length === 0 ? (
+                <p className="text-muted-foreground text-xs">{t('apm_invite_link_empty')}</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {inviteLinks.slice(0, 5).map((link) => {
+                    const status = getInviteLinkStatus(link);
+                    const inactive = status !== 'active';
+                    return (
+                      <div
+                        key={link.id}
+                        className="bg-muted/30 flex items-center justify-between gap-3 rounded-md px-3 py-2"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-medium">
+                            {t(`apm_invite_link_status_${status}`)} · {t(`pr_${link.role}`)}
+                          </p>
+                          <p className="text-muted-foreground truncate text-[11px]">
+                            {t('apm_invite_link_meta', {
+                              used: link.usedCount,
+                              max: link.maxUses,
+                              date: formatInviteDate(link.expiresAt),
+                            })}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRevokeInviteLink(link.id)}
+                          disabled={inactive || revokingLinkId === link.id}
+                        >
+                          {revokingLinkId === link.id ? (
+                            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Ban className="mr-1.5 h-3.5 w-3.5" />
+                          )}
+                          {t('apm_invite_link_revoke')}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <DialogFooter>
@@ -249,4 +500,18 @@ export function AddProjectMemberDialog({
       </DialogContent>
     </Dialog>
   );
+}
+
+function getInviteLinkStatus(link: ProjectInviteLink) {
+  if (link.revokedAt) return 'revoked';
+  if (new Date(link.expiresAt).getTime() <= Date.now()) return 'expired';
+  if (link.usedCount >= link.maxUses) return 'used';
+  return 'active';
+}
+
+function formatInviteDate(value: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value));
 }

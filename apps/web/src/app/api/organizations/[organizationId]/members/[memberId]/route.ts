@@ -89,11 +89,7 @@ export async function PATCH(
     });
 
     // Get user info
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, memberId))
-      .limit(1);
+    const [user] = await db.select().from(users).where(eq(users.id, memberId)).limit(1);
 
     if (!user) {
       throw new Error('User not found');
@@ -122,10 +118,7 @@ export async function PATCH(
     }
 
     console.error('Error updating member:', error);
-    return NextResponse.json(
-      { error: 'Failed to update member' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to update member' }, { status: 500 });
   }
 }
 
@@ -184,6 +177,27 @@ export async function DELETE(
         )
       );
 
+    if (member.status === 'invited') {
+      const [remainingInvite] = await db
+        .select({ id: organizationMembers.id })
+        .from(organizationMembers)
+        .where(
+          and(eq(organizationMembers.userId, memberId), eq(organizationMembers.status, 'invited'))
+        )
+        .limit(1);
+
+      if (!remainingInvite) {
+        await db
+          .update(users)
+          .set({
+            inviteTokenHash: null,
+            inviteTokenExpiresAt: null,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, memberId));
+      }
+    }
+
     // Create audit log
     await db.insert(auditLogs).values({
       id: createId(),
@@ -195,6 +209,7 @@ export async function DELETE(
       metadata: {
         memberId,
         role: member.role,
+        cancelledInvite: member.status === 'invited',
       },
     });
 
@@ -203,10 +218,6 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error removing member:', error);
-    return NextResponse.json(
-      { error: 'Failed to remove member' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to remove member' }, { status: 500 });
   }
 }
-

@@ -1,4 +1,4 @@
-const LOCALE_PREFIX_PATTERN = /^\/[a-z]{2}(?=\/|$)/;
+const LOCALE_PREFIX_PATTERN = /^\/[a-z]{2}(?:-[A-Z]{2})?(?=\/|$)/;
 
 // Keep sidebar and rail route checks locale-agnostic. next-intl may surface
 // either `/dashboard` or `/tr/dashboard` depending on the selected locale.

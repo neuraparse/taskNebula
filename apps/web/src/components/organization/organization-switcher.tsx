@@ -46,26 +46,42 @@ export function OrganizationSwitcher() {
   const t = useTranslations('projectsPages');
 
   useEffect(() => {
-    fetchOrganizations();
-  }, []);
+    const controller = new AbortController();
+    let isMounted = true;
 
-  const fetchOrganizations = async () => {
-    try {
-      const response = await fetch('/api/organizations');
-      if (response.ok) {
-        const data = await response.json();
-        setOrganizations(data.organizations);
-        setCanCreateOrganizations(data.canCreateOrganizations === true);
-        if (!currentOrganizationId && data.organizations.length > 0) {
-          setCurrentOrganization(data.organizations[0].id);
+    const fetchOrganizations = async () => {
+      try {
+        const response = await fetch('/api/organizations', { signal: controller.signal });
+        if (response.ok) {
+          const data = await response.json();
+          if (!isMounted) return;
+          setOrganizations(data.organizations);
+          setCanCreateOrganizations(data.canCreateOrganizations === true);
+          if (!currentOrganizationId && data.organizations.length > 0) {
+            setCurrentOrganization(data.organizations[0].id);
+          }
         }
+      } catch (error) {
+        const isNavigationAbort =
+          !isMounted ||
+          controller.signal.aborted ||
+          (error instanceof DOMException && error.name === 'AbortError') ||
+          (error instanceof TypeError && error.message === 'Failed to fetch');
+        if (!isNavigationAbort) {
+          console.error('Error fetching organizations:', error);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching organizations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    fetchOrganizations();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [currentOrganizationId, setCurrentOrganization]);
 
   const currentOrg = organizations.find((org) => org.id === currentOrganizationId);
 

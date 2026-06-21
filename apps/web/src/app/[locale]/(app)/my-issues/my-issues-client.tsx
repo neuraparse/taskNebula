@@ -7,9 +7,10 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
-import { Inbox, Search, Loader2 } from 'lucide-react';
+import { Inbox, Search } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
+import { MyIssuesLoadingShell } from './my-issues-loading-shell';
 
 interface Issue {
   id: string;
@@ -128,11 +129,7 @@ export function MyIssuesClient() {
   });
 
   if (isLoading) {
-    return (
-      <div className="flex h-full min-h-0 items-center justify-center">
-        <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
-      </div>
-    );
+    return <MyIssuesLoadingShell />;
   }
 
   return (

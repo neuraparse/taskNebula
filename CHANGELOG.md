@@ -6,6 +6,50 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-06-21
+
+### Added
+
+- **Safe self-update handoff for Docker installs.** Admin → Updates now keeps
+  manual Docker commands visible while exposing an opt-in self-update action
+  only when a signed external updater webhook is configured. The web container
+  never receives Docker socket access; requests are super-admin-gated, audited,
+  version-validated, stored durably in `system_settings`, and sent with an HMAC
+  signature so a host-side updater can pull the target Docker Hub image and
+  restart `web` under operator control.
+- **Limited project invite links.** Project member management now supports
+  shareable invite links with a project role, expiry window, usage limit, and
+  revoke action. Valid project invite links can open signup in invite-only
+  installs, while admin-created-only mode remains closed.
+- **Docker/GitHub update visibility across self-hosted installs.** The update
+  surface now tracks Docker Hub tags and GitHub releases, stores update markers,
+  and notifies super-admins when their running image is behind.
+- **README screenshot refresh.** Current home, dashboard, board, and AI workflow
+  screenshots were regenerated for the public README.
+
+### Changed
+
+- **IBM-inspired landing refresh.** The public home page now uses a more
+  restrained IBM-style visual system with local IBM Plex fonts and a tighter
+  two/three-color palette.
+- **App shell and navigation cleanup.** The duplicated profile surfaces were
+  consolidated, sidebar destinations were tightened, and Inbox navigation now
+  exposes clearer data and states.
+- **Route loading polish.** Several route-level loading files were replaced by
+  reusable loading shells to reduce double-load flicker and page jumpiness.
+- **README and install docs now pin `0.7.0`.** Docker Desktop and production
+  pinning examples point at the new release tag.
+
+### Fixed
+
+- **Project invite link routing.** `/join/project/[token]` is now public at the
+  middleware layer, so unauthenticated invitees reach signup with the token
+  intact instead of being bounced to a generic sign-in callback.
+- **Pending email invite cancellation.** Removing a pending organization invite
+  now clears the user's invite token when no other pending invite remains.
+- **Issue detail and time tracking layout polish.** Placeholder and input layout
+  issues in the lower issue-detail/time logging surfaces were tightened.
+
 ## [0.6.9] - 2026-06-21
 
 ### Added
@@ -338,7 +382,9 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Internal alpha release. [See git log] for details.
 
-[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.6.8...HEAD
+[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/neuraparse/tasknebula/compare/v0.6.9...v0.7.0
+[0.6.9]: https://github.com/neuraparse/tasknebula/compare/v0.6.8...v0.6.9
 [0.6.8]: https://github.com/neuraparse/tasknebula/compare/v0.6.7...v0.6.8
 [0.6.7]: https://github.com/neuraparse/tasknebula/compare/v0.6.6...v0.6.7
 [0.6.6]: https://github.com/neuraparse/tasknebula/compare/v0.6.5...v0.6.6

@@ -47,12 +47,18 @@ describe('AppRail', () => {
     } as unknown as ReturnType<typeof useInbox>);
   });
 
-  it('keeps rail labels inside a stable two-line slot', () => {
+  it('keeps rail labels inside a stable two-line slot without forced word breaks', () => {
     render(<AppRail />);
 
     const myIssues = screen.getByRole('link', { name: /my issues/i });
     expect(myIssues).toHaveClass('h-[52px]', 'w-12', 'justify-center');
-    expect(screen.getByText('My Issues')).toHaveClass('h-5', 'w-full', 'text-center');
+    expect(screen.getByText('My Issues')).toHaveClass(
+      'line-clamp-2',
+      'h-5',
+      'w-full',
+      'break-normal',
+      'text-center'
+    );
   });
 
   it('marks My Issues active under locale-prefixed issue pages', () => {
@@ -63,5 +69,15 @@ describe('AppRail', () => {
     const myIssues = screen.getByRole('link', { name: /my issues/i });
     expect(myIssues).toHaveAttribute('data-active', 'true');
     expect(myIssues).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('renders a single unified account menu trigger at the bottom of the rail', () => {
+    render(<AppRail />);
+
+    const accountMenu = screen.getByRole('button', {
+      name: /account menu for ada lovelace/i,
+    });
+
+    expect(accountMenu).toHaveClass('h-9', 'w-9', 'ring-1');
   });
 });

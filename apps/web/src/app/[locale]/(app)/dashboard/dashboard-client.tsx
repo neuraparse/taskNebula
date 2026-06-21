@@ -16,7 +16,6 @@ import { useOrganization } from '@/lib/hooks/use-organization';
 import { useProjects } from '@/lib/hooks/use-projects';
 import {
   ArrowUpRight,
-  Loader2,
   Target,
   Inbox,
   Activity,
@@ -28,6 +27,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
+import { DashboardLoadingShell } from './dashboard-loading-shell';
 
 interface Issue {
   id: string;
@@ -155,11 +155,7 @@ export function DashboardClient() {
   }, [myIssues]);
 
   if (isLoading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
-      </div>
-    );
+    return <DashboardLoadingShell />;
   }
 
   const firstName = session?.user?.name?.split(' ')[0] || t('greeting_fallback_name');

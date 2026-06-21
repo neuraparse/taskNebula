@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { signOut, useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import {
   BookOpenText,
@@ -10,26 +10,16 @@ import {
   Inbox,
   Layers,
   LayoutDashboard,
-  LogOut,
   Settings,
   Shield,
-  User as UserIcon,
   Users,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { useInbox } from '@/lib/hooks/use-inbox';
 import { stripLocalePrefix } from '@/components/layout/nav-paths';
+import { UserProfileDropdown } from '@/components/user/user-profile-dropdown';
 
 interface RailItem {
   name: string;
@@ -66,13 +56,6 @@ export function AppRail() {
   // hook's `refetchInterval`.
   const { data: inboxUnread } = useInbox({ unread: true, limit: 50 });
   const unreadInboxCount = inboxUnread?.items?.length ?? 0;
-
-  const initials =
-    session?.user?.name
-      ?.split(' ')
-      .map((part) => part[0])
-      .join('')
-      .toUpperCase() || 'U';
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -119,7 +102,7 @@ export function AppRail() {
                           {unreadInboxCount > 9 ? '9+' : unreadInboxCount}
                         </span>
                       )}
-                      <span className="text-muted-foreground line-clamp-2 h-5 w-full text-center text-[10px] leading-[10px] [overflow-wrap:anywhere]">
+                      <span className="text-muted-foreground line-clamp-2 h-5 w-full break-normal text-center text-[9px] leading-[10px]">
                         {label}
                       </span>
                     </Link>
@@ -147,7 +130,7 @@ export function AppRail() {
                   )}
                 >
                   <Shield className="h-4 w-4 shrink-0" />
-                  <span className="text-muted-foreground line-clamp-2 h-5 w-full text-center text-[10px] leading-[10px] [overflow-wrap:anywhere]">
+                  <span className="text-muted-foreground line-clamp-2 h-5 w-full break-normal text-center text-[9px] leading-[10px]">
                     {tNav('admin')}
                   </span>
                 </Link>
@@ -156,53 +139,11 @@ export function AppRail() {
             </Tooltip>
           ) : null}
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                aria-label={tNav('account_menu')}
-                className="ring-border hover:ring-foreground/40 mx-auto flex h-9 w-9 items-center justify-center rounded-full ring-1 transition-all duration-150"
-              >
-                <Avatar size="lg">
-                  {session?.user?.image ? (
-                    <AvatarImage
-                      src={session.user.image}
-                      alt={session.user.name ?? tLayout('userFallback')}
-                    />
-                  ) : null}
-                  <AvatarFallback className="bg-muted text-muted-foreground text-[11px] font-medium">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="right" align="end" className="w-60">
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="truncate text-sm font-medium">
-                    {session?.user?.name ?? tLayout('userFallback')}
-                  </p>
-                  <p className="text-muted-foreground truncate text-xs">
-                    {session?.user?.email ?? tLayout('workspaceFallback')}
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/settings" className="flex items-center gap-2">
-                  <UserIcon className="h-4 w-4" />
-                  <span>{tNav('account_settings')}</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => void signOut({ callbackUrl: '/auth/signin' })}
-                className="text-destructive focus:text-destructive"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>{tNav('sign_out')}</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <UserProfileDropdown
+            side="right"
+            align="end"
+            triggerClassName="ring-border hover:ring-foreground/40 mx-auto h-9 w-9 rounded-full ring-1 hover:bg-transparent"
+          />
         </div>
       </nav>
     </TooltipProvider>

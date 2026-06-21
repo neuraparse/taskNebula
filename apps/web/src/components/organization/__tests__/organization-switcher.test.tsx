@@ -147,4 +147,38 @@ describe('OrganizationSwitcher', () => {
       expect(screen.getByRole('combobox')).toBeInTheDocument();
     });
   });
+
+  it('does not log aborted organization fetches during navigation cleanup', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    (global.fetch as jest.Mock).mockImplementationOnce((_url: string, init?: RequestInit) => {
+      return new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => {
+          reject(new DOMException('Aborted', 'AbortError'));
+        });
+      });
+    });
+
+    const { unmount } = renderSwitcher();
+    unmount();
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+    });
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('does not log browser fetch tear-down errors from route changes', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    (global.fetch as jest.Mock).mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+    renderSwitcher();
+
+    await waitFor(() => {
+      expect(screen.getByRole('combobox')).toHaveTextContent('Select org');
+    });
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+
+    consoleErrorSpy.mockRestore();
+  });
 });

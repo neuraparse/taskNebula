@@ -25,7 +25,8 @@ export function MarketingNav() {
         >
           <TaskNebulaLogo
             compact
-            className="ease-snap shrink-0 transition-transform duration-200 group-hover:-translate-y-0.5"
+            variant="mono"
+            className="ease-snap shrink-0 text-[var(--landing-accent-blue)] transition-transform duration-200 group-hover:-translate-y-0.5"
           />
           <span className="landing-title text-[15px] text-[var(--landing-text-dark)]">
             TaskNebula
@@ -63,7 +64,7 @@ export function MarketingNav() {
           </Link>
           <Link
             href="/auth/signup"
-            className={`bg-primary text-primary-foreground ease-snap hover:shadow-glow-primary group inline-flex h-[34px] items-center gap-1.5 rounded-md px-3 text-[13px] font-[430] transition-all duration-150 hover:-translate-y-0.5 hover:opacity-95 ${focusRingClass}`}
+            className={`ease-snap group inline-flex h-[34px] items-center gap-1.5 rounded-md bg-[var(--landing-accent-blue)] px-3 text-[13px] font-[450] text-white transition-all duration-150 hover:-translate-y-0.5 hover:bg-[var(--landing-accent-blue-hover)] ${focusRingClass}`}
           >
             Start free
             <ArrowRight

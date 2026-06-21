@@ -24,8 +24,10 @@ jest.mock('next/navigation', () => ({
 }));
 
 jest.mock('next/link', () => {
-  const MockLink = ({ children, href }: { children: ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  const MockLink = ({ children, href, ...props }: { children: ReactNode; href: string }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
   );
   MockLink.displayName = 'MockLink';
   return { __esModule: true, default: MockLink };
@@ -130,9 +132,15 @@ function setPathname(path: string) {
   mockPathname = path;
 }
 
+function setSearchParams(params: Record<string, string> = {}) {
+  Array.from(mockSearchParams.keys()).forEach((key) => mockSearchParams.delete(key));
+  Object.entries(params).forEach(([key, value]) => mockSearchParams.set(key, value));
+}
+
 describe('AppSidebar', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    setSearchParams();
 
     mockUseSession.mockReturnValue({
       data: { user: { id: 'user-1', name: 'Ada', email: 'ada@example.com', image: null } },
@@ -271,7 +279,64 @@ describe('AppSidebar', () => {
     );
   });
 
-  it('renders SETTINGS_LINKS on /settings (Organization, Members, API Keys, Integrations, Activity)', () => {
+  it('renders Inbox filters on /inbox and keeps the section separate from My Issues', () => {
+    setPathname('/inbox');
+
+    render(
+      <Wrapper>
+        <AppSidebar />
+      </Wrapper>
+    );
+
+    expect(screen.getByText('Inbox')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /assigned to me/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^all$/i })).toHaveAttribute('href', '/inbox');
+    expect(screen.getByRole('link', { name: /unread only/i })).toHaveAttribute(
+      'href',
+      '/inbox?unread=1'
+    );
+    expect(screen.getByRole('link', { name: /agents/i })).toHaveAttribute(
+      'href',
+      '/inbox?actor=agent'
+    );
+    expect(screen.getByRole('link', { name: /webhooks/i })).toHaveAttribute(
+      'href',
+      '/inbox?actor=webhook'
+    );
+  });
+
+  it('marks the matching Inbox filter active from query params', () => {
+    setPathname('/inbox');
+    setSearchParams({ actor: 'agent' });
+
+    render(
+      <Wrapper>
+        <AppSidebar />
+      </Wrapper>
+    );
+
+    expect(screen.getByRole('link', { name: /agents/i })).toHaveAttribute('data-active', 'true');
+    expect(screen.getByRole('link', { name: /^all$/i })).not.toHaveAttribute('data-active');
+  });
+
+  it('marks Team links active from tab query params', () => {
+    setPathname('/team');
+    setSearchParams({ tab: 'teamspaces' });
+
+    render(
+      <Wrapper>
+        <AppSidebar />
+      </Wrapper>
+    );
+
+    expect(screen.getByRole('link', { name: /teamspaces/i })).toHaveAttribute(
+      'data-active',
+      'true'
+    );
+    expect(screen.getByRole('link', { name: /^members$/i })).not.toHaveAttribute('data-active');
+  });
+
+  it('renders SETTINGS_LINKS on /settings (Organization, Members, API Keys, Labels, Integrations, Activity)', () => {
     setPathname('/settings');
 
     render(
@@ -295,6 +360,10 @@ describe('AppSidebar', () => {
     expect(screen.getByRole('link', { name: /webhooks/i })).toHaveAttribute(
       'href',
       '/settings?tab=webhooks'
+    );
+    expect(screen.getByRole('link', { name: /^labels$/i })).toHaveAttribute(
+      'href',
+      '/settings?tab=labels'
     );
     expect(screen.getByRole('link', { name: /integrations/i })).toHaveAttribute(
       'href',
@@ -327,6 +396,8 @@ describe('AppSidebar', () => {
     // Admin-only links must not appear on the /settings page when not super admin
     expect(screen.queryByRole('link', { name: /feature flags/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /agent control/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^system$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^updates$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /realtime health/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /audit logs/i })).not.toBeInTheDocument();
   });
@@ -356,6 +427,14 @@ describe('AppSidebar', () => {
     expect(screen.getByRole('link', { name: /agent control/i })).toHaveAttribute(
       'href',
       '/admin?tab=agents'
+    );
+    expect(screen.getByRole('link', { name: /^system$/i })).toHaveAttribute(
+      'href',
+      '/admin?tab=system'
+    );
+    expect(screen.getByRole('link', { name: /^updates$/i })).toHaveAttribute(
+      'href',
+      '/admin?tab=updates'
     );
     expect(screen.getByRole('link', { name: /realtime health/i })).toHaveAttribute(
       'href',

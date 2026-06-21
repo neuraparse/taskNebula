@@ -41,7 +41,9 @@
     "feature_flags": "Özellik bayrakları",
     "agent_control": "Aracı denetimi",
     "realtime_health": "Gerçek zamanlı durum",
-    "audit_logs": "Denetim günlükleri"
+    "audit_logs": "Denetim günlükleri",
+    "system": "Sistem",
+    "updates": "Güncellemeler"
   },
   "actions": {
     "create_issue": "Konu oluştur",
@@ -472,6 +474,38 @@
       "dismiss": "Kapat",
       "dockerTitle": "Docker imajı {tag} hazır",
       "dockerBody": "Docker Hub {repository}:{tag} imajını yayınladı. Şu anda {current} çalışıyor; pull ve restart için Admin > Updates ekranını açın."
+    },
+    "selfUpdate": {
+      "title": "Kendini güncelleme",
+      "readyDescription": "Dış updater servisine imzalı istek gönderir. Updater Docker imajını çekip web servisini yeniden oluştururken uygulama yeniden başlayabilir.",
+      "manualFallbackDescription": "Bu kurulumda otomatik güncelleme aktif değil. Aşağıdaki manuel Docker komutlarını kullanabilir veya hazır olduğunuzda dış updater yapılandırabilirsiniz.",
+      "available": "Hazır",
+      "manualOnly": "Sadece manuel",
+      "manualOption": "Manuel güncelleme seçeneği aşağıda kullanılabilir.",
+      "acknowledge": "Sürüm notlarını inceledim, Postgres ve uploads yedeğini aldım, uygulamanın yeniden başlayabileceğini anlıyorum.",
+      "start": "{version} sürümüne güncellemeyi başlat",
+      "starting": "Güncelleme başlatılıyor...",
+      "startedTitle": "Güncelleme istendi",
+      "startedDescription": "Dış updater isteği kabul etti. Docker imajı kurulurken uygulama yeniden başlayabilir.",
+      "failedTitle": "Güncelleme isteği başarısız",
+      "jobTitle": "Son güncelleme isteği: {version}",
+      "jobUpdated": "Son güncelleme {time}",
+      "blocked": {
+        "disabled": "Kendini güncelleme kapalı. Etkinleştirmek için TASKNEBULA_SELF_UPDATE_ENABLED=true ayarlayın ve updater webhookunu yapılandırın.",
+        "missing_webhook": "Kendini güncelleme açık, ancak TASKNEBULA_SELF_UPDATE_WEBHOOK_URL eksik veya geçersiz.",
+        "missing_secret": "Kendini güncelleme açık, ancak TASKNEBULA_SELF_UPDATE_WEBHOOK_SECRET eksik.",
+        "checks_disabled": "Güncelleme kontrolleri kapalı olduğu için uygulama güvenli şekilde hedef Docker imajı seçemez.",
+        "no_update": "Daha yeni Docker imajı yok.",
+        "missing_docker_image": "Docker Hub kurulacak semver imaj tagi döndürmedi.",
+        "invalid_target": "Seçilen hedef sürüm bu kurulum için geçerli değil.",
+        "active_job": "Başka bir güncelleme isteği zaten aktif. Yeni istek başlatmadan önce bitmesini bekleyin."
+      },
+      "jobStatus": {
+        "queued": "Sırada",
+        "requested": "İstendi",
+        "succeeded": "Başarılı",
+        "failed": "Başarısız"
+      }
     }
   },
   "issueFields": {
@@ -982,7 +1016,8 @@
     "toast_not_verified_description": "Tamamlanmış bir doğrulama bulamadık. Lütfen gelen kutunuzdaki bağlantıya tıklayın veya yeniden gönderin.",
     "toast_refresh_failed_title": "Durum yenilenemedi",
     "registration_invite_required": "Kayıt yalnızca davetle yapılabilir. Bir yöneticiden davet isteyin.",
-    "registration_admin_only": "Kayıt kapalı. Hesabınızı oluşturması için bir yöneticiye başvurun."
+    "registration_admin_only": "Kayıt kapalı. Hesabınızı oluşturması için bir yöneticiye başvurun.",
+    "project_invite_invalid": "Bu proje davet bağlantısının süresi dolmuş, iptal edilmiş veya kullanım hakkı kalmamış."
   },
   "issuesViews": {
     "loading": "Yükleniyor…",
@@ -3160,7 +3195,32 @@
     "pm_perm_canEditOwnWorklogs": "Kendi iş kayıtlarını düzenle",
     "pm_perm_canEditAllWorklogs": "Tüm iş kayıtlarını düzenle",
     "pm_perm_canDeleteOwnWorklogs": "Kendi iş kayıtlarını sil",
-    "pm_perm_canDeleteAllWorklogs": "Tüm iş kayıtlarını sil"
+    "pm_perm_canDeleteAllWorklogs": "Tüm iş kayıtlarını sil",
+    "apm_invite_link_title": "Link ile davet et",
+    "apm_invite_link_description": "Sınırlı kullanımlı proje kayıt linki oluşturun. Otomatik süresi dolar ve istenirse iptal edilebilir.",
+    "apm_invite_link_expiry": "Süre",
+    "apm_invite_link_max_uses": "Kullanım limiti",
+    "apm_invite_link_days": "{count, plural, one {# gün} other {# gün}}",
+    "apm_invite_link_uses": "{count, plural, one {# kullanım} other {# kullanım}}",
+    "apm_invite_link_create": "Link oluştur",
+    "apm_invite_link_created_title": "Davet linki oluşturuldu",
+    "apm_invite_link_created_description": "Link panoya kopyalandı.",
+    "apm_invite_link_create_failed_title": "Link oluşturulamadı",
+    "apm_invite_link_create_failed": "Proje davet linki oluşturulamadı",
+    "apm_invite_link_copied_title": "Davet linki kopyalandı",
+    "apm_invite_link_copy": "Davet linkini kopyala",
+    "apm_invite_link_active": "Son davet linkleri",
+    "apm_invite_link_loading": "Davet linkleri yükleniyor...",
+    "apm_invite_link_empty": "Henüz davet linki yok.",
+    "apm_invite_link_status_active": "Aktif",
+    "apm_invite_link_status_revoked": "İptal edildi",
+    "apm_invite_link_status_expired": "Süresi doldu",
+    "apm_invite_link_status_used": "Kullanıldı",
+    "apm_invite_link_meta": "{used}/{max} kullanıldı · bitiş {date}",
+    "apm_invite_link_revoke": "İptal et",
+    "apm_invite_link_revoked_title": "Davet linki iptal edildi",
+    "apm_invite_link_revoke_failed_title": "Link iptal edilemedi",
+    "apm_invite_link_revoke_failed": "Proje davet linki iptal edilemedi"
   },
   "adminPanels": {
     "agentOps": {
@@ -3839,6 +3899,7 @@
     "inbox_type_mention": "Bahsetmeler",
     "inbox_type_assignment": "Atamalar",
     "inbox_type_comment": "Yorumlar",
+    "inbox_type_reaction": "Tepkiler",
     "inbox_type_status": "Durum değişiklikleri",
     "inbox_type_due": "Teslim / sprint",
     "inbox_unread_only": "Yalnızca okunmamış",
