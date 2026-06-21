@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-06-21
+
+### Fixed
+
+- **Registered users can be added directly to projects.** Project member
+  management now searches both existing workspace members and active registered
+  users for admins with member-invite permission. Selecting a registered user
+  atomically adds them to the workspace as a member and then to the project with
+  the selected project role, avoiding the previous dead end where self-hosted
+  admins could not choose newly registered accounts.
+- **Project member add flow is race-safe.** Workspace/project membership writes
+  now run in a transaction, handle duplicate project-member inserts as a clean
+  `409`, and avoid leaving stray workspace memberships when the target user is
+  already on the project.
+
 ## [0.7.1] - 2026-06-21
 
 ### Added
@@ -414,7 +429,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Internal alpha release. [See git log] for details.
 
-[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.2...HEAD
+[0.7.2]: https://github.com/neuraparse/tasknebula/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/neuraparse/tasknebula/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/neuraparse/tasknebula/compare/v0.6.9...v0.7.0
 [0.6.9]: https://github.com/neuraparse/tasknebula/compare/v0.6.8...v0.6.9
