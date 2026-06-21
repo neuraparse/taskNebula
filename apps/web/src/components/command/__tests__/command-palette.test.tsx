@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { CommandPalette } from '../command-palette';
 import { useOrganization } from '@/lib/hooks/use-organization';
+import { useOrganizationPermissions } from '@/lib/hooks/use-permissions';
 
 const pushMock = jest.fn();
 
@@ -12,6 +13,14 @@ jest.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
+jest.mock('@/lib/hooks/use-permissions', () => ({
+  useOrganizationPermissions: jest.fn(),
+}));
+
+const mockUseOrganizationPermissions = useOrganizationPermissions as jest.MockedFunction<
+  typeof useOrganizationPermissions
+>;
+
 beforeAll(() => {
   class RO {
     observe() {}
@@ -20,8 +29,8 @@ beforeAll(() => {
   }
   (window as unknown as { ResizeObserver: typeof RO }).ResizeObserver = RO;
   if (!(Element.prototype as unknown as { hasPointerCapture?: unknown }).hasPointerCapture) {
-    (Element.prototype as unknown as { hasPointerCapture: () => boolean }).hasPointerCapture =
-      () => false;
+    (Element.prototype as unknown as { hasPointerCapture: () => boolean }).hasPointerCapture = () =>
+      false;
   }
   if (!(Element.prototype as unknown as { scrollIntoView?: unknown }).scrollIntoView) {
     (Element.prototype as unknown as { scrollIntoView: () => void }).scrollIntoView = () => {};
@@ -38,6 +47,15 @@ describe('CommandPalette (FEAT-25 omnibar)', () => {
     useOrganization.setState({
       currentOrganizationId: 'org-1',
       currentTeamId: null,
+    });
+    mockUseOrganizationPermissions.mockReturnValue({
+      permissions: ['member:view', 'team:view'],
+      isSuperAdmin: false,
+      role: 'member',
+      isLoading: false,
+      has: jest.fn(() => true),
+      hasAny: jest.fn(() => true),
+      hasAll: jest.fn(() => true),
     });
 
     const makeResponse = (status: number, body: unknown = ''): Response => {
@@ -93,12 +111,57 @@ describe('CommandPalette (FEAT-25 omnibar)', () => {
     return result;
   }
 
+  async function advanceDebounce() {
+    await act(async () => {
+      jest.advanceTimersByTime(150);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+  }
+
   it('renders the tab strip and quick navigation when input is empty', async () => {
     await renderOpen();
     expect(screen.getByRole('tab', { name: /All/ })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Ask AI/ })).toBeInTheDocument();
     expect(screen.getByText('Home')).toBeInTheDocument();
-    expect(screen.getByText('Work items')).toBeInTheDocument();
+    expect(screen.getByText('My Issues')).toBeInTheDocument();
+    expect(screen.getByText('Projects')).toBeInTheDocument();
+    expect(screen.queryByText('Work items')).not.toBeInTheDocument();
+    expect(screen.queryByText('Dashboards')).not.toBeInTheDocument();
+  });
+
+  it('limits navigation when the user has no workspace access', async () => {
+    render(<CommandPalette open={true} onOpenChange={jest.fn()} hasWorkspaceAccess={false} />);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(screen.getByRole('tab', { name: /All/ })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /Issues/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /Docs/ })).not.toBeInTheDocument();
+    expect(screen.getByText('Home')).toBeInTheDocument();
+    expect(screen.getByText('Settings')).toBeInTheDocument();
+    expect(screen.queryByText('Work items')).not.toBeInTheDocument();
+    expect(screen.queryByText('Docs')).not.toBeInTheDocument();
+    expect(screen.queryByText('Team')).not.toBeInTheDocument();
+  });
+
+  it('hides team quick navigation while organization permissions are missing', async () => {
+    mockUseOrganizationPermissions.mockReturnValue({
+      permissions: [],
+      isSuperAdmin: false,
+      role: 'viewer',
+      isLoading: false,
+      has: jest.fn(() => false),
+      hasAny: jest.fn(() => false),
+      hasAll: jest.fn(() => false),
+    });
+
+    await renderOpen();
+
+    expect(screen.queryByText('Team')).not.toBeInTheDocument();
+    expect(screen.getByText('Projects')).toBeInTheDocument();
   });
 
   it('debounces and calls /api/search when the user types', async () => {
@@ -111,18 +174,12 @@ describe('CommandPalette (FEAT-25 omnibar)', () => {
     // Debounce window is 120ms.
     expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining('/api/search?'));
 
-    act(() => {
-      jest.advanceTimersByTime(150);
-    });
+    await advanceDebounce();
 
     await waitFor(() => {
       const calls = fetchMock.mock.calls.map((c) => String(c[0]));
       expect(
-        calls.some(
-          (u) =>
-            u.includes('/api/search/hybrid?') ||
-            u.includes('/api/search?')
-        )
+        calls.some((u) => u.includes('/api/search/hybrid?') || u.includes('/api/search?'))
       ).toBe(true);
     });
 
@@ -140,9 +197,7 @@ describe('CommandPalette (FEAT-25 omnibar)', () => {
 
     expect(screen.getByTestId('facet-chip-status')).toHaveTextContent('in_progress');
 
-    act(() => {
-      jest.advanceTimersByTime(150);
-    });
+    await advanceDebounce();
 
     await waitFor(() => {
       const calls = fetchMock.mock.calls.map((c) => String(c[0]));
@@ -176,9 +231,7 @@ describe('CommandPalette (FEAT-25 omnibar)', () => {
     const input = screen.getByLabelText('Command palette query');
     await user.type(input, 'why is sprint velocity dropping?');
 
-    act(() => {
-      jest.advanceTimersByTime(150);
-    });
+    await advanceDebounce();
 
     const cta = await screen.findByText(/Ask TaskNebula/);
     await user.click(cta);

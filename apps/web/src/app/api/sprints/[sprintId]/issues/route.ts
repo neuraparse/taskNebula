@@ -10,6 +10,7 @@ import {
   organizationMembers,
   users,
   ROLE_DEFAULT_PERMISSIONS,
+  hasPermission as roleHasPermission,
   type ProjectRole,
 } from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
@@ -54,13 +55,14 @@ async function checkSprintPermission(
     .where(
       and(
         eq(organizationMembers.userId, userId),
-        eq(organizationMembers.organizationId, project.organizationId)
+        eq(organizationMembers.organizationId, project.organizationId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
 
-  // Org owners have full access
-  if (orgMember?.role === 'owner') {
+  // Org roles with project:manage have full access
+  if (roleHasPermission(orgMember?.role || '', 'project:manage')) {
     return { allowed: true };
   }
 
@@ -72,9 +74,6 @@ async function checkSprintPermission(
     .limit(1);
 
   if (!projectMember) {
-    if (orgMember?.role === 'admin' && action === 'view') {
-      return { allowed: true };
-    }
     if (!orgMember) {
       // Cross-org probe: report the sprint as not found so its existence
       // is not leaked to other tenants.

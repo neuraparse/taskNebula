@@ -5,6 +5,7 @@ import { ProjectsClient } from '../projects-client';
 import { useProjects, useCreateProject } from '@/lib/hooks/use-projects';
 import { useTeamspaces } from '@/lib/hooks/use-teamspaces';
 import { useOrganization } from '@/lib/hooks/use-organization';
+import { useOrganizationPermissions } from '@/lib/hooks/use-permissions';
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn() }),
@@ -19,12 +20,19 @@ jest.mock('@/lib/hooks/use-teamspaces', () => ({
   useTeamspaces: jest.fn(),
 }));
 
+jest.mock('@/lib/hooks/use-permissions', () => ({
+  useOrganizationPermissions: jest.fn(),
+}));
+
 // Avoid real fetches for the organizations query inside the component.
 const originalFetch = global.fetch;
 
 const mockUseProjects = useProjects as jest.MockedFunction<typeof useProjects>;
 const mockUseCreateProject = useCreateProject as jest.MockedFunction<typeof useCreateProject>;
 const mockUseTeamspaces = useTeamspaces as jest.MockedFunction<typeof useTeamspaces>;
+const mockUseOrganizationPermissions = useOrganizationPermissions as jest.MockedFunction<
+  typeof useOrganizationPermissions
+>;
 
 function Wrapper({ children }: { children: ReactNode }) {
   const queryClient = new QueryClient({
@@ -48,6 +56,15 @@ describe('ProjectsClient', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockOrganizations('owner');
+    mockUseOrganizationPermissions.mockReturnValue({
+      permissions: ['project:create'],
+      isSuperAdmin: false,
+      role: 'owner',
+      isLoading: false,
+      has: (permission) => permission === 'project:create',
+      hasAny: (permissions) => permissions.includes('project:create'),
+      hasAll: (permissions) => permissions.every((permission) => permission === 'project:create'),
+    });
     useOrganization.setState({
       currentOrganizationId: 'org-1',
       currentTeamId: null,
@@ -142,6 +159,15 @@ describe('ProjectsClient', () => {
 
   it('hides project creation for regular organization members', async () => {
     mockOrganizations('member');
+    mockUseOrganizationPermissions.mockReturnValue({
+      permissions: [],
+      isSuperAdmin: false,
+      role: 'member',
+      isLoading: false,
+      has: () => false,
+      hasAny: () => false,
+      hasAll: () => false,
+    });
     mockUseProjects.mockReturnValue({
       data: [],
       isLoading: false,
@@ -151,7 +177,7 @@ describe('ProjectsClient', () => {
 
     expect(await screen.findByText('Invitation required')).toBeInTheDocument();
     expect(
-      screen.getByText(/Ask an organization owner or admin to invite you to a project/i)
+      screen.getByText(/Ask an administrator to invite you to a project/i)
     ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /create project/i })).not.toBeInTheDocument();
   });

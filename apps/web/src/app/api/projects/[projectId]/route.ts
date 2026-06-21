@@ -15,20 +15,23 @@ export async function GET(
 ) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 });
   }
 
   const { projectId } = await params;
 
   try {
-    const project = await resolveProjectByIdOrKey(projectId);
+    const project = await resolveProjectByIdOrKey(projectId, session.user.id);
 
     if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Project not found', code: 'PROJECT_NOT_FOUND' },
+        { status: 404 }
+      );
     }
 
     if (!(await canReadProject(session.user.id, project))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Forbidden', code: 'PROJECT_FORBIDDEN' }, { status: 403 });
     }
 
     // Get sprint count
@@ -69,7 +72,7 @@ export async function PATCH(
 ) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 });
   }
 
   const { projectId } = await params;
@@ -88,14 +91,17 @@ export async function PATCH(
       defaultWorkflowId,
     } = body;
 
-    const project = await resolveProjectByIdOrKey(projectId);
+    const project = await resolveProjectByIdOrKey(projectId, session.user.id);
 
     if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Project not found', code: 'PROJECT_NOT_FOUND' },
+        { status: 404 }
+      );
     }
 
     if (!(await canManageProject(session.user.id, project))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Forbidden', code: 'PROJECT_FORBIDDEN' }, { status: 403 });
     }
 
     const updateData: Record<string, unknown> = {
@@ -125,7 +131,10 @@ export async function PATCH(
 
         if (existingProject) {
           return NextResponse.json(
-            { error: 'Project key already exists in this organization' },
+            {
+              error: 'Project key already exists in this organization',
+              code: 'PROJECT_KEY_EXISTS',
+            },
             { status: 409 }
           );
         }
@@ -148,7 +157,10 @@ export async function PATCH(
       .returning();
 
     if (!updatedProject) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Project not found', code: 'PROJECT_NOT_FOUND' },
+        { status: 404 }
+      );
     }
 
     publishEvent('project.updated', session.user.id, {
@@ -198,20 +210,23 @@ export async function DELETE(
 ) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 });
   }
 
   const { projectId } = await params;
 
   try {
-    const project = await resolveProjectByIdOrKey(projectId);
+    const project = await resolveProjectByIdOrKey(projectId, session.user.id);
 
     if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Project not found', code: 'PROJECT_NOT_FOUND' },
+        { status: 404 }
+      );
     }
 
     if (!(await canManageProject(session.user.id, project))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Forbidden', code: 'PROJECT_FORBIDDEN' }, { status: 403 });
     }
 
     // Check if project has issues
@@ -233,7 +248,10 @@ export async function DELETE(
       .returning();
 
     if (!deletedProject) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Project not found', code: 'PROJECT_NOT_FOUND' },
+        { status: 404 }
+      );
     }
 
     publishEvent('project.deleted', session.user.id, {

@@ -52,4 +52,13 @@ describe('AppHeader', () => {
     fireEvent.click(screen.getByRole('button', { name: /open command palette/i }));
     expect(open).toHaveBeenCalled();
   });
+
+  it('hides workspace controls when the user has no workspace access', () => {
+    render(<AppHeader hasWorkspaceAccess={false} />);
+
+    expect(screen.queryByTestId('organization-switcher')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /open command palette/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /notifications/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /language/i })).toBeInTheDocument();
+  });
 });

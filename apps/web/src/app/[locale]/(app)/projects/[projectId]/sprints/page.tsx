@@ -74,7 +74,12 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
     );
   }
 
-  if (!permissions.canBrowseProject && !permissions.isSuperAdmin && !permissions.isOrgOwner) {
+  if (
+    !permissions.canBrowseProject &&
+    !permissions.isSuperAdmin &&
+    !permissions.isOrgOwner &&
+    !permissions.isOrgAdmin
+  ) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4">
         <Lock className="text-muted-foreground h-12 w-12" />

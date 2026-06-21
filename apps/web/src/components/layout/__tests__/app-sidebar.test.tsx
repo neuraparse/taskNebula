@@ -383,6 +383,180 @@ describe('AppSidebar', () => {
     );
   });
 
+  it('limits settings navigation to personal appearance when the user has no workspace access', () => {
+    setPathname('/settings');
+
+    render(
+      <Wrapper>
+        <AppSidebar hasWorkspaceAccess={false} />
+      </Wrapper>
+    );
+
+    expect(screen.getByRole('link', { name: /appearance/i })).toHaveAttribute(
+      'href',
+      '/settings?tab=appearance'
+    );
+    expect(screen.queryByRole('link', { name: /organization/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^members$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^labels$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /api keys/i })).not.toBeInTheDocument();
+  });
+
+  it('hides permission-gated settings links while organization permissions are loading', () => {
+    setPathname('/settings');
+    mockUseOrganizationPermissions.mockReturnValue({
+      permissions: [],
+      isSuperAdmin: false,
+      role: null,
+      isLoading: true,
+      has: jest.fn(() => false),
+      hasAny: jest.fn(() => false),
+      hasAll: jest.fn(() => false),
+    });
+
+    render(
+      <Wrapper>
+        <AppSidebar />
+      </Wrapper>
+    );
+
+    expect(screen.getByRole('link', { name: /^labels$/i })).toHaveAttribute(
+      'href',
+      '/settings?tab=labels'
+    );
+    expect(screen.getByRole('link', { name: /notifications/i })).toHaveAttribute(
+      'href',
+      '/settings?tab=notifications'
+    );
+    expect(screen.getByRole('link', { name: /appearance/i })).toHaveAttribute(
+      'href',
+      '/settings?tab=appearance'
+    );
+    expect(screen.queryByRole('link', { name: /organization/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^members$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /api keys/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /webhooks/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /ai & agents/i })).not.toBeInTheDocument();
+  });
+
+  it('hides team links while organization permissions are loading', () => {
+    setPathname('/team');
+    mockUseOrganizationPermissions.mockReturnValue({
+      permissions: [],
+      isSuperAdmin: false,
+      role: null,
+      isLoading: true,
+      has: jest.fn(() => false),
+      hasAny: jest.fn(() => false),
+      hasAll: jest.fn(() => false),
+    });
+
+    render(
+      <Wrapper>
+        <AppSidebar />
+      </Wrapper>
+    );
+
+    expect(screen.queryByRole('link', { name: /^members$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /teamspaces/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /pending invites/i })).not.toBeInTheDocument();
+  });
+
+  it('shows only teamspaces in team navigation when the user has team:view without member:view', () => {
+    setPathname('/team');
+    mockUseOrganizationPermissions.mockReturnValue({
+      permissions: ['team:view'],
+      isSuperAdmin: false,
+      role: 'guest',
+      isLoading: false,
+      has: jest.fn((permission) => permission === 'team:view'),
+      hasAny: jest.fn((permissions) => permissions.includes('team:view')),
+      hasAll: jest.fn((permissions) =>
+        permissions.every((permission) => permission === 'team:view')
+      ),
+    });
+
+    render(
+      <Wrapper>
+        <AppSidebar />
+      </Wrapper>
+    );
+
+    expect(screen.getByRole('link', { name: /teamspaces/i })).toHaveAttribute(
+      'href',
+      '/team?tab=teamspaces'
+    );
+    expect(screen.queryByRole('link', { name: /^members$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /pending invites/i })).not.toBeInTheDocument();
+  });
+
+  it('hides the dashboard teamspace switcher when the user lacks team:view', () => {
+    setPathname('/dashboard');
+    mockUseOrganizationPermissions.mockReturnValue({
+      permissions: [],
+      isSuperAdmin: false,
+      role: 'member',
+      isLoading: false,
+      has: jest.fn(() => false),
+      hasAny: jest.fn(() => false),
+      hasAll: jest.fn(() => false),
+    });
+
+    render(
+      <Wrapper>
+        <AppSidebar />
+      </Wrapper>
+    );
+
+    expect(screen.queryByTestId('teamspace-switcher')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /teamspaces/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/no projects yet/i)).toBeInTheDocument();
+  });
+
+  it('shows the dashboard teamspace switcher when the user has team:view', () => {
+    setPathname('/dashboard');
+    mockUseOrganizationPermissions.mockReturnValue({
+      permissions: ['team:view'],
+      isSuperAdmin: false,
+      role: 'member',
+      isLoading: false,
+      has: jest.fn((permission) => permission === 'team:view'),
+      hasAny: jest.fn((permissions) => permissions.includes('team:view')),
+      hasAll: jest.fn((permissions) =>
+        permissions.every((permission) => permission === 'team:view')
+      ),
+    });
+
+    render(
+      <Wrapper>
+        <AppSidebar />
+      </Wrapper>
+    );
+
+    expect(screen.getByTestId('teamspace-switcher')).toBeInTheDocument();
+  });
+
+  it('does not fetch or render project navigation when the user has no workspace access', () => {
+    setPathname('/dashboard');
+
+    render(
+      <Wrapper>
+        <AppSidebar hasWorkspaceAccess={false} />
+      </Wrapper>
+    );
+
+    expect(screen.getByRole('link', { name: /overview/i })).toHaveAttribute('href', '/dashboard');
+    expect(screen.queryByRole('link', { name: /drafts/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /templates/i })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('teamspace-switcher')).not.toBeInTheDocument();
+    expect(screen.queryByText(/no projects yet/i)).not.toBeInTheDocument();
+    expect(mockUseProjects).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: false,
+      })
+    );
+  });
+
   it('does not render ADMIN_LINKS when isSuperAdmin is false', () => {
     setPathname('/settings');
     setIsSuperAdmin(false);

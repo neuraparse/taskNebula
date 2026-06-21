@@ -1,4 +1,5 @@
 import NextAuth from 'next-auth';
+import type { NextAuthConfig } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import GitHub from 'next-auth/providers/github';
 import Google from 'next-auth/providers/google';
@@ -7,40 +8,15 @@ import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { authConfig } from './auth.config';
 import { consumeSamlExchangeToken } from '@/lib/sso/session';
-import { getRegistrationPolicy } from '@/lib/auth/registration-policy';
+import { getLoginOAuthCredentials, isLoginOAuthProvider } from '@/lib/auth/login-oauth-providers';
+import { applyOAuthDatabaseUser, resolveOAuthDatabaseUser } from '@/lib/auth/oauth-users';
 
 /**
  * Full auth configuration with database operations
  * This file extends auth.config.ts with Node.js-only features
  */
-const nextAuth = NextAuth({
-  ...authConfig,
-  callbacks: {
-    ...(authConfig.callbacks ?? {}),
-    async signIn({ user, account }) {
-      const provider = account?.provider;
-      if (!provider || provider === 'credentials' || provider === 'saml-bridge') {
-        return true;
-      }
-
-      const email = typeof user.email === 'string' ? user.email.trim().toLowerCase() : '';
-      if (!email) {
-        return false;
-      }
-
-      const existingUser = await db.query.users.findFirst({
-        where: eq(users.email, email),
-      });
-
-      if (existingUser?.status === 'active') {
-        return true;
-      }
-
-      const registrationPolicy = await getRegistrationPolicy();
-      return registrationPolicy.mode === 'allow_registration';
-    },
-  },
-  providers: [
+function buildCredentialProviders(): NextAuthConfig['providers'] {
+  return [
     // Override Credentials provider with actual authorize logic
     Credentials({
       name: 'credentials',
@@ -100,27 +76,73 @@ const nextAuth = NextAuth({
         };
       },
     }),
-    // Include OAuth providers from config
-    ...(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
-      ? [
-          GitHub({
-            clientId: process.env.GITHUB_CLIENT_ID,
-            clientSecret: process.env.GITHUB_CLIENT_SECRET,
-          }),
-        ]
-      : []),
-    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
-      ? [
-          Google({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          }),
-        ]
-      : []),
-  ],
-});
+  ];
+}
 
-export const handlers = nextAuth.handlers;
-export const signIn: typeof nextAuth.signIn = nextAuth.signIn;
-export const signOut = nextAuth.signOut;
-export const auth = nextAuth.auth;
+async function buildNodeProviders(): Promise<NextAuthConfig['providers']> {
+  const providers = buildCredentialProviders();
+  const credentials = await getLoginOAuthCredentials();
+
+  if (credentials.github) {
+    providers.push(
+      GitHub({
+        clientId: credentials.github.clientId,
+        clientSecret: credentials.github.clientSecret,
+      })
+    );
+  }
+
+  if (credentials.google) {
+    providers.push(
+      Google({
+        clientId: credentials.google.clientId,
+        clientSecret: credentials.google.clientSecret,
+      })
+    );
+  }
+
+  return providers;
+}
+
+async function buildNodeAuthConfig(): Promise<NextAuthConfig> {
+  const baseCallbacks = authConfig.callbacks ?? {};
+
+  return {
+    ...authConfig,
+    callbacks: {
+      ...(authConfig.callbacks ?? {}),
+      async signIn({ user, account }) {
+        if (!isLoginOAuthProvider(account?.provider)) {
+          return true;
+        }
+
+        const databaseUser = await resolveOAuthDatabaseUser({ user, account });
+        if (!databaseUser) return false;
+        applyOAuthDatabaseUser(user, databaseUser);
+        return true;
+      },
+      async jwt(params) {
+        if (params.user && isLoginOAuthProvider(params.account?.provider)) {
+          const databaseUser = await resolveOAuthDatabaseUser({
+            user: params.user,
+            account: params.account,
+          });
+          if (databaseUser) {
+            applyOAuthDatabaseUser(params.user, databaseUser);
+          }
+        }
+
+        return baseCallbacks.jwt ? baseCallbacks.jwt(params) : params.token;
+      },
+    },
+    providers: await buildNodeProviders(),
+  };
+}
+
+const handlerAuth = NextAuth(async () => buildNodeAuthConfig());
+const sessionAuth = NextAuth(authConfig);
+
+export const handlers = handlerAuth.handlers;
+export const signIn: typeof handlerAuth.signIn = handlerAuth.signIn;
+export const signOut = handlerAuth.signOut;
+export const auth = sessionAuth.auth;

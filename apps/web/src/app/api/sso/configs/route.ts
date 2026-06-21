@@ -1,5 +1,5 @@
 /**
- * SSO configuration CRUD (admin-only) — one config per workspace.
+ * SSO configuration CRUD — requires organization settings permission.
  *
  *   GET   ?organizationId=xxx           → fetch existing config (without privateKey)
  *   POST  body: SsoConfigInput          → upsert config
@@ -33,10 +33,7 @@ export async function GET(request: NextRequest) {
   }
   const orgId = new URL(request.url).searchParams.get('organizationId');
   if (!orgId) {
-    return NextResponse.json(
-      { error: 'organizationId is required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
   }
   if (!(await hasPermission(orgId, 'org:settings'))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -108,10 +105,7 @@ export async function DELETE(request: NextRequest) {
   }
   const orgId = new URL(request.url).searchParams.get('organizationId');
   if (!orgId) {
-    return NextResponse.json(
-      { error: 'organizationId is required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
   }
   if (!(await hasPermission(orgId, 'org:settings'))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

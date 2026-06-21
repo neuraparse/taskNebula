@@ -9,6 +9,7 @@ import Link from 'next/link';
 
 export function ForgotPasswordForm() {
   const t = useTranslations('authExtra');
+  const tAuth = useTranslations('auth');
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -42,43 +43,37 @@ export function ForgotPasswordForm() {
   if (submitted) {
     return (
       <div className="stagger space-y-6">
-        <div className="space-y-1.5 text-center">
-          <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-            {t('check_inbox_title')}
-          </h1>
-          <p className="text-muted-foreground text-sm">{t('check_inbox_description')}</p>
+        <div className="space-y-2">
+          <h1 className="auth-carbon-heading">{t('check_inbox_title')}</h1>
+          <p className="auth-carbon-subtitle">{t('check_inbox_description')}</p>
         </div>
 
-        <div className="text-center">
-          <Link
-            href="/auth/signin"
-            className="text-foreground hover:text-primary ease-snap text-sm font-medium transition-colors duration-150"
-          >
-            {t('back_to_signin')}
-          </Link>
-        </div>
+        <Link href="/auth/signin" className="auth-carbon-link inline-block text-sm">
+          {t('back_to_signin')}
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="stagger space-y-6">
+    <div className="stagger space-y-7">
       {/* Header */}
-      <div className="space-y-1.5 text-center">
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          {t('forgot_password_title')}
-        </h1>
-        <p className="text-muted-foreground text-sm">{t('forgot_password_subtitle')}</p>
+      <div className="space-y-2">
+        <h1 className="auth-carbon-heading">{t('forgot_password_title')}</h1>
+        <p className="auth-carbon-subtitle">{t('forgot_password_subtitle')}</p>
       </div>
 
       {/* Email Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="email">{t('email_label')}</Label>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="space-y-2">
+          <Label htmlFor="email" className="auth-carbon-label">
+            {t('email_label')}
+          </Label>
           <Input
             id="email"
             type="email"
-            placeholder="name@example.com"
+            className="auth-carbon-input"
+            placeholder={tAuth('email_placeholder')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -87,28 +82,23 @@ export function ForgotPasswordForm() {
         </div>
 
         {error && (
-          <div className="panel-danger animate-alert-in text-sm" role="alert">
+          <div
+            className="auth-carbon-alert animate-alert-in border border-[#ffd7d9] bg-[#fff1f1] text-sm text-[#a2191f]"
+            role="alert"
+          >
             {error}
           </div>
         )}
 
-        <Button
-          type="submit"
-          className="ease-snap w-full transition-all duration-150"
-          size="lg"
-          disabled={loading}
-        >
+        <Button type="submit" className="auth-carbon-primary w-full" size="lg" disabled={loading}>
           {loading ? t('sending') : t('send_reset_link')}
         </Button>
       </form>
 
       {/* Back to Sign In */}
-      <p className="text-muted-foreground text-center text-sm">
+      <p className="text-sm text-[#525252]">
         {t('remember_password')}{' '}
-        <Link
-          href="/auth/signin"
-          className="text-foreground hover:text-primary ease-snap font-medium transition-colors duration-150"
-        >
+        <Link href="/auth/signin" className="auth-carbon-link">
           {t('signin')}
         </Link>
       </p>

@@ -163,7 +163,7 @@ const DEFAULT_PERMISSIONS: UserProjectPermissions = {
 };
 
 export function useProjectPermissions(projectId: string | undefined) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const userId = session?.user?.id;
 
   const { data, isLoading, error } = useQuery({
@@ -188,7 +188,7 @@ export function useProjectPermissions(projectId: string | undefined) {
 
   return {
     permissions: data || DEFAULT_PERMISSIONS,
-    isLoading,
+    isLoading: status === 'loading' || isLoading,
     error,
   };
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, sprints, issues, workflowStatuses } from '@tasknebula/db';
 import { eq, and, sql } from 'drizzle-orm';
+import { resolveProjectAccess } from '@/lib/auth/project-access';
 
 // GET /api/analytics/velocity?projectId=xxx
 export async function GET(request: NextRequest) {
@@ -18,6 +19,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const access = await resolveProjectAccess(session.user.id, projectId);
+    if (!access.project || !access.canRead) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+    const resolvedProjectId = access.project.id;
+
     // Fetch completed sprints with aggregated issue metrics in a single query.
     // `statusId` is a reference to workflowStatuses.id (cuid), not a literal
     // 'done' string — we must join to workflow_statuses and match on the
@@ -34,7 +41,7 @@ export async function GET(request: NextRequest) {
       .from(sprints)
       .leftJoin(issues, eq(issues.sprintId, sprints.id))
       .leftJoin(workflowStatuses, eq(issues.statusId, workflowStatuses.id))
-      .where(and(eq(sprints.projectId, projectId), eq(sprints.status, 'completed')))
+      .where(and(eq(sprints.projectId, resolvedProjectId), eq(sprints.status, 'completed')))
       .groupBy(sprints.id, sprints.name, sprints.startDate, sprints.endDate)
       .orderBy(sprints.startDate);
 
@@ -69,4 +76,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to fetch velocity data' }, { status: 500 });
   }
 }
-

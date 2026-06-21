@@ -2,11 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/auth';
 import { createAuditLog, db, eq, projects } from '@tasknebula/db';
-import {
-  ChatAccessError,
-  getProjectChatContext,
-  resolveProjectIdOrThrow,
-} from '@/lib/chat/server';
+import { ChatAccessError, getProjectChatContext } from '@/lib/chat/server';
 import { normalizeProjectCommunicationsSettings } from '@/lib/chat/config';
 
 const projectCommunicationsSchema = z.object({
@@ -55,7 +51,10 @@ export async function GET(
     }
 
     console.error('Failed to load project communications settings:', error);
-    return NextResponse.json({ error: 'Failed to load project communications settings' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to load project communications settings' },
+      { status: 500 }
+    );
   }
 }
 
@@ -72,15 +71,17 @@ export async function PATCH(
     const { projectId } = await params;
     const context = await getProjectChatContext(session.user.id, projectId);
     if (!context.canManageSettings) {
-      return NextResponse.json({ error: 'You do not have permission to manage chat and calls in this project' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'You do not have permission to manage chat and calls in this project' },
+        { status: 403 }
+      );
     }
 
     const payload = projectCommunicationsSchema.parse(await request.json());
-    const projectIdResolved = await resolveProjectIdOrThrow(projectId);
     const [project] = await db
       .select({ settings: projects.settings })
       .from(projects)
-      .where(eq(projects.id, projectIdResolved))
+      .where(eq(projects.id, context.project.id))
       .limit(1);
 
     if (!project) {
@@ -105,7 +106,7 @@ export async function PATCH(
         updatedAt: new Date(),
         updatedBy: session.user.id,
       })
-      .where(eq(projects.id, projectIdResolved));
+      .where(eq(projects.id, context.project.id));
 
     await createAuditLog({
       userId: session.user.id,
@@ -124,7 +125,10 @@ export async function PATCH(
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Validation failed', details: error.errors }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.errors },
+        { status: 400 }
+      );
     }
 
     if (error instanceof ChatAccessError) {
@@ -132,6 +136,9 @@ export async function PATCH(
     }
 
     console.error('Failed to update project communications settings:', error);
-    return NextResponse.json({ error: 'Failed to update project communications settings' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to update project communications settings' },
+      { status: 500 }
+    );
   }
 }

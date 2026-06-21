@@ -1,6 +1,7 @@
 const authMock = jest.fn();
 const dbSelectMock = jest.fn();
 const dbInsertMock = jest.fn();
+const hasPermissionMock = jest.fn();
 
 class MockNextRequest {
   private readonly bodyValue: string;
@@ -55,6 +56,10 @@ jest.mock('@/lib/realtime/events', () => ({
   publishEvent: jest.fn(),
 }));
 
+jest.mock('@/lib/auth/permissions', () => ({
+  hasPermission: (...args: unknown[]) => hasPermissionMock(...args),
+}));
+
 jest.mock('@paralleldrive/cuid2', () => ({
   createId: () => 'generated-id',
 }));
@@ -99,6 +104,11 @@ jest.mock('@tasknebula/db', () => ({
   },
   ROLE_DEFAULT_PERMISSIONS: {
     product_owner: {},
+  },
+  hasPermission: (role: string, permission: string, isSuperAdmin = false) => {
+    if (isSuperAdmin) return true;
+    if (permission !== 'project:manage') return false;
+    return role === 'owner' || role === 'admin';
   },
 }));
 
@@ -283,7 +293,11 @@ describe('/api/projects route', () => {
   });
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    authMock.mockReset();
+    dbSelectMock.mockReset();
+    dbInsertMock.mockReset();
+    hasPermissionMock.mockReset();
+    hasPermissionMock.mockResolvedValue(true);
   });
 
   it('rejects a requested organization outside the user membership scope', async () => {
@@ -302,7 +316,27 @@ describe('/api/projects route', () => {
     );
 
     expect(response.status).toBe(403);
-    await expect(response.json()).resolves.toEqual({ error: 'Forbidden' });
+    await expect(response.json()).resolves.toEqual({
+      error: 'Forbidden',
+      code: 'ORGANIZATION_FORBIDDEN',
+    });
+  });
+
+  it('rejects an explicit organization filter when the user has no workspace memberships', async () => {
+    authMock.mockResolvedValue({ user: { id: 'user-1' } });
+    dbSelectMock
+      .mockReturnValueOnce(limitBuilder([{ isSuperAdmin: false }]))
+      .mockReturnValueOnce(whereBuilder([]));
+
+    const response = await GET(
+      new NextRequestCtor('http://localhost:3002/api/projects?organizationId=org-1')
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      error: 'Forbidden',
+      code: 'ORGANIZATION_FORBIDDEN',
+    });
   });
 
   it('keeps organization admin visibility scoped to the organization where the role is held', async () => {
@@ -383,17 +417,15 @@ describe('/api/projects route', () => {
 
   it('rejects a teamspace that belongs to a different organization during project creation', async () => {
     authMock.mockResolvedValue({ user: { id: 'user-1' } });
-    dbSelectMock
-      .mockReturnValueOnce(limitBuilder([{ role: 'admin', status: 'active' }]))
-      .mockReturnValueOnce(limitBuilder([{ isSuperAdmin: false }]))
-      .mockReturnValueOnce(
-        limitBuilder([
-          {
-            id: 'team-2',
-            organizationId: 'org-2',
-          },
-        ])
-      );
+    hasPermissionMock.mockResolvedValue(true);
+    dbSelectMock.mockReturnValueOnce(
+      limitBuilder([
+        {
+          id: 'team-2',
+          organizationId: 'org-2',
+        },
+      ])
+    );
 
     const response = await POST(
       new NextRequestCtor('http://localhost:3002/api/projects', {
@@ -408,16 +440,16 @@ describe('/api/projects route', () => {
     );
 
     expect(response.status).toBe(400);
+    expect(hasPermissionMock).toHaveBeenCalledWith('org-1', 'project:create');
     await expect(response.json()).resolves.toEqual({
       error: 'Selected teamspace does not belong to this organization',
+      code: 'TEAMSPACE_ORGANIZATION_MISMATCH',
     });
   });
 
-  it('rejects project creation for active non-admin organization members', async () => {
+  it('rejects project creation when project:create is missing', async () => {
     authMock.mockResolvedValue({ user: { id: 'user-1' } });
-    dbSelectMock
-      .mockReturnValueOnce(limitBuilder([{ role: 'member', status: 'active' }]))
-      .mockReturnValueOnce(limitBuilder([{ isSuperAdmin: false }]));
+    hasPermissionMock.mockResolvedValue(false);
 
     const response = await POST(
       new NextRequestCtor('http://localhost:3002/api/projects', {
@@ -431,8 +463,10 @@ describe('/api/projects route', () => {
     );
 
     expect(response.status).toBe(403);
+    expect(hasPermissionMock).toHaveBeenCalledWith('org-1', 'project:create');
     await expect(response.json()).resolves.toEqual({
-      error: 'You need an owner or admin invite to create projects in this organization',
+      error: 'You need project creation permission in this organization',
+      code: 'PROJECT_CREATE_FORBIDDEN',
     });
     expect(dbInsertMock).not.toHaveBeenCalled();
   });

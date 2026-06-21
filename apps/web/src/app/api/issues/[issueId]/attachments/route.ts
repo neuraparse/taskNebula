@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, attachments, issues, projects, projectMembers, organizationMembers, users } from '@tasknebula/db';
+import {
+  db,
+  attachments,
+  hasPermission as roleHasPermission,
+  issues,
+  projectMembers,
+  organizationMembers,
+  users,
+} from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
@@ -20,7 +28,7 @@ async function ensureUploadDir() {
 
 /**
  * Assert the caller is allowed to access attachments for this issue.
- * Access = super admin, org owner/admin, or any project member of the issue's project.
+ * Access = organization project management permission or any project member of the issue's project.
  * Returns the issue row when allowed, null when the issue is missing, or throws NextResponse-like errors via a status.
  */
 async function assertIssueAccess(userId: string, issueId: string) {
@@ -49,19 +57,20 @@ async function assertIssueAccess(userId: string, issueId: string) {
     return { status: 200 as const, issue };
   }
 
-  // Org owner / admin
+  // Organization-level issue visibility
   const [orgMember] = await db
     .select({ role: organizationMembers.role })
     .from(organizationMembers)
     .where(
       and(
         eq(organizationMembers.userId, userId),
-        eq(organizationMembers.organizationId, issue.organizationId)
+        eq(organizationMembers.organizationId, issue.organizationId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
 
-  if (orgMember?.role === 'owner' || orgMember?.role === 'admin') {
+  if (roleHasPermission(orgMember?.role || '', 'project:manage')) {
     return { status: 200 as const, issue };
   }
 
@@ -69,12 +78,7 @@ async function assertIssueAccess(userId: string, issueId: string) {
   const [projectMember] = await db
     .select({ userId: projectMembers.userId })
     .from(projectMembers)
-    .where(
-      and(
-        eq(projectMembers.userId, userId),
-        eq(projectMembers.projectId, issue.projectId)
-      )
-    )
+    .where(and(eq(projectMembers.userId, userId), eq(projectMembers.projectId, issue.projectId)))
     .limit(1);
 
   if (projectMember) {
@@ -141,10 +145,7 @@ export async function POST(
 
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { error: 'File size exceeds 10MB limit' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'File size exceeds 10MB limit' }, { status: 400 });
     }
 
     // Ensure upload directory exists
@@ -213,7 +214,10 @@ export async function DELETE(
     }
 
     if (attachment.issueId !== issueId) {
-      return NextResponse.json({ error: 'Attachment does not belong to this issue' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Attachment does not belong to this issue' },
+        { status: 400 }
+      );
     }
 
     // Permission check against the owning issue's project/org

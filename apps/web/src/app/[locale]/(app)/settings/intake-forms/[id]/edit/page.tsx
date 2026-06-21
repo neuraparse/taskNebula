@@ -1,10 +1,11 @@
 import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { db, intakeForms, intakeSubmissions, organizationMembers } from '@tasknebula/db';
-import { and, desc, eq } from 'drizzle-orm';
+import { db, intakeForms, intakeSubmissions } from '@tasknebula/db';
+import { desc, eq } from 'drizzle-orm';
 import type { IntakeFieldDefinition } from '@tasknebula/db';
 import { getTranslations } from 'next-intl/server';
 import { IntakeFormEditor } from '@/components/intake/intake-form-editor';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export async function generateMetadata() {
   const t = await getTranslations('pagesSettings');
@@ -21,17 +22,9 @@ export default async function EditIntakeFormPage({ params }: { params: Promise<{
   const [form] = await db.select().from(intakeForms).where(eq(intakeForms.id, id)).limit(1);
   if (!form) notFound();
 
-  const [member] = await db
-    .select({ role: organizationMembers.role })
-    .from(organizationMembers)
-    .where(
-      and(
-        eq(organizationMembers.userId, session.user.id),
-        eq(organizationMembers.organizationId, form.workspaceId)
-      )
-    )
-    .limit(1);
-  if (!member) notFound();
+  if (!(await hasPermission(form.workspaceId, 'org:settings'))) {
+    redirect('/dashboard?error=insufficient-permission');
+  }
 
   const submissions = await db
     .select({

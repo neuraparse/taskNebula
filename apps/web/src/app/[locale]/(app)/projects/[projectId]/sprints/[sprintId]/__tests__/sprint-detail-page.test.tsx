@@ -68,6 +68,24 @@ function resolvedParams<T extends object>(value: T): Promise<T> {
   return p;
 }
 
+function setPermissions(overrides: Record<string, boolean> = {}) {
+  mockUseProjectPermissions.mockReturnValue({
+    permissions: {
+      canBrowseProject: true,
+      canManageSprints: true,
+      canDeleteSprint: true,
+      canStartSprint: true,
+      canCompleteSprint: true,
+      isSuperAdmin: false,
+      isOrgOwner: false,
+      isOrgAdmin: false,
+      ...overrides,
+    },
+    isLoading: false,
+    error: null,
+  } as unknown as ReturnType<typeof useProjectPermissions>);
+}
+
 describe('SprintDetailPage', () => {
   beforeAll(() => {
     class ResizeObserverMock {
@@ -95,19 +113,7 @@ describe('SprintDetailPage', () => {
       isLoading: false,
     } as unknown as ReturnType<typeof useBurndown>);
 
-    mockUseProjectPermissions.mockReturnValue({
-      permissions: {
-        canBrowseProject: true,
-        canManageSprints: true,
-        canDeleteSprint: true,
-        canStartSprint: true,
-        canCompleteSprint: true,
-        isSuperAdmin: false,
-        isOrgOwner: false,
-      },
-      isLoading: false,
-      error: null,
-    } as unknown as ReturnType<typeof useProjectPermissions>);
+    setPermissions();
   });
 
   it('renders sprint header and stats for an active sprint with issues', async () => {
@@ -200,5 +206,46 @@ describe('SprintDetailPage', () => {
     );
 
     expect(await screen.findByText('Sprint not found')).toBeInTheDocument();
+  });
+
+  it('does not show access denied for organization admins', async () => {
+    setPermissions({
+      canBrowseProject: false,
+      canManageSprints: false,
+      isOrgAdmin: true,
+    });
+    mockUseSprint.mockReturnValue({
+      data: {
+        id: 'sprint-1',
+        projectId: 'project-1',
+        name: 'Sprint Alpha',
+        goal: null,
+        startDate: new Date('2026-04-01T00:00:00.000Z'),
+        endDate: new Date('2099-12-31T00:00:00.000Z'),
+        status: 'planned',
+        createdAt: new Date('2026-03-30T00:00:00.000Z'),
+        updatedAt: new Date('2026-03-30T00:00:00.000Z'),
+        createdBy: 'user-1',
+        updatedBy: 'user-1',
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useSprint>);
+    mockUseSprintIssues.mockReturnValue({
+      data: [],
+      isLoading: false,
+    } as unknown as ReturnType<typeof useSprintIssues>);
+
+    render(
+      <Wrapper>
+        <SprintDetailPage
+          params={resolvedParams({ projectId: 'project-1', sprintId: 'sprint-1' })}
+        />
+      </Wrapper>
+    );
+
+    expect(
+      await screen.findByRole('heading', { name: 'Sprint Alpha', level: 1 })
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Access denied')).not.toBeInTheDocument();
   });
 });

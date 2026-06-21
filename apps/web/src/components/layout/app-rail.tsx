@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import {
   BookOpenText,
@@ -18,6 +17,8 @@ import {
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useInbox } from '@/lib/hooks/use-inbox';
+import { useOrganization } from '@/lib/hooks/use-organization';
+import { useOrganizationPermissions, type Permission } from '@/lib/hooks/use-permissions';
 import { stripLocalePrefix } from '@/components/layout/nav-paths';
 import { UserProfileDropdown } from '@/components/user/user-profile-dropdown';
 
@@ -26,6 +27,7 @@ interface RailItem {
   href: string;
   icon: LucideIcon;
   showBadge?: boolean;
+  requiredAnyPermissions?: Permission[];
 }
 
 // Rail items declare a translation key (resolved against `nav`) instead of
@@ -40,22 +42,42 @@ const railItems: (Omit<RailItem, 'name'> & { key: RailItemKey })[] = [
   { key: 'my_issues', href: '/my-issues', icon: Layers },
   { key: 'projects', href: '/projects', icon: FolderKanban },
   { key: 'docs', href: '/docs', icon: BookOpenText },
-  { key: 'team', href: '/team', icon: Users },
+  { key: 'team', href: '/team', icon: Users, requiredAnyPermissions: ['member:view', 'team:view'] },
   { key: 'settings', href: '/settings', icon: Settings },
 ];
 
-export function AppRail() {
+export function AppRail({
+  hasWorkspaceAccess = true,
+  isSuperAdmin = false,
+}: {
+  hasWorkspaceAccess?: boolean;
+  isSuperAdmin?: boolean;
+}) {
   const pathname = usePathname();
   const normalizedPathname = stripLocalePrefix(pathname);
-  const { data: session } = useSession();
   const tNav = useTranslations('nav');
   const tLayout = useTranslations('layoutNav');
-  const isSuperAdmin = (session?.user as { role?: string } | undefined)?.role === 'super_admin';
+  const { currentOrganizationId } = useOrganization();
+  const { hasAny: hasAnyOrgPermission, isLoading: isLoadingOrgPermissions } =
+    useOrganizationPermissions(currentOrganizationId ?? undefined);
   // Lightweight unread count — keys on { unread: true } so the response is
   // small (just unread items, first page). Refetches every minute via the
   // hook's `refetchInterval`.
-  const { data: inboxUnread } = useInbox({ unread: true, limit: 50 });
+  const { data: inboxUnread } = useInbox({
+    unread: true,
+    limit: 50,
+    enabled: hasWorkspaceAccess,
+  });
   const unreadInboxCount = inboxUnread?.items?.length ?? 0;
+  const visibleRailItems = railItems.filter((item) => {
+    if (!hasWorkspaceAccess) {
+      return item.key === 'home' || item.key === 'settings';
+    }
+    if (!item.requiredAnyPermissions) {
+      return true;
+    }
+    return !isLoadingOrgPermissions && hasAnyOrgPermission(item.requiredAnyPermissions);
+  });
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -64,7 +86,7 @@ export function AppRail() {
         className="border-border bg-card flex h-screen w-14 shrink-0 flex-col items-center border-r py-2"
       >
         <ul className="flex flex-1 flex-col items-center gap-1">
-          {railItems.map((item) => {
+          {visibleRailItems.map((item) => {
             const label = tNav(item.key);
             const isActive =
               normalizedPathname === item.href ||

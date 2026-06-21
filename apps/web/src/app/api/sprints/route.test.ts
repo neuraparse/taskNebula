@@ -97,10 +97,28 @@ jest.mock('@tasknebula/db', () => ({
     userId: 'organizationMembers.userId',
     organizationId: 'organizationMembers.organizationId',
     role: 'organizationMembers.role',
+    status: 'organizationMembers.status',
   },
   users: {
     id: 'users.id',
     isSuperAdmin: 'users.isSuperAdmin',
+  },
+  ROLE_DEFAULT_PERMISSIONS: {
+    viewer: {},
+    product_owner: {
+      canManageSprints: true,
+    },
+    scrum_master: {
+      canManageSprints: true,
+    },
+    tech_lead: {
+      canManageSprints: true,
+    },
+  },
+  hasPermission: (role: string, permission: string, isSuperAdmin = false) => {
+    if (isSuperAdmin) return true;
+    if (permission !== 'project:manage') return false;
+    return role === 'owner' || role === 'admin';
   },
 }));
 

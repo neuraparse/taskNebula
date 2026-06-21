@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { SignJWT } from 'jose';
 import { auth } from '@/auth';
+import { userHasWorkspaceAccess } from '@/lib/auth/workspace-access';
 
 /**
  * Mint a short-lived JWT for the Hocuspocus server.
@@ -14,6 +15,10 @@ export async function POST() {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (!(await userHasWorkspaceAccess(session.user.id))) {
+    return NextResponse.json({ error: 'Workspace access required' }, { status: 403 });
   }
 
   const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;

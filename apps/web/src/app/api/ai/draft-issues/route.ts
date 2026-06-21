@@ -46,7 +46,8 @@ async function userHasProjectAccess(userId: string, projectIdOrKey: string) {
     .where(
       and(
         eq(organizationMembers.userId, userId),
-        eq(organizationMembers.organizationId, project.organizationId)
+        eq(organizationMembers.organizationId, project.organizationId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
@@ -108,10 +109,7 @@ export async function POST(request: NextRequest) {
     body = bodySchema.parse(await request.json());
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: err.errors },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid input', details: err.errors }, { status: 400 });
     }
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
@@ -157,10 +155,7 @@ export async function POST(request: NextRequest) {
     if (labelSet.size >= 60) break;
   }
 
-  const { provider, apiKey } = await resolveProviderAndKey(
-    body.provider,
-    project.organizationId
-  );
+  const { provider, apiKey } = await resolveProviderAndKey(body.provider, project.organizationId);
   const modelToUse = workspace.model?.trim() || null;
 
   // P1-16

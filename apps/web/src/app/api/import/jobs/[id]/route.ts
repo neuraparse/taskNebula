@@ -36,7 +36,8 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     .where(
       and(
         eq(organizationMembers.userId, session.user.id),
-        eq(organizationMembers.organizationId, job.workspaceId)
+        eq(organizationMembers.organizationId, job.workspaceId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);

@@ -8,7 +8,6 @@
  */
 import type { ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
-import ProjectChatPage from '../[projectId]/chat/page';
 
 // RTL / LiveKit mount-time effects produce a benign React 19 act() warning
 // under test — same situation as the chat-shell suite. Filter it locally.
@@ -32,11 +31,43 @@ afterAll(() => {
 const bootstrapSpy = jest.fn();
 const conversationMessagesSpy = jest.fn();
 const replaceSpy = jest.fn();
+const redirectSpy = jest.fn((url: string) => {
+  throw new Error(`redirect:${url}`);
+});
+const notFoundSpy = jest.fn(() => {
+  throw new Error('not-found');
+});
+const mockAuth = jest.fn();
+const mockGetProjectChatContext = jest.fn();
+
+class MockChatAccessError extends Error {
+  status: number;
+
+  constructor(message: string, status = 403) {
+    super(message);
+    this.status = status;
+  }
+}
+
+jest.mock('@/auth', () => ({
+  auth: mockAuth,
+}));
+
+jest.mock('@/lib/chat/server', () => ({
+  ChatAccessError: MockChatAccessError,
+  getProjectChatContext: mockGetProjectChatContext,
+}));
+
+jest.mock('@/components/projects/project-access-denied', () => ({
+  ProjectAccessDenied: () => <div data-testid="project-access-denied" />,
+}));
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ replace: replaceSpy, push: jest.fn(), prefetch: jest.fn() }),
   usePathname: () => '/projects/project-1/chat',
   useSearchParams: () => new URLSearchParams('roomId=room-1'),
+  redirect: redirectSpy,
+  notFound: notFoundSpy,
 }));
 
 jest.mock('@/hooks/use-toast', () => ({
@@ -65,7 +96,10 @@ jest.mock('@livekit/components-react', () => {
     useConnectionState: () => 'disconnected',
     useRoomContext: () => React.useContext(RoomContext),
     useParticipants: () => [],
-    useLocalParticipant: () => ({ localParticipant: { identity: 'user-1' }, lastMicrophoneError: null }),
+    useLocalParticipant: () => ({
+      localParticipant: { identity: 'user-1' },
+      lastMicrophoneError: null,
+    }),
     useIsSpeaking: () => false,
     useTrackToggle: () => ({ enabled: false, pending: false, toggle: jest.fn() }),
   };
@@ -209,6 +243,7 @@ jest.mock('@/components/chat/global-voice-provider', () => ({
 }));
 
 async function renderProjectChatPage(projectId: string) {
+  const { default: ProjectChatPage } = await import('../[projectId]/chat/page');
   const element = await ProjectChatPage({
     params: Promise.resolve({ projectId }),
   });
@@ -220,6 +255,10 @@ describe('Project chat page', () => {
     bootstrapSpy.mockReset();
     conversationMessagesSpy.mockReset();
     replaceSpy.mockReset();
+    redirectSpy.mockClear();
+    notFoundSpy.mockClear();
+    mockAuth.mockResolvedValue({ user: { id: 'user-1' } });
+    mockGetProjectChatContext.mockResolvedValue({ canView: true });
   });
 
   it('forwards projectId into the bootstrap query and renders the selected channel header', async () => {

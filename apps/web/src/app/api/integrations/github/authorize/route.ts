@@ -2,7 +2,7 @@
  * GET /api/integrations/github/authorize?organizationId=...
  *
  * Kicks off the GitHub OAuth flow:
- *   1. Confirms the caller is signed in and a member of the org.
+ *   1. Confirms the caller is signed in and can manage integration settings.
  *   2. Mints a random nonce + base64url-encodes `{n, o, u}` as the OAuth state.
  *   3. Stores the same encoded blob in an HttpOnly cookie so the callback can
  *      validate both the CSRF nonce and the target organization.
@@ -16,13 +16,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { auth } from '@/auth';
-import { db, organizationMembers, and, eq } from '@tasknebula/db';
 import { getClientCredentials } from '@/lib/integrations/client-credentials';
 import {
   GITHUB_DEFAULT_SCOPE,
   GITHUB_AUTHORIZE_URL,
   GITHUB_STATE_COOKIE,
 } from '@/lib/integrations/github';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,27 +37,12 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const organizationId = searchParams.get('organizationId');
   if (!organizationId) {
-    return NextResponse.json(
-      { error: 'organizationId is required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
   }
 
-  // Membership check — only org members can bind an integration.
-  const [member] = await db
-    .select({ id: organizationMembers.id })
-    .from(organizationMembers)
-    .where(
-      and(
-        eq(organizationMembers.userId, session.user.id),
-        eq(organizationMembers.organizationId, organizationId)
-      )
-    )
-    .limit(1);
-
-  if (!member) {
+  if (!(await hasPermission(organizationId, 'org:settings'))) {
     return NextResponse.json(
-      { error: 'You do not have access to this organization.' },
+      { error: 'Managing integrations requires organization settings permission.' },
       { status: 403 }
     );
   }
@@ -76,15 +61,12 @@ export async function GET(request: NextRequest) {
   // Resolve a redirect URI: prefer the value the admin saved, fall back to
   // the canonical `/api/integrations/github/callback` rooted on this host.
   const redirectUri =
-    credentials.redirectUri ||
-    `${new URL(request.url).origin}/api/integrations/github/callback`;
+    credentials.redirectUri || `${new URL(request.url).origin}/api/integrations/github/callback`;
   const scope = credentials.scope || GITHUB_DEFAULT_SCOPE;
 
   const nonce = crypto.randomBytes(24).toString('base64url');
   const statePayload = { n: nonce, o: organizationId, u: session.user.id };
-  const state = Buffer.from(JSON.stringify(statePayload), 'utf8').toString(
-    'base64url'
-  );
+  const state = Buffer.from(JSON.stringify(statePayload), 'utf8').toString('base64url');
 
   const authorizeUrl = new URL(GITHUB_AUTHORIZE_URL);
   authorizeUrl.searchParams.set('client_id', credentials.clientId);

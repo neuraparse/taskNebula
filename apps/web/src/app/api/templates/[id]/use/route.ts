@@ -5,6 +5,7 @@ import {
   db,
   desc,
   eq,
+  hasPermission as roleHasPermission,
   issues,
   organizationMembers,
   projectMembers,
@@ -161,11 +162,14 @@ async function instantiateProject({
     .where(eq(users.id, userId))
     .limit(1);
 
-  const canCreateProject =
-    user?.isSuperAdmin || member?.role === 'owner' || member?.role === 'admin';
+  const canCreateProject = roleHasPermission(
+    member?.role || '',
+    'project:create',
+    user?.isSuperAdmin === true
+  );
   if (!canCreateProject) {
     return NextResponse.json(
-      { error: 'You need an owner or admin invite to create projects in this organization' },
+      { error: 'Project creation requires project:create permission in this organization' },
       { status: 403 }
     );
   }

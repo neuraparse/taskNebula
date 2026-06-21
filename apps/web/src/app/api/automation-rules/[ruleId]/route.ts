@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, automationRules } from '@tasknebula/db';
 import { eq } from 'drizzle-orm';
+import { authorizeAutomationRule } from '@/lib/automation/access';
+
+function automationAccessResponse(status: 'not-found' | 'forbidden') {
+  if (status === 'not-found') {
+    return NextResponse.json({ error: 'Automation rule not found' }, { status: 404 });
+  }
+
+  return NextResponse.json(
+    { error: 'Managing automation requires project or organization settings permission' },
+    { status: 403 }
+  );
+}
 
 // GET /api/automation-rules/[ruleId] - Get a specific rule
 export async function GET(
@@ -16,10 +28,12 @@ export async function GET(
 
     const { ruleId } = await params;
 
-    const [rule] = await db
-      .select()
-      .from(automationRules)
-      .where(eq(automationRules.id, ruleId));
+    const access = await authorizeAutomationRule(session.user.id, ruleId);
+    if (access.status !== 'ok') {
+      return automationAccessResponse(access.status);
+    }
+
+    const [rule] = await db.select().from(automationRules).where(eq(automationRules.id, ruleId));
 
     if (!rule) {
       return NextResponse.json({ error: 'Automation rule not found' }, { status: 404 });
@@ -47,10 +61,12 @@ export async function PATCH(
     const body = await request.json();
     const { name, description, enabled, trigger, conditions, actions } = body;
 
-    const [rule] = await db
-      .select()
-      .from(automationRules)
-      .where(eq(automationRules.id, ruleId));
+    const access = await authorizeAutomationRule(session.user.id, ruleId);
+    if (access.status !== 'ok') {
+      return automationAccessResponse(access.status);
+    }
+
+    const [rule] = await db.select().from(automationRules).where(eq(automationRules.id, ruleId));
 
     if (!rule) {
       return NextResponse.json({ error: 'Automation rule not found' }, { status: 404 });
@@ -90,6 +106,11 @@ export async function DELETE(
     }
 
     const { ruleId } = await params;
+
+    const access = await authorizeAutomationRule(session.user.id, ruleId);
+    if (access.status !== 'ok') {
+      return automationAccessResponse(access.status);
+    }
 
     await db.delete(automationRules).where(eq(automationRules.id, ruleId));
 

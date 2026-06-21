@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { throwApiResponseError } from '@/lib/client-api-errors';
 
 export interface Teamspace {
   id: string;
@@ -63,7 +64,7 @@ export function useTeamspaces(organizationId?: string | null) {
 
       const response = await fetch(`/api/organizations/${organizationId}/teams`);
       if (!response.ok) {
-        throw new Error('Failed to fetch teamspaces');
+        await throwApiResponseError(response, 'Failed to fetch teamspaces');
       }
 
       const data = await response.json();
@@ -81,9 +82,11 @@ export function useTeamspaceMembers(organizationId?: string | null, teamspaceId?
         throw new Error('Organization and teamspace are required');
       }
 
-      const response = await fetch(`/api/organizations/${organizationId}/teams/${teamspaceId}/members`);
+      const response = await fetch(
+        `/api/organizations/${organizationId}/teams/${teamspaceId}/members`
+      );
       if (!response.ok) {
-        throw new Error('Failed to fetch teamspace members');
+        await throwApiResponseError(response, 'Failed to fetch teamspace members');
       }
 
       return response.json() as Promise<TeamspaceMembersResponse>;
@@ -92,13 +95,19 @@ export function useTeamspaceMembers(organizationId?: string | null, teamspaceId?
   });
 }
 
-function invalidateTeamspaceQueries(queryClient: ReturnType<typeof useQueryClient>, organizationId?: string | null, teamspaceId?: string | null) {
+function invalidateTeamspaceQueries(
+  queryClient: ReturnType<typeof useQueryClient>,
+  organizationId?: string | null,
+  teamspaceId?: string | null
+) {
   void queryClient.invalidateQueries({ queryKey: ['teamspaces', organizationId] });
   void queryClient.invalidateQueries({ queryKey: ['organization', organizationId] });
   void queryClient.invalidateQueries({ queryKey: ['projects'] });
 
   if (teamspaceId) {
-    void queryClient.invalidateQueries({ queryKey: ['teamspace-members', organizationId, teamspaceId] });
+    void queryClient.invalidateQueries({
+      queryKey: ['teamspace-members', organizationId, teamspaceId],
+    });
   }
 }
 
@@ -117,12 +126,11 @@ export function useCreateTeamspace(organizationId?: string | null) {
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json().catch(() => ({ error: 'Failed to create teamspace' }));
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create teamspace');
+        await throwApiResponseError(response, 'Failed to create teamspace');
       }
 
-      return data;
+      return response.json();
     },
     onSuccess: () => {
       invalidateTeamspaceQueries(queryClient, organizationId);
@@ -151,12 +159,11 @@ export function useUpdateTeamspace(organizationId?: string | null) {
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json().catch(() => ({ error: 'Failed to update teamspace' }));
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to update teamspace');
+        await throwApiResponseError(response, 'Failed to update teamspace');
       }
 
-      return data;
+      return response.json();
     },
     onSuccess: (_, variables) => {
       invalidateTeamspaceQueries(queryClient, organizationId, variables.teamspaceId);
@@ -177,12 +184,11 @@ export function useDeleteTeamspace(organizationId?: string | null) {
         method: 'DELETE',
       });
 
-      const data = await response.json().catch(() => ({ error: 'Failed to delete teamspace' }));
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete teamspace');
+        await throwApiResponseError(response, 'Failed to delete teamspace');
       }
 
-      return data;
+      return response.json();
     },
     onSuccess: (_, teamspaceId) => {
       invalidateTeamspaceQueries(queryClient, organizationId, teamspaceId);
@@ -199,18 +205,20 @@ export function useAddTeamspaceMember(organizationId?: string | null, teamspaceI
         throw new Error('No teamspace selected');
       }
 
-      const response = await fetch(`/api/organizations/${organizationId}/teams/${teamspaceId}/members`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const response = await fetch(
+        `/api/organizations/${organizationId}/teams/${teamspaceId}/members`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }
+      );
 
-      const data = await response.json().catch(() => ({ error: 'Failed to add teamspace member' }));
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to add teamspace member');
+        await throwApiResponseError(response, 'Failed to add teamspace member');
       }
 
-      return data;
+      return response.json();
     },
     onSuccess: () => {
       invalidateTeamspaceQueries(queryClient, organizationId, teamspaceId);
@@ -218,33 +226,32 @@ export function useAddTeamspaceMember(organizationId?: string | null, teamspaceI
   });
 }
 
-export function useUpdateTeamspaceMember(organizationId?: string | null, teamspaceId?: string | null) {
+export function useUpdateTeamspaceMember(
+  organizationId?: string | null,
+  teamspaceId?: string | null
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      memberId,
-      role,
-    }: {
-      memberId: string;
-      role: 'lead' | 'member';
-    }) => {
+    mutationFn: async ({ memberId, role }: { memberId: string; role: 'lead' | 'member' }) => {
       if (!organizationId || !teamspaceId) {
         throw new Error('No teamspace selected');
       }
 
-      const response = await fetch(`/api/organizations/${organizationId}/teams/${teamspaceId}/members/${memberId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role }),
-      });
+      const response = await fetch(
+        `/api/organizations/${organizationId}/teams/${teamspaceId}/members/${memberId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role }),
+        }
+      );
 
-      const data = await response.json().catch(() => ({ error: 'Failed to update teamspace member' }));
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to update teamspace member');
+        await throwApiResponseError(response, 'Failed to update teamspace member');
       }
 
-      return data;
+      return response.json();
     },
     onSuccess: () => {
       invalidateTeamspaceQueries(queryClient, organizationId, teamspaceId);
@@ -252,7 +259,10 @@ export function useUpdateTeamspaceMember(organizationId?: string | null, teamspa
   });
 }
 
-export function useRemoveTeamspaceMember(organizationId?: string | null, teamspaceId?: string | null) {
+export function useRemoveTeamspaceMember(
+  organizationId?: string | null,
+  teamspaceId?: string | null
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -261,16 +271,18 @@ export function useRemoveTeamspaceMember(organizationId?: string | null, teamspa
         throw new Error('No teamspace selected');
       }
 
-      const response = await fetch(`/api/organizations/${organizationId}/teams/${teamspaceId}/members/${memberId}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `/api/organizations/${organizationId}/teams/${teamspaceId}/members/${memberId}`,
+        {
+          method: 'DELETE',
+        }
+      );
 
-      const data = await response.json().catch(() => ({ error: 'Failed to remove teamspace member' }));
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to remove teamspace member');
+        await throwApiResponseError(response, 'Failed to remove teamspace member');
       }
 
-      return data;
+      return response.json();
     },
     onSuccess: () => {
       invalidateTeamspaceQueries(queryClient, organizationId, teamspaceId);

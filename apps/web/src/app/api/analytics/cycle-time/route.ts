@@ -8,15 +8,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { and, eq, gte, sql } from 'drizzle-orm';
-import {
-  db,
-  issueActivities,
-  issues,
-  organizationMembers,
-  projects,
-  workflowStatuses,
-} from '@tasknebula/db';
+import { db, issueActivities, issues, workflowStatuses } from '@tasknebula/db';
 import { auth } from '@/auth';
+import { resolveProjectAccess } from '@/lib/auth/project-access';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,34 +26,14 @@ export async function GET(request: NextRequest) {
   const days = Math.max(1, Math.min(180, Number(daysParam) || 30));
 
   if (!projectId) {
-    return NextResponse.json(
-      { error: 'projectId is required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'projectId is required' }, { status: 400 });
   }
 
-  // Authorize via org membership.
-  const [proj] = await db
-    .select({ id: projects.id, organizationId: projects.organizationId })
-    .from(projects)
-    .where(eq(projects.id, projectId))
-    .limit(1);
-  if (!proj) {
+  const access = await resolveProjectAccess(session.user.id, projectId);
+  if (!access.project || !access.canRead) {
     return NextResponse.json({ error: 'Project not found' }, { status: 404 });
   }
-  const [member] = await db
-    .select({ id: organizationMembers.id })
-    .from(organizationMembers)
-    .where(
-      and(
-        eq(organizationMembers.userId, session.user.id),
-        eq(organizationMembers.organizationId, proj.organizationId)
-      )
-    )
-    .limit(1);
-  if (!member) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  const resolvedProjectId = access.project.id;
 
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
@@ -78,7 +52,7 @@ export async function GET(request: NextRequest) {
     .leftJoin(issueActivities, eq(issueActivities.issueId, issues.id))
     .where(
       and(
-        eq(issues.projectId, projectId),
+        eq(issues.projectId, resolvedProjectId),
         eq(workflowStatuses.category, 'done'),
         gte(issues.updatedAt, since)
       )
@@ -98,7 +72,7 @@ export async function GET(request: NextRequest) {
   const p90 = sorted[Math.floor(sorted.length * 0.9)] ?? 0;
 
   return NextResponse.json({
-    projectId,
+    projectId: resolvedProjectId,
     days,
     sampleSize: cycleDays.length,
     values: cycleDays,

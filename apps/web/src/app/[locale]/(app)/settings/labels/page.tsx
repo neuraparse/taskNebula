@@ -8,7 +8,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { db, organizationMembers } from '@tasknebula/db';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { getTranslations } from 'next-intl/server';
 import { LabelsSettingsClient } from '@/components/settings/labels-settings-client';
 
@@ -26,7 +26,9 @@ export default async function LabelsSettingsPage() {
   const [membership] = await db
     .select({ organizationId: organizationMembers.organizationId })
     .from(organizationMembers)
-    .where(eq(organizationMembers.userId, session.user.id))
+    .where(
+      and(eq(organizationMembers.userId, session.user.id), eq(organizationMembers.status, 'active'))
+    )
     .limit(1);
 
   if (!membership) {

@@ -21,6 +21,9 @@ const TAB_ITEMS: { value: TabValue; labelKey: string; icon: typeof Users }[] = [
 
 export interface TeamPageClientProps {
   organizationId: string;
+  canViewMembers: boolean;
+  canViewTeamspaces: boolean;
+  canInviteMembers: boolean;
   canManageTeamspaces: boolean;
   initialMembers: TeamMemberRow[];
 }
@@ -31,6 +34,9 @@ function isTabValue(value: string | null): value is TabValue {
 
 export function TeamPageClient({
   organizationId,
+  canViewMembers,
+  canViewTeamspaces,
+  canInviteMembers,
   canManageTeamspaces,
   initialMembers,
 }: TeamPageClientProps) {
@@ -39,8 +45,21 @@ export function TeamPageClient({
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const visibleTabs = useMemo(
+    () =>
+      TAB_ITEMS.filter((tab) => {
+        if (tab.value === 'teamspaces') return canViewTeamspaces;
+        return canViewMembers;
+      }),
+    [canViewMembers, canViewTeamspaces]
+  );
+  const visibleTabValues = useMemo(() => visibleTabs.map((tab) => tab.value), [visibleTabs]);
+
   const requestedTab = searchParams?.get('tab') ?? null;
-  const initialTab: TabValue = isTabValue(requestedTab) ? requestedTab : 'members';
+  const initialTab: TabValue =
+    isTabValue(requestedTab) && visibleTabValues.includes(requestedTab)
+      ? requestedTab
+      : (visibleTabValues[0] ?? 'members');
   const [activeTab, setActiveTab] = useState<TabValue>(initialTab);
 
   useEffect(() => {
@@ -59,9 +78,12 @@ export function TeamPageClient({
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   }
 
-  const { data: membersData } = useOrganizationMembers(organizationId);
+  const { data: membersData } = useOrganizationMembers(canViewMembers ? organizationId : null);
 
   const liveMembers: TeamMemberRow[] = useMemo(() => {
+    if (!canViewMembers) {
+      return [];
+    }
     if (!membersData?.members) {
       return initialMembers;
     }
@@ -76,14 +98,17 @@ export function TeamPageClient({
         status: m.status ?? null,
       },
     }));
-  }, [initialMembers, membersData]);
+  }, [canViewMembers, initialMembers, membersData]);
 
   const pendingInvites = useMemo(() => {
+    if (!canViewMembers) {
+      return [];
+    }
     if (!membersData?.members) {
       return [];
     }
     return membersData.members.filter((m) => m.memberStatus === 'invited');
-  }, [membersData]);
+  }, [canViewMembers, membersData]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -91,20 +116,24 @@ export function TeamPageClient({
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-semibold tracking-tight">{t('team.title')}</h1>
-            <p className="text-muted-foreground text-sm">
-              {t('team.memberCount', { count: liveMembers.length })}
-            </p>
+            {canViewMembers ? (
+              <p className="text-muted-foreground text-sm">
+                {t('team.memberCount', { count: liveMembers.length })}
+              </p>
+            ) : null}
           </div>
-          <Link href="/settings?tab=members">
-            <Button size="sm">{t('team.inviteMember')}</Button>
-          </Link>
+          {canInviteMembers ? (
+            <Link href="/settings?tab=members">
+              <Button size="sm">{t('team.inviteMember')}</Button>
+            </Link>
+          ) : null}
         </div>
         <div
           role="tablist"
           aria-label={t('team.sectionsLabel')}
           className="mt-3 flex gap-1 overflow-x-auto"
         >
-          {TAB_ITEMS.map(({ value, labelKey, icon: Icon }) => (
+          {visibleTabs.map(({ value, labelKey, icon: Icon }) => (
             <button
               key={value}
               type="button"
@@ -122,17 +151,22 @@ export function TeamPageClient({
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto p-6">
-        {activeTab === 'members' && <TeamMembersList members={liveMembers} />}
+        {activeTab === 'members' && (
+          <TeamMembersList members={liveMembers} canInviteMembers={canInviteMembers} />
+        )}
         {activeTab === 'teamspaces' && (
           <TeamspaceManager organizationId={organizationId} canManage={canManageTeamspaces} />
         )}
-        {activeTab === 'invites' && <InvitesPanel invites={pendingInvites} />}
+        {activeTab === 'invites' && (
+          <InvitesPanel invites={pendingInvites} canInviteMembers={canInviteMembers} />
+        )}
       </div>
     </div>
   );
 }
 
 interface InvitesPanelProps {
+  canInviteMembers: boolean;
   invites: Array<{
     id: string;
     name: string | null;
@@ -142,18 +176,20 @@ interface InvitesPanelProps {
   }>;
 }
 
-function InvitesPanel({ invites }: InvitesPanelProps) {
+function InvitesPanel({ canInviteMembers, invites }: InvitesPanelProps) {
   const t = useTranslations('pagesWork');
   if (invites.length === 0) {
     return (
       <div className="surface-card animate-fade-up space-y-3 p-8 text-center">
         <UserPlus className="text-muted-foreground mx-auto h-8 w-8" />
         <p className="text-muted-foreground text-sm">{t('team.invites.empty')}</p>
-        <Link href="/settings?tab=members">
-          <Button size="sm" variant="outline">
-            {t('team.inviteMember')}
-          </Button>
-        </Link>
+        {canInviteMembers ? (
+          <Link href="/settings?tab=members">
+            <Button size="sm" variant="outline">
+              {t('team.inviteMember')}
+            </Button>
+          </Link>
+        ) : null}
       </div>
     );
   }

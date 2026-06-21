@@ -57,18 +57,14 @@ export async function GET(request: NextRequest) {
     let since: Date;
     if (sinceParam) {
       const parsed = new Date(sinceParam);
-      since = Number.isNaN(parsed.getTime())
-        ? new Date(Date.now() - TWENTY_FOUR_HOURS_MS)
-        : parsed;
+      since = Number.isNaN(parsed.getTime()) ? new Date(Date.now() - TWENTY_FOUR_HOURS_MS) : parsed;
     } else {
       const [me] = await db
         .select({ lastSeenAt: users.lastSeenAt })
         .from(users)
         .where(eq(users.id, userId))
         .limit(1);
-      since = me?.lastSeenAt
-        ? me.lastSeenAt
-        : new Date(Date.now() - TWENTY_FOUR_HOURS_MS);
+      since = me?.lastSeenAt ? me.lastSeenAt : new Date(Date.now() - TWENTY_FOUR_HOURS_MS);
     }
 
     // Pull the freshest 80 items since `since`. We over-fetch slightly so
@@ -132,7 +128,7 @@ export async function GET(request: NextRequest) {
     const [membership] = await db
       .select({ organizationId: organizationMembers.organizationId })
       .from(organizationMembers)
-      .where(eq(organizationMembers.userId, userId))
+      .where(and(eq(organizationMembers.userId, userId), eq(organizationMembers.status, 'active')))
       .limit(1);
 
     let provider: 'native' | 'anthropic' | 'openai' = 'native';
@@ -155,7 +151,11 @@ export async function GET(request: NextRequest) {
       );
       model = workspace.model?.trim() || CATCH_ME_UP_DEFAULT_MODEL;
 
-      const anthropicKey = resolveProviderApiKeyFromSettings(orgSettings, 'anthropic', platformStore);
+      const anthropicKey = resolveProviderApiKeyFromSettings(
+        orgSettings,
+        'anthropic',
+        platformStore
+      );
       if (anthropicKey) {
         provider = 'anthropic';
         apiKey = anthropicKey;
@@ -183,9 +183,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Failed to build catch-me-up digest:', error);
-    return NextResponse.json(
-      { error: 'Failed to build catch-me-up digest' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to build catch-me-up digest' }, { status: 500 });
   }
 }

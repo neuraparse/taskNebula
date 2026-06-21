@@ -8,13 +8,12 @@
  * admin reviews and (optionally) edits the seed in the wizard before
  * calling /api/onboarding/seed-apply to commit it.
  *
- * Auth: requires an authenticated user who is either a super admin OR an
- * org owner/admin in their organization.
+ * Auth: requires an authenticated user with organization settings permission.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, organizationMembers, users } from '@tasknebula/db';
+import { db, hasPermission as roleHasPermission, organizationMembers, users } from '@tasknebula/db';
 import { and, eq } from 'drizzle-orm';
 import {
   generateWorkspaceSeed,
@@ -66,7 +65,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Authz: super admin or org owner/admin in any org.
+  // Authz: super admin or org:settings in any active org.
   const [actor] = await db
     .select({ isSuperAdmin: users.isSuperAdmin })
     .from(users)
@@ -78,10 +77,12 @@ export async function POST(request: NextRequest) {
       .select({ role: organizationMembers.role })
       .from(organizationMembers)
       .where(and(eq(organizationMembers.userId, userId), eq(organizationMembers.status, 'active')));
-    const isAdmin = memberships.some((m) => m.role === 'owner' || m.role === 'admin');
-    if (!isAdmin) {
+    const canManageSettings = memberships.some((membership) =>
+      roleHasPermission(membership.role || '', 'org:settings')
+    );
+    if (!canManageSettings) {
       return NextResponse.json(
-        { error: 'Admin role required to generate a workspace seed.' },
+        { error: 'Generating a workspace seed requires organization settings permission.' },
         { status: 403 }
       );
     }

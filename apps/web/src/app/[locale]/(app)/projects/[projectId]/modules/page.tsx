@@ -4,10 +4,18 @@ import { use } from 'react';
 import { Layers } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { ModulesGrid } from '@/components/modules/modules-grid';
+import { useProjectPermissions } from '@/lib/hooks/use-project-permissions';
 
 export default function ModulesPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params);
   const t = useTranslations('pagesProjectTabs');
+  const { permissions, isLoading: permissionsLoading } = useProjectPermissions(projectId);
+  const canManageModules =
+    !permissionsLoading &&
+    (permissions.canAdministerProject ||
+      permissions.isSuperAdmin ||
+      permissions.isOrgOwner ||
+      permissions.isOrgAdmin);
 
   return (
     <div className="animate-fade-in h-full overflow-y-auto">
@@ -25,7 +33,7 @@ export default function ModulesPage({ params }: { params: Promise<{ projectId: s
           </div>
         </div>
 
-        <ModulesGrid projectId={projectId} />
+        <ModulesGrid projectId={projectId} canManageModules={canManageModules} />
       </div>
     </div>
   );

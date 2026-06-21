@@ -87,58 +87,6 @@ async function validateLeadMembership(organizationId: string, leadId?: string | 
   }
 }
 
-async function syncLeadMembership(
-  teamId: string,
-  previousLeadId: string | null,
-  nextLeadId: string | null
-) {
-  if (previousLeadId && previousLeadId !== nextLeadId) {
-    const [previousLeadMembership] = await db
-      .select({ id: teamMembers.id })
-      .from(teamMembers)
-      .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, previousLeadId)))
-      .limit(1);
-
-    if (previousLeadMembership) {
-      await db
-        .update(teamMembers)
-        .set({
-          role: 'member',
-          updatedAt: new Date(),
-        })
-        .where(eq(teamMembers.id, previousLeadMembership.id));
-    }
-  }
-
-  if (!nextLeadId) {
-    return;
-  }
-
-  const [existingLeadMembership] = await db
-    .select({ id: teamMembers.id })
-    .from(teamMembers)
-    .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, nextLeadId)))
-    .limit(1);
-
-  if (existingLeadMembership) {
-    await db
-      .update(teamMembers)
-      .set({
-        role: 'lead',
-        updatedAt: new Date(),
-      })
-      .where(eq(teamMembers.id, existingLeadMembership.id));
-    return;
-  }
-
-  await db.insert(teamMembers).values({
-    id: createId(),
-    teamId,
-    userId: nextLeadId,
-    role: 'lead',
-  });
-}
-
 async function serializeTeamspaces(organizationId: string, userId: string) {
   const orgTeamspaces = await db
     .select()
@@ -228,7 +176,7 @@ export async function GET(
     }
 
     const { organizationId } = await params;
-    const canView = await hasPermission(organizationId, 'org:view');
+    const canView = await hasPermission(organizationId, 'team:view');
     if (!canView) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
@@ -257,7 +205,7 @@ export async function POST(
     const canManage = await hasPermission(organizationId, 'org:settings');
     if (!canManage) {
       return NextResponse.json(
-        { error: 'Insufficient permissions. Only owners and admins can manage teamspaces.' },
+        { error: 'Managing teamspaces requires org:settings permission.' },
         { status: 403 }
       );
     }

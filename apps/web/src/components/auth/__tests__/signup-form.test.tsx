@@ -61,6 +61,44 @@ describe('SignUpForm', () => {
     expect(screen.getByRole('button', { name: /create account/i })).toBeInTheDocument();
   });
 
+  it('hides OAuth buttons when no login provider is configured', async () => {
+    render(<SignUpForm />);
+
+    expect(await screen.findByLabelText(/full name/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /continue with github/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /continue with google/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/or continue with email/i)).not.toBeInTheDocument();
+  });
+
+  it('renders configured OAuth providers and preserves the project invite callback', async () => {
+    window.history.pushState({}, '', '/auth/signup?projectInviteToken=project-token-1');
+    fetchMock.mockImplementation((url: string) => {
+      if (url === '/api/setup') {
+        return Promise.resolve({ ok: true, json: async () => ({ setupRequired: false }) });
+      }
+      if (url === '/api/auth/oauth-providers') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ providers: { github: false, google: true } }),
+        });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({}) });
+    });
+
+    const user = userEvent.setup();
+    render(<SignUpForm />);
+
+    const googleButton = await screen.findByRole('button', { name: /continue with google/i });
+    expect(screen.queryByRole('button', { name: /continue with github/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/or continue with email/i)).toBeInTheDocument();
+
+    await user.click(googleButton);
+
+    expect(signInMock).toHaveBeenCalledWith('google', {
+      callbackUrl: '/join/project/project-token-1',
+    });
+  });
+
   it('POSTs to /api/auth/signup with valid input then auto-signs-in', async () => {
     signInMock.mockResolvedValue({ ok: true, error: null });
     fetchMock.mockImplementation((url: string) => {

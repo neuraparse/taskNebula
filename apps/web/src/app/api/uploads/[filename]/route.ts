@@ -8,10 +8,10 @@ import {
   documentPageAttachments,
   documentPages,
   issues,
-  projects,
   projectMembers,
   organizationMembers,
   users,
+  hasPermission as roleHasPermission,
 } from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
 
@@ -140,7 +140,8 @@ async function userCanAccessFile(userId: string, storedPath: string): Promise<Ac
         .where(
           and(
             eq(organizationMembers.userId, userId),
-            eq(organizationMembers.organizationId, page.organizationId)
+            eq(organizationMembers.organizationId, page.organizationId),
+            eq(organizationMembers.status, 'active')
           )
         )
         .limit(1);
@@ -155,31 +156,31 @@ async function userCanAccessFile(userId: string, storedPath: string): Promise<Ac
   return 'not_found';
 }
 
-async function canAccessProject(userId: string, projectId: string, organizationId: string): Promise<boolean> {
+async function canAccessProject(
+  userId: string,
+  projectId: string,
+  organizationId: string
+): Promise<boolean> {
   const [orgMember] = await db
     .select({ role: organizationMembers.role })
     .from(organizationMembers)
     .where(
       and(
         eq(organizationMembers.userId, userId),
-        eq(organizationMembers.organizationId, organizationId)
+        eq(organizationMembers.organizationId, organizationId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
 
-  if (orgMember?.role === 'owner' || orgMember?.role === 'admin') {
+  if (roleHasPermission(orgMember?.role || '', 'project:manage')) {
     return true;
   }
 
   const [projectMember] = await db
     .select({ userId: projectMembers.userId })
     .from(projectMembers)
-    .where(
-      and(
-        eq(projectMembers.userId, userId),
-        eq(projectMembers.projectId, projectId)
-      )
-    )
+    .where(and(eq(projectMembers.userId, userId), eq(projectMembers.projectId, projectId)))
     .limit(1);
 
   return !!projectMember;

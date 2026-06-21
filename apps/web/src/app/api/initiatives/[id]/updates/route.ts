@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import {
-  db,
-  initiatives,
-  initiativeUpdates,
-  organizationMembers,
-  users,
-} from '@tasknebula/db';
+import { db, initiatives, initiativeUpdates, organizationMembers, users } from '@tasknebula/db';
 import { eq, and, desc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
@@ -24,7 +18,8 @@ async function loadInitiativeForUser(initiativeId: string, userId: string) {
     .where(
       and(
         eq(organizationMembers.userId, userId),
-        eq(organizationMembers.organizationId, initiative.workspaceId)
+        eq(organizationMembers.organizationId, initiative.workspaceId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
@@ -34,10 +29,7 @@ async function loadInitiativeForUser(initiativeId: string, userId: string) {
 }
 
 // GET /api/initiatives/[id]/updates — list updates newest-first.
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -70,10 +62,7 @@ export async function GET(
 }
 
 // POST /api/initiatives/[id]/updates — post a new weekly update.
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

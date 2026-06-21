@@ -30,12 +30,15 @@ type WorkspaceAgentResponse = {
   organizationName: string;
   workspaceSettings: {
     enabled: boolean;
+    assistantEnabled: boolean;
     modelConfigId?: string | null;
     provider: 'native' | 'openai' | 'anthropic' | 'azure' | 'custom';
     model: string;
     executionMode: 'manual' | 'assistive' | 'auto';
     allowWriteActions: boolean;
     requireApprovalForWrites: boolean;
+    aiOversight: 'auto' | 'review_required';
+    aiSafetyMode: 'off' | 'warn' | 'strict';
     dailyRunLimit: number;
     capabilities: Record<string, boolean>;
   };
@@ -171,19 +174,22 @@ type ProjectAgentsResponse = {
     state: 'ready' | 'blocked' | 'disabled' | 'preview';
     detail: string;
   }>;
-  lastRunByKind: Record<string, {
-    id: string;
-    kind: string;
-    status: string;
-    dryRun: boolean;
-    summary: string | null;
-    writeActionsCount: number;
-    createdAt: string;
-    completedAt: string | null;
-    mode: string;
-    output: Record<string, unknown>;
-    error: string | null;
-  }>;
+  lastRunByKind: Record<
+    string,
+    {
+      id: string;
+      kind: string;
+      status: string;
+      dryRun: boolean;
+      summary: string | null;
+      writeActionsCount: number;
+      createdAt: string;
+      completedAt: string | null;
+      mode: string;
+      output: Record<string, unknown>;
+      error: string | null;
+    }
+  >;
   recentRuns: Array<{
     id: string;
     kind: string;
@@ -230,12 +236,15 @@ type AdminAgentControlResponse = {
     state: 'ready' | 'blocked' | 'disabled' | 'preview';
     detail: string;
   }>;
-  providerBreakdown: Record<string, {
-    total: number;
-    enabled: number;
-    ready: number;
-    blocked: number;
-  }>;
+  providerBreakdown: Record<
+    string,
+    {
+      total: number;
+      enabled: number;
+      ready: number;
+      blocked: number;
+    }
+  >;
   workspaceCoverage: Array<{
     organizationId: string;
     organizationName: string;
@@ -314,10 +323,7 @@ export type AgentLiveRun = {
   }>;
 };
 
-function reduceAgentStreamEvent(
-  current: Record<string, AgentLiveRun>,
-  event: AgentStreamEvent
-) {
+function reduceAgentStreamEvent(current: Record<string, AgentLiveRun>, event: AgentStreamEvent) {
   const next = { ...current };
   const runId = event.data.executionId;
   const existing = next[runId] ?? {
@@ -333,7 +339,9 @@ function reduceAgentStreamEvent(
   if (event.type === 'log') {
     const nextLogs = [...existing.logs, event.data]
       .sort((left, right) => left.logIndex - right.logIndex)
-      .filter((log, index, logs) => logs.findIndex((item) => item.logIndex === log.logIndex) === index)
+      .filter(
+        (log, index, logs) => logs.findIndex((item) => item.logIndex === log.logIndex) === index
+      )
       .slice(-40);
 
     next[runId] = {
@@ -398,7 +406,11 @@ function useAgentStream(params: {
             queryClient.invalidateQueries({ queryKey: [...queryKey] });
           });
 
-          if (event.data.status === 'completed' || event.data.status === 'failed' || event.data.status === 'cancelled') {
+          if (
+            event.data.status === 'completed' ||
+            event.data.status === 'failed' ||
+            event.data.status === 'cancelled'
+          ) {
             setTimeout(() => {
               setLiveRuns((current) => {
                 const next = { ...current };
@@ -421,7 +433,7 @@ function useAgentStream(params: {
       source.close();
       setIsConnected(false);
     };
-  }, [invalidateKeysKey, params.enabled, params.url, queryClient]);
+  }, [invalidateKeysKey, params.enabled, params.invalidateKeys, params.url, queryClient]);
 
   const runs = useMemo(
     () =>
@@ -443,7 +455,9 @@ export function useOrganizationAgentSettings(organizationId: string | null) {
     queryKey: ['organization-ai-agents', organizationId],
     queryFn: async () => {
       const response = await fetch(`/api/organizations/${organizationId}/ai-agents`);
-      const payload = await response.json().catch(() => ({ error: 'Failed to fetch workspace AI agents' }));
+      const payload = await response
+        .json()
+        .catch(() => ({ error: 'Failed to fetch workspace AI agents' }));
       if (!response.ok) {
         throw new Error(payload.error || 'Failed to fetch workspace AI agents');
       }
@@ -463,7 +477,9 @@ export function useUpdateOrganizationAgentSettings(organizationId: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      const payload = await response.json().catch(() => ({ error: 'Failed to update workspace AI agents' }));
+      const payload = await response
+        .json()
+        .catch(() => ({ error: 'Failed to update workspace AI agents' }));
       if (!response.ok) {
         throw new Error(payload.error || 'Failed to update workspace AI agents');
       }
@@ -472,7 +488,8 @@ export function useUpdateOrganizationAgentSettings(organizationId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organization-ai-agents', organizationId] });
       queryClient.invalidateQueries({
-        predicate: (query) => query.queryKey[0] === 'project-ai-agents' || query.queryKey[0] === 'admin-agent-control',
+        predicate: (query) =>
+          query.queryKey[0] === 'project-ai-agents' || query.queryKey[0] === 'admin-agent-control',
       });
     },
   });
@@ -488,7 +505,9 @@ export function useCreateOrganizationAgentModelConfig(organizationId: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      const payload = await response.json().catch(() => ({ error: 'Failed to create AI model config' }));
+      const payload = await response
+        .json()
+        .catch(() => ({ error: 'Failed to create AI model config' }));
       if (!response.ok) {
         throw new Error(payload.error || 'Failed to create AI model config');
       }
@@ -506,12 +525,17 @@ export function useUpdateOrganizationAgentModelConfig(organizationId: string) {
 
   return useMutation({
     mutationFn: async (params: { configId: string; data: Record<string, unknown> }) => {
-      const response = await fetch(`/api/organizations/${organizationId}/ai-model-configs/${params.configId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(params.data),
-      });
-      const payload = await response.json().catch(() => ({ error: 'Failed to update AI model config' }));
+      const response = await fetch(
+        `/api/organizations/${organizationId}/ai-model-configs/${params.configId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(params.data),
+        }
+      );
+      const payload = await response
+        .json()
+        .catch(() => ({ error: 'Failed to update AI model config' }));
       if (!response.ok) {
         throw new Error(payload.error || 'Failed to update AI model config');
       }
@@ -520,7 +544,8 @@ export function useUpdateOrganizationAgentModelConfig(organizationId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organization-ai-agents', organizationId] });
       queryClient.invalidateQueries({
-        predicate: (query) => query.queryKey[0] === 'project-ai-agents' || query.queryKey[0] === 'admin-agent-control',
+        predicate: (query) =>
+          query.queryKey[0] === 'project-ai-agents' || query.queryKey[0] === 'admin-agent-control',
       });
     },
   });
@@ -531,10 +556,15 @@ export function useArchiveOrganizationAgentModelConfig(organizationId: string) {
 
   return useMutation({
     mutationFn: async (configId: string) => {
-      const response = await fetch(`/api/organizations/${organizationId}/ai-model-configs/${configId}`, {
-        method: 'DELETE',
-      });
-      const payload = await response.json().catch(() => ({ error: 'Failed to archive AI model config' }));
+      const response = await fetch(
+        `/api/organizations/${organizationId}/ai-model-configs/${configId}`,
+        {
+          method: 'DELETE',
+        }
+      );
+      const payload = await response
+        .json()
+        .catch(() => ({ error: 'Failed to archive AI model config' }));
       if (!response.ok) {
         throw new Error(payload.error || 'Failed to archive AI model config');
       }
@@ -543,7 +573,8 @@ export function useArchiveOrganizationAgentModelConfig(organizationId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organization-ai-agents', organizationId] });
       queryClient.invalidateQueries({
-        predicate: (query) => query.queryKey[0] === 'project-ai-agents' || query.queryKey[0] === 'admin-agent-control',
+        predicate: (query) =>
+          query.queryKey[0] === 'project-ai-agents' || query.queryKey[0] === 'admin-agent-control',
       });
     },
   });
@@ -554,7 +585,9 @@ export function useProjectAgents(projectId: string | null) {
     queryKey: ['project-ai-agents', projectId],
     queryFn: async () => {
       const response = await fetch(`/api/projects/${projectId}/agents`);
-      const payload = await response.json().catch(() => ({ error: 'Failed to fetch project AI agents' }));
+      const payload = await response
+        .json()
+        .catch(() => ({ error: 'Failed to fetch project AI agents' }));
       if (!response.ok) {
         throw new Error(payload.error || 'Failed to fetch project AI agents');
       }
@@ -574,7 +607,9 @@ export function useUpdateProjectAgents(projectId: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      const payload = await response.json().catch(() => ({ error: 'Failed to update project AI agents' }));
+      const payload = await response
+        .json()
+        .catch(() => ({ error: 'Failed to update project AI agents' }));
       if (!response.ok) {
         throw new Error(payload.error || 'Failed to update project AI agents');
       }
@@ -616,7 +651,9 @@ export function useAdminAgentControl() {
     queryKey: ['admin-agent-control'],
     queryFn: async () => {
       const response = await fetch('/api/admin/agent-control');
-      const payload = await response.json().catch(() => ({ error: 'Failed to fetch admin agent control' }));
+      const payload = await response
+        .json()
+        .catch(() => ({ error: 'Failed to fetch admin agent control' }));
       if (!response.ok) {
         throw new Error(payload.error || 'Failed to fetch admin agent control');
       }
@@ -635,7 +672,9 @@ export function useUpdateAdminAgentControl() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      const payload = await response.json().catch(() => ({ error: 'Failed to update admin agent control' }));
+      const payload = await response
+        .json()
+        .catch(() => ({ error: 'Failed to update admin agent control' }));
       if (!response.ok) {
         throw new Error(payload.error || 'Failed to update admin agent control');
       }
@@ -647,17 +686,18 @@ export function useUpdateAdminAgentControl() {
   });
 }
 
+const ADMIN_AGENT_STREAM_INVALIDATE_KEYS: Array<readonly unknown[]> = [['admin-agent-control']];
+
 export function useProjectAgentStream(projectId: string | null, enabled = true) {
+  const invalidateKeys = useMemo(
+    () => (projectId ? [['project-ai-agents', projectId], ['issues'], ['sprints', projectId]] : []),
+    [projectId]
+  );
+
   return useAgentStream({
     url: projectId ? `/api/projects/${projectId}/agents/stream` : null,
     enabled: enabled && !!projectId,
-    invalidateKeys: projectId
-      ? [
-          ['project-ai-agents', projectId],
-          ['issues'],
-          ['sprints', projectId],
-        ]
-      : [],
+    invalidateKeys,
   });
 }
 
@@ -665,6 +705,6 @@ export function useAdminAgentStream(enabled = true) {
   return useAgentStream({
     url: enabled ? '/api/admin/agent-control/stream' : null,
     enabled,
-    invalidateKeys: [['admin-agent-control']],
+    invalidateKeys: ADMIN_AGENT_STREAM_INVALIDATE_KEYS,
   });
 }

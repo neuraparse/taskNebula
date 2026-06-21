@@ -15,8 +15,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createDocumentAppHref } from '@/lib/docs/content';
 import { useToast } from '@/hooks/use-toast';
+import { isApiPermissionError } from '@/lib/client-api-errors';
 import { DocumentIcon } from '@/components/docs/document-icon';
-import { Loader2, FileText, Link2, Plus, Unlink2, ExternalLink } from 'lucide-react';
+import { Loader2, Link2, Plus, Unlink2, ExternalLink } from 'lucide-react';
 
 interface IssueDocsProps {
   issueId: string;
@@ -25,13 +26,14 @@ interface IssueDocsProps {
   projectId: string;
 }
 
-export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDocsProps) {
+export function IssueDocs({ issueId, issueKey, projectId }: IssueDocsProps) {
   const t = useTranslations('issuePanels');
+  const tHome = useTranslations('pagesHome');
   const router = useRouter();
   const { toast } = useToast();
   const { currentOrganizationId } = useOrganization();
   const [search, setSearch] = useState('');
-  const { data: docs, isLoading } = useIssueDocs(issueId);
+  const { data: docs, isLoading, error } = useIssueDocs(issueId);
   const attachDoc = useAttachIssueDoc(issueId);
   const detachDoc = useDetachIssueDoc(issueId);
   const { data: searchResults = [] } = useDocumentSearch({
@@ -45,6 +47,13 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
   const linkedDocIds = new Set((docs || []).map((doc) => doc.id));
   const availableResults = searchResults.filter((doc) => !linkedDocIds.has(doc.id));
   const SHOW_LIMIT = 5;
+
+  function formatDocsError(errorValue: unknown, fallback: string) {
+    if (isApiPermissionError(errorValue)) {
+      return tHome('toast_access_denied_description');
+    }
+    return errorValue instanceof Error ? errorValue.message : fallback;
+  }
 
   async function handleCreateSpecDoc() {
     try {
@@ -70,7 +79,7 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
     } catch (error) {
       toast({
         title: t('docs.spec_create_failed'),
-        description: error instanceof Error ? error.message : t('docs.something_went_wrong'),
+        description: formatDocsError(error, t('docs.something_went_wrong')),
         variant: 'destructive',
       });
     }
@@ -87,7 +96,7 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
     } catch (error) {
       toast({
         title: t('docs.link_failed'),
-        description: error instanceof Error ? error.message : t('docs.something_went_wrong'),
+        description: formatDocsError(error, t('docs.something_went_wrong')),
         variant: 'destructive',
       });
     }
@@ -103,7 +112,7 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
     } catch (error) {
       toast({
         title: t('docs.unlink_failed'),
-        description: error instanceof Error ? error.message : t('docs.something_went_wrong'),
+        description: formatDocsError(error, t('docs.something_went_wrong')),
         variant: 'destructive',
       });
     }
@@ -226,6 +235,10 @@ export function IssueDocs({ issueId, issueKey, issueTitle, projectId }: IssueDoc
             </button>
           )}
         </div>
+      ) : error ? (
+        <p role="alert" className="text-destructive text-sm">
+          {formatDocsError(error, t('docs.something_went_wrong'))}
+        </p>
       ) : (
         <p className="text-muted-foreground text-sm">{t('docs.empty')}</p>
       )}

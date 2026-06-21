@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, eq, organizations } from '@tasknebula/db';
+import { isActiveOrganizationMember } from '@/lib/auth/access-control';
+import { userHasWorkspaceAccess } from '@/lib/auth/workspace-access';
 import { getSystemAgentControlSettingsFromDb } from '@/lib/agents/system';
 import {
   getProviderCredentialStatusFromSettings,
@@ -53,6 +55,10 @@ export async function GET(request: Request) {
     return NextResponse.json(disabledShape());
   }
 
+  if (!(await userHasWorkspaceAccess(session.user.id))) {
+    return NextResponse.json(disabledShape());
+  }
+
   const system = await getSystemAgentControlSettingsFromDb().catch(() => null);
   const platformEnabled = system?.globalEnabled === true;
   if (!platformEnabled) {
@@ -61,6 +67,13 @@ export async function GET(request: Request) {
 
   if (!organizationId) {
     // Caller hasn't selected an org yet — surface platform state only.
+    return NextResponse.json({
+      ...disabledShape(),
+      platformEnabled: true,
+    });
+  }
+
+  if (!(await isActiveOrganizationMember(session.user.id, organizationId))) {
     return NextResponse.json({
       ...disabledShape(),
       platformEnabled: true,

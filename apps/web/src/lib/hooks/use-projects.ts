@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { throwApiResponseError } from '@/lib/client-api-errors';
 
 export interface Project {
   id: string;
@@ -33,6 +34,7 @@ export interface Project {
 interface ProjectsFilters {
   organizationId?: string | null;
   teamId?: string | null;
+  enabled?: boolean;
 }
 
 // Get all projects
@@ -44,12 +46,15 @@ export function useProjects(filters?: ProjectsFilters) {
       if (filters?.organizationId) params.append('organizationId', filters.organizationId);
       if (filters?.teamId) params.append('teamId', filters.teamId);
 
-      const response = await fetch(`/api/projects${params.size > 0 ? `?${params.toString()}` : ''}`);
+      const response = await fetch(
+        `/api/projects${params.size > 0 ? `?${params.toString()}` : ''}`
+      );
       if (!response.ok) {
-        throw new Error('Failed to fetch projects');
+        await throwApiResponseError(response);
       }
       return response.json();
     },
+    enabled: filters?.enabled ?? true,
   });
 }
 
@@ -60,7 +65,7 @@ export function useProject(projectId: string) {
     queryFn: async () => {
       const response = await fetch(`/api/projects/${projectId}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch project');
+        await throwApiResponseError(response);
       }
       return response.json();
     },
@@ -86,8 +91,7 @@ export function useCreateProject() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || 'Failed to create project');
+        await throwApiResponseError(response);
       }
       return response.json() as Promise<Project>;
     },
@@ -102,21 +106,14 @@ export function useUpdateProject() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      projectId,
-      data,
-    }: {
-      projectId: string;
-      data: Partial<Project>;
-    }) => {
+    mutationFn: async ({ projectId, data }: { projectId: string; data: Partial<Project> }) => {
       const response = await fetch(`/api/projects/${projectId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || 'Failed to update project');
+        await throwApiResponseError(response);
       }
       return response.json() as Promise<Project>;
     },
@@ -137,8 +134,7 @@ export function useDeleteProject() {
         method: 'DELETE',
       });
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || 'Failed to delete project');
+        await throwApiResponseError(response);
       }
       return response.json();
     },

@@ -43,7 +43,8 @@
     "realtime_health": "Kesehatan realtime",
     "audit_logs": "Log audit",
     "system": "Sistem",
-    "updates": "Pembaruan"
+    "updates": "Pembaruan",
+    "ai_transparency": "Transparansi AI"
   },
   "actions": {
     "create_issue": "Buat isu",
@@ -102,6 +103,7 @@
     "skipToContent": "Lewati ke konten"
   },
   "settings": {
+    "error_no_permission": "Anda tidak memiliki izin untuk mengelola pengaturan ini.",
     "labels": {
       "kicker": "Label",
       "title": "Label",
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "Gagal memuat isu",
       "notFound": "Isu tidak ditemukan",
-      "notFoundHint": "Isu yang Anda cari tidak ada."
+      "notFoundHint": "Isu yang Anda cari tidak ada.",
+      "loadFailedHint": "Muat ulang halaman atau coba lagi sebentar lagi."
     }
   },
   "adminUpdates": {
@@ -1480,8 +1483,8 @@
     "planning_kicker": "Perencanaan",
     "teamspaces_heading": "Ruang Tim",
     "teamspaces_subtitle": "Jalur perencanaan di atas proyek individual, tanpa memecah organisasi.",
-    "owner_admin_only": "Hanya pemilik atau admin",
-    "browse_only_notice": "Hanya menjelajah — pemilik dan admin dapat mengubah struktur.",
+    "owner_admin_only": "Izin diperlukan",
+    "browse_only_notice": "Hanya lihat — mengubah struktur memerlukan izin pengaturan organisasi.",
     "loading_teamspaces": "Memuat ruang tim…",
     "manage_members": "Kelola anggota",
     "members_label": "anggota",
@@ -2104,7 +2107,7 @@
       "none": "Tidak ada",
       "updated": "Diperbarui",
       "server_managed": "Dikelola server",
-      "read_only_notice": "Akses hanya-baca — pemilik dan admin dapat memperbarui kebijakan AI.",
+      "read_only_notice": "Akses baca-saja — memperbarui kebijakan AI memerlukan izin pengaturan organisasi.",
       "your_model_profiles": "Profil model Anda",
       "your_model_profiles_desc": "Kombinasi model + penyetelan kustom yang disimpan untuk digunakan kembali. Profil mana pun yang disimpan di sini juga muncul di dropdown model Penyiapan cepat di atas. Gunakan ini untuk menyematkan model dengan pengaturan suhu / token / upaya-penalaran tertentu, atau untuk mencoba model yang tidak ada dalam katalog bawaan.",
       "create_profile": "Buat profil",
@@ -2772,6 +2775,7 @@
     "loading_modules": "Memuat modul...",
     "no_modules_filter": "Tidak ada modul yang cocok dengan filter ini.",
     "no_modules_empty": "Belum ada modul. Buat satu untuk mengelompokkan pekerjaan terkait.",
+    "no_modules_empty_readonly": "Belum ada modul yang dibuat untuk proyek ini.",
     "create_module": "Buat modul",
     "module_dialog_desc": "Kelompokkan pekerjaan terkait ke dalam area fitur atau proyek-mini.",
     "module_name_placeholder": "mis., Auth, Penagihan, Onboarding",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "Belum ada pembaruan.",
     "initiative_detail_anonymous": "Anonim",
     "initiative_detail_blockers_label": "Penghambat:",
-    "initiative_detail_next_label": "Berikutnya:"
+    "initiative_detail_next_label": "Berikutnya:",
+    "initiative_detail_error_load": "Inisiatif gagal dimuat."
   },
   "pagesProjects": {
     "metaTitle": "Proyek | TaskNebula",
@@ -4029,6 +4034,7 @@
     "descriptionPlaceholder": "Deskripsi proyek singkat",
     "cancel": "Batal",
     "creating": "Membuat...",
+    "createProjectFailed": "Proyek tidak dapat dibuat. Periksa detailnya lalu coba lagi.",
     "breadcrumb": "Remah roti",
     "sections": "Bagian proyek",
     "tabViews": "Tampilan",
@@ -4101,7 +4107,7 @@
     "completeSprintTooltip": "Selesaikan sprint ini. Isu yang belum selesai akan dipindahkan ke backlog.",
     "sprintBurndown": "Burndown Sprint",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
+    "projectInviteRequiredDescription": "Minta administrator mengundang Anda ke proyek atau memberi izin untuk membuat proyek."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4663,7 +4669,7 @@
       "removeProject": "Hapus {name}",
       "projectRole": "Peran proyek",
       "sendInvitation": "Kirim undangan",
-      "viewOnly": "Akses hanya-lihat. Hanya pemilik dan admin yang dapat mengelola anggota.",
+      "viewOnly": "Akses hanya lihat. Manajemen anggota memerlukan izin anggota yang sesuai.",
       "noMembers": "Belum ada anggota.",
       "inviteFirst": "Undang anggota pertama Anda",
       "invited": "Diundang",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "Detail",
       "detailsHeading": "Detail ruang kerja",
       "detailsSubtitle": "Nama, domain, dan informasi merek yang digunakan di seluruh ruang kerja.",
-      "manageRestricted": "Hanya pemilik dan admin yang dapat memperbarui pengaturan organisasi.",
+      "manageRestricted": "Memperbarui pengaturan organisasi memerlukan izin pengaturan organisasi.",
       "logo": "Logo",
       "slug": "Slug ruang kerja",
       "slugHint": "Super admin dapat mengubahnya.",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "Zona berbahaya",
       "dangerSubtitle": "Menghapus ruang kerja ini dan semua yang ada di dalamnya secara permanen. Membutuhkan akses pemilik.",
       "cannotRestore": "Organisasi yang dihapus tidak dapat dipulihkan.",
-      "ownerOnly": "Hanya pemilik",
+      "ownerOnly": "Izin menghapus diperlukan",
       "plan": {
         "free": "Gratis",
         "starter": "Starter",

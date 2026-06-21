@@ -43,7 +43,8 @@
     "realtime_health": "Stato realtime",
     "audit_logs": "Log di audit",
     "system": "Sistema",
-    "updates": "Aggiornamenti"
+    "updates": "Aggiornamenti",
+    "ai_transparency": "Trasparenza AI"
   },
   "actions": {
     "create_issue": "Crea elemento",
@@ -102,6 +103,7 @@
     "skipToContent": "Vai al contenuto"
   },
   "settings": {
+    "error_no_permission": "Non hai l’autorizzazione per gestire queste impostazioni.",
     "labels": {
       "kicker": "Etichette",
       "title": "Etichette",
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "Impossibile caricare l'elemento",
       "notFound": "Elemento non trovato",
-      "notFoundHint": "L'elemento che stai cercando non esiste."
+      "notFoundHint": "L'elemento che stai cercando non esiste.",
+      "loadFailedHint": "Aggiorna la pagina o riprova tra poco."
     }
   },
   "adminUpdates": {
@@ -1480,8 +1483,8 @@
     "planning_kicker": "Pianificazione",
     "teamspaces_heading": "Spazi del team",
     "teamspaces_subtitle": "Corsie di pianificazione al di sopra dei singoli progetti, senza dividere l'organizzazione.",
-    "owner_admin_only": "Solo proprietario o amministratore",
-    "browse_only_notice": "Sola consultazione — proprietari e amministratori possono modificare la struttura.",
+    "owner_admin_only": "Autorizzazione richiesta",
+    "browse_only_notice": "Solo visualizzazione: per modificare la struttura serve l’autorizzazione alle impostazioni dell’organizzazione.",
     "loading_teamspaces": "Caricamento spazi del team…",
     "manage_members": "Gestisci membri",
     "members_label": "membri",
@@ -2104,7 +2107,7 @@
       "none": "Nessuna",
       "updated": "Aggiornato",
       "server_managed": "Gestito dal server",
-      "read_only_notice": "Accesso in sola lettura — proprietari e amministratori possono aggiornare la policy AI.",
+      "read_only_notice": "Accesso in sola lettura: per aggiornare la policy AI serve l’autorizzazione alle impostazioni dell’organizzazione.",
       "your_model_profiles": "I tuoi profili di modello",
       "your_model_profiles_desc": "Combinazioni personalizzate di modello + tuning salvate per il riutilizzo. Qualsiasi profilo salvato qui compare anche nel menu a discesa dei modelli della Configurazione rapida qui sopra. Usalo per fissare un modello con impostazioni specifiche di temperatura / token / sforzo di ragionamento, o per provare un modello non presente nel catalogo integrato.",
       "create_profile": "Crea profilo",
@@ -2772,6 +2775,7 @@
     "loading_modules": "Caricamento moduli...",
     "no_modules_filter": "Nessun modulo corrisponde a questo filtro.",
     "no_modules_empty": "Ancora nessun modulo. Creane uno per raggruppare lavoro correlato.",
+    "no_modules_empty_readonly": "Non sono ancora stati creati moduli per questo progetto.",
     "create_module": "Crea modulo",
     "module_dialog_desc": "Raggruppa lavoro correlato in un'area funzionale o in un mini-progetto.",
     "module_name_placeholder": "es. Autenticazione, Fatturazione, Onboarding",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "Ancora nessun aggiornamento.",
     "initiative_detail_anonymous": "Anonimo",
     "initiative_detail_blockers_label": "Impedimenti:",
-    "initiative_detail_next_label": "Prossimo:"
+    "initiative_detail_next_label": "Prossimo:",
+    "initiative_detail_error_load": "Impossibile caricare l’iniziativa."
   },
   "pagesProjects": {
     "metaTitle": "Progetti | TaskNebula",
@@ -4029,6 +4034,7 @@
     "descriptionPlaceholder": "Breve descrizione del progetto",
     "cancel": "Annulla",
     "creating": "Creazione...",
+    "createProjectFailed": "Impossibile creare il progetto. Controlla i dettagli e riprova.",
     "breadcrumb": "Breadcrumb",
     "sections": "Sezioni del progetto",
     "tabViews": "Viste",
@@ -4101,7 +4107,7 @@
     "completeSprintTooltip": "Completa questo sprint. Gli elementi incompleti verranno spostati nel backlog.",
     "sprintBurndown": "Burndown dello sprint",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
+    "projectInviteRequiredDescription": "Chiedi a un amministratore di invitarti a un progetto o di concederti l’autorizzazione a creare progetti."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4663,7 +4669,7 @@
       "removeProject": "Rimuovi {name}",
       "projectRole": "Ruolo nel progetto",
       "sendInvitation": "Invia invito",
-      "viewOnly": "Accesso in sola lettura. Solo i proprietari e gli amministratori possono gestire i membri.",
+      "viewOnly": "Accesso in sola lettura. La gestione dei membri richiede le autorizzazioni membro appropriate.",
       "noMembers": "Ancora nessun membro.",
       "inviteFirst": "Invita il tuo primo membro",
       "invited": "Invitato",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "Dettagli",
       "detailsHeading": "Dettagli dello spazio di lavoro",
       "detailsSubtitle": "Nome, dominio e informazioni sul marchio utilizzati nello spazio di lavoro.",
-      "manageRestricted": "Solo i proprietari e gli amministratori possono aggiornare le impostazioni dell'organizzazione.",
+      "manageRestricted": "Per aggiornare le impostazioni dell’organizzazione serve l’autorizzazione alle impostazioni dell’organizzazione.",
       "logo": "Logo",
       "slug": "Slug dello spazio di lavoro",
       "slugHint": "I super amministratori possono modificarlo.",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "Zona pericolosa",
       "dangerSubtitle": "Rimuove definitivamente questo spazio di lavoro e tutto ciò che contiene. Richiede l'accesso da proprietario.",
       "cannotRestore": "Le organizzazioni eliminate non possono essere ripristinate.",
-      "ownerOnly": "Solo proprietario",
+      "ownerOnly": "Autorizzazione di eliminazione richiesta",
       "plan": {
         "free": "Free",
         "starter": "Starter",

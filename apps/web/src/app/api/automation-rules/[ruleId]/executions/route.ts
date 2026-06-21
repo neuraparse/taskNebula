@@ -6,6 +6,7 @@ import {
   organizationMembers,
   projectMembers,
   users,
+  hasPermission as roleHasPermission,
 } from '@tasknebula/db';
 import { and, eq, sql } from 'drizzle-orm';
 
@@ -43,8 +44,8 @@ const MAX_LIMIT = 200;
 
 // GET /api/automation-rules/[ruleId]/executions?limit=50
 // Returns recent executions for a rule, ordered by triggeredAt desc.
-// Auth: caller must be a member of the rule's organization (or, if scoped
-// to a project, a member of that project) — super admins always allowed.
+// Auth: caller must have org management permission, or for project-scoped
+// rules be a member of that project. Super admins are always allowed.
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ ruleId: string }> }
@@ -60,9 +61,10 @@ export async function GET(
 
     const { searchParams } = new URL(request.url);
     const rawLimit = Number(searchParams.get('limit'));
-    const limit = Number.isFinite(rawLimit) && rawLimit > 0
-      ? Math.min(Math.floor(rawLimit), MAX_LIMIT)
-      : DEFAULT_LIMIT;
+    const limit =
+      Number.isFinite(rawLimit) && rawLimit > 0
+        ? Math.min(Math.floor(rawLimit), MAX_LIMIT)
+        : DEFAULT_LIMIT;
 
     // Look up rule to know which org/project it belongs to.
     const [rule] = await db
@@ -95,12 +97,13 @@ export async function GET(
         .where(
           and(
             eq(organizationMembers.userId, userId),
-            eq(organizationMembers.organizationId, rule.organizationId)
+            eq(organizationMembers.organizationId, rule.organizationId),
+            eq(organizationMembers.status, 'active')
           )
         )
         .limit(1);
 
-      if (orgMember?.role === 'owner' || orgMember?.role === 'admin') {
+      if (roleHasPermission(orgMember?.role || '', 'org:manage')) {
         allowed = true;
       } else if (rule.projectId) {
         // Rule scoped to a project — check project membership.
@@ -108,16 +111,13 @@ export async function GET(
           .select({ role: projectMembers.role })
           .from(projectMembers)
           .where(
-            and(
-              eq(projectMembers.userId, userId),
-              eq(projectMembers.projectId, rule.projectId)
-            )
+            and(eq(projectMembers.userId, userId), eq(projectMembers.projectId, rule.projectId))
           )
           .limit(1);
-        allowed = Boolean(projectMember) || Boolean(orgMember);
+        allowed = Boolean(projectMember);
       } else {
-        // Org-wide rule — any org member can view executions.
-        allowed = Boolean(orgMember);
+        // Org-wide rule executions require organization management permission.
+        allowed = false;
       }
     }
 
@@ -167,7 +167,10 @@ export async function GET(
     // If the table doesn't exist yet in this environment, return an empty
     // list rather than 500 so the UI can still render a sensible empty state.
     const message = error instanceof Error ? error.message : String(error);
-    if (/automation_executions/i.test(message) && /does not exist|undefined table|no such table/i.test(message)) {
+    if (
+      /automation_executions/i.test(message) &&
+      /does not exist|undefined table|no such table/i.test(message)
+    ) {
       return NextResponse.json([]);
     }
     console.error('Error fetching automation executions:', error);

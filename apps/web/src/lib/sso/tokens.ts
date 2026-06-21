@@ -15,6 +15,7 @@ import {
   db,
   scimTokens,
   organizationMembers,
+  hasPermission as roleHasPermission,
   eq,
   and,
   isNull,
@@ -33,10 +34,7 @@ export async function hashScimToken(token: string): Promise<string> {
   return bcrypt.hash(token, BCRYPT_COST);
 }
 
-export async function verifyScimToken(
-  token: string,
-  hash: string
-): Promise<boolean> {
+export async function verifyScimToken(token: string, hash: string): Promise<boolean> {
   if (!token || !hash) return false;
   try {
     return await bcrypt.compare(token, hash);
@@ -99,19 +97,17 @@ export async function authenticateScimRequest(
 }
 
 /**
- * Helper for the settings UI — ensure the caller is an org admin/owner in
- * the workspace before they can manage SCIM tokens. Used by REST handlers
- * that mutate the table.
+ * Helper for the settings UI — ensure the caller can manage organization
+ * settings in the workspace before they can manage SCIM tokens. Used by REST
+ * handlers that mutate the table.
  */
-export async function isOrgAdmin(
-  userId: string,
-  workspaceId: string
-): Promise<boolean> {
+export async function isOrgAdmin(userId: string, workspaceId: string): Promise<boolean> {
   const member = await db.query.organizationMembers.findFirst({
     where: and(
       eq(organizationMembers.userId, userId),
-      eq(organizationMembers.organizationId, workspaceId)
+      eq(organizationMembers.organizationId, workspaceId),
+      eq(organizationMembers.status, 'active')
     ),
   });
-  return member?.role === 'owner' || member?.role === 'admin';
+  return roleHasPermission(member?.role || '', 'org:settings');
 }

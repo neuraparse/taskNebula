@@ -15,6 +15,7 @@ import './registry'; // ensure `.openapi()` extension is loaded
 export const ErrorResponseSchema = z
   .object({
     error: z.string().openapi({ example: 'Unauthorized' }),
+    code: z.string().optional().openapi({ example: 'UNAUTHORIZED' }),
     details: z.unknown().optional(),
   })
   .openapi('ErrorResponse');

@@ -15,6 +15,7 @@ import {
   organizationMembers,
   users,
   ROLE_DEFAULT_PERMISSIONS,
+  hasPermission as roleHasPermission,
   type ProjectRole,
 } from '@tasknebula/db';
 import { auth } from '@/auth';
@@ -84,13 +85,14 @@ async function checkIssuePermission(
     .where(
       and(
         eq(organizationMembers.userId, userId),
-        eq(organizationMembers.organizationId, project.organizationId)
+        eq(organizationMembers.organizationId, project.organizationId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
 
-  // Org owners have full access
-  if (orgMember?.role === 'owner') {
+  // Org roles with project:manage have full access
+  if (roleHasPermission(orgMember?.role || '', 'project:manage')) {
     return { allowed: true };
   }
 
@@ -102,9 +104,6 @@ async function checkIssuePermission(
     .limit(1);
 
   if (!projectMember) {
-    if (orgMember?.role === 'admin' && action === 'view') {
-      return { allowed: true };
-    }
     return { allowed: false, reason: 'Not a project member' };
   }
 

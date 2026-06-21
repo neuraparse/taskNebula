@@ -43,7 +43,8 @@
     "realtime_health": "Reaaliaikaisuuden tila",
     "audit_logs": "Auditlokit",
     "system": "Järjestelmä",
-    "updates": "Päivitykset"
+    "updates": "Päivitykset",
+    "ai_transparency": "Tekoälyn läpinäkyvyys"
   },
   "actions": {
     "create_issue": "Luo työ",
@@ -102,6 +103,7 @@
     "skipToContent": "Siirry sisältöön"
   },
   "settings": {
+    "error_no_permission": "Sinulla ei ole oikeutta hallita näitä asetuksia.",
     "labels": {
       "kicker": "Tunnisteet",
       "title": "Tunnisteet",
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "Työn lataus epäonnistui",
       "notFound": "Työtä ei löytynyt",
-      "notFoundHint": "Etsimääsi työtä ei ole olemassa."
+      "notFoundHint": "Etsimääsi työtä ei ole olemassa.",
+      "loadFailedHint": "Päivitä sivu tai yritä hetken kuluttua uudelleen."
     }
   },
   "adminUpdates": {
@@ -1480,8 +1483,8 @@
     "planning_kicker": "Suunnittelu",
     "teamspaces_heading": "Tiimitilat",
     "teamspaces_subtitle": "Suunnitteluväylät yksittäisten projektien yläpuolella, jakamatta organisaatiota.",
-    "owner_admin_only": "Vain omistaja tai ylläpitäjä",
-    "browse_only_notice": "Vain selaaminen — omistajat ja ylläpitäjät voivat muuttaa rakennetta.",
+    "owner_admin_only": "Käyttöoikeus vaaditaan",
+    "browse_only_notice": "Vain katselu — rakenteen muuttaminen vaatii organisaatioasetusten käyttöoikeuden.",
     "loading_teamspaces": "Ladataan tiimitiloja…",
     "manage_members": "Hallinnoi jäseniä",
     "members_label": "jäsentä",
@@ -2104,7 +2107,7 @@
       "none": "Ei mitään",
       "updated": "Päivitetty",
       "server_managed": "Palvelimen hallinnoima",
-      "read_only_notice": "Vain luku -käyttö — omistajat ja ylläpitäjät voivat päivittää tekoälykäytäntöä.",
+      "read_only_notice": "Vain luku -käyttö — AI-käytännön päivittäminen vaatii organisaatioasetusten käyttöoikeuden.",
       "your_model_profiles": "Malliprofiilisi",
       "your_model_profiles_desc": "Mukautetut malli- ja virityskombinaatiot, jotka on tallennettu uudelleenkäyttöä varten. Kaikki tähän tallennetut profiilit näkyvät myös yllä olevassa Pika-asennuksen mallin pudotusvalikossa. Käytä tätä mallin kiinnittämiseen tietyillä lämpötila-/token-/päättelyponnistusasetuksilla tai kokeillaksesi mallia, joka ei ole sisäänrakennetussa luettelossa.",
       "create_profile": "Luo profiili",
@@ -2772,6 +2775,7 @@
     "loading_modules": "Ladataan moduuleja...",
     "no_modules_filter": "Mikään moduuli ei vastaa tätä suodatinta.",
     "no_modules_empty": "Ei vielä moduuleja. Luo sellainen ryhmitelläksesi liittyvät työt.",
+    "no_modules_empty_readonly": "Tälle projektille ei ole vielä luotu moduuleja.",
     "create_module": "Luo moduuli",
     "module_dialog_desc": "Ryhmittele liittyvät työt ominaisuusalueeksi tai miniprojektiksi.",
     "module_name_placeholder": "esim. Tunnistautuminen, Laskutus, Perehdytys",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "Ei vielä päivityksiä.",
     "initiative_detail_anonymous": "Anonyymi",
     "initiative_detail_blockers_label": "Esteet:",
-    "initiative_detail_next_label": "Seuraavaksi:"
+    "initiative_detail_next_label": "Seuraavaksi:",
+    "initiative_detail_error_load": "Aloitetta ei voitu ladata."
   },
   "pagesProjects": {
     "metaTitle": "Projektit | TaskNebula",
@@ -4029,6 +4034,7 @@
     "descriptionPlaceholder": "Lyhyt projektin kuvaus",
     "cancel": "Peruuta",
     "creating": "Luodaan...",
+    "createProjectFailed": "Projektia ei voitu luoda. Tarkista tiedot ja yritä uudelleen.",
     "breadcrumb": "Murupolku",
     "sections": "Projektin osiot",
     "tabViews": "Näkymät",
@@ -4101,7 +4107,7 @@
     "completeSprintTooltip": "Päätä tämä sprintti. Keskeneräiset työt siirtyvät työjonoon.",
     "sprintBurndown": "Sprintin palamiskäyrä",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
+    "projectInviteRequiredDescription": "Pyydä ylläpitäjää kutsumaan sinut projektiin tai antamaan sinulle oikeus luoda projekteja."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4663,7 +4669,7 @@
       "removeProject": "Poista {name}",
       "projectRole": "Projektirooli",
       "sendInvitation": "Lähetä kutsu",
-      "viewOnly": "Vain katseluoikeus. Vain omistajat ja ylläpitäjät voivat hallinnoida jäseniä.",
+      "viewOnly": "Vain katselu. Jäsenten hallinta vaatii asianmukaiset jäsenkäyttöoikeudet.",
       "noMembers": "Ei vielä jäseniä.",
       "inviteFirst": "Kutsu ensimmäinen jäsen",
       "invited": "Kutsuttu",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "Tiedot",
       "detailsHeading": "Työtilan tiedot",
       "detailsSubtitle": "Nimi, verkkotunnus ja brändin tiedot, joita käytetään koko työtilassa.",
-      "manageRestricted": "Vain omistajat ja ylläpitäjät voivat päivittää organisaation asetuksia.",
+      "manageRestricted": "Organisaatioasetusten päivittäminen vaatii organisaatioasetusten käyttöoikeuden.",
       "logo": "Logo",
       "slug": "Työtilan tunnus",
       "slugHint": "Pääylläpitäjät voivat muuttaa sitä.",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "Vaarallinen alue",
       "dangerSubtitle": "Poistaa pysyvästi tämän työtilan ja kaiken sen sisällön. Vaatii omistajan oikeudet.",
       "cannotRestore": "Poistettuja organisaatioita ei voi palauttaa.",
-      "ownerOnly": "Vain omistaja",
+      "ownerOnly": "Poisto-oikeus vaaditaan",
       "plan": {
         "free": "Ilmainen",
         "starter": "Aloitus",

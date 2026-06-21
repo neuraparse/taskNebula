@@ -70,40 +70,36 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   if (success) {
     return (
       <div className="stagger space-y-6">
-        <div className="space-y-1.5 text-center">
-          <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-            {t('password_reset_title')}
-          </h1>
-          <p className="text-muted-foreground text-sm">{t('password_reset_redirecting')}</p>
+        <div className="space-y-2">
+          <h1 className="auth-carbon-heading">{t('password_reset_title')}</h1>
+          <p className="auth-carbon-subtitle">{t('password_reset_redirecting')}</p>
         </div>
 
-        <div className="flex items-center justify-center py-2">
-          <div
-            className="border-foreground h-5 w-5 animate-spin rounded-full border-2 border-t-transparent"
-            aria-label={t('redirecting')}
-          />
+        <div className="flex items-center py-2">
+          <div className="auth-carbon-spinner" aria-label={t('redirecting')} />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="stagger space-y-6">
+    <div className="stagger space-y-7">
       {/* Header */}
-      <div className="space-y-1.5 text-center">
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          {t('reset_password_title')}
-        </h1>
-        <p className="text-muted-foreground text-sm">{t('reset_password_subtitle')}</p>
+      <div className="space-y-2">
+        <h1 className="auth-carbon-heading">{t('reset_password_title')}</h1>
+        <p className="auth-carbon-subtitle">{t('reset_password_subtitle')}</p>
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="newPassword">{t('new_password_label')}</Label>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="space-y-2">
+          <Label htmlFor="newPassword" className="auth-carbon-label">
+            {t('new_password_label')}
+          </Label>
           <Input
             id="newPassword"
             type="password"
+            className="auth-carbon-input"
             placeholder={t('new_password_placeholder')}
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
@@ -111,14 +107,17 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
             autoComplete="new-password"
             minLength={8}
           />
-          <p className="text-muted-foreground text-xs">{t('password_hint')}</p>
+          <p className="text-xs text-[#525252]">{t('password_hint')}</p>
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="confirmPassword">{t('confirm_password_label')}</Label>
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword" className="auth-carbon-label">
+            {t('confirm_password_label')}
+          </Label>
           <Input
             id="confirmPassword"
             type="password"
+            className="auth-carbon-input"
             placeholder={t('confirm_password_placeholder')}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -129,28 +128,23 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
         </div>
 
         {error && (
-          <div className="panel-danger animate-alert-in text-sm" role="alert">
+          <div
+            className="auth-carbon-alert animate-alert-in border border-[#ffd7d9] bg-[#fff1f1] text-sm text-[#a2191f]"
+            role="alert"
+          >
             {error}
           </div>
         )}
 
-        <Button
-          type="submit"
-          className="ease-snap w-full transition-all duration-150"
-          size="lg"
-          disabled={loading}
-        >
+        <Button type="submit" className="auth-carbon-primary w-full" size="lg" disabled={loading}>
           {loading ? t('resetting') : t('reset_password_submit')}
         </Button>
       </form>
 
       {/* Back to Sign In */}
-      <p className="text-muted-foreground text-center text-sm">
+      <p className="text-sm text-[#525252]">
         {t('remember_password')}{' '}
-        <Link
-          href="/auth/signin"
-          className="text-foreground hover:text-primary ease-snap font-medium transition-colors duration-150"
-        >
+        <Link href="/auth/signin" className="auth-carbon-link">
           {t('signin')}
         </Link>
       </p>

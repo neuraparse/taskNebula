@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
+import { AuthShell } from '@/components/auth/auth-shell';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,53 +47,22 @@ export default async function VerifyEmailPage({
     : null;
 
   return (
-    <div className="bg-background relative grid min-h-dvh place-items-center overflow-hidden px-4">
-      <div
-        aria-hidden="true"
-        className="bg-aurora pointer-events-none absolute inset-0 -z-10 opacity-60 blur-3xl"
-      />
+    <AuthShell>
+      <div className="stagger space-y-6">
+        <div className="space-y-2">
+          <h1 className="auth-carbon-heading">{copy?.title || t('verifyEmail.defaultTitle')}</h1>
+          <p className="auth-carbon-subtitle">{copy?.body || t('verifyEmail.defaultBody')}</p>
+        </div>
 
-      <div className="animate-blur-in relative w-full max-w-sm">
-        <div className="mb-5 flex justify-center">
-          <Link
-            href="/"
-            className="ease-snap focus-visible:ring-ring flex items-center gap-2 rounded-md transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-          >
-            <div className="bg-foreground flex h-7 w-7 items-center justify-center rounded-md">
-              <span className="text-background text-[11px] font-semibold tracking-tight">
-                {'TN'}
-              </span>
-            </div>
-            <span className="text-foreground text-sm font-semibold tracking-tight">
-              {'TaskNebula'}
-            </span>
+        <div className="flex flex-col gap-3">
+          <Link href="/auth/verify-request" className="auth-carbon-link text-sm">
+            {t('verifyEmail.backToPrompt')}
+          </Link>
+          <Link href="/auth/signin" className="auth-carbon-link text-sm">
+            {t('verifyEmail.goToSignIn')}
           </Link>
         </div>
-
-        <div className="surface-card rounded-lg p-6 text-center sm:p-8">
-          <h1 className="text-foreground text-lg font-semibold">
-            {copy?.title || t('verifyEmail.defaultTitle')}
-          </h1>
-          <p className="text-muted-foreground mt-2 text-sm">
-            {copy?.body || t('verifyEmail.defaultBody')}
-          </p>
-
-          <div className="mt-6 flex flex-col items-center gap-3">
-            <Link
-              href="/auth/verify-request"
-              className="text-primary text-sm font-medium hover:underline"
-            >
-              {t('verifyEmail.backToPrompt')}
-            </Link>
-            <Link
-              href="/auth/signin"
-              className="text-muted-foreground hover:text-foreground text-xs"
-            >
-              {t('verifyEmail.goToSignIn')}
-            </Link>
-          </div>
-        </div>
       </div>
-    </div>
+    </AuthShell>
   );
 }

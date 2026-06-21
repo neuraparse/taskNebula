@@ -86,6 +86,7 @@ import {
   type MicrophonePermissionState,
 } from '@/lib/chat/microphone';
 import { chatClientDebug, chatClientError } from '@/lib/chat/debug';
+import { isApiPermissionError, throwApiResponseError } from '@/lib/client-api-errors';
 import { useStoredVoicePreferences } from '@/lib/chat/voice-preferences';
 import {
   ChevronDown,
@@ -171,6 +172,7 @@ function getOrCreateVoiceClientSessionId() {
 
 export function ChatShell({ projectId }: { projectId: string }) {
   const t = useTranslations('workspaceTools');
+  const tHome = useTranslations('pagesHome');
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -433,6 +435,16 @@ export function ChatShell({ projectId }: { projectId: string }) {
     setCallError(voice.runtimeError);
   }, [isCurrentVoiceRoom, voice.runtimeError]);
 
+  const formatChatError = useCallback(
+    (errorValue: unknown, fallback: string) => {
+      if (isApiPermissionError(errorValue)) {
+        return tHome('toast_access_denied_description');
+      }
+      return errorValue instanceof Error ? errorValue.message : fallback;
+    },
+    [tHome]
+  );
+
   async function handleCreateChannel() {
     try {
       const response = await fetch(`/api/projects/${projectId}/channels`, {
@@ -443,12 +455,10 @@ export function ChatShell({ projectId }: { projectId: string }) {
           description: newChannelDescription || null,
         }),
       });
-      const payload = await response
-        .json()
-        .catch(() => ({ error: t('chat.channel.createFailed') }));
       if (!response.ok) {
-        throw new Error(payload.error || t('chat.channel.createFailed'));
+        await throwApiResponseError(response, t('chat.channel.createFailed'));
       }
+      const payload = await response.json();
 
       setIsCreateChannelOpen(false);
       setNewChannelName('');
@@ -464,8 +474,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
     } catch (mutationError) {
       toast({
         title: t('chat.channel.createFailed'),
-        description:
-          mutationError instanceof Error ? mutationError.message : t('chat.channel.createFailed'),
+        description: formatChatError(mutationError, t('chat.channel.createFailed')),
         variant: 'destructive',
       });
     }
@@ -897,7 +906,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
           <CardHeader>
             <CardTitle>{t('chat.unavailableTitle')}</CardTitle>
             <CardDescription>
-              {error instanceof Error ? error.message : t('chat.unavailableDescription')}
+              {formatChatError(error, t('chat.unavailableDescription'))}
             </CardDescription>
           </CardHeader>
         </Card>

@@ -29,6 +29,7 @@ import { createDocumentAppHref, createInternalDocumentHref } from '@/lib/docs/co
 import { normalizeDocumentPasteHtml, normalizeDocumentPasteText } from '@/lib/docs/paste';
 import type { DocumentPage, DocumentShareUpdateInput } from '@/lib/hooks/use-docs';
 import { useToast } from '@/hooks/use-toast';
+import { isApiPermissionError } from '@/lib/client-api-errors';
 import { cn } from '@/lib/utils';
 import {
   createDocumentEditorExtensions,
@@ -94,6 +95,7 @@ export function DocumentEditor({
   onUploadImage,
 }: DocumentEditorProps) {
   const t = useTranslations('collab');
+  const tHome = useTranslations('pagesHome');
   const { toast } = useToast();
   const [title, setTitle] = useState(page.title);
   const [isDirty, setIsDirty] = useState(false);
@@ -141,6 +143,16 @@ export function DocumentEditor({
   const filteredSlashCommandsRef = useRef<SlashCommand[]>([]);
   const deferredLinkSearch = useDeferredValue(linkSearch);
 
+  const formatEditorError = useCallback(
+    (error: unknown, fallback: string) => {
+      if (isApiPermissionError(error)) {
+        return tHome('toast_access_denied_description');
+      }
+      return error instanceof Error ? error.message : fallback;
+    },
+    [tHome]
+  );
+
   // Stable refs for callbacks that otherwise would need to capture rendering-time values.
   const canEditRef = useRef(canEdit);
   const onUploadImageRef = useRef(onUploadImage);
@@ -180,12 +192,12 @@ export function DocumentEditor({
       } catch (error) {
         toast({
           title: t('editor.toast.imageUploadFailed'),
-          description: error instanceof Error ? error.message : t('common.somethingWrong'),
+          description: formatEditorError(error, t('common.somethingWrong')),
           variant: 'destructive',
         });
       }
     },
-    [t, toast]
+    [formatEditorError, t, toast]
   );
 
   useEffect(() => {
@@ -744,7 +756,7 @@ export function DocumentEditor({
     } catch (error) {
       toast({
         title: t('editor.share.toast.sharingUpdateFailed'),
-        description: error instanceof Error ? error.message : t('common.somethingWrong'),
+        description: formatEditorError(error, t('common.somethingWrong')),
         variant: 'destructive',
       });
     } finally {

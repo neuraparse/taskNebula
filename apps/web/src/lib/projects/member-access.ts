@@ -1,4 +1,12 @@
-import { db, schema, eq, and, ROLE_DEFAULT_PERMISSIONS, type ProjectRole } from '@tasknebula/db';
+import {
+  db,
+  schema,
+  eq,
+  and,
+  ROLE_DEFAULT_PERMISSIONS,
+  hasPermission as roleHasPermission,
+  type ProjectRole,
+} from '@tasknebula/db';
 
 export async function canManageProjectMembers(userId: string, projectId: string): Promise<boolean> {
   const user = await db.query.users.findFirst({
@@ -21,7 +29,7 @@ export async function canManageProjectMembers(userId: string, projectId: string)
     ),
     columns: { role: true },
   });
-  if (orgMember?.role === 'owner' || orgMember?.role === 'admin') return true;
+  if (roleHasPermission(orgMember?.role || '', 'project:manage')) return true;
 
   const projectMember = await db.query.projectMembers.findFirst({
     where: and(

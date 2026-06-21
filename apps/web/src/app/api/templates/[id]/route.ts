@@ -28,10 +28,7 @@ async function loadTemplate(id: string) {
 }
 
 // GET /api/templates/[id]
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -51,11 +48,8 @@ export async function GET(
   return NextResponse.json(template);
 }
 
-// PATCH /api/templates/[id] — admin only.
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+// PATCH /api/templates/[id] — requires template administration permission.
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -70,7 +64,7 @@ export async function PATCH(
   const authz = await getTemplateAuthz(session.user.id, template.organizationId);
   if (!authz.canAdminister) {
     return NextResponse.json(
-      { error: 'Only organization owners or admins can edit templates.' },
+      { error: 'Editing templates requires organization settings permission.' },
       { status: 403 }
     );
   }
@@ -103,14 +97,11 @@ export async function PATCH(
       );
     }
     console.error('[api/templates/:id] PATCH failed', error);
-    return NextResponse.json(
-      { error: 'Failed to update template' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to update template' }, { status: 500 });
   }
 }
 
-// DELETE /api/templates/[id] — admin only.
+// DELETE /api/templates/[id] — requires template administration permission.
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -129,7 +120,7 @@ export async function DELETE(
   const authz = await getTemplateAuthz(session.user.id, template.organizationId);
   if (!authz.canAdminister) {
     return NextResponse.json(
-      { error: 'Only organization owners or admins can delete templates.' },
+      { error: 'Deleting templates requires organization settings permission.' },
       { status: 403 }
     );
   }

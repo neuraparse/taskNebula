@@ -1,7 +1,7 @@
-import type { ReactNode } from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ChatShell, VoiceJoinSetupPanel } from '../chat-shell';
+import { ApiResponseError } from '@/lib/client-api-errors';
 
 // ChatShell and VoiceJoinSetupPanel fire fire-and-forget async microphone-probe
 // effects (refreshMicrophoneEnvironment) from their mount-time useEffect. Those
@@ -62,8 +62,49 @@ let liveCallsData: Array<Record<string, unknown>> = [];
 let startSessionError: Error | null = null;
 let conversationMessagesData: Array<Record<string, unknown>> = [];
 let conversationHasMore = false;
+let bootstrapError: Error | null = null;
 let setVoiceRuntimeErrorRef: ((message: string | null) => void) | null = null;
 const originalUserAgent = window.navigator.userAgent;
+
+function buildBootstrapData() {
+  return {
+    project: { id: 'project-1', key: 'WEB', name: 'Website Redesign' },
+    effectiveSettings: {
+      enabled: true,
+      voiceEnabled: true,
+      issueThreadsEnabled: true,
+      documentThreadsEnabled: true,
+      attachmentsEnabled: true,
+      unreadTrackingEnabled: true,
+    },
+    permissions: {
+      canBrowseProject: true,
+      canAdministerProject: true,
+      canBrowseChat: true,
+      canCreateChannels: true,
+      canPostMessages: true,
+      canModerateMessages: true,
+      canStartCalls: true,
+      canManageCalls: true,
+    },
+    channels: [
+      {
+        id: 'channel-1',
+        name: 'general',
+        slug: 'general',
+        description: 'Team updates',
+        roomId: 'room-1',
+        unreadCount: 2,
+        participantCount: 1,
+        lastMessage: null,
+        activeCall: null,
+      },
+    ],
+    recentDiscussions: [],
+    activeCalls: [],
+    lastActiveRoomId: 'room-1',
+  };
+}
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ replace }),
@@ -167,45 +208,9 @@ jest.mock('livekit-client', () => ({
 
 jest.mock('@/lib/hooks/use-chat', () => ({
   useProjectChatBootstrap: () => ({
-    data: {
-      project: { id: 'project-1', key: 'WEB', name: 'Website Redesign' },
-      effectiveSettings: {
-        enabled: true,
-        voiceEnabled: true,
-        issueThreadsEnabled: true,
-        documentThreadsEnabled: true,
-        attachmentsEnabled: true,
-        unreadTrackingEnabled: true,
-      },
-      permissions: {
-        canBrowseProject: true,
-        canAdministerProject: true,
-        canBrowseChat: true,
-        canCreateChannels: true,
-        canPostMessages: true,
-        canModerateMessages: true,
-        canStartCalls: true,
-        canManageCalls: true,
-      },
-      channels: [
-        {
-          id: 'channel-1',
-          name: 'general',
-          slug: 'general',
-          description: 'Team updates',
-          roomId: 'room-1',
-          unreadCount: 2,
-          participantCount: 1,
-          lastMessage: null,
-          activeCall: null,
-        },
-      ],
-      recentDiscussions: [],
-      activeCalls: [],
-      lastActiveRoomId: 'room-1',
-    },
+    data: bootstrapError ? undefined : buildBootstrapData(),
     isLoading: false,
-    error: null,
+    error: bootstrapError,
     refetch: jest.fn(),
   }),
   useConversationMessages: () => ({
@@ -394,6 +399,7 @@ describe('ChatShell', () => {
     currentTrackVolume = 0.04;
     liveCallsData = [];
     startSessionError = null;
+    bootstrapError = null;
     conversationHasMore = false;
     setVoiceRuntimeErrorRef = null;
     conversationMessagesData = [
@@ -452,6 +458,17 @@ describe('ChatShell', () => {
     expect(screen.getByText('Latest release plan is ready.')).toBeInTheDocument();
     expect(screen.queryByText('Room details')).not.toBeInTheDocument();
     expect(screen.queryByText('Files')).not.toBeInTheDocument();
+  });
+
+  it('shows a localized access message when project chat bootstrap is denied', () => {
+    bootstrapError = new ApiResponseError('You do not have permission to view project chat.', 403);
+
+    render(<ChatShell projectId="project-1" />);
+
+    expect(screen.getByText("You don't have permission to view that page.")).toBeInTheDocument();
+    expect(
+      screen.queryByText('You do not have permission to view project chat.')
+    ).not.toBeInTheDocument();
   });
 
   it('opens the voice setup panel first and then joins the inline voice dock', async () => {
@@ -957,7 +974,6 @@ describe('ChatShell', () => {
   });
 
   it('shows a clear audio error if microphone access fails while joining', async () => {
-    const user = userEvent.setup();
     startSessionError = new Error('Permission denied');
 
     render(<ChatShell projectId="project-1" />);

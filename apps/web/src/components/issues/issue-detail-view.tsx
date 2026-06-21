@@ -14,6 +14,7 @@ import { TimeTrackingPanel } from './time-tracking-panel';
 import { useIssue, useDeleteIssue, type Issue } from '@/lib/hooks/use-issues';
 import { useAiCapability } from '@/lib/hooks/use-ai-capability';
 import { useToast } from '@/hooks/use-toast';
+import { isApiPermissionError } from '@/lib/client-api-errors';
 import { FileText, AlertCircle, ChevronDown, Clock, Sparkles } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { ViewTransition } from '@/components/ui/view-transition';
@@ -82,6 +83,7 @@ export function IssueDetailView({
   onClose?: () => void;
 }) {
   const t = useTranslations('issueDetail');
+  const tHome = useTranslations('pagesHome');
   const { data: issue, isLoading, error, refetch } = useIssue(issueId);
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -172,6 +174,9 @@ export function IssueDetailView({
   }
 
   if (error) {
+    const errorMessage = isApiPermissionError(error)
+      ? tHome('toast_access_denied_description')
+      : t('view.loadFailedHint');
     return (
       <div className="bg-background flex h-full items-center justify-center">
         <div className="animate-fade-up max-w-sm px-4 text-center">
@@ -179,7 +184,7 @@ export function IssueDetailView({
             <AlertCircle className="text-destructive h-5 w-5" />
           </div>
           <p className="text-foreground font-medium">{t('view.loadFailed')}</p>
-          <p className="text-muted-foreground mt-1 text-sm">{error.message}</p>
+          <p className="text-muted-foreground mt-1 text-sm">{errorMessage}</p>
         </div>
       </div>
     );

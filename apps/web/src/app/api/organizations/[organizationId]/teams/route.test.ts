@@ -177,10 +177,14 @@ describe('organization teamspaces route', () => {
         ])
       );
 
-    const response = await GET(new NextRequestCtor('http://localhost:3002/api/organizations/org-1/teams'), {
-      params: Promise.resolve({ organizationId: 'org-1' }),
-    });
+    const response = await GET(
+      new NextRequestCtor('http://localhost:3002/api/organizations/org-1/teams'),
+      {
+        params: Promise.resolve({ organizationId: 'org-1' }),
+      }
+    );
 
+    expect(hasPermissionMock).toHaveBeenCalledWith('org-1', 'team:view');
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       teams: [
@@ -198,6 +202,23 @@ describe('organization teamspaces route', () => {
         }),
       ],
     });
+  });
+
+  it('rejects teamspace listing when the user lacks team:view', async () => {
+    authMock.mockResolvedValue({ user: { id: 'user-1' } });
+    hasPermissionMock.mockResolvedValue(false);
+
+    const response = await GET(
+      new NextRequestCtor('http://localhost:3002/api/organizations/org-1/teams'),
+      {
+        params: Promise.resolve({ organizationId: 'org-1' }),
+      }
+    );
+
+    expect(hasPermissionMock).toHaveBeenCalledWith('org-1', 'team:view');
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({ error: 'Insufficient permissions' });
+    expect(dbSelectMock).not.toHaveBeenCalled();
   });
 
   it('creates a new teamspace and returns the serialized payload', async () => {

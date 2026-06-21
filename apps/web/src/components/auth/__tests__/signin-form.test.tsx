@@ -54,6 +54,44 @@ describe('SignInForm', () => {
     expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
   });
 
+  it('hides OAuth buttons when no login provider is configured', async () => {
+    render(<SignInForm />);
+
+    expect(await screen.findByLabelText(/email address/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /continue with github/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /continue with google/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/or continue with email/i)).not.toBeInTheDocument();
+  });
+
+  it('renders only configured OAuth providers and keeps the project invite callback', async () => {
+    searchParamsValue = new URLSearchParams('projectInviteToken=invite-token-1');
+    fetchMock.mockImplementation((url: string) => {
+      if (url === '/api/setup') {
+        return Promise.resolve({ ok: true, json: async () => ({ setupRequired: false }) });
+      }
+      if (url === '/api/auth/oauth-providers') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ providers: { github: true, google: false } }),
+        });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({}) });
+    });
+
+    const user = userEvent.setup();
+    render(<SignInForm />);
+
+    const githubButton = await screen.findByRole('button', { name: /continue with github/i });
+    expect(screen.queryByRole('button', { name: /continue with google/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/or continue with email/i)).toBeInTheDocument();
+
+    await user.click(githubButton);
+
+    expect(signInMock).toHaveBeenCalledWith('github', {
+      callbackUrl: '/join/project/invite-token-1',
+    });
+  });
+
   it('calls next-auth signIn with credentials on valid submit', async () => {
     signInMock.mockResolvedValue({ ok: true, error: null });
     const user = userEvent.setup();
@@ -80,9 +118,7 @@ describe('SignInForm', () => {
     searchParamsValue = new URLSearchParams('verified=1');
     render(<SignInForm />);
 
-    expect(
-      await screen.findByText(/email verified\. sign in to continue\./i)
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/email verified\. sign in to continue\./i)).toBeInTheDocument();
   });
 
   it('shows an error message when signIn returns an error', async () => {

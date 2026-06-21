@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { isApiPermissionError, throwApiResponseError } from '@/lib/client-api-errors';
 import { Plus, Shield, Trash2, Edit, Star, Link2 } from 'lucide-react';
 
 interface PermissionScheme {
@@ -73,8 +74,12 @@ export function PermissionSchemeManager({
   const [editingScheme, setEditingScheme] = useState<PermissionScheme | null>(null);
   const [editForm, setEditForm] = useState({ name: '', description: '', isDefault: false });
   const t = useTranslations('projectConfig');
+  const tSettings = useTranslations('settings');
   const tActions = useTranslations('actions');
   const { toast } = useToast();
+
+  const getErrorDescription = (error: unknown, fallback: string) =>
+    isApiPermissionError(error) ? tSettings('error_no_permission') : fallback;
 
   useEffect(() => {
     void fetchSchemes();
@@ -86,7 +91,7 @@ export function PermissionSchemeManager({
     try {
       const res = await fetch(`/api/permission-schemes?organizationId=${organizationId}`);
       if (!res.ok) {
-        throw new Error(t('psm_load_failed_description'));
+        await throwApiResponseError(res);
       }
 
       const data = await res.json();
@@ -126,8 +131,7 @@ export function PermissionSchemeManager({
       });
 
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: t('psm_create_failed') }));
-        throw new Error(error.error || t('psm_create_failed'));
+        await throwApiResponseError(res);
       }
 
       toast({ title: t('psm_created_title'), description: t('psm_created_description') });
@@ -137,7 +141,7 @@ export function PermissionSchemeManager({
     } catch (error) {
       toast({
         title: t('psm_create_failed_title'),
-        description: error instanceof Error ? error.message : t('psm_create_failed'),
+        description: getErrorDescription(error, t('psm_create_failed')),
         variant: 'destructive',
       });
     }
@@ -160,8 +164,7 @@ export function PermissionSchemeManager({
       });
 
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: t('psm_update_failed') }));
-        throw new Error(error.error || t('psm_update_failed'));
+        await throwApiResponseError(res);
       }
 
       toast({ title: t('psm_updated_title'), description: t('psm_updated_description') });
@@ -171,7 +174,7 @@ export function PermissionSchemeManager({
     } catch (error) {
       toast({
         title: t('psm_update_failed_title'),
-        description: error instanceof Error ? error.message : t('psm_update_failed'),
+        description: getErrorDescription(error, t('psm_update_failed')),
         variant: 'destructive',
       });
     }
@@ -186,7 +189,7 @@ export function PermissionSchemeManager({
       });
 
       if (!res.ok) {
-        throw new Error(t('psm_update_failed'));
+        await throwApiResponseError(res);
       }
 
       toast({
@@ -197,7 +200,7 @@ export function PermissionSchemeManager({
     } catch (error) {
       toast({
         title: t('psm_update_failed_title'),
-        description: error instanceof Error ? error.message : t('psm_update_failed'),
+        description: getErrorDescription(error, t('psm_update_failed')),
         variant: 'destructive',
       });
     }
@@ -220,8 +223,7 @@ export function PermissionSchemeManager({
       });
 
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: t('psm_assign_failed') }));
-        throw new Error(error.error || t('psm_assign_failed'));
+        await throwApiResponseError(res);
       }
 
       const nextState = await res.json();
@@ -237,7 +239,7 @@ export function PermissionSchemeManager({
     } catch (error) {
       toast({
         title: t('psm_assign_failed_title'),
-        description: error instanceof Error ? error.message : t('psm_assign_failed'),
+        description: getErrorDescription(error, t('psm_assign_failed')),
         variant: 'destructive',
       });
       await fetchSchemes();
@@ -252,8 +254,7 @@ export function PermissionSchemeManager({
     try {
       const res = await fetch(`/api/permission-schemes/${schemeId}`, { method: 'DELETE' });
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: t('psm_delete_failed') }));
-        throw new Error(error.error || t('psm_delete_failed'));
+        await throwApiResponseError(res);
       }
 
       toast({ title: t('psm_deleted_title'), description: t('psm_deleted_description') });
@@ -261,7 +262,7 @@ export function PermissionSchemeManager({
     } catch (error) {
       toast({
         title: t('psm_delete_failed_title'),
-        description: error instanceof Error ? error.message : t('psm_delete_failed'),
+        description: getErrorDescription(error, t('psm_delete_failed')),
         variant: 'destructive',
       });
     }

@@ -53,8 +53,8 @@ export function EpicPicker({
   const { data, isLoading } = useIssues({ projectId, type: 'epic' });
   const createEpic = useCreateEpic();
 
-  // POST requires issue-create permission — hide the create row from members
-  // who cannot create issues (super admin / org owner bypass like other pickers).
+  // POST requires issue-create permission; organization-level overrides are
+  // included in the project permissions payload.
   const { permissions } = useProjectPermissions(projectId);
   const canCreate =
     permissions.isSuperAdmin || permissions.isOrgOwner || permissions.canCreateIssues;

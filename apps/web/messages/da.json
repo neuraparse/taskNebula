@@ -43,7 +43,8 @@
     "realtime_health": "Realtidstilstand",
     "audit_logs": "Revisionslog",
     "system": "System",
-    "updates": "Opdateringer"
+    "updates": "Opdateringer",
+    "ai_transparency": "AI-transparens"
   },
   "actions": {
     "create_issue": "Opret opgave",
@@ -102,6 +103,7 @@
     "skipToContent": "Spring til indhold"
   },
   "settings": {
+    "error_no_permission": "Du har ikke tilladelse til at administrere disse indstillinger.",
     "labels": {
       "kicker": "Etiketter",
       "title": "Etiketter",
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "Kunne ikke indlæse opgave",
       "notFound": "Opgave ikke fundet",
-      "notFoundHint": "Den opgave, du leder efter, findes ikke."
+      "notFoundHint": "Den opgave, du leder efter, findes ikke.",
+      "loadFailedHint": "Opdater siden, eller prøv igen om lidt."
     }
   },
   "adminUpdates": {
@@ -1480,8 +1483,8 @@
     "planning_kicker": "Planlægning",
     "teamspaces_heading": "Teamområder",
     "teamspaces_subtitle": "Planlægningsbaner over de enkelte projekter, uden at opdele organisationen.",
-    "owner_admin_only": "Kun ejer eller administrator",
-    "browse_only_notice": "Kun gennemsyn — ejere og administratorer kan ændre strukturen.",
+    "owner_admin_only": "Tilladelse kræves",
+    "browse_only_notice": "Kun visning — ændring af strukturen kræver tilladelse til organisationsindstillinger.",
     "loading_teamspaces": "Indlæser teamområder …",
     "manage_members": "Administrer medlemmer",
     "members_label": "medlemmer",
@@ -2104,7 +2107,7 @@
       "none": "Ingen",
       "updated": "Opdateret",
       "server_managed": "Serveradministreret",
-      "read_only_notice": "Skrivebeskyttet adgang — ejere og administratorer kan opdatere AI-politik.",
+      "read_only_notice": "Skrivebeskyttet adgang — opdatering af AI-politikken kræver tilladelse til organisationsindstillinger.",
       "your_model_profiles": "Dine modelprofiler",
       "your_model_profiles_desc": "Brugerdefinerede kombinationer af model + finjustering gemt til genbrug. Enhver profil, der gemmes her, vises også i model-rullelisten i Hurtig opsætning ovenfor. Brug dette til at fastgøre en model med specifikke indstillinger for temperatur / tokens / ræsonnementsindsats, eller til at prøve en model, der ikke findes i det indbyggede katalog.",
       "create_profile": "Opret profil",
@@ -2772,6 +2775,7 @@
     "loading_modules": "Indlæser moduler ...",
     "no_modules_filter": "Ingen moduler matcher dette filter.",
     "no_modules_empty": "Ingen moduler endnu. Opret et for at gruppere relateret arbejde.",
+    "no_modules_empty_readonly": "Der er endnu ikke oprettet moduler for dette projekt.",
     "create_module": "Opret modul",
     "module_dialog_desc": "Gruppér relateret arbejde i et funktionsområde eller miniprojekt.",
     "module_name_placeholder": "f.eks. Auth, Fakturering, Onboarding",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "Ingen opdateringer endnu.",
     "initiative_detail_anonymous": "Anonym",
     "initiative_detail_blockers_label": "Hindringer:",
-    "initiative_detail_next_label": "Næste:"
+    "initiative_detail_next_label": "Næste:",
+    "initiative_detail_error_load": "Initiativet kunne ikke indlæses."
   },
   "pagesProjects": {
     "metaTitle": "Projekter | TaskNebula",
@@ -4029,6 +4034,7 @@
     "descriptionPlaceholder": "Kort projektbeskrivelse",
     "cancel": "Annuller",
     "creating": "Opretter ...",
+    "createProjectFailed": "Projektet kunne ikke oprettes. Tjek oplysningerne, og prøv igen.",
     "breadcrumb": "Brødkrumme",
     "sections": "Projektsektioner",
     "tabViews": "Visninger",
@@ -4101,7 +4107,7 @@
     "completeSprintTooltip": "Afslut dette sprint. Ufærdige opgaver flyttes til backloggen.",
     "sprintBurndown": "Sprint-burndown",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
+    "projectInviteRequiredDescription": "Bed en administrator om at invitere dig til et projekt eller give dig tilladelse til at oprette projekter."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4663,7 +4669,7 @@
       "removeProject": "Fjern {name}",
       "projectRole": "Projektrolle",
       "sendInvitation": "Send invitation",
-      "viewOnly": "Kun visningsadgang. Kun ejere og administratorer kan administrere medlemmer.",
+      "viewOnly": "Kun visning. Medlemsadministration kræver de relevante medlemstilladelser.",
       "noMembers": "Ingen medlemmer endnu.",
       "inviteFirst": "Inviter dit første medlem",
       "invited": "Inviteret",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "Detaljer",
       "detailsHeading": "Detaljer om arbejdsområde",
       "detailsSubtitle": "Navn, domæne og brandoplysninger, der bruges på tværs af arbejdsområdet.",
-      "manageRestricted": "Kun ejere og administratorer kan opdatere organisationsindstillinger.",
+      "manageRestricted": "Opdatering af organisationsindstillinger kræver tilladelse til organisationsindstillinger.",
       "logo": "Logo",
       "slug": "Slug for arbejdsområde",
       "slugHint": "Superadministratorer kan ændre det.",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "Farezone",
       "dangerSubtitle": "Fjerner permanent dette arbejdsområde og alt under det. Kræver ejeradgang.",
       "cannotRestore": "Slettede organisationer kan ikke gendannes.",
-      "ownerOnly": "Kun ejer",
+      "ownerOnly": "Slettetilladelse kræves",
       "plan": {
         "free": "Gratis",
         "starter": "Starter",

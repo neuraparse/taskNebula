@@ -334,4 +334,53 @@ describe('ProjectViewsShell', () => {
       },
     });
   });
+
+  it('shows a localized permission message when saving a view is denied', async () => {
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = input.toString();
+
+      if (
+        url === '/api/projects/project-1/views?teamId=team-1' &&
+        (!init || !init.method || init.method === 'GET')
+      ) {
+        return {
+          ok: true,
+          json: async () => ({
+            viewerId: 'user-1',
+            project: {
+              id: 'project-1',
+              key: 'API',
+              name: 'API Platform',
+              teamId: 'team-1',
+            },
+            views: [],
+          }),
+        } as Response;
+      }
+
+      if (url === '/api/projects/project-1/views' && init?.method === 'POST') {
+        return {
+          ok: false,
+          status: 403,
+          json: async () => ({ error: 'Forbidden' }),
+        } as Response;
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    });
+
+    const user = userEvent.setup();
+    renderWithQueryClient(<ProjectViewsShell projectId="project-1" />);
+
+    await screen.findByText('Views');
+
+    await user.click(screen.getByRole('button', { name: /Save view/i }));
+    await user.type(screen.getByLabelText('View name'), 'Restricted view');
+    await user.click(screen.getByRole('button', { name: /^Save view$/i }));
+
+    expect(
+      await screen.findByText("You don't have permission to view that page.")
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/^Forbidden$/i)).not.toBeInTheDocument();
+  });
 });

@@ -32,10 +32,7 @@ export async function POST(
 
   const { source } = await params;
   if (!isImportSource(source)) {
-    return NextResponse.json(
-      { error: `Unknown import source: ${source}` },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: `Unknown import source: ${source}` }, { status: 400 });
   }
 
   let body: Record<string, unknown>;
@@ -45,15 +42,10 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const workspaceId =
-    typeof body.workspaceId === 'string' ? body.workspaceId : null;
-  const projectId =
-    typeof body.projectId === 'string' ? body.projectId : null;
+  const workspaceId = typeof body.workspaceId === 'string' ? body.workspaceId : null;
+  const projectId = typeof body.projectId === 'string' ? body.projectId : null;
   if (!workspaceId || !projectId) {
-    return NextResponse.json(
-      { error: 'workspaceId and projectId are required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'workspaceId and projectId are required' }, { status: 400 });
   }
 
   const [membership] = await db
@@ -62,7 +54,8 @@ export async function POST(
     .where(
       and(
         eq(organizationMembers.userId, session.user.id),
-        eq(organizationMembers.organizationId, workspaceId)
+        eq(organizationMembers.organizationId, workspaceId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
@@ -91,10 +84,7 @@ export async function POST(
     .returning();
 
   if (!job) {
-    return NextResponse.json(
-      { error: 'Failed to create import job' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to create import job' }, { status: 500 });
   }
 
   // Fire-and-forget. When a real queue lands (BullMQ / pg-boss), replace

@@ -39,6 +39,7 @@ import {
   projectMembers,
   projects,
   ROLE_DEFAULT_PERMISSIONS,
+  hasPermission as roleHasPermission,
   users,
   type ProjectRole,
 } from '@tasknebula/db';
@@ -92,11 +93,12 @@ async function userCanAssign(userId: string, projectId: string): Promise<boolean
     .where(
       and(
         eq(organizationMembers.userId, userId),
-        eq(organizationMembers.organizationId, project.organizationId)
+        eq(organizationMembers.organizationId, project.organizationId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
-  if (orgMember?.role === 'owner') return true;
+  if (roleHasPermission(orgMember?.role || '', 'project:manage')) return true;
 
   const [pm] = await db
     .select()

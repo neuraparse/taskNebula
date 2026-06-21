@@ -7,6 +7,7 @@ import {
   useDocumentPages,
   useUpdateDocumentPage,
 } from '../use-docs';
+import type { ApiResponseError } from '@/lib/client-api-errors';
 
 const fetchMock = jest.fn();
 
@@ -139,6 +140,7 @@ describe('use-docs hooks', () => {
     it('throws the error message from the API when creation fails', async () => {
       fetchMock.mockResolvedValue({
         ok: false,
+        status: 409,
         json: async () => ({ error: 'Title already taken' }),
       });
 
@@ -151,6 +153,27 @@ describe('use-docs hooks', () => {
           await result.current.mutateAsync({ title: 'Dup' });
         })
       ).rejects.toThrow('Title already taken');
+    });
+
+    it('preserves API status on permission failures', async () => {
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 403,
+        json: async () => ({ error: 'You do not have permission to create pages in this space' }),
+      });
+
+      const { result } = renderHook(() => useCreateDocumentPage(), {
+        wrapper: createWrapper(createQueryClient()),
+      });
+
+      await expect(
+        act(async () => {
+          await result.current.mutateAsync({ title: 'Blocked' });
+        })
+      ).rejects.toMatchObject({
+        status: 403,
+        message: 'You do not have permission to create pages in this space',
+      } satisfies Partial<ApiResponseError>);
     });
   });
 

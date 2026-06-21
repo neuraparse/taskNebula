@@ -27,10 +27,7 @@ import { auth } from '@/auth';
 import { triageIssue } from '@/lib/agents/triage';
 import { AiDraftError } from '@/lib/ai/draft-issue';
 
-async function callerCanView(
-  userId: string,
-  projectId: string,
-): Promise<boolean> {
+async function callerCanView(userId: string, projectId: string): Promise<boolean> {
   const [user] = await db
     .select({ isSuperAdmin: users.isSuperAdmin })
     .from(users)
@@ -52,7 +49,8 @@ async function callerCanView(
       and(
         eq(organizationMembers.userId, userId),
         eq(organizationMembers.organizationId, project.organizationId),
-      ),
+        eq(organizationMembers.status, 'active')
+      )
     )
     .limit(1);
   if (orgMember) return true;
@@ -60,19 +58,14 @@ async function callerCanView(
   const [projectMember] = await db
     .select({ userId: projectMembers.userId })
     .from(projectMembers)
-    .where(
-      and(
-        eq(projectMembers.userId, userId),
-        eq(projectMembers.projectId, projectId),
-      ),
-    )
+    .where(and(eq(projectMembers.userId, userId), eq(projectMembers.projectId, projectId)))
     .limit(1);
   return Boolean(projectMember);
 }
 
 export async function POST(
   _request: NextRequest,
-  { params }: { params: Promise<{ issueId: string }> },
+  { params }: { params: Promise<{ issueId: string }> }
 ) {
   try {
     const session = await auth();
@@ -101,15 +94,18 @@ export async function POST(
       })
       .returning();
 
-    return NextResponse.json({
-      suggestion: inserted,
-      payload: suggestion,
-    }, { status: 201 });
+    return NextResponse.json(
+      {
+        suggestion: inserted,
+        payload: suggestion,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     if (error instanceof AiDraftError) {
       return NextResponse.json(
         { error: error.message, code: error.code },
-        { status: error.code === 'issue_not_found' ? 404 : 502 },
+        { status: error.code === 'issue_not_found' ? 404 : 502 }
       );
     }
     console.error('triage endpoint failed:', error);
@@ -125,7 +121,7 @@ export async function POST(
  */
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ issueId: string }> },
+  { params }: { params: Promise<{ issueId: string }> }
 ) {
   try {
     const session = await auth();
@@ -151,9 +147,6 @@ export async function GET(
     return NextResponse.json({ suggestions: rows });
   } catch (error) {
     console.error('triage list endpoint failed:', error);
-    return NextResponse.json(
-      { error: 'Failed to load triage suggestions' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Failed to load triage suggestions' }, { status: 500 });
   }
 }

@@ -9,7 +9,7 @@
  *      stashing workspace/app/bot ids in `metadata` for later API calls.
  *
  * Mirrors the GitHub callback shape — same state format (base64url JSON with
- * `{n, o, u}`), same redirect targets (`/settings?tab=integrations&...`).
+ * `{n, o, u}`), same redirect targets (`/settings/integrations?...`).
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -17,11 +17,8 @@ import { auth } from '@/auth';
 import { db, and, eq } from '@tasknebula/db';
 import { integrationConnections } from '@tasknebula/db/src/schema/integration-connections';
 import { encryptToken } from '@/lib/integrations/token-crypto';
-import {
-  SLACK_PROVIDER,
-  SLACK_STATE_COOKIE,
-  exchangeSlackCode,
-} from '@/lib/integrations/slack';
+import { hasPermission } from '@/lib/auth/permissions';
+import { SLACK_PROVIDER, SLACK_STATE_COOKIE, exchangeSlackCode } from '@/lib/integrations/slack';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,12 +45,8 @@ function decodeState(raw: string): StatePayload | null {
   return null;
 }
 
-function settingsRedirect(
-  request: NextRequest,
-  params: Record<string, string>
-): NextResponse {
-  const url = new URL('/settings', request.url);
-  url.searchParams.set('tab', 'integrations');
+function settingsRedirect(request: NextRequest, params: Record<string, string>): NextResponse {
+  const url = new URL('/settings/integrations', request.url);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   const response = NextResponse.redirect(url.toString());
   response.cookies.delete(SLACK_STATE_COOKIE);
@@ -100,6 +93,13 @@ export async function GET(request: NextRequest) {
     });
   }
 
+  if (!(await hasPermission(decoded.o, 'org:settings'))) {
+    return settingsRedirect(request, {
+      integration: SLACK_PROVIDER,
+      error: 'forbidden',
+    });
+  }
+
   let payload;
   try {
     payload = await exchangeSlackCode(code);
@@ -120,9 +120,7 @@ export async function GET(request: NextRequest) {
   }
 
   const accessTokenEnc = encryptToken(payload.access_token);
-  const refreshTokenEnc = payload.refresh_token
-    ? encryptToken(payload.refresh_token)
-    : null;
+  const refreshTokenEnc = payload.refresh_token ? encryptToken(payload.refresh_token) : null;
 
   const workspaceId = payload.team?.id || null;
   const workspaceLabel = payload.team?.name || null;

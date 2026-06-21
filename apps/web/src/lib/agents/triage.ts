@@ -29,6 +29,7 @@
 import { z } from 'zod';
 import {
   db,
+  and,
   desc,
   eq,
   inArray,
@@ -46,13 +47,7 @@ import {
   resolveProviderApiKeyFromSettings,
 } from '@/lib/agents/credentials';
 
-export const TRIAGE_PRIORITIES = [
-  'critical',
-  'high',
-  'medium',
-  'low',
-  'none',
-] as const;
+export const TRIAGE_PRIORITIES = ['critical', 'high', 'medium', 'low', 'none'] as const;
 export type TriagePriority = (typeof TRIAGE_PRIORITIES)[number];
 
 export const triageSuggestionSchema = z.object({
@@ -186,8 +181,8 @@ async function loadTriageContext(issueId: string): Promise<TriageContext | null>
     new Set(
       recent
         .flatMap((row) => (Array.isArray(row.labels) ? (row.labels as string[]) : []))
-        .filter((l): l is string => typeof l === 'string' && l.length > 0),
-    ),
+        .filter((l): l is string => typeof l === 'string' && l.length > 0)
+    )
   ).slice(0, 80);
 
   // Team taxonomy for the issue's organization.
@@ -211,13 +206,15 @@ async function loadTriageContext(issueId: string): Promise<TriageContext | null>
   const orgMemberRows = await db
     .select({ userId: organizationMembers.userId })
     .from(organizationMembers)
-    .where(eq(organizationMembers.organizationId, issue.organizationId))
+    .where(
+      and(
+        eq(organizationMembers.organizationId, issue.organizationId),
+        eq(organizationMembers.status, 'active')
+      )
+    )
     .limit(60);
   const memberIds = Array.from(
-    new Set([
-      ...projectMemberRows.map((r) => r.userId),
-      ...orgMemberRows.map((r) => r.userId),
-    ]),
+    new Set([...projectMemberRows.map((r) => r.userId), ...orgMemberRows.map((r) => r.userId)])
   ).slice(0, 30);
 
   const memberUsers = memberIds.length
@@ -285,7 +282,10 @@ function buildPrompt(context: TriageContext) {
   const teamsBlock = context.teamTaxonomy.length
     ? `Teams:\n${context.teamTaxonomy
         .slice(0, 20)
-        .map((t) => `  - ${t.id} :: ${t.name}${t.description ? ` — ${t.description.slice(0, 80)}` : ''}`)
+        .map(
+          (t) =>
+            `  - ${t.id} :: ${t.name}${t.description ? ` — ${t.description.slice(0, 80)}` : ''}`
+        )
         .join('\n')}`
     : 'Teams: (no teams defined)';
 
@@ -303,7 +303,7 @@ function buildPrompt(context: TriageContext) {
           (r) =>
             `  - ${r.key} [${r.type}/${r.priority}] ${r.title.slice(0, 90)}${
               r.labels.length ? ` ::labels=${r.labels.slice(0, 4).join(',')}` : ''
-            }`,
+            }`
         )
         .join('\n')}`
     : 'Recent issues: (none)';
@@ -311,7 +311,9 @@ function buildPrompt(context: TriageContext) {
   const user = [
     `New issue ${issue.key} (${issue.type})`,
     `Title: ${issue.title}`,
-    issue.description ? `Description:\n${issue.description.slice(0, 4000)}` : 'Description: (empty)',
+    issue.description
+      ? `Description:\n${issue.description.slice(0, 4000)}`
+      : 'Description: (empty)',
     `Current labels: ${issue.labels.join(', ') || '(none)'}`,
     `Current priority: ${issue.priority}`,
     '',
@@ -352,7 +354,7 @@ const defaultLlmClient: TriageLlmClient = {
         const detail = await response.text().catch(() => '');
         throw new AiDraftError(
           'provider_error',
-          `OpenAI returned ${response.status}: ${detail.slice(0, 200)}`,
+          `OpenAI returned ${response.status}: ${detail.slice(0, 200)}`
         );
       }
       const payload = (await response.json()) as {
@@ -380,7 +382,7 @@ const defaultLlmClient: TriageLlmClient = {
       const detail = await response.text().catch(() => '');
       throw new AiDraftError(
         'provider_error',
-        `Anthropic returned ${response.status}: ${detail.slice(0, 200)}`,
+        `Anthropic returned ${response.status}: ${detail.slice(0, 200)}`
       );
     }
     const payload = (await response.json()) as {
@@ -401,7 +403,9 @@ export function triageIssueNative(context: TriageContext): TriageSuggestionPaylo
   const issue = context.issue;
   const lower = `${issue.title} ${issue.description ?? ''}`.toLowerCase();
 
-  const priority: TriagePriority = /\b(urgent|p0|critical|down|outage|payment|sev[- ]?1)\b/.test(lower)
+  const priority: TriagePriority = /\b(urgent|p0|critical|down|outage|payment|sev[- ]?1)\b/.test(
+    lower
+  )
     ? 'critical'
     : /\b(important|p1|regression|security)\b/.test(lower)
       ? 'high'
@@ -422,7 +426,8 @@ export function triageIssueNative(context: TriageContext): TriageSuggestionPaylo
     suggested_assignee_id: null,
     team_id: null,
     confidence: 20, // intentionally low — heuristic guess
-    rationale: 'Heuristic triage (no LLM credential resolved); priority/labels inferred from title+description keywords.',
+    rationale:
+      'Heuristic triage (no LLM credential resolved); priority/labels inferred from title+description keywords.',
   };
 }
 
@@ -446,7 +451,7 @@ function parseTriageOutput(raw: string, context: TriageContext): TriageSuggestio
       `Triage output failed validation: ${result.error.errors
         .slice(0, 3)
         .map((e) => e.path.join('.') + ' ' + e.message)
-        .join('; ')}`,
+        .join('; ')}`
     );
   }
   const out = result.data;
@@ -466,8 +471,8 @@ function parseTriageOutput(raw: string, context: TriageContext): TriageSuggestio
     new Set(
       out.labels
         .map((l) => l.toLowerCase().trim().replace(/\s+/g, '-'))
-        .filter((l) => l.length > 0 && l.length <= 40),
-    ),
+        .filter((l) => l.length > 0 && l.length <= 40)
+    )
   ).slice(0, 8);
   return out;
 }
@@ -476,7 +481,7 @@ function parseTriageOutput(raw: string, context: TriageContext): TriageSuggestio
 
 export async function triageIssue(
   issueId: string,
-  options: TriageOptions = {},
+  options: TriageOptions = {}
 ): Promise<{ context: TriageContext; suggestion: TriageSuggestionPayload }> {
   const context = options.loadContextOverride ?? (await loadTriageContext(issueId));
   if (!context) {
@@ -485,7 +490,7 @@ export async function triageIssue(
 
   // Resolve provider + credentials from the issue's organization.
   const settings = await getOrganizationSettingsForAgentCredentials(
-    context.issue.organizationId,
+    context.issue.organizationId
   ).catch(() => null);
 
   let provider: 'native' | 'openai' | 'anthropic' = options.provider ?? 'anthropic';
@@ -511,8 +516,7 @@ export async function triageIssue(
   }
 
   const model =
-    options.model ??
-    (provider === 'anthropic' ? DEFAULT_HAIKU_MODEL : DEFAULT_OPENAI_MODEL);
+    options.model ?? (provider === 'anthropic' ? DEFAULT_HAIKU_MODEL : DEFAULT_OPENAI_MODEL);
   const llm = options.llmClient ?? defaultLlmClient;
   const { system, user } = buildPrompt(context);
   const raw = await llm.generate({ system, user, provider, apiKey, model });

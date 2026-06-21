@@ -1,9 +1,16 @@
-import { and, db, eq, organizationMembers, users } from '@tasknebula/db';
+import {
+  and,
+  db,
+  eq,
+  hasPermission as roleHasPermission,
+  organizationMembers,
+  users,
+} from '@tasknebula/db';
 
 /**
  * Shared helper: is the calling user allowed to administer templates in the
- * given organization? Org owners, org admins, and super admins may create /
- * edit / delete. Any org member may list + use.
+ * given organization? Uses the org:settings permission. Any org member may
+ * list + use.
  */
 export async function getTemplateAuthz(userId: string, organizationId: string | null) {
   const [user] = await db
@@ -31,6 +38,6 @@ export async function getTemplateAuthz(userId: string, organizationId: string | 
     .limit(1);
 
   const isMember = Boolean(member);
-  const canAdminister = isSuperAdmin || member?.role === 'owner' || member?.role === 'admin';
+  const canAdminister = roleHasPermission(member?.role || '', 'org:settings', isSuperAdmin);
   return { isSuperAdmin, isMember: isMember || isSuperAdmin, canAdminister };
 }

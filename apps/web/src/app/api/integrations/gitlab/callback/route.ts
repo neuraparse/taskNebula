@@ -3,7 +3,7 @@
  *
  * Validates state cookie, exchanges the authorization code for tokens at
  * GitLab, stores the encrypted tokens in integration_connections
- * (provider = 'gitlab'), and redirects back to the settings integrations tab.
+ * (provider = 'gitlab'), and redirects back to the settings integrations page.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -43,10 +43,11 @@ function decodeState(raw: string): StatePayload | null {
 }
 
 function settingsRedirect(request: NextRequest, params: Record<string, string>): NextResponse {
-  const url = new URL('/settings', request.url);
-  url.searchParams.set('tab', 'integrations');
+  const url = new URL('/settings/integrations', request.url);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-  return NextResponse.redirect(url.toString());
+  const response = NextResponse.redirect(url.toString());
+  response.cookies.delete(STATE_COOKIE);
+  return response;
 }
 
 export async function GET(request: NextRequest) {
@@ -75,6 +76,10 @@ export async function GET(request: NextRequest) {
   const decoded = decodeState(state);
   if (!decoded || decoded.u !== session.user.id) {
     return settingsRedirect(request, { integration: 'gitlab', error: 'invalid_state' });
+  }
+
+  if (!(await hasPermission(decoded.o, 'org:settings'))) {
+    return settingsRedirect(request, { integration: 'gitlab', error: 'forbidden' });
   }
 
   const clientId = process.env.GITLAB_CLIENT_ID;
@@ -154,10 +159,6 @@ export async function GET(request: NextRequest) {
   const now = new Date();
   const organizationId = decoded.o;
 
-  if (!(await hasPermission(organizationId, 'org:settings'))) {
-    return settingsRedirect(request, { integration: 'gitlab', error: 'forbidden' });
-  }
-
   try {
     // Upsert: one connection per (organizationId, provider). If another
     // agent's schema includes a unique constraint this will collapse; if
@@ -208,7 +209,5 @@ export async function GET(request: NextRequest) {
     return settingsRedirect(request, { integration: 'gitlab', error: 'persist_failed' });
   }
 
-  const response = settingsRedirect(request, { integration: 'gitlab', connected: '1' });
-  response.cookies.delete(STATE_COOKIE);
-  return response;
+  return settingsRedirect(request, { integration: 'gitlab', connected: '1' });
 }

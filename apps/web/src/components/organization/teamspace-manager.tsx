@@ -31,6 +31,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import { isApiPermissionError } from '@/lib/client-api-errors';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useOrganizationMembers } from '@/lib/hooks/use-members';
 import {
@@ -100,9 +101,10 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const t = useTranslations('projectsPages');
+  const tSettings = useTranslations('settings');
   const { currentTeamId, setCurrentTeam } = useOrganization();
   const { data: teamspaces = [], isLoading } = useTeamspaces(organizationId);
-  const { data: orgMembersData } = useOrganizationMembers(organizationId);
+  const { data: orgMembersData } = useOrganizationMembers(canManage ? organizationId : null);
   const organizationMembers = orgMembersData?.members ?? [];
 
   const createMutation = useCreateTeamspace(organizationId);
@@ -195,7 +197,9 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
     } catch (error) {
       toast({
         title: editingTeamspace ? t('ts_update_error_title') : t('ts_create_error_title'),
-        description: error instanceof Error ? error.message : t('try_again'),
+        description: isApiPermissionError(error)
+          ? tSettings('error_no_permission')
+          : t('try_again'),
         variant: 'destructive',
       });
     }
@@ -215,7 +219,9 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
     } catch (error) {
       toast({
         title: t('ts_delete_error_title'),
-        description: error instanceof Error ? error.message : t('try_again'),
+        description: isApiPermissionError(error)
+          ? tSettings('error_no_permission')
+          : t('try_again'),
         variant: 'destructive',
       });
     }
@@ -232,7 +238,9 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
     } catch (error) {
       toast({
         title: t('member_add_error_title'),
-        description: error instanceof Error ? error.message : t('try_again'),
+        description: isApiPermissionError(error)
+          ? tSettings('error_no_permission')
+          : t('try_again'),
         variant: 'destructive',
       });
     }
@@ -245,7 +253,9 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
     } catch (error) {
       toast({
         title: t('member_update_error_title'),
-        description: error instanceof Error ? error.message : t('try_again'),
+        description: isApiPermissionError(error)
+          ? tSettings('error_no_permission')
+          : t('try_again'),
         variant: 'destructive',
       });
     }
@@ -258,7 +268,9 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
     } catch (error) {
       toast({
         title: t('member_remove_error_title'),
-        description: error instanceof Error ? error.message : t('try_again'),
+        description: isApiPermissionError(error)
+          ? tSettings('error_no_permission')
+          : t('try_again'),
         variant: 'destructive',
       });
     }

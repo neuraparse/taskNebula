@@ -72,6 +72,7 @@ import { useOrganization } from '@/lib/hooks/use-organization';
 import { useTeamspaces } from '@/lib/hooks/use-teamspaces';
 import { useWorkflowStatuses, type WorkflowStatus } from '@/lib/hooks/use-workflow-statuses';
 import { useToast } from '@/hooks/use-toast';
+import { isApiPermissionError, throwApiResponseError } from '@/lib/client-api-errors';
 import { cn } from '@/lib/utils';
 
 type ViewType = 'list' | 'board' | 'timeline' | 'calendar';
@@ -183,6 +184,7 @@ function getScopeLabel(scope: ViewScope, t: (key: string) => string) {
 export function ProjectViewsShell({ projectId }: { projectId: string }) {
   const t = useTranslations('issuesViews');
   const tActions = useTranslations('actions');
+  const tHome = useTranslations('pagesHome');
   const queryClient = useQueryClient();
   const { currentOrganizationId, currentTeamId } = useOrganization();
   const { toast } = useToast();
@@ -215,11 +217,16 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
         `/api/projects/${projectId}/views${params.size ? `?${params.toString()}` : ''}`
       );
       if (!response.ok) {
-        throw new Error('Failed to fetch project views');
+        await throwApiResponseError(response, t('toast.something_went_wrong'));
       }
       return response.json();
     },
   });
+
+  const getMutationErrorMessage = (error: unknown) =>
+    isApiPermissionError(error)
+      ? tHome('toast_access_denied_description')
+      : t('toast.something_went_wrong');
 
   const activeTeamspace = useMemo(
     () => teamspaces.find((teamspace) => teamspace.id === currentTeamId) ?? null,
@@ -328,8 +335,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || 'Failed to save view');
+        await throwApiResponseError(response, t('toast.save_failed_title'));
       }
 
       return response.json();
@@ -350,7 +356,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
     onError: (error: Error) => {
       toast({
         title: t('toast.save_failed_title'),
-        description: error.message,
+        description: getMutationErrorMessage(error),
         variant: 'destructive',
       });
     },
@@ -365,8 +371,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || 'Failed to update view');
+        await throwApiResponseError(response, t('toast.update_failed_title'));
       }
 
       return response.json();
@@ -383,8 +388,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || 'Failed to delete view');
+        await throwApiResponseError(response, t('toast.delete_failed_title'));
       }
 
       return response.json();
@@ -403,7 +407,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
     } catch (error) {
       toast({
         title: t('toast.update_failed_title'),
-        description: error instanceof Error ? error.message : t('toast.something_went_wrong'),
+        description: getMutationErrorMessage(error),
         variant: 'destructive',
       });
     }
@@ -422,7 +426,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
     } catch (error) {
       toast({
         title: t('toast.update_default_failed_title'),
-        description: error instanceof Error ? error.message : t('toast.something_went_wrong'),
+        description: getMutationErrorMessage(error),
         variant: 'destructive',
       });
     }
@@ -438,7 +442,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
     } catch (error) {
       toast({
         title: t('toast.delete_failed_title'),
-        description: error instanceof Error ? error.message : t('toast.something_went_wrong'),
+        description: getMutationErrorMessage(error),
         variant: 'destructive',
       });
     }
@@ -1136,7 +1140,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
 
             {saveViewMutation.error ? (
               <div className="bg-destructive/10 text-destructive rounded-md px-3 py-2 text-sm">
-                {saveViewMutation.error.message}
+                {getMutationErrorMessage(saveViewMutation.error)}
               </div>
             ) : null}
           </div>

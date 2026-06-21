@@ -177,6 +177,7 @@ const TEAM_LINKS: NavLink[] = [
     i18nKey: 'members',
     icon: Users,
     match: { path: '/team', tab: 'members' },
+    requiredPermission: 'member:view',
   },
   {
     href: '/team?tab=teamspaces',
@@ -263,6 +264,14 @@ const SETTINGS_LINKS: NavLink[] = [
     requiredPermission: 'org:settings',
   },
   {
+    href: '/settings?tab=ai-transparency',
+    label: 'AI Transparency',
+    i18nKey: 'ai_transparency',
+    icon: Sparkles,
+    match: { path: '/settings', tab: 'ai-transparency' },
+    requiredPermission: 'org:settings',
+  },
+  {
     href: '/settings?tab=communications',
     label: 'Communications',
     i18nKey: 'communications',
@@ -293,6 +302,8 @@ const SETTINGS_LINKS: NavLink[] = [
     requiredPermission: 'org:manage',
   },
 ];
+
+const PERSONAL_SETTINGS_KEYS = new Set(['appearance']);
 
 const ADMIN_LINKS: Array<{
   href: string;
@@ -450,7 +461,13 @@ const SIDEBAR_NAV_LINK_CLASS =
   'row-interactive text-muted-foreground ease-snap border border-transparent hover:text-foreground data-[active=true]:border-primary/20 data-[active=true]:bg-primary/10 data-[active=true]:text-primary min-h-8 w-full min-w-0 rounded-md text-[13px] font-medium transition-all duration-150';
 const SIDEBAR_NAV_LABEL_CLASS = 'min-w-0 flex-1 truncate';
 
-export function AppSidebar() {
+export function AppSidebar({
+  hasWorkspaceAccess = true,
+  isSuperAdmin: initialIsSuperAdmin = false,
+}: {
+  hasWorkspaceAccess?: boolean;
+  isSuperAdmin?: boolean;
+}) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const normalizedPathname = stripLocalePrefix(pathname);
@@ -461,7 +478,9 @@ export function AppSidebar() {
   const tLayout = useTranslations('layoutNav');
   const { data: session } = useSession();
   const { currentOrganizationId, currentTeamId } = useOrganization();
-  const { data: liveCalls, isLoading: liveCallsLoading } = useLiveCalls();
+  const { data: liveCalls, isLoading: liveCallsLoading } = useLiveCalls({
+    enabled: hasWorkspaceAccess,
+  });
   const hasPageSidebar = usePageSidebarHasContent();
   const [isTeamspacesOpen, setIsTeamspacesOpen] = useState(true);
   const [isProjectsOpen, setIsProjectsOpen] = useState(true);
@@ -501,30 +520,46 @@ export function AppSidebar() {
   });
 
   const { data: projects, isLoading: projectsLoading } = useProjects({
-    organizationId: currentOrganizationId,
-    teamId: currentTeamId,
+    organizationId: hasWorkspaceAccess ? currentOrganizationId : null,
+    teamId: hasWorkspaceAccess ? currentTeamId : null,
+    enabled: hasWorkspaceAccess,
   });
 
-  const isSuperAdmin = userData?.isSuperAdmin || false;
+  const isSuperAdmin = userData?.isSuperAdmin ?? initialIsSuperAdmin;
 
   const { has: hasOrgPermission, isLoading: isLoadingOrgPermissions } = useOrganizationPermissions(
     currentOrganizationId ?? undefined
   );
 
   const visibleSettingsLinks = useMemo(() => {
-    // While loading, render the full list to avoid flicker.
-    if (isLoadingOrgPermissions) return SETTINGS_LINKS;
+    if (!hasWorkspaceAccess) {
+      return SETTINGS_LINKS.filter(
+        (link) => link.i18nKey && PERSONAL_SETTINGS_KEYS.has(link.i18nKey)
+      );
+    }
+    if (isLoadingOrgPermissions) {
+      return SETTINGS_LINKS.filter((link) => !link.requiredPermission);
+    }
     return SETTINGS_LINKS.filter(
       (link) => !link.requiredPermission || hasOrgPermission(link.requiredPermission)
     );
-  }, [hasOrgPermission, isLoadingOrgPermissions]);
+  }, [hasOrgPermission, hasWorkspaceAccess, isLoadingOrgPermissions]);
 
   const visibleTeamLinks = useMemo(() => {
-    if (isLoadingOrgPermissions) return TEAM_LINKS;
+    if (!hasWorkspaceAccess) return [];
+    if (isLoadingOrgPermissions) return [];
     return TEAM_LINKS.filter(
       (link) => !link.requiredPermission || hasOrgPermission(link.requiredPermission)
     );
-  }, [hasOrgPermission, isLoadingOrgPermissions]);
+  }, [hasOrgPermission, hasWorkspaceAccess, isLoadingOrgPermissions]);
+  const canViewTeamspaces =
+    hasWorkspaceAccess && !isLoadingOrgPermissions && hasOrgPermission('team:view');
+  const visibleDashboardLinks = useMemo(() => {
+    if (hasWorkspaceAccess) {
+      return DASHBOARD_LINKS;
+    }
+    return DASHBOARD_LINKS.filter((link) => link.href === '/dashboard');
+  }, [hasWorkspaceAccess]);
   const pinnedCall = currentTarget
     ? liveCalls?.find(
         (call) => call.roomId === currentTarget.roomId && call.participantCount > 0
@@ -578,7 +613,7 @@ export function AppSidebar() {
 
   return (
     <div className="flex h-screen">
-      <AppRail />
+      <AppRail hasWorkspaceAccess={hasWorkspaceAccess} isSuperAdmin={isSuperAdmin} />
       <aside className="border-border bg-surface flex w-64 flex-col border-r">
         <div className="border-border flex h-12 items-center border-b px-3">
           <button
@@ -619,8 +654,9 @@ export function AppSidebar() {
               </div>
             )}
 
-            {normalizedPathname.startsWith('/my-issues') ||
-            normalizedPathname.startsWith('/issues') ? (
+            {hasWorkspaceAccess &&
+            (normalizedPathname.startsWith('/my-issues') ||
+              normalizedPathname.startsWith('/issues')) ? (
               <div className="space-y-0.5">
                 {MY_ISSUES_VIEWS.map((view) => {
                   const isActive =
@@ -643,7 +679,7 @@ export function AppSidebar() {
               </div>
             ) : null}
 
-            {normalizedPathname.startsWith('/inbox') ? (
+            {hasWorkspaceAccess && normalizedPathname.startsWith('/inbox') ? (
               <div className="space-y-0.5">
                 {INBOX_LINKS.map((link) => {
                   const isActive = isInboxLinkActive(link, searchParams);
@@ -664,7 +700,7 @@ export function AppSidebar() {
 
             {isHomeSectionPath(pathname) ? (
               <div className="space-y-0.5">
-                {DASHBOARD_LINKS.map((link) => {
+                {visibleDashboardLinks.map((link) => {
                   const isActive =
                     link.href === normalizedPathname ||
                     (link.href === '/dashboard' && normalizedPathname === '/');
@@ -685,7 +721,7 @@ export function AppSidebar() {
               </div>
             ) : null}
 
-            {normalizedPathname.startsWith('/team') ? (
+            {hasWorkspaceAccess && normalizedPathname.startsWith('/team') ? (
               <div className="space-y-0.5">
                 {visibleTeamLinks.map((link) => {
                   const isActive = isNavLinkActive(link, pathname, searchParams?.get('tab'));
@@ -763,108 +799,113 @@ export function AppSidebar() {
               </>
             ) : null}
 
-            <div
-              hidden={!(normalizedPathname.startsWith('/projects') || isHomeSectionPath(pathname))}
-            >
-              <button
-                type="button"
-                onClick={() => setIsTeamspacesOpen((open) => !open)}
-                aria-expanded={isTeamspacesOpen}
-                className="hover:text-foreground mb-1 mt-4 flex w-full items-center gap-1 px-3 text-start transition-colors duration-150"
-              >
-                {isTeamspacesOpen ? (
-                  <ChevronDown className="text-muted-foreground h-3 w-3" />
-                ) : (
-                  <ChevronRight className="text-muted-foreground h-3 w-3" />
-                )}
-                <span className="kicker">{tNav('teamspaces')}</span>
-              </button>
-              {isTeamspacesOpen ? (
-                <div className="px-1 pb-2">
-                  <TeamspaceSwitcher />
-                </div>
-              ) : null}
-
-              <div className="mb-1 mt-4 flex items-center justify-between px-3">
-                <button
-                  type="button"
-                  onClick={() => setIsProjectsOpen((open) => !open)}
-                  aria-expanded={isProjectsOpen}
-                  className="hover:text-foreground flex flex-1 items-center gap-1 text-start transition-colors duration-150"
-                >
-                  {isProjectsOpen ? (
-                    <ChevronDown className="text-muted-foreground h-3 w-3" />
-                  ) : (
-                    <ChevronRight className="text-muted-foreground h-3 w-3" />
-                  )}
-                  <span className="kicker">{tNav('projects')}</span>
-                </button>
-                <Link href="/projects">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground hover:text-foreground h-6 w-6 rounded-sm"
-                    aria-label={tNav('projects')}
-                  >
-                    <Plus className="h-3 w-3" />
-                  </Button>
-                </Link>
-              </div>
-              {isProjectsOpen ? (
-                <div className="space-y-0.5">
-                  {projectsLoading ? (
-                    <div className="flex items-center justify-center py-4">
-                      <span role="status" aria-live="polite" aria-busy="true">
-                        <span className="sr-only">{tCommon('loading')}</span>
-                        <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
-                      </span>
-                    </div>
-                  ) : projects && projects.length > 0 ? (
-                    projects.slice(0, 5).map((project) => {
-                      const projectPath = project.key?.toLowerCase() || project.id;
-                      const isActive = normalizedPathname.includes(`/projects/${projectPath}`);
-                      const projectIcon = (project as { icon?: string | null }).icon;
-                      return (
-                        <Link
-                          key={project.id}
-                          href={`/projects/${projectPath}/views`}
-                          data-active={isActive ? 'true' : undefined}
-                          className={cn(SIDEBAR_NAV_LINK_CLASS, 'group')}
-                        >
-                          <div className="bg-card border-border flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border">
-                            {projectIcon ? (
-                              <span className="text-xs leading-none" aria-hidden="true">
-                                {projectIcon}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground text-[9px] font-bold">
-                                {project.name.substring(0, 2).toUpperCase()}
-                              </span>
-                            )}
-                          </div>
-                          <span className="flex-1 truncate">{project.name}</span>
-                          <span className="text-muted-foreground font-mono text-[10px] opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                            {project.key}
-                          </span>
-                        </Link>
-                      );
-                    })
-                  ) : (
-                    <div className="px-3 py-4 text-center">
-                      <p className="text-muted-foreground text-xs">{tCommon('no_projects')}</p>
-                    </div>
-                  )}
-                  {projects && projects.length > 5 ? (
-                    <Link
-                      href="/projects"
-                      className="row-interactive text-muted-foreground ease-snap hover:text-foreground rounded-md text-xs transition-all duration-150"
+            {hasWorkspaceAccess &&
+            (normalizedPathname.startsWith('/projects') || isHomeSectionPath(pathname)) ? (
+              <div>
+                {canViewTeamspaces ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setIsTeamspacesOpen((open) => !open)}
+                      aria-expanded={isTeamspacesOpen}
+                      className="hover:text-foreground mb-1 mt-4 flex w-full items-center gap-1 px-3 text-start transition-colors duration-150"
                     >
-                      {tCommon('view_all_projects', { count: projects.length })}
-                    </Link>
-                  ) : null}
+                      {isTeamspacesOpen ? (
+                        <ChevronDown className="text-muted-foreground h-3 w-3" />
+                      ) : (
+                        <ChevronRight className="text-muted-foreground h-3 w-3" />
+                      )}
+                      <span className="kicker">{tNav('teamspaces')}</span>
+                    </button>
+                    {isTeamspacesOpen ? (
+                      <div className="px-1 pb-2">
+                        <TeamspaceSwitcher />
+                      </div>
+                    ) : null}
+                  </>
+                ) : null}
+
+                <div className="mb-1 mt-4 flex items-center justify-between px-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsProjectsOpen((open) => !open)}
+                    aria-expanded={isProjectsOpen}
+                    className="hover:text-foreground flex flex-1 items-center gap-1 text-start transition-colors duration-150"
+                  >
+                    {isProjectsOpen ? (
+                      <ChevronDown className="text-muted-foreground h-3 w-3" />
+                    ) : (
+                      <ChevronRight className="text-muted-foreground h-3 w-3" />
+                    )}
+                    <span className="kicker">{tNav('projects')}</span>
+                  </button>
+                  <Link href="/projects">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-muted-foreground hover:text-foreground h-6 w-6 rounded-sm"
+                      aria-label={tNav('projects')}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </Link>
                 </div>
-              ) : null}
-            </div>
+                {isProjectsOpen ? (
+                  <div className="space-y-0.5">
+                    {projectsLoading ? (
+                      <div className="flex items-center justify-center py-4">
+                        <span role="status" aria-live="polite" aria-busy="true">
+                          <span className="sr-only">{tCommon('loading')}</span>
+                          <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+                        </span>
+                      </div>
+                    ) : projects && projects.length > 0 ? (
+                      projects.slice(0, 5).map((project) => {
+                        const projectPath = project.key?.toLowerCase() || project.id;
+                        const isActive = normalizedPathname.includes(`/projects/${projectPath}`);
+                        const projectIcon = (project as { icon?: string | null }).icon;
+                        return (
+                          <Link
+                            key={project.id}
+                            href={`/projects/${projectPath}/views`}
+                            data-active={isActive ? 'true' : undefined}
+                            className={cn(SIDEBAR_NAV_LINK_CLASS, 'group')}
+                          >
+                            <div className="bg-card border-border flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border">
+                              {projectIcon ? (
+                                <span className="text-xs leading-none" aria-hidden="true">
+                                  {projectIcon}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground text-[9px] font-bold">
+                                  {project.name.substring(0, 2).toUpperCase()}
+                                </span>
+                              )}
+                            </div>
+                            <span className="flex-1 truncate">{project.name}</span>
+                            <span className="text-muted-foreground font-mono text-[10px] opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                              {project.key}
+                            </span>
+                          </Link>
+                        );
+                      })
+                    ) : (
+                      <div className="px-3 py-4 text-center">
+                        <p className="text-muted-foreground text-xs">{tCommon('no_projects')}</p>
+                      </div>
+                    )}
+                    {projects && projects.length > 5 ? (
+                      <Link
+                        href="/projects"
+                        className="row-interactive text-muted-foreground ease-snap hover:text-foreground rounded-md text-xs transition-all duration-150"
+                      >
+                        {tCommon('view_all_projects', { count: projects.length })}
+                      </Link>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </nav>
 

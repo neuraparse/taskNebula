@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ApiResponseError } from '@/lib/client-api-errors';
 
 // Mock child components to keep this test focused on branching in IssueDetailView
 jest.mock('../issue-header', () => ({
@@ -214,6 +215,27 @@ describe('IssueDetailView', () => {
     );
 
     expect(screen.getByText(/failed to load issue/i)).toBeInTheDocument();
-    expect(screen.getByText(/boom/i)).toBeInTheDocument();
+    expect(screen.getByText(/refresh the page or try again/i)).toBeInTheDocument();
+    expect(screen.queryByText(/boom/i)).not.toBeInTheDocument();
+  });
+
+  it('shows a localized permission message when the issue API denies access', () => {
+    useIssueMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new ApiResponseError('Forbidden', 403, 'FORBIDDEN'),
+      refetch: jest.fn(),
+    });
+
+    const Wrapper = wrapper();
+    render(
+      <Wrapper>
+        <IssueDetailView issueId="issue-1" />
+      </Wrapper>
+    );
+
+    expect(screen.getByText(/failed to load issue/i)).toBeInTheDocument();
+    expect(screen.getByText(/you don't have permission to view that page/i)).toBeInTheDocument();
+    expect(screen.queryByText(/^forbidden$/i)).not.toBeInTheDocument();
   });
 });

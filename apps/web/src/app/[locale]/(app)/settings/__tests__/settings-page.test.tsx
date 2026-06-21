@@ -28,6 +28,11 @@ jest.mock('@/lib/hooks/use-ai-feature', () => ({
   useAiFeature: () => ({ aiEnabled: true }),
 }));
 
+const mockUseOrganizationPermissions = jest.fn();
+jest.mock('@/lib/hooks/use-permissions', () => ({
+  useOrganizationPermissions: () => mockUseOrganizationPermissions(),
+}));
+
 const mockSearchParamsGet = jest.fn<string | null, [string]>();
 const mockRouterReplace = jest.fn();
 jest.mock('next/navigation', () => ({
@@ -60,6 +65,9 @@ jest.mock('@/components/settings/appearance-settings', () => ({
 jest.mock('@/components/settings/organization-ai-agents', () => ({
   OrganizationAiAgentsSettings: () => <div data-testid="manager-ai-agents">ai-agents</div>,
 }));
+jest.mock('../ai-transparency/ai-transparency-client', () => ({
+  AiTransparencyClient: () => <div data-testid="manager-ai-transparency">ai-transparency</div>,
+}));
 jest.mock('@/components/settings/organization-communications-settings', () => ({
   OrganizationCommunicationsSettings: () => (
     <div data-testid="manager-communications">communications</div>
@@ -88,6 +96,15 @@ function renderWithProviders(ui: React.ReactElement) {
 
 beforeEach(() => {
   mockUseOrganization.mockReturnValue({ currentOrganizationId: 'org-test' });
+  mockUseOrganizationPermissions.mockReturnValue({
+    permissions: [],
+    isSuperAdmin: false,
+    role: 'owner',
+    isLoading: false,
+    has: jest.fn(() => true),
+    hasAny: jest.fn(() => true),
+    hasAll: jest.fn(() => true),
+  });
   mockSearchParamsGet.mockReturnValue(null);
   mockRouterReplace.mockClear();
 });
@@ -123,18 +140,48 @@ describe('SettingsPage (/settings)', () => {
     expect(screen.queryByTestId('manager-organization')).not.toBeInTheDocument();
   });
 
-  it('shows a loading placeholder instead of any manager when the organization has not resolved yet', () => {
-    // No current organization — mirrors the "not a member of any workspace" /
-    // session-still-loading state. The page returns a loading stub and does
-    // not mount any manager (which would then blow up against /api/* without
-    // an org ID).
+  it('mounts the AI transparency manager from the normal settings tab flow', () => {
+    mockSearchParamsGet.mockImplementation((key) => (key === 'tab' ? 'ai-transparency' : null));
+
+    renderWithProviders(<SettingsPage />);
+
+    expect(screen.getByTestId('manager-ai-transparency')).toBeInTheDocument();
+    expect(screen.queryByTestId('manager-ai-agents')).not.toBeInTheDocument();
+  });
+
+  it('keeps only personal appearance settings available when there is no organization', () => {
+    // No current organization — mirrors a signed-in user waiting for a
+    // workspace/project invite. Org-scoped managers must not mount without an
+    // org ID.
     mockUseOrganization.mockReturnValue({ currentOrganizationId: null });
     mockSearchParamsGet.mockImplementation((key) => (key === 'tab' ? 'api-keys' : null));
 
     renderWithProviders(<SettingsPage />);
 
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    expect(screen.getByTestId('manager-appearance')).toBeInTheDocument();
     expect(screen.queryByTestId('manager-api-keys')).not.toBeInTheDocument();
     expect(screen.queryByTestId('manager-organization')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('manager-notifications')).not.toBeInTheDocument();
+  });
+
+  it('does not render permission-gated managers while permissions are loading', () => {
+    mockUseOrganizationPermissions.mockReturnValue({
+      permissions: [],
+      isSuperAdmin: false,
+      role: null,
+      isLoading: true,
+      has: jest.fn(() => false),
+      hasAny: jest.fn(() => false),
+      hasAll: jest.fn(() => false),
+    });
+    mockSearchParamsGet.mockImplementation((key) => (key === 'tab' ? 'organization' : null));
+
+    renderWithProviders(<SettingsPage />);
+
+    expect(screen.getByTestId('manager-labels')).toBeInTheDocument();
+    expect(screen.queryByTestId('manager-organization')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('manager-api-keys')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('manager-webhooks')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('manager-ai-agents')).not.toBeInTheDocument();
   });
 });

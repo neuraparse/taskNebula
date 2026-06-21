@@ -43,7 +43,8 @@
     "realtime_health": "Realtime-status",
     "audit_logs": "Auditlogboeken",
     "system": "Systeem",
-    "updates": "Updates"
+    "updates": "Updates",
+    "ai_transparency": "AI-transparantie"
   },
   "actions": {
     "create_issue": "Issue aanmaken",
@@ -102,6 +103,7 @@
     "skipToContent": "Ga naar inhoud"
   },
   "settings": {
+    "error_no_permission": "Je hebt geen toestemming om deze instellingen te beheren.",
     "labels": {
       "kicker": "Labels",
       "title": "Labels",
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "Issue laden mislukt",
       "notFound": "Issue niet gevonden",
-      "notFoundHint": "Het issue dat je zoekt bestaat niet."
+      "notFoundHint": "Het issue dat je zoekt bestaat niet.",
+      "loadFailedHint": "Vernieuw de pagina of probeer het zo opnieuw."
     }
   },
   "adminUpdates": {
@@ -1480,8 +1483,8 @@
     "planning_kicker": "Planning",
     "teamspaces_heading": "Teamruimtes",
     "teamspaces_subtitle": "Planningsbanen boven afzonderlijke projecten, zonder de organisatie op te splitsen.",
-    "owner_admin_only": "Alleen eigenaar of beheerder",
-    "browse_only_notice": "Alleen bladeren — eigenaars en beheerders kunnen de structuur wijzigen.",
+    "owner_admin_only": "Machtiging vereist",
+    "browse_only_notice": "Alleen bekijken — de structuur wijzigen vereist machtiging voor organisatie-instellingen.",
     "loading_teamspaces": "Teamruimtes laden…",
     "manage_members": "Leden beheren",
     "members_label": "leden",
@@ -2104,7 +2107,7 @@
       "none": "Geen",
       "updated": "Bijgewerkt",
       "server_managed": "Serverbeheerd",
-      "read_only_notice": "Alleen-lezentoegang — eigenaars en beheerders kunnen het AI-beleid bijwerken.",
+      "read_only_notice": "Alleen-lezen toegang — het bijwerken van AI-beleid vereist machtiging voor organisatie-instellingen.",
       "your_model_profiles": "Je modelprofielen",
       "your_model_profiles_desc": "Aangepaste model- + afstemmingscombinaties die zijn opgeslagen voor hergebruik. Elk hier opgeslagen profiel verschijnt ook in de modelkeuzelijst van Snelle installatie hierboven. Gebruik dit om een model vast te zetten met specifieke temperatuur-/token-/redeneerinspanningsinstellingen, of om een model te proberen dat niet in de ingebouwde catalogus staat.",
       "create_profile": "Profiel aanmaken",
@@ -2772,6 +2775,7 @@
     "loading_modules": "Modules laden...",
     "no_modules_filter": "Geen modules komen overeen met dit filter.",
     "no_modules_empty": "Nog geen modules. Maak er een aan om gerelateerd werk te groeperen.",
+    "no_modules_empty_readonly": "Er zijn nog geen modules voor dit project gemaakt.",
     "create_module": "Module aanmaken",
     "module_dialog_desc": "Groepeer gerelateerd werk in een functiegebied of miniproject.",
     "module_name_placeholder": "bijv. Auth, Facturatie, Onboarding",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "Nog geen updates.",
     "initiative_detail_anonymous": "Anoniem",
     "initiative_detail_blockers_label": "Belemmeringen:",
-    "initiative_detail_next_label": "Volgende:"
+    "initiative_detail_next_label": "Volgende:",
+    "initiative_detail_error_load": "Kan initiatief niet laden."
   },
   "pagesProjects": {
     "metaTitle": "Projecten | TaskNebula",
@@ -4029,6 +4034,7 @@
     "descriptionPlaceholder": "Korte projectbeschrijving",
     "cancel": "Annuleren",
     "creating": "Aanmaken...",
+    "createProjectFailed": "Het project kon niet worden aangemaakt. Controleer de gegevens en probeer het opnieuw.",
     "breadcrumb": "Broodkruimel",
     "sections": "Projectsecties",
     "tabViews": "Weergaven",
@@ -4101,7 +4107,7 @@
     "completeSprintTooltip": "Voltooi deze sprint. Onvoltooide issues worden naar de backlog verplaatst.",
     "sprintBurndown": "Sprintburndown",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
+    "projectInviteRequiredDescription": "Vraag een beheerder om je voor een project uit te nodigen of je toestemming te geven om projecten te maken."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4663,7 +4669,7 @@
       "removeProject": "{name} verwijderen",
       "projectRole": "Projectrol",
       "sendInvitation": "Uitnodiging versturen",
-      "viewOnly": "Alleen-lezen toegang. Alleen eigenaren en beheerders kunnen leden beheren.",
+      "viewOnly": "Alleen bekijken. Ledenbeheer vereist de juiste ledenmachtigingen.",
       "noMembers": "Nog geen leden.",
       "inviteFirst": "Nodig je eerste lid uit",
       "invited": "Uitgenodigd",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "Details",
       "detailsHeading": "Werkruimtedetails",
       "detailsSubtitle": "Naam, domein en merkinformatie die in de hele werkruimte wordt gebruikt.",
-      "manageRestricted": "Alleen eigenaren en beheerders kunnen organisatie-instellingen bijwerken.",
+      "manageRestricted": "Organisatie-instellingen bijwerken vereist machtiging voor organisatie-instellingen.",
       "logo": "Logo",
       "slug": "Werkruimte-slug",
       "slugHint": "Superbeheerders kunnen dit wijzigen.",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "Gevarenzone",
       "dangerSubtitle": "Verwijdert deze werkruimte en alles eronder permanent. Eigenaarstoegang vereist.",
       "cannotRestore": "Verwijderde organisaties kunnen niet worden hersteld.",
-      "ownerOnly": "Alleen eigenaar",
+      "ownerOnly": "Verwijdermachtiging vereist",
       "plan": {
         "free": "Gratis",
         "starter": "Starter",

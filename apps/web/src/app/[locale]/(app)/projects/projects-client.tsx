@@ -15,8 +15,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import { isApiPermissionError } from '@/lib/client-api-errors';
 import { useCreateProject, useProjects } from '@/lib/hooks/use-projects';
 import { useOrganization } from '@/lib/hooks/use-organization';
+import { useOrganizationPermissions } from '@/lib/hooks/use-permissions';
 import { useTeamspaces } from '@/lib/hooks/use-teamspaces';
 import { FolderKanban, Layers3, Plus, X, Sparkles } from 'lucide-react';
 import { ViewTransition } from '@/components/ui/view-transition';
@@ -67,11 +69,10 @@ export function ProjectsClient() {
   });
 
   const firstOrganizationId = orgsData?.organizations?.[0]?.id ?? null;
-  const currentOrganization = orgsData?.organizations?.find(
-    (organization) => organization.id === currentOrganizationId
+  const { has: hasOrgPermission, isLoading: permissionsLoading } = useOrganizationPermissions(
+    currentOrganizationId ?? undefined
   );
-  const canCreateProject =
-    currentOrganization?.role === 'owner' || currentOrganization?.role === 'admin';
+  const canCreateProject = !permissionsLoading && hasOrgPermission('project:create');
 
   useEffect(() => {
     if (!currentOrganizationId && firstOrganizationId) {
@@ -84,6 +85,7 @@ export function ProjectsClient() {
     organizationId: currentOrganizationId,
     teamId: currentTeamId,
   });
+  const isProjectListLoading = isLoading || permissionsLoading;
 
   const activeTeamspace = useMemo(
     () => teamspaces.find((teamspace) => teamspace.id === currentTeamId) ?? null,
@@ -98,7 +100,7 @@ export function ProjectsClient() {
             <span className="kicker">{t('kicker')}</span>
             <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
             <p className="text-muted-foreground text-sm">
-              {isLoading
+              {isProjectListLoading
                 ? t('loading')
                 : activeTeamspace
                   ? t('activeCountInTeamspace', {
@@ -118,7 +120,7 @@ export function ProjectsClient() {
       </div>
 
       <div className="flex-1 overflow-auto p-6">
-        {projects.length === 0 && !isLoading ? (
+        {projects.length === 0 && !isProjectListLoading ? (
           /* FEAT-31 dashboard empty state. Illustration tile + primary CTA
              + secondary AI CTA (TODO: route once /api/ai/projects/scaffold
              lands; it should pre-fill the create-project dialog). */
@@ -264,6 +266,11 @@ function CreateProjectDialog({
   const [description, setDescription] = useState('');
   const [teamId, setTeamId] = useState<string>(currentTeamId ?? 'none');
   const [keyManual, setKeyManual] = useState(false);
+  const createProjectError = createProject.error
+    ? isApiPermissionError(createProject.error)
+      ? t('projectInviteRequiredDescription')
+      : t('createProjectFailed')
+    : null;
 
   useEffect(() => {
     setTeamId(currentTeamId ?? 'none');
@@ -400,9 +407,9 @@ function CreateProjectDialog({
             />
           </div>
 
-          {createProject.error ? (
+          {createProjectError ? (
             <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
-              {createProject.error.message}
+              {createProjectError}
             </div>
           ) : null}
 

@@ -43,7 +43,8 @@
     "realtime_health": "สถานะเรียลไทม์",
     "audit_logs": "บันทึกการตรวจสอบ",
     "system": "ระบบ",
-    "updates": "การอัปเดต"
+    "updates": "การอัปเดต",
+    "ai_transparency": "ความโปร่งใส AI"
   },
   "actions": {
     "create_issue": "สร้างงาน",
@@ -102,6 +103,7 @@
     "skipToContent": "ข้ามไปยังเนื้อหา"
   },
   "settings": {
+    "error_no_permission": "คุณไม่มีสิทธิ์จัดการการตั้งค่าเหล่านี้",
     "labels": {
       "kicker": "ป้ายกำกับ",
       "title": "ป้ายกำกับ",
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "โหลดงานไม่สำเร็จ",
       "notFound": "ไม่พบงาน",
-      "notFoundHint": "งานที่คุณกำลังค้นหาไม่มีอยู่"
+      "notFoundHint": "งานที่คุณกำลังค้นหาไม่มีอยู่",
+      "loadFailedHint": "รีเฟรชหน้าเว็บหรือลองอีกครั้งในอีกสักครู่"
     }
   },
   "adminUpdates": {
@@ -1480,8 +1483,8 @@
     "planning_kicker": "การวางแผน",
     "teamspaces_heading": "พื้นที่ทีม",
     "teamspaces_subtitle": "เลนการวางแผนเหนือโปรเจกต์แต่ละรายการ โดยไม่ต้องแบ่งแยกองค์กร",
-    "owner_admin_only": "เฉพาะเจ้าของหรือผู้ดูแลระบบ",
-    "browse_only_notice": "ดูได้อย่างเดียว — เจ้าของและผู้ดูแลระบบสามารถเปลี่ยนโครงสร้างได้",
+    "owner_admin_only": "ต้องมีสิทธิ์",
+    "browse_only_notice": "ดูได้อย่างเดียว — การเปลี่ยนโครงสร้างต้องมีสิทธิ์ตั้งค่าองค์กร",
     "loading_teamspaces": "กำลังโหลดพื้นที่ทีม…",
     "manage_members": "จัดการสมาชิก",
     "members_label": "สมาชิก",
@@ -2104,7 +2107,7 @@
       "none": "ไม่มี",
       "updated": "อัปเดตแล้ว",
       "server_managed": "จัดการโดยเซิร์ฟเวอร์",
-      "read_only_notice": "เข้าถึงแบบอ่านอย่างเดียว — เจ้าของและผู้ดูแลระบบสามารถอัปเดตนโยบาย AI ได้",
+      "read_only_notice": "เข้าถึงแบบอ่านอย่างเดียว — การอัปเดตนโยบาย AI ต้องมีสิทธิ์ตั้งค่าองค์กร",
       "your_model_profiles": "โปรไฟล์โมเดลของคุณ",
       "your_model_profiles_desc": "การผสมผสานโมเดล + การปรับแต่งที่กำหนดเองซึ่งบันทึกไว้เพื่อนำกลับมาใช้ โปรไฟล์ที่บันทึกที่นี่จะปรากฏในเมนูโมเดลของการตั้งค่าด่วนด้านบนด้วย ใช้สิ่งนี้เพื่อปักหมุดโมเดลด้วยการตั้งค่า temperature / โทเค็น / reasoning-effort ที่เฉพาะเจาะจง หรือเพื่อลองโมเดลที่ไม่อยู่ในแคตตาล็อกในตัว",
       "create_profile": "สร้างโปรไฟล์",
@@ -2772,6 +2775,7 @@
     "loading_modules": "กำลังโหลดโมดูล...",
     "no_modules_filter": "ไม่มีโมดูลที่ตรงกับตัวกรองนี้",
     "no_modules_empty": "ยังไม่มีโมดูล สร้างหนึ่งโมดูลเพื่อจัดกลุ่มงานที่เกี่ยวข้อง",
+    "no_modules_empty_readonly": "ยังไม่มีการสร้างโมดูลสำหรับโปรเจกต์นี้",
     "create_module": "สร้างโมดูล",
     "module_dialog_desc": "จัดกลุ่มงานที่เกี่ยวข้องเข้าเป็นพื้นที่ฟีเจอร์หรือมินิโปรเจกต์",
     "module_name_placeholder": "เช่น Auth, Billing, Onboarding",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "ยังไม่มีการอัปเดต",
     "initiative_detail_anonymous": "ไม่ระบุชื่อ",
     "initiative_detail_blockers_label": "อุปสรรค:",
-    "initiative_detail_next_label": "ถัดไป:"
+    "initiative_detail_next_label": "ถัดไป:",
+    "initiative_detail_error_load": "ไม่สามารถโหลดโครงการริเริ่มได้"
   },
   "pagesProjects": {
     "metaTitle": "โปรเจกต์ | TaskNebula",
@@ -4029,6 +4034,7 @@
     "descriptionPlaceholder": "คำอธิบายโปรเจกต์โดยย่อ",
     "cancel": "ยกเลิก",
     "creating": "กำลังสร้าง...",
+    "createProjectFailed": "ไม่สามารถสร้างโปรเจกต์ได้ โปรดตรวจสอบรายละเอียดแล้วลองอีกครั้ง",
     "breadcrumb": "เบรดครัมบ์",
     "sections": "ส่วนของโปรเจกต์",
     "tabViews": "มุมมอง",
@@ -4101,7 +4107,7 @@
     "completeSprintTooltip": "เสร็จสิ้นสปรินต์นี้ งานที่ไม่เสร็จสิ้นจะย้ายไปยัง backlog",
     "sprintBurndown": "Burndown ของสปรินต์",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
+    "projectInviteRequiredDescription": "ขอให้ผู้ดูแลเชิญคุณเข้าร่วมโปรเจกต์ หรือมอบสิทธิ์สร้างโปรเจกต์ให้คุณ"
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4663,7 +4669,7 @@
       "removeProject": "นำ {name} ออก",
       "projectRole": "บทบาทในโปรเจกต์",
       "sendInvitation": "ส่งคำเชิญ",
-      "viewOnly": "การเข้าถึงแบบดูอย่างเดียว เฉพาะเจ้าของและผู้ดูแลระบบเท่านั้นที่จัดการสมาชิกได้",
+      "viewOnly": "เข้าถึงแบบดูได้อย่างเดียว การจัดการสมาชิกต้องมีสิทธิ์สมาชิกที่เกี่ยวข้อง",
       "noMembers": "ยังไม่มีสมาชิก",
       "inviteFirst": "เชิญสมาชิกคนแรกของคุณ",
       "invited": "เชิญแล้ว",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "รายละเอียด",
       "detailsHeading": "รายละเอียดพื้นที่ทำงาน",
       "detailsSubtitle": "ชื่อ โดเมน และข้อมูลแบรนด์ที่ใช้ทั่วทั้งพื้นที่ทำงาน",
-      "manageRestricted": "เฉพาะเจ้าของและผู้ดูแลระบบเท่านั้นที่อัปเดตการตั้งค่าองค์กรได้",
+      "manageRestricted": "การอัปเดตการตั้งค่าองค์กรต้องมีสิทธิ์ตั้งค่าองค์กร",
       "logo": "โลโก้",
       "slug": "สลั๊กพื้นที่ทำงาน",
       "slugHint": "ผู้ดูแลระบบสูงสุดสามารถเปลี่ยนได้",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "โซนอันตราย",
       "dangerSubtitle": "ลบพื้นที่ทำงานนี้และทุกอย่างภายใต้พื้นที่นี้อย่างถาวร ต้องมีสิทธิ์เจ้าของ",
       "cannotRestore": "องค์กรที่ถูกลบไม่สามารถกู้คืนได้",
-      "ownerOnly": "เฉพาะเจ้าของ",
+      "ownerOnly": "ต้องมีสิทธิ์ลบ",
       "plan": {
         "free": "ฟรี",
         "starter": "เริ่มต้น",

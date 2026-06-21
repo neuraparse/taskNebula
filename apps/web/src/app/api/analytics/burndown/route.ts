@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, sprints, issues, workflowStatuses } from '@tasknebula/db';
+import { db, sprints, issues, workflowStatuses, projects } from '@tasknebula/db';
 import { eq } from 'drizzle-orm';
 import { differenceInDays, addDays, format } from 'date-fns';
+import { canReadProject } from '@/lib/auth/access-control';
 
 // GET /api/analytics/burndown?sprintId=xxx[&unit=points|hours]
 //
@@ -32,6 +33,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Sprint not found' }, { status: 404 });
     }
 
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(eq(projects.id, sprint.projectId))
+      .limit(1);
+
+    if (!project || !(await canReadProject(session.user.id, project))) {
+      return NextResponse.json({ error: 'Sprint not found' }, { status: 404 });
+    }
+
     // Fetch all issues in sprint with their workflow status
     const sprintIssues = await db
       .select({
@@ -55,17 +66,16 @@ export async function GET(request: NextRequest) {
     // includes them only when there's signal, so old clients don't see noise.
     const totalEstimateHours = sprintIssues.reduce(
       (sum, issue) => sum + Number(issue.estimateHours ?? 0),
-      0,
+      0
     );
     const totalActualHours = sprintIssues.reduce(
       (sum, issue) => sum + Number(issue.actualHours ?? 0),
-      0,
+      0
     );
     const completedActualHours = sprintIssues
       .filter((issue) => issue.statusCategory === 'done')
       .reduce((sum, issue) => sum + Number(issue.actualHours ?? 0), 0);
-    const hasHourData =
-      totalEstimateHours > 0 || totalActualHours > 0;
+    const hasHourData = totalEstimateHours > 0 || totalActualHours > 0;
 
     // Calculate ideal burndown
     const startDate = new Date(sprint.startDate);
@@ -90,14 +100,9 @@ export async function GET(request: NextRequest) {
       .filter((issue) => issue.statusCategory === 'done')
       .reduce((sum, issue) => sum + (issue.estimate || 0), 0);
 
-    const completedIssues = sprintIssues.filter(
-      (issue) => issue.statusCategory === 'done'
-    ).length;
+    const completedIssues = sprintIssues.filter((issue) => issue.statusCategory === 'done').length;
 
-    const currentDay = Math.min(
-      totalDays,
-      Math.max(0, differenceInDays(new Date(), startDate))
-    );
+    const currentDay = Math.min(totalDays, Math.max(0, differenceInDays(new Date(), startDate)));
 
     const actualBurndown = idealBurndown.map((item, index) => {
       if (index > currentDay) {
@@ -134,8 +139,7 @@ export async function GET(request: NextRequest) {
         totalEstimateHours: Math.round(totalEstimateHours * 100) / 100,
         totalActualHours: Math.round(totalActualHours * 100) / 100,
         completedActualHours: Math.round(completedActualHours * 100) / 100,
-        remainingEstimateHours:
-          Math.round((totalEstimateHours - completedActualHours) * 100) / 100,
+        remainingEstimateHours: Math.round((totalEstimateHours - completedActualHours) * 100) / 100,
       };
     }
 
@@ -145,4 +149,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to fetch burndown data' }, { status: 500 });
   }
 }
-

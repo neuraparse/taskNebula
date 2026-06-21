@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { throwApiResponseError } from '@/lib/client-api-errors';
 import { invalidateIssueCaches } from '@/lib/realtime/issue-cache';
 
 /**
@@ -41,10 +42,7 @@ export function useCreateEpic() {
         body: JSON.stringify({ projectId, title, type: 'epic' }),
       });
       if (!response.ok) {
-        const err = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw Object.assign(new Error(err?.error || 'Failed to create epic'), {
-          status: response.status,
-        });
+        await throwApiResponseError(response);
       }
       return (await response.json()) as CreatedEpic;
     },

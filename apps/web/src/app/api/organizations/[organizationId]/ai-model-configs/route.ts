@@ -60,7 +60,10 @@ export async function POST(
   const { organizationId } = await params;
   const access = await getOrgAgentAccess(session.user.id, organizationId);
   if (!access.canManage) {
-    return NextResponse.json({ error: 'Only workspace owners and admins can manage model configs.' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'Managing model configs requires organization settings permission.' },
+      { status: 403 }
+    );
   }
 
   try {
@@ -98,7 +101,10 @@ export async function POST(
     return NextResponse.json({ config }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Validation failed', details: error.errors }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.errors },
+        { status: 400 }
+      );
     }
 
     console.error('Failed to create AI model config:', error);

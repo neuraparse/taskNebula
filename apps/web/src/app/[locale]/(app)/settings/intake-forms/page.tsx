@@ -1,9 +1,10 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { db, intakeForms, organizationMembers, projects } from '@tasknebula/db';
-import { desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { getTranslations } from 'next-intl/server';
 import { IntakeFormsList } from '@/components/intake/intake-forms-list';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export async function generateMetadata() {
   const t = await getTranslations('pagesSettings');
@@ -23,43 +24,52 @@ export default async function IntakeFormsSettingsPage() {
   const orgMemberships = await db
     .select({ organizationId: organizationMembers.organizationId })
     .from(organizationMembers)
-    .where(eq(organizationMembers.userId, session.user.id));
+    .where(
+      and(eq(organizationMembers.userId, session.user.id), eq(organizationMembers.status, 'active'))
+    );
 
-  const orgIds = orgMemberships.map((m) => m.organizationId);
+  const orgIds = (
+    await Promise.all(
+      orgMemberships.map(async (membership) =>
+        (await hasPermission(membership.organizationId, 'org:settings'))
+          ? membership.organizationId
+          : null
+      )
+    )
+  ).filter((organizationId): organizationId is string => Boolean(organizationId));
 
-  const forms = orgIds.length
-    ? await db
-        .select({
-          id: intakeForms.id,
-          slug: intakeForms.slug,
-          title: intakeForms.title,
-          description: intakeForms.description,
-          isPublic: intakeForms.isPublic,
-          projectId: intakeForms.projectId,
-          updatedAt: intakeForms.updatedAt,
-        })
-        .from(intakeForms)
-        .where(inArray(intakeForms.workspaceId, orgIds))
-        .orderBy(desc(intakeForms.updatedAt))
-    : [];
+  if (orgIds.length === 0) {
+    redirect('/dashboard?error=insufficient-permission');
+  }
+
+  const forms = await db
+    .select({
+      id: intakeForms.id,
+      slug: intakeForms.slug,
+      title: intakeForms.title,
+      description: intakeForms.description,
+      isPublic: intakeForms.isPublic,
+      projectId: intakeForms.projectId,
+      updatedAt: intakeForms.updatedAt,
+    })
+    .from(intakeForms)
+    .where(inArray(intakeForms.workspaceId, orgIds))
+    .orderBy(desc(intakeForms.updatedAt));
 
   // Pull the small set of project labels we need so the list can show
   // "Project — Slug" without forcing an N+1 from the client.
   const projectIds = Array.from(new Set(forms.map((f) => f.projectId)));
-  const projectRows =
-    orgIds.length && projectIds.length
-      ? await db
-          .select({ id: projects.id, name: projects.name, key: projects.key })
-          .from(projects)
-          .where(inArray(projects.id, projectIds))
-      : [];
-
-  const accessibleProjects = orgIds.length
+  const projectRows = projectIds.length
     ? await db
         .select({ id: projects.id, name: projects.name, key: projects.key })
         .from(projects)
-        .where(inArray(projects.organizationId, orgIds))
+        .where(inArray(projects.id, projectIds))
     : [];
+
+  const accessibleProjects = await db
+    .select({ id: projects.id, name: projects.name, key: projects.key })
+    .from(projects)
+    .where(inArray(projects.organizationId, orgIds));
 
   const t = await getTranslations('pagesSettings');
 

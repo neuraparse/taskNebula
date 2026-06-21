@@ -34,10 +34,7 @@ export async function POST(
 
   const { source } = await params;
   if (!isImportSource(source)) {
-    return NextResponse.json(
-      { error: `Unknown import source: ${source}` },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: `Unknown import source: ${source}` }, { status: 400 });
   }
 
   let body: Record<string, unknown>;
@@ -47,13 +44,9 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const workspaceId =
-    typeof body.workspaceId === 'string' ? body.workspaceId : null;
+  const workspaceId = typeof body.workspaceId === 'string' ? body.workspaceId : null;
   if (!workspaceId) {
-    return NextResponse.json(
-      { error: 'workspaceId is required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'workspaceId is required' }, { status: 400 });
   }
 
   const [membership] = await db
@@ -62,7 +55,8 @@ export async function POST(
     .where(
       and(
         eq(organizationMembers.userId, session.user.id),
-        eq(organizationMembers.organizationId, workspaceId)
+        eq(organizationMembers.organizationId, workspaceId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
@@ -84,16 +78,10 @@ export async function POST(
     if (source === 'csv') {
       const csvText = typeof body.csvText === 'string' ? body.csvText : '';
       const parsed = parseCsvText(csvText);
-      suggestedMapping = suggestColumnMapping(parsed.headers) as Record<
-        string,
-        string
-      >;
+      suggestedMapping = suggestColumnMapping(parsed.headers) as Record<string, string>;
       parseInput = {
         text: csvText,
-        columns:
-          typeof body.columns === 'object' && body.columns
-            ? body.columns
-            : suggestedMapping,
+        columns: typeof body.columns === 'object' && body.columns ? body.columns : suggestedMapping,
       };
     } else {
       // Non-CSV: pass the body through; the adapter validates required

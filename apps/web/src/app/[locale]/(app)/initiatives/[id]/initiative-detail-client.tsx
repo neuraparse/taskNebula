@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, Loader2, Send, Target } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -69,11 +70,21 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
   const t = useTranslations('pagesHome');
   const queryClient = useQueryClient();
 
-  const { data: detail, isLoading } = useQuery<InitiativeDetail>({
+  const {
+    data: detail,
+    error: detailError,
+    isLoading,
+  } = useQuery<InitiativeDetail>({
     queryKey: ['initiative', initiativeId],
     queryFn: async () => {
       const res = await fetch(`/api/initiatives/${initiativeId}`);
-      if (!res.ok) throw new Error('Failed to load');
+      if (!res.ok) {
+        const message =
+          res.status === 401 || res.status === 403
+            ? t('toast_access_denied_description')
+            : t('initiative_detail_error_load');
+        throw new Error(message);
+      }
       return res.json();
     },
   });
@@ -120,11 +131,24 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
     },
   });
 
-  if (isLoading || !detail) {
+  if (isLoading) {
     return (
       <div className="text-muted-foreground flex h-full items-center justify-center">
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         {t('initiative_detail_loading')}
+      </div>
+    );
+  }
+
+  if (detailError || !detail) {
+    return (
+      <div className="flex h-full items-center justify-center p-6">
+        <Alert className="max-w-lg">
+          <AlertTitle>{t('toast_access_denied_title')}</AlertTitle>
+          <AlertDescription>
+            {detailError instanceof Error ? detailError.message : t('initiative_detail_error_load')}
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }

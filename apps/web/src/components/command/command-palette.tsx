@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   ArrowRight,
-  BarChart3,
   BookOpenText,
   CircleDot,
   FileText,
@@ -13,13 +12,12 @@ import {
   Hash,
   Home,
   Inbox,
-  Layers,
   Lightbulb,
   type LucideIcon,
   Pin,
   PinOff,
-  RefreshCw,
   Search,
+  Settings,
   Sparkles,
   Tag,
   User,
@@ -38,6 +36,7 @@ import {
 } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
 import { useOrganization } from '@/lib/hooks/use-organization';
+import { useOrganizationPermissions, type Permission } from '@/lib/hooks/use-permissions';
 import {
   parseFacets,
   activeFacetPicker,
@@ -54,6 +53,7 @@ import { useOmnibarSearch, type OmnibarTab } from '@/lib/command/use-omnibar-sea
 export interface CommandPaletteProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  hasWorkspaceAccess?: boolean;
 }
 
 interface HistoryEntry {
@@ -65,16 +65,20 @@ interface HistoryEntry {
 interface NavShortcut {
   id: string;
   labelKey: string;
+  labelNamespace?: 'nav' | 'searchCommand';
   icon: LucideIcon;
   href: string;
   hint?: string;
+  requiredAnyPermissions?: Permission[];
 }
 
 /* -------------------------------------------------------------------------- */
 /* Static data                                                                 */
 /* -------------------------------------------------------------------------- */
 
-const TABS: ReadonlyArray<{ key: OmnibarTab; labelKey: string; hotkey: string }> = [
+type OmnibarTabConfig = { key: OmnibarTab; labelKey: string; hotkey: string };
+
+const TABS: ReadonlyArray<OmnibarTabConfig> = [
   { key: 'all', labelKey: 'tabAll', hotkey: '1' },
   { key: 'issues', labelKey: 'tabIssues', hotkey: '2' },
   { key: 'docs', labelKey: 'tabDocs', hotkey: '3' },
@@ -83,17 +87,49 @@ const TABS: ReadonlyArray<{ key: OmnibarTab; labelKey: string; hotkey: string }>
 ];
 
 const QUICK_NAV: ReadonlyArray<NavShortcut> = [
-  { id: 'nav.home', labelKey: 'navHome', icon: Home, href: '/' },
-  { id: 'nav.inbox', labelKey: 'navInbox', icon: Inbox, href: '/inbox' },
-  { id: 'nav.work-items', labelKey: 'navWorkItems', icon: CircleDot, href: '/work-items' },
-  { id: 'nav.docs', labelKey: 'navDocs', icon: BookOpenText, href: '/docs' },
-  { id: 'nav.dashboards', labelKey: 'navDashboards', icon: BarChart3, href: '/dashboards' },
-  { id: 'nav.projects', labelKey: 'navProjects', icon: FolderKanban, href: '/projects' },
-  { id: 'nav.cycles', labelKey: 'navCycles', icon: RefreshCw, href: '/cycles' },
-  { id: 'nav.modules', labelKey: 'navModules', icon: Layers, href: '/modules' },
+  { id: 'nav.home', labelKey: 'home', labelNamespace: 'nav', icon: Home, href: '/dashboard' },
+  { id: 'nav.inbox', labelKey: 'inbox', labelNamespace: 'nav', icon: Inbox, href: '/inbox' },
+  {
+    id: 'nav.my-issues',
+    labelKey: 'my_issues',
+    labelNamespace: 'nav',
+    icon: CircleDot,
+    href: '/my-issues',
+  },
+  { id: 'nav.docs', labelKey: 'docs', labelNamespace: 'nav', icon: BookOpenText, href: '/docs' },
+  {
+    id: 'nav.projects',
+    labelKey: 'projects',
+    labelNamespace: 'nav',
+    icon: FolderKanban,
+    href: '/projects',
+  },
   { id: 'nav.initiatives', labelKey: 'navInitiatives', icon: Lightbulb, href: '/initiatives' },
-  { id: 'nav.team', labelKey: 'navTeam', icon: Users, href: '/team' },
+  { id: 'nav.drafts', labelKey: 'drafts', labelNamespace: 'nav', icon: FileText, href: '/drafts' },
+  {
+    id: 'nav.templates',
+    labelKey: 'templates',
+    labelNamespace: 'nav',
+    icon: Pin,
+    href: '/templates',
+  },
+  {
+    id: 'nav.team',
+    labelKey: 'team',
+    labelNamespace: 'nav',
+    icon: Users,
+    href: '/team',
+    requiredAnyPermissions: ['member:view', 'team:view'],
+  },
+  {
+    id: 'nav.settings',
+    labelKey: 'settings',
+    labelNamespace: 'nav',
+    icon: Settings,
+    href: '/settings',
+  },
 ];
+const PERSONAL_QUICK_NAV_IDS = new Set(['nav.home', 'nav.settings']);
 
 const FACET_ICON: Record<FacetKey, LucideIcon> = {
   status: Hash,
@@ -146,9 +182,10 @@ function FacetChip({ facet, onRemove }: FacetChipProps) {
 interface OmnibarTabsProps {
   active: OmnibarTab;
   onChange: (next: OmnibarTab) => void;
+  tabs: ReadonlyArray<OmnibarTabConfig>;
 }
 
-function OmnibarTabs({ active, onChange }: OmnibarTabsProps) {
+function OmnibarTabs({ active, onChange, tabs }: OmnibarTabsProps) {
   const t = useTranslations('searchCommand');
   return (
     <div
@@ -156,7 +193,7 @@ function OmnibarTabs({ active, onChange }: OmnibarTabsProps) {
       aria-label={t('searchScope')}
       className="border-border bg-muted flex items-center gap-1 border-b px-3 py-2"
     >
-      {TABS.map((tab) => {
+      {tabs.map((tab) => {
         const isActive = tab.key === active;
         return (
           <button
@@ -312,13 +349,39 @@ function useHistory(organizationId: string | null, open: boolean) {
 /* Main palette                                                                */
 /* -------------------------------------------------------------------------- */
 
-export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
+export function CommandPalette({
+  open,
+  onOpenChange,
+  hasWorkspaceAccess = true,
+}: CommandPaletteProps) {
   const t = useTranslations('searchCommand');
+  const tNav = useTranslations('nav');
   const router = useRouter();
   const { currentOrganizationId } = useOrganization();
+  const { hasAny: hasAnyOrgPermission, isLoading: isLoadingOrgPermissions } =
+    useOrganizationPermissions(currentOrganizationId ?? undefined);
   const [rawInput, setRawInput] = React.useState('');
   const [tab, setTab] = React.useState<OmnibarTab>('all');
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const visibleTabs = React.useMemo(
+    () => (hasWorkspaceAccess ? TABS : TABS.filter((item) => item.key === 'all')),
+    [hasWorkspaceAccess]
+  );
+  const visibleQuickNav = React.useMemo(() => {
+    const workspaceScoped = hasWorkspaceAccess
+      ? QUICK_NAV
+      : QUICK_NAV.filter((item) => PERSONAL_QUICK_NAV_IDS.has(item.id));
+
+    return workspaceScoped.filter((item) => {
+      if (!item.requiredAnyPermissions) return true;
+      return !isLoadingOrgPermissions && hasAnyOrgPermission(item.requiredAnyPermissions);
+    });
+  }, [hasAnyOrgPermission, hasWorkspaceAccess, isLoadingOrgPermissions]);
+  const navLabel = React.useCallback(
+    (shortcut: NavShortcut) =>
+      shortcut.labelNamespace === 'nav' ? tNav(shortcut.labelKey) : t(shortcut.labelKey),
+    [t, tNav]
+  );
 
   // Reset on every open.
   React.useEffect(() => {
@@ -328,16 +391,22 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     }
   }, [open]);
 
+  React.useEffect(() => {
+    if (!visibleTabs.some((item) => item.key === tab)) {
+      setTab('all');
+    }
+  }, [tab, visibleTabs]);
+
   const { text: textQuery, facets } = React.useMemo(() => parseFacets(rawInput), [rawInput]);
   const activePicker = React.useMemo(() => activeFacetPicker(rawInput), [rawInput]);
 
   const search = useOmnibarSearch({
     query: textQuery,
     tab,
-    organizationId: currentOrganizationId,
+    organizationId: hasWorkspaceAccess ? currentOrganizationId : null,
   });
 
-  const history = useHistory(currentOrganizationId, open);
+  const history = useHistory(hasWorkspaceAccess ? currentOrganizationId : null, open);
 
   const close = React.useCallback(() => onOpenChange(false), [onOpenChange]);
 
@@ -351,6 +420,9 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
   const askAi = React.useCallback(
     (prompt: string) => {
+      if (!hasWorkspaceAccess) {
+        return;
+      }
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('tasknebula:ask-ai', { detail: { prompt } }));
       }
@@ -370,7 +442,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       });
       close();
     },
-    [close, currentOrganizationId]
+    [close, currentOrganizationId, hasWorkspaceAccess]
   );
 
   const removeChip = React.useCallback((facet: Facet) => {
@@ -393,7 +465,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       // typing — once the input has content, digits go to the query.
       if (rawInput.length === 0 && /^[1-5]$/.test(event.key) && !event.metaKey && !event.ctrlKey) {
         const idx = parseInt(event.key, 10) - 1;
-        const next = TABS[idx];
+        const next = visibleTabs[idx];
         if (next) {
           event.preventDefault();
           setTab(next.key);
@@ -405,14 +477,14 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       if (event.key === 'Tab' && !event.metaKey && !event.ctrlKey) {
         event.preventDefault();
         const direction = event.shiftKey ? -1 : 1;
-        const idx = TABS.findIndex((t) => t.key === tab);
-        const nextIdx = (idx + direction + TABS.length) % TABS.length;
-        const target = TABS[nextIdx];
+        const idx = visibleTabs.findIndex((t) => t.key === tab);
+        const nextIdx = (idx + direction + visibleTabs.length) % visibleTabs.length;
+        const target = visibleTabs[nextIdx];
         if (target) setTab(target.key);
         return;
       }
     },
-    [rawInput, tab]
+    [rawInput, tab, visibleTabs]
   );
 
   /* ------------------------------------------------------------------ */
@@ -423,7 +495,9 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   // Heuristic: surface the Ask AI CTA when the user has typed a
   // sentence-ish input (more than a single word OR ends with `?`).
   const showAskCta =
-    askPrompt.length > 0 && (askPrompt.includes(' ') || askPrompt.endsWith('?') || tab === 'ask');
+    hasWorkspaceAccess &&
+    askPrompt.length > 0 &&
+    (askPrompt.includes(' ') || askPrompt.endsWith('?') || tab === 'ask');
 
   /* ------------------------------------------------------------------ */
   /* Render                                                              */
@@ -440,9 +514,11 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         )}
       >
         <DialogTitle className="sr-only">{t('paletteTitle')}</DialogTitle>
-        <DialogDescription className="sr-only">{t('paletteDescription')}</DialogDescription>
+        <DialogDescription className="sr-only">
+          {hasWorkspaceAccess ? t('paletteDescription') : t('navigate')}
+        </DialogDescription>
 
-        <OmnibarTabs active={tab} onChange={setTab} />
+        <OmnibarTabs active={tab} onChange={setTab} tabs={visibleTabs} />
 
         <Command shouldFilter={false} className="text-foreground bg-transparent">
           {/* ---- Input row with inline chips ---- */}
@@ -632,7 +708,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 <CommandGroup
                   heading={<span className="kicker text-muted-foreground">{t('navigate')}</span>}
                 >
-                  {QUICK_NAV.map((nav) => (
+                  {visibleQuickNav.map((nav) => (
                     <CommandItem
                       key={nav.id}
                       value={nav.id}
@@ -643,7 +719,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                         className="text-muted-foreground h-3.5 w-3.5 shrink-0"
                         aria-hidden
                       />
-                      <span className="flex-1 truncate">{t(nav.labelKey)}</span>
+                      <span className="flex-1 truncate">{navLabel(nav)}</span>
                     </CommandItem>
                   ))}
                 </CommandGroup>

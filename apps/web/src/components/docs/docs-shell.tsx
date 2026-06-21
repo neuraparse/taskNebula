@@ -31,6 +31,11 @@ import { extractDocumentHeadings } from '@/lib/docs/content';
 import { buildDocumentTree } from '@/lib/docs/tree';
 import { formatFileSize } from '@/lib/hooks/use-attachments';
 import { useToast } from '@/hooks/use-toast';
+import {
+  isApiConflictError,
+  isApiPermissionError,
+  throwApiResponseError,
+} from '@/lib/client-api-errors';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,6 +43,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -88,6 +94,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
   const { currentOrganizationId } = useOrganization();
   const { toast } = useToast();
   const t = useTranslations('collab');
+  const tHome = useTranslations('pagesHome');
 
   const [pageSearch, setPageSearch] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -245,6 +252,13 @@ export function DocsShell({ projectId }: DocsShellProps) {
     setIsDetailsSheetOpen(false);
   }
 
+  function formatDocsError(error: unknown, fallback: string) {
+    if (isApiPermissionError(error)) {
+      return tHome('toast_access_denied_description');
+    }
+    return error instanceof Error ? error.message : fallback;
+  }
+
   async function handleCreatePage() {
     if (!newPageTitle.trim()) {
       return;
@@ -282,7 +296,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
     } catch (error) {
       toast({
         title: t('shell.toast.pageCreateFailed'),
-        description: error instanceof Error ? error.message : t('common.somethingWrong'),
+        description: formatDocsError(error, t('common.somethingWrong')),
         variant: 'destructive',
       });
     }
@@ -319,7 +333,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
   async function handleSavePage(data: {
     title: string;
     icon: string | null;
-    contentJson: Record<string, any>;
+    contentJson: DocumentPage['contentJson'];
     expectedRevision: number;
   }): Promise<DocumentPage> {
     if (!selectedPageId) {
@@ -334,11 +348,10 @@ export function DocsShell({ projectId }: DocsShellProps) {
       });
       return page;
     } catch (error) {
-      const message = error instanceof Error ? error.message : t('shell.error.saveFailed');
+      const message = formatDocsError(error, t('shell.error.saveFailed'));
       setSaveError(message);
 
-      const maybeError = error as Error & { status?: number };
-      if (maybeError.status === 409) {
+      if (isApiConflictError(error)) {
         queryClient.invalidateQueries({ queryKey: ['document-page', selectedPageId] });
         queryClient.invalidateQueries({ queryKey: ['document-revisions', selectedPageId] });
       }
@@ -367,7 +380,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
     } catch (error) {
       toast({
         title: t('shell.toast.restoreFailed'),
-        description: error instanceof Error ? error.message : t('shell.error.restoreFailed'),
+        description: formatDocsError(error, t('shell.error.restoreFailed')),
         variant: 'destructive',
       });
     }
@@ -385,9 +398,8 @@ export function DocsShell({ projectId }: DocsShellProps) {
         body: JSON.stringify({ pageId: selectedPageId }),
       });
 
-      const result = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(result.error || t('shell.error.linkIssueFailed'));
+        await throwApiResponseError(response, t('shell.error.linkIssueFailed'));
       }
 
       setIssueToAttach('');
@@ -400,7 +412,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
     } catch (error) {
       toast({
         title: t('shell.toast.taskLinkFailed'),
-        description: error instanceof Error ? error.message : t('common.somethingWrong'),
+        description: formatDocsError(error, t('common.somethingWrong')),
         variant: 'destructive',
       });
     }
@@ -416,9 +428,8 @@ export function DocsShell({ projectId }: DocsShellProps) {
         method: 'DELETE',
       });
 
-      const result = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(result.error || t('shell.error.unlinkTaskFailed'));
+        await throwApiResponseError(response, t('shell.error.unlinkTaskFailed'));
       }
 
       queryClient.invalidateQueries({ queryKey: ['document-page', selectedPageId] });
@@ -430,7 +441,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
     } catch (error) {
       toast({
         title: t('shell.toast.taskUnlinkFailed'),
-        description: error instanceof Error ? error.message : t('common.somethingWrong'),
+        description: formatDocsError(error, t('common.somethingWrong')),
         variant: 'destructive',
       });
     }
@@ -524,7 +535,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
     } catch (error) {
       toast({
         title: t('shell.toast.sharingUpdateFailed'),
-        description: error instanceof Error ? error.message : t('common.somethingWrong'),
+        description: formatDocsError(error, t('common.somethingWrong')),
         variant: 'destructive',
       });
     }
@@ -1243,13 +1254,13 @@ export function DocsShell({ projectId }: DocsShellProps) {
             <DialogTitle>
               {newPageParentId ? t('shell.dialog.createSubNote') : t('shell.dialog.createNewPage')}
             </DialogTitle>
-            <p className="text-muted-foreground text-sm">
+            <DialogDescription>
               {selectedParentPage
                 ? t('shell.dialog.nestedUnder', { title: selectedParentPage.title })
                 : t('shell.dialog.createsRoot', {
                     space: createTargetSpace?.name || t('shell.docsTitle'),
                   })}
-            </p>
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">

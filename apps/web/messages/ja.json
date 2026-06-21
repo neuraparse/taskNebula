@@ -43,7 +43,8 @@
     "realtime_health": "リアルタイム稼働状況",
     "audit_logs": "監査ログ",
     "system": "システム",
-    "updates": "アップデート"
+    "updates": "アップデート",
+    "ai_transparency": "AI 透明性"
   },
   "actions": {
     "create_issue": "課題を作成",
@@ -102,6 +103,7 @@
     "skipToContent": "コンテンツにスキップ"
   },
   "settings": {
+    "error_no_permission": "これらの設定を管理する権限がありません。",
     "labels": {
       "kicker": "ラベル",
       "title": "ラベル",
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "課題の読み込みに失敗しました",
       "notFound": "課題が見つかりません",
-      "notFoundHint": "お探しの課題は存在しません。"
+      "notFoundHint": "お探しの課題は存在しません。",
+      "loadFailedHint": "ページを更新するか、少し待ってからもう一度お試しください。"
     }
   },
   "adminUpdates": {
@@ -1480,8 +1483,8 @@
     "planning_kicker": "計画",
     "teamspaces_heading": "チームスペース",
     "teamspaces_subtitle": "組織を分割せずに、個々のプロジェクトの上位にある計画レーン。",
-    "owner_admin_only": "オーナーまたは管理者のみ",
-    "browse_only_notice": "閲覧のみ — オーナーと管理者が構造を変更できます。",
+    "owner_admin_only": "権限が必要です",
+    "browse_only_notice": "閲覧のみ — 構造を変更するには組織設定の権限が必要です。",
     "loading_teamspaces": "チームスペースを読み込み中…",
     "manage_members": "メンバーを管理",
     "members_label": "メンバー",
@@ -2104,7 +2107,7 @@
       "none": "なし",
       "updated": "更新済み",
       "server_managed": "サーバー管理",
-      "read_only_notice": "読み取り専用アクセス — オーナーと管理者が AI ポリシーを更新できます。",
+      "read_only_notice": "読み取り専用アクセス — AIポリシーを更新するには組織設定の権限が必要です。",
       "your_model_profiles": "あなたのモデルプロファイル",
       "your_model_profiles_desc": "再利用のために保存したカスタムのモデル + チューニングの組み合わせ。ここに保存したプロファイルは、上のクイックセットアップのモデルドロップダウンにも表示されます。特定の温度 / トークン / 推論強度の設定でモデルを固定したり、組み込みカタログにないモデルを試したりするのに使用します。",
       "create_profile": "プロファイルを作成",
@@ -2772,6 +2775,7 @@
     "loading_modules": "モジュールを読み込み中...",
     "no_modules_filter": "このフィルターに一致するモジュールはありません。",
     "no_modules_empty": "モジュールはまだありません。作成して関連する作業をまとめましょう。",
+    "no_modules_empty_readonly": "このプロジェクトにはまだモジュールが作成されていません。",
     "create_module": "モジュールを作成",
     "module_dialog_desc": "関連する作業を機能領域やミニプロジェクトにまとめます。",
     "module_name_placeholder": "例: 認証、課金、オンボーディング",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "アップデートはまだありません。",
     "initiative_detail_anonymous": "匿名",
     "initiative_detail_blockers_label": "ブロッカー:",
-    "initiative_detail_next_label": "次:"
+    "initiative_detail_next_label": "次:",
+    "initiative_detail_error_load": "イニシアチブを読み込めませんでした。"
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4112,6 +4117,7 @@
     "descriptionPlaceholder": "プロジェクトの簡単な説明",
     "cancel": "キャンセル",
     "creating": "作成中...",
+    "createProjectFailed": "プロジェクトを作成できませんでした。内容を確認してもう一度お試しください。",
     "breadcrumb": "パンくずリスト",
     "sections": "プロジェクトのセクション",
     "tabViews": "ビュー",
@@ -4184,7 +4190,7 @@
     "completeSprintTooltip": "このスプリントを完了します。未完了の課題はバックログに移動します。",
     "sprintBurndown": "スプリントバーンダウン",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
+    "projectInviteRequiredDescription": "管理者にプロジェクトへ招待してもらうか、プロジェクト作成権限を付与してもらってください。"
   },
   "pagesSettings": {
     "loading": "読み込み中...",
@@ -4663,7 +4669,7 @@
       "removeProject": "{name} を削除",
       "projectRole": "プロジェクトの役割",
       "sendInvitation": "招待を送信",
-      "viewOnly": "閲覧のみのアクセスです。オーナーと管理者のみがメンバーを管理できます。",
+      "viewOnly": "閲覧のみのアクセスです。メンバー管理には該当するメンバー権限が必要です。",
       "noMembers": "まだメンバーがいません。",
       "inviteFirst": "最初のメンバーを招待",
       "invited": "招待済み",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "詳細",
       "detailsHeading": "ワークスペースの詳細",
       "detailsSubtitle": "ワークスペース全体で使用される名前、ドメイン、ブランド情報。",
-      "manageRestricted": "組織設定を更新できるのはオーナーと管理者のみです。",
+      "manageRestricted": "組織設定を更新するには組織設定の権限が必要です。",
       "logo": "ロゴ",
       "slug": "ワークスペーススラッグ",
       "slugHint": "スーパー管理者が変更できます。",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "危険ゾーン",
       "dangerSubtitle": "このワークスペースとその配下のすべてを完全に削除します。オーナー権限が必要です。",
       "cannotRestore": "削除した組織は復元できません。",
-      "ownerOnly": "オーナーのみ",
+      "ownerOnly": "削除権限が必要です",
       "plan": {
         "free": "フリー",
         "starter": "スターター",

@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Trash2, ArrowRight, Save, Star, GitBranch } from 'lucide-react';
+import { isApiPermissionError, throwApiResponseError } from '@/lib/client-api-errors';
 import { useProject, useUpdateProject } from '@/lib/hooks/use-projects';
 
 interface WorkflowStatus {
@@ -130,10 +131,13 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
     toStatusId: '',
   });
   const t = useTranslations('projectConfig');
+  const tSettings = useTranslations('settings');
   const tActions = useTranslations('actions');
   const { toast } = useToast();
   const { data: project } = useProject(projectId || '');
   const updateProject = useUpdateProject();
+  const getErrorDescription = (error: unknown, fallback: string) =>
+    isApiPermissionError(error) ? tSettings('error_no_permission') : fallback;
 
   useEffect(() => {
     void fetchWorkflows();
@@ -161,7 +165,7 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
     try {
       const response = await fetch(`/api/workflows?organizationId=${organizationId}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch workflows');
+        await throwApiResponseError(response);
       }
 
       const data = await response.json();
@@ -188,7 +192,7 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
     try {
       const response = await fetch(`/api/workflows/${workflowId}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch workflow details');
+        await throwApiResponseError(response);
       }
 
       const data = await response.json();
@@ -233,7 +237,7 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to create workflow');
+      if (!response.ok) await throwApiResponseError(response);
 
       const workflow = await response.json();
 
@@ -273,7 +277,7 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update workflow');
+        await throwApiResponseError(response);
       }
 
       toast({
@@ -286,7 +290,7 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
     } catch (error) {
       toast({
         title: t('we_save_failed_title'),
-        description: error instanceof Error ? error.message : t('we_update_failed'),
+        description: getErrorDescription(error, t('we_update_failed')),
         variant: 'destructive',
       });
     }
@@ -301,7 +305,7 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
       });
 
       if (!response.ok) {
-        throw new Error('Failed to set default workflow');
+        await throwApiResponseError(response);
       }
 
       toast({
@@ -314,7 +318,7 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
     } catch (error) {
       toast({
         title: t('we_update_failed_title'),
-        description: error instanceof Error ? error.message : t('we_update_failed'),
+        description: getErrorDescription(error, t('we_update_failed')),
         variant: 'destructive',
       });
     }
@@ -331,8 +335,7 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Failed to delete workflow' }));
-        throw new Error(error.error || 'Failed to delete workflow');
+        await throwApiResponseError(response);
       }
 
       toast({
@@ -348,7 +351,7 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
     } catch (error) {
       toast({
         title: t('we_delete_failed_title'),
-        description: error instanceof Error ? error.message : t('we_delete_failed'),
+        description: getErrorDescription(error, t('we_delete_failed')),
         variant: 'destructive',
       });
     }
@@ -374,7 +377,7 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
     } catch (error) {
       toast({
         title: t('we_assign_failed_title'),
-        description: error instanceof Error ? error.message : t('we_assign_failed'),
+        description: getErrorDescription(error, t('we_assign_failed')),
         variant: 'destructive',
       });
     }
@@ -397,7 +400,7 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create workflow status');
+        await throwApiResponseError(response);
       }
 
       toast({
@@ -415,7 +418,7 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
     } catch (error) {
       toast({
         title: t('we_create_failed_title'),
-        description: error instanceof Error ? error.message : t('we_status_create_failed'),
+        description: getErrorDescription(error, t('we_status_create_failed')),
         variant: 'destructive',
       });
     }
@@ -451,7 +454,7 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to create transition');
+      if (!response.ok) await throwApiResponseError(response);
 
       toast({
         title: t('we_transition_created_title'),
@@ -467,7 +470,7 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
     } catch (error) {
       toast({
         title: t('we_create_failed_title'),
-        description: error instanceof Error ? error.message : t('we_transition_create_failed'),
+        description: getErrorDescription(error, t('we_transition_create_failed')),
         variant: 'destructive',
       });
     }
@@ -487,7 +490,7 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
       );
 
       if (!response.ok) {
-        throw new Error('Failed to delete transition');
+        await throwApiResponseError(response);
       }
 
       toast({
@@ -500,7 +503,7 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
     } catch (error) {
       toast({
         title: t('we_delete_failed_title'),
-        description: error instanceof Error ? error.message : t('we_transition_delete_failed'),
+        description: getErrorDescription(error, t('we_transition_delete_failed')),
         variant: 'destructive',
       });
     }

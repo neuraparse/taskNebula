@@ -5,6 +5,7 @@ import {
   db,
   desc,
   eq,
+  hasPermission as roleHasPermission,
   inArray,
   organizationMembers,
   projectTemplates,
@@ -16,7 +17,6 @@ import { getTemplateAuthz } from '@/lib/templates/authz';
 export const dynamic = 'force-dynamic';
 
 const TEMPLATE_KINDS = ['project', 'issue', 'doc'] as const;
-type TemplateKind = (typeof TEMPLATE_KINDS)[number];
 
 const createTemplateSchema = z.object({
   name: z.string().min(1).max(255),
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
       user?.isSuperAdmin
         ? orgIds
         : orgMemberships
-            .filter((m) => m.role === 'owner' || m.role === 'admin')
+            .filter((m) => roleHasPermission(m.role || '', 'org:settings'))
             .map((m) => m.organizationId)
     );
 
@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/templates — create a template. Admin-only within the target org.
+// POST /api/templates — create a template with org:settings permission in the target org.
 export async function POST(request: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -140,23 +140,24 @@ export async function POST(request: NextRequest) {
     // Resolve organization: explicit or the caller's first admin org.
     let organizationId = data.organizationId ?? null;
     if (!organizationId) {
-      const [adminMembership] = await db
-        .select({ organizationId: organizationMembers.organizationId })
+      const memberships = await db
+        .select({
+          organizationId: organizationMembers.organizationId,
+          role: organizationMembers.role,
+        })
         .from(organizationMembers)
         .where(
-          and(
-            eq(organizationMembers.userId, userId),
-            inArray(organizationMembers.role, ['owner', 'admin']),
-            eq(organizationMembers.status, 'active')
-          )
-        )
-        .limit(1);
+          and(eq(organizationMembers.userId, userId), eq(organizationMembers.status, 'active'))
+        );
+      const adminMembership = memberships.find((membership) =>
+        roleHasPermission(membership.role || '', 'org:settings')
+      );
       organizationId = adminMembership?.organizationId ?? null;
     }
 
     if (!organizationId) {
       return NextResponse.json(
-        { error: 'You must be an owner or admin of an organization to create templates.' },
+        { error: 'Template creation requires organization settings permission.' },
         { status: 403 }
       );
     }
@@ -164,7 +165,7 @@ export async function POST(request: NextRequest) {
     const authz = await getTemplateAuthz(userId, organizationId);
     if (!authz.canAdminister) {
       return NextResponse.json(
-        { error: 'Only organization owners or admins can create templates.' },
+        { error: 'Template creation requires organization settings permission.' },
         { status: 403 }
       );
     }

@@ -43,7 +43,8 @@
     "realtime_health": "Sanntidsstatus",
     "audit_logs": "Revisjonslogger",
     "system": "System",
-    "updates": "Oppdateringer"
+    "updates": "Oppdateringer",
+    "ai_transparency": "AI-åpenhet"
   },
   "actions": {
     "create_issue": "Opprett sak",
@@ -102,6 +103,7 @@
     "skipToContent": "Hopp til innhold"
   },
   "settings": {
+    "error_no_permission": "Du har ikke tillatelse til å administrere disse innstillingene.",
     "labels": {
       "kicker": "Etiketter",
       "title": "Etiketter",
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "Kunne ikke laste saken",
       "notFound": "Fant ikke saken",
-      "notFoundHint": "Saken du leter etter, finnes ikke."
+      "notFoundHint": "Saken du leter etter, finnes ikke.",
+      "loadFailedHint": "Oppdater siden, eller prøv igjen om et øyeblikk."
     }
   },
   "adminUpdates": {
@@ -1480,8 +1483,8 @@
     "planning_kicker": "Planlegging",
     "teamspaces_heading": "Teamområder",
     "teamspaces_subtitle": "Planleggingsbaner over enkeltprosjekter, uten å splitte organisasjonen.",
-    "owner_admin_only": "Kun eier eller administrator",
-    "browse_only_notice": "Kun visning — eiere og administratorer kan endre strukturen.",
+    "owner_admin_only": "Tillatelse kreves",
+    "browse_only_notice": "Kun visning — endring av strukturen krever tillatelse til organisasjonsinnstillinger.",
     "loading_teamspaces": "Laster teamområder …",
     "manage_members": "Administrer medlemmer",
     "members_label": "medlemmer",
@@ -2104,7 +2107,7 @@
       "none": "Ingen",
       "updated": "Oppdatert",
       "server_managed": "Serveradministrert",
-      "read_only_notice": "Skrivebeskyttet tilgang — eiere og administratorer kan oppdatere AI-policy.",
+      "read_only_notice": "Skrivebeskyttet tilgang — oppdatering av AI-policy krever tillatelse til organisasjonsinnstillinger.",
       "your_model_profiles": "Dine modellprofiler",
       "your_model_profiles_desc": "Egendefinerte kombinasjoner av modell + finjustering som er lagret for gjenbruk. Enhver profil som lagres her, vises også i modellnedtrekkslisten i Hurtigoppsett ovenfor. Bruk dette til å feste en modell med spesifikke innstillinger for temperatur / tokens / resonneringsinnsats, eller til å prøve en modell som ikke er i den innebygde katalogen.",
       "create_profile": "Opprett profil",
@@ -2772,6 +2775,7 @@
     "loading_modules": "Laster moduler …",
     "no_modules_filter": "Ingen moduler samsvarer med dette filteret.",
     "no_modules_empty": "Ingen moduler ennå. Opprett én for å gruppere relatert arbeid.",
+    "no_modules_empty_readonly": "Det er ikke opprettet noen moduler for dette prosjektet ennå.",
     "create_module": "Opprett modul",
     "module_dialog_desc": "Grupper relatert arbeid i et funksjonsområde eller miniprosjekt.",
     "module_name_placeholder": "f.eks. Autentisering, Fakturering, Introduksjon",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "Ingen oppdateringer ennå.",
     "initiative_detail_anonymous": "Anonym",
     "initiative_detail_blockers_label": "Hindringer:",
-    "initiative_detail_next_label": "Neste:"
+    "initiative_detail_next_label": "Neste:",
+    "initiative_detail_error_load": "Kunne ikke laste inn initiativet."
   },
   "pagesProjects": {
     "metaTitle": "Prosjekter | TaskNebula",
@@ -4029,6 +4034,7 @@
     "descriptionPlaceholder": "Kort prosjektbeskrivelse",
     "cancel": "Avbryt",
     "creating": "Oppretter …",
+    "createProjectFailed": "Prosjektet kunne ikke opprettes. Kontroller detaljene og prøv igjen.",
     "breadcrumb": "Brødsmulesti",
     "sections": "Prosjektseksjoner",
     "tabViews": "Visninger",
@@ -4101,7 +4107,7 @@
     "completeSprintTooltip": "Fullfør denne sprinten. Ufullstendige saker vil bli flyttet til backloggen.",
     "sprintBurndown": "Sprint-burndown",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
+    "projectInviteRequiredDescription": "Be en administrator invitere deg til et prosjekt eller gi deg tillatelse til å opprette prosjekter."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4663,7 +4669,7 @@
       "removeProject": "Fjern {name}",
       "projectRole": "Prosjektrolle",
       "sendInvitation": "Send invitasjon",
-      "viewOnly": "Skrivebeskyttet tilgang. Bare eiere og administratorer kan administrere medlemmer.",
+      "viewOnly": "Kun visning. Medlemsadministrasjon krever relevante medlemstillatelser.",
       "noMembers": "Ingen medlemmer ennå.",
       "inviteFirst": "Inviter ditt første medlem",
       "invited": "Invitert",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "Detaljer",
       "detailsHeading": "Detaljer for arbeidsområde",
       "detailsSubtitle": "Navn, domene og merkevareinformasjon som brukes på tvers av arbeidsområdet.",
-      "manageRestricted": "Bare eiere og administratorer kan oppdatere organisasjonsinnstillinger.",
+      "manageRestricted": "Oppdatering av organisasjonsinnstillinger krever tillatelse til organisasjonsinnstillinger.",
       "logo": "Logo",
       "slug": "Slug for arbeidsområde",
       "slugHint": "Superadministratorer kan endre den.",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "Faresone",
       "dangerSubtitle": "Fjerner permanent dette arbeidsområdet og alt under det. Krever eiertilgang.",
       "cannotRestore": "Slettede organisasjoner kan ikke gjenopprettes.",
-      "ownerOnly": "Kun eier",
+      "ownerOnly": "Slettetillatelse kreves",
       "plan": {
         "free": "Gratis",
         "starter": "Starter",

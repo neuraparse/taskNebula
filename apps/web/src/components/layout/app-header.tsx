@@ -8,7 +8,7 @@ import { NotificationBell } from '@/components/notifications/notification-bell';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { useCommandPalette } from '@/lib/command/use-command-palette';
 
-export function AppHeader() {
+export function AppHeader({ hasWorkspaceAccess = true }: { hasWorkspaceAccess?: boolean }) {
   const tNav = useTranslations('nav');
   const tActions = useTranslations('actions');
   const { open: openPalette } = useCommandPalette();
@@ -17,25 +17,29 @@ export function AppHeader() {
     <header className="border-border bg-card/95 supports-[backdrop-filter]:bg-card/85 sticky top-0 z-30 flex h-12 items-center justify-between border-b px-4 backdrop-blur">
       {/* Workspace + search trigger */}
       <div className="flex flex-1 items-center gap-3">
-        <OrganizationSwitcher />
-        <button
-          type="button"
-          onClick={openPalette}
-          aria-label={tActions('open_command_palette')}
-          className="border-border bg-surface text-muted-foreground ease-snap hover:border-primary/30 hover:bg-background hover:text-foreground focus-visible:ring-ring group relative flex h-8 w-full max-w-xl items-center rounded-md border pe-2 ps-9 text-start text-[13px] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2"
-        >
-          <Search className="text-muted-foreground absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-          <span className="truncate">{tNav('search_placeholder')}</span>
-          <kbd className="chip pointer-events-none ms-auto inline-flex shrink-0 select-none items-center gap-1 rounded-sm font-mono text-[10px]">
-            <Command className="h-3 w-3" />
-            {'K'}
-          </kbd>
-        </button>
+        {hasWorkspaceAccess ? (
+          <>
+            <OrganizationSwitcher />
+            <button
+              type="button"
+              onClick={openPalette}
+              aria-label={tActions('open_command_palette')}
+              className="border-border bg-surface text-muted-foreground ease-snap hover:border-primary/30 hover:bg-background hover:text-foreground focus-visible:ring-ring group relative flex h-8 w-full max-w-xl items-center rounded-md border pe-2 ps-9 text-start text-[13px] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2"
+            >
+              <Search className="text-muted-foreground absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+              <span className="truncate">{tNav('search_placeholder')}</span>
+              <kbd className="chip pointer-events-none ms-auto inline-flex shrink-0 select-none items-center gap-1 rounded-sm font-mono text-[10px]">
+                <Command className="h-3 w-3" />
+                {'K'}
+              </kbd>
+            </button>
+          </>
+        ) : null}
       </div>
 
       {/* Quick actions */}
       <div className="flex items-center gap-0.5">
-        <NotificationBell />
+        {hasWorkspaceAccess ? <NotificationBell /> : null}
         <LanguageSwitcher />
         <Button
           variant="ghost"

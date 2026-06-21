@@ -42,7 +42,7 @@ export function OrganizationSwitcher() {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [canCreateOrganizations, setCanCreateOrganizations] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { currentOrganizationId, setCurrentOrganization } = useOrganization();
+  const { currentOrganizationId } = useOrganization();
   const t = useTranslations('projectsPages');
 
   useEffect(() => {
@@ -57,9 +57,6 @@ export function OrganizationSwitcher() {
           if (!isMounted) return;
           setOrganizations(data.organizations);
           setCanCreateOrganizations(data.canCreateOrganizations === true);
-          if (!currentOrganizationId && data.organizations.length > 0) {
-            setCurrentOrganization(data.organizations[0].id);
-          }
         }
       } catch (error) {
         const isNavigationAbort =
@@ -81,7 +78,29 @@ export function OrganizationSwitcher() {
       isMounted = false;
       controller.abort();
     };
-  }, [currentOrganizationId, setCurrentOrganization]);
+  }, []);
+
+  useEffect(() => {
+    if (loading) return;
+
+    const organizationState = useOrganization.getState();
+    const storedOrganizationId = organizationState.currentOrganizationId;
+    const hasCurrentOrganization = organizations.some((org) => org.id === storedOrganizationId);
+
+    if (organizations.length === 0) {
+      if (storedOrganizationId) {
+        organizationState.clearContext();
+      }
+      return;
+    }
+
+    if (!storedOrganizationId || !hasCurrentOrganization) {
+      const firstOrganization = organizations[0];
+      if (firstOrganization) {
+        organizationState.setCurrentOrganization(firstOrganization.id);
+      }
+    }
+  }, [currentOrganizationId, loading, organizations]);
 
   const currentOrg = organizations.find((org) => org.id === currentOrganizationId);
 
@@ -145,7 +164,7 @@ export function OrganizationSwitcher() {
                   isActive && 'bg-accent'
                 )}
                 onSelect={() => {
-                  setCurrentOrganization(org.id);
+                  useOrganization.getState().setCurrentOrganization(org.id);
                   setOpen(false);
                 }}
               >

@@ -43,7 +43,8 @@
     "realtime_health": "रीयल-टाइम स्वास्थ्य",
     "audit_logs": "ऑडिट लॉग",
     "system": "सिस्टम",
-    "updates": "अपडेट"
+    "updates": "अपडेट",
+    "ai_transparency": "AI पारदर्शिता"
   },
   "actions": {
     "create_issue": "इश्यू बनाएं",
@@ -102,6 +103,7 @@
     "skipToContent": "सामग्री पर जाएँ"
   },
   "settings": {
+    "error_no_permission": "आपके पास इन सेटिंग्स को प्रबंधित करने की अनुमति नहीं है।",
     "labels": {
       "kicker": "लेबल",
       "title": "लेबल",
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "इश्यू लोड करने में विफल",
       "notFound": "इश्यू नहीं मिला",
-      "notFoundHint": "जिस इश्यू को आप खोज रहे हैं वह मौजूद नहीं है।"
+      "notFoundHint": "जिस इश्यू को आप खोज रहे हैं वह मौजूद नहीं है।",
+      "loadFailedHint": "पेज रीफ़्रेश करें या कुछ देर बाद फिर कोशिश करें."
     }
   },
   "adminUpdates": {
@@ -1480,8 +1483,8 @@
     "planning_kicker": "योजना",
     "teamspaces_heading": "टीमस्पेस",
     "teamspaces_subtitle": "संगठन को विभाजित किए बिना व्यक्तिगत प्रोजेक्ट से ऊपर योजना लेन।",
-    "owner_admin_only": "केवल स्वामी या एडमिन",
-    "browse_only_notice": "केवल ब्राउज़ करें — स्वामी और एडमिन संरचना बदल सकते हैं।",
+    "owner_admin_only": "अनुमति आवश्यक है",
+    "browse_only_notice": "केवल देखने की अनुमति — संरचना बदलने के लिए संगठन सेटिंग्स अनुमति चाहिए।",
     "loading_teamspaces": "टीमस्पेस लोड हो रहे हैं…",
     "manage_members": "सदस्य प्रबंधित करें",
     "members_label": "सदस्य",
@@ -2104,7 +2107,7 @@
       "none": "कोई नहीं",
       "updated": "अपडेट किया गया",
       "server_managed": "सर्वर द्वारा प्रबंधित",
-      "read_only_notice": "रीड-ओनली पहुँच — स्वामी और एडमिन AI नीति अपडेट कर सकते हैं।",
+      "read_only_notice": "केवल पढ़ने की पहुंच — AI नीति अपडेट करने के लिए संगठन सेटिंग्स अनुमति चाहिए।",
       "your_model_profiles": "आपके मॉडल प्रोफ़ाइल",
       "your_model_profiles_desc": "पुनः उपयोग के लिए सहेजे गए कस्टम मॉडल + ट्यूनिंग संयोजन। यहाँ सहेजा गया कोई भी प्रोफ़ाइल ऊपर त्वरित सेटअप मॉडल ड्रॉपडाउन में भी दिखाई देता है। विशिष्ट तापमान / टोकन / रीज़निंग-एफ़र्ट सेटिंग्स के साथ एक मॉडल पिन करने के लिए, या बिल्ट-इन कैटलॉग में नहीं मौजूद किसी मॉडल को आज़माने के लिए इसका उपयोग करें।",
       "create_profile": "प्रोफ़ाइल बनाएँ",
@@ -2772,6 +2775,7 @@
     "loading_modules": "मॉड्यूल लोड हो रहे हैं...",
     "no_modules_filter": "इस फ़िल्टर से कोई मॉड्यूल मेल नहीं खाता।",
     "no_modules_empty": "अभी तक कोई मॉड्यूल नहीं। संबंधित काम को समूहित करने के लिए एक बनाएँ।",
+    "no_modules_empty_readonly": "इस प्रोजेक्ट के लिए अभी तक कोई मॉड्यूल नहीं बनाया गया है।",
     "create_module": "मॉड्यूल बनाएँ",
     "module_dialog_desc": "संबंधित काम को एक फ़ीचर क्षेत्र या मिनी-प्रोजेक्ट में समूहित करें।",
     "module_name_placeholder": "जैसे, Auth, Billing, Onboarding",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "अभी तक कोई अपडेट नहीं।",
     "initiative_detail_anonymous": "अनाम",
     "initiative_detail_blockers_label": "ब्लॉकर:",
-    "initiative_detail_next_label": "अगला:"
+    "initiative_detail_next_label": "अगला:",
+    "initiative_detail_error_load": "इनिशिएटिव लोड नहीं हो सका."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4112,6 +4117,7 @@
     "descriptionPlaceholder": "संक्षिप्त प्रोजेक्ट विवरण",
     "cancel": "रद्द करें",
     "creating": "बनाया जा रहा है...",
+    "createProjectFailed": "प्रोजेक्ट बनाया नहीं जा सका। विवरण जांचें और फिर कोशिश करें।",
     "breadcrumb": "ब्रेडक्रंब",
     "sections": "प्रोजेक्ट अनुभाग",
     "tabViews": "व्यू",
@@ -4184,7 +4190,7 @@
     "completeSprintTooltip": "इस स्प्रिंट को पूर्ण करें। अपूर्ण इश्यू बैकलॉग में चले जाएँगे।",
     "sprintBurndown": "स्प्रिंट बर्नडाउन",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
+    "projectInviteRequiredDescription": "किसी व्यवस्थापक से कहें कि वह आपको प्रोजेक्ट में आमंत्रित करे या प्रोजेक्ट बनाने की अनुमति दे।"
   },
   "pagesSettings": {
     "loading": "लोड हो रहा है...",
@@ -4663,7 +4669,7 @@
       "removeProject": "{name} हटाएं",
       "projectRole": "प्रोजेक्ट भूमिका",
       "sendInvitation": "आमंत्रण भेजें",
-      "viewOnly": "केवल-देखने की पहुंच। केवल मालिक और एडमिन सदस्यों का प्रबंधन कर सकते हैं।",
+      "viewOnly": "केवल देखने की पहुंच। सदस्य प्रबंधन के लिए संबंधित सदस्य अनुमतियां आवश्यक हैं।",
       "noMembers": "अभी कोई सदस्य नहीं।",
       "inviteFirst": "अपने पहले सदस्य को आमंत्रित करें",
       "invited": "आमंत्रित किया गया",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "विवरण",
       "detailsHeading": "वर्कस्पेस विवरण",
       "detailsSubtitle": "वर्कस्पेस में उपयोग किए जाने वाले नाम, डोमेन और ब्रांड जानकारी।",
-      "manageRestricted": "केवल मालिक और एडमिन संगठन सेटिंग्स अपडेट कर सकते हैं।",
+      "manageRestricted": "संगठन सेटिंग्स अपडेट करने के लिए संगठन सेटिंग्स अनुमति चाहिए।",
       "logo": "लोगो",
       "slug": "वर्कस्पेस स्लग",
       "slugHint": "सुपर एडमिन इसे बदल सकते हैं।",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "खतरा क्षेत्र",
       "dangerSubtitle": "इस वर्कस्पेस और इसके अंतर्गत सब कुछ स्थायी रूप से हटा देता है। मालिक की पहुंच आवश्यक है।",
       "cannotRestore": "हटाए गए संगठनों को पुनर्स्थापित नहीं किया जा सकता।",
-      "ownerOnly": "केवल मालिक",
+      "ownerOnly": "हटाने की अनुमति आवश्यक है",
       "plan": {
         "free": "मुफ़्त",
         "starter": "स्टार्टर",

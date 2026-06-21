@@ -13,6 +13,9 @@ import {
   users,
   projectMembers,
   organizationMembers,
+  ROLE_DEFAULT_PERMISSIONS,
+  hasPermission as roleHasPermission,
+  type ProjectRole,
 } from '@tasknebula/db';
 import { auth } from '@/auth';
 import { createId } from '@paralleldrive/cuid2';
@@ -72,8 +75,8 @@ async function checkIssuePermission(
     )
     .limit(1);
 
-  // Org owners have full access
-  if (orgMember?.role === 'owner') {
+  // Org roles with project:manage have full access
+  if (roleHasPermission(orgMember?.role || '', 'project:manage')) {
     return { allowed: true };
   }
 
@@ -81,6 +84,8 @@ async function checkIssuePermission(
   const [projectMember] = await db
     .select({
       role: projectMembers.role,
+      canCreateIssues: projectMembers.canCreateIssues,
+      canEditIssues: projectMembers.canEditIssues,
       canDeleteIssues: projectMembers.canDeleteIssues,
     })
     .from(projectMembers)
@@ -88,37 +93,31 @@ async function checkIssuePermission(
     .limit(1);
 
   if (!projectMember) {
-    // Org admins can view but not modify
-    if (orgMember?.role === 'admin' && action === 'view') {
-      return { allowed: true };
-    }
     return { allowed: false, reason: 'Not a project member' };
   }
 
-  // Check role-based permissions
-  const issueCreateRoles = [
-    'product_owner',
-    'scrum_master',
-    'tech_lead',
-    'developer',
-    'qa_engineer',
-    'designer',
-  ];
-  const issueDeleteRoles = ['product_owner', 'tech_lead'];
+  // Check role defaults and explicit overrides
+  const roleDefaults =
+    ROLE_DEFAULT_PERMISSIONS[projectMember.role as ProjectRole] || ROLE_DEFAULT_PERMISSIONS.viewer;
+  const toBool = (val: string | null | undefined): boolean => val === 'true';
 
   if (action === 'view') {
     return { allowed: true };
   }
 
   if (action === 'create' || action === 'edit') {
-    if (issueCreateRoles.includes(projectMember.role)) {
+    const canModify =
+      action === 'create'
+        ? toBool(projectMember.canCreateIssues) || roleDefaults.canCreateIssues
+        : toBool(projectMember.canEditIssues) || roleDefaults.canEditIssues;
+    if (canModify) {
       return { allowed: true };
     }
     return { allowed: false, reason: 'Insufficient permissions to create/edit issues' };
   }
 
   if (action === 'delete') {
-    if (issueDeleteRoles.includes(projectMember.role) || projectMember.canDeleteIssues) {
+    if (toBool(projectMember.canDeleteIssues) || roleDefaults.canDeleteIssues) {
       return { allowed: true };
     }
     return { allowed: false, reason: 'Insufficient permissions to delete issues' };

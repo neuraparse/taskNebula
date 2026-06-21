@@ -11,26 +11,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { and, eq, sql } from 'drizzle-orm';
-import {
-  aiDisclosuresAcknowledged,
-  db,
-  organizationMembers,
-} from '@tasknebula/db';
+import { aiDisclosuresAcknowledged, db, organizationMembers } from '@tasknebula/db';
 import { auth } from '@/auth';
 
 export const dynamic = 'force-dynamic';
 
-async function assertWorkspaceMember(
-  userId: string,
-  workspaceId: string
-): Promise<boolean> {
+async function assertWorkspaceMember(userId: string, workspaceId: string): Promise<boolean> {
   const [row] = await db
     .select({ id: organizationMembers.id })
     .from(organizationMembers)
     .where(
       and(
         eq(organizationMembers.userId, userId),
-        eq(organizationMembers.organizationId, workspaceId)
+        eq(organizationMembers.organizationId, workspaceId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
@@ -46,10 +40,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const workspaceId = searchParams.get('workspaceId');
   if (!workspaceId) {
-    return NextResponse.json(
-      { error: 'workspaceId is required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'workspaceId is required' }, { status: 400 });
   }
 
   if (!(await assertWorkspaceMember(session.user.id, workspaceId))) {

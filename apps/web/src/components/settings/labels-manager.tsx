@@ -17,6 +17,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import {
+  isApiConflictError,
+  isApiPermissionError,
+  throwApiResponseError,
+} from '@/lib/client-api-errors';
 import { cn } from '@/lib/utils';
 
 export interface OrgLabel {
@@ -52,34 +57,13 @@ const LABEL_COLOR_PALETTE = [
   '#6366F1',
 ] as const;
 
-class ApiError extends Error {
-  readonly status: number;
-
-  constructor(message: string, status: number) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-  }
-}
-
-async function throwApiError(response: Response): Promise<never> {
-  let message = `Request failed (${response.status})`;
-  try {
-    const data = (await response.json()) as { error?: string };
-    if (data.error) message = data.error;
-  } catch {
-    // Non-JSON error body — keep the generic message.
-  }
-  throw new ApiError(message, response.status);
-}
-
 function useLabels(organizationId: string) {
   return useQuery({
     queryKey: ['labels', organizationId],
     queryFn: async () => {
       const params = new URLSearchParams({ organizationId });
       const response = await fetch(`/api/labels?${params.toString()}`);
-      if (!response.ok) await throwApiError(response);
+      if (!response.ok) await throwApiResponseError(response);
       return (await response.json()) as LabelsResponse;
     },
     enabled: Boolean(organizationId),
@@ -104,7 +88,7 @@ function useCreateLabel(organizationId: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ organizationId, ...data }),
       });
-      if (!response.ok) await throwApiError(response);
+      if (!response.ok) await throwApiResponseError(response);
       return (await response.json()) as OrgLabel;
     },
     onSuccess: invalidate,
@@ -128,7 +112,7 @@ function useUpdateLabel(organizationId: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      if (!response.ok) await throwApiError(response);
+      if (!response.ok) await throwApiResponseError(response);
       return (await response.json()) as OrgLabel;
     },
     onSuccess: invalidate,
@@ -140,7 +124,7 @@ function useDeleteLabel(organizationId: string) {
   return useMutation({
     mutationFn: async (labelId: string) => {
       const response = await fetch(`/api/labels/${labelId}`, { method: 'DELETE' });
-      if (!response.ok) await throwApiError(response);
+      if (!response.ok) await throwApiResponseError(response);
       return (await response.json()) as { success: boolean; id: string };
     },
     onSuccess: invalidate,
@@ -153,6 +137,7 @@ export interface LabelsManagerProps {
 
 export function LabelsManager({ organizationId }: LabelsManagerProps) {
   const t = useTranslations('settings.labels');
+  const tSettings = useTranslations('settings');
   const tActions = useTranslations('actions');
   const tCommon = useTranslations('common');
   const { toast } = useToast();
@@ -172,8 +157,11 @@ export function LabelsManager({ organizationId }: LabelsManagerProps) {
       await deleteLabel.mutateAsync(deletingLabel.id);
       toast({ title: t('toast_deleted'), variant: 'success' });
       setDeletingLabel(null);
-    } catch {
-      toast({ title: t('error_generic'), variant: 'destructive' });
+    } catch (error) {
+      toast({
+        title: isApiPermissionError(error) ? tSettings('error_no_permission') : t('error_generic'),
+        variant: 'destructive',
+      });
     }
   };
 
@@ -329,6 +317,7 @@ function LabelEditorDialog({
   labelToEdit,
 }: LabelEditorDialogProps) {
   const t = useTranslations('settings.labels');
+  const tSettings = useTranslations('settings');
   const tActions = useTranslations('actions');
   const { toast } = useToast();
 
@@ -381,9 +370,12 @@ function LabelEditorDialog({
       }
       onOpenChange(false);
     } catch (error) {
-      const isDuplicate = error instanceof ApiError && error.status === 409;
       toast({
-        title: isDuplicate ? t('error_duplicate') : t('error_generic'),
+        title: isApiPermissionError(error)
+          ? tSettings('error_no_permission')
+          : isApiConflictError(error)
+            ? t('error_duplicate')
+            : t('error_generic'),
         variant: 'destructive',
       });
     }

@@ -10,11 +10,37 @@
 import type { ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import ProjectDocsPage from '../[projectId]/docs/page';
 
 // Spies for next/navigation.
 const replaceSpy = jest.fn();
+const redirectSpy = jest.fn((url: string) => {
+  throw new Error(`redirect:${url}`);
+});
+const notFoundSpy = jest.fn(() => {
+  throw new Error('not-found');
+});
+const mockAuth = jest.fn();
+const mockResolveProjectAccess = jest.fn();
+const mockGetUserFlags = jest.fn();
+const mockGetProjectDocumentPermissions = jest.fn();
 let currentSearchParamsString = '';
+
+jest.mock('@/auth', () => ({
+  auth: mockAuth,
+}));
+
+jest.mock('@/lib/auth/project-access', () => ({
+  resolveProjectAccess: mockResolveProjectAccess,
+}));
+
+jest.mock('@/lib/docs/server', () => ({
+  getUserFlags: mockGetUserFlags,
+  getProjectDocumentPermissions: mockGetProjectDocumentPermissions,
+}));
+
+jest.mock('@/components/projects/project-access-denied', () => ({
+  ProjectAccessDenied: () => <div data-testid="project-access-denied" />,
+}));
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -27,6 +53,8 @@ jest.mock('next/navigation', () => ({
   }),
   usePathname: () => '/projects/project-1/docs',
   useSearchParams: () => new URLSearchParams(currentSearchParamsString),
+  redirect: redirectSpy,
+  notFound: notFoundSpy,
 }));
 
 jest.mock('@/components/docs/document-editor', () => ({
@@ -142,7 +170,11 @@ jest.mock('@/lib/hooks/use-docs', () => ({
   useRestoreDocumentPage: () => ({ mutateAsync: jest.fn(), isPending: false }),
   useUpdateDocumentShare: () => ({ mutateAsync: jest.fn(), isPending: false }),
   useUploadDocumentAttachment: () => ({ mutateAsync: jest.fn(), isPending: false }),
-  useDeleteDocumentAttachment: () => ({ mutate: jest.fn(), mutateAsync: jest.fn(), isPending: false }),
+  useDeleteDocumentAttachment: () => ({
+    mutate: jest.fn(),
+    mutateAsync: jest.fn(),
+    isPending: false,
+  }),
 }));
 
 function createQueryClient() {
@@ -155,13 +187,12 @@ function createQueryClient() {
 }
 
 async function renderProjectDocsPage(projectId: string) {
+  const { default: ProjectDocsPage } = await import('../[projectId]/docs/page');
   const element = await ProjectDocsPage({
     params: Promise.resolve({ projectId }),
   });
   const client = createQueryClient();
-  return render(
-    <QueryClientProvider client={client}>{element as ReactNode}</QueryClientProvider>
-  );
+  return render(<QueryClientProvider client={client}>{element as ReactNode}</QueryClientProvider>);
 }
 
 describe('Project docs page', () => {
@@ -173,6 +204,21 @@ describe('Project docs page', () => {
     mockSpaces = [];
     mockPagesData = null;
     mockCurrentPage = null;
+    redirectSpy.mockClear();
+    notFoundSpy.mockClear();
+    mockAuth.mockResolvedValue({ user: { id: 'user-1' } });
+    mockResolveProjectAccess.mockResolvedValue({
+      project: { id: 'project-1', organizationId: 'org-1' },
+      canRead: true,
+      canManage: true,
+    });
+    mockGetUserFlags.mockResolvedValue({ isSuperAdmin: false });
+    mockGetProjectDocumentPermissions.mockResolvedValue({
+      canBrowse: true,
+      canCreate: true,
+      canEdit: true,
+      canDelete: false,
+    });
   });
 
   it('renders the docs editor with project-scoped data', async () => {

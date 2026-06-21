@@ -43,7 +43,8 @@
     "realtime_health": "Gerçek zamanlı durum",
     "audit_logs": "Denetim günlükleri",
     "system": "Sistem",
-    "updates": "Güncellemeler"
+    "updates": "Güncellemeler",
+    "ai_transparency": "AI Şeffaflığı"
   },
   "actions": {
     "create_issue": "Konu oluştur",
@@ -102,6 +103,7 @@
     "skipToContent": "İçeriğe geç"
   },
   "settings": {
+    "error_no_permission": "Bu ayarları yönetme izniniz yok.",
     "labels": {
       "kicker": "Labels",
       "title": "Labels",
@@ -300,7 +302,7 @@
       "loading": "Loading…",
       "remove": "Remove label {name}",
       "created": "Label \"{name}\" created",
-      "noPermission": "You don't have permission to create labels",
+      "noPermission": "Etiket oluşturma izniniz yok",
       "createFailed": "Couldn't create label"
     },
     "components": {
@@ -311,7 +313,7 @@
       "create": "Create \"{name}\"",
       "created": "Component \"{name}\" created",
       "duplicate": "Component \"{name}\" already exists",
-      "noPermission": "You don't have permission to create components",
+      "noPermission": "Bileşen oluşturma izniniz yok",
       "createFailed": "Couldn't create component"
     },
     "versions": {
@@ -327,7 +329,7 @@
       "create": "Create \"{name}\"",
       "created": "Version \"{name}\" created",
       "duplicate": "Version \"{name}\" already exists",
-      "noPermission": "You don't have permission to create versions",
+      "noPermission": "Sürüm oluşturma izniniz yok",
       "createFailed": "Couldn't create version"
     },
     "resolution": {
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "Failed to load issue",
       "notFound": "Issue not found",
-      "notFoundHint": "The issue you're looking for doesn't exist."
+      "notFoundHint": "The issue you're looking for doesn't exist.",
+      "loadFailedHint": "Sayfayı yenileyin veya biraz sonra tekrar deneyin."
     }
   },
   "adminUpdates": {
@@ -1480,8 +1483,8 @@
     "planning_kicker": "Planlama",
     "teamspaces_heading": "Ekip alanları",
     "teamspaces_subtitle": "Kuruluşu bölmeden, bireysel projelerin üzerindeki planlama şeritleri.",
-    "owner_admin_only": "Yalnızca sahip veya yönetici",
-    "browse_only_notice": "Yalnızca görüntüleme — sahipler ve yöneticiler yapıyı değiştirebilir.",
+    "owner_admin_only": "Yetki gerekli",
+    "browse_only_notice": "Yalnızca görüntüleme — yapıyı değiştirmek için organizasyon ayarları yetkisi gerekir.",
     "loading_teamspaces": "Ekip alanları yükleniyor…",
     "manage_members": "Üyeleri yönet",
     "members_label": "üye",
@@ -2104,7 +2107,7 @@
       "none": "Yok",
       "updated": "Güncellendi",
       "server_managed": "Sunucu tarafından yönetiliyor",
-      "read_only_notice": "Salt okunur erişim — sahipler ve yöneticiler AI politikasını güncelleyebilir.",
+      "read_only_notice": "Salt okunur erişim — AI politikasını güncellemek için organizasyon ayarları yetkisi gerekir.",
       "your_model_profiles": "Model profilleriniz",
       "your_model_profiles_desc": "Yeniden kullanım için kaydedilen özel model + ince ayar kombinasyonları. Burada kaydedilen herhangi bir profil yukarıdaki Hızlı kurulum model açılır listesinde de görünür. Belirli sıcaklık / belirteç / akıl yürütme çabası ayarlarıyla bir modeli sabitlemek veya yerleşik katalogda olmayan bir modeli denemek için bunu kullanın.",
       "create_profile": "Profil oluştur",
@@ -2772,6 +2775,7 @@
     "loading_modules": "Modüller yükleniyor...",
     "no_modules_filter": "Bu filtreyle eşleşen modül yok.",
     "no_modules_empty": "Henüz modül yok. İlgili işleri gruplamak için bir tane oluşturun.",
+    "no_modules_empty_readonly": "Bu proje için henüz modül oluşturulmamış.",
     "create_module": "Modül oluştur",
     "module_dialog_desc": "İlgili işleri bir özellik alanında veya mini projede gruplayın.",
     "module_name_placeholder": "ör. Kimlik doğrulama, Faturalandırma, Başlangıç",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "Henüz güncelleme yok.",
     "initiative_detail_anonymous": "Anonim",
     "initiative_detail_blockers_label": "Engeller:",
-    "initiative_detail_next_label": "Sonraki:"
+    "initiative_detail_next_label": "Sonraki:",
+    "initiative_detail_error_load": "İnisiyatif yüklenemedi."
   },
   "pagesProjects": {
     "metaTitle": "Projeler | TaskNebula",
@@ -4029,6 +4034,7 @@
     "descriptionPlaceholder": "Kısa proje açıklaması",
     "cancel": "İptal",
     "creating": "Oluşturuluyor...",
+    "createProjectFailed": "Proje oluşturulamadı. Bilgileri kontrol edip tekrar deneyin.",
     "breadcrumb": "İçerik haritası",
     "sections": "Proje bölümleri",
     "tabViews": "Görünümler",
@@ -4101,7 +4107,7 @@
     "completeSprintTooltip": "Bu sprinti tamamla. Tamamlanmayan işler iş listesine taşınacak.",
     "sprintBurndown": "Sprint Tükenme Grafiği",
     "projectInviteRequiredTitle": "Davet gerekli",
-    "projectInviteRequiredDescription": "Projelerde çalışmak için bir organizasyon sahibi veya adminin sizi projeye davet etmesi ya da proje oluşturmak için owner/admin rolü vermesi gerekir."
+    "projectInviteRequiredDescription": "Bir yöneticiden sizi projeye davet etmesini veya proje oluşturma yetkisi vermesini isteyin."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4663,7 +4669,7 @@
       "removeProject": "{name} öğesini kaldır",
       "projectRole": "Proje rolü",
       "sendInvitation": "Davet gönder",
-      "viewOnly": "Yalnızca görüntüleme erişimi. Üyeleri yalnızca sahipler ve yöneticiler yönetebilir.",
+      "viewOnly": "Yalnızca görüntüleme erişimi. Üye yönetimi için ilgili üye yetkileri gerekir.",
       "noMembers": "Henüz üye yok.",
       "inviteFirst": "İlk üyenizi davet edin",
       "invited": "Davet edildi",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "Ayrıntılar",
       "detailsHeading": "Çalışma alanı ayrıntıları",
       "detailsSubtitle": "Çalışma alanı genelinde kullanılan ad, alan adı ve marka bilgileri.",
-      "manageRestricted": "Kuruluş ayarlarını yalnızca sahipler ve yöneticiler güncelleyebilir.",
+      "manageRestricted": "Organizasyon ayarlarını güncellemek için organizasyon ayarları yetkisi gerekir.",
       "logo": "Logo",
       "slug": "Çalışma alanı kısaltması",
       "slugHint": "Süper yöneticiler bunu değiştirebilir.",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "Tehlike bölgesi",
       "dangerSubtitle": "Bu çalışma alanını ve altındaki her şeyi kalıcı olarak kaldırır. Sahip erişimi gereklidir.",
       "cannotRestore": "Silinen kuruluşlar geri yüklenemez.",
-      "ownerOnly": "Yalnızca sahip",
+      "ownerOnly": "Silme izni gerekli",
       "plan": {
         "free": "Ücretsiz",
         "starter": "Başlangıç",

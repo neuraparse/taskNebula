@@ -8,6 +8,7 @@ import {
   organizationMembers,
   users,
   ROLE_DEFAULT_PERMISSIONS,
+  hasPermission as roleHasPermission,
   type ProjectRole,
 } from '@tasknebula/db';
 import { and, eq } from 'drizzle-orm';
@@ -43,8 +44,8 @@ export async function POST(
     return NextResponse.json({ error: 'Cycle not found' }, { status: 404 });
   }
 
-  // Permission: manage_sprints on this project, with org-owner/super-admin
-  // fast-paths matching the existing sprint endpoints.
+  // Permission: manage_sprints on this project, with org-wide project manager
+  // and super-admin fast-paths matching the existing sprint endpoints.
   const [user] = await db
     .select({ isSuperAdmin: users.isSuperAdmin })
     .from(users)
@@ -70,12 +71,13 @@ export async function POST(
       .where(
         and(
           eq(organizationMembers.userId, userId),
-          eq(organizationMembers.organizationId, project.organizationId)
+          eq(organizationMembers.organizationId, project.organizationId),
+          eq(organizationMembers.status, 'active')
         )
       )
       .limit(1);
 
-    if (orgMember?.role !== 'owner') {
+    if (!roleHasPermission(orgMember?.role || '', 'project:manage')) {
       const [projectMember] = await db
         .select()
         .from(projectMembers)

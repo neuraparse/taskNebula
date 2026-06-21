@@ -68,7 +68,8 @@ async function ensureProjectAccess(projectIdOrKey: string, userId: string) {
     .where(
       and(
         eq(organizationMembers.organizationId, project.organizationId),
-        eq(organizationMembers.userId, userId)
+        eq(organizationMembers.userId, userId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
@@ -192,7 +193,7 @@ export async function PATCH(
     };
     const nextTeamspaceId =
       nextScope === 'teamspace'
-        ? getViewTeamspaceId(nextCriteriaBase) ?? request.nextUrl.searchParams.get('teamId')
+        ? (getViewTeamspaceId(nextCriteriaBase) ?? request.nextUrl.searchParams.get('teamId'))
         : null;
 
     if (nextScope === 'teamspace' && !nextTeamspaceId) {
@@ -229,10 +230,8 @@ export async function PATCH(
         query: parsed.query ?? existingView.query,
         criteria: nextCriteria as any,
         viewType: parsed.viewType ?? existingView.viewType,
-        isPublic:
-          nextScope === 'personal' ? false : (parsed.isPublic ?? existingView.isPublic),
-        isStarred:
-          typeof parsed.isPinned === 'boolean' ? parsed.isPinned : existingView.isStarred,
+        isPublic: nextScope === 'personal' ? false : (parsed.isPublic ?? existingView.isPublic),
+        isStarred: typeof parsed.isPinned === 'boolean' ? parsed.isPinned : existingView.isStarred,
         updatedAt: new Date(),
       })
       .where(eq(savedFilters.id, existingView.id))

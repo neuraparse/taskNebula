@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, issues, users, workflowStatuses, projects, organizationMembers, projectMembers } from '@tasknebula/db';
+import {
+  db,
+  issues,
+  users,
+  workflowStatuses,
+  projects,
+  organizationMembers,
+  projectMembers,
+} from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
 
 // GET /api/export/issues?projectId=xxx&format=csv|json
@@ -43,7 +51,8 @@ export async function GET(request: NextRequest) {
         .where(
           and(
             eq(organizationMembers.userId, session.user.id),
-            eq(organizationMembers.organizationId, project.organizationId)
+            eq(organizationMembers.organizationId, project.organizationId),
+            eq(organizationMembers.status, 'active')
           )
         )
         .limit(1);
@@ -53,10 +62,7 @@ export async function GET(request: NextRequest) {
           .select({ userId: projectMembers.userId })
           .from(projectMembers)
           .where(
-            and(
-              eq(projectMembers.userId, session.user.id),
-              eq(projectMembers.projectId, projectId)
-            )
+            and(eq(projectMembers.userId, session.user.id), eq(projectMembers.projectId, projectId))
           )
           .limit(1);
 
@@ -144,4 +150,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to export issues' }, { status: 500 });
   }
 }
-

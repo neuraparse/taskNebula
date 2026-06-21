@@ -113,7 +113,8 @@ describe('/api/organizations route', () => {
 
     expect(response.status).toBe(403);
     await expect(response.json()).resolves.toEqual({
-      error: 'Only platform admins can create organizations. Ask an admin for an invite.',
+      error:
+        'Organization creation requires platform administration permission. Ask a platform administrator for an invite.',
     });
     expect(dbInsertMock).not.toHaveBeenCalled();
   });

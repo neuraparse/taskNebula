@@ -1,30 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import {
-  db,
-  integrationConnections,
-  organizationMembers,
-  eq,
-  and,
-} from '@tasknebula/db';
+import { db, integrationConnections, eq, and } from '@tasknebula/db';
 import { JIRA_PROVIDER } from '@/lib/integrations/jira';
+import { hasPermission } from '@/lib/auth/permissions';
 
 /**
  * Helpers
  */
 
-async function requireMembership(userId: string, organizationId: string) {
-  const [membership] = await db
-    .select({ role: organizationMembers.role })
-    .from(organizationMembers)
-    .where(
-      and(
-        eq(organizationMembers.userId, userId),
-        eq(organizationMembers.organizationId, organizationId)
-      )
-    )
-    .limit(1);
-  return membership ?? null;
+async function canViewIntegrationSettings(organizationId: string) {
+  return hasPermission(organizationId, 'org:settings');
 }
 
 /**
@@ -47,9 +32,11 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const membership = await requireMembership(session.user.id, organizationId);
-  if (!membership) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!(await canViewIntegrationSettings(organizationId))) {
+    return NextResponse.json(
+      { error: 'Viewing integration settings requires organization settings permission.' },
+      { status: 403 }
+    );
   }
 
   const [row] = await db
@@ -85,10 +72,7 @@ export async function GET(request: NextRequest) {
     externalAccountLabel: row.externalAccountLabel,
     scope: row.scope,
     siteUrl: typeof metadata.siteUrl === 'string' ? metadata.siteUrl : null,
-    siteName:
-      typeof metadata.siteName === 'string'
-        ? metadata.siteName
-        : row.externalAccountLabel,
+    siteName: typeof metadata.siteName === 'string' ? metadata.siteName : row.externalAccountLabel,
     connectedAt: row.createdAt,
     updatedAt: row.updatedAt,
   });
@@ -115,9 +99,11 @@ export async function DELETE(request: NextRequest) {
     );
   }
 
-  const membership = await requireMembership(session.user.id, organizationId);
-  if (!membership) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!(await canViewIntegrationSettings(organizationId))) {
+    return NextResponse.json(
+      { error: 'Managing integrations requires organization settings permission.' },
+      { status: 403 }
+    );
   }
 
   await db

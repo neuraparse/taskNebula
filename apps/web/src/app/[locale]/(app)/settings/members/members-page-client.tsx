@@ -39,7 +39,9 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { useToast } from '@/hooks/use-toast';
+import { isApiPermissionError, throwApiResponseError } from '@/lib/client-api-errors';
 import { useOrganization } from '@/lib/hooks/use-organization';
+import { useOrganizationPermissions } from '@/lib/hooks/use-permissions';
 import { useProjects } from '@/lib/hooks/use-projects';
 import {
   Users,
@@ -95,7 +97,11 @@ const roleChipClass: Record<Member['role'], string> = {
 
 export function MembersPageClient() {
   const t = useTranslations('settingsClients');
+  const tProject = useTranslations('projectConfig');
   const { currentOrganizationId } = useOrganization();
+  const { has: hasOrgPermission, isLoading: permissionsLoading } = useOrganizationPermissions(
+    currentOrganizationId ?? undefined
+  );
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -107,16 +113,26 @@ export function MembersPageClient() {
   const [projectRole, setProjectRole] = useState<ProjectRole>('developer');
   const [inviteExpiresInDays, setInviteExpiresInDays] =
     useState<(typeof INVITE_EXPIRY_OPTIONS)[number]>(7);
+  const [assignTargetMember, setAssignTargetMember] = useState<Member | null>(null);
+  const [assignProjectPickerOpen, setAssignProjectPickerOpen] = useState(false);
+  const [assignSelectedProjectIds, setAssignSelectedProjectIds] = useState<string[]>([]);
+  const [assignProjectRole, setAssignProjectRole] = useState<ProjectRole>('developer');
 
   const { data: orgProjects = [], isLoading: projectsLoading } = useProjects({
     organizationId: currentOrganizationId ?? undefined,
   });
 
+  const canAssignProjects = !permissionsLoading && hasOrgPermission('project:manage');
+  const assignableProjects = useMemo(
+    () => (canAssignProjects ? orgProjects : []),
+    [canAssignProjects, orgProjects]
+  );
+
   const projectById = useMemo(() => {
     const map = new Map<string, (typeof orgProjects)[number]>();
-    for (const p of orgProjects) map.set(p.id, p);
+    for (const p of assignableProjects) map.set(p.id, p);
     return map;
-  }, [orgProjects]);
+  }, [assignableProjects]);
 
   const toggleProject = (id: string) => {
     setSelectedProjectIds((prev) =>
@@ -125,6 +141,14 @@ export function MembersPageClient() {
   };
   const removeProject = (id: string) => {
     setSelectedProjectIds((prev) => prev.filter((v) => v !== id));
+  };
+  const toggleAssignProject = (id: string) => {
+    setAssignSelectedProjectIds((prev) =>
+      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
+    );
+  };
+  const removeAssignProject = (id: string) => {
+    setAssignSelectedProjectIds((prev) => prev.filter((v) => v !== id));
   };
 
   const resetInviteForm = () => {
@@ -135,12 +159,17 @@ export function MembersPageClient() {
     setProjectRole('developer');
     setProjectsExpanded(false);
   };
+  const resetAssignForm = () => {
+    setAssignProjectPickerOpen(false);
+    setAssignSelectedProjectIds([]);
+    setAssignProjectRole('developer');
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ['organization-members', currentOrganizationId],
     queryFn: async () => {
       const response = await fetch(`/api/organizations/${currentOrganizationId}/members`);
-      if (!response.ok) throw new Error(t('members.fetchFailed'));
+      if (!response.ok) await throwApiResponseError(response);
       return response.json() as Promise<{
         members: Member[];
         userRole: 'owner' | 'admin' | 'member' | 'viewer' | 'guest' | null;
@@ -154,9 +183,9 @@ export function MembersPageClient() {
   const userRole = data?.userRole || null;
   const isSuperAdmin = data?.isSuperAdmin || false;
 
-  const canInvite = userRole === 'owner' || userRole === 'admin' || isSuperAdmin;
-  const canManage = userRole === 'owner' || userRole === 'admin' || isSuperAdmin;
-  const canRemove = userRole === 'owner' || userRole === 'admin' || isSuperAdmin;
+  const canInvite = !permissionsLoading && hasOrgPermission('member:invite');
+  const canManage = !permissionsLoading && hasOrgPermission('member:manage');
+  const canRemove = !permissionsLoading && hasOrgPermission('member:remove');
 
   const inviteMutation = useMutation({
     mutationFn: async (data: {
@@ -172,8 +201,7 @@ export function MembersPageClient() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || t('members.inviteFailed'));
+        await throwApiResponseError(response);
       }
       return response.json() as Promise<{
         addedToProjects?: string[];
@@ -213,7 +241,9 @@ export function MembersPageClient() {
     onError: (error: Error) => {
       toast({
         title: t('members.inviteFailed'),
-        description: error.message,
+        description: isApiPermissionError(error)
+          ? t('members.viewOnly')
+          : t('members.inviteFailed'),
         variant: 'destructive',
       });
     },
@@ -234,6 +264,70 @@ export function MembersPageClient() {
     inviteMutation.mutate(payload);
   };
 
+  const assignProjectsMutation = useMutation({
+    mutationFn: async (data: {
+      memberId: string;
+      projectIds: string[];
+      projectRole: ProjectRole;
+    }) => {
+      const response = await fetch(
+        `/api/organizations/${currentOrganizationId}/members/${data.memberId}/projects`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectIds: data.projectIds,
+            projectRole: data.projectRole,
+          }),
+        }
+      );
+      if (!response.ok) {
+        await throwApiResponseError(response);
+      }
+      return response.json() as Promise<{
+        addedToProjects?: string[];
+        skippedProjects?: string[];
+      }>;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['project-members'] });
+      const added = result?.addedToProjects?.length ?? 0;
+      const skipped = result?.skippedProjects?.length ?? 0;
+      const parts = [];
+      if (added > 0) parts.push(t('members.addedToProjects', { count: added }));
+      if (skipped > 0) parts.push(t('members.skippedProjects', { count: skipped }));
+      toast({
+        title: tProject('apm_member_added_title'),
+        description: parts.join(' ') || tProject('apm_member_added_description'),
+      });
+      setAssignTargetMember(null);
+      resetAssignForm();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: tProject('apm_add_failed_title'),
+        description: isApiPermissionError(error)
+          ? t('members.viewOnly')
+          : tProject('apm_add_failed'),
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const openAssignProjects = (member: Member) => {
+    resetAssignForm();
+    setAssignTargetMember(member);
+  };
+
+  const handleSubmitAssignProjects = () => {
+    if (!assignTargetMember || assignSelectedProjectIds.length === 0) return;
+    assignProjectsMutation.mutate({
+      memberId: assignTargetMember.id,
+      projectIds: assignSelectedProjectIds,
+      projectRole: assignProjectRole,
+    });
+  };
+
   const updateRoleMutation = useMutation({
     mutationFn: async ({ memberId, role }: { memberId: string; role: Member['role'] }) => {
       const response = await fetch(
@@ -245,8 +339,7 @@ export function MembersPageClient() {
         }
       );
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || t('members.updateRoleFailed'));
+        await throwApiResponseError(response);
       }
       return response.json();
     },
@@ -257,7 +350,9 @@ export function MembersPageClient() {
     onError: (error: Error) => {
       toast({
         title: t('members.updateRoleFailed'),
-        description: error.message,
+        description: isApiPermissionError(error)
+          ? t('members.viewOnly')
+          : t('members.updateRoleFailed'),
         variant: 'destructive',
       });
     },
@@ -270,8 +365,7 @@ export function MembersPageClient() {
         { method: 'DELETE' }
       );
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || t('members.removeFailed'));
+        await throwApiResponseError(response);
       }
       return response.json();
     },
@@ -282,7 +376,9 @@ export function MembersPageClient() {
     onError: (error: Error) => {
       toast({
         title: t('members.removeFailed'),
-        description: error.message,
+        description: isApiPermissionError(error)
+          ? t('members.viewOnly')
+          : t('members.removeFailed'),
         variant: 'destructive',
       });
     },
@@ -334,7 +430,7 @@ export function MembersPageClient() {
               }}
             >
               <DialogTrigger asChild>
-                <Button size="sm" disabled={!canInvite}>
+                <Button size="sm" disabled={permissionsLoading || !canInvite}>
                   <UserPlus className="mr-1.5 h-4 w-4" />
                   {t('members.invite')}
                 </Button>
@@ -399,143 +495,148 @@ export function MembersPageClient() {
                     <p className="text-muted-foreground text-xs">{t('members.inviteExpiryHelp')}</p>
                   </div>
 
-                  <div className="border-border bg-muted/20 space-y-2 rounded-md border p-3">
-                    <button
-                      type="button"
-                      onClick={() => setProjectsExpanded((v) => !v)}
-                      className="flex w-full items-center justify-between text-left"
-                    >
-                      <span className="flex items-center gap-2 text-sm font-medium">
-                        <FolderKanban className="text-muted-foreground h-4 w-4" />
-                        {t('members.addToProjects')}
-                        {selectedProjectIds.length > 0 && (
-                          <span className="chip text-[11px]">{selectedProjectIds.length}</span>
-                        )}
-                      </span>
-                      <ChevronsUpDown
-                        className={cn(
-                          'text-muted-foreground h-4 w-4 transition-transform',
-                          projectsExpanded && 'rotate-180'
-                        )}
-                      />
-                    </button>
+                  {canAssignProjects ? (
+                    <div className="border-border bg-muted/20 space-y-2 rounded-md border p-3">
+                      <button
+                        type="button"
+                        onClick={() => setProjectsExpanded((v) => !v)}
+                        className="flex w-full items-center justify-between text-left"
+                      >
+                        <span className="flex items-center gap-2 text-sm font-medium">
+                          <FolderKanban className="text-muted-foreground h-4 w-4" />
+                          {t('members.addToProjects')}
+                          {selectedProjectIds.length > 0 && (
+                            <span className="chip text-[11px]">{selectedProjectIds.length}</span>
+                          )}
+                        </span>
+                        <ChevronsUpDown
+                          className={cn(
+                            'text-muted-foreground h-4 w-4 transition-transform',
+                            projectsExpanded && 'rotate-180'
+                          )}
+                        />
+                      </button>
 
-                    {projectsExpanded && (
-                      <div className="space-y-3 pt-2">
-                        {projectsLoading ? (
-                          <div className="flex items-center justify-center py-4">
-                            <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
-                          </div>
-                        ) : orgProjects.length === 0 ? (
-                          <p className="text-muted-foreground text-xs">
-                            {t('members.noProjectsYet')}
-                          </p>
-                        ) : (
-                          <>
-                            <Popover open={projectPickerOpen} onOpenChange={setProjectPickerOpen}>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  role="combobox"
-                                  aria-label={t('members.selectProjects')}
-                                  aria-expanded={projectPickerOpen}
-                                  className="w-full justify-between font-normal"
-                                >
-                                  <span className="truncate text-sm">
-                                    {selectedProjectIds.length === 0
-                                      ? t('members.selectProjectsPlaceholder')
-                                      : t('members.selectedCount', {
-                                          count: selectedProjectIds.length,
-                                        })}
-                                  </span>
-                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent
-                                className="w-[--radix-popover-trigger-width] p-0"
-                                align="start"
-                              >
-                                <Command>
-                                  <CommandInput placeholder={t('members.searchProjects')} />
-                                  <CommandList>
-                                    <CommandEmpty>{t('members.noProjectsFound')}</CommandEmpty>
-                                    <CommandGroup>
-                                      {orgProjects.map((project) => {
-                                        const selected = selectedProjectIds.includes(project.id);
-                                        return (
-                                          <CommandItem
-                                            key={project.id}
-                                            value={`${project.name} ${project.key}`}
-                                            onSelect={() => toggleProject(project.id)}
-                                          >
-                                            <Check
-                                              className={cn(
-                                                'mr-2 h-4 w-4',
-                                                selected ? 'opacity-100' : 'opacity-0'
-                                              )}
-                                            />
-                                            <span className="truncate">{project.name}</span>
-                                            <span className="text-muted-foreground ml-2 truncate font-mono text-xs">
-                                              {project.key}
-                                            </span>
-                                          </CommandItem>
-                                        );
-                                      })}
-                                    </CommandGroup>
-                                  </CommandList>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
-
-                            {selectedProjectIds.length > 0 && (
-                              <div className="flex flex-wrap gap-1.5">
-                                {selectedProjectIds.map((id) => {
-                                  const project = projectById.get(id);
-                                  return (
-                                    <span key={id} className="chip flex items-center gap-1 text-xs">
-                                      {project?.name ?? id}
-                                      <button
-                                        type="button"
-                                        onClick={() => removeProject(id)}
-                                        className="rounded p-0.5 opacity-60 hover:opacity-100"
-                                        aria-label={t('members.removeProject', {
-                                          name: project?.name ?? id,
-                                        })}
-                                      >
-                                        <X className="h-3 w-3" />
-                                      </button>
+                      {projectsExpanded && (
+                        <div className="space-y-3 pt-2">
+                          {projectsLoading ? (
+                            <div className="flex items-center justify-center py-4">
+                              <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+                            </div>
+                          ) : assignableProjects.length === 0 ? (
+                            <p className="text-muted-foreground text-xs">
+                              {t('members.noProjectsYet')}
+                            </p>
+                          ) : (
+                            <>
+                              <Popover open={projectPickerOpen} onOpenChange={setProjectPickerOpen}>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-label={t('members.selectProjects')}
+                                    aria-expanded={projectPickerOpen}
+                                    className="w-full justify-between font-normal"
+                                  >
+                                    <span className="truncate text-sm">
+                                      {selectedProjectIds.length === 0
+                                        ? t('members.selectProjectsPlaceholder')
+                                        : t('members.selectedCount', {
+                                            count: selectedProjectIds.length,
+                                          })}
                                     </span>
-                                  );
-                                })}
-                              </div>
-                            )}
-
-                            {selectedProjectIds.length > 0 && (
-                              <div className="space-y-2">
-                                <Label htmlFor="project-role">{t('members.projectRole')}</Label>
-                                <Select
-                                  value={projectRole}
-                                  onValueChange={(value) => setProjectRole(value as ProjectRole)}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent
+                                  className="w-[--radix-popover-trigger-width] p-0"
+                                  align="start"
                                 >
-                                  <SelectTrigger id="project-role">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {PROJECT_ROLE_VALUES.map((value) => (
-                                      <SelectItem key={value} value={value}>
-                                        {t(`members.projectRoleOption.${value}`)}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                                  <Command>
+                                    <CommandInput placeholder={t('members.searchProjects')} />
+                                    <CommandList>
+                                      <CommandEmpty>{t('members.noProjectsFound')}</CommandEmpty>
+                                      <CommandGroup>
+                                        {assignableProjects.map((project) => {
+                                          const selected = selectedProjectIds.includes(project.id);
+                                          return (
+                                            <CommandItem
+                                              key={project.id}
+                                              value={`${project.name} ${project.key}`}
+                                              onSelect={() => toggleProject(project.id)}
+                                            >
+                                              <Check
+                                                className={cn(
+                                                  'mr-2 h-4 w-4',
+                                                  selected ? 'opacity-100' : 'opacity-0'
+                                                )}
+                                              />
+                                              <span className="truncate">{project.name}</span>
+                                              <span className="text-muted-foreground ml-2 truncate font-mono text-xs">
+                                                {project.key}
+                                              </span>
+                                            </CommandItem>
+                                          );
+                                        })}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
+
+                              {selectedProjectIds.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5">
+                                  {selectedProjectIds.map((id) => {
+                                    const project = projectById.get(id);
+                                    return (
+                                      <span
+                                        key={id}
+                                        className="chip flex items-center gap-1 text-xs"
+                                      >
+                                        {project?.name ?? id}
+                                        <button
+                                          type="button"
+                                          onClick={() => removeProject(id)}
+                                          className="rounded p-0.5 opacity-60 hover:opacity-100"
+                                          aria-label={t('members.removeProject', {
+                                            name: project?.name ?? id,
+                                          })}
+                                        >
+                                          <X className="h-3 w-3" />
+                                        </button>
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {selectedProjectIds.length > 0 && (
+                                <div className="space-y-2">
+                                  <Label htmlFor="project-role">{t('members.projectRole')}</Label>
+                                  <Select
+                                    value={projectRole}
+                                    onValueChange={(value) => setProjectRole(value as ProjectRole)}
+                                  >
+                                    <SelectTrigger id="project-role">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {PROJECT_ROLE_VALUES.map((value) => (
+                                        <SelectItem key={value} value={value}>
+                                          {t(`members.projectRoleOption.${value}`)}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setInviteOpen(false)}>
@@ -543,7 +644,7 @@ export function MembersPageClient() {
                   </Button>
                   <Button
                     onClick={handleSubmitInvite}
-                    disabled={inviteMutation.isPending || !inviteEmail}
+                    disabled={!canInvite || inviteMutation.isPending || !inviteEmail}
                   >
                     {inviteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {t('members.sendInvitation')}
@@ -554,7 +655,9 @@ export function MembersPageClient() {
           </div>
         </div>
 
-        {!canManage && <div className="panel-warn text-sm">{t('members.viewOnly')}</div>}
+        {!permissionsLoading && !canManage && (
+          <div className="panel-warn text-sm">{t('members.viewOnly')}</div>
+        )}
 
         {isLoading ? (
           <div className="flex items-center justify-center py-10">
@@ -574,6 +677,7 @@ export function MembersPageClient() {
           <div>
             {members.map((member) => {
               const disableRoleChange = member.role === 'owner' || !canManage;
+              const showActions = canAssignProjects || (member.role !== 'owner' && canRemove);
               return (
                 <div
                   key={member.id}
@@ -629,20 +733,37 @@ export function MembersPageClient() {
                       </Select>
                     )}
 
-                    {member.role !== 'owner' && canRemove && (
+                    {showActions && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            aria-label={
+                              canAssignProjects
+                                ? t('members.addToProjects')
+                                : t('members.removeMember')
+                            }
+                          >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => removeMutation.mutate(member.id)}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            {t('members.removeMember')}
-                          </DropdownMenuItem>
+                          {canAssignProjects ? (
+                            <DropdownMenuItem onClick={() => openAssignProjects(member)}>
+                              <FolderKanban className="mr-2 h-4 w-4" />
+                              {t('members.addToProjects')}
+                            </DropdownMenuItem>
+                          ) : null}
+                          {member.role !== 'owner' && canRemove ? (
+                            <DropdownMenuItem
+                              onClick={() => removeMutation.mutate(member.id)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              {t('members.removeMember')}
+                            </DropdownMenuItem>
+                          ) : null}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}
@@ -652,6 +773,172 @@ export function MembersPageClient() {
             })}
           </div>
         )}
+
+        <Dialog
+          open={Boolean(assignTargetMember)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setAssignTargetMember(null);
+              resetAssignForm();
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FolderKanban className="text-muted-foreground h-4 w-4" />
+                {t('members.addToProjects')}
+              </DialogTitle>
+              {assignTargetMember ? (
+                <DialogDescription>
+                  {assignTargetMember.name || assignTargetMember.email}
+                </DialogDescription>
+              ) : null}
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {projectsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
+                </div>
+              ) : assignableProjects.length === 0 ? (
+                <p className="text-muted-foreground text-sm">{t('members.noProjectsYet')}</p>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label>{t('members.selectProjects')}</Label>
+                    <Popover
+                      open={assignProjectPickerOpen}
+                      onOpenChange={setAssignProjectPickerOpen}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          role="combobox"
+                          aria-label={t('members.selectProjects')}
+                          aria-expanded={assignProjectPickerOpen}
+                          className="w-full justify-between font-normal"
+                        >
+                          <span className="truncate text-sm">
+                            {assignSelectedProjectIds.length === 0
+                              ? t('members.selectProjectsPlaceholder')
+                              : t('members.selectedCount', {
+                                  count: assignSelectedProjectIds.length,
+                                })}
+                          </span>
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-[--radix-popover-trigger-width] p-0"
+                        align="start"
+                      >
+                        <Command>
+                          <CommandInput placeholder={t('members.searchProjects')} />
+                          <CommandList>
+                            <CommandEmpty>{t('members.noProjectsFound')}</CommandEmpty>
+                            <CommandGroup>
+                              {assignableProjects.map((project) => {
+                                const selected = assignSelectedProjectIds.includes(project.id);
+                                return (
+                                  <CommandItem
+                                    key={project.id}
+                                    value={`${project.name} ${project.key}`}
+                                    onSelect={() => toggleAssignProject(project.id)}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        'mr-2 h-4 w-4',
+                                        selected ? 'opacity-100' : 'opacity-0'
+                                      )}
+                                    />
+                                    <span className="truncate">{project.name}</span>
+                                    <span className="text-muted-foreground ml-2 truncate font-mono text-xs">
+                                      {project.key}
+                                    </span>
+                                  </CommandItem>
+                                );
+                              })}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {assignSelectedProjectIds.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {assignSelectedProjectIds.map((id) => {
+                        const project = projectById.get(id);
+                        return (
+                          <span key={id} className="chip flex items-center gap-1 text-xs">
+                            {project?.name ?? id}
+                            <button
+                              type="button"
+                              onClick={() => removeAssignProject(id)}
+                              className="rounded p-0.5 opacity-60 hover:opacity-100"
+                              aria-label={t('members.removeProject', {
+                                name: project?.name ?? id,
+                              })}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="assign-project-role">{t('members.projectRole')}</Label>
+                    <Select
+                      value={assignProjectRole}
+                      onValueChange={(value) => setAssignProjectRole(value as ProjectRole)}
+                    >
+                      <SelectTrigger id="assign-project-role">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PROJECT_ROLE_VALUES.map((value) => (
+                          <SelectItem key={value} value={value}>
+                            {t(`members.projectRoleOption.${value}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setAssignTargetMember(null);
+                  resetAssignForm();
+                }}
+                disabled={assignProjectsMutation.isPending}
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button
+                onClick={handleSubmitAssignProjects}
+                disabled={
+                  !canAssignProjects ||
+                  assignProjectsMutation.isPending ||
+                  assignSelectedProjectIds.length === 0
+                }
+              >
+                {assignProjectsMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
+                {t('members.addToProjects')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </section>
     </div>
   );

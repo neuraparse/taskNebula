@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { and, desc, eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { auth } from '@/auth';
-import { db, organizationMembers } from '@tasknebula/db';
+import { db } from '@tasknebula/db';
 import { projectModules } from '@tasknebula/db/src/schema/project-modules';
-import { resolveProjectByIdOrKey } from '@/lib/projects/server';
+import { resolveProjectAccess } from '@/lib/auth/project-access';
 
 const MODULE_STATUSES = [
   'backlog',
@@ -24,30 +24,23 @@ const createModuleSchema = z.object({
   targetDate: z.string().datetime().nullable().optional().or(z.string().length(0)),
 });
 
-async function ensureProjectAccess(projectIdOrKey: string, userId: string) {
-  const project = await resolveProjectByIdOrKey(projectIdOrKey);
-  if (!project) {
+async function ensureProjectAccess(
+  projectIdOrKey: string,
+  userId: string,
+  mode: 'read' | 'manage'
+) {
+  const access = await resolveProjectAccess(userId, projectIdOrKey);
+  if (!access.project || !access.canRead) {
     return {
       error: NextResponse.json({ error: 'Project not found' }, { status: 404 }),
     };
   }
 
-  const [membership] = await db
-    .select({ id: organizationMembers.id })
-    .from(organizationMembers)
-    .where(
-      and(
-        eq(organizationMembers.organizationId, project.organizationId),
-        eq(organizationMembers.userId, userId),
-      ),
-    )
-    .limit(1);
-
-  if (!membership) {
+  if (mode === 'manage' && !access.canManage) {
     return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
   }
 
-  return { project };
+  return { project: access.project };
 }
 
 function serializeModule(row: typeof projectModules.$inferSelect) {
@@ -74,7 +67,7 @@ function parseTargetDate(value: string | null | undefined): Date | null {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -82,7 +75,7 @@ export async function GET(
   }
 
   const { projectId } = await params;
-  const access = await ensureProjectAccess(projectId, session.user.id);
+  const access = await ensureProjectAccess(projectId, session.user.id, 'read');
   if ('error' in access) return access.error;
 
   const rows = await db
@@ -96,7 +89,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -104,7 +97,7 @@ export async function POST(
   }
 
   const { projectId } = await params;
-  const access = await ensureProjectAccess(projectId, session.user.id);
+  const access = await ensureProjectAccess(projectId, session.user.id, 'manage');
   if ('error' in access) return access.error;
 
   try {
@@ -133,7 +126,7 @@ export async function POST(
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Invalid module payload', details: error.errors },
-        { status: 400 },
+        { status: 400 }
       );
     }
     console.error('Create project module error:', error);

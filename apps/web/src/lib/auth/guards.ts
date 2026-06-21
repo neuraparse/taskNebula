@@ -6,12 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { Permission } from '@tasknebula/db';
-import {
-  hasPermission,
-  hasAnyPermission,
-  isSuperAdmin as checkSuperAdmin,
-  getUserRole,
-} from './permissions';
+import { hasPermission, hasAnyPermission, isSuperAdmin as checkSuperAdmin } from './permissions';
 
 /**
  * Super Admin Guard - Protect routes that require super admin access
@@ -52,10 +47,7 @@ export function withPermission(
       const hasAccess = await hasPermission(organizationId, permission);
 
       if (!hasAccess) {
-        return NextResponse.json(
-          { error: `Permission denied: ${permission}` },
-          { status: 403 }
-        );
+        return NextResponse.json({ error: `Permission denied: ${permission}` }, { status: 403 });
       }
 
       return handler(req, ...args);
@@ -93,7 +85,8 @@ export function withAnyPermission(
 }
 
 /**
- * Organization Owner Guard - Protect routes that require organization owner role
+ * Organization Owner Guard - legacy name; protects routes that require the
+ * strongest organization permission.
  */
 export function withOrganizationOwner(
   getOrganizationId: (req: NextRequest, ...args: any[]) => string | Promise<string>
@@ -106,11 +99,11 @@ export function withOrganizationOwner(
       }
 
       const organizationId = await getOrganizationId(req, ...args);
-      const userRole = await getUserRole(organizationId);
+      const hasAccess = await hasPermission(organizationId, 'org:delete');
 
-      if (!userRole || (userRole.role !== 'owner' && !userRole.isSuperAdmin)) {
+      if (!hasAccess) {
         return NextResponse.json(
-          { error: 'Organization owner access required' },
+          { error: 'Organization deletion permission required' },
           { status: 403 }
         );
       }
@@ -121,7 +114,8 @@ export function withOrganizationOwner(
 }
 
 /**
- * Organization Admin Guard - Protect routes that require organization admin or owner role
+ * Organization Admin Guard - legacy name; protects routes that require
+ * organization settings permission.
  */
 export function withOrganizationAdmin(
   getOrganizationId: (req: NextRequest, ...args: any[]) => string | Promise<string>
@@ -134,11 +128,11 @@ export function withOrganizationAdmin(
       }
 
       const organizationId = await getOrganizationId(req, ...args);
-      const userRole = await getUserRole(organizationId);
+      const hasAccess = await hasPermission(organizationId, 'org:settings');
 
-      if (!userRole || (!['owner', 'admin'].includes(userRole.role || '') && !userRole.isSuperAdmin)) {
+      if (!hasAccess) {
         return NextResponse.json(
-          { error: 'Organization admin access required' },
+          { error: 'Organization settings permission required' },
           { status: 403 }
         );
       }
@@ -147,4 +141,3 @@ export function withOrganizationAdmin(
     };
   };
 }
-

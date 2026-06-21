@@ -21,6 +21,7 @@ import {
   issues,
   users,
   ROLE_DEFAULT_PERMISSIONS,
+  hasPermission as roleHasPermission,
   type ProjectRole,
 } from '@tasknebula/db';
 import { and, eq } from 'drizzle-orm';
@@ -93,9 +94,12 @@ export async function applyWorkspaceSeed(input: ApplySeedInput): Promise<ApplySe
     .from(users)
     .where(eq(users.id, input.userId))
     .limit(1);
-  const canApply = actor?.isSuperAdmin || member?.role === 'owner' || member?.role === 'admin';
+  const canApply = roleHasPermission(member?.role || '', 'org:settings', actor?.isSuperAdmin);
   if (!canApply) {
-    throw new ApplySeedError('forbidden', 'Only org admins/owners may apply a workspace seed.');
+    throw new ApplySeedError(
+      'forbidden',
+      'Applying a workspace seed requires organization settings permission.'
+    );
   }
 
   // Resolve / ensure a default workflow exists for the org. We need this for

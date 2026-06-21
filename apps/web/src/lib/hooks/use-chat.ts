@@ -5,6 +5,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { removeById, upsertById } from '@/lib/chat/message-state';
 import { chatClientDebug, chatClientError } from '@/lib/chat/debug';
+import { throwApiResponseError } from '@/lib/client-api-errors';
+
+async function readChatResponse<T>(response: Response, fallbackMessage: string): Promise<T> {
+  if (!response.ok) {
+    await throwApiResponseError(response, fallbackMessage);
+  }
+  return response.json() as Promise<T>;
+}
 
 function mergeOlderMessages(current: ConversationMessage[], older: ConversationMessage[]) {
   if (!older.length) {
@@ -32,11 +40,7 @@ function isSameCallSummary(
     | Record<string, unknown>
     | null
     | undefined,
-  next:
-    | ChatBootstrapResponse['activeCalls'][number]
-    | Record<string, unknown>
-    | null
-    | undefined
+  next: ChatBootstrapResponse['activeCalls'][number] | Record<string, unknown> | null | undefined
 ) {
   if (!current && !next) {
     return true;
@@ -110,7 +114,9 @@ function patchBootstrapActiveCall(
     const existingIndex = current.activeCalls.findIndex((call) => call.roomId === roomId);
     if (existingIndex >= 0) {
       if (!isSameCallSummary(current.activeCalls[existingIndex], activeCall)) {
-        activeCalls = current.activeCalls.map((call, index) => (index === existingIndex ? activeCall : call));
+        activeCalls = current.activeCalls.map((call, index) =>
+          index === existingIndex ? activeCall : call
+        );
         changed = true;
       }
     } else {
@@ -338,11 +344,7 @@ export function useProjectChatBootstrap(projectId: string | undefined) {
     queryKey: ['project-chat-bootstrap', projectId],
     queryFn: async () => {
       const response = await fetch(`/api/projects/${projectId}/chat/bootstrap`);
-      const payload = await response.json().catch(() => ({ error: 'Failed to load chat bootstrap' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to load chat bootstrap');
-      }
-      return payload as ChatBootstrapResponse;
+      return readChatResponse<ChatBootstrapResponse>(response, 'Failed to load chat bootstrap');
     },
     enabled: Boolean(projectId),
     staleTime: 45_000,
@@ -353,15 +355,15 @@ export function useProjectChatBootstrap(projectId: string | undefined) {
   });
 }
 
-export function useLiveCalls() {
+export function useLiveCalls(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ['live-calls'],
     queryFn: async () => {
       const response = await fetch('/api/chat/live-calls');
-      const payload = await response.json().catch(() => ({ error: 'Failed to load live calls' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to load live calls');
-      }
+      const payload = await readChatResponse<{ calls: GlobalLiveCall[] }>(
+        response,
+        'Failed to load live calls'
+      );
       return payload.calls as GlobalLiveCall[];
     },
     staleTime: 10_000,
@@ -369,6 +371,7 @@ export function useLiveCalls() {
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
+    enabled: options.enabled ?? true,
   });
 }
 
@@ -378,11 +381,7 @@ export function useConversationMessages(roomId: string | undefined) {
     queryKey: ['conversation-messages', roomId],
     queryFn: async () => {
       const response = await fetch(`/api/conversations/${roomId}/messages`);
-      const payload = await response.json().catch(() => ({ error: 'Failed to load messages' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to load messages');
-      }
-      return payload as ConversationMessagesPage;
+      return readChatResponse<ConversationMessagesPage>(response, 'Failed to load messages');
     },
     enabled: Boolean(roomId),
     staleTime: 10_000,
@@ -403,16 +402,17 @@ export function useConversationMessages(roomId: string | undefined) {
       const response = await fetch(
         `/api/conversations/${roomId}/messages?before=${encodeURIComponent(pageInfo.nextCursor)}`
       );
-      const payload = await response.json().catch(() => ({ error: 'Failed to load older messages' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to load older messages');
-      }
-
-      const nextPage = payload as ConversationMessagesPage;
-      queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => ({
-        messages: mergeOlderMessages(current?.messages || [], nextPage.messages),
-        pageInfo: nextPage.pageInfo,
-      }));
+      const nextPage = await readChatResponse<ConversationMessagesPage>(
+        response,
+        'Failed to load older messages'
+      );
+      queryClient.setQueryData<ConversationMessagesPage>(
+        ['conversation-messages', roomId],
+        (current) => ({
+          messages: mergeOlderMessages(current?.messages || [], nextPage.messages),
+          pageInfo: nextPage.pageInfo,
+        })
+      );
     } finally {
       setIsLoadingMore(false);
     }
@@ -433,11 +433,7 @@ export function useIssueConversation(issueId: string | undefined) {
     queryKey: ['issue-conversation', issueId],
     queryFn: async () => {
       const response = await fetch(`/api/issues/${issueId}/conversation`);
-      const payload = await response.json().catch(() => ({ error: 'Failed to load issue conversation' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to load issue conversation');
-      }
-      return payload as ConversationResponse;
+      return readChatResponse<ConversationResponse>(response, 'Failed to load issue conversation');
     },
     enabled: Boolean(issueId),
   });
@@ -448,11 +444,10 @@ export function useDocumentConversation(pageId: string | undefined) {
     queryKey: ['document-conversation', pageId],
     queryFn: async () => {
       const response = await fetch(`/api/docs/pages/${pageId}/conversation`);
-      const payload = await response.json().catch(() => ({ error: 'Failed to load document conversation' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to load document conversation');
-      }
-      return payload as ConversationResponse;
+      return readChatResponse<ConversationResponse>(
+        response,
+        'Failed to load document conversation'
+      );
     },
     enabled: Boolean(pageId),
   });
@@ -463,7 +458,11 @@ export function useCreateConversationMessage(roomId: string | undefined) {
   const { data: session } = useSession();
 
   return useMutation({
-    mutationFn: async (input: { body: string; files?: File[]; parentMessageId?: string | null }) => {
+    mutationFn: async (input: {
+      body: string;
+      files?: File[];
+      parentMessageId?: string | null;
+    }) => {
       if (!roomId) {
         throw new Error('No room selected');
       }
@@ -484,10 +483,10 @@ export function useCreateConversationMessage(roomId: string | undefined) {
           : JSON.stringify({ body: input.body, parentMessageId: input.parentMessageId || null }),
         headers: hasFiles ? undefined : { 'Content-Type': 'application/json' },
       });
-      const payload = await response.json().catch(() => ({ error: 'Failed to send message' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to send message');
-      }
+      const payload = await readChatResponse<{ message: ConversationMessage }>(
+        response,
+        'Failed to send message'
+      );
 
       return payload.message as ConversationMessage;
     },
@@ -528,10 +527,13 @@ export function useCreateConversationMessage(roomId: string | undefined) {
         optimistic: true,
       };
 
-      queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => ({
-        messages: upsertById(current?.messages, optimisticMessage),
-        pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
-      }));
+      queryClient.setQueryData<ConversationMessagesPage>(
+        ['conversation-messages', roomId],
+        (current) => ({
+          messages: upsertById(current?.messages, optimisticMessage),
+          pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
+        })
+      );
 
       return { tempId };
     },
@@ -540,22 +542,28 @@ export function useCreateConversationMessage(roomId: string | undefined) {
         return;
       }
 
-      queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => ({
-        messages: removeById(current?.messages, context.tempId as string),
-        pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
-      }));
+      queryClient.setQueryData<ConversationMessagesPage>(
+        ['conversation-messages', roomId],
+        (current) => ({
+          messages: removeById(current?.messages, context.tempId as string),
+          pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
+        })
+      );
     },
     onSuccess: (message, _input, context) => {
-      queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => {
-        const withoutTemp =
-          roomId && context?.tempId
-            ? removeById(current?.messages, context.tempId as string)
-            : current?.messages || [];
-        return {
-          messages: upsertById(withoutTemp, message),
-          pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
-        };
-      });
+      queryClient.setQueryData<ConversationMessagesPage>(
+        ['conversation-messages', roomId],
+        (current) => {
+          const withoutTemp =
+            roomId && context?.tempId
+              ? removeById(current?.messages, context.tempId as string)
+              : current?.messages || [];
+          return {
+            messages: upsertById(withoutTemp, message),
+            pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
+          };
+        }
+      );
       queryClient.invalidateQueries({ queryKey: ['project-chat-bootstrap'] });
       queryClient.invalidateQueries({ queryKey: ['issue-conversation'] });
       queryClient.invalidateQueries({ queryKey: ['document-conversation'] });
@@ -577,18 +585,21 @@ export function useUpdateConversationMessage(roomId: string | undefined) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
       });
-      const payload = await response.json().catch(() => ({ error: 'Failed to update message' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to update message');
-      }
+      const payload = await readChatResponse<{ message: ConversationMessage | null }>(
+        response,
+        'Failed to update message'
+      );
       return payload.message as ConversationMessage | null;
     },
     onSuccess: (message) => {
       if (message) {
-        queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => ({
-          messages: upsertById(current?.messages, message),
-          pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
-        }));
+        queryClient.setQueryData<ConversationMessagesPage>(
+          ['conversation-messages', roomId],
+          (current) => ({
+            messages: upsertById(current?.messages, message),
+            pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
+          })
+        );
       }
       queryClient.invalidateQueries({ queryKey: ['project-chat-bootstrap'] });
       queryClient.invalidateQueries({ queryKey: ['issue-conversation'] });
@@ -609,20 +620,23 @@ export function useDeleteConversationMessage(roomId: string | undefined) {
       const response = await fetch(`/api/conversations/${roomId}/messages/${messageId}`, {
         method: 'DELETE',
       });
-      const payload = await response.json().catch(() => ({ error: 'Failed to delete message' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to delete message');
-      }
+      const payload = await readChatResponse<{ message: ConversationMessage | null }>(
+        response,
+        'Failed to delete message'
+      );
 
       return payload.message as ConversationMessage | null;
     },
     onSuccess: (message, messageId) => {
-      queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => ({
-        messages: message
-          ? upsertById(current?.messages, message)
-          : removeById(current?.messages, messageId),
-        pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
-      }));
+      queryClient.setQueryData<ConversationMessagesPage>(
+        ['conversation-messages', roomId],
+        (current) => ({
+          messages: message
+            ? upsertById(current?.messages, message)
+            : removeById(current?.messages, messageId),
+          pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
+        })
+      );
       queryClient.invalidateQueries({ queryKey: ['project-chat-bootstrap'] });
       queryClient.invalidateQueries({ queryKey: ['issue-conversation'] });
       queryClient.invalidateQueries({ queryKey: ['document-conversation'] });
@@ -645,25 +659,28 @@ export function useModerateConversationMessages(roomId: string | undefined) {
         .catch(() => ({ error: 'Failed to moderate conversation messages' }));
 
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to moderate conversation messages');
+        await throwApiResponseError(response, 'Failed to moderate conversation messages');
       }
 
       return payload as { action: ConversationModerationAction; affectedCount: number };
     },
     onSuccess: ({ action }) => {
-      queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => {
-        if (action === 'clear_room') {
+      queryClient.setQueryData<ConversationMessagesPage>(
+        ['conversation-messages', roomId],
+        (current) => {
+          if (action === 'clear_room') {
+            return {
+              messages: [],
+              pageInfo: { hasMore: false, nextCursor: null },
+            };
+          }
+
           return {
-            messages: [],
-            pageInfo: { hasMore: false, nextCursor: null },
+            messages: (current?.messages || []).filter((message) => !message.deletedAt),
+            pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
           };
         }
-
-        return {
-          messages: (current?.messages || []).filter((message) => !message.deletedAt),
-          pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
-        };
-      });
+      );
       queryClient.invalidateQueries({ queryKey: ['project-chat-bootstrap'] });
       queryClient.invalidateQueries({ queryKey: ['issue-conversation'] });
       queryClient.invalidateQueries({ queryKey: ['document-conversation'] });
@@ -685,12 +702,7 @@ export function useMarkConversationRead(roomId: string | undefined) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lastReadMessageId: lastReadMessageId || null }),
       });
-      const payload = await response.json().catch(() => ({ error: 'Failed to mark conversation as read' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to mark conversation as read');
-      }
-
-      return payload;
+      return readChatResponse<unknown>(response, 'Failed to mark conversation as read');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-chat-bootstrap'] });
@@ -709,11 +721,7 @@ export function useStartConversationCall(roomId: string | undefined) {
       const response = await fetch(`/api/conversations/${roomId}/call/start`, {
         method: 'POST',
       });
-      const payload = await response.json().catch(() => ({ error: 'Failed to start call' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to start call');
-      }
-      return payload;
+      return readChatResponse<unknown>(response, 'Failed to start call');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-chat-bootstrap'] });
@@ -734,11 +742,7 @@ export function useEndConversationCall(roomId: string | undefined) {
       const response = await fetch(`/api/conversations/${roomId}/call/end`, {
         method: 'POST',
       });
-      const payload = await response.json().catch(() => ({ error: 'Failed to end call' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to end call');
-      }
-      return payload;
+      return readChatResponse<unknown>(response, 'Failed to end call');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-chat-bootstrap'] });
@@ -757,11 +761,7 @@ export function useLeaveConversationCall(roomId: string | undefined) {
       const response = await fetch(`/api/conversations/${roomId}/call/leave`, {
         method: 'POST',
       });
-      const payload = await response.json().catch(() => ({ error: 'Failed to leave call' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to leave call');
-      }
-      return payload;
+      return readChatResponse<unknown>(response, 'Failed to leave call');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-chat-bootstrap'] });
@@ -787,17 +787,13 @@ export function useCallToken(roomId: string | undefined) {
           clientSessionId: input?.clientSessionId || null,
         }),
       });
-      const payload = await response.json().catch(() => ({ error: 'Failed to create call token' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to create call token');
-      }
-      return payload as {
+      return readChatResponse<{
         participantIdentity: string;
         roomName: string;
         token: string;
         url: string;
         call: Record<string, unknown>;
-      };
+      }>(response, 'Failed to create call token');
     },
   });
 }
@@ -852,8 +848,11 @@ export function useConversationStream(roomId: string | undefined, enabled: boole
               },
         });
         if (payload.type === 'presence') {
-          const nextPresence = (payload.data.participants as ConversationResponse['presence']) || [];
-          setPresence((current) => (isSamePresenceList(current, nextPresence) ? current : nextPresence));
+          const nextPresence =
+            (payload.data.participants as ConversationResponse['presence']) || [];
+          setPresence((current) =>
+            isSamePresenceList(current, nextPresence) ? current : nextPresence
+          );
         }
         if (payload.type === 'call.started' || payload.type === 'call.presence') {
           const nextCall = (payload.data.call as Record<string, unknown>) || null;
@@ -865,9 +864,8 @@ export function useConversationStream(roomId: string | undefined, enabled: boole
           if (payload.type === 'call.started') {
             queryClient.invalidateQueries({ queryKey: ['live-calls'] });
           } else {
-            queryClient.setQueryData<GlobalLiveCall[]>(
-              ['live-calls'],
-              (current) => patchLiveCalls(current, roomId, nextCall)
+            queryClient.setQueryData<GlobalLiveCall[]>(['live-calls'], (current) =>
+              patchLiveCalls(current, roomId, nextCall)
             );
           }
         }
@@ -877,38 +875,44 @@ export function useConversationStream(roomId: string | undefined, enabled: boole
             { queryKey: ['project-chat-bootstrap'] },
             (current) => patchBootstrapActiveCall(current, roomId, null)
           );
-          queryClient.setQueryData<GlobalLiveCall[]>(
-            ['live-calls'],
-            (current) => patchLiveCalls(current, roomId, null)
+          queryClient.setQueryData<GlobalLiveCall[]>(['live-calls'], (current) =>
+            patchLiveCalls(current, roomId, null)
           );
         }
         if (payload.type === 'message.created' || payload.type === 'message.updated') {
           const message = payload.data.message as ConversationMessage | undefined;
           if (message) {
-            queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => ({
-              messages: upsertById(current?.messages, message),
-              pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
-            }));
+            queryClient.setQueryData<ConversationMessagesPage>(
+              ['conversation-messages', roomId],
+              (current) => ({
+                messages: upsertById(current?.messages, message),
+                pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
+              })
+            );
           }
         }
         if (payload.type === 'message.deleted') {
-          const messageId = typeof payload.data.messageId === 'string' ? payload.data.messageId : null;
+          const messageId =
+            typeof payload.data.messageId === 'string' ? payload.data.messageId : null;
           if (messageId) {
-            queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => ({
-              messages: (current?.messages || []).map((message) =>
-                message.id === messageId
-                  ? {
-                      ...message,
-                      body: '',
-                      attachments: [],
-                      deletedAt: message.deletedAt || new Date().toISOString(),
-                      canDelete: false,
-                      canEdit: false,
-                    }
-                  : message
-              ),
-              pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
-            }));
+            queryClient.setQueryData<ConversationMessagesPage>(
+              ['conversation-messages', roomId],
+              (current) => ({
+                messages: (current?.messages || []).map((message) =>
+                  message.id === messageId
+                    ? {
+                        ...message,
+                        body: '',
+                        attachments: [],
+                        deletedAt: message.deletedAt || new Date().toISOString(),
+                        canDelete: false,
+                        canEdit: false,
+                      }
+                    : message
+                ),
+                pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
+              })
+            );
           }
 
           void fetch(`/api/conversations/${roomId}/messages?limit=40`)
@@ -924,10 +928,13 @@ export function useConversationStream(roomId: string | undefined, enabled: boole
               }
 
               const latestPage = json as ConversationMessagesPage;
-              queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => ({
-                messages: mergeLatestMessages(current?.messages || [], latestPage.messages),
-                pageInfo: current?.pageInfo || latestPage.pageInfo,
-              }));
+              queryClient.setQueryData<ConversationMessagesPage>(
+                ['conversation-messages', roomId],
+                (current) => ({
+                  messages: mergeLatestMessages(current?.messages || [], latestPage.messages),
+                  pageInfo: current?.pageInfo || latestPage.pageInfo,
+                })
+              );
             })
             .catch(() => {
               // Ignore best-effort refresh failures.
@@ -937,17 +944,20 @@ export function useConversationStream(roomId: string | undefined, enabled: boole
           const messageId = payload.data.messageId;
           const reactions = payload.data.reactions as ConversationMessage['reactions'] | undefined;
           if (typeof messageId === 'string' && reactions) {
-            queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => ({
-              messages: (current?.messages || []).map((message) =>
-                message.id === messageId
-                  ? {
-                      ...message,
-                      reactions,
-                    }
-                  : message
-              ),
-              pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
-            }));
+            queryClient.setQueryData<ConversationMessagesPage>(
+              ['conversation-messages', roomId],
+              (current) => ({
+                messages: (current?.messages || []).map((message) =>
+                  message.id === messageId
+                    ? {
+                        ...message,
+                        reactions,
+                      }
+                    : message
+                ),
+                pageInfo: current?.pageInfo || { hasMore: false, nextCursor: null },
+              })
+            );
           }
         }
         if (payload.type === 'messages.cleared') {
@@ -965,16 +975,19 @@ export function useConversationStream(roomId: string | undefined, enabled: boole
               }
 
               const latestPage = json as ConversationMessagesPage;
-              queryClient.setQueryData<ConversationMessagesPage>(['conversation-messages', roomId], (current) => ({
-                messages:
-                  action === 'clear_room'
-                    ? latestPage.messages
-                    : mergeLatestMessages(
-                        (current?.messages || []).filter((message) => !message.deletedAt),
-                        latestPage.messages
-                      ),
-                pageInfo: latestPage.pageInfo,
-              }));
+              queryClient.setQueryData<ConversationMessagesPage>(
+                ['conversation-messages', roomId],
+                (current) => ({
+                  messages:
+                    action === 'clear_room'
+                      ? latestPage.messages
+                      : mergeLatestMessages(
+                          (current?.messages || []).filter((message) => !message.deletedAt),
+                          latestPage.messages
+                        ),
+                  pageInfo: latestPage.pageInfo,
+                })
+              );
             })
             .catch(() => {
               // Ignore best-effort refresh failures.
@@ -1056,11 +1069,7 @@ export function useWorkspaceCommunicationsSettings(organizationId: string | unde
     queryKey: ['workspace-communications', organizationId],
     queryFn: async () => {
       const response = await fetch(`/api/organizations/${organizationId}/communications`);
-      const payload = await response.json().catch(() => ({ error: 'Failed to load workspace communications' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to load workspace communications');
-      }
-      return payload as {
+      return readChatResponse<{
         organizationId: string;
         organizationName: string;
         settings: Record<string, boolean>;
@@ -1072,7 +1081,7 @@ export function useWorkspaceCommunicationsSettings(organizationId: string | unde
             missing: string[];
           };
         };
-      };
+      }>(response, 'Failed to load workspace communications');
     },
     enabled: Boolean(organizationId),
   });
@@ -1090,11 +1099,7 @@ export function useUpdateWorkspaceCommunicationsSettings(organizationId: string 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
       });
-      const payload = await response.json().catch(() => ({ error: 'Failed to update workspace communications' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to update workspace communications');
-      }
-      return payload;
+      return readChatResponse<unknown>(response, 'Failed to update workspace communications');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspace-communications', organizationId] });
@@ -1107,17 +1112,13 @@ export function useProjectCommunicationsSettings(projectId: string | undefined) 
     queryKey: ['project-communications', projectId],
     queryFn: async () => {
       const response = await fetch(`/api/projects/${projectId}/communications`);
-      const payload = await response.json().catch(() => ({ error: 'Failed to load project communications' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to load project communications');
-      }
-      return payload as {
+      return readChatResponse<{
         project: { id: string; key: string; name: string };
         access: { canView: boolean; canManage: boolean };
         workspaceSettings: Record<string, boolean>;
         projectSettings: Record<string, boolean>;
         effectiveSettings: Record<string, boolean>;
-      };
+      }>(response, 'Failed to load project communications');
     },
     enabled: Boolean(projectId),
   });
@@ -1136,11 +1137,7 @@ export function useUpdateProjectCommunicationsSettings(projectId: string | undef
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
       });
-      const payload = await response.json().catch(() => ({ error: 'Failed to update project communications' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to update project communications');
-      }
-      return payload;
+      return readChatResponse<unknown>(response, 'Failed to update project communications');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-communications', projectId] });
@@ -1154,11 +1151,7 @@ export function useRealtimeHealth() {
     queryKey: ['admin-realtime-health'],
     queryFn: async () => {
       const response = await fetch('/api/admin/realtime-health');
-      const payload = await response.json().catch(() => ({ error: 'Failed to load realtime health' }));
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to load realtime health');
-      }
-      return payload as {
+      return readChatResponse<{
         services: {
           redis: { ready: boolean; mode: string };
           livekit: { ready: boolean; url: string | null; missing: string[] };
@@ -1169,7 +1162,7 @@ export function useRealtimeHealth() {
           activeCalls: number;
           readStates: number;
         };
-      };
+      }>(response, 'Failed to load realtime health');
     },
   });
 }

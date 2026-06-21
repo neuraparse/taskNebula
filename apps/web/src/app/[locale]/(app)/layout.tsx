@@ -10,8 +10,11 @@ import { AiSidecarProvider } from '@/components/ai/ai-sidecar-provider';
 import { EmailVerificationBanner } from '@/components/auth/email-verification-banner';
 import { MobileNav } from '@/components/mobile/mobile-nav';
 import { GlobalVersionUpdateBanner } from '@/components/admin/global-version-update-banner';
+import { auth } from '@/auth';
 import { isSuperAdmin } from '@/lib/auth/permissions';
+import { currentUserHasWorkspaceAccess } from '@/lib/auth/workspace-access';
 import { getTranslations } from 'next-intl/server';
+import { redirect } from 'next/navigation';
 import type { CSSProperties } from 'react';
 
 type AppCarbonStyle = CSSProperties & {
@@ -23,7 +26,16 @@ type AppCarbonStyle = CSSProperties & {
 export const dynamic = 'force-dynamic';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const [t, showUpdateBanner] = await Promise.all([getTranslations('common'), isSuperAdmin()]);
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect('/auth/signin');
+  }
+
+  const [t, isSuperAdminUser, hasWorkspaceAccess] = await Promise.all([
+    getTranslations('common'),
+    isSuperAdmin(),
+    currentUserHasWorkspaceAccess(),
+  ]);
   const appCarbonStyle = {
     '--font-sans': "var(--app-font-sans, 'Plus Jakarta Sans')",
     '--font-mono': "var(--app-font-mono, 'JetBrains Mono')",
@@ -33,9 +45,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <GlobalVoiceProvider>
       <AppUiScope />
-      <CommandPaletteProvider>
+      <CommandPaletteProvider hasWorkspaceAccess={hasWorkspaceAccess}>
         <KeyboardShortcutsProvider>
-          <AiSidecarProvider>
+          <AiSidecarProvider enabled={hasWorkspaceAccess}>
             <PageSidebarSlotProvider>
               <a
                 href="#main-content"
@@ -48,16 +60,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 style={appCarbonStyle}
               >
                 <div className="hidden md:flex">
-                  <AppSidebar />
+                  <AppSidebar
+                    hasWorkspaceAccess={hasWorkspaceAccess}
+                    isSuperAdmin={isSuperAdminUser}
+                  />
                 </div>
 
                 <div className="flex flex-1 flex-col overflow-hidden">
                   {/* Rendered async; returns null when the user is verified. */}
                   <EmailVerificationBanner />
                   <div className="hidden md:block">
-                    <AppHeader />
+                    <AppHeader hasWorkspaceAccess={hasWorkspaceAccess} />
                   </div>
-                  {showUpdateBanner ? <GlobalVersionUpdateBanner /> : null}
+                  {isSuperAdminUser ? <GlobalVersionUpdateBanner /> : null}
 
                   <main
                     id="main-content"
@@ -67,7 +82,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                     <RouteTransition>{children}</RouteTransition>
                   </main>
                 </div>
-                <MobileNav />
+                <MobileNav hasWorkspaceAccess={hasWorkspaceAccess} />
               </div>
             </PageSidebarSlotProvider>
           </AiSidecarProvider>

@@ -43,7 +43,8 @@
     "realtime_health": "État du temps réel",
     "audit_logs": "Journaux d'audit",
     "system": "Système",
-    "updates": "Mises à jour"
+    "updates": "Mises à jour",
+    "ai_transparency": "Transparence de l'IA"
   },
   "actions": {
     "create_issue": "Créer un ticket",
@@ -102,6 +103,7 @@
     "skipToContent": "Passer au contenu"
   },
   "settings": {
+    "error_no_permission": "Vous n'avez pas l'autorisation de gérer ces paramètres.",
     "labels": {
       "kicker": "Étiquettes",
       "title": "Étiquettes",
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "Échec du chargement du ticket",
       "notFound": "Ticket introuvable",
-      "notFoundHint": "Le ticket que vous recherchez n'existe pas."
+      "notFoundHint": "Le ticket que vous recherchez n'existe pas.",
+      "loadFailedHint": "Actualisez la page ou réessayez dans un instant."
     }
   },
   "adminUpdates": {
@@ -1480,8 +1483,8 @@
     "planning_kicker": "Planification",
     "teamspaces_heading": "Espaces d'équipe",
     "teamspaces_subtitle": "Couloirs de planification au-dessus des projets individuels, sans diviser l'organisation.",
-    "owner_admin_only": "Propriétaire ou administrateur uniquement",
-    "browse_only_notice": "Consultation seule — les propriétaires et les administrateurs peuvent modifier la structure.",
+    "owner_admin_only": "Autorisation requise",
+    "browse_only_notice": "Consultation uniquement — la modification de la structure nécessite l’autorisation des paramètres de l’organisation.",
     "loading_teamspaces": "Chargement des espaces d'équipe…",
     "manage_members": "Gérer les membres",
     "members_label": "membres",
@@ -2104,7 +2107,7 @@
       "none": "Aucun",
       "updated": "Mis à jour",
       "server_managed": "Géré par le serveur",
-      "read_only_notice": "Accès en lecture seule — les propriétaires et les administrateurs peuvent mettre à jour la politique IA.",
+      "read_only_notice": "Accès en lecture seule — la mise à jour de la politique IA nécessite l’autorisation des paramètres de l’organisation.",
       "your_model_profiles": "Vos profils de modèle",
       "your_model_profiles_desc": "Combinaisons personnalisées de modèle + réglages enregistrées pour réutilisation. Tout profil enregistré ici apparaît aussi dans la liste déroulante de modèles de la Configuration rapide ci-dessus. Utilisez-le pour épingler un modèle avec des paramètres spécifiques de température / jetons / effort de raisonnement, ou pour essayer un modèle absent du catalogue intégré.",
       "create_profile": "Créer un profil",
@@ -2772,6 +2775,7 @@
     "loading_modules": "Chargement des modules...",
     "no_modules_filter": "Aucun module ne correspond à ce filtre.",
     "no_modules_empty": "Aucun module pour l'instant. Créez-en un pour regrouper le travail connexe.",
+    "no_modules_empty_readonly": "Aucun module n’a encore été créé pour ce projet.",
     "create_module": "Créer un module",
     "module_dialog_desc": "Regroupez le travail connexe en un domaine fonctionnel ou un mini-projet.",
     "module_name_placeholder": "ex. Auth, Facturation, Intégration",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "Aucune mise à jour pour l'instant.",
     "initiative_detail_anonymous": "Anonyme",
     "initiative_detail_blockers_label": "Obstacles :",
-    "initiative_detail_next_label": "Suite :"
+    "initiative_detail_next_label": "Suite :",
+    "initiative_detail_error_load": "Impossible de charger l’initiative."
   },
   "pagesProjects": {
     "metaTitle": "Projets | TaskNebula",
@@ -4029,6 +4034,7 @@
     "descriptionPlaceholder": "Brève description du projet",
     "cancel": "Annuler",
     "creating": "Création...",
+    "createProjectFailed": "Le projet n’a pas pu être créé. Vérifiez les informations et réessayez.",
     "breadcrumb": "Fil d'Ariane",
     "sections": "Sections du projet",
     "tabViews": "Vues",
@@ -4101,7 +4107,7 @@
     "completeSprintTooltip": "Terminer ce sprint. Les tickets incomplets seront déplacés vers le backlog.",
     "sprintBurndown": "Burndown du sprint",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
+    "projectInviteRequiredDescription": "Demandez à un administrateur de vous inviter à un projet ou de vous accorder l’autorisation de créer des projets."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4663,7 +4669,7 @@
       "removeProject": "Retirer {name}",
       "projectRole": "Rôle dans le projet",
       "sendInvitation": "Envoyer l'invitation",
-      "viewOnly": "Accès en lecture seule. Seuls les propriétaires et les administrateurs peuvent gérer les membres.",
+      "viewOnly": "Accès en lecture seule. La gestion des membres nécessite les autorisations de membre correspondantes.",
       "noMembers": "Aucun membre pour l'instant.",
       "inviteFirst": "Invitez votre premier membre",
       "invited": "Invité",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "Détails",
       "detailsHeading": "Détails de l'espace de travail",
       "detailsSubtitle": "Nom, domaine et informations de marque utilisés dans tout l'espace de travail.",
-      "manageRestricted": "Seuls les propriétaires et les administrateurs peuvent modifier les paramètres de l'organisation.",
+      "manageRestricted": "La mise à jour des paramètres de l’organisation nécessite l’autorisation des paramètres de l’organisation.",
       "logo": "Logo",
       "slug": "Slug de l'espace de travail",
       "slugHint": "Les super administrateurs peuvent le modifier.",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "Zone de danger",
       "dangerSubtitle": "Supprime définitivement cet espace de travail et tout ce qu'il contient. Accès propriétaire requis.",
       "cannotRestore": "Les organisations supprimées ne peuvent pas être restaurées.",
-      "ownerOnly": "Propriétaire uniquement",
+      "ownerOnly": "Autorisation de suppression requise",
       "plan": {
         "free": "Gratuit",
         "starter": "Starter",

@@ -43,7 +43,8 @@
     "realtime_health": "Valós idejű állapot",
     "audit_logs": "Auditnaplók",
     "system": "Rendszer",
-    "updates": "Frissítések"
+    "updates": "Frissítések",
+    "ai_transparency": "AI-átláthatóság"
   },
   "actions": {
     "create_issue": "Feladat létrehozása",
@@ -102,6 +103,7 @@
     "skipToContent": "Ugrás a tartalomra"
   },
   "settings": {
+    "error_no_permission": "Nincs jogosultságod ezeknek a beállításoknak a kezeléséhez.",
     "labels": {
       "kicker": "Címkék",
       "title": "Címkék",
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "Nem sikerült betölteni a feladatot",
       "notFound": "A feladat nem található",
-      "notFoundHint": "A keresett feladat nem létezik."
+      "notFoundHint": "A keresett feladat nem létezik.",
+      "loadFailedHint": "Frissítse az oldalt, vagy próbálja újra egy pillanat múlva."
     }
   },
   "adminUpdates": {
@@ -1480,8 +1483,8 @@
     "planning_kicker": "Tervezés",
     "teamspaces_heading": "Csapatterek",
     "teamspaces_subtitle": "Tervezési sávok az egyes projektek felett, a szervezet felosztása nélkül.",
-    "owner_admin_only": "Csak tulajdonos vagy adminisztrátor",
-    "browse_only_notice": "Csak böngészés – a tulajdonosok és adminisztrátorok módosíthatják a struktúrát.",
+    "owner_admin_only": "Engedély szükséges",
+    "browse_only_notice": "Csak megtekintés — a struktúra módosításához szervezeti beállítási engedély szükséges.",
     "loading_teamspaces": "Csapatterek betöltése…",
     "manage_members": "Tagok kezelése",
     "members_label": "tag",
@@ -2104,7 +2107,7 @@
       "none": "Nincs",
       "updated": "Frissítve",
       "server_managed": "Szerver által kezelt",
-      "read_only_notice": "Csak olvasható hozzáférés – a tulajdonosok és adminisztrátorok frissíthetik az AI-házirendet.",
+      "read_only_notice": "Csak olvasási hozzáférés — az AI-szabályzat frissítéséhez szervezeti beállítási engedély szükséges.",
       "your_model_profiles": "A modellprofiljaid",
       "your_model_profiles_desc": "Egyéni modell + hangolás kombinációk, újrafelhasználásra mentve. Az itt mentett profilok a fenti Gyors beállítás modell legördülőjében is megjelennek. Használd ezt egy modell rögzítésére adott hőmérséklet / token / érvelési erőfeszítés beállításokkal, vagy egy olyan modell kipróbálására, amely nincs a beépített katalógusban.",
       "create_profile": "Profil létrehozása",
@@ -2772,6 +2775,7 @@
     "loading_modules": "Modulok betöltése...",
     "no_modules_filter": "Egyetlen modul sem felel meg ennek a szűrőnek.",
     "no_modules_empty": "Még nincsenek modulok. Hozz létre egyet a kapcsolódó munka csoportosításához.",
+    "no_modules_empty_readonly": "Ehhez a projekthez még nem hoztak létre modulokat.",
     "create_module": "Modul létrehozása",
     "module_dialog_desc": "Csoportosítsd a kapcsolódó munkát egy funkcióterületbe vagy miniprojektbe.",
     "module_name_placeholder": "pl. Hitelesítés, Számlázás, Bevezetés",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "Még nincsenek frissítések.",
     "initiative_detail_anonymous": "Névtelen",
     "initiative_detail_blockers_label": "Akadályok:",
-    "initiative_detail_next_label": "Következő:"
+    "initiative_detail_next_label": "Következő:",
+    "initiative_detail_error_load": "Nem sikerült betölteni a kezdeményezést."
   },
   "pagesProjects": {
     "metaTitle": "Projektek | TaskNebula",
@@ -4029,6 +4034,7 @@
     "descriptionPlaceholder": "Rövid projektleírás",
     "cancel": "Mégse",
     "creating": "Létrehozás...",
+    "createProjectFailed": "A projektet nem sikerült létrehozni. Ellenőrizd az adatokat, majd próbáld újra.",
     "breadcrumb": "Morzsamenü",
     "sections": "Projektszakaszok",
     "tabViews": "Nézetek",
@@ -4101,7 +4107,7 @@
     "completeSprintTooltip": "Fejezd be ezt a sprintet. A befejezetlen feladatok a teendőlistára kerülnek.",
     "sprintBurndown": "Sprint burndown",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
+    "projectInviteRequiredDescription": "Kérj meg egy adminisztrátort, hogy hívjon meg egy projektbe, vagy adjon projektlétrehozási engedélyt."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4663,7 +4669,7 @@
       "removeProject": "{name} eltávolítása",
       "projectRole": "Projektszerepkör",
       "sendInvitation": "Meghívó küldése",
-      "viewOnly": "Csak megtekintési hozzáférés. Csak a tulajdonosok és a rendszergazdák kezelhetik a tagokat.",
+      "viewOnly": "Csak megtekintési hozzáférés. A tagkezeléshez a megfelelő tagjogosultságok szükségesek.",
       "noMembers": "Még nincsenek tagok.",
       "inviteFirst": "Hívja meg az első tagját",
       "invited": "Meghívva",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "Részletek",
       "detailsHeading": "Munkaterület részletei",
       "detailsSubtitle": "A munkaterületen használt név, domain és márkainformációk.",
-      "manageRestricted": "Csak a tulajdonosok és a rendszergazdák frissíthetik a szervezet beállításait.",
+      "manageRestricted": "A szervezeti beállítások frissítéséhez szervezeti beállítási engedély szükséges.",
       "logo": "Logó",
       "slug": "Munkaterület azonosítója",
       "slugHint": "A szuper rendszergazdák módosíthatják.",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "Veszélyzóna",
       "dangerSubtitle": "Véglegesen eltávolítja ezt a munkaterületet és minden hozzá tartozó elemet. Tulajdonosi hozzáférés szükséges.",
       "cannotRestore": "A törölt szervezetek nem állíthatók vissza.",
-      "ownerOnly": "Csak tulajdonos",
+      "ownerOnly": "Törlési engedély szükséges",
       "plan": {
         "free": "Ingyenes",
         "starter": "Kezdő",

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, issues, sprints, workflowStatuses } from '@tasknebula/db';
 import { eq, and, count, sql } from 'drizzle-orm';
+import { resolveProjectAccess } from '@/lib/auth/project-access';
 
 // GET /api/analytics/project-health?projectId=xxx
 export async function GET(request: NextRequest) {
@@ -18,11 +19,17 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const access = await resolveProjectAccess(session.user.id, projectId);
+    if (!access.project || !access.canRead) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+    const resolvedProjectId = access.project.id;
+
     // Total issues
     const [totalIssuesData] = await db
       .select({ count: count() })
       .from(issues)
-      .where(eq(issues.projectId, projectId));
+      .where(eq(issues.projectId, resolvedProjectId));
 
     const totalIssues = totalIssuesData?.count || 0;
 
@@ -38,7 +45,7 @@ export async function GET(request: NextRequest) {
       })
       .from(issues)
       .leftJoin(workflowStatuses, eq(issues.statusId, workflowStatuses.id))
-      .where(eq(issues.projectId, projectId))
+      .where(eq(issues.projectId, resolvedProjectId))
       .groupBy(
         issues.statusId,
         workflowStatuses.name,
@@ -53,7 +60,7 @@ export async function GET(request: NextRequest) {
         count: count(),
       })
       .from(issues)
-      .where(eq(issues.projectId, projectId))
+      .where(eq(issues.projectId, resolvedProjectId))
       .groupBy(issues.priority);
 
     // Issues by type
@@ -63,24 +70,24 @@ export async function GET(request: NextRequest) {
         count: count(),
       })
       .from(issues)
-      .where(eq(issues.projectId, projectId))
+      .where(eq(issues.projectId, resolvedProjectId))
       .groupBy(issues.type);
 
     // Sprint statistics
     const [totalSprintsData] = await db
       .select({ count: count() })
       .from(sprints)
-      .where(eq(sprints.projectId, projectId));
+      .where(eq(sprints.projectId, resolvedProjectId));
 
     const [activeSprintsData] = await db
       .select({ count: count() })
       .from(sprints)
-      .where(and(eq(sprints.projectId, projectId), eq(sprints.status, 'active')));
+      .where(and(eq(sprints.projectId, resolvedProjectId), eq(sprints.status, 'active')));
 
     const [completedSprintsData] = await db
       .select({ count: count() })
       .from(sprints)
-      .where(and(eq(sprints.projectId, projectId), eq(sprints.status, 'completed')));
+      .where(and(eq(sprints.projectId, resolvedProjectId), eq(sprints.status, 'completed')));
 
     // Overdue issues (issues with dueDate in the past and not done)
     // statusId references workflowStatuses.id (cuid) — not a literal 'done'
@@ -91,7 +98,7 @@ export async function GET(request: NextRequest) {
       .leftJoin(workflowStatuses, eq(issues.statusId, workflowStatuses.id))
       .where(
         and(
-          eq(issues.projectId, projectId),
+          eq(issues.projectId, resolvedProjectId),
           sql`${issues.dueDate} < NOW()`,
           sql`(${workflowStatuses.category} IS NULL OR ${workflowStatuses.category} != 'done')`
         )
@@ -101,7 +108,7 @@ export async function GET(request: NextRequest) {
     const [unassignedIssuesData] = await db
       .select({ count: count() })
       .from(issues)
-      .where(and(eq(issues.projectId, projectId), sql`${issues.assigneeId} IS NULL`));
+      .where(and(eq(issues.projectId, resolvedProjectId), sql`${issues.assigneeId} IS NULL`));
 
     return NextResponse.json({
       overview: {

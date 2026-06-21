@@ -49,7 +49,8 @@ async function userHasProjectAccess(userId: string, projectIdOrKey: string) {
     .where(
       and(
         eq(organizationMembers.userId, userId),
-        eq(organizationMembers.organizationId, project.organizationId)
+        eq(organizationMembers.organizationId, project.organizationId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);

@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import { auth } from '@/auth';
-import { db, organizationMembers } from '@tasknebula/db';
+import { db } from '@tasknebula/db';
 import { projectModules } from '@tasknebula/db/src/schema/project-modules';
-import { resolveProjectByIdOrKey } from '@/lib/projects/server';
+import { resolveProjectAccess } from '@/lib/auth/project-access';
 
 const MODULE_STATUSES = [
   'backlog',
@@ -21,38 +21,22 @@ const updateModuleSchema = z.object({
   status: z.enum(MODULE_STATUSES).optional(),
   ownerId: z.string().nullable().optional(),
   memberIds: z.array(z.string()).optional(),
-  targetDate: z
-    .string()
-    .datetime()
-    .nullable()
-    .optional()
-    .or(z.string().length(0)),
+  targetDate: z.string().datetime().nullable().optional().or(z.string().length(0)),
 });
 
 async function ensureProjectAccess(projectIdOrKey: string, userId: string) {
-  const project = await resolveProjectByIdOrKey(projectIdOrKey);
-  if (!project) {
+  const access = await resolveProjectAccess(userId, projectIdOrKey);
+  if (!access.project || !access.canRead) {
     return {
       error: NextResponse.json({ error: 'Project not found' }, { status: 404 }),
     };
   }
 
-  const [membership] = await db
-    .select({ id: organizationMembers.id })
-    .from(organizationMembers)
-    .where(
-      and(
-        eq(organizationMembers.organizationId, project.organizationId),
-        eq(organizationMembers.userId, userId),
-      ),
-    )
-    .limit(1);
-
-  if (!membership) {
+  if (!access.canManage) {
     return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
   }
 
-  return { project };
+  return { project: access.project };
 }
 
 function serializeModule(row: typeof projectModules.$inferSelect) {
@@ -81,16 +65,14 @@ async function getModuleInProject(projectId: string, moduleId: string) {
   const [row] = await db
     .select()
     .from(projectModules)
-    .where(
-      and(eq(projectModules.id, moduleId), eq(projectModules.projectId, projectId)),
-    )
+    .where(and(eq(projectModules.id, moduleId), eq(projectModules.projectId, projectId)))
     .limit(1);
   return row ?? null;
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; moduleId: string }> },
+  { params }: { params: Promise<{ projectId: string; moduleId: string }> }
 ) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -136,7 +118,7 @@ export async function PATCH(
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Invalid module payload', details: error.errors },
-        { status: 400 },
+        { status: 400 }
       );
     }
     console.error('Update project module error:', error);
@@ -146,7 +128,7 @@ export async function PATCH(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; moduleId: string }> },
+  { params }: { params: Promise<{ projectId: string; moduleId: string }> }
 ) {
   const session = await auth();
   if (!session?.user?.id) {

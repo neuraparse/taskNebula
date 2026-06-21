@@ -43,7 +43,8 @@
     "realtime_health": "Stare în timp real",
     "audit_logs": "Jurnale de audit",
     "system": "Sistem",
-    "updates": "Actualizări"
+    "updates": "Actualizări",
+    "ai_transparency": "Transparență AI"
   },
   "actions": {
     "create_issue": "Creează sarcină",
@@ -102,6 +103,7 @@
     "skipToContent": "Salt la conținut"
   },
   "settings": {
+    "error_no_permission": "Nu ai permisiunea de a gestiona aceste setări.",
     "labels": {
       "kicker": "Etichete",
       "title": "Etichete",
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "Încărcarea sarcinii a eșuat",
       "notFound": "Sarcina nu a fost găsită",
-      "notFoundHint": "Sarcina pe care o cauți nu există."
+      "notFoundHint": "Sarcina pe care o cauți nu există.",
+      "loadFailedHint": "Reîmprospătați pagina sau încercați din nou în câteva momente."
     }
   },
   "adminUpdates": {
@@ -1519,8 +1522,8 @@
     "planning_kicker": "Planificare",
     "teamspaces_heading": "Spații de echipă",
     "teamspaces_subtitle": "Benzi de planificare deasupra proiectelor individuale, fără a împărți organizația.",
-    "owner_admin_only": "Doar proprietar sau administrator",
-    "browse_only_notice": "Doar răsfoire — proprietarii și administratorii pot schimba structura.",
+    "owner_admin_only": "Permisiune necesară",
+    "browse_only_notice": "Doar vizualizare — modificarea structurii necesită permisiunea pentru setările organizației.",
     "loading_teamspaces": "Se încarcă spațiile de echipă…",
     "manage_members": "Gestionează membrii",
     "members_label": "membri",
@@ -2204,7 +2207,7 @@
       "none": "Niciunul",
       "updated": "Actualizat",
       "server_managed": "Gestionat de server",
-      "read_only_notice": "Acces doar pentru citire — proprietarii și administratorii pot actualiza politica AI.",
+      "read_only_notice": "Acces doar în citire — actualizarea politicii AI necesită permisiunea pentru setările organizației.",
       "your_model_profiles": "Profilurile tale de model",
       "your_model_profiles_desc": "Combinații personalizate de model + ajustare salvate pentru reutilizare. Orice profil salvat aici apare și în lista derulantă de modele din Configurare rapidă de mai sus. Folosește asta pentru a fixa un model cu setări specifice de temperatură / token-uri / efort de raționament, sau pentru a încerca un model care nu este în catalogul integrat.",
       "create_profile": "Creează profil",
@@ -2872,6 +2875,7 @@
     "loading_modules": "Se încarcă modulele...",
     "no_modules_filter": "Niciun modul nu corespunde acestui filtru.",
     "no_modules_empty": "Niciun modul încă. Creează unul pentru a grupa munca conexă.",
+    "no_modules_empty_readonly": "Nu au fost create încă module pentru acest proiect.",
     "create_module": "Creează modul",
     "module_dialog_desc": "Grupează munca conexă într-o zonă de funcționalitate sau un mini-proiect.",
     "module_name_placeholder": "ex. Autentificare, Facturare, Integrare",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "Nicio actualizare încă.",
     "initiative_detail_anonymous": "Anonim",
     "initiative_detail_blockers_label": "Blocaje:",
-    "initiative_detail_next_label": "Următor:"
+    "initiative_detail_next_label": "Următor:",
+    "initiative_detail_error_load": "Inițiativa nu a putut fi încărcată."
   },
   "pagesProjects": {
     "metaTitle": "Proiecte | TaskNebula",
@@ -4029,6 +4034,7 @@
     "descriptionPlaceholder": "Descriere scurtă a proiectului",
     "cancel": "Anulează",
     "creating": "Se creează...",
+    "createProjectFailed": "Proiectul nu a putut fi creat. Verifică detaliile și încearcă din nou.",
     "breadcrumb": "Breadcrumb",
     "sections": "Secțiuni proiect",
     "tabViews": "Vizualizări",
@@ -4101,7 +4107,7 @@
     "completeSprintTooltip": "Finalizează acest sprint. Problemele nefinalizate se vor muta în backlog.",
     "sprintBurndown": "Burndown sprint",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
+    "projectInviteRequiredDescription": "Cere unui administrator să te invite într-un proiect sau să îți acorde permisiunea de a crea proiecte."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4663,7 +4669,7 @@
       "removeProject": "Elimină {name}",
       "projectRole": "Rol în proiect",
       "sendInvitation": "Trimite invitația",
-      "viewOnly": "Acces doar pentru vizualizare. Doar proprietarii și administratorii pot gestiona membrii.",
+      "viewOnly": "Acces doar pentru vizualizare. Gestionarea membrilor necesită permisiunile de membru relevante.",
       "noMembers": "Niciun membru încă.",
       "inviteFirst": "Invită primul tău membru",
       "invited": "Invitat",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "Detalii",
       "detailsHeading": "Detaliile spațiului de lucru",
       "detailsSubtitle": "Numele, domeniul și informațiile de brand folosite în spațiul de lucru.",
-      "manageRestricted": "Doar proprietarii și administratorii pot actualiza setările organizației.",
+      "manageRestricted": "Actualizarea setărilor organizației necesită permisiunea pentru setările organizației.",
       "logo": "Logo",
       "slug": "Slug spațiu de lucru",
       "slugHint": "Super administratorii îl pot modifica.",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "Zonă periculoasă",
       "dangerSubtitle": "Elimină definitiv acest spațiu de lucru și tot ce conține. Necesită acces de proprietar.",
       "cannotRestore": "Organizațiile șterse nu pot fi restaurate.",
-      "ownerOnly": "Doar proprietar",
+      "ownerOnly": "Este necesară permisiunea de ștergere",
       "plan": {
         "free": "Gratuit",
         "starter": "Starter",

@@ -76,6 +76,7 @@ function setPermissions(overrides: Record<string, boolean> = {}) {
       canCompleteSprint: true,
       isSuperAdmin: false,
       isOrgOwner: false,
+      isOrgAdmin: false,
       ...overrides,
     },
     isLoading: false,
@@ -200,5 +201,26 @@ describe('SprintsPage', () => {
     expect(
       await screen.findByText('No sprints have been created for this project yet.')
     ).toBeInTheDocument();
+  });
+
+  it('does not show access denied for organization admins', async () => {
+    setPermissions({
+      canBrowseProject: false,
+      canManageSprints: false,
+      isOrgAdmin: true,
+    });
+    mockUseSprints.mockReturnValue({
+      data: [],
+      isLoading: false,
+    } as unknown as ReturnType<typeof useSprints>);
+
+    render(
+      <Wrapper>
+        <SprintsPage params={resolvedParams({ projectId: 'project-1' })} />
+      </Wrapper>
+    );
+
+    expect(await screen.findByText('Sprints')).toBeInTheDocument();
+    expect(screen.queryByText('Access denied')).not.toBeInTheDocument();
   });
 });

@@ -29,6 +29,7 @@ export interface InboxFilters {
   until?: string | null;
   cursor?: string | null;
   limit?: number;
+  enabled?: boolean;
 }
 
 export interface InboxItem {
@@ -90,6 +91,7 @@ export function useInbox(filters: InboxFilters = {}) {
       return response.json() as Promise<InboxResponse>;
     },
     refetchInterval: 60_000,
+    enabled: filters.enabled ?? true,
   });
 }
 

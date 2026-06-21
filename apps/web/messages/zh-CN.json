@@ -43,7 +43,8 @@
     "realtime_health": "实时状态",
     "audit_logs": "审计日志",
     "system": "系统",
-    "updates": "更新"
+    "updates": "更新",
+    "ai_transparency": "AI 透明度"
   },
   "actions": {
     "create_issue": "创建事项",
@@ -102,6 +103,7 @@
     "skipToContent": "跳至内容"
   },
   "settings": {
+    "error_no_permission": "你没有权限管理这些设置。",
     "labels": {
       "kicker": "标签",
       "title": "标签",
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "加载事项失败",
       "notFound": "未找到事项",
-      "notFoundHint": "你查找的事项不存在。"
+      "notFoundHint": "你查找的事项不存在。",
+      "loadFailedHint": "请刷新页面，或稍后重试。"
     }
   },
   "adminUpdates": {
@@ -1480,8 +1483,8 @@
     "planning_kicker": "规划",
     "teamspaces_heading": "团队空间",
     "teamspaces_subtitle": "凌驾于单个项目之上的规划通道，无需拆分组织。",
-    "owner_admin_only": "仅限所有者或管理员",
-    "browse_only_notice": "仅供浏览 — 只有所有者和管理员可以更改结构。",
+    "owner_admin_only": "需要权限",
+    "browse_only_notice": "仅可查看 — 更改结构需要组织设置权限。",
     "loading_teamspaces": "正在加载团队空间…",
     "manage_members": "管理成员",
     "members_label": "成员",
@@ -2104,7 +2107,7 @@
       "none": "无",
       "updated": "已更新",
       "server_managed": "由服务器管理",
-      "read_only_notice": "只读访问 — 只有所有者和管理员可以更新 AI 策略。",
+      "read_only_notice": "只读访问 — 更新 AI 策略需要组织设置权限。",
       "your_model_profiles": "你的模型配置文件",
       "your_model_profiles_desc": "保存以供重复使用的自定义模型 + 调优组合。在此保存的任何配置文件也会出现在上方快速设置的模型下拉菜单中。可用于固定具有特定温度/令牌/推理强度设置的模型，或试用内置目录中没有的模型。",
       "create_profile": "创建配置文件",
@@ -2772,6 +2775,7 @@
     "loading_modules": "正在加载模块...",
     "no_modules_filter": "没有模块与此筛选匹配。",
     "no_modules_empty": "暂无模块。创建一个以对相关工作进行分组。",
+    "no_modules_empty_readonly": "此项目尚未创建任何模块。",
     "create_module": "创建模块",
     "module_dialog_desc": "将相关工作分组到一个功能领域或小型项目中。",
     "module_name_placeholder": "例如：认证、计费、入职",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "暂无动态。",
     "initiative_detail_anonymous": "匿名",
     "initiative_detail_blockers_label": "阻碍因素：",
-    "initiative_detail_next_label": "下一步："
+    "initiative_detail_next_label": "下一步：",
+    "initiative_detail_error_load": "无法加载计划。"
   },
   "pagesProjects": {
     "metaTitle": "项目 | TaskNebula",
@@ -4029,6 +4034,7 @@
     "descriptionPlaceholder": "项目简要描述",
     "cancel": "取消",
     "creating": "正在创建...",
+    "createProjectFailed": "无法创建项目。请检查详细信息后重试。",
     "breadcrumb": "面包屑",
     "sections": "项目板块",
     "tabViews": "视图",
@@ -4101,7 +4107,7 @@
     "completeSprintTooltip": "完成此冲刺。未完成的问题将移至待办。",
     "sprintBurndown": "冲刺燃尽图",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
+    "projectInviteRequiredDescription": "请管理员邀请你加入项目，或授予你创建项目的权限。"
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4663,7 +4669,7 @@
       "removeProject": "移除 {name}",
       "projectRole": "项目角色",
       "sendInvitation": "发送邀请",
-      "viewOnly": "仅查看权限。只有所有者和管理员可以管理成员。",
+      "viewOnly": "仅可查看。成员管理需要相应的成员权限。",
       "noMembers": "暂无成员。",
       "inviteFirst": "邀请您的第一位成员",
       "invited": "已邀请",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "详情",
       "detailsHeading": "工作区详情",
       "detailsSubtitle": "在整个工作区中使用的名称、域名和品牌信息。",
-      "manageRestricted": "只有所有者和管理员可以更新组织设置。",
+      "manageRestricted": "更新组织设置需要组织设置权限。",
       "logo": "徽标",
       "slug": "工作区标识",
       "slugHint": "超级管理员可以更改它。",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "危险区域",
       "dangerSubtitle": "永久移除此工作区及其下的所有内容。需要所有者权限。",
       "cannotRestore": "已删除的组织无法恢复。",
-      "ownerOnly": "仅限所有者",
+      "ownerOnly": "需要删除权限",
       "plan": {
         "free": "免费版",
         "starter": "入门版",

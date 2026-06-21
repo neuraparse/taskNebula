@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DocsShell } from '../docs-shell';
@@ -6,6 +5,7 @@ import {
   PageSidebarSlotProvider,
   PageSidebarSlotTarget,
 } from '@/components/layout/page-sidebar-slot';
+import { ApiResponseError } from '@/lib/client-api-errors';
 
 // Spies for next/navigation.
 const replaceSpy = jest.fn();
@@ -142,6 +142,7 @@ let mockPagesLoading = false;
 let mockCurrentPage: MockPage | null = null;
 let mockPageLoading = false;
 let lastDocumentPageId: string | null = null;
+let mockCreatePageMutateAsync = jest.fn();
 
 jest.mock('@/lib/hooks/use-docs', () => ({
   useDocumentSpaces: () => ({ data: mockSpaces }),
@@ -154,7 +155,7 @@ jest.mock('@/lib/hooks/use-docs', () => ({
   useDocumentRevisions: () => ({ data: [] }),
   useDocumentSearch: () => ({ data: [] }),
   useDocumentAttachments: () => ({ data: [] }),
-  useCreateDocumentPage: () => ({ mutateAsync: jest.fn(), isPending: false }),
+  useCreateDocumentPage: () => ({ mutateAsync: mockCreatePageMutateAsync, isPending: false }),
   useUpdateDocumentPage: () => ({ mutateAsync: jest.fn(), isPending: false }),
   useRestoreDocumentPage: () => ({ mutateAsync: jest.fn(), isPending: false }),
   useUpdateDocumentShare: () => ({ mutateAsync: jest.fn(), isPending: false }),
@@ -204,6 +205,7 @@ describe('DocsShell behavior', () => {
     mockCurrentPage = null;
     mockPageLoading = false;
     lastDocumentPageId = null;
+    mockCreatePageMutateAsync = jest.fn();
   });
 
   it('renders a shimmer skeleton while page data is loading', () => {
@@ -450,5 +452,45 @@ describe('DocsShell behavior', () => {
     await waitFor(() => {
       expect(screen.getAllByText('Release Notes').length).toBeGreaterThan(0);
     });
+  });
+
+  it('shows a localized access message when page creation is denied', async () => {
+    currentSearchParamsString = 'spaceId=space-1';
+    const page = buildMockPage();
+    mockSpaces = [page.space!];
+    mockPagesData = { space: page.space!, pages: [page] };
+    mockCurrentPage = page;
+    mockCreatePageMutateAsync.mockRejectedValue(
+      new ApiResponseError('You do not have permission to create pages in this space', 403)
+    );
+
+    renderDocsShell();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /new page/i }));
+    });
+
+    fireEvent.change(screen.getByLabelText(/title/i), {
+      target: { value: 'Restricted note' },
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /create page/i }));
+    });
+
+    await waitFor(() => {
+      expect(toastSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: "You don't have permission to view that page.",
+          variant: 'destructive',
+        })
+      );
+    });
+
+    expect(toastSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        description: 'You do not have permission to create pages in this space',
+      })
+    );
   });
 });

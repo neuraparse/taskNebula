@@ -43,7 +43,8 @@
     "realtime_health": "תקינות זמן אמת",
     "audit_logs": "יומני ביקורת",
     "system": "מערכת",
-    "updates": "עדכונים"
+    "updates": "עדכונים",
+    "ai_transparency": "שקיפות AI"
   },
   "actions": {
     "create_issue": "יצירת משימה",
@@ -102,6 +103,7 @@
     "skipToContent": "דלג לתוכן"
   },
   "settings": {
+    "error_no_permission": "אין לך הרשאה לנהל את ההגדרות האלה.",
     "labels": {
       "kicker": "תוויות",
       "title": "תוויות",
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "טעינת המשימה נכשלה",
       "notFound": "המשימה לא נמצאה",
-      "notFoundHint": "המשימה שאתם מחפשים אינה קיימת."
+      "notFoundHint": "המשימה שאתם מחפשים אינה קיימת.",
+      "loadFailedHint": "רענן את הדף או נסה שוב בעוד רגע."
     }
   },
   "adminUpdates": {
@@ -1480,8 +1483,8 @@
     "planning_kicker": "תכנון",
     "teamspaces_heading": "מרחבי צוות",
     "teamspaces_subtitle": "מסלולי תכנון מעל פרויקטים בודדים, מבלי לפצל את הארגון.",
-    "owner_admin_only": "לבעלים או למנהלים בלבד",
-    "browse_only_notice": "עיון בלבד — בעלים ומנהלים יכולים לשנות את המבנה.",
+    "owner_admin_only": "נדרשת הרשאה",
+    "browse_only_notice": "צפייה בלבד — שינוי המבנה דורש הרשאת הגדרות ארגון.",
     "loading_teamspaces": "טוען מרחבי צוות…",
     "manage_members": "ניהול חברים",
     "members_label": "חברים",
@@ -2104,7 +2107,7 @@
       "none": "ללא",
       "updated": "עודכן",
       "server_managed": "מנוהל על ידי השרת",
-      "read_only_notice": "גישת קריאה בלבד — בעלים ומנהלים יכולים לעדכן את מדיניות ה-AI.",
+      "read_only_notice": "גישה לקריאה בלבד — עדכון מדיניות AI דורש הרשאת הגדרות ארגון.",
       "your_model_profiles": "פרופילי המודל שלכם",
       "your_model_profiles_desc": "שילובי מודל + כוונון מותאמים אישית שנשמרו לשימוש חוזר. כל פרופיל שנשמר כאן מופיע גם בתפריט הנפתח של מודל ההגדרה המהירה למעלה. השתמשו בזה כדי להצמיד מודל עם הגדרות טמפרטורה / אסימונים / מאמץ-חשיבה ספציפיות, או כדי לנסות מודל שאינו בקטלוג המובנה.",
       "create_profile": "יצירת פרופיל",
@@ -2772,6 +2775,7 @@
     "loading_modules": "טוען מודולים...",
     "no_modules_filter": "אין מודולים התואמים למסנן זה.",
     "no_modules_empty": "אין עדיין מודולים. צרו אחד כדי לקבץ עבודה קשורה.",
+    "no_modules_empty_readonly": "עדיין לא נוצרו מודולים לפרויקט הזה.",
     "create_module": "יצירת מודול",
     "module_dialog_desc": "קבצו עבודה קשורה לתחום תכונה או מיני-פרויקט.",
     "module_name_placeholder": "לדוגמה, אימות, חיוב, קליטה",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "אין עדיין עדכונים.",
     "initiative_detail_anonymous": "אנונימי",
     "initiative_detail_blockers_label": "מכשולים:",
-    "initiative_detail_next_label": "הבא:"
+    "initiative_detail_next_label": "הבא:",
+    "initiative_detail_error_load": "לא ניתן היה לטעון את היוזמה."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4065,6 +4070,7 @@
     "descriptionPlaceholder": "תיאור פרויקט קצר",
     "cancel": "ביטול",
     "creating": "יוצר...",
+    "createProjectFailed": "לא ניתן היה ליצור את הפרויקט. בדוק את הפרטים ונסה שוב.",
     "breadcrumb": "פירורי לחם",
     "sections": "מקטעי פרויקט",
     "tabViews": "תצוגות",
@@ -4137,7 +4143,7 @@
     "completeSprintTooltip": "השלימו ספרינט זה. משימות שלא הושלמו יועברו למאגר המשימות.",
     "sprintBurndown": "Burndown של ספרינט",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
+    "projectInviteRequiredDescription": "בקש ממנהל להזמין אותך לפרויקט או להעניק לך הרשאה ליצור פרויקטים."
   },
   "pagesWork": {
     "team": {
@@ -4663,7 +4669,7 @@
       "removeProject": "הסר את {name}",
       "projectRole": "תפקיד בפרויקט",
       "sendInvitation": "שלח הזמנה",
-      "viewOnly": "גישת צפייה בלבד. רק בעלים ומנהלים יכולים לנהל חברים.",
+      "viewOnly": "גישה לצפייה בלבד. ניהול חברים דורש את הרשאות החברים המתאימות.",
       "noMembers": "אין עדיין חברים.",
       "inviteFirst": "הזמינו את החבר הראשון שלכם",
       "invited": "הוזמן",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "פרטים",
       "detailsHeading": "פרטי מרחב העבודה",
       "detailsSubtitle": "שם, דומיין ומידע מיתוג המשמשים בכל מרחב העבודה.",
-      "manageRestricted": "רק בעלים ומנהלים יכולים לעדכן הגדרות ארגון.",
+      "manageRestricted": "עדכון הגדרות הארגון דורש הרשאת הגדרות ארגון.",
       "logo": "לוגו",
       "slug": "מזהה מרחב העבודה",
       "slugHint": "מנהלי-על יכולים לשנות אותו.",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "אזור סכנה",
       "dangerSubtitle": "מסיר לצמיתות את מרחב העבודה הזה ואת כל מה שתחתיו. נדרשת גישת בעלים.",
       "cannotRestore": "לא ניתן לשחזר ארגונים שנמחקו.",
-      "ownerOnly": "בעלים בלבד",
+      "ownerOnly": "נדרשת הרשאת מחיקה",
       "plan": {
         "free": "חינמי",
         "starter": "מתחיל",

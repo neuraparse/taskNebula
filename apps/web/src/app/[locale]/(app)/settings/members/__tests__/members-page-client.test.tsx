@@ -42,6 +42,11 @@ jest.mock('@/lib/hooks/use-projects', () => ({
   useProjects: (...args: unknown[]) => useProjectsMock(...args),
 }));
 
+const useOrganizationPermissionsMock = jest.fn();
+jest.mock('@/lib/hooks/use-permissions', () => ({
+  useOrganizationPermissions: (...args: unknown[]) => useOrganizationPermissionsMock(...args),
+}));
+
 jest.mock('next/link', () => {
   const MockLink = ({ children, href }: { children: ReactNode; href: string }) => (
     <a href={href}>{children}</a>
@@ -111,12 +116,43 @@ function defaultUseProjectsReturn(projects: Array<{ id: string; name: string; ke
   };
 }
 
+type TestMember = {
+  id: string;
+  name: string;
+  email: string;
+  image?: string;
+  status: string;
+  role: 'owner' | 'admin' | 'member' | 'viewer' | 'guest';
+  memberStatus: string;
+  joinedAt: string;
+};
+
 /** Ensures /api/organizations/org-1/members GET returns an owner-role payload
  *  so the Invite button is enabled. */
 function installMembersListFetch(overrides?: {
+  members?: TestMember[];
   invitePostHandler?: (body: string) => { ok: boolean; status?: number; payload: unknown };
+  assignProjectsPostHandler?: (body: string) => { ok: boolean; status?: number; payload: unknown };
 }) {
   fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+    if (
+      typeof url === 'string' &&
+      /\/api\/organizations\/[^/]+\/members\/[^/]+\/projects$/.test(url) &&
+      init?.method === 'POST'
+    ) {
+      const body = typeof init.body === 'string' ? init.body : '';
+      const handled = overrides?.assignProjectsPostHandler?.(body);
+      return {
+        ok: handled?.ok ?? true,
+        status: handled?.status ?? (handled?.ok === false ? 400 : 200),
+        json: async () =>
+          handled?.payload ?? {
+            addedToProjects: [],
+            skippedProjects: [],
+          },
+      };
+    }
+
     if (
       typeof url === 'string' &&
       url.includes('/members') &&
@@ -126,7 +162,7 @@ function installMembersListFetch(overrides?: {
         ok: true,
         status: 200,
         json: async () => ({
-          members: [],
+          members: overrides?.members ?? [],
           userRole: 'owner',
           isSuperAdmin: false,
         }),
@@ -172,6 +208,22 @@ function installMembersListFetch(overrides?: {
 beforeEach(() => {
   jest.clearAllMocks();
   useProjectsMock.mockReturnValue(defaultUseProjectsReturn([]));
+  useOrganizationPermissionsMock.mockReturnValue({
+    permissions: ['member:invite', 'member:manage', 'member:remove', 'project:manage'],
+    isSuperAdmin: false,
+    role: 'owner',
+    isLoading: false,
+    has: (permission: string) =>
+      ['member:invite', 'member:manage', 'member:remove', 'project:manage'].includes(permission),
+    hasAny: (permissions: string[]) =>
+      permissions.some((permission) =>
+        ['member:invite', 'member:manage', 'member:remove', 'project:manage'].includes(permission)
+      ),
+    hasAll: (permissions: string[]) =>
+      permissions.every((permission) =>
+        ['member:invite', 'member:manage', 'member:remove', 'project:manage'].includes(permission)
+      ),
+  });
   installMembersListFetch();
 });
 
@@ -399,5 +451,109 @@ describe('MembersPageClient — invite with project assignment', () => {
     expect(projectIds === undefined || (Array.isArray(projectIds) && projectIds.length === 0)).toBe(
       true
     );
+  });
+
+  it('assigns an existing member to selected projects from the member row action', async () => {
+    useProjectsMock.mockReturnValue(
+      defaultUseProjectsReturn([
+        { id: 'proj-a', name: 'Alpha', key: 'ALPHA' },
+        { id: 'proj-b', name: 'Beta', key: 'BETA' },
+      ])
+    );
+
+    let capturedBody: string | null = null;
+    installMembersListFetch({
+      members: [
+        {
+          id: 'user-1',
+          name: 'Existing User',
+          email: 'existing@example.com',
+          image: undefined,
+          status: 'active',
+          role: 'member',
+          memberStatus: 'active',
+          joinedAt: '2025-01-01T00:00:00Z',
+        },
+      ],
+      assignProjectsPostHandler: (body) => {
+        capturedBody = body;
+        return {
+          ok: true,
+          status: 200,
+          payload: {
+            addedToProjects: ['proj-a'],
+            skippedProjects: [],
+          },
+        };
+      },
+    });
+
+    const user = userEvent.setup();
+    renderWithClient(<MembersPageClient />);
+
+    expect(await screen.findByText('Existing User')).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: /add to projects/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /add to projects/i }));
+
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('combobox', { name: /select projects/i }));
+    await user.click(await screen.findByText(/^Alpha$/));
+
+    await user.click(within(dialog).getByRole('button', { name: /add to projects/i }));
+
+    await waitFor(() => {
+      expect(capturedBody).not.toBeNull();
+    });
+
+    const parsed = capturedBody ? JSON.parse(capturedBody) : {};
+    expect(parsed).toEqual({
+      projectIds: ['proj-a'],
+      projectRole: 'developer',
+    });
+  });
+
+  it('disables invite actions when member:invite is missing', async () => {
+    useOrganizationPermissionsMock.mockReturnValue({
+      permissions: ['member:view'],
+      isSuperAdmin: false,
+      role: 'viewer',
+      isLoading: false,
+      has: () => false,
+      hasAny: () => false,
+      hasAll: () => false,
+    });
+
+    renderWithClient(<MembersPageClient />);
+
+    const inviteTrigger = await screen.findByRole('button', { name: /invite/i });
+    expect(inviteTrigger).toBeDisabled();
+  });
+
+  it('hides project assignment when project:manage is missing', async () => {
+    useOrganizationPermissionsMock.mockReturnValue({
+      permissions: ['member:invite'],
+      isSuperAdmin: false,
+      role: 'member',
+      isLoading: false,
+      has: (permission: string) => permission === 'member:invite',
+      hasAny: (permissions: string[]) => permissions.includes('member:invite'),
+      hasAll: (permissions: string[]) =>
+        permissions.every((permission) => permission === 'member:invite'),
+    });
+    useProjectsMock.mockReturnValue(
+      defaultUseProjectsReturn([{ id: 'proj-a', name: 'Alpha', key: 'ALPHA' }])
+    );
+
+    const user = userEvent.setup();
+    renderWithClient(<MembersPageClient />);
+
+    const inviteTrigger = await screen.findByRole('button', { name: /invite/i });
+    await waitFor(() => expect(inviteTrigger).toBeEnabled());
+    await user.click(inviteTrigger);
+
+    const dialog = await screen.findByRole('dialog');
+    expect(
+      within(dialog).queryByRole('button', { name: /add to projects/i })
+    ).not.toBeInTheDocument();
   });
 });

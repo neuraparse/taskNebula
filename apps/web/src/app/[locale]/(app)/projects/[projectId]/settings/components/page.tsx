@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { db, projects } from '@tasknebula/db';
-import { eq } from 'drizzle-orm';
-import { hasPermission } from '@/lib/auth/permissions';
+import { ProjectAccessDenied } from '@/components/projects/project-access-denied';
+import { resolveProjectCapabilityAccess } from '@/lib/auth/project-access';
 import { ComponentsManager } from '@/components/settings/components-manager';
 
 export default async function ProjectComponentsSettingsPage({
@@ -17,22 +16,13 @@ export default async function ProjectComponentsSettingsPage({
     redirect(`/auth/signin?callbackUrl=/projects/${projectId}/settings/components`);
   }
 
-  const [project] = await db
-    .select({ organizationId: projects.organizationId })
-    .from(projects)
-    .where(eq(projects.id, projectId))
-    .limit(1);
-
-  if (!project) {
-    redirect('/dashboard?error=insufficient-permission');
-  }
-
+  const access = await resolveProjectCapabilityAccess(session.user.id, projectId);
   const canAccess =
-    (await hasPermission(project.organizationId, 'project:settings')) ||
-    (await hasPermission(project.organizationId, 'project:manage'));
+    access.canRead &&
+    (access.canManage || access.isSuperAdmin || access.isOrgOwner || access.isOrgAdmin);
 
   if (!canAccess) {
-    redirect('/dashboard?error=insufficient-permission');
+    return <ProjectAccessDenied />;
   }
 
   return (

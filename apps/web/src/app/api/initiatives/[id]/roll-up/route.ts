@@ -26,10 +26,7 @@ import {
  * done when its `workflow_statuses.category` is `'done'`. This matches what
  * the project board UI already considers complete.
  */
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -37,11 +34,7 @@ export async function GET(
 
   const { id } = await params;
 
-  const [root] = await db
-    .select()
-    .from(initiatives)
-    .where(eq(initiatives.id, id))
-    .limit(1);
+  const [root] = await db.select().from(initiatives).where(eq(initiatives.id, id)).limit(1);
   if (!root) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
@@ -52,7 +45,8 @@ export async function GET(
     .where(
       and(
         eq(organizationMembers.userId, session.user.id),
-        eq(organizationMembers.organizationId, root.workspaceId)
+        eq(organizationMembers.organizationId, root.workspaceId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
@@ -136,10 +130,7 @@ export async function GET(
       projectKey: row.projectKey,
       done: Number(row.done) || 0,
       total: Number(row.total) || 0,
-      percent:
-        Number(row.total) > 0
-          ? Math.round((Number(row.done) / Number(row.total)) * 100)
-          : 0,
+      percent: Number(row.total) > 0 ? Math.round((Number(row.done) / Number(row.total)) * 100) : 0,
     })),
   });
 }

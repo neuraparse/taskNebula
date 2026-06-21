@@ -41,6 +41,11 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import {
+  isApiConflictError,
+  isApiPermissionError,
+  throwApiResponseError,
+} from '@/lib/client-api-errors';
 
 type VersionStatus = 'unreleased' | 'released' | 'archived';
 
@@ -67,33 +72,12 @@ interface VersionsResponse {
   total: number;
 }
 
-class ApiError extends Error {
-  readonly status: number;
-
-  constructor(message: string, status: number) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-  }
-}
-
-async function throwApiError(response: Response): Promise<never> {
-  let message = `Request failed (${response.status})`;
-  try {
-    const data = (await response.json()) as { error?: string };
-    if (data.error) message = data.error;
-  } catch {
-    // Non-JSON error body — keep the generic message.
-  }
-  throw new ApiError(message, response.status);
-}
-
 function useProjectVersions(projectId: string) {
   return useQuery({
     queryKey: ['project-versions', projectId],
     queryFn: async () => {
       const response = await fetch(`/api/projects/${projectId}/versions`);
-      if (!response.ok) await throwApiError(response);
+      if (!response.ok) await throwApiResponseError(response);
       return (await response.json()) as VersionsResponse;
     },
     enabled: Boolean(projectId),
@@ -117,7 +101,7 @@ function useCreateVersion(projectId: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      if (!response.ok) await throwApiError(response);
+      if (!response.ok) await throwApiResponseError(response);
       return (await response.json()) as { version: ProjectVersion };
     },
     onSuccess: () => {
@@ -135,7 +119,7 @@ function useUpdateVersion(projectId: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      if (!response.ok) await throwApiError(response);
+      if (!response.ok) await throwApiResponseError(response);
       return (await response.json()) as { version: ProjectVersion };
     },
     onSuccess: () => {
@@ -151,7 +135,7 @@ function useDeleteVersion(projectId: string) {
       const response = await fetch(`/api/projects/${projectId}/versions/${versionId}`, {
         method: 'DELETE',
       });
-      if (!response.ok) await throwApiError(response);
+      if (!response.ok) await throwApiResponseError(response);
       return (await response.json()) as { success: boolean };
     },
     onSuccess: () => {
@@ -175,7 +159,7 @@ function useReleaseVersion(projectId: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(moveOpenIssuesToVersionId ? { moveOpenIssuesToVersionId } : {}),
       });
-      if (!response.ok) await throwApiError(response);
+      if (!response.ok) await throwApiResponseError(response);
       return (await response.json()) as { version: ProjectVersion; movedIssueCount: number };
     },
     onSuccess: () => {
@@ -199,6 +183,7 @@ export interface VersionsManagerProps {
 
 export function VersionsManager({ projectId }: VersionsManagerProps) {
   const t = useTranslations('settings.versions');
+  const tSettings = useTranslations('settings');
   const tActions = useTranslations('actions');
   const tCommon = useTranslations('common');
   const format = useFormatter();
@@ -237,8 +222,11 @@ export function VersionsManager({ projectId }: VersionsManagerProps) {
         title: status === 'archived' ? t('toast_archived') : t('toast_restored'),
         variant: 'success',
       });
-    } catch {
-      toast({ title: t('error_generic'), variant: 'destructive' });
+    } catch (error) {
+      toast({
+        title: isApiPermissionError(error) ? tSettings('error_no_permission') : t('error_generic'),
+        variant: 'destructive',
+      });
     }
   };
 
@@ -248,8 +236,11 @@ export function VersionsManager({ projectId }: VersionsManagerProps) {
       await deleteVersion.mutateAsync(deletingVersion.id);
       toast({ title: t('toast_deleted'), variant: 'success' });
       setDeletingVersion(null);
-    } catch {
-      toast({ title: t('error_generic'), variant: 'destructive' });
+    } catch (error) {
+      toast({
+        title: isApiPermissionError(error) ? tSettings('error_no_permission') : t('error_generic'),
+        variant: 'destructive',
+      });
     }
   };
 
@@ -479,6 +470,7 @@ function VersionEditorDialog({
   versionToEdit,
 }: VersionEditorDialogProps) {
   const t = useTranslations('settings.versions');
+  const tSettings = useTranslations('settings');
   const tActions = useTranslations('actions');
   const { toast } = useToast();
 
@@ -532,9 +524,12 @@ function VersionEditorDialog({
       }
       onOpenChange(false);
     } catch (error) {
-      const isDuplicate = error instanceof ApiError && error.status === 409;
       toast({
-        title: isDuplicate ? t('error_duplicate') : t('error_generic'),
+        title: isApiPermissionError(error)
+          ? tSettings('error_no_permission')
+          : isApiConflictError(error)
+            ? t('error_duplicate')
+            : t('error_generic'),
         variant: 'destructive',
       });
     }
@@ -636,6 +631,7 @@ function ReleaseVersionDialog({
   moveTargets,
 }: ReleaseVersionDialogProps) {
   const t = useTranslations('settings.versions');
+  const tSettings = useTranslations('settings');
   const tActions = useTranslations('actions');
   const { toast } = useToast();
 
@@ -661,8 +657,11 @@ function ReleaseVersionDialog({
         variant: 'success',
       });
       onOpenChange(false);
-    } catch {
-      toast({ title: t('error_generic'), variant: 'destructive' });
+    } catch (error) {
+      toast({
+        title: isApiPermissionError(error) ? tSettings('error_no_permission') : t('error_generic'),
+        variant: 'destructive',
+      });
     }
   };
 

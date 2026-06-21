@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { throwApiResponseError } from '@/lib/client-api-errors';
 import {
   invalidateIssueCaches,
   matchesIssueList,
@@ -100,7 +101,7 @@ export function useIssue(issueId: string | null) {
         return null;
       }
       if (!response.ok) {
-        throw new Error('Failed to fetch issue');
+        await throwApiResponseError(response, 'Failed to fetch issue');
       }
       const data = await response.json();
       return data as Issue;
@@ -261,8 +262,7 @@ export function useUpdateIssue() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        const err = await response.json().catch(() => null);
-        throw new Error(err?.error || 'Failed to update issue');
+        await throwApiResponseError(response);
       }
       return response.json();
     },

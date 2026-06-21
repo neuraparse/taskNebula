@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { throwApiResponseError } from '@/lib/client-api-errors';
 
 interface DocumentSpace {
   id: string;
@@ -47,7 +48,7 @@ export interface DocumentPage {
   title: string;
   slug: string;
   icon: string | null;
-  contentJson: Record<string, any>;
+  contentJson: Record<string, unknown>;
   contentText: string;
   excerpt: string | null;
   currentRevision: number;
@@ -64,7 +65,15 @@ export interface DocumentPage {
     canDelete: boolean;
   };
   backlinks?: Array<{ id: string; title: string; slug: string; projectId: string | null }>;
-  relatedIssues?: Array<{ linkId: string; id: string; key: string; title: string; projectId: string; priority: string; statusId: string }>;
+  relatedIssues?: Array<{
+    linkId: string;
+    id: string;
+    key: string;
+    title: string;
+    projectId: string;
+    priority: string;
+    statusId: string;
+  }>;
   attachments?: Array<DocumentAttachment>;
   revisionCount?: number;
   space?: DocumentSpace;
@@ -112,7 +121,10 @@ export interface DocumentAttachment {
   createdAt: string;
 }
 
-export function useDocumentSpaces(filters?: { organizationId?: string | null; projectId?: string | null }) {
+export function useDocumentSpaces(filters?: {
+  organizationId?: string | null;
+  projectId?: string | null;
+}) {
   return useQuery({
     queryKey: ['document-spaces', filters],
     queryFn: async () => {
@@ -120,14 +132,18 @@ export function useDocumentSpaces(filters?: { organizationId?: string | null; pr
       if (filters?.organizationId) params.append('organizationId', filters.organizationId);
       if (filters?.projectId) params.append('projectId', filters.projectId);
       const response = await fetch(`/api/docs/spaces?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch document spaces');
+      if (!response.ok) await throwApiResponseError(response, 'Failed to fetch document spaces');
       const data = await response.json();
       return data.spaces as DocumentSpace[];
     },
   });
 }
 
-export function useDocumentPages(filters?: { spaceId?: string | null; organizationId?: string | null; projectId?: string | null }) {
+export function useDocumentPages(filters?: {
+  spaceId?: string | null;
+  organizationId?: string | null;
+  projectId?: string | null;
+}) {
   return useQuery({
     queryKey: ['document-pages', filters],
     queryFn: async () => {
@@ -136,7 +152,7 @@ export function useDocumentPages(filters?: { spaceId?: string | null; organizati
       if (filters?.organizationId) params.append('organizationId', filters.organizationId);
       if (filters?.projectId) params.append('projectId', filters.projectId);
       const response = await fetch(`/api/docs/pages?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch document pages');
+      if (!response.ok) await throwApiResponseError(response, 'Failed to fetch document pages');
       return response.json() as Promise<{
         space: DocumentSpace | null;
         permissions: DocumentSpace['permissions'];
@@ -152,7 +168,7 @@ export function useDocumentPage(pageId: string | null) {
     queryFn: async () => {
       if (!pageId) return null;
       const response = await fetch(`/api/docs/pages/${pageId}`);
-      if (!response.ok) throw new Error('Failed to fetch document page');
+      if (!response.ok) await throwApiResponseError(response, 'Failed to fetch document page');
       return response.json() as Promise<DocumentPage>;
     },
     enabled: !!pageId,
@@ -165,7 +181,7 @@ export function useDocumentTree(pageId: string | null) {
     queryFn: async () => {
       if (!pageId) return null;
       const response = await fetch(`/api/docs/pages/${pageId}/tree`);
-      if (!response.ok) throw new Error('Failed to fetch document tree');
+      if (!response.ok) await throwApiResponseError(response, 'Failed to fetch document tree');
       return response.json() as Promise<{
         tree: DocumentTreeNode[];
         currentPageId: string;
@@ -182,7 +198,7 @@ export function useDocumentRevisions(pageId: string | null) {
     queryFn: async () => {
       if (!pageId) return [];
       const response = await fetch(`/api/docs/pages/${pageId}/revisions`);
-      if (!response.ok) throw new Error('Failed to fetch document revisions');
+      if (!response.ok) await throwApiResponseError(response, 'Failed to fetch document revisions');
       const data = await response.json();
       return data.revisions as DocumentRevision[];
     },
@@ -190,7 +206,12 @@ export function useDocumentRevisions(pageId: string | null) {
   });
 }
 
-export function useDocumentSearch(filters: { query: string; organizationId?: string | null; projectId?: string | null; enabled?: boolean }) {
+export function useDocumentSearch(filters: {
+  query: string;
+  organizationId?: string | null;
+  projectId?: string | null;
+  enabled?: boolean;
+}) {
   return useQuery({
     queryKey: ['document-search', filters.query, filters.organizationId, filters.projectId],
     queryFn: async () => {
@@ -201,7 +222,7 @@ export function useDocumentSearch(filters: { query: string; organizationId?: str
       params.append('limit', '10');
 
       const response = await fetch(`/api/docs/search?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to search docs');
+      if (!response.ok) await throwApiResponseError(response, 'Failed to search docs');
       const data = await response.json();
       return data.results as Array<{
         id: string;
@@ -232,7 +253,7 @@ export function useCreateDocumentPage() {
       organizationId?: string;
       projectId?: string;
       changeSummary?: string;
-      contentJson?: Record<string, any>;
+      contentJson?: Record<string, unknown>;
     }) => {
       const response = await fetch('/api/docs/pages', {
         method: 'POST',
@@ -240,8 +261,7 @@ export function useCreateDocumentPage() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || 'Failed to create document page');
+        await throwApiResponseError(response, 'Failed to create document page');
       }
       return response.json() as Promise<DocumentPage>;
     },
@@ -269,7 +289,7 @@ export function useUpdateDocumentPage() {
       data: {
         title?: string;
         icon?: string | null;
-        contentJson?: Record<string, any>;
+        contentJson?: Record<string, unknown>;
         changeSummary?: string;
         expectedRevision: number;
       };
@@ -280,12 +300,7 @@ export function useUpdateDocumentPage() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        const message = error.error || 'Failed to update document page';
-        const err = new Error(message) as Error & { status?: number; payload?: any };
-        err.status = response.status;
-        err.payload = error;
-        throw err;
+        await throwApiResponseError(response, 'Failed to update document page');
       }
       return response.json() as Promise<DocumentPage>;
     },
@@ -304,15 +319,22 @@ export function useRestoreDocumentPage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ pageId, revision, revisionId }: { pageId: string; revision?: number; revisionId?: string }) => {
+    mutationFn: async ({
+      pageId,
+      revision,
+      revisionId,
+    }: {
+      pageId: string;
+      revision?: number;
+      revisionId?: string;
+    }) => {
       const response = await fetch(`/api/docs/pages/${pageId}/restore`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ revision, revisionId }),
       });
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || 'Failed to restore document revision');
+        await throwApiResponseError(response, 'Failed to restore document revision');
       }
       return response.json() as Promise<DocumentPage>;
     },
@@ -342,8 +364,7 @@ export function useUpdateDocumentShare(pageId: string | null) {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || 'Failed to update document sharing');
+        await throwApiResponseError(response, 'Failed to update document sharing');
       }
 
       return response.json() as Promise<DocumentPage>;
@@ -363,7 +384,7 @@ export function useIssueDocs(issueId: string | null) {
     queryFn: async () => {
       if (!issueId) return [];
       const response = await fetch(`/api/issues/${issueId}/docs`);
-      if (!response.ok) throw new Error('Failed to fetch issue docs');
+      if (!response.ok) await throwApiResponseError(response, 'Failed to fetch issue docs');
       const data = await response.json();
       return data.docs as Array<{
         linkId: string;
@@ -392,8 +413,7 @@ export function useAttachIssueDoc(issueId: string) {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || 'Failed to attach doc');
+        await throwApiResponseError(response, 'Failed to attach doc');
       }
       return response.json();
     },
@@ -422,8 +442,7 @@ export function useDetachIssueDoc(issueId: string) {
         method: 'DELETE',
       });
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || 'Failed to detach doc');
+        await throwApiResponseError(response, 'Failed to detach doc');
       }
       return response.json();
     },
@@ -440,7 +459,8 @@ export function useDocumentAttachments(pageId: string | null) {
     queryFn: async () => {
       if (!pageId) return [];
       const response = await fetch(`/api/docs/pages/${pageId}/attachments`);
-      if (!response.ok) throw new Error('Failed to fetch document attachments');
+      if (!response.ok)
+        await throwApiResponseError(response, 'Failed to fetch document attachments');
       const data = await response.json();
       return data.attachments as DocumentAttachment[];
     },
@@ -462,8 +482,7 @@ export function useUploadDocumentAttachment(pageId: string) {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || 'Failed to upload document attachment');
+        await throwApiResponseError(response, 'Failed to upload document attachment');
       }
 
       return response.json() as Promise<{ attachment: DocumentAttachment }>;
@@ -480,13 +499,15 @@ export function useDeleteDocumentAttachment(pageId: string) {
 
   return useMutation({
     mutationFn: async (attachmentId: string) => {
-      const response = await fetch(`/api/docs/pages/${pageId}/attachments?attachmentId=${attachmentId}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `/api/docs/pages/${pageId}/attachments?attachmentId=${attachmentId}`,
+        {
+          method: 'DELETE',
+        }
+      );
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || 'Failed to delete document attachment');
+        await throwApiResponseError(response, 'Failed to delete document attachment');
       }
 
       return response.json();

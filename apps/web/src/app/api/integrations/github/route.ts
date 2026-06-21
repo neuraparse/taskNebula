@@ -10,18 +10,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import {
-  db,
-  and,
-  eq,
-  organizationMembers,
-  integrationConnections,
-} from '@tasknebula/db';
-import {
-  asTokenEnvelope,
-  decryptToken,
-} from '@/lib/integrations/token-crypto';
+import { db, and, eq, integrationConnections } from '@tasknebula/db';
+import { asTokenEnvelope, decryptToken } from '@/lib/integrations/token-crypto';
 import { revokeGithubGrant } from '@/lib/integrations/github';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,26 +26,12 @@ export async function DELETE(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const organizationId = searchParams.get('organizationId');
   if (!organizationId) {
-    return NextResponse.json(
-      { error: 'organizationId is required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
   }
 
-  const [member] = await db
-    .select({ id: organizationMembers.id })
-    .from(organizationMembers)
-    .where(
-      and(
-        eq(organizationMembers.userId, session.user.id),
-        eq(organizationMembers.organizationId, organizationId)
-      )
-    )
-    .limit(1);
-
-  if (!member) {
+  if (!(await hasPermission(organizationId, 'org:settings'))) {
     return NextResponse.json(
-      { error: 'You do not have access to this organization.' },
+      { error: 'Managing integrations requires organization settings permission.' },
       { status: 403 }
     );
   }
@@ -85,15 +63,10 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    await db
-      .delete(integrationConnections)
-      .where(eq(integrationConnections.id, connection.id));
+    await db.delete(integrationConnections).where(eq(integrationConnections.id, connection.id));
   } catch (err) {
     console.error('Failed to delete GitHub integration_connection', err);
-    return NextResponse.json(
-      { error: 'Failed to disconnect GitHub' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to disconnect GitHub' }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });

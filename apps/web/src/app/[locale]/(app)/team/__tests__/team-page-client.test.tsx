@@ -115,6 +115,9 @@ describe('TeamPageClient', () => {
       <Wrapper>
         <TeamPageClient
           organizationId="org-1"
+          canViewMembers
+          canViewTeamspaces
+          canInviteMembers
           canManageTeamspaces
           initialMembers={initialMembers}
         />
@@ -133,6 +136,9 @@ describe('TeamPageClient', () => {
       <Wrapper>
         <TeamPageClient
           organizationId="org-1"
+          canViewMembers
+          canViewTeamspaces
+          canInviteMembers
           canManageTeamspaces
           initialMembers={initialMembers}
         />
@@ -150,6 +156,9 @@ describe('TeamPageClient', () => {
       <Wrapper>
         <TeamPageClient
           organizationId="org-1"
+          canViewMembers
+          canViewTeamspaces
+          canInviteMembers
           canManageTeamspaces
           initialMembers={initialMembers}
         />
@@ -184,6 +193,9 @@ describe('TeamPageClient', () => {
       <Wrapper>
         <TeamPageClient
           organizationId="org-1"
+          canViewMembers
+          canViewTeamspaces
+          canInviteMembers
           canManageTeamspaces
           initialMembers={initialMembers}
         />
@@ -192,5 +204,29 @@ describe('TeamPageClient', () => {
 
     expect(screen.getByText('pending@example.com')).toBeInTheDocument();
     expect(screen.getByText('Invited')).toBeInTheDocument();
+  });
+
+  it('allows teamspace-only viewers to open the teamspaces tab without fetching members', () => {
+    mockSearchParams = new URLSearchParams('tab=teamspaces');
+
+    render(
+      <Wrapper>
+        <TeamPageClient
+          organizationId="org-1"
+          canViewMembers={false}
+          canViewTeamspaces
+          canInviteMembers={false}
+          canManageTeamspaces={false}
+          initialMembers={[]}
+        />
+      </Wrapper>
+    );
+
+    expect(screen.getByTestId('teamspace-manager')).toBeInTheDocument();
+    expect(screen.getByText('Teamspace panel for org-1')).toBeInTheDocument();
+    expect(screen.queryByText('Members')).not.toBeInTheDocument();
+    expect(screen.queryByText('Pending invites')).not.toBeInTheDocument();
+    expect(screen.queryByText('Invite member')).not.toBeInTheDocument();
+    expect(mockUseOrganizationMembers).toHaveBeenCalledWith(null);
   });
 });

@@ -1,12 +1,10 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { auth } from '@/auth';
 import { db, organizationMembers, users as usersTable } from '@tasknebula/db';
-import { eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 import { Users } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { hasPermission } from '@/lib/auth/permissions';
 import { TeamPageClient } from './team-page-client';
 import type { TeamMemberRow } from './team-members-list';
@@ -20,7 +18,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function TeamPage() {
-  const t = await getTranslations('pagesWork');
+  const [t, tProjects] = await Promise.all([
+    getTranslations('pagesWork'),
+    getTranslations('pagesProjects'),
+  ]);
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -30,7 +31,9 @@ export default async function TeamPage() {
   const userOrgs = await db
     .select()
     .from(organizationMembers)
-    .where(eq(organizationMembers.userId, session.user.id));
+    .where(
+      and(eq(organizationMembers.userId, session.user.id), eq(organizationMembers.status, 'active'))
+    );
 
   const primaryOrg = userOrgs[0];
   if (!primaryOrg) {
@@ -42,20 +45,41 @@ export default async function TeamPage() {
         <div className="min-h-0 flex-1 p-6">
           <div className="surface-card space-y-3 p-8 text-center">
             <Users className="text-muted-foreground mx-auto h-8 w-8" />
-            <p className="text-muted-foreground text-sm">{t('team.noOrganization')}</p>
-            <Link href="/settings?tab=organization">
-              <Button size="sm">{t('team.createOrganization')}</Button>
-            </Link>
+            <p className="text-foreground text-sm font-medium">
+              {tProjects('projectInviteRequiredTitle')}
+            </p>
+            <p className="text-muted-foreground mx-auto max-w-md text-sm">
+              {tProjects('projectInviteRequiredDescription')}
+            </p>
           </div>
         </div>
       </div>
     );
   }
 
-  const allMembers = await db
-    .select()
-    .from(organizationMembers)
-    .where(eq(organizationMembers.organizationId, primaryOrg.organizationId));
+  const [canViewMembers, canViewTeamspaces, canInviteMembers, canManageTeamspaces] =
+    await Promise.all([
+      hasPermission(primaryOrg.organizationId, 'member:view'),
+      hasPermission(primaryOrg.organizationId, 'team:view'),
+      hasPermission(primaryOrg.organizationId, 'member:invite'),
+      hasPermission(primaryOrg.organizationId, 'org:settings'),
+    ]);
+
+  if (!canViewMembers && !canViewTeamspaces) {
+    redirect('/dashboard?error=insufficient-permission');
+  }
+
+  const allMembers = canViewMembers
+    ? await db
+        .select()
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, primaryOrg.organizationId),
+            eq(organizationMembers.status, 'active')
+          )
+        )
+    : [];
 
   const userIds = allMembers.map((m) => m.userId);
 
@@ -79,15 +103,16 @@ export default async function TeamPage() {
       name: m.user!.name ?? null,
       email: m.user!.email ?? null,
       image: m.user!.image ?? null,
-      status: (m.user as any).status ?? null,
+      status: m.user!.status ?? null,
     },
   }));
-
-  const canManageTeamspaces = await hasPermission(primaryOrg.organizationId, 'org:settings');
 
   return (
     <TeamPageClient
       organizationId={primaryOrg.organizationId}
+      canViewMembers={canViewMembers}
+      canViewTeamspaces={canViewTeamspaces}
+      canInviteMembers={canInviteMembers}
       canManageTeamspaces={canManageTeamspaces}
       initialMembers={plainMembers}
     />

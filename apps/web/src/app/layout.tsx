@@ -14,7 +14,18 @@ import {
   type Locale,
 } from '@/lib/i18n/config';
 
+function resolveMetadataBase(): URL {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL ?? 'http://localhost:3000';
+
+  try {
+    return new URL(appUrl);
+  } catch {
+    return new URL('http://localhost:3000');
+  }
+}
+
 export const metadata: Metadata = {
+  metadataBase: resolveMetadataBase(),
   title: 'TaskNebula - AI-Native Project Management',
   description: 'Real-time, keyboard-first project management platform powered by AI',
   manifest: '/manifest.json',

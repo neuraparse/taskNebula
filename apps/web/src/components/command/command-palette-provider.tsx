@@ -10,6 +10,7 @@ import {
 
 interface CommandPaletteProviderProps {
   children: React.ReactNode;
+  hasWorkspaceAccess?: boolean;
 }
 
 /**
@@ -23,7 +24,10 @@ interface CommandPaletteProviderProps {
  *  - The keydown listener intentionally lives at `window` so it works
  *    no matter which element currently has focus.
  */
-export function CommandPaletteProvider({ children }: CommandPaletteProviderProps) {
+export function CommandPaletteProvider({
+  children,
+  hasWorkspaceAccess = true,
+}: CommandPaletteProviderProps) {
   const [isOpen, setIsOpen] = React.useState(false);
 
   const open = React.useCallback(() => setIsOpen(true), []);
@@ -55,7 +59,11 @@ export function CommandPaletteProvider({ children }: CommandPaletteProviderProps
   return (
     <CommandPaletteContext.Provider value={value}>
       {children}
-      <CommandPalette open={isOpen} onOpenChange={setIsOpen} />
+      <CommandPalette
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        hasWorkspaceAccess={hasWorkspaceAccess}
+      />
     </CommandPaletteContext.Provider>
   );
 }

@@ -9,6 +9,7 @@ import {
   auditLogs,
   projects,
   projectMembers,
+  type ProjectRole,
 } from '@tasknebula/db';
 import { eq, and, inArray } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
@@ -17,6 +18,7 @@ import { hasPermission, getUserRole } from '@/lib/auth/permissions';
 import { publishEvent } from '@/lib/realtime/events';
 import { sendEmail } from '@/lib/email/sender';
 import { renderInvitationMessage } from '@/lib/email/templates';
+import { getProjectMemberPermissionValues } from '@/lib/projects/member-permissions';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const FALLBACK_INVITE_EXPIRES_IN_DAYS = 7;
@@ -314,10 +316,8 @@ export async function POST(
             projectId,
             userId: user.id,
             role: data.projectRole,
-            canManageSprints: 'false',
-            canStartSprint: 'false',
-            canAssignIssues: 'false',
             invitedBy: session.user.id,
+            ...getProjectMemberPermissionValues(data.projectRole as ProjectRole),
           });
 
           await db.insert(auditLogs).values({

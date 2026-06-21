@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { throwApiResponseError } from '@/lib/client-api-errors';
 
 /** project_versions row (Jira-parity Fix/Affects Version layer). */
 export interface ProjectVersion {
@@ -46,7 +47,7 @@ export function useProjectVersions(projectId: string | null) {
       if (!projectId) return [];
       const response = await fetch(`/api/projects/${projectId}/versions`);
       if (!response.ok) {
-        throw new Error('Failed to fetch project versions');
+        await throwApiResponseError(response);
       }
       const data: ProjectVersionsResponse = await response.json();
       return data.versions;
@@ -77,10 +78,7 @@ export function useCreateProjectVersion() {
         body: JSON.stringify({ name }),
       });
       if (!response.ok) {
-        const err = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw Object.assign(new Error(err?.error || 'Failed to create version'), {
-          status: response.status,
-        });
+        await throwApiResponseError(response);
       }
       const data = (await response.json()) as { version: ProjectVersion };
       return data.version;
@@ -106,7 +104,7 @@ export function useIssueVersions(issueId: string | null) {
       if (!issueId) return { fixVersions: [], affectsVersions: [] };
       const response = await fetch(`/api/issues/${issueId}/versions`);
       if (!response.ok) {
-        throw new Error('Failed to fetch issue versions');
+        await throwApiResponseError(response);
       }
       return response.json() as Promise<IssueVersions>;
     },
@@ -140,8 +138,7 @@ export function useSetIssueVersions() {
         }),
       });
       if (!response.ok) {
-        const err = await response.json().catch(() => null);
-        throw new Error(err?.error || 'Failed to update issue versions');
+        await throwApiResponseError(response);
       }
       return response.json() as Promise<IssueVersions>;
     },

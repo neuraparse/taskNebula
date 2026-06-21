@@ -11,6 +11,7 @@ interface ResponsiveLayoutProps {
   showSearch?: boolean;
   onSearchClick?: () => void;
   showMobileNav?: boolean;
+  hasWorkspaceAccess?: boolean;
 }
 
 export function ResponsiveLayout({
@@ -19,6 +20,7 @@ export function ResponsiveLayout({
   showSearch,
   onSearchClick,
   showMobileNav = true,
+  hasWorkspaceAccess = true,
 }: ResponsiveLayoutProps) {
   const isMobile = useIsMobile();
 
@@ -27,15 +29,10 @@ export function ResponsiveLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <MobileHeader
-        title={title}
-        showSearch={showSearch}
-        onSearchClick={onSearchClick}
-      />
+    <div className="bg-background flex min-h-screen flex-col">
+      <MobileHeader title={title} showSearch={showSearch} onSearchClick={onSearchClick} />
       <main className="flex-1 pb-14">{children}</main>
-      {showMobileNav && <MobileNav />}
+      {showMobileNav && <MobileNav hasWorkspaceAccess={hasWorkspaceAccess} />}
     </div>
   );
 }
-

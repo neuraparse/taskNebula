@@ -43,7 +43,8 @@
     "realtime_health": "صحة الزمن الحقيقي",
     "audit_logs": "سجلات التدقيق",
     "system": "النظام",
-    "updates": "التحديثات"
+    "updates": "التحديثات",
+    "ai_transparency": "شفافية الذكاء الاصطناعي"
   },
   "actions": {
     "create_issue": "إنشاء مهمة",
@@ -102,6 +103,7 @@
     "skipToContent": "تخطٍّ إلى المحتوى"
   },
   "settings": {
+    "error_no_permission": "ليس لديك إذن لإدارة هذه الإعدادات.",
     "labels": {
       "kicker": "التسميات",
       "title": "التسميات",
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "فشل تحميل المهمة",
       "notFound": "لم يتم العثور على المهمة",
-      "notFoundHint": "المهمة التي تبحث عنها غير موجودة."
+      "notFoundHint": "المهمة التي تبحث عنها غير موجودة.",
+      "loadFailedHint": "حدّث الصفحة أو حاول مرة أخرى بعد قليل."
     }
   },
   "adminUpdates": {
@@ -1480,8 +1483,8 @@
     "planning_kicker": "التخطيط",
     "teamspaces_heading": "مساحات الفرق",
     "teamspaces_subtitle": "مسارات تخطيط فوق المشاريع الفردية، دون تقسيم المؤسسة.",
-    "owner_admin_only": "المالك أو المسؤول فقط",
-    "browse_only_notice": "للتصفح فقط — يمكن للمالكين والمسؤولين تغيير الهيكل.",
+    "owner_admin_only": "الإذن مطلوب",
+    "browse_only_notice": "عرض فقط — يتطلب تغيير البنية إذن إعدادات المؤسسة.",
     "loading_teamspaces": "جارٍ تحميل مساحات الفرق…",
     "manage_members": "إدارة الأعضاء",
     "members_label": "أعضاء",
@@ -2104,7 +2107,7 @@
       "none": "بلا",
       "updated": "حُدّث",
       "server_managed": "مُدار من الخادم",
-      "read_only_notice": "وصول للقراءة فقط — يمكن للمالكين والمسؤولين تحديث سياسة الذكاء الاصطناعي.",
+      "read_only_notice": "وصول للقراءة فقط — يتطلب تحديث سياسة الذكاء الاصطناعي إذن إعدادات المؤسسة.",
       "your_model_profiles": "ملفاتك الشخصية للنماذج",
       "your_model_profiles_desc": "تركيبات مخصصة من النموذج + الضبط محفوظة لإعادة الاستخدام. أي ملف شخصي محفوظ هنا يظهر أيضًا في القائمة المنسدلة للنماذج في الإعداد السريع أعلاه. استخدم هذا لتثبيت نموذج بإعدادات محددة لدرجة الحرارة / الرموز / جهد الاستدلال، أو لتجربة نموذج غير موجود في الكتالوج المدمج.",
       "create_profile": "إنشاء ملف شخصي",
@@ -2772,6 +2775,7 @@
     "loading_modules": "جارٍ تحميل الوحدات...",
     "no_modules_filter": "لا توجد وحدات تطابق هذا العامل.",
     "no_modules_empty": "لا توجد وحدات بعد. أنشئ واحدة لتجميع الأعمال ذات الصلة.",
+    "no_modules_empty_readonly": "لم يتم إنشاء أي وحدات لهذا المشروع بعد.",
     "create_module": "إنشاء وحدة",
     "module_dialog_desc": "جمّع الأعمال ذات الصلة في مجال ميزة أو مشروع مصغّر.",
     "module_name_placeholder": "مثال: المصادقة، الفوترة، الإعداد",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "لا توجد تحديثات بعد.",
     "initiative_detail_anonymous": "مجهول",
     "initiative_detail_blockers_label": "العوائق:",
-    "initiative_detail_next_label": "التالي:"
+    "initiative_detail_next_label": "التالي:",
+    "initiative_detail_error_load": "تعذر تحميل المبادرة."
   },
   "pagesProjects": {
     "metaTitle": "المشاريع | TaskNebula",
@@ -4029,6 +4034,7 @@
     "descriptionPlaceholder": "وصف موجز للمشروع",
     "cancel": "إلغاء",
     "creating": "جارٍ الإنشاء...",
+    "createProjectFailed": "تعذر إنشاء المشروع. تحقق من التفاصيل وحاول مرة أخرى.",
     "breadcrumb": "مسار التنقّل",
     "sections": "أقسام المشروع",
     "tabViews": "العروض",
@@ -4101,7 +4107,7 @@
     "completeSprintTooltip": "أكمِل هذا السباق. ستُنقل المهام غير المكتملة إلى قائمة الأعمال المتراكمة.",
     "sprintBurndown": "مخطط إنجاز السباق",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
+    "projectInviteRequiredDescription": "اطلب من مسؤول دعوتك إلى مشروع أو منحك إذن إنشاء المشاريع."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4663,7 +4669,7 @@
       "removeProject": "إزالة {name}",
       "projectRole": "دور المشروع",
       "sendInvitation": "إرسال الدعوة",
-      "viewOnly": "وصول للعرض فقط. يمكن للمالكين والمسؤولين فقط إدارة الأعضاء.",
+      "viewOnly": "وصول للعرض فقط. تتطلب إدارة الأعضاء أذونات الأعضاء المناسبة.",
       "noMembers": "لا يوجد أعضاء بعد.",
       "inviteFirst": "ادعُ عضوك الأول",
       "invited": "تمت الدعوة",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "التفاصيل",
       "detailsHeading": "تفاصيل مساحة العمل",
       "detailsSubtitle": "الاسم والنطاق ومعلومات العلامة التجارية المستخدمة في مساحة العمل.",
-      "manageRestricted": "يمكن للمالكين والمسؤولين فقط تحديث إعدادات المؤسسة.",
+      "manageRestricted": "يتطلب تحديث إعدادات المؤسسة إذن إعدادات المؤسسة.",
       "logo": "الشعار",
       "slug": "معرّف مساحة العمل",
       "slugHint": "يمكن للمسؤولين الأعلى تغييره.",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "منطقة الخطر",
       "dangerSubtitle": "تزيل هذه المنطقة مساحة العمل وكل ما تحتها نهائيًا. يلزم وصول المالك.",
       "cannotRestore": "لا يمكن استعادة المؤسسات المحذوفة.",
-      "ownerOnly": "المالك فقط",
+      "ownerOnly": "إذن الحذف مطلوب",
       "plan": {
         "free": "مجاني",
         "starter": "مبتدئ",

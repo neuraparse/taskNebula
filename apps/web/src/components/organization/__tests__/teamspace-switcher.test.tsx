@@ -2,12 +2,17 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TeamspaceSwitcher } from '../teamspace-switcher';
 import { useOrganization } from '@/lib/hooks/use-organization';
+import { useOrganizationPermissions } from '@/lib/hooks/use-permissions';
 import { useTeamspaces } from '@/lib/hooks/use-teamspaces';
 
 const pushMock = jest.fn();
 
 jest.mock('@/lib/hooks/use-teamspaces', () => ({
   useTeamspaces: jest.fn(),
+}));
+
+jest.mock('@/lib/hooks/use-permissions', () => ({
+  useOrganizationPermissions: jest.fn(),
 }));
 
 jest.mock('next/navigation', () => ({
@@ -17,6 +22,9 @@ jest.mock('next/navigation', () => ({
 }));
 
 const mockUseTeamspaces = useTeamspaces as jest.MockedFunction<typeof useTeamspaces>;
+const mockUseOrganizationPermissions = useOrganizationPermissions as jest.MockedFunction<
+  typeof useOrganizationPermissions
+>;
 
 describe('TeamspaceSwitcher', () => {
   beforeAll(() => {
@@ -71,6 +79,17 @@ describe('TeamspaceSwitcher', () => {
       ],
       isLoading: false,
     } as ReturnType<typeof useTeamspaces>);
+    mockUseOrganizationPermissions.mockReset().mockReturnValue({
+      permissions: ['org:settings'],
+      isSuperAdmin: false,
+      role: 'admin',
+      isLoading: false,
+      has: jest.fn((permission) => permission === 'org:settings'),
+      hasAny: jest.fn((permissions) => permissions.includes('org:settings')),
+      hasAll: jest.fn((permissions) =>
+        permissions.every((permission) => permission === 'org:settings')
+      ),
+    });
   });
 
   it('shows the active teamspace label when one is selected', () => {
@@ -135,5 +154,25 @@ describe('TeamspaceSwitcher', () => {
     await user.click(screen.getByText('Manage teamspaces'));
 
     expect(pushMock).toHaveBeenCalledWith('/settings/organization?tab=teamspaces');
+  });
+
+  it('hides teamspace management when the user lacks org settings permission', async () => {
+    mockUseOrganizationPermissions.mockReturnValue({
+      permissions: ['team:view'],
+      isSuperAdmin: false,
+      role: 'member',
+      isLoading: false,
+      has: jest.fn(() => false),
+      hasAny: jest.fn(() => false),
+      hasAll: jest.fn(() => false),
+    });
+
+    const user = userEvent.setup();
+    render(<TeamspaceSwitcher />);
+
+    await user.click(screen.getByRole('combobox'));
+
+    expect(screen.queryByText('Manage teamspaces')).not.toBeInTheDocument();
+    expect(pushMock).not.toHaveBeenCalled();
   });
 });

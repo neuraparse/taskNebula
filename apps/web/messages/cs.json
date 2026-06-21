@@ -43,7 +43,8 @@
     "realtime_health": "Stav v reálném čase",
     "audit_logs": "Protokoly auditu",
     "system": "Systém",
-    "updates": "Aktualizace"
+    "updates": "Aktualizace",
+    "ai_transparency": "Transparentnost AI"
   },
   "actions": {
     "create_issue": "Vytvořit úkol",
@@ -102,6 +103,7 @@
     "skipToContent": "Přejít na obsah"
   },
   "settings": {
+    "error_no_permission": "Nemáte oprávnění spravovat tato nastavení.",
     "labels": {
       "kicker": "Štítky",
       "title": "Štítky",
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "Úkol se nepodařilo načíst",
       "notFound": "Úkol nenalezen",
-      "notFoundHint": "Hledaný úkol neexistuje."
+      "notFoundHint": "Hledaný úkol neexistuje.",
+      "loadFailedHint": "Obnovte stránku nebo to za chvíli zkuste znovu."
     }
   },
   "adminUpdates": {
@@ -1480,8 +1483,8 @@
     "planning_kicker": "Plánování",
     "teamspaces_heading": "Týmové prostory",
     "teamspaces_subtitle": "Plánovací roviny nad jednotlivými projekty, bez rozdělení organizace.",
-    "owner_admin_only": "Pouze vlastník nebo správce",
-    "browse_only_notice": "Pouze prohlížení — vlastníci a správci mohou měnit strukturu.",
+    "owner_admin_only": "Vyžadováno oprávnění",
+    "browse_only_notice": "Pouze prohlížení — změna struktury vyžaduje oprávnění k nastavení organizace.",
     "loading_teamspaces": "Načítání týmových prostorů…",
     "manage_members": "Spravovat členy",
     "members_label": "členů",
@@ -2104,7 +2107,7 @@
       "none": "Žádný",
       "updated": "Aktualizováno",
       "server_managed": "Spravováno serverem",
-      "read_only_notice": "Přístup jen pro čtení — vlastníci a správci mohou aktualizovat zásadu AI.",
+      "read_only_notice": "Přístup pouze pro čtení — aktualizace zásad AI vyžaduje oprávnění k nastavení organizace.",
       "your_model_profiles": "Vaše profily modelů",
       "your_model_profiles_desc": "Vlastní kombinace modelu + ladění uložené pro opakované použití. Každý zde uložený profil se také objeví v rozbalovací nabídce modelů Rychlého nastavení výše. Použijte to k připnutí modelu s konkrétním nastavením teploty / tokenů / úsilí uvažování nebo k vyzkoušení modelu, který není ve vestavěném katalogu.",
       "create_profile": "Vytvořit profil",
@@ -2772,6 +2775,7 @@
     "loading_modules": "Načítání modulů...",
     "no_modules_filter": "Tomuto filtru neodpovídají žádné moduly.",
     "no_modules_empty": "Zatím žádné moduly. Vytvořte jeden pro seskupení související práce.",
+    "no_modules_empty_readonly": "Pro tento projekt zatím nejsou vytvořeny žádné moduly.",
     "create_module": "Vytvořit modul",
     "module_dialog_desc": "Seskupte související práci do oblasti funkcí nebo mini-projektu.",
     "module_name_placeholder": "např. Autentizace, Fakturace, Onboarding",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "Zatím žádné aktualizace.",
     "initiative_detail_anonymous": "Anonymní",
     "initiative_detail_blockers_label": "Překážky:",
-    "initiative_detail_next_label": "Další:"
+    "initiative_detail_next_label": "Další:",
+    "initiative_detail_error_load": "Iniciativu se nepodařilo načíst."
   },
   "pagesProjects": {
     "metaTitle": "Projekty | TaskNebula",
@@ -4029,6 +4034,7 @@
     "descriptionPlaceholder": "Stručný popis projektu",
     "cancel": "Zrušit",
     "creating": "Vytváření...",
+    "createProjectFailed": "Projekt se nepodařilo vytvořit. Zkontrolujte údaje a zkuste to znovu.",
     "breadcrumb": "Drobečková navigace",
     "sections": "Sekce projektu",
     "tabViews": "Zobrazení",
@@ -4101,7 +4107,7 @@
     "completeSprintTooltip": "Dokončit tento sprint. Nedokončené úkoly se přesunou do backlogu.",
     "sprintBurndown": "Burndown sprintu",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
+    "projectInviteRequiredDescription": "Požádejte správce, aby vás pozval do projektu nebo vám udělil oprávnění vytvářet projekty."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4663,7 +4669,7 @@
       "removeProject": "Odebrat {name}",
       "projectRole": "Role v projektu",
       "sendInvitation": "Odeslat pozvánku",
-      "viewOnly": "Přístup pouze pro čtení. Členy mohou spravovat pouze vlastníci a administrátoři.",
+      "viewOnly": "Přístup pouze pro čtení. Správa členů vyžaduje příslušná členská oprávnění.",
       "noMembers": "Zatím žádní členové.",
       "inviteFirst": "Pozvěte svého prvního člena",
       "invited": "Pozváno",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "Podrobnosti",
       "detailsHeading": "Podrobnosti o pracovním prostoru",
       "detailsSubtitle": "Název, doména a informace o značce používané napříč pracovním prostorem.",
-      "manageRestricted": "Nastavení organizace mohou aktualizovat pouze vlastníci a administrátoři.",
+      "manageRestricted": "Aktualizace nastavení organizace vyžaduje oprávnění k nastavení organizace.",
       "logo": "Logo",
       "slug": "Slug pracovního prostoru",
       "slugHint": "Super administrátoři jej mohou změnit.",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "Nebezpečná zóna",
       "dangerSubtitle": "Trvale odstraní tento pracovní prostor a vše, co se v něm nachází. Vyžaduje přístup vlastníka.",
       "cannotRestore": "Smazané organizace nelze obnovit.",
-      "ownerOnly": "Pouze vlastník",
+      "ownerOnly": "Vyžaduje se oprávnění k odstranění",
       "plan": {
         "free": "Zdarma",
         "starter": "Starter",

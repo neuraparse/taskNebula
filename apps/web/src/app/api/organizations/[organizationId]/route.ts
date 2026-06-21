@@ -45,8 +45,14 @@ export async function GET(
     const userRole = await getUserRole(organizationId);
 
     const [[memberCount], [projectCount], [teamCount], [apiKeyCount]] = await Promise.all([
-      db.select({ count: count() }).from(organizationMembers).where(eq(organizationMembers.organizationId, organizationId)),
-      db.select({ count: count() }).from(projects).where(eq(projects.organizationId, organizationId)),
+      db
+        .select({ count: count() })
+        .from(organizationMembers)
+        .where(eq(organizationMembers.organizationId, organizationId)),
+      db
+        .select({ count: count() })
+        .from(projects)
+        .where(eq(projects.organizationId, organizationId)),
       db.select({ count: count() }).from(teams).where(eq(teams.organizationId, organizationId)),
       db.select({ count: count() }).from(apiKeys).where(eq(apiKeys.organizationId, organizationId)),
     ]);
@@ -64,16 +70,18 @@ export async function GET(
     });
   } catch (error) {
     console.error('Failed to fetch organization:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch organization' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch organization' }, { status: 500 });
   }
 }
 
 const updateOrgSchema = z.object({
   name: z.string().min(1).max(255).optional(),
-  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/).optional(),
+  slug: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[a-z0-9-]+$/)
+    .optional(),
   domain: z.string().max(255).optional(),
   logoUrl: z.union([z.string().url(), z.literal('')]).optional(),
 });
@@ -93,7 +101,10 @@ export async function PATCH(
     // Check if user has permission to manage organization settings
     const canManage = await hasPermission(organizationId, 'org:settings');
     if (!canManage) {
-      return NextResponse.json({ error: 'Insufficient permissions. Only owners and admins can update organization settings.' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Updating organization settings requires org:settings permission.' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
@@ -107,10 +118,7 @@ export async function PATCH(
         .limit(1);
 
       if (existingOrg) {
-        return NextResponse.json(
-          { error: 'Organization slug already exists' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Organization slug already exists' }, { status: 400 });
       }
     }
 
@@ -135,10 +143,7 @@ export async function PATCH(
     }
 
     console.error('Failed to update organization:', error);
-    return NextResponse.json(
-      { error: 'Failed to update organization' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to update organization' }, { status: 500 });
   }
 }
 
@@ -161,16 +166,11 @@ export async function DELETE(
     }
 
     // Delete organization (cascade will handle related records)
-    await db
-      .delete(organizations)
-      .where(eq(organizations.id, organizationId));
+    await db.delete(organizations).where(eq(organizations.id, organizationId));
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Failed to delete organization:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete organization' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to delete organization' }, { status: 500 });
   }
 }

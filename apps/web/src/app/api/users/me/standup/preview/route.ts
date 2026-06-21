@@ -63,7 +63,8 @@ export async function POST(request: NextRequest) {
       .where(
         and(
           eq(organizationMembers.userId, session.user.id),
-          eq(organizationMembers.organizationId, organizationId)
+          eq(organizationMembers.organizationId, organizationId),
+          eq(organizationMembers.status, 'active')
         )
       )
       .limit(1);

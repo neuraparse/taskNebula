@@ -184,6 +184,25 @@ describe('MyIssuesClient', () => {
     });
     expect(screen.getByText('0 issues')).toBeInTheDocument();
   });
+
+  it('shows an access error instead of an empty list when the API denies access', async () => {
+    // @ts-expect-error — global fetch is augmented for the jsdom test env.
+    global.fetch = jest.fn(async (url: string) => {
+      fetchCalls.push(url);
+      return {
+        ok: false,
+        status: 403,
+        json: async () => ({ error: 'Forbidden' }),
+      } as unknown as Response;
+    });
+
+    renderWithQueryClient(<MyIssuesClient />);
+
+    await waitFor(() => {
+      expect(screen.getByText("You don't have permission to view that page.")).toBeInTheDocument();
+    });
+    expect(screen.queryByText('No issues assigned to you yet')).not.toBeInTheDocument();
+  });
 });
 
 // Silence unused-import-in-production-build warning from userEvent/act bundles.

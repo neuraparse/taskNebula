@@ -9,15 +9,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { and, eq, ne, isNull, or, sql } from 'drizzle-orm';
-import {
-  db,
-  issues,
-  projects,
-  sprints,
-  workflowStatuses,
-  organizationMembers,
-} from '@tasknebula/db';
+import { db, issues, sprints, workflowStatuses } from '@tasknebula/db';
 import { auth } from '@/auth';
+import { resolveProjectAccess } from '@/lib/auth/project-access';
 import { monteCarloForecast } from '@/lib/analytics/forecast';
 
 export const dynamic = 'force-dynamic';
@@ -34,34 +28,14 @@ export async function GET(request: NextRequest) {
   const iterationsParam = searchParams.get('iterations');
 
   if (!projectId) {
-    return NextResponse.json(
-      { error: 'projectId is required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'projectId is required' }, { status: 400 });
   }
 
-  // Authorize via org membership.
-  const [proj] = await db
-    .select({ id: projects.id, organizationId: projects.organizationId })
-    .from(projects)
-    .where(eq(projects.id, projectId))
-    .limit(1);
-  if (!proj) {
+  const access = await resolveProjectAccess(session.user.id, projectId);
+  if (!access.project || !access.canRead) {
     return NextResponse.json({ error: 'Project not found' }, { status: 404 });
   }
-  const [member] = await db
-    .select({ id: organizationMembers.id })
-    .from(organizationMembers)
-    .where(
-      and(
-        eq(organizationMembers.userId, session.user.id),
-        eq(organizationMembers.organizationId, proj.organizationId)
-      )
-    )
-    .limit(1);
-  if (!member) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  const resolvedProjectId = access.project.id;
 
   // Throughput per completed sprint, most recent 6.
   const rows = await db
@@ -74,9 +48,7 @@ export async function GET(request: NextRequest) {
     .from(sprints)
     .leftJoin(issues, eq(issues.sprintId, sprints.id))
     .leftJoin(workflowStatuses, eq(issues.statusId, workflowStatuses.id))
-    .where(
-      and(eq(sprints.projectId, projectId), eq(sprints.status, 'completed'))
-    )
+    .where(and(eq(sprints.projectId, resolvedProjectId), eq(sprints.status, 'completed')))
     .groupBy(sprints.id, sprints.name, sprints.startDate)
     .orderBy(sql`${sprints.startDate} DESC`)
     .limit(6);
@@ -92,11 +64,8 @@ export async function GET(request: NextRequest) {
     .leftJoin(workflowStatuses, eq(issues.statusId, workflowStatuses.id))
     .where(
       and(
-        eq(issues.projectId, projectId),
-        or(
-          isNull(workflowStatuses.category),
-          ne(workflowStatuses.category, 'done')
-        )
+        eq(issues.projectId, resolvedProjectId),
+        or(isNull(workflowStatuses.category), ne(workflowStatuses.category, 'done'))
       )
     );
   const backlog = Number(backlogRows[0]?.count ?? 0);
@@ -110,7 +79,7 @@ export async function GET(request: NextRequest) {
   });
 
   return NextResponse.json({
-    projectId,
+    projectId: resolvedProjectId,
     backlog,
     throughputHistory: throughput,
     ...result,

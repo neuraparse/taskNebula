@@ -4,6 +4,7 @@ import { db, intakeForms, organizationMembers, projects } from '@tasknebula/db';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { intakeFieldsArraySchema } from '@/lib/intake/schema';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,9 +55,17 @@ export async function GET(request: NextRequest) {
         )
       );
 
-    const accessibleOrgIds = orgMemberships.map((m) => m.organizationId);
+    const accessibleOrgIds = (
+      await Promise.all(
+        orgMemberships.map(async (membership) =>
+          (await hasPermission(membership.organizationId, 'org:settings'))
+            ? membership.organizationId
+            : null
+        )
+      )
+    ).filter((organizationId): organizationId is string => Boolean(organizationId));
     if (accessibleOrgIds.length === 0) {
-      return NextResponse.json({ forms: [] });
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const conditions = [inArray(intakeForms.workspaceId, accessibleOrgIds)];
@@ -103,19 +112,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    const [member] = await db
-      .select({ role: organizationMembers.role })
-      .from(organizationMembers)
-      .where(
-        and(
-          eq(organizationMembers.userId, session.user.id),
-          eq(organizationMembers.organizationId, project.organizationId),
-          eq(organizationMembers.status, 'active')
-        )
-      )
-      .limit(1);
-
-    if (!member) {
+    if (!(await hasPermission(project.organizationId, 'org:settings'))) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

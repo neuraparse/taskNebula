@@ -9,6 +9,9 @@ import {
   organizationMembers,
   users,
   createAuditLog,
+  ROLE_DEFAULT_PERMISSIONS,
+  hasPermission as roleHasPermission,
+  type ProjectRole,
 } from '@tasknebula/db';
 import { eq, inArray, and } from 'drizzle-orm';
 import { z } from 'zod';
@@ -82,12 +85,13 @@ async function assertBulkPermission(
       .where(
         and(
           eq(organizationMembers.userId, userId),
-          eq(organizationMembers.organizationId, project.organizationId)
+          eq(organizationMembers.organizationId, project.organizationId),
+          eq(organizationMembers.status, 'active')
         )
       )
       .limit(1);
 
-    if (orgMember?.role === 'owner') {
+    if (roleHasPermission(orgMember?.role || '', 'project:manage')) {
       continue;
     }
 
@@ -115,19 +119,12 @@ async function assertBulkPermission(
         ? toBool(projectMember.canEditIssues)
         : toBool(projectMember.canDeleteIssues);
 
-    // Fall back to role defaults for common roles
-    const elevatedRoles = ['product_owner', 'tech_lead', 'scrum_master'];
+    // Fall back to project role defaults
+    const roleDefaults =
+      ROLE_DEFAULT_PERMISSIONS[projectMember.role as ProjectRole] ||
+      ROLE_DEFAULT_PERMISSIONS.viewer;
     const allowedByRole =
-      action === 'edit'
-        ? [
-            'product_owner',
-            'scrum_master',
-            'tech_lead',
-            'developer',
-            'qa_engineer',
-            'designer',
-          ].includes(projectMember.role)
-        : elevatedRoles.includes(projectMember.role);
+      action === 'edit' ? roleDefaults.canEditIssues : roleDefaults.canDeleteIssues;
 
     if (!canModify && !allowedByRole) {
       return {

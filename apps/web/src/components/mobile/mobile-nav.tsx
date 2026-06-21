@@ -34,10 +34,13 @@ const navItems = [
   },
 ] as const;
 
-export function MobileNav() {
+export function MobileNav({ hasWorkspaceAccess = true }: { hasWorkspaceAccess?: boolean }) {
   const t = useTranslations('mobileNav');
   const pathname = usePathname();
   const normalizedPathname = stripLocalePrefix(pathname);
+  const visibleNavItems = hasWorkspaceAccess
+    ? navItems
+    : navItems.filter((item) => item.labelKey === 'dashboard' || item.labelKey === 'settings');
 
   return (
     <nav
@@ -45,7 +48,7 @@ export function MobileNav() {
       className="border-border bg-background/90 fixed bottom-0 left-0 right-0 z-50 h-14 border-t backdrop-blur md:hidden"
     >
       <div className="flex h-full items-center justify-around px-1">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const Icon = item.icon;
           const isActive =
             normalizedPathname === item.match || normalizedPathname.startsWith(`${item.match}/`);

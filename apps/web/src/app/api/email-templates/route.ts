@@ -33,7 +33,7 @@ const updateEmailTemplateSchema = createEmailTemplateSchema.partial().omit({
 
 /**
  * GET /api/email-templates?organizationId=xxx&type=xxx
- * 
+ *
  * Get email templates for an organization
  */
 export async function GET(request: NextRequest) {
@@ -47,13 +47,10 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get('type');
 
   if (!organizationId) {
-    return NextResponse.json(
-      { error: 'organizationId is required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
   }
 
-  // Require org:settings permission (owner/admin) to view email templates.
+  // Require org:settings permission to view email templates.
   const canView = await hasPermission(organizationId, 'org:settings');
   if (!canView) {
     return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
@@ -73,16 +70,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ emailTemplates: templates });
   } catch (error) {
     console.error('Error fetching email templates:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch email templates' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch email templates' }, { status: 500 });
   }
 }
 
 /**
  * POST /api/email-templates
- * 
+ *
  * Create a new email template
  */
 export async function POST(request: NextRequest) {
@@ -95,7 +89,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = createEmailTemplateSchema.parse(body);
 
-    // Require org:settings permission (owner/admin) on the target org.
+    // Require org:settings permission on the target org.
     const canManage = await hasPermission(validatedData.organizationId, 'org:settings');
     if (!canManage) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
@@ -120,10 +114,6 @@ export async function POST(request: NextRequest) {
     }
 
     console.error('Error creating email template:', error);
-    return NextResponse.json(
-      { error: 'Failed to create email template' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to create email template' }, { status: 500 });
   }
 }
-

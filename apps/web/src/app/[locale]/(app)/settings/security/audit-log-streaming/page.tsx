@@ -10,7 +10,8 @@
 
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { db, organizationMembers, eq } from '@tasknebula/db';
+import { db, organizationMembers } from '@tasknebula/db';
+import { and, eq } from 'drizzle-orm';
 import { getTranslations } from 'next-intl/server';
 import { requirePermission } from '@/lib/auth/permissions';
 import { AuditLogStreamingClient } from './audit-log-streaming-client';
@@ -30,7 +31,9 @@ export default async function AuditLogStreamingPage() {
   const [primaryOrg] = await db
     .select({ organizationId: organizationMembers.organizationId })
     .from(organizationMembers)
-    .where(eq(organizationMembers.userId, session.user.id))
+    .where(
+      and(eq(organizationMembers.userId, session.user.id), eq(organizationMembers.status, 'active'))
+    )
     .limit(1);
 
   if (!primaryOrg) {

@@ -1,12 +1,12 @@
 import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, organizationMembers, eq, and } from '@tasknebula/db';
 import {
   JIRA_STATE_COOKIE,
   buildJiraAuthorizeUrl,
   getJiraClientCredentials,
 } from '@/lib/integrations/jira';
+import { hasPermission } from '@/lib/auth/permissions';
 
 /**
  * GET /api/integrations/jira/authorize
@@ -38,21 +38,11 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Confirm the caller is a member of the requested organization before we
-  // embed it in the OAuth state.
-  const [membership] = await db
-    .select({ role: organizationMembers.role })
-    .from(organizationMembers)
-    .where(
-      and(
-        eq(organizationMembers.userId, session.user.id),
-        eq(organizationMembers.organizationId, requestedOrgId)
-      )
-    )
-    .limit(1);
-
-  if (!membership) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!(await hasPermission(requestedOrgId, 'org:settings'))) {
+    return NextResponse.json(
+      { error: 'Managing integrations requires organization settings permission.' },
+      { status: 403 }
+    );
   }
 
   const nonce = crypto.randomBytes(16).toString('hex');

@@ -46,7 +46,10 @@ export async function PATCH(
   const { organizationId, configId } = await params;
   const access = await getOrgAgentAccess(session.user.id, organizationId);
   if (!access.canManage) {
-    return NextResponse.json({ error: 'Only workspace owners and admins can manage model configs.' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'Managing model configs requires organization settings permission.' },
+      { status: 403 }
+    );
   }
 
   try {
@@ -91,7 +94,10 @@ export async function PATCH(
     return NextResponse.json({ config: next });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Validation failed', details: error.errors }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.errors },
+        { status: 400 }
+      );
     }
 
     console.error('Failed to update AI model config:', error);
@@ -112,7 +118,10 @@ export async function DELETE(
   const { organizationId, configId } = await params;
   const access = await getOrgAgentAccess(session.user.id, organizationId);
   if (!access.canManage) {
-    return NextResponse.json({ error: 'Only workspace owners and admins can manage model configs.' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'Managing model configs requires organization settings permission.' },
+      { status: 403 }
+    );
   }
 
   const [current, organizationSettings] = await Promise.all([
@@ -125,15 +134,18 @@ export async function DELETE(
   }
 
   const selectedModelConfigId =
-    typeof organizationSettings?.aiAgents === 'object'
-      && organizationSettings.aiAgents !== null
-      && typeof (organizationSettings.aiAgents as Record<string, unknown>).modelConfigId === 'string'
+    typeof organizationSettings?.aiAgents === 'object' &&
+    organizationSettings.aiAgents !== null &&
+    typeof (organizationSettings.aiAgents as Record<string, unknown>).modelConfigId === 'string'
       ? ((organizationSettings.aiAgents as Record<string, unknown>).modelConfigId as string)
       : null;
 
   if (selectedModelConfigId === configId) {
     return NextResponse.json(
-      { error: 'This model config is currently applied to the workspace. Switch the workspace policy first.' },
+      {
+        error:
+          'This model config is currently applied to the workspace. Switch the workspace policy first.',
+      },
       { status: 409 }
     );
   }

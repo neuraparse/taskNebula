@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { isApiPermissionError, throwApiResponseError } from '@/lib/client-api-errors';
 import { Plus, Lock, Trash2, Edit, Star, Users, User, UserCheck, Shield } from 'lucide-react';
 
 interface SecurityLevelMember {
@@ -119,6 +120,10 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
   );
   const { toast } = useToast();
   const t = useTranslations('userSecurity');
+  const tSettings = useTranslations('settings');
+
+  const getErrorDescription = (error: unknown, fallback: string) =>
+    isApiPermissionError(error) ? tSettings('error_no_permission') : fallback;
 
   useEffect(() => {
     void fetchSchemes();
@@ -130,7 +135,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
     try {
       const res = await fetch(`/api/security-schemes?organizationId=${organizationId}`);
       if (!res.ok) {
-        throw new Error('Failed to fetch security schemes');
+        await throwApiResponseError(res);
       }
 
       const data = await res.json();
@@ -186,8 +191,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
       });
 
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: t('errorCreateScheme') }));
-        throw new Error(error.error || t('errorCreateScheme'));
+        await throwApiResponseError(res);
       }
 
       toast({
@@ -200,7 +204,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
     } catch (error) {
       toast({
         title: t('toastCreateFailedTitle'),
-        description: error instanceof Error ? error.message : t('errorCreateScheme'),
+        description: getErrorDescription(error, t('errorCreateScheme')),
         variant: 'destructive',
       });
     }
@@ -223,8 +227,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
       });
 
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: t('errorUpdateScheme') }));
-        throw new Error(error.error || t('errorUpdateScheme'));
+        await throwApiResponseError(res);
       }
 
       toast({
@@ -237,7 +240,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
     } catch (error) {
       toast({
         title: t('toastUpdateFailedTitle'),
-        description: error instanceof Error ? error.message : t('errorUpdateScheme'),
+        description: getErrorDescription(error, t('errorUpdateScheme')),
         variant: 'destructive',
       });
     }
@@ -252,7 +255,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
       });
 
       if (!res.ok) {
-        throw new Error(t('errorUpdateDefaultScheme'));
+        await throwApiResponseError(res);
       }
 
       toast({
@@ -263,7 +266,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
     } catch (error) {
       toast({
         title: t('toastUpdateFailedTitle'),
-        description: error instanceof Error ? error.message : t('errorUpdateScheme'),
+        description: getErrorDescription(error, t('errorUpdateScheme')),
         variant: 'destructive',
       });
     }
@@ -286,8 +289,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
       });
 
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: t('errorAssignScheme') }));
-        throw new Error(error.error || t('errorAssignScheme'));
+        await throwApiResponseError(res);
       }
 
       const nextState = await res.json();
@@ -303,7 +305,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
     } catch (error) {
       toast({
         title: t('toastAssignmentFailedTitle'),
-        description: error instanceof Error ? error.message : t('errorAssignScheme'),
+        description: getErrorDescription(error, t('errorAssignScheme')),
         variant: 'destructive',
       });
       await fetchSchemes();
@@ -318,8 +320,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
     try {
       const res = await fetch(`/api/security-schemes/${schemeId}`, { method: 'DELETE' });
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: t('errorDeleteScheme') }));
-        throw new Error(error.error || t('errorDeleteScheme'));
+        await throwApiResponseError(res);
       }
 
       toast({
@@ -330,7 +331,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
     } catch (error) {
       toast({
         title: t('toastDeleteFailedTitle'),
-        description: error instanceof Error ? error.message : t('errorDeleteScheme'),
+        description: getErrorDescription(error, t('errorDeleteScheme')),
         variant: 'destructive',
       });
     }
@@ -389,8 +390,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
       });
 
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: t('errorSaveLevel') }));
-        throw new Error(error.error || t('errorSaveLevel'));
+        await throwApiResponseError(res);
       }
 
       toast({
@@ -404,7 +404,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
     } catch (error) {
       toast({
         title: t('toastSaveFailedTitle'),
-        description: error instanceof Error ? error.message : t('errorSaveLevel'),
+        description: getErrorDescription(error, t('errorSaveLevel')),
         variant: 'destructive',
       });
     }
@@ -421,8 +421,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
       });
 
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: t('errorDeleteLevel') }));
-        throw new Error(error.error || t('errorDeleteLevel'));
+        await throwApiResponseError(res);
       }
 
       toast({
@@ -433,7 +432,7 @@ export function IssueSecurityManager({ organizationId, projectId }: IssueSecurit
     } catch (error) {
       toast({
         title: t('toastDeleteFailedTitle'),
-        description: error instanceof Error ? error.message : t('errorDeleteLevel'),
+        description: getErrorDescription(error, t('errorDeleteLevel')),
         variant: 'destructive',
       });
     }

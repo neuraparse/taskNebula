@@ -12,6 +12,7 @@ import { and, eq } from 'drizzle-orm';
 import { db, integrationConnections } from '@tasknebula/db';
 import { auth } from '@/auth';
 import { encryptToken } from '@/lib/integrations/token-crypto';
+import { hasPermission } from '@/lib/auth/permissions';
 import {
   GITHUB_STATE_COOKIE,
   exchangeGithubCode,
@@ -43,12 +44,8 @@ function decodeState(raw: string): StatePayload | null {
   return null;
 }
 
-function settingsRedirect(
-  request: NextRequest,
-  params: Record<string, string>
-): NextResponse {
-  const url = new URL('/settings', request.url);
-  url.searchParams.set('tab', 'integrations');
+function settingsRedirect(request: NextRequest, params: Record<string, string>): NextResponse {
+  const url = new URL('/settings/integrations', request.url);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   const response = NextResponse.redirect(url.toString());
   response.cookies.delete(GITHUB_STATE_COOKIE);
@@ -92,6 +89,13 @@ export async function GET(request: NextRequest) {
     });
   }
 
+  if (!(await hasPermission(decoded.o, 'org:settings'))) {
+    return settingsRedirect(request, {
+      integration: 'github',
+      error: 'forbidden',
+    });
+  }
+
   let tokenJson;
   try {
     tokenJson = await exchangeGithubCode(code);
@@ -118,9 +122,7 @@ export async function GET(request: NextRequest) {
   const externalAccountLabel = user?.login || user?.name || '';
 
   const accessTokenEnc = encryptToken(tokenJson.access_token);
-  const refreshTokenEnc = tokenJson.refresh_token
-    ? encryptToken(tokenJson.refresh_token)
-    : null;
+  const refreshTokenEnc = tokenJson.refresh_token ? encryptToken(tokenJson.refresh_token) : null;
 
   const metadata = {
     tokenType: tokenJson.token_type ?? null,

@@ -61,6 +61,14 @@ describe('useProjects', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/projects?organizationId=org-1&teamId=team-1');
   });
 
+  it('does not request projects when disabled', () => {
+    renderHook(() => useProjects({ organizationId: 'org-1', enabled: false }), {
+      wrapper: createWrapper(createQueryClient()),
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('creates a project with optional teamspace context and invalidates project queries', async () => {
     const queryClient = createQueryClient();
     const invalidateQueriesSpy = jest.spyOn(queryClient, 'invalidateQueries');

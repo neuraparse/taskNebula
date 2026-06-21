@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, projects, projectMembers, organizationMembers, users, eq, and, ROLE_DEFAULT_PERMISSIONS, type ProjectRole, type GranularPermissions } from '@tasknebula/db';
+import {
+  db,
+  projects,
+  projectMembers,
+  organizationMembers,
+  users,
+  eq,
+  and,
+  ROLE_DEFAULT_PERMISSIONS,
+  hasPermission as roleHasPermission,
+  type ProjectRole,
+  type GranularPermissions,
+} from '@tasknebula/db';
 
 // Full permissions interface with all granular permissions
 export interface UserProjectPermissions extends GranularPermissions {
@@ -11,7 +23,7 @@ export interface UserProjectPermissions extends GranularPermissions {
   isOrgAdmin: boolean;
 }
 
-// All permissions set to true (for super admin / org owner)
+// All permissions set to true (for super admin / org-wide project manager)
 const ALL_PERMISSIONS: GranularPermissions = {
   canBrowseProject: true,
   canAdministerProject: true,
@@ -177,28 +189,31 @@ export async function GET(
       .where(
         and(
           eq(organizationMembers.userId, session.user.id),
-          eq(organizationMembers.organizationId, project.organizationId)
+          eq(organizationMembers.organizationId, project.organizationId),
+          eq(organizationMembers.status, 'active')
         )
       )
       .limit(1);
 
     const isOrgOwner = orgMember?.role === 'owner';
     const isOrgAdmin = orgMember?.role === 'admin' || isOrgOwner;
+    const hasOrgProjectManagement = roleHasPermission(
+      orgMember?.role || '',
+      'project:manage',
+      isSuperAdmin
+    );
 
     // Get project membership with ALL permission columns
     const [projectMember] = await db
       .select()
       .from(projectMembers)
       .where(
-        and(
-          eq(projectMembers.userId, session.user.id),
-          eq(projectMembers.projectId, projectId)
-        )
+        and(eq(projectMembers.userId, session.user.id), eq(projectMembers.projectId, projectId))
       )
       .limit(1);
 
-    // Super admin or org owner has full access
-    if (isSuperAdmin || isOrgOwner) {
+    // Super admin or org roles with project:manage have full project access.
+    if (hasOrgProjectManagement) {
       return NextResponse.json({
         isMember: true,
         role: (projectMember?.role as ProjectRole) || 'product_owner',
@@ -209,24 +224,22 @@ export async function GET(
       } as UserProjectPermissions);
     }
 
-    // Not a member - no access (org admin can browse)
+    // Not a member - no access
     if (!projectMember) {
-      const viewOnlyPermissions = { ...NO_PERMISSIONS };
-      if (isOrgAdmin) {
-        viewOnlyPermissions.canBrowseProject = true;
-      }
       return NextResponse.json({
         isMember: false,
         role: null,
         isSuperAdmin,
         isOrgOwner,
         isOrgAdmin,
-        ...viewOnlyPermissions,
+        ...NO_PERMISSIONS,
       } as UserProjectPermissions);
     }
 
     // Get role-based default permissions
-    const roleDefaults = ROLE_DEFAULT_PERMISSIONS[projectMember.role as ProjectRole] || ROLE_DEFAULT_PERMISSIONS.viewer;
+    const roleDefaults =
+      ROLE_DEFAULT_PERMISSIONS[projectMember.role as ProjectRole] ||
+      ROLE_DEFAULT_PERMISSIONS.viewer;
 
     // Helper to convert 'true'/'false' string to boolean
     const toBool = (val: string | null | undefined): boolean => val === 'true';
@@ -240,7 +253,8 @@ export async function GET(
       isOrgAdmin,
       // Project
       canBrowseProject: toBool(projectMember.canBrowseProject) || roleDefaults.canBrowseProject,
-      canAdministerProject: toBool(projectMember.canAdministerProject) || roleDefaults.canAdministerProject,
+      canAdministerProject:
+        toBool(projectMember.canAdministerProject) || roleDefaults.canAdministerProject,
       canBrowseDocs: toBool(projectMember.canBrowseDocs) || roleDefaults.canBrowseDocs,
       canCreateDocs: toBool(projectMember.canCreateDocs) || roleDefaults.canCreateDocs,
       canEditDocs: toBool(projectMember.canEditDocs) || roleDefaults.canEditDocs,
@@ -248,7 +262,8 @@ export async function GET(
       canBrowseChat: toBool(projectMember.canBrowseChat) || roleDefaults.canBrowseChat,
       canCreateChannels: toBool(projectMember.canCreateChannels) || roleDefaults.canCreateChannels,
       canPostMessages: toBool(projectMember.canPostMessages) || roleDefaults.canPostMessages,
-      canModerateMessages: toBool(projectMember.canModerateMessages) || roleDefaults.canModerateMessages,
+      canModerateMessages:
+        toBool(projectMember.canModerateMessages) || roleDefaults.canModerateMessages,
       canStartCalls: toBool(projectMember.canStartCalls) || roleDefaults.canStartCalls,
       canManageCalls: toBool(projectMember.canManageCalls) || roleDefaults.canManageCalls,
       // Sprint
@@ -261,10 +276,12 @@ export async function GET(
       canEditIssues: toBool(projectMember.canEditIssues) || roleDefaults.canEditIssues,
       canEditOwnIssues: toBool(projectMember.canEditOwnIssues) || roleDefaults.canEditOwnIssues,
       canDeleteIssues: toBool(projectMember.canDeleteIssues) || roleDefaults.canDeleteIssues,
-      canDeleteOwnIssues: toBool(projectMember.canDeleteOwnIssues) || roleDefaults.canDeleteOwnIssues,
+      canDeleteOwnIssues:
+        toBool(projectMember.canDeleteOwnIssues) || roleDefaults.canDeleteOwnIssues,
       canAssignIssues: toBool(projectMember.canAssignIssues) || roleDefaults.canAssignIssues,
       canAssigneeIssues: toBool(projectMember.canAssigneeIssues) || roleDefaults.canAssigneeIssues,
-      canTransitionIssues: toBool(projectMember.canTransitionIssues) || roleDefaults.canTransitionIssues,
+      canTransitionIssues:
+        toBool(projectMember.canTransitionIssues) || roleDefaults.canTransitionIssues,
       canScheduleIssues: toBool(projectMember.canScheduleIssues) || roleDefaults.canScheduleIssues,
       canMoveIssues: toBool(projectMember.canMoveIssues) || roleDefaults.canMoveIssues,
       canLinkIssues: toBool(projectMember.canLinkIssues) || roleDefaults.canLinkIssues,
@@ -272,14 +289,21 @@ export async function GET(
       canReopenIssues: toBool(projectMember.canReopenIssues) || roleDefaults.canReopenIssues,
       // Comment
       canAddComments: toBool(projectMember.canAddComments) || roleDefaults.canAddComments,
-      canEditOwnComments: toBool(projectMember.canEditOwnComments) || roleDefaults.canEditOwnComments,
-      canEditAllComments: toBool(projectMember.canEditAllComments) || roleDefaults.canEditAllComments,
-      canDeleteOwnComments: toBool(projectMember.canDeleteOwnComments) || roleDefaults.canDeleteOwnComments,
-      canDeleteAllComments: toBool(projectMember.canDeleteAllComments) || roleDefaults.canDeleteAllComments,
+      canEditOwnComments:
+        toBool(projectMember.canEditOwnComments) || roleDefaults.canEditOwnComments,
+      canEditAllComments:
+        toBool(projectMember.canEditAllComments) || roleDefaults.canEditAllComments,
+      canDeleteOwnComments:
+        toBool(projectMember.canDeleteOwnComments) || roleDefaults.canDeleteOwnComments,
+      canDeleteAllComments:
+        toBool(projectMember.canDeleteAllComments) || roleDefaults.canDeleteAllComments,
       // Attachment
-      canCreateAttachments: toBool(projectMember.canCreateAttachments) || roleDefaults.canCreateAttachments,
-      canDeleteOwnAttachments: toBool(projectMember.canDeleteOwnAttachments) || roleDefaults.canDeleteOwnAttachments,
-      canDeleteAllAttachments: toBool(projectMember.canDeleteAllAttachments) || roleDefaults.canDeleteAllAttachments,
+      canCreateAttachments:
+        toBool(projectMember.canCreateAttachments) || roleDefaults.canCreateAttachments,
+      canDeleteOwnAttachments:
+        toBool(projectMember.canDeleteOwnAttachments) || roleDefaults.canDeleteOwnAttachments,
+      canDeleteAllAttachments:
+        toBool(projectMember.canDeleteAllAttachments) || roleDefaults.canDeleteAllAttachments,
       // Watcher
       canManageWatchers: toBool(projectMember.canManageWatchers) || roleDefaults.canManageWatchers,
       canViewWatchers: toBool(projectMember.canViewWatchers) || roleDefaults.canViewWatchers,
@@ -292,18 +316,19 @@ export async function GET(
       canManageWorkflow: toBool(projectMember.canManageWorkflow) || roleDefaults.canManageWorkflow,
       // Time Tracking
       canLogWork: toBool(projectMember.canLogWork) || roleDefaults.canLogWork,
-      canEditOwnWorklogs: toBool(projectMember.canEditOwnWorklogs) || roleDefaults.canEditOwnWorklogs,
-      canEditAllWorklogs: toBool(projectMember.canEditAllWorklogs) || roleDefaults.canEditAllWorklogs,
-      canDeleteOwnWorklogs: toBool(projectMember.canDeleteOwnWorklogs) || roleDefaults.canDeleteOwnWorklogs,
-      canDeleteAllWorklogs: toBool(projectMember.canDeleteAllWorklogs) || roleDefaults.canDeleteAllWorklogs,
+      canEditOwnWorklogs:
+        toBool(projectMember.canEditOwnWorklogs) || roleDefaults.canEditOwnWorklogs,
+      canEditAllWorklogs:
+        toBool(projectMember.canEditAllWorklogs) || roleDefaults.canEditAllWorklogs,
+      canDeleteOwnWorklogs:
+        toBool(projectMember.canDeleteOwnWorklogs) || roleDefaults.canDeleteOwnWorklogs,
+      canDeleteAllWorklogs:
+        toBool(projectMember.canDeleteAllWorklogs) || roleDefaults.canDeleteAllWorklogs,
     };
 
     return NextResponse.json(permissions);
   } catch (error) {
     console.error('Error fetching project permissions:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch permissions' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch permissions' }, { status: 500 });
   }
 }

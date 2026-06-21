@@ -6,6 +6,7 @@ import {
   projects,
   users,
   ROLE_DEFAULT_PERMISSIONS,
+  hasPermission as roleHasPermission,
   type ProjectRole,
 } from '@tasknebula/db';
 import { and, eq } from 'drizzle-orm';
@@ -79,7 +80,7 @@ export async function canReadProject(
     )
     .limit(1);
 
-  if (orgMember?.role === 'owner' || orgMember?.role === 'admin') {
+  if (roleHasPermission(orgMember?.role || '', 'project:manage')) {
     return true;
   }
 
@@ -114,7 +115,7 @@ export async function canManageProject(
     )
     .limit(1);
 
-  if (orgMember?.role === 'owner' || orgMember?.role === 'admin') {
+  if (roleHasPermission(orgMember?.role || '', 'project:manage')) {
     return true;
   }
 

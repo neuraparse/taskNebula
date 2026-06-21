@@ -11,6 +11,7 @@ import { Inbox, Search } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { MyIssuesLoadingShell } from './my-issues-loading-shell';
+import { isApiPermissionError, throwApiResponseError } from '@/lib/client-api-errors';
 
 interface Issue {
   id: string;
@@ -90,6 +91,7 @@ function formatRelativeDate(input?: string): string {
 export function MyIssuesClient() {
   const t = useTranslations('pagesHome');
   const tNav = useTranslations('nav');
+  const tIssues = useTranslations('issuesViews');
   const { data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
@@ -110,12 +112,16 @@ export function MyIssuesClient() {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  const { data: myIssues, isLoading } = useQuery<Issue[]>({
+  const {
+    data: myIssues,
+    error,
+    isLoading,
+  } = useQuery<Issue[]>({
     queryKey: ['my-issues', session?.user?.id, scope],
     queryFn: async () => {
       const params = new URLSearchParams({ view: scope });
       const response = await fetch(`/api/issues/my-issues?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch issues');
+      if (!response.ok) await throwApiResponseError(response, tIssues('loadFailed'));
       const data = await response.json();
       return data.issues || [];
     },
@@ -130,6 +136,20 @@ export function MyIssuesClient() {
 
   if (isLoading) {
     return <MyIssuesLoadingShell />;
+  }
+
+  if (error) {
+    const message = isApiPermissionError(error)
+      ? t('toast_access_denied_description')
+      : tIssues('loadFailed');
+    return (
+      <div className="bg-background flex h-full items-center justify-center p-6">
+        <div className="surface-card max-w-md space-y-2 p-6 text-center">
+          <p className="text-foreground text-sm font-medium">{tIssues('loadFailed')}</p>
+          <p className="text-muted-foreground text-sm">{message}</p>
+        </div>
+      </div>
+    );
   }
 
   return (

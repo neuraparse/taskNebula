@@ -43,7 +43,8 @@
     "realtime_health": "Tình trạng thời gian thực",
     "audit_logs": "Nhật ký kiểm toán",
     "system": "Hệ thống",
-    "updates": "Cập nhật"
+    "updates": "Cập nhật",
+    "ai_transparency": "Minh bạch AI"
   },
   "actions": {
     "create_issue": "Tạo vấn đề",
@@ -102,6 +103,7 @@
     "skipToContent": "Chuyển đến nội dung"
   },
   "settings": {
+    "error_no_permission": "Bạn không có quyền quản lý các cài đặt này.",
     "labels": {
       "kicker": "Nhãn",
       "title": "Nhãn",
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "Không thể tải vấn đề",
       "notFound": "Không tìm thấy vấn đề",
-      "notFoundHint": "Vấn đề bạn đang tìm không tồn tại."
+      "notFoundHint": "Vấn đề bạn đang tìm không tồn tại.",
+      "loadFailedHint": "Tải lại trang hoặc thử lại sau ít phút."
     }
   },
   "adminUpdates": {
@@ -1480,8 +1483,8 @@
     "planning_kicker": "Lập kế hoạch",
     "teamspaces_heading": "Không gian nhóm",
     "teamspaces_subtitle": "Các làn lập kế hoạch trên cấp dự án riêng lẻ, mà không chia tách tổ chức.",
-    "owner_admin_only": "Chỉ chủ sở hữu hoặc quản trị viên",
-    "browse_only_notice": "Chỉ duyệt xem — chủ sở hữu và quản trị viên có thể thay đổi cấu trúc.",
+    "owner_admin_only": "Cần quyền",
+    "browse_only_notice": "Chỉ xem — thay đổi cấu trúc cần quyền cài đặt tổ chức.",
     "loading_teamspaces": "Đang tải không gian nhóm…",
     "manage_members": "Quản lý thành viên",
     "members_label": "thành viên",
@@ -2104,7 +2107,7 @@
       "none": "Không có",
       "updated": "Đã cập nhật",
       "server_managed": "Do máy chủ quản lý",
-      "read_only_notice": "Truy cập chỉ đọc — chủ sở hữu và quản trị viên có thể cập nhật chính sách AI.",
+      "read_only_notice": "Quyền chỉ đọc — cập nhật chính sách AI cần quyền cài đặt tổ chức.",
       "your_model_profiles": "Hồ sơ mô hình của bạn",
       "your_model_profiles_desc": "Các tổ hợp mô hình + tinh chỉnh tùy chỉnh được lưu để tái sử dụng. Bất kỳ hồ sơ nào lưu ở đây cũng xuất hiện trong danh sách thả xuống mô hình của Thiết lập nhanh ở trên. Dùng nó để ghim một mô hình với các cài đặt nhiệt độ / token / mức độ suy luận cụ thể, hoặc để thử một mô hình không có trong danh mục tích hợp sẵn.",
       "create_profile": "Tạo hồ sơ",
@@ -2772,6 +2775,7 @@
     "loading_modules": "Đang tải mô-đun...",
     "no_modules_filter": "Không có mô-đun nào khớp với bộ lọc này.",
     "no_modules_empty": "Chưa có mô-đun nào. Tạo một mô-đun để gom các công việc liên quan.",
+    "no_modules_empty_readonly": "Chưa có mô-đun nào được tạo cho dự án này.",
     "create_module": "Tạo mô-đun",
     "module_dialog_desc": "Gom các công việc liên quan vào một mảng tính năng hoặc một dự án nhỏ.",
     "module_name_placeholder": "ví dụ: Xác thực, Thanh toán, Nhập môn",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "Chưa có bản cập nhật nào.",
     "initiative_detail_anonymous": "Ẩn danh",
     "initiative_detail_blockers_label": "Vướng mắc:",
-    "initiative_detail_next_label": "Tiếp theo:"
+    "initiative_detail_next_label": "Tiếp theo:",
+    "initiative_detail_error_load": "Không thể tải sáng kiến."
   },
   "pagesProjects": {
     "metaTitle": "Dự án | TaskNebula",
@@ -4029,6 +4034,7 @@
     "descriptionPlaceholder": "Mô tả ngắn gọn về dự án",
     "cancel": "Hủy",
     "creating": "Đang tạo...",
+    "createProjectFailed": "Không thể tạo dự án. Kiểm tra thông tin và thử lại.",
     "breadcrumb": "Đường dẫn",
     "sections": "Các mục dự án",
     "tabViews": "Chế độ xem",
@@ -4101,7 +4107,7 @@
     "completeSprintTooltip": "Hoàn thành sprint này. Các vấn đề chưa hoàn thành sẽ chuyển sang tồn đọng.",
     "sprintBurndown": "Burndown sprint",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
+    "projectInviteRequiredDescription": "Hãy nhờ quản trị viên mời bạn vào dự án hoặc cấp quyền tạo dự án."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4663,7 +4669,7 @@
       "removeProject": "Xóa {name}",
       "projectRole": "Vai trò trong dự án",
       "sendInvitation": "Gửi lời mời",
-      "viewOnly": "Quyền chỉ xem. Chỉ chủ sở hữu và quản trị viên mới có thể quản lý thành viên.",
+      "viewOnly": "Quyền chỉ xem. Quản lý thành viên cần các quyền thành viên phù hợp.",
       "noMembers": "Chưa có thành viên nào.",
       "inviteFirst": "Mời thành viên đầu tiên của bạn",
       "invited": "Đã mời",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "Chi tiết",
       "detailsHeading": "Chi tiết không gian làm việc",
       "detailsSubtitle": "Tên, miền và thông tin thương hiệu được sử dụng trong toàn bộ không gian làm việc.",
-      "manageRestricted": "Chỉ chủ sở hữu và quản trị viên mới có thể cập nhật cài đặt tổ chức.",
+      "manageRestricted": "Cập nhật cài đặt tổ chức cần quyền cài đặt tổ chức.",
       "logo": "Logo",
       "slug": "Slug không gian làm việc",
       "slugHint": "Quản trị viên cấp cao có thể thay đổi nó.",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "Vùng nguy hiểm",
       "dangerSubtitle": "Xóa vĩnh viễn không gian làm việc này và mọi thứ bên trong nó. Yêu cầu quyền chủ sở hữu.",
       "cannotRestore": "Các tổ chức đã xóa không thể khôi phục.",
-      "ownerOnly": "Chỉ chủ sở hữu",
+      "ownerOnly": "Cần quyền xóa",
       "plan": {
         "free": "Miễn phí",
         "starter": "Khởi đầu",

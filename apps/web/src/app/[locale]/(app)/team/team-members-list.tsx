@@ -28,10 +28,11 @@ export interface TeamMemberRow {
 }
 
 interface TeamMembersListProps {
+  canInviteMembers: boolean;
   members: TeamMemberRow[];
 }
 
-export function TeamMembersList({ members }: TeamMembersListProps) {
+export function TeamMembersList({ canInviteMembers, members }: TeamMembersListProps) {
   const t = useTranslations('pagesWork');
   const [query, setQuery] = useState('');
   const [role, setRole] = useState<string>('all');
@@ -58,9 +59,11 @@ export function TeamMembersList({ members }: TeamMembersListProps) {
       <div className="surface-card animate-fade-up space-y-3 p-8 text-center">
         <Users className="text-muted-foreground mx-auto h-8 w-8" />
         <p className="text-muted-foreground text-sm">{t('team.members.emptyDescription')}</p>
-        <Link href="/settings?tab=members">
-          <Button size="sm">{t('team.inviteMember')}</Button>
-        </Link>
+        {canInviteMembers ? (
+          <Link href="/settings?tab=members">
+            <Button size="sm">{t('team.inviteMember')}</Button>
+          </Link>
+        ) : null}
       </div>
     );
   }

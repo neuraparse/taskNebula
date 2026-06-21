@@ -40,13 +40,17 @@ const workspaceAgentSettingsSchema = z.object({
   executionMode: z.enum(['manual', 'assistive', 'auto']).optional(),
   allowWriteActions: z.boolean().optional(),
   requireApprovalForWrites: z.boolean().optional(),
+  aiOversight: z.enum(['auto', 'review_required']).optional(),
+  aiSafetyMode: z.enum(['off', 'warn', 'strict']).optional(),
   dailyRunLimit: z.number().min(1).max(500).optional(),
   capabilities: capabilitySchema.optional(),
-  credential: z.object({
-    provider: z.enum(['openai', 'anthropic']).default('openai'),
-    apiKey: z.string().min(20).max(500).optional(),
-    remove: z.boolean().optional(),
-  }).optional(),
+  credential: z
+    .object({
+      provider: z.enum(['openai', 'anthropic']).default('openai'),
+      apiKey: z.string().min(20).max(500).optional(),
+      remove: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 function mergeCapabilities(
@@ -155,8 +159,10 @@ export async function GET(
     workspaceSettings.model,
     providerCredential
   );
-  const enabledProjectCount = orgProjects.filter((project) =>
-    normalizeProjectAgentSettings((project.settings as Record<string, unknown> | null)?.aiAgents).enabled
+  const enabledProjectCount = orgProjects.filter(
+    (project) =>
+      normalizeProjectAgentSettings((project.settings as Record<string, unknown> | null)?.aiAgents)
+        .enabled
   ).length;
   const configIssues = getWorkspaceAgentConfigIssues({
     workspaceSettings,
@@ -168,9 +174,12 @@ export async function GET(
   const totalRuns = Number(totalRunsResult[0]?.count || 0);
   const runningRuns = Number(runningRunsResult[0]?.count || 0);
   const executionIssue = configIssues.find((issue) => issue.blocksRuns) ?? null;
-  const writeIssue = configIssues.find(
-    (issue) => !issue.blocksRuns && (issue.code === 'writes_preview_only' || issue.code === 'write_approval_required')
-  ) ?? null;
+  const writeIssue =
+    configIssues.find(
+      (issue) =>
+        !issue.blocksRuns &&
+        (issue.code === 'writes_preview_only' || issue.code === 'write_approval_required')
+    ) ?? null;
   const serviceStatus = [
     {
       key: 'provider',
@@ -244,7 +253,10 @@ export async function PATCH(
   const { organizationId } = await params;
   const access = await getOrgAgentAccess(session.user.id, organizationId);
   if (!access.canManage) {
-    return NextResponse.json({ error: 'Only workspace owners and admins can manage AI agents.' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'Managing AI agents requires organization settings permission.' },
+      { status: 403 }
+    );
   }
 
   try {
@@ -280,7 +292,8 @@ export async function PATCH(
     if (nextSettings.modelConfigId && (!selectedModelConfig || selectedModelConfig.isArchived)) {
       return NextResponse.json(
         {
-          error: 'The selected model config is missing or archived. Pick another saved profile or switch back to manual mode.',
+          error:
+            'The selected model config is missing or archived. Pick another saved profile or switch back to manual mode.',
         },
         { status: 409 }
       );
@@ -350,12 +363,18 @@ export async function PATCH(
       providerStatus: getAgentProviderReadiness(
         appliedNextSettings.provider,
         appliedNextSettings.model,
-        getProviderCredentialStatusFromSettings(nextOrganizationSettings, appliedNextSettings.provider)
+        getProviderCredentialStatusFromSettings(
+          nextOrganizationSettings,
+          appliedNextSettings.provider
+        )
       ),
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Validation failed', details: error.errors }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.errors },
+        { status: 400 }
+      );
     }
 
     console.error('Failed to update workspace AI agents:', error);

@@ -7,14 +7,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { and, eq, gte, sql } from 'drizzle-orm';
-import {
-  db,
-  issues,
-  organizationMembers,
-  projects,
-  workflowStatuses,
-} from '@tasknebula/db';
+import { db, issues, workflowStatuses } from '@tasknebula/db';
 import { auth } from '@/auth';
+import { resolveProjectAccess } from '@/lib/auth/project-access';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,39 +26,17 @@ export async function GET(request: NextRequest) {
   const days = Math.max(7, Math.min(180, Number(daysParam) || 60));
 
   if (!projectId) {
-    return NextResponse.json(
-      { error: 'projectId is required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'projectId is required' }, { status: 400 });
   }
   if (bucket !== 'day' && bucket !== 'week') {
-    return NextResponse.json(
-      { error: 'bucket must be "day" or "week"' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'bucket must be "day" or "week"' }, { status: 400 });
   }
 
-  const [proj] = await db
-    .select({ id: projects.id, organizationId: projects.organizationId })
-    .from(projects)
-    .where(eq(projects.id, projectId))
-    .limit(1);
-  if (!proj) {
+  const access = await resolveProjectAccess(session.user.id, projectId);
+  if (!access.project || !access.canRead) {
     return NextResponse.json({ error: 'Project not found' }, { status: 404 });
   }
-  const [member] = await db
-    .select({ id: organizationMembers.id })
-    .from(organizationMembers)
-    .where(
-      and(
-        eq(organizationMembers.userId, session.user.id),
-        eq(organizationMembers.organizationId, proj.organizationId)
-      )
-    )
-    .limit(1);
-  if (!member) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  const resolvedProjectId = access.project.id;
 
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
@@ -77,7 +50,7 @@ export async function GET(request: NextRequest) {
     .leftJoin(workflowStatuses, eq(issues.statusId, workflowStatuses.id))
     .where(
       and(
-        eq(issues.projectId, projectId),
+        eq(issues.projectId, resolvedProjectId),
         eq(workflowStatuses.category, 'done'),
         gte(issues.updatedAt, since)
       )
@@ -86,7 +59,7 @@ export async function GET(request: NextRequest) {
     .orderBy(sql`to_char(${issues.updatedAt}, ${sql.raw(truncFmt)})`);
 
   return NextResponse.json({
-    projectId,
+    projectId: resolvedProjectId,
     bucket,
     days,
     data: rows.map((r: { period: string; count: number | null }) => ({

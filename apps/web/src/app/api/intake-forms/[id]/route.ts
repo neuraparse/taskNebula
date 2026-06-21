@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, intakeForms, organizationMembers } from '@tasknebula/db';
-import { and, eq } from 'drizzle-orm';
+import { db, intakeForms } from '@tasknebula/db';
+import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { intakeFieldsArraySchema } from '@/lib/intake/schema';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,46 +23,29 @@ const patchIntakeFormSchema = z.object({
 });
 
 /**
- * Verify the caller is a member of the org that owns the form. Returns
- * the form on success or a NextResponse on failure (so callers can
- * early-return either way).
+ * Verify the caller can manage settings for the org that owns the form.
+ * Returns the form on success or a NextResponse on failure so callers can
+ * early-return either way.
  */
 async function loadFormForCaller(
-  formId: string,
-  userId: string,
-): Promise<{ ok: true; form: typeof intakeForms.$inferSelect } | { ok: false; response: NextResponse }> {
-  const [form] = await db
-    .select()
-    .from(intakeForms)
-    .where(eq(intakeForms.id, formId))
-    .limit(1);
+  formId: string
+): Promise<
+  { ok: true; form: typeof intakeForms.$inferSelect } | { ok: false; response: NextResponse }
+> {
+  const [form] = await db.select().from(intakeForms).where(eq(intakeForms.id, formId)).limit(1);
 
   if (!form) {
     return { ok: false, response: NextResponse.json({ error: 'Form not found' }, { status: 404 }) };
   }
 
-  const [member] = await db
-    .select({ role: organizationMembers.role })
-    .from(organizationMembers)
-    .where(
-      and(
-        eq(organizationMembers.userId, userId),
-        eq(organizationMembers.organizationId, form.workspaceId),
-      ),
-    )
-    .limit(1);
-
-  if (!member) {
+  if (!(await hasPermission(form.workspaceId, 'org:settings'))) {
     return { ok: false, response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
   }
 
   return { ok: true, form };
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -69,7 +53,7 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const guard = await loadFormForCaller(id, session.user.id);
+    const guard = await loadFormForCaller(id);
     if (!guard.ok) return guard.response;
 
     const body = await request.json();
@@ -84,7 +68,7 @@ export async function PATCH(
       if (existing && existing.id !== id) {
         return NextResponse.json(
           { error: 'A form with that slug already exists' },
-          { status: 409 },
+          { status: 409 }
         );
       }
     }
@@ -114,7 +98,7 @@ export async function PATCH(
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Invalid request data', details: error.errors },
-        { status: 400 },
+        { status: 400 }
       );
     }
     console.error('Update intake form error:', error);
@@ -124,7 +108,7 @@ export async function PATCH(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -133,7 +117,7 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const guard = await loadFormForCaller(id, session.user.id);
+    const guard = await loadFormForCaller(id);
     if (!guard.ok) return guard.response;
 
     await db.delete(intakeForms).where(eq(intakeForms.id, id));
@@ -144,10 +128,7 @@ export async function DELETE(
   }
 }
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -155,7 +136,7 @@ export async function GET(
     }
 
     const { id } = await params;
-    const guard = await loadFormForCaller(id, session.user.id);
+    const guard = await loadFormForCaller(id);
     if (!guard.ok) return guard.response;
 
     return NextResponse.json({ form: guard.form });

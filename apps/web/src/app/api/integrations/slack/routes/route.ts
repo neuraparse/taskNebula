@@ -14,21 +14,14 @@
  *   Removes a single route. Idempotent.
  *
  * NOTE: This is the minimal endpoint the roadmap calls out — a richer settings
- * UI is left as a follow-up. Permission check today is "org membership"; we'll
- * tighten to admin-only when the integration settings page lands.
+ * UI is left as a follow-up. Access is aligned with integration settings.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import {
-  db,
-  and,
-  eq,
-  organizationMembers,
-  slackChannelRoutes,
-  integrationConnections,
-} from '@tasknebula/db';
+import { db, and, eq, slackChannelRoutes, integrationConnections } from '@tasknebula/db';
 import { auth } from '@/auth';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,12 +32,10 @@ const createSchema = z.object({
   projectId: z.string().min(1),
   defaultLabel: z.string().max(80).optional(),
   emojiTrigger: z.string().max(64).optional(),
-  defaultPriority: z
-    .enum(['critical', 'high', 'medium', 'low', 'none'])
-    .default('medium'),
+  defaultPriority: z.enum(['critical', 'high', 'medium', 'low', 'none']).default('medium'),
 });
 
-async function requireMembership(
+async function requireIntegrationSettingsPermission(
   request: NextRequest,
   organizationId: string
 ): Promise<{ userId: string } | NextResponse> {
@@ -52,19 +43,9 @@ async function requireMembership(
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const [member] = await db
-    .select({ id: organizationMembers.id })
-    .from(organizationMembers)
-    .where(
-      and(
-        eq(organizationMembers.userId, session.user.id),
-        eq(organizationMembers.organizationId, organizationId)
-      )
-    )
-    .limit(1);
-  if (!member) {
+  if (!(await hasPermission(organizationId, 'org:settings'))) {
     return NextResponse.json(
-      { error: 'You do not have access to this organization.' },
+      { error: 'Managing integrations requires organization settings permission.' },
       { status: 403 }
     );
   }
@@ -74,12 +55,9 @@ async function requireMembership(
 export async function GET(request: NextRequest) {
   const organizationId = new URL(request.url).searchParams.get('organizationId');
   if (!organizationId) {
-    return NextResponse.json(
-      { error: 'organizationId is required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
   }
-  const guard = await requireMembership(request, organizationId);
+  const guard = await requireIntegrationSettingsPermission(request, organizationId);
   if (guard instanceof NextResponse) return guard;
 
   const rows = await db
@@ -104,7 +82,7 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
-  const guard = await requireMembership(request, parsed.data.organizationId);
+  const guard = await requireIntegrationSettingsPermission(request, parsed.data.organizationId);
   if (guard instanceof NextResponse) return guard;
 
   // Resolve the workspace id from the org's Slack connection. We require a
@@ -121,10 +99,7 @@ export async function POST(request: NextRequest) {
     )
     .limit(1);
   if (!conn?.externalAccountId) {
-    return NextResponse.json(
-      { error: 'slack_not_connected' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'slack_not_connected' }, { status: 400 });
   }
 
   const slackTeamId = conn.externalAccountId;
@@ -180,21 +155,15 @@ export async function DELETE(request: NextRequest) {
   const organizationId = searchParams.get('organizationId');
   const id = searchParams.get('id');
   if (!organizationId || !id) {
-    return NextResponse.json(
-      { error: 'organizationId and id are required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'organizationId and id are required' }, { status: 400 });
   }
-  const guard = await requireMembership(request, organizationId);
+  const guard = await requireIntegrationSettingsPermission(request, organizationId);
   if (guard instanceof NextResponse) return guard;
 
   await db
     .delete(slackChannelRoutes)
     .where(
-      and(
-        eq(slackChannelRoutes.id, id),
-        eq(slackChannelRoutes.organizationId, organizationId)
-      )
+      and(eq(slackChannelRoutes.id, id), eq(slackChannelRoutes.organizationId, organizationId))
     );
 
   return NextResponse.json({ ok: true });

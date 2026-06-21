@@ -79,7 +79,10 @@ export async function POST(request: NextRequest) {
 
     if (!actor?.isSuperAdmin) {
       return NextResponse.json(
-        { error: 'Only platform admins can create organizations. Ask an admin for an invite.' },
+        {
+          error:
+            'Organization creation requires platform administration permission. Ask a platform administrator for an invite.',
+        },
         { status: 403 }
       );
     }

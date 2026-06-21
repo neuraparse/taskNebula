@@ -20,6 +20,7 @@ const dbDeleteMock = jest.fn();
 const dbInsertMock = jest.fn();
 const publishEventMock = jest.fn();
 const sendEmailMock = jest.fn();
+const getProjectMemberPermissionValuesMock = jest.fn();
 
 class MockNextRequest {
   private readonly bodyValue: string;
@@ -75,6 +76,11 @@ jest.mock('@/lib/realtime/events', () => ({
 
 jest.mock('@/lib/email/sender', () => ({
   sendEmail: (...args: unknown[]) => sendEmailMock(...args),
+}));
+
+jest.mock('@/lib/projects/member-permissions', () => ({
+  getProjectMemberPermissionValues: (...args: unknown[]) =>
+    getProjectMemberPermissionValuesMock(...args),
 }));
 
 jest.mock('@paralleldrive/cuid2', () => ({
@@ -212,9 +218,14 @@ describe('POST /api/organizations/[organizationId]/members — invite with proje
     dbInsertMock.mockReset();
     publishEventMock.mockReset();
     sendEmailMock.mockReset();
+    getProjectMemberPermissionValuesMock.mockReset();
     authMock.mockResolvedValue({ user: { id: 'inviter-1' } });
     hasPermissionMock.mockResolvedValue(true);
     sendEmailMock.mockResolvedValue({ sent: true, messageId: 'msg-1' });
+    getProjectMemberPermissionValuesMock.mockReturnValue({
+      canBrowseProject: 'true',
+      canCreateIssues: 'true',
+    });
   });
 
   /**

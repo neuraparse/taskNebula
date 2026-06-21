@@ -45,7 +45,8 @@ export async function isOrgMember(userId: string, organizationId: string): Promi
     .where(
       and(
         eq(organizationMembers.userId, userId),
-        eq(organizationMembers.organizationId, organizationId)
+        eq(organizationMembers.organizationId, organizationId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
@@ -58,9 +59,7 @@ export async function isOrgMember(userId: string, organizationId: string): Promi
  * in via the optional `extraEvents` parameter on the calling route — this
  * keeps the DB-side collector dependency-free.
  */
-export async function collectStandupEvents(
-  input: CollectEventsInput
-): Promise<StandupEvent[]> {
+export async function collectStandupEvents(input: CollectEventsInput): Promise<StandupEvent[]> {
   const { userId, organizationId, windowStart, windowEnd } = input;
 
   // 1. Issues the user updated or created. We filter by organization
@@ -81,12 +80,7 @@ export async function collectStandupEvents(
     })
     .from(issues)
     .leftJoin(workflowStatuses, eq(workflowStatuses.id, issues.statusId))
-    .where(
-      and(
-        eq(issues.organizationId, organizationId),
-        gte(issues.updatedAt, windowStart)
-      )
-    )
+    .where(and(eq(issues.organizationId, organizationId), gte(issues.updatedAt, windowStart)))
     .limit(200)) as Array<{
     id: string;
     key: string;

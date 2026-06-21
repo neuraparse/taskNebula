@@ -9,13 +9,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { auth } from '@/auth';
-import { db, organizationMembers, and, eq } from '@tasknebula/db';
 import { getClientCredentials } from '@/lib/integrations/client-credentials';
 import {
   SENTRY_DEFAULT_SCOPE,
   SENTRY_STATE_COOKIE,
   sentryAuthorizeUrl,
 } from '@/lib/integrations/sentry';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,26 +30,12 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const organizationId = searchParams.get('organizationId');
   if (!organizationId) {
-    return NextResponse.json(
-      { error: 'organizationId is required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
   }
 
-  const [member] = await db
-    .select({ id: organizationMembers.id })
-    .from(organizationMembers)
-    .where(
-      and(
-        eq(organizationMembers.userId, session.user.id),
-        eq(organizationMembers.organizationId, organizationId)
-      )
-    )
-    .limit(1);
-
-  if (!member) {
+  if (!(await hasPermission(organizationId, 'org:settings'))) {
     return NextResponse.json(
-      { error: 'You do not have access to this organization.' },
+      { error: 'Managing integrations requires organization settings permission.' },
       { status: 403 }
     );
   }
@@ -66,15 +52,12 @@ export async function GET(request: NextRequest) {
   }
 
   const redirectUri =
-    credentials.redirectUri ||
-    `${new URL(request.url).origin}/api/integrations/sentry/callback`;
+    credentials.redirectUri || `${new URL(request.url).origin}/api/integrations/sentry/callback`;
   const scope = credentials.scope || SENTRY_DEFAULT_SCOPE;
 
   const nonce = crypto.randomBytes(24).toString('base64url');
   const statePayload = { n: nonce, o: organizationId, u: session.user.id };
-  const state = Buffer.from(JSON.stringify(statePayload), 'utf8').toString(
-    'base64url'
-  );
+  const state = Buffer.from(JSON.stringify(statePayload), 'utf8').toString('base64url');
 
   const authorizeUrl = new URL(sentryAuthorizeUrl());
   authorizeUrl.searchParams.set('client_id', credentials.clientId);

@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 
+import { WorkspaceRequiredNotice } from '@/components/layout/workspace-required-notice';
 import { TemplatesGrid } from '@/components/templates/templates-grid';
+import { currentUserHasWorkspaceAccess } from '@/lib/auth/workspace-access';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('pagesWork');
@@ -12,6 +14,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function TemplatesPage() {
+  const hasWorkspaceAccess = await currentUserHasWorkspaceAccess();
+  if (!hasWorkspaceAccess) {
+    return <WorkspaceRequiredNotice />;
+  }
+
   const t = await getTranslations('pagesWork');
   return (
     <div className="mx-auto w-full max-w-7xl px-6 py-8 lg:px-8">

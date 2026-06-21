@@ -1,4 +1,4 @@
-import { db, organizationMembers, projectMembers } from '@tasknebula/db';
+import { db, projectMembers } from '@tasknebula/db';
 import { and, eq } from 'drizzle-orm';
 import { hasPermission } from '@/lib/auth/permissions';
 
@@ -10,20 +10,6 @@ export async function canManageAgentApprovals(params: {
   projectId?: string | null;
 }) {
   if (await hasPermission(params.workspaceId, 'org:manage')) return true;
-
-  const [member] = await db
-    .select({ role: organizationMembers.role })
-    .from(organizationMembers)
-    .where(
-      and(
-        eq(organizationMembers.userId, params.userId),
-        eq(organizationMembers.organizationId, params.workspaceId),
-        eq(organizationMembers.status, 'active')
-      )
-    )
-    .limit(1);
-
-  if (member?.role === 'admin' || member?.role === 'owner') return true;
 
   if (!params.projectId) return false;
 

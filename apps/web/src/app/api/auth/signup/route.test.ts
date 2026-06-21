@@ -328,8 +328,14 @@ describe('/api/auth/signup route', () => {
     expect(findFirstMock).toHaveBeenCalledWith({
       where: expect.objectContaining({ right: 'b@e.com' }),
     });
-    expect(insertBuilder.values).toHaveBeenCalledWith(
-      expect.objectContaining({ email: 'b@e.com' })
-    );
+    expect(dbInsertMock).toHaveBeenCalledTimes(1);
+    const insertedUser = insertBuilder.values.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(insertedUser).toMatchObject({
+      email: 'b@e.com',
+      status: 'active',
+    });
+    expect(insertedUser).not.toHaveProperty('isSuperAdmin');
+    expect(insertedUser).not.toHaveProperty('organizationId');
+    expect(insertedUser).not.toHaveProperty('role');
   });
 });

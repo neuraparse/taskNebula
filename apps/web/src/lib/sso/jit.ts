@@ -27,9 +27,7 @@ export type JitResult = {
 };
 
 function displayName(input: JitInput): string {
-  const parts = [input.firstName, input.lastName].filter(
-    (s): s is string => !!s && s.length > 0
-  );
+  const parts = [input.firstName, input.lastName].filter((s): s is string => !!s && s.length > 0);
   if (parts.length) return parts.join(' ');
   return input.email.split('@')[0] ?? input.email;
 }
@@ -96,6 +94,11 @@ export async function jitProvisionUser(input: JitInput): Promise<JitResult> {
       status: 'active',
     });
     membershipCreated = true;
+  } else if (member.status !== 'active') {
+    await db
+      .update(organizationMembers)
+      .set({ status: 'active', updatedAt: new Date() })
+      .where(eq(organizationMembers.id, member.id));
   }
 
   return { userId, created, membershipCreated };

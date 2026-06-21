@@ -25,6 +25,7 @@ import {
   projectMembers,
   projects,
   ROLE_DEFAULT_PERMISSIONS,
+  hasPermission as roleHasPermission,
   type ProjectRole,
   roomReadStates,
   sql,
@@ -55,6 +56,7 @@ import {
 } from '@/lib/chat/config';
 import { listRoomPresence, publishRoomEvent } from '@/lib/chat/realtime';
 import { resolveDocumentPageAccess } from '@/lib/docs/server';
+import { resolveProjectByIdOrKey } from '@/lib/projects/server';
 
 type ChatPermissionSet = {
   canBrowseProject: boolean;
@@ -141,9 +143,21 @@ export class ChatAccessError extends Error {
 
 const DEFAULT_CHANNEL_DEFINITIONS = [
   { slug: 'general', name: 'General', description: 'Project-wide updates and async check-ins.' },
-  { slug: 'delivery', name: 'Delivery', description: 'Planning, release sequencing, and rollout coordination.' },
-  { slug: 'eng', name: 'Eng', description: 'Engineering execution, implementation notes, and blockers.' },
-  { slug: 'incidents', name: 'Incidents', description: 'Operational incidents, triage, and rapid response.' },
+  {
+    slug: 'delivery',
+    name: 'Delivery',
+    description: 'Planning, release sequencing, and rollout coordination.',
+  },
+  {
+    slug: 'eng',
+    name: 'Eng',
+    description: 'Engineering execution, implementation notes, and blockers.',
+  },
+  {
+    slug: 'incidents',
+    name: 'Incidents',
+    description: 'Operational incidents, triage, and rapid response.',
+  },
 ] as const;
 
 function getAllChatPermissions(): ChatPermissionSet {
@@ -179,25 +193,18 @@ function toPermissionValue(value: string | null | undefined, fallback = false) {
 }
 
 function slugifyChannel(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 80) || 'channel';
+  return (
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 80) || 'channel'
+  );
 }
 
-export async function resolveProjectIdOrThrow(projectIdOrKey: string) {
-  if (projectIdOrKey.length > 10 || projectIdOrKey.includes('_')) {
-    return projectIdOrKey;
-  }
-
-  const [project] = await db
-    .select({ id: projects.id })
-    .from(projects)
-    .where(eq(projects.key, projectIdOrKey.toUpperCase()))
-    .limit(1);
-
+export async function resolveProjectIdOrThrow(projectIdOrKey: string, userId?: string) {
+  const project = await resolveProjectByIdOrKey(projectIdOrKey, userId);
   if (!project) {
     throw new ChatAccessError('Project not found', 404);
   }
@@ -205,15 +212,16 @@ export async function resolveProjectIdOrThrow(projectIdOrKey: string) {
   return project.id;
 }
 
-export async function getProjectChatContext(userId: string, projectIdOrKey: string): Promise<ProjectChatContext> {
-  const projectId = await resolveProjectIdOrThrow(projectIdOrKey);
+export async function getProjectChatContext(
+  userId: string,
+  projectIdOrKey: string
+): Promise<ProjectChatContext> {
+  const project = await resolveProjectByIdOrKey(projectIdOrKey, userId);
+  if (!project) {
+    throw new ChatAccessError('Project not found', 404);
+  }
 
-  const [[project], [user]] = await Promise.all([
-    db
-      .select()
-      .from(projects)
-      .where(eq(projects.id, projectId))
-      .limit(1),
+  const [[user]] = await Promise.all([
     db
       .select({
         id: users.id,
@@ -224,23 +232,16 @@ export async function getProjectChatContext(userId: string, projectIdOrKey: stri
       .limit(1),
   ]);
 
-  if (!project) {
-    throw new ChatAccessError('Project not found', 404);
-  }
-
   const [[organization], [orgMember], [projectMember]] = await Promise.all([
-    db
-      .select()
-      .from(organizations)
-      .where(eq(organizations.id, project.organizationId))
-      .limit(1),
+    db.select().from(organizations).where(eq(organizations.id, project.organizationId)).limit(1),
     db
       .select({ role: organizationMembers.role })
       .from(organizationMembers)
       .where(
         and(
           eq(organizationMembers.organizationId, project.organizationId),
-          eq(organizationMembers.userId, userId)
+          eq(organizationMembers.userId, userId),
+          eq(organizationMembers.status, 'active')
         )
       )
       .limit(1),
@@ -257,31 +258,45 @@ export async function getProjectChatContext(userId: string, projectIdOrKey: stri
 
   const isSuperAdmin = Boolean(user?.isSuperAdmin);
   const isOrgOwner = orgMember?.role === 'owner';
-  const isOrgAdmin = orgMember?.role === 'admin' || isOrgOwner;
+  const isOrgAdmin = orgMember?.role === 'admin';
+  const hasOrgProjectManagement = roleHasPermission(
+    orgMember?.role || '',
+    'project:manage',
+    isSuperAdmin
+  );
   const roleDefaults = projectMember
     ? ROLE_DEFAULT_PERMISSIONS[projectMember.role as ProjectRole]
     : null;
 
   let permissions: ChatPermissionSet = getNoChatPermissions();
 
-  if (isSuperAdmin || isOrgOwner) {
+  if (hasOrgProjectManagement) {
     permissions = getAllChatPermissions();
   } else if (projectMember) {
     permissions = {
-      canBrowseProject: toPermissionValue(projectMember.canBrowseProject, roleDefaults?.canBrowseProject),
-      canAdministerProject: toPermissionValue(projectMember.canAdministerProject, roleDefaults?.canAdministerProject),
+      canBrowseProject: toPermissionValue(
+        projectMember.canBrowseProject,
+        roleDefaults?.canBrowseProject
+      ),
+      canAdministerProject: toPermissionValue(
+        projectMember.canAdministerProject,
+        roleDefaults?.canAdministerProject
+      ),
       canBrowseChat: toPermissionValue(projectMember.canBrowseChat, roleDefaults?.canBrowseChat),
-      canCreateChannels: toPermissionValue(projectMember.canCreateChannels, roleDefaults?.canCreateChannels),
-      canPostMessages: toPermissionValue(projectMember.canPostMessages, roleDefaults?.canPostMessages),
-      canModerateMessages: toPermissionValue(projectMember.canModerateMessages, roleDefaults?.canModerateMessages),
+      canCreateChannels: toPermissionValue(
+        projectMember.canCreateChannels,
+        roleDefaults?.canCreateChannels
+      ),
+      canPostMessages: toPermissionValue(
+        projectMember.canPostMessages,
+        roleDefaults?.canPostMessages
+      ),
+      canModerateMessages: toPermissionValue(
+        projectMember.canModerateMessages,
+        roleDefaults?.canModerateMessages
+      ),
       canStartCalls: toPermissionValue(projectMember.canStartCalls, roleDefaults?.canStartCalls),
       canManageCalls: toPermissionValue(projectMember.canManageCalls, roleDefaults?.canManageCalls),
-    };
-  } else if (isOrgAdmin) {
-    permissions = {
-      ...permissions,
-      canBrowseProject: true,
-      canBrowseChat: true,
     };
   }
 
@@ -309,8 +324,7 @@ export async function getProjectChatContext(userId: string, projectIdOrKey: stri
     projectSettings,
     effectiveSettings,
     canView: permissions.canBrowseProject && permissions.canBrowseChat,
-    canManageSettings:
-      isSuperAdmin || isOrgOwner || isOrgAdmin || permissions.canAdministerProject,
+    canManageSettings: hasOrgProjectManagement || permissions.canAdministerProject,
   };
 }
 
@@ -322,7 +336,9 @@ export async function ensureDefaultProjectChannels(params: {
   let channels = await db
     .select()
     .from(projectChannels)
-    .where(and(eq(projectChannels.projectId, params.projectId), eq(projectChannels.isArchived, false)))
+    .where(
+      and(eq(projectChannels.projectId, params.projectId), eq(projectChannels.isArchived, false))
+    )
     .orderBy(asc(projectChannels.position), asc(projectChannels.name));
 
   if (channels.length === 0) {
@@ -412,7 +428,11 @@ export async function ensureIssueConversationRoom(userId: string, issueId: strin
   }
 
   const context = await getProjectChatContext(userId, issue.projectId);
-  if (!context.canView || !context.effectiveSettings.enabled || !context.effectiveSettings.issueThreadsEnabled) {
+  if (
+    !context.canView ||
+    !context.effectiveSettings.enabled ||
+    !context.effectiveSettings.issueThreadsEnabled
+  ) {
     throw new ChatAccessError('Issue discussions are disabled or unavailable in this project.');
   }
 
@@ -461,7 +481,11 @@ export async function ensureDocumentConversationRoom(userId: string, pageId: str
   }
 
   const context = await getProjectChatContext(userId, pageAccess.page.projectId);
-  if (!context.canView || !context.effectiveSettings.enabled || !context.effectiveSettings.documentThreadsEnabled) {
+  if (
+    !context.canView ||
+    !context.effectiveSettings.enabled ||
+    !context.effectiveSettings.documentThreadsEnabled
+  ) {
     throw new ChatAccessError('Document discussions are disabled or unavailable in this project.');
   }
 
@@ -544,7 +568,9 @@ function parseAttachments(value: unknown): ChatMessageAttachmentRecord[] {
     return [];
   }
 
-  return value.filter((entry) => entry && typeof entry === 'object') as ChatMessageAttachmentRecord[];
+  return value.filter(
+    (entry) => entry && typeof entry === 'object'
+  ) as ChatMessageAttachmentRecord[];
 }
 
 function parseMentions(value: unknown): string[] {
@@ -609,7 +635,8 @@ async function serializeConversationMessageRows(params: {
     if (existing) {
       existing.count += 1;
       existing.reactedUserIds.push(reaction.userId);
-      existing.reactedByCurrentUser = existing.reactedByCurrentUser || reaction.userId === params.currentUserId;
+      existing.reactedByCurrentUser =
+        existing.reactedByCurrentUser || reaction.userId === params.currentUserId;
     } else {
       list.push({
         emoji: reaction.emoji,
@@ -622,14 +649,20 @@ async function serializeConversationMessageRows(params: {
     reactionsByMessage.set(reaction.messageId, list);
   }
 
-  const deleterIds = [...new Set(
-    params.rows
-      .map((row) => {
-        const snapshot = parseDeletedSnapshot(row.message.bodyJson);
-        return typeof snapshot?.deletedById === 'string' ? snapshot.deletedById : row.message.deletedAt ? row.message.updatedBy : null;
-      })
-      .filter((value): value is string => Boolean(value))
-  )];
+  const deleterIds = [
+    ...new Set(
+      params.rows
+        .map((row) => {
+          const snapshot = parseDeletedSnapshot(row.message.bodyJson);
+          return typeof snapshot?.deletedById === 'string'
+            ? snapshot.deletedById
+            : row.message.deletedAt
+              ? row.message.updatedBy
+              : null;
+        })
+        .filter((value): value is string => Boolean(value))
+    ),
+  ];
 
   const deleterMap = deleterIds.length
     ? new Map(
@@ -823,7 +856,11 @@ async function getUnreadCountForRoom(roomId: string, userId: string, lastReadAt:
   return Number(result?.count || 0);
 }
 
-export async function markConversationRead(roomId: string, userId: string, lastReadMessageId?: string | null) {
+export async function markConversationRead(
+  roomId: string,
+  userId: string,
+  lastReadMessageId?: string | null
+) {
   const latestMessageId = lastReadMessageId
     ? lastReadMessageId
     : (
@@ -863,7 +900,10 @@ export async function markConversationRead(roomId: string, userId: string, lastR
   }
 }
 
-function extractMentions(body: string, projectMembersList: Array<{ userId: string; name: string | null; email: string | null }>) {
+function extractMentions(
+  body: string,
+  projectMembersList: Array<{ userId: string; name: string | null; email: string | null }>
+) {
   const matches = [...body.matchAll(/@([a-z0-9._-]+)/gi)]
     .map((match) => match[1]?.toLowerCase())
     .filter((match): match is string => Boolean(match));
@@ -873,10 +913,7 @@ function extractMentions(body: string, projectMembersList: Array<{ userId: strin
 
   const mentionedIds = new Set<string>();
   for (const member of projectMembersList) {
-    const nameParts = member.name
-      ?.toLowerCase()
-      .split(/\s+/)
-      .filter(Boolean) || [];
+    const nameParts = member.name?.toLowerCase().split(/\s+/).filter(Boolean) || [];
     const aliases = new Set<string>([
       ...nameParts,
       member.name?.toLowerCase().replace(/\s+/g, '') || '',
@@ -1056,7 +1093,11 @@ export async function updateConversationMessage(params: {
       });
     }
 
-    const message = await getConversationMessageById(params.roomId, params.messageId, params.userId);
+    const message = await getConversationMessageById(
+      params.roomId,
+      params.messageId,
+      params.userId
+    );
 
     await publishRoomEvent(params.roomId, {
       type: 'message.reaction',
@@ -1074,7 +1115,8 @@ export async function updateConversationMessage(params: {
     throw new ChatAccessError('Message body is required', 400);
   }
 
-  const canEdit = existing.createdBy === params.userId || access.context.permissions.canModerateMessages;
+  const canEdit =
+    existing.createdBy === params.userId || access.context.permissions.canModerateMessages;
   if (!canEdit) {
     throw new ChatAccessError('You do not have permission to edit this message.');
   }
@@ -1149,7 +1191,8 @@ export async function deleteConversationMessage(params: {
     return getConversationMessageById(params.roomId, params.messageId, params.userId);
   }
 
-  const canDelete = existing.createdBy === params.userId || access.context.permissions.canModerateMessages;
+  const canDelete =
+    existing.createdBy === params.userId || access.context.permissions.canModerateMessages;
   if (!canDelete) {
     throw new ChatAccessError('You do not have permission to delete this message.');
   }
@@ -1369,9 +1412,9 @@ type ActiveCallState = typeof callSessions.$inferSelect & {
  * Collapses rows belonging to the same user down to their most recent join.
  * Exported so tests can exercise the dedupe rule without touching the DB.
  */
-export function dedupeActiveParticipantsByUserId<
-  T extends { userId: string; joinedAt: Date },
->(participants: T[]): T[] {
+export function dedupeActiveParticipantsByUserId<T extends { userId: string; joinedAt: Date }>(
+  participants: T[]
+): T[] {
   const newestByUser = new Map<string, T>();
   for (const participant of participants) {
     const existing = newestByUser.get(participant.userId);
@@ -1437,7 +1480,9 @@ async function getActiveCallStateByLivekitRoomName(
   const [call] = await db
     .select()
     .from(callSessions)
-    .where(and(eq(callSessions.livekitRoomName, livekitRoomName), eq(callSessions.status, 'active')))
+    .where(
+      and(eq(callSessions.livekitRoomName, livekitRoomName), eq(callSessions.status, 'active'))
+    )
     .orderBy(desc(callSessions.startedAt))
     .limit(1);
 
@@ -1502,7 +1547,8 @@ async function getLivekitRoomOccupancy(livekitRoomName: string) {
       participantCount: participants.length,
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+    const message =
+      error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
     if (
       message.includes('not_found') ||
       message.includes('not found') ||
@@ -1538,11 +1584,7 @@ async function finalizeActiveCallSession(
   const finalizedCall = await db.transaction(async (tx) => {
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${callId}))`);
 
-    const [call] = await tx
-      .select()
-      .from(callSessions)
-      .where(eq(callSessions.id, callId))
-      .limit(1);
+    const [call] = await tx.select().from(callSessions).where(eq(callSessions.id, callId)).limit(1);
 
     if (!call || call.status !== 'active') {
       return null;
@@ -1583,7 +1625,8 @@ async function finalizeActiveCallSession(
     : await createLivekitRoomService();
   if (roomService) {
     void roomService.deleteRoom(finalizedCall.livekitRoomName).catch((error) => {
-      const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+      const message =
+        error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
       if (
         message.includes('not_found') ||
         message.includes('not found') ||
@@ -1891,10 +1934,7 @@ export async function getActiveCallSummary(roomId: string) {
       livekitParticipantCount: livekitOccupancy.participantCount,
     });
     await finalizeActiveCallSession(call.id, {
-      reason:
-        livekitOccupancy.roomExists === false
-          ? 'livekit_room_missing'
-          : 'livekit_room_empty',
+      reason: livekitOccupancy.roomExists === false ? 'livekit_room_missing' : 'livekit_room_empty',
     });
     return null;
   }
@@ -2603,9 +2643,13 @@ export async function getProjectChatBootstrap(userId: string, projectIdOrKey: st
     .orderBy(desc(callSessions.startedAt));
 
   const activeCallsByRoom = new Map(
-    (await Promise.all(
-      activeCalls.map(async (call) => [call.roomId, await getActiveCallSummary(call.roomId)] as const)
-    )).filter((entry) => entry[1])
+    (
+      await Promise.all(
+        activeCalls.map(
+          async (call) => [call.roomId, await getActiveCallSummary(call.roomId)] as const
+        )
+      )
+    ).filter((entry) => entry[1])
   );
 
   const unreadCounts = new Map<string, number>();
@@ -2644,7 +2688,8 @@ export async function getProjectChatBootstrap(userId: string, projectIdOrKey: st
       .filter((room) => room.kind !== 'channel')
       .filter((room) => {
         if (room.kind === 'issue_thread') return context.effectiveSettings.issueThreadsEnabled;
-        if (room.kind === 'document_thread') return context.effectiveSettings.documentThreadsEnabled;
+        if (room.kind === 'document_thread')
+          return context.effectiveSettings.documentThreadsEnabled;
         return true;
       })
       .slice(0, 8)

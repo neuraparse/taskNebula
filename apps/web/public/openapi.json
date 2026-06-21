@@ -214,6 +214,10 @@
             "type": "string",
             "example": "Unauthorized"
           },
+          "code": {
+            "type": "string",
+            "example": "UNAUTHORIZED"
+          },
           "details": {}
         },
         "required": [

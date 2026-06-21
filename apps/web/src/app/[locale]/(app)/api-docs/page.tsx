@@ -33,6 +33,7 @@ async function isWorkspaceAdmin(userId: string): Promise<boolean> {
     .where(
       and(
         eq(organizationMembers.userId, userId),
+        eq(organizationMembers.status, 'active'),
         inArray(organizationMembers.role, ['owner', 'admin'])
       )
     )

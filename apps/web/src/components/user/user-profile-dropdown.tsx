@@ -1,6 +1,7 @@
 'use client';
 
-import { LogOut, Settings } from 'lucide-react';
+import { useState } from 'react';
+import { Loader2, LogOut, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
@@ -37,17 +38,20 @@ export function UserProfileDropdown({
   const { user, isLoading } = useUser();
   const t = useTranslations('userSecurity');
   const tNav = useTranslations('nav');
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const triggerClasses = cn(
-    'focus-visible:ring-ring relative h-8 w-8 rounded-full p-0 transition-opacity duration-200 hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+    'relative h-9 w-9 rounded-[2px] border border-border bg-card p-0 shadow-none transition-colors duration-150 hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f62fe]',
     triggerClassName
   );
-  const avatarClasses = cn('h-8 w-8', avatarClassName);
+  const avatarClasses = cn('h-8 w-8 rounded-[2px]', avatarClassName);
 
   if (isLoading || !user) {
     return (
       <Button variant="ghost" className={triggerClasses} disabled aria-label={t('accountMenu')}>
         <Avatar className={avatarClasses}>
-          <AvatarFallback className="bg-muted text-muted-foreground text-xs">--</AvatarFallback>
+          <AvatarFallback className="bg-muted text-muted-foreground rounded-[2px] text-xs">
+            --
+          </AvatarFallback>
         </Avatar>
       </Button>
     );
@@ -72,22 +76,26 @@ export function UserProfileDropdown({
         >
           <Avatar className={avatarClasses}>
             <AvatarImage src={user.image || undefined} alt={user.name || t('userAlt')} />
-            <AvatarFallback className="text-xs font-medium">{initials}</AvatarFallback>
+            <AvatarFallback className="rounded-[2px] text-xs font-medium">
+              {initials}
+            </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="data-[state=open]:animate-pop-in w-60 rounded-lg shadow-sm"
+        className="data-[state=open]:animate-pop-in border-border w-72 rounded-[2px] p-0 shadow-none"
         align={align}
         side={side}
         sideOffset={sideOffset}
         forceMount
       >
         {/* Avatar header */}
-        <div className="flex items-center gap-3 px-3 py-3">
-          <Avatar className="h-9 w-9 shrink-0">
+        <div className="border-border flex items-center gap-3 border-b px-3 py-3">
+          <Avatar className="h-9 w-9 shrink-0 rounded-[2px]">
             <AvatarImage src={user.image || undefined} alt={user.name || t('userAlt')} />
-            <AvatarFallback className="text-xs font-medium">{initials}</AvatarFallback>
+            <AvatarFallback className="rounded-[2px] text-xs font-medium">
+              {initials}
+            </AvatarFallback>
           </Avatar>
           <div className="min-w-0">
             {user.name && <p className="truncate text-sm font-medium leading-tight">{user.name}</p>}
@@ -95,9 +103,10 @@ export function UserProfileDropdown({
           </div>
         </div>
 
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem className="ease-snap gap-2 px-3 transition-all duration-150" asChild>
+        <DropdownMenuItem
+          className="focus:bg-accent h-11 rounded-none px-3 text-sm transition-colors duration-150"
+          asChild
+        >
           <Link href="/settings">
             <Settings className="text-muted-foreground h-4 w-4 shrink-0" />
             {tNav('account_settings')}
@@ -107,10 +116,20 @@ export function UserProfileDropdown({
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
-          className="text-destructive ease-snap focus:bg-destructive/10 focus:text-destructive gap-2 px-3 transition-all duration-150"
-          onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+          className="h-11 rounded-none px-3 text-sm text-[#da1e28] transition-colors duration-150 focus:bg-[#fff1f1] focus:text-[#a2191f]"
+          disabled={isSigningOut}
+          onSelect={(event) => {
+            event.preventDefault();
+            if (isSigningOut) return;
+            setIsSigningOut(true);
+            void signOut({ callbackUrl: '/auth/signin' });
+          }}
         >
-          <LogOut className="h-4 w-4 shrink-0" />
+          {isSigningOut ? (
+            <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+          ) : (
+            <LogOut className="h-4 w-4 shrink-0" />
+          )}
           {tNav('sign_out')}
         </DropdownMenuItem>
       </DropdownMenuContent>

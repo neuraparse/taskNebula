@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { isApiPermissionError } from '@/lib/client-api-errors';
 import { useDeleteProject, useProject, useUpdateProject } from '@/lib/hooks/use-projects';
 import { AlertTriangle } from 'lucide-react';
 
@@ -42,11 +43,14 @@ const PROJECT_VISIBILITY: ReadonlyArray<{
 
 export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProps) {
   const t = useTranslations('settingsProject');
+  const tSettings = useTranslations('settings');
   const router = useRouter();
   const { toast } = useToast();
   const { data: project, isLoading } = useProject(projectId);
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
+  const getErrorDescription = (error: unknown, fallback: string) =>
+    isApiPermissionError(error) ? tSettings('error_no_permission') : fallback;
   const [formData, setFormData] = useState({
     name: '',
     key: '',
@@ -89,7 +93,7 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
     } catch (error) {
       toast({
         title: t('toast_save_failed_title'),
-        description: error instanceof Error ? error.message : t('toast_save_failed_description'),
+        description: getErrorDescription(error, t('toast_save_failed_description')),
         variant: 'destructive',
       });
     }
@@ -113,7 +117,7 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
     } catch (error) {
       toast({
         title: t('toast_delete_failed_title'),
-        description: error instanceof Error ? error.message : t('toast_delete_failed_description'),
+        description: getErrorDescription(error, t('toast_delete_failed_description')),
         variant: 'destructive',
       });
     }

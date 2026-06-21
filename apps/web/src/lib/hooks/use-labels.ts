@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { throwApiResponseError } from '@/lib/client-api-errors';
 
 /** Label row as returned by GET /api/labels (first-class labels table, migration 0054). */
 export interface OrgLabel {
@@ -47,7 +48,7 @@ export function useLabels(organizationId: string | null, options?: UseLabelsOpti
 
       const response = await fetch(`/api/labels?${params.toString()}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch labels');
+        await throwApiResponseError(response);
       }
       const data: LabelsResponse = await response.json();
       return data.labels;
@@ -121,10 +122,7 @@ export function useCreateLabel() {
         }),
       });
       if (!response.ok) {
-        const err = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw Object.assign(new Error(err?.error || 'Failed to create label'), {
-          status: response.status,
-        });
+        await throwApiResponseError(response);
       }
       return (await response.json()) as CreatedLabel;
     },

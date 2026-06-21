@@ -128,6 +128,7 @@ describe('OrganizationSwitcher', () => {
       'aria-disabled',
       'true'
     );
+    expect(useOrganization.getState().currentOrganizationId).toBeNull();
   });
 
   it('hides the organization list while the fetch is in-flight (loading state)', async () => {

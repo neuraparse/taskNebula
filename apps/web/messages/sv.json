@@ -43,7 +43,8 @@
     "realtime_health": "Realtidsstatus",
     "audit_logs": "Granskningsloggar",
     "system": "System",
-    "updates": "Uppdateringar"
+    "updates": "Uppdateringar",
+    "ai_transparency": "AI-transparens"
   },
   "actions": {
     "create_issue": "Skapa ärende",
@@ -102,6 +103,7 @@
     "skipToContent": "Hoppa till innehåll"
   },
   "settings": {
+    "error_no_permission": "Du har inte behörighet att hantera dessa inställningar.",
     "labels": {
       "kicker": "Etiketter",
       "title": "Etiketter",
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "Det gick inte att läsa in ärendet",
       "notFound": "Ärendet hittades inte",
-      "notFoundHint": "Ärendet du letar efter finns inte."
+      "notFoundHint": "Ärendet du letar efter finns inte.",
+      "loadFailedHint": "Uppdatera sidan eller försök igen om en stund."
     }
   },
   "adminUpdates": {
@@ -1519,8 +1522,8 @@
     "planning_kicker": "Planering",
     "teamspaces_heading": "Teamutrymmen",
     "teamspaces_subtitle": "Planeringsspår ovanför enskilda projekt, utan att dela upp organisationen.",
-    "owner_admin_only": "Endast ägare eller administratör",
-    "browse_only_notice": "Endast visning — ägare och administratörer kan ändra strukturen.",
+    "owner_admin_only": "Behörighet krävs",
+    "browse_only_notice": "Endast visning — att ändra strukturen kräver behörighet för organisationsinställningar.",
     "loading_teamspaces": "Läser in teamutrymmen…",
     "manage_members": "Hantera medlemmar",
     "members_label": "medlemmar",
@@ -2143,7 +2146,7 @@
       "none": "Ingen",
       "updated": "Uppdaterad",
       "server_managed": "Serverhanterad",
-      "read_only_notice": "Skrivskyddad åtkomst — ägare och administratörer kan uppdatera AI-policyn.",
+      "read_only_notice": "Skrivskyddad åtkomst — att uppdatera AI-policyn kräver behörighet för organisationsinställningar.",
       "your_model_profiles": "Dina modellprofiler",
       "your_model_profiles_desc": "Anpassade kombinationer av modell + finjustering sparade för återanvändning. Alla profiler som sparas här visas även i modellrullgardinsmenyn i Snabbinställning ovan. Använd detta för att fästa en modell med specifika inställningar för temperatur / tokens / resonemangsansträngning, eller för att prova en modell som inte finns i den inbyggda katalogen.",
       "create_profile": "Skapa profil",
@@ -2811,6 +2814,7 @@
     "loading_modules": "Läser in moduler...",
     "no_modules_filter": "Inga moduler matchar det här filtret.",
     "no_modules_empty": "Inga moduler ännu. Skapa en för att gruppera relaterat arbete.",
+    "no_modules_empty_readonly": "Inga moduler har skapats för det här projektet ännu.",
     "create_module": "Skapa modul",
     "module_dialog_desc": "Gruppera relaterat arbete i ett funktionsområde eller miniprojekt.",
     "module_name_placeholder": "t.ex. Autentisering, Fakturering, Introduktion",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "Inga uppdateringar ännu.",
     "initiative_detail_anonymous": "Anonym",
     "initiative_detail_blockers_label": "Hinder:",
-    "initiative_detail_next_label": "Nästa:"
+    "initiative_detail_next_label": "Nästa:",
+    "initiative_detail_error_load": "Det gick inte att läsa in initiativet."
   },
   "pagesProjects": {
     "metaTitle": "Projekt | TaskNebula",
@@ -4029,6 +4034,7 @@
     "descriptionPlaceholder": "Kort projektbeskrivning",
     "cancel": "Avbryt",
     "creating": "Skapar...",
+    "createProjectFailed": "Projektet kunde inte skapas. Kontrollera uppgifterna och försök igen.",
     "breadcrumb": "Brödsmula",
     "sections": "Projektavsnitt",
     "tabViews": "Vyer",
@@ -4101,7 +4107,7 @@
     "completeSprintTooltip": "Slutför den här sprinten. Ofullständiga ärenden flyttas till backloggen.",
     "sprintBurndown": "Sprint-burndown",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
+    "projectInviteRequiredDescription": "Be en administratör bjuda in dig till ett projekt eller ge dig behörighet att skapa projekt."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4663,7 +4669,7 @@
       "removeProject": "Ta bort {name}",
       "projectRole": "Projektroll",
       "sendInvitation": "Skicka inbjudan",
-      "viewOnly": "Endast visningsåtkomst. Endast ägare och administratörer kan hantera medlemmar.",
+      "viewOnly": "Endast visning. Medlemshantering kräver relevanta medlemsbehörigheter.",
       "noMembers": "Inga medlemmar ännu.",
       "inviteFirst": "Bjud in din första medlem",
       "invited": "Inbjuden",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "Detaljer",
       "detailsHeading": "Arbetsytans detaljer",
       "detailsSubtitle": "Namn, domän och varumärkesinformation som används i hela arbetsytan.",
-      "manageRestricted": "Endast ägare och administratörer kan uppdatera organisationsinställningar.",
+      "manageRestricted": "Att uppdatera organisationsinställningar kräver behörighet för organisationsinställningar.",
       "logo": "Logotyp",
       "slug": "Arbetsytans slug",
       "slugHint": "Superadministratörer kan ändra den.",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "Riskzon",
       "dangerSubtitle": "Tar permanent bort den här arbetsytan och allt under den. Ägaråtkomst krävs.",
       "cannotRestore": "Borttagna organisationer kan inte återställas.",
-      "ownerOnly": "Endast ägare",
+      "ownerOnly": "Raderingsbehörighet krävs",
       "plan": {
         "free": "Gratis",
         "starter": "Starter",

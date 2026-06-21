@@ -22,11 +22,8 @@ import {
   organizations,
 } from '@tasknebula/db';
 import { auth } from '@/auth';
-import {
-  getRedisClient,
-  ensureRedisConnection,
-  isRedisConfigured,
-} from '@/lib/server/redis';
+import { resolveProjectAccess } from '@/lib/auth/project-access';
+import { getRedisClient, ensureRedisConnection, isRedisConfigured } from '@/lib/server/redis';
 import { normalizeWorkspaceAgentSettings } from '@/lib/agents/config';
 import { getSystemAgentControlSettingsFromDb } from '@/lib/agents/system';
 import { resolveProviderApiKeyFromSettings } from '@/lib/agents/credentials';
@@ -43,14 +40,7 @@ const SUPPORTED_METRICS = new Set([
   'change-failure-rate',
 ]);
 
-const SUPPORTED_PERIODS = new Set([
-  '7d',
-  '14d',
-  '30d',
-  '90d',
-  'current-sprint',
-  '6-sprints',
-]);
+const SUPPORTED_PERIODS = new Set(['7d', '14d', '30d', '90d', 'current-sprint', '6-sprints']);
 
 const TTL_SECONDS = 15 * 60;
 
@@ -92,14 +82,7 @@ async function pullMetricSnapshot(
 ): Promise<{ summary: string; series: number[] }> {
   // Approximate window in days. We don't try to be exact — the LLM just
   // needs a flavor of recent shape.
-  const days =
-    period === '7d'
-      ? 7
-      : period === '14d'
-        ? 14
-        : period === '90d'
-          ? 90
-          : 30;
+  const days = period === '7d' ? 7 : period === '14d' ? 14 : period === '90d' ? 90 : 30;
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
   if (metric === 'throughput' && scopeId) {
@@ -136,9 +119,7 @@ async function pullMetricSnapshot(
       .from(sprints)
       .leftJoin(issues, eq(issues.sprintId, sprints.id))
       .leftJoin(workflowStatuses, eq(issues.statusId, workflowStatuses.id))
-      .where(
-        and(eq(sprints.projectId, scopeId), eq(sprints.status, 'completed'))
-      )
+      .where(and(eq(sprints.projectId, scopeId), eq(sprints.status, 'completed')))
       .groupBy(sprints.id, sprints.name, sprints.startDate)
       .orderBy(sprints.startDate);
 
@@ -206,11 +187,7 @@ async function llmSummary(
 
   const system = await getSystemAgentControlSettingsFromDb();
   const platformStore = system.providerCredentials ?? null;
-  const apiKey = resolveProviderApiKeyFromSettings(
-    orgSettings,
-    'anthropic',
-    platformStore
-  );
+  const apiKey = resolveProviderApiKeyFromSettings(orgSettings, 'anthropic', platformStore);
   if (!apiKey) return null;
 
   const model = workspace.model?.trim() || 'claude-haiku-4-5';
@@ -275,9 +252,20 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // If an organizationId was supplied, make sure the caller is a member of it.
-  // This is the gate for hitting any LLM credentials.
+  let safeScopeId: string | null = null;
   let safeOrgId: string | null = null;
+
+  if (scopeId) {
+    const access = await resolveProjectAccess(session.user.id, scopeId);
+    if (!access.project || !access.canRead) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+    safeScopeId = access.project.id;
+    safeOrgId = access.project.organizationId;
+  }
+
+  // If an organizationId was supplied without a scoped project, make sure the
+  // caller is an active member before using workspace-level LLM credentials.
   if (organizationId) {
     const [member] = await db
       .select({ id: organizationMembers.id })
@@ -285,20 +273,21 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(organizationMembers.userId, session.user.id),
-          eq(organizationMembers.organizationId, organizationId)
+          eq(organizationMembers.organizationId, organizationId),
+          eq(organizationMembers.status, 'active')
         )
       )
       .limit(1);
-    if (member) safeOrgId = organizationId;
+    if (member && !safeOrgId) safeOrgId = organizationId;
   }
 
-  const key = cacheKey(metric, period, scopeId);
+  const key = cacheKey(metric, period, safeScopeId);
   const cached = await readCache(key);
   if (cached) {
     return NextResponse.json({ summary: cached, cached: true });
   }
 
-  const snapshot = await pullMetricSnapshot(metric, period, scopeId);
+  const snapshot = await pullMetricSnapshot(metric, period, safeScopeId);
 
   let summary: string | null = null;
   if (safeOrgId) {

@@ -79,10 +79,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const organizationId = searchParams.get('organizationId');
   if (!organizationId) {
-    return NextResponse.json(
-      { error: 'organizationId is required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
   }
 
   const [member] = await db
@@ -91,7 +88,8 @@ export async function GET(request: NextRequest) {
     .where(
       and(
         eq(organizationMembers.userId, session.user.id),
-        eq(organizationMembers.organizationId, organizationId)
+        eq(organizationMembers.organizationId, organizationId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
@@ -126,7 +124,11 @@ export async function GET(request: NextRequest) {
       reopened: sql<number>`COUNT(DISTINCT CASE WHEN ${issueActivities.field} = 'statusId' THEN ${issueActivities.issueId} END)`,
     })
     .from(issueActivities)
-    .where(gte(issueActivities.createdAt, since30));
+    .innerJoin(issues, eq(issueActivities.issueId, issues.id))
+    .innerJoin(projects, eq(issues.projectId, projects.id))
+    .where(
+      and(eq(projects.organizationId, organizationId), gte(issueActivities.createdAt, since30))
+    );
   const reopened = Number(reworkRow[0]?.reopened ?? 0);
 
   const closedRow = await db

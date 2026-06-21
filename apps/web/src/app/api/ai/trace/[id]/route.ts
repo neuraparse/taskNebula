@@ -11,6 +11,7 @@ import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 import { agentRuns, db } from '@tasknebula/db';
 import { auth } from '@/auth';
+import { isActiveOrganizationMember } from '@/lib/auth/access-control';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +41,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const [run] = await db.select().from(agentRuns).where(eq(agentRuns.id, id)).limit(1);
 
   if (!run) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  if (!(await isActiveOrganizationMember(session.user.id, run.organizationId))) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 

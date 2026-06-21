@@ -15,6 +15,7 @@ type FilterChip = 'all' | 'in_progress' | 'completed' | 'backlog';
 
 interface ModulesGridProps {
   projectId: string;
+  canManageModules?: boolean;
 }
 
 const VIEW_OPTIONS: { value: ViewMode; labelKey: string; icon: typeof LayoutGrid }[] = [
@@ -41,7 +42,7 @@ function formatTargetDate(iso?: string | null): string | null {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-export function ModulesGrid({ projectId }: ModulesGridProps) {
+export function ModulesGrid({ projectId, canManageModules = false }: ModulesGridProps) {
   const { modules, isLoading, createModule } = useModules(projectId);
   const t = useTranslations('planning');
   const [view, setView] = useState<ViewMode>('gallery');
@@ -106,10 +107,12 @@ export function ModulesGrid({ projectId }: ModulesGridProps) {
           </div>
         </div>
 
-        <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => setCreateOpen(true)}>
-          <Plus className="h-3.5 w-3.5" />
-          {t('new_module')}
-        </Button>
+        {canManageModules ? (
+          <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => setCreateOpen(true)}>
+            <Plus className="h-3.5 w-3.5" />
+            {t('new_module')}
+          </Button>
+        ) : null}
       </div>
 
       {/* Body */}
@@ -118,7 +121,11 @@ export function ModulesGrid({ projectId }: ModulesGridProps) {
           {t('loading_modules')}
         </div>
       ) : filtered.length === 0 ? (
-        <EmptyState onCreate={() => setCreateOpen(true)} hasAny={modules.length > 0} />
+        <EmptyState
+          onCreate={() => setCreateOpen(true)}
+          hasAny={modules.length > 0}
+          canManageModules={canManageModules}
+        />
       ) : view === 'gallery' ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((m) => (
@@ -129,29 +136,41 @@ export function ModulesGrid({ projectId }: ModulesGridProps) {
         <ModulesList projectId={projectId} modules={filtered} />
       )}
 
-      <ModuleCreateDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        createModule={createModule}
-      />
+      {canManageModules ? (
+        <ModuleCreateDialog
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          createModule={createModule}
+        />
+      ) : null}
     </div>
   );
 }
 
-function EmptyState({ onCreate, hasAny }: { onCreate: () => void; hasAny: boolean }) {
+function EmptyState({
+  onCreate,
+  hasAny,
+  canManageModules,
+}: {
+  onCreate: () => void;
+  hasAny: boolean;
+  canManageModules: boolean;
+}) {
   const t = useTranslations('planning');
   return (
     <div className="border-border mx-auto flex max-w-md flex-col items-center gap-3 rounded-xl border border-dashed p-8 text-center">
       <Layers className="text-muted-foreground h-8 w-8" />
       <p className="text-muted-foreground text-sm">
-        {hasAny ? t('no_modules_filter') : t('no_modules_empty')}
+        {hasAny
+          ? t('no_modules_filter')
+          : t(canManageModules ? 'no_modules_empty' : 'no_modules_empty_readonly')}
       </p>
-      {!hasAny && (
+      {!hasAny && canManageModules ? (
         <Button size="sm" variant="outline" onClick={onCreate}>
           <Plus className="mr-1.5 h-3.5 w-3.5" />
           {t('create_module')}
         </Button>
-      )}
+      ) : null}
     </div>
   );
 }

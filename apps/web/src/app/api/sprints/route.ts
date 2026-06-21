@@ -8,6 +8,9 @@ import {
   projectMembers,
   organizationMembers,
   users,
+  ROLE_DEFAULT_PERMISSIONS,
+  hasPermission as roleHasPermission,
+  type ProjectRole,
 } from '@tasknebula/db';
 import { eq, and, desc, count, inArray } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
@@ -51,13 +54,14 @@ async function checkSprintPermission(
     .where(
       and(
         eq(organizationMembers.userId, userId),
-        eq(organizationMembers.organizationId, project.organizationId)
+        eq(organizationMembers.organizationId, project.organizationId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
 
-  // Org owners have full access
-  if (orgMember?.role === 'owner') {
+  // Org roles with project:manage have full access
+  if (roleHasPermission(orgMember?.role || '', 'project:manage')) {
     return { allowed: true };
   }
 
@@ -72,10 +76,6 @@ async function checkSprintPermission(
     .limit(1);
 
   if (!projectMember) {
-    // Org admins can view but not manage
-    if (orgMember?.role === 'admin' && action === 'view') {
-      return { allowed: true };
-    }
     if (!orgMember) {
       // Cross-org probe: report the project as not found so its existence
       // is not leaked to other tenants.
@@ -84,10 +84,11 @@ async function checkSprintPermission(
     return { allowed: false, reason: 'Not a project member' };
   }
 
-  // Check role-based permissions
-  const sprintManageRoles = ['product_owner', 'scrum_master', 'tech_lead'];
-  const canManage =
-    sprintManageRoles.includes(projectMember.role) || projectMember.canManageSprints;
+  // Check role defaults and explicit overrides
+  const roleDefaults =
+    ROLE_DEFAULT_PERMISSIONS[projectMember.role as ProjectRole] || ROLE_DEFAULT_PERMISSIONS.viewer;
+  const toBool = (val: string | null | undefined): boolean => val === 'true';
+  const canManage = toBool(projectMember.canManageSprints) || roleDefaults.canManageSprints;
 
   if (action === 'view') {
     return { allowed: true };

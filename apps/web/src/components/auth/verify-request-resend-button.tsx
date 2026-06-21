@@ -51,12 +51,12 @@ export function VerifyRequestResendButton({ email }: VerifyRequestResendButtonPr
   }
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col gap-2">
       <button
         type="button"
         onClick={handleResend}
         disabled={status === 'sending' || status === 'sent'}
-        className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-60"
+        className="auth-carbon-primary inline-flex items-center justify-center px-4 text-sm disabled:pointer-events-none disabled:opacity-60"
       >
         {status === 'sending'
           ? t('sending_ellipsis')
@@ -64,9 +64,9 @@ export function VerifyRequestResendButton({ email }: VerifyRequestResendButtonPr
             ? t('email_sent')
             : t('resend_verification_email')}
       </button>
-      {status === 'error' && error ? <p className="text-destructive text-xs">{error}</p> : null}
+      {status === 'error' && error ? <p className="text-xs text-[#a2191f]">{error}</p> : null}
       {status === 'sent' ? (
-        <p className="text-muted-foreground text-xs">{t('check_inbox_new_link')}</p>
+        <p className="text-xs text-[#525252]">{t('check_inbox_new_link')}</p>
       ) : null}
     </div>
   );

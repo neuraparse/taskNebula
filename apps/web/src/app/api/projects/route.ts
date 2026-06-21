@@ -11,6 +11,7 @@ import {
   teams,
   organizations,
   ROLE_DEFAULT_PERMISSIONS,
+  hasPermission as roleHasPermission,
   type ProjectRole,
 } from '@tasknebula/db';
 import { eq, and, inArray, desc } from 'drizzle-orm';
@@ -19,6 +20,7 @@ import { publishEvent } from '@/lib/realtime/events';
 import { notifyProjectCreated } from '@/lib/notifications/project-events';
 import { runAutomations } from '@/lib/automation/evaluator';
 import { withValidation } from '@/lib/api-validation';
+import { hasPermission } from '@/lib/auth/permissions';
 
 // FEAT-29: replaces ad-hoc `if (!name || !key)` checks with a Zod schema.
 // `key` is uppercased downstream; we accept any case here and let the
@@ -39,7 +41,7 @@ const createProjectSchema = z.object({
 export async function GET(request: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 });
   }
 
   try {
@@ -68,16 +70,19 @@ export async function GET(request: NextRequest) {
         )
       );
 
-    if (userOrgMemberships.length === 0 && !user?.isSuperAdmin) {
-      return NextResponse.json([]);
-    }
-
     let orgIds = userOrgMemberships.map((m) => m.organizationId);
     if (requestedOrganizationId) {
       if (!user?.isSuperAdmin && !orgIds.includes(requestedOrganizationId)) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        return NextResponse.json(
+          { error: 'Forbidden', code: 'ORGANIZATION_FORBIDDEN' },
+          { status: 403 }
+        );
       }
       orgIds = [requestedOrganizationId];
+    }
+
+    if (userOrgMemberships.length === 0 && !user?.isSuperAdmin) {
+      return NextResponse.json([]);
     }
 
     const teamFilter = requestedTeamId ? eq(projects.teamId, requestedTeamId) : undefined;
@@ -153,15 +158,15 @@ export async function GET(request: NextRequest) {
       : userOrgMemberships;
 
     const adminOrgIds = scopedMemberships
-      .filter((m) => m.role === 'owner' || m.role === 'admin')
+      .filter((m) => roleHasPermission(m.role || '', 'project:manage'))
       .map((m) => m.organizationId);
     const memberOrgIds = scopedMemberships
-      .filter((m) => m.role !== 'owner' && m.role !== 'admin')
+      .filter((m) => !roleHasPermission(m.role || '', 'project:manage'))
       .map((m) => m.organizationId);
 
     const visibleProjects: ProjectListRow[] = [];
 
-    // Org owners/admins see every project only inside the orgs where they hold that role.
+    // Org roles with project:manage see every project only inside those orgs.
     visibleProjects.push(...(await selectProjectsForOrgIds(adminOrgIds)));
 
     // Regular organization users only see projects they are explicitly members of.
@@ -188,7 +193,7 @@ export async function GET(request: NextRequest) {
 export const POST = withValidation({ body: createProjectSchema })(async (request, { body }) => {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 });
   }
 
   try {
@@ -196,12 +201,10 @@ export const POST = withValidation({ body: createProjectSchema })(async (request
 
     // Get user's first organization if not specified
     let orgId = organizationId;
-    let organizationRole: string | null = null;
     if (!orgId) {
       const [membership] = await db
         .select({
           organizationId: organizationMembers.organizationId,
-          role: organizationMembers.role,
           status: organizationMembers.status,
         })
         .from(organizationMembers)
@@ -215,42 +218,23 @@ export const POST = withValidation({ body: createProjectSchema })(async (request
 
       if (!membership) {
         return NextResponse.json(
-          { error: 'You must be a member of an organization to create a project' },
-          { status: 400 }
+          {
+            error: 'You must be a member of an organization to create a project',
+            code: 'ORGANIZATION_MEMBERSHIP_REQUIRED',
+          },
+          { status: 403 }
         );
       }
       orgId = membership.organizationId;
-      organizationRole = membership.role;
-    } else {
-      const [membership] = await db
-        .select({
-          role: organizationMembers.role,
-          status: organizationMembers.status,
-        })
-        .from(organizationMembers)
-        .where(
-          and(
-            eq(organizationMembers.userId, session.user.id),
-            eq(organizationMembers.organizationId, orgId),
-            eq(organizationMembers.status, 'active')
-          )
-        )
-        .limit(1);
-
-      organizationRole = membership?.role ?? null;
     }
 
-    const [actor] = await db
-      .select({ isSuperAdmin: users.isSuperAdmin })
-      .from(users)
-      .where(eq(users.id, session.user.id))
-      .limit(1);
-
-    const canCreateProject =
-      actor?.isSuperAdmin || organizationRole === 'owner' || organizationRole === 'admin';
+    const canCreateProject = await hasPermission(orgId, 'project:create');
     if (!canCreateProject) {
       return NextResponse.json(
-        { error: 'You need an owner or admin invite to create projects in this organization' },
+        {
+          error: 'You need project creation permission in this organization',
+          code: 'PROJECT_CREATE_FORBIDDEN',
+        },
         { status: 403 }
       );
     }
@@ -268,7 +252,10 @@ export const POST = withValidation({ body: createProjectSchema })(async (request
 
       if (!team || team.organizationId !== orgId) {
         return NextResponse.json(
-          { error: 'Selected teamspace does not belong to this organization' },
+          {
+            error: 'Selected teamspace does not belong to this organization',
+            code: 'TEAMSPACE_ORGANIZATION_MISMATCH',
+          },
           { status: 400 }
         );
       }
@@ -283,7 +270,10 @@ export const POST = withValidation({ body: createProjectSchema })(async (request
 
     if (existingProject) {
       return NextResponse.json(
-        { error: 'Project key already exists in this organization' },
+        {
+          error: 'Project key already exists in this organization',
+          code: 'PROJECT_KEY_EXISTS',
+        },
         { status: 400 }
       );
     }

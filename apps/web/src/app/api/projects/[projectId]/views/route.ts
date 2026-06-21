@@ -125,7 +125,8 @@ async function ensureProjectAccess(projectIdOrKey: string, userId: string) {
     .where(
       and(
         eq(organizationMembers.organizationId, project.organizationId),
-        eq(organizationMembers.userId, userId)
+        eq(organizationMembers.userId, userId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
@@ -168,7 +169,11 @@ export async function GET(
           : eq(savedFilters.userId, session.user.id)
       )
     )
-    .orderBy(desc(savedFilters.isStarred), desc(savedFilters.lastUsedAt), desc(savedFilters.updatedAt));
+    .orderBy(
+      desc(savedFilters.isStarred),
+      desc(savedFilters.lastUsedAt),
+      desc(savedFilters.updatedAt)
+    );
 
   const views = rawViews
     .map((view) => serializeProjectView(view, session.user.id))
@@ -284,7 +289,10 @@ export async function POST(
       throw new Error('Failed to create view');
     }
 
-    return NextResponse.json({ view: serializeProjectView(view, session.user.id) }, { status: 201 });
+    return NextResponse.json(
+      { view: serializeProjectView(view, session.user.id) },
+      { status: 201 }
+    );
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

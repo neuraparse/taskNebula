@@ -1,5 +1,7 @@
 import { Metadata } from 'next';
 import { Suspense } from 'react';
+import { WorkspaceRequiredNotice } from '@/components/layout/workspace-required-notice';
+import { currentUserHasWorkspaceAccess } from '@/lib/auth/workspace-access';
 import { DashboardClient } from './dashboard-client';
 import { DashboardLoadingShell } from './dashboard-loading-shell';
 
@@ -14,7 +16,13 @@ export const metadata: Metadata = {
 // statically prerendered.
 // export const experimental_ppr = true;
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const hasWorkspaceAccess = await currentUserHasWorkspaceAccess();
+
+  if (!hasWorkspaceAccess) {
+    return <WorkspaceRequiredNotice />;
+  }
+
   return (
     <Suspense fallback={<DashboardLoadingShell />}>
       <DashboardClient />

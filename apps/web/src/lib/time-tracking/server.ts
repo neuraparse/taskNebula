@@ -19,6 +19,7 @@ import {
   projects,
   timeEntries,
   users,
+  hasPermission as roleHasPermission,
 } from '@tasknebula/db';
 
 export type IssueAccessIssue = {
@@ -72,7 +73,7 @@ export async function assertIssueAccess(
     .limit(1);
   if (u?.isSuperAdmin) return { ok: true, issue };
 
-  // Org owner / admin shortcut.
+  // Org-wide project managers can view the issue.
   const [orgMember] = await db
     .select({ role: organizationMembers.role })
     .from(organizationMembers)
@@ -84,7 +85,7 @@ export async function assertIssueAccess(
       )
     )
     .limit(1);
-  if (orgMember?.role === 'owner' || orgMember?.role === 'admin') {
+  if (roleHasPermission(orgMember?.role || '', 'project:manage')) {
     return { ok: true, issue };
   }
 

@@ -142,7 +142,7 @@ export async function PATCH(
     const canManage = await hasPermission(organizationId, 'org:settings');
     if (!canManage) {
       return NextResponse.json(
-        { error: 'Insufficient permissions. Only owners and admins can manage teamspaces.' },
+        { error: 'Managing teamspaces requires org:settings permission.' },
         { status: 403 }
       );
     }
@@ -224,7 +224,7 @@ export async function DELETE(
     const canManage = await hasPermission(organizationId, 'org:settings');
     if (!canManage) {
       return NextResponse.json(
-        { error: 'Insufficient permissions. Only owners and admins can manage teamspaces.' },
+        { error: 'Managing teamspaces requires org:settings permission.' },
         { status: 403 }
       );
     }

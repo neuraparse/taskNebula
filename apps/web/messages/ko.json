@@ -43,7 +43,8 @@
     "realtime_health": "실시간 상태",
     "audit_logs": "감사 로그",
     "system": "시스템",
-    "updates": "업데이트"
+    "updates": "업데이트",
+    "ai_transparency": "AI 투명성"
   },
   "actions": {
     "create_issue": "이슈 만들기",
@@ -102,6 +103,7 @@
     "skipToContent": "본문으로 건너뛰기"
   },
   "settings": {
+    "error_no_permission": "이 설정을 관리할 권한이 없습니다.",
     "labels": {
       "kicker": "레이블",
       "title": "레이블",
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "이슈를 불러오지 못했습니다",
       "notFound": "이슈를 찾을 수 없습니다",
-      "notFoundHint": "찾으시는 이슈가 존재하지 않습니다."
+      "notFoundHint": "찾으시는 이슈가 존재하지 않습니다.",
+      "loadFailedHint": "페이지를 새로고침하거나 잠시 후 다시 시도하세요."
     }
   },
   "adminUpdates": {
@@ -1480,8 +1483,8 @@
     "planning_kicker": "계획",
     "teamspaces_heading": "팀스페이스",
     "teamspaces_subtitle": "조직을 나누지 않고 개별 프로젝트 위에 두는 계획 레인입니다.",
-    "owner_admin_only": "소유자 또는 관리자 전용",
-    "browse_only_notice": "보기 전용 — 소유자와 관리자만 구조를 변경할 수 있습니다.",
+    "owner_admin_only": "권한 필요",
+    "browse_only_notice": "보기 전용 — 구조를 변경하려면 조직 설정 권한이 필요합니다.",
     "loading_teamspaces": "팀스페이스 불러오는 중…",
     "manage_members": "멤버 관리",
     "members_label": "멤버",
@@ -2104,7 +2107,7 @@
       "none": "없음",
       "updated": "업데이트됨",
       "server_managed": "서버 관리",
-      "read_only_notice": "읽기 전용 액세스 — 소유자와 관리자만 AI 정책을 업데이트할 수 있습니다.",
+      "read_only_notice": "읽기 전용 액세스 — AI 정책을 업데이트하려면 조직 설정 권한이 필요합니다.",
       "your_model_profiles": "내 모델 프로필",
       "your_model_profiles_desc": "재사용을 위해 저장된 사용자 지정 모델 + 튜닝 조합입니다. 여기에 저장된 프로필은 위의 빠른 설정 모델 드롭다운에도 표시됩니다. 특정 온도/토큰/추론 노력 설정으로 모델을 고정하거나 내장 카탈로그에 없는 모델을 시도할 때 사용하세요.",
       "create_profile": "프로필 생성",
@@ -2772,6 +2775,7 @@
     "loading_modules": "모듈 불러오는 중...",
     "no_modules_filter": "이 필터와 일치하는 모듈이 없습니다.",
     "no_modules_empty": "아직 모듈이 없습니다. 관련 작업을 그룹화하려면 하나 만드세요.",
+    "no_modules_empty_readonly": "이 프로젝트에는 아직 생성된 모듈이 없습니다.",
     "create_module": "모듈 만들기",
     "module_dialog_desc": "관련 작업을 기능 영역이나 미니 프로젝트로 그룹화합니다.",
     "module_name_placeholder": "예: 인증, 결제, 온보딩",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "아직 업데이트가 없습니다.",
     "initiative_detail_anonymous": "익명",
     "initiative_detail_blockers_label": "차단 요소:",
-    "initiative_detail_next_label": "다음:"
+    "initiative_detail_next_label": "다음:",
+    "initiative_detail_error_load": "이니셔티브를 불러오지 못했습니다."
   },
   "pagesProjects": {
     "metaTitle": "프로젝트 | TaskNebula",
@@ -4029,6 +4034,7 @@
     "descriptionPlaceholder": "간단한 프로젝트 설명",
     "cancel": "취소",
     "creating": "생성 중...",
+    "createProjectFailed": "프로젝트를 만들 수 없습니다. 세부 정보를 확인한 후 다시 시도하세요.",
     "breadcrumb": "탐색 경로",
     "sections": "프로젝트 섹션",
     "tabViews": "보기",
@@ -4101,7 +4107,7 @@
     "completeSprintTooltip": "이 스프린트를 완료합니다. 미완료 이슈는 백로그로 이동됩니다.",
     "sprintBurndown": "스프린트 번다운",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
+    "projectInviteRequiredDescription": "관리자에게 프로젝트 초대 또는 프로젝트 생성 권한 부여를 요청하세요."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4663,7 +4669,7 @@
       "removeProject": "{name} 제거",
       "projectRole": "프로젝트 역할",
       "sendInvitation": "초대장 보내기",
-      "viewOnly": "보기 전용 액세스입니다. 소유자와 관리자만 구성원을 관리할 수 있습니다.",
+      "viewOnly": "보기 전용 액세스입니다. 멤버 관리는 관련 멤버 권한이 필요합니다.",
       "noMembers": "아직 구성원이 없습니다.",
       "inviteFirst": "첫 구성원 초대하기",
       "invited": "초대됨",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "세부 정보",
       "detailsHeading": "워크스페이스 세부 정보",
       "detailsSubtitle": "워크스페이스 전반에서 사용되는 이름, 도메인, 브랜드 정보.",
-      "manageRestricted": "소유자와 관리자만 조직 설정을 업데이트할 수 있습니다.",
+      "manageRestricted": "조직 설정을 업데이트하려면 조직 설정 권한이 필요합니다.",
       "logo": "로고",
       "slug": "워크스페이스 슬러그",
       "slugHint": "슈퍼 관리자가 변경할 수 있습니다.",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "위험 구역",
       "dangerSubtitle": "이 워크스페이스와 그 아래의 모든 것을 영구적으로 제거합니다. 소유자 권한이 필요합니다.",
       "cannotRestore": "삭제된 조직은 복원할 수 없습니다.",
-      "ownerOnly": "소유자 전용",
+      "ownerOnly": "삭제 권한 필요",
       "plan": {
         "free": "무료",
         "starter": "스타터",

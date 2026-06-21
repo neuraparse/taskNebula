@@ -7,6 +7,7 @@ import {
   and,
   ROLE_DEFAULT_PERMISSIONS,
   PERMISSION_KEYS,
+  hasPermission as roleHasPermission,
   type ProjectRole,
   type PermissionKey,
 } from '@tasknebula/db';
@@ -47,7 +48,7 @@ async function canChangeRolesAndPermissions(userId: string, projectId: string): 
     ),
     columns: { role: true },
   });
-  if (orgMember?.role === 'owner') return true;
+  if (roleHasPermission(orgMember?.role || '', 'project:manage')) return true;
 
   // Check project role - only product_owner can change roles
   const projectMember = await db.query.projectMembers.findFirst({
@@ -84,7 +85,7 @@ async function canRemoveProjectMembers(userId: string, projectId: string): Promi
     ),
     columns: { role: true },
   });
-  if (orgMember?.role === 'owner' || orgMember?.role === 'admin') return true;
+  if (roleHasPermission(orgMember?.role || '', 'project:manage')) return true;
 
   const projectMember = await db.query.projectMembers.findFirst({
     where: and(

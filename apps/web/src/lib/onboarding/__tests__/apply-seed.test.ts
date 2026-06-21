@@ -55,6 +55,11 @@ jest.mock('@tasknebula/db', () => ({
   ROLE_DEFAULT_PERMISSIONS: {
     product_owner: { canBrowseProject: true, canAdministerProject: true },
   },
+  hasPermission: (role: string, permission: string, isSuperAdmin = false) => {
+    if (isSuperAdmin) return true;
+    if (permission !== 'org:settings') return false;
+    return role === 'owner' || role === 'admin';
+  },
 }));
 
 jest.mock('drizzle-orm', () => ({
@@ -67,10 +72,7 @@ jest.mock('@paralleldrive/cuid2', () => {
   return { createId: () => `id_${++counter}` };
 });
 
-import {
-  applyWorkspaceSeed,
-  ApplySeedError,
-} from '../apply-seed';
+import { applyWorkspaceSeed, ApplySeedError } from '../apply-seed';
 import type { WorkspaceSeed } from '../bootstrapper';
 
 const baseSeed: WorkspaceSeed = {
@@ -82,9 +84,7 @@ const baseSeed: WorkspaceSeed = {
     { name: 'feature', color: '#3b82f6' },
   ],
   priorities: ['high', 'medium', 'low'],
-  cycles: [
-    { name: 'Cycle 1', startDate: '2026-05-14', endDate: '2026-05-27' },
-  ],
+  cycles: [{ name: 'Cycle 1', startDate: '2026-05-14', endDate: '2026-05-27' }],
   issues: [
     {
       title: 'Kickoff',
@@ -237,9 +237,7 @@ describe('applyWorkspaceSeed transactional behavior', () => {
 
     // Mimic drizzle: an error inside the callback triggers ROLLBACK and
     // re-throws. Awaiting the callback is enough to surface the rejection.
-    dbTransactionMock.mockImplementation(
-      async (cb: (tx: unknown) => Promise<unknown>) => cb(tx)
-    );
+    dbTransactionMock.mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) => cb(tx));
 
     await expect(
       applyWorkspaceSeed({

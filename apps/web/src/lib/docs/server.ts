@@ -18,6 +18,7 @@ import {
   projects,
   sql,
   users,
+  hasPermission as roleHasPermission,
   type ProjectRole,
 } from '@tasknebula/db';
 import {
@@ -112,7 +113,7 @@ export function getOrgDocumentPermissions(
   role: OrgDocumentRole,
   isSuperAdmin = false
 ): DocumentPermissionSet {
-  if (isSuperAdmin || role === 'owner' || role === 'admin') {
+  if (roleHasPermission(role || '', 'org:settings', isSuperAdmin)) {
     return { canBrowse: true, canCreate: true, canEdit: true, canDelete: true };
   }
 
@@ -133,6 +134,32 @@ export async function getProjectDocumentPermissions(
   isSuperAdmin = false
 ): Promise<DocumentPermissionSet> {
   if (isSuperAdmin) {
+    return { canBrowse: true, canCreate: true, canEdit: true, canDelete: true };
+  }
+
+  const [project] = await db
+    .select({ organizationId: projects.organizationId })
+    .from(projects)
+    .where(eq(projects.id, projectId))
+    .limit(1);
+
+  if (!project) {
+    return { canBrowse: false, canCreate: false, canEdit: false, canDelete: false };
+  }
+
+  const [orgMember] = await db
+    .select({ role: organizationMembers.role })
+    .from(organizationMembers)
+    .where(
+      and(
+        eq(organizationMembers.userId, userId),
+        eq(organizationMembers.organizationId, project.organizationId),
+        eq(organizationMembers.status, 'active')
+      )
+    )
+    .limit(1);
+
+  if (roleHasPermission(orgMember?.role || '', 'project:manage')) {
     return { canBrowse: true, canCreate: true, canEdit: true, canDelete: true };
   }
 
@@ -164,6 +191,7 @@ export async function ensureOrganizationDocumentSpace(
   organizationId: string,
   userId: string
 ): Promise<DocumentSpaceRecord | null> {
+  const defaultSlug = 'team-wiki';
   const [existing] = await db
     .select()
     .from(documentSpaces)
@@ -188,15 +216,34 @@ export async function ensureOrganizationDocumentSpace(
       projectId: null,
       scope: 'organization',
       name: 'Team Wiki',
-      slug: 'team-wiki',
+      slug: defaultSlug,
       description: 'Shared organization knowledge base',
       isDefault: true,
       createdBy: userId,
       updatedBy: userId,
     })
+    .onConflictDoNothing({
+      target: [documentSpaces.organizationId, documentSpaces.scope, documentSpaces.slug],
+    })
     .returning();
 
-  return space ?? null;
+  if (space) {
+    return space;
+  }
+
+  const [conflictingSpace] = await db
+    .select()
+    .from(documentSpaces)
+    .where(
+      and(
+        eq(documentSpaces.organizationId, organizationId),
+        eq(documentSpaces.scope, 'organization'),
+        eq(documentSpaces.slug, defaultSlug)
+      )
+    )
+    .limit(1);
+
+  return conflictingSpace ?? null;
 }
 
 export async function ensureProjectDocumentSpace(
@@ -242,9 +289,28 @@ export async function ensureProjectDocumentSpace(
       createdBy: userId,
       updatedBy: userId,
     })
+    .onConflictDoNothing({
+      target: [documentSpaces.organizationId, documentSpaces.scope, documentSpaces.slug],
+    })
     .returning();
 
-  return space ?? null;
+  if (space) {
+    return space;
+  }
+
+  const [conflictingSpace] = await db
+    .select()
+    .from(documentSpaces)
+    .where(
+      and(
+        eq(documentSpaces.organizationId, project.organizationId),
+        eq(documentSpaces.scope, 'project'),
+        eq(documentSpaces.slug, `${project.key.toLowerCase()}-docs`)
+      )
+    )
+    .limit(1);
+
+  return conflictingSpace ?? null;
 }
 
 export async function listAccessibleDocumentSpaces(

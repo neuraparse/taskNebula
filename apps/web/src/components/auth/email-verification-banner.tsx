@@ -1,5 +1,12 @@
 import { auth } from '@/auth';
-import { db, users, organizationMembers, eq, and } from '@tasknebula/db';
+import {
+  db,
+  users,
+  organizationMembers,
+  eq,
+  and,
+  hasPermission as roleHasPermission,
+} from '@tasknebula/db';
 import { EmailVerificationBannerClient } from './email-verification-banner-client';
 
 /**
@@ -10,7 +17,7 @@ import { EmailVerificationBannerClient } from './email-verification-banner-clien
  *  - user is missing
  *  - user is already verified
  *  - user is a super admin (they bootstrap the system; cannot be locked out by a nag they can't clear)
- *  - user is an organization owner (trusted by definition; their own admin panel can manage verification)
+ *  - user has organization settings permission (their own admin panel can manage verification)
  * Also auto-backfills `emailVerified` for these trusted roles so the banner
  * and any future enforcement stay consistent across the session.
  */
@@ -32,15 +39,18 @@ export async function EmailVerificationBanner() {
   if (!user) return null;
   if (user.emailVerified) return null;
 
-  // Trusted roles: super admin or any organization owner.
+  // Trusted roles: super admin or any active org with settings permission.
   let trusted = user.isSuperAdmin === true;
   if (!trusted) {
-    const [ownerRow] = await db
-      .select({ id: organizationMembers.id })
+    const memberships = await db
+      .select({ role: organizationMembers.role })
       .from(organizationMembers)
-      .where(and(eq(organizationMembers.userId, user.id), eq(organizationMembers.role, 'owner')))
-      .limit(1);
-    trusted = !!ownerRow;
+      .where(
+        and(eq(organizationMembers.userId, user.id), eq(organizationMembers.status, 'active'))
+      );
+    trusted = memberships.some((membership) =>
+      roleHasPermission(membership.role || '', 'org:settings')
+    );
   }
 
   if (trusted) {

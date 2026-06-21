@@ -36,7 +36,10 @@ import {
   organizations,
   projectMembers,
   projects,
+  ROLE_DEFAULT_PERMISSIONS,
+  hasPermission as roleHasPermission,
   users,
+  type ProjectRole,
 } from '@tasknebula/db';
 import { and, isNull } from 'drizzle-orm';
 import { auth } from '@/auth';
@@ -72,22 +75,22 @@ async function callerCanEdit(userId: string, projectId: string): Promise<boolean
     .where(
       and(
         eq(organizationMembers.userId, userId),
-        eq(organizationMembers.organizationId, project.organizationId)
+        eq(organizationMembers.organizationId, project.organizationId),
+        eq(organizationMembers.status, 'active')
       )
     )
     .limit(1);
-  if (orgMember?.role === 'owner' || orgMember?.role === 'admin') return true;
+  if (roleHasPermission(orgMember?.role || '', 'project:manage')) return true;
 
   const [pm] = await db
-    .select({ role: projectMembers.role })
+    .select({ role: projectMembers.role, canEditIssues: projectMembers.canEditIssues })
     .from(projectMembers)
     .where(and(eq(projectMembers.userId, userId), eq(projectMembers.projectId, projectId)))
     .limit(1);
   if (!pm) return false;
-  // Mirror the "editor-tier" allowlist from /api/issues/[issueId] PATCH.
-  return ['product_owner', 'scrum_master', 'tech_lead', 'developer', 'qa_engineer'].includes(
-    pm.role
-  );
+  const roleDefaults =
+    ROLE_DEFAULT_PERMISSIONS[pm.role as ProjectRole] || ROLE_DEFAULT_PERMISSIONS.viewer;
+  return pm.canEditIssues === 'true' || roleDefaults.canEditIssues;
 }
 
 async function autoApplyConfidenceFor(organizationId: string): Promise<number> {

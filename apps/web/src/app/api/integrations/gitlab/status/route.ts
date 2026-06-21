@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   if (!organizationId) {
     return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
   }
-  if (!(await hasPermission(organizationId, 'org:view'))) {
+  if (!(await hasPermission(organizationId, 'org:settings'))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

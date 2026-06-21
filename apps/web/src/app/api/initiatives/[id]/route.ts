@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, initiatives, initiativeProjects, organizationMembers, projects } from '@tasknebula/db';
+import { db, initiatives, initiativeProjects, projects } from '@tasknebula/db';
 import { eq, and, inArray } from 'drizzle-orm';
+import { resolveInitiativeAccess } from '@/lib/initiatives/access';
 import {
   buildInitiativeIndex,
   validateInitiativeDepth,
@@ -9,26 +10,9 @@ import {
 } from '@/lib/initiatives/depth';
 
 async function loadAndAuthorize(initiativeId: string, userId: string) {
-  const [initiative] = await db
-    .select()
-    .from(initiatives)
-    .where(eq(initiatives.id, initiativeId))
-    .limit(1);
-
+  const { initiative, canRead } = await resolveInitiativeAccess(userId, initiativeId);
   if (!initiative) return { error: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
-
-  const [membership] = await db
-    .select()
-    .from(organizationMembers)
-    .where(
-      and(
-        eq(organizationMembers.userId, userId),
-        eq(organizationMembers.organizationId, initiative.workspaceId)
-      )
-    )
-    .limit(1);
-
-  if (!membership) {
+  if (!canRead) {
     return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
   }
   return { initiative };

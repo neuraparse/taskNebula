@@ -86,10 +86,7 @@ export async function POST(request: NextRequest) {
     body = bodySchema.parse(await request.json());
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: err.errors },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid input', details: err.errors }, { status: 400 });
     }
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
@@ -127,7 +124,8 @@ export async function POST(request: NextRequest) {
       .where(
         and(
           eq(organizationMembers.userId, session.user.id),
-          eq(organizationMembers.organizationId, issue.organizationId)
+          eq(organizationMembers.organizationId, issue.organizationId),
+          eq(organizationMembers.status, 'active')
         )
       )
       .limit(1);
@@ -175,10 +173,7 @@ export async function POST(request: NextRequest) {
     .orderBy(desc(issueComments.createdAt))
     .limit(8);
 
-  const { provider, apiKey } = await resolveProviderAndKey(
-    body.provider,
-    issue.organizationId
-  );
+  const { provider, apiKey } = await resolveProviderAndKey(body.provider, issue.organizationId);
   const modelToUse = workspace.model?.trim() || null;
 
   // P1-16: untrusted text fed to the LLM here is the issue description +

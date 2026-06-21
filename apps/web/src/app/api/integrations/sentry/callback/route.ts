@@ -13,10 +13,8 @@ import { and, eq } from 'drizzle-orm';
 import { db, integrationConnections } from '@tasknebula/db';
 import { auth } from '@/auth';
 import { encryptToken } from '@/lib/integrations/token-crypto';
-import {
-  SENTRY_STATE_COOKIE,
-  exchangeSentryCode,
-} from '@/lib/integrations/sentry';
+import { hasPermission } from '@/lib/auth/permissions';
+import { SENTRY_STATE_COOKIE, exchangeSentryCode } from '@/lib/integrations/sentry';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,12 +41,8 @@ function decodeState(raw: string): StatePayload | null {
   return null;
 }
 
-function settingsRedirect(
-  request: NextRequest,
-  params: Record<string, string>
-): NextResponse {
-  const url = new URL('/settings', request.url);
-  url.searchParams.set('tab', 'integrations');
+function settingsRedirect(request: NextRequest, params: Record<string, string>): NextResponse {
+  const url = new URL('/settings/integrations', request.url);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   const response = NextResponse.redirect(url.toString());
   response.cookies.delete(SENTRY_STATE_COOKIE);
@@ -92,6 +86,13 @@ export async function GET(request: NextRequest) {
     });
   }
 
+  if (!(await hasPermission(decoded.o, 'org:settings'))) {
+    return settingsRedirect(request, {
+      integration: 'sentry',
+      error: 'forbidden',
+    });
+  }
+
   let tokenJson;
   try {
     tokenJson = await exchangeSentryCode(code);
@@ -112,13 +113,10 @@ export async function GET(request: NextRequest) {
   }
 
   const accessTokenEnc = encryptToken(tokenJson.access_token);
-  const refreshTokenEnc = tokenJson.refresh_token
-    ? encryptToken(tokenJson.refresh_token)
-    : null;
+  const refreshTokenEnc = tokenJson.refresh_token ? encryptToken(tokenJson.refresh_token) : null;
 
   const externalAccountId = tokenJson.organization?.id || tokenJson.organization?.slug || '';
-  const externalAccountLabel =
-    tokenJson.organization?.name || tokenJson.organization?.slug || '';
+  const externalAccountLabel = tokenJson.organization?.name || tokenJson.organization?.slug || '';
 
   const metadata = {
     tokenType: tokenJson.token_type ?? null,

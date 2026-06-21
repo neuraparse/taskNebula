@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, and, eq, organizationMembers } from '@tasknebula/db';
+import { db, and, eq } from '@tasknebula/db';
 import { integrationConnections } from '@tasknebula/db/src/schema/integration-connections';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,26 +22,12 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const organizationId = searchParams.get('organizationId');
   if (!organizationId) {
-    return NextResponse.json(
-      { error: 'organizationId is required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
   }
 
-  const [member] = await db
-    .select({ id: organizationMembers.id })
-    .from(organizationMembers)
-    .where(
-      and(
-        eq(organizationMembers.userId, session.user.id),
-        eq(organizationMembers.organizationId, organizationId)
-      )
-    )
-    .limit(1);
-
-  if (!member) {
+  if (!(await hasPermission(organizationId, 'org:settings'))) {
     return NextResponse.json(
-      { error: 'You do not have access to this organization.' },
+      { error: 'Viewing integration settings requires organization settings permission.' },
       { status: 403 }
     );
   }

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useIssueConversation } from '@/lib/hooks/use-chat';
 import { MessageSquareText, PhoneCall } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { isApiPermissionError } from '@/lib/client-api-errors';
 
 export function IssueDiscussionCard({
   issueId,
@@ -15,8 +16,14 @@ export function IssueDiscussionCard({
   projectId: string;
 }) {
   const t = useTranslations('collab');
+  const tHome = useTranslations('pagesHome');
   // Realtime hook — not modified.
   const { data, isLoading, error } = useIssueConversation(issueId);
+  const errorMessage = isApiPermissionError(error)
+    ? tHome('toast_access_denied_description')
+    : error instanceof Error
+      ? error.message
+      : t('discussion.unavailable');
 
   return (
     <div className="space-y-3">
@@ -36,7 +43,7 @@ export function IssueDiscussionCard({
       {isLoading ? (
         <p className="text-muted-foreground text-sm">{t('discussion.loading')}</p>
       ) : error ? (
-        <p className="text-muted-foreground text-sm">{error.message}</p>
+        <p className="text-muted-foreground text-sm">{errorMessage}</p>
       ) : data ? (
         <div className="space-y-2">
           {/* Last two messages — compact preview */}

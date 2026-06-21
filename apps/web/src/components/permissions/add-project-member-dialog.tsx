@@ -24,6 +24,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import { isApiPermissionError, throwApiResponseError } from '@/lib/client-api-errors';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { Ban, Check, Copy, Link2, Loader2, Search, UserPlus } from 'lucide-react';
 import type { ProjectRole } from '@/lib/hooks/use-project-permissions';
@@ -94,7 +95,7 @@ export function AddProjectMemberDialog({
     queryFn: async () => {
       if (!currentOrganizationId) return { members: [] as OrgMember[] };
       const res = await fetch(`/api/organizations/${currentOrganizationId}/members?limit=200`);
-      if (!res.ok) throw new Error('Failed to load organization members');
+      if (!res.ok) await throwApiResponseError(res);
       return res.json();
     },
     enabled: !!currentOrganizationId && open,
@@ -108,7 +109,7 @@ export function AddProjectMemberDialog({
     queryKey: ['project-invite-links', projectId],
     queryFn: async () => {
       const res = await fetch(`/api/projects/${projectId}/invite-links`);
-      if (!res.ok) throw new Error('Failed to load project invite links');
+      if (!res.ok) await throwApiResponseError(res);
       return res.json() as Promise<{ links: ProjectInviteLink[] }>;
     },
     enabled: open,
@@ -164,14 +165,13 @@ export function AddProjectMemberDialog({
         body: JSON.stringify({ userId: selectedUserId, role }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.error || 'Failed to add project member');
+        await throwApiResponseError(res);
       }
       toast({ title: t('apm_member_added_title'), description: t('apm_member_added_description') });
       onAdded?.();
       handleClose(false);
     } catch (error) {
-      const msg = error instanceof Error ? error.message : t('apm_add_failed');
+      const msg = isApiPermissionError(error) ? t('pm_no_permission') : t('apm_add_failed');
       toast({ title: t('apm_add_failed_title'), description: msg, variant: 'destructive' });
     } finally {
       setSubmitting(false);
@@ -190,9 +190,13 @@ export function AddProjectMemberDialog({
           maxUses: linkMaxUses,
         }),
       });
-      const data = (await res.json().catch(() => ({}))) as { inviteUrl?: string; error?: string };
-      if (!res.ok || !data.inviteUrl) {
-        throw new Error(data.error || t('apm_invite_link_create_failed'));
+      if (!res.ok) {
+        await throwApiResponseError(res);
+      }
+
+      const data = (await res.json().catch(() => ({}))) as { inviteUrl?: string };
+      if (!data.inviteUrl) {
+        throw new Error(t('apm_invite_link_create_failed'));
       }
       setCreatedInviteUrl(data.inviteUrl);
       await navigator.clipboard?.writeText(data.inviteUrl).catch(() => undefined);
@@ -202,7 +206,9 @@ export function AddProjectMemberDialog({
       });
       refetchInviteLinks();
     } catch (error) {
-      const msg = error instanceof Error ? error.message : t('apm_invite_link_create_failed');
+      const msg = isApiPermissionError(error)
+        ? t('pm_no_permission')
+        : t('apm_invite_link_create_failed');
       toast({
         title: t('apm_invite_link_create_failed_title'),
         description: msg,
@@ -226,13 +232,14 @@ export function AddProjectMemberDialog({
         method: 'DELETE',
       });
       if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(data.error || t('apm_invite_link_revoke_failed'));
+        await throwApiResponseError(res);
       }
       toast({ title: t('apm_invite_link_revoked_title') });
       refetchInviteLinks();
     } catch (error) {
-      const msg = error instanceof Error ? error.message : t('apm_invite_link_revoke_failed');
+      const msg = isApiPermissionError(error)
+        ? t('pm_no_permission')
+        : t('apm_invite_link_revoke_failed');
       toast({
         title: t('apm_invite_link_revoke_failed_title'),
         description: msg,

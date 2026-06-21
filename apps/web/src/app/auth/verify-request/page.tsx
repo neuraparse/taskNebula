@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { auth } from '@/auth';
+import { AuthShell } from '@/components/auth/auth-shell';
 import { VerifyRequestResendButton } from '@/components/auth/verify-request-resend-button';
 
 export const dynamic = 'force-dynamic';
@@ -37,67 +38,38 @@ export default async function VerifyRequestPage({ searchParams }: VerifyRequestP
   const t = await getTranslations('authPages');
 
   return (
-    <div className="bg-background relative grid min-h-dvh place-items-center overflow-hidden px-4">
-      <div
-        aria-hidden="true"
-        className="bg-aurora pointer-events-none absolute inset-0 -z-10 opacity-60 blur-3xl"
-      />
-
-      <div className="animate-blur-in relative w-full max-w-sm">
-        <div className="mb-5 flex justify-center">
-          <Link
-            href="/"
-            className="ease-snap focus-visible:ring-ring flex items-center gap-2 rounded-md transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-          >
-            <div className="bg-foreground flex h-7 w-7 items-center justify-center rounded-md">
-              <span className="text-background text-[11px] font-semibold tracking-tight">
-                {'TN'}
-              </span>
-            </div>
-            <span className="text-foreground text-sm font-semibold tracking-tight">
-              {'TaskNebula'}
-            </span>
-          </Link>
-        </div>
-
-        <div className="surface-card rounded-lg p-6 text-center sm:p-8">
-          <h1 className="text-foreground text-lg font-semibold">{t('verifyRequest.title')}</h1>
+    <AuthShell>
+      <div className="stagger space-y-6">
+        <div className="space-y-2">
+          <h1 className="auth-carbon-heading">{t('verifyRequest.title')}</h1>
           {email ? (
-            <p className="text-muted-foreground mt-2 text-sm">
+            <p className="auth-carbon-subtitle">
               {t.rich('verifyRequest.bodyWithEmail', {
                 email,
                 strong: (chunks) => (
-                  <span className="text-foreground break-all font-medium">{chunks}</span>
+                  <span className="break-all font-medium text-[#161616]">{chunks}</span>
                 ),
               })}
             </p>
           ) : (
-            <p className="text-muted-foreground mt-2 text-sm">{t('verifyRequest.body')}</p>
-          )}
-
-          {canResend ? (
-            <div className="mt-6 space-y-3">
-              <VerifyRequestResendButton email={email ?? undefined} />
-              <p className="text-muted-foreground text-xs">{t('verifyRequest.didntGet')}</p>
-              <Link
-                href="/auth/signin"
-                className="text-muted-foreground hover:text-foreground inline-block text-xs font-medium transition-colors"
-              >
-                {t('verifyRequest.backToSignIn')}
-              </Link>
-            </div>
-          ) : (
-            <div className="mt-6 space-y-3">
-              <Link
-                href="/auth/signin"
-                className="text-primary inline-block text-sm font-medium hover:underline"
-              >
-                {t('verifyRequest.backToSignIn')}
-              </Link>
-            </div>
+            <p className="auth-carbon-subtitle">{t('verifyRequest.body')}</p>
           )}
         </div>
+
+        {canResend ? (
+          <div className="space-y-3">
+            <VerifyRequestResendButton email={email ?? undefined} />
+            <p className="text-sm text-[#525252]">{t('verifyRequest.didntGet')}</p>
+            <Link href="/auth/signin" className="auth-carbon-link inline-block text-sm">
+              {t('verifyRequest.backToSignIn')}
+            </Link>
+          </div>
+        ) : (
+          <Link href="/auth/signin" className="auth-carbon-link inline-block text-sm">
+            {t('verifyRequest.backToSignIn')}
+          </Link>
+        )}
       </div>
-    </div>
+    </AuthShell>
   );
 }

@@ -11,16 +11,9 @@ jest.mock('@/lib/hooks/use-organization', () => ({
   useOrganization: () => ({ currentOrganizationId: 'org-1' }),
 }));
 
+const mockUseProjectPermissions = jest.fn();
 jest.mock('@/lib/hooks/use-project-permissions', () => ({
-  useProjectPermissions: () => ({
-    permissions: {
-      canBrowseProject: true,
-      canAdministerProject: true,
-      isSuperAdmin: false,
-      isOrgOwner: false,
-    },
-    isLoading: false,
-  }),
+  useProjectPermissions: () => mockUseProjectPermissions(),
 }));
 
 jest.mock('@/components/settings/project-general-settings', () => ({
@@ -59,6 +52,23 @@ jest.mock('@/components/settings/project-communications-settings', () => ({
 }));
 
 describe('ProjectSettingsContent', () => {
+  beforeEach(() => {
+    mockUseProjectPermissions.mockReturnValue({
+      permissions: {
+        canBrowseProject: true,
+        canAdministerProject: true,
+        canManageMembers: false,
+        canInviteMembers: false,
+        canChangeRoles: false,
+        canManageWorkflow: false,
+        isSuperAdmin: false,
+        isOrgOwner: false,
+        isOrgAdmin: false,
+      },
+      isLoading: false,
+    });
+  });
+
   it('renders the general tab by default', () => {
     render(<ProjectSettingsContent projectId="proj-1" />);
 
@@ -70,11 +80,7 @@ describe('ProjectSettingsContent', () => {
     const onTabChange = jest.fn();
     const user = userEvent.setup();
     render(
-      <ProjectSettingsContent
-        projectId="proj-1"
-        initialTab="general"
-        onTabChange={onTabChange}
-      />
+      <ProjectSettingsContent projectId="proj-1" initialTab="general" onTabChange={onTabChange} />
     );
 
     const workflowsTab = screen.getByRole('tab', { name: /workflows/i });
@@ -85,5 +91,78 @@ describe('ProjectSettingsContent', () => {
     });
     expect(screen.getByTestId('manager-workflows')).toHaveTextContent('workflow-editor:proj-1');
     expect(onTabChange).toHaveBeenCalledWith('workflows');
+  });
+
+  it('allows organization admins through the project settings guard', () => {
+    mockUseProjectPermissions.mockReturnValue({
+      permissions: {
+        canBrowseProject: false,
+        canAdministerProject: false,
+        canManageMembers: false,
+        canInviteMembers: false,
+        canChangeRoles: false,
+        canManageWorkflow: false,
+        isSuperAdmin: false,
+        isOrgOwner: false,
+        isOrgAdmin: true,
+      },
+      isLoading: false,
+    });
+
+    render(<ProjectSettingsContent projectId="proj-1" />);
+
+    expect(screen.getByTestId('manager-general')).toBeInTheDocument();
+    expect(
+      screen.queryByText("You don't have permission to access project settings.")
+    ).not.toBeInTheDocument();
+  });
+
+  it('hides admin-only tabs for project member managers', async () => {
+    mockUseProjectPermissions.mockReturnValue({
+      permissions: {
+        canBrowseProject: true,
+        canAdministerProject: false,
+        canManageMembers: true,
+        canInviteMembers: false,
+        canChangeRoles: false,
+        canManageWorkflow: false,
+        isSuperAdmin: false,
+        isOrgOwner: false,
+        isOrgAdmin: false,
+      },
+      isLoading: false,
+    });
+
+    render(<ProjectSettingsContent projectId="proj-1" initialTab="automation" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('manager-permissions')).toBeInTheDocument();
+    });
+    expect(screen.queryByRole('tab', { name: /automation/i })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('manager-automation')).not.toBeInTheDocument();
+  });
+
+  it('denies settings content for browse-only project users', () => {
+    mockUseProjectPermissions.mockReturnValue({
+      permissions: {
+        canBrowseProject: true,
+        canAdministerProject: false,
+        canManageMembers: false,
+        canInviteMembers: false,
+        canChangeRoles: false,
+        canManageWorkflow: false,
+        isSuperAdmin: false,
+        isOrgOwner: false,
+        isOrgAdmin: false,
+      },
+      isLoading: false,
+    });
+
+    render(<ProjectSettingsContent projectId="proj-1" />);
+
+    expect(
+      screen.getByText("You don't have permission to access project settings.")
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('manager-general')).not.toBeInTheDocument();
   });
 });

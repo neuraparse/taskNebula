@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, issues, projects, workflowStatuses } from '@tasknebula/db';
 import { and, eq, inArray, isNotNull, lte } from 'drizzle-orm';
+import { canReadProject } from '@/lib/auth/access-control';
 
 const windows = new Set(['today', 'this_week', 'this_sprint', 'overdue']);
 
@@ -62,13 +63,21 @@ export async function GET(request: NextRequest) {
 
   const statusById = new Map(statuses.map((status) => [status.id, status]));
   const projectById = new Map(projectRows.map((project) => [project.id, project]));
+  const readableProjectIds = new Set<string>();
+  for (const project of projectRows) {
+    if (await canReadProject(session.user.id, project)) {
+      readableProjectIds.add(project.id);
+    }
+  }
 
   const countsByStatus: Record<string, number> = {};
   const countsByPriority: Record<string, number> = {};
   let overdue = 0;
   let dueSoon = 0;
 
-  const items = scopedIssues.map((issue) => {
+  const readableIssues = scopedIssues.filter((issue) => readableProjectIds.has(issue.projectId));
+
+  const items = readableIssues.map((issue) => {
     const status = statusById.get(issue.statusId);
     const project = projectById.get(issue.projectId);
     const statusName = status?.name ?? 'Unknown';
@@ -92,7 +101,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     window,
-    total: scopedIssues.length,
+    total: readableIssues.length,
     countsByStatus,
     countsByPriority,
     overdue,

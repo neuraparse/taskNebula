@@ -26,6 +26,12 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import {
+  isApiBadRequestError,
+  isApiConflictError,
+  isApiPermissionError,
+  throwApiResponseError,
+} from '@/lib/client-api-errors';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useOrganizationMembers, type OrganizationMember } from '@/lib/hooks/use-members';
 import { cn } from '@/lib/utils';
@@ -60,33 +66,12 @@ const DEFAULT_ASSIGNEE_TYPES: ReadonlyArray<{
   { value: 'unassigned', i18nKey: 'assignee_unassigned' },
 ];
 
-class ApiError extends Error {
-  readonly status: number;
-
-  constructor(message: string, status: number) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-  }
-}
-
-async function throwApiError(response: Response): Promise<never> {
-  let message = `Request failed (${response.status})`;
-  try {
-    const data = (await response.json()) as { error?: string };
-    if (data.error) message = data.error;
-  } catch {
-    // Non-JSON error body — keep the generic message.
-  }
-  throw new ApiError(message, response.status);
-}
-
 function useProjectComponents(projectId: string) {
   return useQuery({
     queryKey: ['project-components', projectId],
     queryFn: async () => {
       const response = await fetch(`/api/projects/${projectId}/components`);
-      if (!response.ok) await throwApiError(response);
+      if (!response.ok) await throwApiResponseError(response);
       return (await response.json()) as ComponentsResponse;
     },
     enabled: Boolean(projectId),
@@ -110,7 +95,7 @@ function useCreateComponent(projectId: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      if (!response.ok) await throwApiError(response);
+      if (!response.ok) await throwApiResponseError(response);
       return (await response.json()) as { component: ProjectComponent };
     },
     onSuccess: () => {
@@ -128,7 +113,7 @@ function useUpdateComponent(projectId: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      if (!response.ok) await throwApiError(response);
+      if (!response.ok) await throwApiResponseError(response);
       return (await response.json()) as { component: ProjectComponent };
     },
     onSuccess: () => {
@@ -144,7 +129,7 @@ function useDeleteComponent(projectId: string) {
       const response = await fetch(`/api/projects/${projectId}/components/${componentId}`, {
         method: 'DELETE',
       });
-      if (!response.ok) await throwApiError(response);
+      if (!response.ok) await throwApiResponseError(response);
       return (await response.json()) as { success: boolean };
     },
     onSuccess: () => {
@@ -169,6 +154,7 @@ export interface ComponentsManagerProps {
 
 export function ComponentsManager({ projectId }: ComponentsManagerProps) {
   const t = useTranslations('settings.components');
+  const tSettings = useTranslations('settings');
   const tActions = useTranslations('actions');
   const tCommon = useTranslations('common');
   const { toast } = useToast();
@@ -198,8 +184,11 @@ export function ComponentsManager({ projectId }: ComponentsManagerProps) {
     try {
       await updateComponent.mutateAsync({ componentId: component.id, ...payload });
       toast({ title: successTitle, variant: 'success' });
-    } catch {
-      toast({ title: t('error_generic'), variant: 'destructive' });
+    } catch (error) {
+      toast({
+        title: isApiPermissionError(error) ? tSettings('error_no_permission') : t('error_generic'),
+        variant: 'destructive',
+      });
     }
   };
 
@@ -209,8 +198,11 @@ export function ComponentsManager({ projectId }: ComponentsManagerProps) {
       await deleteComponent.mutateAsync(deletingComponent.id);
       toast({ title: t('toast_deleted'), variant: 'success' });
       setDeletingComponent(null);
-    } catch {
-      toast({ title: t('error_generic'), variant: 'destructive' });
+    } catch (error) {
+      toast({
+        title: isApiPermissionError(error) ? tSettings('error_no_permission') : t('error_generic'),
+        variant: 'destructive',
+      });
     }
   };
 
@@ -431,6 +423,7 @@ function ComponentEditorDialog({
   componentToEdit,
 }: ComponentEditorDialogProps) {
   const t = useTranslations('settings.components');
+  const tSettings = useTranslations('settings');
   const tActions = useTranslations('actions');
   const { toast } = useToast();
 
@@ -485,12 +478,12 @@ function ComponentEditorDialog({
       }
       onOpenChange(false);
     } catch (error) {
-      const status = error instanceof ApiError ? error.status : null;
       toast({
-        title:
-          status === 409
+        title: isApiPermissionError(error)
+          ? tSettings('error_no_permission')
+          : isApiConflictError(error)
             ? t('error_duplicate')
-            : status === 400
+            : isApiBadRequestError(error)
               ? t('error_lead')
               : t('error_generic'),
         variant: 'destructive',

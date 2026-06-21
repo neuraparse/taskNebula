@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, integrationConnections, organizationMembers, eq, and } from '@tasknebula/db';
+import { db, integrationConnections } from '@tasknebula/db';
 import {
   JIRA_PROVIDER,
   JIRA_SCOPES,
@@ -9,6 +9,7 @@ import {
   fetchJiraAccessibleResources,
 } from '@/lib/integrations/jira';
 import { encryptToken } from '@/lib/integrations/token-crypto';
+import { hasPermission } from '@/lib/auth/permissions';
 
 type StatePayload = {
   nonce: string;
@@ -33,10 +34,7 @@ function decodeState(raw: string): StatePayload | null {
   }
 }
 
-function redirectToSettings(message?: {
-  status: 'connected' | 'error';
-  reason?: string;
-}) {
+function redirectToSettings(message?: { status: 'connected' | 'error'; reason?: string }) {
   const base =
     process.env.NEXT_PUBLIC_APP_URL ||
     process.env.AUTH_URL ||
@@ -90,18 +88,7 @@ export async function GET(request: NextRequest) {
     return redirectToSettings({ status: 'error', reason: 'user_mismatch' });
   }
 
-  // Reconfirm membership in case roles changed between authorize & callback.
-  const [membership] = await db
-    .select({ role: organizationMembers.role })
-    .from(organizationMembers)
-    .where(
-      and(
-        eq(organizationMembers.userId, session.user.id),
-        eq(organizationMembers.organizationId, state.organizationId)
-      )
-    )
-    .limit(1);
-  if (!membership) {
+  if (!(await hasPermission(state.organizationId, 'org:settings'))) {
     return redirectToSettings({ status: 'error', reason: 'forbidden' });
   }
 

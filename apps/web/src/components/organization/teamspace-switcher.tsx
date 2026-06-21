@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useOrganization } from '@/lib/hooks/use-organization';
+import { useOrganizationPermissions } from '@/lib/hooks/use-permissions';
 import { useTeamspaces } from '@/lib/hooks/use-teamspaces';
 import { cn } from '@/lib/utils';
 
@@ -21,7 +22,12 @@ export function TeamspaceSwitcher() {
   const [open, setOpen] = useState(false);
   const { currentOrganizationId, currentTeamId, setCurrentTeam } = useOrganization();
   const { data: teamspaces = [], isLoading } = useTeamspaces(currentOrganizationId);
+  const { has: hasOrgPermission, isLoading: isLoadingOrgPermissions } = useOrganizationPermissions(
+    currentOrganizationId ?? undefined
+  );
   const t = useTranslations('projectsPages');
+  const canManageTeamspaces =
+    Boolean(currentOrganizationId) && !isLoadingOrgPermissions && hasOrgPermission('org:settings');
 
   useEffect(() => {
     if (!currentTeamId) return;
@@ -106,17 +112,21 @@ export function TeamspaceSwitcher() {
           );
         })}
 
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="text-muted-foreground min-h-[36px] gap-2 px-2 text-sm transition-colors duration-200"
-          onSelect={() => {
-            setOpen(false);
-            router.push('/settings/organization?tab=teamspaces');
-          }}
-        >
-          <Settings2 className="h-3.5 w-3.5 shrink-0" />
-          {t('ts_manage')}
-        </DropdownMenuItem>
+        {canManageTeamspaces ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-muted-foreground min-h-[36px] gap-2 px-2 text-sm transition-colors duration-200"
+              onSelect={() => {
+                setOpen(false);
+                router.push('/settings/organization?tab=teamspaces');
+              }}
+            >
+              <Settings2 className="h-3.5 w-3.5 shrink-0" />
+              {t('ts_manage')}
+            </DropdownMenuItem>
+          </>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -43,7 +43,8 @@
     "realtime_health": "Realtime health",
     "audit_logs": "Audit logs",
     "system": "System",
-    "updates": "Updates"
+    "updates": "Updates",
+    "ai_transparency": "AI Transparency"
   },
   "actions": {
     "create_issue": "Create issue",
@@ -102,6 +103,7 @@
     "skipToContent": "Skip to content"
   },
   "settings": {
+    "error_no_permission": "You don't have permission to manage these settings.",
     "labels": {
       "kicker": "Labels",
       "title": "Labels",
@@ -430,7 +432,8 @@
     "view": {
       "loadFailed": "Failed to load issue",
       "notFound": "Issue not found",
-      "notFoundHint": "The issue you're looking for doesn't exist."
+      "notFoundHint": "The issue you're looking for doesn't exist.",
+      "loadFailedHint": "Refresh the page or try again in a moment."
     }
   },
   "adminUpdates": {
@@ -1480,8 +1483,8 @@
     "planning_kicker": "Planning",
     "teamspaces_heading": "Teamspaces",
     "teamspaces_subtitle": "Planning lanes above individual projects, without splitting the organization.",
-    "owner_admin_only": "Owner or admin only",
-    "browse_only_notice": "Browse only — owners and admins can change the structure.",
+    "owner_admin_only": "Permission required",
+    "browse_only_notice": "Browse only — changing the structure requires organization settings permission.",
     "loading_teamspaces": "Loading teamspaces…",
     "manage_members": "Manage members",
     "members_label": "members",
@@ -2104,7 +2107,7 @@
       "none": "None",
       "updated": "Updated",
       "server_managed": "Server managed",
-      "read_only_notice": "Read-only access — owners and admins can update AI policy.",
+      "read_only_notice": "Read-only access — updating AI policy requires organization settings permission.",
       "your_model_profiles": "Your model profiles",
       "your_model_profiles_desc": "Custom model + tuning combinations saved for reuse. Any profile saved here also appears in the Quick setup model dropdown above. Use this to pin a model with specific temperature / token / reasoning-effort settings, or to try a model that is not in the built-in catalog.",
       "create_profile": "Create profile",
@@ -2772,6 +2775,7 @@
     "loading_modules": "Loading modules...",
     "no_modules_filter": "No modules match this filter.",
     "no_modules_empty": "No modules yet. Create one to group related work.",
+    "no_modules_empty_readonly": "No modules have been created for this project yet.",
     "create_module": "Create module",
     "module_dialog_desc": "Group related work into a feature area or mini-project.",
     "module_name_placeholder": "e.g., Auth, Billing, Onboarding",
@@ -3998,7 +4002,8 @@
     "initiative_detail_no_updates": "No updates yet.",
     "initiative_detail_anonymous": "Anonymous",
     "initiative_detail_blockers_label": "Blockers:",
-    "initiative_detail_next_label": "Next:"
+    "initiative_detail_next_label": "Next:",
+    "initiative_detail_error_load": "Failed to load initiative."
   },
   "pagesProjects": {
     "metaTitle": "Projects | TaskNebula",
@@ -4029,6 +4034,7 @@
     "descriptionPlaceholder": "Brief project description",
     "cancel": "Cancel",
     "creating": "Creating...",
+    "createProjectFailed": "Project could not be created. Check the details and try again.",
     "breadcrumb": "Breadcrumb",
     "sections": "Project sections",
     "tabViews": "Views",
@@ -4101,7 +4107,7 @@
     "completeSprintTooltip": "Complete this sprint. Incomplete issues will move to backlog.",
     "sprintBurndown": "Sprint Burndown",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Ask an organization owner or admin to invite you to a project, or grant you an owner/admin role before creating projects."
+    "projectInviteRequiredDescription": "Ask an administrator to invite you to a project, or grant you project creation permission."
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4663,7 +4669,7 @@
       "removeProject": "Remove {name}",
       "projectRole": "Project role",
       "sendInvitation": "Send invitation",
-      "viewOnly": "View-only access. Only owners and admins can manage members.",
+      "viewOnly": "View-only access. Member management requires the relevant member permissions.",
       "noMembers": "No members yet.",
       "inviteFirst": "Invite your first member",
       "invited": "Invited",
@@ -4728,7 +4734,7 @@
       "detailsKicker": "Details",
       "detailsHeading": "Workspace details",
       "detailsSubtitle": "Name, domain, and brand information used across the workspace.",
-      "manageRestricted": "Only owners and admins can update organization settings.",
+      "manageRestricted": "Updating organization settings requires organization settings permission.",
       "logo": "Logo",
       "slug": "Workspace slug",
       "slugHint": "Super admins can change it.",
@@ -4740,7 +4746,7 @@
       "dangerKicker": "Danger zone",
       "dangerSubtitle": "Permanently removes this workspace and everything under it. Owner access required.",
       "cannotRestore": "Deleted organizations cannot be restored.",
-      "ownerOnly": "Owner only",
+      "ownerOnly": "Delete permission required",
       "plan": {
         "free": "Free",
         "starter": "Starter",

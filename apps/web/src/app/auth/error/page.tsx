@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { AuthShell } from '@/components/auth/auth-shell';
 import { AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
@@ -17,25 +18,22 @@ function ErrorContent() {
   const errorMessage = t(`error.messages.${errorKey}`);
 
   return (
-    <div className="stagger space-y-5 text-center">
-      <div className="flex justify-center">
-        <span className="chip-rose" aria-hidden="true">
+    <div className="stagger space-y-6">
+      <div className="flex items-center gap-3">
+        <span className="flex h-10 w-10 items-center justify-center bg-[#fff1f1] text-[#da1e28]">
+          <AlertCircle className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <span className="border border-[#ffd7d9] bg-[#fff1f1] px-2 py-1 text-xs text-[#a2191f]">
           {t('error.chip', { error })}
         </span>
       </div>
 
-      <div className="flex justify-center">
-        <AlertCircle className="text-destructive h-8 w-8" aria-hidden="true" />
+      <div className="space-y-2">
+        <h1 className="auth-carbon-heading">{t('error.title')}</h1>
+        <p className="auth-carbon-subtitle">{errorMessage}</p>
       </div>
 
-      <div className="space-y-1">
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          {t('error.title')}
-        </h1>
-        <p className="text-muted-foreground text-sm">{errorMessage}</p>
-      </div>
-
-      <Button asChild className="ease-snap w-full transition-all duration-150" size="lg">
+      <Button asChild className="auth-carbon-primary w-full" size="lg">
         <Link href="/auth/signin">{t('error.tryAgain')}</Link>
       </Button>
     </div>
@@ -45,28 +43,16 @@ function ErrorContent() {
 export default function AuthErrorPage() {
   const tCommon = useTranslations('common');
   return (
-    <div className="bg-background relative grid min-h-dvh place-items-center overflow-hidden px-4">
-      <div
-        aria-hidden="true"
-        className="bg-aurora pointer-events-none absolute inset-0 -z-10 opacity-60 blur-3xl"
-      />
-
-      <div className="animate-blur-in relative w-full max-w-sm">
-        <div className="surface-card rounded-lg p-6 sm:p-8">
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center py-8">
-                <div
-                  className="border-foreground h-5 w-5 animate-spin rounded-full border-2 border-t-transparent"
-                  aria-label={tCommon('loading')}
-                />
-              </div>
-            }
-          >
-            <ErrorContent />
-          </Suspense>
-        </div>
-      </div>
-    </div>
+    <AuthShell>
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-8">
+            <div className="auth-carbon-spinner" aria-label={tCommon('loading')} />
+          </div>
+        }
+      >
+        <ErrorContent />
+      </Suspense>
+    </AuthShell>
   );
 }

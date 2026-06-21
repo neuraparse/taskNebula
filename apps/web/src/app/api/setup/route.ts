@@ -20,7 +20,6 @@ export async function GET() {
 
     return NextResponse.json({
       setupRequired: userCount === 0,
-      userCount,
     });
   } catch (error) {
     console.error('Setup status check failed:', error);
@@ -28,7 +27,6 @@ export async function GET() {
       {
         setupRequired: false,
         databaseReady: false,
-        userCount: 0,
         error: 'Database is not ready. Check the database connection and migrations.',
       },
       { status: 503 }

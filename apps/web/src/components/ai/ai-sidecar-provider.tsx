@@ -16,6 +16,7 @@ import { AiDisclosureModal } from './ai-disclosure-modal';
 
 interface AiSidecarProviderProps {
   children: ReactNode;
+  enabled?: boolean;
 }
 
 /**
@@ -26,7 +27,15 @@ interface AiSidecarProviderProps {
  * Keyboard: Cmd+J (macOS) / Ctrl+J (Win/Linux) toggles. ESC closes
  * (handled inside <AiSidecar />).
  */
-export function AiSidecarProvider({ children }: AiSidecarProviderProps) {
+export function AiSidecarProvider({ children, enabled = true }: AiSidecarProviderProps) {
+  if (!enabled) {
+    return <>{children}</>;
+  }
+
+  return <AiSidecarProviderInner>{children}</AiSidecarProviderInner>;
+}
+
+function AiSidecarProviderInner({ children }: { children: ReactNode }) {
   const t = useTranslations('aiFeatures');
   const { toast } = useToast();
   const [open, setOpenState] = useState(false);
