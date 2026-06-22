@@ -76,7 +76,11 @@ export async function GET(request: Request) {
         // of the subscriber's organizations. Events without an
         // organizationId are dropped (fail closed) — publishers must attach
         // organizationId for the event to be delivered.
-        if (!isSuperAdmin && (!event.organizationId || !memberOrgIds.has(event.organizationId))) {
+        if (
+          event.targetUserId !== userId &&
+          !isSuperAdmin &&
+          (!event.organizationId || !memberOrgIds.has(event.organizationId))
+        ) {
           return;
         }
         send(`data: ${JSON.stringify(event)}\n\n`);

@@ -383,6 +383,26 @@ describe('AppSidebar', () => {
     );
   });
 
+  it('keeps admin navigation out of the settings sidebar even for super admins', () => {
+    setPathname('/settings');
+    setIsSuperAdmin(true);
+
+    render(
+      <Wrapper>
+        <AppSidebar />
+      </Wrapper>
+    );
+
+    expect(screen.getByRole('link', { name: /organization/i })).toHaveAttribute(
+      'href',
+      '/settings?tab=organization'
+    );
+    expect(screen.queryByRole('link', { name: /feature flags/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /agent control/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^system$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /audit logs/i })).not.toBeInTheDocument();
+  });
+
   it('limits settings navigation to personal appearance when the user has no workspace access', () => {
     setPathname('/settings');
 
@@ -576,8 +596,8 @@ describe('AppSidebar', () => {
     expect(screen.queryByRole('link', { name: /audit logs/i })).not.toBeInTheDocument();
   });
 
-  it('renders ADMIN_LINKS when isSuperAdmin is true', () => {
-    setPathname('/settings');
+  it('renders only ADMIN_LINKS on /admin when isSuperAdmin is true', () => {
+    setPathname('/admin');
     setIsSuperAdmin(true);
 
     render(
@@ -618,5 +638,9 @@ describe('AppSidebar', () => {
       'href',
       '/admin?tab=audit'
     );
+    expect(screen.queryByRole('link', { name: /api keys/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /webhooks/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^labels$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /appearance/i })).not.toBeInTheDocument();
   });
 });

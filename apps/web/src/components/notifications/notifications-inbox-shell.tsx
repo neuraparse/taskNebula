@@ -17,7 +17,6 @@ import {
   useNotifications,
   useMarkNotificationAsRead,
   useMarkAllNotificationsAsRead,
-  useUnreadNotificationsCount,
   type Notification,
 } from '@/lib/hooks/use-notifications';
 
@@ -112,7 +111,6 @@ export function NotificationsInboxShell({
   const { toast } = useToast();
 
   const { data, isLoading, isFetching, isError, error, refetch } = useNotifications();
-  const unreadCount = useUnreadNotificationsCount();
   const markAsRead = useMarkNotificationAsRead();
   const markAllAsRead = useMarkAllNotificationsAsRead();
 
@@ -124,6 +122,10 @@ export function NotificationsInboxShell({
   const notifications: Notification[] = useMemo(
     () => data?.notifications ?? [],
     [data?.notifications]
+  );
+  const unreadCount = useMemo(
+    () => notifications.filter((notification) => !notification.isRead).length,
+    [notifications]
   );
 
   const filtered = useMemo(() => {

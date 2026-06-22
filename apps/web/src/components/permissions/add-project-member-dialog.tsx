@@ -87,7 +87,7 @@ interface AddProjectMemberDialogProps {
   existingMemberUserIds: string[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdded?: () => void;
+  onAdded?: () => void | Promise<void>;
 }
 
 export function AddProjectMemberDialog({
@@ -201,7 +201,7 @@ export function AddProjectMemberDialog({
         await throwApiResponseError(res);
       }
       toast({ title: t('apm_member_added_title'), description: t('apm_member_added_description') });
-      onAdded?.();
+      await onAdded?.();
       handleClose(false);
     } catch (error) {
       const msg = isApiPermissionError(error) ? t('pm_no_permission') : t('apm_add_failed');
@@ -287,8 +287,8 @@ export function AddProjectMemberDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[min(92dvh,760px)] w-[min(calc(100vw-1rem),720px)] max-w-none flex-col gap-0 overflow-hidden p-0 sm:rounded-md">
+        <DialogHeader className="border-border shrink-0 border-b px-4 py-4 pr-12 sm:px-6">
           <DialogTitle className="flex items-center gap-2">
             <UserPlus className="h-4 w-4" />
             {t('apm_title')}
@@ -296,7 +296,7 @@ export function AddProjectMemberDialog({
           <DialogDescription>{t('apm_description')}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-6">
           <div className="relative">
             <Search className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
             <Input
@@ -308,7 +308,7 @@ export function AddProjectMemberDialog({
           </div>
 
           <div className="border-border rounded-md border">
-            <ScrollArea className="h-60">
+            <ScrollArea className="h-[min(32dvh,15rem)]">
               {isLoading ? (
                 <div className="text-muted-foreground flex items-center justify-center py-10 text-sm">
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -532,7 +532,7 @@ export function AddProjectMemberDialog({
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="border-border shrink-0 gap-2 border-t px-4 py-3 sm:px-6">
           <Button variant="outline" onClick={() => handleClose(false)} disabled={submitting}>
             {tActions('cancel')}
           </Button>

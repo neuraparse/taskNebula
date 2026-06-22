@@ -6,7 +6,16 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { db, users, organizationMembers, organizations, systemAuditLogs } from '@tasknebula/db';
+import {
+  auditLogs,
+  db,
+  organizationMembers,
+  organizations,
+  projectMembers,
+  projects,
+  systemAuditLogs,
+  users,
+} from '@tasknebula/db';
 import { eq, desc, count, ilike, or, and, inArray } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { isSuperAdmin } from '@/lib/auth/permissions';
@@ -43,12 +52,7 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(users.status, status as any));
     }
     if (search) {
-      conditions.push(
-        or(
-          ilike(users.name, `%${search}%`),
-          ilike(users.email, `%${search}%`)
-        )!
-      );
+      conditions.push(or(ilike(users.name, `%${search}%`), ilike(users.email, `%${search}%`))!);
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -75,6 +79,43 @@ export async function GET(request: NextRequest) {
       string,
       Array<{ organizationId: string; organizationName: string; role: string }>
     >();
+    const projectMembershipsByUser = new Map<
+      string,
+      Array<{
+        projectId: string;
+        projectKey: string;
+        projectName: string;
+        organizationId: string;
+        organizationName: string | null;
+        role: string;
+      }>
+    >();
+    const lastActivityByUser = new Map<
+      string,
+      {
+        action: string;
+        resourceType: string;
+        resourceId: string | null;
+        projectId: string | null;
+        createdAt: Date;
+        scope: 'system' | 'workspace';
+      }
+    >();
+
+    const rememberLastActivity = (row: {
+      userId: string;
+      action: string;
+      resourceType: string;
+      resourceId: string | null;
+      projectId: string | null;
+      createdAt: Date;
+      scope: 'system' | 'workspace';
+    }) => {
+      const existing = lastActivityByUser.get(row.userId);
+      if (!existing || row.createdAt > existing.createdAt) {
+        lastActivityByUser.set(row.userId, row);
+      }
+    };
 
     if (userIds.length > 0) {
       const allMemberships = await db
@@ -97,6 +138,70 @@ export async function GET(request: NextRequest) {
         });
         membershipsByUser.set(row.userId, list);
       }
+
+      const allProjectMemberships = await db
+        .select({
+          userId: projectMembers.userId,
+          projectId: projects.id,
+          projectKey: projects.key,
+          projectName: projects.name,
+          organizationId: projects.organizationId,
+          organizationName: organizations.name,
+          role: projectMembers.role,
+        })
+        .from(projectMembers)
+        .innerJoin(projects, eq(projectMembers.projectId, projects.id))
+        .leftJoin(organizations, eq(projects.organizationId, organizations.id))
+        .where(inArray(projectMembers.userId, userIds));
+
+      for (const row of allProjectMemberships) {
+        const list = projectMembershipsByUser.get(row.userId) || [];
+        list.push({
+          projectId: row.projectId,
+          projectKey: row.projectKey,
+          projectName: row.projectName,
+          organizationId: row.organizationId,
+          organizationName: row.organizationName,
+          role: row.role,
+        });
+        projectMembershipsByUser.set(row.userId, list);
+      }
+
+      const recentWorkspaceActivity = await db
+        .select({
+          userId: auditLogs.userId,
+          action: auditLogs.action,
+          resourceType: auditLogs.resourceType,
+          resourceId: auditLogs.resourceId,
+          projectId: auditLogs.projectId,
+          createdAt: auditLogs.createdAt,
+        })
+        .from(auditLogs)
+        .where(inArray(auditLogs.userId, userIds))
+        .orderBy(desc(auditLogs.createdAt))
+        .limit(userIds.length * 10);
+
+      for (const row of recentWorkspaceActivity) {
+        rememberLastActivity({ ...row, scope: 'workspace' });
+      }
+
+      const recentSystemActivity = await db
+        .select({
+          userId: systemAuditLogs.userId,
+          action: systemAuditLogs.action,
+          resourceType: systemAuditLogs.resourceType,
+          resourceId: systemAuditLogs.resourceId,
+          projectId: systemAuditLogs.organizationId,
+          createdAt: systemAuditLogs.createdAt,
+        })
+        .from(systemAuditLogs)
+        .where(inArray(systemAuditLogs.userId, userIds))
+        .orderBy(desc(systemAuditLogs.createdAt))
+        .limit(userIds.length * 10);
+
+      for (const row of recentSystemActivity) {
+        rememberLastActivity({ ...row, projectId: null, scope: 'system' });
+      }
     }
 
     const usersWithOrgs = allUsers.map((user) => ({
@@ -107,8 +212,12 @@ export async function GET(request: NextRequest) {
       status: user.status,
       isSuperAdmin: user.isSuperAdmin,
       superAdminGrantedAt: user.superAdminGrantedAt,
+      emailVerified: user.emailVerified,
+      lastSeenAt: user.lastSeenAt,
       createdAt: user.createdAt,
       organizations: membershipsByUser.get(user.id) || [],
+      projectMemberships: projectMembershipsByUser.get(user.id) || [],
+      lastActivity: lastActivityByUser.get(user.id) || null,
     }));
 
     // Get total count
@@ -126,10 +235,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Failed to fetch users:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch users' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
   }
 }
 
@@ -154,10 +260,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: 'User with this email already exists' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'User with this email already exists' }, { status: 400 });
     }
 
     // Hash password
@@ -197,7 +300,8 @@ export async function POST(request: NextRequest) {
         email: newUser.email,
         name: newUser.name,
       },
-      ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
+      ipAddress:
+        request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
       userAgent: request.headers.get('user-agent') || undefined,
     });
 
@@ -220,9 +324,6 @@ export async function POST(request: NextRequest) {
     }
 
     console.error('Failed to create user:', error);
-    return NextResponse.json(
-      { error: 'Failed to create user' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
   }
 }

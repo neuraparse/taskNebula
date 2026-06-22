@@ -42,6 +42,7 @@ export interface RealtimeEvent {
   sprintId?: string;
   issueId?: string;
   organizationId?: string;
+  targetUserId?: string;
   userId: string; // who triggered the event
   timestamp: number;
 }
@@ -87,7 +88,9 @@ export const eventBus = new RealtimeEventBus();
 export function publishEvent(
   type: RealtimeEventType,
   userId: string,
-  context?: Partial<Pick<RealtimeEvent, 'projectId' | 'sprintId' | 'issueId' | 'organizationId'>>
+  context?: Partial<
+    Pick<RealtimeEvent, 'projectId' | 'sprintId' | 'issueId' | 'organizationId' | 'targetUserId'>
+  >
 ) {
   const event: RealtimeEvent = {
     type,

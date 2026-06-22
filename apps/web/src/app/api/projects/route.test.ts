@@ -168,6 +168,7 @@ function collectInArrayValues(condition: unknown, left: string): unknown[] | nul
 function projectListBuilder(rows: ProjectRow[]) {
   const chain = {
     leftJoin: jest.fn(() => chain),
+    orderBy: jest.fn().mockResolvedValue(rows),
     where: jest.fn((condition: unknown) => ({
       orderBy: jest.fn().mockResolvedValue(
         rows.filter((row) => {
@@ -337,6 +338,63 @@ describe('/api/projects route', () => {
       error: 'Forbidden',
       code: 'ORGANIZATION_FORBIDDEN',
     });
+  });
+
+  it('lets super admins see every project without an organization membership filter', async () => {
+    authMock.mockResolvedValue({ user: { id: 'super-1' } });
+    const rows: ProjectRow[] = [
+      {
+        project: {
+          id: 'project-1',
+          organizationId: 'org-1',
+          name: 'Org one project',
+          updatedAt: '2026-01-03T00:00:00.000Z',
+        },
+        organizationName: 'Org One',
+        teamId: null,
+        teamName: null,
+        teamSlug: null,
+      },
+      {
+        project: {
+          id: 'project-2',
+          organizationId: 'org-2',
+          name: 'Org two project',
+          updatedAt: '2026-01-02T00:00:00.000Z',
+        },
+        organizationName: 'Org Two',
+        teamId: null,
+        teamName: null,
+        teamSlug: null,
+      },
+    ];
+
+    dbSelectMock
+      .mockReturnValueOnce(limitBuilder([{ isSuperAdmin: true }]))
+      .mockReturnValueOnce(whereBuilder([]))
+      .mockReturnValueOnce(projectListBuilder(rows));
+
+    const response = await GET(new NextRequestCtor('http://localhost:3002/api/projects'));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual([
+      {
+        id: 'project-1',
+        organizationId: 'org-1',
+        name: 'Org one project',
+        updatedAt: '2026-01-03T00:00:00.000Z',
+        organizationName: 'Org One',
+        team: null,
+      },
+      {
+        id: 'project-2',
+        organizationId: 'org-2',
+        name: 'Org two project',
+        updatedAt: '2026-01-02T00:00:00.000Z',
+        organizationName: 'Org Two',
+        team: null,
+      },
+    ]);
   });
 
   it('keeps organization admin visibility scoped to the organization where the role is held', async () => {

@@ -11,17 +11,10 @@ import {
   type ProjectRole,
   type PermissionKey,
 } from '@tasknebula/db';
-
-// Helper to resolve project key or id
-async function resolveProjectId(projectIdOrKey: string): Promise<string | null> {
-  if (projectIdOrKey.length > 10 || projectIdOrKey.includes('_')) {
-    return projectIdOrKey;
-  }
-  const project = await db.query.projects.findFirst({
-    where: eq(schema.projects.key, projectIdOrKey.toUpperCase()),
-  });
-  return project?.id || null;
-}
+import { createId } from '@paralleldrive/cuid2';
+import { resolveProjectByIdOrKey } from '@/lib/projects/server';
+import { canReadProject } from '@/lib/auth/access-control';
+import { publishEvent } from '@/lib/realtime/events';
 
 // Check if user can change roles/permissions
 async function canChangeRolesAndPermissions(userId: string, projectId: string): Promise<boolean> {
@@ -96,7 +89,21 @@ async function canRemoveProjectMembers(userId: string, projectId: string): Promi
   if (!projectMember) return false;
 
   const roleDefaults = ROLE_DEFAULT_PERMISSIONS[projectMember.role as ProjectRole];
-  return projectMember.canRemoveMembers === 'true' || roleDefaults?.canRemoveMembers || false;
+  return (
+    projectMember.canManageMembers === 'true' ||
+    projectMember.canRemoveMembers === 'true' ||
+    roleDefaults?.canManageMembers ||
+    roleDefaults?.canRemoveMembers ||
+    false
+  );
+}
+
+async function isSuperAdminUser(userId: string): Promise<boolean> {
+  const user = await db.query.users.findFirst({
+    where: eq(schema.users.id, userId),
+    columns: { isSuperAdmin: true },
+  });
+  return user?.isSuperAdmin === true;
 }
 
 // PATCH /api/projects/[projectId]/members/[memberId] - Update member role and permissions
@@ -111,11 +118,18 @@ export async function PATCH(
     }
 
     const { projectId: projectIdOrKey, memberId } = await params;
-    const projectId = await resolveProjectId(projectIdOrKey);
+    const project = await resolveProjectByIdOrKey(projectIdOrKey, session.user.id);
 
-    if (!projectId) {
+    if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
+
+    const canRead = await canReadProject(session.user.id, project);
+    if (!canRead) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const projectId = project.id;
 
     // Check permission
     const canChange = await canChangeRolesAndPermissions(session.user.id, projectId);
@@ -174,6 +188,12 @@ export async function PATCH(
       return NextResponse.json({ error: 'Member not found' }, { status: 404 });
     }
 
+    publishEvent('member.updated', session.user.id, {
+      organizationId: project.organizationId,
+      projectId,
+      targetUserId: updated.userId,
+    });
+
     return NextResponse.json(updated);
   } catch (error) {
     console.error('Error updating project member:', error);
@@ -193,11 +213,18 @@ export async function DELETE(
     }
 
     const { projectId: projectIdOrKey, memberId } = await params;
-    const projectId = await resolveProjectId(projectIdOrKey);
+    const project = await resolveProjectByIdOrKey(projectIdOrKey, session.user.id);
 
-    if (!projectId) {
+    if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
+
+    const canRead = await canReadProject(session.user.id, project);
+    if (!canRead) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const projectId = project.id;
 
     // Get the member to be deleted
     const memberToDelete = await db.query.projectMembers.findFirst({
@@ -211,8 +238,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Member not found' }, { status: 404 });
     }
 
+    const actorIsSuperAdmin = await isSuperAdminUser(session.user.id);
+
     // Users can remove themselves
-    if (memberToDelete.userId !== session.user.id) {
+    if (memberToDelete.userId !== session.user.id && !actorIsSuperAdmin) {
       const canRemove = await canRemoveProjectMembers(session.user.id, projectId);
       if (!canRemove) {
         return NextResponse.json(
@@ -223,7 +252,7 @@ export async function DELETE(
     }
 
     // Prevent removing the last product_owner
-    if (memberToDelete.role === 'product_owner') {
+    if (!actorIsSuperAdmin && memberToDelete.role === 'product_owner') {
       const productOwners = await db.query.projectMembers.findMany({
         where: and(
           eq(schema.projectMembers.projectId, projectId),
@@ -244,6 +273,26 @@ export async function DELETE(
         and(eq(schema.projectMembers.id, memberId), eq(schema.projectMembers.projectId, projectId))
       )
       .returning();
+
+    await db.insert(schema.auditLogs).values({
+      id: createId(),
+      organizationId: project.organizationId,
+      userId: session.user.id,
+      action: 'project.member_removed',
+      resourceType: 'project_member',
+      resourceId: memberToDelete.id,
+      projectId,
+      metadata: {
+        memberId: memberToDelete.userId,
+        role: memberToDelete.role,
+      },
+    });
+
+    publishEvent('member.removed', session.user.id, {
+      organizationId: project.organizationId,
+      projectId,
+      targetUserId: memberToDelete.userId,
+    });
 
     return NextResponse.json({ success: true, deleted });
   } catch (error) {

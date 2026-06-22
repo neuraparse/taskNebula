@@ -145,6 +145,11 @@ describe('SignUpForm', () => {
         redirect: false,
       });
     });
+
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith('/auth/verify-request?email=alice%40example.com');
+    });
+    expect(refreshMock).not.toHaveBeenCalled();
   });
 
   it('prefills invite email and sends invite token with normalized signup email', async () => {
@@ -187,6 +192,7 @@ describe('SignUpForm', () => {
       redirect: false,
     });
     expect(pushMock).toHaveBeenCalledWith('/auth/verify-request?email=invited%40example.com');
+    expect(refreshMock).not.toHaveBeenCalled();
   });
 
   it('shows the server error on failed signup', async () => {

@@ -1545,7 +1545,7 @@
     "settings_sections_aria": "Ενότητες ρυθμίσεων έργου",
     "no_settings_permission": "Δεν έχετε δικαίωμα πρόσβασης στις ρυθμίσεις έργου.",
     "tab_general": "Γενικά",
-    "tab_permissions": "Δικαιώματα",
+    "tab_permissions": "Μέλη και δικαιώματα",
     "tab_schemes": "Σχήματα",
     "tab_security": "Ασφάλεια",
     "tab_custom_fields": "Προσαρμοσμένα πεδία",
@@ -3232,7 +3232,10 @@
     "apm_invite_link_revoke": "Revoke",
     "apm_invite_link_revoked_title": "Invite link revoked",
     "apm_invite_link_revoke_failed_title": "Could not revoke link",
-    "apm_invite_link_revoke_failed": "Failed to revoke project invite link"
+    "apm_invite_link_revoke_failed": "Failed to revoke project invite link",
+    "pm_remove_success": "Το μέλος αφαιρέθηκε από το έργο",
+    "pm_remove_failed": "Αποτυχία αφαίρεσης μέλους έργου",
+    "pm_remove_member_aria": "Αφαίρεση του {name} από το έργο"
   },
   "adminPanels": {
     "agentOps": {
@@ -4368,7 +4371,28 @@
       "roleSuspended": "Σε αναστολή",
       "rolePending": "Εκκρεμεί",
       "roleMember": "Μέλος",
-      "editUser": "Επεξεργασία χρήστη"
+      "editUser": "Επεξεργασία χρήστη",
+      "deleteUser": "Διαγραφή χρήστη",
+      "deletedTitle": "Ο χρήστης διαγράφηκε",
+      "deletedDescription": "Ο χρήστης αφαιρέθηκε μόνιμα.",
+      "deleteFailedTitle": "Αποτυχία διαγραφής χρήστη",
+      "confirmDeleteTitle": "Διαγραφή χρήστη;",
+      "confirmDeleteDescription": "Ο χρήστης \"{name}\" θα αφαιρεθεί μόνιμα. Οι συμμετοχές και οι συνεδρίες του θα διαγραφούν. Αυτή η ενέργεια δεν αναιρείται.",
+      "confirmDeleteLabel": "Διαγραφή χρήστη",
+      "colAccess": "Access",
+      "colMail": "Mail",
+      "colProjects": "Projects",
+      "colLastSeen": "Last seen",
+      "colLastActivity": "Last activity",
+      "createdAt": "Created {date}",
+      "orgsCount": "{count} orgs",
+      "emailVerified": "Verified",
+      "emailUnverified": "Unverified",
+      "projectCount": "{count} projects",
+      "moreProjects": "+{count} more",
+      "noProjects": "No projects",
+      "neverSeen": "Never seen",
+      "noActivity": "No tracked activity"
     },
     "flags": {
       "matchingCount": "{count} flags που ταιριάζουν",
@@ -4400,7 +4424,12 @@
       "loading": "Φόρτωση αρχείων ελέγχου...",
       "loadFailed": "Αποτυχία φόρτωσης αρχείων ελέγχου",
       "empty": "Κανένα συμβάν ελέγχου δεν ταιριάζει με τα τρέχοντα φίλτρα.",
-      "unknownUser": "Άγνωστος χρήστης"
+      "unknownUser": "Άγνωστος χρήστης",
+      "matchingCount": "{count} audit events",
+      "project": "Project",
+      "projectMember": "Project member",
+      "systemSetting": "System setting",
+      "ipAddress": "IP {ip}"
     }
   },
   "authPages": {

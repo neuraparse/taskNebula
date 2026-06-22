@@ -95,7 +95,6 @@ export function DashboardClient() {
     next.delete('verified');
     const qs = next.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-    router.refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
   const { data: projectsForCreate } = useProjects({

@@ -1545,7 +1545,7 @@
     "settings_sections_aria": "Разделы настроек проекта",
     "no_settings_permission": "У вас нет прав на доступ к настройкам проекта.",
     "tab_general": "Общие",
-    "tab_permissions": "Разрешения",
+    "tab_permissions": "Участники и разрешения",
     "tab_schemes": "Схемы",
     "tab_security": "Безопасность",
     "tab_custom_fields": "Пользовательские поля",
@@ -3232,7 +3232,10 @@
     "apm_invite_link_revoke": "Revoke",
     "apm_invite_link_revoked_title": "Invite link revoked",
     "apm_invite_link_revoke_failed_title": "Could not revoke link",
-    "apm_invite_link_revoke_failed": "Failed to revoke project invite link"
+    "apm_invite_link_revoke_failed": "Failed to revoke project invite link",
+    "pm_remove_success": "Участник удален из проекта",
+    "pm_remove_failed": "Не удалось удалить участника проекта",
+    "pm_remove_member_aria": "Удалить {name} из проекта"
   },
   "adminPanels": {
     "agentOps": {
@@ -4368,7 +4371,28 @@
       "roleSuspended": "Приостановлен",
       "rolePending": "Ожидает",
       "roleMember": "Участник",
-      "editUser": "Изменить пользователя"
+      "editUser": "Изменить пользователя",
+      "deleteUser": "Удалить пользователя",
+      "deletedTitle": "Пользователь удален",
+      "deletedDescription": "Пользователь был удален навсегда.",
+      "deleteFailedTitle": "Не удалось удалить пользователя",
+      "confirmDeleteTitle": "Удалить пользователя?",
+      "confirmDeleteDescription": "\"{name}\" будет удален навсегда. Его членства и сеансы будут очищены. Это действие нельзя отменить.",
+      "confirmDeleteLabel": "Удалить пользователя",
+      "colAccess": "Access",
+      "colMail": "Mail",
+      "colProjects": "Projects",
+      "colLastSeen": "Last seen",
+      "colLastActivity": "Last activity",
+      "createdAt": "Created {date}",
+      "orgsCount": "{count} orgs",
+      "emailVerified": "Verified",
+      "emailUnverified": "Unverified",
+      "projectCount": "{count} projects",
+      "moreProjects": "+{count} more",
+      "noProjects": "No projects",
+      "neverSeen": "Never seen",
+      "noActivity": "No tracked activity"
     },
     "flags": {
       "matchingCount": "{count} подходящих флагов",
@@ -4400,7 +4424,12 @@
       "loading": "Загрузка журналов аудита...",
       "loadFailed": "Не удалось загрузить журналы аудита",
       "empty": "Нет событий аудита по текущим фильтрам.",
-      "unknownUser": "Неизвестный пользователь"
+      "unknownUser": "Неизвестный пользователь",
+      "matchingCount": "{count} audit events",
+      "project": "Project",
+      "projectMember": "Project member",
+      "systemSetting": "System setting",
+      "ipAddress": "IP {ip}"
     }
   },
   "authPages": {

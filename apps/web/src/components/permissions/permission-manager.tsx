@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   useProjectMembers,
   useProjectPermissions,
@@ -20,7 +21,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Save, RotateCcw, UserPlus } from 'lucide-react';
+import { Loader2, Shield, Save, RotateCcw, Trash2, UserPlus } from 'lucide-react';
 import { AddProjectMemberDialog } from './add-project-member-dialog';
 
 // Role info using design token classes
@@ -203,19 +204,39 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
   const [editedRole, setEditedRole] = useState<ProjectRole | null>(null);
   const [saving, setSaving] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
   const t = useTranslations('projectConfig');
   const tActions = useTranslations('actions');
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const canManage =
     currentUserPermissions.canChangeRoles ||
     currentUserPermissions.isSuperAdmin ||
+    currentUserPermissions.isOrgAdmin ||
     currentUserPermissions.isOrgOwner;
   const canAdd =
     canManage || currentUserPermissions.canInviteMembers || currentUserPermissions.canManageMembers;
+  const canRemove =
+    currentUserPermissions.isSuperAdmin ||
+    currentUserPermissions.isOrgAdmin ||
+    currentUserPermissions.isOrgOwner ||
+    currentUserPermissions.canManageMembers ||
+    currentUserPermissions.canRemoveMembers;
   const existingMemberUserIds = members
     .map((m) => m.user?.id)
     .filter((id): id is string => typeof id === 'string');
+
+  const invalidateMemberCaches = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['projects'] }),
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] }),
+      queryClient.invalidateQueries({ queryKey: ['project-members'] }),
+      queryClient.invalidateQueries({ queryKey: ['project-members', projectId] }),
+      queryClient.invalidateQueries({ queryKey: ['project-permissions', projectId] }),
+      queryClient.invalidateQueries({ queryKey: ['org-members-for-project-add'] }),
+    ]);
+  };
 
   const handleMemberSelect = (member: ProjectMember) => {
     setSelectedMember(member);
@@ -242,7 +263,8 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
       });
       if (!res.ok) throw new Error('Failed to save');
       toast({ title: t('success'), description: t('pm_update_success') });
-      refetch();
+      await refetch();
+      await invalidateMemberCaches();
     } catch {
       toast({ title: t('error'), description: t('pm_update_failed'), variant: 'destructive' });
     } finally {
@@ -261,7 +283,8 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
       });
       if (!res.ok) throw new Error('Failed to reset');
       toast({ title: t('success'), description: t('pm_reset_success') });
-      refetch();
+      await refetch();
+      await invalidateMemberCaches();
       setSelectedMember(null);
     } catch {
       toast({ title: t('error'), description: t('pm_reset_failed'), variant: 'destructive' });
@@ -270,21 +293,62 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
     }
   };
 
+  const handleRemoveMember = async (member: ProjectMember) => {
+    setRemovingMemberId(member.id);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/members/${member.id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({ error: t('pm_remove_failed') }));
+        throw new Error(payload.error || t('pm_remove_failed'));
+      }
+      toast({ title: t('success'), description: t('pm_remove_success') });
+      if (selectedMember?.id === member.id) {
+        setSelectedMember(null);
+      }
+      await refetch();
+      await invalidateMemberCaches();
+    } catch (error) {
+      toast({
+        title: t('error'),
+        description: error instanceof Error ? error.message : t('pm_remove_failed'),
+        variant: 'destructive',
+      });
+    } finally {
+      setRemovingMemberId(null);
+    }
+  };
+
   if (isLoading) {
     return <div className="text-muted-foreground p-4 text-sm">{t('pm_loading')}</div>;
   }
 
   return (
-    <div className="animate-fade-up space-y-6">
-      <div className="space-y-1">
-        <span className="kicker">{t('pm_permissions')}</span>
-        <h2 className="text-lg font-semibold tracking-tight">{t('pm_management')}</h2>
-        <p className="text-muted-foreground text-sm">{t('pm_management_help')}</p>
+    <div className="animate-fade-up flex min-h-0 flex-col gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 space-y-1">
+          <span className="kicker">{t('pm_permissions')}</span>
+          <h2 className="text-lg font-semibold tracking-tight">{t('pm_management')}</h2>
+          <p className="text-muted-foreground text-sm">{t('pm_management_help')}</p>
+        </div>
+        {canAdd ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => setAddOpen(true)}
+            className="w-full shrink-0 sm:w-auto"
+          >
+            <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+            {t('pm_add')}
+          </Button>
+        ) : null}
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="grid min-h-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)]">
         {/* Members list */}
-        <div className="surface-card p-0 lg:col-span-1">
+        <div className="surface-card min-h-0 overflow-hidden p-0">
           <div className="border-border/60 flex items-start justify-between gap-3 border-b px-4 py-3">
             <div>
               <span className="kicker">{t('pm_team_members')}</span>
@@ -292,53 +356,68 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
                 {t('pm_members_count', { count: members.length })}
               </p>
             </div>
-            {canAdd ? (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setAddOpen(true)}
-                className="shrink-0"
-              >
-                <UserPlus className="mr-1.5 h-3.5 w-3.5" />
-                {t('pm_add')}
-              </Button>
-            ) : null}
           </div>
-          <ScrollArea className="h-[440px]">
+          <ScrollArea className="h-[min(42dvh,360px)] lg:h-[min(58dvh,520px)]">
             <div className="divide-border/60 divide-y">
               {members.map((member) => {
                 const roleInfo = ROLE_INFO[member.role];
                 const isActive = selectedMember?.id === member.id;
                 return (
-                  <button
+                  <div
                     key={member.id}
-                    type="button"
-                    onClick={() => canManage && handleMemberSelect(member)}
                     data-active={isActive ? 'true' : undefined}
-                    className={`row-interactive w-full px-4 py-2.5 text-left ${
-                      !canManage ? 'cursor-default' : 'cursor-pointer'
+                    className={`row-interactive flex w-full items-center gap-2 px-4 py-2.5 text-left ${
+                      !canManage ? 'cursor-default' : ''
                     }`}
                   >
-                    <div className="flex items-center gap-2.5">
-                      <Avatar className="h-7 w-7 shrink-0">
-                        <AvatarImage src={member.user?.image || ''} />
-                        <AvatarFallback className="text-[11px]">
-                          {member.user?.name?.charAt(0) || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">
-                          {member.user?.name || t('pm_unknown')}
-                        </p>
-                        <p className="text-muted-foreground truncate text-xs">
-                          {member.user?.email}
-                        </p>
+                    <button
+                      type="button"
+                      onClick={() => canManage && handleMemberSelect(member)}
+                      disabled={!canManage}
+                      className={`min-w-0 flex-1 text-left ${
+                        canManage ? 'cursor-pointer' : 'cursor-default'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Avatar className="h-7 w-7 shrink-0">
+                          <AvatarImage src={member.user?.image || ''} />
+                          <AvatarFallback className="text-[11px]">
+                            {member.user?.name?.charAt(0) || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">
+                            {member.user?.name || t('pm_unknown')}
+                          </p>
+                          <p className="text-muted-foreground truncate text-xs">
+                            {member.user?.email}
+                          </p>
+                        </div>
+                        <span className={`chip shrink-0 text-[10px] ${roleInfo?.tokenClass}`}>
+                          {roleInfo ? t(roleInfo.labelKey) : null}
+                        </span>
                       </div>
-                      <span className={`chip shrink-0 text-[10px] ${roleInfo?.tokenClass}`}>
-                        {roleInfo ? t(roleInfo.labelKey) : null}
-                      </span>
-                    </div>
-                  </button>
+                    </button>
+                    {canRemove ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-destructive h-7 w-7 shrink-0"
+                        onClick={() => void handleRemoveMember(member)}
+                        disabled={removingMemberId === member.id}
+                        aria-label={t('pm_remove_member_aria', {
+                          name: member.user?.name || member.user?.email || t('pm_unknown'),
+                        })}
+                      >
+                        {removingMemberId === member.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                    ) : null}
+                  </div>
                 );
               })}
             </div>
@@ -346,7 +425,7 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
         </div>
 
         {/* Permission editor */}
-        <div className="surface-card lg:col-span-2">
+        <div className="surface-card min-h-0 overflow-hidden p-0">
           <div className="border-border/60 border-b px-5 py-4">
             <span className="kicker">{t('pm_editor')}</span>
             <h3 className="mt-1 text-sm font-semibold tracking-tight">
@@ -359,7 +438,7 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
             </p>
           </div>
 
-          <div className="p-5">
+          <div className="p-4 sm:p-5">
             {!canManage && (
               <div className="panel-warn mb-4 p-3">
                 <p className="text-sm">{t('pm_no_permission')}</p>
@@ -369,14 +448,14 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
             {selectedMember && canManage ? (
               <div className="space-y-5">
                 {/* Role selector row */}
-                <div className="grid grid-cols-1 items-center gap-4 md:grid-cols-[240px_1fr]">
+                <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-[minmax(160px,220px)_1fr] md:items-center">
                   <div className="text-sm font-medium">{t('pm_role')}</div>
                   <div className="flex flex-wrap items-center gap-2">
                     <Select
                       value={editedRole || ''}
                       onValueChange={(v) => handleRoleChange(v as ProjectRole)}
                     >
-                      <SelectTrigger className="w-56">
+                      <SelectTrigger className="w-full sm:w-56">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -400,7 +479,7 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
                 </div>
 
                 {/* Permission categories */}
-                <ScrollArea className="h-[360px]">
+                <ScrollArea className="h-[min(44dvh,390px)]">
                   <div className="stagger space-y-6 pr-2">
                     {Object.entries(PERMISSION_CATEGORIES).map(([catKey, category]) => (
                       <div key={catKey} className="space-y-2">
@@ -416,7 +495,7 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
                                 htmlFor={`perm-${permKey}`}
                                 className="row-interactive flex cursor-pointer items-center justify-between gap-3 px-4 py-2.5"
                               >
-                                <div className="min-w-0">
+                                <div className="min-w-0 flex-1">
                                   <p className="text-sm font-medium">{permLabel}</p>
                                   {permHint ? (
                                     <p className="text-muted-foreground truncate text-xs">
@@ -426,6 +505,7 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
                                 </div>
                                 <Switch
                                   id={`perm-${permKey}`}
+                                  className="shrink-0"
                                   checked={editedPermissions[permKey] || false}
                                   onCheckedChange={(v) =>
                                     handlePermissionChange(permKey, Boolean(v))
@@ -452,7 +532,7 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
                 </div>
               </div>
             ) : (
-              <div className="text-muted-foreground flex h-[360px] items-center justify-center">
+              <div className="text-muted-foreground flex h-[min(44dvh,390px)] min-h-64 items-center justify-center">
                 <div className="space-y-2 text-center">
                   <Shield className="text-muted-foreground/40 mx-auto h-8 w-8" />
                   <p className="text-sm">{t('pm_select_member_hint')}</p>
@@ -468,8 +548,9 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
         existingMemberUserIds={existingMemberUserIds}
         open={addOpen}
         onOpenChange={setAddOpen}
-        onAdded={() => {
-          refetch();
+        onAdded={async () => {
+          await refetch();
+          await invalidateMemberCaches();
         }}
       />
     </div>

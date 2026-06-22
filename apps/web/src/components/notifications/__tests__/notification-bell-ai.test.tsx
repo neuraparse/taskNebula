@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import userEvent from '@testing-library/user-event';
 import { NotificationBell } from '../notification-bell';
 
 jest.mock('@/lib/hooks/use-notifications', () => {
@@ -9,7 +10,9 @@ jest.mock('@/lib/hooks/use-notifications', () => {
     useNotifications: jest.fn(),
     useUnreadNotificationsCount: jest.fn().mockReturnValue({ data: { count: 2 } }),
     useMarkNotificationAsRead: jest.fn().mockReturnValue({ mutateAsync: jest.fn() }),
-    useMarkAllNotificationsAsRead: jest.fn().mockReturnValue({ mutateAsync: jest.fn(), isPending: false }),
+    useMarkAllNotificationsAsRead: jest
+      .fn()
+      .mockReturnValue({ mutateAsync: jest.fn(), isPending: false }),
   };
 });
 
@@ -63,26 +66,27 @@ describe('NotificationBell — AI/agent notification rendering', () => {
   });
 
   it('renders ai_draft_failed with "AI draft" label and action text in body', async () => {
+    const user = userEvent.setup();
     render(<NotificationBell />, { wrapper: makeWrapper() });
     const trigger = screen.getByRole('button', { name: /notifications/i });
-    trigger.click();
+    await user.click(trigger);
 
     const label = await screen.findByText('AI draft');
     expect(label).toBeInTheDocument();
-    expect(
-      screen.getByText(/Rate limit exceeded/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Rate limit exceeded/i)).toBeInTheDocument();
   });
 
   it('renders agent_run_failed with "Agent run" label', async () => {
+    const user = userEvent.setup();
     render(<NotificationBell />, { wrapper: makeWrapper() });
-    screen.getByRole('button', { name: /notifications/i }).click();
+    await user.click(screen.getByRole('button', { name: /notifications/i }));
     expect(await screen.findByText('Agent run')).toBeInTheDocument();
   });
 
   it('deep-links AI failure rows to project AI settings', async () => {
+    const user = userEvent.setup();
     render(<NotificationBell />, { wrapper: makeWrapper() });
-    screen.getByRole('button', { name: /notifications/i }).click();
+    await user.click(screen.getByRole('button', { name: /notifications/i }));
 
     await screen.findByText('AI draft');
     const links = document.querySelectorAll('a[href*="/projects/proj-1/settings?tab=ai-agents"]');

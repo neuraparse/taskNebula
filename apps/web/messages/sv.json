@@ -1584,7 +1584,7 @@
     "settings_sections_aria": "Avsnitt för projektinställningar",
     "no_settings_permission": "Du har inte behörighet att komma åt projektinställningar.",
     "tab_general": "Allmänt",
-    "tab_permissions": "Behörigheter",
+    "tab_permissions": "Medlemmar och behörigheter",
     "tab_schemes": "Scheman",
     "tab_security": "Säkerhet",
     "tab_custom_fields": "Anpassade fält",
@@ -3271,7 +3271,10 @@
     "apm_invite_link_revoke": "Revoke",
     "apm_invite_link_revoked_title": "Invite link revoked",
     "apm_invite_link_revoke_failed_title": "Could not revoke link",
-    "apm_invite_link_revoke_failed": "Failed to revoke project invite link"
+    "apm_invite_link_revoke_failed": "Failed to revoke project invite link",
+    "pm_remove_success": "Medlem borttagen från projektet",
+    "pm_remove_failed": "Det gick inte att ta bort projektmedlemmen",
+    "pm_remove_member_aria": "Ta bort {name} från projektet"
   },
   "adminPanels": {
     "agentOps": {
@@ -4368,7 +4371,28 @@
       "roleSuspended": "Avstängd",
       "rolePending": "Väntande",
       "roleMember": "Medlem",
-      "editUser": "Redigera användare"
+      "editUser": "Redigera användare",
+      "deleteUser": "Ta bort användare",
+      "deletedTitle": "Användare borttagen",
+      "deletedDescription": "Användaren togs bort permanent.",
+      "deleteFailedTitle": "Det gick inte att ta bort användaren",
+      "confirmDeleteTitle": "Ta bort användare?",
+      "confirmDeleteDescription": "\"{name}\" tas bort permanent. Medlemskap och sessioner rensas. Detta kan inte ångras.",
+      "confirmDeleteLabel": "Ta bort användare",
+      "colAccess": "Access",
+      "colMail": "Mail",
+      "colProjects": "Projects",
+      "colLastSeen": "Last seen",
+      "colLastActivity": "Last activity",
+      "createdAt": "Created {date}",
+      "orgsCount": "{count} orgs",
+      "emailVerified": "Verified",
+      "emailUnverified": "Unverified",
+      "projectCount": "{count} projects",
+      "moreProjects": "+{count} more",
+      "noProjects": "No projects",
+      "neverSeen": "Never seen",
+      "noActivity": "No tracked activity"
     },
     "flags": {
       "matchingCount": "{count} matchande flaggor",
@@ -4400,7 +4424,12 @@
       "loading": "Läser in granskningsloggar...",
       "loadFailed": "Det gick inte att läsa in granskningsloggar",
       "empty": "Inga granskningshändelser matchar de aktuella filtren.",
-      "unknownUser": "Okänd användare"
+      "unknownUser": "Okänd användare",
+      "matchingCount": "{count} audit events",
+      "project": "Project",
+      "projectMember": "Project member",
+      "systemSetting": "System setting",
+      "ipAddress": "IP {ip}"
     }
   },
   "authPages": {

@@ -1545,7 +1545,7 @@
     "settings_sections_aria": "Projektbeállítások szakaszai",
     "no_settings_permission": "Nincs jogosultságod a projektbeállítások eléréséhez.",
     "tab_general": "Általános",
-    "tab_permissions": "Engedélyek",
+    "tab_permissions": "Tagok és jogosultságok",
     "tab_schemes": "Sémák",
     "tab_security": "Biztonság",
     "tab_custom_fields": "Egyéni mezők",
@@ -3232,7 +3232,10 @@
     "apm_invite_link_revoke": "Revoke",
     "apm_invite_link_revoked_title": "Invite link revoked",
     "apm_invite_link_revoke_failed_title": "Could not revoke link",
-    "apm_invite_link_revoke_failed": "Failed to revoke project invite link"
+    "apm_invite_link_revoke_failed": "Failed to revoke project invite link",
+    "pm_remove_success": "Tag eltávolítva a projektből",
+    "pm_remove_failed": "Nem sikerült eltávolítani a projekt tagját",
+    "pm_remove_member_aria": "{name} eltávolítása a projektből"
   },
   "adminPanels": {
     "agentOps": {
@@ -4368,7 +4371,28 @@
       "roleSuspended": "Felfüggesztve",
       "rolePending": "Függőben",
       "roleMember": "Tag",
-      "editUser": "Felhasználó szerkesztése"
+      "editUser": "Felhasználó szerkesztése",
+      "deleteUser": "Felhasználó törlése",
+      "deletedTitle": "Felhasználó törölve",
+      "deletedDescription": "A felhasználó véglegesen eltávolítva.",
+      "deleteFailedTitle": "Nem sikerült törölni a felhasználót",
+      "confirmDeleteTitle": "Törli a felhasználót?",
+      "confirmDeleteDescription": "\"{name}\" véglegesen eltávolításra kerül. A tagságai és munkamenetei törlődnek. Ez nem vonható vissza.",
+      "confirmDeleteLabel": "Felhasználó törlése",
+      "colAccess": "Access",
+      "colMail": "Mail",
+      "colProjects": "Projects",
+      "colLastSeen": "Last seen",
+      "colLastActivity": "Last activity",
+      "createdAt": "Created {date}",
+      "orgsCount": "{count} orgs",
+      "emailVerified": "Verified",
+      "emailUnverified": "Unverified",
+      "projectCount": "{count} projects",
+      "moreProjects": "+{count} more",
+      "noProjects": "No projects",
+      "neverSeen": "Never seen",
+      "noActivity": "No tracked activity"
     },
     "flags": {
       "matchingCount": "{count} egyező jelölő",
@@ -4400,7 +4424,12 @@
       "loading": "Naplók betöltése...",
       "loadFailed": "Nem sikerült betölteni a naplókat",
       "empty": "Egyetlen naplóesemény sem felel meg a jelenlegi szűrőknek.",
-      "unknownUser": "Ismeretlen felhasználó"
+      "unknownUser": "Ismeretlen felhasználó",
+      "matchingCount": "{count} audit events",
+      "project": "Project",
+      "projectMember": "Project member",
+      "systemSetting": "System setting",
+      "ipAddress": "IP {ip}"
     }
   },
   "authPages": {

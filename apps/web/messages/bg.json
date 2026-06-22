@@ -1545,7 +1545,7 @@
     "settings_sections_aria": "Раздели на настройките на проекта",
     "no_settings_permission": "Нямате разрешение за достъп до настройките на проекта.",
     "tab_general": "Общи",
-    "tab_permissions": "Разрешения",
+    "tab_permissions": "Членове и разрешения",
     "tab_schemes": "Схеми",
     "tab_security": "Сигурност",
     "tab_custom_fields": "Персонализирани полета",
@@ -3232,7 +3232,10 @@
     "apm_invite_link_revoke": "Revoke",
     "apm_invite_link_revoked_title": "Invite link revoked",
     "apm_invite_link_revoke_failed_title": "Could not revoke link",
-    "apm_invite_link_revoke_failed": "Failed to revoke project invite link"
+    "apm_invite_link_revoke_failed": "Failed to revoke project invite link",
+    "pm_remove_success": "Членът е премахнат от проекта",
+    "pm_remove_failed": "Неуспешно премахване на член от проекта",
+    "pm_remove_member_aria": "Премахване на {name} от проекта"
   },
   "adminPanels": {
     "agentOps": {
@@ -4368,7 +4371,28 @@
       "roleSuspended": "Спрян",
       "rolePending": "Чакащ",
       "roleMember": "Член",
-      "editUser": "Редактирай потребителя"
+      "editUser": "Редактирай потребителя",
+      "deleteUser": "Изтриване на потребител",
+      "deletedTitle": "Потребителят е изтрит",
+      "deletedDescription": "Потребителят беше премахнат завинаги.",
+      "deleteFailedTitle": "Неуспешно изтриване на потребител",
+      "confirmDeleteTitle": "Да се изтрие ли потребителят?",
+      "confirmDeleteDescription": "\"{name}\" ще бъде премахнат завинаги. Членствата и сесиите ще бъдат изчистени. Това не може да бъде отменено.",
+      "confirmDeleteLabel": "Изтриване на потребител",
+      "colAccess": "Access",
+      "colMail": "Mail",
+      "colProjects": "Projects",
+      "colLastSeen": "Last seen",
+      "colLastActivity": "Last activity",
+      "createdAt": "Created {date}",
+      "orgsCount": "{count} orgs",
+      "emailVerified": "Verified",
+      "emailUnverified": "Unverified",
+      "projectCount": "{count} projects",
+      "moreProjects": "+{count} more",
+      "noProjects": "No projects",
+      "neverSeen": "Never seen",
+      "noActivity": "No tracked activity"
     },
     "flags": {
       "matchingCount": "{count} съвпадащи флага",
@@ -4400,7 +4424,12 @@
       "loading": "Зареждане на одитни дневници...",
       "loadFailed": "Одитните дневници не можаха да бъдат заредени",
       "empty": "Няма одитни събития, които да съответстват на текущите филтри.",
-      "unknownUser": "Неизвестен потребител"
+      "unknownUser": "Неизвестен потребител",
+      "matchingCount": "{count} audit events",
+      "project": "Project",
+      "projectMember": "Project member",
+      "systemSetting": "System setting",
+      "ipAddress": "IP {ip}"
     }
   },
   "authPages": {

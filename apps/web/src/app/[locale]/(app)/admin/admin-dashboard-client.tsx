@@ -61,7 +61,9 @@ import {
   Crown,
   Edit,
   Flag,
+  FolderKanban,
   Gauge,
+  Mail,
   MoreVertical,
   Plug,
   Radio,
@@ -107,9 +109,40 @@ type UserItem = {
   id: string;
   name: string | null;
   email: string;
+  emailVerified?: string | null;
+  lastSeenAt?: string | null;
+  createdAt?: string;
   status: string;
   isSuperAdmin: boolean;
   organizations?: Array<{ organizationId: string; organizationName: string; role: string }>;
+  projectMemberships?: Array<{
+    projectId: string;
+    projectKey: string;
+    projectName: string;
+    organizationId: string;
+    organizationName: string | null;
+    role: string;
+  }>;
+  lastActivity?: {
+    action: string;
+    resourceType: string;
+    resourceId: string | null;
+    projectId: string | null;
+    createdAt: string;
+    scope: 'system' | 'workspace';
+  } | null;
+};
+
+type AdminFeatureFlag = {
+  id: string;
+  key: string;
+  name: string;
+  description: string | null;
+  isEnabled: boolean;
+  enabledForPlans: string[];
+  enabledForOrganizations: string[];
+  rolloutPercentage: number;
+  metadata: Record<string, unknown>;
 };
 
 type AdminAuditLog = {
@@ -119,6 +152,9 @@ type AdminAuditLog = {
   resourceId: string | null;
   changes: Record<string, { from?: unknown; to?: unknown }> | null;
   metadata: Record<string, unknown> | null;
+  organizationId?: string | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
   createdAt: string;
   user: {
     id: string | null;
@@ -162,6 +198,13 @@ const userStatusChipClass: Record<string, string> = {
   suspended: 'chip-rose',
 };
 
+const ADMIN_TABLE_CLASS = 'w-full border-collapse text-sm';
+const ADMIN_TABLE_HEADER_CELL_CLASS =
+  'text-muted-foreground h-9 px-3 py-2 text-left align-middle text-[11px] font-medium uppercase tracking-wider whitespace-nowrap';
+const ADMIN_TABLE_CELL_CLASS = 'px-3 py-3 align-middle';
+const ADMIN_TABLE_ROW_CLASS =
+  'border-border/50 border-b transition-colors hover:bg-accent/60 last:border-b-0';
+
 const auditSeverity = (action: string): 'critical' | 'high' | 'medium' | 'low' => {
   if (/delete|revoke|suspend|purge/i.test(action)) return 'critical';
   if (/update|change|rotate|disable|enable/i.test(action)) return 'high';
@@ -186,6 +229,7 @@ export function AdminDashboardClient() {
   const [editUserId, setEditUserId] = useState<string | null>(null);
   const [editFlagId, setEditFlagId] = useState<string | null>(null);
   const [deleteOrg, setDeleteOrg] = useState<OrganizationItem | null>(null);
+  const [deleteUser, setDeleteUser] = useState<UserItem | null>(null);
   const [deleteFlag, setDeleteFlag] = useState<{ id: string; name: string } | null>(null);
 
   const [orgSearch, setOrgSearch] = useState('');
@@ -311,8 +355,36 @@ export function AdminDashboardClient() {
     },
   });
 
-  const selectedFlag = featureFlags?.find((flag: any) => flag.id === editFlagId);
-  const filteredFlags = (featureFlags || []).filter((flag: any) => {
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
+      });
+      const payload = await response.json().catch(() => ({ error: t('users.deleteFailedTitle') }));
+      if (!response.ok) throw new Error(payload.error || t('users.deleteFailedTitle'));
+      return payload;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
+      toast({
+        title: t('users.deletedTitle'),
+        description: t('users.deletedDescription'),
+      });
+      setDeleteUser(null);
+    },
+    onError: (mutationError: Error) => {
+      toast({
+        title: t('users.deleteFailedTitle'),
+        description: mutationError.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const selectedFlag = featureFlags?.find((flag: AdminFeatureFlag) => flag.id === editFlagId);
+  const filteredFlags = (featureFlags || []).filter((flag: AdminFeatureFlag) => {
     const searchTerm = flagSearch.trim().toLowerCase();
     const matchesSearch =
       !searchTerm ||
@@ -326,7 +398,7 @@ export function AdminDashboardClient() {
     return matchesSearch && matchesState;
   });
 
-  async function handleToggleFlag(flag: any, next: boolean) {
+  async function handleToggleFlag(flag: AdminFeatureFlag, next: boolean) {
     try {
       await updateFeatureFlag.mutateAsync({ flagId: flag.id, data: { isEnabled: next } });
       queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
@@ -400,6 +472,22 @@ export function AdminDashboardClient() {
         cancelLabel={t('common.cancel')}
         pending={deleteOrgMutation.isPending}
         onConfirm={() => deleteOrg && deleteOrgMutation.mutate(deleteOrg.id)}
+      />
+
+      <ConfirmDialog
+        open={!!deleteUser}
+        onOpenChange={(open) => !open && setDeleteUser(null)}
+        title={t('users.confirmDeleteTitle')}
+        description={
+          deleteUser
+            ? t('users.confirmDeleteDescription', { name: deleteUser.name || deleteUser.email })
+            : ''
+        }
+        confirmLabel={t('users.confirmDeleteLabel')}
+        pendingLabel={t('common.deleting')}
+        cancelLabel={t('common.cancel')}
+        pending={deleteUserMutation.isPending}
+        onConfirm={() => deleteUser && deleteUserMutation.mutate(deleteUser.id)}
       />
 
       <ConfirmDialog
@@ -477,6 +565,7 @@ export function AdminDashboardClient() {
               userStatus={userStatus}
               setUserStatus={setUserStatus}
               onEdit={setEditUserId}
+              onDelete={setDeleteUser}
             />
           )}
 
@@ -525,6 +614,82 @@ export function AdminDashboardClient() {
         </div>
       </div>
     </>
+  );
+}
+
+function OrganizationActionsMenu({
+  org,
+  onEdit,
+  onDelete,
+}: {
+  org: OrganizationItem;
+  onEdit: (id: string) => void;
+  onDelete: (org: OrganizationItem) => void;
+}) {
+  const t = useTranslations('pagesAdmin');
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-7 w-7">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>{t('common.actions')}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => onEdit(org.id)}>
+          <Edit className="mr-2 h-4 w-4" />
+          {t('common.edit')}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="text-destructive focus:text-destructive"
+          onClick={() => onDelete(org)}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          {t('common.delete')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function UserActionsMenu({
+  user,
+  onEdit,
+  onDelete,
+}: {
+  user: UserItem;
+  onEdit: (id: string) => void;
+  onDelete: (user: UserItem) => void;
+}) {
+  const t = useTranslations('pagesAdmin');
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-7 w-7">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>{t('common.actions')}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => onEdit(user.id)}>
+          <Edit className="mr-2 h-4 w-4" />
+          {t('users.editUser')}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="text-destructive focus:text-destructive"
+          onClick={() => onDelete(user)}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          {t('users.deleteUser')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -712,7 +877,7 @@ function OrganizationsSection({
         </Select>
       </div>
 
-      <div className="surface-card overflow-hidden">
+      <div className="surface-card overflow-hidden xl:hidden">
         {orgsLoading ? (
           <EmptyState icon={Building2} message={t('orgs.loading')} />
         ) : orgsError ? (
@@ -722,40 +887,89 @@ function OrganizationsSection({
         ) : orgs.length === 0 ? (
           <EmptyState icon={Building2} message={t('orgs.empty')} />
         ) : (
-          <table className="w-full border-collapse">
+          <ul className="stagger divide-border/50 divide-y">
+            {orgs.map((org) => (
+              <li key={org.id} className="px-4 py-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{org.name}</p>
+                    <p className="text-muted-foreground truncate font-mono text-xs">{org.slug}</p>
+                  </div>
+                  <OrganizationActionsMenu org={org} onEdit={onEdit} onDelete={onDelete} />
+                </div>
+
+                <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+                  <div className="min-w-0 space-y-1">
+                    <dt className="kicker">{t('orgs.colStatus')}</dt>
+                    <dd>
+                      <span
+                        className={cn(
+                          orgStatusChipClass[org.status] ?? DEFAULT_CHIP_CLASS,
+                          'capitalize'
+                        )}
+                      >
+                        {org.status}
+                      </span>
+                    </dd>
+                  </div>
+                  <div className="min-w-0 space-y-1">
+                    <dt className="kicker">{t('orgs.colPlan')}</dt>
+                    <dd>
+                      <span className="chip capitalize">{org.plan}</span>
+                    </dd>
+                  </div>
+                  <div className="min-w-0 space-y-1">
+                    <dt className="kicker">{t('orgs.colOwner')}</dt>
+                    <dd className="truncate">
+                      {org.owner?.name || org.owner?.email || (
+                        <span className="text-muted-foreground">{t('orgs.noOwner')}</span>
+                      )}
+                    </dd>
+                  </div>
+                  <div className="min-w-0 space-y-1">
+                    <dt className="kicker">{t('orgs.colMembers')}</dt>
+                    <dd className="tabular-nums">{org.stats?.members ?? 0}</dd>
+                  </div>
+                </dl>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="surface-card hidden overflow-x-auto xl:block">
+        {orgsLoading ? (
+          <EmptyState icon={Building2} message={t('orgs.loading')} />
+        ) : orgsError ? (
+          <ErrorState
+            message={orgsError instanceof Error ? orgsError.message : t('orgs.loadFailed')}
+          />
+        ) : orgs.length === 0 ? (
+          <EmptyState icon={Building2} message={t('orgs.empty')} />
+        ) : (
+          <table className={cn(ADMIN_TABLE_CLASS, 'min-w-[860px] xl:min-w-0')}>
             <thead>
               <tr className="border-border border-b">
-                <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
-                  {t('orgs.colName')}
-                </th>
-                <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
-                  {t('orgs.colStatus')}
-                </th>
-                <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
-                  {t('orgs.colPlan')}
-                </th>
-                <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
-                  {t('orgs.colOwner')}
-                </th>
-                <th className="text-muted-foreground px-4 py-2 text-right text-xs font-medium uppercase tracking-wider">
+                <th className={ADMIN_TABLE_HEADER_CELL_CLASS}>{t('orgs.colName')}</th>
+                <th className={ADMIN_TABLE_HEADER_CELL_CLASS}>{t('orgs.colStatus')}</th>
+                <th className={ADMIN_TABLE_HEADER_CELL_CLASS}>{t('orgs.colPlan')}</th>
+                <th className={ADMIN_TABLE_HEADER_CELL_CLASS}>{t('orgs.colOwner')}</th>
+                <th className={cn(ADMIN_TABLE_HEADER_CELL_CLASS, 'text-right')}>
                   {t('orgs.colMembers')}
                 </th>
-                <th className="px-4 py-2" />
+                <th className={cn(ADMIN_TABLE_HEADER_CELL_CLASS, 'w-12')} />
               </tr>
             </thead>
             <tbody className="stagger">
               {orgs.map((org) => (
-                <tr
-                  key={org.id}
-                  className="row-interactive border-border/50 border-b last:border-b-0"
-                >
-                  <td className="px-4 py-3">
+                <tr key={org.id} className={ADMIN_TABLE_ROW_CLASS}>
+                  <td className={ADMIN_TABLE_CELL_CLASS}>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{org.name}</p>
                       <p className="text-muted-foreground truncate font-mono text-xs">{org.slug}</p>
                     </div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className={ADMIN_TABLE_CELL_CLASS}>
                     <span
                       className={cn(
                         orgStatusChipClass[org.status] ?? DEFAULT_CHIP_CLASS,
@@ -765,43 +979,21 @@ function OrganizationsSection({
                       {org.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className={ADMIN_TABLE_CELL_CLASS}>
                     <span className="chip capitalize">{org.plan}</span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className={ADMIN_TABLE_CELL_CLASS}>
                     <p className="max-w-[200px] truncate text-sm">
                       {org.owner?.name || org.owner?.email || (
                         <span className="text-muted-foreground">{t('orgs.noOwner')}</span>
                       )}
                     </p>
                   </td>
-                  <td className="px-4 py-3 text-right text-sm tabular-nums">
+                  <td className={cn(ADMIN_TABLE_CELL_CLASS, 'text-right tabular-nums')}>
                     {org.stats?.members ?? 0}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>{t('common.actions')}</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => onEdit(org.id)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          {t('common.edit')}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => onDelete(org)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          {t('common.delete')}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                  <td className={cn(ADMIN_TABLE_CELL_CLASS, 'px-2 text-right')}>
+                    <OrganizationActionsMenu org={org} onEdit={onEdit} onDelete={onDelete} />
                   </td>
                 </tr>
               ))}
@@ -824,6 +1016,7 @@ function UsersSection({
   userStatus,
   setUserStatus,
   onEdit,
+  onDelete,
 }: {
   usersData: { users: UserItem[]; pagination: { total: number } } | undefined;
   usersLoading: boolean;
@@ -833,9 +1026,133 @@ function UsersSection({
   userStatus: string;
   setUserStatus: (v: string) => void;
   onEdit: (id: string) => void;
+  onDelete: (user: UserItem) => void;
 }) {
   const t = useTranslations('pagesAdmin');
+  const tProject = useTranslations('projectConfig');
   const users = usersData?.users || [];
+
+  function renderUserIdentity(user: UserItem) {
+    return (
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium">{user.name || user.email}</p>
+        <p className="text-muted-foreground truncate text-xs">{user.email}</p>
+        {user.createdAt ? (
+          <p className="text-muted-foreground mt-0.5 truncate text-[11px]">
+            {t('users.createdAt', { date: formatShortDate(user.createdAt) })}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
+  function renderUserAccess(user: UserItem) {
+    const isSuspended = user.status === 'suspended' || user.status === 'inactive';
+    const isInvited = user.status === 'invited';
+    const orgCount = user.organizations?.length ?? 0;
+
+    return (
+      <div className="space-y-1">
+        {user.isSuperAdmin ? (
+          <span className="chip-rose inline-flex items-center gap-1">
+            <Crown className="h-3 w-3" />
+            {t('users.roleAdmin')}
+          </span>
+        ) : isSuspended ? (
+          <span className="chip-rose">{t('users.roleSuspended')}</span>
+        ) : isInvited ? (
+          <span className="chip-amber">{t('users.rolePending')}</span>
+        ) : (
+          <span className="chip-blue">{t('users.roleMember')}</span>
+        )}
+        <div className="flex flex-wrap gap-1">
+          <span
+            className={cn(userStatusChipClass[user.status] ?? DEFAULT_CHIP_CLASS, 'capitalize')}
+          >
+            {user.status}
+          </span>
+          <span className="chip">{t('users.orgsCount', { count: orgCount })}</span>
+        </div>
+      </div>
+    );
+  }
+
+  function renderEmailStatus(user: UserItem) {
+    return (
+      <span
+        className={cn(
+          'inline-flex items-center gap-1',
+          user.emailVerified ? 'chip-emerald' : 'chip-amber'
+        )}
+      >
+        <Mail className="h-3 w-3" />
+        {user.emailVerified ? t('users.emailVerified') : t('users.emailUnverified')}
+      </span>
+    );
+  }
+
+  function renderProjectMemberships(user: UserItem) {
+    const projectMemberships = user.projectMemberships ?? [];
+    const visibleProjects = projectMemberships.slice(0, 2);
+    const hiddenProjectCount = Math.max(projectMemberships.length - visibleProjects.length, 0);
+
+    if (projectMemberships.length === 0) {
+      return <span className="text-muted-foreground text-sm">{t('users.noProjects')}</span>;
+    }
+
+    return (
+      <div className="min-w-0 space-y-1">
+        <div className="flex items-center gap-1.5 text-sm font-medium">
+          <FolderKanban className="text-muted-foreground h-3.5 w-3.5" />
+          {t('users.projectCount', { count: projectMemberships.length })}
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {visibleProjects.map((project) => (
+            <span key={project.projectId} className="chip min-w-0 max-w-full">
+              <span className="shrink-0 font-mono">{project.projectKey}</span>
+              <span className="text-muted-foreground mx-1">·</span>
+              <span className="min-w-0 truncate">{tProject(`pr_${project.role}`)}</span>
+            </span>
+          ))}
+          {hiddenProjectCount > 0 ? (
+            <span className="chip">{t('users.moreProjects', { count: hiddenProjectCount })}</span>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  function renderLastSeen(user: UserItem) {
+    if (!user.lastSeenAt) {
+      return <span className="text-muted-foreground">{t('users.neverSeen')}</span>;
+    }
+
+    return (
+      <div className="space-y-0.5">
+        <p className="tabular-nums">{formatRelativeTime(user.lastSeenAt)}</p>
+        <p className="text-muted-foreground text-[11px]">{formatShortDate(user.lastSeenAt)}</p>
+      </div>
+    );
+  }
+
+  function renderLastActivity(user: UserItem) {
+    if (!user.lastActivity) {
+      return <span className="text-muted-foreground text-sm">{t('users.noActivity')}</span>;
+    }
+
+    return (
+      <div className="min-w-0 space-y-0.5">
+        <p className="truncate text-sm font-medium">
+          {formatAdminAction(user.lastActivity.action)}
+        </p>
+        <p className="text-muted-foreground truncate text-xs">
+          {formatAdminAction(user.lastActivity.resourceType)} ·{' '}
+          {formatRelativeTime(user.lastActivity.createdAt)}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -864,7 +1181,7 @@ function UsersSection({
         </Select>
       </div>
 
-      <div className="surface-card overflow-hidden">
+      <div className="surface-card overflow-hidden xl:hidden">
         {usersLoading ? (
           <EmptyState icon={Users} message={t('users.loading')} />
         ) : usersError ? (
@@ -874,86 +1191,87 @@ function UsersSection({
         ) : users.length === 0 ? (
           <EmptyState icon={Users} message={t('users.empty')} />
         ) : (
-          <table className="w-full border-collapse">
+          <ul className="stagger divide-border/50 divide-y">
+            {users.map((user) => (
+              <li key={user.id} className="px-4 py-4">
+                <div className="flex items-start justify-between gap-3">
+                  {renderUserIdentity(user)}
+                  <UserActionsMenu user={user} onEdit={onEdit} onDelete={onDelete} />
+                </div>
+
+                <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                  <div className="min-w-0 space-y-1">
+                    <dt className="kicker">{t('users.colAccess')}</dt>
+                    <dd>{renderUserAccess(user)}</dd>
+                  </div>
+                  <div className="min-w-0 space-y-1">
+                    <dt className="kicker">{t('users.colMail')}</dt>
+                    <dd>{renderEmailStatus(user)}</dd>
+                  </div>
+                  <div className="min-w-0 space-y-1 sm:col-span-2">
+                    <dt className="kicker">{t('users.colProjects')}</dt>
+                    <dd>{renderProjectMemberships(user)}</dd>
+                  </div>
+                  <div className="min-w-0 space-y-1">
+                    <dt className="kicker">{t('users.colLastSeen')}</dt>
+                    <dd>{renderLastSeen(user)}</dd>
+                  </div>
+                  <div className="min-w-0 space-y-1">
+                    <dt className="kicker">{t('users.colLastActivity')}</dt>
+                    <dd>{renderLastActivity(user)}</dd>
+                  </div>
+                </dl>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="surface-card hidden overflow-x-auto xl:block">
+        {usersLoading ? (
+          <EmptyState icon={Users} message={t('users.loading')} />
+        ) : usersError ? (
+          <ErrorState
+            message={usersError instanceof Error ? usersError.message : t('users.loadFailed')}
+          />
+        ) : users.length === 0 ? (
+          <EmptyState icon={Users} message={t('users.empty')} />
+        ) : (
+          <table className={cn(ADMIN_TABLE_CLASS, 'min-w-[980px] table-fixed xl:min-w-0')}>
+            <colgroup>
+              <col className="w-[23%]" />
+              <col className="w-[14%]" />
+              <col className="w-[12%]" />
+              <col className="w-[25%]" />
+              <col className="w-[12%]" />
+              <col className="w-[9%]" />
+              <col className="w-[5%]" />
+            </colgroup>
             <thead>
               <tr className="border-border border-b">
-                <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
-                  {t('users.colUser')}
-                </th>
-                <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
-                  {t('users.colRole')}
-                </th>
-                <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
-                  {t('users.colStatus')}
-                </th>
-                <th className="text-muted-foreground px-4 py-2 text-right text-xs font-medium uppercase tracking-wider">
-                  {t('users.colOrgs')}
-                </th>
-                <th className="px-4 py-2" />
+                <th className={ADMIN_TABLE_HEADER_CELL_CLASS}>{t('users.colUser')}</th>
+                <th className={ADMIN_TABLE_HEADER_CELL_CLASS}>{t('users.colAccess')}</th>
+                <th className={ADMIN_TABLE_HEADER_CELL_CLASS}>{t('users.colMail')}</th>
+                <th className={ADMIN_TABLE_HEADER_CELL_CLASS}>{t('users.colProjects')}</th>
+                <th className={ADMIN_TABLE_HEADER_CELL_CLASS}>{t('users.colLastSeen')}</th>
+                <th className={ADMIN_TABLE_HEADER_CELL_CLASS}>{t('users.colLastActivity')}</th>
+                <th className={cn(ADMIN_TABLE_HEADER_CELL_CLASS, 'px-2')} />
               </tr>
             </thead>
             <tbody className="stagger">
-              {users.map((user) => {
-                const isSuspended = user.status === 'suspended' || user.status === 'inactive';
-                const isInvited = user.status === 'invited';
-                return (
-                  <tr
-                    key={user.id}
-                    className="row-interactive border-border/50 border-b last:border-b-0"
-                  >
-                    <td className="px-4 py-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{user.name || user.email}</p>
-                        <p className="text-muted-foreground truncate text-xs">{user.email}</p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      {user.isSuperAdmin ? (
-                        <span className="chip-rose inline-flex items-center gap-1">
-                          <Crown className="h-3 w-3" />
-                          {t('users.roleAdmin')}
-                        </span>
-                      ) : isSuspended ? (
-                        <span className="chip-rose">{t('users.roleSuspended')}</span>
-                      ) : isInvited ? (
-                        <span className="chip-amber">{t('users.rolePending')}</span>
-                      ) : (
-                        <span className="chip-blue">{t('users.roleMember')}</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={cn(
-                          userStatusChipClass[user.status] ?? DEFAULT_CHIP_CLASS,
-                          'capitalize'
-                        )}
-                      >
-                        {user.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right text-sm tabular-nums">
-                      {(user.organizations || []).length}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>{t('common.actions')}</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => onEdit(user.id)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            {t('users.editUser')}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                );
-              })}
+              {users.map((user) => (
+                <tr key={user.id} className={ADMIN_TABLE_ROW_CLASS}>
+                  <td className={ADMIN_TABLE_CELL_CLASS}>{renderUserIdentity(user)}</td>
+                  <td className={ADMIN_TABLE_CELL_CLASS}>{renderUserAccess(user)}</td>
+                  <td className={ADMIN_TABLE_CELL_CLASS}>{renderEmailStatus(user)}</td>
+                  <td className={ADMIN_TABLE_CELL_CLASS}>{renderProjectMemberships(user)}</td>
+                  <td className={ADMIN_TABLE_CELL_CLASS}>{renderLastSeen(user)}</td>
+                  <td className={ADMIN_TABLE_CELL_CLASS}>{renderLastActivity(user)}</td>
+                  <td className={cn(ADMIN_TABLE_CELL_CLASS, 'px-2 text-right')}>
+                    <UserActionsMenu user={user} onEdit={onEdit} onDelete={onDelete} />
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}
@@ -977,7 +1295,7 @@ function FeatureFlagsSection({
   onToggle,
   updatePending,
 }: {
-  flags: any[];
+  flags: AdminFeatureFlag[];
   loading: boolean;
   error: unknown;
   search: string;
@@ -986,7 +1304,7 @@ function FeatureFlagsSection({
   setState: (v: string) => void;
   onEdit: (id: string) => void;
   onDelete: (flag: { id: string; name: string }) => void;
-  onToggle: (flag: any, next: boolean) => void;
+  onToggle: (flag: AdminFeatureFlag, next: boolean) => void;
   updatePending: boolean;
 }) {
   const t = useTranslations('pagesAdmin');
@@ -1029,8 +1347,11 @@ function FeatureFlagsSection({
           <EmptyState icon={Flag} message={t('flags.empty')} />
         ) : (
           <ul className="stagger divide-border/50 divide-y">
-            {flags.map((flag: any) => (
-              <li key={flag.id} className="row-interactive flex items-center gap-4 px-4 py-3">
+            {flags.map((flag) => (
+              <li
+                key={flag.id}
+                className="border-border/50 hover:bg-accent/60 flex flex-col gap-3 px-4 py-3 transition-colors sm:flex-row sm:items-center"
+              >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="truncate text-sm font-medium">{flag.name}</span>
@@ -1045,7 +1366,7 @@ function FeatureFlagsSection({
                     </p>
                   ) : null}
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex shrink-0 items-center justify-end gap-2 sm:min-w-[5.5rem]">
                   <Switch
                     checked={flag.isEnabled}
                     onCheckedChange={(next) => onToggle(flag, next)}
@@ -1107,6 +1428,10 @@ function AuditSection({
   const t = useTranslations('pagesAdmin');
   return (
     <div className="space-y-4">
+      <p className="text-muted-foreground text-xs">
+        {t('audit.matchingCount', { count: logs.length })}
+      </p>
+
       <div className="animate-blur-in grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
         <SearchInput
           value={search}
@@ -1121,6 +1446,9 @@ function AuditSection({
             <SelectItem value="all">{t('audit.allResources')}</SelectItem>
             <SelectItem value="organization">{t('audit.organization')}</SelectItem>
             <SelectItem value="user">{t('audit.user')}</SelectItem>
+            <SelectItem value="project">{t('audit.project')}</SelectItem>
+            <SelectItem value="project_member">{t('audit.projectMember')}</SelectItem>
+            <SelectItem value="system_setting">{t('audit.systemSetting')}</SelectItem>
             <SelectItem value="feature_flag">{t('audit.featureFlag')}</SelectItem>
           </SelectContent>
         </Select>
@@ -1138,26 +1466,49 @@ function AuditSection({
             {logs.map((log) => {
               const severity = auditSeverity(log.action);
               return (
-                <li key={log.id} className="row-interactive flex items-center gap-3 px-4 py-3">
-                  <span
-                    className={cn(
-                      'priority-indicator min-h-[1.75rem] shrink-0 self-stretch',
-                      severity === 'critical' && 'priority-critical',
-                      severity === 'high' && 'priority-high',
-                      severity === 'medium' && 'priority-medium',
-                      severity === 'low' && 'priority-low'
-                    )}
-                    aria-hidden="true"
-                  />
-                  <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-0.5">
-                    <span className="text-foreground truncate text-sm font-medium">
-                      {log.user?.name || log.user?.email || t('audit.unknownUser')}
-                    </span>
-                    <span className="text-muted-foreground truncate text-sm">
-                      {formatAdminAction(log.action)}
-                    </span>
+                <li
+                  key={log.id}
+                  className="border-border/50 hover:bg-accent/60 flex flex-col gap-2 px-4 py-3 transition-colors sm:flex-row sm:items-start sm:gap-3"
+                >
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                    <span
+                      className={cn(
+                        'priority-indicator min-h-[1.75rem] shrink-0 self-stretch',
+                        severity === 'critical' && 'priority-critical',
+                        severity === 'high' && 'priority-high',
+                        severity === 'medium' && 'priority-medium',
+                        severity === 'low' && 'priority-low'
+                      )}
+                      aria-hidden="true"
+                    />
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <span className="text-foreground truncate text-sm font-medium">
+                          {formatAdminAction(log.action)}
+                        </span>
+                        <span className="chip">{formatAdminAction(log.resourceType)}</span>
+                        {log.resourceId ? (
+                          <span className="chip max-w-[180px] truncate font-mono text-[11px]">
+                            {log.resourceId}
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="text-muted-foreground flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+                        <span className="truncate">
+                          {log.user?.name || log.user?.email || t('audit.unknownUser')}
+                        </span>
+                        {log.user?.email && log.user.name ? (
+                          <span className="truncate">{log.user.email}</span>
+                        ) : null}
+                        {log.ipAddress ? (
+                          <span className="font-mono">
+                            {t('audit.ipAddress', { ip: log.ipAddress })}
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
                   </div>
-                  <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
+                  <span className="text-muted-foreground shrink-0 text-xs tabular-nums sm:pt-0.5">
                     {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
                   </span>
                 </li>
@@ -1309,4 +1660,15 @@ function formatAdminAction(action: string) {
     .replaceAll('.', ' ')
     .replaceAll('_', ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function formatRelativeTime(value: string) {
+  return formatDistanceToNow(new Date(value), { addSuffix: true });
+}
+
+function formatShortDate(value: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value));
 }

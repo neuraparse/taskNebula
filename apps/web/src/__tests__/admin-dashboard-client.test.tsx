@@ -191,9 +191,32 @@ describe('/admin route', () => {
                 id: 'u1',
                 name: 'Alice',
                 email: 'alice@example.com',
+                emailVerified: '2026-06-01T10:00:00.000Z',
+                lastSeenAt: '2026-06-22T08:30:00.000Z',
+                createdAt: '2026-01-01T00:00:00.000Z',
                 status: 'active',
                 isSuperAdmin: false,
-                organizations: [],
+                organizations: [
+                  { organizationId: 'org-1', organizationName: 'Acme', role: 'admin' },
+                ],
+                projectMemberships: [
+                  {
+                    projectId: 'project-1',
+                    projectKey: 'TASK',
+                    projectName: 'TaskNebula',
+                    organizationId: 'org-1',
+                    organizationName: 'Acme',
+                    role: 'developer',
+                  },
+                ],
+                lastActivity: {
+                  action: 'issue.updated',
+                  resourceType: 'issue',
+                  resourceId: 'issue-1',
+                  projectId: 'project-1',
+                  createdAt: '2026-06-22T08:45:00.000Z',
+                  scope: 'workspace',
+                },
               },
             ],
             pagination: { total: 1 },
@@ -214,22 +237,16 @@ describe('/admin route', () => {
       isSuperAdminMock.mockResolvedValueOnce(false);
 
       // Import after mocks are registered.
-      const { default: AdminDashboardPage } = await import(
-        '@/app/[locale]/(app)/admin/page'
-      );
+      const { default: AdminDashboardPage } = await import('@/app/[locale]/(app)/admin/page');
 
-      await expect(AdminDashboardPage()).rejects.toThrow(
-        'NEXT_REDIRECT:/dashboard'
-      );
+      await expect(AdminDashboardPage()).rejects.toThrow('NEXT_REDIRECT:/dashboard');
       expect(redirectMock).toHaveBeenCalledWith('/dashboard');
     });
 
     it('renders the admin dashboard for super-admins', async () => {
       isSuperAdminMock.mockResolvedValueOnce(true);
 
-      const { default: AdminDashboardPage } = await import(
-        '@/app/[locale]/(app)/admin/page'
-      );
+      const { default: AdminDashboardPage } = await import('@/app/[locale]/(app)/admin/page');
 
       const element = await AdminDashboardPage();
       expect(redirectMock).not.toHaveBeenCalled();
@@ -247,9 +264,7 @@ describe('/admin route', () => {
       render(<AdminDashboardClient />);
 
       // Header text for the Overview tab.
-      expect(
-        screen.getByRole('heading', { name: /overview/i })
-      ).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /overview/i })).toBeInTheDocument();
       // KPI tile labels are unique to overview.
       expect(screen.getByText('Organizations')).toBeInTheDocument();
       expect(screen.getByText('Users')).toBeInTheDocument();
@@ -265,10 +280,28 @@ describe('/admin route', () => {
       render(<AdminDashboardClient />);
 
       // The Users tab swaps the H1 for "Users" and renders the user row.
-      expect(
-        screen.getByRole('heading', { name: /^users$/i })
-      ).toBeInTheDocument();
-      expect(screen.getByText('alice@example.com')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /^users$/i })).toBeInTheDocument();
+      expect(screen.getAllByText('alice@example.com')).toHaveLength(2);
+      expect(screen.getAllByText('Verified')).toHaveLength(2);
+      expect(screen.getAllByText('TASK')).toHaveLength(2);
+      expect(screen.getAllByText('Issue Updated')).toHaveLength(2);
+
+      const table = screen.getByRole('table');
+      expect(table).toHaveClass('min-w-[980px]');
+      expect(table).not.toHaveClass('min-w-[1160px]');
+
+      const userRow = screen
+        .getAllByText('alice@example.com')
+        .map((node) => node.closest('tr'))
+        .find(Boolean);
+      expect(userRow).toHaveClass('transition-colors');
+      expect(userRow).not.toHaveClass('row-interactive');
+
+      const userCard = screen
+        .getAllByText('alice@example.com')
+        .map((node) => node.closest('li'))
+        .find(Boolean);
+      expect(userCard).toBeTruthy();
       // Overview-specific KPI label should not be present.
       expect(screen.queryByText('Super admins')).not.toBeInTheDocument();
     });

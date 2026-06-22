@@ -10,7 +10,7 @@
  * endpoint currently only supports a generic test message).
  */
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,6 +46,9 @@ export function EmailPreviewPanel() {
   const { toast } = useToast();
   const [selected, setSelected] = useState<string>('verify_email');
   const [sending, setSending] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState('');
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
   // Cache-buster keyed to template selection so the iframe re-loads when
   // the admin picks a different template.
@@ -59,6 +62,39 @@ export function EmailPreviewPanel() {
   const selectedLabel = TEMPLATES.some((tpl) => tpl.value === selected)
     ? templateLabel(selected)
     : selected;
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadPreview() {
+      setPreviewLoading(true);
+      setPreviewError(null);
+
+      try {
+        const res = await fetch(previewUrl, {
+          credentials: 'same-origin',
+          signal: controller.signal,
+        });
+        const body = await res.text();
+        if (!res.ok) {
+          throw new Error(body || `HTTP ${res.status}`);
+        }
+        setPreviewHtml(body);
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        setPreviewHtml('');
+        setPreviewError(err instanceof Error ? err.message : String(err));
+      } finally {
+        if (!controller.signal.aborted) {
+          setPreviewLoading(false);
+        }
+      }
+    }
+
+    void loadPreview();
+
+    return () => controller.abort();
+  }, [previewUrl]);
 
   async function handleSendTest() {
     setSending(true);
@@ -168,16 +204,25 @@ export function EmailPreviewPanel() {
         </p>
 
         <div className="bg-muted/30 overflow-hidden rounded-md border">
-          <iframe
-            // Key on URL forces a fresh load when the template changes.
-            key={previewUrl}
-            src={previewUrl}
-            title={t('emailPreview.iframeTitle', { label: selectedLabel })}
-            // Sandbox: no script execution, no top navigation, but allow
-            // same-origin so the iframe can render our HTML normally.
-            sandbox="allow-same-origin"
-            className="h-[720px] w-full bg-white"
-          />
+          {previewLoading ? (
+            <div className="text-muted-foreground flex h-48 items-center justify-center gap-2 text-xs">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              {t('emailPreview.previewing')}
+            </div>
+          ) : previewError ? (
+            <div className="text-destructive px-4 py-6 text-sm">{previewError}</div>
+          ) : (
+            <iframe
+              // Key on URL forces a fresh load when the template changes.
+              key={previewUrl}
+              srcDoc={previewHtml}
+              title={t('emailPreview.iframeTitle', { label: selectedLabel })}
+              // Sandbox: no script execution, no top navigation, but allow
+              // same-origin so the iframe can render our HTML normally.
+              sandbox="allow-same-origin"
+              className="h-[720px] w-full bg-white"
+            />
+          )}
         </div>
       </CardContent>
     </Card>

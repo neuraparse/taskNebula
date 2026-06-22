@@ -1545,7 +1545,7 @@
     "settings_sections_aria": "프로젝트 설정 섹션",
     "no_settings_permission": "프로젝트 설정에 접근할 권한이 없습니다.",
     "tab_general": "일반",
-    "tab_permissions": "권한",
+    "tab_permissions": "멤버 및 권한",
     "tab_schemes": "스킴",
     "tab_security": "보안",
     "tab_custom_fields": "사용자 지정 필드",
@@ -3232,7 +3232,10 @@
     "apm_invite_link_revoke": "Revoke",
     "apm_invite_link_revoked_title": "Invite link revoked",
     "apm_invite_link_revoke_failed_title": "Could not revoke link",
-    "apm_invite_link_revoke_failed": "Failed to revoke project invite link"
+    "apm_invite_link_revoke_failed": "Failed to revoke project invite link",
+    "pm_remove_success": "프로젝트에서 멤버를 제거했습니다",
+    "pm_remove_failed": "프로젝트 멤버 제거 실패",
+    "pm_remove_member_aria": "프로젝트에서 {name} 제거"
   },
   "adminPanels": {
     "agentOps": {
@@ -4368,7 +4371,28 @@
       "roleSuspended": "정지됨",
       "rolePending": "대기 중",
       "roleMember": "멤버",
-      "editUser": "사용자 편집"
+      "editUser": "사용자 편집",
+      "deleteUser": "사용자 삭제",
+      "deletedTitle": "사용자가 삭제됨",
+      "deletedDescription": "사용자가 영구적으로 제거되었습니다.",
+      "deleteFailedTitle": "사용자 삭제 실패",
+      "confirmDeleteTitle": "사용자를 삭제할까요?",
+      "confirmDeleteDescription": "\"{name}\" 사용자가 영구적으로 제거됩니다. 멤버십과 세션이 정리됩니다. 이 작업은 되돌릴 수 없습니다.",
+      "confirmDeleteLabel": "사용자 삭제",
+      "colAccess": "Access",
+      "colMail": "Mail",
+      "colProjects": "Projects",
+      "colLastSeen": "Last seen",
+      "colLastActivity": "Last activity",
+      "createdAt": "Created {date}",
+      "orgsCount": "{count} orgs",
+      "emailVerified": "Verified",
+      "emailUnverified": "Unverified",
+      "projectCount": "{count} projects",
+      "moreProjects": "+{count} more",
+      "noProjects": "No projects",
+      "neverSeen": "Never seen",
+      "noActivity": "No tracked activity"
     },
     "flags": {
       "matchingCount": "일치하는 플래그 {count}개",
@@ -4400,7 +4424,12 @@
       "loading": "감사 로그 불러오는 중...",
       "loadFailed": "감사 로그를 불러오지 못했습니다",
       "empty": "현재 필터와 일치하는 감사 이벤트가 없습니다.",
-      "unknownUser": "알 수 없는 사용자"
+      "unknownUser": "알 수 없는 사용자",
+      "matchingCount": "{count} audit events",
+      "project": "Project",
+      "projectMember": "Project member",
+      "systemSetting": "System setting",
+      "ipAddress": "IP {ip}"
     }
   },
   "authPages": {

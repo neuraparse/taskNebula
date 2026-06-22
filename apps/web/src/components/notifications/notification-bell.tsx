@@ -21,7 +21,6 @@ import {
   useNotifications,
   useMarkNotificationAsRead,
   useMarkAllNotificationsAsRead,
-  useUnreadNotificationsCount,
   type Notification,
 } from '@/lib/hooks/use-notifications';
 import { formatDistanceToNow, isToday, isYesterday } from 'date-fns';
@@ -261,11 +260,14 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<TabKey>('all');
   const { data, isLoading } = useNotifications();
-  const unreadCount = useUnreadNotificationsCount();
   const markAsRead = useMarkNotificationAsRead();
   const markAllAsRead = useMarkAllNotificationsAsRead();
 
   const notifications = data?.notifications || [];
+  const unreadCount = useMemo(
+    () => notifications.filter((notification) => !notification.isRead).length,
+    [notifications]
+  );
   const mentionsCount = useMemo(
     () =>
       notifications.filter((n) => (n.type === 'mention' || n.type === 'comment') && !n.isRead)

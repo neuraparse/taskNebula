@@ -15,6 +15,14 @@ const REGISTRATION_INVITE_REQUIRED = 'REGISTRATION_INVITE_REQUIRED';
 const REGISTRATION_ADMIN_ONLY = 'REGISTRATION_ADMIN_ONLY';
 const INVALID_PROJECT_INVITE = 'INVALID_PROJECT_INVITE';
 
+function dispatchVerificationEmail(userId: string) {
+  import('@/lib/auth/email-verification')
+    .then(({ issueEmailVerificationToken }) => issueEmailVerificationToken(userId))
+    .catch((err) => {
+      console.error('[signup] verification email dispatch failed:', err);
+    });
+}
+
 function normalizeEmail(email: unknown): string {
   return typeof email === 'string' ? email.trim().toLowerCase() : '';
 }
@@ -60,13 +68,6 @@ export async function POST(request: NextRequest) {
     if (existingUser) {
       // Allow invited users to complete signup by setting their password
       if (existingUser.status === 'invited' && !existingUser.password) {
-        if (registrationPolicy.mode === 'admin_created_only') {
-          return NextResponse.json(
-            { error: REGISTRATION_ADMIN_ONLY, code: REGISTRATION_ADMIN_ONLY },
-            { status: 403 }
-          );
-        }
-
         if (
           !isValidInviteToken(
             inviteToken,
@@ -104,6 +105,8 @@ export async function POST(request: NextRequest) {
               eq(organizationMembers.status, 'invited')
             )
           );
+
+        dispatchVerificationEmail(updatedUser.id);
 
         return NextResponse.json(
           {
@@ -150,11 +153,7 @@ export async function POST(request: NextRequest) {
           token: projectInviteToken,
         });
 
-        import('@/lib/auth/email-verification')
-          .then(({ issueEmailVerificationToken }) => issueEmailVerificationToken(result.user.id))
-          .catch((err) => {
-            console.error('[signup] verification email dispatch failed:', err);
-          });
+        dispatchVerificationEmail(result.user.id);
 
         return NextResponse.json(
           {
@@ -193,11 +192,7 @@ export async function POST(request: NextRequest) {
     // Fire-and-forget verification email. Dynamic import keeps this path
     // cheap when SMTP is unconfigured; errors are logged, not surfaced to
     // the caller so signup always succeeds.
-    import('@/lib/auth/email-verification')
-      .then(({ issueEmailVerificationToken }) => issueEmailVerificationToken(newUser.id))
-      .catch((err) => {
-        console.error('[signup] verification email dispatch failed:', err);
-      });
+    dispatchVerificationEmail(newUser.id);
 
     return NextResponse.json(
       {

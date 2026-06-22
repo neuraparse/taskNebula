@@ -1,13 +1,27 @@
 // Service Worker for TaskNebula PWA
-const CACHE_NAME = 'tasknebula-v2';
-const RUNTIME_CACHE = 'tasknebula-runtime';
+const CACHE_NAME = 'tasknebula-offline-v3';
+const RUNTIME_CACHE = 'tasknebula-static-v3';
 
 // Assets to cache on install
-const PRECACHE_URLS = ['/', '/offline', '/manifest.json'];
+const PRECACHE_URLS = ['/offline', '/manifest.json'];
 
-function shouldHandleNavigation(requestUrl) {
-  const pathname = new URL(requestUrl).pathname;
-  return pathname === '/' || pathname === '/offline';
+function isNextInternalRequest(url) {
+  return url.includes('/_next/') || url.includes('/_rsc') || url.includes('?_rsc=');
+}
+
+function isStaticAsset(requestUrl) {
+  const url = new URL(requestUrl);
+  const pathname = url.pathname;
+
+  if (pathname === '/sw.js') {
+    return false;
+  }
+
+  return (
+    pathname.startsWith('/icons/') ||
+    pathname.startsWith('/images/') ||
+    /\.(avif|gif|ico|jpeg|jpg|otf|png|svg|ttf|webp|woff|woff2)$/i.test(pathname)
+  );
 }
 
 // Install event - cache essential assets
@@ -26,7 +40,10 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((name) => name !== CACHE_NAME && name !== RUNTIME_CACHE)
+          .filter(
+            (name) =>
+              name.startsWith('tasknebula-') && name !== CACHE_NAME && name !== RUNTIME_CACHE
+          )
           .map((name) => caches.delete(name))
       );
     })
@@ -36,17 +53,17 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - network first, fallback to cache
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) {
     return;
   }
 
   // Skip _next/static and other Next.js internal requests - let browser handle them
-  if (
-    event.request.url.includes('/_next/') ||
-    event.request.url.includes('/_rsc') ||
-    event.request.url.includes('?_rsc=')
-  ) {
+  if (isNextInternalRequest(event.request.url)) {
     return;
   }
 
@@ -56,79 +73,50 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Only cache navigation requests for offline support
+  // Navigation requests are network-first. Do not cache the app shell:
+  // stale HTML/RSC can keep old deployment action IDs alive after an update.
   if (event.request.mode === 'navigate') {
-    if (!shouldHandleNavigation(event.request.url)) {
-      return;
-    }
-
     event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          // Cache successful navigation responses
-          if (response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
+      fetch(event.request).catch(() => {
+        return caches.match('/offline').then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
           }
-          return response;
-        })
-        .catch(() => {
-          // Fallback to cache or offline page
-          return caches
-            .match(event.request)
-            .then((cachedResponse) => {
-              if (cachedResponse) {
-                return cachedResponse;
-              }
-              return caches.match('/offline');
-            })
-            .then((response) => {
-              // If still no response, return a basic offline response
-              return (
-                response ||
-                new Response('Offline', {
-                  status: 503,
-                  statusText: 'Service Unavailable',
-                  headers: { 'Content-Type': 'text/plain' },
-                })
-              );
-            });
-        })
+
+          return new Response('Offline', {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: { 'Content-Type': 'text/plain' },
+          });
+        });
+      })
     );
     return;
   }
 
-  // For other requests (images, fonts, etc.) - cache first, network fallback
+  if (!isStaticAsset(event.request.url)) {
+    return;
+  }
+
+  // Static assets are network-first so changed files at stable public paths
+  // don't stay pinned behind a service-worker cache after deployment.
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
+    fetch(event.request)
+      .then((response) => {
+        if (response && response.status === 200 && response.type === 'basic') {
+          const responseClone = response.clone();
+          caches.open(RUNTIME_CACHE).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+        }
 
-      return fetch(event.request)
-        .then((response) => {
-          // Don't cache non-successful responses
-          if (!response || response.status !== 200) {
-            return response;
-          }
-
-          // Only cache same-origin basic responses
-          if (response.type === 'basic') {
-            const responseClone = response.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-          }
-
-          return response;
-        })
-        .catch(() => {
-          // Return nothing if fetch fails for static assets
-          return new Response('', { status: 404 });
-        });
-    })
+        return response;
+      })
+      .catch(() =>
+        caches
+          .match(event.request)
+          .then((cachedResponse) => cachedResponse || new Response('', { status: 404 }))
+      )
   );
 });
 

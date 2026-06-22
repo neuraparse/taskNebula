@@ -1545,7 +1545,7 @@
     "settings_sections_aria": "Secties van projectinstellingen",
     "no_settings_permission": "Je hebt geen rechten om de projectinstellingen te openen.",
     "tab_general": "Algemeen",
-    "tab_permissions": "Rechten",
+    "tab_permissions": "Leden en machtigingen",
     "tab_schemes": "Schema's",
     "tab_security": "Beveiliging",
     "tab_custom_fields": "Aangepaste velden",
@@ -3232,7 +3232,10 @@
     "apm_invite_link_revoke": "Revoke",
     "apm_invite_link_revoked_title": "Invite link revoked",
     "apm_invite_link_revoke_failed_title": "Could not revoke link",
-    "apm_invite_link_revoke_failed": "Failed to revoke project invite link"
+    "apm_invite_link_revoke_failed": "Failed to revoke project invite link",
+    "pm_remove_success": "Lid uit project verwijderd",
+    "pm_remove_failed": "Projectlid verwijderen mislukt",
+    "pm_remove_member_aria": "{name} uit project verwijderen"
   },
   "adminPanels": {
     "agentOps": {
@@ -4368,7 +4371,28 @@
       "roleSuspended": "Geschorst",
       "rolePending": "In afwachting",
       "roleMember": "Lid",
-      "editUser": "Gebruiker bewerken"
+      "editUser": "Gebruiker bewerken",
+      "deleteUser": "Gebruiker verwijderen",
+      "deletedTitle": "Gebruiker verwijderd",
+      "deletedDescription": "De gebruiker is permanent verwijderd.",
+      "deleteFailedTitle": "Gebruiker verwijderen mislukt",
+      "confirmDeleteTitle": "Gebruiker verwijderen?",
+      "confirmDeleteDescription": "\"{name}\" wordt permanent verwijderd. Lidmaatschappen en sessies worden gewist. Dit kan niet ongedaan worden gemaakt.",
+      "confirmDeleteLabel": "Gebruiker verwijderen",
+      "colAccess": "Access",
+      "colMail": "Mail",
+      "colProjects": "Projects",
+      "colLastSeen": "Last seen",
+      "colLastActivity": "Last activity",
+      "createdAt": "Created {date}",
+      "orgsCount": "{count} orgs",
+      "emailVerified": "Verified",
+      "emailUnverified": "Unverified",
+      "projectCount": "{count} projects",
+      "moreProjects": "+{count} more",
+      "noProjects": "No projects",
+      "neverSeen": "Never seen",
+      "noActivity": "No tracked activity"
     },
     "flags": {
       "matchingCount": "{count} overeenkomende flags",
@@ -4400,7 +4424,12 @@
       "loading": "Auditlogboeken laden...",
       "loadFailed": "Auditlogboeken laden mislukt",
       "empty": "Geen auditgebeurtenissen komen overeen met de huidige filters.",
-      "unknownUser": "Onbekende gebruiker"
+      "unknownUser": "Onbekende gebruiker",
+      "matchingCount": "{count} audit events",
+      "project": "Project",
+      "projectMember": "Project member",
+      "systemSetting": "System setting",
+      "ipAddress": "IP {ip}"
     }
   },
   "authPages": {

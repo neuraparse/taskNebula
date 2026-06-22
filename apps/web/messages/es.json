@@ -1545,7 +1545,7 @@
     "settings_sections_aria": "Secciones de ajustes del proyecto",
     "no_settings_permission": "No tienes permiso para acceder a los ajustes del proyecto.",
     "tab_general": "General",
-    "tab_permissions": "Permisos",
+    "tab_permissions": "Miembros y permisos",
     "tab_schemes": "Esquemas",
     "tab_security": "Seguridad",
     "tab_custom_fields": "Campos personalizados",
@@ -3232,7 +3232,10 @@
     "apm_invite_link_revoke": "Revoke",
     "apm_invite_link_revoked_title": "Invite link revoked",
     "apm_invite_link_revoke_failed_title": "Could not revoke link",
-    "apm_invite_link_revoke_failed": "Failed to revoke project invite link"
+    "apm_invite_link_revoke_failed": "Failed to revoke project invite link",
+    "pm_remove_success": "Miembro eliminado del proyecto",
+    "pm_remove_failed": "No se pudo eliminar el miembro del proyecto",
+    "pm_remove_member_aria": "Eliminar a {name} del proyecto"
   },
   "adminPanels": {
     "agentOps": {
@@ -4368,7 +4371,28 @@
       "roleSuspended": "Suspendido",
       "rolePending": "Pendiente",
       "roleMember": "Miembro",
-      "editUser": "Editar usuario"
+      "editUser": "Editar usuario",
+      "deleteUser": "Eliminar usuario",
+      "deletedTitle": "Usuario eliminado",
+      "deletedDescription": "El usuario se eliminó permanentemente.",
+      "deleteFailedTitle": "No se pudo eliminar el usuario",
+      "confirmDeleteTitle": "¿Eliminar usuario?",
+      "confirmDeleteDescription": "\"{name}\" se eliminará permanentemente. Se borrarán sus membresías y sesiones. Esta acción no se puede deshacer.",
+      "confirmDeleteLabel": "Eliminar usuario",
+      "colAccess": "Access",
+      "colMail": "Mail",
+      "colProjects": "Projects",
+      "colLastSeen": "Last seen",
+      "colLastActivity": "Last activity",
+      "createdAt": "Created {date}",
+      "orgsCount": "{count} orgs",
+      "emailVerified": "Verified",
+      "emailUnverified": "Unverified",
+      "projectCount": "{count} projects",
+      "moreProjects": "+{count} more",
+      "noProjects": "No projects",
+      "neverSeen": "Never seen",
+      "noActivity": "No tracked activity"
     },
     "flags": {
       "matchingCount": "{count} flags coincidentes",
@@ -4400,7 +4424,12 @@
       "loading": "Cargando registros de auditoría...",
       "loadFailed": "No se pudieron cargar los registros de auditoría",
       "empty": "Ningún evento de auditoría coincide con los filtros actuales.",
-      "unknownUser": "Usuario desconocido"
+      "unknownUser": "Usuario desconocido",
+      "matchingCount": "{count} audit events",
+      "project": "Project",
+      "projectMember": "Project member",
+      "systemSetting": "System setting",
+      "ipAddress": "IP {ip}"
     }
   },
   "authPages": {

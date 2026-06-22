@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.7.3] - 2026-06-22
+
+### Added
+
+- **Richer super-admin user visibility.** Admin → Users now surfaces email
+  verification state, last seen/created timestamps, organization memberships,
+  project memberships, and recent activity so self-hosted operators can audit
+  invited and active accounts without jumping between pages.
+- **Admin email preview and broader admin regression tests.** Super-admin email
+  diagnostics and the refreshed admin tables now have focused Jest coverage,
+  alongside project settings and membership-flow tests.
+
+### Changed
+
+- **Admin/users tables are responsive and action-oriented.** Admin pages now use
+  denser table layouts on desktop, card fallbacks on smaller screens, safer
+  delete confirmations, and cleaner action menus for organizations, users, and
+  feature flags.
+- **Project settings membership management is usable from the modal.** Project
+  settings now exposes add/remove project-member flows in a layout that fits
+  the dialog and keeps permission controls aligned with the table/card views.
+
+### Fixed
+
+- **Invited-user signup works in admin-created-only installs.** A valid admin
+  invite token now authorizes activation even when public account creation is
+  closed, and invited-user activation dispatches the verification email expected
+  by the verify-request screen.
+- **Deploy updates no longer strand cached sessions on stale bundles.** The PWA
+  service worker no longer precaches the app shell, skips mutating/API/Next
+  internal requests, updates its script without browser-cache indirection, and
+  the client clears TaskNebula caches plus reloads once when it detects stale
+  Server Action or chunk-load errors from an older deployment.
+- **Signup no longer performs a redundant router refresh after sign-in.** The
+  invite/signup flow now navigates once to the project or verify-request page,
+  reducing RSC/session races after account activation.
+
 ## [0.7.2] - 2026-06-21
 
 ### Fixed
@@ -429,7 +466,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Internal alpha release. [See git log] for details.
 
-[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.2...HEAD
+[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.3...HEAD
+[0.7.3]: https://github.com/neuraparse/tasknebula/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/neuraparse/tasknebula/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/neuraparse/tasknebula/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/neuraparse/tasknebula/compare/v0.6.9...v0.7.0

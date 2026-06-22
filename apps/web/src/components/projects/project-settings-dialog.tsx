@@ -24,8 +24,8 @@ export function ProjectSettingsDialog({
   const t = useTranslations('projectsPages');
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[90vh] max-h-[900px] w-[min(96vw,1100px)] max-w-none flex-col overflow-hidden p-0 sm:rounded-md">
-        <DialogHeader className="border-border shrink-0 border-b px-6 py-4">
+      <DialogContent className="flex h-[min(92dvh,900px)] w-[min(calc(100vw-1rem),1120px)] max-w-none flex-col gap-0 overflow-hidden p-0 sm:rounded-md">
+        <DialogHeader className="border-border shrink-0 border-b px-4 py-4 pr-12 sm:px-6">
           <DialogTitle className="text-base font-semibold">
             {t('settings_dialog_title')}
           </DialogTitle>

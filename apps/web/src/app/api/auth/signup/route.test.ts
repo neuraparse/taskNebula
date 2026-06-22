@@ -135,6 +135,10 @@ function selectRegistrationPolicy(mode?: string) {
   };
 }
 
+async function flushAsyncTasks() {
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 describe('/api/auth/signup route', () => {
   let NextRequestCtor: typeof import('next/server').NextRequest;
   let POST: typeof import('./route').POST;
@@ -223,6 +227,8 @@ describe('/api/auth/signup route', () => {
     expect(body.message).toBe('Account activated successfully');
     expect(body.user.id).toBe('u1');
     expect(bcryptHashMock).toHaveBeenCalledWith('abcdefgh', 10);
+    await flushAsyncTasks();
+    expect(issueEmailVerificationTokenMock).toHaveBeenCalledWith('u1');
   });
 
   it('rejects an expired invited-user token', async () => {
@@ -253,6 +259,7 @@ describe('/api/auth/signup route', () => {
       error: 'Invalid or expired invitation',
     });
     expect(dbUpdateMock).not.toHaveBeenCalled();
+    expect(issueEmailVerificationTokenMock).not.toHaveBeenCalled();
   });
 
   it('rejects new public signups when registration is invite-only', async () => {
@@ -274,7 +281,7 @@ describe('/api/auth/signup route', () => {
     expect(dbInsertMock).not.toHaveBeenCalled();
   });
 
-  it('rejects invited-user activation when registration is admin-created only', async () => {
+  it('activates invited users with a valid token when registration is admin-created only', async () => {
     dbSelectMock.mockReturnValue(selectRegistrationPolicy('admin_created_only'));
     const inviteToken = 'invite-token-1';
     findFirstMock.mockResolvedValue({
@@ -285,6 +292,9 @@ describe('/api/auth/signup route', () => {
       inviteTokenHash: createHash('sha256').update(inviteToken).digest('hex'),
       inviteTokenExpiresAt: new Date(Date.now() + 60_000),
     });
+    dbUpdateMock
+      .mockReturnValueOnce(updateReturning([{ id: 'u1', name: 'Alice', email: 'a@e.com' }]))
+      .mockReturnValueOnce(updateResolving());
 
     const response = await POST(
       new NextRequestCtor('http://localhost:3002/api/auth/signup', {
@@ -298,12 +308,13 @@ describe('/api/auth/signup route', () => {
       })
     );
 
-    expect(response.status).toBe(403);
-    await expect(response.json()).resolves.toEqual({
-      error: 'REGISTRATION_ADMIN_ONLY',
-      code: 'REGISTRATION_ADMIN_ONLY',
+    expect(response.status).toBe(201);
+    await expect(response.json()).resolves.toMatchObject({
+      message: 'Account activated successfully',
+      user: { id: 'u1', email: 'a@e.com' },
     });
-    expect(dbUpdateMock).not.toHaveBeenCalled();
+    await flushAsyncTasks();
+    expect(issueEmailVerificationTokenMock).toHaveBeenCalledWith('u1');
   });
 
   it('creates a new user on happy path', async () => {
@@ -337,5 +348,7 @@ describe('/api/auth/signup route', () => {
     expect(insertedUser).not.toHaveProperty('isSuperAdmin');
     expect(insertedUser).not.toHaveProperty('organizationId');
     expect(insertedUser).not.toHaveProperty('role');
+    await flushAsyncTasks();
+    expect(issueEmailVerificationTokenMock).toHaveBeenCalledWith('u2');
   });
 });

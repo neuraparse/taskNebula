@@ -118,21 +118,21 @@ export async function GET(request: NextRequest) {
           : null,
       }));
 
-    const selectProjectsForOrgIds = async (
-      visibleOrgIds: string[],
+    const selectProjects = async (
+      visibleOrgIds?: string[],
       visibleProjectIds?: string[]
     ): Promise<ProjectListRow[]> => {
-      if (visibleOrgIds.length === 0) {
+      if (visibleOrgIds && visibleOrgIds.length === 0) {
         return [];
       }
 
       const filters = [
-        inArray(projects.organizationId, visibleOrgIds),
+        ...(visibleOrgIds ? [inArray(projects.organizationId, visibleOrgIds)] : []),
         ...(visibleProjectIds ? [inArray(projects.id, visibleProjectIds)] : []),
         ...(teamFilter ? [teamFilter] : []),
       ];
 
-      return db
+      const query = db
         .select({
           project: projects,
           organizationName: organizations.name,
@@ -142,13 +142,18 @@ export async function GET(request: NextRequest) {
         })
         .from(projects)
         .leftJoin(organizations, eq(projects.organizationId, organizations.id))
-        .leftJoin(teams, eq(projects.teamId, teams.id))
-        .where(and(...filters))
-        .orderBy(desc(projects.updatedAt));
+        .leftJoin(teams, eq(projects.teamId, teams.id));
+
+      if (filters.length === 0) {
+        return query.orderBy(desc(projects.updatedAt));
+      }
+
+      return query.where(and(...filters)).orderBy(desc(projects.updatedAt));
     };
 
     if (user?.isSuperAdmin) {
-      const userProjects = await selectProjectsForOrgIds(orgIds);
+      const visibleOrgIds = requestedOrganizationId ? orgIds : undefined;
+      const userProjects = await selectProjects(visibleOrgIds);
 
       return NextResponse.json(mapProjects(userProjects));
     }
@@ -167,7 +172,7 @@ export async function GET(request: NextRequest) {
     const visibleProjects: ProjectListRow[] = [];
 
     // Org roles with project:manage see every project only inside those orgs.
-    visibleProjects.push(...(await selectProjectsForOrgIds(adminOrgIds)));
+    visibleProjects.push(...(await selectProjects(adminOrgIds)));
 
     // Regular organization users only see projects they are explicitly members of.
     const userProjectMemberships = await db
@@ -177,7 +182,7 @@ export async function GET(request: NextRequest) {
 
     if (memberOrgIds.length > 0 && userProjectMemberships.length > 0) {
       const projectIds = userProjectMemberships.map((m) => m.projectId);
-      visibleProjects.push(...(await selectProjectsForOrgIds(memberOrgIds, projectIds)));
+      visibleProjects.push(...(await selectProjects(memberOrgIds, projectIds)));
     }
 
     return NextResponse.json(mapProjects(visibleProjects));

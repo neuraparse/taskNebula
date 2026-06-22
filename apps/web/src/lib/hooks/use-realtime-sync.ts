@@ -11,6 +11,7 @@ interface RealtimeEvent {
   sprintId?: string;
   issueId?: string;
   organizationId?: string;
+  targetUserId?: string;
   userId: string;
   timestamp: number;
 }
@@ -23,12 +24,13 @@ interface RealtimeEvent {
 export function useRealtimeSync() {
   const queryClient = useQueryClient();
   const { data: session } = useSession();
+  const userId = session?.user?.id;
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const retryCountRef = useRef(0);
 
   useEffect(() => {
-    if (!session?.user) return;
+    if (!userId) return;
 
     function connect() {
       // Clean up existing connection
@@ -115,7 +117,14 @@ export function useRealtimeSync() {
         case 'member.updated':
         case 'member.removed':
           queryClient.invalidateQueries({ queryKey: ['organization-members'] });
+          queryClient.invalidateQueries({ queryKey: ['org-members-for-project-add'] });
+          queryClient.invalidateQueries({ queryKey: ['projects'] });
           queryClient.invalidateQueries({ queryKey: ['project-members'] });
+          if (projectId) {
+            queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+            queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
+            queryClient.invalidateQueries({ queryKey: ['project-permissions', projectId] });
+          }
           break;
       }
     }
@@ -152,5 +161,5 @@ export function useRealtimeSync() {
         clearTimeout(reconnectTimeoutRef.current);
       }
     };
-  }, [session?.user, queryClient]);
+  }, [userId, queryClient]);
 }

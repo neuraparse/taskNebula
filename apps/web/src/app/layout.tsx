@@ -170,7 +170,7 @@ export default async function RootLayout({
                       return;
                     }
 
-                    await navigator.serviceWorker.register('/sw.js');
+                    await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
                   } catch {
                     // Keep localhost and production consoles clean. The app works without SW.
                   }

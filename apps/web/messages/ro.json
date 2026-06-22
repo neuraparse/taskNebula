@@ -1584,7 +1584,7 @@
     "settings_sections_aria": "Secțiuni setări proiect",
     "no_settings_permission": "Nu ai permisiunea de a accesa setările proiectului.",
     "tab_general": "General",
-    "tab_permissions": "Permisiuni",
+    "tab_permissions": "Membri și permisiuni",
     "tab_schemes": "Scheme",
     "tab_security": "Securitate",
     "tab_custom_fields": "Câmpuri personalizate",
@@ -3332,7 +3332,10 @@
     "apm_invite_link_revoke": "Revoke",
     "apm_invite_link_revoked_title": "Invite link revoked",
     "apm_invite_link_revoke_failed_title": "Could not revoke link",
-    "apm_invite_link_revoke_failed": "Failed to revoke project invite link"
+    "apm_invite_link_revoke_failed": "Failed to revoke project invite link",
+    "pm_remove_success": "Membru eliminat din proiect",
+    "pm_remove_failed": "Eliminarea membrului din proiect a eșuat",
+    "pm_remove_member_aria": "Elimină {name} din proiect"
   },
   "adminPanels": {
     "agentOps": {
@@ -4368,7 +4371,28 @@
       "roleSuspended": "Suspendat",
       "rolePending": "În așteptare",
       "roleMember": "Membru",
-      "editUser": "Editează utilizatorul"
+      "editUser": "Editează utilizatorul",
+      "deleteUser": "Șterge utilizatorul",
+      "deletedTitle": "Utilizator șters",
+      "deletedDescription": "Utilizatorul a fost eliminat permanent.",
+      "deleteFailedTitle": "Ștergerea utilizatorului a eșuat",
+      "confirmDeleteTitle": "Ștergeți utilizatorul?",
+      "confirmDeleteDescription": "\"{name}\" va fi eliminat permanent. Apartenențele și sesiunile vor fi șterse. Această acțiune nu poate fi anulată.",
+      "confirmDeleteLabel": "Șterge utilizatorul",
+      "colAccess": "Access",
+      "colMail": "Mail",
+      "colProjects": "Projects",
+      "colLastSeen": "Last seen",
+      "colLastActivity": "Last activity",
+      "createdAt": "Created {date}",
+      "orgsCount": "{count} orgs",
+      "emailVerified": "Verified",
+      "emailUnverified": "Unverified",
+      "projectCount": "{count} projects",
+      "moreProjects": "+{count} more",
+      "noProjects": "No projects",
+      "neverSeen": "Never seen",
+      "noActivity": "No tracked activity"
     },
     "flags": {
       "matchingCount": "{count} flag-uri corespunzătoare",
@@ -4400,7 +4424,12 @@
       "loading": "Se încarcă jurnalele de audit...",
       "loadFailed": "Încărcarea jurnalelor de audit a eșuat",
       "empty": "Niciun eveniment de audit nu corespunde filtrelor curente.",
-      "unknownUser": "Utilizator necunoscut"
+      "unknownUser": "Utilizator necunoscut",
+      "matchingCount": "{count} audit events",
+      "project": "Project",
+      "projectMember": "Project member",
+      "systemSetting": "System setting",
+      "ipAddress": "IP {ip}"
     }
   },
   "authPages": {

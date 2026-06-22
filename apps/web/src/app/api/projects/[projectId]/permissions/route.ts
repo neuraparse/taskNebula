@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import {
   db,
-  projects,
   projectMembers,
   organizationMembers,
   users,
@@ -13,6 +12,8 @@ import {
   type ProjectRole,
   type GranularPermissions,
 } from '@tasknebula/db';
+import { resolveProjectByIdOrKey } from '@/lib/projects/server';
+import { canReadProject } from '@/lib/auth/access-control';
 
 // Full permissions interface with all granular permissions
 export interface UserProjectPermissions extends GranularPermissions {
@@ -129,19 +130,6 @@ const NO_PERMISSIONS: GranularPermissions = {
   canDeleteAllWorklogs: false,
 };
 
-// Helper to resolve projectId (key or CUID)
-async function resolveProjectId(projectIdOrKey: string): Promise<string | null> {
-  if (projectIdOrKey.length > 10 || projectIdOrKey.includes('_')) {
-    return projectIdOrKey;
-  }
-  const [project] = await db
-    .select({ id: projects.id })
-    .from(projects)
-    .where(eq(projects.key, projectIdOrKey.toUpperCase()))
-    .limit(1);
-  return project?.id || null;
-}
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
@@ -153,25 +141,18 @@ export async function GET(
     }
 
     const { projectId: projectIdOrKey } = await params;
-    const projectId = await resolveProjectId(projectIdOrKey);
-
-    if (!projectId) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
-    }
-
-    // Get project with organization
-    const [project] = await db
-      .select({
-        id: projects.id,
-        organizationId: projects.organizationId,
-      })
-      .from(projects)
-      .where(eq(projects.id, projectId))
-      .limit(1);
+    const project = await resolveProjectByIdOrKey(projectIdOrKey, session.user.id);
 
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
+
+    const canRead = await canReadProject(session.user.id, project);
+    if (!canRead) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const projectId = project.id;
 
     // Check if user is super admin
     const [user] = await db

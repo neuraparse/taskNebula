@@ -253,6 +253,8 @@ describe('POST /api/projects/[projectId]/members', () => {
     expect(hasPermissionMock).toHaveBeenCalledWith('org-1', 'member:invite');
     expect(publishEventMock).toHaveBeenCalledWith('member.added', 'admin-1', {
       organizationId: 'org-1',
+      projectId: 'project-1',
+      targetUserId: 'registered-user-1',
     });
   });
 

@@ -1545,7 +1545,7 @@
     "settings_sections_aria": "Các mục cài đặt dự án",
     "no_settings_permission": "Bạn không có quyền truy cập cài đặt dự án.",
     "tab_general": "Chung",
-    "tab_permissions": "Quyền",
+    "tab_permissions": "Thành viên và quyền",
     "tab_schemes": "Sơ đồ",
     "tab_security": "Bảo mật",
     "tab_custom_fields": "Trường tùy chỉnh",
@@ -3232,7 +3232,10 @@
     "apm_invite_link_revoke": "Revoke",
     "apm_invite_link_revoked_title": "Invite link revoked",
     "apm_invite_link_revoke_failed_title": "Could not revoke link",
-    "apm_invite_link_revoke_failed": "Failed to revoke project invite link"
+    "apm_invite_link_revoke_failed": "Failed to revoke project invite link",
+    "pm_remove_success": "Đã xóa thành viên khỏi dự án",
+    "pm_remove_failed": "Không thể xóa thành viên dự án",
+    "pm_remove_member_aria": "Xóa {name} khỏi dự án"
   },
   "adminPanels": {
     "agentOps": {
@@ -4368,7 +4371,28 @@
       "roleSuspended": "Bị đình chỉ",
       "rolePending": "Đang chờ",
       "roleMember": "Thành viên",
-      "editUser": "Chỉnh sửa người dùng"
+      "editUser": "Chỉnh sửa người dùng",
+      "deleteUser": "Xóa người dùng",
+      "deletedTitle": "Đã xóa người dùng",
+      "deletedDescription": "Người dùng đã bị xóa vĩnh viễn.",
+      "deleteFailedTitle": "Không thể xóa người dùng",
+      "confirmDeleteTitle": "Xóa người dùng?",
+      "confirmDeleteDescription": "\"{name}\" sẽ bị xóa vĩnh viễn. Tư cách thành viên và phiên đăng nhập sẽ được xóa. Không thể hoàn tác thao tác này.",
+      "confirmDeleteLabel": "Xóa người dùng",
+      "colAccess": "Access",
+      "colMail": "Mail",
+      "colProjects": "Projects",
+      "colLastSeen": "Last seen",
+      "colLastActivity": "Last activity",
+      "createdAt": "Created {date}",
+      "orgsCount": "{count} orgs",
+      "emailVerified": "Verified",
+      "emailUnverified": "Unverified",
+      "projectCount": "{count} projects",
+      "moreProjects": "+{count} more",
+      "noProjects": "No projects",
+      "neverSeen": "Never seen",
+      "noActivity": "No tracked activity"
     },
     "flags": {
       "matchingCount": "{count} cờ khớp",
@@ -4400,7 +4424,12 @@
       "loading": "Đang tải nhật ký kiểm toán...",
       "loadFailed": "Tải nhật ký kiểm toán thất bại",
       "empty": "Không có sự kiện kiểm toán nào khớp với các bộ lọc hiện tại.",
-      "unknownUser": "Người dùng không xác định"
+      "unknownUser": "Người dùng không xác định",
+      "matchingCount": "{count} audit events",
+      "project": "Project",
+      "projectMember": "Project member",
+      "systemSetting": "System setting",
+      "ipAddress": "IP {ip}"
     }
   },
   "authPages": {

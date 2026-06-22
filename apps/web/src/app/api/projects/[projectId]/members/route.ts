@@ -243,7 +243,11 @@ export async function POST(
       );
     }
 
-    publishEvent('member.added', session.user.id, { organizationId: project.organizationId });
+    publishEvent('member.added', session.user.id, {
+      organizationId: project.organizationId,
+      projectId,
+      targetUserId: userId,
+    });
 
     return NextResponse.json(result.member, { status: 201 });
   } catch (error) {

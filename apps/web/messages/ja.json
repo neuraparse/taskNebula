@@ -1545,7 +1545,7 @@
     "settings_sections_aria": "プロジェクト設定のセクション",
     "no_settings_permission": "プロジェクト設定にアクセスする権限がありません。",
     "tab_general": "一般",
-    "tab_permissions": "権限",
+    "tab_permissions": "メンバーと権限",
     "tab_schemes": "スキーム",
     "tab_security": "セキュリティ",
     "tab_custom_fields": "カスタムフィールド",
@@ -3232,7 +3232,10 @@
     "apm_invite_link_revoke": "Revoke",
     "apm_invite_link_revoked_title": "Invite link revoked",
     "apm_invite_link_revoke_failed_title": "Could not revoke link",
-    "apm_invite_link_revoke_failed": "Failed to revoke project invite link"
+    "apm_invite_link_revoke_failed": "Failed to revoke project invite link",
+    "pm_remove_success": "メンバーをプロジェクトから削除しました",
+    "pm_remove_failed": "プロジェクトメンバーの削除に失敗しました",
+    "pm_remove_member_aria": "{name} をプロジェクトから削除"
   },
   "adminPanels": {
     "agentOps": {
@@ -4368,7 +4371,28 @@
       "roleSuspended": "停止中",
       "rolePending": "保留中",
       "roleMember": "メンバー",
-      "editUser": "ユーザーを編集"
+      "editUser": "ユーザーを編集",
+      "deleteUser": "ユーザーを削除",
+      "deletedTitle": "ユーザーを削除しました",
+      "deletedDescription": "ユーザーは完全に削除されました。",
+      "deleteFailedTitle": "ユーザーの削除に失敗しました",
+      "confirmDeleteTitle": "ユーザーを削除しますか？",
+      "confirmDeleteDescription": "\"{name}\" は完全に削除されます。メンバーシップとセッションも消去されます。この操作は元に戻せません。",
+      "confirmDeleteLabel": "ユーザーを削除",
+      "colAccess": "Access",
+      "colMail": "Mail",
+      "colProjects": "Projects",
+      "colLastSeen": "Last seen",
+      "colLastActivity": "Last activity",
+      "createdAt": "Created {date}",
+      "orgsCount": "{count} orgs",
+      "emailVerified": "Verified",
+      "emailUnverified": "Unverified",
+      "projectCount": "{count} projects",
+      "moreProjects": "+{count} more",
+      "noProjects": "No projects",
+      "neverSeen": "Never seen",
+      "noActivity": "No tracked activity"
     },
     "flags": {
       "matchingCount": "{count} 件の一致するフラグ",
@@ -4400,7 +4424,12 @@
       "loading": "監査ログを読み込み中...",
       "loadFailed": "監査ログの読み込みに失敗しました",
       "empty": "現在のフィルターに一致する監査イベントはありません。",
-      "unknownUser": "不明なユーザー"
+      "unknownUser": "不明なユーザー",
+      "matchingCount": "{count} audit events",
+      "project": "Project",
+      "projectMember": "Project member",
+      "systemSetting": "System setting",
+      "ipAddress": "IP {ip}"
     }
   },
   "authPages": {

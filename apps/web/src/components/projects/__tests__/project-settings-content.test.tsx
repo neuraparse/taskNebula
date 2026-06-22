@@ -73,6 +73,7 @@ describe('ProjectSettingsContent', () => {
     render(<ProjectSettingsContent projectId="proj-1" />);
 
     expect(screen.getByTestId('manager-general')).toHaveTextContent('general:proj-1');
+    expect(screen.getByRole('tab', { name: /members & permissions/i })).toBeInTheDocument();
     expect(screen.queryByTestId('manager-workflows')).not.toBeInTheDocument();
   });
 

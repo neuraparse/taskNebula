@@ -1545,7 +1545,7 @@
     "settings_sections_aria": "ส่วนการตั้งค่าโปรเจกต์",
     "no_settings_permission": "คุณไม่มีสิทธิ์เข้าถึงการตั้งค่าโปรเจกต์",
     "tab_general": "ทั่วไป",
-    "tab_permissions": "สิทธิ์",
+    "tab_permissions": "สมาชิกและสิทธิ์",
     "tab_schemes": "สคีม",
     "tab_security": "ความปลอดภัย",
     "tab_custom_fields": "ฟิลด์ที่กำหนดเอง",
@@ -3232,7 +3232,10 @@
     "apm_invite_link_revoke": "Revoke",
     "apm_invite_link_revoked_title": "Invite link revoked",
     "apm_invite_link_revoke_failed_title": "Could not revoke link",
-    "apm_invite_link_revoke_failed": "Failed to revoke project invite link"
+    "apm_invite_link_revoke_failed": "Failed to revoke project invite link",
+    "pm_remove_success": "นำสมาชิกออกจากโปรเจกต์แล้ว",
+    "pm_remove_failed": "นำสมาชิกโปรเจกต์ออกไม่สำเร็จ",
+    "pm_remove_member_aria": "นำ {name} ออกจากโปรเจกต์"
   },
   "adminPanels": {
     "agentOps": {
@@ -4368,7 +4371,28 @@
       "roleSuspended": "ระงับ",
       "rolePending": "รอดำเนินการ",
       "roleMember": "สมาชิก",
-      "editUser": "แก้ไขผู้ใช้"
+      "editUser": "แก้ไขผู้ใช้",
+      "deleteUser": "ลบผู้ใช้",
+      "deletedTitle": "ลบผู้ใช้แล้ว",
+      "deletedDescription": "ผู้ใช้ถูกลบอย่างถาวรแล้ว",
+      "deleteFailedTitle": "ลบผู้ใช้ไม่สำเร็จ",
+      "confirmDeleteTitle": "ลบผู้ใช้หรือไม่?",
+      "confirmDeleteDescription": "\"{name}\" จะถูกลบอย่างถาวร ระบบจะล้างสมาชิกภาพและเซสชัน การดำเนินการนี้ไม่สามารถย้อนกลับได้",
+      "confirmDeleteLabel": "ลบผู้ใช้",
+      "colAccess": "Access",
+      "colMail": "Mail",
+      "colProjects": "Projects",
+      "colLastSeen": "Last seen",
+      "colLastActivity": "Last activity",
+      "createdAt": "Created {date}",
+      "orgsCount": "{count} orgs",
+      "emailVerified": "Verified",
+      "emailUnverified": "Unverified",
+      "projectCount": "{count} projects",
+      "moreProjects": "+{count} more",
+      "noProjects": "No projects",
+      "neverSeen": "Never seen",
+      "noActivity": "No tracked activity"
     },
     "flags": {
       "matchingCount": "{count} แฟล็กที่ตรงกัน",
@@ -4400,7 +4424,12 @@
       "loading": "กำลังโหลดบันทึกการตรวจสอบ...",
       "loadFailed": "โหลดบันทึกการตรวจสอบไม่สำเร็จ",
       "empty": "ไม่มีเหตุการณ์การตรวจสอบที่ตรงกับตัวกรองปัจจุบัน",
-      "unknownUser": "ผู้ใช้ที่ไม่รู้จัก"
+      "unknownUser": "ผู้ใช้ที่ไม่รู้จัก",
+      "matchingCount": "{count} audit events",
+      "project": "Project",
+      "projectMember": "Project member",
+      "systemSetting": "System setting",
+      "ipAddress": "IP {ip}"
     }
   },
   "authPages": {

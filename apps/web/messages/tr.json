@@ -1545,7 +1545,7 @@
     "settings_sections_aria": "Proje ayarları bölümleri",
     "no_settings_permission": "Proje ayarlarına erişim izniniz yok.",
     "tab_general": "Genel",
-    "tab_permissions": "İzinler",
+    "tab_permissions": "Üyeler ve izinler",
     "tab_schemes": "Şemalar",
     "tab_security": "Güvenlik",
     "tab_custom_fields": "Özel Alanlar",
@@ -3232,7 +3232,10 @@
     "apm_invite_link_revoke": "İptal et",
     "apm_invite_link_revoked_title": "Davet linki iptal edildi",
     "apm_invite_link_revoke_failed_title": "Link iptal edilemedi",
-    "apm_invite_link_revoke_failed": "Proje davet linki iptal edilemedi"
+    "apm_invite_link_revoke_failed": "Proje davet linki iptal edilemedi",
+    "pm_remove_success": "Üye projeden kaldırıldı",
+    "pm_remove_failed": "Proje üyesi kaldırılamadı",
+    "pm_remove_member_aria": "{name} kullanıcısını projeden kaldır"
   },
   "adminPanels": {
     "agentOps": {
@@ -4368,7 +4371,28 @@
       "roleSuspended": "Askıya alındı",
       "rolePending": "Bekliyor",
       "roleMember": "Üye",
-      "editUser": "Kullanıcıyı düzenle"
+      "editUser": "Kullanıcıyı düzenle",
+      "deleteUser": "Kullanıcıyı sil",
+      "deletedTitle": "Kullanıcı silindi",
+      "deletedDescription": "Kullanıcı kalıcı olarak kaldırıldı.",
+      "deleteFailedTitle": "Kullanıcı silinemedi",
+      "confirmDeleteTitle": "Kullanıcı silinsin mi?",
+      "confirmDeleteDescription": "\"{name}\" kalıcı olarak kaldırılacak. Üyelikleri ve oturumları temizlenecek. Bu işlem geri alınamaz.",
+      "confirmDeleteLabel": "Kullanıcıyı sil",
+      "colAccess": "Erişim",
+      "colMail": "E-posta",
+      "colProjects": "Projeler",
+      "colLastSeen": "Son görülme",
+      "colLastActivity": "Son aktivite",
+      "createdAt": "{date} tarihinde oluşturuldu",
+      "orgsCount": "{count} kuruluş",
+      "emailVerified": "Doğrulandı",
+      "emailUnverified": "Doğrulanmadı",
+      "projectCount": "{count} proje",
+      "moreProjects": "+{count} daha",
+      "noProjects": "Proje yok",
+      "neverSeen": "Hiç görülmedi",
+      "noActivity": "Takip edilen aktivite yok"
     },
     "flags": {
       "matchingCount": "{count} eşleşen bayrak",
@@ -4400,7 +4424,12 @@
       "loading": "Denetim günlükleri yükleniyor...",
       "loadFailed": "Denetim günlükleri yüklenemedi",
       "empty": "Geçerli filtrelerle eşleşen denetim olayı yok.",
-      "unknownUser": "Bilinmeyen kullanıcı"
+      "unknownUser": "Bilinmeyen kullanıcı",
+      "matchingCount": "{count} denetim olayı",
+      "project": "Proje",
+      "projectMember": "Proje üyesi",
+      "systemSetting": "Sistem ayarı",
+      "ipAddress": "IP {ip}"
     }
   },
   "authPages": {

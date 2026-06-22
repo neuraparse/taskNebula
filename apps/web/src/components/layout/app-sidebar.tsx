@@ -471,6 +471,8 @@ export function AppSidebar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const normalizedPathname = stripLocalePrefix(pathname);
+  const isSettingsRoute = normalizedPathname.startsWith('/settings');
+  const isAdminRoute = normalizedPathname.startsWith('/admin');
   const tNav = useTranslations('nav');
   const tHome = useTranslations('pagesHome');
   const tActions = useTranslations('actions');
@@ -647,8 +649,7 @@ export function AppSidebar({
           />
 
           <div className={cn('px-2.5 py-3', hasPageSidebar && 'hidden')}>
-            {normalizedPathname.startsWith('/settings') ||
-            normalizedPathname.startsWith('/admin') ? null : (
+            {isSettingsRoute || isAdminRoute ? null : (
               <div className="mb-2 px-3">
                 <div className="kicker">{tNav(getSectionKey(pathname))}</div>
               </div>
@@ -742,10 +743,9 @@ export function AppSidebar({
               </div>
             ) : null}
 
-            {normalizedPathname.startsWith('/settings') ||
-            normalizedPathname.startsWith('/admin') ? (
+            {isSettingsRoute || isAdminRoute ? (
               <>
-                {visibleSettingsLinks.length > 0 ? (
+                {isSettingsRoute && visibleSettingsLinks.length > 0 ? (
                   <>
                     <div className="mb-1 flex items-center gap-2 px-3 pt-1">
                       <Settings className="text-muted-foreground h-3 w-3" />
@@ -772,9 +772,9 @@ export function AppSidebar({
                   </>
                 ) : null}
 
-                {isSuperAdmin ? (
+                {isAdminRoute && isSuperAdmin ? (
                   <>
-                    <div className="mb-1 mt-4 flex items-center gap-2 px-3">
+                    <div className="mb-1 flex items-center gap-2 px-3 pt-1">
                       <Shield className="text-muted-foreground h-3 w-3" />
                       <span className="kicker">{tNav('admin')}</span>
                     </div>

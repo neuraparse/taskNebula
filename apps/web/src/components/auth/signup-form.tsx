@@ -153,7 +153,6 @@ export function SignUpForm() {
           ? `/projects/${encodeURIComponent(projectKey)}`
           : `/auth/verify-request?email=${encodeURIComponent(normalizedEmail)}`
       );
-      router.refresh();
     } catch {
       setError(t('generic_error'));
     } finally {
@@ -268,12 +267,12 @@ export function SignUpForm() {
         <p className="text-xs leading-5 text-[#525252]">
           {t.rich('terms_agreement', {
             terms: (chunks) => (
-              <Link href="/terms" className="auth-carbon-link">
+              <Link href="/terms" className="auth-carbon-link" prefetch={false}>
                 {chunks}
               </Link>
             ),
             privacy: (chunks) => (
-              <Link href="/privacy" className="auth-carbon-link">
+              <Link href="/privacy" className="auth-carbon-link" prefetch={false}>
                 {chunks}
               </Link>
             ),

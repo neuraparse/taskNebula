@@ -177,7 +177,7 @@ export function ProjectSettingsContent({
       onValueChange={handleTabChange}
       className="flex min-h-0 flex-1 flex-col"
     >
-      <div className="border-border bg-background border-b">
+      <div className="border-border bg-background shrink-0 border-b">
         <TabsList
           aria-label={t('settings_sections_aria')}
           className="h-auto w-full justify-start gap-0 overflow-x-auto rounded-none bg-transparent p-0"
@@ -188,7 +188,7 @@ export function ProjectSettingsContent({
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-foreground flex items-center gap-1.5 rounded-none border-b-2 border-transparent px-3 py-2 text-sm data-[state=active]:bg-transparent"
+                className="text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-foreground flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 py-2 text-sm data-[state=active]:bg-transparent"
               >
                 <Icon className="h-4 w-4" />
                 <span>{t(tab.labelKey)}</span>
@@ -198,7 +198,7 @@ export function ProjectSettingsContent({
         </TabsList>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-5">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
         <TabsContent value="permissions" className="focus-visible:outline-none">
           {activeTab === 'permissions' && canAccessTab('permissions', permissions) ? (
             <PermissionManager projectId={projectId} />

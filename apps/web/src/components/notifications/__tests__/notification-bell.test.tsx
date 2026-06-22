@@ -8,7 +8,6 @@ import {
   useMarkNotificationAsRead,
   useMarkAllNotificationsAsRead,
   useDeleteNotification,
-  useUnreadNotificationsCount,
 } from '@/lib/hooks/use-notifications';
 
 jest.mock('@/hooks/use-toast', () => ({
@@ -22,17 +21,12 @@ jest.mock('@/lib/hooks/use-notifications', () => ({
   useMarkNotificationAsRead: jest.fn(),
   useMarkAllNotificationsAsRead: jest.fn(),
   useDeleteNotification: jest.fn(),
-  useUnreadNotificationsCount: jest.fn(),
 }));
 
 jest.mock('next/link', () => {
-  const MockLink = ({
-    children,
-    href,
-  }: {
-    children: ReactNode;
-    href: string;
-  }) => <a href={href}>{children}</a>;
+  const MockLink = ({ children, href }: { children: ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  );
   MockLink.displayName = 'MockLink';
   return { __esModule: true, default: MockLink };
 });
@@ -45,9 +39,6 @@ const mockUseMarkAllAsRead = useMarkAllNotificationsAsRead as jest.MockedFunctio
   typeof useMarkAllNotificationsAsRead
 >;
 const mockUseDelete = useDeleteNotification as jest.MockedFunction<typeof useDeleteNotification>;
-const mockUseUnreadCount = useUnreadNotificationsCount as jest.MockedFunction<
-  typeof useUnreadNotificationsCount
->;
 
 function Wrapper({ children }: { children: ReactNode }) {
   const queryClient = new QueryClient({
@@ -97,8 +88,6 @@ describe('NotificationBell', () => {
       isPending: false,
     } as unknown as ReturnType<typeof useDeleteNotification>);
 
-    mockUseUnreadCount.mockReturnValue(0);
-
     mockUseNotifications.mockReturnValue({
       data: { notifications: [] },
       isLoading: false,
@@ -116,7 +105,40 @@ describe('NotificationBell', () => {
   });
 
   it('shows the unread count badge when there are unread notifications', () => {
-    mockUseUnreadCount.mockReturnValue(3);
+    mockUseNotifications.mockReturnValue({
+      data: {
+        notifications: [
+          {
+            id: 'notif-1',
+            type: 'mention',
+            title: 'Mention',
+            message: 'A teammate mentioned you',
+            isRead: false,
+            createdAt: new Date().toISOString(),
+            actor: null,
+          },
+          {
+            id: 'notif-2',
+            type: 'comment',
+            title: 'Comment',
+            message: 'A teammate commented',
+            isRead: false,
+            createdAt: new Date().toISOString(),
+            actor: null,
+          },
+          {
+            id: 'notif-3',
+            type: 'assigned',
+            title: 'Assigned',
+            message: 'You were assigned',
+            isRead: false,
+            createdAt: new Date().toISOString(),
+            actor: null,
+          },
+        ],
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useNotifications>);
 
     render(
       <Wrapper>
@@ -128,7 +150,20 @@ describe('NotificationBell', () => {
   });
 
   it('caps the badge display at "9+" when unread count exceeds 9', () => {
-    mockUseUnreadCount.mockReturnValue(42);
+    mockUseNotifications.mockReturnValue({
+      data: {
+        notifications: Array.from({ length: 12 }).map((_, index) => ({
+          id: `notif-${index}`,
+          type: 'mention',
+          title: 'Mention',
+          message: 'A teammate mentioned you',
+          isRead: false,
+          createdAt: new Date().toISOString(),
+          actor: null,
+        })),
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useNotifications>);
 
     render(
       <Wrapper>
@@ -156,7 +191,6 @@ describe('NotificationBell', () => {
   it('calls the mark-as-read mutation when clicking the "Mark read" action', async () => {
     const user = userEvent.setup();
 
-    mockUseUnreadCount.mockReturnValue(1);
     mockUseNotifications.mockReturnValue({
       data: {
         notifications: [
@@ -192,7 +226,6 @@ describe('NotificationBell', () => {
   it('calls mark-all-as-read when clicking the header action', async () => {
     const user = userEvent.setup();
 
-    mockUseUnreadCount.mockReturnValue(2);
     mockUseNotifications.mockReturnValue({
       data: {
         notifications: [

@@ -1545,7 +1545,7 @@
     "settings_sections_aria": "專案設定區段",
     "no_settings_permission": "你沒有權限存取專案設定。",
     "tab_general": "一般",
-    "tab_permissions": "權限",
+    "tab_permissions": "成員與權限",
     "tab_schemes": "方案",
     "tab_security": "安全性",
     "tab_custom_fields": "自訂欄位",
@@ -3232,7 +3232,10 @@
     "apm_invite_link_revoke": "Revoke",
     "apm_invite_link_revoked_title": "Invite link revoked",
     "apm_invite_link_revoke_failed_title": "Could not revoke link",
-    "apm_invite_link_revoke_failed": "Failed to revoke project invite link"
+    "apm_invite_link_revoke_failed": "Failed to revoke project invite link",
+    "pm_remove_success": "成員已從專案中移除",
+    "pm_remove_failed": "移除專案成員失敗",
+    "pm_remove_member_aria": "從專案中移除 {name}"
   },
   "adminPanels": {
     "agentOps": {
@@ -4368,7 +4371,28 @@
       "roleSuspended": "已停權",
       "rolePending": "待處理",
       "roleMember": "成員",
-      "editUser": "編輯使用者"
+      "editUser": "編輯使用者",
+      "deleteUser": "刪除使用者",
+      "deletedTitle": "使用者已刪除",
+      "deletedDescription": "該使用者已永久移除。",
+      "deleteFailedTitle": "刪除使用者失敗",
+      "confirmDeleteTitle": "刪除使用者？",
+      "confirmDeleteDescription": "\"{name}\" 將被永久移除。其成員資格與工作階段將被清除。此操作無法復原。",
+      "confirmDeleteLabel": "刪除使用者",
+      "colAccess": "Access",
+      "colMail": "Mail",
+      "colProjects": "Projects",
+      "colLastSeen": "Last seen",
+      "colLastActivity": "Last activity",
+      "createdAt": "Created {date}",
+      "orgsCount": "{count} orgs",
+      "emailVerified": "Verified",
+      "emailUnverified": "Unverified",
+      "projectCount": "{count} projects",
+      "moreProjects": "+{count} more",
+      "noProjects": "No projects",
+      "neverSeen": "Never seen",
+      "noActivity": "No tracked activity"
     },
     "flags": {
       "matchingCount": "{count} 個相符的旗標",
@@ -4400,7 +4424,12 @@
       "loading": "正在載入稽核記錄...",
       "loadFailed": "載入稽核記錄失敗",
       "empty": "沒有稽核事件符合目前的篩選。",
-      "unknownUser": "未知使用者"
+      "unknownUser": "未知使用者",
+      "matchingCount": "{count} audit events",
+      "project": "Project",
+      "projectMember": "Project member",
+      "systemSetting": "System setting",
+      "ipAddress": "IP {ip}"
     }
   },
   "authPages": {

@@ -15,8 +15,10 @@ export function QueryProvider({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000, // 60 seconds - reasonable with refetchOnWindowFocus
-            refetchOnWindowFocus: true,
+            staleTime: 60 * 1000,
+            refetchOnMount: false,
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
             // No global polling - SSE handles cross-client sync
             // Individual hooks can add refetchInterval where needed
           },
@@ -30,4 +32,3 @@ export function QueryProvider({ children }: { children: ReactNode }) {
     </QueryClientProvider>
   );
 }
-
