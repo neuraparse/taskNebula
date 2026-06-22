@@ -48,7 +48,7 @@ export function AuthShell({ children, contentClassName }: AuthShellProps) {
 
           <div
             className={cn(
-              'flex min-h-dvh flex-col justify-center overflow-y-auto px-5 py-8 sm:min-h-0 sm:px-10 md:px-12',
+              'flex min-h-dvh flex-col justify-start overflow-y-auto px-5 pb-8 pt-10 sm:min-h-0 sm:justify-center sm:px-10 sm:py-8 md:px-12',
               contentClassName
             )}
           >

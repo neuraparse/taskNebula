@@ -210,6 +210,50 @@ function ColHeader({
   );
 }
 
+function MobileComparisonCards() {
+  const products = [
+    { key: 'tasknebula', name: 'TaskNebula', highlight: true },
+    { key: 'jira', name: 'Jira', highlight: false },
+    { key: 'linear', name: 'Linear', highlight: false },
+    { key: 'plane', name: 'Plane', highlight: false },
+  ] as const satisfies readonly {
+    key: keyof Pick<Row, 'tasknebula' | 'jira' | 'linear' | 'plane'>;
+    name: string;
+    highlight?: boolean;
+  }[];
+
+  return (
+    <div className="mt-10 space-y-3 md:hidden">
+      {rows.map((row) => (
+        <article
+          key={row.feature}
+          className="rounded-lg border border-[var(--landing-border)] bg-[var(--landing-bg-card)] p-4"
+        >
+          <h3 className="text-[13px] font-[520] text-[var(--landing-text-dark)]">{row.feature}</h3>
+          <dl className="mt-3 space-y-3">
+            {products.map((product) => (
+              <div key={product.key} className="grid gap-1">
+                <dt
+                  className={`text-[11px] font-[500] uppercase tracking-[0.14em] ${
+                    product.highlight
+                      ? 'text-[var(--landing-accent-blue)]'
+                      : 'text-[var(--landing-text-muted)]'
+                  }`}
+                >
+                  {product.name}
+                </dt>
+                <dd>
+                  <CompareCell cell={row[product.key]} highlight={product.highlight} />
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 export function Comparison() {
   return (
     <section id="compare" className="border-t border-[var(--landing-border)]">
@@ -221,11 +265,13 @@ export function Comparison() {
           description="All four are capable tools. Here is exactly where TaskNebula differs — open by default, yours to host, AI-native. Nothing more, nothing less."
         />
 
+        <MobileComparisonCards />
+
         <div
           tabIndex={0}
           role="region"
           aria-label="Feature comparison table"
-          className="mt-10 overflow-x-auto rounded-lg border border-[var(--landing-border)] bg-[var(--landing-bg-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
+          className="mt-10 hidden overflow-x-auto rounded-lg border border-[var(--landing-border)] bg-[var(--landing-bg-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] md:block"
         >
           <table className="w-full min-w-[820px] border-collapse text-left">
             <caption className="sr-only">

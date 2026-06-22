@@ -154,6 +154,9 @@ services:
       # comments and updates; without it the janitor runs in dry-run mode.
       CRON_SECRET: ${CRON_SECRET:-}
       JANITOR_SYSTEM_USER_ID: ${JANITOR_SYSTEM_USER_ID:-}
+      # Optional Docker Hub inbound webhook for immediate image-update
+      # detection. Pair with /api/cron/version-check as the polling fallback.
+      TASKNEBULA_DOCKER_HUB_WEBHOOK_SECRET: ${TASKNEBULA_DOCKER_HUB_WEBHOOK_SECRET:-}
       # Optional self-update handoff. Disabled by default: the web container
       # never receives Docker socket access and only sends a signed request to
       # an operator-managed updater endpoint when explicitly configured.
@@ -195,9 +198,10 @@ services:
       CRON_SECRET: ${CRON_SECRET:-}
       WEB_BASE_URL: ${CRON_WEB_BASE_URL:-http://web:3000}
     entrypoint: ['/bin/sh', '-c']
-    # Daily standup at 08:00 UTC, hourly janitor, daily cycle-rollover at
-    # 02:00 UTC (off-peak so any cross-cycle DB churn doesn't collide with
-    # the standup digest window). busybox crond reads /etc/crontabs/root.
+    # Daily standup at 08:00 UTC, hourly janitor, 6-hourly version check, and
+    # daily cycle-rollover at 02:00 UTC (off-peak so any cross-cycle DB churn
+    # doesn't collide with the standup digest window). busybox crond reads
+    # /etc/crontabs/root.
     command:
       - |
         if [ -z "$$CRON_SECRET" ]; then
@@ -205,7 +209,7 @@ services:
           exit 1
         fi
         apk add --no-cache curl > /dev/null && \
-        printf '0 8 * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/standup" -o /dev/null\n0 * * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/janitor" -o /dev/null\n0 2 * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/cycle-rollover" -o /dev/null\n' > /etc/crontabs/root && \
+        printf '0 8 * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/standup" -o /dev/null\n0 * * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/janitor" -o /dev/null\n17 */6 * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/version-check" -o /dev/null\n0 2 * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/cycle-rollover" -o /dev/null\n' > /etc/crontabs/root && \
         crond -f -l 8
 
 volumes:

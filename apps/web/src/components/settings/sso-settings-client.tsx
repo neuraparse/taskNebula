@@ -12,7 +12,7 @@
  * the EntityID, SSO URL, and signing certificate from a standard SAML 2.0
  * IdP descriptor.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -115,13 +115,14 @@ function SamlSection({ organizationId }: { organizationId: string }) {
     enabled: false,
     hasPrivateKey: false,
   });
+  const [metadataUrl, setMetadataUrl] = useState('');
+
   useEffect(() => {
     if (data?.ssoConfig) setForm(data.ssoConfig);
   }, [data]);
 
-  const metadataUrl = useMemo(() => {
-    if (typeof window === 'undefined') return '';
-    return `${window.location.origin}/api/auth/saml/${'<workspace-slug>'}/metadata.xml`;
+  useEffect(() => {
+    setMetadataUrl(`${window.location.origin}/api/auth/saml/${'<workspace-slug>'}/metadata.xml`);
   }, []);
 
   const save = useMutation({
@@ -161,9 +162,15 @@ function SamlSection({ organizationId }: { organizationId: string }) {
     <div className="border-border bg-card space-y-6 rounded-md border p-6">
       <div>
         <h2 className="text-lg font-semibold">{t('sso.saml_heading')}</h2>
-        <p className="text-muted-foreground text-sm">
-          {t('sso.saml_metadata_prefix')} <code>{metadataUrl}</code> {t('sso.saml_metadata_suffix')}
-        </p>
+        <div className="text-muted-foreground text-sm">
+          <p>{t('sso.saml_metadata_prefix')}</p>
+          {metadataUrl ? (
+            <code className="bg-muted mt-1 block max-w-full break-all rounded-sm px-1.5 py-1 font-mono text-[0.85em] leading-relaxed">
+              {metadataUrl}
+            </code>
+          ) : null}
+          <p className="mt-1">{t('sso.saml_metadata_suffix')}</p>
+        </div>
       </div>
 
       <div className="space-y-2">

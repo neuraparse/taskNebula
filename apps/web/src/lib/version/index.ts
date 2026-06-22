@@ -6,9 +6,9 @@
  *
  *   - HTTPS GETs to the GitHub releases API (`RELEASES_LATEST_URL`) and the
  *     Docker Hub tags API (`DOCKER_HUB_TAGS_URL`), at most once per
- *     `VERSION_CHECK_TTL_MS` (6h), only when an admin surface asks for update
- *     status. No instance data is sent beyond a `tasknebula/<version>`
- *     User-Agent. This is not telemetry.
+ *     `VERSION_CHECK_TTL_MS` (6h), when an admin/cron surface asks for update
+ *     status or a Docker Hub webhook delivers a push event. No instance data
+ *     is sent beyond a `tasknebula/<version>` User-Agent. This is not telemetry.
  *   - `TASKNEBULA_DISABLE_UPDATE_CHECK=true` disables all outbound calls.
  *   - Results are cached in the `system_settings` table (key
  *     `version_check`) so multi-replica deployments share one cache.
@@ -89,6 +89,21 @@ export type UpdateStatus = {
   };
   /** True when TASKNEBULA_DISABLE_UPDATE_CHECK suppresses all checks. */
   checkDisabled: boolean;
+};
+
+export type DockerHubWebhookResult = {
+  ok: boolean;
+  action:
+    | 'disabled'
+    | 'ignored_payload'
+    | 'ignored_repository'
+    | 'refreshed_from_registry'
+    | 'recorded';
+  repository: string | null;
+  tag: string | null;
+  latest: string | null;
+  updateAvailable: boolean;
+  checkedAt: string | null;
 };
 
 // ---------------------------------------------------------------------------
@@ -391,6 +406,51 @@ function normalizeDockerTag(raw: unknown): DockerImageCheckState | null {
   };
 }
 
+function normalizeDockerHubRepository(raw: Record<string, unknown>): string | null {
+  const repository = raw.repository;
+  if (!repository || typeof repository !== 'object') return null;
+  const repo = repository as Record<string, unknown>;
+
+  if (typeof repo.repo_name === 'string' && repo.repo_name.trim()) {
+    const repoName = repo.repo_name.trim();
+    if (repoName.includes('/')) return repoName.toLowerCase();
+  }
+
+  const namespace =
+    typeof repo.namespace === 'string'
+      ? repo.namespace.trim()
+      : typeof repo.owner === 'string'
+        ? repo.owner.trim()
+        : '';
+  const name =
+    typeof repo.name === 'string'
+      ? repo.name.trim()
+      : typeof repo.repo_name === 'string'
+        ? repo.repo_name.trim()
+        : '';
+  if (!namespace || !name) return null;
+  return `${namespace}/${name}`.toLowerCase();
+}
+
+function normalizeDockerHubPushData(raw: Record<string, unknown>): Record<string, unknown> | null {
+  const pushData = raw.push_data;
+  return pushData && typeof pushData === 'object' ? (pushData as Record<string, unknown>) : null;
+}
+
+function readDockerHubWebhookPushedAt(pushData: Record<string, unknown>): string | null {
+  const pushedAt = pushData.pushed_at;
+  if (typeof pushedAt === 'number' && Number.isFinite(pushedAt) && pushedAt > 0) {
+    return new Date(pushedAt * 1000).toISOString();
+  }
+  if (isIsoDateString(pushedAt)) return pushedAt;
+  return null;
+}
+
+function readDockerHubWebhookDigest(pushData: Record<string, unknown>): string | null {
+  const digest = pushData.digest;
+  return typeof digest === 'string' && /^sha256:[0-9a-f]{64}$/i.test(digest) ? digest : null;
+}
+
 function compareDockerImageFreshness(a: DockerImageCheckState, b: DockerImageCheckState): number {
   const aTime = a.pushedAt ? Date.parse(a.pushedAt) : 0;
   const bTime = b.pushedAt ? Date.parse(b.pushedAt) : 0;
@@ -651,4 +711,97 @@ export async function getUpdateStatus(options: { refresh?: boolean } = {}): Prom
   await notifySuperAdminsOfAvailableUpdate(status);
 
   return status;
+}
+
+/**
+ * Processes a Docker Hub repository webhook payload.
+ *
+ * Docker Hub sends a POST for repository push events. For semver image tags we
+ * can update the shared version cache directly from the payload, then reuse the
+ * normal super-admin notification path. Non-semver pushes such as `latest`
+ * trigger a forced registry check because the release workflow may push
+ * `latest` after the versioned tag.
+ */
+export async function handleDockerHubWebhook(payload: unknown): Promise<DockerHubWebhookResult> {
+  if (isUpdateCheckDisabled()) {
+    return {
+      ok: true,
+      action: 'disabled',
+      repository: null,
+      tag: null,
+      latest: null,
+      updateAvailable: false,
+      checkedAt: null,
+    };
+  }
+
+  if (!payload || typeof payload !== 'object') {
+    return {
+      ok: false,
+      action: 'ignored_payload',
+      repository: null,
+      tag: null,
+      latest: null,
+      updateAvailable: false,
+      checkedAt: null,
+    };
+  }
+
+  const raw = payload as Record<string, unknown>;
+  const repository = normalizeDockerHubRepository(raw);
+  const pushData = normalizeDockerHubPushData(raw);
+  const tag = typeof pushData?.tag === 'string' ? pushData.tag.trim() : null;
+
+  if (repository !== DOCKER_HUB_REPOSITORY) {
+    return {
+      ok: true,
+      action: 'ignored_repository',
+      repository,
+      tag,
+      latest: null,
+      updateAvailable: false,
+      checkedAt: null,
+    };
+  }
+
+  if (!tag || !SEMVERISH.test(tag)) {
+    const status = await getUpdateStatus({ refresh: true });
+    return {
+      ok: true,
+      action: 'refreshed_from_registry',
+      repository,
+      tag,
+      latest: status.latest,
+      updateAvailable: status.updateAvailable,
+      checkedAt: status.checkedAt,
+    };
+  }
+
+  const normalizedTag = stripV(tag);
+  const cached = await readCachedVersionCheck();
+  const state: VersionCheckState = {
+    release: cached?.release ?? null,
+    docker: {
+      repository: DOCKER_HUB_REPOSITORY,
+      latestTag: normalizedTag,
+      tagUrl: dockerTagUrl(tag),
+      pushedAt: pushData ? readDockerHubWebhookPushedAt(pushData) : null,
+      digest: pushData ? readDockerHubWebhookDigest(pushData) : null,
+      sizeBytes: null,
+    },
+    fetchedAt: new Date().toISOString(),
+  };
+
+  await writeVersionCheck(state);
+  const status = await getUpdateStatus();
+
+  return {
+    ok: true,
+    action: 'recorded',
+    repository,
+    tag,
+    latest: status.latest,
+    updateAvailable: status.updateAvailable,
+    checkedAt: status.checkedAt,
+  };
 }

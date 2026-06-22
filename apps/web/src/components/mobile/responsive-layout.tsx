@@ -29,9 +29,11 @@ export function ResponsiveLayout({
   }
 
   return (
-    <div className="bg-background flex min-h-screen flex-col">
+    <div className="bg-background flex min-h-dvh flex-col overflow-x-hidden">
       <MobileHeader title={title} showSearch={showSearch} onSearchClick={onSearchClick} />
-      <main className="flex-1 pb-14">{children}</main>
+      <main className="min-w-0 flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
+        {children}
+      </main>
       {showMobileNav && <MobileNav hasWorkspaceAccess={hasWorkspaceAccess} />}
     </div>
   );

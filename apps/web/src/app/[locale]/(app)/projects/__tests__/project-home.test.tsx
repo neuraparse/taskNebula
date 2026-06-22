@@ -1,34 +1,27 @@
-/**
- * /projects/[projectId]/page.tsx is a pure server-side redirect to
- * `/projects/[projectId]/views`. This test verifies the redirect target
- * so a future regression (blank page, "coming soon", wrong URL) fails here.
- */
+import { isValidElement, type ReactElement } from 'react';
+import { ProjectViewsShell } from '@/components/issues/project-views-shell';
 import ProjectPage from '../[projectId]/page';
 
-const redirectMock = jest.fn((url: string) => {
-  throw new Error(`NEXT_REDIRECT:${url}`);
-});
-
-jest.mock('next/navigation', () => ({
-  redirect: (url: string) => redirectMock(url),
+jest.mock('@/components/issues/project-views-shell', () => ({
+  ProjectViewsShell: jest.fn(() => null),
 }));
 
-describe('ProjectPage (pure redirect)', () => {
+describe('ProjectPage', () => {
   beforeEach(() => {
-    redirectMock.mockClear();
+    jest.mocked(ProjectViewsShell).mockClear();
   });
 
-  it('redirects /projects/:id to /projects/:id/views', async () => {
-    await expect(
-      ProjectPage({ params: Promise.resolve({ projectId: 'alpha' }) })
-    ).rejects.toThrow('NEXT_REDIRECT:/projects/alpha/views');
+  it('renders the project views shell at /projects/:id', async () => {
+    const result = await ProjectPage({ params: Promise.resolve({ projectId: 'alpha' }) });
 
-    expect(redirectMock).toHaveBeenCalledWith('/projects/alpha/views');
+    expect(isValidElement(result)).toBe(true);
+    expect((result as ReactElement<{ projectId: string }>).type).toBe(ProjectViewsShell);
+    expect((result as ReactElement<{ projectId: string }>).props.projectId).toBe('alpha');
   });
 
-  it('preserves the project key/id exactly in the redirect URL', async () => {
-    await expect(
-      ProjectPage({ params: Promise.resolve({ projectId: 'TN-CORE' }) })
-    ).rejects.toThrow('NEXT_REDIRECT:/projects/TN-CORE/views');
+  it('preserves the project key/id exactly in the shell props', async () => {
+    const result = await ProjectPage({ params: Promise.resolve({ projectId: 'TN-CORE' }) });
+
+    expect((result as ReactElement<{ projectId: string }>).props.projectId).toBe('TN-CORE');
   });
 });

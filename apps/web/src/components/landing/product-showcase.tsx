@@ -406,8 +406,8 @@ export function HeroShowcase() {
           </div>
 
           <div className="space-y-4 p-4">
-            <div className="scrollbar-none overflow-x-auto pb-1">
-              <div className="grid min-w-[980px] auto-cols-[188px] grid-flow-col gap-3 xl:min-w-0 xl:auto-cols-auto xl:grid-flow-row xl:grid-cols-5">
+            <div className="scrollbar-none max-w-full overflow-x-auto overscroll-x-contain pb-1">
+              <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:min-w-[980px] lg:auto-cols-[188px] lg:grid-flow-col lg:grid-cols-none xl:min-w-0 xl:auto-cols-auto xl:grid-flow-row xl:grid-cols-5">
                 {columns.map((column, columnIndex) => {
                   const columnCards = activeBoard.issues.filter(
                     (issue) => issue.col === columnIndex

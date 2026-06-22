@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
-import { redirect } from 'next/navigation';
+import { ProjectViewsShell } from '@/components/issues/project-views-shell';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('pagesProjects');
@@ -17,5 +17,5 @@ interface ProjectPageProps {
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { projectId } = await params;
-  redirect(`/projects/${projectId}/views`);
+  return <ProjectViewsShell projectId={projectId} />;
 }

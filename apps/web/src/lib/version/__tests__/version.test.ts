@@ -27,6 +27,7 @@ import {
   checkLatestVersion,
   getUpdateStatus,
   getCurrentVersion,
+  handleDockerHubWebhook,
   DOCKER_HUB_REPOSITORY,
   DOCKER_HUB_TAGS_URL,
   RELEASES_LATEST_URL,
@@ -539,5 +540,113 @@ describe('getUpdateStatus', () => {
     expect(dbUpdateMock).toHaveBeenCalledTimes(1);
     expect(dbInsertMock).toHaveBeenCalledTimes(1);
     expect(dbSelectMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('records Docker Hub semver webhook pushes and notifies super admins', async () => {
+    process.env.TASKNEBULA_VERSION = '1.2.3';
+    const cached = cachedState(1 * HOUR_MS, {
+      release: {
+        latest: '1.2.3',
+        htmlUrl: 'https://github.com/neuraparse/taskNebula/releases/tag/v1.2.3',
+        publishedAt: '2026-06-01T00:00:00.000Z',
+        notes: null,
+      },
+      docker: null,
+    });
+    const webhookState: VersionCheckState = {
+      release: cached.release,
+      docker: {
+        repository: DOCKER_HUB_REPOSITORY,
+        latestTag: '1.2.4',
+        tagUrl: 'https://hub.docker.com/r/neuraparse/tasknebula/tags?name=1.2.4',
+        pushedAt: '2026-06-22T16:13:20.000Z',
+        digest: null,
+        sizeBytes: null,
+      },
+      fetchedAt: new Date().toISOString(),
+    };
+
+    dbSelectMock
+      .mockReturnValueOnce(cacheSelectChain([{ value: cached }]))
+      .mockReturnValueOnce(cacheSelectChain([{ value: webhookState }]))
+      .mockReturnValueOnce(adminsSelectChain([{ id: 'admin-1' }]));
+
+    const versionCheckValues = jest.fn().mockReturnValue({
+      onConflictDoUpdate: jest.fn().mockResolvedValue(undefined),
+    });
+    const markerValues = jest.fn().mockReturnValue({
+      onConflictDoNothing: jest.fn().mockReturnValue({
+        returning: jest.fn().mockResolvedValue([{ id: 'marker-1' }]),
+      }),
+    });
+    const notificationValues = jest.fn().mockResolvedValue(undefined);
+    dbInsertMock.mockImplementation((table: unknown) => ({
+      values: jest.fn((rowOrRows: unknown) => {
+        if (table !== systemSettingsTable) return notificationValues(rowOrRows);
+        const row = rowOrRows as { key?: string };
+        return row.key === UPDATE_NOTIFICATION_KEY
+          ? markerValues(rowOrRows)
+          : versionCheckValues(rowOrRows);
+      }),
+    }));
+
+    const result = await handleDockerHubWebhook({
+      push_data: {
+        pushed_at: 1782144800,
+        tag: '1.2.4',
+      },
+      repository: {
+        repo_name: 'tasknebula',
+        namespace: 'neuraparse',
+        name: 'tasknebula',
+      },
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      ok: true,
+      action: 'recorded',
+      repository: DOCKER_HUB_REPOSITORY,
+      tag: '1.2.4',
+      latest: '1.2.4',
+      updateAvailable: true,
+    });
+    expect(versionCheckValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        key: 'version_check',
+        value: expect.objectContaining({
+          docker: expect.objectContaining({
+            latestTag: '1.2.4',
+            pushedAt: '2026-06-22T16:13:20.000Z',
+          }),
+        }),
+      })
+    );
+    expect(notificationValues).toHaveBeenCalledWith([
+      expect.objectContaining({
+        userId: 'admin-1',
+        actorType: 'system',
+        title: 'TaskNebula v1.2.4 is available',
+        message: expect.stringContaining('Docker Hub published neuraparse/tasknebula:1.2.4'),
+      }),
+    ]);
+  });
+
+  it('forces a registry refresh for Docker Hub latest-tag webhooks', async () => {
+    process.env.TASKNEBULA_VERSION = '9.9.9';
+    mockCachedRows([]);
+    mockInsertChain();
+    fetchMock.mockResolvedValueOnce(githubResponse()).mockResolvedValueOnce(dockerResponse());
+
+    const result = await handleDockerHubWebhook({
+      push_data: { pushed_at: 1782144800, tag: 'latest' },
+      repository: { repo_name: DOCKER_HUB_REPOSITORY },
+    });
+
+    expect(result.action).toBe('refreshed_from_registry');
+    expect(fetchMock).toHaveBeenCalledWith(
+      DOCKER_HUB_TAGS_URL,
+      expect.objectContaining({ cache: 'no-store' })
+    );
   });
 });

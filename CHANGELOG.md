@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.7.5] - 2026-06-22
+
+### Added
+
+- **Immediate Docker Hub update detection.** Self-hosted installs can now point
+  Docker Hub webhooks at `/api/webhooks/docker-hub` with
+  `TASKNEBULA_DOCKER_HUB_WEBHOOK_SECRET`; versioned image pushes update the
+  shared version cache and notify every super-admin in-app without waiting for
+  an admin page poll.
+- **Scheduled update-check fallback.** The optional cron sidecar now calls
+  `/api/cron/version-check` every 6 hours when `CRON_SECRET` is configured, so
+  installs still detect new GitHub/Docker Hub versions when inbound webhooks
+  are not exposed.
+
+### Changed
+
+- **Mobile and responsive UI polish.** The mobile app header/nav now respect
+  safe-area insets, truncate long labels cleanly, and prevent horizontal page
+  overflow; landing/auth/comparison surfaces were tightened for narrow screens.
+- **Project overview opens the real views shell.** Visiting a project root now
+  renders the project views surface directly instead of redirecting through the
+  nested views route.
+
+### Fixed
+
+- **Dashboard language picker scrolls through all shipped locales.** The
+  30-language menu now caps to the available viewport height, supports mouse
+  and touch scrolling, and keeps the bottom locales reachable.
+- **SAML metadata display no longer overflows settings.** Long metadata URLs
+  wrap inside a code block instead of pushing the SSO panel wider than its
+  container.
+- **Public unlocalized routes stay public.** Middleware now keeps
+  `/ai-model-cards`, `/intake`, and `/trust` outside locale-prefix handling,
+  matching their app routes.
+
 ## [0.7.4] - 2026-06-22
 
 ### Added
@@ -497,7 +532,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Internal alpha release. [See git log] for details.
 
-[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.4...HEAD
+[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.5...HEAD
+[0.7.5]: https://github.com/neuraparse/tasknebula/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/neuraparse/tasknebula/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/neuraparse/tasknebula/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/neuraparse/tasknebula/compare/v0.7.1...v0.7.2

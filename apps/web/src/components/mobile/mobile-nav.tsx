@@ -45,9 +45,9 @@ export function MobileNav({ hasWorkspaceAccess = true }: { hasWorkspaceAccess?: 
   return (
     <nav
       aria-label={t('primaryNavAria')}
-      className="border-border bg-background/90 fixed bottom-0 left-0 right-0 z-50 h-14 border-t backdrop-blur md:hidden"
+      className="border-border bg-background/95 fixed bottom-0 left-0 right-0 z-50 border-t pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
-      <div className="flex h-full items-center justify-around px-1">
+      <div className="flex h-14 items-center justify-around px-1">
         {visibleNavItems.map((item) => {
           const Icon = item.icon;
           const isActive =
@@ -59,13 +59,13 @@ export function MobileNav({ hasWorkspaceAccess = true }: { hasWorkspaceAccess?: 
               href={item.href}
               data-active={isActive ? 'true' : undefined}
               className={cn(
-                'ease-snap relative flex h-full flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-2 text-[10px] font-medium transition-all duration-150',
+                'ease-snap relative flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-1.5 text-[10px] font-medium transition-all duration-150',
                 isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               )}
               aria-current={isActive ? 'page' : undefined}
             >
               <Icon className="h-4 w-4" />
-              <span>{t(item.labelKey)}</span>
+              <span className="max-w-full truncate leading-tight">{t(item.labelKey)}</span>
               {isActive ? (
                 <span
                   aria-hidden="true"

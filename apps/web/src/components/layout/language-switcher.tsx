@@ -70,16 +70,25 @@ export function LanguageSwitcher() {
           <Languages className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-44">
+      <DropdownMenuContent
+        align="end"
+        sideOffset={8}
+        className="w-56 touch-pan-y scroll-py-1 overflow-y-auto overflow-x-hidden overscroll-contain"
+        style={{
+          maxHeight:
+            'min(26rem, var(--radix-dropdown-menu-content-available-height, calc(100dvh - 4rem)))',
+        }}
+      >
         <DropdownMenuLabel>{t('language')}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {locales.map((entry) => (
           <DropdownMenuItem
             key={entry}
             onSelect={() => setLocale(entry)}
+            aria-selected={entry === locale}
             className="flex items-center justify-between gap-3"
           >
-            <span>{localeLabels[entry]}</span>
+            <span className="min-w-0 truncate">{localeLabels[entry]}</span>
             <span className="text-muted-foreground text-[10px] uppercase tracking-[0.14em]">
               {entry === locale ? tLayout('languageActive') : entry}
             </span>

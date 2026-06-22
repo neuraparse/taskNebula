@@ -43,7 +43,7 @@ services:
       retries: 10
 
   web:
-    image: ${TASKNEBULA_IMAGE:-neuraparse/tasknebula:0.7.4}
+    image: ${TASKNEBULA_IMAGE:-neuraparse/tasknebula:0.7.5}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -60,6 +60,7 @@ services:
       SKIP_SEED: 'true'
       SEED_DEMO_DATA: 'false'
       NODE_ENV: production
+      TASKNEBULA_DOCKER_HUB_WEBHOOK_SECRET: ${TASKNEBULA_DOCKER_HUB_WEBHOOK_SECRET:-}
       TASKNEBULA_SELF_UPDATE_ENABLED: ${TASKNEBULA_SELF_UPDATE_ENABLED:-false}
       TASKNEBULA_SELF_UPDATE_WEBHOOK_URL: ${TASKNEBULA_SELF_UPDATE_WEBHOOK_URL:-}
       TASKNEBULA_SELF_UPDATE_WEBHOOK_SECRET: ${TASKNEBULA_SELF_UPDATE_WEBHOOK_SECRET:-}

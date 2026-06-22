@@ -14,12 +14,9 @@ interface MobileHeaderProps {
   onSearchClick?: () => void;
 }
 
-export function MobileHeader({
-  title = 'TaskNebula',
-  showSearch = false,
-  onSearchClick,
-}: MobileHeaderProps) {
+export function MobileHeader({ title, showSearch = false, onSearchClick }: MobileHeaderProps) {
   const t = useTranslations('mobileNav');
+  const displayTitle = title ?? t('dashboard');
   return (
     <header className="border-border bg-background/80 sticky top-0 z-40 border-b backdrop-blur md:hidden">
       <div className="flex h-14 items-center justify-between px-3">
@@ -48,10 +45,12 @@ export function MobileHeader({
         </Sheet>
 
         {/* Center: Title */}
-        <span className="truncate text-sm font-semibold tracking-tight">{title}</span>
+        <span className="min-w-0 flex-1 truncate px-3 text-center text-sm font-semibold tracking-tight">
+          {displayTitle}
+        </span>
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1">
           {showSearch && (
             <Button
               variant="ghost"
