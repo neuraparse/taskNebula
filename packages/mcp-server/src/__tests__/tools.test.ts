@@ -24,6 +24,41 @@ import {
 
 type FetchCall = { url: string; init: RequestInit };
 
+const AGENT_POLICY_ENV_KEYS = [
+  'TASKNEBULA_AGENT_ACTOR',
+  'AGENTOWNERS_ACTOR',
+  'TASKNEBULA_AGENT_SOURCE',
+  'AGENTOWNERS_SOURCE',
+  'TASKNEBULA_AGENT_POLICY',
+  'AGENTOWNERS_POLICY',
+] as const;
+
+let originalAgentPolicyEnv: Partial<Record<(typeof AGENT_POLICY_ENV_KEYS)[number], string>>;
+
+beforeAll(() => {
+  originalAgentPolicyEnv = {};
+  for (const key of AGENT_POLICY_ENV_KEYS) {
+    originalAgentPolicyEnv[key] = process.env[key];
+  }
+});
+
+beforeEach(() => {
+  for (const key of AGENT_POLICY_ENV_KEYS) {
+    delete process.env[key];
+  }
+});
+
+afterAll(() => {
+  for (const key of AGENT_POLICY_ENV_KEYS) {
+    const value = originalAgentPolicyEnv[key];
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+});
+
 function mockClient(response: unknown = { ok: true }): {
   client: TaskNebulaClient;
   calls: FetchCall[];
@@ -148,7 +183,35 @@ describe('create_issue', () => {
       title: 'New',
       type: 'task',
       priority: 'medium',
+      agentPolicy: {
+        actor: 'mcp-agent',
+        source: 'mcp-server',
+      },
     });
+  });
+
+  it('uses the configured AGENTOWNERS actor for write tools', async () => {
+    process.env.TASKNEBULA_AGENT_ACTOR = 'codex';
+    process.env.TASKNEBULA_AGENT_SOURCE = 'codex-cli';
+    const { client, calls } = mockClient({ id: 'i1' });
+    const input = createIssueTool.inputSchema.parse({ projectId: 'p1', title: 'New' });
+    await createIssueTool.handler(input, { client });
+
+    expect(JSON.parse(String(calls[0]!.init.body))).toMatchObject({
+      agentPolicy: {
+        actor: 'codex',
+        source: 'codex-cli',
+      },
+    });
+  });
+
+  it('can disable AGENTOWNERS markers when explicitly configured', async () => {
+    process.env.TASKNEBULA_AGENT_POLICY = 'off';
+    const { client, calls } = mockClient({ id: 'i1' });
+    const input = createIssueTool.inputSchema.parse({ projectId: 'p1', title: 'New' });
+    await createIssueTool.handler(input, { client });
+
+    expect(JSON.parse(String(calls[0]!.init.body))).not.toHaveProperty('agentPolicy');
   });
 });
 
@@ -164,7 +227,14 @@ describe('update_issue', () => {
     );
     expect(calls[0]!.init.method).toBe('PATCH');
     const body = JSON.parse(String(calls[0]!.init.body));
-    expect(body).toEqual({ title: 'Renamed', priority: 'high' });
+    expect(body).toEqual({
+      title: 'Renamed',
+      priority: 'high',
+      agentPolicy: {
+        actor: 'mcp-agent',
+        source: 'mcp-server',
+      },
+    });
   });
 });
 
@@ -175,7 +245,13 @@ describe('transition_status', () => {
   it('PATCHes with statusId', async () => {
     const { client, calls } = mockClient({ ok: true });
     await transitionStatusTool.handler({ issueId: 'i1', statusId: 's2' }, { client });
-    expect(JSON.parse(String(calls[0]!.init.body))).toMatchObject({ statusId: 's2' });
+    expect(JSON.parse(String(calls[0]!.init.body))).toMatchObject({
+      statusId: 's2',
+      agentPolicy: {
+        actor: 'mcp-agent',
+        source: 'mcp-server',
+      },
+    });
   });
 });
 
@@ -187,7 +263,13 @@ describe('assign_issue', () => {
   it('PATCHes assigneeId', async () => {
     const { client, calls } = mockClient({ ok: true });
     await assignIssueTool.handler({ issueId: 'i1', assigneeId: 'u1' }, { client });
-    expect(JSON.parse(String(calls[0]!.init.body))).toEqual({ assigneeId: 'u1' });
+    expect(JSON.parse(String(calls[0]!.init.body))).toEqual({
+      assigneeId: 'u1',
+      agentPolicy: {
+        actor: 'mcp-agent',
+        source: 'mcp-server',
+      },
+    });
   });
 });
 
@@ -200,7 +282,16 @@ describe('add_comment', () => {
     await addCommentTool.handler({ issueId: 'i1', body: 'hello' }, { client });
     expect(calls[0]!.url).toMatch(/\/api\/issues\/i1\/comments$/);
     expect(calls[0]!.init.method).toBe('POST');
-    expect(JSON.parse(String(calls[0]!.init.body))).toMatchObject({ content: 'hello' });
+    expect(JSON.parse(String(calls[0]!.init.body))).toMatchObject({
+      content: 'hello',
+      agentPolicy: {
+        actor: 'mcp-agent',
+        source: 'mcp-server',
+        resource: 'comments',
+        action: 'create',
+        targetType: 'issue',
+      },
+    });
   });
 });
 
@@ -251,6 +342,10 @@ describe('create_subtask', () => {
       parentIssueId: 'i1',
       projectId: 'p1',
       title: 'Sub',
+      agentPolicy: {
+        actor: 'mcp-agent',
+        source: 'mcp-server',
+      },
     });
   });
 });

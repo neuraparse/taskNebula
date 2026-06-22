@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.7.4] - 2026-06-22
+
+### Added
+
+- **AGENTOWNERS enforcement for MCP coding agents.** The TaskNebula MCP server
+  now attaches server-side AGENTOWNERS markers to issue creation, issue updates,
+  assignment, status transitions, comments, and subtask creation so Codex,
+  Claude Code, Gemini, Cursor, and other configured agent actors flow through
+  the local policy evaluator and approval queue instead of bypassing governance.
+- **MCP AGENTOWNERS configuration docs.** MCP setup examples now show
+  `TASKNEBULA_AGENT_ACTOR` so each client can identify itself consistently, with
+  `mcp-agent` as the unknown-agent fallback and `TASKNEBULA_AGENT_POLICY=off`
+  available for explicit opt-out.
+
+### Changed
+
+- **Comment policy rules are normalized.** `comments:create` and the earlier
+  `issues:comment` AGENTOWNERS spelling now match each other, keeping existing
+  policy files compatible while documenting the more precise comment resource.
+
+### Fixed
+
+- **Admin-created-only invitations no longer strand invited users.** When
+  platform registration is restricted to admin-created accounts, organization
+  invitations now block new/passwordless invitees with a clear warning instead
+  of sending signup mail for an account that cannot set a password.
+- **Invitation and auth emails use the configured app URL.** Organization
+  invites, project invite links, password reset links, and email verification
+  links now prefer `APP_URL`/auth URL configuration instead of falling back to
+  `http://localhost:3000` in self-hosted custom-domain deployments.
+
 ## [0.7.3] - 2026-06-22
 
 ### Added
@@ -466,7 +497,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Internal alpha release. [See git log] for details.
 
-[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.3...HEAD
+[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.4...HEAD
+[0.7.4]: https://github.com/neuraparse/tasknebula/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/neuraparse/tasknebula/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/neuraparse/tasknebula/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/neuraparse/tasknebula/compare/v0.7.0...v0.7.1

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { ToolDefinition } from './types.js';
+import { withAgentPolicy } from './agent-policy.js';
 
 export const updateIssueInput = z.object({
   issueId: z.string().min(1),
@@ -13,10 +14,11 @@ export const updateIssueInput = z.object({
 
 export const updateIssueTool: ToolDefinition<typeof updateIssueInput> = {
   name: 'update_issue',
-  description: 'Patch fields on an existing issue (title, description, priority, labels, due date, estimate).',
+  description:
+    'Patch fields on an existing issue (title, description, priority, labels, due date, estimate).',
   inputSchema: updateIssueInput,
   async handler(input, { client }) {
     const { issueId, ...patch } = input;
-    return client.patch(`/api/issues/${encodeURIComponent(issueId)}`, patch);
+    return client.patch(`/api/issues/${encodeURIComponent(issueId)}`, withAgentPolicy(patch));
   },
 };

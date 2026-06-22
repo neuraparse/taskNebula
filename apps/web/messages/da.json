@@ -4737,7 +4737,10 @@
       "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
       "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
       "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
-      "invitationResent": "Invitation resent"
+      "invitationResent": "Invitation resent",
+      "adminCreatedOnlyInviteWarning": "Kun administratør-oprettede konti er aktiveret. Nye eksterne medlemmer skal oprettes af en superadministrator, før de kan tilføjes her.",
+      "adminCreatedOnlyInviteBlockedTitle": "Invitation deaktiveret",
+      "adminCreatedOnlyInviteBlockedDescription": "Opret først brugeren i Admin > Users, og tilføj derefter den aktive konto til denne organisation."
     },
     "org": {
       "selectOrg": "Vælg en organisation for at indlæse indstillinger.",

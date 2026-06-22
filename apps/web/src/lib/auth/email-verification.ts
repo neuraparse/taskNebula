@@ -26,6 +26,7 @@ import {
 } from '@tasknebula/db';
 import { emailVerificationTokens } from '@tasknebula/db/src/schema/email-verification-tokens';
 import { sendEmail } from '@/lib/email/sender';
+import { buildAppUrl } from '@/lib/url/app-url';
 
 const TOKEN_BYTES = 32; // 256 bits → 64 hex chars
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -35,8 +36,7 @@ function hashToken(raw: string): string {
 }
 
 function buildVerificationUrl(token: string): string {
-  const base = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || '';
-  return `${base}/auth/verify-email?token=${encodeURIComponent(token)}`;
+  return buildAppUrl(`/auth/verify-email?token=${encodeURIComponent(token)}`);
 }
 
 /**
@@ -45,36 +45,33 @@ function buildVerificationUrl(token: string): string {
  * (e.g. the admin email preview panel) can render an exact copy without
  * duplicating the layout composition.
  */
-export function renderVerifyEmailMessage(args: {
-  displayName: string;
-  verifyUrl: string;
-}): { subject: string; html: string; text: string } {
+export function renderVerifyEmailMessage(args: { displayName: string; verifyUrl: string }): {
+  subject: string;
+  html: string;
+  text: string;
+} {
   const { displayName, verifyUrl } = args;
 
   const body = [
     paragraph(
-      'Click the button below to verify the email associated with your TaskNebula account. This link expires in 24 hours.',
+      'Click the button below to verify the email associated with your TaskNebula account. This link expires in 24 hours.'
     ),
     infoCard({
       title: 'Once verified',
       tone: 'info',
-      body: bulletList([
-        'Log in and set your profile photo',
-        'Invite your team',
-        'Join a project',
-      ]),
+      body: bulletList(['Log in and set your profile photo', 'Invite your team', 'Join a project']),
     }),
   ].join('');
 
   const fallback = [
     paragraph(
       `If the button doesn't work, paste this URL into your browser:<br/><span style="color:#374151;word-break:break-all;">${verifyUrl}</span>`,
-      { muted: true, spacingTop: 20 },
+      { muted: true, spacingTop: 20 }
     ),
-    paragraph(
-      "If you didn't create a TaskNebula account, you can safely ignore this message.",
-      { muted: true, spacingTop: 12 },
-    ),
+    paragraph("If you didn't create a TaskNebula account, you can safely ignore this message.", {
+      muted: true,
+      spacingTop: 12,
+    }),
   ].join('');
 
   const html = renderShell({
@@ -132,12 +129,7 @@ export async function issueEmailVerificationToken(userId: string): Promise<Issue
   await db
     .update(emailVerificationTokens)
     .set({ usedAt: new Date() })
-    .where(
-      and(
-        eq(emailVerificationTokens.userId, userId),
-        isNull(emailVerificationTokens.usedAt)
-      )
-    );
+    .where(and(eq(emailVerificationTokens.userId, userId), isNull(emailVerificationTokens.usedAt)));
 
   const rawToken = crypto.randomBytes(TOKEN_BYTES).toString('hex');
   const tokenHash = hashToken(rawToken);
@@ -272,10 +264,7 @@ export async function reconcileUserVerification(userId: string): Promise<{ verif
   }
 
   const now = new Date();
-  await db
-    .update(users)
-    .set({ emailVerified: now, updatedAt: now })
-    .where(eq(users.id, userId));
+  await db.update(users).set({ emailVerified: now, updatedAt: now }).where(eq(users.id, userId));
 
   return { verified: true };
 }

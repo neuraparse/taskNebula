@@ -4737,7 +4737,10 @@
       "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
       "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
       "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
-      "invitationResent": "Invitation resent"
+      "invitationResent": "Invitation resent",
+      "adminCreatedOnlyInviteWarning": "Chế độ chỉ tài khoản do quản trị viên tạo đang bật. Thành viên bên ngoài mới phải được quản trị viên cấp cao tạo trước khi có thể thêm tại đây.",
+      "adminCreatedOnlyInviteBlockedTitle": "Lời mời đã bị tắt",
+      "adminCreatedOnlyInviteBlockedDescription": "Trước tiên hãy tạo người dùng trong Admin > Users, sau đó thêm tài khoản đang hoạt động vào tổ chức này."
     },
     "org": {
       "selectOrg": "Chọn một tổ chức để tải cài đặt.",

@@ -4737,7 +4737,10 @@
       "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
       "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
       "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
-      "invitationResent": "Invitation resent"
+      "invitationResent": "Invitation resent",
+      "adminCreatedOnlyInviteWarning": "เปิดใช้โหมดบัญชีที่ผู้ดูแลสร้างเท่านั้น สมาชิกภายนอกใหม่ต้องให้ผู้ดูแลระดับสูงสร้างบัญชีก่อน จึงจะเพิ่มที่นี่ได้",
+      "adminCreatedOnlyInviteBlockedTitle": "ปิดใช้งานคำเชิญแล้ว",
+      "adminCreatedOnlyInviteBlockedDescription": "สร้างผู้ใช้ใน Admin > Users ก่อน จากนั้นเพิ่มบัญชีที่ใช้งานอยู่ลงในองค์กรนี้"
     },
     "org": {
       "selectOrg": "เลือกองค์กรเพื่อโหลดการตั้งค่า",

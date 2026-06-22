@@ -131,6 +131,7 @@ type TestMember = {
  *  so the Invite button is enabled. */
 function installMembersListFetch(overrides?: {
   members?: TestMember[];
+  registrationMode?: 'allow_registration' | 'invite_only' | 'admin_created_only';
   invitePostHandler?: (body: string) => { ok: boolean; status?: number; payload: unknown };
   assignProjectsPostHandler?: (body: string) => { ok: boolean; status?: number; payload: unknown };
 }) {
@@ -165,6 +166,7 @@ function installMembersListFetch(overrides?: {
           members: overrides?.members ?? [],
           userRole: 'owner',
           isSuperAdmin: false,
+          registrationMode: overrides?.registrationMode ?? 'allow_registration',
         }),
       };
     }
@@ -527,6 +529,16 @@ describe('MembersPageClient — invite with project assignment', () => {
 
     const inviteTrigger = await screen.findByRole('button', { name: /invite/i });
     expect(inviteTrigger).toBeDisabled();
+  });
+
+  it('warns when admin-created accounts only blocks new invite signups', async () => {
+    installMembersListFetch({ registrationMode: 'admin_created_only' });
+
+    renderWithClient(<MembersPageClient />);
+
+    expect(
+      await screen.findByText(/new external members must be created by a super admin/i)
+    ).toBeInTheDocument();
   });
 
   it('hides project assignment when project:manage is missing', async () => {

@@ -4737,7 +4737,10 @@
       "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
       "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
       "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
-      "invitationResent": "Invitation resent"
+      "invitationResent": "Invitation resent",
+      "adminCreatedOnlyInviteWarning": "Vain ylläpitäjän luomat tilit on käytössä. Uudet ulkoiset jäsenet täytyy luoda ensin pääylläpitäjän toimesta, ennen kuin heidät voi lisätä tähän.",
+      "adminCreatedOnlyInviteBlockedTitle": "Kutsu poistettu käytöstä",
+      "adminCreatedOnlyInviteBlockedDescription": "Luo käyttäjä ensin kohdassa Admin > Users ja lisää sitten aktiivinen tili tähän organisaatioon."
     },
     "org": {
       "selectOrg": "Valitse organisaatio ladataksesi asetukset.",

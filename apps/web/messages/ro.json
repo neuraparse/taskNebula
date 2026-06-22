@@ -4737,7 +4737,10 @@
       "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
       "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
       "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
-      "invitationResent": "Invitation resent"
+      "invitationResent": "Invitation resent",
+      "adminCreatedOnlyInviteWarning": "Este activată opțiunea doar conturi create de administrator. Membrii externi noi trebuie creați mai întâi de un super administrator înainte de a putea fi adăugați aici.",
+      "adminCreatedOnlyInviteBlockedTitle": "Invitație dezactivată",
+      "adminCreatedOnlyInviteBlockedDescription": "Creați mai întâi utilizatorul în Admin > Users, apoi adăugați contul activ la această organizație."
     },
     "org": {
       "selectOrg": "Selectează o organizație pentru a încărca setările.",

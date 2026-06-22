@@ -4737,7 +4737,10 @@
       "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
       "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
       "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
-      "invitationResent": "Invitation resent"
+      "invitationResent": "Invitation resent",
+      "adminCreatedOnlyInviteWarning": "Включен е режим само за акаунти, създадени от администратор. Новите външни членове трябва първо да бъдат създадени от супер администратор, преди да бъдат добавени тук.",
+      "adminCreatedOnlyInviteBlockedTitle": "Поканата е изключена",
+      "adminCreatedOnlyInviteBlockedDescription": "Първо създайте потребителя от Admin > Users, след това добавете активния акаунт към тази организация."
     },
     "org": {
       "selectOrg": "Изберете организация, за да заредите настройките.",

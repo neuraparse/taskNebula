@@ -15,21 +15,21 @@ agent:tasknebula-ai issues:create allow
 agent:tasknebula-ai issues:triage allow
 agent:tasknebula-ai issues:assign allow
 agent:tasknebula-ai issues:label allow
-agent:tasknebula-ai issues:comment allow
+agent:tasknebula-ai comments:create allow
 
 # Closing or deleting issues needs human approval
 agent:tasknebula-ai issues:close require-approval @maintainers
 agent:tasknebula-ai issues:delete deny
 
 # External coding agents are more restricted
-agent:claude-code issues:comment allow
+agent:claude-code comments:create allow
 agent:claude-code issues:update require-approval @maintainers
 agent:codex issues:update require-approval @maintainers
 agent:gemini issues:update require-approval @maintainers
 
+# MCP servers identify as mcp-agent unless TASKNEBULA_AGENT_ACTOR is set
+unknown:* * require-approval @admins
+
 # Boards
 agent:tasknebula-ai boards:create-card allow
 agent:tasknebula-ai boards:move-card require-approval @maintainers
-
-# Unknown agents are never trusted by default
-unknown:* * require-approval @admins

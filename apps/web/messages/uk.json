@@ -4737,7 +4737,10 @@
       "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
       "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
       "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
-      "invitationResent": "Invitation resent"
+      "invitationResent": "Invitation resent",
+      "adminCreatedOnlyInviteWarning": "Увімкнено режим облікових записів, створених лише адміністратором. Нових зовнішніх учасників має спочатку створити суперадміністратор, перш ніж їх можна буде додати тут.",
+      "adminCreatedOnlyInviteBlockedTitle": "Запрошення вимкнено",
+      "adminCreatedOnlyInviteBlockedDescription": "Спочатку створіть користувача в Admin > Users, а потім додайте активний обліковий запис до цієї організації."
     },
     "org": {
       "selectOrg": "Виберіть організацію, щоб завантажити налаштування.",

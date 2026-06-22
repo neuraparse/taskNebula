@@ -4737,7 +4737,10 @@
       "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
       "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
       "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
-      "invitationResent": "Invitation resent"
+      "invitationResent": "Invitation resent",
+      "adminCreatedOnlyInviteWarning": "Je zapnutý režim pouze účtů vytvořených administrátorem. Nové externí členy musí nejprve vytvořit super administrátor, teprve potom je můžete přidat sem.",
+      "adminCreatedOnlyInviteBlockedTitle": "Pozvánky jsou vypnuté",
+      "adminCreatedOnlyInviteBlockedDescription": "Nejprve vytvořte uživatele v Admin > Users a potom přidejte aktivní účet do této organizace."
     },
     "org": {
       "selectOrg": "Vyberte organizaci pro načtení nastavení.",

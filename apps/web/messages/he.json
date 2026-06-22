@@ -4737,7 +4737,10 @@
       "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
       "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
       "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
-      "invitationResent": "Invitation resent"
+      "invitationResent": "Invitation resent",
+      "adminCreatedOnlyInviteWarning": "האפשרות לחשבונות שנוצרים על ידי מנהל בלבד מופעלת. חברים חיצוניים חדשים חייבים להיווצר תחילה על ידי מנהל-על לפני שניתן להוסיף אותם כאן.",
+      "adminCreatedOnlyInviteBlockedTitle": "ההזמנה מושבתת",
+      "adminCreatedOnlyInviteBlockedDescription": "צרו תחילה את המשתמש ב-Admin > Users, ואז הוסיפו את החשבון הפעיל לארגון הזה."
     },
     "org": {
       "selectOrg": "בחרו ארגון כדי לטעון הגדרות.",

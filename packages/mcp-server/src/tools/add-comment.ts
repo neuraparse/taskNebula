@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { ToolDefinition } from './types.js';
+import { withAgentPolicy } from './agent-policy.js';
 
 export const addCommentInput = z.object({
   issueId: z.string().min(1),
@@ -12,9 +13,15 @@ export const addCommentTool: ToolDefinition<typeof addCommentInput> = {
   description: 'Add a comment to an issue.',
   inputSchema: addCommentInput,
   async handler(input, { client }) {
-    return client.post(`/api/issues/${encodeURIComponent(input.issueId)}/comments`, {
-      content: input.body,
-      mentions: input.mentions,
-    });
+    return client.post(
+      `/api/issues/${encodeURIComponent(input.issueId)}/comments`,
+      withAgentPolicy(
+        {
+          content: input.body,
+          mentions: input.mentions,
+        },
+        { resource: 'comments', action: 'create', targetType: 'issue' }
+      )
+    );
   },
 };

@@ -4737,7 +4737,10 @@
       "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
       "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
       "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
-      "invitationResent": "Invitation resent"
+      "invitationResent": "Invitation resent",
+      "adminCreatedOnlyInviteWarning": "تم تفعيل خيار الحسابات التي ينشئها المسؤول فقط. يجب أن ينشئ مسؤول عام الأعضاء الخارجيين الجدد قبل إضافتهم هنا.",
+      "adminCreatedOnlyInviteBlockedTitle": "تم تعطيل الدعوة",
+      "adminCreatedOnlyInviteBlockedDescription": "أنشئ المستخدم أولاً من Admin > Users، ثم أضف الحساب النشط إلى هذه المؤسسة."
     },
     "org": {
       "selectOrg": "اختر مؤسسة لتحميل الإعدادات.",

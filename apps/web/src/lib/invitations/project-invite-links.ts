@@ -17,6 +17,7 @@ import {
   type ProjectRole,
 } from '@tasknebula/db';
 import { getProjectMemberPermissionValues } from '@/lib/projects/member-permissions';
+import { buildAppUrl } from '@/lib/url/app-url';
 
 type DbExecutor = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -94,9 +95,7 @@ export function hashProjectInviteToken(token: string) {
 }
 
 export function buildProjectInviteUrl(token: string, origin?: string) {
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || origin || 'http://localhost:3000';
-  return `${appUrl.replace(/\/$/, '')}/join/project/${encodeURIComponent(token)}`;
+  return buildAppUrl(`/join/project/${encodeURIComponent(token)}`, origin);
 }
 
 export function clampProjectInviteExpiresInDays(value: unknown) {

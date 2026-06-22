@@ -64,14 +64,30 @@ function resourceActionScore(rule: AgentPolicyRule, resource: string, action: st
   return (rule.resource === resource ? 20 : 0) + (rule.action === action ? 10 : 0);
 }
 
+function equivalentResourceActions(resource: string, action: string) {
+  const pairs = [{ resource, action }];
+  if (resource === 'comments' && action === 'create') {
+    pairs.push({ resource: 'issues', action: 'comment' });
+  } else if (resource === 'issues' && action === 'comment') {
+    pairs.push({ resource: 'comments', action: 'create' });
+  }
+  return pairs;
+}
+
 function findBestRule(
   rules: AgentPolicyRule[],
   input: AgentPolicyEvaluationInput
 ): AgentPolicyRule | undefined {
+  const resourceActions = equivalentResourceActions(input.resource, input.action);
+
   return rules
     .map((rule, index) => {
       const actorScore = actorMatchScore(rule, input);
-      const resourceScore = resourceActionScore(rule, input.resource, input.action);
+      const resourceScore = Math.max(
+        ...resourceActions.map(({ resource, action }) =>
+          resourceActionScore(rule, resource, action)
+        )
+      );
       if (actorScore < 0 || resourceScore < 0) return null;
       return {
         rule,

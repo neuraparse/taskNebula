@@ -4737,7 +4737,10 @@
       "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
       "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
       "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
-      "invitationResent": "Invitation resent"
+      "invitationResent": "Invitation resent",
+      "adminCreatedOnlyInviteWarning": "Az admin által létrehozott fiókok mód be van kapcsolva. Az új külső tagokat először egy szuperadminnak kell létrehoznia, mielőtt itt hozzáadhatók.",
+      "adminCreatedOnlyInviteBlockedTitle": "A meghívás le van tiltva",
+      "adminCreatedOnlyInviteBlockedDescription": "Először hozd létre a felhasználót az Admin > Users részen, majd add hozzá az aktív fiókot ehhez a szervezethez."
     },
     "org": {
       "selectOrg": "Válasszon egy szervezetet a beállítások betöltéséhez.",

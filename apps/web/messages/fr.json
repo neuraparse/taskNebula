@@ -4737,7 +4737,10 @@
       "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
       "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
       "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
-      "invitationResent": "Invitation resent"
+      "invitationResent": "Invitation resent",
+      "adminCreatedOnlyInviteWarning": "Le mode comptes créés uniquement par un administrateur est activé. Les nouveaux membres externes doivent être créés par un super administrateur avant de pouvoir être ajoutés ici.",
+      "adminCreatedOnlyInviteBlockedTitle": "Invitation désactivée",
+      "adminCreatedOnlyInviteBlockedDescription": "Créez d’abord l’utilisateur dans Admin > Users, puis ajoutez le compte actif à cette organisation."
     },
     "org": {
       "selectOrg": "Sélectionnez une organisation pour charger les paramètres.",

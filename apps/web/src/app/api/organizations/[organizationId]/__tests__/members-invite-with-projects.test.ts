@@ -21,6 +21,7 @@ const dbInsertMock = jest.fn();
 const publishEventMock = jest.fn();
 const sendEmailMock = jest.fn();
 const getProjectMemberPermissionValuesMock = jest.fn();
+const getRegistrationPolicyMock = jest.fn();
 
 class MockNextRequest {
   private readonly bodyValue: string;
@@ -81,6 +82,10 @@ jest.mock('@/lib/email/sender', () => ({
 jest.mock('@/lib/projects/member-permissions', () => ({
   getProjectMemberPermissionValues: (...args: unknown[]) =>
     getProjectMemberPermissionValuesMock(...args),
+}));
+
+jest.mock('@/lib/auth/registration-policy', () => ({
+  getRegistrationPolicy: (...args: unknown[]) => getRegistrationPolicyMock(...args),
 }));
 
 jest.mock('@paralleldrive/cuid2', () => ({
@@ -219,9 +224,11 @@ describe('POST /api/organizations/[organizationId]/members — invite with proje
     publishEventMock.mockReset();
     sendEmailMock.mockReset();
     getProjectMemberPermissionValuesMock.mockReset();
+    getRegistrationPolicyMock.mockReset();
     authMock.mockResolvedValue({ user: { id: 'inviter-1' } });
     hasPermissionMock.mockResolvedValue(true);
     sendEmailMock.mockResolvedValue({ sent: true, messageId: 'msg-1' });
+    getRegistrationPolicyMock.mockResolvedValue({ mode: 'allow_registration' });
     getProjectMemberPermissionValuesMock.mockReturnValue({
       canBrowseProject: 'true',
       canCreateIssues: 'true',
@@ -432,6 +439,66 @@ describe('POST /api/organizations/[organizationId]/members — invite with proje
     await expect(response.json()).resolves.toEqual({ error: 'User is already a member' });
     expect(sendEmailMock).not.toHaveBeenCalled();
     expect(dbUpdateMock).not.toHaveBeenCalled();
+  });
+
+  it('blocks new passwordless invitations when registration is admin-created only', async () => {
+    getRegistrationPolicyMock.mockResolvedValue({ mode: 'admin_created_only' });
+    queueInviteSelects({});
+
+    const response = await POST(
+      buildRequest({ email: 'new@example.com', role: 'member' }),
+      routeParams
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: 'REGISTRATION_ADMIN_CREATED_INVITES_DISABLED',
+      code: 'REGISTRATION_ADMIN_CREATED_INVITES_DISABLED',
+    });
+    expect(dbInsertMock).not.toHaveBeenCalled();
+    expect(sendEmailMock).not.toHaveBeenCalled();
+  });
+
+  it('uses APP_URL ahead of a stale NEXT_PUBLIC_APP_URL for invitation emails', async () => {
+    const previousAppUrl = process.env.APP_URL;
+    const previousPublicAppUrl = process.env.NEXT_PUBLIC_APP_URL;
+    process.env.APP_URL = 'https://workspace.example.com';
+    process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000';
+
+    try {
+      queueInviteSelects({});
+      queueInserts();
+
+      const response = await POST(
+        buildRequest({ email: 'new@example.com', role: 'member' }),
+        routeParams
+      );
+
+      expect(response.status).toBe(200);
+      expect(sendEmailMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'new@example.com',
+          text: expect.stringContaining('https://workspace.example.com/auth/signup?'),
+        })
+      );
+      expect(sendEmailMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          text: expect.not.stringContaining('http://localhost:3000/auth/signup?'),
+        })
+      );
+    } finally {
+      if (previousAppUrl === undefined) {
+        delete process.env.APP_URL;
+      } else {
+        process.env.APP_URL = previousAppUrl;
+      }
+
+      if (previousPublicAppUrl === undefined) {
+        delete process.env.NEXT_PUBLIC_APP_URL;
+      } else {
+        process.env.NEXT_PUBLIC_APP_URL = previousPublicAppUrl;
+      }
+    }
   });
 
   it('(b) invite with valid projectIds inserts projectMembers rows and reports them in addedToProjects', async () => {

@@ -6,24 +6,15 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { sendEmail } from '@/lib/email/sender';
 import { checkRateLimit, getClientIp } from '@/lib/auth/rate-limit';
 import { renderPasswordResetMessage } from '@/lib/email/templates';
+import { buildAppUrl } from '@/lib/url/app-url';
 
 const TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 const RATE_LIMIT_PER_MIN = 5;
-const GENERIC_MESSAGE =
-  'If an account exists for that email, we’ve sent a password reset link.';
+const GENERIC_MESSAGE = 'If an account exists for that email, we’ve sent a password reset link.';
 
 function hashToken(raw: string): string {
   return crypto.createHash('sha256').update(raw).digest('hex');
 }
-
-function resolveAppUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.APP_URL ||
-    'http://localhost:3000'
-  );
-}
-
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
@@ -47,9 +38,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const email = typeof (body as { email?: unknown })?.email === 'string'
-    ? ((body as { email: string }).email).trim().toLowerCase()
-    : '';
+  const email =
+    typeof (body as { email?: unknown })?.email === 'string'
+      ? (body as { email: string }).email.trim().toLowerCase()
+      : '';
 
   if (!email) {
     // Still return 200 to avoid enumeration even on malformed input.
@@ -67,12 +59,7 @@ export async function POST(request: NextRequest) {
       await db
         .update(passwordResetTokens)
         .set({ usedAt: new Date() })
-        .where(
-          and(
-            eq(passwordResetTokens.userId, user.id),
-            isNull(passwordResetTokens.usedAt)
-          )
-        );
+        .where(and(eq(passwordResetTokens.userId, user.id), isNull(passwordResetTokens.usedAt)));
 
       const rawToken = crypto.randomBytes(32).toString('hex');
       const tokenHash = hashToken(rawToken);
@@ -84,8 +71,8 @@ export async function POST(request: NextRequest) {
         expiresAt,
       });
 
-      const appUrl = resolveAppUrl().replace(/\/+$/, '');
-      const resetUrl = `${appUrl}/auth/reset-password?token=${rawToken}`;
+      const origin = request.nextUrl?.origin ?? new URL(request.url).origin;
+      const resetUrl = buildAppUrl(`/auth/reset-password?token=${rawToken}`, origin);
 
       const { subject, html, text } = renderPasswordResetMessage({
         resetUrl,

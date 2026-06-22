@@ -4737,7 +4737,10 @@
       "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
       "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
       "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
-      "invitationResent": "Invitation resent"
+      "invitationResent": "Invitation resent",
+      "adminCreatedOnlyInviteWarning": "Είναι ενεργή η επιλογή μόνο λογαριασμών που δημιουργούνται από διαχειριστή. Τα νέα εξωτερικά μέλη πρέπει πρώτα να δημιουργηθούν από υπερδιαχειριστή πριν προστεθούν εδώ.",
+      "adminCreatedOnlyInviteBlockedTitle": "Η πρόσκληση απενεργοποιήθηκε",
+      "adminCreatedOnlyInviteBlockedDescription": "Δημιουργήστε πρώτα τον χρήστη στο Admin > Users και μετά προσθέστε τον ενεργό λογαριασμό σε αυτόν τον οργανισμό."
     },
     "org": {
       "selectOrg": "Επιλέξτε έναν οργανισμό για να φορτώσετε τις ρυθμίσεις.",

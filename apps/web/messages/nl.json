@@ -4737,7 +4737,10 @@
       "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
       "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
       "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
-      "invitationResent": "Invitation resent"
+      "invitationResent": "Invitation resent",
+      "adminCreatedOnlyInviteWarning": "Alleen door beheerders gemaakte accounts is ingeschakeld. Nieuwe externe leden moeten eerst door een superbeheerder worden aangemaakt voordat ze hier kunnen worden toegevoegd.",
+      "adminCreatedOnlyInviteBlockedTitle": "Uitnodiging uitgeschakeld",
+      "adminCreatedOnlyInviteBlockedDescription": "Maak de gebruiker eerst aan in Admin > Users en voeg daarna het actieve account toe aan deze organisatie."
     },
     "org": {
       "selectOrg": "Selecteer een organisatie om de instellingen te laden.",

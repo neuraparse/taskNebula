@@ -4737,7 +4737,10 @@
       "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
       "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
       "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
-      "invitationResent": "Invitation resent"
+      "invitationResent": "Invitation resent",
+      "adminCreatedOnlyInviteWarning": "Mode hanya akun yang dibuat admin sedang aktif. Anggota eksternal baru harus dibuat oleh super admin sebelum dapat ditambahkan di sini.",
+      "adminCreatedOnlyInviteBlockedTitle": "Undangan dinonaktifkan",
+      "adminCreatedOnlyInviteBlockedDescription": "Buat pengguna terlebih dahulu di Admin > Users, lalu tambahkan akun aktif ke organisasi ini."
     },
     "org": {
       "selectOrg": "Pilih organisasi untuk memuat pengaturan.",

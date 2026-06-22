@@ -26,8 +26,21 @@ Set credentials:
 
 ```bash
 export TASKNEBULA_API_URL="https://app.tasknebula.io"
-export TASKNEBULA_API_KEY="tnk_..."   # from Settings → API keys
+export TASKNEBULA_API_KEY="sk_live_..."   # from Settings → API keys
 ```
+
+Write tools include an AGENTOWNERS marker by default so self-hosted
+instances can evaluate agent policy locally. Set a stable actor per AI
+client:
+
+```bash
+export TASKNEBULA_AGENT_ACTOR="claude-code" # or codex, gemini, github-copilot
+```
+
+If the actor is not configured, the MCP server identifies as
+`mcp-agent`, which TaskNebula treats as an unknown AI actor and routes to
+approval unless an AGENTOWNERS rule allows it. Set
+`TASKNEBULA_AGENT_POLICY=off` only when you need to disable this marker.
 
 ## Claude Desktop
 
@@ -42,7 +55,8 @@ export TASKNEBULA_API_KEY="tnk_..."   # from Settings → API keys
       "args": ["-y", "@tasknebula/mcp-server"],
       "env": {
         "TASKNEBULA_API_URL": "https://app.tasknebula.io",
-        "TASKNEBULA_API_KEY": "tnk_..."
+        "TASKNEBULA_API_KEY": "sk_live_...",
+        "TASKNEBULA_AGENT_ACTOR": "claude-code"
       }
     }
   }
@@ -61,7 +75,8 @@ export TASKNEBULA_API_KEY="tnk_..."   # from Settings → API keys
       "args": ["-y", "@tasknebula/mcp-server"],
       "env": {
         "TASKNEBULA_API_URL": "https://app.tasknebula.io",
-        "TASKNEBULA_API_KEY": "tnk_..."
+        "TASKNEBULA_API_KEY": "sk_live_...",
+        "TASKNEBULA_AGENT_ACTOR": "cursor"
       }
     }
   }
@@ -74,7 +89,8 @@ export TASKNEBULA_API_KEY="tnk_..."   # from Settings → API keys
 claude mcp add tasknebula \
   --command "npx" --args "-y" "@tasknebula/mcp-server" \
   --env "TASKNEBULA_API_URL=https://app.tasknebula.io" \
-  --env "TASKNEBULA_API_KEY=tnk_..."
+  --env "TASKNEBULA_API_KEY=sk_live_..." \
+  --env "TASKNEBULA_AGENT_ACTOR=claude-code"
 ```
 
 ## Claude.ai (Custom Connector / remote)
@@ -93,20 +109,20 @@ for testing.)
 
 ## Tools
 
-| Name | Description |
-| --- | --- |
-| `search_issues` | Full-text search across issues with optional project/status/assignee filters. |
-| `get_issue` | Fetch one issue with comments + links. |
-| `list_my_assigned` | Issues assigned to the authenticated user (filterable by status bucket). |
-| `create_issue` | Create a new issue. |
-| `update_issue` | Patch title/description/priority/labels/due-date. |
-| `transition_status` | Move an issue between workflow statuses. |
-| `assign_issue` | Assign or unassign. |
-| `add_comment` | Post a comment (with optional mentions). |
-| `link_pr` | Attach a pull-request URL to an issue. |
-| `list_projects` | Projects accessible to the user. |
-| `create_subtask` | Create a subtask under a parent issue. |
-| `get_my_workload` | Aggregated workload (counts + due-soon list) for the user. |
+| Name                | Description                                                                   |
+| ------------------- | ----------------------------------------------------------------------------- |
+| `search_issues`     | Full-text search across issues with optional project/status/assignee filters. |
+| `get_issue`         | Fetch one issue with comments + links.                                        |
+| `list_my_assigned`  | Issues assigned to the authenticated user (filterable by status bucket).      |
+| `create_issue`      | Create a new issue.                                                           |
+| `update_issue`      | Patch title/description/priority/labels/due-date.                             |
+| `transition_status` | Move an issue between workflow statuses.                                      |
+| `assign_issue`      | Assign or unassign.                                                           |
+| `add_comment`       | Post a comment (with optional mentions).                                      |
+| `link_pr`           | Attach a pull-request URL to an issue.                                        |
+| `list_projects`     | Projects accessible to the user.                                              |
+| `create_subtask`    | Create a subtask under a parent issue.                                        |
+| `get_my_workload`   | Aggregated workload (counts + due-soon list) for the user.                    |
 
 ## Resources
 

@@ -4737,7 +4737,10 @@
       "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
       "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
       "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
-      "invitationResent": "Invitation resent"
+      "invitationResent": "Invitation resent",
+      "adminCreatedOnlyInviteWarning": "「管理者が作成したアカウントのみ」が有効です。新しい外部メンバーは、ここに追加する前にスーパー管理者が作成する必要があります。",
+      "adminCreatedOnlyInviteBlockedTitle": "招待は無効です",
+      "adminCreatedOnlyInviteBlockedDescription": "まず Admin > Users でユーザーを作成し、その後アクティブなアカウントをこの組織に追加してください。"
     },
     "org": {
       "selectOrg": "組織を選択して設定を読み込みます。",

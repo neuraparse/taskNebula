@@ -4737,7 +4737,10 @@
       "inviteExpiryHelp": "Bekleyen davet yeniden gönderilirse bu süreyle yeni bağlantı oluşturulur.",
       "inviteExpiryOption": "{count, plural, one {# gün} other {# gün}}",
       "inviteExpiresSummary": "{count, plural, one {# gün geçerli.} other {# gün geçerli.}}",
-      "invitationResent": "Davet yeniden gönderildi"
+      "invitationResent": "Davet yeniden gönderildi",
+      "adminCreatedOnlyInviteWarning": "Yalnızca yönetici tarafından oluşturulan hesaplar etkin. Yeni harici üyeler buraya eklenmeden önce bir süper yönetici tarafından oluşturulmalıdır.",
+      "adminCreatedOnlyInviteBlockedTitle": "Davet devre dışı",
+      "adminCreatedOnlyInviteBlockedDescription": "Önce kullanıcıyı Admin > Users bölümünde oluşturun, ardından aktif hesabı bu organizasyona ekleyin."
     },
     "org": {
       "selectOrg": "Ayarları yüklemek için bir kuruluş seçin.",

@@ -4737,7 +4737,10 @@
       "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
       "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
       "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
-      "invitationResent": "Invitation resent"
+      "invitationResent": "Invitation resent",
+      "adminCreatedOnlyInviteWarning": "已启用仅允许管理员创建账户。新的外部成员必须先由超级管理员创建，然后才能在此处添加。",
+      "adminCreatedOnlyInviteBlockedTitle": "邀请已停用",
+      "adminCreatedOnlyInviteBlockedDescription": "请先在 Admin > Users 中创建用户，然后将该活动账户添加到此组织。"
     },
     "org": {
       "selectOrg": "选择一个组织以加载设置。",

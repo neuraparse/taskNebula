@@ -4737,7 +4737,10 @@
       "inviteExpiryHelp": "A resent pending invite gets a fresh link with this expiry.",
       "inviteExpiryOption": "{count, plural, one {# day} other {# days}}",
       "inviteExpiresSummary": "{count, plural, one {Valid for # day.} other {Valid for # days.}}",
-      "invitationResent": "Invitation resent"
+      "invitationResent": "Invitation resent",
+      "adminCreatedOnlyInviteWarning": "केवल एडमिन द्वारा बनाए गए खाते सक्षम हैं। नए बाहरी सदस्यों को यहां जोड़ने से पहले किसी सुपर एडमिन को उन्हें बनाना होगा।",
+      "adminCreatedOnlyInviteBlockedTitle": "आमंत्रण अक्षम है",
+      "adminCreatedOnlyInviteBlockedDescription": "पहले Admin > Users में उपयोगकर्ता बनाएं, फिर सक्रिय खाते को इस संगठन में जोड़ें।"
     },
     "org": {
       "selectOrg": "सेटिंग्स लोड करने के लिए एक संगठन चुनें।",

@@ -18,11 +18,14 @@ import { hasPermission, getUserRole } from '@/lib/auth/permissions';
 import { publishEvent } from '@/lib/realtime/events';
 import { sendEmail } from '@/lib/email/sender';
 import { renderInvitationMessage } from '@/lib/email/templates';
+import { getRegistrationPolicy } from '@/lib/auth/registration-policy';
 import { getProjectMemberPermissionValues } from '@/lib/projects/member-permissions';
+import { buildAppUrl } from '@/lib/url/app-url';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const FALLBACK_INVITE_EXPIRES_IN_DAYS = 7;
 const MAX_INVITE_EXPIRES_IN_DAYS = 90;
+const ADMIN_CREATED_INVITES_DISABLED = 'REGISTRATION_ADMIN_CREATED_INVITES_DISABLED';
 
 function getDefaultInviteExpiresInDays() {
   const raw = Number(process.env.INVITE_TOKEN_TTL_DAYS);
@@ -36,6 +39,10 @@ function normalizeEmail(email: string) {
 
 function hashInviteToken(token: string) {
   return createHash('sha256').update(token).digest('hex');
+}
+
+function getRequestOrigin(request: NextRequest) {
+  return request.nextUrl?.origin ?? new URL(request.url).origin;
 }
 
 // GET /api/organizations/[organizationId]/members - List members
@@ -80,11 +87,13 @@ export async function GET(
 
     // Get current user's role
     const userRole = await getUserRole(organizationId);
+    const registrationPolicy = await getRegistrationPolicy();
 
     return NextResponse.json({
       members,
       userRole: userRole?.role || null,
       isSuperAdmin: userRole?.isSuperAdmin || false,
+      registrationMode: registrationPolicy.mode,
     });
   } catch (error) {
     console.error('Error fetching organization members:', error);
@@ -139,6 +148,19 @@ export async function POST(
 
     // Find or create user
     let [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const registrationPolicy = await getRegistrationPolicy();
+    const canReceiveSignInInvite =
+      user?.status === 'active' && typeof user.password === 'string' && user.password.length > 0;
+
+    if (registrationPolicy.mode === 'admin_created_only' && !canReceiveSignInInvite) {
+      return NextResponse.json(
+        {
+          error: ADMIN_CREATED_INVITES_DISABLED,
+          code: ADMIN_CREATED_INVITES_DISABLED,
+        },
+        { status: 409 }
+      );
+    }
 
     if (!user) {
       // Create invited user
@@ -343,8 +365,6 @@ export async function POST(
     }
 
     // Send invite email (fire-and-forget) — uses shared renderShell + sendEmail
-    const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:3000';
     const [org] = await db
       .select({ name: organizations.name })
       .from(organizations)
@@ -358,9 +378,13 @@ export async function POST(
 
     const orgName = org?.name || 'their organization';
     const inviterName = inviter?.name || 'A team member';
+    const requestOrigin = getRequestOrigin(request);
     const signupUrl = userCanAcceptInvite
-      ? `${appUrl}/auth/signup?email=${encodeURIComponent(email)}&token=${encodeURIComponent(inviteToken)}`
-      : `${appUrl}/auth/signin?email=${encodeURIComponent(email)}`;
+      ? buildAppUrl(
+          `/auth/signup?email=${encodeURIComponent(email)}&token=${encodeURIComponent(inviteToken)}`,
+          requestOrigin
+        )
+      : buildAppUrl(`/auth/signin?email=${encodeURIComponent(email)}`, requestOrigin);
 
     const { subject, html, text } = renderInvitationMessage({
       inviteeEmail: email,

@@ -39,7 +39,11 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { useToast } from '@/hooks/use-toast';
-import { isApiPermissionError, throwApiResponseError } from '@/lib/client-api-errors';
+import {
+  ApiResponseError,
+  isApiPermissionError,
+  throwApiResponseError,
+} from '@/lib/client-api-errors';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useOrganizationPermissions } from '@/lib/hooks/use-permissions';
 import { useProjects } from '@/lib/hooks/use-projects';
@@ -52,6 +56,7 @@ import {
   ChevronsUpDown,
   FolderKanban,
   X,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -74,6 +79,9 @@ const PROJECT_ROLE_VALUES: ProjectRole[] = [
   'viewer',
 ];
 const INVITE_EXPIRY_OPTIONS = [1, 7, 14, 30, 90] as const;
+const ADMIN_CREATED_INVITES_DISABLED = 'REGISTRATION_ADMIN_CREATED_INVITES_DISABLED';
+
+type RegistrationMode = 'allow_registration' | 'invite_only' | 'admin_created_only';
 
 type Member = {
   id: string;
@@ -174,6 +182,7 @@ export function MembersPageClient() {
         members: Member[];
         userRole: 'owner' | 'admin' | 'member' | 'viewer' | 'guest' | null;
         isSuperAdmin: boolean;
+        registrationMode?: RegistrationMode;
       }>;
     },
     enabled: !!currentOrganizationId,
@@ -182,6 +191,8 @@ export function MembersPageClient() {
   const members = data?.members || [];
   const userRole = data?.userRole || null;
   const isSuperAdmin = data?.isSuperAdmin || false;
+  const registrationMode = data?.registrationMode ?? 'allow_registration';
+  const adminCreatedOnlyInvites = registrationMode === 'admin_created_only';
 
   const canInvite = !permissionsLoading && hasOrgPermission('member:invite');
   const canManage = !permissionsLoading && hasOrgPermission('member:manage');
@@ -239,11 +250,17 @@ export function MembersPageClient() {
       resetInviteForm();
     },
     onError: (error: Error) => {
+      const adminCreatedOnlyBlocked =
+        error instanceof ApiResponseError && error.code === ADMIN_CREATED_INVITES_DISABLED;
       toast({
-        title: t('members.inviteFailed'),
-        description: isApiPermissionError(error)
-          ? t('members.viewOnly')
+        title: adminCreatedOnlyBlocked
+          ? t('members.adminCreatedOnlyInviteBlockedTitle')
           : t('members.inviteFailed'),
+        description: adminCreatedOnlyBlocked
+          ? t('members.adminCreatedOnlyInviteBlockedDescription')
+          : isApiPermissionError(error)
+            ? t('members.viewOnly')
+            : t('members.inviteFailed'),
         variant: 'destructive',
       });
     },
@@ -444,6 +461,12 @@ export function MembersPageClient() {
                   <DialogDescription>{t('members.inviteDescription')}</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
+                  {adminCreatedOnlyInvites && (
+                    <div className="panel-warn flex items-start gap-2 px-3 py-3 text-xs">
+                      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      <span>{t('members.adminCreatedOnlyInviteWarning')}</span>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="email">{t('members.email')}</Label>
                     <Input
@@ -657,6 +680,13 @@ export function MembersPageClient() {
 
         {!permissionsLoading && !canManage && (
           <div className="panel-warn text-sm">{t('members.viewOnly')}</div>
+        )}
+
+        {!isLoading && canInvite && adminCreatedOnlyInvites && (
+          <div className="panel-warn flex items-start gap-2 text-sm">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{t('members.adminCreatedOnlyInviteWarning')}</span>
+          </div>
         )}
 
         {isLoading ? (

@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { consumeEmailVerificationToken } from '@/lib/auth/email-verification';
-
-function resolveAppUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.APP_URL ||
-    'http://localhost:3000'
-  );
-}
+import { buildAppUrl } from '@/lib/url/app-url';
 
 /**
  * GET /api/auth/verify-email/[token]
@@ -25,25 +18,22 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params;
-  const appUrl = resolveAppUrl().replace(/\/+$/, '');
+  const origin = _request.nextUrl?.origin ?? new URL(_request.url).origin;
 
   try {
-    const [result, session] = await Promise.all([
-      consumeEmailVerificationToken(token),
-      auth(),
-    ]);
+    const [result, session] = await Promise.all([consumeEmailVerificationToken(token), auth()]);
 
     if (result.ok) {
       const target = session?.user?.id
-        ? `${appUrl}/dashboard?verified=1`
-        : `${appUrl}/auth/signin?verified=1`;
+        ? buildAppUrl('/dashboard?verified=1', origin)
+        : buildAppUrl('/auth/signin?verified=1', origin);
       return NextResponse.redirect(target);
     }
 
     const reason = result.reason || 'invalid';
-    return NextResponse.redirect(`${appUrl}/auth/verify-email?error=${reason}`);
+    return NextResponse.redirect(buildAppUrl(`/auth/verify-email?error=${reason}`, origin));
   } catch (error) {
     console.error('[verify-email] unexpected error:', error);
-    return NextResponse.redirect(`${appUrl}/auth/verify-email?error=server_error`);
+    return NextResponse.redirect(buildAppUrl('/auth/verify-email?error=server_error', origin));
   }
 }

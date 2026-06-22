@@ -96,6 +96,38 @@ agent:tasknebula-ai issues:close deny
     expect(result.decision).toBe('require_approval');
   });
 
+  it('treats legacy issue comment rules as comment create rules', () => {
+    const result = evaluateAgentPolicyDocument(
+      {
+        workspaceId: 'org-1',
+        actorType: 'agent',
+        actor: 'claude-code',
+        resource: 'comments',
+        action: 'create',
+      },
+      doc('agent:claude-code issues:comment allow')
+    );
+
+    expect(result.decision).toBe('allow');
+    expect(result.matchedRule?.raw).toBe('agent:claude-code issues:comment allow');
+  });
+
+  it('treats comment create rules as legacy issue comment rules', () => {
+    const result = evaluateAgentPolicyDocument(
+      {
+        workspaceId: 'org-1',
+        actorType: 'agent',
+        actor: 'claude-code',
+        resource: 'issues',
+        action: 'comment',
+      },
+      doc('agent:claude-code comments:create allow')
+    );
+
+    expect(result.decision).toBe('allow');
+    expect(result.matchedRule?.raw).toBe('agent:claude-code comments:create allow');
+  });
+
   it('requires approval for destructive AI actions without a matching rule', () => {
     const result = evaluateAgentPolicyDocument(
       {

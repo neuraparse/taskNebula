@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { ToolDefinition } from './types.js';
+import { withAgentPolicy } from './agent-policy.js';
 
 export const createSubtaskInput = z.object({
   parentIssueId: z.string().min(1),
@@ -16,10 +17,13 @@ export const createSubtaskTool: ToolDefinition<typeof createSubtaskInput> = {
   inputSchema: createSubtaskInput,
   async handler(input, { client }) {
     const { parentIssueId, ...body } = input;
-    return client.post('/api/issues', {
-      ...body,
-      type: 'subtask',
-      parentIssueId,
-    });
+    return client.post(
+      '/api/issues',
+      withAgentPolicy({
+        ...body,
+        type: 'subtask',
+        parentIssueId,
+      })
+    );
   },
 };
