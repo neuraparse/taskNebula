@@ -114,18 +114,18 @@ describe('AppRail', () => {
     expect(accountMenu).toHaveClass(
       'h-9',
       'w-9',
-      'rounded-[2px]',
-      'border-white/15',
-      'bg-white/5',
+      'rounded-full',
+      'border-white/20',
+      'bg-white/10',
       'hover:text-white',
       'ring-1',
-      'ring-white/25'
+      'ring-white/30'
     );
-    expect(accountMenu).not.toHaveClass('rounded-full');
+    expect(accountMenu).not.toHaveClass('rounded-[2px]');
 
     const initials = screen.getByText('AL');
-    expect(initials).toHaveClass('rounded-[2px]', 'bg-white', 'text-zinc-950');
-    expect(initials).not.toHaveClass('rounded-full');
+    expect(initials).toHaveClass('rounded-full', 'bg-white', 'text-zinc-950');
+    expect(initials).not.toHaveClass('rounded-[2px]');
   });
 
   it('hides workspace navigation when the user has no workspace access', () => {

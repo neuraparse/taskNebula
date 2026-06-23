@@ -167,9 +167,9 @@ export function AppRail({
           <UserProfileDropdown
             side="right"
             align="end"
-            triggerClassName="mx-auto h-9 w-9 rounded-[2px] border-white/15 bg-white/5 text-white ring-1 ring-white/25 hover:bg-white/10 hover:text-white hover:ring-white/50"
-            avatarClassName="rounded-[2px]"
-            fallbackClassName="bg-white text-zinc-950"
+            triggerClassName="mx-auto h-9 w-9 rounded-full border-white/20 bg-white/10 text-white ring-1 ring-white/30 hover:bg-white/15 hover:text-white hover:ring-white/55"
+            avatarClassName="rounded-full"
+            fallbackClassName="rounded-full bg-white text-zinc-950 ring-1 ring-white/70"
           />
         </div>
       </nav>

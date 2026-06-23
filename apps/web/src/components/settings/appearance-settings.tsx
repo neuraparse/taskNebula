@@ -51,6 +51,27 @@ function getStoredColorMode(): ColorMode | null {
   return null;
 }
 
+function storeColorMode(mode: ColorMode) {
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.localStorage.setItem(COLOR_MODE_STORAGE_KEY, mode);
+    window.localStorage.removeItem(LEGACY_COLOR_MODE_STORAGE_KEY);
+  } catch {
+    // Browsers can deny storage in private contexts. The server sync still
+    // preserves the preference for authenticated users.
+  }
+}
+
+function shouldLocalColorModeWin(localMode: ColorMode, serverMode: ColorMode | null) {
+  if (!serverMode || localMode === serverMode) return true;
+  if (localMode !== 'system') return true;
+
+  // A stored `system` can be a stale next-themes default. Do not let it wipe a
+  // real saved light/dark server preference on the next Appearance mount.
+  return serverMode === 'system';
+}
+
 const VISUAL_STYLES: { value: VisualStyle; labelKey: string }[] = [
   { value: 'modern', labelKey: 'appearance.style_modern' },
   { value: 'glass', labelKey: 'appearance.style_glass' },
@@ -119,7 +140,9 @@ export function AppearanceSettings() {
 
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [serverHydrated, setServerHydrated] = useState(false);
-  const [selectedColorMode, setSelectedColorMode] = useState<ColorMode>('system');
+  const [selectedColorMode, setSelectedColorMode] = useState<ColorMode>(
+    () => getStoredColorMode() ?? 'system'
+  );
 
   // Fetch server settings — only runs when a session exists, so the landing
   // page / other unauthenticated surfaces never hit the authed API.
@@ -139,12 +162,26 @@ export function AppearanceSettings() {
   // don't fight the user's ongoing edits if the query re-runs.
   const hydratedRef = useRef(false);
   const syncedStoredColorModeRef = useRef(false);
+  const localColorModeTouchedRef = useRef(false);
   // Debounced PUT on any client-side change. Skip the first hydrated pass so
   // default `system` does not get written until the user explicitly selects it.
   const skipFirstSyncRef = useRef(true);
+  const skipNextSyncPayloadRef = useRef<string | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestPayloadRef = useRef<Record<string, unknown>>({});
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const buildAppearancePayload = useCallback(
+    (mode: ColorMode = selectedColorMode) => ({
+      theme: mode,
+      colorTheme,
+      visualStyle,
+      interfaceFont,
+      animationsEnabled: enableAnimations,
+      gradientsEnabled: enableGradients,
+    }),
+    [selectedColorMode, colorTheme, visualStyle, interfaceFont, enableAnimations, enableGradients]
+  );
 
   const persistAppearance = useCallback(async (payload: Record<string, unknown>) => {
     setSyncStatus('saving');
@@ -168,29 +205,23 @@ export function AppearanceSettings() {
     const storedColorMode = getStoredColorMode();
     if (storedColorMode) {
       setSelectedColorMode(storedColorMode);
+      if (theme !== storedColorMode) {
+        setTheme(storedColorMode);
+      }
       return;
     }
 
     if (isColorMode(theme)) {
       setSelectedColorMode(theme);
     }
-  }, [theme]);
-
-  useEffect(() => {
-    if (!isAuthenticated || syncedStoredColorModeRef.current) return;
-
-    const storedColorMode = getStoredColorMode();
-    if (!storedColorMode) return;
-
-    syncedStoredColorModeRef.current = true;
-    void persistAppearance({ theme: storedColorMode });
-  }, [isAuthenticated, persistAppearance]);
+  }, [setTheme, theme]);
 
   useEffect(() => {
     if (!serverData?.settings || hydratedRef.current) return;
     const s = serverData.settings;
     const hasPersistedServerSettings = Boolean(s.updatedAt);
     const storedColorMode = getStoredColorMode();
+    const serverColorMode = isColorMode(s.theme) ? s.theme : null;
 
     if (hasPersistedServerSettings) {
       hydrateFromServer({
@@ -202,8 +233,23 @@ export function AppearanceSettings() {
       });
     }
 
-    if (storedColorMode) {
-      if (!hasPersistedServerSettings || s.theme !== storedColorMode) {
+    if (
+      storedColorMode &&
+      (!hasPersistedServerSettings ||
+        localColorModeTouchedRef.current ||
+        shouldLocalColorModeWin(storedColorMode, serverColorMode))
+    ) {
+      storeColorMode(storedColorMode);
+      setSelectedColorMode(storedColorMode);
+      if (theme !== storedColorMode) {
+        setTheme(storedColorMode);
+      }
+
+      if (
+        !syncedStoredColorModeRef.current &&
+        (!hasPersistedServerSettings || serverColorMode !== storedColorMode) &&
+        (storedColorMode !== 'system' || localColorModeTouchedRef.current)
+      ) {
         const localAppearancePayload = hasPersistedServerSettings
           ? { theme: storedColorMode }
           : {
@@ -214,16 +260,17 @@ export function AppearanceSettings() {
               animationsEnabled: enableAnimations,
               gradientsEnabled: enableGradients,
             };
-        if (!syncedStoredColorModeRef.current) {
-          syncedStoredColorModeRef.current = true;
-          void persistAppearance(localAppearancePayload);
-        }
+        syncedStoredColorModeRef.current = true;
+        void persistAppearance(localAppearancePayload);
       }
-    } else if (hasPersistedServerSettings && s.theme) {
+    } else if (hasPersistedServerSettings && serverColorMode) {
       // next-themes owns its own storage; align it with a saved server value
       // only when this browser has no explicit color-mode choice.
-      setSelectedColorMode(s.theme);
-      setTheme(s.theme);
+      storeColorMode(serverColorMode);
+      setSelectedColorMode(serverColorMode);
+      if (theme !== serverColorMode) {
+        setTheme(serverColorMode);
+      }
     }
 
     hydratedRef.current = true;
@@ -238,6 +285,7 @@ export function AppearanceSettings() {
     enableAnimations,
     enableGradients,
     persistAppearance,
+    theme,
   ]);
 
   useEffect(() => {
@@ -248,14 +296,13 @@ export function AppearanceSettings() {
       return;
     }
 
-    latestPayloadRef.current = {
-      theme: selectedColorMode,
-      colorTheme,
-      visualStyle,
-      interfaceFont,
-      animationsEnabled: enableAnimations,
-      gradientsEnabled: enableGradients,
-    };
+    latestPayloadRef.current = buildAppearancePayload();
+
+    const payloadSignature = JSON.stringify(latestPayloadRef.current);
+    if (skipNextSyncPayloadRef.current === payloadSignature) {
+      skipNextSyncPayloadRef.current = null;
+      return;
+    }
 
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     debounceTimerRef.current = setTimeout(async () => {
@@ -274,6 +321,7 @@ export function AppearanceSettings() {
     enableAnimations,
     enableGradients,
     serverHydrated,
+    buildAppearancePayload,
     persistAppearance,
   ]);
 
@@ -285,13 +333,23 @@ export function AppearanceSettings() {
 
   const handleColorModeChange = useCallback(
     (mode: ColorMode) => {
+      localColorModeTouchedRef.current = true;
+      storeColorMode(mode);
       setSelectedColorMode(mode);
       setTheme(mode);
+
+      if (isAuthenticated && serverHydrated) {
+        const payload = buildAppearancePayload(mode);
+        skipNextSyncPayloadRef.current = JSON.stringify(payload);
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+        void persistAppearance(payload);
+      }
     },
-    [setTheme]
+    [buildAppearancePayload, isAuthenticated, persistAppearance, serverHydrated, setTheme]
   );
 
   const handleReset = useCallback(() => {
+    localColorModeTouchedRef.current = true;
     try {
       reset();
     } catch {
@@ -301,6 +359,7 @@ export function AppearanceSettings() {
       setEnableAnimations(true);
       setEnableGradients(true);
     }
+    storeColorMode('system');
     setSelectedColorMode('system');
     setTheme('system');
   }, [

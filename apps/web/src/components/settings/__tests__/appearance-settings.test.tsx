@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useTheme } from 'next-themes';
 import { useSession } from 'next-auth/react';
 import { AppearanceSettings } from '../appearance-settings';
@@ -145,6 +145,38 @@ describe('AppearanceSettings', () => {
     });
   });
 
+  it('uses a saved server light mode instead of a stale local default system value', async () => {
+    localStorage.setItem('tasknebula-color-mode', 'system');
+    mockTheme = 'system';
+    mockAppearanceFetch({
+      userId: 'user-1',
+      theme: 'light',
+      colorTheme: 'default',
+      visualStyle: 'modern',
+      interfaceFont: 'ibm',
+      animationsEnabled: true,
+      gradientsEnabled: true,
+      updatedAt: '2026-06-23T04:00:00.000Z',
+    });
+
+    renderWithQueryClient(<AppearanceSettings />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /light/i })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+    });
+
+    expect(mockSetTheme).toHaveBeenCalledWith('light');
+    expect(localStorage.getItem('tasknebula-color-mode')).toBe('light');
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    });
+    expect(getAppearancePutCalls()).toHaveLength(0);
+  });
+
   it('saves an explicit local color mode when the server only has first-run defaults', async () => {
     localStorage.setItem('tasknebula-color-mode', 'dark');
     mockTheme = 'dark';
@@ -168,6 +200,39 @@ describe('AppearanceSettings', () => {
     const [, init] = getAppearancePutCalls()[0];
     expect(JSON.parse(init?.body as string)).toMatchObject({
       theme: 'dark',
+    });
+  });
+
+  it('writes the selected color mode to local storage immediately', async () => {
+    mockTheme = 'system';
+    mockAppearanceFetch({
+      userId: 'user-1',
+      theme: 'system',
+      colorTheme: 'default',
+      visualStyle: 'modern',
+      interfaceFont: 'ibm',
+      animationsEnabled: true,
+      gradientsEnabled: true,
+      updatedAt: '2026-06-23T04:00:00.000Z',
+    });
+
+    renderWithQueryClient(<AppearanceSettings />);
+
+    await waitFor(() => {
+      expect(localStorage.getItem('tasknebula-color-mode')).toBe('system');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /light/i }));
+
+    expect(localStorage.getItem('tasknebula-color-mode')).toBe('light');
+    expect(mockSetTheme).toHaveBeenCalledWith('light');
+
+    await waitFor(() => {
+      expect(getAppearancePutCalls()).toHaveLength(1);
+    });
+    const [, init] = getAppearancePutCalls()[0];
+    expect(JSON.parse(init?.body as string)).toMatchObject({
+      theme: 'light',
     });
   });
 

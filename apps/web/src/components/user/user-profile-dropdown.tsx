@@ -42,12 +42,12 @@ export function UserProfileDropdown({
   const tNav = useTranslations('nav');
   const [isSigningOut, setIsSigningOut] = useState(false);
   const triggerClasses = cn(
-    'relative h-9 w-9 rounded-[2px] border border-border bg-card p-0 shadow-none transition-colors duration-150 hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f62fe]',
+    'relative h-9 w-9 rounded-full border border-border bg-card p-0 shadow-none transition-colors duration-150 hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f62fe]',
     triggerClassName
   );
-  const avatarClasses = cn('h-8 w-8 rounded-[2px]', avatarClassName);
+  const avatarClasses = cn('h-8 w-8 rounded-full', avatarClassName);
   const fallbackClasses = cn(
-    'bg-muted text-muted-foreground rounded-[2px] text-xs font-medium',
+    'bg-muted text-muted-foreground rounded-full text-xs font-semibold',
     fallbackClassName
   );
 
@@ -93,7 +93,7 @@ export function UserProfileDropdown({
       >
         {/* Avatar header */}
         <div className="border-border flex items-center gap-3 border-b px-3 py-3">
-          <Avatar className="h-9 w-9 shrink-0 rounded-[2px]">
+          <Avatar className="h-9 w-9 shrink-0 rounded-full">
             <AvatarImage src={user.image || undefined} alt={user.name || t('userAlt')} />
             <AvatarFallback className={fallbackClasses}>{initials}</AvatarFallback>
           </Avatar>

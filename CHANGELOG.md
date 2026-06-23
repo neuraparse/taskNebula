@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.7.7] - 2026-06-23
+
+### Fixed
+
+- **Appearance color mode persistence no longer falls back to System.**
+  Settings → Appearance now writes light/dark/system selections to the active
+  color-mode storage immediately, preserves explicit choices across navigation,
+  and prevents stale local `system` values from overriding a saved server-side
+  light or dark preference.
+- **Lower-left profile control is consistently circular.** The app rail
+  account trigger, initials avatar, and profile dropdown header now use one
+  round avatar shape with stronger light/dark contrast for the initials.
+
 ## [0.7.6] - 2026-06-23
 
 ### Added
@@ -569,7 +582,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Internal alpha release. [See git log] for details.
 
-[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.6...HEAD
+[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.7...HEAD
+[0.7.7]: https://github.com/neuraparse/tasknebula/compare/v0.7.6...v0.7.7
 [0.7.6]: https://github.com/neuraparse/tasknebula/compare/v0.7.5...v0.7.6
 [0.7.5]: https://github.com/neuraparse/tasknebula/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/neuraparse/tasknebula/compare/v0.7.3...v0.7.4
