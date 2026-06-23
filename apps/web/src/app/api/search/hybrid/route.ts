@@ -19,11 +19,15 @@ const bodySchema = z.object({
   query: z.string().trim().min(1, 'query is required').max(500),
   organizationId: z.string().min(1).max(64).optional(),
   projectId: stringOrArray.optional(),
+  project: stringOrArray.optional(),
   assigneeId: stringOrArray.optional(),
+  assignee: stringOrArray.optional(),
   statusId: stringOrArray.optional(),
+  status: stringOrArray.optional(),
   statusCategory: stringOrArray.optional(),
   type: stringOrArray.optional(),
-  label: z.string().min(1).max(100).optional(),
+  priority: stringOrArray.optional(),
+  label: stringOrArray.optional(),
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
@@ -59,6 +63,47 @@ async function resolveOrganizationId(
   return member?.organizationId ?? null;
 }
 
+function normalizeAssigneeFilter(
+  input: string | string[] | undefined,
+  userId: string
+): {
+  assigneeId: string | string[] | null;
+  assignee: string | string[] | null;
+  assigneeUnassigned: boolean;
+} {
+  if (!input) {
+    return { assigneeId: null, assignee: null, assigneeUnassigned: false };
+  }
+
+  const ids: string[] = [];
+  const refs: string[] = [];
+  let assigneeUnassigned = false;
+
+  for (const rawValue of Array.isArray(input) ? input : [input]) {
+    const value = rawValue.trim();
+    const normalized = value.replace(/^@/, '').toLowerCase();
+    if (!value) continue;
+
+    if (normalized === 'me') {
+      ids.push(userId);
+      continue;
+    }
+
+    if (['unassigned', 'none', 'no_assignee'].includes(normalized)) {
+      assigneeUnassigned = true;
+      continue;
+    }
+
+    refs.push(value);
+  }
+
+  return {
+    assigneeId: ids.length === 0 ? null : ids.length === 1 ? ids[0]! : ids,
+    assignee: refs.length === 0 ? null : refs.length === 1 ? refs[0]! : refs,
+    assigneeUnassigned,
+  };
+}
+
 /**
  * Hybrid search endpoint.
  *
@@ -69,11 +114,15 @@ async function resolveOrganizationId(
  *     query: string,                          // required, free-text
  *     organizationId?: string,                // must match a membership; defaults to first
  *     projectId?: string | string[],
+ *     project?: string | string[],            // project key/name/id facet
  *     assigneeId?: string | string[],
+ *     assignee?: string | string[],           // "me", "@unassigned", email/name/id
  *     statusId?: string | string[],
+ *     status?: string | string[],             // status name/category/id facet
  *     statusCategory?: string | string[],     // 'backlog' | 'in_progress' | ...
  *     type?: string | string[],               // 'task' | 'bug' | ...
- *     label?: string,
+ *     priority?: string | string[],
+ *     label?: string | string[],
  *     limit?: number                          // default 20
  *   }
  *
@@ -112,13 +161,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const assigneeFilter = normalizeAssigneeFilter(payload.assignee, session.user.id);
     const filters = {
       organizationId,
       projectId: payload.projectId ?? null,
-      assigneeId: payload.assigneeId ?? null,
+      project: payload.project ?? null,
+      assigneeId: payload.assigneeId ?? assigneeFilter.assigneeId,
+      assignee: assigneeFilter.assignee,
+      assigneeUnassigned: assigneeFilter.assigneeUnassigned,
       statusId: payload.statusId ?? null,
+      status: payload.status ?? null,
       statusCategory: payload.statusCategory ?? null,
       type: payload.type ?? null,
+      priority: payload.priority ?? null,
       label: payload.label ?? null,
     };
 

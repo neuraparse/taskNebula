@@ -14,6 +14,7 @@ export function Providers({ children }: { children: ReactNode }) {
       <QueryProvider>
         <ThemeProvider
           attribute="class"
+          storageKey="tasknebula-color-mode"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange={false}

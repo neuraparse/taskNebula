@@ -868,7 +868,9 @@
       "sprint": "冲刺",
       "ai_draft": "AI 草稿",
       "agent": "智能体",
-      "update": "动态"
+      "update": "动态",
+      "project_created": "项目已创建",
+      "project_archived": "项目已归档"
     },
     "type_action": {
       "mention": "提及了你",
@@ -967,7 +969,9 @@
         "sprint_started": "冲刺已开始",
         "sprint_completed": "冲刺已完成",
         "ai_draft_failed": "AI 草稿失败",
-        "agent_run_failed": "智能体失败"
+        "agent_run_failed": "智能体失败",
+        "project_created": "项目已创建",
+        "project_archived": "项目已归档"
       },
       "meta": {
         "project": "项目",
@@ -1275,12 +1279,46 @@
       "open_sidecar": "打开 Sidecar"
     },
     "agent": {
-      "title": "智能体活动",
-      "state": "状态：{state}",
-      "idle": "空闲 — 尚未派发会话",
-      "dispatch": "派发",
-      "dispatch_failed": "派发失败",
-      "dispatch_failed_status": "派发失败（{status}）"
+      "title": "代理活动",
+      "beta": "测试版",
+      "assignedTo": "已分配给 {name}",
+      "directDispatch": "将此任务直接发送给编码代理。",
+      "provider": "提供商",
+      "promptPlaceholder": "此运行的可选说明...",
+      "dispatch": "发送",
+      "dispatching": "正在发送",
+      "dispatch_failed": "发送失败",
+      "dispatch_failed_status": "发送失败（{status}）",
+      "latestSessions": "最新会话",
+      "noSessions": "还没有代理会话。",
+      "localRunner": "本地 CLI：{command}",
+      "webhookRunner": "Webhook 提供商",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "自定义"
+      },
+      "states": {
+        "pending": "待处理",
+        "active": "运行中",
+        "awaitingInput": "需要输入",
+        "error": "失败",
+        "complete": "完成",
+        "stale": "已过期"
+      },
+      "issueContext": "问题字段",
+      "descriptionContext": "描述",
+      "instructionContext": "管理员备注",
+      "sessionStatus": "会话状态",
+      "runner": "运行器",
+      "runnerStatus": "运行状态",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "退出代码"
     },
     "vote": {
       "group_label": "投票",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Platform",
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "打开完整页面"
   },
   "settingsProject": {
     "kicker": "项目",
@@ -3331,6 +3370,29 @@
         "description": "用于监控发布质量和影响范围的全系统历史记录。",
         "noData": "尚未记录任何智能体运行。",
         "writesChip": "{count} 次写入"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "问题已分配",
         "issue_mentioned": "问题中被提及",
         "issue_commented": "问题被评论",
+        "issue_status_changed": "工作项状态已更改",
+        "issue_created": "工作项已创建",
         "sprint_started": "冲刺已开始",
+        "sprint_completed": "Sprint 已完成",
+        "project_created": "项目已创建",
+        "project_archived": "项目已归档",
         "daily_digest": "每日摘要",
         "weekly_digest": "每周摘要"
       }

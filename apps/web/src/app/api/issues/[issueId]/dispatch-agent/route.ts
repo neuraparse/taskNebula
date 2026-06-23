@@ -2,22 +2,22 @@
  * POST /api/issues/[issueId]/dispatch-agent
  *
  * Linear Agent Protocol entry point (P0-04). Body:
- *   { provider: 'claude' | 'cursor' | 'devin' | 'copilot' | 'openhands' | 'custom',
+ *   { provider: 'claude' | 'codex' | 'cursor' | 'devin' | 'copilot' | 'openhands' | 'custom',
  *     prompt_override?: string }
  *
  * Flow:
  *   1. Auth + assign-permission check on the issue.
- *   2. Look up `agent_providers` for the issue's organization/provider; reject
- *      if the provider isn't configured or disabled.
+ *   2. Resolve either an organization webhook provider or the optional
+ *      beta local CLI runner (`local://claude` / `local://codex` or env).
  *   3. Generate a per-session HMAC secret, insert an `agent_sessions` row
- *      (state=pending), build an AgentSessionRequest envelope, sign it with
- *      the provider's `hmac_secret`, and POST to `endpoint_url`.
- *   4. Record the outcome in `agent_sessions.payload` and best-effort flip the
- *      row to `active` on a 2xx (the provider's first event will reconcile).
+ *      (state=pending), and build an AgentSessionRequest envelope.
+ *   4. For local runners, start the CLI process in the background and stream
+ *      status/log snapshots back into `agent_sessions.payload.localRun`.
+ *      For webhooks, sign the envelope with the provider HMAC and POST it.
  *
  * The endpoint is intentionally synchronous: dispatch is small and the caller
- * wants to know whether the provider accepted the handoff. Long-running work
- * happens on the provider side.
+ * wants to know whether the handoff was accepted. Long-running work happens
+ * either in the local child process or on the external provider side.
  *
  * NOTE: GitHub Copilot Coding Agent has its own dispatch surface
  * (`POST /repos/{owner}/{repo}/copilot/agents/{agent_id}/runs`). We leave a
@@ -52,6 +52,11 @@ import {
   type AgentProviderKind,
   type AgentSessionRequest,
 } from '@/lib/agents/sessions';
+import {
+  isLocalAgentEndpoint,
+  resolveLocalAgentRunner,
+  runLocalAgentSession,
+} from '@/lib/agents/local-runner';
 
 export const dynamic = 'force-dynamic';
 
@@ -176,7 +181,12 @@ export async function POST(
     )
     .limit(1);
 
-  if (!provider || !provider.enabled) {
+  const localRunner =
+    !provider || isLocalAgentEndpoint(provider.endpointUrl)
+      ? resolveLocalAgentRunner(parsed.provider, provider?.endpointUrl, provider?.enabled ?? false)
+      : null;
+
+  if ((!provider || !provider.enabled) && !localRunner) {
     return NextResponse.json(
       {
         error: `Provider '${parsed.provider}' is not configured for this workspace`,
@@ -197,6 +207,7 @@ export async function POST(
       payload: {
         dispatchedBy: session.user.id,
         promptOverride: parsed.prompt_override ?? null,
+        dispatchMode: localRunner ? 'local_cli' : 'webhook',
       },
     })
     .returning();
@@ -226,6 +237,43 @@ export async function POST(
     callbackUrl,
     dispatchedAt: new Date().toISOString(),
   };
+
+  if (localRunner) {
+    void runLocalAgentSession(localRunner, {
+      sessionId: created.id,
+      provider: localRunner.provider,
+      issue: {
+        ...envelope.issue,
+        reporterId: issue.reporterId,
+      },
+      actorUserId: session.user.id,
+      promptOverride: parsed.prompt_override ?? null,
+      appBaseUrl,
+    }).catch((err) => {
+      console.error('[agent-dispatch] local runner failed to start', {
+        sessionId: created.id,
+        provider: parsed.provider,
+        err: err instanceof Error ? err.message : String(err),
+      });
+    });
+
+    return NextResponse.json({
+      sessionId: created.id,
+      provider: parsed.provider,
+      state: 'active',
+      runner: 'local_cli',
+      callbackUrl,
+    });
+  }
+
+  if (!provider || !provider.enabled) {
+    return NextResponse.json(
+      {
+        error: `Provider '${parsed.provider}' is not configured for this workspace`,
+      },
+      { status: 422 }
+    );
+  }
 
   const body = JSON.stringify(envelope);
   const signature = signAgentPayload(body, provider.hmacSecret);

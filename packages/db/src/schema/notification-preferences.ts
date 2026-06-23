@@ -5,7 +5,7 @@ import { organizations } from './organizations';
 
 /**
  * Notification Channels
- * 
+ *
  * - in_app: In-app notifications (notification bell)
  * - email: Email notifications
  * - digest: Digest emails (daily/weekly)
@@ -19,21 +19,17 @@ export const notificationChannelEnum = pgEnum('notification_channel', [
 
 /**
  * Digest Frequency
- * 
+ *
  * - none: No digest emails
  * - daily: Daily digest at 9 AM
  * - weekly: Weekly digest on Monday at 9 AM
  */
 
-export const digestFrequencyEnum = pgEnum('digest_frequency', [
-  'none',
-  'daily',
-  'weekly',
-]);
+export const digestFrequencyEnum = pgEnum('digest_frequency', ['none', 'daily', 'weekly']);
 
 /**
  * Notification Preferences - User-level notification settings
- * 
+ *
  * Features:
  * - Per-organization preferences
  * - Channel-specific settings (in-app, email, digest)
@@ -58,16 +54,16 @@ export const notificationPreferences = pgTable('notification_preferences', {
   enableEmail: boolean('enable_email').notNull().default(true),
   digestFrequency: digestFrequencyEnum('digest_frequency').notNull().default('none'),
 
-  // Event-specific email settings — default policy: quiet by default.
-  // Only events with direct, personal impact (direct assignment, direct mention)
-  // are opted-in at creation. Everything else is opt-in by the user.
+  // Event-specific email settings — direct personal events and sprint
+  // lifecycle milestones are on by default; noisy activity and project
+  // lifecycle emails remain opt-in.
   emailOnAssigned: boolean('email_on_assigned').notNull().default(true),
   emailOnMentioned: boolean('email_on_mentioned').notNull().default(true),
   emailOnCommented: boolean('email_on_commented').notNull().default(false),
   emailOnStatusChanged: boolean('email_on_status_changed').notNull().default(false),
   emailOnIssueCreated: boolean('email_on_issue_created').notNull().default(false),
-  emailOnSprintStarted: boolean('email_on_sprint_started').notNull().default(false),
-  emailOnSprintCompleted: boolean('email_on_sprint_completed').notNull().default(false),
+  emailOnSprintStarted: boolean('email_on_sprint_started').notNull().default(true),
+  emailOnSprintCompleted: boolean('email_on_sprint_completed').notNull().default(true),
   // Project lifecycle events — opt-in (quiet by default)
   emailOnProjectCreated: boolean('email_on_project_created').notNull().default(false),
   emailOnProjectArchived: boolean('email_on_project_archived').notNull().default(false),
@@ -94,4 +90,3 @@ export const notificationPreferences = pgTable('notification_preferences', {
 
 export type NotificationPreference = typeof notificationPreferences.$inferSelect;
 export type NewNotificationPreference = typeof notificationPreferences.$inferInsert;
-

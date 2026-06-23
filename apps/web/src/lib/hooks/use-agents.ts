@@ -282,6 +282,57 @@ type AdminAgentControlResponse = {
   }>;
 };
 
+export type AgentSessionProvider =
+  | 'claude'
+  | 'codex'
+  | 'cursor'
+  | 'devin'
+  | 'copilot'
+  | 'openhands'
+  | 'custom';
+
+export type IssueAgentSession = {
+  id: string;
+  issueId: string;
+  provider: AgentSessionProvider;
+  externalId: string | null;
+  state: 'pending' | 'active' | 'awaitingInput' | 'error' | 'complete' | 'stale';
+  payload: Record<string, unknown>;
+  startedAt: string;
+  updatedAt: string;
+  finishedAt: string | null;
+};
+
+type IssueAgentSessionsResponse = {
+  sessions: IssueAgentSession[];
+};
+
+export type LocalAgentRunnerProvider = 'claude' | 'codex';
+
+export type LocalAgentRunnerStatus = {
+  provider: LocalAgentRunnerProvider;
+  enabled: boolean;
+  endpointMode: 'local_cli' | 'webhook';
+  configured: boolean;
+  command: string;
+  cwd: string;
+  model: string | null;
+  timeoutSeconds: number | null;
+  mode: string | null;
+  reasonCode: 'disabled' | 'cwd_missing' | 'command_missing' | null;
+  reasonDetail: string | null;
+  enabledByEnv: boolean;
+  enabledByProvider: boolean;
+};
+
+type AdminLocalAgentRunnersResponse = {
+  organization: {
+    id: string;
+    name: string;
+  };
+  providers: LocalAgentRunnerStatus[];
+};
+
 type AgentStreamLogEvent = {
   type: 'log';
   data: {
@@ -658,6 +709,106 @@ export function useAdminAgentControl() {
         throw new Error(payload.error || 'Failed to fetch admin agent control');
       }
       return payload;
+    },
+  });
+}
+
+export function useIssueAgentSessions(issueId: string | null, enabled = true) {
+  return useQuery<IssueAgentSessionsResponse>({
+    queryKey: ['issue-agent-sessions', issueId],
+    queryFn: async () => {
+      const response = await fetch(`/api/issues/${issueId}/agent-sessions`);
+      const payload = await response
+        .json()
+        .catch(() => ({ error: 'Failed to fetch agent sessions' }));
+      if (!response.ok) {
+        throw new Error(payload.error || 'Failed to fetch agent sessions');
+      }
+      return payload;
+    },
+    enabled: enabled && !!issueId,
+    refetchInterval: (query) => {
+      const sessions = query.state.data?.sessions ?? [];
+      return sessions.some((session) => session.state === 'pending' || session.state === 'active')
+        ? 5000
+        : false;
+    },
+  });
+}
+
+export function useDispatchIssueAgent(issueId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { provider: AgentSessionProvider; promptOverride?: string }) => {
+      const response = await fetch(`/api/issues/${issueId}/dispatch-agent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: data.provider,
+          prompt_override: data.promptOverride || undefined,
+        }),
+      });
+      const payload = await response.json().catch(() => ({ error: 'Failed to dispatch agent' }));
+      if (!response.ok) {
+        throw new Error(payload.error || 'Failed to dispatch agent');
+      }
+      return payload as {
+        sessionId: string;
+        provider: AgentSessionProvider;
+        state: string;
+        runner?: 'local_cli';
+        callbackUrl?: string;
+      };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['issue-agent-sessions', issueId] });
+      queryClient.invalidateQueries({ queryKey: ['issue', issueId] });
+      queryClient.invalidateQueries({ queryKey: ['issues'] });
+    },
+  });
+}
+
+export function useAdminLocalAgentRunners(organizationId: string | null) {
+  return useQuery<AdminLocalAgentRunnersResponse>({
+    queryKey: ['admin-local-agent-runners', organizationId],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/admin/agent-control/local-runners?organizationId=${organizationId}`
+      );
+      const payload = await response
+        .json()
+        .catch(() => ({ error: 'Failed to fetch local agent runners' }));
+      if (!response.ok) {
+        throw new Error(payload.error || 'Failed to fetch local agent runners');
+      }
+      return payload;
+    },
+    enabled: !!organizationId,
+  });
+}
+
+export function useUpdateAdminLocalAgentRunner(organizationId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { provider: LocalAgentRunnerProvider; enabled: boolean }) => {
+      const response = await fetch('/api/admin/agent-control/local-runners', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ organizationId, ...data }),
+      });
+      const payload = await response
+        .json()
+        .catch(() => ({ error: 'Failed to update local agent runner' }));
+      if (!response.ok) {
+        throw new Error(payload.error || 'Failed to update local agent runner');
+      }
+      return payload as AdminLocalAgentRunnersResponse;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-local-agent-runners', organizationId] });
+      queryClient.invalidateQueries({ queryKey: ['admin-agent-control'] });
     },
   });
 }

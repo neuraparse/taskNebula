@@ -164,31 +164,33 @@ export function DashboardClient() {
 
   return (
     <>
-      <div className="bg-surface flex h-full min-h-0 flex-col">
+      <div className="dashboard-carbon bg-background flex h-full min-h-0 flex-col">
         <div className="custom-scrollbar flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-[1600px] space-y-5 p-4 sm:p-5 lg:p-6">
+          <div className="mx-auto w-full max-w-[1680px] space-y-3 p-3 sm:p-4 lg:p-5">
             <CatchMeUpBanner />
 
             {/* Greeting */}
-            <div className="surface-card animate-fade-up flex items-end justify-between gap-4 p-5">
-              <div className="space-y-1">
+            <div className="surface-card animate-fade-up border-t-primary flex flex-col border-t-2 shadow-none sm:flex-row sm:items-stretch sm:justify-between">
+              <div className="min-w-0 space-y-1 p-4 sm:p-5">
                 <div className="flex items-center gap-2">
                   <span className="kicker">{tDash('kicker')}</span>
                   <span className="live-pill">{tDash('live')}</span>
                 </div>
-                <h1 className="text-foreground text-balance text-[28px] font-[400] leading-tight tracking-tight">
+                <h1 className="text-foreground text-balance text-[28px] font-[400] leading-tight tracking-normal">
                   {tDash('welcome_back', { name: firstName })}
                 </h1>
                 <p className="text-muted-foreground max-w-2xl text-sm">
                   {currentTeamId ? tDash('subtitle_team') : tDash('subtitle_personal')}
                 </p>
               </div>
-              <Link href="/my-issues">
-                <Button size="sm" className="gap-2 rounded-md">
-                  <Target className="h-4 w-4" />
-                  {tNav('my_issues')}
-                </Button>
-              </Link>
+              <div className="border-border flex items-center border-t p-4 sm:border-l sm:border-t-0 sm:p-5">
+                <Link href="/my-issues" className="w-full sm:w-auto">
+                  <Button size="sm" className="w-full gap-2 rounded-none sm:w-auto">
+                    <Target className="h-4 w-4" />
+                    {tNav('my_issues')}
+                  </Button>
+                </Link>
+              </div>
             </div>
 
             {/* KPI Summary Row */}
@@ -222,8 +224,8 @@ export function DashboardClient() {
             {/* Main Content */}
             <div className="stagger grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
               {/* My Issues */}
-              <div className="surface-card animate-fade-up p-5">
-                <div className="mb-4 flex items-center justify-between">
+              <div className="surface-card animate-fade-up border-t-primary overflow-hidden border-t-2 shadow-none">
+                <div className="border-border flex items-center justify-between border-b px-4 py-3">
                   <div className="flex items-center gap-2">
                     <Inbox className="text-muted-foreground h-4 w-4" />
                     <span className="text-foreground text-sm font-medium">
@@ -240,7 +242,7 @@ export function DashboardClient() {
                 </div>
 
                 {!myIssues || myIssues.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
                     <Inbox className="text-muted-foreground mb-3 h-8 w-8" />
                     <p className="text-muted-foreground mb-4 text-sm">{tDash('all_caught_up')}</p>
                     {firstProjectId ? (
@@ -260,7 +262,7 @@ export function DashboardClient() {
                     )}
                   </div>
                 ) : (
-                  <div className="space-y-0.5">
+                  <div className="divide-border divide-y px-2 py-2">
                     {myIssues.slice(0, 7).map((issue) => (
                       <IssueRow
                         key={issue.id}
@@ -323,14 +325,14 @@ function StatTile({
   icon: LucideIcon;
 }) {
   return (
-    <div className="surface-card surface-card-hover ease-snap flex min-h-[118px] flex-col justify-between p-4 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="surface-card ease-snap border-l-primary hover:border-border-strong hover:bg-surface/50 flex min-h-[112px] flex-col justify-between border-l-2 p-4 shadow-none transition-colors duration-150">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-muted-foreground text-[11px] uppercase tracking-[0.14em]">{label}</p>
+        <p className="text-muted-foreground text-[11px] uppercase tracking-normal">{label}</p>
         <span className={cn('icon-tile h-8 w-8', `icon-tile-accent-${hue}`)}>
           <Icon className="h-4 w-4" />
         </span>
       </div>
-      <p className="text-foreground text-[34px] font-[400] tabular-nums leading-none tracking-tight">
+      <p className="text-foreground text-[34px] font-[400] tabular-nums leading-none tracking-normal">
         {value}
       </p>
     </div>
@@ -359,7 +361,7 @@ function IssueRow({ issue, onClick }: { issue: Issue; onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="row-interactive ease-snap hover:border-border-strong flex min-h-[40px] w-full cursor-pointer items-center gap-3 rounded-md border border-transparent py-2.5 pl-2 pr-3 text-left transition-all duration-150"
+      className="row-interactive ease-snap hover:border-border-strong flex min-h-[42px] w-full cursor-pointer items-center gap-3 rounded-none border border-transparent py-2.5 pl-2 pr-3 text-left transition-all duration-150"
     >
       <span className={cn('priority-indicator h-6 shrink-0', priorityCls)} />
 

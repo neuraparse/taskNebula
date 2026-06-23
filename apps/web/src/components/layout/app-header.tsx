@@ -14,7 +14,7 @@ export function AppHeader({ hasWorkspaceAccess = true }: { hasWorkspaceAccess?: 
   const { open: openPalette } = useCommandPalette();
 
   return (
-    <header className="border-border bg-card/95 supports-[backdrop-filter]:bg-card/85 sticky top-0 z-30 flex h-12 items-center justify-between border-b px-4 backdrop-blur">
+    <header className="bg-surface-dark border-border-strong sticky top-0 z-30 flex h-12 items-center justify-between border-b px-4 text-white shadow-none">
       {/* Workspace + search trigger */}
       <div className="flex flex-1 items-center gap-3">
         {hasWorkspaceAccess ? (
@@ -24,11 +24,11 @@ export function AppHeader({ hasWorkspaceAccess = true }: { hasWorkspaceAccess?: 
               type="button"
               onClick={openPalette}
               aria-label={tActions('open_command_palette')}
-              className="border-border bg-surface text-muted-foreground ease-snap hover:border-primary/30 hover:bg-background hover:text-foreground focus-visible:ring-ring group relative flex h-8 w-full max-w-xl items-center rounded-md border pe-2 ps-9 text-start text-[13px] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2"
+              className="bg-surface-elevated border-subtle ease-snap focus-visible:ring-ring group relative flex h-8 w-full max-w-xl items-center rounded-md border pe-2 ps-9 text-start text-[13px] text-white/65 transition-all duration-150 hover:border-white/20 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2"
             >
-              <Search className="text-muted-foreground absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+              <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/55" />
               <span className="truncate">{tNav('search_placeholder')}</span>
-              <kbd className="chip pointer-events-none ms-auto inline-flex shrink-0 select-none items-center gap-1 rounded-sm font-mono text-[10px]">
+              <kbd className="pointer-events-none ms-auto inline-flex shrink-0 select-none items-center gap-1 rounded-sm border border-white/15 bg-white/10 px-1.5 py-0.5 font-mono text-[10px] text-white/75">
                 <Command className="h-3 w-3" />
                 {'K'}
               </kbd>
@@ -45,7 +45,7 @@ export function AppHeader({ hasWorkspaceAccess = true }: { hasWorkspaceAccess?: 
           variant="ghost"
           size="icon"
           aria-label={tActions('help')}
-          className="ease-snap h-8 w-8 transition-all duration-150"
+          className="ease-snap h-8 w-8 text-white/70 transition-all duration-150 hover:bg-white/10 hover:text-white"
         >
           <HelpCircle className="h-4 w-4" />
         </Button>

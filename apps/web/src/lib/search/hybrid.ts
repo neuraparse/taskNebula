@@ -14,20 +14,21 @@
 
 import { db, sql } from '@tasknebula/db';
 import { reciprocalRankFusion } from './rrf';
-import {
-  getDefaultEmbeddingProvider,
-  vectorToPg,
-  type EmbeddingProvider,
-} from './embeddings';
+import { getDefaultEmbeddingProvider, vectorToPg, type EmbeddingProvider } from './embeddings';
 
 export interface HybridSearchFilters {
   organizationId: string;
   projectId?: string | string[] | null;
+  project?: string | string[] | null;
   assigneeId?: string | string[] | null;
+  assignee?: string | string[] | null;
+  assigneeUnassigned?: boolean;
   statusId?: string | string[] | null;
+  status?: string | string[] | null;
   statusCategory?: string | string[] | null;
   type?: string | string[] | null;
-  label?: string | null;
+  priority?: string | string[] | null;
+  label?: string | string[] | null;
 }
 
 export interface HybridSearchOptions {
@@ -82,29 +83,138 @@ interface VectorRow {
 
 function asArrayParam(v: string | string[] | null | undefined): string[] | null {
   if (v == null) return null;
-  return Array.isArray(v) ? v : [v];
+  const values = Array.isArray(v) ? v : [v];
+  const compact = values.map((value) => value.trim()).filter(Boolean);
+  return compact.length > 0 ? compact : null;
+}
+
+function normalizeLookupValue(value: string): string {
+  return value
+    .trim()
+    .replace(/^@/, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function normalizeArrayParam(v: string | string[] | null | undefined): string[] | null {
+  const values = asArrayParam(v)?.map(normalizeLookupValue).filter(Boolean) ?? [];
+  return values.length > 0 ? Array.from(new Set(values)) : null;
+}
+
+function normalizeStatusValue(value: string): string {
+  const normalized = normalizeLookupValue(value);
+  if (['todo', 'to_do', 'open'].includes(normalized)) return 'backlog';
+  if (['review', 'in_review', 'code_review'].includes(normalized)) return 'in_review';
+  if (['doing', 'inprogress', 'in_progress'].includes(normalized)) return 'in_progress';
+  if (['closed', 'complete', 'completed'].includes(normalized)) return 'done';
+  return normalized;
+}
+
+function normalizePriorityValue(value: string): string {
+  const normalized = normalizeLookupValue(value);
+  if (['highest', 'urgent', 'p0', 'p_0', 'critical'].includes(normalized)) return 'critical';
+  if (['high', 'p1', 'p_1'].includes(normalized)) return 'high';
+  if (['medium', 'normal', 'p2', 'p_2'].includes(normalized)) return 'medium';
+  if (['low', 'p3', 'p_3'].includes(normalized)) return 'low';
+  if (['lowest', 'none', 'no_priority', 'p4', 'p_4'].includes(normalized)) return 'none';
+  return normalized;
+}
+
+function normalizeStatusArray(v: string | string[] | null | undefined): string[] | null {
+  const values = asArrayParam(v)?.map(normalizeStatusValue).filter(Boolean) ?? [];
+  return values.length > 0 ? Array.from(new Set(values)) : null;
+}
+
+function normalizePriorityArray(v: string | string[] | null | undefined): string[] | null {
+  const values = asArrayParam(v)?.map(normalizePriorityValue).filter(Boolean) ?? [];
+  return values.length > 0 ? Array.from(new Set(values)) : null;
 }
 
 /** Build the filter SQL fragment shared between BM25 and vector CTEs. */
 function buildIssueFilterSql(filters: HybridSearchFilters) {
   const projectIds = asArrayParam(filters.projectId);
+  const projectRefs = normalizeArrayParam(filters.project);
   const assigneeIds = asArrayParam(filters.assigneeId);
+  const assigneeRefs = normalizeArrayParam(filters.assignee);
   const statusIds = asArrayParam(filters.statusId);
-  const statusCats = asArrayParam(filters.statusCategory);
-  const types = asArrayParam(filters.type);
-  const label = filters.label ?? null;
+  const statusRefs = normalizeStatusArray(filters.status);
+  const statusCats = normalizeStatusArray(filters.statusCategory);
+  const types = normalizeArrayParam(filters.type);
+  const priorities = normalizePriorityArray(filters.priority);
+  const labels = normalizeArrayParam(filters.label);
 
   return sql`
     i.organization_id = ${filters.organizationId}
     ${projectIds ? sql`AND i.project_id = ANY(${projectIds})` : sql``}
-    ${assigneeIds ? sql`AND i.assignee_id = ANY(${assigneeIds})` : sql``}
+    ${
+      projectRefs
+        ? sql`AND EXISTS (
+      SELECT 1 FROM projects p
+      WHERE p.id = i.project_id
+        AND p.organization_id = i.organization_id
+        AND (
+          p.id = ANY(${projectRefs})
+          OR lower(p.key) = ANY(${projectRefs})
+          OR lower(regexp_replace(p.name, '[^a-zA-Z0-9]+', '_', 'g')) = ANY(${projectRefs})
+        )
+    )`
+        : sql``
+    }
+    ${
+      assigneeIds || filters.assigneeUnassigned
+        ? sql`AND (
+          ${assigneeIds ? sql`i.assignee_id = ANY(${assigneeIds})` : sql`false`}
+          ${filters.assigneeUnassigned ? sql`OR i.assignee_id IS NULL` : sql``}
+        )`
+        : sql``
+    }
+    ${
+      assigneeRefs
+        ? sql`AND EXISTS (
+      SELECT 1 FROM users u
+      WHERE u.id = i.assignee_id
+        AND (
+          u.id = ANY(${assigneeRefs})
+          OR lower(u.email) = ANY(${assigneeRefs})
+          OR lower(regexp_replace(coalesce(u.name, ''), '[^a-zA-Z0-9]+', '_', 'g')) = ANY(${assigneeRefs})
+        )
+    )`
+        : sql``
+    }
     ${statusIds ? sql`AND i.status_id = ANY(${statusIds})` : sql``}
+    ${
+      statusRefs
+        ? sql`AND EXISTS (
+      SELECT 1 FROM workflow_statuses ws
+      WHERE ws.id = i.status_id
+        AND (
+          ws.id = ANY(${statusRefs})
+          OR ws.category::text = ANY(${statusRefs})
+          OR lower(regexp_replace(ws.name, '[^a-zA-Z0-9]+', '_', 'g')) = ANY(${statusRefs})
+        )
+    )`
+        : sql``
+    }
     ${types ? sql`AND i.type::text = ANY(${types})` : sql``}
-    ${statusCats ? sql`AND EXISTS (
+    ${priorities ? sql`AND i.priority::text = ANY(${priorities})` : sql``}
+    ${
+      statusCats
+        ? sql`AND EXISTS (
       SELECT 1 FROM workflow_statuses ws
       WHERE ws.id = i.status_id AND ws.category::text = ANY(${statusCats})
-    )` : sql``}
-    ${label ? sql`AND i.labels::jsonb @> ${JSON.stringify([label])}::jsonb` : sql``}
+    )`
+        : sql``
+    }
+    ${
+      labels
+        ? sql`AND EXISTS (
+      SELECT 1
+      FROM jsonb_array_elements_text(i.labels::jsonb) label(value)
+      WHERE lower(regexp_replace(label.value, '[^a-zA-Z0-9]+', '_', 'g')) = ANY(${labels})
+    )`
+        : sql``
+    }
   `;
 }
 
@@ -131,9 +241,23 @@ async function runBM25(
         i.title AS title,
         COALESCE(left(i.description, 500), i.title) AS snippet,
         i.project_id AS project_id,
-        ts_rank_cd(i.search_vector, q.tsq) AS rank
+        (
+          CASE WHEN lower(i.key) = lower(${query}) THEN 20 ELSE 0 END
+          + CASE WHEN lower(i.key) LIKE lower(${query}) || '%' THEN 10 ELSE 0 END
+          + CASE WHEN lower(i.title) = lower(${query}) THEN 8 ELSE 0 END
+          + CASE WHEN lower(i.title) LIKE lower(${query}) || '%' THEN 4 ELSE 0 END
+          + CASE WHEN lower(i.title) LIKE '%' || lower(${query}) || '%' THEN 2 ELSE 0 END
+          + CASE WHEN lower(coalesce(i.description, '')) LIKE '%' || lower(${query}) || '%' THEN 1 ELSE 0 END
+          + ts_rank_cd(i.search_vector, q.tsq)
+        ) AS rank
       FROM issues i, q
-      WHERE i.search_vector @@ q.tsq
+      WHERE (
+          i.search_vector @@ q.tsq
+          OR lower(i.key) = lower(${query})
+          OR lower(i.key) LIKE lower(${query}) || '%'
+          OR lower(i.title) LIKE '%' || lower(${query}) || '%'
+          OR lower(coalesce(i.description, '')) LIKE '%' || lower(${query}) || '%'
+        )
         AND ${filterSql}
     ),
     comment_hits AS (
@@ -145,10 +269,16 @@ async function runBM25(
         i.title AS title,
         left(c.content, 500) AS snippet,
         i.project_id AS project_id,
-        ts_rank_cd(c.search_vector, q.tsq) AS rank
+        (
+          CASE WHEN lower(c.content) LIKE '%' || lower(${query}) || '%' THEN 1 ELSE 0 END
+          + ts_rank_cd(c.search_vector, q.tsq)
+        ) AS rank
       FROM issue_comments c
       JOIN issues i ON i.id = c.issue_id, q
-      WHERE c.search_vector @@ q.tsq
+      WHERE (
+          c.search_vector @@ q.tsq
+          OR lower(c.content) LIKE '%' || lower(${query}) || '%'
+        )
         AND ${filterSql}
     )
     SELECT * FROM (
@@ -160,7 +290,7 @@ async function runBM25(
     LIMIT ${limit};
   `);
 
-  return Array.isArray(result) ? result : (result as any).rows ?? [];
+  return Array.isArray(result) ? result : ((result as any).rows ?? []);
 }
 
 /**
@@ -207,18 +337,15 @@ async function runVector(
     LIMIT ${limit};
   `);
 
-  return Array.isArray(result) ? result : (result as any).rows ?? [];
+  return Array.isArray(result) ? result : ((result as any).rows ?? []);
 }
 
-export async function hybridSearch(
-  options: HybridSearchOptions
-): Promise<HybridResultRow[]> {
+export async function hybridSearch(options: HybridSearchOptions): Promise<HybridResultRow[]> {
   const candidateLimit = options.candidateLimit ?? 50;
   const limit = options.limit ?? 20;
   const rrfK = options.rrfK ?? 60;
-  const provider = options.provider !== undefined
-    ? options.provider
-    : getDefaultEmbeddingProvider();
+  const provider =
+    options.provider !== undefined ? options.provider : getDefaultEmbeddingProvider();
 
   const [bm25Rows, vectorRows] = await Promise.all([
     runBM25(options.query, options.filters, candidateLimit),
@@ -287,19 +414,7 @@ export function looksLikeFreeText(query: string): boolean {
   if (!q) return false;
 
   // Common JQL operators / keywords. Any occurrence => treat as JQL.
-  const jqlMarkers = [
-    '=',
-    '!=',
-    '~',
-    '!~',
-    '>',
-    '<',
-    ' AND ',
-    ' OR ',
-    ' NOT ',
-    ' IN (',
-    ' IS ',
-  ];
+  const jqlMarkers = ['=', '!=', '~', '!~', '>', '<', ' AND ', ' OR ', ' NOT ', ' IN (', ' IS '];
   const upper = q.toUpperCase();
   for (const marker of jqlMarkers) {
     if (upper.includes(marker)) return false;

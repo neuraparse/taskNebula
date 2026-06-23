@@ -60,7 +60,7 @@ function applyInterfaceFont(font: InterfaceFont) {
 const defaultState = {
   colorTheme: 'default' as ColorTheme,
   visualStyle: 'modern' as VisualStyle,
-  interfaceFont: 'brand' as InterfaceFont,
+  interfaceFont: 'ibm' as InterfaceFont,
   enableAnimations: true,
   enableGradients: true,
   hydrated: false,

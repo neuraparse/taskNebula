@@ -770,7 +770,9 @@
       "sprint": "สปรินต์",
       "ai_draft": "ฉบับร่าง AI",
       "agent": "เอเจนต์",
-      "update": "อัปเดต"
+      "update": "อัปเดต",
+      "project_created": "สร้างโปรเจกต์แล้ว",
+      "project_archived": "เก็บโปรเจกต์เข้าคลังแล้ว"
     },
     "type_action": {
       "mention": "กล่าวถึงคุณ",
@@ -869,7 +871,9 @@
         "sprint_started": "เริ่มสปรินต์แล้ว",
         "sprint_completed": "สปรินต์เสร็จสิ้นแล้ว",
         "ai_draft_failed": "ฉบับร่าง AI ล้มเหลว",
-        "agent_run_failed": "เอเจนต์ล้มเหลว"
+        "agent_run_failed": "เอเจนต์ล้มเหลว",
+        "project_created": "สร้างโปรเจกต์แล้ว",
+        "project_archived": "เก็บโปรเจกต์เข้าคลังแล้ว"
       },
       "meta": {
         "project": "โปรเจกต์",
@@ -1382,12 +1386,46 @@
       "open_sidecar": "เปิด Sidecar"
     },
     "agent": {
-      "title": "กิจกรรมเอเจนต์",
-      "state": "สถานะ: {state}",
-      "idle": "ว่าง — ยังไม่ได้ส่งเซสชัน",
+      "title": "กิจกรรมของเอเจนต์",
+      "beta": "เบต้า",
+      "assignedTo": "มอบหมายให้ {name}",
+      "directDispatch": "ส่งงานนี้ไปยังเอเจนต์เขียนโค้ดโดยตรง",
+      "provider": "ผู้ให้บริการ",
+      "promptPlaceholder": "คำสั่งเพิ่มเติมสำหรับการรันนี้...",
       "dispatch": "ส่ง",
+      "dispatching": "กำลังส่ง",
       "dispatch_failed": "ส่งไม่สำเร็จ",
-      "dispatch_failed_status": "ส่งไม่สำเร็จ ({status})"
+      "dispatch_failed_status": "ส่งไม่สำเร็จ ({status})",
+      "latestSessions": "เซสชันล่าสุด",
+      "noSessions": "ยังไม่มีเซสชันของเอเจนต์",
+      "localRunner": "CLI ในเครื่อง: {command}",
+      "webhookRunner": "ผู้ให้บริการ Webhook",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "กำหนดเอง"
+      },
+      "states": {
+        "pending": "รอดำเนินการ",
+        "active": "กำลังทำงาน",
+        "awaitingInput": "ต้องการอินพุต",
+        "error": "ล้มเหลว",
+        "complete": "เสร็จสมบูรณ์",
+        "stale": "ล้าสมัย"
+      },
+      "issueContext": "ฟิลด์ของประเด็น",
+      "descriptionContext": "คำอธิบาย",
+      "instructionContext": "บันทึกผู้ดูแล",
+      "sessionStatus": "สถานะเซสชัน",
+      "runner": "ตัวรัน",
+      "runnerStatus": "สถานะการรัน",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "รหัสออก"
     },
     "vote": {
       "group_label": "โหวต",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Platform",
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "เปิดแบบเต็มหน้า"
   },
   "settingsProject": {
     "kicker": "โปรเจกต์",
@@ -3331,6 +3370,29 @@
         "description": "ประวัติทั่วทั้งระบบสำหรับการตรวจสอบคุณภาพการเปิดตัวและขอบเขตผลกระทบ",
         "noData": "ยังไม่มีการบันทึกการรันเอเจนต์",
         "writesChip": "{count} การเขียน"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "มอบหมายงาน",
         "issue_mentioned": "กล่าวถึงในงาน",
         "issue_commented": "แสดงความคิดเห็นในงาน",
+        "issue_status_changed": "สถานะรายการงานเปลี่ยนแล้ว",
+        "issue_created": "สร้างรายการงานแล้ว",
         "sprint_started": "เริ่มสปรินต์แล้ว",
+        "sprint_completed": "สปรินต์เสร็จสิ้นแล้ว",
+        "project_created": "สร้างโปรเจกต์แล้ว",
+        "project_archived": "เก็บโปรเจกต์เข้าคลังแล้ว",
         "daily_digest": "สรุปรายวัน",
         "weekly_digest": "สรุปรายสัปดาห์"
       }

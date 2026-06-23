@@ -807,7 +807,9 @@
       "sprint": "Sprint",
       "ai_draft": "Schiță AI",
       "agent": "Agent",
-      "update": "Actualizare"
+      "update": "Actualizare",
+      "project_created": "Proiect creat",
+      "project_archived": "Proiect arhivat"
     },
     "type_action": {
       "mention": "te-a menționat",
@@ -906,7 +908,9 @@
         "sprint_started": "Sprint început",
         "sprint_completed": "Sprint finalizat",
         "ai_draft_failed": "Schiță AI eșuată",
-        "agent_run_failed": "Agent eșuat"
+        "agent_run_failed": "Agent eșuat",
+        "project_created": "Proiect creat",
+        "project_archived": "Proiect arhivat"
       },
       "meta": {
         "project": "Proiect",
@@ -1345,12 +1349,46 @@
       "open_sidecar": "Deschide sidecar"
     },
     "agent": {
-      "title": "Activitate agent",
-      "state": "Stare: {state}",
-      "idle": "Inactiv — nicio sesiune trimisă încă",
+      "title": "Activitatea agentului",
+      "beta": "Beta",
+      "assignedTo": "Atribuit către {name}",
+      "directDispatch": "Trimite această sarcină direct către un agent de cod.",
+      "provider": "Furnizor",
+      "promptPlaceholder": "Instrucțiuni opționale pentru această rulare...",
       "dispatch": "Trimite",
+      "dispatching": "Se trimite",
       "dispatch_failed": "Trimiterea a eșuat",
-      "dispatch_failed_status": "Trimiterea a eșuat ({status})"
+      "dispatch_failed_status": "Trimiterea a eșuat ({status})",
+      "latestSessions": "Cele mai recente sesiuni",
+      "noSessions": "Nu există încă sesiuni de agent.",
+      "localRunner": "CLI local: {command}",
+      "webhookRunner": "Furnizor webhook",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "Personalizat"
+      },
+      "states": {
+        "pending": "În așteptare",
+        "active": "Rulează",
+        "awaitingInput": "Necesită input",
+        "error": "Eșuat",
+        "complete": "Finalizat",
+        "stale": "Învechit"
+      },
+      "issueContext": "Câmpuri issue",
+      "descriptionContext": "Descriere",
+      "instructionContext": "Note administrator",
+      "sessionStatus": "Starea sesiunii",
+      "runner": "Executor",
+      "runnerStatus": "Starea rulării",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "Cod de ieșire"
     },
     "vote": {
       "group_label": "Vot",
@@ -1598,7 +1636,8 @@
     "ts_name_placeholder": "Platformă",
     "ts_slug_placeholder": "platforma",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "Deschide pagina completă"
   },
   "settingsProject": {
     "kicker": "Proiect",
@@ -3431,6 +3470,29 @@
         "description": "Istoric la nivel de sistem pentru monitorizarea calității lansării și a razei de impact.",
         "noData": "Nicio execuție de agent înregistrată încă.",
         "writesChip": "{count} scrieri"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3617,7 +3679,12 @@
         "issue_assigned": "Problemă atribuită",
         "issue_mentioned": "Problemă menționată",
         "issue_commented": "Problemă comentată",
+        "issue_status_changed": "Starea elementului de lucru s-a schimbat",
+        "issue_created": "Element de lucru creat",
         "sprint_started": "Sprint început",
+        "sprint_completed": "Sprint finalizat",
+        "project_created": "Proiect creat",
+        "project_archived": "Proiect arhivat",
         "daily_digest": "Rezumat zilnic",
         "weekly_digest": "Rezumat săptămânal"
       }

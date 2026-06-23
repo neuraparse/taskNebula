@@ -770,7 +770,9 @@
       "sprint": "스프린트",
       "ai_draft": "AI 초안",
       "agent": "에이전트",
-      "update": "업데이트"
+      "update": "업데이트",
+      "project_created": "프로젝트 생성됨",
+      "project_archived": "프로젝트 보관됨"
     },
     "type_action": {
       "mention": "회원님을 멘션함",
@@ -869,7 +871,9 @@
         "sprint_started": "스프린트 시작됨",
         "sprint_completed": "스프린트 완료됨",
         "ai_draft_failed": "AI 초안 작성 실패",
-        "agent_run_failed": "에이전트 실패"
+        "agent_run_failed": "에이전트 실패",
+        "project_created": "프로젝트 생성됨",
+        "project_archived": "프로젝트 보관됨"
       },
       "meta": {
         "project": "프로젝트",
@@ -1276,11 +1280,45 @@
     },
     "agent": {
       "title": "에이전트 활동",
-      "state": "상태: {state}",
-      "idle": "유휴 — 아직 디스패치된 세션 없음",
-      "dispatch": "디스패치",
-      "dispatch_failed": "디스패치 실패",
-      "dispatch_failed_status": "디스패치 실패 ({status})"
+      "beta": "베타",
+      "assignedTo": "{name}에게 할당됨",
+      "directDispatch": "이 작업을 코딩 에이전트에 직접 보냅니다.",
+      "provider": "제공자",
+      "promptPlaceholder": "이 실행에 대한 선택적 지침...",
+      "dispatch": "보내기",
+      "dispatching": "보내는 중",
+      "dispatch_failed": "보내기 실패",
+      "dispatch_failed_status": "보내기 실패({status})",
+      "latestSessions": "최근 세션",
+      "noSessions": "아직 에이전트 세션이 없습니다.",
+      "localRunner": "로컬 CLI: {command}",
+      "webhookRunner": "Webhook 제공자",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "사용자 지정"
+      },
+      "states": {
+        "pending": "대기 중",
+        "active": "실행 중",
+        "awaitingInput": "입력 필요",
+        "error": "실패",
+        "complete": "완료",
+        "stale": "오래됨"
+      },
+      "issueContext": "이슈 필드",
+      "descriptionContext": "설명",
+      "instructionContext": "관리자 메모",
+      "sessionStatus": "세션 상태",
+      "runner": "러너",
+      "runnerStatus": "실행 상태",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "종료 코드"
     },
     "vote": {
       "group_label": "투표",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Platform",
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "전체 페이지 열기"
   },
   "settingsProject": {
     "kicker": "프로젝트",
@@ -3331,6 +3370,29 @@
         "description": "롤아웃 품질과 영향 범위를 모니터링하기 위한 시스템 전체 기록.",
         "noData": "아직 기록된 에이전트 실행이 없습니다.",
         "writesChip": "쓰기 {count}건"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "이슈 할당됨",
         "issue_mentioned": "이슈 멘션됨",
         "issue_commented": "이슈 댓글 달림",
+        "issue_status_changed": "작업 항목 상태 변경됨",
+        "issue_created": "작업 항목 생성됨",
         "sprint_started": "스프린트 시작됨",
+        "sprint_completed": "스프린트 완료됨",
+        "project_created": "프로젝트 생성됨",
+        "project_archived": "프로젝트 보관됨",
         "daily_digest": "일일 다이제스트",
         "weekly_digest": "주간 다이제스트"
       }

@@ -770,7 +770,9 @@
       "sprint": "Sprintti",
       "ai_draft": "Tekoälyluonnos",
       "agent": "Agentti",
-      "update": "Päivitys"
+      "update": "Päivitys",
+      "project_created": "Projekti luotu",
+      "project_archived": "Projekti arkistoitu"
     },
     "type_action": {
       "mention": "mainitsi sinut",
@@ -869,7 +871,9 @@
         "sprint_started": "Sprintti aloitettu",
         "sprint_completed": "Sprintti valmis",
         "ai_draft_failed": "Tekoälyluonnos epäonnistui",
-        "agent_run_failed": "Agentti epäonnistui"
+        "agent_run_failed": "Agentti epäonnistui",
+        "project_created": "Projekti luotu",
+        "project_archived": "Projekti arkistoitu"
       },
       "meta": {
         "project": "Projekti",
@@ -1276,11 +1280,45 @@
     },
     "agent": {
       "title": "Agentin toiminta",
-      "state": "Tila: {state}",
-      "idle": "Lepotilassa — istuntoa ei ole vielä käynnistetty",
-      "dispatch": "Käynnistä",
-      "dispatch_failed": "Käynnistys epäonnistui",
-      "dispatch_failed_status": "Käynnistys epäonnistui ({status})"
+      "beta": "Beta",
+      "assignedTo": "Määritetty käyttäjälle {name}",
+      "directDispatch": "Lähetä tämä tehtävä suoraan koodausagentille.",
+      "provider": "Palveluntarjoaja",
+      "promptPlaceholder": "Valinnaiset ohjeet tälle ajolle...",
+      "dispatch": "Lähetä",
+      "dispatching": "Lähetetään",
+      "dispatch_failed": "Lähetys epäonnistui",
+      "dispatch_failed_status": "Lähetys epäonnistui ({status})",
+      "latestSessions": "Viimeisimmät istunnot",
+      "noSessions": "Agentti-istuntoja ei vielä ole.",
+      "localRunner": "Paikallinen CLI: {command}",
+      "webhookRunner": "Webhook-palveluntarjoaja",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "Mukautettu"
+      },
+      "states": {
+        "pending": "Odottaa",
+        "active": "Käynnissä",
+        "awaitingInput": "Tarvitsee syötteen",
+        "error": "Epäonnistui",
+        "complete": "Valmis",
+        "stale": "Vanhentunut"
+      },
+      "issueContext": "Tehtävän kentät",
+      "descriptionContext": "Kuvaus",
+      "instructionContext": "Ylläpidon muistiinpanot",
+      "sessionStatus": "Istunnon tila",
+      "runner": "Suorittaja",
+      "runnerStatus": "Ajon tila",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "Poistumiskoodi"
     },
     "vote": {
       "group_label": "Ääni",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Alusta",
     "ts_slug_placeholder": "alusta",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "Avaa koko sivu"
   },
   "settingsProject": {
     "kicker": "Projekti",
@@ -3331,6 +3370,29 @@
         "description": "Järjestelmänlaajuinen historia käyttöönoton laadun ja vaikutussäteen valvontaan.",
         "noData": "Yhtään agenttisuoritusta ei ole vielä tallennettu.",
         "writesChip": "{count} kirjoitusta"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "Työ osoitettu",
         "issue_mentioned": "Työssä mainittu",
         "issue_commented": "Työtä kommentoitu",
+        "issue_status_changed": "Työkohteen tila muuttui",
+        "issue_created": "Työkohde luotu",
         "sprint_started": "Sprintti aloitettu",
+        "sprint_completed": "Sprintti valmistui",
+        "project_created": "Projekti luotu",
+        "project_archived": "Projekti arkistoitu",
         "daily_digest": "Päivittäinen kooste",
         "weekly_digest": "Viikoittainen kooste"
       }

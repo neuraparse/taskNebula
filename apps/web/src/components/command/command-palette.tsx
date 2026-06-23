@@ -44,7 +44,11 @@ import {
   type Facet,
   type FacetKey,
 } from '@/lib/command/facets';
-import { useOmnibarSearch, type OmnibarTab } from '@/lib/command/use-omnibar-search';
+import {
+  useOmnibarSearch,
+  type OmnibarResult,
+  type OmnibarTab,
+} from '@/lib/command/use-omnibar-search';
 
 /* -------------------------------------------------------------------------- */
 /* Types                                                                       */
@@ -140,6 +144,13 @@ const FACET_ICON: Record<FacetKey, LucideIcon> = {
   priority: Hash,
 };
 
+const RESULT_ICON: Record<OmnibarResult['type'], LucideIcon> = {
+  issue: CircleDot,
+  doc: BookOpenText,
+  person: User,
+  ai: Sparkles,
+};
+
 /* -------------------------------------------------------------------------- */
 /* Chip                                                                        */
 /* -------------------------------------------------------------------------- */
@@ -225,9 +236,9 @@ function OmnibarTabs({ active, onChange, tabs }: OmnibarTabsProps) {
 /* -------------------------------------------------------------------------- */
 
 const FACET_PRESETS: Record<FacetKey, ReadonlyArray<string>> = {
-  status: ['todo', 'in_progress', 'review', 'done', 'blocked'],
-  priority: ['highest', 'high', 'medium', 'low', 'lowest'],
-  type: ['task', 'bug', 'story', 'epic', 'incident'],
+  status: ['backlog', 'in_progress', 'in_review', 'done', 'blocked'],
+  priority: ['critical', 'high', 'medium', 'low', 'none'],
+  type: ['task', 'bug', 'story', 'epic', 'subtask'],
   label: ['frontend', 'backend', 'urgent', 'design', 'tech-debt'],
   assignee: ['me', '@unassigned'],
   project: [],
@@ -404,6 +415,7 @@ export function CommandPalette({
     query: textQuery,
     tab,
     organizationId: hasWorkspaceAccess ? currentOrganizationId : null,
+    facets,
   });
 
   const history = useHistory(hasWorkspaceAccess ? currentOrganizationId : null, open);
@@ -680,24 +692,39 @@ export function CommandPalette({
                   </span>
                 }
               >
-                {search.results.map((result) => (
-                  <CommandItem
-                    key={result.id}
-                    value={`result:${result.id}`}
-                    onSelect={() => navigate(result.href ?? '#')}
-                    className="text-foreground data-[selected=true]:bg-accent flex items-center gap-2 rounded-md"
-                  >
-                    <CircleDot className="h-3.5 w-3.5 shrink-0 text-blue-400" aria-hidden />
-                    <div className="flex min-w-0 flex-col">
-                      <span className="truncate">{result.title}</span>
-                      {result.subtitle ? (
-                        <span className="text-muted-foreground truncate text-[11px]">
-                          {result.subtitle}
+                {search.results.map((result) => {
+                  const Icon = RESULT_ICON[result.type] ?? Search;
+                  return (
+                    <CommandItem
+                      key={`${result.type}:${result.id}`}
+                      value={`result:${result.type}:${result.id}:${result.title}:${result.badge ?? ''}`}
+                      onSelect={() => navigate(result.href ?? '#')}
+                      className="text-foreground data-[selected=true]:bg-accent flex items-center gap-2 rounded-md"
+                    >
+                      <Icon className="h-3.5 w-3.5 shrink-0 text-blue-400" aria-hidden />
+                      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                        <div className="flex min-w-0 items-center gap-2">
+                          {result.badge ? (
+                            <span className="border-border bg-muted text-muted-foreground shrink-0 rounded-sm border px-1.5 py-0.5 font-mono text-[10px] leading-none">
+                              {result.badge}
+                            </span>
+                          ) : null}
+                          <span className="truncate text-sm">{result.title}</span>
+                        </div>
+                        {result.subtitle || result.meta ? (
+                          <span className="text-muted-foreground truncate text-[11px]">
+                            {result.subtitle ?? result.meta}
+                          </span>
+                        ) : null}
+                      </div>
+                      {result.meta && result.subtitle ? (
+                        <span className="text-muted-foreground hidden max-w-[140px] truncate text-[10px] sm:inline">
+                          {result.meta}
                         </span>
                       ) : null}
-                    </div>
-                  </CommandItem>
-                ))}
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
             ) : null}
 

@@ -770,7 +770,9 @@
       "sprint": "Sprint",
       "ai_draft": "AI draft",
       "agent": "Agent",
-      "update": "Update"
+      "update": "Update",
+      "project_created": "Project created",
+      "project_archived": "Project archived"
     },
     "type_action": {
       "mention": "mentioned you",
@@ -869,7 +871,9 @@
         "sprint_started": "Sprint started",
         "sprint_completed": "Sprint completed",
         "ai_draft_failed": "AI draft failed",
-        "agent_run_failed": "Agent failed"
+        "agent_run_failed": "Agent failed",
+        "project_created": "Project created",
+        "project_archived": "Project archived"
       },
       "meta": {
         "project": "Project",
@@ -1276,11 +1280,45 @@
     },
     "agent": {
       "title": "Agent activity",
-      "state": "State: {state}",
-      "idle": "Idle — no session dispatched yet",
+      "beta": "Beta",
+      "assignedTo": "Assigned to {name}",
+      "directDispatch": "Dispatch this task directly to a coding agent.",
+      "provider": "Provider",
+      "promptPlaceholder": "Optional instructions for this run...",
       "dispatch": "Dispatch",
+      "dispatching": "Dispatching",
       "dispatch_failed": "Dispatch failed",
-      "dispatch_failed_status": "Dispatch failed ({status})"
+      "dispatch_failed_status": "Dispatch failed ({status})",
+      "latestSessions": "Latest sessions",
+      "noSessions": "No agent sessions yet.",
+      "localRunner": "Local CLI: {command}",
+      "webhookRunner": "Webhook provider",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "Custom"
+      },
+      "states": {
+        "pending": "Pending",
+        "active": "Running",
+        "awaitingInput": "Needs input",
+        "error": "Failed",
+        "complete": "Complete",
+        "stale": "Stale"
+      },
+      "issueContext": "Issue fields",
+      "descriptionContext": "Description",
+      "instructionContext": "Admin notes",
+      "sessionStatus": "Session status",
+      "runner": "Runner",
+      "runnerStatus": "Run status",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "Exit code"
     },
     "vote": {
       "group_label": "Vote",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Platform",
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "Open full page"
   },
   "settingsProject": {
     "kicker": "Project",
@@ -3270,6 +3309,29 @@
         "requireSupervisionDetail": "Even autonomous projects stay preview-first when this is enabled.",
         "maxConcurrentRuns": "Max concurrent runs"
       },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
+      },
       "serviceStatus": {
         "title": "Service status",
         "description": "Runtime gates for the agent control plane."
@@ -3517,7 +3579,12 @@
         "issue_assigned": "Issue assigned",
         "issue_mentioned": "Issue mentioned",
         "issue_commented": "Issue commented",
+        "issue_status_changed": "Issue status changed",
+        "issue_created": "Issue created",
         "sprint_started": "Sprint started",
+        "sprint_completed": "Sprint completed",
+        "project_created": "Project created",
+        "project_archived": "Project archived",
         "daily_digest": "Daily digest",
         "weekly_digest": "Weekly digest"
       }

@@ -98,7 +98,7 @@ Pick the path that matches where you are deploying.
 | ---------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | **One-command Docker** | A fresh Linux VM or homelab box                     | `curl -fsSL https://raw.githubusercontent.com/neuraparse/tasknebula/main/scripts/quickstart.sh \| bash`                                   |
 | **Docker Desktop**     | Local Mac, Windows, or Linux PC with Docker Desktop | `curl -fsSLo compose.yml https://raw.githubusercontent.com/neuraparse/tasknebula/main/docker-compose.desktop.yml && docker compose up -d` |
-| **Pinned production**  | Repeatable self-hosted releases                     | `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.7.5 docker compose up -d`                                                                       |
+| **Pinned production**  | Repeatable self-hosted releases                     | `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.7.6 docker compose up -d`                                                                       |
 | **Source build**       | Local development or patching                       | `docker compose up -d --build`                                                                                                            |
 
 > 2026 note: Play with Docker is intentionally removed. Docker's
@@ -164,7 +164,7 @@ docker compose up -d
 
 ```bash
 docker compose pull web && docker compose up -d    # update published image
-TASKNEBULA_IMAGE=neuraparse/tasknebula:0.7.5 \
+TASKNEBULA_IMAGE=neuraparse/tasknebula:0.7.6 \
   docker compose up -d                             # pin a release
 docker compose up -d --build                       # build local source
 docker compose --profile cron up -d cron           # enable optional cron sidecar
@@ -199,13 +199,13 @@ container is never given Docker socket access by the default Compose files.
 | Item              | Value                                                                                                          |
 | ----------------- | -------------------------------------------------------------------------------------------------------------- |
 | Repository        | [`neuraparse/tasknebula`](https://hub.docker.com/r/neuraparse/tasknebula)                                      |
-| Recommended tag   | `0.7.5` for pinned installs, `latest` for quickstart demos                                                     |
+| Recommended tag   | `0.7.6` for pinned installs, `latest` for quickstart demos                                                     |
 | Current platform  | `linux/amd64`                                                                                                  |
 | Runtime port      | `3000`                                                                                                         |
 | Health endpoint   | `GET /api/health`                                                                                              |
 | Required services | PostgreSQL 16 + `pgvector`, Redis 7                                                                            |
 | Optional services | LiveKit voice rooms, cron sidecar, SMTP, OAuth providers, OpenAI / Anthropic keys                              |
-| Immutable pulls   | Inspect the tag digest with `docker buildx imagetools inspect neuraparse/tasknebula:0.7.5` before pinning hard |
+| Immutable pulls   | Inspect the tag digest with `docker buildx imagetools inspect neuraparse/tasknebula:0.7.6` before pinning hard |
 
 The production Compose file keeps core services always-on and gates optional
 automation behind Docker Compose profiles. This keeps `docker compose up -d`
@@ -275,10 +275,22 @@ the relevant project AI settings. Full audit trail in
 
 ## What's new
 
-Latest release: **v0.7.5**. Highlights from the latest release line
-(`v0.6.5` → `v0.7.5`) — see the [CHANGELOG](CHANGELOG.md) for the complete
+Latest release: **v0.7.6**. Highlights from the latest release line
+(`v0.6.5` → `v0.7.6`) — see the [CHANGELOG](CHANGELOG.md) for the complete
 history:
 
+- **IBM-modern app and email refresh.** Dashboard, project pages, project
+  settings, transactional mail templates, and admin email previews now share a
+  sharper IBM-style visual system with square geometry and stronger light-mode
+  contrast.
+- **Notifications, task assignments, search, and docs hardening.** Assignment
+  and project lifecycle notifications now use the unified mail-aware sender,
+  global search has broader hybrid scoring plus membership guards, and docs
+  loading avoids unnecessary payload work.
+- **Appearance persistence and agent activity.** Saved light/dark choices no
+  longer reset to system mode, the lower-left profile control uses one
+  consistent avatar shape, and issue agent activity/local runner surfaces ship
+  with 30-locale copy.
 - **AGENTOWNERS for coding-agent workflows.** MCP write tools now identify the
   configured AI actor before creating or changing issues, assignments, status,
   subtasks, and comments, so self-hosted teams can route Codex, Claude Code,
@@ -524,7 +536,7 @@ sed -i "s|^LIVEKIT_API_SECRET=.*|LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}|" .env
 Then start the stack:
 
 ```bash
-TASKNEBULA_IMAGE=neuraparse/tasknebula:0.7.5 docker compose up -d
+TASKNEBULA_IMAGE=neuraparse/tasknebula:0.7.6 docker compose up -d
 ```
 
 ### Reverse proxy
@@ -547,7 +559,7 @@ fallback for dev.
 
 | Area         | Recommendation                                                                                  |
 | ------------ | ----------------------------------------------------------------------------------------------- |
-| Image        | Pin `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.7.5`; use `latest` only for demos                 |
+| Image        | Pin `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.7.6`; use `latest` only for demos                 |
 | Secrets      | Generate `AUTH_SECRET`, `REDIS_PASSWORD`, and `LIVEKIT_API_SECRET` per install                  |
 | Network      | Keep Compose ports bound to `127.0.0.1`; expose through your reverse proxy                      |
 | Persistence  | Back up `postgres_data`, `redis_data`, and `uploads_data`                                       |
@@ -595,10 +607,10 @@ WebSocket upgrade headers + 24h idle timeout LiveKit needs.
 | Check containers    | `docker compose ps`                                            |
 | Check app health    | `curl -fsS http://localhost:3000/api/health`                   |
 | Enable cron sidecar | `docker compose --profile cron up -d cron`                     |
-| Inspect image tag   | `docker buildx imagetools inspect neuraparse/tasknebula:0.7.5` |
+| Inspect image tag   | `docker buildx imagetools inspect neuraparse/tasknebula:0.7.6` |
 
 > `docker-compose.yml` defaults to `image: neuraparse/tasknebula:latest`.
-> Set `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.7.5` in `.env` to pin.
+> Set `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.7.6` in `.env` to pin.
 
 ---
 

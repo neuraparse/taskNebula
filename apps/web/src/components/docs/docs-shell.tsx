@@ -2,6 +2,7 @@
 // QUAL-21 TS-strict-migration: file untouched intentionally; surfaces 8 errors
 // under `exactOptionalPropertyTypes`. See docs/TS_STRICT_MIGRATION.md.
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
@@ -21,12 +22,11 @@ import {
   useUpdateDocumentPage,
   useUploadDocumentAttachment,
   type DocumentPage,
+  type DocumentPageSummary,
   type DocumentShareUpdateInput,
   type DocumentTreeNode,
 } from '@/lib/hooks/use-docs';
-import { DocumentEditor } from './document-editor';
 import { DocsGettingStarted } from './docs-getting-started';
-import { DocumentDiscussionCard } from '@/components/chat/document-discussion-card';
 import { extractDocumentHeadings } from '@/lib/docs/content';
 import { buildDocumentTree } from '@/lib/docs/tree';
 import { formatFileSize } from '@/lib/hooks/use-attachments';
@@ -86,6 +86,23 @@ interface DocsShellProps {
   projectId?: string;
 }
 
+type DetailsTab = 'overview' | 'history' | 'connections';
+
+const DocumentEditor = dynamic(
+  () => import('./document-editor').then((mod) => mod.DocumentEditor),
+  {
+    loading: () => <DocsShellSkeleton />,
+  }
+);
+
+const DocumentDiscussionCard = dynamic(
+  () =>
+    import('@/components/chat/document-discussion-card').then((mod) => mod.DocumentDiscussionCard),
+  {
+    loading: () => null,
+  }
+);
+
 export function DocsShell({ projectId }: DocsShellProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -105,6 +122,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
   const [issueToAttach, setIssueToAttach] = useState<string>('');
   const [isPagesSheetOpen, setIsPagesSheetOpen] = useState(false);
   const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
+  const [detailsTab, setDetailsTab] = useState<DetailsTab>('overview');
 
   const requestedPageId = searchParams.get('pageId');
   const selectedSpaceId = searchParams.get('spaceId');
@@ -139,23 +157,32 @@ export function DocsShell({ projectId }: DocsShellProps) {
   const selectedPageId = requestedPageId ?? defaultPageId;
 
   const { data: currentPage, isLoading: pageLoading } = useDocumentPage(selectedPageId);
-  const { data: revisions = [] } = useDocumentRevisions(selectedPageId);
-  const { data: attachments = [] } = useDocumentAttachments(selectedPageId);
+  const shouldLoadHistory = detailsTab === 'history';
+  const shouldLoadConnections = detailsTab === 'connections';
+  const { data: revisions = [] } = useDocumentRevisions(selectedPageId, {
+    enabled: shouldLoadHistory,
+  });
+  const { data: attachments = [] } = useDocumentAttachments(selectedPageId, {
+    enabled: shouldLoadConnections,
+  });
   const createPage = useCreateDocumentPage();
   const updatePage = useUpdateDocumentPage();
   const restorePage = useRestoreDocumentPage();
   const updateShare = useUpdateDocumentShare(selectedPageId);
   const uploadAttachment = useUploadDocumentAttachment(selectedPageId || '');
   const deleteAttachment = useDeleteDocumentAttachment(selectedPageId || '');
-  const { data: searchableIssues } = useIssues({ projectId: currentPage?.projectId || undefined });
 
   const activeSpace = currentPage?.space || pagesData?.space || spaces?.[0] || null;
-  const allPages = pagesData?.pages || [];
+  const allPages: DocumentPageSummary[] = pagesData?.pages || [];
   const createTargetSpace =
     activeSpace || spaces?.find((space) => space.permissions?.canCreate) || spaces?.[0] || null;
   const pagePermissions =
     currentPage?.permissions || activeSpace?.permissions || createTargetSpace?.permissions || null;
   const canEditCurrentPage = !!pagePermissions?.canEdit;
+  const { data: searchableIssues } = useIssues(
+    { projectId: currentPage?.projectId || undefined },
+    { enabled: shouldLoadConnections && !!currentPage?.projectId && canEditCurrentPage }
+  );
   const canCreateChildPages = !!pagePermissions?.canCreate;
   const canCreateInContext =
     createTargetSpace?.permissions?.canCreate ??
@@ -717,7 +744,11 @@ export function DocsShell({ projectId }: DocsShellProps) {
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="flex min-h-full flex-col gap-4 p-4">
+      <Tabs
+        value={detailsTab}
+        onValueChange={(value) => setDetailsTab(value as DetailsTab)}
+        className="flex min-h-full flex-col gap-4 p-4"
+      >
         <TabsList className="grid h-9 grid-cols-3">
           <TabsTrigger value="overview" className="text-sm">
             {t('shell.tabs.overview')}
@@ -956,197 +987,205 @@ export function DocsShell({ projectId }: DocsShellProps) {
         </TabsContent>
 
         <TabsContent value="history" className="mt-0">
-          <DetailSection title={t('shell.section.history')} count={revisions.length}>
-            {revisions.length > 0 ? (
-              <Accordion
-                type="single"
-                collapsible
-                defaultValue={
-                  revisions.find((revision) => revision.revision === currentPage.currentRevision)
-                    ?.id
-                }
-                className="overflow-hidden rounded-lg border"
-              >
-                {revisions.map((revision) => {
-                  const isCurrentRevision = revision.revision === currentPage.currentRevision;
-                  const commitMessage = getRevisionCommitMessage(revision, t);
+          {detailsTab === 'history' ? (
+            <DetailSection title={t('shell.section.history')} count={revisions.length}>
+              {revisions.length > 0 ? (
+                <Accordion
+                  type="single"
+                  collapsible
+                  defaultValue={
+                    revisions.find((revision) => revision.revision === currentPage.currentRevision)
+                      ?.id
+                  }
+                  className="overflow-hidden rounded-lg border"
+                >
+                  {revisions.map((revision) => {
+                    const isCurrentRevision = revision.revision === currentPage.currentRevision;
+                    const commitMessage = getRevisionCommitMessage(revision, t);
 
-                  return (
-                    <AccordionItem
-                      key={revision.id}
-                      value={revision.id}
-                      className="border-border border-b last:border-b-0"
-                    >
-                      <AccordionTrigger className="px-3 py-2.5 hover:no-underline">
-                        <div className="min-w-0 flex-1 text-left">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-muted-foreground font-mono text-[11px]">
-                              {getShortRevisionId(revision.id)}
-                            </span>
-                            <span className="truncate text-sm font-medium">{commitMessage}</span>
-                            {isCurrentRevision && <Badge variant="secondary">{'HEAD'}</Badge>}
+                    return (
+                      <AccordionItem
+                        key={revision.id}
+                        value={revision.id}
+                        className="border-border border-b last:border-b-0"
+                      >
+                        <AccordionTrigger className="px-3 py-2.5 hover:no-underline">
+                          <div className="min-w-0 flex-1 text-left">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-muted-foreground font-mono text-[11px]">
+                                {getShortRevisionId(revision.id)}
+                              </span>
+                              <span className="truncate text-sm font-medium">{commitMessage}</span>
+                              {isCurrentRevision && <Badge variant="secondary">{'HEAD'}</Badge>}
+                            </div>
+                            <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-[11px]">
+                              <span>{revision.author?.name || t('shell.unknown')}</span>
+                              <span>{new Date(revision.createdAt).toLocaleString()}</span>
+                              <span>
+                                {'r'}
+                                {revision.revision}
+                              </span>
+                            </div>
                           </div>
-                          <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-[11px]">
-                            <span>{revision.author?.name || t('shell.unknown')}</span>
-                            <span>{new Date(revision.createdAt).toLocaleString()}</span>
-                            <span>
-                              {'r'}
-                              {revision.revision}
-                            </span>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-3 pb-3 pt-0">
+                          <div className="border-border space-y-2 border-t pt-3">
+                            {revision.changeSummary && (
+                              <div className="text-foreground text-xs">
+                                {revision.changeSummary}
+                              </div>
+                            )}
+                            <div className="text-muted-foreground text-xs leading-5">
+                              {revision.excerpt || t('shell.noPreview')}
+                            </div>
+                            {canEditCurrentPage && !isCurrentRevision && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8"
+                                onClick={() => handleRestoreRevision(revision.id)}
+                              >
+                                <RefreshCcw className="mr-2 h-3.5 w-3.5" />
+                                {t('shell.restore')}
+                              </Button>
+                            )}
                           </div>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="px-3 pb-3 pt-0">
-                        <div className="border-border space-y-2 border-t pt-3">
-                          {revision.changeSummary && (
-                            <div className="text-foreground text-xs">{revision.changeSummary}</div>
-                          )}
-                          <div className="text-muted-foreground text-xs leading-5">
-                            {revision.excerpt || t('shell.noPreview')}
-                          </div>
-                          {canEditCurrentPage && !isCurrentRevision && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8"
-                              onClick={() => handleRestoreRevision(revision.id)}
-                            >
-                              <RefreshCcw className="mr-2 h-3.5 w-3.5" />
-                              {t('shell.restore')}
-                            </Button>
-                          )}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  );
-                })}
-              </Accordion>
-            ) : (
-              <CompactEmptyState>{t('shell.noRevisions')}</CompactEmptyState>
-            )}
-          </DetailSection>
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
+                </Accordion>
+              ) : (
+                <CompactEmptyState>{t('shell.noRevisions')}</CompactEmptyState>
+              )}
+            </DetailSection>
+          ) : null}
         </TabsContent>
 
         <TabsContent value="connections" className="mt-0 space-y-3">
-          {currentPage.projectId ? (
-            <DocumentDiscussionCard pageId={currentPage.id} projectId={currentPage.projectId} />
+          {detailsTab === 'connections' ? (
+            <>
+              {currentPage.projectId ? (
+                <DocumentDiscussionCard pageId={currentPage.id} projectId={currentPage.projectId} />
+              ) : null}
+
+              <DetailSection
+                title={t('shell.section.relatedTasks')}
+                count={currentPage.relatedIssues?.length || 0}
+              >
+                {canEditCurrentPage && (
+                  <div className="flex gap-2">
+                    <Select value={issueToAttach} onValueChange={setIssueToAttach}>
+                      <SelectTrigger className="h-9 flex-1">
+                        <SelectValue placeholder={t('shell.attachTask')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(searchableIssues || []).map((issue) => (
+                          <SelectItem key={issue.id} value={issue.id}>
+                            {issue.key} {'·'} {issue.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" onClick={handleAttachIssue} disabled={!issueToAttach}>
+                      {t('shell.link')}
+                    </Button>
+                  </div>
+                )}
+                {currentPage.relatedIssues?.length ? (
+                  currentPage.relatedIssues.map((issue) => (
+                    <div key={issue.id}>
+                      <DetailButtonRow
+                        primary={issue.key}
+                        secondary={issue.title}
+                        action={
+                          canEditCurrentPage ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => handleDetachIssue(issue.id)}
+                            >
+                              <Unlink2 className="h-3.5 w-3.5" />
+                            </Button>
+                          ) : null
+                        }
+                      />
+                    </div>
+                  ))
+                ) : (
+                  <CompactEmptyState>{t('shell.noLinkedTasks')}</CompactEmptyState>
+                )}
+              </DetailSection>
+
+              <DetailSection
+                title={t('shell.section.backlinks')}
+                count={currentPage.backlinks?.length || 0}
+              >
+                {currentPage.backlinks?.length ? (
+                  currentPage.backlinks.map((backlink) => (
+                    <button
+                      key={backlink.id}
+                      className="w-full"
+                      onClick={() =>
+                        updateQueryParams({
+                          pageId: backlink.id,
+                          spaceId: currentPage.space?.id || activeSpace?.id || null,
+                        })
+                      }
+                      type="button"
+                    >
+                      <DetailButtonRow
+                        primary={backlink.title}
+                        secondary={backlink.slug}
+                        action={<ChevronRight className="text-muted-foreground h-4 w-4" />}
+                      />
+                    </button>
+                  ))
+                ) : (
+                  <CompactEmptyState>{t('shell.noBacklinks')}</CompactEmptyState>
+                )}
+              </DetailSection>
+
+              <DetailSection title={t('shell.section.attachments')} count={attachments.length}>
+                {attachments.length ? (
+                  attachments.map((attachment) => (
+                    <div key={attachment.id}>
+                      <DetailButtonRow
+                        primary={attachment.fileName}
+                        secondary={formatFileSize(attachment.fileSize)}
+                        action={
+                          <div className="flex items-center gap-1">
+                            <a
+                              href={`/api/uploads/${attachment.filePath.split('/').pop()}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:bg-accent inline-flex h-7 items-center rounded-md border px-2 text-xs transition-colors"
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              {t('shell.open')}
+                            </a>
+                            {canEditCurrentPage && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => deleteAttachment.mutate(attachment.id)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                          </div>
+                        }
+                      />
+                    </div>
+                  ))
+                ) : (
+                  <CompactEmptyState>{t('shell.noAttachments')}</CompactEmptyState>
+                )}
+              </DetailSection>
+            </>
           ) : null}
-
-          <DetailSection
-            title={t('shell.section.relatedTasks')}
-            count={currentPage.relatedIssues?.length || 0}
-          >
-            {canEditCurrentPage && (
-              <div className="flex gap-2">
-                <Select value={issueToAttach} onValueChange={setIssueToAttach}>
-                  <SelectTrigger className="h-9 flex-1">
-                    <SelectValue placeholder={t('shell.attachTask')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(searchableIssues || []).map((issue) => (
-                      <SelectItem key={issue.id} value={issue.id}>
-                        {issue.key} {'·'} {issue.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button size="sm" onClick={handleAttachIssue} disabled={!issueToAttach}>
-                  {t('shell.link')}
-                </Button>
-              </div>
-            )}
-            {currentPage.relatedIssues?.length ? (
-              currentPage.relatedIssues.map((issue) => (
-                <div key={issue.id}>
-                  <DetailButtonRow
-                    primary={issue.key}
-                    secondary={issue.title}
-                    action={
-                      canEditCurrentPage ? (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() => handleDetachIssue(issue.id)}
-                        >
-                          <Unlink2 className="h-3.5 w-3.5" />
-                        </Button>
-                      ) : null
-                    }
-                  />
-                </div>
-              ))
-            ) : (
-              <CompactEmptyState>{t('shell.noLinkedTasks')}</CompactEmptyState>
-            )}
-          </DetailSection>
-
-          <DetailSection
-            title={t('shell.section.backlinks')}
-            count={currentPage.backlinks?.length || 0}
-          >
-            {currentPage.backlinks?.length ? (
-              currentPage.backlinks.map((backlink) => (
-                <button
-                  key={backlink.id}
-                  className="w-full"
-                  onClick={() =>
-                    updateQueryParams({
-                      pageId: backlink.id,
-                      spaceId: currentPage.space?.id || activeSpace?.id || null,
-                    })
-                  }
-                  type="button"
-                >
-                  <DetailButtonRow
-                    primary={backlink.title}
-                    secondary={backlink.slug}
-                    action={<ChevronRight className="text-muted-foreground h-4 w-4" />}
-                  />
-                </button>
-              ))
-            ) : (
-              <CompactEmptyState>{t('shell.noBacklinks')}</CompactEmptyState>
-            )}
-          </DetailSection>
-
-          <DetailSection title={t('shell.section.attachments')} count={attachments.length}>
-            {attachments.length ? (
-              attachments.map((attachment) => (
-                <div key={attachment.id}>
-                  <DetailButtonRow
-                    primary={attachment.fileName}
-                    secondary={formatFileSize(attachment.fileSize)}
-                    action={
-                      <div className="flex items-center gap-1">
-                        <a
-                          href={`/api/uploads/${attachment.filePath.split('/').pop()}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hover:bg-accent inline-flex h-7 items-center rounded-md border px-2 text-xs transition-colors"
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          {t('shell.open')}
-                        </a>
-                        {canEditCurrentPage && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => deleteAttachment.mutate(attachment.id)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    }
-                  />
-                </div>
-              ))
-            ) : (
-              <CompactEmptyState>{t('shell.noAttachments')}</CompactEmptyState>
-            )}
-          </DetailSection>
         </TabsContent>
       </Tabs>
     </div>
@@ -1596,7 +1635,7 @@ function CompactEmptyState({ children }: { children: ReactNode }) {
   return <div className="text-muted-foreground px-4 py-4 text-sm">{children}</div>;
 }
 
-function sortDocumentPages(left: DocumentPage, right: DocumentPage) {
+function sortDocumentPages(left: DocumentPageSummary, right: DocumentPageSummary) {
   const positionDelta = left.position - right.position;
   if (positionDelta !== 0) {
     return positionDelta;

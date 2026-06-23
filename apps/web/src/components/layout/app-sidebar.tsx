@@ -458,7 +458,7 @@ function isHomeSectionPath(pathname: string | null | undefined): boolean {
 }
 
 const SIDEBAR_NAV_LINK_CLASS =
-  'row-interactive text-muted-foreground ease-snap border border-transparent hover:text-foreground data-[active=true]:border-primary/20 data-[active=true]:bg-primary/10 data-[active=true]:text-primary min-h-8 w-full min-w-0 rounded-md text-[13px] font-medium transition-all duration-150';
+  'row-interactive text-muted-foreground ease-snap border border-transparent hover:border-border-strong hover:bg-accent/70 hover:text-foreground data-[active=true]:border-primary/30 data-[active=true]:bg-primary/10 data-[active=true]:text-foreground min-h-8 w-full min-w-0 rounded-md text-[13px] font-medium transition-all duration-150';
 const SIDEBAR_NAV_LABEL_CLASS = 'min-w-0 flex-1 truncate';
 
 export function AppSidebar({
@@ -616,19 +616,19 @@ export function AppSidebar({
   return (
     <div className="flex h-screen">
       <AppRail hasWorkspaceAccess={hasWorkspaceAccess} isSuperAdmin={isSuperAdmin} />
-      <aside className="border-border bg-surface flex w-64 flex-col border-r">
-        <div className="border-border flex h-12 items-center border-b px-3">
+      <aside className="border-border bg-background flex w-64 flex-col border-r">
+        <div className="bg-surface-dark border-border-strong flex h-12 items-center border-b px-3 text-white">
           <button
-            className="ease-snap hover:bg-accent/60 flex w-full items-center justify-between rounded-md px-1 py-1.5 text-sm font-medium transition-all duration-150"
+            className="ease-snap flex w-full items-center justify-between rounded-md px-1 py-1.5 text-sm font-medium transition-all duration-150 hover:bg-white/10"
             aria-label={tActions('switch_workspace')}
           >
             <div className="flex items-center gap-2.5">
               <div className="bg-primary flex h-7 w-7 shrink-0 items-center justify-center rounded-md">
                 <TaskNebulaLogo compact className="h-5 w-5" />
               </div>
-              <span className="text-foreground font-semibold tracking-tight">TaskNebula</span>
+              <span className="font-semibold tracking-tight text-white">TaskNebula</span>
             </div>
-            <ChevronDown className="text-muted-foreground h-4 w-4" />
+            <ChevronDown className="h-4 w-4 text-white/55" />
           </button>
         </div>
 

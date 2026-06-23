@@ -15,6 +15,7 @@ import {
   Clock,
   ExternalLink,
   Flag,
+  FolderPlus,
   GitBranch,
   Link2,
   MessageSquare,
@@ -55,6 +56,12 @@ export function resolveHref(notification: Notification): string | null {
     notification.projectId
   ) {
     return `/projects/${notification.projectId}/settings?tab=ai-agents`;
+  }
+  if (
+    (notification.type === 'project_created' || notification.type === 'project_archived') &&
+    notification.projectId
+  ) {
+    return `/projects/${notification.projectId}`;
   }
   return null;
 }
@@ -135,6 +142,16 @@ const TYPE_VISUALS: Record<NotificationType, TypeVisual> = {
     Icon: Bot,
     labelKey: 'agent',
     tone: 'bg-destructive/10 text-destructive ring-destructive/30',
+  },
+  project_created: {
+    Icon: FolderPlus,
+    labelKey: 'project_created',
+    tone: 'bg-emerald-500/10 text-emerald-600 ring-emerald-500/30 dark:text-emerald-300',
+  },
+  project_archived: {
+    Icon: Archive,
+    labelKey: 'project_archived',
+    tone: 'bg-muted text-muted-foreground ring-border',
   },
 };
 

@@ -62,6 +62,20 @@ describe('use-issues hooks', () => {
 
       expect(result.current.error?.message).toBe('Failed to fetch issues');
     });
+
+    it('does not fetch issues when disabled', async () => {
+      const { result } = renderHook(
+        () => useIssues({ projectId: 'project-1' }, { enabled: false }),
+        {
+          wrapper: createWrapper(createQueryClient()),
+        }
+      );
+
+      await Promise.resolve();
+
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(result.current.data).toBeUndefined();
+    });
   });
 
   describe('useIssue', () => {

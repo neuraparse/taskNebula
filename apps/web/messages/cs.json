@@ -770,7 +770,9 @@
       "sprint": "Sprint",
       "ai_draft": "Návrh AI",
       "agent": "Agent",
-      "update": "Aktualizace"
+      "update": "Aktualizace",
+      "project_created": "Projekt vytvořen",
+      "project_archived": "Projekt archivován"
     },
     "type_action": {
       "mention": "vás zmínil(a)",
@@ -869,7 +871,9 @@
         "sprint_started": "Sprint zahájen",
         "sprint_completed": "Sprint dokončen",
         "ai_draft_failed": "Návrh AI selhal",
-        "agent_run_failed": "Agent selhal"
+        "agent_run_failed": "Agent selhal",
+        "project_created": "Projekt vytvořen",
+        "project_archived": "Projekt archivován"
       },
       "meta": {
         "project": "Projekt",
@@ -1276,11 +1280,45 @@
     },
     "agent": {
       "title": "Aktivita agenta",
-      "state": "Stav: {state}",
-      "idle": "Nečinný — zatím nebyla odeslána žádná relace",
+      "beta": "Beta",
+      "assignedTo": "Přiřazeno uživateli {name}",
+      "directDispatch": "Odešlete tento úkol přímo programovacímu agentovi.",
+      "provider": "Poskytovatel",
+      "promptPlaceholder": "Volitelné pokyny pro toto spuštění...",
       "dispatch": "Odeslat",
+      "dispatching": "Odesílá se",
       "dispatch_failed": "Odeslání selhalo",
-      "dispatch_failed_status": "Odeslání selhalo ({status})"
+      "dispatch_failed_status": "Odeslání selhalo ({status})",
+      "latestSessions": "Nejnovější relace",
+      "noSessions": "Zatím žádné relace agentů.",
+      "localRunner": "Místní CLI: {command}",
+      "webhookRunner": "Poskytovatel webhooku",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "Vlastní"
+      },
+      "states": {
+        "pending": "Čeká",
+        "active": "Běží",
+        "awaitingInput": "Vyžaduje vstup",
+        "error": "Selhalo",
+        "complete": "Dokončeno",
+        "stale": "Zastaralé"
+      },
+      "issueContext": "Pole úkolu",
+      "descriptionContext": "Popis",
+      "instructionContext": "Poznámky správce",
+      "sessionStatus": "Stav relace",
+      "runner": "Spouštěč",
+      "runnerStatus": "Stav běhu",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "Návratový kód"
     },
     "vote": {
       "group_label": "Hlasování",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Platforma",
     "ts_slug_placeholder": "platforma",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "Otevřít celou stránku"
   },
   "settingsProject": {
     "kicker": "Projekt",
@@ -3331,6 +3370,29 @@
         "description": "Celosystémová historie pro monitorování kvality zavádění a rozsahu dopadu.",
         "noData": "Zatím nebyly zaznamenány žádné běhy agentů.",
         "writesChip": "{count} zápisů"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "Úkol přiřazen",
         "issue_mentioned": "Zmínka v úkolu",
         "issue_commented": "Komentář k úkolu",
+        "issue_status_changed": "Stav úkolu změněn",
+        "issue_created": "Úkol vytvořen",
         "sprint_started": "Sprint zahájen",
+        "sprint_completed": "Sprint dokončen",
+        "project_created": "Projekt vytvořen",
+        "project_archived": "Projekt archivován",
         "daily_digest": "Denní přehled",
         "weekly_digest": "Týdenní přehled"
       }

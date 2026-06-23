@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.7.6] - 2026-06-23
+
+### Added
+
+- **IBM-modern transactional email system.** Mail templates, shared email
+  layout utilities, and the admin preview API now cover project lifecycle,
+  assignment, verification, and notification diagnostics with focused tests.
+- **Project lifecycle and assignment notifications.** Issue assignment,
+  project events, and notification delivery now flow through the unified
+  notification sender with email preference checks and regression coverage.
+- **Local coding-agent runner beta.** Admin Agent control can discover local
+  Claude Code/Codex runner configuration, issue dispatch creates agent
+  sessions, and issue sidebars expose live agent activity through the new
+  session APIs.
+
+### Changed
+
+- **IBM-modern app surfaces.** Dashboard, project pages, project settings,
+  shell navigation, cards, buttons, and loading states were tightened around
+  square geometry, denser spacing, and improved light/dark contrast.
+- **Faster docs and stronger search.** Docs loading now avoids unnecessary
+  payload work, while global search and command palette matching use broader
+  hybrid scoring, membership guards, and richer test coverage.
+- **30-locale agent activity copy.** The new agent activity panel strings are
+  translated across all shipped catalogs and verified by the i18n parity gate.
+
+### Fixed
+
+- **Appearance persistence stays explicit.** Settings → Appearance now keeps a
+  saved light/dark choice instead of silently falling back to system mode, and
+  partial appearance updates preserve default values safely.
+- **Profile and light-mode contrast polish.** The lower-left profile trigger
+  uses one square avatar shape consistently and remains legible in day mode.
+- **Email and notification edge cases.** Notification inserts, template
+  selection, and email send failures are handled more defensively so task and
+  assignment events do not silently disappear.
+
 ## [0.7.5] - 2026-06-22
 
 ### Added
@@ -532,7 +569,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Internal alpha release. [See git log] for details.
 
-[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.5...HEAD
+[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.6...HEAD
+[0.7.6]: https://github.com/neuraparse/tasknebula/compare/v0.7.5...v0.7.6
 [0.7.5]: https://github.com/neuraparse/tasknebula/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/neuraparse/tasknebula/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/neuraparse/tasknebula/compare/v0.7.2...v0.7.3

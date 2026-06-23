@@ -118,12 +118,10 @@ describe('DashboardClient', () => {
       </Wrapper>
     );
 
-    expect(
-      await screen.findByText(/Welcome back, Ada/i)
-    ).toBeInTheDocument();
-    expect(
-      await screen.findByText('Ship dashboard refresh')
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Welcome back, Ada/i)).toBeInTheDocument();
+    expect(await screen.findByText('Ship dashboard refresh')).toBeInTheDocument();
+    expect(document.querySelector('.dashboard-carbon')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /my issues/i })).toHaveClass('rounded-none');
   });
 
   it('shows the empty state when no issues are returned', async () => {

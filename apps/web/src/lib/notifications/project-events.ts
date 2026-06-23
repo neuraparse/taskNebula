@@ -6,9 +6,10 @@ import {
   projectMembers,
   notifications,
   notificationPreferences,
-  sendProjectNotificationEmail,
 } from '@tasknebula/db';
 import { eq, and, inArray, ne } from 'drizzle-orm';
+
+import { sendNotificationEmail } from '@/lib/notifications/email-notification';
 
 /**
  * Project lifecycle notifications.
@@ -42,7 +43,7 @@ type ProjectEventInput = {
 async function filterInAppRecipients(
   userIds: string[],
   organizationId: string,
-  field: 'inAppOnProjectCreated' | 'inAppOnProjectArchived',
+  field: 'inAppOnProjectCreated' | 'inAppOnProjectArchived'
 ): Promise<string[]> {
   if (userIds.length === 0) return [];
 
@@ -52,8 +53,8 @@ async function filterInAppRecipients(
     .where(
       and(
         eq(notificationPreferences.organizationId, organizationId),
-        inArray(notificationPreferences.userId, userIds),
-      ),
+        inArray(notificationPreferences.userId, userIds)
+      )
     );
 
   const prefByUser = new Map(prefs.map((p) => [p.userId, p]));
@@ -73,7 +74,7 @@ async function filterInAppRecipients(
  */
 async function getOrgRecipients(
   organizationId: string,
-  excludeUserId: string,
+  excludeUserId: string
 ): Promise<{ userId: string; email: string; name: string | null }[]> {
   const rows = await db
     .select({
@@ -87,8 +88,8 @@ async function getOrgRecipients(
       and(
         eq(organizationMembers.organizationId, organizationId),
         eq(organizationMembers.status, 'active'),
-        ne(organizationMembers.userId, excludeUserId),
-      ),
+        ne(organizationMembers.userId, excludeUserId)
+      )
     );
 
   return rows.filter((r) => r.email);
@@ -100,7 +101,7 @@ async function getOrgRecipients(
  */
 async function getProjectRecipients(
   projectId: string,
-  excludeUserId: string,
+  excludeUserId: string
 ): Promise<{ userId: string; email: string; name: string | null }[]> {
   const rows = await db
     .select({
@@ -110,12 +111,7 @@ async function getProjectRecipients(
     })
     .from(projectMembers)
     .innerJoin(users, eq(users.id, projectMembers.userId))
-    .where(
-      and(
-        eq(projectMembers.projectId, projectId),
-        ne(projectMembers.userId, excludeUserId),
-      ),
-    );
+    .where(and(eq(projectMembers.projectId, projectId), ne(projectMembers.userId, excludeUserId)));
 
   return rows.filter((r) => r.email);
 }
@@ -139,6 +135,52 @@ async function resolveActorAndOrg(actorUserId: string, organizationId: string) {
   };
 }
 
+function appUrl() {
+  return (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.APP_URL ||
+    'http://localhost:3000'
+  ).replace(/\/+$/, '');
+}
+
+async function sendProjectLifecycleEmails(params: {
+  templateType: 'project_created' | 'project_archived';
+  project: ProjectEventInput['project'];
+  organization: { id: string; name: string };
+  actorName: string;
+  recipients: ReadonlyArray<{ userId: string; email: string; name: string | null }>;
+  archivedAt?: string;
+}): Promise<void> {
+  const baseUrl = appUrl();
+  const projectUrl = `${baseUrl}/projects/${params.project.id}`;
+  const unsubscribeUrl = `${baseUrl}/settings/notifications`;
+
+  await Promise.all(
+    params.recipients.map((recipient) =>
+      sendNotificationEmail({
+        to: recipient.email,
+        userId: recipient.userId,
+        organizationId: params.organization.id,
+        templateType: params.templateType,
+        variables: {
+          userName: recipient.name || recipient.email.split('@')[0] || 'there',
+          recipientName: recipient.name || recipient.email.split('@')[0] || 'there',
+          userEmail: recipient.email,
+          projectName: params.project.name,
+          projectKey: params.project.key || '',
+          projectDescription: params.project.description || 'No description provided yet.',
+          projectUrl,
+          organizationName: params.organization.name,
+          actorName: params.actorName,
+          archivedAt: params.archivedAt || '',
+          appUrl: baseUrl,
+          unsubscribeUrl,
+        },
+      })
+    )
+  );
+}
+
 /**
  * Fire-and-forget entry point for `project.created`.
  * Safe to call without await — errors are swallowed after logging.
@@ -151,22 +193,19 @@ export function notifyProjectCreated(input: ProjectEventInput): void {
 
 async function _notifyProjectCreated(input: ProjectEventInput): Promise<void> {
   try {
-    const recipients = await getOrgRecipients(
-      input.project.organizationId,
-      input.actorUserId,
-    );
+    const recipients = await getOrgRecipients(input.project.organizationId, input.actorUserId);
     if (recipients.length === 0) return;
 
     const { actorName, organization } = await resolveActorAndOrg(
       input.actorUserId,
-      input.project.organizationId,
+      input.project.organizationId
     );
 
     // In-app notifications — gated by prefs.
     const inAppRecipients = await filterInAppRecipients(
       recipients.map((r) => r.userId),
       input.project.organizationId,
-      'inAppOnProjectCreated',
+      'inAppOnProjectCreated'
     );
 
     if (inAppRecipients.length > 0) {
@@ -180,18 +219,18 @@ async function _notifyProjectCreated(input: ProjectEventInput): Promise<void> {
             message,
             projectId: input.project.id,
             actorId: input.actorUserId,
-          })),
+          }))
         );
       } catch (err) {
         console.warn('Failed to insert project_created notifications:', err);
       }
     }
 
-    // Email sends — each recipient is gated inside sendEmail() by prefs.
-    await sendProjectNotificationEmail({
+    // Email sends — each recipient is gated by preferences inside sendNotificationEmail().
+    await sendProjectLifecycleEmails({
       project: input.project,
       organization,
-      eventType: 'project.created',
+      templateType: 'project_created',
       actorName,
       recipients,
     });
@@ -216,7 +255,7 @@ async function _notifyProjectArchived(input: ProjectEventInput): Promise<void> {
 
     const { actorName, organization } = await resolveActorAndOrg(
       input.actorUserId,
-      input.project.organizationId,
+      input.project.organizationId
     );
 
     const archivedAt = new Date().toISOString().slice(0, 10);
@@ -224,7 +263,7 @@ async function _notifyProjectArchived(input: ProjectEventInput): Promise<void> {
     const inAppRecipients = await filterInAppRecipients(
       recipients.map((r) => r.userId),
       input.project.organizationId,
-      'inAppOnProjectArchived',
+      'inAppOnProjectArchived'
     );
 
     if (inAppRecipients.length > 0) {
@@ -238,17 +277,17 @@ async function _notifyProjectArchived(input: ProjectEventInput): Promise<void> {
             message,
             projectId: input.project.id,
             actorId: input.actorUserId,
-          })),
+          }))
         );
       } catch (err) {
         console.warn('Failed to insert project_archived notifications:', err);
       }
     }
 
-    await sendProjectNotificationEmail({
+    await sendProjectLifecycleEmails({
       project: input.project,
       organization,
-      eventType: 'project.archived',
+      templateType: 'project_archived',
       actorName,
       archivedAt,
       recipients,

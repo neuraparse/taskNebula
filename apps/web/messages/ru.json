@@ -770,7 +770,9 @@
       "sprint": "Спринт",
       "ai_draft": "Черновик AI",
       "agent": "Агент",
-      "update": "Обновление"
+      "update": "Обновление",
+      "project_created": "Проект создан",
+      "project_archived": "Проект архивирован"
     },
     "type_action": {
       "mention": "упомянул вас",
@@ -869,7 +871,9 @@
         "sprint_started": "Спринт начат",
         "sprint_completed": "Спринт завершён",
         "ai_draft_failed": "Сбой черновика AI",
-        "agent_run_failed": "Сбой агента"
+        "agent_run_failed": "Сбой агента",
+        "project_created": "Проект создан",
+        "project_archived": "Проект архивирован"
       },
       "meta": {
         "project": "Проект",
@@ -1276,11 +1280,45 @@
     },
     "agent": {
       "title": "Активность агента",
-      "state": "Состояние: {state}",
-      "idle": "Простаивает — сессия ещё не запущена",
-      "dispatch": "Запустить",
-      "dispatch_failed": "Не удалось запустить",
-      "dispatch_failed_status": "Не удалось запустить ({status})"
+      "beta": "Бета",
+      "assignedTo": "Назначено {name}",
+      "directDispatch": "Отправьте эту задачу напрямую кодовому агенту.",
+      "provider": "Поставщик",
+      "promptPlaceholder": "Необязательные инструкции для этого запуска...",
+      "dispatch": "Отправить",
+      "dispatching": "Отправка",
+      "dispatch_failed": "Не удалось отправить",
+      "dispatch_failed_status": "Не удалось отправить ({status})",
+      "latestSessions": "Последние сеансы",
+      "noSessions": "Сеансов агента пока нет.",
+      "localRunner": "Локальный CLI: {command}",
+      "webhookRunner": "Поставщик webhook",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "Пользовательский"
+      },
+      "states": {
+        "pending": "Ожидает",
+        "active": "Выполняется",
+        "awaitingInput": "Нужен ввод",
+        "error": "Ошибка",
+        "complete": "Завершено",
+        "stale": "Устарело"
+      },
+      "issueContext": "Поля задачи",
+      "descriptionContext": "Описание",
+      "instructionContext": "Заметки администратора",
+      "sessionStatus": "Статус сеанса",
+      "runner": "Запуск",
+      "runnerStatus": "Статус запуска",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "Код выхода"
     },
     "vote": {
       "group_label": "Голос",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Platform",
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "Открыть полную страницу"
   },
   "settingsProject": {
     "kicker": "Проект",
@@ -3331,6 +3370,29 @@
         "description": "Общесистемная история для мониторинга качества развёртывания и радиуса поражения.",
         "noData": "Запуски агентов ещё не записаны.",
         "writesChip": "{count} записей"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "Задача назначена",
         "issue_mentioned": "Упоминание в задаче",
         "issue_commented": "Комментарий к задаче",
+        "issue_status_changed": "Статус рабочего элемента изменен",
+        "issue_created": "Рабочий элемент создан",
         "sprint_started": "Спринт начат",
+        "sprint_completed": "Спринт завершен",
+        "project_created": "Проект создан",
+        "project_archived": "Проект архивирован",
         "daily_digest": "Ежедневная сводка",
         "weekly_digest": "Еженедельная сводка"
       }

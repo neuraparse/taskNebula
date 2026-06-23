@@ -17,7 +17,7 @@ import { db } from '../client';
 import { users } from '../schema/users';
 import { organizationMembers } from '../schema/organizations';
 
-export type AgentProviderHandle = 'claude' | 'cursor' | 'devin' | 'copilot';
+export type AgentProviderHandle = 'claude' | 'codex' | 'cursor' | 'devin' | 'copilot';
 
 interface AgentSpec {
   handle: AgentProviderHandle;
@@ -27,6 +27,7 @@ interface AgentSpec {
 
 const DEFAULT_AGENTS: AgentSpec[] = [
   { handle: 'claude', name: 'Claude (Anthropic)', image: 'https://avatar.vercel.sh/claude' },
+  { handle: 'codex', name: 'Codex (OpenAI)', image: 'https://avatar.vercel.sh/codex' },
   { handle: 'cursor', name: 'Cursor', image: 'https://avatar.vercel.sh/cursor' },
   { handle: 'devin', name: 'Devin (Cognition)', image: 'https://avatar.vercel.sh/devin' },
   { handle: 'copilot', name: 'GitHub Copilot', image: 'https://avatar.vercel.sh/copilot' },

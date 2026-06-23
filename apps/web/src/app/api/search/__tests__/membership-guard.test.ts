@@ -7,9 +7,9 @@
  *
  *   1. anonymous           → 401
  *   2. non-member org      → 403 { error: 'Forbidden' }
- *   3. member org, no proj → passes guard, hits parseJQL (400 invalid syntax)
+ *   3. member org, no proj → passes guard, free-text delegates to hybrid
  *   4. member org, non-member project → 403
- *   5. member org, member project     → passes guard, hits parseJQL
+ *   5. member org, member project     → passes guard, free-text delegates to hybrid
  *
  * Mocks mirror the strategy used in
  * apps/web/src/app/api/projects/route.test.ts and sprints/route.test.ts:
@@ -23,6 +23,8 @@ const authMock = jest.fn();
 const dbSelectMock = jest.fn();
 const dbInsertMock = jest.fn();
 const parseJQLMock = jest.fn();
+const hybridSearchMock = jest.fn();
+const looksLikeFreeTextMock = jest.fn();
 
 class MockNextRequest {
   private readonly bodyValue: string;
@@ -120,6 +122,11 @@ jest.mock('@tasknebula/db', () => ({
     role: 'projectMembers.role',
   },
   parseJQL: (...args: unknown[]) => parseJQLMock(...args),
+}));
+
+jest.mock('@/lib/search/hybrid', () => ({
+  hybridSearch: (...args: unknown[]) => hybridSearchMock(...args),
+  looksLikeFreeText: (...args: unknown[]) => looksLikeFreeTextMock(...args),
 }));
 
 jest.mock('drizzle-orm', () => ({
@@ -250,6 +257,24 @@ describe('/api/search membership guard', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    dbInsertMock.mockReturnValue({
+      values: jest.fn().mockResolvedValue(undefined),
+    });
+    hybridSearchMock.mockResolvedValue([
+      {
+        id: 'iss-1',
+        issueId: 'iss-1',
+        key: 'TN-1',
+        title: 'Free text match',
+        snippet: 'foo',
+        projectId: 'proj-1',
+        entityType: 'issue',
+        bm25Rank: 1,
+        vectorRank: null,
+        score: 0.1,
+      },
+    ]);
+    looksLikeFreeTextMock.mockReturnValue(true);
     // Default: parseJQL returns invalid so we never reach the heavy issues
     // query. Tests that need to assert the *guard* passes the call through
     // assert on the resulting "Invalid query syntax" 400.
@@ -296,13 +321,35 @@ describe('/api/search membership guard', () => {
       new NextRequestCtor('http://localhost:3002/api/search?q=foo&organizationId=org-1')
     );
 
-    // We reached parseJQL (mocked to invalid) → 400, not 403/401.
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
-      error: 'Invalid query syntax',
-      details: 'mocked invalid query',
+      results: [
+        {
+          id: 'iss-1',
+          issueId: 'iss-1',
+          key: 'TN-1',
+          title: 'Free text match',
+          snippet: 'foo',
+          projectId: 'proj-1',
+          entityType: 'issue',
+          bm25Rank: 1,
+          vectorRank: null,
+          score: 0.1,
+        },
+      ],
+      count: 1,
+      query: 'foo',
+      criteria: { text: 'foo' },
+      mode: 'freeText',
     });
-    expect(parseJQLMock).toHaveBeenCalledWith('foo');
+    expect(hybridSearchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: 'foo',
+        filters: { organizationId: 'org-1', projectId: null },
+        limit: 100,
+      })
+    );
+    expect(parseJQLMock).not.toHaveBeenCalled();
     // Only one membership lookup since no projectId was supplied.
     expect(dbSelectMock).toHaveBeenCalledTimes(1);
   });
@@ -340,13 +387,41 @@ describe('/api/search membership guard', () => {
       )
     );
 
-    // Past the guard → parseJQL is invoked and returns invalid → 400.
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      count: 1,
+      query: 'foo',
+      criteria: { text: 'foo' },
+      mode: 'freeText',
+    });
+    expect(hybridSearchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: 'foo',
+        filters: { organizationId: 'org-1', projectId: 'proj-1' },
+      })
+    );
+    expect(parseJQLMock).not.toHaveBeenCalled();
+    expect(dbSelectMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps structured JQL on the parser path after the guard passes', async () => {
+    authMock.mockResolvedValue({ user: { id: 'user-1' } });
+    dbSelectMock.mockReturnValueOnce(limitBuilder([{ role: 'member' }]));
+    looksLikeFreeTextMock.mockReturnValue(false);
+
+    const response = await GET(
+      new NextRequestCtor(
+        'http://localhost:3002/api/search?q=status%20%3D%20done&organizationId=org-1'
+      )
+    );
+
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({
       error: 'Invalid query syntax',
       details: 'mocked invalid query',
     });
-    expect(parseJQLMock).toHaveBeenCalledWith('foo');
-    expect(dbSelectMock).toHaveBeenCalledTimes(2);
+    expect(parseJQLMock).toHaveBeenCalledWith('status = done');
+    expect(hybridSearchMock).not.toHaveBeenCalled();
+    expect(dbSelectMock).toHaveBeenCalledTimes(1);
   });
 });

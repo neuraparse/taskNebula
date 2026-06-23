@@ -45,6 +45,15 @@ jest.mock('@/lib/hooks/use-agents', () => ({
     error: null,
   }),
   useAdminAgentStream: () => mockAgentStream,
+  useAdminLocalAgentRunners: () => ({
+    data: { organization: { id: 'org-test', name: 'Org Test' }, providers: [] },
+    isLoading: false,
+    error: null,
+  }),
+  useUpdateAdminLocalAgentRunner: () => ({
+    mutateAsync: jest.fn().mockResolvedValue(undefined),
+    isPending: false,
+  }),
   useUpdateAdminAgentControl: () => ({
     mutateAsync: jest.fn().mockResolvedValue(undefined),
     isPending: false,

@@ -26,6 +26,7 @@ interface UserProfileDropdownProps {
   sideOffset?: number;
   triggerClassName?: string;
   avatarClassName?: string;
+  fallbackClassName?: string;
 }
 
 export function UserProfileDropdown({
@@ -34,6 +35,7 @@ export function UserProfileDropdown({
   sideOffset = 8,
   triggerClassName,
   avatarClassName,
+  fallbackClassName,
 }: UserProfileDropdownProps = {}) {
   const { user, isLoading } = useUser();
   const t = useTranslations('userSecurity');
@@ -44,14 +46,16 @@ export function UserProfileDropdown({
     triggerClassName
   );
   const avatarClasses = cn('h-8 w-8 rounded-[2px]', avatarClassName);
+  const fallbackClasses = cn(
+    'bg-muted text-muted-foreground rounded-[2px] text-xs font-medium',
+    fallbackClassName
+  );
 
   if (isLoading || !user) {
     return (
       <Button variant="ghost" className={triggerClasses} disabled aria-label={t('accountMenu')}>
         <Avatar className={avatarClasses}>
-          <AvatarFallback className="bg-muted text-muted-foreground rounded-[2px] text-xs">
-            --
-          </AvatarFallback>
+          <AvatarFallback className={fallbackClasses}>--</AvatarFallback>
         </Avatar>
       </Button>
     );
@@ -76,9 +80,7 @@ export function UserProfileDropdown({
         >
           <Avatar className={avatarClasses}>
             <AvatarImage src={user.image || undefined} alt={user.name || t('userAlt')} />
-            <AvatarFallback className="rounded-[2px] text-xs font-medium">
-              {initials}
-            </AvatarFallback>
+            <AvatarFallback className={fallbackClasses}>{initials}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -93,9 +95,7 @@ export function UserProfileDropdown({
         <div className="border-border flex items-center gap-3 border-b px-3 py-3">
           <Avatar className="h-9 w-9 shrink-0 rounded-[2px]">
             <AvatarImage src={user.image || undefined} alt={user.name || t('userAlt')} />
-            <AvatarFallback className="rounded-[2px] text-xs font-medium">
-              {initials}
-            </AvatarFallback>
+            <AvatarFallback className={fallbackClasses}>{initials}</AvatarFallback>
           </Avatar>
           <div className="min-w-0">
             {user.name && <p className="truncate text-sm font-medium leading-tight">{user.name}</p>}
@@ -116,7 +116,7 @@ export function UserProfileDropdown({
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
-          className="h-11 rounded-none px-3 text-sm text-[#da1e28] transition-colors duration-150 focus:bg-[#fff1f1] focus:text-[#a2191f]"
+          className="text-destructive focus:bg-destructive/10 focus:text-destructive h-11 rounded-none px-3 text-sm transition-colors duration-150"
           disabled={isSigningOut}
           onSelect={(event) => {
             event.preventDefault();

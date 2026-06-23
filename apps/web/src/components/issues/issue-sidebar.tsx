@@ -486,13 +486,11 @@ export function IssueSidebar({ issue }: IssueSidebarProps) {
         </div>
       </section>
 
-      {agentAssignee ? (
-        <AgentActivityPanel
-          issueId={issue.id}
-          agentProvider={agentAssignee.agentProvider!}
-          assigneeName={agentAssignee.name}
-        />
-      ) : null}
+      <AgentActivityPanel
+        issueId={issue.id}
+        agentProvider={agentAssignee?.agentProvider ?? null}
+        assigneeName={agentAssignee?.name}
+      />
 
       <section className="space-y-3">
         <IssueCustomFields issueId={issue.id} />

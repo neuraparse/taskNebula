@@ -945,6 +945,105 @@
     box-shadow: 0 0 0 3px currentColor;
     box-shadow: 0 0 0 3px hsl(var(--accent-emerald) / 0.18);
   }
+
+  /* Dashboard-only Carbon treatment: crisp panels, square controls, no lift. */
+  .dashboard-carbon {
+    font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, var(--font-sans), sans-serif;
+    word-spacing: 0;
+    background-image:
+      linear-gradient(90deg, hsl(var(--border) / 0.42) 1px, transparent 1px),
+      linear-gradient(180deg, hsl(var(--border) / 0.42) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+
+  .dark .dashboard-carbon {
+    background-image:
+      linear-gradient(90deg, hsl(var(--border) / 0.26) 1px, transparent 1px),
+      linear-gradient(180deg, hsl(var(--border) / 0.26) 1px, transparent 1px);
+  }
+
+  .dashboard-carbon :is(.surface-card, .surface-inset, .surface-glass) {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .dashboard-carbon .surface-card {
+    background:
+      linear-gradient(180deg, hsl(var(--foreground) / 0.018), transparent 64px), hsl(var(--card));
+  }
+
+  .dark .dashboard-carbon .surface-card {
+    background:
+      linear-gradient(180deg, hsl(var(--foreground) / 0.035), transparent 64px), hsl(var(--card));
+  }
+
+  .dashboard-carbon :is(.surface-card, .surface-card-hover):hover {
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  .dashboard-carbon
+    :is(
+      .rounded,
+      .rounded-sm,
+      .rounded-md,
+      .rounded-lg,
+      .rounded-xl,
+      .rounded-2xl,
+      .rounded-3xl,
+      .rounded-full
+    ) {
+    border-radius: 0 !important;
+  }
+
+  .dashboard-carbon
+    :is(
+      .chip,
+      .chip-accent,
+      .chip-blue,
+      .chip-violet,
+      .chip-cyan,
+      .chip-emerald,
+      .chip-amber,
+      .chip-rose,
+      .live-pill,
+      .panel-info,
+      .panel-success,
+      .panel-warn,
+      .panel-danger,
+      .row-interactive,
+      .icon-tile
+    ) {
+    border-radius: 0 !important;
+  }
+
+  .dashboard-carbon .kicker {
+    font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, var(--font-sans), sans-serif;
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+
+  .dashboard-carbon [class*='tracking-'] {
+    letter-spacing: 0 !important;
+  }
+
+  .dashboard-carbon .row-interactive {
+    background: transparent;
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease,
+      color 120ms ease;
+  }
+
+  .dashboard-carbon .row-interactive:hover {
+    background: hsl(var(--surface) / 0.72);
+  }
+
+  .dashboard-carbon :is(button, a, [role='button'], [role='tab']):focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: -2px;
+    box-shadow: none !important;
+  }
 }
 
 /* ----------------------------------------------------------------------------

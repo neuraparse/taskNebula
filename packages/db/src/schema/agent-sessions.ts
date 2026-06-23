@@ -43,6 +43,7 @@ export const agentSessionStateEnum = pgEnum('agent_session_state', [
 
 export const agentSessionProviderEnum = pgEnum('agent_session_provider', [
   'claude',
+  'codex',
   'cursor',
   'devin',
   'copilot',
@@ -53,7 +54,9 @@ export const agentSessionProviderEnum = pgEnum('agent_session_provider', [
 export const agentSessions = pgTable(
   'agent_sessions',
   {
-    id: text('id').$defaultFn(() => createId()).primaryKey(),
+    id: text('id')
+      .$defaultFn(() => createId())
+      .primaryKey(),
 
     issueId: text('issue_id')
       .notNull()
@@ -84,17 +87,16 @@ export const agentSessions = pgTable(
     issueIdx: index('agent_session_issue_idx').on(table.issueId),
     stateIdx: index('agent_session_state_idx').on(table.state),
     providerIdx: index('agent_session_provider_idx').on(table.provider),
-    issueStateIdx: index('agent_session_issue_state_idx').on(
-      table.issueId,
-      table.state
-    ),
+    issueStateIdx: index('agent_session_issue_state_idx').on(table.issueId, table.state),
   })
 );
 
 export const agentProviders = pgTable(
   'agent_providers',
   {
-    id: text('id').$defaultFn(() => createId()).primaryKey(),
+    id: text('id')
+      .$defaultFn(() => createId())
+      .primaryKey(),
 
     // Workspace = TaskNebula organization. Provider config is scoped here so
     // each org wires up its own Cursor / Devin / Claude tokens.
@@ -107,10 +109,9 @@ export const agentProviders = pgTable(
     // Optional FK to the encrypted client credentials envelope. We point at the
     // existing `integration_client_credentials` row (already AES-256-GCM
     // wrapped) rather than duplicating secret storage.
-    credentialsRef: text('credentials_ref').references(
-      () => integrationClientCredentials.id,
-      { onDelete: 'set null' }
-    ),
+    credentialsRef: text('credentials_ref').references(() => integrationClientCredentials.id, {
+      onDelete: 'set null',
+    }),
 
     // Webhook endpoint we POST AgentSessionRequest events to.
     endpointUrl: text('endpoint_url').notNull(),

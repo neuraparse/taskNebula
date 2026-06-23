@@ -2,13 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/auth';
 import { createId } from '@paralleldrive/cuid2';
-import {
-  createAuditLog,
-  db,
-  documentPages,
-  eq,
-  projects,
-} from '@tasknebula/db';
+import { and, createAuditLog, db, documentPages, eq } from '@tasknebula/db';
 import {
   buildDocumentPageResponse,
   createInitialRevision,
@@ -64,21 +58,34 @@ export async function GET(request: NextRequest) {
       }
 
       const { isSuperAdmin } = await getUserFlags(session.user.id);
-      const permissions = await getProjectDocumentPermissions(session.user.id, projectId, isSuperAdmin);
+      const permissions = await getProjectDocumentPermissions(
+        session.user.id,
+        projectId,
+        isSuperAdmin
+      );
       if (!permissions.canBrowse) {
-        return NextResponse.json({ error: 'You do not have permission to view project docs' }, { status: 403 });
+        return NextResponse.json(
+          { error: 'You do not have permission to view project docs' },
+          { status: 403 }
+        );
       }
 
       const space = await ensureProjectDocumentSpace(projectId, session.user.id);
       if (!space) {
-        return NextResponse.json({ error: 'Project docs space could not be created' }, { status: 500 });
+        return NextResponse.json(
+          { error: 'Project docs space could not be created' },
+          { status: 500 }
+        );
       }
 
       resolvedSpaceId = space.id;
     }
 
     if (!resolvedSpaceId) {
-      const organizationId = await resolveOrganizationIdForUser(session.user.id, organizationIdParam);
+      const organizationId = await resolveOrganizationIdForUser(
+        session.user.id,
+        organizationIdParam
+      );
       if (!organizationId) {
         return NextResponse.json({ pages: [], space: null });
       }
@@ -92,7 +99,10 @@ export async function GET(request: NextRequest) {
 
       const space = await ensureOrganizationDocumentSpace(organizationId, session.user.id);
       if (!space) {
-        return NextResponse.json({ error: 'Organization docs space could not be created' }, { status: 500 });
+        return NextResponse.json(
+          { error: 'Organization docs space could not be created' },
+          { status: 500 }
+        );
       }
 
       resolvedSpaceId = space.id;
@@ -100,13 +110,34 @@ export async function GET(request: NextRequest) {
 
     const access = await resolveDocumentSpaceAccess(session.user.id, resolvedSpaceId);
     if (!access?.permissions.canBrowse) {
-      return NextResponse.json({ error: 'You do not have permission to view this document space' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'You do not have permission to view this document space' },
+        { status: 403 }
+      );
     }
 
-    const pages = await db.query.documentPages.findMany({
-      where: (table, { and, eq }) => and(eq(table.spaceId, resolvedSpaceId), eq(table.isArchived, false)),
-      orderBy: (table, { asc }) => [asc(table.position), asc(table.title)],
-    });
+    const pages = await db
+      .select({
+        id: documentPages.id,
+        spaceId: documentPages.spaceId,
+        organizationId: documentPages.organizationId,
+        projectId: documentPages.projectId,
+        parentId: documentPages.parentId,
+        title: documentPages.title,
+        slug: documentPages.slug,
+        icon: documentPages.icon,
+        excerpt: documentPages.excerpt,
+        currentRevision: documentPages.currentRevision,
+        position: documentPages.position,
+        isArchived: documentPages.isArchived,
+        createdAt: documentPages.createdAt,
+        updatedAt: documentPages.updatedAt,
+        createdBy: documentPages.createdBy,
+        updatedBy: documentPages.updatedBy,
+      })
+      .from(documentPages)
+      .where(and(eq(documentPages.spaceId, resolvedSpaceId), eq(documentPages.isArchived, false)))
+      .orderBy(documentPages.position, documentPages.title);
 
     return NextResponse.json({
       space: access.space,
@@ -138,7 +169,10 @@ export async function POST(request: NextRequest) {
     if (spaceId) {
       const access = await resolveDocumentSpaceAccess(session.user.id, spaceId);
       if (!access?.permissions.canCreate) {
-        return NextResponse.json({ error: 'You do not have permission to create pages in this space' }, { status: 403 });
+        return NextResponse.json(
+          { error: 'You do not have permission to create pages in this space' },
+          { status: 403 }
+        );
       }
 
       organizationId = access.organizationId;
@@ -150,9 +184,16 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Project not found' }, { status: 404 });
       }
 
-      const projectPermissions = await getProjectDocumentPermissions(session.user.id, resolvedProjectId, isSuperAdmin);
+      const projectPermissions = await getProjectDocumentPermissions(
+        session.user.id,
+        resolvedProjectId,
+        isSuperAdmin
+      );
       if (!projectPermissions.canCreate) {
-        return NextResponse.json({ error: 'You do not have permission to create project docs' }, { status: 403 });
+        return NextResponse.json(
+          { error: 'You do not have permission to create project docs' },
+          { status: 403 }
+        );
       }
 
       const projectSpace = await ensureProjectDocumentSpace(resolvedProjectId, session.user.id);
@@ -173,12 +214,18 @@ export async function POST(request: NextRequest) {
       const orgRole = await getOrganizationRole(session.user.id, organizationId);
       const orgPermissions = getOrgDocumentPermissions(orgRole, isSuperAdmin);
       if (!orgPermissions.canCreate) {
-        return NextResponse.json({ error: 'You do not have permission to create organization docs' }, { status: 403 });
+        return NextResponse.json(
+          { error: 'You do not have permission to create organization docs' },
+          { status: 403 }
+        );
       }
 
       const orgSpace = await ensureOrganizationDocumentSpace(organizationId, session.user.id);
       if (!orgSpace) {
-        return NextResponse.json({ error: 'Organization docs space could not be created' }, { status: 500 });
+        return NextResponse.json(
+          { error: 'Organization docs space could not be created' },
+          { status: 500 }
+        );
       }
 
       spaceId = orgSpace.id;
@@ -246,7 +293,11 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
     });
 
-    await replaceDocumentLinks(pageId, extractInternalDocumentLinkIds(contentJson), session.user.id);
+    await replaceDocumentLinks(
+      pageId,
+      extractInternalDocumentLinkIds(contentJson),
+      session.user.id
+    );
 
     await createAuditLog({
       userId: session.user.id,
@@ -266,7 +317,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(responsePage, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Validation failed', details: error.errors }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.errors },
+        { status: 400 }
+      );
     }
 
     console.error('Error creating document page:', error);

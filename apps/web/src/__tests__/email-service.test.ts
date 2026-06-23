@@ -39,6 +39,21 @@ jest.mock('@tasknebula/db/src/index', () => ({
 }));
 
 jest.mock('@tasknebula/db/src/schema', () => ({
+  emailTemplateTypeEnum: {
+    enumValues: [
+      'issue_assigned',
+      'issue_mentioned',
+      'issue_commented',
+      'issue_status_changed',
+      'issue_created',
+      'sprint_started',
+      'sprint_completed',
+      'project_created',
+      'project_archived',
+      'daily_digest',
+      'weekly_digest',
+    ],
+  },
   emailTemplates: {
     organizationId: 'et.organizationId',
     type: 'et.type',
@@ -56,7 +71,7 @@ jest.mock('drizzle-orm', () => ({
   eq: (left: unknown, right: unknown) => ({ type: 'eq', left, right }),
 }));
 
-type SendEmail = typeof import('@tasknebula/db/src/utils/email-service').sendEmail;
+type EmailServiceModule = typeof import('@tasknebula/db/src/utils/email-service');
 
 /**
  * Sets up db.select() to return pref rows for the first call (prefs lookup)
@@ -72,11 +87,9 @@ function mockDbWithPrefs(prefs: Record<string, unknown> | null) {
 
 const ORIGINAL_ENV = { ...process.env };
 
-async function loadService(): Promise<{ sendEmail: SendEmail }> {
+async function loadService(): Promise<EmailServiceModule> {
   // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-  return require('@tasknebula/db/src/utils/email-service') as {
-    sendEmail: SendEmail;
-  };
+  return require('@tasknebula/db/src/utils/email-service') as EmailServiceModule;
 }
 
 describe('email-service', () => {
@@ -97,6 +110,21 @@ describe('email-service', () => {
       },
     }));
     jest.doMock('@tasknebula/db/src/schema', () => ({
+      emailTemplateTypeEnum: {
+        enumValues: [
+          'issue_assigned',
+          'issue_mentioned',
+          'issue_commented',
+          'issue_status_changed',
+          'issue_created',
+          'sprint_started',
+          'sprint_completed',
+          'project_created',
+          'project_archived',
+          'daily_digest',
+          'weekly_digest',
+        ],
+      },
       emailTemplates: {
         organizationId: 'et.organizationId',
         type: 'et.type',
@@ -204,7 +232,7 @@ describe('email-service', () => {
       expect(result.messageId).not.toBe('skipped-by-preferences');
     });
 
-    it('skips sprint_started (quiet default: false)', async () => {
+    it('sends sprint_started (lifecycle default: true)', async () => {
       mockDbWithPrefs(null);
       const { sendEmail } = await loadService();
       const result = await sendEmail({
@@ -214,8 +242,8 @@ describe('email-service', () => {
         organizationId: 'org-1',
         userId: 'user-1',
       });
-      expect(result.messageId).toBe('skipped-by-preferences');
-      expect(sendMailMock).not.toHaveBeenCalled();
+      expect(result.messageId).not.toBe('skipped-by-preferences');
+      expect(sendMailMock).toHaveBeenCalledTimes(1);
     });
 
     it('falls back to quiet policy for unmapped events like daily_digest', async () => {
@@ -243,6 +271,8 @@ describe('email-service', () => {
       emailOnIssueCreated: true,
       emailOnSprintStarted: true,
       emailOnSprintCompleted: true,
+      emailOnProjectCreated: false,
+      emailOnProjectArchived: false,
       doNotDisturb: false,
       doNotDisturbStart: null,
       doNotDisturbEnd: null,
@@ -297,6 +327,24 @@ describe('email-service', () => {
       });
       expect(result.messageId).toBe('skipped-by-preferences');
     });
+
+    it('respects project lifecycle opt-in', async () => {
+      mockDbWithPrefs({ ...basePrefs, emailOnProjectCreated: true });
+      const { sendEmail } = await loadService();
+      const result = await sendEmail({
+        to: 'a@b.com',
+        templateType: 'project_created',
+        variables: {
+          projectName: 'Demo',
+          organizationName: 'TaskNebula',
+          actorName: 'Alice',
+        },
+        organizationId: 'org-1',
+        userId: 'user-1',
+      });
+      expect(result.messageId).not.toBe('skipped-by-preferences');
+      expect(sendMailMock).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('DND windows', () => {
@@ -309,6 +357,8 @@ describe('email-service', () => {
       emailOnIssueCreated: true,
       emailOnSprintStarted: true,
       emailOnSprintCompleted: true,
+      emailOnProjectCreated: true,
+      emailOnProjectArchived: true,
       doNotDisturb: true,
       doNotDisturbStart: start,
       doNotDisturbEnd: end,
@@ -411,6 +461,30 @@ describe('email-service', () => {
   });
 
   describe('templates', () => {
+    it('renders built-in HTML with the IBM Modern shell', async () => {
+      const { BUILTIN_TEMPLATES, replaceVariables } = await loadService();
+
+      const html = replaceVariables(BUILTIN_TEMPLATES.issue_assigned.html, {
+        actorName: 'Alice',
+        issueKey: 'T-99',
+        issueTitle: 'Regression found',
+        issueUrl: 'https://tasknebula.test/issues/T-99',
+        projectName: 'Alpha',
+        priority: 'High',
+        organizationName: 'Alpha Org',
+        appUrl: 'https://tasknebula.test',
+        unsubscribeUrl: 'https://tasknebula.test/settings/notifications',
+      });
+
+      expect(html).toContain('data-email-style="ibm-modern"');
+      expect(html).toContain('"IBM Plex Sans","Helvetica Neue",Arial,sans-serif');
+      expect(html).toContain('#0f62fe');
+      expect(html).toContain('border-radius:0');
+      expect(html).toContain('View issue');
+      expect(html).not.toContain('linear-gradient');
+      expect(html).not.toContain('#4f46e5');
+    });
+
     it('substitutes variables in the sendMail html', async () => {
       // no prefs row → policy decides (assigned = true), no userId to skip
       const { sendEmail } = await loadService();

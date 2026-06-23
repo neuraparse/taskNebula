@@ -234,7 +234,7 @@ describe('DocsShell behavior', () => {
     expect(screen.queryByTestId('doc-editor')).not.toBeInTheDocument();
   });
 
-  it('mounts the real editor when the page resolves', () => {
+  it('mounts the real editor when the page resolves', async () => {
     currentSearchParamsString = 'pageId=page-1&spaceId=space-1';
     mockPagesData = { space: buildMockPage().space!, pages: [buildMockPage()] };
     mockCurrentPage = buildMockPage();
@@ -242,8 +242,10 @@ describe('DocsShell behavior', () => {
 
     renderDocsShell();
 
-    expect(screen.getByTestId('doc-editor')).toBeInTheDocument();
-    expect(screen.queryByTestId('docs-shell-skeleton')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('doc-editor')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByTestId('docs-shell-skeleton')).not.toBeInTheDocument();
+    });
   });
 
   it('uses the first listed page while the URL catches up so docs do not flash the empty state', () => {
@@ -413,7 +415,7 @@ describe('DocsShell behavior', () => {
     const { rerender } = renderDocsShell();
 
     // Initially the first page is open: mocked editor is mounted.
-    expect(screen.getByTestId('doc-editor')).toBeInTheDocument();
+    expect(await screen.findByTestId('doc-editor')).toBeInTheDocument();
 
     const baselineCalls = replaceSpy.mock.calls.length;
 

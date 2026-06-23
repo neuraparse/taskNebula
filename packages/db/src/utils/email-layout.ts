@@ -2,40 +2,40 @@
  * Shared email-safe layout primitives.
  *
  * All email HTML in TaskNebula should compose through these helpers so the
- * visual language stays consistent (brand gradient, typography, spacing,
- * meta tables, CTA buttons, info cards).
+ * visual language stays consistent (IBM Modern / Carbon-inspired typography,
+ * spacing, meta tables, CTA buttons, info cards).
  *
  * Rules for email HTML:
  *   - inline styles only (no <style> tags, no classes)
  *   - table-based layout (Outlook/Gmail compatibility)
- *   - MSO VML fallback for rounded buttons
- *   - 600px max content width, white card on #f5f6fa page
+ *   - MSO VML fallback for buttons
+ *   - 600px max content width, white card on #f4f4f4 page
  *
  * Merge tokens ({{x}}) are replaced by the caller's variable map downstream.
  */
 
-export const EMAIL_FONT =
-  '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
+export const EMAIL_FONT = '"IBM Plex Sans","Helvetica Neue",Arial,sans-serif';
 
 export const EMAIL_COLORS = {
-  // Brand — indigo → violet gradient
-  brand: '#4f46e5',
-  brandEnd: '#7c3aed',
+  // IBM Modern / Carbon palette
+  brand: '#0f62fe',
+  brandHover: '#0043ce',
   // Surfaces
-  page: '#f5f6fa',
+  page: '#f4f4f4',
   card: '#ffffff',
-  subtle: '#f9fafb',
-  border: '#e5e7eb',
+  subtle: '#f4f4f4',
+  elevated: '#ffffff',
+  border: '#e0e0e0',
   // Text
-  heading: '#111827',
-  body: '#374151',
-  muted: '#6b7280',
-  faint: '#9ca3af',
+  heading: '#161616',
+  body: '#393939',
+  muted: '#6f6f6f',
+  faint: '#8d8d8d',
   // Semantic
-  success: '#10b981',
-  warning: '#f59e0b',
-  danger: '#ef4444',
-  info: '#0ea5e9',
+  success: '#24a148',
+  warning: '#f1c21b',
+  danger: '#da1e28',
+  info: '#4589ff',
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -60,13 +60,13 @@ export function renderShell(args: RenderShellArgs): string {
     ctaLabel && ctaUrl
       ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 4px 0;"><tr><td>
 <!--[if mso]>
-<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:40px;v-text-anchor:middle;width:200px;" arcsize="12%" stroke="f" fillcolor="${EMAIL_COLORS.brand}">
+<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:44px;v-text-anchor:middle;width:204px;" arcsize="0%" stroke="f" fillcolor="${EMAIL_COLORS.brand}">
 <w:anchorlock/>
-<center style="color:#ffffff;font-family:${EMAIL_FONT};font-size:14px;font-weight:600;">${ctaLabel}</center>
+<center style="color:#ffffff;font-family:${EMAIL_FONT};font-size:14px;font-weight:600;">${ctaLabel} &rarr;</center>
 </v:roundrect>
 <![endif]-->
 <!--[if !mso]><!-- -->
-<a href="${ctaUrl}" style="background:${EMAIL_COLORS.brand};background-image:linear-gradient(135deg,${EMAIL_COLORS.brand},${EMAIL_COLORS.brandEnd});color:#ffffff;display:inline-block;font-family:${EMAIL_FONT};font-size:14px;font-weight:600;line-height:1;padding:13px 26px;text-decoration:none;border-radius:6px;mso-hide:all;box-shadow:0 2px 8px rgba(79,70,229,0.28);">${ctaLabel}</a>
+<a href="${ctaUrl}" style="background:${EMAIL_COLORS.brand};color:#ffffff;display:inline-block;font-family:${EMAIL_FONT};font-size:14px;font-weight:600;line-height:1;padding:15px 18px;text-decoration:none;border-radius:0;mso-hide:all;">${ctaLabel}<span style="display:inline-block;padding-left:28px;">&rarr;</span></a>
 <!--<![endif]-->
 </td></tr></table>`
       : '';
@@ -81,19 +81,19 @@ export function renderShell(args: RenderShellArgs): string {
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="x-apple-disable-message-reformatting"/><title>TaskNebula</title></head>
-<body style="margin:0;padding:0;background-color:${EMAIL_COLORS.page};font-family:${EMAIL_FONT};color:${EMAIL_COLORS.heading};-webkit-font-smoothing:antialiased;">
+<body data-email-style="ibm-modern" style="margin:0;padding:0;background-color:${EMAIL_COLORS.page};font-family:${EMAIL_FONT};color:${EMAIL_COLORS.heading};-webkit-font-smoothing:antialiased;">
 ${preheaderHtml}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${EMAIL_COLORS.page};"><tr><td align="center" style="padding:40px 16px;">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
 <tr><td style="padding:0 4px 20px 4px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-<td align="left" style="font-family:${EMAIL_FONT};color:${EMAIL_COLORS.heading};font-weight:700;font-size:18px;letter-spacing:-0.01em;">TaskNebula</td>
-<td align="right" width="120"><table role="presentation" cellpadding="0" cellspacing="0" border="0" align="right"><tr><td height="3" width="96" style="height:3px;width:96px;line-height:3px;font-size:0;background-color:${EMAIL_COLORS.brand};background-image:linear-gradient(90deg,${EMAIL_COLORS.brand},${EMAIL_COLORS.brandEnd});border-radius:2px;">&nbsp;</td></tr></table></td>
+<td align="left" style="font-family:${EMAIL_FONT};color:${EMAIL_COLORS.heading};font-weight:600;font-size:18px;letter-spacing:0;">TaskNebula</td>
+<td align="right" width="120"><table role="presentation" cellpadding="0" cellspacing="0" border="0" align="right"><tr><td height="4" width="96" style="height:4px;width:96px;line-height:4px;font-size:0;background-color:${EMAIL_COLORS.brand};">&nbsp;</td></tr></table></td>
 </tr></table>
 </td></tr>
-<tr><td style="background:${EMAIL_COLORS.card};border:1px solid ${EMAIL_COLORS.border};border-radius:10px;padding:36px;box-shadow:0 2px 6px rgba(16,24,40,0.05);">
-<p style="margin:0 0 12px 0;font-family:${EMAIL_FONT};color:${EMAIL_COLORS.brand};font-size:11px;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;">${kicker}</p>
-<h1 style="margin:0 0 14px 0;font-family:${EMAIL_FONT};font-size:22px;font-weight:700;line-height:1.3;color:${EMAIL_COLORS.heading};letter-spacing:-0.015em;">${heading}</h1>
+<tr><td style="background:${EMAIL_COLORS.card};border-top:4px solid ${EMAIL_COLORS.heading};border-right:1px solid ${EMAIL_COLORS.border};border-bottom:1px solid ${EMAIL_COLORS.border};border-left:1px solid ${EMAIL_COLORS.border};border-radius:0;padding:40px 40px 36px 40px;">
+<p style="margin:0 0 12px 0;font-family:${EMAIL_FONT};color:${EMAIL_COLORS.brand};font-size:11px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;">${kicker}</p>
+<h1 style="margin:0 0 14px 0;font-family:${EMAIL_FONT};font-size:24px;font-weight:400;line-height:1.25;color:${EMAIL_COLORS.heading};letter-spacing:0;">${heading}</h1>
 ${subheadHtml}
 ${body}
 ${cta}
@@ -139,22 +139,22 @@ export function metaTable(rows: string): string {
 /** Quote-style block for comments / mentions. */
 export function quoteBlock(content: string, opts?: { accent?: string }): string {
   const accent = opts?.accent || EMAIL_COLORS.brand;
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:18px 0 4px 0;"><tr><td style="background:${EMAIL_COLORS.subtle};border-left:3px solid ${accent};border-radius:0 6px 6px 0;padding:14px 18px;font-family:${EMAIL_FONT};font-size:14px;line-height:1.65;color:${EMAIL_COLORS.body};">${content}</td></tr></table>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:18px 0 4px 0;"><tr><td style="background:${EMAIL_COLORS.subtle};border-left:4px solid ${accent};border-radius:0;padding:14px 18px;font-family:${EMAIL_FONT};font-size:14px;line-height:1.65;color:${EMAIL_COLORS.body};">${content}</td></tr></table>`;
 }
 
 type InfoCardTone = 'neutral' | 'success' | 'warning' | 'danger' | 'info';
 const INFO_CARD_PALETTE: Record<InfoCardTone, { bg: string; border: string; accent: string }> = {
   neutral: { bg: EMAIL_COLORS.subtle, border: EMAIL_COLORS.border, accent: EMAIL_COLORS.heading },
-  success: { bg: '#ecfdf5', border: '#a7f3d0', accent: '#065f46' },
-  warning: { bg: '#fffbeb', border: '#fde68a', accent: '#92400e' },
-  danger: { bg: '#fef2f2', border: '#fecaca', accent: '#991b1b' },
-  info: { bg: '#eff6ff', border: '#bfdbfe', accent: '#1e40af' },
+  success: { bg: '#defbe6', border: '#a7f0ba', accent: '#0e6027' },
+  warning: { bg: '#fcf4d6', border: '#fddc69', accent: '#684e00' },
+  danger: { bg: '#fff1f1', border: '#ffb3b8', accent: '#a2191f' },
+  info: { bg: '#edf5ff', border: '#a6c8ff', accent: '#0f62fe' },
 };
 
 /** Bordered info card with title and body — for context summaries. */
 export function infoCard(args: { title: string; body: string; tone?: InfoCardTone }): string {
   const p = INFO_CARD_PALETTE[args.tone ?? 'neutral'];
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:18px 0 4px 0;"><tr><td style="background:${p.bg};border:1px solid ${p.border};border-radius:8px;padding:16px 18px;">
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:18px 0 4px 0;"><tr><td style="background:${p.bg};border-left:4px solid ${p.accent};border-top:1px solid ${p.border};border-right:1px solid ${p.border};border-bottom:1px solid ${p.border};border-radius:0;padding:16px 18px;">
 <p style="margin:0 0 6px 0;font-family:${EMAIL_FONT};font-size:12px;font-weight:700;color:${p.accent};letter-spacing:0.06em;text-transform:uppercase;">${args.title}</p>
 <div style="font-family:${EMAIL_FONT};font-size:13px;line-height:1.6;color:${EMAIL_COLORS.body};">${args.body}</div>
 </td></tr></table>`;
@@ -162,18 +162,18 @@ export function infoCard(args: { title: string; body: string; tone?: InfoCardTon
 
 type ChipTone = 'neutral' | 'success' | 'warning' | 'danger' | 'info' | 'brand';
 const CHIP_PALETTE: Record<ChipTone, { bg: string; color: string }> = {
-  neutral: { bg: '#f3f4f6', color: '#374151' },
-  success: { bg: '#d1fae5', color: '#065f46' },
-  warning: { bg: '#fef3c7', color: '#92400e' },
-  danger: { bg: '#fee2e2', color: '#991b1b' },
-  info: { bg: '#dbeafe', color: '#1e40af' },
-  brand: { bg: '#ede9fe', color: '#5b21b6' },
+  neutral: { bg: '#e0e0e0', color: '#393939' },
+  success: { bg: '#defbe6', color: '#0e6027' },
+  warning: { bg: '#fcf4d6', color: '#684e00' },
+  danger: { bg: '#fff1f1', color: '#a2191f' },
+  info: { bg: '#edf5ff', color: '#0f62fe' },
+  brand: { bg: '#edf5ff', color: '#0f62fe' },
 };
 
 /** Inline status / priority chip. */
 export function chip(text: string, opts?: { tone?: ChipTone }): string {
   const p = CHIP_PALETTE[opts?.tone ?? 'neutral'];
-  return `<span style="display:inline-block;background:${p.bg};color:${p.color};border-radius:4px;font-size:11px;padding:3px 9px;font-weight:600;letter-spacing:0.02em;line-height:1.4;">${text}</span>`;
+  return `<span style="display:inline-block;background:${p.bg};color:${p.color};border-radius:0;font-size:11px;padding:3px 9px;font-weight:600;letter-spacing:0.02em;line-height:1.4;">${text}</span>`;
 }
 
 /** Actor row with avatar initial and name/email. */
@@ -183,7 +183,7 @@ export function actorRow(args: { name: string; email?: string; action?: string }
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:18px 0 4px 0;">
 <tr>
 <td width="40" style="vertical-align:middle;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td width="36" height="36" align="center" valign="middle" style="width:36px;height:36px;background:${EMAIL_COLORS.brand};background-image:linear-gradient(135deg,${EMAIL_COLORS.brand},${EMAIL_COLORS.brandEnd});color:#ffffff;border-radius:50%;font-family:${EMAIL_FONT};font-size:14px;font-weight:700;line-height:1;">${initial}</td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td width="36" height="36" align="center" valign="middle" style="width:36px;height:36px;background:${EMAIL_COLORS.heading};color:#ffffff;border-radius:0;font-family:${EMAIL_FONT};font-size:14px;font-weight:600;line-height:1;">${initial}</td></tr></table>
 </td>
 <td style="padding-left:12px;vertical-align:middle;">
 <div style="font-family:${EMAIL_FONT};font-size:14px;font-weight:600;color:${EMAIL_COLORS.heading};line-height:1.2;">${args.name}</div>
@@ -194,13 +194,19 @@ ${subtitle ? `<div style="font-family:${EMAIL_FONT};font-size:12px;color:${EMAIL
 }
 
 /** Stat grid row — up to 4 cells side by side with value + label. */
-export function statGrid(stats: Array<{ value: string | number; label: string; tone?: 'neutral' | 'success' | 'brand' }>): string {
+export function statGrid(
+  stats: Array<{ value: string | number; label: string; tone?: 'neutral' | 'success' | 'brand' }>
+): string {
   const cells = stats
     .map((s) => {
       const color =
-        s.tone === 'success' ? EMAIL_COLORS.success : s.tone === 'brand' ? EMAIL_COLORS.brand : EMAIL_COLORS.heading;
-      return `<td align="center" valign="top" style="padding:14px 8px;background:${EMAIL_COLORS.subtle};border:1px solid ${EMAIL_COLORS.border};border-radius:8px;">
-<div style="font-family:${EMAIL_FONT};font-size:22px;font-weight:700;color:${color};line-height:1.2;letter-spacing:-0.01em;">${s.value}</div>
+        s.tone === 'success'
+          ? EMAIL_COLORS.success
+          : s.tone === 'brand'
+            ? EMAIL_COLORS.brand
+            : EMAIL_COLORS.heading;
+      return `<td align="center" valign="top" style="padding:14px 8px;background:${EMAIL_COLORS.subtle};border:1px solid ${EMAIL_COLORS.border};border-radius:0;">
+<div style="font-family:${EMAIL_FONT};font-size:22px;font-weight:400;color:${color};line-height:1.2;letter-spacing:0;">${s.value}</div>
 <div style="font-family:${EMAIL_FONT};font-size:11px;color:${EMAIL_COLORS.muted};text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-top:4px;">${s.label}</div>
 </td>`;
     })
@@ -222,7 +228,8 @@ export function sectionHeading(text: string): string {
 export function bulletList(items: string[]): string {
   const rows = items
     .map(
-      (item) => `<tr><td valign="top" width="14" style="padding:4px 8px 4px 0;font-family:${EMAIL_FONT};font-size:14px;color:${EMAIL_COLORS.brand};line-height:1.6;">&bull;</td><td style="padding:4px 0;font-family:${EMAIL_FONT};font-size:14px;color:${EMAIL_COLORS.body};line-height:1.6;">${item}</td></tr>`,
+      (item) =>
+        `<tr><td valign="top" width="14" style="padding:4px 8px 4px 0;font-family:${EMAIL_FONT};font-size:14px;color:${EMAIL_COLORS.brand};line-height:1.6;">&bull;</td><td style="padding:4px 0;font-family:${EMAIL_FONT};font-size:14px;color:${EMAIL_COLORS.body};line-height:1.6;">${item}</td></tr>`
     )
     .join('');
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:10px 0 4px 0;">${rows}</table>`;

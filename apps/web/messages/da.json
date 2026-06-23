@@ -770,7 +770,9 @@
       "sprint": "Sprint",
       "ai_draft": "AI-udkast",
       "agent": "Agent",
-      "update": "Opdatering"
+      "update": "Opdatering",
+      "project_created": "Projekt oprettet",
+      "project_archived": "Projekt arkiveret"
     },
     "type_action": {
       "mention": "nævnte dig",
@@ -869,7 +871,9 @@
         "sprint_started": "Sprint startet",
         "sprint_completed": "Sprint afsluttet",
         "ai_draft_failed": "AI-udkast mislykkedes",
-        "agent_run_failed": "Agent mislykkedes"
+        "agent_run_failed": "Agent mislykkedes",
+        "project_created": "Projekt oprettet",
+        "project_archived": "Projekt arkiveret"
       },
       "meta": {
         "project": "Projekt",
@@ -1383,11 +1387,45 @@
     },
     "agent": {
       "title": "Agentaktivitet",
-      "state": "Tilstand: {state}",
-      "idle": "Inaktiv — ingen session afsendt endnu",
-      "dispatch": "Afsend",
+      "beta": "Beta",
+      "assignedTo": "Tildelt til {name}",
+      "directDispatch": "Send denne opgave direkte til en kodeagent.",
+      "provider": "Udbyder",
+      "promptPlaceholder": "Valgfri instruktioner til denne kørsel...",
+      "dispatch": "Send",
+      "dispatching": "Sender",
       "dispatch_failed": "Afsendelse mislykkedes",
-      "dispatch_failed_status": "Afsendelse mislykkedes ({status})"
+      "dispatch_failed_status": "Afsendelse mislykkedes ({status})",
+      "latestSessions": "Seneste sessioner",
+      "noSessions": "Ingen agentsessioner endnu.",
+      "localRunner": "Lokal CLI: {command}",
+      "webhookRunner": "Webhook-udbyder",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "Tilpasset"
+      },
+      "states": {
+        "pending": "Afventer",
+        "active": "Kører",
+        "awaitingInput": "Kræver input",
+        "error": "Mislykket",
+        "complete": "Fuldført",
+        "stale": "Forældet"
+      },
+      "issueContext": "Opgavefelter",
+      "descriptionContext": "Beskrivelse",
+      "instructionContext": "Adminnoter",
+      "sessionStatus": "Sessionsstatus",
+      "runner": "Kørselsagent",
+      "runnerStatus": "Kørselsstatus",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "Afslutningskode"
     },
     "vote": {
       "group_label": "Stem",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Platform",
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "Åbn hele siden"
   },
   "settingsProject": {
     "kicker": "Projekt",
@@ -3331,6 +3370,29 @@
         "description": "Systemdækkende historik til overvågning af udrulningskvalitet og effektradius.",
         "noData": "Ingen agentkørsler er registreret endnu.",
         "writesChip": "{count} skrivninger"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "Opgave tildelt",
         "issue_mentioned": "Opgave nævnt",
         "issue_commented": "Opgave kommenteret",
+        "issue_status_changed": "Arbejdselementstatus ændret",
+        "issue_created": "Arbejdselement oprettet",
         "sprint_started": "Sprint startet",
+        "sprint_completed": "Sprint afsluttet",
+        "project_created": "Projekt oprettet",
+        "project_archived": "Projekt arkiveret",
         "daily_digest": "Daglig oversigt",
         "weekly_digest": "Ugentlig oversigt"
       }

@@ -770,7 +770,9 @@
       "sprint": "ספרינט",
       "ai_draft": "טיוטת AI",
       "agent": "סוכן",
-      "update": "עדכון"
+      "update": "עדכון",
+      "project_created": "פרויקט נוצר",
+      "project_archived": "הפרויקט הועבר לארכיון"
     },
     "type_action": {
       "mention": "אזכר אתכם",
@@ -869,7 +871,9 @@
         "sprint_started": "הספרינט התחיל",
         "sprint_completed": "הספרינט הושלם",
         "ai_draft_failed": "טיוטת AI נכשלה",
-        "agent_run_failed": "הסוכן נכשל"
+        "agent_run_failed": "הסוכן נכשל",
+        "project_created": "פרויקט נוצר",
+        "project_archived": "הפרויקט הועבר לארכיון"
       },
       "meta": {
         "project": "פרויקט",
@@ -1382,12 +1386,46 @@
       "open_sidecar": "פתיחת הסיידקאר"
     },
     "agent": {
-      "title": "פעילות סוכן",
-      "state": "מצב: {state}",
-      "idle": "במנוחה — טרם נשלחה הפעלה",
-      "dispatch": "שליחה",
+      "title": "פעילות הסוכן",
+      "beta": "בטא",
+      "assignedTo": "הוקצה אל {name}",
+      "directDispatch": "שלחו משימה זו ישירות לסוכן קוד.",
+      "provider": "ספק",
+      "promptPlaceholder": "הוראות אופציונליות להרצה הזו...",
+      "dispatch": "שלח",
+      "dispatching": "שולח",
       "dispatch_failed": "השליחה נכשלה",
-      "dispatch_failed_status": "השליחה נכשלה ({status})"
+      "dispatch_failed_status": "השליחה נכשלה ({status})",
+      "latestSessions": "הפעלות אחרונות",
+      "noSessions": "עדיין אין הפעלות סוכן.",
+      "localRunner": "CLI מקומי: {command}",
+      "webhookRunner": "ספק Webhook",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "מותאם אישית"
+      },
+      "states": {
+        "pending": "בהמתנה",
+        "active": "פועל",
+        "awaitingInput": "נדרש קלט",
+        "error": "נכשל",
+        "complete": "הושלם",
+        "stale": "מיושן"
+      },
+      "issueContext": "שדות המשימה",
+      "descriptionContext": "תיאור",
+      "instructionContext": "הערות ניהול",
+      "sessionStatus": "מצב ההפעלה",
+      "runner": "מריץ",
+      "runnerStatus": "מצב ההרצה",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "קוד יציאה"
     },
     "vote": {
       "group_label": "הצבעה",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Platform",
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "פתיחת העמוד המלא"
   },
   "settingsProject": {
     "kicker": "פרויקט",
@@ -3331,6 +3370,29 @@
         "description": "היסטוריה כלל-מערכתית לניטור איכות ההשקה ורדיוס ההשפעה.",
         "noData": "אין עדיין הרצות סוכן שנרשמו.",
         "writesChip": "{count} כתיבות"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "משימה שויכה",
         "issue_mentioned": "משימה אוזכרה",
         "issue_commented": "תגובה למשימה",
+        "issue_status_changed": "סטטוס הפריט השתנה",
+        "issue_created": "פריט נוצר",
         "sprint_started": "ספרינט התחיל",
+        "sprint_completed": "הספרינט הושלם",
+        "project_created": "פרויקט נוצר",
+        "project_archived": "הפרויקט הועבר לארכיון",
         "daily_digest": "סיכום יומי",
         "weekly_digest": "סיכום שבועי"
       }

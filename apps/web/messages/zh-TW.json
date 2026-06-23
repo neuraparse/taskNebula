@@ -770,7 +770,9 @@
       "sprint": "衝刺",
       "ai_draft": "AI 草稿",
       "agent": "代理程式",
-      "update": "更新"
+      "update": "更新",
+      "project_created": "專案已建立",
+      "project_archived": "專案已封存"
     },
     "type_action": {
       "mention": "提及了你",
@@ -869,7 +871,9 @@
         "sprint_started": "衝刺已開始",
         "sprint_completed": "衝刺已完成",
         "ai_draft_failed": "AI 草稿失敗",
-        "agent_run_failed": "代理程式失敗"
+        "agent_run_failed": "代理程式失敗",
+        "project_created": "專案已建立",
+        "project_archived": "專案已封存"
       },
       "meta": {
         "project": "專案",
@@ -1275,12 +1279,46 @@
       "open_sidecar": "開啟側欄助手"
     },
     "agent": {
-      "title": "代理程式活動",
-      "state": "狀態：{state}",
-      "idle": "閒置 — 尚未派送工作階段",
-      "dispatch": "派送",
-      "dispatch_failed": "派送失敗",
-      "dispatch_failed_status": "派送失敗（{status}）"
+      "title": "代理活動",
+      "beta": "Beta",
+      "assignedTo": "已指派給 {name}",
+      "directDispatch": "將此任務直接傳送給程式碼代理。",
+      "provider": "提供者",
+      "promptPlaceholder": "此執行的選填指示...",
+      "dispatch": "傳送",
+      "dispatching": "正在傳送",
+      "dispatch_failed": "傳送失敗",
+      "dispatch_failed_status": "傳送失敗（{status}）",
+      "latestSessions": "最新工作階段",
+      "noSessions": "尚無代理工作階段。",
+      "localRunner": "本機 CLI：{command}",
+      "webhookRunner": "Webhook 提供者",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "自訂"
+      },
+      "states": {
+        "pending": "待處理",
+        "active": "執行中",
+        "awaitingInput": "需要輸入",
+        "error": "失敗",
+        "complete": "完成",
+        "stale": "已過期"
+      },
+      "issueContext": "議題欄位",
+      "descriptionContext": "描述",
+      "instructionContext": "管理員備註",
+      "sessionStatus": "工作階段狀態",
+      "runner": "執行器",
+      "runnerStatus": "執行狀態",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "退出碼"
     },
     "vote": {
       "group_label": "投票",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "平台",
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "開啟完整頁面"
   },
   "settingsProject": {
     "kicker": "專案",
@@ -3331,6 +3370,29 @@
         "description": "用於監控推出品質與影響範圍的全系統歷程。",
         "noData": "尚未記錄任何代理程式執行。",
         "writesChip": "{count} 次寫入"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "議題已指派",
         "issue_mentioned": "議題提及",
         "issue_commented": "議題留言",
+        "issue_status_changed": "工作項目狀態已變更",
+        "issue_created": "工作項目已建立",
         "sprint_started": "衝刺已開始",
+        "sprint_completed": "Sprint 已完成",
+        "project_created": "專案已建立",
+        "project_archived": "專案已封存",
         "daily_digest": "每日摘要",
         "weekly_digest": "每週摘要"
       }

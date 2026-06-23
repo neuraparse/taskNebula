@@ -770,7 +770,9 @@
       "sprint": "Sprint",
       "ai_draft": "AI-utkast",
       "agent": "Agent",
-      "update": "Oppdatering"
+      "update": "Oppdatering",
+      "project_created": "Prosjekt opprettet",
+      "project_archived": "Prosjekt arkivert"
     },
     "type_action": {
       "mention": "nevnte deg",
@@ -869,7 +871,9 @@
         "sprint_started": "Sprint startet",
         "sprint_completed": "Sprint fullført",
         "ai_draft_failed": "AI-utkast mislyktes",
-        "agent_run_failed": "Agent mislyktes"
+        "agent_run_failed": "Agent mislyktes",
+        "project_created": "Prosjekt opprettet",
+        "project_archived": "Prosjekt arkivert"
       },
       "meta": {
         "project": "Prosjekt",
@@ -1276,11 +1280,45 @@
     },
     "agent": {
       "title": "Agentaktivitet",
-      "state": "Tilstand: {state}",
-      "idle": "Inaktiv — ingen økt sendt ennå",
+      "beta": "Beta",
+      "assignedTo": "Tildelt til {name}",
+      "directDispatch": "Send denne oppgaven direkte til en kodeagent.",
+      "provider": "Leverandør",
+      "promptPlaceholder": "Valgfrie instruksjoner for denne kjøringen...",
       "dispatch": "Send",
+      "dispatching": "Sender",
       "dispatch_failed": "Sending mislyktes",
-      "dispatch_failed_status": "Sending mislyktes ({status})"
+      "dispatch_failed_status": "Sending mislyktes ({status})",
+      "latestSessions": "Nyeste økter",
+      "noSessions": "Ingen agentøkter ennå.",
+      "localRunner": "Lokal CLI: {command}",
+      "webhookRunner": "Webhook-leverandør",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "Egendefinert"
+      },
+      "states": {
+        "pending": "Venter",
+        "active": "Kjører",
+        "awaitingInput": "Trenger inndata",
+        "error": "Mislyktes",
+        "complete": "Fullført",
+        "stale": "Foreldet"
+      },
+      "issueContext": "Oppgavefelter",
+      "descriptionContext": "Beskrivelse",
+      "instructionContext": "Adminnotater",
+      "sessionStatus": "Øktstatus",
+      "runner": "Kjører",
+      "runnerStatus": "Kjøringsstatus",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "Avslutningskode"
     },
     "vote": {
       "group_label": "Stem",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Platform",
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "Åpne hele siden"
   },
   "settingsProject": {
     "kicker": "Prosjekt",
@@ -3331,6 +3370,29 @@
         "description": "Systemomfattende historikk for å overvåke utrullingskvalitet og rekkevidde.",
         "noData": "Ingen agentkjøringer har blitt registrert ennå.",
         "writesChip": "{count} skrivinger"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "Sak tildelt",
         "issue_mentioned": "Sak omtalt",
         "issue_commented": "Sak kommentert",
+        "issue_status_changed": "Arbeidselementstatus endret",
+        "issue_created": "Arbeidselement opprettet",
         "sprint_started": "Sprint startet",
+        "sprint_completed": "Sprint fullført",
+        "project_created": "Prosjekt opprettet",
+        "project_archived": "Prosjekt arkivert",
         "daily_digest": "Daglig sammendrag",
         "weekly_digest": "Ukentlig sammendrag"
       }

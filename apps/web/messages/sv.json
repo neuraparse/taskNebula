@@ -868,7 +868,9 @@
       "sprint": "Sprint",
       "ai_draft": "AI-utkast",
       "agent": "Agent",
-      "update": "Uppdatering"
+      "update": "Uppdatering",
+      "project_created": "Projekt skapat",
+      "project_archived": "Projekt arkiverat"
     },
     "type_action": {
       "mention": "nämnde dig",
@@ -967,7 +969,9 @@
         "sprint_started": "Sprint startad",
         "sprint_completed": "Sprint avslutad",
         "ai_draft_failed": "AI-utkast misslyckades",
-        "agent_run_failed": "Agent misslyckades"
+        "agent_run_failed": "Agent misslyckades",
+        "project_created": "Projekt skapat",
+        "project_archived": "Projekt arkiverat"
       },
       "meta": {
         "project": "Projekt",
@@ -1315,11 +1319,45 @@
     },
     "agent": {
       "title": "Agentaktivitet",
-      "state": "Tillstånd: {state}",
-      "idle": "Vilande — ingen session skickad ännu",
+      "beta": "Beta",
+      "assignedTo": "Tilldelad till {name}",
+      "directDispatch": "Skicka den här uppgiften direkt till en kodagent.",
+      "provider": "Leverantör",
+      "promptPlaceholder": "Valfria instruktioner för den här körningen...",
       "dispatch": "Skicka",
-      "dispatch_failed": "Sändningen misslyckades",
-      "dispatch_failed_status": "Sändningen misslyckades ({status})"
+      "dispatching": "Skickar",
+      "dispatch_failed": "Skickande misslyckades",
+      "dispatch_failed_status": "Skickande misslyckades ({status})",
+      "latestSessions": "Senaste sessionerna",
+      "noSessions": "Inga agentsessioner ännu.",
+      "localRunner": "Lokal CLI: {command}",
+      "webhookRunner": "Webhook-leverantör",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "Anpassad"
+      },
+      "states": {
+        "pending": "Väntar",
+        "active": "Körs",
+        "awaitingInput": "Behöver indata",
+        "error": "Misslyckades",
+        "complete": "Slutförd",
+        "stale": "Inaktuell"
+      },
+      "issueContext": "Ärendefält",
+      "descriptionContext": "Beskrivning",
+      "instructionContext": "Adminanteckningar",
+      "sessionStatus": "Sessionsstatus",
+      "runner": "Körare",
+      "runnerStatus": "Körningsstatus",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "Avslutningskod"
     },
     "vote": {
       "group_label": "Rösta",
@@ -1598,7 +1636,8 @@
     "ts_name_placeholder": "Plattform",
     "ts_slug_placeholder": "plattform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "Öppna hela sidan"
   },
   "settingsProject": {
     "kicker": "Projekt",
@@ -3370,6 +3409,29 @@
         "description": "Systemövergripande historik för att övervaka utrullningskvalitet och spridningsradie.",
         "noData": "Inga agentkörningar har registrerats ännu.",
         "writesChip": "{count} skrivningar"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3556,7 +3618,12 @@
         "issue_assigned": "Ärende tilldelat",
         "issue_mentioned": "Ärende omnämnt",
         "issue_commented": "Ärende kommenterat",
+        "issue_status_changed": "Arbetsobjektets status ändrad",
+        "issue_created": "Arbetsobjekt skapat",
         "sprint_started": "Sprint startad",
+        "sprint_completed": "Sprint slutförd",
+        "project_created": "Projekt skapat",
+        "project_archived": "Projekt arkiverat",
         "daily_digest": "Daglig sammanfattning",
         "weekly_digest": "Veckosammanfattning"
       }

@@ -12,7 +12,9 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import {
   useAdminAgentControl,
+  useAdminLocalAgentRunners,
   useAdminAgentStream,
+  useUpdateAdminLocalAgentRunner,
   useUpdateAdminAgentControl,
 } from '@/lib/hooks/use-agents';
 import { PlatformAiCredentials } from './platform-ai-credentials';
@@ -27,6 +29,7 @@ import {
   Loader2,
   Shield,
   Sparkles,
+  TerminalSquare,
   Wifi,
   WifiOff,
   Zap,
@@ -70,6 +73,8 @@ export function AgentOpsPanel() {
   const stream = useAdminAgentStream();
   const updateControl = useUpdateAdminAgentControl();
   const { currentOrganizationId } = useOrganization();
+  const localRunners = useAdminLocalAgentRunners(currentOrganizationId);
+  const updateLocalRunner = useUpdateAdminLocalAgentRunner(currentOrganizationId || '');
   const { toast } = useToast();
   const [formState, setFormState] = useState<AgentControlForm>(EMPTY_FORM);
 
@@ -96,6 +101,26 @@ export function AgentOpsPanel() {
           mutationError instanceof Error
             ? mutationError.message
             : t('agentOps.controlUpdateFailed'),
+        variant: 'destructive',
+      });
+    }
+  }
+
+  async function handleLocalRunnerToggle(provider: 'claude' | 'codex', enabled: boolean) {
+    if (!currentOrganizationId) return;
+    try {
+      await updateLocalRunner.mutateAsync({ provider, enabled });
+      toast({
+        title: t('agentOps.localRunners.updated'),
+        description: t('agentOps.localRunners.updatedDescription'),
+      });
+    } catch (mutationError) {
+      toast({
+        title: t('agentOps.localRunners.updateFailed'),
+        description:
+          mutationError instanceof Error
+            ? mutationError.message
+            : t('agentOps.localRunners.updateFailed'),
         variant: 'destructive',
       });
     }
@@ -272,6 +297,88 @@ export function AgentOpsPanel() {
       <section>
         <PlatformAiCredentials />
       </section>
+
+      {currentOrganizationId ? (
+        <section className="space-y-3">
+          <SectionHeader
+            title={t('agentOps.localRunners.title')}
+            description={t('agentOps.localRunners.description')}
+          />
+          <div className="surface-card space-y-3 p-4">
+            {localRunners.isLoading ? (
+              <p className="text-muted-foreground px-2 py-4 text-sm">
+                {t('agentOps.localRunners.loading')}
+              </p>
+            ) : localRunners.error ? (
+              <p className="text-destructive px-2 py-4 text-sm">
+                {localRunners.error instanceof Error
+                  ? localRunners.error.message
+                  : t('agentOps.localRunners.loadError')}
+              </p>
+            ) : (
+              <ul className="divide-border/50 divide-y">
+                {(localRunners.data?.providers ?? []).map((runner) => (
+                  <li key={runner.provider} className="space-y-2 px-1 py-3">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <div className="min-w-0 space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="icon-tile icon-tile-accent-blue">
+                            <TerminalSquare className="h-3.5 w-3.5" />
+                          </span>
+                          <span className="text-sm font-medium">
+                            {t(`agentOps.localRunners.providers.${runner.provider}`)}
+                          </span>
+                          <span
+                            className={cn(
+                              runner.configured ? 'chip-emerald' : 'chip-rose',
+                              runner.enabled && !runner.configured && 'realtime-ping'
+                            )}
+                          >
+                            {runner.configured
+                              ? t('agentOps.localRunners.ready')
+                              : t('agentOps.localRunners.needsSetup')}
+                          </span>
+                          <span className="chip">
+                            {runner.enabled
+                              ? t('agentOps.workspaceCoverage.on')
+                              : t('agentOps.workspaceCoverage.off')}
+                          </span>
+                        </div>
+                        <p className="text-muted-foreground break-all text-xs">
+                          {runner.command} · {runner.cwd}
+                        </p>
+                        <p className="text-muted-foreground text-xs">
+                          {t('agentOps.localRunners.runtime', {
+                            mode: runner.mode || t('agentOps.localRunners.defaultMode'),
+                            timeout: runner.timeoutSeconds || 0,
+                          })}
+                        </p>
+                      </div>
+                      <Switch
+                        checked={runner.enabled}
+                        onCheckedChange={(checked) =>
+                          handleLocalRunnerToggle(runner.provider, checked)
+                        }
+                        disabled={updateLocalRunner.isPending}
+                        aria-label={t('agentOps.localRunners.toggle', {
+                          provider: t(`agentOps.localRunners.providers.${runner.provider}`),
+                        })}
+                      />
+                    </div>
+                    {runner.reasonCode ? (
+                      <p className="panel-warn px-3 py-2 text-xs">
+                        {t(`agentOps.localRunners.reason.${runner.reasonCode}`, {
+                          value: runner.reasonDetail || '',
+                        })}
+                      </p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+      ) : null}
 
       {/* Service status + Provider coverage */}
       <section className="grid gap-4 xl:grid-cols-2">

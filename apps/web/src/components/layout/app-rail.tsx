@@ -83,7 +83,7 @@ export function AppRail({
     <TooltipProvider delayDuration={150}>
       <nav
         aria-label={tLayout('workspaceRail')}
-        className="border-border bg-card flex h-screen w-14 shrink-0 flex-col items-center border-r py-2"
+        className="bg-surface-dark border-border-strong flex h-screen w-14 shrink-0 flex-col items-center border-r py-2 text-white"
       >
         <ul className="flex flex-1 flex-col items-center gap-1">
           {visibleRailItems.map((item) => {
@@ -110,9 +110,9 @@ export function AppRail({
                       aria-label={showInboxBadge ? `${label} · ${unreadLabel}` : label}
                       aria-current={isActive ? 'page' : undefined}
                       className={cn(
-                        'text-muted-foreground ease-snap hover:bg-accent/60 hover:text-foreground group relative mx-auto flex h-[50px] w-12 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1.5 transition-all duration-150',
+                        'ease-snap group relative mx-auto flex h-[50px] w-12 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1.5 text-white/60 transition-all duration-150 hover:bg-white/10 hover:text-white',
                         isActive &&
-                          'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground shadow-sm'
+                          'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground shadow-none'
                       )}
                     >
                       <Icon className="h-4 w-4 shrink-0" />
@@ -120,12 +120,12 @@ export function AppRail({
                         <span
                           aria-hidden="true"
                           data-testid="inbox-unread-badge"
-                          className="bg-primary text-primary-foreground ring-background absolute right-1 top-0.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full px-1 text-[9px] font-semibold ring-1"
+                          className="bg-primary text-primary-foreground absolute right-1 top-0.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full px-1 text-[9px] font-semibold ring-1 ring-white/20"
                         >
                           {unreadInboxCount > 9 ? '9+' : unreadInboxCount}
                         </span>
                       )}
-                      <span className="text-muted-foreground group-data-[active=true]:text-primary-foreground/90 line-clamp-2 h-5 w-full break-normal text-center text-[9px] leading-[10px]">
+                      <span className="group-data-[active=true]:text-primary-foreground/90 line-clamp-2 h-5 w-full break-normal text-center text-[9px] leading-[10px] text-white/60 group-hover:text-white">
                         {label}
                       </span>
                     </Link>
@@ -149,13 +149,13 @@ export function AppRail({
                   data-active={normalizedPathname.startsWith('/admin') ? 'true' : undefined}
                   aria-label={tNav('admin')}
                   className={cn(
-                    'text-muted-foreground ease-snap hover:bg-accent/60 hover:text-foreground group mx-auto flex h-[50px] w-12 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1.5 transition-all duration-150',
+                    'ease-snap group mx-auto flex h-[50px] w-12 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1.5 text-white/60 transition-all duration-150 hover:bg-white/10 hover:text-white',
                     normalizedPathname.startsWith('/admin') &&
-                      'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground shadow-sm'
+                      'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground shadow-none'
                   )}
                 >
                   <Shield className="h-4 w-4 shrink-0" />
-                  <span className="text-muted-foreground group-data-[active=true]:text-primary-foreground/90 line-clamp-2 h-5 w-full break-normal text-center text-[9px] leading-[10px]">
+                  <span className="group-data-[active=true]:text-primary-foreground/90 line-clamp-2 h-5 w-full break-normal text-center text-[9px] leading-[10px] text-white/60 group-hover:text-white">
                     {tNav('admin')}
                   </span>
                 </Link>
@@ -167,7 +167,9 @@ export function AppRail({
           <UserProfileDropdown
             side="right"
             align="end"
-            triggerClassName="ring-border hover:ring-foreground/40 mx-auto h-9 w-9 rounded-full ring-1 hover:bg-transparent"
+            triggerClassName="mx-auto h-9 w-9 rounded-[2px] border-white/15 bg-white/5 text-white ring-1 ring-white/25 hover:bg-white/10 hover:text-white hover:ring-white/50"
+            avatarClassName="rounded-[2px]"
+            fallbackClassName="bg-white text-zinc-950"
           />
         </div>
       </nav>

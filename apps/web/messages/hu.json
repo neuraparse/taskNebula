@@ -770,7 +770,9 @@
       "sprint": "Sprint",
       "ai_draft": "AI-piszkozat",
       "agent": "Ügynök",
-      "update": "Frissítés"
+      "update": "Frissítés",
+      "project_created": "Projekt létrehozva",
+      "project_archived": "Projekt archiválva"
     },
     "type_action": {
       "mention": "megemlített",
@@ -869,7 +871,9 @@
         "sprint_started": "Sprint elindult",
         "sprint_completed": "Sprint befejezve",
         "ai_draft_failed": "AI-piszkozat sikertelen",
-        "agent_run_failed": "Ügynök sikertelen"
+        "agent_run_failed": "Ügynök sikertelen",
+        "project_created": "Projekt létrehozva",
+        "project_archived": "Projekt archiválva"
       },
       "meta": {
         "project": "Projekt",
@@ -1275,12 +1279,46 @@
       "open_sidecar": "Oldalpanel megnyitása"
     },
     "agent": {
-      "title": "Ügynöktevékenység",
-      "state": "Állapot: {state}",
-      "idle": "Tétlen – még nem indult munkamenet",
-      "dispatch": "Indítás",
-      "dispatch_failed": "Az indítás sikertelen",
-      "dispatch_failed_status": "Az indítás sikertelen ({status})"
+      "title": "Ügynökaktivitás",
+      "beta": "Béta",
+      "assignedTo": "{name} hozzárendelve",
+      "directDispatch": "Küldd ezt a feladatot közvetlenül egy kódoló ügynöknek.",
+      "provider": "Szolgáltató",
+      "promptPlaceholder": "Opcionális utasítások ehhez a futtatáshoz...",
+      "dispatch": "Küldés",
+      "dispatching": "Küldés folyamatban",
+      "dispatch_failed": "Küldés sikertelen",
+      "dispatch_failed_status": "Küldés sikertelen ({status})",
+      "latestSessions": "Legutóbbi munkamenetek",
+      "noSessions": "Még nincsenek ügynökmunkamenetek.",
+      "localRunner": "Helyi CLI: {command}",
+      "webhookRunner": "Webhook-szolgáltató",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "Egyéni"
+      },
+      "states": {
+        "pending": "Függőben",
+        "active": "Fut",
+        "awaitingInput": "Bemenetre vár",
+        "error": "Sikertelen",
+        "complete": "Kész",
+        "stale": "Elavult"
+      },
+      "issueContext": "Feladatmezők",
+      "descriptionContext": "Leírás",
+      "instructionContext": "Adminisztrátori jegyzetek",
+      "sessionStatus": "Munkamenet állapota",
+      "runner": "Futtató",
+      "runnerStatus": "Futtatás állapota",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "Kilépési kód"
     },
     "vote": {
       "group_label": "Szavazás",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Platform",
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "Teljes oldal megnyitása"
   },
   "settingsProject": {
     "kicker": "Projekt",
@@ -3331,6 +3370,29 @@
         "description": "Rendszerszintű előzmények a bevezetés minőségének és a hatótávolságnak a monitorozásához.",
         "noData": "Még nincsenek rögzített ügynökfuttatások.",
         "writesChip": "{count} írás"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "Feladat hozzárendelve",
         "issue_mentioned": "Feladatban megemlítve",
         "issue_commented": "Feladathoz hozzászólva",
+        "issue_status_changed": "Munkaelem állapota megváltozott",
+        "issue_created": "Munkaelem létrehozva",
         "sprint_started": "Sprint elindult",
+        "sprint_completed": "Sprint befejezve",
+        "project_created": "Projekt létrehozva",
+        "project_archived": "Projekt archiválva",
         "daily_digest": "Napi összefoglaló",
         "weekly_digest": "Heti összefoglaló"
       }

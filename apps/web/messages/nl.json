@@ -770,7 +770,9 @@
       "sprint": "Sprint",
       "ai_draft": "AI-concept",
       "agent": "Agent",
-      "update": "Update"
+      "update": "Update",
+      "project_created": "Project aangemaakt",
+      "project_archived": "Project gearchiveerd"
     },
     "type_action": {
       "mention": "vermeldde je",
@@ -869,7 +871,9 @@
         "sprint_started": "Sprint gestart",
         "sprint_completed": "Sprint voltooid",
         "ai_draft_failed": "AI-concept mislukt",
-        "agent_run_failed": "Agent mislukt"
+        "agent_run_failed": "Agent mislukt",
+        "project_created": "Project aangemaakt",
+        "project_archived": "Project gearchiveerd"
       },
       "meta": {
         "project": "Project",
@@ -1276,11 +1280,45 @@
     },
     "agent": {
       "title": "Agentactiviteit",
-      "state": "Status: {state}",
-      "idle": "Inactief — nog geen sessie verzonden",
+      "beta": "Bèta",
+      "assignedTo": "Toegewezen aan {name}",
+      "directDispatch": "Stuur deze taak direct naar een code-agent.",
+      "provider": "Aanbieder",
+      "promptPlaceholder": "Optionele instructies voor deze run...",
       "dispatch": "Verzenden",
+      "dispatching": "Bezig met verzenden",
       "dispatch_failed": "Verzenden mislukt",
-      "dispatch_failed_status": "Verzenden mislukt ({status})"
+      "dispatch_failed_status": "Verzenden mislukt ({status})",
+      "latestSessions": "Laatste sessies",
+      "noSessions": "Nog geen agentsessies.",
+      "localRunner": "Lokale CLI: {command}",
+      "webhookRunner": "Webhook-provider",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "Aangepast"
+      },
+      "states": {
+        "pending": "In behandeling",
+        "active": "Actief",
+        "awaitingInput": "Invoer nodig",
+        "error": "Mislukt",
+        "complete": "Voltooid",
+        "stale": "Verouderd"
+      },
+      "issueContext": "Issuevelden",
+      "descriptionContext": "Beschrijving",
+      "instructionContext": "Beheerdersnotities",
+      "sessionStatus": "Sessiestatus",
+      "runner": "Uitvoerder",
+      "runnerStatus": "Runstatus",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "Exitcode"
     },
     "vote": {
       "group_label": "Stem",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Platform",
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "Volledige pagina openen"
   },
   "settingsProject": {
     "kicker": "Project",
@@ -3331,6 +3370,29 @@
         "description": "Systeembrede geschiedenis voor het monitoren van de uitrolkwaliteit en impactradius.",
         "noData": "Er zijn nog geen agentruns vastgelegd.",
         "writesChip": "{count} schrijfacties"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "Issue toegewezen",
         "issue_mentioned": "Issue vermeld",
         "issue_commented": "Reactie op issue",
+        "issue_status_changed": "Werkitemstatus gewijzigd",
+        "issue_created": "Werkitem aangemaakt",
         "sprint_started": "Sprint gestart",
+        "sprint_completed": "Sprint voltooid",
+        "project_created": "Project aangemaakt",
+        "project_archived": "Project gearchiveerd",
         "daily_digest": "Dagelijkse samenvatting",
         "weekly_digest": "Wekelijkse samenvatting"
       }

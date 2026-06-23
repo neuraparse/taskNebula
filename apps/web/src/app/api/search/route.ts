@@ -14,6 +14,7 @@ import {
 } from '@tasknebula/db';
 import { eq, and, or, inArray, gte, lte, desc, sql, type SQL } from 'drizzle-orm';
 import { withValidation } from '@/lib/api-validation';
+import { hybridSearch, looksLikeFreeText } from '@/lib/search/hybrid';
 
 export const dynamic = 'force-dynamic';
 
@@ -100,6 +101,44 @@ export const GET = withValidation({ query: searchQuerySchema })(async (request, 
       if (!projMember) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
+    }
+
+    if (looksLikeFreeText(query)) {
+      const hybridLimit = Math.min(Math.max(limit + offset, limit), 500);
+      const rankedResults = await hybridSearch({
+        query,
+        filters: {
+          organizationId,
+          projectId: projectId || null,
+        },
+        candidateLimit: Math.min(Math.max(hybridLimit * 2, 50), 500),
+        limit: hybridLimit,
+      });
+      const results = rankedResults.slice(offset, offset + limit);
+      const criteria = { text: query };
+
+      if (saveHistory) {
+        try {
+          await db.insert(searchHistory).values({
+            userId: session.user.id,
+            organizationId,
+            projectId: projectId || null,
+            query,
+            criteria,
+            resultCount: results.length.toString(),
+          });
+        } catch (error) {
+          console.error('Failed to save search history:', error);
+        }
+      }
+
+      return NextResponse.json({
+        results,
+        count: results.length,
+        query,
+        criteria,
+        mode: 'freeText',
+      });
     }
 
     // Parse JQL query

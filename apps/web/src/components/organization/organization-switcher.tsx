@@ -109,7 +109,7 @@ export function OrganizationSwitcher() {
       <Button
         variant="ghost"
         size="sm"
-        className="text-muted-foreground w-[180px] justify-between px-2"
+        className="w-[180px] justify-between px-2 text-current"
         disabled
       >
         <span className="flex items-center gap-2 truncate">
@@ -129,19 +129,19 @@ export function OrganizationSwitcher() {
           role="combobox"
           aria-expanded={open}
           aria-label={t('org_switch_aria')}
-          className="h-9 w-[180px] justify-between gap-2 px-2 transition-colors duration-200"
+          className="h-9 w-[180px] justify-between gap-2 px-2 text-current transition-colors duration-150"
         >
           <span className="flex min-w-0 items-center gap-2 truncate">
             {currentOrg ? (
               <OrgAvatar name={currentOrg.name} />
             ) : (
-              <Building2 className="text-muted-foreground h-4 w-4 shrink-0" />
+              <Building2 className="h-4 w-4 shrink-0 text-current opacity-60" />
             )}
             <span className="truncate text-sm font-medium">
               {currentOrg?.name || t('org_select')}
             </span>
           </span>
-          <ChevronsUpDown className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+          <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-current opacity-60" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent

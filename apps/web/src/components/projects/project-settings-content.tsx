@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Skeleton, SkeletonText } from '@/components/ui/skeleton';
 import { CustomFieldManager } from '@/components/custom-fields/custom-field-manager';
 import { PermissionManager } from '@/components/permissions/permission-manager';
 import { PermissionSchemeManager } from '@/components/permissions/permission-scheme-manager';
@@ -18,6 +20,7 @@ import { ProjectCommunicationsSettings } from '@/components/settings/project-com
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useProjectPermissions } from '@/lib/hooks/use-project-permissions';
 import type { UserProjectPermissions } from '@/lib/hooks/use-project-permissions';
+import { cn } from '@/lib/utils';
 import {
   Shield,
   Settings,
@@ -105,6 +108,7 @@ export interface ProjectSettingsContentProps {
   projectId: string;
   initialTab?: TabValue;
   onTabChange?: (tab: TabValue) => void;
+  variant?: 'page' | 'dialog';
 }
 
 /**
@@ -116,10 +120,12 @@ export function ProjectSettingsContent({
   projectId,
   initialTab = 'general',
   onTabChange,
+  variant = 'page',
 }: ProjectSettingsContentProps) {
   const t = useTranslations('projectsPages');
   const { currentOrganizationId } = useOrganization();
   const { permissions, isLoading: permissionsLoading } = useProjectPermissions(projectId);
+  const isDialog = variant === 'dialog';
   const visibleTabs = useMemo(
     () => TABS.filter((tab) => canAccessTab(tab.value, permissions)),
     [permissions]
@@ -155,8 +161,23 @@ export function ProjectSettingsContent({
 
   if (!currentOrganizationId || permissionsLoading) {
     return (
-      <div className="p-6">
-        <p className="text-muted-foreground text-sm">{t('loading')}</p>
+      <div className="grid min-h-0 flex-1 gap-0 md:grid-cols-[16rem_minmax(0,1fr)]">
+        <div className="border-border hidden border-r p-3 md:block">
+          <div className="space-y-2">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <Skeleton key={index} className="h-9 w-full" />
+            ))}
+          </div>
+        </div>
+        <div className="space-y-5 p-6">
+          <Skeleton className="h-5 w-48" />
+          <SkeletonText lines={4} className="max-w-2xl" />
+          <div className="grid gap-3 lg:grid-cols-2">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+          <p className="sr-only">{t('loading')}</p>
+        </div>
       </div>
     );
   }
@@ -164,23 +185,36 @@ export function ProjectSettingsContent({
   if (!canAccessSettingsShell(permissions) || visibleTabs.length === 0) {
     return (
       <div className="p-6">
-        <div className="panel-danger rounded-lg p-6 text-center">
-          <p className="text-destructive text-sm">{t('no_settings_permission')}</p>
-        </div>
+        <Alert variant="destructive" className="mx-auto max-w-xl">
+          <Lock className="h-4 w-4" />
+          <AlertDescription>{t('no_settings_permission')}</AlertDescription>
+        </Alert>
       </div>
     );
   }
+
+  const activeTabMeta = visibleTabs.find((tab) => tab.value === activeTab) ?? visibleTabs[0];
+  const ActiveTabIcon = activeTabMeta?.icon;
 
   return (
     <Tabs
       value={activeTab}
       onValueChange={handleTabChange}
-      className="flex min-h-0 flex-1 flex-col"
+      className={cn('flex min-h-0 flex-1 flex-col', isDialog && 'md:flex-row')}
     >
-      <div className="border-border bg-background shrink-0 border-b">
+      <div
+        className={cn(
+          'border-border bg-background shrink-0 border-b',
+          isDialog && 'md:bg-muted/10 md:w-64 md:border-b-0 md:border-r'
+        )}
+      >
         <TabsList
           aria-label={t('settings_sections_aria')}
-          className="h-auto w-full justify-start gap-0 overflow-x-auto rounded-none bg-transparent p-0"
+          className={cn(
+            'h-auto w-full justify-start gap-0 overflow-x-auto rounded-none bg-transparent p-0',
+            isDialog &&
+              'md:max-h-full md:flex-col md:items-stretch md:gap-1 md:overflow-y-auto md:overflow-x-hidden md:p-2'
+          )}
         >
           {visibleTabs.map((tab) => {
             const Icon = tab.icon;
@@ -188,77 +222,98 @@ export function ProjectSettingsContent({
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-foreground flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 py-2 text-sm data-[state=active]:bg-transparent"
+                className={cn(
+                  'text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-foreground flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 py-2 text-sm data-[state=active]:bg-transparent',
+                  isDialog &&
+                    'md:data-[state=active]:bg-accent/60 md:w-full md:justify-start md:rounded-md md:border-b-0 md:border-l-2 md:px-3 md:py-2.5'
+                )}
               >
                 <Icon className="h-4 w-4" />
-                <span>{t(tab.labelKey)}</span>
+                <span className="min-w-0 truncate">{t(tab.labelKey)}</span>
               </TabsTrigger>
             );
           })}
         </TabsList>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
-        <TabsContent value="permissions" className="focus-visible:outline-none">
-          {activeTab === 'permissions' && canAccessTab('permissions', permissions) ? (
-            <PermissionManager projectId={projectId} />
-          ) : null}
-        </TabsContent>
-        <TabsContent value="schemes" className="focus-visible:outline-none">
-          {activeTab === 'schemes' && canAccessTab('schemes', permissions) ? (
-            <PermissionSchemeManager organizationId={currentOrganizationId} projectId={projectId} />
-          ) : null}
-        </TabsContent>
-        <TabsContent value="security" className="focus-visible:outline-none">
-          {activeTab === 'security' && canAccessTab('security', permissions) ? (
-            <IssueSecurityManager organizationId={currentOrganizationId} projectId={projectId} />
-          ) : null}
-        </TabsContent>
-        <TabsContent value="custom-fields" className="focus-visible:outline-none">
-          {activeTab === 'custom-fields' && canAccessTab('custom-fields', permissions) ? (
-            <CustomFieldManager organizationId={currentOrganizationId} projectId={projectId} />
-          ) : null}
-        </TabsContent>
-        <TabsContent value="versions" className="focus-visible:outline-none">
-          {activeTab === 'versions' && canAccessTab('versions', permissions) ? (
-            <VersionsManager projectId={projectId} />
-          ) : null}
-        </TabsContent>
-        <TabsContent value="components" className="focus-visible:outline-none">
-          {activeTab === 'components' && canAccessTab('components', permissions) ? (
-            <ComponentsManager projectId={projectId} />
-          ) : null}
-        </TabsContent>
-        <TabsContent value="workflows" className="focus-visible:outline-none">
-          {activeTab === 'workflows' && canAccessTab('workflows', permissions) ? (
-            <WorkflowEditor organizationId={currentOrganizationId} projectId={projectId} />
-          ) : null}
-        </TabsContent>
-        <TabsContent value="automation" className="focus-visible:outline-none">
-          {activeTab === 'automation' && canAccessTab('automation', permissions) ? (
-            <AutomationManager organizationId={currentOrganizationId} projectId={projectId} />
-          ) : null}
-        </TabsContent>
-        <TabsContent value="ai-agents" className="focus-visible:outline-none">
-          {activeTab === 'ai-agents' && canAccessTab('ai-agents', permissions) ? (
-            <ProjectAiAgents projectId={projectId} />
-          ) : null}
-        </TabsContent>
-        <TabsContent value="chat-calls" className="focus-visible:outline-none">
-          {activeTab === 'chat-calls' && canAccessTab('chat-calls', permissions) ? (
-            <ProjectCommunicationsSettings projectId={projectId} />
-          ) : null}
-        </TabsContent>
-        <TabsContent value="webhooks" className="focus-visible:outline-none">
-          {activeTab === 'webhooks' && canAccessTab('webhooks', permissions) ? (
-            <WebhooksManager organizationId={currentOrganizationId} projectId={projectId} />
-          ) : null}
-        </TabsContent>
-        <TabsContent value="general" className="focus-visible:outline-none">
-          {activeTab === 'general' && canAccessTab('general', permissions) ? (
-            <ProjectGeneralSettings projectId={projectId} />
-          ) : null}
-        </TabsContent>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        {isDialog && activeTabMeta && ActiveTabIcon ? (
+          <div className="border-border/70 bg-background/80 hidden shrink-0 items-center gap-2 border-b px-6 py-3 md:flex">
+            <ActiveTabIcon className="text-muted-foreground h-4 w-4" />
+            <h2 className="truncate text-sm font-medium">{t(activeTabMeta.labelKey)}</h2>
+          </div>
+        ) : null}
+
+        <div
+          className={cn(
+            'min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5',
+            isDialog && 'lg:px-7'
+          )}
+        >
+          <TabsContent value="permissions" className="mt-0 focus-visible:outline-none">
+            {activeTab === 'permissions' && canAccessTab('permissions', permissions) ? (
+              <PermissionManager projectId={projectId} />
+            ) : null}
+          </TabsContent>
+          <TabsContent value="schemes" className="mt-0 focus-visible:outline-none">
+            {activeTab === 'schemes' && canAccessTab('schemes', permissions) ? (
+              <PermissionSchemeManager
+                organizationId={currentOrganizationId}
+                projectId={projectId}
+              />
+            ) : null}
+          </TabsContent>
+          <TabsContent value="security" className="mt-0 focus-visible:outline-none">
+            {activeTab === 'security' && canAccessTab('security', permissions) ? (
+              <IssueSecurityManager organizationId={currentOrganizationId} projectId={projectId} />
+            ) : null}
+          </TabsContent>
+          <TabsContent value="custom-fields" className="mt-0 focus-visible:outline-none">
+            {activeTab === 'custom-fields' && canAccessTab('custom-fields', permissions) ? (
+              <CustomFieldManager organizationId={currentOrganizationId} projectId={projectId} />
+            ) : null}
+          </TabsContent>
+          <TabsContent value="versions" className="mt-0 focus-visible:outline-none">
+            {activeTab === 'versions' && canAccessTab('versions', permissions) ? (
+              <VersionsManager projectId={projectId} />
+            ) : null}
+          </TabsContent>
+          <TabsContent value="components" className="mt-0 focus-visible:outline-none">
+            {activeTab === 'components' && canAccessTab('components', permissions) ? (
+              <ComponentsManager projectId={projectId} />
+            ) : null}
+          </TabsContent>
+          <TabsContent value="workflows" className="mt-0 focus-visible:outline-none">
+            {activeTab === 'workflows' && canAccessTab('workflows', permissions) ? (
+              <WorkflowEditor organizationId={currentOrganizationId} projectId={projectId} />
+            ) : null}
+          </TabsContent>
+          <TabsContent value="automation" className="mt-0 focus-visible:outline-none">
+            {activeTab === 'automation' && canAccessTab('automation', permissions) ? (
+              <AutomationManager organizationId={currentOrganizationId} projectId={projectId} />
+            ) : null}
+          </TabsContent>
+          <TabsContent value="ai-agents" className="mt-0 focus-visible:outline-none">
+            {activeTab === 'ai-agents' && canAccessTab('ai-agents', permissions) ? (
+              <ProjectAiAgents projectId={projectId} />
+            ) : null}
+          </TabsContent>
+          <TabsContent value="chat-calls" className="mt-0 focus-visible:outline-none">
+            {activeTab === 'chat-calls' && canAccessTab('chat-calls', permissions) ? (
+              <ProjectCommunicationsSettings projectId={projectId} />
+            ) : null}
+          </TabsContent>
+          <TabsContent value="webhooks" className="mt-0 focus-visible:outline-none">
+            {activeTab === 'webhooks' && canAccessTab('webhooks', permissions) ? (
+              <WebhooksManager organizationId={currentOrganizationId} projectId={projectId} />
+            ) : null}
+          </TabsContent>
+          <TabsContent value="general" className="mt-0 focus-visible:outline-none">
+            {activeTab === 'general' && canAccessTab('general', permissions) ? (
+              <ProjectGeneralSettings projectId={projectId} />
+            ) : null}
+          </TabsContent>
+        </div>
       </div>
     </Tabs>
   );

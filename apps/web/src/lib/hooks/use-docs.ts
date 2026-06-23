@@ -80,6 +80,26 @@ export interface DocumentPage {
   share?: DocumentShareSettings;
 }
 
+export type DocumentPageSummary = Pick<
+  DocumentPage,
+  | 'id'
+  | 'spaceId'
+  | 'organizationId'
+  | 'projectId'
+  | 'parentId'
+  | 'title'
+  | 'slug'
+  | 'icon'
+  | 'excerpt'
+  | 'currentRevision'
+  | 'position'
+  | 'isArchived'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'createdBy'
+  | 'updatedBy'
+>;
+
 export interface DocumentRevision {
   id: string;
   pageId: string;
@@ -156,7 +176,7 @@ export function useDocumentPages(filters?: {
       return response.json() as Promise<{
         space: DocumentSpace | null;
         permissions: DocumentSpace['permissions'];
-        pages: DocumentPage[];
+        pages: DocumentPageSummary[];
       }>;
     },
   });
@@ -192,7 +212,7 @@ export function useDocumentTree(pageId: string | null) {
   });
 }
 
-export function useDocumentRevisions(pageId: string | null) {
+export function useDocumentRevisions(pageId: string | null, options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ['document-revisions', pageId],
     queryFn: async () => {
@@ -202,7 +222,7 @@ export function useDocumentRevisions(pageId: string | null) {
       const data = await response.json();
       return data.revisions as DocumentRevision[];
     },
-    enabled: !!pageId,
+    enabled: !!pageId && options.enabled !== false,
   });
 }
 
@@ -453,7 +473,7 @@ export function useDetachIssueDoc(issueId: string) {
   });
 }
 
-export function useDocumentAttachments(pageId: string | null) {
+export function useDocumentAttachments(pageId: string | null, options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ['document-attachments', pageId],
     queryFn: async () => {
@@ -464,7 +484,7 @@ export function useDocumentAttachments(pageId: string | null) {
       const data = await response.json();
       return data.attachments as DocumentAttachment[];
     },
-    enabled: !!pageId,
+    enabled: !!pageId && options.enabled !== false,
   });
 }
 

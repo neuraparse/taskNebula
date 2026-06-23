@@ -26,6 +26,31 @@ const COLOR_MODES = [
   { value: 'system', labelKey: 'appearance.mode_system', icon: Monitor },
 ] as const;
 
+type ColorMode = (typeof COLOR_MODES)[number]['value'];
+
+const COLOR_MODE_STORAGE_KEY = 'tasknebula-color-mode';
+const LEGACY_COLOR_MODE_STORAGE_KEY = 'theme';
+
+function isColorMode(value: unknown): value is ColorMode {
+  return value === 'light' || value === 'dark' || value === 'system';
+}
+
+function getStoredColorMode(): ColorMode | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const storedColorMode = window.localStorage.getItem(COLOR_MODE_STORAGE_KEY);
+    if (isColorMode(storedColorMode)) return storedColorMode;
+
+    const legacyColorMode = window.localStorage.getItem(LEGACY_COLOR_MODE_STORAGE_KEY);
+    if (isColorMode(legacyColorMode)) return legacyColorMode;
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
 const VISUAL_STYLES: { value: VisualStyle; labelKey: string }[] = [
   { value: 'modern', labelKey: 'appearance.style_modern' },
   { value: 'glass', labelKey: 'appearance.style_glass' },
@@ -93,6 +118,8 @@ export function AppearanceSettings() {
   } = useThemeStore();
 
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
+  const [serverHydrated, setServerHydrated] = useState(false);
+  const [selectedColorMode, setSelectedColorMode] = useState<ColorMode>('system');
 
   // Fetch server settings — only runs when a session exists, so the landing
   // page / other unauthenticated surfaces never hit the authed API.
@@ -111,43 +138,118 @@ export function AppearanceSettings() {
   // Track whether we've already hydrated from server in this mount so we
   // don't fight the user's ongoing edits if the query re-runs.
   const hydratedRef = useRef(false);
-  useEffect(() => {
-    if (!serverData?.settings || hydratedRef.current) return;
-    const s = serverData.settings;
-    hydrateFromServer({
-      colorTheme: s.colorTheme,
-      visualStyle: s.visualStyle,
-      interfaceFont: s.interfaceFont,
-      animationsEnabled: s.animationsEnabled,
-      gradientsEnabled: s.gradientsEnabled,
-    });
-    if (s.theme) {
-      // next-themes owns its own storage; align it with server-side value.
-      setTheme(s.theme);
-    }
-    hydratedRef.current = true;
-  }, [serverData, hydrateFromServer, setTheme]);
-
-  // Debounced PUT on any client-side change. Skip the very first render so we
-  // don't immediately write back the defaults before hydration completes.
+  const syncedStoredColorModeRef = useRef(false);
+  // Debounced PUT on any client-side change. Skip the first hydrated pass so
+  // default `system` does not get written until the user explicitly selects it.
   const skipFirstSyncRef = useRef(true);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestPayloadRef = useRef<Record<string, unknown>>({});
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const persistAppearance = useCallback(async (payload: Record<string, unknown>) => {
+    setSyncStatus('saving');
+    try {
+      const res = await fetch('/api/user/appearance', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error('PUT failed');
+      setSyncStatus('saved');
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = setTimeout(() => setSyncStatus('idle'), 1500);
+    } catch (err) {
+      console.error('Failed to sync appearance settings', err);
+      setSyncStatus('error');
+    }
+  }, []);
+
+  useEffect(() => {
+    const storedColorMode = getStoredColorMode();
+    if (storedColorMode) {
+      setSelectedColorMode(storedColorMode);
+      return;
+    }
+
+    if (isColorMode(theme)) {
+      setSelectedColorMode(theme);
+    }
+  }, [theme]);
+
+  useEffect(() => {
+    if (!isAuthenticated || syncedStoredColorModeRef.current) return;
+
+    const storedColorMode = getStoredColorMode();
+    if (!storedColorMode) return;
+
+    syncedStoredColorModeRef.current = true;
+    void persistAppearance({ theme: storedColorMode });
+  }, [isAuthenticated, persistAppearance]);
+
+  useEffect(() => {
+    if (!serverData?.settings || hydratedRef.current) return;
+    const s = serverData.settings;
+    const hasPersistedServerSettings = Boolean(s.updatedAt);
+    const storedColorMode = getStoredColorMode();
+
+    if (hasPersistedServerSettings) {
+      hydrateFromServer({
+        colorTheme: s.colorTheme,
+        visualStyle: s.visualStyle,
+        interfaceFont: s.interfaceFont,
+        animationsEnabled: s.animationsEnabled,
+        gradientsEnabled: s.gradientsEnabled,
+      });
+    }
+
+    if (storedColorMode) {
+      if (!hasPersistedServerSettings || s.theme !== storedColorMode) {
+        const localAppearancePayload = hasPersistedServerSettings
+          ? { theme: storedColorMode }
+          : {
+              theme: storedColorMode,
+              colorTheme,
+              visualStyle,
+              interfaceFont,
+              animationsEnabled: enableAnimations,
+              gradientsEnabled: enableGradients,
+            };
+        if (!syncedStoredColorModeRef.current) {
+          syncedStoredColorModeRef.current = true;
+          void persistAppearance(localAppearancePayload);
+        }
+      }
+    } else if (hasPersistedServerSettings && s.theme) {
+      // next-themes owns its own storage; align it with a saved server value
+      // only when this browser has no explicit color-mode choice.
+      setSelectedColorMode(s.theme);
+      setTheme(s.theme);
+    }
+
+    hydratedRef.current = true;
+    setServerHydrated(true);
+  }, [
+    serverData,
+    hydrateFromServer,
+    setTheme,
+    colorTheme,
+    visualStyle,
+    interfaceFont,
+    enableAnimations,
+    enableGradients,
+    persistAppearance,
+  ]);
+
   useEffect(() => {
     if (!isAuthenticated) return;
+    if (!serverHydrated || !hydratedRef.current) return;
     if (skipFirstSyncRef.current) {
       skipFirstSyncRef.current = false;
       return;
     }
-    // Wait until we've seen the server row before pushing updates, otherwise
-    // a fresh-page edit could race the initial GET and overwrite server state
-    // with not-yet-hydrated defaults.
-    if (!hydratedRef.current) return;
 
     latestPayloadRef.current = {
-      theme,
+      theme: selectedColorMode,
       colorTheme,
       visualStyle,
       interfaceFont,
@@ -157,21 +259,7 @@ export function AppearanceSettings() {
 
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     debounceTimerRef.current = setTimeout(async () => {
-      setSyncStatus('saving');
-      try {
-        const res = await fetch('/api/user/appearance', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(latestPayloadRef.current),
-        });
-        if (!res.ok) throw new Error('PUT failed');
-        setSyncStatus('saved');
-        if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-        savedTimerRef.current = setTimeout(() => setSyncStatus('idle'), 1500);
-      } catch (err) {
-        console.error('Failed to sync appearance settings', err);
-        setSyncStatus('error');
-      }
+      await persistAppearance(latestPayloadRef.current);
     }, 400);
 
     return () => {
@@ -179,12 +267,14 @@ export function AppearanceSettings() {
     };
   }, [
     isAuthenticated,
-    theme,
+    selectedColorMode,
     colorTheme,
     visualStyle,
     interfaceFont,
     enableAnimations,
     enableGradients,
+    serverHydrated,
+    persistAppearance,
   ]);
 
   useEffect(() => {
@@ -193,16 +283,25 @@ export function AppearanceSettings() {
     };
   }, []);
 
+  const handleColorModeChange = useCallback(
+    (mode: ColorMode) => {
+      setSelectedColorMode(mode);
+      setTheme(mode);
+    },
+    [setTheme]
+  );
+
   const handleReset = useCallback(() => {
     try {
       reset();
     } catch {
       setColorTheme('default');
       setVisualStyle('modern');
-      setInterfaceFont('brand');
+      setInterfaceFont('ibm');
       setEnableAnimations(true);
       setEnableGradients(true);
     }
+    setSelectedColorMode('system');
     setTheme('system');
   }, [
     reset,
@@ -273,13 +372,13 @@ export function AppearanceSettings() {
               {t('appearance.color_mode_sr')}
             </span>
             {COLOR_MODES.map((mode) => {
-              const isActive = theme === mode.value;
+              const isActive = selectedColorMode === mode.value;
               return (
                 <button
                   key={mode.value}
                   type="button"
                   aria-pressed={isActive}
-                  onClick={() => setTheme(mode.value)}
+                  onClick={() => handleColorModeChange(mode.value)}
                   className={cn(
                     'ease-snap flex items-center justify-center gap-2 rounded-md border px-3 py-2.5 text-sm transition-all duration-150',
                     'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',

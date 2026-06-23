@@ -17,6 +17,8 @@ const createEmailTemplateSchema = z.object({
     'issue_created',
     'sprint_started',
     'sprint_completed',
+    'project_created',
+    'project_archived',
     'daily_digest',
     'weekly_digest',
   ]),

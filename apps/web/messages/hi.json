@@ -770,7 +770,9 @@
       "sprint": "स्प्रिंट",
       "ai_draft": "AI ड्राफ़्ट",
       "agent": "एजेंट",
-      "update": "अपडेट"
+      "update": "अपडेट",
+      "project_created": "प्रोजेक्ट बनाया गया",
+      "project_archived": "प्रोजेक्ट संग्रहित किया गया"
     },
     "type_action": {
       "mention": "ने आपका उल्लेख किया",
@@ -869,7 +871,9 @@
         "sprint_started": "स्प्रिंट शुरू हुआ",
         "sprint_completed": "स्प्रिंट पूरा हुआ",
         "ai_draft_failed": "AI ड्राफ़्ट विफल",
-        "agent_run_failed": "एजेंट विफल"
+        "agent_run_failed": "एजेंट विफल",
+        "project_created": "प्रोजेक्ट बनाया गया",
+        "project_archived": "प्रोजेक्ट संग्रहित किया गया"
       },
       "meta": {
         "project": "प्रोजेक्ट",
@@ -1276,11 +1280,45 @@
     },
     "agent": {
       "title": "एजेंट गतिविधि",
-      "state": "स्थिति: {state}",
-      "idle": "निष्क्रिय — अभी तक कोई सत्र भेजा नहीं गया",
+      "beta": "बीटा",
+      "assignedTo": "{name} को असाइन किया गया",
+      "directDispatch": "इस कार्य को सीधे कोडिंग एजेंट को भेजें।",
+      "provider": "प्रदाता",
+      "promptPlaceholder": "इस रन के लिए वैकल्पिक निर्देश...",
       "dispatch": "भेजें",
-      "dispatch_failed": "भेजना विफल",
-      "dispatch_failed_status": "भेजना विफल ({status})"
+      "dispatching": "भेजा जा रहा है",
+      "dispatch_failed": "भेजना विफल रहा",
+      "dispatch_failed_status": "भेजना विफल रहा ({status})",
+      "latestSessions": "नवीनतम सत्र",
+      "noSessions": "अभी तक कोई एजेंट सत्र नहीं है।",
+      "localRunner": "स्थानीय CLI: {command}",
+      "webhookRunner": "Webhook प्रदाता",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "कस्टम"
+      },
+      "states": {
+        "pending": "लंबित",
+        "active": "चल रहा है",
+        "awaitingInput": "इनपुट चाहिए",
+        "error": "विफल",
+        "complete": "पूर्ण",
+        "stale": "पुराना"
+      },
+      "issueContext": "इश्यू फ़ील्ड",
+      "descriptionContext": "विवरण",
+      "instructionContext": "एडमिन नोट्स",
+      "sessionStatus": "सत्र स्थिति",
+      "runner": "रनर",
+      "runnerStatus": "रन स्थिति",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "निकास कोड"
     },
     "vote": {
       "group_label": "वोट",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Platform",
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "पूरा पेज खोलें"
   },
   "settingsProject": {
     "kicker": "प्रोजेक्ट",
@@ -3331,6 +3370,29 @@
         "description": "रोलआउट गुणवत्ता और ब्लास्ट रेडियस की निगरानी के लिए सिस्टम-व्यापी इतिहास।",
         "noData": "अभी तक कोई एजेंट रन दर्ज नहीं किया गया।",
         "writesChip": "{count} लेखन"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "इश्यू असाइन किया गया",
         "issue_mentioned": "इश्यू में उल्लेख किया गया",
         "issue_commented": "इश्यू पर टिप्पणी की गई",
+        "issue_status_changed": "कार्य आइटम की स्थिति बदली",
+        "issue_created": "कार्य आइटम बनाया गया",
         "sprint_started": "स्प्रिंट शुरू हुआ",
+        "sprint_completed": "स्प्रिंट पूरा हुआ",
+        "project_created": "प्रोजेक्ट बनाया गया",
+        "project_archived": "प्रोजेक्ट संग्रहित किया गया",
         "daily_digest": "दैनिक डाइजेस्ट",
         "weekly_digest": "साप्ताहिक डाइजेस्ट"
       }

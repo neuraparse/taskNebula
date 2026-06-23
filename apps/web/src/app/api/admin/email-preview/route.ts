@@ -12,7 +12,8 @@
  *   - password_reset        (from api/auth/forgot-password/route.ts)
  *   - invitation            (from api/organizations/.../members/route.ts)
  *   - issue_assigned, issue_mentioned, issue_commented,
- *     sprint_started, daily_digest, weekly_digest
+ *     issue_status_changed, issue_created, sprint_started, sprint_completed,
+ *     project_created, project_archived, daily_digest, weekly_digest
  *     (from BUILTIN_TEMPLATES in packages/db/src/utils/email-service.ts)
  */
 import { NextRequest, NextResponse } from 'next/server';
@@ -108,7 +109,12 @@ const BUILTIN_KEYS = [
   'issue_assigned',
   'issue_mentioned',
   'issue_commented',
+  'issue_status_changed',
+  'issue_created',
   'sprint_started',
+  'sprint_completed',
+  'project_created',
+  'project_archived',
   'daily_digest',
   'weekly_digest',
 ] as const;

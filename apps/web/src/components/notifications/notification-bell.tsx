@@ -317,7 +317,7 @@ export function NotificationBell() {
         <Button
           variant="ghost"
           size="icon"
-          className="ease-snap focus-visible:ring-ring relative transition-all duration-150 focus-visible:ring-2"
+          className="ease-snap focus-visible:ring-ring relative text-current transition-all duration-150 focus-visible:ring-2"
           aria-label={
             hasUnread
               ? t('bell.trigger_aria_unread', { count: unreadCount })
@@ -327,10 +327,7 @@ export function NotificationBell() {
           aria-expanded={open}
         >
           <Bell
-            className={cn(
-              'h-4 w-4 transition-transform duration-200',
-              hasUnread && 'text-foreground'
-            )}
+            className={cn('h-4 w-4 transition-transform duration-200', hasUnread && 'text-primary')}
           />
           {hasUnread && (
             <span

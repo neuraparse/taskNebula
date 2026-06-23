@@ -11,7 +11,9 @@ export type NotificationType =
   | 'sprint_started'
   | 'sprint_completed'
   | 'ai_draft_failed'
-  | 'agent_run_failed';
+  | 'agent_run_failed'
+  | 'project_created'
+  | 'project_archived';
 
 export interface NotificationActor {
   id: string;
@@ -120,4 +122,3 @@ export function useUnreadNotificationsCount() {
   const { data } = useNotifications(true);
   return data?.notifications?.length || 0;
 }
-

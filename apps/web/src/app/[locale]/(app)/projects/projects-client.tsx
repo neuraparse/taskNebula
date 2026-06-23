@@ -93,9 +93,9 @@ export function ProjectsClient() {
   );
 
   return (
-    <div className="animate-fade-in flex h-full flex-col">
-      <div className="border-border bg-background border-b px-6 py-5">
-        <div className="flex items-center justify-between gap-4">
+    <div className="bg-background animate-fade-in flex h-full flex-col">
+      <div className="border-border bg-card border-b px-6 py-5">
+        <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4">
           <div className="space-y-1">
             <span className="kicker">{t('kicker')}</span>
             <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
@@ -124,8 +124,8 @@ export function ProjectsClient() {
           /* FEAT-31 dashboard empty state. Illustration tile + primary CTA
              + secondary AI CTA (TODO: route once /api/ai/projects/scaffold
              lands; it should pre-fill the create-project dialog). */
-          <div className="animate-fade-up border-border mx-auto flex max-w-md flex-col items-center gap-4 rounded-lg border border-dashed p-10 text-center">
-            <div className="bg-gradient-mesh flex h-14 w-14 items-center justify-center rounded-md">
+          <div className="surface-card animate-fade-up mx-auto flex max-w-md flex-col items-center gap-4 border-dashed p-10 text-center shadow-none">
+            <div className="icon-tile icon-tile-accent-blue flex h-14 w-14 items-center justify-center">
               <FolderKanban className="text-foreground/80 h-7 w-7" />
             </div>
             <div className="space-y-1">
@@ -164,7 +164,7 @@ export function ProjectsClient() {
             ) : null}
           </div>
         ) : (
-          <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="stagger mx-auto grid w-full max-w-[1600px] gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {projects.map((project) => {
               const initials = project.name
                 .split(/\s+/)
@@ -182,7 +182,7 @@ export function ProjectsClient() {
                 <ViewTransition key={project.id} name={`project-${project.id}`}>
                   <Link
                     href={`/projects/${project.key.toLowerCase()}/views`}
-                    className="surface-card surface-card-hover ease-snap group flex flex-col gap-3 rounded-lg p-5 transition-all duration-150 hover:-translate-y-0.5"
+                    className="surface-card ease-snap border-t-primary hover:border-border-strong hover:bg-surface/50 group flex min-h-[176px] flex-col gap-3 border-t-2 p-5 shadow-none transition-colors duration-150"
                   >
                     <div className="flex items-start gap-3">
                       <span
@@ -194,7 +194,7 @@ export function ProjectsClient() {
                         <p className="text-foreground group-hover:text-primary truncate text-sm font-semibold leading-tight transition-colors">
                           {project.name}
                         </p>
-                        <p className="text-muted-foreground font-mono text-[11px]">
+                        <p className="text-muted-foreground font-mono text-[11px] uppercase tracking-[0.08em]">
                           {project.key}
                           {project.team ? (
                             <>
@@ -215,7 +215,7 @@ export function ProjectsClient() {
                       </p>
                     ) : null}
 
-                    <div className="text-muted-foreground mt-auto flex items-center gap-1.5 text-xs">
+                    <div className="text-muted-foreground border-border mt-auto flex flex-wrap items-center gap-1.5 border-t pt-3 text-xs">
                       <span className="text-foreground font-medium">{issueCount}</span>
                       <span>{t('issueLabel', { count: issueCount })}</span>
                       <span className="opacity-40">·</span>

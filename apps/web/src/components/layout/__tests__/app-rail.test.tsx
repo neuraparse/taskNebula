@@ -111,7 +111,21 @@ describe('AppRail', () => {
       name: /account menu for ada lovelace/i,
     });
 
-    expect(accountMenu).toHaveClass('h-9', 'w-9', 'ring-1');
+    expect(accountMenu).toHaveClass(
+      'h-9',
+      'w-9',
+      'rounded-[2px]',
+      'border-white/15',
+      'bg-white/5',
+      'hover:text-white',
+      'ring-1',
+      'ring-white/25'
+    );
+    expect(accountMenu).not.toHaveClass('rounded-full');
+
+    const initials = screen.getByText('AL');
+    expect(initials).toHaveClass('rounded-[2px]', 'bg-white', 'text-zinc-950');
+    expect(initials).not.toHaveClass('rounded-full');
   });
 
   it('hides workspace navigation when the user has no workspace access', () => {

@@ -770,7 +770,9 @@
       "sprint": "Sprint",
       "ai_draft": "Szkic AI",
       "agent": "Agent",
-      "update": "Aktualizacja"
+      "update": "Aktualizacja",
+      "project_created": "Projekt utworzony",
+      "project_archived": "Projekt zarchiwizowany"
     },
     "type_action": {
       "mention": "wspomniał(a) o Tobie",
@@ -869,7 +871,9 @@
         "sprint_started": "Sprint rozpoczęty",
         "sprint_completed": "Sprint ukończony",
         "ai_draft_failed": "Szkic AI nie powiódł się",
-        "agent_run_failed": "Agent nie powiódł się"
+        "agent_run_failed": "Agent nie powiódł się",
+        "project_created": "Projekt utworzony",
+        "project_archived": "Projekt zarchiwizowany"
       },
       "meta": {
         "project": "Projekt",
@@ -1276,11 +1280,45 @@
     },
     "agent": {
       "title": "Aktywność agenta",
-      "state": "Stan: {state}",
-      "idle": "Bezczynny — brak wysłanej sesji",
+      "beta": "Beta",
+      "assignedTo": "Przypisano do {name}",
+      "directDispatch": "Wyślij to zadanie bezpośrednio do agenta kodującego.",
+      "provider": "Dostawca",
+      "promptPlaceholder": "Opcjonalne instrukcje dla tego uruchomienia...",
       "dispatch": "Wyślij",
-      "dispatch_failed": "Wysłanie nie powiodło się",
-      "dispatch_failed_status": "Wysłanie nie powiodło się ({status})"
+      "dispatching": "Wysyłanie",
+      "dispatch_failed": "Wysyłanie nie powiodło się",
+      "dispatch_failed_status": "Wysyłanie nie powiodło się ({status})",
+      "latestSessions": "Najnowsze sesje",
+      "noSessions": "Brak jeszcze sesji agentów.",
+      "localRunner": "Lokalne CLI: {command}",
+      "webhookRunner": "Dostawca webhooka",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "Niestandardowy"
+      },
+      "states": {
+        "pending": "Oczekuje",
+        "active": "Działa",
+        "awaitingInput": "Wymaga danych",
+        "error": "Niepowodzenie",
+        "complete": "Ukończono",
+        "stale": "Nieaktualne"
+      },
+      "issueContext": "Pola zadania",
+      "descriptionContext": "Opis",
+      "instructionContext": "Notatki administratora",
+      "sessionStatus": "Stan sesji",
+      "runner": "Wykonawca",
+      "runnerStatus": "Stan uruchomienia",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "Kod wyjścia"
     },
     "vote": {
       "group_label": "Głos",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Platforma",
     "ts_slug_placeholder": "platforma",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "Otwórz pełną stronę"
   },
   "settingsProject": {
     "kicker": "Projekt",
@@ -3331,6 +3370,29 @@
         "description": "Historia w całym systemie do monitorowania jakości wdrożenia i zasięgu skutków.",
         "noData": "Nie zarejestrowano jeszcze żadnych uruchomień agentów.",
         "writesChip": "{count} zapisów"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "Zadanie przypisane",
         "issue_mentioned": "Wzmianka w zadaniu",
         "issue_commented": "Komentarz do zadania",
+        "issue_status_changed": "Zmieniono status elementu pracy",
+        "issue_created": "Utworzono element pracy",
         "sprint_started": "Sprint rozpoczęty",
+        "sprint_completed": "Sprint ukończony",
+        "project_created": "Projekt utworzony",
+        "project_archived": "Projekt zarchiwizowany",
         "daily_digest": "Codzienne podsumowanie",
         "weekly_digest": "Cotygodniowe podsumowanie"
       }

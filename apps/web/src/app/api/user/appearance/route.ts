@@ -38,7 +38,7 @@ const DEFAULT_APPEARANCE = {
   theme: 'system' as const,
   colorTheme: 'default' as const,
   visualStyle: 'modern' as const,
-  interfaceFont: 'brand' as const,
+  interfaceFont: 'ibm' as const,
   animationsEnabled: true,
   gradientsEnabled: true,
 };
@@ -101,12 +101,12 @@ export async function PUT(request: NextRequest) {
       .insert(userAppearanceSettings)
       .values({
         userId: session.user.id,
-        theme: patch.theme ?? null,
-        colorTheme: patch.colorTheme ?? null,
-        visualStyle: patch.visualStyle ?? null,
-        interfaceFont: patch.interfaceFont ?? null,
-        animationsEnabled: patch.animationsEnabled ?? true,
-        gradientsEnabled: patch.gradientsEnabled ?? true,
+        theme: patch.theme ?? DEFAULT_APPEARANCE.theme,
+        colorTheme: patch.colorTheme ?? DEFAULT_APPEARANCE.colorTheme,
+        visualStyle: patch.visualStyle ?? DEFAULT_APPEARANCE.visualStyle,
+        interfaceFont: patch.interfaceFont ?? DEFAULT_APPEARANCE.interfaceFont,
+        animationsEnabled: patch.animationsEnabled ?? DEFAULT_APPEARANCE.animationsEnabled,
+        gradientsEnabled: patch.gradientsEnabled ?? DEFAULT_APPEARANCE.gradientsEnabled,
       })
       .onConflictDoUpdate({
         target: userAppearanceSettings.userId,

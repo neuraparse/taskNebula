@@ -3,8 +3,10 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   useCreateDocumentPage,
+  useDocumentAttachments,
   useDocumentPage,
   useDocumentPages,
+  useDocumentRevisions,
   useUpdateDocumentPage,
 } from '../use-docs';
 import type { ApiResponseError } from '@/lib/client-api-errors';
@@ -104,6 +106,30 @@ describe('use-docs hooks', () => {
       expect(fetchMock).toHaveBeenCalledWith(
         '/api/docs/pages?spaceId=space-1&organizationId=org-1&projectId=project-1'
       );
+    });
+  });
+
+  describe('lazy detail hooks', () => {
+    it('does not fetch revisions while disabled', async () => {
+      const { result } = renderHook(() => useDocumentRevisions('page-1', { enabled: false }), {
+        wrapper: createWrapper(createQueryClient()),
+      });
+
+      await Promise.resolve();
+
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(result.current.data).toBeUndefined();
+    });
+
+    it('does not fetch attachments while disabled', async () => {
+      const { result } = renderHook(() => useDocumentAttachments('page-1', { enabled: false }), {
+        wrapper: createWrapper(createQueryClient()),
+      });
+
+      await Promise.resolve();
+
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(result.current.data).toBeUndefined();
     });
   });
 

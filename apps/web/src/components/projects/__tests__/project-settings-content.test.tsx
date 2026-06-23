@@ -77,6 +77,14 @@ describe('ProjectSettingsContent', () => {
     expect(screen.queryByTestId('manager-workflows')).not.toBeInTheDocument();
   });
 
+  it('renders the dialog navigation layout when embedded in the settings modal', () => {
+    render(<ProjectSettingsContent projectId="proj-1" variant="dialog" />);
+
+    expect(screen.getByRole('tablist', { name: /project settings sections/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /general/i })).toBeInTheDocument();
+    expect(screen.getByTestId('manager-general')).toHaveTextContent('general:proj-1');
+  });
+
   it('switches to the workflows tab and renders the workflow editor', async () => {
     const onTabChange = jest.fn();
     const user = userEvent.setup();

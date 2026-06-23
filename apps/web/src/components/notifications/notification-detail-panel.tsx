@@ -51,6 +51,8 @@ const TYPE_LABEL_KEYS: Record<NotificationType, string> = {
   sprint_completed: 'sprint_completed',
   ai_draft_failed: 'ai_draft_failed',
   agent_run_failed: 'agent_run_failed',
+  project_created: 'project_created',
+  project_archived: 'project_archived',
 };
 
 function typeChipClass(type: NotificationType): string {
@@ -69,6 +71,10 @@ function typeChipClass(type: NotificationType): string {
     case 'sprint_started':
     case 'sprint_completed':
       return 'chip-emerald';
+    case 'project_created':
+      return 'chip-emerald';
+    case 'project_archived':
+      return 'chip';
     case 'ai_draft_failed':
     case 'agent_run_failed':
       return 'chip-rose';

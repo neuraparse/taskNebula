@@ -407,6 +407,20 @@
       "when": 1779000000016,
       "tag": "0057_user_appearance_interface_font",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1779000000017,
+      "tag": "0058_email_template_project_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1779000000018,
+      "tag": "0059_local_agent_codex_provider",
+      "breakpoints": true
     }
   ]
 }

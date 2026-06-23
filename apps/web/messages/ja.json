@@ -770,7 +770,9 @@
       "sprint": "スプリント",
       "ai_draft": "AI 下書き",
       "agent": "エージェント",
-      "update": "アップデート"
+      "update": "アップデート",
+      "project_created": "プロジェクトが作成されました",
+      "project_archived": "プロジェクトがアーカイブされました"
     },
     "type_action": {
       "mention": "があなたをメンションしました",
@@ -869,7 +871,9 @@
         "sprint_started": "スプリント開始",
         "sprint_completed": "スプリント完了",
         "ai_draft_failed": "AI 下書きが失敗",
-        "agent_run_failed": "エージェントが失敗"
+        "agent_run_failed": "エージェントが失敗",
+        "project_created": "プロジェクトが作成されました",
+        "project_archived": "プロジェクトがアーカイブされました"
       },
       "meta": {
         "project": "プロジェクト",
@@ -1275,12 +1279,46 @@
       "open_sidecar": "サイドカーを開く"
     },
     "agent": {
-      "title": "エージェントのアクティビティ",
-      "state": "状態: {state}",
-      "idle": "アイドル — セッションはまだ送信されていません",
+      "title": "エージェントアクティビティ",
+      "beta": "ベータ",
+      "assignedTo": "{name} に割り当て済み",
+      "directDispatch": "このタスクをコードエージェントに直接送信します。",
+      "provider": "プロバイダー",
+      "promptPlaceholder": "この実行に対する任意の指示...",
       "dispatch": "送信",
+      "dispatching": "送信中",
       "dispatch_failed": "送信に失敗しました",
-      "dispatch_failed_status": "送信に失敗しました（{status}）"
+      "dispatch_failed_status": "送信に失敗しました（{status}）",
+      "latestSessions": "最新セッション",
+      "noSessions": "エージェントセッションはまだありません。",
+      "localRunner": "ローカル CLI: {command}",
+      "webhookRunner": "Webhook プロバイダー",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "カスタム"
+      },
+      "states": {
+        "pending": "保留中",
+        "active": "実行中",
+        "awaitingInput": "入力待ち",
+        "error": "失敗",
+        "complete": "完了",
+        "stale": "古い"
+      },
+      "issueContext": "課題フィールド",
+      "descriptionContext": "説明",
+      "instructionContext": "管理者メモ",
+      "sessionStatus": "セッション状態",
+      "runner": "ランナー",
+      "runnerStatus": "実行状態",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "終了コード"
     },
     "vote": {
       "group_label": "投票",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "プラットフォーム",
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "フルページで開く"
   },
   "settingsProject": {
     "kicker": "プロジェクト",
@@ -3331,6 +3370,29 @@
         "description": "ロールアウトの品質と影響範囲を監視するためのシステム全体の履歴。",
         "noData": "記録されたエージェントの実行はまだありません。",
         "writesChip": "{count} 件の書き込み"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "課題の割り当て",
         "issue_mentioned": "課題でのメンション",
         "issue_commented": "課題へのコメント",
+        "issue_status_changed": "作業項目のステータスが変更されました",
+        "issue_created": "作業項目が作成されました",
         "sprint_started": "スプリント開始",
+        "sprint_completed": "スプリントが完了しました",
+        "project_created": "プロジェクトが作成されました",
+        "project_archived": "プロジェクトがアーカイブされました",
         "daily_digest": "毎日のダイジェスト",
         "weekly_digest": "毎週のダイジェスト"
       }

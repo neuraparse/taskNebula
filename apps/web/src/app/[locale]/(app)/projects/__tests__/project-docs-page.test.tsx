@@ -231,7 +231,7 @@ describe('Project docs page', () => {
     await renderProjectDocsPage('project-1');
 
     // The editor mounts when a project doc is selected.
-    expect(screen.getByTestId('doc-editor')).toBeInTheDocument();
+    expect(await screen.findByTestId('doc-editor')).toBeInTheDocument();
 
     // Both docs hooks must be queried with the projectId so the API filters
     // server-side (no client-side filtering or org-wide leak).

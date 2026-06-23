@@ -23,6 +23,7 @@ import {
   infoCard,
   bulletList,
   textFooter,
+  EMAIL_COLORS,
 } from '@tasknebula/db';
 import { emailVerificationTokens } from '@tasknebula/db/src/schema/email-verification-tokens';
 import { sendEmail } from '@/lib/email/sender';
@@ -65,7 +66,7 @@ export function renderVerifyEmailMessage(args: { displayName: string; verifyUrl:
 
   const fallback = [
     paragraph(
-      `If the button doesn't work, paste this URL into your browser:<br/><span style="color:#374151;word-break:break-all;">${verifyUrl}</span>`,
+      `If the button doesn't work, paste this URL into your browser:<br/><span style="color:${EMAIL_COLORS.body};word-break:break-all;">${verifyUrl}</span>`,
       { muted: true, spacingTop: 20 }
     ),
     paragraph("If you didn't create a TaskNebula account, you can safely ignore this message.", {

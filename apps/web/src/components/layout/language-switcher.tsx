@@ -64,7 +64,7 @@ export function LanguageSwitcher() {
           variant="ghost"
           size="icon"
           aria-label={t('language')}
-          className="ease-snap transition-all duration-150"
+          className="ease-snap text-current transition-all duration-150"
           disabled={isPending}
         >
           <Languages className="h-4 w-4" />

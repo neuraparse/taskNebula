@@ -9,7 +9,15 @@ export interface OrganizationMember {
   /** P0-04: virtual coding-agent users (Claude/Cursor/Devin/Copilot/...). */
   isAgent?: boolean;
   /** Provider handle when `isAgent` is true (matches agent_session_provider). */
-  agentProvider?: 'claude' | 'cursor' | 'devin' | 'copilot' | 'openhands' | 'custom' | null;
+  agentProvider?:
+    | 'claude'
+    | 'codex'
+    | 'cursor'
+    | 'devin'
+    | 'copilot'
+    | 'openhands'
+    | 'custom'
+    | null;
   role: 'owner' | 'admin' | 'member' | 'viewer' | 'guest';
   memberStatus: string;
   joinedAt: string;

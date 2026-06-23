@@ -37,8 +37,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     currentUserHasWorkspaceAccess(),
   ]);
   const appCarbonStyle = {
-    '--font-sans': "var(--app-font-sans, 'Plus Jakarta Sans')",
-    '--font-mono': "var(--app-font-mono, 'JetBrains Mono')",
+    '--font-sans': "var(--app-font-sans, 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif)",
+    '--font-mono':
+      "var(--app-font-mono, 'IBM Plex Mono', 'IBM Plex Sans', ui-monospace, monospace)",
     fontFamily: 'var(--font-sans)',
   } satisfies AppCarbonStyle;
 

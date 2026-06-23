@@ -770,7 +770,9 @@
       "sprint": "Sprint",
       "ai_draft": "Πρόχειρο AI",
       "agent": "Πράκτορας",
-      "update": "Ενημέρωση"
+      "update": "Ενημέρωση",
+      "project_created": "Δημιουργήθηκε έργο",
+      "project_archived": "Το έργο αρχειοθετήθηκε"
     },
     "type_action": {
       "mention": "σας ανέφερε",
@@ -869,7 +871,9 @@
         "sprint_started": "Ξεκίνησε sprint",
         "sprint_completed": "Ολοκληρώθηκε sprint",
         "ai_draft_failed": "Το πρόχειρο AI απέτυχε",
-        "agent_run_failed": "Ο πράκτορας απέτυχε"
+        "agent_run_failed": "Ο πράκτορας απέτυχε",
+        "project_created": "Δημιουργήθηκε έργο",
+        "project_archived": "Το έργο αρχειοθετήθηκε"
       },
       "meta": {
         "project": "Έργο",
@@ -1275,12 +1279,46 @@
       "open_sidecar": "Άνοιγμα sidecar"
     },
     "agent": {
-      "title": "Δραστηριότητα πράκτορα",
-      "state": "Κατάσταση: {state}",
-      "idle": "Αδρανής — δεν έχει αποσταλεί ακόμη συνεδρία",
+      "title": "Δραστηριότητα agent",
+      "beta": "Beta",
+      "assignedTo": "Ανατέθηκε σε {name}",
+      "directDispatch": "Στείλτε αυτήν την εργασία απευθείας σε έναν agent κώδικα.",
+      "provider": "Πάροχος",
+      "promptPlaceholder": "Προαιρετικές οδηγίες για αυτήν την εκτέλεση...",
       "dispatch": "Αποστολή",
+      "dispatching": "Γίνεται αποστολή",
       "dispatch_failed": "Η αποστολή απέτυχε",
-      "dispatch_failed_status": "Η αποστολή απέτυχε ({status})"
+      "dispatch_failed_status": "Η αποστολή απέτυχε ({status})",
+      "latestSessions": "Πιο πρόσφατες συνεδρίες",
+      "noSessions": "Δεν υπάρχουν ακόμη συνεδρίες agent.",
+      "localRunner": "Τοπικό CLI: {command}",
+      "webhookRunner": "Πάροχος webhook",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "Προσαρμοσμένο"
+      },
+      "states": {
+        "pending": "Σε αναμονή",
+        "active": "Εκτελείται",
+        "awaitingInput": "Χρειάζεται είσοδο",
+        "error": "Απέτυχε",
+        "complete": "Ολοκληρώθηκε",
+        "stale": "Παρωχημένο"
+      },
+      "issueContext": "Πεδία ζητήματος",
+      "descriptionContext": "Περιγραφή",
+      "instructionContext": "Σημειώσεις διαχείρισης",
+      "sessionStatus": "Κατάσταση συνεδρίας",
+      "runner": "Εκτελεστής",
+      "runnerStatus": "Κατάσταση εκτέλεσης",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "Κωδικός εξόδου"
     },
     "vote": {
       "group_label": "Ψήφος",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Platform",
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "Άνοιγμα πλήρους σελίδας"
   },
   "settingsProject": {
     "kicker": "Έργο",
@@ -3331,6 +3370,29 @@
         "description": "Ιστορικό σε όλο το σύστημα για παρακολούθηση της ποιότητας ανάπτυξης και της ακτίνας επίδρασης.",
         "noData": "Δεν έχουν καταγραφεί ακόμη εκτελέσεις πρακτόρων.",
         "writesChip": "{count} εγγραφές"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "Ανάθεση ζητήματος",
         "issue_mentioned": "Αναφορά ζητήματος",
         "issue_commented": "Σχόλιο σε ζήτημα",
+        "issue_status_changed": "Η κατάσταση του αντικειμένου άλλαξε",
+        "issue_created": "Δημιουργήθηκε αντικείμενο",
         "sprint_started": "Έναρξη sprint",
+        "sprint_completed": "Το sprint ολοκληρώθηκε",
+        "project_created": "Δημιουργήθηκε έργο",
+        "project_archived": "Το έργο αρχειοθετήθηκε",
         "daily_digest": "Ημερήσια σύνοψη",
         "weekly_digest": "Εβδομαδιαία σύνοψη"
       }

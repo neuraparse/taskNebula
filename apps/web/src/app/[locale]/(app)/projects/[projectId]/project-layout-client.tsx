@@ -109,25 +109,22 @@ export function ProjectLayoutClient({
   return (
     <TooltipProvider delayDuration={80}>
       <div className="flex h-full flex-col">
-        <div className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/60 shrink-0 border-b backdrop-blur">
+        <div className="bg-surface-dark border-border-strong shrink-0 border-b text-white shadow-none">
           <div className="flex items-center gap-3 px-4 py-1.5">
             <nav aria-label={t('breadcrumb')} className="flex min-w-0 items-center gap-1 text-xs">
-              <Link
-                href="/projects"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
+              <Link href="/projects" className="text-white/60 transition-colors hover:text-white">
                 {t('title')}
               </Link>
-              <ChevronRight className="text-muted-foreground/50 h-3 w-3 shrink-0" />
-              <span className="text-foreground truncate font-medium">{projectName}</span>
+              <ChevronRight className="h-3 w-3 shrink-0 text-white/35" />
+              <span className="truncate font-medium text-white">{projectName}</span>
               {project?.key ? (
-                <span className="text-muted-foreground ml-1 hidden font-mono text-[10px] sm:inline">
+                <span className="ml-1 hidden font-mono text-[10px] uppercase tracking-[0.12em] text-white/45 sm:inline">
                   {project.key}
                 </span>
               ) : null}
             </nav>
 
-            <div className="bg-border/70 h-4 w-px" aria-hidden="true" />
+            <div className="h-4 w-px bg-white/15" aria-hidden="true" />
 
             <Tabs
               value={activeTabValue}
@@ -147,7 +144,7 @@ export function ProjectLayoutClient({
                         <TabsTrigger
                           value={tab.href}
                           aria-label={tabLabel}
-                          className="data-[state=active]:bg-accent/60 h-7 w-7 shrink-0 gap-1.5 rounded-md px-0 lg:w-auto lg:px-2.5"
+                          className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground h-7 w-7 shrink-0 gap-1.5 rounded-md px-0 text-white/65 hover:bg-white/10 hover:text-white lg:w-auto lg:px-2.5"
                         >
                           <Icon className="h-4 w-4 shrink-0" />
                           <span className="hidden text-xs font-medium lg:inline">{tabLabel}</span>
@@ -188,7 +185,7 @@ export function ProjectLayoutClient({
                       size="icon"
                       aria-label={t('projectSettings')}
                       onClick={() => setIsSettingsOpen(true)}
-                      className="h-7 w-7"
+                      className="h-7 w-7 text-white/65 hover:bg-white/10 hover:text-white"
                     >
                       <Settings className="h-4 w-4" />
                     </Button>

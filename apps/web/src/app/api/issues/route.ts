@@ -564,9 +564,11 @@ export const POST = withValidation({ body: createIssueSchema })(async (
             recipientUserId: createdIssue.assigneeId,
             actorUserId,
             organizationId: createdIssue.organizationId,
+            issueId: createdIssue.id,
+            projectId: createdIssue.projectId,
             issueKey: createdIssue.key,
             issueTitle: createdIssue.title,
-            projectName: projectKey,
+            projectName: project.name || projectKey,
           });
         } catch (err) {
           console.error('assignee notification failed', err);

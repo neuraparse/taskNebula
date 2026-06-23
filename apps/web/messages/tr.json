@@ -770,7 +770,9 @@
       "sprint": "Sprint",
       "ai_draft": "AI taslağı",
       "agent": "Aracı",
-      "update": "Güncelleme"
+      "update": "Güncelleme",
+      "project_created": "Proje oluşturuldu",
+      "project_archived": "Proje arşivlendi"
     },
     "type_action": {
       "mention": "sizden bahsetti",
@@ -869,7 +871,9 @@
         "sprint_started": "Sprint başladı",
         "sprint_completed": "Sprint tamamlandı",
         "ai_draft_failed": "AI taslağı başarısız oldu",
-        "agent_run_failed": "Aracı başarısız oldu"
+        "agent_run_failed": "Aracı başarısız oldu",
+        "project_created": "Proje oluşturuldu",
+        "project_archived": "Proje arşivlendi"
       },
       "meta": {
         "project": "Proje",
@@ -1276,11 +1280,45 @@
     },
     "agent": {
       "title": "Aracı etkinliği",
-      "state": "Durum: {state}",
-      "idle": "Boşta — henüz oturum başlatılmadı",
-      "dispatch": "Başlat",
-      "dispatch_failed": "Başlatma başarısız oldu",
-      "dispatch_failed_status": "Başlatma başarısız oldu ({status})"
+      "beta": "Beta",
+      "assignedTo": "{name} kişisine atandı",
+      "directDispatch": "Bu görevi doğrudan bir kodlama aracısına gönder.",
+      "provider": "Sağlayıcı",
+      "promptPlaceholder": "Bu çalıştırma için isteğe bağlı yönergeler...",
+      "dispatch": "Gönder",
+      "dispatching": "Gönderiliyor",
+      "dispatch_failed": "Gönderim başarısız",
+      "dispatch_failed_status": "Gönderim başarısız ({status})",
+      "latestSessions": "Son oturumlar",
+      "noSessions": "Henüz aracı oturumu yok.",
+      "localRunner": "Yerel CLI: {command}",
+      "webhookRunner": "Webhook sağlayıcısı",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "Özel"
+      },
+      "states": {
+        "pending": "Beklemede",
+        "active": "Çalışıyor",
+        "awaitingInput": "Girdi gerekiyor",
+        "error": "Başarısız",
+        "complete": "Tamamlandı",
+        "stale": "Bayat"
+      },
+      "issueContext": "İş alanları",
+      "descriptionContext": "Açıklama",
+      "instructionContext": "Yönetici notları",
+      "sessionStatus": "Oturum durumu",
+      "runner": "Çalıştırıcı",
+      "runnerStatus": "Çalıştırma durumu",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "Çıkış kodu"
     },
     "vote": {
       "group_label": "Oy",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Platform",
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "Tam sayfada aç"
   },
   "settingsProject": {
     "kicker": "Proje",
@@ -3331,6 +3370,29 @@
         "description": "Dağıtım kalitesini ve etki alanını izlemek için sistem çapında geçmiş.",
         "noData": "Henüz aracı çalıştırması kaydedilmedi.",
         "writesChip": "{count} yazma"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "İş atandı",
         "issue_mentioned": "İşte bahsedildi",
         "issue_commented": "İşe yorum yapıldı",
+        "issue_status_changed": "İş durumu değişti",
+        "issue_created": "İş oluşturuldu",
         "sprint_started": "Sprint başladı",
+        "sprint_completed": "Sprint tamamlandı",
+        "project_created": "Proje oluşturuldu",
+        "project_archived": "Proje arşivlendi",
         "daily_digest": "Günlük özet",
         "weekly_digest": "Haftalık özet"
       }

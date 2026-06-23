@@ -27,7 +27,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { createDocumentAppHref, createInternalDocumentHref } from '@/lib/docs/content';
 import { normalizeDocumentPasteHtml, normalizeDocumentPasteText } from '@/lib/docs/paste';
-import type { DocumentPage, DocumentShareUpdateInput } from '@/lib/hooks/use-docs';
+import type {
+  DocumentPage,
+  DocumentPageSummary,
+  DocumentShareUpdateInput,
+} from '@/lib/hooks/use-docs';
 import { useToast } from '@/hooks/use-toast';
 import { isApiPermissionError } from '@/lib/client-api-errors';
 import { cn } from '@/lib/utils';
@@ -70,7 +74,7 @@ type SaveState = 'saved' | 'dirty' | 'saving' | 'error';
 
 interface DocumentEditorProps {
   page: DocumentPage;
-  allPages: DocumentPage[];
+  allPages: DocumentPageSummary[];
   canEdit: boolean;
   saveError?: string | null;
   onSave: (data: {
@@ -790,7 +794,7 @@ export function DocumentEditor({
     );
   }
 
-  const insertInternalLink = (linkedPage: DocumentPage) => {
+  const insertInternalLink = (linkedPage: DocumentPageSummary) => {
     if (!editor) {
       return;
     }
@@ -1754,7 +1758,7 @@ function isDocumentVisuallyEmpty(contentJson: Record<string, any>) {
   });
 }
 
-function sortDocumentPages(left: DocumentPage, right: DocumentPage) {
+function sortDocumentPages(left: DocumentPageSummary, right: DocumentPageSummary) {
   const positionDelta = left.position - right.position;
   if (positionDelta !== 0) {
     return positionDelta;
@@ -1763,9 +1767,9 @@ function sortDocumentPages(left: DocumentPage, right: DocumentPage) {
   return left.title.localeCompare(right.title);
 }
 
-function buildDocumentBreadcrumbs(page: DocumentPage, pages: DocumentPage[]) {
+function buildDocumentBreadcrumbs(page: DocumentPage, pages: DocumentPageSummary[]) {
   const pagesById = new Map(pages.map((candidate) => [candidate.id, candidate]));
-  const breadcrumbs: DocumentPage[] = [];
+  const breadcrumbs: DocumentPageSummary[] = [];
   let cursor = page.parentId ? pagesById.get(page.parentId) || null : null;
 
   while (cursor) {

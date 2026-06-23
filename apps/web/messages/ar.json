@@ -770,7 +770,9 @@
       "sprint": "السباق",
       "ai_draft": "مسودة بالذكاء الاصطناعي",
       "agent": "وكيل",
-      "update": "تحديث"
+      "update": "تحديث",
+      "project_created": "تم إنشاء المشروع",
+      "project_archived": "تمت أرشفة المشروع"
     },
     "type_action": {
       "mention": "أشار إليك",
@@ -869,7 +871,9 @@
         "sprint_started": "بدأ السباق",
         "sprint_completed": "اكتمل السباق",
         "ai_draft_failed": "فشلت المسودة بالذكاء الاصطناعي",
-        "agent_run_failed": "فشل الوكيل"
+        "agent_run_failed": "فشل الوكيل",
+        "project_created": "تم إنشاء المشروع",
+        "project_archived": "تمت أرشفة المشروع"
       },
       "meta": {
         "project": "المشروع",
@@ -1276,11 +1280,45 @@
     },
     "agent": {
       "title": "نشاط الوكيل",
-      "state": "الحالة: {state}",
-      "idle": "خامل — لم يتم إرسال أي جلسة بعد",
+      "beta": "تجريبي",
+      "assignedTo": "مُعيّن إلى {name}",
+      "directDispatch": "أرسل هذه المهمة مباشرة إلى وكيل برمجي.",
+      "provider": "المزوّد",
+      "promptPlaceholder": "تعليمات اختيارية لهذا التشغيل...",
       "dispatch": "إرسال",
+      "dispatching": "جارٍ الإرسال",
       "dispatch_failed": "فشل الإرسال",
-      "dispatch_failed_status": "فشل الإرسال ({status})"
+      "dispatch_failed_status": "فشل الإرسال ({status})",
+      "latestSessions": "أحدث الجلسات",
+      "noSessions": "لا توجد جلسات وكلاء بعد.",
+      "localRunner": "واجهة CLI محلية: {command}",
+      "webhookRunner": "مزوّد Webhook",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "مخصّص"
+      },
+      "states": {
+        "pending": "قيد الانتظار",
+        "active": "قيد التشغيل",
+        "awaitingInput": "يتطلب إدخالاً",
+        "error": "فشل",
+        "complete": "مكتمل",
+        "stale": "قديم"
+      },
+      "issueContext": "حقول المسألة",
+      "descriptionContext": "الوصف",
+      "instructionContext": "ملاحظات الإدارة",
+      "sessionStatus": "حالة الجلسة",
+      "runner": "المشغّل",
+      "runnerStatus": "حالة التشغيل",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "رمز الخروج"
     },
     "vote": {
       "group_label": "التصويت",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Platform",
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "فتح الصفحة الكاملة"
   },
   "settingsProject": {
     "kicker": "المشروع",
@@ -3331,6 +3370,29 @@
         "description": "سجلّ على مستوى النظام لمراقبة جودة الطرح ونطاق التأثير.",
         "noData": "لم يتم تسجيل أي عمليات تشغيل وكلاء بعد.",
         "writesChip": "{count} عملية كتابة"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "تم إسناد مهمة",
         "issue_mentioned": "تمت الإشارة في مهمة",
         "issue_commented": "تم التعليق على مهمة",
+        "issue_status_changed": "تغيرت حالة المسألة",
+        "issue_created": "تم إنشاء المسألة",
         "sprint_started": "بدأ السباق",
+        "sprint_completed": "اكتمل السبرنت",
+        "project_created": "تم إنشاء المشروع",
+        "project_archived": "تمت أرشفة المشروع",
         "daily_digest": "الملخص اليومي",
         "weekly_digest": "الملخص الأسبوعي"
       }

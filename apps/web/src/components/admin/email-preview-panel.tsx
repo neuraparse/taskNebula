@@ -25,20 +25,25 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { ExternalLink, Loader2, Mail, Send } from 'lucide-react';
 
-type TemplateOption = { value: string; label: string; group: 'auth' | 'notify' };
+type TemplateOption = { value: string };
 
 const TEMPLATES: ReadonlyArray<TemplateOption> = [
   // Ad-hoc / transactional
-  { value: 'verify_email', label: 'Verify email', group: 'auth' },
-  { value: 'password_reset', label: 'Password reset', group: 'auth' },
-  { value: 'invitation', label: 'Organization invitation', group: 'auth' },
+  { value: 'verify_email' },
+  { value: 'password_reset' },
+  { value: 'invitation' },
   // Built-in notification templates
-  { value: 'issue_assigned', label: 'Issue assigned', group: 'notify' },
-  { value: 'issue_mentioned', label: 'Issue mentioned', group: 'notify' },
-  { value: 'issue_commented', label: 'Issue commented', group: 'notify' },
-  { value: 'sprint_started', label: 'Sprint started', group: 'notify' },
-  { value: 'daily_digest', label: 'Daily digest', group: 'notify' },
-  { value: 'weekly_digest', label: 'Weekly digest', group: 'notify' },
+  { value: 'issue_assigned' },
+  { value: 'issue_mentioned' },
+  { value: 'issue_commented' },
+  { value: 'issue_status_changed' },
+  { value: 'issue_created' },
+  { value: 'sprint_started' },
+  { value: 'sprint_completed' },
+  { value: 'project_created' },
+  { value: 'project_archived' },
+  { value: 'daily_digest' },
+  { value: 'weekly_digest' },
 ];
 
 export function EmailPreviewPanel() {

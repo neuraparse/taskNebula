@@ -25,6 +25,7 @@ import { z } from 'zod';
 
 export type AgentProviderKind =
   | 'claude'
+  | 'codex'
   | 'cursor'
   | 'devin'
   | 'copilot'
@@ -33,6 +34,7 @@ export type AgentProviderKind =
 
 export const AGENT_PROVIDERS: readonly AgentProviderKind[] = [
   'claude',
+  'codex',
   'cursor',
   'devin',
   'copilot',
@@ -78,10 +80,7 @@ const TRANSITIONS: Record<AgentSessionState, readonly AgentSessionState[]> = {
   stale: ['active'],
 };
 
-export function canTransition(
-  from: AgentSessionState,
-  to: AgentSessionState
-): boolean {
+export function canTransition(from: AgentSessionState, to: AgentSessionState): boolean {
   if (from === to) return true; // idempotent re-deliveries are fine
   return TRANSITIONS[from]?.includes(to) ?? false;
 }
@@ -207,10 +206,7 @@ export function verifyAgentSignature(
   // Both buffers must have the same length for timingSafeEqual.
   if (provided.length !== expected.length) return false;
   try {
-    return crypto.timingSafeEqual(
-      Buffer.from(provided, 'hex'),
-      Buffer.from(expected, 'hex')
-    );
+    return crypto.timingSafeEqual(Buffer.from(provided, 'hex'), Buffer.from(expected, 'hex'));
   } catch {
     return false;
   }
@@ -239,24 +235,24 @@ export function renderAgentComment(
   const label =
     provider === 'claude'
       ? 'Claude'
-      : provider === 'cursor'
-        ? 'Cursor'
-        : provider === 'devin'
-          ? 'Devin'
-          : provider === 'copilot'
-            ? 'Copilot'
-            : provider === 'openhands'
-              ? 'OpenHands'
-              : 'Agent';
+      : provider === 'codex'
+        ? 'Codex'
+        : provider === 'cursor'
+          ? 'Cursor'
+          : provider === 'devin'
+            ? 'Devin'
+            : provider === 'copilot'
+              ? 'Copilot'
+              : provider === 'openhands'
+                ? 'OpenHands'
+                : 'Agent';
 
   const pr = event.pullRequest;
   switch (state) {
     case 'pending':
       return `${label} session queued.`;
     case 'active':
-      return event.message
-        ? `${label} started: ${event.message}`
-        : `${label} started.`;
+      return event.message ? `${label} started: ${event.message}` : `${label} started.`;
     case 'awaitingInput':
       return event.message
         ? `${label} is awaiting input: ${event.message}`
@@ -268,9 +264,7 @@ export function renderAgentComment(
       if (event.message) return `${label} completed: ${event.message}`;
       return `${label} completed.`;
     case 'error':
-      return event.message
-        ? `${label} errored: ${event.message}`
-        : `${label} errored.`;
+      return event.message ? `${label} errored: ${event.message}` : `${label} errored.`;
     case 'stale':
       return `${label} session went stale.`;
     default:

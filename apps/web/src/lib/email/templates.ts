@@ -10,7 +10,15 @@
  * handler methods + a small allowlist of config symbols are permitted.
  */
 
-import { renderShell, paragraph, infoCard, bulletList, chip, textFooter } from '@tasknebula/db';
+import {
+  renderShell,
+  paragraph,
+  infoCard,
+  bulletList,
+  chip,
+  textFooter,
+  EMAIL_COLORS,
+} from '@tasknebula/db';
 
 /**
  * Render the password-reset message (subject/html/text).
@@ -37,7 +45,7 @@ export function renderPasswordResetMessage(args: {
   const hasIp = Boolean(args.ip && args.ip !== 'unknown');
   const displayIp = hasIp ? escapeHtml(args.ip as string) : '';
   const ipLine = displayIp
-    ? ` Request origin: <span style="display:inline-block;padding:1px 6px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:4px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;color:#374151;">${displayIp}</span>.`
+    ? ` Request origin: <span style="display:inline-block;padding:1px 6px;background:${EMAIL_COLORS.subtle};border:1px solid ${EMAIL_COLORS.border};border-radius:0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;color:${EMAIL_COLORS.body};">${displayIp}</span>.`
     : '';
 
   const bodyHtml = [
@@ -52,7 +60,7 @@ export function renderPasswordResetMessage(args: {
         'If you keep receiving these messages unexpectedly, consider rotating your password from your account settings.',
     }),
     paragraph(
-      `If the button doesn't work, paste this URL into your browser:<br/><span style="word-break:break-all;color:#374151;">${resetUrl}</span>`,
+      `If the button doesn't work, paste this URL into your browser:<br/><span style="word-break:break-all;color:${EMAIL_COLORS.body};">${resetUrl}</span>`,
       { muted: true, spacingTop: 18 }
     ),
   ].join('\n');

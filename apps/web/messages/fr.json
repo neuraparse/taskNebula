@@ -770,7 +770,9 @@
       "sprint": "Sprint",
       "ai_draft": "Brouillon IA",
       "agent": "Agent",
-      "update": "Mise à jour"
+      "update": "Mise à jour",
+      "project_created": "Projet créé",
+      "project_archived": "Projet archivé"
     },
     "type_action": {
       "mention": "vous a mentionné",
@@ -869,7 +871,9 @@
         "sprint_started": "Sprint démarré",
         "sprint_completed": "Sprint terminé",
         "ai_draft_failed": "Échec du brouillon IA",
-        "agent_run_failed": "Échec de l'agent"
+        "agent_run_failed": "Échec de l'agent",
+        "project_created": "Projet créé",
+        "project_archived": "Projet archivé"
       },
       "meta": {
         "project": "Projet",
@@ -1275,12 +1279,46 @@
       "open_sidecar": "Ouvrir le Sidecar"
     },
     "agent": {
-      "title": "Activité de l'agent",
-      "state": "État : {state}",
-      "idle": "Inactif — aucune session lancée pour l'instant",
-      "dispatch": "Lancer",
-      "dispatch_failed": "Échec du lancement",
-      "dispatch_failed_status": "Échec du lancement ({status})"
+      "title": "Activité de l’agent",
+      "beta": "Bêta",
+      "assignedTo": "Assigné à {name}",
+      "directDispatch": "Envoyez cette tâche directement à un agent de code.",
+      "provider": "Fournisseur",
+      "promptPlaceholder": "Instructions facultatives pour cette exécution...",
+      "dispatch": "Envoyer",
+      "dispatching": "Envoi en cours",
+      "dispatch_failed": "Échec de l’envoi",
+      "dispatch_failed_status": "Échec de l’envoi ({status})",
+      "latestSessions": "Dernières sessions",
+      "noSessions": "Aucune session d’agent pour le moment.",
+      "localRunner": "CLI locale : {command}",
+      "webhookRunner": "Fournisseur webhook",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "Personnalisé"
+      },
+      "states": {
+        "pending": "En attente",
+        "active": "En cours",
+        "awaitingInput": "Entrée requise",
+        "error": "Échec",
+        "complete": "Terminé",
+        "stale": "Obsolète"
+      },
+      "issueContext": "Champs du ticket",
+      "descriptionContext": "Descriptif",
+      "instructionContext": "Notes d’administration",
+      "sessionStatus": "État de la session",
+      "runner": "Exécuteur",
+      "runnerStatus": "État de l’exécution",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "Code de sortie"
     },
     "vote": {
       "group_label": "Voter",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Plateforme",
     "ts_slug_placeholder": "plateforme",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "Ouvrir la page complète"
   },
   "settingsProject": {
     "kicker": "Projet",
@@ -3331,6 +3370,29 @@
         "description": "Historique à l'échelle du système pour surveiller la qualité du déploiement et le rayon d'impact.",
         "noData": "Aucune exécution d'agent n'a encore été enregistrée.",
         "writesChip": "{count} écritures"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "Ticket assigné",
         "issue_mentioned": "Ticket mentionné",
         "issue_commented": "Ticket commenté",
+        "issue_status_changed": "Statut du ticket modifié",
+        "issue_created": "Ticket créé",
         "sprint_started": "Sprint démarré",
+        "sprint_completed": "Sprint terminé",
+        "project_created": "Projet créé",
+        "project_archived": "Projet archivé",
         "daily_digest": "Récapitulatif quotidien",
         "weekly_digest": "Récapitulatif hebdomadaire"
       }

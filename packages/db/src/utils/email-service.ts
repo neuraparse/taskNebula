@@ -1,8 +1,9 @@
 import { db } from '../index';
-import { emailTemplates, notificationPreferences } from '../schema';
+import { emailTemplateTypeEnum, emailTemplates, notificationPreferences } from '../schema';
 import { eq, and } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 import {
+  renderShell,
   quoteBlock,
   infoCard,
   chip,
@@ -12,6 +13,8 @@ import {
   sectionHeading,
   bulletList,
   EMAIL_COLORS,
+  metaRow,
+  metaTable,
   paragraph,
   textFooter,
 } from './email-layout';
@@ -48,88 +51,21 @@ export interface SendEmailResult {
   error?: string;
 }
 
+type EmailTemplateType = (typeof emailTemplateTypeEnum.enumValues)[number];
+
+const EMAIL_TEMPLATE_TYPES = new Set<string>(emailTemplateTypeEnum.enumValues);
+
+function isEmailTemplateType(templateType: string): templateType is EmailTemplateType {
+  return EMAIL_TEMPLATE_TYPES.has(templateType);
+}
+
 /**
  * Built-in fallback templates used when no DB templates exist.
  * These ensure emails work out of the box without seeding.
  */
-// ---------------------------------------------------------------------------
 // Built-in email templates (email-safe HTML: tables, inline styles only).
-// Shared fragments are composed into each template below.
-// Font stack + palette follow the TaskNebula design system:
-//   brand  #4f46e5 / #7c3aed (indigo → violet gradient)
-//   body   #111827  muted #6b7280  border #e5e7eb  surface #ffffff
-// ---------------------------------------------------------------------------
-
-const EMAIL_FONT =
-  '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
-
-function renderShell(args: {
-  kicker: string;
-  heading: string;
-  body: string; // inner HTML after heading (paragraphs, meta rows, etc.)
-  ctaLabel: string;
-  ctaUrl: string;
-  /** Optional preview text shown by inbox clients before the user opens the email. */
-  preheader?: string;
-}): string {
-  const { kicker, heading, body, ctaLabel, ctaUrl, preheader } = args;
-  const preheaderHtml = preheader
-    ? `<div style="display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0;mso-hide:all;">${preheader}</div>`
-    : '';
-  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="x-apple-disable-message-reformatting"/><title>TaskNebula</title></head>
-<body style="margin:0;padding:0;background-color:#f5f6fa;font-family:${EMAIL_FONT};color:#111827;-webkit-font-smoothing:antialiased;">
-${preheaderHtml}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f6fa;"><tr><td align="center" style="padding:32px 16px;">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
-<tr><td style="padding:0 4px 16px 4px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-<td align="left" style="font-family:${EMAIL_FONT};color:#111827;font-weight:600;font-size:18px;letter-spacing:-0.01em;">TaskNebula</td>
-<td align="right" width="120"><table role="presentation" cellpadding="0" cellspacing="0" border="0" align="right"><tr><td height="2" width="96" style="height:2px;width:96px;line-height:2px;font-size:0;background-color:#4f46e5;background-image:linear-gradient(90deg,#4f46e5,#7c3aed);">&nbsp;</td></tr></table></td>
-</tr></table>
-</td></tr>
-<tr><td style="background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:32px;box-shadow:0 1px 2px rgba(16,24,40,0.04);">
-<p style="margin:0 0 12px 0;font-family:${EMAIL_FONT};color:#6b7280;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;font-weight:600;">${kicker}</p>
-<h1 style="margin:0 0 12px 0;font-family:${EMAIL_FONT};font-size:20px;font-weight:600;line-height:1.35;color:#111827;letter-spacing:-0.01em;">${heading}</h1>
-${body}
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 4px 0;"><tr><td>
-<!--[if mso]>
-<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:40px;v-text-anchor:middle;width:180px;" arcsize="10%" stroke="f" fillcolor="#4f46e5">
-<w:anchorlock/>
-<center style="color:#ffffff;font-family:${EMAIL_FONT};font-size:14px;font-weight:500;">${ctaLabel}</center>
-</v:roundrect>
-<![endif]-->
-<!--[if !mso]><!-- -->
-<a href="${ctaUrl}" style="background:#4f46e5;color:#ffffff;display:inline-block;font-family:${EMAIL_FONT};font-size:14px;font-weight:500;line-height:1;padding:12px 24px;text-decoration:none;border-radius:4px;mso-hide:all;">${ctaLabel}</a>
-<!--<![endif]-->
-</td></tr></table>
-</td></tr>
-<tr><td style="padding:20px 4px 0 4px;font-family:${EMAIL_FONT};font-size:12px;color:#6b7280;" align="center">
-<a href="{{unsubscribeUrl}}" style="color:#6b7280;text-decoration:none;">Manage notifications</a>
-&nbsp;&middot;&nbsp;
-<a href="{{appUrl}}" style="color:#6b7280;text-decoration:none;">Open TaskNebula</a>
-&nbsp;&middot;&nbsp;
-<a href="{{appUrl}}/help" style="color:#6b7280;text-decoration:none;">Help</a>
-</td></tr>
-<tr><td style="padding:8px 4px 0 4px;font-family:${EMAIL_FONT};font-size:11px;color:#9ca3af;" align="center">
-You're receiving this because you're a member of {{organizationName}}.
-</td></tr>
-</table>
-</td></tr></table>
-</body></html>`;
-}
-
-// Two-column meta row (muted label on the left, value on the right).
-function metaRow(label: string, value: string): string {
-  return `<tr>
-<td style="padding:6px 0;font-family:${EMAIL_FONT};font-size:13px;color:#6b7280;width:120px;vertical-align:top;">${label}</td>
-<td style="padding:6px 0;font-family:${EMAIL_FONT};font-size:13px;color:#111827;vertical-align:top;">${value}</td>
-</tr>`;
-}
-
-function metaTable(rows: string): string {
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:16px 0 4px 0;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;">${rows}</table>`;
-}
+// Shared fragments are composed through email-layout.ts so every runtime
+// notification uses the same IBM Modern / Carbon-inspired visual system.
 
 export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; text: string }> = {
   issue_assigned: {
@@ -144,7 +80,7 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
         ) +
         actorRow({ name: '{{actorName}}', action: 'Assigned this issue to you' }) +
         metaTable(
-          metaRow('Issue', '<strong style="color:#111827;">{{issueKey}}</strong>') +
+          metaRow('Issue', `<strong style="color:${EMAIL_COLORS.heading};">{{issueKey}}</strong>`) +
             metaRow('Project', '{{projectName}}') +
             metaRow('Priority', chip('{{priority}}', { tone: 'warning' }))
         ),
@@ -171,7 +107,7 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
         ) +
         actorRow({ name: '{{actorName}}', action: 'Mentioned you in a thread' }) +
         metaTable(
-          metaRow('Issue', '<strong style="color:#111827;">{{issueKey}}</strong>') +
+          metaRow('Issue', `<strong style="color:${EMAIL_COLORS.heading};">{{issueKey}}</strong>`) +
             metaRow('Project', '{{projectName}}')
         ),
       ctaLabel: 'Open thread',
@@ -197,7 +133,7 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
         actorRow({ name: '{{actorName}}', action: 'Added a new comment' }) +
         quoteBlock('{{commentBody}}') +
         metaTable(
-          metaRow('Issue', '<strong style="color:#111827;">{{issueKey}}</strong>') +
+          metaRow('Issue', `<strong style="color:${EMAIL_COLORS.heading};">{{issueKey}}</strong>`) +
             metaRow('Project', '{{projectName}}')
         ),
       ctaLabel: 'Reply in thread',
@@ -225,7 +161,7 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
         ) +
         actorRow({ name: '{{actorName}}', action: 'Updated the issue status' }) +
         metaTable(
-          metaRow('Issue', '<strong style="color:#111827;">{{issueKey}}</strong>') +
+          metaRow('Issue', `<strong style="color:${EMAIL_COLORS.heading};">{{issueKey}}</strong>`) +
             metaRow('Project', '{{projectName}}') +
             metaRow('New status', chip('{{newStatus}}', { tone: 'success' }))
         ),
@@ -252,7 +188,7 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
         ) +
         actorRow({ name: '{{actorName}}', action: 'Created this issue' }) +
         metaTable(
-          metaRow('Issue', '<strong style="color:#111827;">{{issueKey}}</strong>') +
+          metaRow('Issue', `<strong style="color:${EMAIL_COLORS.heading};">{{issueKey}}</strong>`) +
             metaRow('Project', '{{projectName}}') +
             metaRow('Priority', chip('{{priority}}', { tone: 'warning' }))
         ),
@@ -284,7 +220,10 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
           { value: '{{issueCount}}', label: 'Issues', tone: 'brand' },
         ]) +
         metaTable(
-          metaRow('Sprint', '<strong style="color:#111827;">{{sprintName}}</strong>') +
+          metaRow(
+            'Sprint',
+            `<strong style="color:${EMAIL_COLORS.heading};">{{sprintName}}</strong>`
+          ) +
             metaRow('Project', '{{projectName}}') +
             metaRow('Dates', '{{sprintStartDate}} &rarr; {{sprintEndDate}}') +
             metaRow('Issues', '{{issueCount}}')
@@ -314,7 +253,10 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
         ) +
         infoCard({ tone: 'info', title: 'ABOUT THIS PROJECT', body: '{{projectDescription}}' }) +
         metaTable(
-          metaRow('Project', '<strong style="color:#111827;">{{projectName}}</strong>') +
+          metaRow(
+            'Project',
+            `<strong style="color:${EMAIL_COLORS.heading};">{{projectName}}</strong>`
+          ) +
             metaRow('Key', '{{projectKey}}') +
             metaRow('Created by', '{{actorName}}') +
             metaRow('Organization', '{{organizationName}}')
@@ -347,7 +289,10 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
           body: 'The project is now read-only for most members. Reach out to an admin if this was unexpected.',
         }) +
         metaTable(
-          metaRow('Project', '<strong style="color:#111827;">{{projectName}}</strong>') +
+          metaRow(
+            'Project',
+            `<strong style="color:${EMAIL_COLORS.heading};">{{projectName}}</strong>`
+          ) +
             metaRow('Archived by', '{{actorName}}') +
             metaRow('Archived on', '{{archivedAt}}') +
             metaRow('Organization', '{{organizationName}}')
@@ -378,7 +323,10 @@ export const BUILTIN_TEMPLATES: Record<string, { subject: string; html: string; 
           { value: '{{carriedOverCount}}', label: 'Carried over' },
         ]) +
         metaTable(
-          metaRow('Sprint', '<strong style="color:#111827;">{{sprintName}}</strong>') +
+          metaRow(
+            'Sprint',
+            `<strong style="color:${EMAIL_COLORS.heading};">{{sprintName}}</strong>`
+          ) +
             metaRow('Project', '{{projectName}}') +
             metaRow('Dates', '{{sprintStartDate}} &rarr; {{sprintEndDate}}') +
             metaRow('Total issues', '{{issueCount}}') +
@@ -492,16 +440,16 @@ async function shouldSendEmail(
         )
       );
 
-    // Quiet-by-default policy: critical events (assigned, mentioned) are on;
-    // everything else is off until the user opts in.
+    // Quiet-by-default policy: critical direct events and sprint lifecycle
+    // milestones are on; noisy activity and project lifecycle emails are opt-in.
     const DEFAULT_EVENT_POLICY: Record<string, boolean> = {
       issue_assigned: true,
       issue_mentioned: true,
       issue_commented: false,
       issue_status_changed: false,
       issue_created: false,
-      sprint_started: false,
-      sprint_completed: false,
+      sprint_started: true,
+      sprint_completed: true,
       project_created: false,
       project_archived: false,
       daily_digest: false,
@@ -556,6 +504,10 @@ async function shouldSendEmail(
  * falls back to default template if not found.
  */
 async function getTemplate(organizationId: string, templateType: string) {
+  if (!isEmailTemplateType(templateType)) {
+    return null;
+  }
+
   try {
     // Try organization-specific template first
     const [orgTemplate] = await db
@@ -564,7 +516,7 @@ async function getTemplate(organizationId: string, templateType: string) {
       .where(
         and(
           eq(emailTemplates.organizationId, organizationId),
-          eq(emailTemplates.type, templateType as any),
+          eq(emailTemplates.type, templateType),
           eq(emailTemplates.isActive, true)
         )
       );
@@ -577,7 +529,7 @@ async function getTemplate(organizationId: string, templateType: string) {
       .from(emailTemplates)
       .where(
         and(
-          eq(emailTemplates.type, templateType as any),
+          eq(emailTemplates.type, templateType),
           eq(emailTemplates.isDefault, true),
           eq(emailTemplates.isActive, true)
         )

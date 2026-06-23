@@ -190,6 +190,39 @@ describe('POST /api/search/hybrid', () => {
     expect(json.results[0].vectorRank).toBeNull();
   });
 
+  it('accepts omnibar facet filters and resolves assignee aliases server-side', async () => {
+    (auth as jest.Mock).mockResolvedValue({ user: { id: 'u1' } });
+    execMock.mockResolvedValueOnce([]);
+
+    const res = await POST(
+      makeRequest({
+        query: 'login bug',
+        organizationId: 'org_1',
+        project: 'WEB',
+        assignee: ['me', '@unassigned', 'ada@example.com'],
+        status: 'review',
+        priority: 'highest',
+        type: 'bug',
+        label: ['frontend', 'urgent'],
+      })
+    );
+
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.filters).toEqual(
+      expect.objectContaining({
+        project: 'WEB',
+        assigneeId: 'u1',
+        assignee: 'ada@example.com',
+        assigneeUnassigned: true,
+        status: 'review',
+        priority: 'highest',
+        type: 'bug',
+        label: ['frontend', 'urgent'],
+      })
+    );
+  });
+
   it('fuses BM25 + vector rows via RRF', async () => {
     (auth as jest.Mock).mockResolvedValue({ user: { id: 'u1' } });
     process.env.OPENAI_API_KEY = 'sk-test';

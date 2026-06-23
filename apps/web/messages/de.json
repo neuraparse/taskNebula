@@ -770,7 +770,9 @@
       "sprint": "Sprint",
       "ai_draft": "KI-Entwurf",
       "agent": "Agent",
-      "update": "Update"
+      "update": "Update",
+      "project_created": "Projekt erstellt",
+      "project_archived": "Projekt archiviert"
     },
     "type_action": {
       "mention": "hat dich erwähnt",
@@ -869,7 +871,9 @@
         "sprint_started": "Sprint gestartet",
         "sprint_completed": "Sprint abgeschlossen",
         "ai_draft_failed": "KI-Entwurf fehlgeschlagen",
-        "agent_run_failed": "Agent fehlgeschlagen"
+        "agent_run_failed": "Agent fehlgeschlagen",
+        "project_created": "Projekt erstellt",
+        "project_archived": "Projekt archiviert"
       },
       "meta": {
         "project": "Projekt",
@@ -1276,11 +1280,45 @@
     },
     "agent": {
       "title": "Agentenaktivität",
-      "state": "Status: {state}",
-      "idle": "Inaktiv — noch keine Sitzung gestartet",
-      "dispatch": "Starten",
-      "dispatch_failed": "Start fehlgeschlagen",
-      "dispatch_failed_status": "Start fehlgeschlagen ({status})"
+      "beta": "Beta",
+      "assignedTo": "Zugewiesen an {name}",
+      "directDispatch": "Diese Aufgabe direkt an einen Coding-Agenten senden.",
+      "provider": "Anbieter",
+      "promptPlaceholder": "Optionale Anweisungen für diesen Lauf...",
+      "dispatch": "Senden",
+      "dispatching": "Wird gesendet",
+      "dispatch_failed": "Senden fehlgeschlagen",
+      "dispatch_failed_status": "Senden fehlgeschlagen ({status})",
+      "latestSessions": "Neueste Sitzungen",
+      "noSessions": "Noch keine Agentensitzungen.",
+      "localRunner": "Lokale CLI: {command}",
+      "webhookRunner": "Webhook-Anbieter",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "Benutzerdefiniert"
+      },
+      "states": {
+        "pending": "Ausstehend",
+        "active": "Läuft",
+        "awaitingInput": "Eingabe erforderlich",
+        "error": "Fehlgeschlagen",
+        "complete": "Abgeschlossen",
+        "stale": "Veraltet"
+      },
+      "issueContext": "Aufgabenfelder",
+      "descriptionContext": "Beschreibung",
+      "instructionContext": "Admin-Notizen",
+      "sessionStatus": "Sitzungsstatus",
+      "runner": "Ausführer",
+      "runnerStatus": "Laufstatus",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "Exit-Code"
     },
     "vote": {
       "group_label": "Abstimmen",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Plattform",
     "ts_slug_placeholder": "plattform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "Ganze Seite öffnen"
   },
   "settingsProject": {
     "kicker": "Projekt",
@@ -3331,6 +3370,29 @@
         "description": "Systemweiter Verlauf zur Überwachung der Rollout-Qualität und des Wirkungsbereichs.",
         "noData": "Noch keine Agentenläufe erfasst.",
         "writesChip": "{count} Schreibvorgänge"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "Aufgabe zugewiesen",
         "issue_mentioned": "Aufgabe erwähnt",
         "issue_commented": "Aufgabe kommentiert",
+        "issue_status_changed": "Vorgangsstatus geändert",
+        "issue_created": "Vorgang erstellt",
         "sprint_started": "Sprint gestartet",
+        "sprint_completed": "Sprint abgeschlossen",
+        "project_created": "Projekt erstellt",
+        "project_archived": "Projekt archiviert",
         "daily_digest": "Täglicher Digest",
         "weekly_digest": "Wöchentlicher Digest"
       }

@@ -770,7 +770,9 @@
       "sprint": "Спринт",
       "ai_draft": "AI-чернетка",
       "agent": "Агент",
-      "update": "Оновлення"
+      "update": "Оновлення",
+      "project_created": "Проект створено",
+      "project_archived": "Проект заархівовано"
     },
     "type_action": {
       "mention": "згадав вас",
@@ -869,7 +871,9 @@
         "sprint_started": "Спринт розпочато",
         "sprint_completed": "Спринт завершено",
         "ai_draft_failed": "Не вдалося створити AI-чернетку",
-        "agent_run_failed": "Збій агента"
+        "agent_run_failed": "Збій агента",
+        "project_created": "Проект створено",
+        "project_archived": "Проект заархівовано"
       },
       "meta": {
         "project": "Проєкт",
@@ -1276,11 +1280,45 @@
     },
     "agent": {
       "title": "Активність агента",
-      "state": "Стан: {state}",
-      "idle": "Очікування — сесію ще не запущено",
-      "dispatch": "Запустити",
-      "dispatch_failed": "Не вдалося запустити",
-      "dispatch_failed_status": "Не вдалося запустити ({status})"
+      "beta": "Бета",
+      "assignedTo": "Призначено {name}",
+      "directDispatch": "Надішліть це завдання безпосередньо агенту коду.",
+      "provider": "Постачальник",
+      "promptPlaceholder": "Необов’язкові інструкції для цього запуску...",
+      "dispatch": "Надіслати",
+      "dispatching": "Надсилання",
+      "dispatch_failed": "Не вдалося надіслати",
+      "dispatch_failed_status": "Не вдалося надіслати ({status})",
+      "latestSessions": "Останні сеанси",
+      "noSessions": "Сеансів агента ще немає.",
+      "localRunner": "Локальний CLI: {command}",
+      "webhookRunner": "Постачальник webhook",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "Власний"
+      },
+      "states": {
+        "pending": "Очікує",
+        "active": "Виконується",
+        "awaitingInput": "Потрібен ввід",
+        "error": "Помилка",
+        "complete": "Завершено",
+        "stale": "Застаріло"
+      },
+      "issueContext": "Поля задачі",
+      "descriptionContext": "Опис",
+      "instructionContext": "Нотатки адміністратора",
+      "sessionStatus": "Стан сеансу",
+      "runner": "Запускач",
+      "runnerStatus": "Стан запуску",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "Код виходу"
     },
     "vote": {
       "group_label": "Голос",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Platform",
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "Відкрити повну сторінку"
   },
   "settingsProject": {
     "kicker": "Проєкт",
@@ -3331,6 +3370,29 @@
         "description": "Загальносистемна історія для моніторингу якості розгортання та зони впливу.",
         "noData": "Поки що не записано жодного запуску агентів.",
         "writesChip": "{count} записів"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "Задачу призначено",
         "issue_mentioned": "Згадка в задачі",
         "issue_commented": "Коментар до задачі",
+        "issue_status_changed": "Статус робочого елемента змінено",
+        "issue_created": "Робочий елемент створено",
         "sprint_started": "Спринт розпочато",
+        "sprint_completed": "Спринт завершено",
+        "project_created": "Проект створено",
+        "project_archived": "Проект заархівовано",
         "daily_digest": "Щоденний дайджест",
         "weekly_digest": "Щотижневий дайджест"
       }

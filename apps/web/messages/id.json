@@ -801,7 +801,9 @@
       "sprint": "Sprint",
       "ai_draft": "Draf AI",
       "agent": "Agen",
-      "update": "Pembaruan"
+      "update": "Pembaruan",
+      "project_created": "Proyek dibuat",
+      "project_archived": "Proyek diarsipkan"
     },
     "type_action": {
       "mention": "menyebut Anda",
@@ -900,7 +902,9 @@
         "sprint_started": "Sprint dimulai",
         "sprint_completed": "Sprint selesai",
         "ai_draft_failed": "Draf AI gagal",
-        "agent_run_failed": "Agen gagal"
+        "agent_run_failed": "Agen gagal",
+        "project_created": "Proyek dibuat",
+        "project_archived": "Proyek diarsipkan"
       },
       "meta": {
         "project": "Proyek",
@@ -1276,11 +1280,45 @@
     },
     "agent": {
       "title": "Aktivitas agen",
-      "state": "Keadaan: {state}",
-      "idle": "Diam — belum ada sesi yang dikirim",
+      "beta": "Beta",
+      "assignedTo": "Ditugaskan ke {name}",
+      "directDispatch": "Kirim tugas ini langsung ke agen pengodean.",
+      "provider": "Penyedia",
+      "promptPlaceholder": "Instruksi opsional untuk run ini...",
       "dispatch": "Kirim",
+      "dispatching": "Mengirim",
       "dispatch_failed": "Pengiriman gagal",
-      "dispatch_failed_status": "Pengiriman gagal ({status})"
+      "dispatch_failed_status": "Pengiriman gagal ({status})",
+      "latestSessions": "Sesi terbaru",
+      "noSessions": "Belum ada sesi agen.",
+      "localRunner": "CLI lokal: {command}",
+      "webhookRunner": "Penyedia webhook",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "Kustom"
+      },
+      "states": {
+        "pending": "Tertunda",
+        "active": "Berjalan",
+        "awaitingInput": "Memerlukan input",
+        "error": "Gagal",
+        "complete": "Selesai",
+        "stale": "Kedaluwarsa"
+      },
+      "issueContext": "Kolom isu",
+      "descriptionContext": "Deskripsi",
+      "instructionContext": "Catatan admin",
+      "sessionStatus": "Status sesi",
+      "runner": "Pelaksana",
+      "runnerStatus": "Status run",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "Kode keluar"
     },
     "vote": {
       "group_label": "Suara",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Platform",
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "Buka halaman penuh"
   },
   "settingsProject": {
     "kicker": "Proyek",
@@ -3331,6 +3370,29 @@
         "description": "Riwayat seluruh sistem untuk memantau kualitas peluncuran dan radius dampak.",
         "noData": "Belum ada eksekusi agen yang tercatat.",
         "writesChip": "{count} tulis"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "Isu ditugaskan",
         "issue_mentioned": "Isu disebut",
         "issue_commented": "Isu dikomentari",
+        "issue_status_changed": "Status item kerja berubah",
+        "issue_created": "Item kerja dibuat",
         "sprint_started": "Sprint dimulai",
+        "sprint_completed": "Sprint selesai",
+        "project_created": "Proyek dibuat",
+        "project_archived": "Proyek diarsipkan",
         "daily_digest": "Ringkasan harian",
         "weekly_digest": "Ringkasan mingguan"
       }

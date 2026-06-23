@@ -770,7 +770,9 @@
       "sprint": "Спринт",
       "ai_draft": "AI чернова",
       "agent": "Агент",
-      "update": "Актуализация"
+      "update": "Актуализация",
+      "project_created": "Проектът е създаден",
+      "project_archived": "Проектът е архивиран"
     },
     "type_action": {
       "mention": "ви спомена",
@@ -869,7 +871,9 @@
         "sprint_started": "Спринтът започна",
         "sprint_completed": "Спринтът завърши",
         "ai_draft_failed": "AI черновата е неуспешна",
-        "agent_run_failed": "Агентът е неуспешен"
+        "agent_run_failed": "Агентът е неуспешен",
+        "project_created": "Проектът е създаден",
+        "project_archived": "Проектът е архивиран"
       },
       "meta": {
         "project": "Проект",
@@ -1276,11 +1280,45 @@
     },
     "agent": {
       "title": "Активност на агента",
-      "state": "Състояние: {state}",
-      "idle": "Бездействащ — все още не е изпратена сесия",
+      "beta": "Бета",
+      "assignedTo": "Възложено на {name}",
+      "directDispatch": "Изпратете тази задача директно към програмен агент.",
+      "provider": "Доставчик",
+      "promptPlaceholder": "Незадължителни инструкции за това изпълнение...",
       "dispatch": "Изпрати",
-      "dispatch_failed": "Изпращането е неуспешно",
-      "dispatch_failed_status": "Изпращането е неуспешно ({status})"
+      "dispatching": "Изпращане",
+      "dispatch_failed": "Изпращането не бе успешно",
+      "dispatch_failed_status": "Изпращането не бе успешно ({status})",
+      "latestSessions": "Последни сесии",
+      "noSessions": "Все още няма сесии на агенти.",
+      "localRunner": "Локален CLI: {command}",
+      "webhookRunner": "Webhook доставчик",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "Персонализиран"
+      },
+      "states": {
+        "pending": "Изчаква",
+        "active": "Изпълнява се",
+        "awaitingInput": "Изисква вход",
+        "error": "Неуспешно",
+        "complete": "Завършено",
+        "stale": "Остаряло"
+      },
+      "issueContext": "Полета на задачата",
+      "descriptionContext": "Описание",
+      "instructionContext": "Административни бележки",
+      "sessionStatus": "Състояние на сесията",
+      "runner": "Изпълнител",
+      "runnerStatus": "Състояние на изпълнението",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "Код за изход"
     },
     "vote": {
       "group_label": "Глас",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Platform",
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "Отваряне на цялата страница"
   },
   "settingsProject": {
     "kicker": "Проект",
@@ -3331,6 +3370,29 @@
         "description": "История за цялата система за наблюдение на качеството на внедряването и обхвата на въздействие.",
         "noData": "Все още не са записани изпълнения на агенти.",
         "writesChip": "{count} записа"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "Възложена задача",
         "issue_mentioned": "Споменаване в задача",
         "issue_commented": "Коментар по задача",
+        "issue_status_changed": "Състоянието на задачата е променено",
+        "issue_created": "Задачата е създадена",
         "sprint_started": "Спринтът започна",
+        "sprint_completed": "Спринтът е завършен",
+        "project_created": "Проектът е създаден",
+        "project_archived": "Проектът е архивиран",
         "daily_digest": "Ежедневно обобщение",
         "weekly_digest": "Седмично обобщение"
       }

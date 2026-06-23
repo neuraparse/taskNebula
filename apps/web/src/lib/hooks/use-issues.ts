@@ -69,7 +69,7 @@ interface IssueFilters {
 }
 
 // Fetch issues with filters
-export function useIssues(filters?: IssueFilters) {
+export function useIssues(filters?: IssueFilters, options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ['issues', filters],
     queryFn: async () => {
@@ -87,6 +87,7 @@ export function useIssues(filters?: IssueFilters) {
       const data: IssuesResponse = await response.json();
       return data.issues;
     },
+    enabled: options.enabled !== false,
   });
 }
 

@@ -770,7 +770,9 @@
       "sprint": "Sprint",
       "ai_draft": "Bản nháp AI",
       "agent": "Tác nhân",
-      "update": "Cập nhật"
+      "update": "Cập nhật",
+      "project_created": "Đã tạo dự án",
+      "project_archived": "Dự án đã được lưu trữ"
     },
     "type_action": {
       "mention": "đã nhắc đến bạn",
@@ -869,7 +871,9 @@
         "sprint_started": "Sprint đã bắt đầu",
         "sprint_completed": "Sprint đã hoàn thành",
         "ai_draft_failed": "Tạo bản nháp AI thất bại",
-        "agent_run_failed": "Tác nhân thất bại"
+        "agent_run_failed": "Tác nhân thất bại",
+        "project_created": "Đã tạo dự án",
+        "project_archived": "Dự án đã được lưu trữ"
       },
       "meta": {
         "project": "Dự án",
@@ -1275,12 +1279,46 @@
       "open_sidecar": "Mở Sidecar"
     },
     "agent": {
-      "title": "Hoạt động tác nhân",
-      "state": "Trạng thái: {state}",
-      "idle": "Nhàn rỗi — chưa có phiên nào được điều phối",
-      "dispatch": "Điều phối",
-      "dispatch_failed": "Điều phối thất bại",
-      "dispatch_failed_status": "Điều phối thất bại ({status})"
+      "title": "Hoạt động của tác nhân",
+      "beta": "Beta",
+      "assignedTo": "Đã giao cho {name}",
+      "directDispatch": "Gửi tác vụ này trực tiếp tới tác nhân lập trình.",
+      "provider": "Nhà cung cấp",
+      "promptPlaceholder": "Hướng dẫn tùy chọn cho lần chạy này...",
+      "dispatch": "Gửi",
+      "dispatching": "Đang gửi",
+      "dispatch_failed": "Gửi thất bại",
+      "dispatch_failed_status": "Gửi thất bại ({status})",
+      "latestSessions": "Phiên mới nhất",
+      "noSessions": "Chưa có phiên tác nhân nào.",
+      "localRunner": "CLI cục bộ: {command}",
+      "webhookRunner": "Nhà cung cấp webhook",
+      "providers": {
+        "claude": "Claude",
+        "codex": "Codex",
+        "cursor": "Cursor",
+        "devin": "Devin",
+        "copilot": "GitHub Copilot",
+        "openhands": "OpenHands",
+        "custom": "Tùy chỉnh"
+      },
+      "states": {
+        "pending": "Đang chờ",
+        "active": "Đang chạy",
+        "awaitingInput": "Cần đầu vào",
+        "error": "Thất bại",
+        "complete": "Hoàn tất",
+        "stale": "Cũ"
+      },
+      "issueContext": "Trường issue",
+      "descriptionContext": "Mô tả",
+      "instructionContext": "Ghi chú quản trị",
+      "sessionStatus": "Trạng thái phiên",
+      "runner": "Trình chạy",
+      "runnerStatus": "Trạng thái chạy",
+      "runnerStatusValue": "{status}",
+      "runnerStatusSuffix": " · {status}",
+      "exitCode": "Mã thoát"
     },
     "vote": {
       "group_label": "Bình chọn",
@@ -1559,7 +1597,8 @@
     "ts_name_placeholder": "Platform",
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
-    "org_slug_placeholder": "acme-inc"
+    "org_slug_placeholder": "acme-inc",
+    "settings_open_full_page": "Mở toàn trang"
   },
   "settingsProject": {
     "kicker": "Dự án",
@@ -3331,6 +3370,29 @@
         "description": "Lịch sử toàn hệ thống để giám sát chất lượng triển khai và phạm vi ảnh hưởng.",
         "noData": "Chưa có lần chạy tác nhân nào được ghi nhận.",
         "writesChip": "{count} lần ghi"
+      },
+      "localRunners": {
+        "title": "Local server runners",
+        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
+        "loading": "Loading local runners...",
+        "loadError": "Failed to load local runners.",
+        "updated": "Local runner updated",
+        "updatedDescription": "The workspace handoff mode was saved.",
+        "updateFailed": "Failed to update local runner",
+        "ready": "Ready",
+        "needsSetup": "Needs setup",
+        "defaultMode": "default",
+        "runtime": "{mode} · {timeout}s timeout",
+        "toggle": "Toggle {provider} local runner",
+        "providers": {
+          "claude": "Claude Code",
+          "codex": "Codex CLI"
+        },
+        "reason": {
+          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
+          "cwd_missing": "Working directory does not exist: {value}",
+          "command_missing": "Command is not executable inside the web runtime: {value}"
+        }
       }
     },
     "integrations": {
@@ -3517,7 +3579,12 @@
         "issue_assigned": "Vấn đề được giao",
         "issue_mentioned": "Vấn đề được nhắc đến",
         "issue_commented": "Vấn đề được bình luận",
+        "issue_status_changed": "Trạng thái mục công việc đã thay đổi",
+        "issue_created": "Đã tạo mục công việc",
         "sprint_started": "Sprint đã bắt đầu",
+        "sprint_completed": "Sprint đã hoàn tất",
+        "project_created": "Đã tạo dự án",
+        "project_archived": "Dự án đã được lưu trữ",
         "daily_digest": "Tóm tắt hằng ngày",
         "weekly_digest": "Tóm tắt hằng tuần"
       }

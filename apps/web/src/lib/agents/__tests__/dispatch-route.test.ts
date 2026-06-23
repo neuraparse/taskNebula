@@ -147,6 +147,16 @@ jest.mock('@/auth', () => ({
   auth: jest.fn(),
 }));
 
+const mockResolveLocalAgentRunner = jest.fn();
+const mockRunLocalAgentSession = jest.fn();
+
+jest.mock('@/lib/agents/local-runner', () => ({
+  isLocalAgentEndpoint: (endpointUrl: string | null | undefined) =>
+    Boolean(endpointUrl?.startsWith('local://')),
+  resolveLocalAgentRunner: (...args: unknown[]) => mockResolveLocalAgentRunner(...args),
+  runLocalAgentSession: (...args: unknown[]) => mockRunLocalAgentSession(...args),
+}));
+
 // --------------------------------------------------------------------------
 
 import { auth as authMock } from '@/auth';
@@ -201,6 +211,10 @@ beforeEach(() => {
   fake.updated = [];
   for (const k of Object.keys(fake.rows)) fake.rows[k] = [];
   (global as unknown as { fetch: jest.Mock }).fetch = jest.fn();
+  mockResolveLocalAgentRunner.mockReset();
+  mockResolveLocalAgentRunner.mockReturnValue(null);
+  mockRunLocalAgentSession.mockReset();
+  mockRunLocalAgentSession.mockResolvedValue(undefined);
 });
 
 afterAll(() => {
@@ -334,5 +348,52 @@ describe('POST /api/issues/[id]/dispatch-agent', () => {
 
     const flip = fake.updated.find((u) => u.table === 'agent_sessions');
     expect(flip?.set).toMatchObject({ state: 'error' });
+  });
+
+  it('dispatches directly to a configured local Codex runner without webhook fetch', async () => {
+    (authMock as unknown as jest.Mock).mockResolvedValue({
+      user: { id: 'user_caller' },
+    });
+    seedHappyPath({ hmacSecret: 'unused' });
+    fake.rows.agent_providers = [];
+    mockResolveLocalAgentRunner.mockReturnValue({
+      provider: 'codex',
+      command: 'codex',
+      cwd: '/srv/tasknebula',
+      model: null,
+      timeoutMs: 3600000,
+      maxTurns: null,
+      codexSandbox: 'workspace-write',
+      claudePermissionMode: 'auto',
+      extraArgs: [],
+      source: 'env',
+    });
+
+    const res = await dispatchHandler(
+      buildRequest({ provider: 'codex', prompt_override: 'open a small PR' }) as never,
+      { params: Promise.resolve({ issueId: 'issue_1' }) }
+    );
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toMatchObject({
+      provider: 'codex',
+      state: 'active',
+      runner: 'local_cli',
+    });
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(mockRunLocalAgentSession).toHaveBeenCalledWith(
+      expect.objectContaining({ provider: 'codex', command: 'codex' }),
+      expect.objectContaining({
+        sessionId: body.sessionId,
+        provider: 'codex',
+        promptOverride: 'open a small PR',
+        issue: expect.objectContaining({
+          id: 'issue_1',
+          key: 'TN-1',
+          reporterId: 'user_caller',
+        }),
+      })
+    );
   });
 });

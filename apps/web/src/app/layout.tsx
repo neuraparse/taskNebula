@@ -91,11 +91,22 @@ export default async function RootLayout({
             __html: `
               (function() {
                 try {
+                  var storedColorMode = localStorage.getItem('tasknebula-color-mode');
+                  if (!storedColorMode) {
+                    var legacyColorMode = localStorage.getItem('theme');
+                    if (
+                      legacyColorMode === 'light' ||
+                      legacyColorMode === 'dark' ||
+                      legacyColorMode === 'system'
+                    ) {
+                      localStorage.setItem('tasknebula-color-mode', legacyColorMode);
+                    }
+                  }
                   var raw = localStorage.getItem('tasknebula-theme');
                   var state = raw ? (JSON.parse(raw).state || {}) : {};
                   var theme = state.colorTheme || 'default';
                   var visual = state.visualStyle || 'modern';
-                  var font = state.interfaceFont === 'ibm' ? 'ibm' : 'brand';
+                  var font = state.interfaceFont === 'brand' ? 'brand' : 'ibm';
                   var anims = state.enableAnimations === false ? 'false' : 'true';
                   var fontStacks = {
                     brand: {
@@ -107,7 +118,7 @@ export default async function RootLayout({
                       mono: "'IBM Plex Mono', 'IBM Plex Sans', ui-monospace, monospace"
                     }
                   };
-                  var activeFont = fontStacks[font] || fontStacks.brand;
+                  var activeFont = fontStacks[font] || fontStacks.ibm;
                   var root = document.documentElement;
                   root.setAttribute('data-theme', theme);
                   root.setAttribute('data-visual', visual);
