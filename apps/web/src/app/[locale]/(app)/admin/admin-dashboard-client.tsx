@@ -213,6 +213,7 @@ const auditSeverity = (action: string): 'critical' | 'high' | 'medium' | 'low' =
 
 export function AdminDashboardClient() {
   const t = useTranslations('pagesAdmin');
+  const errorT = useTranslations('componentErrors.admin');
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -259,8 +260,8 @@ export function AdminDashboardClient() {
     queryKey: ['admin-stats'],
     queryFn: async () => {
       const response = await fetch('/api/admin/stats');
-      const payload = await response.json().catch(() => ({ error: 'Failed to fetch stats' }));
-      if (!response.ok) throw new Error(payload.error || 'Failed to fetch stats');
+      const payload = await response.json().catch(() => ({ error: errorT('fetchStats') }));
+      if (!response.ok) throw new Error(payload.error || errorT('fetchStats'));
       return payload as StatsResponse;
     },
   });
@@ -277,10 +278,8 @@ export function AdminDashboardClient() {
       if (orgStatus !== 'all') params.set('status', orgStatus);
       if (orgPlan !== 'all') params.set('plan', orgPlan);
       const response = await fetch(`/api/admin/organizations?${params.toString()}`);
-      const payload = await response
-        .json()
-        .catch(() => ({ error: 'Failed to fetch organizations' }));
-      if (!response.ok) throw new Error(payload.error || 'Failed to fetch organizations');
+      const payload = await response.json().catch(() => ({ error: errorT('fetchOrganizations') }));
+      if (!response.ok) throw new Error(payload.error || errorT('fetchOrganizations'));
       return payload as { organizations: OrganizationItem[]; pagination: { total: number } };
     },
   });
@@ -296,8 +295,8 @@ export function AdminDashboardClient() {
       if (userSearch.trim()) params.set('search', userSearch.trim());
       if (userStatus !== 'all') params.set('status', userStatus);
       const response = await fetch(`/api/admin/users?${params.toString()}`);
-      const payload = await response.json().catch(() => ({ error: 'Failed to fetch users' }));
-      if (!response.ok) throw new Error(payload.error || 'Failed to fetch users');
+      const payload = await response.json().catch(() => ({ error: errorT('fetchUsers') }));
+      if (!response.ok) throw new Error(payload.error || errorT('fetchUsers'));
       return payload as { users: UserItem[]; pagination: { total: number } };
     },
   });
@@ -313,8 +312,8 @@ export function AdminDashboardClient() {
       if (auditSearch.trim()) params.set('search', auditSearch.trim());
       if (auditResourceType !== 'all') params.set('resourceType', auditResourceType);
       const response = await fetch(`/api/admin/audit-logs?${params.toString()}`);
-      const payload = await response.json().catch(() => ({ error: 'Failed to fetch audit logs' }));
-      if (!response.ok) throw new Error(payload.error || 'Failed to fetch audit logs');
+      const payload = await response.json().catch(() => ({ error: errorT('fetchAuditLogs') }));
+      if (!response.ok) throw new Error(payload.error || errorT('fetchAuditLogs'));
       return payload as { auditLogs: AdminAuditLog[] };
     },
     enabled: activeTab === 'audit',
@@ -329,10 +328,8 @@ export function AdminDashboardClient() {
       const response = await fetch(`/api/admin/organizations/${organizationId}`, {
         method: 'DELETE',
       });
-      const payload = await response
-        .json()
-        .catch(() => ({ error: 'Failed to delete organization' }));
-      if (!response.ok) throw new Error(payload.error || 'Failed to delete organization');
+      const payload = await response.json().catch(() => ({ error: errorT('deleteOrganization') }));
+      if (!response.ok) throw new Error(payload.error || errorT('deleteOrganization'));
       return payload;
     },
     onSuccess: () => {
@@ -345,10 +342,10 @@ export function AdminDashboardClient() {
       });
       setDeleteOrg(null);
     },
-    onError: (mutationError: Error) => {
+    onError: () => {
       toast({
         title: t('orgs.deleteFailedTitle'),
-        description: mutationError.message,
+        description: t('orgs.deleteFailedTitle'),
         variant: 'destructive',
       });
     },
@@ -373,10 +370,10 @@ export function AdminDashboardClient() {
       });
       setDeleteUser(null);
     },
-    onError: (mutationError: Error) => {
+    onError: () => {
       toast({
         title: t('users.deleteFailedTitle'),
-        description: mutationError.message,
+        description: t('users.deleteFailedTitle'),
         variant: 'destructive',
       });
     },
@@ -407,10 +404,10 @@ export function AdminDashboardClient() {
           ? t('flags.enabledDescription', { name: flag.name })
           : t('flags.disabledDescription', { name: flag.name }),
       });
-    } catch (error) {
+    } catch {
       toast({
         title: t('flags.updateFailedTitle'),
-        description: error instanceof Error ? error.message : t('flags.updateFailedTitle'),
+        description: t('flags.updateFailedTitle'),
         variant: 'destructive',
       });
     }
@@ -426,10 +423,10 @@ export function AdminDashboardClient() {
         description: t('flags.deletedDescription', { name: deleteFlag.name }),
       });
       setDeleteFlag(null);
-    } catch (error) {
+    } catch {
       toast({
         title: t('flags.deleteFailedTitle'),
-        description: error instanceof Error ? error.message : t('flags.deleteFailedTitle'),
+        description: t('flags.deleteFailedTitle'),
         variant: 'destructive',
       });
     }
@@ -1352,7 +1349,7 @@ function FeatureFlagsSection({
         {loading ? (
           <EmptyState icon={Flag} message={t('flags.loading')} />
         ) : error ? (
-          <ErrorState message={error instanceof Error ? error.message : t('flags.loadFailed')} />
+          <ErrorState message={t('flags.loadFailed')} />
         ) : flags.length === 0 ? (
           <EmptyState icon={Flag} message={t('flags.empty')} />
         ) : (
@@ -1469,7 +1466,7 @@ function AuditSection({
         {loading ? (
           <EmptyState icon={Scroll} message={t('audit.loading')} />
         ) : error ? (
-          <ErrorState message={error instanceof Error ? error.message : t('audit.loadFailed')} />
+          <ErrorState message={t('audit.loadFailed')} />
         ) : logs.length === 0 ? (
           <EmptyState icon={Scroll} message={t('audit.empty')} />
         ) : (

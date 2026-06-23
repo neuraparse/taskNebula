@@ -21,6 +21,7 @@ import { AgentGovernancePanel } from '@/components/settings/agent-governance-pan
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { cn } from '@/lib/utils';
 import { formatAgentRunKind } from '@/lib/agents/run-kind-labels';
+import { formatAgentRunDisplayText, formatAgentRunStatus } from '@/lib/agents/i18n';
 import type { ComponentType } from 'react';
 import {
   Bot,
@@ -63,8 +64,24 @@ function credentialSourceKey(source: 'workspace' | 'platform' | 'server_env' | n
   return 'agentOps.credentialSource.notConfigured';
 }
 
+function adminServiceKey(key: string) {
+  if (key === 'control-plane') return 'controlPlane';
+  if (key === 'live-monitoring') return 'liveMonitoring';
+  if (key === 'write-pipeline') return 'writePipeline';
+  if (key === 'provider-coverage') return 'providerCoverage';
+  return 'unknown';
+}
+
+function adminServiceStateKey(state: 'ready' | 'blocked' | 'disabled' | 'preview') {
+  if (state === 'ready') return 'agentOps.serviceStatus.states.ready';
+  if (state === 'blocked') return 'agentOps.serviceStatus.states.blocked';
+  if (state === 'disabled') return 'agentOps.serviceStatus.states.disabled';
+  return 'agentOps.serviceStatus.states.preview';
+}
+
 export function AgentOpsPanel() {
   const t = useTranslations('adminPanels');
+  const tSettings = useTranslations('settingsConfig');
   const tRunKind = useTranslations('agentRunKinds');
   const formatter = useFormatter();
   const { data, isLoading, error } = useAdminAgentControl();
@@ -92,13 +109,10 @@ export function AgentOpsPanel() {
         title: t('agentOps.controlUpdated'),
         description: t('agentOps.controlUpdatedDescription'),
       });
-    } catch (mutationError) {
+    } catch {
       toast({
         title: t('agentOps.controlUpdateFailed'),
-        description:
-          mutationError instanceof Error
-            ? mutationError.message
-            : t('agentOps.controlUpdateFailed'),
+        description: t('agentOps.controlUpdateFailed'),
         variant: 'destructive',
       });
     }
@@ -112,13 +126,10 @@ export function AgentOpsPanel() {
         title: t('agentOps.localRunners.updated'),
         description: t('agentOps.localRunners.updatedDescription'),
       });
-    } catch (mutationError) {
+    } catch {
       toast({
         title: t('agentOps.localRunners.updateFailed'),
-        description:
-          mutationError instanceof Error
-            ? mutationError.message
-            : t('agentOps.localRunners.updateFailed'),
+        description: t('agentOps.localRunners.updateFailed'),
         variant: 'destructive',
       });
     }
@@ -132,10 +143,37 @@ export function AgentOpsPanel() {
 
   if (error || !data) {
     return (
-      <div className="surface-card text-destructive p-6 text-sm">
-        {error instanceof Error ? error.message : t('agentOps.loadError')}
-      </div>
+      <div className="surface-card text-destructive p-6 text-sm">{t('agentOps.loadError')}</div>
     );
+  }
+
+  const controlData = data;
+
+  function getAdminServiceDetail(key: string) {
+    if (key === 'control-plane') {
+      return controlData.settings.globalEnabled
+        ? t('agentOps.serviceStatus.items.controlPlane.readyDetail')
+        : t('agentOps.serviceStatus.items.controlPlane.disabledDetail');
+    }
+
+    if (key === 'live-monitoring') {
+      return t('agentOps.serviceStatus.items.liveMonitoring.readyDetail');
+    }
+
+    if (key === 'write-pipeline') {
+      return controlData.settings.allowWriteActions
+        ? t('agentOps.serviceStatus.items.writePipeline.readyDetail')
+        : t('agentOps.serviceStatus.items.writePipeline.previewDetail');
+    }
+
+    if (key === 'provider-coverage') {
+      return t('agentOps.serviceStatus.items.providerCoverage.detail', {
+        ready: controlData.stats.readyWorkspaceCount,
+        total: controlData.stats.enabledWorkspaceCount,
+      });
+    }
+
+    return t('agentOps.serviceStatus.items.unknown.detail');
   }
 
   const kpis: Array<{
@@ -310,7 +348,7 @@ export function AgentOpsPanel() {
             ) : localRunners.error ? (
               <p className="text-destructive px-2 py-4 text-sm">
                 {localRunners.error instanceof Error
-                  ? localRunners.error.message
+                  ? t('agentOps.localRunners.loadError')
                   : t('agentOps.localRunners.loadError')}
               </p>
             ) : (
@@ -390,12 +428,18 @@ export function AgentOpsPanel() {
             {data.serviceStatus.map((service) => (
               <li key={service.key} className="flex items-start justify-between gap-3 py-2.5">
                 <div className="min-w-0 flex-1 space-y-0.5">
-                  <p className="text-sm font-medium">{service.label}</p>
-                  <p className="text-muted-foreground text-xs">{service.detail}</p>
+                  <p className="text-sm font-medium">
+                    {t(`agentOps.serviceStatus.items.${adminServiceKey(service.key)}.label`)}
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    {getAdminServiceDetail(service.key)}
+                  </p>
                 </div>
                 <span className="flex shrink-0 items-center gap-1.5">
                   <span className={`status-dot ${serviceStatusDot(service.state)}`} />
-                  <span className="text-muted-foreground text-xs capitalize">{service.state}</span>
+                  <span className="text-muted-foreground text-xs">
+                    {t(adminServiceStateKey(service.state))}
+                  </span>
                 </span>
               </li>
             ))}
@@ -524,7 +568,9 @@ export function AgentOpsPanel() {
                       <summary className="text-accent-amber cursor-pointer text-xs">
                         {t('agentOps.workspaceCoverage.lastFailure')}
                       </summary>
-                      <p className="panel-warn mt-1 px-3 py-2 text-xs">{workspace.lastFailure}</p>
+                      <p className="panel-warn mt-1 px-3 py-2 text-xs">
+                        {formatAgentRunDisplayText(tSettings, workspace.lastFailure)}
+                      </p>
                     </details>
                   ) : null}
                 </li>
@@ -636,7 +682,10 @@ export function AgentOpsPanel() {
                               ? formatAgentRunKind(runMeta.kind, tRunKind)
                               : t('agentOps.runFallback', { id: run.executionId.slice(0, 8) })}
                           </span>
-                          <RunStatusChip status={run.status} />
+                          <RunStatusChip
+                            status={run.status}
+                            label={formatAgentRunStatus(tSettings, run.status)}
+                          />
                           {runMeta && (
                             <span className="chip">
                               {runMeta.dryRun ? t('agentOps.preview') : t('agentOps.live')}
@@ -689,14 +738,18 @@ export function AgentOpsPanel() {
                                   log.type === 'stderr' && 'text-destructive'
                                 )}
                               >
-                                {log.content}
+                                {formatAgentRunDisplayText(tSettings, log.content)}
                               </span>
                             </li>
                           ))}
                         </ul>
                       )}
                     </div>
-                    {run.error && <p className="text-destructive text-xs">{run.error}</p>}
+                    {run.error && (
+                      <p className="text-destructive text-xs">
+                        {formatAgentRunDisplayText(tSettings, run.error)}
+                      </p>
+                    )}
                   </li>
                 );
               })}
@@ -728,7 +781,10 @@ export function AgentOpsPanel() {
                       <span className="text-sm font-medium">
                         {formatAgentRunKind(run.kind, tRunKind)}
                       </span>
-                      <RunStatusChip status={run.status} />
+                      <RunStatusChip
+                        status={run.status}
+                        label={formatAgentRunStatus(tSettings, run.status)}
+                      />
                       <span className="chip">
                         {run.dryRun ? t('agentOps.preview') : t('agentOps.live')}
                       </span>
@@ -774,7 +830,7 @@ function SectionHeader({
   );
 }
 
-function RunStatusChip({ status }: { status: string }) {
+function RunStatusChip({ status, label }: { status: string; label: string }) {
   const toneClass =
     status === 'completed'
       ? 'chip-emerald'
@@ -783,5 +839,5 @@ function RunStatusChip({ status }: { status: string }) {
         : status === 'running'
           ? 'chip-blue'
           : 'chip';
-  return <span className={cn(toneClass, 'capitalize')}>{status}</span>;
+  return <span className={toneClass}>{label}</span>;
 }

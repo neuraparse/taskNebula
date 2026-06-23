@@ -37,8 +37,8 @@ export function TimeInStatusPanel({ issueId }: { issueId: string }) {
       .then((data) => {
         if (!cancelled) setBuckets(data);
       })
-      .catch((err) => {
-        if (!cancelled) setError(err.message ?? t('failed_to_load'));
+      .catch(() => {
+        if (!cancelled) setError(t('failed_to_load'));
       });
     return () => {
       cancelled = true;

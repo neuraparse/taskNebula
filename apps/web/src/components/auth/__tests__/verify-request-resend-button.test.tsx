@@ -12,9 +12,7 @@ beforeEach(() => {
 describe('VerifyRequestResendButton', () => {
   it('renders the initial resend button', () => {
     render(<VerifyRequestResendButton />);
-    expect(
-      screen.getByRole('button', { name: /resend verification email/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /resend verification email/i })).toBeInTheDocument();
   });
 
   it('POSTs to /api/auth/send-verification and shows the sent state', async () => {
@@ -36,7 +34,7 @@ describe('VerifyRequestResendButton', () => {
     expect(screen.getByText(/check your inbox for the new link/i)).toBeInTheDocument();
   });
 
-  it('shows the server error on failure', async () => {
+  it('shows a localized send error on failure', async () => {
     fetchMock.mockResolvedValue({
       ok: false,
       json: async () => ({ error: 'Rate limited' }),
@@ -47,6 +45,6 @@ describe('VerifyRequestResendButton', () => {
 
     await user.click(screen.getByRole('button', { name: /resend verification email/i }));
 
-    expect(await screen.findByText(/rate limited/i)).toBeInTheDocument();
+    expect(await screen.findByText(/failed to send verification email/i)).toBeInTheDocument();
   });
 });

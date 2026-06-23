@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 
 export type ModuleStatus =
   | 'backlog'
@@ -112,14 +113,13 @@ function toTargetDateIso(value: string | null | undefined): string | null | unde
   return d.toISOString();
 }
 
-export const modulesQueryKey = (projectId: string) =>
-  ['project-modules', projectId] as const;
+export const modulesQueryKey = (projectId: string) => ['project-modules', projectId] as const;
 
-async function fetchModules(projectId: string): Promise<ProjectModule[]> {
+async function fetchModules(projectId: string, fetchError: string): Promise<ProjectModule[]> {
   const res = await fetch(`/api/projects/${projectId}/modules`, {
     credentials: 'include',
   });
-  if (!res.ok) throw new Error('Failed to fetch modules');
+  if (!res.ok) throw new Error(fetchError);
   const data = (await res.json()) as { modules: ServerModule[] };
   return (data.modules ?? []).map(toClientModule);
 }
@@ -127,6 +127,7 @@ async function fetchModules(projectId: string): Promise<ProjectModule[]> {
 async function postModule(
   projectId: string,
   input: CreateModuleInput,
+  createError: string
 ): Promise<ProjectModule> {
   const res = await fetch(`/api/projects/${projectId}/modules`, {
     method: 'POST',
@@ -141,7 +142,7 @@ async function postModule(
       targetDate: toTargetDateIso(input.targetDate),
     }),
   });
-  if (!res.ok) throw new Error('Failed to create module');
+  if (!res.ok) throw new Error(createError);
   const data = (await res.json()) as { module: ServerModule };
   return toClientModule(data.module);
 }
@@ -150,6 +151,7 @@ async function patchModule(
   projectId: string,
   id: string,
   patch: UpdateModuleInput,
+  updateError: string
 ): Promise<ProjectModule> {
   const body: Record<string, unknown> = {};
   if (patch.name !== undefined) body.name = patch.name;
@@ -165,31 +167,32 @@ async function patchModule(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error('Failed to update module');
+  if (!res.ok) throw new Error(updateError);
   const data = (await res.json()) as { module: ServerModule };
   return toClientModule(data.module);
 }
 
-async function deleteModule(projectId: string, id: string): Promise<void> {
+async function deleteModule(projectId: string, id: string, deleteError: string): Promise<void> {
   const res = await fetch(`/api/projects/${projectId}/modules/${id}`, {
     method: 'DELETE',
     credentials: 'include',
   });
-  if (!res.ok) throw new Error('Failed to delete module');
+  if (!res.ok) throw new Error(deleteError);
 }
 
 export function useModules(projectId: string): UseModulesResult {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.modules');
   const queryKey = modulesQueryKey(projectId);
 
   const query = useQuery({
     queryKey,
-    queryFn: () => fetchModules(projectId),
+    queryFn: () => fetchModules(projectId, t('fetch')),
     enabled: Boolean(projectId),
   });
 
   const createMutation = useMutation({
-    mutationFn: (input: CreateModuleInput) => postModule(projectId, input),
+    mutationFn: (input: CreateModuleInput) => postModule(projectId, input, t('create')),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
     },
@@ -197,14 +200,14 @@ export function useModules(projectId: string): UseModulesResult {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: UpdateModuleInput }) =>
-      patchModule(projectId, id, patch),
+      patchModule(projectId, id, patch, t('update')),
     onMutate: async ({ id, patch }) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<ProjectModule[]>(queryKey);
       if (previous) {
         queryClient.setQueryData<ProjectModule[]>(
           queryKey,
-          previous.map((m) => (m.id === id ? { ...m, ...patch } : m)),
+          previous.map((m) => (m.id === id ? { ...m, ...patch } : m))
         );
       }
       return { previous };
@@ -218,14 +221,14 @@ export function useModules(projectId: string): UseModulesResult {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteModule(projectId, id),
+    mutationFn: (id: string) => deleteModule(projectId, id, t('delete')),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<ProjectModule[]>(queryKey);
       if (previous) {
         queryClient.setQueryData<ProjectModule[]>(
           queryKey,
-          previous.filter((m) => m.id !== id),
+          previous.filter((m) => m.id !== id)
         );
       }
       return { previous };
@@ -240,29 +243,27 @@ export function useModules(projectId: string): UseModulesResult {
 
   const createModule = useCallback<UseModulesResult['createModule']>(
     (input) => createMutation.mutateAsync(input),
-    [createMutation],
+    [createMutation]
   );
 
   const updateModule = useCallback<UseModulesResult['updateModule']>(
     (id, patch) => updateMutation.mutateAsync({ id, patch }),
-    [updateMutation],
+    [updateMutation]
   );
 
   const removeModule = useCallback<UseModulesResult['removeModule']>(
     (id) => deleteMutation.mutateAsync(id),
-    [deleteMutation],
+    [deleteMutation]
   );
-
-  const modules = query.data ?? [];
 
   return useMemo(
     () => ({
-      modules,
+      modules: query.data ?? [],
       isLoading: query.isLoading,
       createModule,
       updateModule,
       removeModule,
     }),
-    [modules, query.isLoading, createModule, updateModule, removeModule],
+    [query.data, query.isLoading, createModule, updateModule, removeModule]
   );
 }

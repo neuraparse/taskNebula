@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { Facet } from './facets';
 
@@ -282,6 +283,7 @@ export function useOmnibarSearch({
   facets,
   debounceMs = 120,
 }: UseOmnibarSearchOptions): UseOmnibarSearchResult {
+  const tErrors = useTranslations('issueMisc');
   const [results, setResults] = React.useState<OmnibarResult[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -354,7 +356,7 @@ export function useOmnibarSearch({
         setError(null);
       } catch (err) {
         if ((err as { name?: string }).name === 'AbortError') return;
-        setError(err instanceof Error ? err.message : 'Search failed');
+        setError(tErrors('failed_to_load'));
         setResults([]);
       } finally {
         setLoading(false);
@@ -365,7 +367,7 @@ export function useOmnibarSearch({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, tab, organizationId, facetSignature, debounceMs]);
+  }, [query, tab, organizationId, facetSignature, debounceMs, tErrors]);
 
   return { results, loading, error };
 }

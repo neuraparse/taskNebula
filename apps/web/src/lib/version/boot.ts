@@ -24,6 +24,7 @@
 
 import { db, systemSettings, notifications, users, eq, and, sql } from '@tasknebula/db';
 import { getCurrentVersion, GITHUB_REPO_URL } from './index';
+import { getVersionUpdatePreferences } from './preferences';
 
 export const LAST_BOOT_VERSION_KEY = 'last_boot_version';
 
@@ -78,6 +79,9 @@ export async function handleBootVersionChange(): Promise<void> {
 }
 
 async function notifySuperAdminsOfUpgrade(current: string, previous: string | null): Promise<void> {
+  const preferences = await getVersionUpdatePreferences();
+  if (!preferences.postUpdateNotificationsEnabled) return;
+
   const admins = await db.select({ id: users.id }).from(users).where(eq(users.isSuperAdmin, true));
   if (admins.length === 0) return;
 

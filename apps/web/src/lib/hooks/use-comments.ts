@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 
 export interface CommentReaction {
   emoji: string;
@@ -53,12 +54,14 @@ interface ToggleCommentReactionResponse {
 }
 
 export function useComments(issueId: string) {
+  const t = useTranslations('hookErrors.comments');
+
   return useQuery({
     queryKey: ['comments', issueId],
     queryFn: async () => {
       const response = await fetch(`/api/issues/${issueId}/comments`);
       if (!response.ok) {
-        throw new Error('Failed to fetch comments');
+        throw new Error(t('fetch'));
       }
       const data: CommentsResponse = await response.json();
       return data.comments;
@@ -69,6 +72,7 @@ export function useComments(issueId: string) {
 
 export function useCreateComment(issueId: string) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.comments');
 
   return useMutation({
     mutationFn: async (input: CreateCommentInput) => {
@@ -84,7 +88,7 @@ export function useCreateComment(issueId: string) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create comment');
+        throw new Error(t('create'));
       }
 
       return response.json();
@@ -98,6 +102,7 @@ export function useCreateComment(issueId: string) {
 
 export function useUpdateComment(issueId: string) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.comments');
 
   return useMutation({
     mutationFn: async ({ commentId, content, mentions }: UpdateCommentInput) => {
@@ -111,7 +116,7 @@ export function useUpdateComment(issueId: string) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update comment');
+        throw new Error(t('update'));
       }
 
       return response.json();
@@ -124,6 +129,7 @@ export function useUpdateComment(issueId: string) {
 
 export function useDeleteComment(issueId: string) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.comments');
 
   return useMutation({
     mutationFn: async (commentId: string) => {
@@ -132,9 +138,7 @@ export function useDeleteComment(issueId: string) {
       });
 
       if (!response.ok) {
-        throw new Error(
-          response.status === 409 ? COMMENT_HAS_REPLIES_ERROR : 'Failed to delete comment'
-        );
+        throw new Error(response.status === 409 ? COMMENT_HAS_REPLIES_ERROR : t('delete'));
       }
 
       return response.json();
@@ -147,6 +151,7 @@ export function useDeleteComment(issueId: string) {
 
 export function useToggleCommentReaction(issueId: string) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.comments');
 
   return useMutation({
     mutationFn: async ({ commentId, emoji }: ToggleCommentReactionInput) => {
@@ -157,7 +162,7 @@ export function useToggleCommentReaction(issueId: string) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to toggle reaction');
+        throw new Error(t('toggleReaction'));
       }
 
       return response.json() as Promise<ToggleCommentReactionResponse>;

@@ -52,8 +52,8 @@ export function IssueTriagePanel({ issueId }: { issueId: string }) {
       const body = (await res.json()) as { suggestions: Suggestion[] };
       const pending = (body.suggestions || []).find((s) => !s.appliedAt && !s.dismissedAt);
       setLatest(pending ?? null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('loadFailed'));
+    } catch {
+      setError(t('loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -70,8 +70,8 @@ export function IssueTriagePanel({ issueId }: { issueId: string }) {
       const res = await fetch(`/api/issues/${issueId}/triage`, { method: 'POST' });
       if (!res.ok) throw new Error(`Status ${res.status}`);
       await refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('runFailed'));
+    } catch {
+      setError(t('runFailed'));
     } finally {
       setBusy(false);
     }
@@ -108,8 +108,8 @@ export function IssueTriagePanel({ issueId }: { issueId: string }) {
           projectId: cached?.projectId,
           sprintId: cached?.sprintId ?? null,
         });
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t('applyFailed'));
+      } catch {
+        setError(t('applyFailed'));
       } finally {
         setBusy(false);
       }

@@ -82,7 +82,7 @@ export function IntakeFormsList({ forms, projectLookup, accessibleProjects }: Pr
       });
       const data = (await response.json()) as { error?: string; form?: { id: string } };
       if (!response.ok || !data.form) {
-        setError(data.error ?? t('error_create_form'));
+        setError(t('error_create_form'));
         return;
       }
       setOpen(false);

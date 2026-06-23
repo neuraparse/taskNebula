@@ -98,6 +98,7 @@ export function WorkflowBuilder({ projectId }: WorkflowBuilderProps) {
 
   const t = useTranslations('projectConfig');
   const tActions = useTranslations('actions');
+  const tPagesProjects = useTranslations('pagesProjects');
   const { toast } = useToast();
   const [selectedRuleId, setSelectedRuleId] = useState<string | null>(null);
 
@@ -135,10 +136,10 @@ export function WorkflowBuilder({ projectId }: WorkflowBuilderProps) {
     try {
       await save();
       toast({ title: t('wf_saved_title'), description: t('wf_saved_description') });
-    } catch (error) {
+    } catch {
       toast({
         title: t('wf_save_failed_title'),
-        description: error instanceof Error ? error.message : t('wf_save_failed_description'),
+        description: t('wf_save_failed_description'),
         variant: 'destructive',
       });
     }
@@ -150,7 +151,7 @@ export function WorkflowBuilder({ projectId }: WorkflowBuilderProps) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
           <nav
-            aria-label="Breadcrumb"
+            aria-label={tPagesProjects('breadcrumb')}
             className="text-muted-foreground flex items-center gap-1.5 text-xs"
           >
             <Link

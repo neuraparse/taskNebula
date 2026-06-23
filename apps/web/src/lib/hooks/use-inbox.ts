@@ -9,6 +9,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 
 export type InboxActorType = 'user' | 'agent' | 'webhook' | 'system';
 export type InboxNotificationType =
@@ -83,11 +84,13 @@ function buildInboxUrl(filters: InboxFilters): string {
 }
 
 export function useInbox(filters: InboxFilters = {}) {
+  const t = useTranslations('hookErrors.inbox');
+
   return useQuery({
     queryKey: ['inbox', filters],
     queryFn: async (): Promise<InboxResponse> => {
       const response = await fetch(buildInboxUrl(filters));
-      if (!response.ok) throw new Error('Failed to fetch inbox');
+      if (!response.ok) throw new Error(t('fetch'));
       return response.json() as Promise<InboxResponse>;
     },
     refetchInterval: 60_000,
@@ -97,6 +100,8 @@ export function useInbox(filters: InboxFilters = {}) {
 
 export function useInboxSnooze() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.inbox');
+
   return useMutation({
     mutationFn: async ({ id, until }: { id: string; until: string | null }) => {
       const response = await fetch(`/api/inbox/${id}/snooze`, {
@@ -104,7 +109,7 @@ export function useInboxSnooze() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ until }),
       });
-      if (!response.ok) throw new Error('Failed to snooze inbox item');
+      if (!response.ok) throw new Error(t('snooze'));
       return response.json();
     },
     onSuccess: () => {
@@ -116,10 +121,12 @@ export function useInboxSnooze() {
 
 export function useInboxMarkRead() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.inbox');
+
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(`/api/inbox/${id}/mark-read`, { method: 'POST' });
-      if (!response.ok) throw new Error('Failed to mark inbox item as read');
+      if (!response.ok) throw new Error(t('markRead'));
       return response.json();
     },
     // Optimistic update: patch the affected item across *every* cached
@@ -164,6 +171,8 @@ export function useInboxMarkRead() {
 
 export function useInboxMarkAllRead() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.inbox');
+
   return useMutation({
     mutationFn: async (filters: InboxFilters = {}) => {
       const params = new URLSearchParams();
@@ -175,7 +184,7 @@ export function useInboxMarkAllRead() {
       const qs = params.toString();
       const url = qs ? `/api/inbox/mark-all-read?${qs}` : '/api/inbox/mark-all-read';
       const response = await fetch(url, { method: 'POST' });
-      if (!response.ok) throw new Error('Failed to mark all inbox items as read');
+      if (!response.ok) throw new Error(t('markAllRead'));
       return response.json() as Promise<{ success: boolean; count: number }>;
     },
     onSuccess: () => {
@@ -199,6 +208,8 @@ export interface CatchMeUpResponse {
 }
 
 export function useCatchMeUp(opts: { since?: string | null; enabled?: boolean } = {}) {
+  const t = useTranslations('hookErrors.inbox');
+
   return useQuery({
     queryKey: ['inbox', 'catch-me-up', opts.since ?? null],
     queryFn: async (): Promise<CatchMeUpResponse> => {
@@ -208,7 +219,7 @@ export function useCatchMeUp(opts: { since?: string | null; enabled?: boolean } 
         ? `/api/inbox/catch-me-up?${params.toString()}`
         : '/api/inbox/catch-me-up';
       const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch catch-me-up digest');
+      if (!response.ok) throw new Error(t('catchMeUp'));
       return response.json() as Promise<CatchMeUpResponse>;
     },
     enabled: opts.enabled !== false,

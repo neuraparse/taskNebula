@@ -18,6 +18,7 @@
 
 import { db, systemSettings, notifications, users, eq, and, sql } from '@tasknebula/db';
 import pkg from '../../../package.json';
+import { getVersionUpdatePreferences } from './preferences';
 
 export const VERSION_CHECK_KEY = 'version_check';
 export const UPDATE_NOTIFICATION_KEY = 'version_update_notification';
@@ -624,6 +625,9 @@ async function notifySuperAdminsOfAvailableUpdate(status: UpdateStatus): Promise
   const source = getUpdateNotificationSource(status);
 
   try {
+    const preferences = await getVersionUpdatePreferences();
+    if (!preferences.availableUpdateNotificationsEnabled) return;
+
     const shouldNotify = await rememberUpdateNotification(status, source);
     if (!shouldNotify) return;
 

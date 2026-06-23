@@ -15,8 +15,18 @@ interface WatchersListProps {
   projectId?: string;
 }
 
+interface Watcher {
+  id: string;
+  userId: string;
+  user: {
+    name: string | null;
+    image: string | null;
+  };
+}
+
 export function WatchersList({ issueId, projectId }: WatchersListProps) {
   const t = useTranslations('projectConfig');
+  const errorT = useTranslations('componentErrors.watchers');
   const { user } = useUser();
   const queryClient = useQueryClient();
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -30,14 +40,14 @@ export function WatchersList({ issueId, projectId }: WatchersListProps) {
       if (projectId) params.append('projectId', projectId);
 
       const response = await fetch(`/api/watchers?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch watchers');
+      if (!response.ok) throw new Error(errorT('fetch'));
       return response.json();
     },
     enabled: !!(issueId || projectId),
   });
 
-  const watchers = data?.watchers || [];
-  const isWatching = watchers.some((w: any) => w.userId === user?.id);
+  const watchers = (data?.watchers || []) as Watcher[];
+  const isWatching = watchers.some((watcher) => watcher.userId === user?.id);
 
   // Add watcher mutation — API call untouched.
   const addWatcher = useMutation({
@@ -47,7 +57,7 @@ export function WatchersList({ issueId, projectId }: WatchersListProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ issueId, projectId }),
       });
-      if (!response.ok) throw new Error('Failed to add watcher');
+      if (!response.ok) throw new Error(errorT('add'));
       return response.json();
     },
     onSuccess: () => {
@@ -65,7 +75,7 @@ export function WatchersList({ issueId, projectId }: WatchersListProps) {
       const response = await fetch(`/api/watchers?${params.toString()}`, {
         method: 'DELETE',
       });
-      if (!response.ok) throw new Error('Failed to remove watcher');
+      if (!response.ok) throw new Error(errorT('remove'));
       return response.json();
     },
     onSuccess: () => {
@@ -99,12 +109,15 @@ export function WatchersList({ issueId, projectId }: WatchersListProps) {
               {/* Overlapping avatar stack */}
               {watchers.length > 0 && (
                 <span className="flex items-center" aria-hidden="true">
-                  {visibleAvatars.map((watcher: any) => (
+                  {visibleAvatars.map((watcher) => (
                     <Avatar
                       key={watcher.id}
                       className="ring-background -ml-2 h-5 w-5 ring-2 first:ml-0"
                     >
-                      <AvatarImage src={watcher.user.image} alt={watcher.user.name ?? ''} />
+                      <AvatarImage
+                        src={watcher.user.image ?? undefined}
+                        alt={watcher.user.name ?? ''}
+                      />
                       <AvatarFallback className="bg-muted text-muted-foreground text-[9px]">
                         {watcher.user.name?.charAt(0)}
                       </AvatarFallback>
@@ -138,10 +151,13 @@ export function WatchersList({ issueId, projectId }: WatchersListProps) {
               <p className="text-muted-foreground px-4 py-4 text-sm">{t('no_one_watching')}</p>
             ) : (
               <ul role="list" className="stagger">
-                {watchers.map((watcher: any) => (
+                {watchers.map((watcher) => (
                   <li key={watcher.id} className="flex items-center gap-2.5 px-3 py-1.5">
                     <Avatar className="h-6 w-6 shrink-0">
-                      <AvatarImage src={watcher.user.image} alt={watcher.user.name ?? ''} />
+                      <AvatarImage
+                        src={watcher.user.image ?? undefined}
+                        alt={watcher.user.name ?? ''}
+                      />
                       <AvatarFallback className="bg-muted text-muted-foreground text-xs">
                         {watcher.user.name?.charAt(0)}
                       </AvatarFallback>

@@ -178,7 +178,7 @@ describe('useOmnibarSearch', () => {
       expect(result.current.error).not.toBeNull();
     });
 
-    expect(result.current.error).toContain('500');
+    expect(result.current.error).toBe('Failed to load');
     expect(result.current.results).toEqual([]);
     expect(result.current.loading).toBe(false);
   });

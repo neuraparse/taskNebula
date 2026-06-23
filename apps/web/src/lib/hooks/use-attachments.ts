@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 
 interface Attachment {
   id: string;
@@ -16,12 +17,14 @@ interface AttachmentsResponse {
 }
 
 export function useAttachments(issueId: string) {
+  const t = useTranslations('hookErrors.attachments');
+
   return useQuery({
     queryKey: ['attachments', issueId],
     queryFn: async () => {
       const response = await fetch(`/api/issues/${issueId}/attachments`);
       if (!response.ok) {
-        throw new Error('Failed to fetch attachments');
+        throw new Error(t('fetch'));
       }
       const data: AttachmentsResponse = await response.json();
       return data.attachments;
@@ -31,6 +34,7 @@ export function useAttachments(issueId: string) {
 
 export function useUploadAttachment(issueId: string) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.attachments');
 
   return useMutation({
     mutationFn: async (file: File) => {
@@ -43,8 +47,8 @@ export function useUploadAttachment(issueId: string) {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to upload file');
+        const error = (await response.json().catch(() => ({}))) as { error?: string };
+        throw new Error(error.error || t('upload'));
       }
 
       return response.json();
@@ -57,6 +61,7 @@ export function useUploadAttachment(issueId: string) {
 
 export function useDeleteAttachment(issueId: string) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.attachments');
 
   return useMutation({
     mutationFn: async (attachmentId: string) => {
@@ -68,7 +73,7 @@ export function useDeleteAttachment(issueId: string) {
       );
 
       if (!response.ok) {
-        throw new Error('Failed to delete attachment');
+        throw new Error(t('delete'));
       }
 
       return response.json();
@@ -88,4 +93,3 @@ export function formatFileSize(bytes: number): string {
 
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
 }
-

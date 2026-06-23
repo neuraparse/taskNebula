@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 
 import { useToast } from '@/hooks/use-toast';
@@ -70,16 +71,19 @@ function rowToDraft(row: DraftRow): Draft {
   };
 }
 
-async function fetchDrafts(): Promise<Draft[]> {
+async function fetchDrafts(loadError: string): Promise<Draft[]> {
   const res = await fetch('/api/drafts');
   if (!res.ok) {
-    throw new Error('Failed to load drafts');
+    throw new Error(loadError);
   }
   const json = (await res.json()) as { drafts: DraftRow[] };
   return (json.drafts ?? []).map(rowToDraft);
 }
 
-async function createDraftRequest(input: Partial<Draft> & { type: Draft['type'] }): Promise<Draft> {
+async function createDraftRequest(
+  input: Partial<Draft> & { type: Draft['type'] },
+  createError: string
+): Promise<Draft> {
   const res = await fetch('/api/drafts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -91,13 +95,17 @@ async function createDraftRequest(input: Partial<Draft> & { type: Draft['type'] 
     }),
   });
   if (!res.ok) {
-    throw new Error('Failed to create draft');
+    throw new Error(createError);
   }
   const json = (await res.json()) as { draft: DraftRow };
   return rowToDraft(json.draft);
 }
 
-async function patchDraftRequest(id: string, patch: Partial<Draft>): Promise<Draft> {
+async function patchDraftRequest(
+  id: string,
+  patch: Partial<Draft>,
+  updateError: string
+): Promise<Draft> {
   const body: Record<string, unknown> = {};
   if (patch.title !== undefined) body.title = patch.title;
   if (patch.body !== undefined) body.content = patch.body;
@@ -110,16 +118,16 @@ async function patchDraftRequest(id: string, patch: Partial<Draft>): Promise<Dra
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    throw new Error('Failed to update draft');
+    throw new Error(updateError);
   }
   const json = (await res.json()) as { draft: DraftRow };
   return rowToDraft(json.draft);
 }
 
-async function deleteDraftRequest(id: string): Promise<void> {
+async function deleteDraftRequest(id: string, deleteError: string): Promise<void> {
   const res = await fetch(`/api/drafts/${id}`, { method: 'DELETE' });
   if (!res.ok) {
-    throw new Error('Failed to delete draft');
+    throw new Error(deleteError);
   }
 }
 
@@ -144,10 +152,11 @@ export function useDrafts(): UseDraftsResult {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const t = useTranslations('hookErrors.drafts');
 
   const query = useQuery<Draft[], Error>({
     queryKey: DRAFTS_KEY,
-    queryFn: fetchDrafts,
+    queryFn: () => fetchDrafts(t('load')),
   });
 
   const invalidate = () => {
@@ -155,17 +164,17 @@ export function useDrafts(): UseDraftsResult {
   };
 
   const createMutation = useMutation<Draft, Error, Partial<Draft> & { type: Draft['type'] }>({
-    mutationFn: createDraftRequest,
+    mutationFn: (input) => createDraftRequest(input, t('create')),
     onSuccess: invalidate,
   });
 
   const patchMutation = useMutation<Draft, Error, { id: string; patch: Partial<Draft> }>({
-    mutationFn: ({ id, patch }) => patchDraftRequest(id, patch),
+    mutationFn: ({ id, patch }) => patchDraftRequest(id, patch, t('update')),
     onSuccess: invalidate,
   });
 
   const deleteMutation = useMutation<void, Error, string>({
-    mutationFn: deleteDraftRequest,
+    mutationFn: (id) => deleteDraftRequest(id, t('delete')),
     onSuccess: invalidate,
   });
 
@@ -175,14 +184,14 @@ export function useDrafts(): UseDraftsResult {
         return await createMutation.mutateAsync(input);
       } catch (err) {
         toast({
-          title: 'Could not save draft',
-          description: err instanceof Error ? err.message : 'Unknown error',
+          title: t('saveToastTitle'),
+          description: t('unknownError'),
           variant: 'destructive',
         });
         return null;
       }
     },
-    [createMutation, toast]
+    [createMutation, toast, t]
   );
 
   const updateDraft = useCallback<UseDraftsResult['updateDraft']>(
@@ -191,13 +200,13 @@ export function useDrafts(): UseDraftsResult {
         await patchMutation.mutateAsync({ id, patch });
       } catch (err) {
         toast({
-          title: 'Could not update draft',
-          description: err instanceof Error ? err.message : 'Unknown error',
+          title: t('updateToastTitle'),
+          description: t('unknownError'),
           variant: 'destructive',
         });
       }
     },
-    [patchMutation, toast]
+    [patchMutation, toast, t]
   );
 
   const removeDraft = useCallback<UseDraftsResult['removeDraft']>(
@@ -206,13 +215,13 @@ export function useDrafts(): UseDraftsResult {
         await deleteMutation.mutateAsync(id);
       } catch (err) {
         toast({
-          title: 'Could not delete draft',
-          description: err instanceof Error ? err.message : 'Unknown error',
+          title: t('deleteToastTitle'),
+          description: t('unknownError'),
           variant: 'destructive',
         });
       }
     },
-    [deleteMutation, toast]
+    [deleteMutation, toast, t]
   );
 
   const promoteDraft = useCallback<UseDraftsResult['promoteDraft']>(
@@ -220,8 +229,8 @@ export function useDrafts(): UseDraftsResult {
       const draft = (query.data ?? []).find((d) => d.id === id);
       if (!draft) {
         toast({
-          title: 'Draft not found',
-          description: 'Reload the page and try again.',
+          title: t('notFoundTitle'),
+          description: t('reloadAndTryAgain'),
           variant: 'destructive',
         });
         return;
@@ -232,11 +241,11 @@ export function useDrafts(): UseDraftsResult {
       // until their own promote flows land.
       if (draft.type !== 'work_item') {
         toast({
-          title: 'Not supported yet',
+          title: t('notSupportedTitle'),
           description:
             draft.type === 'page'
-              ? 'Promoting pages to docs is not available yet.'
-              : 'Promoting comments is not available yet.',
+              ? t('pagePromotionUnsupported')
+              : t('commentPromotionUnsupported'),
         });
         return;
       }
@@ -244,8 +253,8 @@ export function useDrafts(): UseDraftsResult {
       const projectId = draft.projectId ?? (await pickDefaultProjectId());
       if (!projectId) {
         toast({
-          title: 'No project available',
-          description: 'Join or create a project before promoting drafts to work items.',
+          title: t('noProjectTitle'),
+          description: t('noProjectDescription'),
           variant: 'destructive',
         });
         return;
@@ -258,7 +267,7 @@ export function useDrafts(): UseDraftsResult {
           body: JSON.stringify({
             projectId,
             type: 'task',
-            title: draft.title || 'Untitled draft',
+            title: draft.title || t('untitledDraft'),
             description: draft.body ?? null,
             priority: 'medium',
             labels: [],
@@ -270,7 +279,7 @@ export function useDrafts(): UseDraftsResult {
           const payload = (await res.json().catch(() => ({}))) as {
             error?: string;
           };
-          throw new Error(payload.error || 'Failed to create work item');
+          throw new Error(payload.error || t('createWorkItem'));
         }
 
         const issue = (await res.json()) as {
@@ -293,14 +302,16 @@ export function useDrafts(): UseDraftsResult {
         await deleteMutation.mutateAsync(id).catch(() => {
           // Non-fatal: issue was created. Surface but don't abort.
           toast({
-            title: 'Draft kept',
-            description: 'Work item created, but the draft could not be removed.',
+            title: t('draftKeptTitle'),
+            description: t('draftKeptDescription'),
           });
         });
 
         toast({
-          title: 'Promoted to work item',
-          description: issue.key ? `Created ${issue.key}.` : 'Work item created successfully.',
+          title: t('promotedTitle'),
+          description: issue.key
+            ? t('promotedDescriptionWithKey', { key: issue.key })
+            : t('promotedDescription'),
         });
 
         if (issue.id) {
@@ -308,13 +319,13 @@ export function useDrafts(): UseDraftsResult {
         }
       } catch (err) {
         toast({
-          title: 'Could not promote draft',
-          description: err instanceof Error ? err.message : 'Unknown error',
+          title: t('promoteToastTitle'),
+          description: t('unknownError'),
           variant: 'destructive',
         });
       }
     },
-    [query.data, deleteMutation, toast, router, queryClient]
+    [query.data, deleteMutation, toast, router, queryClient, t]
   );
 
   return {

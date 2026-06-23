@@ -117,7 +117,7 @@ export function CreateIssueModal({
       onOpenChange(false);
     } catch (err) {
       console.error('Failed to create issue:', err);
-      setError(err instanceof Error ? err.message : t('create.create_failed'));
+      setError(t('create.create_failed'));
     }
   };
 

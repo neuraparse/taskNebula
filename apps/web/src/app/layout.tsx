@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { cookies, headers } from 'next/headers';
 import { NextIntlClientProvider } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import { DirectionProvider } from '@/lib/i18n/direction-provider';
 import './globals.css';
 import '@livekit/components-styles';
@@ -24,20 +25,24 @@ function resolveMetadataBase(): URL {
   }
 }
 
-export const metadata: Metadata = {
-  metadataBase: resolveMetadataBase(),
-  title: 'TaskNebula - AI-Native Project Management',
-  description: 'Real-time, keyboard-first project management platform powered by AI',
-  manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'TaskNebula',
-  },
-  formatDetection: {
-    telephone: false,
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('metadata.root');
+
+  return {
+    metadataBase: resolveMetadataBase(),
+    title: t('title'),
+    description: t('description'),
+    manifest: '/manifest.json',
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'default',
+      title: 'TaskNebula',
+    },
+    formatDetection: {
+      telephone: false,
+    },
+  };
+}
 
 export const viewport: Viewport = {
   width: 'device-width',

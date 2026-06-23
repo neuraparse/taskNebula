@@ -43,7 +43,13 @@ export function VersionUpdateBanner({
     setHydrated(true);
   }, []);
 
-  if (!hydrated || !data?.updateAvailable || !data.latest || dismissedVersion === data.latest) {
+  if (
+    !hydrated ||
+    data?.updatePreferences?.bannerEnabled === false ||
+    !data?.updateAvailable ||
+    !data.latest ||
+    dismissedVersion === data.latest
+  ) {
     return null;
   }
 

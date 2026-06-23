@@ -71,8 +71,9 @@ RUN pnpm build
 # =============================================================================
 FROM node:22-alpine AS runner
 
-# Install netcat for database connection check and su-exec for user switching
-RUN apk add --no-cache netcat-openbsd su-exec
+# Install netcat for database checks, postgresql-client for update backups,
+# and su-exec for user switching.
+RUN apk add --no-cache netcat-openbsd postgresql-client su-exec
 
 # Enable corepack for pnpm in runner stage
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
@@ -138,8 +139,8 @@ COPY --from=builder /app/node_modules ./node_modules
 # Copy entrypoint script
 COPY --chmod=755 docker-entrypoint.sh /docker-entrypoint.sh
 
-# Create uploads directory with correct permissions
-RUN mkdir -p ./uploads && chown -R nextjs:nodejs ./uploads ./packages
+# Create writable runtime directories with correct permissions
+RUN mkdir -p ./uploads ./backups && chown -R nextjs:nodejs ./uploads ./backups ./packages
 
 USER nextjs
 

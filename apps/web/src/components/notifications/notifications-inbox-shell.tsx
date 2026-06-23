@@ -307,10 +307,7 @@ export function NotificationsInboxShell({
 
           <ScrollArea className="min-h-0 flex-1">
             {isError ? (
-              <InboxErrorState
-                message={error instanceof Error ? error.message : undefined}
-                onRetry={handleRefresh}
-              />
+              <InboxErrorState onRetry={handleRefresh} />
             ) : isLoading ? (
               <InboxListSkeleton />
             ) : filtered.length === 0 ? (
@@ -359,11 +356,7 @@ export function NotificationsInboxShell({
           )}
 
           {isError ? (
-            <InboxErrorState
-              message={error instanceof Error ? error.message : undefined}
-              onRetry={handleRefresh}
-              variant="panel"
-            />
+            <InboxErrorState onRetry={handleRefresh} variant="panel" />
           ) : isLoading ? (
             <InboxDetailSkeleton />
           ) : (

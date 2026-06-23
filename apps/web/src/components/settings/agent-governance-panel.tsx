@@ -64,8 +64,10 @@ export function AgentGovernancePanel({ organizationId }: { organizationId: strin
       const response = await fetch(
         `/api/agent-policy?organizationId=${encodeURIComponent(organizationId)}`
       );
-      const payload = await response.json().catch(() => ({ error: 'load_failed' }));
-      if (!response.ok) throw new Error(payload.error || 'load_failed');
+      const payload = await response
+        .json()
+        .catch(() => ({ error: t('agentGovernance.loadFailed') }));
+      if (!response.ok) throw new Error(payload.error || t('agentGovernance.loadFailed'));
       return payload as PolicyStatus;
     },
   });
@@ -76,8 +78,10 @@ export function AgentGovernancePanel({ organizationId }: { organizationId: strin
       const response = await fetch(
         `/api/agent-approvals?organizationId=${encodeURIComponent(organizationId)}&status=pending`
       );
-      const payload = await response.json().catch(() => ({ error: 'load_failed' }));
-      if (!response.ok) throw new Error(payload.error || 'load_failed');
+      const payload = await response
+        .json()
+        .catch(() => ({ error: t('agentGovernance.queueLoadFailed') }));
+      if (!response.ok) throw new Error(payload.error || t('agentGovernance.queueLoadFailed'));
       return payload as { approvals: ApprovalRequest[] };
     },
   });
@@ -87,8 +91,10 @@ export function AgentGovernancePanel({ organizationId }: { organizationId: strin
       const response = await fetch(`/api/agent-approvals/${id}/${decision}`, {
         method: 'POST',
       });
-      const payload = await response.json().catch(() => ({ error: 'decision_failed' }));
-      if (!response.ok) throw new Error(payload.error || 'decision_failed');
+      const payload = await response
+        .json()
+        .catch(() => ({ error: t('agentGovernance.decisionFailed') }));
+      if (!response.ok) throw new Error(payload.error || t('agentGovernance.decisionFailed'));
       return payload;
     },
     onSuccess: () => {
@@ -175,7 +181,9 @@ export function AgentGovernancePanel({ organizationId }: { organizationId: strin
                       <span className="font-medium">
                         {t('agentGovernance.line', { line: error.line })}
                       </span>{' '}
-                      <span className="text-muted-foreground">{error.message}</span>
+                      <span className="text-muted-foreground">
+                        {t('agentGovernance.validationErrors')}
+                      </span>
                     </div>
                   ))}
                 </div>

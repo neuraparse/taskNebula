@@ -26,15 +26,16 @@ const PROVIDER_LABELS: Record<ProviderKey, { label: string }> = {
   anthropic: { label: 'Anthropic' },
 };
 
-async function fetchCredentials(): Promise<CredentialsResponse> {
+async function fetchCredentials(loadError: string): Promise<CredentialsResponse> {
   const response = await fetch('/api/admin/agent-control/credentials');
-  if (!response.ok) throw new Error('Failed to load platform credentials');
+  if (!response.ok) throw new Error(loadError);
   return response.json();
 }
 
 async function upsertCredential(
   provider: ProviderKey,
-  apiKey: string
+  apiKey: string,
+  fallbackError: string
 ): Promise<CredentialsResponse> {
   const response = await fetch('/api/admin/agent-control/credentials', {
     method: 'POST',
@@ -44,12 +45,15 @@ async function upsertCredential(
   if (!response.ok) {
     const err = (await response.json().catch(() => ({}))) as { error?: string };
     if (err.error) throw new Error(err.error);
-    throw new Error('SAVE_CREDENTIAL_FAILED');
+    throw new Error(fallbackError);
   }
   return response.json();
 }
 
-async function deleteCredential(provider: ProviderKey): Promise<CredentialsResponse> {
+async function deleteCredential(
+  provider: ProviderKey,
+  fallbackError: string
+): Promise<CredentialsResponse> {
   const response = await fetch('/api/admin/agent-control/credentials', {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
@@ -58,7 +62,7 @@ async function deleteCredential(provider: ProviderKey): Promise<CredentialsRespo
   if (!response.ok) {
     const err = (await response.json().catch(() => ({}))) as { error?: string };
     if (err.error) throw new Error(err.error);
-    throw new Error('REMOVE_CREDENTIAL_FAILED');
+    throw new Error(fallbackError);
   }
   return response.json();
 }
@@ -70,14 +74,14 @@ export function PlatformAiCredentials() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'agent-control', 'credentials'],
-    queryFn: fetchCredentials,
+    queryFn: () => fetchCredentials(t('platformAi.loadFailedDescription')),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
 
   const upsertMutation = useMutation({
     mutationFn: ({ provider, apiKey }: { provider: ProviderKey; apiKey: string }) =>
-      upsertCredential(provider, apiKey),
+      upsertCredential(provider, apiKey, t('platformAi.saveFailedDescription')),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'agent-control', 'credentials'] });
       toast({
@@ -87,31 +91,26 @@ export function PlatformAiCredentials() {
         }),
       });
     },
-    onError: (err: Error) => {
+    onError: () => {
       toast({
         title: t('platformAi.saveFailed'),
-        description:
-          err.message === 'SAVE_CREDENTIAL_FAILED'
-            ? t('platformAi.saveFailedDescription')
-            : err.message,
+        description: t('platformAi.saveFailedDescription'),
         variant: 'destructive',
       });
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (provider: ProviderKey) => deleteCredential(provider),
+    mutationFn: (provider: ProviderKey) =>
+      deleteCredential(provider, t('platformAi.removeFailedDescription')),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'agent-control', 'credentials'] });
       toast({ title: t('platformAi.keyRemoved') });
     },
-    onError: (err: Error) => {
+    onError: () => {
       toast({
         title: t('platformAi.removeFailed'),
-        description:
-          err.message === 'REMOVE_CREDENTIAL_FAILED'
-            ? t('platformAi.removeFailedDescription')
-            : err.message,
+        description: t('platformAi.removeFailedDescription'),
         variant: 'destructive',
       });
     },

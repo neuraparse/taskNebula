@@ -38,14 +38,13 @@ export function VerifyRequestResendButton({ email }: VerifyRequestResendButtonPr
           : {}),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data?.error || t('send_verification_failed'));
+        setError(t('send_verification_failed'));
         setStatus('error');
         return;
       }
       setStatus('sent');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('network_error'));
+    } catch {
+      setError(t('network_error'));
       setStatus('error');
     }
   }

@@ -64,9 +64,7 @@ describe('ResetPasswordForm', () => {
     });
 
     // Success state renders
-    expect(
-      await screen.findByRole('heading', { name: /password reset/i })
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /password reset/i })).toBeInTheDocument();
   });
 
   it('shows validation error when passwords do not match without calling fetch', async () => {
@@ -82,7 +80,7 @@ describe('ResetPasswordForm', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('shows the server error when the endpoint rejects the token', async () => {
+  it('shows a localized reset error when the endpoint rejects the token', async () => {
     fetchMock.mockResolvedValue({
       ok: false,
       status: 400,
@@ -97,7 +95,7 @@ describe('ResetPasswordForm', () => {
     await user.click(screen.getByRole('button', { name: /reset password/i }));
 
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent(/invalid or expired token/i);
+    expect(alert).toHaveTextContent(/failed to reset password/i);
   });
 
   it('redirects to /auth/signin?reset=1 after a successful reset', async () => {
@@ -133,9 +131,7 @@ describe('ResetPasswordForm', () => {
     });
     render(ui);
 
-    expect(
-      screen.getByRole('heading', { name: /invalid reset link/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /invalid reset link/i })).toBeInTheDocument();
     const link = screen.getByRole('link', { name: /request a new reset link/i });
     expect(link).toHaveAttribute('href', '/auth/forgot-password');
   });

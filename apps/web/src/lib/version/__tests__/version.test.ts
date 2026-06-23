@@ -21,6 +21,16 @@ jest.mock('@tasknebula/db', () => ({
   sql: (...args: unknown[]) => ({ type: 'sql', args }),
 }));
 
+jest.mock('../preferences', () => ({
+  getVersionUpdatePreferences: jest.fn().mockResolvedValue({
+    bannerEnabled: true,
+    availableUpdateNotificationsEnabled: true,
+    postUpdateNotificationsEnabled: true,
+    updatedAt: null,
+    updatedBy: null,
+  }),
+}));
+
 import { systemSettings as systemSettingsTable } from '@tasknebula/db';
 import {
   compareSemver,

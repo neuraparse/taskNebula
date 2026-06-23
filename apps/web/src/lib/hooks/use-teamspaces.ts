@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { throwApiResponseError } from '@/lib/client-api-errors';
 
 export interface Teamspace {
@@ -55,6 +56,8 @@ export interface TeamspaceMemberPayload {
 }
 
 export function useTeamspaces(organizationId?: string | null) {
+  const t = useTranslations('hookErrors.teamspaces');
+
   return useQuery<Teamspace[]>({
     queryKey: ['teamspaces', organizationId],
     queryFn: async () => {
@@ -64,7 +67,7 @@ export function useTeamspaces(organizationId?: string | null) {
 
       const response = await fetch(`/api/organizations/${organizationId}/teams`);
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to fetch teamspaces');
+        await throwApiResponseError(response, t('fetch'));
       }
 
       const data = await response.json();
@@ -75,18 +78,20 @@ export function useTeamspaces(organizationId?: string | null) {
 }
 
 export function useTeamspaceMembers(organizationId?: string | null, teamspaceId?: string | null) {
+  const t = useTranslations('hookErrors.teamspaces');
+
   return useQuery<TeamspaceMembersResponse>({
     queryKey: ['teamspace-members', organizationId, teamspaceId],
     queryFn: async () => {
       if (!organizationId || !teamspaceId) {
-        throw new Error('Organization and teamspace are required');
+        throw new Error(t('organizationAndTeamspaceRequired'));
       }
 
       const response = await fetch(
         `/api/organizations/${organizationId}/teams/${teamspaceId}/members`
       );
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to fetch teamspace members');
+        await throwApiResponseError(response, t('fetchMembers'));
       }
 
       return response.json() as Promise<TeamspaceMembersResponse>;
@@ -113,11 +118,12 @@ function invalidateTeamspaceQueries(
 
 export function useCreateTeamspace(organizationId?: string | null) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.teamspaces');
 
   return useMutation({
     mutationFn: async (payload: TeamspacePayload) => {
       if (!organizationId) {
-        throw new Error('No organization selected');
+        throw new Error(t('noOrganizationSelected'));
       }
 
       const response = await fetch(`/api/organizations/${organizationId}/teams`, {
@@ -127,7 +133,7 @@ export function useCreateTeamspace(organizationId?: string | null) {
       });
 
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to create teamspace');
+        await throwApiResponseError(response, t('create'));
       }
 
       return response.json();
@@ -140,6 +146,7 @@ export function useCreateTeamspace(organizationId?: string | null) {
 
 export function useUpdateTeamspace(organizationId?: string | null) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.teamspaces');
 
   return useMutation({
     mutationFn: async ({
@@ -150,7 +157,7 @@ export function useUpdateTeamspace(organizationId?: string | null) {
       payload: TeamspacePayload;
     }) => {
       if (!organizationId) {
-        throw new Error('No organization selected');
+        throw new Error(t('noOrganizationSelected'));
       }
 
       const response = await fetch(`/api/organizations/${organizationId}/teams/${teamspaceId}`, {
@@ -160,7 +167,7 @@ export function useUpdateTeamspace(organizationId?: string | null) {
       });
 
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to update teamspace');
+        await throwApiResponseError(response, t('update'));
       }
 
       return response.json();
@@ -173,11 +180,12 @@ export function useUpdateTeamspace(organizationId?: string | null) {
 
 export function useDeleteTeamspace(organizationId?: string | null) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.teamspaces');
 
   return useMutation({
     mutationFn: async (teamspaceId: string) => {
       if (!organizationId) {
-        throw new Error('No organization selected');
+        throw new Error(t('noOrganizationSelected'));
       }
 
       const response = await fetch(`/api/organizations/${organizationId}/teams/${teamspaceId}`, {
@@ -185,7 +193,7 @@ export function useDeleteTeamspace(organizationId?: string | null) {
       });
 
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to delete teamspace');
+        await throwApiResponseError(response, t('delete'));
       }
 
       return response.json();
@@ -198,11 +206,12 @@ export function useDeleteTeamspace(organizationId?: string | null) {
 
 export function useAddTeamspaceMember(organizationId?: string | null, teamspaceId?: string | null) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.teamspaces');
 
   return useMutation({
     mutationFn: async (payload: TeamspaceMemberPayload) => {
       if (!organizationId || !teamspaceId) {
-        throw new Error('No teamspace selected');
+        throw new Error(t('noTeamspaceSelected'));
       }
 
       const response = await fetch(
@@ -215,7 +224,7 @@ export function useAddTeamspaceMember(organizationId?: string | null, teamspaceI
       );
 
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to add teamspace member');
+        await throwApiResponseError(response, t('addMember'));
       }
 
       return response.json();
@@ -231,11 +240,12 @@ export function useUpdateTeamspaceMember(
   teamspaceId?: string | null
 ) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.teamspaces');
 
   return useMutation({
     mutationFn: async ({ memberId, role }: { memberId: string; role: 'lead' | 'member' }) => {
       if (!organizationId || !teamspaceId) {
-        throw new Error('No teamspace selected');
+        throw new Error(t('noTeamspaceSelected'));
       }
 
       const response = await fetch(
@@ -248,7 +258,7 @@ export function useUpdateTeamspaceMember(
       );
 
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to update teamspace member');
+        await throwApiResponseError(response, t('updateMember'));
       }
 
       return response.json();
@@ -264,11 +274,12 @@ export function useRemoveTeamspaceMember(
   teamspaceId?: string | null
 ) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.teamspaces');
 
   return useMutation({
     mutationFn: async (memberId: string) => {
       if (!organizationId || !teamspaceId) {
-        throw new Error('No teamspace selected');
+        throw new Error(t('noTeamspaceSelected'));
       }
 
       const response = await fetch(
@@ -279,7 +290,7 @@ export function useRemoveTeamspaceMember(
       );
 
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to remove teamspace member');
+        await throwApiResponseError(response, t('removeMember'));
       }
 
       return response.json();

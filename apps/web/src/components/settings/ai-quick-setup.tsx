@@ -121,10 +121,10 @@ export function AiQuickSetup({
         description: t('aiQuickSetup.enabled_toast_desc', { provider: PROVIDER_LABELS[provider] }),
       });
     },
-    onError: (err: Error) => {
+    onError: () => {
       toast({
         title: t('aiQuickSetup.enable_failed'),
-        description: err.message,
+        description: t('aiQuickSetup.enable_failed'),
         variant: 'destructive',
       });
     },

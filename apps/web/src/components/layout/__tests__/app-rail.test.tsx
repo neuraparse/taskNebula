@@ -115,16 +115,16 @@ describe('AppRail', () => {
       'h-9',
       'w-9',
       'rounded-full',
-      'border-white/20',
-      'bg-white/10',
+      'border-0',
+      'bg-transparent',
+      'p-0',
       'hover:text-white',
-      'ring-1',
-      'ring-white/30'
+      'ring-0'
     );
     expect(accountMenu).not.toHaveClass('rounded-[2px]');
 
     const initials = screen.getByText('AL');
-    expect(initials).toHaveClass('rounded-full', 'bg-white', 'text-zinc-950');
+    expect(initials).toHaveClass('rounded-full', 'bg-white/10', 'text-white/90');
     expect(initials).not.toHaveClass('rounded-[2px]');
   });
 

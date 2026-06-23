@@ -68,6 +68,7 @@ interface RollUpResponse {
 
 export function InitiativeDetailClient({ initiativeId }: { initiativeId: string }) {
   const t = useTranslations('pagesHome');
+  const errorT = useTranslations('componentErrors.initiatives');
   const queryClient = useQueryClient();
 
   const {
@@ -93,7 +94,7 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
     queryKey: ['initiative-rollup', initiativeId],
     queryFn: async () => {
       const res = await fetch(`/api/initiatives/${initiativeId}/roll-up`);
-      if (!res.ok) throw new Error('Failed to load roll-up');
+      if (!res.ok) throw new Error(errorT('loadRollup'));
       return res.json();
     },
   });
@@ -102,7 +103,7 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
     queryKey: ['initiative-updates', initiativeId],
     queryFn: async () => {
       const res = await fetch(`/api/initiatives/${initiativeId}/updates`);
-      if (!res.ok) throw new Error('Failed to load updates');
+      if (!res.ok) throw new Error(errorT('loadUpdates'));
       return res.json();
     },
   });
@@ -343,7 +344,7 @@ export function InitiativeDetailClient({ initiativeId }: { initiativeId: string 
                 {t('initiative_detail_post_update')}
               </Button>
               {postUpdate.error ? (
-                <p className="text-destructive text-xs">{(postUpdate.error as Error).message}</p>
+                <p className="text-destructive text-xs">{t('initiative_detail_error_post')}</p>
               ) : null}
             </CardContent>
           </Card>

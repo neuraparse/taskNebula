@@ -58,13 +58,10 @@ export function AiTransparencyClient({ organizationId }: { organizationId: strin
         title: tConfig('orgAi.saved_toast_title'),
         description: tConfig('orgAi.saved_toast_desc_policy'),
       });
-    } catch (mutationError) {
+    } catch {
       toast({
         title: tConfig('orgAi.save_failed_title'),
-        description:
-          mutationError instanceof Error
-            ? mutationError.message
-            : tConfig('orgAi.save_failed_title'),
+        description: tConfig('orgAi.save_failed_title'),
         variant: 'destructive',
       });
     }
@@ -85,13 +82,10 @@ export function AiTransparencyClient({ organizationId }: { organizationId: strin
         title: tConfig('orgAi.saved_toast_title'),
         description: tConfig('orgAi.saved_toast_desc_policy'),
       });
-    } catch (mutationError) {
+    } catch {
       toast({
         title: tConfig('orgAi.save_failed_title'),
-        description:
-          mutationError instanceof Error
-            ? mutationError.message
-            : tConfig('orgAi.save_failed_title'),
+        description: tConfig('orgAi.save_failed_title'),
         variant: 'destructive',
       });
     }
@@ -112,7 +106,7 @@ export function AiTransparencyClient({ organizationId }: { organizationId: strin
     return (
       <Card>
         <CardContent className="text-destructive py-8 text-sm">
-          {error instanceof Error ? error.message : tConfig('orgAi.load_error')}
+          {tConfig('orgAi.load_error')}
         </CardContent>
       </Card>
     );

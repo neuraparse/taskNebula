@@ -179,7 +179,7 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
         success: !!payload.success,
         statusCode: payload.statusCode ?? null,
         durationMs: payload.durationMs ?? 0,
-        error: payload.error,
+        error: payload.success ? undefined : t('webhooks.test_no_response'),
       };
       setLastTestResults((current) => ({ ...current, [webhookId]: result }));
       if (result.success) {
@@ -201,19 +201,19 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
       }
       queryClient.invalidateQueries({ queryKey });
     },
-    onError: (err, webhookId) => {
+    onError: (_err, webhookId) => {
       setLastTestResults((current) => ({
         ...current,
         [webhookId]: {
           success: false,
           statusCode: null,
           durationMs: 0,
-          error: err instanceof Error ? err.message : t('webhooks.test_send_failed'),
+          error: t('webhooks.test_send_failed'),
         },
       }));
       toast({
         title: t('webhooks.test_failed'),
-        description: err instanceof Error ? err.message : t('webhooks.test_send_failed'),
+        description: t('webhooks.test_send_failed'),
         variant: 'destructive',
       });
     },
@@ -268,7 +268,7 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
     } catch (err) {
       toast({
         title: t('webhooks.save_failed_title'),
-        description: err instanceof Error ? err.message : t('webhooks.save_failed'),
+        description: t('webhooks.save_failed'),
         variant: 'destructive',
       });
     }
@@ -318,7 +318,7 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
                   onChange={(event) =>
                     setFormData((current) => ({ ...current, url: event.target.value }))
                   }
-                  placeholder="https://example.com/webhooks/tasknebula"
+                  placeholder={t('webhooks.url_placeholder')}
                 />
               </div>
               <div className="space-y-2">
@@ -358,9 +358,7 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
       {isLoading ? (
         <p className="text-muted-foreground py-6 text-center text-sm">{t('webhooks.loading')}</p>
       ) : error ? (
-        <div className="panel-warn text-sm">
-          {error instanceof Error ? error.message : t('webhooks.load_error')}
-        </div>
+        <div className="panel-warn text-sm">{t('webhooks.load_error')}</div>
       ) : webhooks.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-12 text-center">
           <WebhookIcon className="text-muted-foreground/50 h-8 w-8" />

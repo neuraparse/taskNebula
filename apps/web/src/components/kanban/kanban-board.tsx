@@ -176,7 +176,6 @@ export function KanbanBoard({ projectId, sprintId, filters }: KanbanBoardProps) 
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
           <p className="text-destructive text-sm">{t('loadFailed')}</p>
-          <p className="text-muted-foreground text-xs">{error.message}</p>
         </div>
       </div>
     );

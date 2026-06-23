@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { SectionHeader, Shell } from './primitives';
 
@@ -13,11 +14,12 @@ import { SectionHeader, Shell } from './primitives';
  */
 
 type Mark = 'yes' | 'partial' | 'no';
+type ProductKey = 'tasknebula' | 'jira' | 'linear' | 'plane';
 
-type Cell = { mark: Mark; note: string };
+type Cell = { mark: Mark };
 
 type Row = {
-  feature: string;
+  key: string;
   tasknebula: Cell;
   jira: Cell;
   linear: Cell;
@@ -26,81 +28,81 @@ type Row = {
 
 const rows: readonly Row[] = [
   {
-    feature: 'Open source (MIT)',
-    tasknebula: { mark: 'yes', note: 'Entire codebase, MIT' },
-    jira: { mark: 'no', note: 'Proprietary' },
-    linear: { mark: 'no', note: 'Proprietary' },
-    plane: { mark: 'partial', note: 'AGPL-3.0 core' },
+    key: 'openSource',
+    tasknebula: { mark: 'yes' },
+    jira: { mark: 'no' },
+    linear: { mark: 'no' },
+    plane: { mark: 'partial' },
   },
   {
-    feature: 'Self-host (one Docker Compose)',
-    tasknebula: { mark: 'yes', note: 'Postgres + Redis + one web image' },
-    jira: { mark: 'no', note: 'Cloud-first; DC phased out' },
-    linear: { mark: 'no', note: 'Cloud only' },
-    plane: { mark: 'yes', note: 'Docker / Kubernetes' },
+    key: 'selfHost',
+    tasknebula: { mark: 'yes' },
+    jira: { mark: 'no' },
+    linear: { mark: 'no' },
+    plane: { mark: 'yes' },
   },
   {
-    feature: 'Price',
-    tasknebula: { mark: 'yes', note: 'Free, unlimited users, self-hosted' },
-    jira: { mark: 'partial', note: 'Free ≤10 users, then per-seat' },
-    linear: { mark: 'partial', note: 'Free tier, then per-seat' },
-    plane: { mark: 'partial', note: 'Free ≤12 users, then per-seat' },
+    key: 'price',
+    tasknebula: { mark: 'yes' },
+    jira: { mark: 'partial' },
+    linear: { mark: 'partial' },
+    plane: { mark: 'partial' },
   },
   {
-    feature: 'AI agents native + MCP server',
-    tasknebula: { mark: 'yes', note: 'Built-in agents + MIT MCP server' },
-    jira: { mark: 'partial', note: 'Rovo + remote MCP, cloud-only' },
-    linear: { mark: 'partial', note: 'AI + remote MCP server' },
-    plane: { mark: 'partial', note: 'Plane AI (credits) + MCP' },
+    key: 'aiAgents',
+    tasknebula: { mark: 'yes' },
+    jira: { mark: 'partial' },
+    linear: { mark: 'partial' },
+    plane: { mark: 'partial' },
   },
   {
-    feature: 'Keyboard-first',
-    tasknebula: { mark: 'yes', note: 'Command palette + shortcuts' },
-    jira: { mark: 'partial', note: 'Limited shortcuts' },
-    linear: { mark: 'yes', note: 'Best-in-class' },
-    plane: { mark: 'yes', note: 'Command-K palette' },
+    key: 'keyboard',
+    tasknebula: { mark: 'yes' },
+    jira: { mark: 'partial' },
+    linear: { mark: 'yes' },
+    plane: { mark: 'yes' },
   },
   {
-    feature: 'Realtime collab',
-    tasknebula: { mark: 'yes', note: 'Live cursors via Yjs' },
-    jira: { mark: 'partial', note: 'Live sync, no co-editing' },
-    linear: { mark: 'yes', note: 'Live sync' },
-    plane: { mark: 'yes', note: 'Live sync' },
+    key: 'realtime',
+    tasknebula: { mark: 'yes' },
+    jira: { mark: 'partial' },
+    linear: { mark: 'yes' },
+    plane: { mark: 'yes' },
   },
   {
-    feature: 'Jira / Linear import',
-    tasknebula: { mark: 'yes', note: 'CSV + API import' },
-    jira: { mark: 'partial', note: 'Imports to Jira' },
-    linear: { mark: 'yes', note: 'Jira import built-in' },
-    plane: { mark: 'yes', note: 'Jira / Linear importers' },
+    key: 'import',
+    tasknebula: { mark: 'yes' },
+    jira: { mark: 'partial' },
+    linear: { mark: 'yes' },
+    plane: { mark: 'yes' },
   },
   {
-    feature: 'Sprints / Cycles',
-    tasknebula: { mark: 'yes', note: 'Sprints + backlog' },
-    jira: { mark: 'yes', note: 'Scrum + Kanban' },
-    linear: { mark: 'yes', note: 'Cycles' },
-    plane: { mark: 'yes', note: 'Cycles + modules' },
+    key: 'sprints',
+    tasknebula: { mark: 'yes' },
+    jira: { mark: 'yes' },
+    linear: { mark: 'yes' },
+    plane: { mark: 'yes' },
   },
   {
-    feature: 'Labels / Components / Versions',
-    tasknebula: { mark: 'yes', note: 'First-class, all three' },
-    jira: { mark: 'yes', note: 'All three' },
-    linear: { mark: 'partial', note: 'Labels + projects' },
-    plane: { mark: 'partial', note: 'Labels + modules' },
+    key: 'structure',
+    tasknebula: { mark: 'yes' },
+    jira: { mark: 'yes' },
+    linear: { mark: 'partial' },
+    plane: { mark: 'partial' },
   },
   {
-    feature: 'API / Projects-as-code',
-    tasknebula: { mark: 'yes', note: 'Open REST + OpenAPI spec' },
-    jira: { mark: 'partial', note: 'REST API, no IaC' },
-    linear: { mark: 'partial', note: 'GraphQL API' },
-    plane: { mark: 'partial', note: 'REST API' },
+    key: 'api',
+    tasknebula: { mark: 'yes' },
+    jira: { mark: 'partial' },
+    linear: { mark: 'partial' },
+    plane: { mark: 'partial' },
   },
 ] as const;
 
-const markMeta: Record<Mark, { label: string; accentVar: string }> = {
-  yes: { label: 'Yes', accentVar: 'var(--landing-accent-emerald)' },
-  partial: { label: 'Partial', accentVar: 'var(--landing-accent-amber)' },
-  no: { label: 'No', accentVar: 'var(--landing-text-muted)' },
+const markMeta: Record<Mark, { accentVar: string }> = {
+  yes: { accentVar: 'var(--landing-accent-emerald)' },
+  partial: { accentVar: 'var(--landing-accent-amber)' },
+  no: { accentVar: 'var(--landing-text-muted)' },
 };
 
 function MarkGlyph({ mark }: { mark: Mark }) {
@@ -155,8 +157,20 @@ function MarkGlyph({ mark }: { mark: Mark }) {
   );
 }
 
-function CompareCell({ cell, highlight = false }: { cell: Cell; highlight?: boolean }) {
-  const { label } = markMeta[cell.mark];
+function CompareCell({
+  cell,
+  rowKey,
+  productKey,
+  highlight = false,
+}: {
+  cell: Cell;
+  rowKey: string;
+  productKey: ProductKey;
+  highlight?: boolean;
+}) {
+  const t = useTranslations('publicPages.landing.comparison');
+  const label = t(`marks.${cell.mark}`);
+
   return (
     <div className="flex items-start gap-2">
       <span className="mt-0.5">
@@ -169,7 +183,7 @@ function CompareCell({ cell, highlight = false }: { cell: Cell; highlight?: bool
             highlight ? 'text-[var(--landing-text)]' : 'text-[var(--landing-text-subtle)]'
           }`}
         >
-          {cell.note}
+          {t(`rows.${rowKey}.notes.${productKey}`)}
         </span>
       </span>
     </div>
@@ -211,6 +225,7 @@ function ColHeader({
 }
 
 function MobileComparisonCards() {
+  const t = useTranslations('publicPages.landing.comparison');
   const products = [
     { key: 'tasknebula', name: 'TaskNebula', highlight: true },
     { key: 'jira', name: 'Jira', highlight: false },
@@ -226,10 +241,12 @@ function MobileComparisonCards() {
     <div className="mt-10 space-y-3 md:hidden">
       {rows.map((row) => (
         <article
-          key={row.feature}
+          key={row.key}
           className="rounded-lg border border-[var(--landing-border)] bg-[var(--landing-bg-card)] p-4"
         >
-          <h3 className="text-[13px] font-[520] text-[var(--landing-text-dark)]">{row.feature}</h3>
+          <h3 className="text-[13px] font-[520] text-[var(--landing-text-dark)]">
+            {t(`rows.${row.key}.feature`)}
+          </h3>
           <dl className="mt-3 space-y-3">
             {products.map((product) => (
               <div key={product.key} className="grid gap-1">
@@ -243,7 +260,12 @@ function MobileComparisonCards() {
                   {product.name}
                 </dt>
                 <dd>
-                  <CompareCell cell={row[product.key]} highlight={product.highlight} />
+                  <CompareCell
+                    cell={row[product.key]}
+                    rowKey={row.key}
+                    productKey={product.key}
+                    highlight={product.highlight}
+                  />
                 </dd>
               </div>
             ))}
@@ -255,14 +277,16 @@ function MobileComparisonCards() {
 }
 
 export function Comparison() {
+  const t = useTranslations('publicPages.landing.comparison');
+
   return (
     <section id="compare" className="border-t border-[var(--landing-border)]">
       <Shell className="py-20 sm:py-24">
         <SectionHeader
-          kicker="Compare"
+          kicker={t('kicker')}
           kickerAccentVar="var(--landing-accent-amber)"
-          title="TaskNebula vs Jira vs Linear vs Plane"
-          description="All four are capable tools. Here is exactly where TaskNebula differs — open by default, yours to host, AI-native. Nothing more, nothing less."
+          title={t('title')}
+          description={t('description')}
         />
 
         <MobileComparisonCards />
@@ -270,21 +294,18 @@ export function Comparison() {
         <div
           tabIndex={0}
           role="region"
-          aria-label="Feature comparison table"
+          aria-label={t('tableAria')}
           className="mt-10 hidden overflow-x-auto rounded-lg border border-[var(--landing-border)] bg-[var(--landing-bg-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] md:block"
         >
           <table className="w-full min-w-[820px] border-collapse text-left">
-            <caption className="sr-only">
-              Feature comparison between TaskNebula, Jira, Linear, and Plane. Each cell is marked
-              Yes, Partial, or No, followed by a short detail.
-            </caption>
+            <caption className="sr-only">{t('tableCaption')}</caption>
             <thead>
               <tr className="border-b border-[var(--landing-border)]">
                 <th
                   scope="col"
                   className="px-5 py-4 text-[11px] font-[500] uppercase tracking-[0.14em] text-[var(--landing-text-muted)]"
                 >
-                  Feature
+                  {t('featureHeader')}
                 </th>
                 <ColHeader name="TaskNebula" highlight accentVar="var(--landing-accent-blue)" />
                 <ColHeader name="Jira" />
@@ -295,26 +316,31 @@ export function Comparison() {
             <tbody>
               {rows.map((row) => (
                 <tr
-                  key={row.feature}
+                  key={row.key}
                   className="border-b border-[var(--landing-border)] last:border-b-0"
                 >
                   <th
                     scope="row"
                     className="whitespace-nowrap px-5 py-4 align-top text-[12px] font-[500] text-[var(--landing-text-subtle)]"
                   >
-                    {row.feature}
+                    {t(`rows.${row.key}.feature`)}
                   </th>
                   <td className="bg-[var(--landing-bg-surface)] px-5 py-4 align-top">
-                    <CompareCell cell={row.tasknebula} highlight />
+                    <CompareCell
+                      cell={row.tasknebula}
+                      rowKey={row.key}
+                      productKey="tasknebula"
+                      highlight
+                    />
                   </td>
                   <td className="px-5 py-4 align-top">
-                    <CompareCell cell={row.jira} />
+                    <CompareCell cell={row.jira} rowKey={row.key} productKey="jira" />
                   </td>
                   <td className="px-5 py-4 align-top">
-                    <CompareCell cell={row.linear} />
+                    <CompareCell cell={row.linear} rowKey={row.key} productKey="linear" />
                   </td>
                   <td className="px-5 py-4 align-top">
-                    <CompareCell cell={row.plane} />
+                    <CompareCell cell={row.plane} rowKey={row.key} productKey="plane" />
                   </td>
                 </tr>
               ))}
@@ -327,16 +353,14 @@ export function Comparison() {
             <span key={mark} className="inline-flex items-center gap-2">
               <MarkGlyph mark={mark} />
               <span className="text-[12px] text-[var(--landing-text-subtle)]">
-                {markMeta[mark].label}
+                {t(`marks.${mark}`)}
               </span>
             </span>
           ))}
         </div>
 
         <p className="mt-4 text-[11px] leading-5 text-[var(--landing-text-subtle)]">
-          Vendor details reflect public documentation and pricing pages as of June 2026 and may
-          change. Jira is a trademark of Atlassian, Linear of Linear Orbit, and Plane of Plane
-          Software — all are solid products, none affiliated with TaskNebula.
+          {t('footnote')}
         </p>
       </Shell>
     </section>

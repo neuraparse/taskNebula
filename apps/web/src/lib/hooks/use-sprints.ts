@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { throwApiResponseError } from '@/lib/client-api-errors';
 
 export interface Sprint {
@@ -46,12 +47,14 @@ export interface SprintIssue {
 
 // Fetch sprints for a project
 export function useSprints(projectId: string | null) {
+  const t = useTranslations('hookErrors.sprints');
+
   return useQuery({
     queryKey: ['sprints', projectId],
     queryFn: async () => {
       if (!projectId) return [];
       const response = await fetch(`/api/sprints?projectId=${projectId}`);
-      if (!response.ok) await throwApiResponseError(response, 'Failed to fetch sprints');
+      if (!response.ok) await throwApiResponseError(response, t('fetch'));
       return response.json() as Promise<Sprint[]>;
     },
     enabled: !!projectId,
@@ -60,12 +63,14 @@ export function useSprints(projectId: string | null) {
 
 // Fetch single sprint
 export function useSprint(sprintId: string | null) {
+  const t = useTranslations('hookErrors.sprints');
+
   return useQuery({
     queryKey: ['sprint', sprintId],
     queryFn: async () => {
       if (!sprintId) return null;
       const response = await fetch(`/api/sprints/${sprintId}`);
-      if (!response.ok) await throwApiResponseError(response, 'Failed to fetch sprint');
+      if (!response.ok) await throwApiResponseError(response, t('fetchOne'));
       return response.json() as Promise<Sprint>;
     },
     enabled: !!sprintId,
@@ -74,12 +79,14 @@ export function useSprint(sprintId: string | null) {
 
 // Fetch sprint issues
 export function useSprintIssues(sprintId: string | null) {
+  const t = useTranslations('hookErrors.sprints');
+
   return useQuery({
     queryKey: ['sprint-issues', sprintId],
     queryFn: async () => {
       if (!sprintId) return [];
       const response = await fetch(`/api/sprints/${sprintId}/issues`);
-      if (!response.ok) await throwApiResponseError(response, 'Failed to fetch sprint issues');
+      if (!response.ok) await throwApiResponseError(response, t('fetchIssues'));
       return response.json() as Promise<SprintIssue[]>;
     },
     enabled: !!sprintId,
@@ -89,6 +96,7 @@ export function useSprintIssues(sprintId: string | null) {
 // Create sprint
 export function useCreateSprint() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.sprints');
 
   return useMutation({
     mutationFn: async (data: {
@@ -108,7 +116,7 @@ export function useCreateSprint() {
         }),
       });
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to create sprint');
+        await throwApiResponseError(response, t('create'));
       }
       return response.json() as Promise<Sprint>;
     },
@@ -128,6 +136,7 @@ export function useCreateSprint() {
  */
 export function useInlineCreateSprint() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.sprints');
 
   return useMutation({
     mutationFn: async ({
@@ -150,7 +159,7 @@ export function useInlineCreateSprint() {
         }),
       });
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to create sprint');
+        await throwApiResponseError(response, t('create'));
       }
       return response.json() as Promise<Sprint>;
     },
@@ -169,6 +178,7 @@ export function useInlineCreateSprint() {
 // Update sprint
 export function useUpdateSprint() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.sprints');
 
   return useMutation({
     mutationFn: async ({ sprintId, data }: { sprintId: string; data: Partial<Sprint> }) => {
@@ -178,7 +188,7 @@ export function useUpdateSprint() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to update sprint');
+        await throwApiResponseError(response, t('update'));
       }
       return response.json() as Promise<Sprint>;
     },
@@ -204,6 +214,7 @@ export function useUpdateSprint() {
 // Delete sprint
 export function useDeleteSprint() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.sprints');
 
   return useMutation({
     mutationFn: async (sprintId: string) => {
@@ -212,7 +223,7 @@ export function useDeleteSprint() {
       const response = await fetch(`/api/sprints/${sprintId}`, {
         method: 'DELETE',
       });
-      if (!response.ok) await throwApiResponseError(response, 'Failed to delete sprint');
+      if (!response.ok) await throwApiResponseError(response, t('delete'));
       const json = await response.json();
       return { ...json, projectId: cached?.projectId };
     },
@@ -238,6 +249,7 @@ export function useDeleteSprint() {
 // Assign issue to sprint
 export function useAssignIssueToSprint() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.sprints');
 
   return useMutation({
     mutationFn: async ({ sprintId, issueId }: { sprintId: string; issueId: string }) => {
@@ -246,7 +258,7 @@ export function useAssignIssueToSprint() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ issueId }),
       });
-      if (!response.ok) throw new Error('Failed to assign issue to sprint');
+      if (!response.ok) throw new Error(t('assignIssue'));
       return response.json();
     },
     onSuccess: (_, variables) => {

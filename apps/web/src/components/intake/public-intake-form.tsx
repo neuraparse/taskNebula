@@ -62,21 +62,21 @@ export function PublicIntakeForm({ slug, fields, requiresCaptcha }: Props) {
       if (!response.ok) {
         const fieldErrors: Record<string, string> = {};
         for (const issue of data.issues ?? []) {
-          fieldErrors[issue.field] = issue.message;
+          fieldErrors[issue.field] = t('submission_failed');
         }
         setState({
           kind: 'error',
-          message: data.error ?? t('submission_failed'),
+          message: t('submission_failed'),
           fieldErrors,
         });
         return;
       }
 
       setState({ kind: 'success', issueKey: data.issueKey ?? '' });
-    } catch (err) {
+    } catch {
       setState({
         kind: 'error',
-        message: err instanceof Error ? err.message : t('network_error'),
+        message: t('network_error'),
       });
     }
   }

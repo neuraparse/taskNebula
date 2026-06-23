@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.7.10] - 2026-06-23
+
+### Added
+
+- **Backup-aware in-app update handoff.** Admin → Updates now checks backup
+  readiness, requires immutable Docker image digests, creates Postgres custom
+  archives plus uploads archives before dispatch, and sends a hardened signed
+  self-update request with updater callback support.
+- **Update alert controls.** Super admins can turn the global update banner,
+  new-version inbox alerts, and post-update inbox alerts on or off directly
+  from Admin → Updates.
+- **Full Docker backup helper.** `scripts/tasknebula-backup.sh` writes
+  Postgres, uploads, manifest, and checksum artifacts for manual update and
+  rollback workflows.
+
+### Changed
+
+- **Safer self-update defaults.** The published runtime now includes
+  `postgresql-client`, mounts `/app/backups`, prefers HTTPS updater webhooks,
+  and documents digest-pinned update/rollback commands.
+
 ## [0.7.9] - 2026-06-23
 
 ### Changed
@@ -621,7 +642,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Internal alpha release. [See git log] for details.
 
-[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.9...HEAD
+[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.10...HEAD
+[0.7.10]: https://github.com/neuraparse/tasknebula/compare/v0.7.9...v0.7.10
 [0.7.9]: https://github.com/neuraparse/tasknebula/compare/v0.7.8...v0.7.9
 [0.7.8]: https://github.com/neuraparse/tasknebula/compare/v0.7.7...v0.7.8
 [0.7.7]: https://github.com/neuraparse/tasknebula/compare/v0.7.6...v0.7.7

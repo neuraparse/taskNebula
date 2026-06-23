@@ -284,7 +284,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
     if (isApiPermissionError(error)) {
       return tHome('toast_access_denied_description');
     }
-    return error instanceof Error ? error.message : fallback;
+    return fallback;
   }
 
   async function handleCreatePage() {

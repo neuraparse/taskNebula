@@ -112,9 +112,8 @@ export function IntakeFormEditor({ form, recentSubmissions }: Props) {
           fields,
         }),
       });
-      const data = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? t('error_save'));
+        setError(t('error_save'));
         return;
       }
       setSavedAt(new Date());

@@ -50,12 +50,13 @@ export interface DoraPanelProps {
 
 export function DoraPanel({ organizationId }: DoraPanelProps) {
   const t = useTranslations('charts');
+  const errorT = useTranslations('componentErrors.analytics');
   const { data, isLoading } = useQuery({
     queryKey: ['analytics', 'dora', organizationId],
     queryFn: async () => {
       if (!organizationId) return null;
       const res = await fetch(`/api/analytics/dora?organizationId=${organizationId}`);
-      if (!res.ok) throw new Error('Failed to fetch DORA metrics');
+      if (!res.ok) throw new Error(errorT('dora'));
       return (await res.json()) as DoraMetrics;
     },
     enabled: !!organizationId,

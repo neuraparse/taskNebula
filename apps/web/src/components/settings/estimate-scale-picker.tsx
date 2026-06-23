@@ -42,17 +42,6 @@ const DEFAULT_SUBKIND: EstimateSubKind = 'points-fibonacci';
 const MIN_CUSTOM_ROWS = 2;
 const MAX_CUSTOM_ROWS = 32;
 
-function defaultCustomValues(kind: EstimateKind): string[] {
-  switch (kind) {
-    case 'points':
-      return ['1', '2', '3'];
-    case 'categories':
-      return ['Small', 'Medium', 'Large'];
-    case 'time':
-      return ['30m', '1h', '2h'];
-  }
-}
-
 /**
  * Plane-style estimate scale picker for project settings.
  *
@@ -64,6 +53,23 @@ export function EstimateScalePicker({ initialScale, onSave, className }: Estimat
   const t = useTranslations('settingsProject');
   const initialSubKind: EstimateSubKind = initialScale?.subKind ?? DEFAULT_SUBKIND;
   const initialKind: EstimateKind = kindOfSubKind(initialSubKind);
+  const defaultCustomValues = React.useCallback(
+    (kind: EstimateKind): string[] => {
+      switch (kind) {
+        case 'points':
+          return ['1', '2', '3'];
+        case 'categories':
+          return [
+            t('estimate_default_small'),
+            t('estimate_default_medium'),
+            t('estimate_default_large'),
+          ];
+        case 'time':
+          return ['30m', '1h', '2h'];
+      }
+    },
+    [t]
+  );
 
   const [activeTab, setActiveTab] = React.useState<EstimateKind>(initialKind);
   const [selected, setSelected] = React.useState<EstimateSubKind>(initialSubKind);
@@ -154,7 +160,7 @@ export function EstimateScalePicker({ initialScale, onSave, className }: Estimat
           ? [...initialScale.values]
           : defaultCustomValues('time'),
     });
-  }, [initialScale]);
+  }, [defaultCustomValues, initialScale]);
 
   return (
     <div

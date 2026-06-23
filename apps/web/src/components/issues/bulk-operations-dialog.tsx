@@ -111,10 +111,10 @@ export function BulkOperationsDialog({
       setOperation('update');
       setUpdateField('statusId');
       setNewValue('');
-    } catch (error: any) {
+    } catch {
       toast({
         title: t('bulkOps.error_title'),
-        description: error.message || t('bulkOps.bulk_failed'),
+        description: t('bulkOps.bulk_failed'),
         variant: 'destructive',
       });
     } finally {

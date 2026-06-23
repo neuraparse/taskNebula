@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 
 export interface VelocityData {
   sprints: {
@@ -62,12 +63,14 @@ export interface BurndownData {
 
 // Fetch velocity data
 export function useVelocity(projectId: string | null) {
+  const t = useTranslations('hookErrors.analytics');
+
   return useQuery({
     queryKey: ['analytics', 'velocity', projectId],
     queryFn: async () => {
       if (!projectId) return null;
       const response = await fetch(`/api/analytics/velocity?projectId=${projectId}`);
-      if (!response.ok) throw new Error('Failed to fetch velocity data');
+      if (!response.ok) throw new Error(t('velocity'));
       return response.json() as Promise<VelocityData>;
     },
     enabled: !!projectId,
@@ -76,12 +79,14 @@ export function useVelocity(projectId: string | null) {
 
 // Fetch project health data
 export function useProjectHealth(projectId: string | null) {
+  const t = useTranslations('hookErrors.analytics');
+
   return useQuery({
     queryKey: ['analytics', 'project-health', projectId],
     queryFn: async () => {
       if (!projectId) return null;
       const response = await fetch(`/api/analytics/project-health?projectId=${projectId}`);
-      if (!response.ok) throw new Error('Failed to fetch project health data');
+      if (!response.ok) throw new Error(t('projectHealth'));
       return response.json() as Promise<ProjectHealthData>;
     },
     enabled: !!projectId,
@@ -90,12 +95,14 @@ export function useProjectHealth(projectId: string | null) {
 
 // Fetch burndown data
 export function useBurndown(sprintId: string | null) {
+  const t = useTranslations('hookErrors.analytics');
+
   return useQuery({
     queryKey: ['analytics', 'burndown', sprintId],
     queryFn: async () => {
       if (!sprintId) return null;
       const response = await fetch(`/api/analytics/burndown?sprintId=${sprintId}`);
-      if (!response.ok) throw new Error('Failed to fetch burndown data');
+      if (!response.ok) throw new Error(t('burndown'));
       return response.json() as Promise<BurndownData>;
     },
     enabled: !!sprintId,

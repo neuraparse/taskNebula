@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { isSuperAdmin } from '@/lib/auth/permissions';
 import { getUpdateStatus } from '@/lib/version';
 import { getSelfUpdateStatus } from '@/lib/version/self-update';
+import { getVersionUpdatePreferences } from '@/lib/version/preferences';
 
 /**
  * GET /api/admin/version — super-admin-only update status.
@@ -18,6 +19,7 @@ import { getSelfUpdateStatus } from '@/lib/version/self-update';
  *   checkedAt: string | null,   // ISO timestamp of the last upstream fetch
  *   image: object,              // Docker Hub tag metadata for neuraparse/tasknebula
  *   checkDisabled: boolean,     // TASKNEBULA_DISABLE_UPDATE_CHECK=true
+ *   updatePreferences: object,  // DB-backed banner/inbox notification settings
  *   selfUpdate: object          // opt-in external-updater capability/status
  * }
  *
@@ -46,6 +48,7 @@ export async function GET(request: NextRequest) {
   const refresh = request.nextUrl.searchParams.get('refresh') === 'true';
   const status = await getUpdateStatus({ refresh });
   const selfUpdate = await getSelfUpdateStatus(status);
+  const updatePreferences = await getVersionUpdatePreferences();
 
-  return NextResponse.json({ ...status, selfUpdate });
+  return NextResponse.json({ ...status, updatePreferences, selfUpdate });
 }

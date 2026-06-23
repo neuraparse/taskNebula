@@ -90,12 +90,19 @@ export function NewTemplateDialog({ trigger }: NewTemplateDialogProps) {
         try {
           const parsed = JSON.parse(raw);
           if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
-            throw new Error(t('payload_must_be_object'));
+            const message = t('payload_must_be_object');
+            setPayloadError(message);
+            toast({
+              title: t('toast_invalid_payload_title'),
+              description: message,
+              variant: 'destructive',
+            });
+            return;
           }
           payload = parsed as Record<string, unknown>;
           setPayloadError(null);
-        } catch (err) {
-          const message = err instanceof Error ? err.message : t('payload_invalid_json');
+        } catch {
+          const message = t('payload_invalid_json');
           setPayloadError(message);
           toast({
             title: t('toast_invalid_payload_title'),
@@ -122,11 +129,10 @@ export function NewTemplateDialog({ trigger }: NewTemplateDialogProps) {
             });
             handleOpenChange(false);
           },
-          onError: (error: unknown) => {
-            const message = error instanceof Error ? error.message : t('toast_create_failed_desc');
+          onError: () => {
             toast({
               title: t('toast_create_failed_title'),
-              description: message,
+              description: t('toast_create_failed_desc'),
               variant: 'destructive',
             });
           },

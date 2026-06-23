@@ -52,6 +52,13 @@ type LocalRunPayload = {
   cwd?: string;
 };
 
+function runnerStatusKey(status: string) {
+  if (status === 'running') return 'running';
+  if (status === 'completed') return 'completed';
+  if (status === 'failed') return 'failed';
+  return null;
+}
+
 function statusTone(state: string) {
   if (state === 'complete')
     return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
@@ -106,6 +113,10 @@ export function AgentActivityPanel({
   const latestSession = sessions[0] ?? null;
   const latestLocalRun = latestSession ? readLocalRun(latestSession.payload) : null;
   const isDispatching = dispatchAgent.isPending;
+  const formatRunnerStatus = (status: string) => {
+    const key = runnerStatusKey(status);
+    return key ? t(`agent.runnerStatuses.${key}`) : status;
+  };
 
   useEffect(() => {
     if (agentProvider) setSelectedProvider(agentProvider);
@@ -120,7 +131,7 @@ export function AgentActivityPanel({
       });
       setPromptOverride('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('agent.dispatch_failed'));
+      setError(t('agent.dispatch_failed'));
     }
   };
 
@@ -204,9 +215,7 @@ export function AgentActivityPanel({
           {latestLocalRun?.status ? (
             <div className="flex items-center justify-between gap-2">
               <span className="text-muted-foreground">{t('agent.runnerStatus')}</span>
-              <span className="font-medium">
-                {t('agent.runnerStatusValue', { status: latestLocalRun.status })}
-              </span>
+              <span className="font-medium">{formatRunnerStatus(latestLocalRun.status)}</span>
             </div>
           ) : null}
           {latestLocalRun?.exitCode !== null && latestLocalRun?.exitCode !== undefined ? (
@@ -305,7 +314,9 @@ export function AgentActivityPanel({
                         ? t('agent.localRunner', { command: localRun.command })
                         : t('agent.webhookRunner')}
                       {localRun?.status
-                        ? t('agent.runnerStatusSuffix', { status: localRun.status })
+                        ? t('agent.runnerStatusSuffix', {
+                            status: formatRunnerStatus(localRun.status),
+                          })
                         : ''}
                     </p>
                   </div>

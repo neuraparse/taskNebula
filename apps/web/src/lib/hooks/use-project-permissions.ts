@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { useSession } from 'next-auth/react';
 
 export type ProjectRole =
@@ -165,6 +166,7 @@ const DEFAULT_PERMISSIONS: UserProjectPermissions = {
 export function useProjectPermissions(projectId: string | undefined) {
   const { data: session, status } = useSession();
   const userId = session?.user?.id;
+  const t = useTranslations('hookErrors.projectPermissions');
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['project-permissions', projectId, userId],
@@ -178,7 +180,7 @@ export function useProjectPermissions(projectId: string | undefined) {
         if (res.status === 403 || res.status === 404) {
           return DEFAULT_PERMISSIONS;
         }
-        throw new Error('Failed to fetch permissions');
+        throw new Error(t('fetchPermissions'));
       }
       return res.json();
     },
@@ -195,12 +197,13 @@ export function useProjectPermissions(projectId: string | undefined) {
 
 export function useUserRole() {
   const { data: session } = useSession();
+  const t = useTranslations('hookErrors.projectPermissions');
 
   const { data, isLoading } = useQuery({
     queryKey: ['user-role', session?.user?.id],
     queryFn: async () => {
       const res = await fetch('/api/user/role');
-      if (!res.ok) throw new Error('Failed to fetch user role');
+      if (!res.ok) throw new Error(t('fetchUserRole'));
       return res.json();
     },
     enabled: !!session?.user?.id,
@@ -217,13 +220,14 @@ export function useUserRole() {
 // Hook to fetch project members
 export function useProjectMembers(projectId: string | undefined) {
   const { data: session } = useSession();
+  const t = useTranslations('hookErrors.projectPermissions');
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['project-members', projectId],
     queryFn: async (): Promise<ProjectMember[]> => {
       if (!projectId) return [];
       const res = await fetch(`/api/projects/${projectId}/members`);
-      if (!res.ok) throw new Error('Failed to fetch members');
+      if (!res.ok) throw new Error(t('fetchMembers'));
       return res.json();
     },
     enabled: !!projectId && !!session?.user?.id,

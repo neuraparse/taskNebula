@@ -177,6 +177,43 @@ describe('AppearanceSettings', () => {
     expect(getAppearancePutCalls()).toHaveLength(0);
   });
 
+  it('keeps a pending explicit system choice over a saved server light mode after remount', async () => {
+    localStorage.setItem('tasknebula-color-mode', 'system');
+    localStorage.setItem('tasknebula-color-mode-pending-sync', 'system');
+    mockTheme = 'system';
+    mockAppearanceFetch({
+      userId: 'user-1',
+      theme: 'light',
+      colorTheme: 'default',
+      visualStyle: 'modern',
+      interfaceFont: 'ibm',
+      animationsEnabled: true,
+      gradientsEnabled: true,
+      updatedAt: '2026-06-23T04:00:00.000Z',
+    });
+
+    renderWithQueryClient(<AppearanceSettings />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /system/i })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+    });
+
+    expect(mockSetTheme).not.toHaveBeenCalledWith('light');
+
+    await waitFor(() => {
+      expect(getAppearancePutCalls()).toHaveLength(1);
+    });
+
+    const [, init] = getAppearancePutCalls()[0];
+    expect(JSON.parse(init?.body as string)).toMatchObject({
+      theme: 'system',
+    });
+    expect(localStorage.getItem('tasknebula-color-mode-pending-sync')).toBeNull();
+  });
+
   it('saves an explicit local color mode when the server only has first-run defaults', async () => {
     localStorage.setItem('tasknebula-color-mode', 'dark');
     mockTheme = 'dark';

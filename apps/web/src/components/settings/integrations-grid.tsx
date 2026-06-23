@@ -3,10 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { cn } from '@/lib/utils';
 
@@ -27,7 +24,8 @@ export type IntegrationStatus = 'available' | 'connected' | 'coming_soon';
 export interface IntegrationDefinition {
   id: string;
   name: string;
-  description: string;
+  description?: string;
+  descriptionKey?: string;
   status?: IntegrationStatus;
   href?: string;
   category: IntegrationCategory;
@@ -245,7 +243,7 @@ export const INTEGRATIONS: IntegrationDefinition[] = [
     // Status is resolved at runtime via /api/integrations/github/status.
     id: 'github',
     name: 'GitHub',
-    description: 'Sync issues, PRs, and commits',
+    descriptionKey: 'integrations.desc_github',
     status: 'available',
     category: 'source-control',
     brandColor: '#181717',
@@ -257,7 +255,7 @@ export const INTEGRATIONS: IntegrationDefinition[] = [
     // (e.g. if this registry is consumed outside the IntegrationsGrid).
     id: 'gitlab',
     name: 'GitLab',
-    description: 'Sync issues, merge requests, and commits',
+    descriptionKey: 'integrations.desc_gitlab',
     status: 'available',
     category: 'source-control',
     brandColor: '#FC6D26',
@@ -266,7 +264,7 @@ export const INTEGRATIONS: IntegrationDefinition[] = [
   {
     id: 'slack',
     name: 'Slack',
-    description: 'Turn conversations into trackable work',
+    descriptionKey: 'integrations.desc_slack',
     status: 'coming_soon',
     category: 'communication',
     brandColor: '#4A154B',
@@ -276,7 +274,7 @@ export const INTEGRATIONS: IntegrationDefinition[] = [
     // Status is resolved at runtime via /api/integrations/sentry/status.
     id: 'sentry',
     name: 'Sentry',
-    description: 'Sync Sentry issues with work items',
+    descriptionKey: 'integrations.desc_sentry',
     status: 'available',
     category: 'monitoring',
     brandColor: '#362D59',
@@ -285,7 +283,7 @@ export const INTEGRATIONS: IntegrationDefinition[] = [
   {
     id: 'claude',
     name: 'Claude',
-    description: 'AI agents powered by TaskNebula MCP',
+    descriptionKey: 'integrations.desc_claude',
     status: 'available',
     href: '/settings?tab=ai',
     category: 'ai',
@@ -295,7 +293,7 @@ export const INTEGRATIONS: IntegrationDefinition[] = [
   {
     id: 'jira',
     name: 'Jira',
-    description: 'Migrate projects and issues to TaskNebula',
+    descriptionKey: 'integrations.desc_jira',
     status: 'available',
     category: 'productivity',
     brandColor: '#2684FF',
@@ -304,7 +302,7 @@ export const INTEGRATIONS: IntegrationDefinition[] = [
   {
     id: 'vscode',
     name: 'VS Code',
-    description: 'Manage TaskNebula from inside VS Code',
+    descriptionKey: 'integrations.desc_vscode',
     status: 'coming_soon',
     category: 'productivity',
     brandColor: '#0078D4',
@@ -313,7 +311,7 @@ export const INTEGRATIONS: IntegrationDefinition[] = [
   {
     id: 'raycast',
     name: 'Raycast',
-    description: 'Manage TaskNebula from anywhere on macOS',
+    descriptionKey: 'integrations.desc_raycast',
     status: 'coming_soon',
     category: 'productivity',
     brandColor: '#FF6363',
@@ -322,7 +320,7 @@ export const INTEGRATIONS: IntegrationDefinition[] = [
   {
     id: 'drawio',
     name: 'Draw.io',
-    description: 'Diagrams and whiteboards inside Pages',
+    descriptionKey: 'integrations.desc_drawio',
     status: 'coming_soon',
     category: 'design',
     brandColor: '#F08705',
@@ -373,8 +371,10 @@ function IntegrationCard({ integration, footer, accountLabel }: IntegrationCardP
     return <SentryIntegrationCard integration={integration} />;
   }
 
-  const { id, name, status, href, Icon } = integration;
-  const description = t(`integrations.desc_${id}`);
+  const { name, status, href, Icon } = integration;
+  const description = integration.descriptionKey
+    ? t(integration.descriptionKey)
+    : (integration.description ?? '');
   const isInteractive = href && status !== 'coming_soon' && !footer;
 
   const card = (
@@ -506,8 +506,10 @@ interface GitLabStatusResponse {
 
 function GitLabIntegrationCard({ integration }: IntegrationCardProps) {
   const t = useTranslations('settingsConfig');
-  const { id, name, Icon } = integration;
-  const description = t(`integrations.desc_${id}`);
+  const { name, Icon } = integration;
+  const description = integration.descriptionKey
+    ? t(integration.descriptionKey)
+    : (integration.description ?? '');
   const currentOrganizationId = useOrganization((state) => state.currentOrganizationId);
 
   const [connected, setConnected] = useState(false);
@@ -638,8 +640,10 @@ interface JiraStatusResponse {
 
 function JiraIntegrationCard({ integration }: IntegrationCardProps) {
   const t = useTranslations('settingsConfig');
-  const { id, name, Icon } = integration;
-  const description = t(`integrations.desc_${id}`);
+  const { name, Icon } = integration;
+  const description = integration.descriptionKey
+    ? t(integration.descriptionKey)
+    : (integration.description ?? '');
   const currentOrganizationId = useOrganization((s) => s.currentOrganizationId);
 
   const [connected, setConnected] = useState(false);
@@ -787,8 +791,10 @@ interface GitHubStatusResponse {
 
 function GitHubIntegrationCard({ integration }: IntegrationCardProps) {
   const t = useTranslations('settingsConfig');
-  const { id, name, Icon } = integration;
-  const description = t(`integrations.desc_${id}`);
+  const { name, Icon } = integration;
+  const description = integration.descriptionKey
+    ? t(integration.descriptionKey)
+    : (integration.description ?? '');
   const currentOrganizationId = useOrganization((s) => s.currentOrganizationId);
 
   const [connected, setConnected] = useState(false);
@@ -937,8 +943,10 @@ interface SentryStatusResponse {
 
 function SentryIntegrationCard({ integration }: IntegrationCardProps) {
   const t = useTranslations('settingsConfig');
-  const { id, name, Icon } = integration;
-  const description = t(`integrations.desc_${id}`);
+  const { name, Icon } = integration;
+  const description = integration.descriptionKey
+    ? t(integration.descriptionKey)
+    : (integration.description ?? '');
   const currentOrganizationId = useOrganization((s) => s.currentOrganizationId);
 
   const [connected, setConnected] = useState(false);
@@ -1131,9 +1139,10 @@ export function IntegrationsGrid({ integrations = INTEGRATIONS }: IntegrationsGr
     return effectiveIntegrations.filter((item) => {
       if (activeCategory !== 'all' && item.category !== activeCategory) return false;
       if (!q) return true;
-      return item.name.toLowerCase().includes(q) || item.description.toLowerCase().includes(q);
+      const description = item.descriptionKey ? t(item.descriptionKey) : (item.description ?? '');
+      return item.name.toLowerCase().includes(q) || description.toLowerCase().includes(q);
     });
-  }, [effectiveIntegrations, search, activeCategory]);
+  }, [effectiveIntegrations, search, activeCategory, t]);
 
   const renderCard = (integration: IntegrationDefinition) => {
     if (integration.id === 'slack') {

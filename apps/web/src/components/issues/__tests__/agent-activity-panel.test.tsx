@@ -42,7 +42,8 @@ describe('AgentActivityPanel', () => {
     expect(screen.getByText('Run status')).toBeInTheDocument();
     expect(screen.getAllByText('Codex').length).toBeGreaterThan(0);
     expect(screen.getByText('Local CLI: codex')).toBeInTheDocument();
-    expect(screen.getAllByText('running').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Running').length).toBeGreaterThan(0);
+    expect(screen.queryByText('running')).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByPlaceholderText('Optional instructions for this run...'), {
       target: { value: 'keep the patch small' },

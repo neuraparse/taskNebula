@@ -101,9 +101,9 @@ export function CreateSprintModal({ projectId, open, onOpenChange }: CreateSprin
       setEndDate('');
       setError(null);
       onOpenChange(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error creating sprint:', err);
-      setError(err.message || t('errors.createFailed'));
+      setError(t('errors.createFailed'));
     }
   };
 

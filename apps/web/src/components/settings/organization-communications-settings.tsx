@@ -57,13 +57,10 @@ export function OrganizationCommunicationsSettings({ organizationId }: { organiz
         title: t('orgComms.updated_toast_title'),
         description: t('orgComms.updated_toast_desc'),
       });
-    } catch (mutationError) {
+    } catch {
       toast({
         title: t('orgComms.update_failed_title'),
-        description:
-          mutationError instanceof Error
-            ? mutationError.message
-            : t('orgComms.update_failed_title'),
+        description: t('orgComms.update_failed_title'),
         variant: 'destructive',
       });
     }
@@ -74,11 +71,7 @@ export function OrganizationCommunicationsSettings({ organizationId }: { organiz
   }
 
   if (error || !data) {
-    return (
-      <div className="panel-danger animate-alert-in text-sm">
-        {error instanceof Error ? error.message : t('orgComms.load_error')}
-      </div>
-    );
+    return <div className="panel-danger animate-alert-in text-sm">{t('orgComms.load_error')}</div>;
   }
 
   return (

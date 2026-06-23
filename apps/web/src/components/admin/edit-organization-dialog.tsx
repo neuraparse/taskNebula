@@ -30,19 +30,23 @@ type EditOrganizationDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
+type OrganizationPlan = 'free' | 'starter' | 'growth' | 'enterprise';
+type OrganizationStatus = 'active' | 'trial' | 'suspended';
+
 export function EditOrganizationDialog({
   organizationId,
   open,
   onOpenChange,
 }: EditOrganizationDialogProps) {
   const t = useTranslations('adminDialogs');
+  const errorT = useTranslations('componentErrors.admin');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
-    plan: 'free' as 'free' | 'starter' | 'growth' | 'enterprise',
-    status: 'active' as 'active' | 'trial' | 'suspended',
+    plan: 'free' as OrganizationPlan,
+    status: 'active' as OrganizationStatus,
     domain: '',
   });
 
@@ -50,7 +54,7 @@ export function EditOrganizationDialog({
     queryKey: ['admin-organization', organizationId],
     queryFn: async () => {
       const response = await fetch(`/api/admin/organizations/${organizationId}`);
-      if (!response.ok) throw new Error('Failed to fetch organization');
+      if (!response.ok) throw new Error(errorT('fetchOrganization'));
       return response.json();
     },
     enabled: !!organizationId && open,
@@ -88,10 +92,10 @@ export function EditOrganizationDialog({
       });
       onOpenChange(false);
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast({
         title: t('editOrg.toastFailedTitle'),
-        description: error.message,
+        description: t('editOrg.toastFailedTitle'),
         variant: 'destructive',
       });
     },
@@ -142,7 +146,9 @@ export function EditOrganizationDialog({
                 <Label htmlFor="plan">{t('orgForm.plan')}</Label>
                 <Select
                   value={formData.plan}
-                  onValueChange={(value: any) => setFormData({ ...formData, plan: value })}
+                  onValueChange={(value: OrganizationPlan) =>
+                    setFormData({ ...formData, plan: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -160,7 +166,9 @@ export function EditOrganizationDialog({
                 <Label htmlFor="status">{t('editOrg.status')}</Label>
                 <Select
                   value={formData.status}
-                  onValueChange={(value: any) => setFormData({ ...formData, status: value })}
+                  onValueChange={(value: OrganizationStatus) =>
+                    setFormData({ ...formData, status: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />

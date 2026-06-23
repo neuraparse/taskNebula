@@ -48,8 +48,8 @@ export function AiInsightCard({ metric, period, scopeId, className }: AiInsightC
       }
       const data = (await res.json()) as InsightResponse;
       setInsight(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('insightFetchFailed'));
+    } catch {
+      setError(t('insightFetchFailed'));
     } finally {
       setLoading(false);
     }

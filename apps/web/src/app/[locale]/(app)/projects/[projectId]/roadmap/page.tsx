@@ -273,6 +273,7 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
   const { projectId } = use(params);
   const router = useRouter();
   const t = useTranslations('pagesProjectTabs');
+  const errorT = useTranslations('componentErrors.projects');
   const [epics, setEpics] = useState<Epic[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [period, setPeriod] = useState<PeriodMode>('quarterly');
@@ -283,7 +284,7 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
     const fetchEpics = async () => {
       try {
         const response = await fetch(`/api/issues?projectId=${projectId}&type=epic`);
-        if (!response.ok) throw new Error('Failed to fetch epics');
+        if (!response.ok) throw new Error(errorT('fetchEpics'));
         const data = (await response.json()) as EpicsResponse;
         const epicIssues = data.issues || [];
         const mapped: Epic[] = epicIssues.map((epic) => ({
@@ -313,7 +314,7 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
     return () => {
       cancelled = true;
     };
-  }, [projectId, toast, t]);
+  }, [errorT, projectId, toast, t]);
 
   const periodData = useMemo(() => getPeriod(period), [period]);
 

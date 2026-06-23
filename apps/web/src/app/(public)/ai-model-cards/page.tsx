@@ -16,11 +16,14 @@ import { Sparkles, ArrowLeft } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { AI_FEATURE_MODEL_CARDS, DISCLOSURE_VERSION } from '@/config/ai-model-cards';
 
-export const metadata: Metadata = {
-  title: 'AI Model Cards — TaskNebula',
-  description:
-    'Public AI transparency disclosures for every AI feature TaskNebula deploys, as required by EU AI Act Article 50.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('aiModelCards.meta');
+
+  return {
+    title: t('title'),
+    description: t('description'),
+  };
+}
 
 /** Minimal markdown renderer — supports paragraphs, headings, lists, and bold. */
 function renderMarkdown(md: string): React.ReactNode {

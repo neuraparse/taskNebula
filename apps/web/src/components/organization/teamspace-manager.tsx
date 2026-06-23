@@ -370,7 +370,7 @@ export function TeamspaceManager({ organizationId, canManage }: TeamspaceManager
                   onChange={(event) =>
                     setFormState((current) => ({ ...current, avatarUrl: event.target.value }))
                   }
-                  placeholder="https://cdn.example.com/icon.png"
+                  placeholder={t('field_avatar_url_placeholder')}
                 />
               </div>
             </div>

@@ -224,7 +224,7 @@ export default function SetupPage() {
                   id="email"
                   type="email"
                   required
-                  placeholder="admin@company.com"
+                  placeholder={t('setupEmailPlaceholder')}
                   autoComplete="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}

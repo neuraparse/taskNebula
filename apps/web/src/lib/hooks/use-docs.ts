@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { throwApiResponseError } from '@/lib/client-api-errors';
 
 interface DocumentSpace {
@@ -145,6 +146,8 @@ export function useDocumentSpaces(filters?: {
   organizationId?: string | null;
   projectId?: string | null;
 }) {
+  const t = useTranslations('hookErrors.docs');
+
   return useQuery({
     queryKey: ['document-spaces', filters],
     queryFn: async () => {
@@ -152,7 +155,7 @@ export function useDocumentSpaces(filters?: {
       if (filters?.organizationId) params.append('organizationId', filters.organizationId);
       if (filters?.projectId) params.append('projectId', filters.projectId);
       const response = await fetch(`/api/docs/spaces?${params.toString()}`);
-      if (!response.ok) await throwApiResponseError(response, 'Failed to fetch document spaces');
+      if (!response.ok) await throwApiResponseError(response, t('fetchSpaces'));
       const data = await response.json();
       return data.spaces as DocumentSpace[];
     },
@@ -164,6 +167,8 @@ export function useDocumentPages(filters?: {
   organizationId?: string | null;
   projectId?: string | null;
 }) {
+  const t = useTranslations('hookErrors.docs');
+
   return useQuery({
     queryKey: ['document-pages', filters],
     queryFn: async () => {
@@ -172,7 +177,7 @@ export function useDocumentPages(filters?: {
       if (filters?.organizationId) params.append('organizationId', filters.organizationId);
       if (filters?.projectId) params.append('projectId', filters.projectId);
       const response = await fetch(`/api/docs/pages?${params.toString()}`);
-      if (!response.ok) await throwApiResponseError(response, 'Failed to fetch document pages');
+      if (!response.ok) await throwApiResponseError(response, t('fetchPages'));
       return response.json() as Promise<{
         space: DocumentSpace | null;
         permissions: DocumentSpace['permissions'];
@@ -183,12 +188,14 @@ export function useDocumentPages(filters?: {
 }
 
 export function useDocumentPage(pageId: string | null) {
+  const t = useTranslations('hookErrors.docs');
+
   return useQuery({
     queryKey: ['document-page', pageId],
     queryFn: async () => {
       if (!pageId) return null;
       const response = await fetch(`/api/docs/pages/${pageId}`);
-      if (!response.ok) await throwApiResponseError(response, 'Failed to fetch document page');
+      if (!response.ok) await throwApiResponseError(response, t('fetchPage'));
       return response.json() as Promise<DocumentPage>;
     },
     enabled: !!pageId,
@@ -196,12 +203,14 @@ export function useDocumentPage(pageId: string | null) {
 }
 
 export function useDocumentTree(pageId: string | null) {
+  const t = useTranslations('hookErrors.docs');
+
   return useQuery({
     queryKey: ['document-tree', pageId],
     queryFn: async () => {
       if (!pageId) return null;
       const response = await fetch(`/api/docs/pages/${pageId}/tree`);
-      if (!response.ok) await throwApiResponseError(response, 'Failed to fetch document tree');
+      if (!response.ok) await throwApiResponseError(response, t('fetchTree'));
       return response.json() as Promise<{
         tree: DocumentTreeNode[];
         currentPageId: string;
@@ -213,12 +222,14 @@ export function useDocumentTree(pageId: string | null) {
 }
 
 export function useDocumentRevisions(pageId: string | null, options: { enabled?: boolean } = {}) {
+  const t = useTranslations('hookErrors.docs');
+
   return useQuery({
     queryKey: ['document-revisions', pageId],
     queryFn: async () => {
       if (!pageId) return [];
       const response = await fetch(`/api/docs/pages/${pageId}/revisions`);
-      if (!response.ok) await throwApiResponseError(response, 'Failed to fetch document revisions');
+      if (!response.ok) await throwApiResponseError(response, t('fetchRevisions'));
       const data = await response.json();
       return data.revisions as DocumentRevision[];
     },
@@ -232,6 +243,8 @@ export function useDocumentSearch(filters: {
   projectId?: string | null;
   enabled?: boolean;
 }) {
+  const t = useTranslations('hookErrors.docs');
+
   return useQuery({
     queryKey: ['document-search', filters.query, filters.organizationId, filters.projectId],
     queryFn: async () => {
@@ -242,7 +255,7 @@ export function useDocumentSearch(filters: {
       params.append('limit', '10');
 
       const response = await fetch(`/api/docs/search?${params.toString()}`);
-      if (!response.ok) await throwApiResponseError(response, 'Failed to search docs');
+      if (!response.ok) await throwApiResponseError(response, t('search'));
       const data = await response.json();
       return data.results as Array<{
         id: string;
@@ -263,6 +276,7 @@ export function useDocumentSearch(filters: {
 
 export function useCreateDocumentPage() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.docs');
 
   return useMutation({
     mutationFn: async (data: {
@@ -281,7 +295,7 @@ export function useCreateDocumentPage() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to create document page');
+        await throwApiResponseError(response, t('createPage'));
       }
       return response.json() as Promise<DocumentPage>;
     },
@@ -299,6 +313,7 @@ export function useCreateDocumentPage() {
 
 export function useUpdateDocumentPage() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.docs');
 
   return useMutation({
     mutationFn: async ({
@@ -320,7 +335,7 @@ export function useUpdateDocumentPage() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to update document page');
+        await throwApiResponseError(response, t('updatePage'));
       }
       return response.json() as Promise<DocumentPage>;
     },
@@ -337,6 +352,7 @@ export function useUpdateDocumentPage() {
 
 export function useRestoreDocumentPage() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.docs');
 
   return useMutation({
     mutationFn: async ({
@@ -354,7 +370,7 @@ export function useRestoreDocumentPage() {
         body: JSON.stringify({ revision, revisionId }),
       });
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to restore document revision');
+        await throwApiResponseError(response, t('restoreRevision'));
       }
       return response.json() as Promise<DocumentPage>;
     },
@@ -370,11 +386,12 @@ export function useRestoreDocumentPage() {
 
 export function useUpdateDocumentShare(pageId: string | null) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.docs');
 
   return useMutation({
     mutationFn: async (data: DocumentShareUpdateInput) => {
       if (!pageId) {
-        throw new Error('Open a page before updating sharing');
+        throw new Error(t('openPageBeforeSharing'));
       }
 
       const response = await fetch(`/api/docs/pages/${pageId}/share`, {
@@ -384,7 +401,7 @@ export function useUpdateDocumentShare(pageId: string | null) {
       });
 
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to update document sharing');
+        await throwApiResponseError(response, t('updateSharing'));
       }
 
       return response.json() as Promise<DocumentPage>;
@@ -399,12 +416,14 @@ export function useUpdateDocumentShare(pageId: string | null) {
 }
 
 export function useIssueDocs(issueId: string | null) {
+  const t = useTranslations('hookErrors.docs');
+
   return useQuery({
     queryKey: ['issue-docs', issueId],
     queryFn: async () => {
       if (!issueId) return [];
       const response = await fetch(`/api/issues/${issueId}/docs`);
-      if (!response.ok) await throwApiResponseError(response, 'Failed to fetch issue docs');
+      if (!response.ok) await throwApiResponseError(response, t('fetchIssueDocs'));
       const data = await response.json();
       return data.docs as Array<{
         linkId: string;
@@ -424,6 +443,7 @@ export function useIssueDocs(issueId: string | null) {
 
 export function useAttachIssueDoc(issueId: string) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.docs');
 
   return useMutation({
     mutationFn: async (data: { pageId?: string; createNew?: boolean; title?: string }) => {
@@ -433,7 +453,7 @@ export function useAttachIssueDoc(issueId: string) {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to attach doc');
+        await throwApiResponseError(response, t('attachDoc'));
       }
       return response.json();
     },
@@ -455,6 +475,7 @@ export function useAttachIssueDoc(issueId: string) {
 
 export function useDetachIssueDoc(issueId: string) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.docs');
 
   return useMutation({
     mutationFn: async (pageId: string) => {
@@ -462,7 +483,7 @@ export function useDetachIssueDoc(issueId: string) {
         method: 'DELETE',
       });
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to detach doc');
+        await throwApiResponseError(response, t('detachDoc'));
       }
       return response.json();
     },
@@ -474,13 +495,14 @@ export function useDetachIssueDoc(issueId: string) {
 }
 
 export function useDocumentAttachments(pageId: string | null, options: { enabled?: boolean } = {}) {
+  const t = useTranslations('hookErrors.docs');
+
   return useQuery({
     queryKey: ['document-attachments', pageId],
     queryFn: async () => {
       if (!pageId) return [];
       const response = await fetch(`/api/docs/pages/${pageId}/attachments`);
-      if (!response.ok)
-        await throwApiResponseError(response, 'Failed to fetch document attachments');
+      if (!response.ok) await throwApiResponseError(response, t('fetchAttachments'));
       const data = await response.json();
       return data.attachments as DocumentAttachment[];
     },
@@ -490,6 +512,7 @@ export function useDocumentAttachments(pageId: string | null, options: { enabled
 
 export function useUploadDocumentAttachment(pageId: string) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.docs');
 
   return useMutation({
     mutationFn: async (file: File) => {
@@ -502,7 +525,7 @@ export function useUploadDocumentAttachment(pageId: string) {
       });
 
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to upload document attachment');
+        await throwApiResponseError(response, t('uploadAttachment'));
       }
 
       return response.json() as Promise<{ attachment: DocumentAttachment }>;
@@ -516,6 +539,7 @@ export function useUploadDocumentAttachment(pageId: string) {
 
 export function useDeleteDocumentAttachment(pageId: string) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.docs');
 
   return useMutation({
     mutationFn: async (attachmentId: string) => {
@@ -527,7 +551,7 @@ export function useDeleteDocumentAttachment(pageId: string) {
       );
 
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to delete document attachment');
+        await throwApiResponseError(response, t('deleteAttachment'));
       }
 
       return response.json();

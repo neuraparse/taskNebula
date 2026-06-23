@@ -135,38 +135,23 @@ export const useThemeStore = create<ThemeState>()(
   )
 );
 
-export const themeInfo: Record<
-  ColorTheme,
-  { name: string; description: string; preview: string[] }
-> = {
+export const themeInfo: Record<ColorTheme, { preview: string[] }> = {
   default: {
-    name: 'Blue',
-    description: 'Classic blue — default',
     preview: ['#3b82f6', '#60a5fa', '#93c5fd'],
   },
   ocean: {
-    name: 'Teal',
-    description: 'Fresh teal accent',
     preview: ['#0891b2', '#22d3ee', '#67e8f9'],
   },
   forest: {
-    name: 'Green',
-    description: 'Natural green accent',
     preview: ['#16a34a', '#22c55e', '#4ade80'],
   },
   sunset: {
-    name: 'Orange',
-    description: 'Warm orange accent',
     preview: ['#ea580c', '#f97316', '#fb923c'],
   },
   purple: {
-    name: 'Purple',
-    description: 'Rich purple accent',
     preview: ['#9333ea', '#a855f7', '#c084fc'],
   },
   rose: {
-    name: 'Rose',
-    description: 'Elegant rose accent',
     preview: ['#e11d48', '#f43f5e', '#fb7185'],
   },
 };

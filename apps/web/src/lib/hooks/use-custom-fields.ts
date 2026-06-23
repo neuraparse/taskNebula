@@ -1,8 +1,17 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 
-type CustomFieldType = 'text' | 'number' | 'date' | 'select' | 'multi_select' | 'checkbox' | 'url' | 'email';
+type CustomFieldType =
+  | 'text'
+  | 'number'
+  | 'date'
+  | 'select'
+  | 'multi_select'
+  | 'checkbox'
+  | 'url'
+  | 'email';
 
 interface CustomField {
   id: string;
@@ -48,6 +57,8 @@ interface CustomFieldValuesResponse {
 
 // Fetch custom fields for organization/project
 export function useCustomFields(organizationId: string, projectId?: string) {
+  const t = useTranslations('hookErrors.customFields');
+
   return useQuery({
     queryKey: ['custom-fields', organizationId, projectId],
     queryFn: async () => {
@@ -56,7 +67,7 @@ export function useCustomFields(organizationId: string, projectId?: string) {
 
       const response = await fetch(`/api/custom-fields?${params.toString()}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch custom fields');
+        throw new Error(t('fetch'));
       }
       return response.json() as Promise<CustomFieldsResponse>;
     },
@@ -66,12 +77,14 @@ export function useCustomFields(organizationId: string, projectId?: string) {
 
 // Fetch custom field values for an issue
 export function useCustomFieldValues(issueId: string) {
+  const t = useTranslations('hookErrors.customFields');
+
   return useQuery({
     queryKey: ['custom-field-values', issueId],
     queryFn: async () => {
       const response = await fetch(`/api/issues/${issueId}/custom-fields`);
       if (!response.ok) {
-        throw new Error('Failed to fetch custom field values');
+        throw new Error(t('fetchValues'));
       }
       return response.json() as Promise<CustomFieldValuesResponse>;
     },
@@ -82,6 +95,7 @@ export function useCustomFieldValues(issueId: string) {
 // Create custom field
 export function useCreateCustomField() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.customFields');
 
   return useMutation({
     mutationFn: async (data: {
@@ -100,7 +114,7 @@ export function useCreateCustomField() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        throw new Error('Failed to create custom field');
+        throw new Error(t('create'));
       }
       return response.json();
     },
@@ -113,9 +127,13 @@ export function useCreateCustomField() {
 // Update custom field
 export function useUpdateCustomField() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.customFields');
 
   return useMutation({
-    mutationFn: async ({ fieldId, ...data }: {
+    mutationFn: async ({
+      fieldId,
+      ...data
+    }: {
       fieldId: string;
       name?: string;
       description?: string;
@@ -131,7 +149,7 @@ export function useUpdateCustomField() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        throw new Error('Failed to update custom field');
+        throw new Error(t('update'));
       }
       return response.json();
     },
@@ -144,6 +162,7 @@ export function useUpdateCustomField() {
 // Delete custom field
 export function useDeleteCustomField() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.customFields');
 
   return useMutation({
     mutationFn: async (fieldId: string) => {
@@ -151,7 +170,7 @@ export function useDeleteCustomField() {
         method: 'DELETE',
       });
       if (!response.ok) {
-        throw new Error('Failed to delete custom field');
+        throw new Error(t('delete'));
       }
       return response.json();
     },
@@ -164,6 +183,7 @@ export function useDeleteCustomField() {
 // Set custom field value for an issue
 export function useSetCustomFieldValue(issueId: string) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.customFields');
 
   return useMutation({
     mutationFn: async (data: { customFieldId: string; value: string | null }) => {
@@ -173,7 +193,7 @@ export function useSetCustomFieldValue(issueId: string) {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        throw new Error('Failed to set custom field value');
+        throw new Error(t('setValue'));
       }
       return response.json();
     },
@@ -182,4 +202,3 @@ export function useSetCustomFieldValue(issueId: string) {
     },
   });
 }
-

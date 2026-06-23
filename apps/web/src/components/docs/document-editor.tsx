@@ -153,7 +153,7 @@ export function DocumentEditor({
       if (isApiPermissionError(error)) {
         return tHome('toast_access_denied_description');
       }
-      return error instanceof Error ? error.message : fallback;
+      return fallback;
     },
     [tHome]
   );
@@ -1686,11 +1686,11 @@ type SlashCommand = {
 };
 
 const SLASH_COMMAND_GROUPS = [
-  { id: 'basic', label: 'Basics' },
-  { id: 'lists', label: 'Lists' },
-  { id: 'media', label: 'Media' },
-  { id: 'structure', label: 'Structure' },
-  { id: 'templates', label: 'Templates' },
+  { id: 'basic' },
+  { id: 'lists' },
+  { id: 'media' },
+  { id: 'structure' },
+  { id: 'templates' },
 ] as const;
 
 type SlashCommandGroupKey = (typeof SLASH_COMMAND_GROUPS)[number]['id'];

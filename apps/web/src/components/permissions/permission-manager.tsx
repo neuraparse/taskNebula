@@ -261,7 +261,7 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: editedRole, permissions: editedPermissions }),
       });
-      if (!res.ok) throw new Error('Failed to save');
+      if (!res.ok) throw new Error(t('pm_update_failed'));
       toast({ title: t('success'), description: t('pm_update_success') });
       await refetch();
       await invalidateMemberCaches();
@@ -281,7 +281,7 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: editedRole, resetToDefaults: true }),
       });
-      if (!res.ok) throw new Error('Failed to reset');
+      if (!res.ok) throw new Error(t('pm_reset_failed'));
       toast({ title: t('success'), description: t('pm_reset_success') });
       await refetch();
       await invalidateMemberCaches();
@@ -309,10 +309,10 @@ export function PermissionManager({ projectId }: PermissionManagerProps) {
       }
       await refetch();
       await invalidateMemberCaches();
-    } catch (error) {
+    } catch {
       toast({
         title: t('error'),
-        description: error instanceof Error ? error.message : t('pm_remove_failed'),
+        description: t('pm_remove_failed'),
         variant: 'destructive',
       });
     } finally {

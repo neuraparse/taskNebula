@@ -25,14 +25,23 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+type OrganizationPlan = 'free' | 'starter' | 'growth' | 'enterprise';
+
+interface AdminUserOption {
+  id: string;
+  name: string | null;
+  email: string;
+}
+
 export function CreateOrganizationAdminDialog() {
   const t = useTranslations('adminDialogs');
+  const errorT = useTranslations('componentErrors.admin');
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
     ownerId: '',
-    plan: 'free' as 'free' | 'starter' | 'growth' | 'enterprise',
+    plan: 'free' as OrganizationPlan,
   });
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -41,7 +50,7 @@ export function CreateOrganizationAdminDialog() {
     queryKey: ['admin-all-users'],
     queryFn: async () => {
       const response = await fetch('/api/admin/users?limit=1000');
-      if (!response.ok) throw new Error('Failed to fetch users');
+      if (!response.ok) throw new Error(errorT('fetchUsers'));
       return response.json();
     },
     enabled: open,
@@ -70,10 +79,10 @@ export function CreateOrganizationAdminDialog() {
       setOpen(false);
       setFormData({ name: '', slug: '', ownerId: '', plan: 'free' });
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast({
         title: t('createOrg.toastFailedTitle'),
-        description: error.message,
+        description: t('createOrg.toastFailedTitle'),
         variant: 'destructive',
       });
     },
@@ -149,7 +158,7 @@ export function CreateOrganizationAdminDialog() {
                   <SelectValue placeholder={t('createOrg.ownerPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {usersData?.users?.map((user: any) => (
+                  {usersData?.users?.map((user: AdminUserOption) => (
                     <SelectItem key={user.id} value={user.id}>
                       {user.name} ({user.email})
                     </SelectItem>
@@ -161,7 +170,9 @@ export function CreateOrganizationAdminDialog() {
               <Label htmlFor="plan">{t('orgForm.plan')}</Label>
               <Select
                 value={formData.plan}
-                onValueChange={(value: any) => setFormData({ ...formData, plan: value })}
+                onValueChange={(value: OrganizationPlan) =>
+                  setFormData({ ...formData, plan: value })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 /**
  * Mobile disclosure menu for the marketing nav (hidden at lg and up, where the
@@ -11,6 +12,7 @@ import { Menu, X } from 'lucide-react';
  */
 export function MobileMenu({ items }: { items: ReadonlyArray<{ label: string; href: string }> }) {
   const [open, setOpen] = useState(false);
+  const t = useTranslations('publicPages.landing.nav');
 
   useEffect(() => {
     if (!open) return undefined;
@@ -28,7 +30,7 @@ export function MobileMenu({ items }: { items: ReadonlyArray<{ label: string; hr
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-controls="marketing-mobile-menu"
-        aria-label={open ? 'Close navigation menu' : 'Open navigation menu'}
+        aria-label={open ? t('closeMenuAria') : t('openMenuAria')}
         className="ease-snap inline-flex h-[34px] w-[34px] items-center justify-center rounded-md border border-[var(--landing-border-strong)] text-[var(--landing-text)] transition-all duration-150 hover:bg-[var(--landing-bg-elevated)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
       >
         {open ? (
@@ -59,7 +61,7 @@ export function MobileMenu({ items }: { items: ReadonlyArray<{ label: string; hr
               onClick={() => setOpen(false)}
               className="mt-1 rounded-md border-t border-[var(--landing-border)] px-3 pb-2.5 pt-3.5 text-[14px] text-[var(--landing-text-subtle)] transition-colors duration-150 hover:bg-[var(--landing-bg-elevated)] hover:text-[var(--landing-text-dark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] md:hidden"
             >
-              Sign in
+              {t('signIn')}
             </Link>
           </div>
         </div>

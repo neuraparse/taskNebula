@@ -50,6 +50,37 @@ const COLOR_SWATCHES: ReadonlyArray<{
   { value: '#F59E0B', i18nKey: 'color_amber' },
 ];
 
+const DEFAULT_TYPE_I18N_KEYS: Record<string, { name: string; description: string }> = {
+  'default-story': {
+    name: 'wit_default_story_name',
+    description: 'wit_default_story_description',
+  },
+  'default-bug': {
+    name: 'wit_default_bug_name',
+    description: 'wit_default_bug_description',
+  },
+  'default-task': {
+    name: 'wit_default_task_name',
+    description: 'wit_default_task_description',
+  },
+  'default-epic': {
+    name: 'wit_default_epic_name',
+    description: 'wit_default_epic_description',
+  },
+};
+
+type SettingsProjectTranslate = (key: string, values?: Record<string, string | number>) => string;
+
+function getLocalizedTypeName(t: SettingsProjectTranslate, type: WorkItemType) {
+  const keys = type.isDefault ? DEFAULT_TYPE_I18N_KEYS[type.id] : null;
+  return keys ? t(keys.name) : type.name;
+}
+
+function getLocalizedTypeDescription(t: SettingsProjectTranslate, type: WorkItemType) {
+  const keys = type.isDefault ? DEFAULT_TYPE_I18N_KEYS[type.id] : null;
+  return keys ? t(keys.description) : type.description;
+}
+
 export function WorkItemTypesManager({ projectId }: WorkItemTypesManagerProps) {
   const t = useTranslations('settingsProject');
   const {
@@ -95,6 +126,9 @@ export function WorkItemTypesManager({ projectId }: WorkItemTypesManagerProps) {
       <div className="space-y-2">
         {types.map((type) => {
           const isEditing = editingId === type.id;
+          const displayName = getLocalizedTypeName(t, type);
+          const displayDescription = getLocalizedTypeDescription(t, type);
+
           return (
             <Card key={type.id} className="overflow-hidden">
               <button
@@ -111,7 +145,7 @@ export function WorkItemTypesManager({ projectId }: WorkItemTypesManagerProps) {
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-semibold">{type.name}</span>
+                    <span className="text-sm font-semibold">{displayName}</span>
                     <span
                       className="border-border/50 h-3 w-3 shrink-0 rounded-sm border"
                       style={{ backgroundColor: type.color }}
@@ -119,9 +153,9 @@ export function WorkItemTypesManager({ projectId }: WorkItemTypesManagerProps) {
                     />
                     {type.isDefault ? <span className="chip">{t('wit_default_badge')}</span> : null}
                   </div>
-                  {type.description ? (
+                  {displayDescription ? (
                     <p className="text-muted-foreground mt-0.5 truncate text-xs">
-                      {type.description}
+                      {displayDescription}
                     </p>
                   ) : null}
                 </div>
@@ -137,7 +171,7 @@ export function WorkItemTypesManager({ projectId }: WorkItemTypesManagerProps) {
                 <span
                   role="button"
                   tabIndex={0}
-                  aria-label={t('wit_delete_aria', { name: type.name })}
+                  aria-label={t('wit_delete_aria', { name: displayName })}
                   aria-disabled={type.isDefault}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -163,6 +197,8 @@ export function WorkItemTypesManager({ projectId }: WorkItemTypesManagerProps) {
               {isEditing ? (
                 <TypeEditor
                   type={type}
+                  displayName={displayName}
+                  displayDescription={displayDescription}
                   onUpdate={(patch) => updateType(type.id, patch)}
                   onAddProperty={() => addProperty(type.id)}
                   onUpdateProperty={(propertyId, next) => updateProperty(type.id, propertyId, next)}
@@ -180,6 +216,8 @@ export function WorkItemTypesManager({ projectId }: WorkItemTypesManagerProps) {
 
 interface TypeEditorProps {
   type: WorkItemType;
+  displayName: string;
+  displayDescription?: string;
   onUpdate: (patch: Partial<Omit<WorkItemType, 'id'>>) => void;
   onAddProperty: () => void;
   onUpdateProperty: (propertyId: string, next: CustomProperty) => void;
@@ -189,6 +227,8 @@ interface TypeEditorProps {
 
 function TypeEditor({
   type,
+  displayName,
+  displayDescription,
   onUpdate,
   onAddProperty,
   onUpdateProperty,
@@ -270,7 +310,7 @@ function TypeEditor({
           </Label>
           <Input
             id={`type-name-${type.id}`}
-            value={type.name}
+            value={displayName}
             onChange={(e) => onUpdate({ name: e.target.value })}
             placeholder={t('wit_name_placeholder')}
           />
@@ -283,7 +323,7 @@ function TypeEditor({
         </Label>
         <Textarea
           id={`type-desc-${type.id}`}
-          value={type.description ?? ''}
+          value={displayDescription ?? ''}
           onChange={(e) => onUpdate({ description: e.target.value })}
           placeholder={t('wit_description_placeholder')}
           rows={2}
@@ -296,7 +336,7 @@ function TypeEditor({
             <Label className="text-xs">{t('wit_custom_properties_label')}</Label>
             <p className="text-muted-foreground text-xs">
               {t('wit_custom_properties_hint', {
-                type: type.name.toLowerCase() || t('wit_item_fallback'),
+                type: displayName.toLowerCase() || t('wit_item_fallback'),
               })}
             </p>
           </div>

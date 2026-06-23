@@ -7,10 +7,12 @@ import type { VersionInfo } from '@/lib/hooks/use-version-info';
 const useVersionInfoMock = jest.fn();
 const useRefreshVersionInfoMock = jest.fn();
 const useStartSelfUpdateMock = jest.fn();
+const useUpdateVersionPreferencesMock = jest.fn();
 jest.mock('@/lib/hooks/use-version-info', () => ({
   useVersionInfo: () => useVersionInfoMock(),
   useRefreshVersionInfo: () => useRefreshVersionInfoMock(),
   useStartSelfUpdate: () => useStartSelfUpdateMock(),
+  useUpdateVersionPreferences: () => useUpdateVersionPreferencesMock(),
 }));
 
 const toastMock = jest.fn();
@@ -56,6 +58,17 @@ function mockQuery(overrides: Partial<{ data: VersionInfo; isLoading: boolean; e
 
 const mutate = jest.fn();
 const startMutate = jest.fn();
+const updatePreferencesMutate = jest.fn();
+const backupPreflight = {
+  required: true,
+  available: true,
+  directory: '/app/backups',
+  uploadsPath: '/app/uploads',
+  postgresDumpAvailable: true,
+  uploadsReadable: true,
+  backupDirWritable: true,
+  blockedReason: null,
+} as const;
 function mockRefresh(overrides: Partial<{ isPending: boolean }> = {}) {
   useRefreshVersionInfoMock.mockReturnValue({
     mutate,
@@ -72,15 +85,26 @@ function mockStartUpdate(overrides: Partial<{ isPending: boolean }> = {}) {
   });
 }
 
+function mockUpdatePreferences(overrides: Partial<{ isPending: boolean }> = {}) {
+  useUpdateVersionPreferencesMock.mockReturnValue({
+    mutate: updatePreferencesMutate,
+    isPending: false,
+    ...overrides,
+  });
+}
+
 beforeEach(() => {
   useVersionInfoMock.mockReset();
   useRefreshVersionInfoMock.mockReset();
   useStartSelfUpdateMock.mockReset();
+  useUpdateVersionPreferencesMock.mockReset();
   toastMock.mockReset();
   mutate.mockReset();
   startMutate.mockReset();
+  updatePreferencesMutate.mockReset();
   mockRefresh();
   mockStartUpdate();
+  mockUpdatePreferences();
 });
 
 describe('VersionPanel', () => {
@@ -93,7 +117,7 @@ describe('VersionPanel', () => {
   it('renders the query error message', () => {
     mockQuery({ error: new Error('Super admin access required') });
     render(<VersionPanel />);
-    expect(screen.getByText('Super admin access required')).toBeInTheDocument();
+    expect(screen.getByText('Failed to load version information')).toBeInTheDocument();
   });
 
   it('shows current and latest versions with the up-to-date status when current === latest', () => {
@@ -144,6 +168,9 @@ describe('VersionPanel', () => {
           targetVersion: '0.5.0',
           repository: 'neuraparse/tasknebula',
           digest: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          imageRef:
+            'neuraparse/tasknebula@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          backupPreflight,
           webhookConfigured: true,
           manualCommands: 'docker compose pull web',
           job: null,
@@ -175,6 +202,8 @@ describe('VersionPanel', () => {
           targetVersion: '0.5.0',
           repository: 'neuraparse/tasknebula',
           digest: null,
+          imageRef: null,
+          backupPreflight,
           webhookConfigured: false,
           manualCommands: 'docker compose pull web',
           job: null,
@@ -324,9 +353,22 @@ describe('VersionPanel', () => {
     expect(toastMock).toHaveBeenCalledWith(
       expect.objectContaining({
         title: 'Check failed',
-        description: 'Could not reach GitHub',
+        description: 'Could not reach the update server. Try again later.',
         variant: 'destructive',
       })
+    );
+  });
+
+  it('saves update alert preferences from the Updates page', async () => {
+    const user = userEvent.setup();
+    mockQuery({ data: info({ latest: '0.4.0' }) });
+    render(<VersionPanel />);
+
+    await user.click(screen.getByRole('switch', { name: 'Global banner' }));
+
+    expect(updatePreferencesMutate).toHaveBeenCalledWith(
+      { bannerEnabled: false },
+      expect.any(Object)
     );
   });
 

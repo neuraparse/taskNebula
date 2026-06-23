@@ -92,6 +92,7 @@ gh release create v<v> --title "v<v>" --notes-file <(sed -n '/## \[<v>\]/,/## \[
 Operators pin a known-good tag without a rebuild:
 
 ```bash
+./scripts/tasknebula-backup.sh
 TASKNEBULA_IMAGE=neuraparse/tasknebula:<previous> docker compose up -d
 ```
 
@@ -99,6 +100,10 @@ TASKNEBULA_IMAGE=neuraparse/tasknebula:<previous> docker compose up -d
 
 - The runtime image runs DB migrations on start (`docker-entrypoint.sh`) and
   serves on port `3000` with health at `GET /api/health`.
+- `scripts/tasknebula-backup.sh` writes a Postgres custom-format archive,
+  uploads archive, manifest, and checksums before manual update or rollback
+  work. Restore the database with `pg_restore` and restore `uploads.tar.gz` to
+  the uploads volume before starting the target web image.
 - There is no CI publish pipeline yet — releases are cut manually with this
   runbook. If/when a GitHub Actions workflow is added, it should mirror these
   steps.

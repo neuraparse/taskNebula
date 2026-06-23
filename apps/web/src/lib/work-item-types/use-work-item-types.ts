@@ -60,7 +60,6 @@ export const DEFAULT_WORK_ITEM_TYPES: WorkItemType[] = [
     name: 'Story',
     icon: '📖',
     color: '#3B82F6',
-    description: 'User-facing capability or scenario.',
     isDefault: true,
     customProperties: [],
   },
@@ -69,7 +68,6 @@ export const DEFAULT_WORK_ITEM_TYPES: WorkItemType[] = [
     name: 'Bug',
     icon: '🐛',
     color: '#EF4444',
-    description: 'Defect that needs to be fixed.',
     isDefault: true,
     customProperties: [],
   },
@@ -78,7 +76,6 @@ export const DEFAULT_WORK_ITEM_TYPES: WorkItemType[] = [
     name: 'Task',
     icon: '📌',
     color: '#6B7280',
-    description: 'Generic chunk of work.',
     isDefault: true,
     customProperties: [],
   },
@@ -87,7 +84,6 @@ export const DEFAULT_WORK_ITEM_TYPES: WorkItemType[] = [
     name: 'Epic',
     icon: '✨',
     color: '#8B5CF6',
-    description: 'Large initiative spanning multiple stories.',
     isDefault: true,
     customProperties: [],
   },
@@ -156,9 +152,7 @@ function sanitizeType(raw: unknown): WorkItemType | null {
   const description = typeof obj.description === 'string' ? obj.description : undefined;
   const isDefault = typeof obj.isDefault === 'boolean' ? obj.isDefault : undefined;
   const customProperties = Array.isArray(obj.customProperties)
-    ? obj.customProperties
-        .map(sanitizeProperty)
-        .filter((p): p is CustomProperty => p !== null)
+    ? obj.customProperties.map(sanitizeProperty).filter((p): p is CustomProperty => p !== null)
     : [];
   return {
     id: obj.id,
@@ -178,9 +172,7 @@ function loadFromStorage(projectId: string): WorkItemType[] | null {
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return null;
-    const cleaned = parsed
-      .map(sanitizeType)
-      .filter((t): t is WorkItemType => t !== null);
+    const cleaned = parsed.map(sanitizeType).filter((t): t is WorkItemType => t !== null);
     return cleaned;
   } catch {
     return null;
@@ -250,30 +242,25 @@ export function useWorkItemTypes(projectId: string): UseWorkItemTypesResult {
     setTypes((prev) => prev.filter((t) => (t.id === id ? !!t.isDefault : true)));
   }, []);
 
-  const addProperty = useCallback<UseWorkItemTypesResult['addProperty']>(
-    (typeId, input) => {
-      const type = input?.type && isCustomPropertyType(input.type) ? input.type : 'text';
-      const created: CustomProperty = {
-        id: generateId('prop'),
-        name: input?.name?.trim() || 'New property',
-        type,
-        required: input?.required ?? false,
-        ...(type === 'dropdown'
-          ? { options: input?.options ?? ['Option 1'] }
-          : {}),
-      };
-      let didAdd = false;
-      setTypes((prev) =>
-        prev.map((t) => {
-          if (t.id !== typeId) return t;
-          didAdd = true;
-          return { ...t, customProperties: [...t.customProperties, created] };
-        })
-      );
-      return didAdd ? created : null;
-    },
-    []
-  );
+  const addProperty = useCallback<UseWorkItemTypesResult['addProperty']>((typeId, input) => {
+    const type = input?.type && isCustomPropertyType(input.type) ? input.type : 'text';
+    const created: CustomProperty = {
+      id: generateId('prop'),
+      name: input?.name?.trim() || 'New property',
+      type,
+      required: input?.required ?? false,
+      ...(type === 'dropdown' ? { options: input?.options ?? ['Option 1'] } : {}),
+    };
+    let didAdd = false;
+    setTypes((prev) =>
+      prev.map((t) => {
+        if (t.id !== typeId) return t;
+        didAdd = true;
+        return { ...t, customProperties: [...t.customProperties, created] };
+      })
+    );
+    return didAdd ? created : null;
+  }, []);
 
   const updateProperty = useCallback<UseWorkItemTypesResult['updateProperty']>(
     (typeId, propertyId, patch) => {

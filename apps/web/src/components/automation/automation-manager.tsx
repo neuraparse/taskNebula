@@ -175,11 +175,7 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
   const t = useTranslations('workspaceTools');
   const formatter = useFormatter();
 
-  useEffect(() => {
-    void fetchRules();
-  }, [organizationId, projectId]);
-
-  async function fetchRules() {
+  const fetchRules = useCallback(async () => {
     setIsLoading(true);
 
     try {
@@ -190,7 +186,7 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
 
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error('Failed to fetch automation rules');
+        throw new Error(t('automation.toast.loadFailed'));
       }
 
       const data = await response.json();
@@ -204,7 +200,11 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [organizationId, projectId, t, toast]);
+
+  useEffect(() => {
+    void fetchRules();
+  }, [fetchRules]);
 
   function resetForm() {
     setFormMode(null);
@@ -281,10 +281,10 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
 
       resetForm();
       await fetchRules();
-    } catch (error) {
+    } catch {
       toast({
         title: t('automation.toast.errorTitle'),
-        description: error instanceof Error ? error.message : t('automation.toast.saveFailed'),
+        description: t('automation.toast.saveFailed'),
         variant: 'destructive',
       });
     }
@@ -298,7 +298,7 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
         body: JSON.stringify({ enabled: !currentState }),
       });
 
-      if (!response.ok) throw new Error('Failed to toggle rule');
+      if (!response.ok) throw new Error(t('automation.toast.toggleFailed'));
 
       toast({
         title: t('automation.toast.successTitle'),
@@ -327,7 +327,7 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
         method: 'DELETE',
       });
 
-      if (!response.ok) throw new Error('Failed to delete rule');
+      if (!response.ok) throw new Error(t('automation.toast.deleteFailed'));
 
       toast({
         title: t('automation.toast.successTitle'),
@@ -359,11 +359,9 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
         }
         const data: AutomationExecution[] = await response.json();
         setExecutions(data);
-      } catch (error) {
+      } catch {
         setExecutions([]);
-        setExecutionsError(
-          error instanceof Error ? error.message : t('automation.toast.executionsLoadFailed')
-        );
+        setExecutionsError(t('automation.toast.executionsLoadFailed'));
       } finally {
         setExecutionsLoading(false);
       }

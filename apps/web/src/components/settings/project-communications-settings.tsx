@@ -61,13 +61,10 @@ export function ProjectCommunicationsSettings({ projectId }: { projectId: string
         title: t('projectComms.updated_toast_title'),
         description: t('projectComms.updated_toast_desc'),
       });
-    } catch (mutationError) {
+    } catch {
       toast({
         title: t('projectComms.update_failed_title'),
-        description:
-          mutationError instanceof Error
-            ? mutationError.message
-            : t('projectComms.update_failed_title'),
+        description: t('projectComms.update_failed_title'),
         variant: 'destructive',
       });
     }
@@ -79,9 +76,7 @@ export function ProjectCommunicationsSettings({ projectId }: { projectId: string
 
   if (error || !data) {
     return (
-      <div className="panel-danger animate-alert-in text-sm">
-        {error instanceof Error ? error.message : t('projectComms.load_error')}
-      </div>
+      <div className="panel-danger animate-alert-in text-sm">{t('projectComms.load_error')}</div>
     );
   }
 

@@ -163,10 +163,10 @@ function RegistrationSection() {
         description: t('systemCredentials.registration.savedDescription'),
       });
     },
-    onError: (err: Error) => {
+    onError: () => {
       toast({
         title: t('systemCredentials.saveFailed'),
-        description: err.message,
+        description: t('systemCredentials.registration.loadError'),
         variant: 'destructive',
       });
     },
@@ -300,10 +300,10 @@ function SmtpSection() {
       queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
       toast({ title: t('systemCredentials.smtp.saved') });
     },
-    onError: (err: Error) => {
+    onError: () => {
       toast({
         title: t('systemCredentials.saveFailed'),
-        description: err.message,
+        description: t('systemCredentials.smtp.loadError'),
         variant: 'destructive',
       });
     },
@@ -336,10 +336,10 @@ function SmtpSection() {
         }),
       });
     },
-    onError: (err: Error) => {
+    onError: () => {
       toast({
         title: t('systemCredentials.testFailed'),
-        description: err.message,
+        description: t('systemCredentials.smtp.testError'),
         variant: 'destructive',
       });
     },
@@ -369,7 +369,7 @@ function SmtpSection() {
             <Input
               value={host}
               onChange={(e) => setHost(e.target.value)}
-              placeholder="smtp.example.com"
+              placeholder={t('systemCredentials.smtp.hostPlaceholder')}
             />
           </Field>
           <Field label={t('systemCredentials.smtp.port')}>
@@ -378,14 +378,14 @@ function SmtpSection() {
               inputMode="numeric"
               value={port}
               onChange={(e) => setPort(e.target.value)}
-              placeholder="587"
+              placeholder={t('systemCredentials.smtp.portPlaceholder')}
             />
           </Field>
           <Field label={t('systemCredentials.smtp.username')}>
             <Input
               value={user}
               onChange={(e) => setUser(e.target.value)}
-              placeholder="noreply@example.com"
+              placeholder={t('systemCredentials.smtp.usernamePlaceholder')}
               autoComplete="off"
             />
           </Field>
@@ -412,7 +412,7 @@ function SmtpSection() {
             <Input
               value={emailFrom}
               onChange={(e) => setEmailFrom(e.target.value)}
-              placeholder="TaskNebula <noreply@example.com>"
+              placeholder={t('systemCredentials.smtp.fromAddressPlaceholder')}
             />
           </Field>
           <div className="flex items-center gap-3 self-end pb-2">
@@ -508,10 +508,10 @@ function LivekitSection() {
       queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
       toast({ title: t('systemCredentials.livekit.saved') });
     },
-    onError: (err: Error) => {
+    onError: () => {
       toast({
         title: t('systemCredentials.saveFailed'),
-        description: err.message,
+        description: t('systemCredentials.livekit.loadError'),
         variant: 'destructive',
       });
     },
@@ -540,10 +540,10 @@ function LivekitSection() {
         }),
       });
     },
-    onError: (err: Error) => {
+    onError: () => {
       toast({
         title: t('systemCredentials.testFailed'),
-        description: err.message,
+        description: t('systemCredentials.livekit.testError'),
         variant: 'destructive',
       });
     },
@@ -575,14 +575,14 @@ function LivekitSection() {
             <Input
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="wss://livekit.example.com"
+              placeholder={t('systemCredentials.livekit.serverUrlPlaceholder')}
             />
           </Field>
           <Field label={t('systemCredentials.livekit.apiKey')}>
             <Input
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              placeholder="APIxxxxxxxxxxxxxxxx"
+              placeholder={t('systemCredentials.livekit.apiKeyPlaceholder')}
               autoComplete="off"
             />
           </Field>
@@ -700,10 +700,10 @@ function StorageSection() {
       queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
       toast({ title: t('systemCredentials.storage.saved') });
     },
-    onError: (err: Error) => {
+    onError: () => {
       toast({
         title: t('systemCredentials.saveFailed'),
-        description: err.message,
+        description: t('systemCredentials.storage.loadError'),
         variant: 'destructive',
       });
     },
@@ -729,28 +729,28 @@ function StorageSection() {
             <Input
               value={uploadsDir}
               onChange={(e) => setUploadsDir(e.target.value)}
-              placeholder="/var/tasknebula/uploads"
+              placeholder={t('systemCredentials.storage.uploadsDirPlaceholder')}
             />
           </Field>
           <Field label={t('systemCredentials.storage.s3Bucket')}>
             <Input
               value={s3Bucket}
               onChange={(e) => setS3Bucket(e.target.value)}
-              placeholder="tasknebula-prod"
+              placeholder={t('systemCredentials.storage.s3BucketPlaceholder')}
             />
           </Field>
           <Field label={t('systemCredentials.storage.s3Region')}>
             <Input
               value={s3Region}
               onChange={(e) => setS3Region(e.target.value)}
-              placeholder="us-east-1"
+              placeholder={t('systemCredentials.storage.s3RegionPlaceholder')}
             />
           </Field>
           <Field label={t('systemCredentials.storage.s3AccessKey')}>
             <Input
               value={s3AccessKey}
               onChange={(e) => setS3AccessKey(e.target.value)}
-              placeholder="AKIA…"
+              placeholder={t('systemCredentials.storage.s3AccessKeyPlaceholder')}
               autoComplete="off"
             />
           </Field>

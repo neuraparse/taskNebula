@@ -195,7 +195,7 @@ describe('SignUpForm', () => {
     expect(refreshMock).not.toHaveBeenCalled();
   });
 
-  it('shows the server error on failed signup', async () => {
+  it('shows a localized signup error on failed signup', async () => {
     fetchMock.mockImplementation((url: string) => {
       if (url === '/api/setup') {
         return Promise.resolve({ ok: true, json: async () => ({ setupRequired: false }) });
@@ -219,7 +219,7 @@ describe('SignUpForm', () => {
     await user.click(screen.getByRole('button', { name: /create account/i }));
 
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent(/email already in use/i);
+    expect(alert).toHaveTextContent(/failed to create account/i);
     expect(signInMock).not.toHaveBeenCalled();
   });
 

@@ -36,6 +36,7 @@ import {
   normalizeAudioInputDeviceId,
   requestRawMicrophoneStream,
 } from '@/lib/chat/microphone';
+import { useMicrophoneMessageCatalog } from '@/components/chat/use-microphone-message-catalog';
 import { readStoredVoicePreferences } from '@/lib/chat/voice-preferences';
 import { chatClientDebug, chatClientError } from '@/lib/chat/debug';
 const CALL_HEARTBEAT_INTERVAL_MS = 15_000;
@@ -105,6 +106,11 @@ export type PersistentVoiceTarget = {
 };
 
 type MicrophoneRequestOptions = Parameters<typeof requestRawMicrophoneStream>[1];
+
+interface MicrophoneErrorMessages {
+  noAudioTrack: string;
+  startTimeout: string;
+}
 
 type GlobalVoiceContextValue = {
   currentSession: PersistentVoiceSession | null;
@@ -194,7 +200,8 @@ async function enableRoomMicrophoneWithFallback(
   audioDeviceId?: string | null,
   onFallbackToDefault?: () => void,
   preflightMicrophoneStream?: MediaStream | null,
-  requestOptions?: MicrophoneRequestOptions
+  requestOptions?: MicrophoneRequestOptions,
+  errorMessages?: MicrophoneErrorMessages
 ) {
   const normalizedDeviceId = normalizeAudioInputDeviceId(audioDeviceId);
   const existingPublication = room.localParticipant.getTrackPublication(Track.Source.Microphone) as
@@ -220,7 +227,7 @@ async function enableRoomMicrophoneWithFallback(
       const mediaTrack = preflightMicrophoneStream.getAudioTracks()[0];
       if (!mediaTrack) {
         stopMediaStream(preflightMicrophoneStream);
-        throw new Error('No audio track was returned by the browser.');
+        throw new Error(errorMessages?.noAudioTrack ?? 'NO_AUDIO_TRACK_RETURNED');
       }
 
       chatClientDebug('global-voice.mic.capture.success', {
@@ -275,7 +282,7 @@ async function enableRoomMicrophoneWithFallback(
       const mediaTrack = stream.getAudioTracks()[0];
       if (!mediaTrack) {
         stream.getTracks().forEach((streamTrack) => streamTrack.stop());
-        throw new Error('No audio track was returned by the browser.');
+        throw new Error(errorMessages?.noAudioTrack ?? 'NO_AUDIO_TRACK_RETURNED');
       }
 
       chatClientDebug('global-voice.mic.capture.success', {
@@ -370,7 +377,8 @@ async function enableRoomMicrophoneWithTimeout(
   audioDeviceId?: string | null,
   onFallbackToDefault?: () => void,
   preflightMicrophoneStream?: MediaStream | null,
-  requestOptions?: MicrophoneRequestOptions
+  requestOptions?: MicrophoneRequestOptions,
+  errorMessages?: MicrophoneErrorMessages
 ) {
   const timeoutMs = requestOptions?.timeoutMs ?? MICROPHONE_ENABLE_TIMEOUT_MS;
 
@@ -380,11 +388,12 @@ async function enableRoomMicrophoneWithTimeout(
       audioDeviceId,
       onFallbackToDefault,
       preflightMicrophoneStream,
-      requestOptions
+      requestOptions,
+      errorMessages
     ),
     new Promise<LocalTrackPublication | undefined>((_, reject) => {
       window.setTimeout(() => {
-        reject(new Error('Timed out while starting the microphone.'));
+        reject(new Error(errorMessages?.startTimeout ?? 'MICROPHONE_START_TIMEOUT'));
       }, timeoutMs);
     }),
   ]);
@@ -392,7 +401,15 @@ async function enableRoomMicrophoneWithTimeout(
 
 export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
   const t = useTranslations('workspaceTools');
+  const microphoneMessages = useMicrophoneMessageCatalog();
   const queryClient = useQueryClient();
+  const microphoneErrorMessages = useMemo<MicrophoneErrorMessages>(
+    () => ({
+      noAudioTrack: t('chat.voice.noAudioTrackError'),
+      startTimeout: t('chat.voice.microphoneStartTimeout'),
+    }),
+    [t]
+  );
   const [currentSession, setCurrentSession] = useState<PersistentVoiceSession | null>(null);
   const [currentTarget, setCurrentTarget] = useState<PersistentVoiceTarget | null>(null);
   const [runtimeError, setRuntimeError] = useState<string | null>(null);
@@ -620,14 +637,16 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
             roomId: currentTarget?.roomId || null,
             audioDeviceId: currentSession.audioDeviceId,
           });
+          const userAgent = getCurrentMicrophoneUserAgent();
+          const timedOutPendingPromptMessage = getTimedOutPendingMicrophonePromptMessage(
+            userAgent,
+            microphoneMessages
+          );
           setRuntimeError((current) => {
-            if (
-              current &&
-              current.toLowerCase().includes('timed out while waiting for the browser prompt')
-            ) {
+            if (current === timedOutPendingPromptMessage) {
               return current;
             }
-            return getPendingMicrophoneRuntimeMessage(getCurrentMicrophoneUserAgent());
+            return getPendingMicrophoneRuntimeMessage(userAgent, microphoneMessages);
           });
           return;
         }
@@ -663,7 +682,7 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
             permissionState,
             requestTimeoutMs: EXTENDED_CHROMIUM_MICROPHONE_PROMPT_TIMEOUT_MS,
           });
-          setRuntimeError(getPendingMicrophoneRuntimeMessage(userAgent));
+          setRuntimeError(getPendingMicrophoneRuntimeMessage(userAgent, microphoneMessages));
           let pendingPromptTimedOut = false;
           const pendingPromptTimeout = window.setTimeout(() => {
             if (roomRef.current !== room) {
@@ -679,7 +698,9 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
                 `Microphone access was still waiting for the browser prompt after ${PENDING_MICROPHONE_PROMPT_UI_TIMEOUT_MS}ms.`
               ),
             });
-            setRuntimeError(getTimedOutPendingMicrophonePromptMessage(userAgent));
+            setRuntimeError(
+              getTimedOutPendingMicrophonePromptMessage(userAgent, microphoneMessages)
+            );
           }, PENDING_MICROPHONE_PROMPT_UI_TIMEOUT_MS);
 
           void pendingMicrophoneStreamPromise
@@ -717,7 +738,8 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
                   stream,
                   {
                     timeoutMs: MICROPHONE_ENABLE_TIMEOUT_MS,
-                  }
+                  },
+                  microphoneErrorMessages
                 );
                 syncRoomState(room);
                 setRuntimeError(null);
@@ -736,7 +758,7 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
                       : new Error('Failed to enable microphone after the browser prompt resolved'),
                 });
                 if (!isMicrophoneAccessTimeoutError(error)) {
-                  setRuntimeError(formatMicrophoneError(error));
+                  setRuntimeError(formatMicrophoneError(error, { messages: microphoneMessages }));
                 }
               } finally {
                 syncRoomState(room);
@@ -760,7 +782,9 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
                       : new Error('Microphone access timed out after the in-call prompt'),
                 });
                 if (!pendingPromptTimedOut) {
-                  setRuntimeError(getTimedOutPendingMicrophonePromptMessage(userAgent));
+                  setRuntimeError(
+                    getTimedOutPendingMicrophonePromptMessage(userAgent, microphoneMessages)
+                  );
                 }
                 return;
               }
@@ -774,7 +798,7 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
                     ? error
                     : new Error('Microphone access failed while the in-call prompt was pending'),
               });
-              setRuntimeError(formatMicrophoneError(error));
+              setRuntimeError(formatMicrophoneError(error, { messages: microphoneMessages }));
             });
           return;
         }
@@ -791,7 +815,8 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
           buildStoredMicrophoneRequestOptions(currentSession?.audioDeviceId, {
             interactive: true,
             timeoutMs: MICROPHONE_ENABLE_TIMEOUT_MS,
-          })
+          }),
+          microphoneErrorMessages
         );
       } else {
         microphoneActivationIntentRef.current = false;
@@ -811,7 +836,7 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
         targetEnabled,
       });
     } catch (error) {
-      const message = formatMicrophoneError(error);
+      const message = formatMicrophoneError(error, { messages: microphoneMessages });
       setRuntimeError(message);
       chatClientError('global-voice.toggle-microphone.error', {
         roomId: currentTarget?.roomId || null,
@@ -832,6 +857,8 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
     currentSession?.pendingMicrophoneStreamPromise,
     currentTarget?.roomId,
     isMicrophoneEnabled,
+    microphoneErrorMessages,
+    microphoneMessages,
     syncRoomState,
     t,
   ]);
@@ -1203,6 +1230,14 @@ function PersistentVoiceHost({
   shouldRenderAudio: boolean;
 }) {
   const t = useTranslations('workspaceTools');
+  const microphoneMessages = useMicrophoneMessageCatalog();
+  const microphoneErrorMessages = useMemo<MicrophoneErrorMessages>(
+    () => ({
+      noAudioTrack: t('chat.voice.noAudioTrackError'),
+      startTimeout: t('chat.voice.microphoneStartTimeout'),
+    }),
+    [t]
+  );
   const [room] = useState(() => createVoiceRoom());
   const latestOnConnectionFailedRef = useRef(onConnectionFailed);
   const latestOnDisconnectedRef = useRef(onDisconnected);
@@ -1262,7 +1297,9 @@ function PersistentVoiceHost({
             .lastMicrophoneError || null,
         error,
       });
-      latestOnRuntimeErrorRef.current(formatMicrophoneError(error));
+      latestOnRuntimeErrorRef.current(
+        formatMicrophoneError(error, { messages: microphoneMessages })
+      );
     };
     const handleRoomStateChanged = () => {
       if (disposed) {
@@ -1340,7 +1377,8 @@ function PersistentVoiceHost({
               session.preflightMicrophoneStream,
               buildStoredMicrophoneRequestOptions(session.audioDeviceId, {
                 timeoutMs: MICROPHONE_ENABLE_TIMEOUT_MS,
-              })
+              }),
+              microphoneErrorMessages
             );
             chatClientDebug('global-voice.host.mic.enable.success', {
               roomName: session.roomName,
@@ -1362,7 +1400,9 @@ function PersistentVoiceHost({
                   ? error
                   : new Error('Failed to enable microphone during connect'),
             });
-            latestOnRuntimeErrorRef.current(formatMicrophoneError(error));
+            latestOnRuntimeErrorRef.current(
+              formatMicrophoneError(error, { messages: microphoneMessages })
+            );
           } finally {
             if (!disposed) {
               latestOnRoomStateChangedRef.current(room);
@@ -1390,7 +1430,10 @@ function PersistentVoiceHost({
               ),
             });
             latestOnRuntimeErrorRef.current(
-              getTimedOutPendingMicrophonePromptMessage(getCurrentMicrophoneUserAgent())
+              getTimedOutPendingMicrophonePromptMessage(
+                getCurrentMicrophoneUserAgent(),
+                microphoneMessages
+              )
             );
           }, PENDING_MICROPHONE_PROMPT_UI_TIMEOUT_MS);
 
@@ -1424,7 +1467,8 @@ function PersistentVoiceHost({
                   stream,
                   buildStoredMicrophoneRequestOptions(session.audioDeviceId, {
                     timeoutMs: MICROPHONE_ENABLE_TIMEOUT_MS,
-                  })
+                  }),
+                  microphoneErrorMessages
                 );
                 chatClientDebug('global-voice.host.mic.pending.success', {
                   roomName: session.roomName,
@@ -1451,7 +1495,9 @@ function PersistentVoiceHost({
                 });
 
                 if (!isMicrophoneAccessTimeoutError(error)) {
-                  latestOnRuntimeErrorRef.current(formatMicrophoneError(error));
+                  latestOnRuntimeErrorRef.current(
+                    formatMicrophoneError(error, { messages: microphoneMessages })
+                  );
                 }
               } finally {
                 if (!disposed) {
@@ -1478,7 +1524,10 @@ function PersistentVoiceHost({
                 });
                 if (!pendingPromptTimedOut) {
                   latestOnRuntimeErrorRef.current(
-                    getTimedOutPendingMicrophonePromptMessage(getCurrentMicrophoneUserAgent())
+                    getTimedOutPendingMicrophonePromptMessage(
+                      getCurrentMicrophoneUserAgent(),
+                      microphoneMessages
+                    )
                   );
                 }
                 return;
@@ -1499,7 +1548,9 @@ function PersistentVoiceHost({
                     ? error
                     : new Error('Microphone access failed after the room connected'),
               });
-              latestOnRuntimeErrorRef.current(formatMicrophoneError(error));
+              latestOnRuntimeErrorRef.current(
+                formatMicrophoneError(error, { messages: microphoneMessages })
+              );
             });
         }
       } catch (error) {
@@ -1543,7 +1594,18 @@ function PersistentVoiceHost({
       latestOnRoomDetachedRef.current(room);
       void room.disconnect();
     };
-  }, [room, session.roomName, session.token, session.url, t]);
+    // The LiveKit room lifecycle is keyed by room identity and token; audio device
+    // updates are handled inside the active room to avoid unnecessary reconnects.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    microphoneErrorMessages,
+    microphoneMessages,
+    room,
+    session.roomName,
+    session.token,
+    session.url,
+    t,
+  ]);
 
   return (
     <div className="sr-only">
@@ -1570,19 +1632,19 @@ export function formatLivekitRuntimeError(error: Error, t?: LivekitRuntimeErrorT
     return '';
   }
   if (message.includes('permission denied') || message.includes('notallowederror')) {
-    return t ? t('chat.voice.permissionDeniedRetry') : error.message;
+    return t ? t('chat.voice.permissionDeniedRetry') : 'LIVEKIT_PERMISSION_DENIED';
   }
   if (message.includes('could not start audio source') || message.includes('notreadableerror')) {
-    return t ? t('chat.voice.micCouldNotStartBusy') : error.message;
+    return t ? t('chat.voice.micCouldNotStartBusy') : 'LIVEKIT_MIC_BUSY';
   }
   if (
     message.includes('audiocontext encountered an error') ||
     message.includes('webaudio renderer')
   ) {
-    return t ? t('chat.voice.audioEngineFailed') : error.message;
+    return t ? t('chat.voice.audioEngineFailed') : 'LIVEKIT_AUDIO_ENGINE_FAILED';
   }
   if (message.includes('device not found') || message.includes('notfounderror')) {
-    return t ? t('chat.voice.noMicForSession') : error.message;
+    return t ? t('chat.voice.noMicForSession') : 'LIVEKIT_DEVICE_NOT_FOUND';
   }
-  return error.message;
+  return t ? t('chat.voice.audioCaptureUnavailable') : 'LIVEKIT_RUNTIME_ERROR';
 }

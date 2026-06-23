@@ -141,6 +141,8 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
 
   useEffect(() => {
     void fetchWorkflows();
+    // Keep this effect scoped to organization changes; mutation handlers refresh explicitly.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
 
   useEffect(() => {
@@ -226,13 +228,21 @@ export function WorkflowEditor({ organizationId, projectId }: WorkflowEditorProp
           name: newWorkflowName.trim(),
           description: newWorkflowDescription.trim() || null,
           statuses: [
-            { name: 'To Do', category: 'backlog', color: STATUS_CATEGORY_COLORS.backlog },
             {
-              name: 'In Progress',
+              name: t('we_default_status_todo'),
+              category: 'backlog',
+              color: STATUS_CATEGORY_COLORS.backlog,
+            },
+            {
+              name: t('we_default_status_in_progress'),
               category: 'in_progress',
               color: STATUS_CATEGORY_COLORS.in_progress,
             },
-            { name: 'Done', category: 'done', color: STATUS_CATEGORY_COLORS.done },
+            {
+              name: t('we_default_status_done'),
+              category: 'done',
+              color: STATUS_CATEGORY_COLORS.done,
+            },
           ],
         }),
       });

@@ -76,11 +76,11 @@ export function AiIssueAssistPanel({
       setResult({ action, ...data });
       setActiveAction(null);
     },
-    onError: (err: Error) => {
+    onError: () => {
       setActiveAction(null);
       toast({
         title: t('assist.assistFailed'),
-        description: err.message,
+        description: t('assist.assistFailed'),
         variant: 'destructive',
       });
     },

@@ -132,10 +132,10 @@ export function OrganizationSettingsClient() {
       queryClient.invalidateQueries({ queryKey: ['organizations'] });
       toast({ title: t('org.updated'), description: t('org.updatedDesc') });
     },
-    onError: (mutationError: Error) => {
+    onError: () => {
       toast({
         title: t('org.updateFailed'),
-        description: mutationError.message,
+        description: t('org.updateFailed'),
         variant: 'destructive',
       });
     },
@@ -166,10 +166,10 @@ export function OrganizationSettingsClient() {
       setDeleteConfirmationName('');
       router.push('/');
     },
-    onError: (mutationError: Error) => {
+    onError: () => {
       toast({
         title: t('org.deleteFailed'),
-        description: mutationError.message,
+        description: t('org.deleteFailed'),
         variant: 'destructive',
       });
     },
@@ -192,11 +192,7 @@ export function OrganizationSettingsClient() {
   }
 
   if (error || !org) {
-    return (
-      <div className="panel-danger animate-alert-in text-sm">
-        {error instanceof Error ? error.message : t('org.loadFailed')}
-      </div>
-    );
+    return <div className="panel-danger animate-alert-in text-sm">{t('org.loadFailed')}</div>;
   }
 
   const canManageSettings =
@@ -363,7 +359,7 @@ export function OrganizationSettingsClient() {
                     </div>
                     <Input
                       id="org-logo-url"
-                      placeholder="https://cdn.example.com/logo.png"
+                      placeholder={t('org.logoPlaceholder')}
                       value={formData.logoUrl}
                       onChange={(event) =>
                         setFormData((current) => ({ ...current, logoUrl: event.target.value }))
@@ -411,7 +407,7 @@ export function OrganizationSettingsClient() {
                     <Input
                       id="org-domain"
                       className="ease-snap pl-9 transition-all duration-150"
-                      placeholder="company.com"
+                      placeholder={t('org.domainPlaceholder')}
                       value={formData.domain}
                       onChange={(event) =>
                         setFormData((current) => ({ ...current, domain: event.target.value }))

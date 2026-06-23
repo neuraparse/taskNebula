@@ -175,7 +175,7 @@ export function ProjectGeneralSettings({ projectId }: ProjectGeneralSettingsProp
                 }))
               }
               maxLength={20}
-              placeholder="WEB"
+              placeholder={t('key_placeholder')}
               className="ease-snap transition-all duration-150"
             />
           </div>

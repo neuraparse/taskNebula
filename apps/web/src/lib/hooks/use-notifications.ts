@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 
 export type NotificationType =
   | 'mention'
@@ -41,6 +42,8 @@ export interface NotificationsResponse {
 
 // Fetch notifications
 export function useNotifications(unreadOnly: boolean = false) {
+  const t = useTranslations('hookErrors.notifications');
+
   return useQuery({
     queryKey: ['notifications', unreadOnly],
     queryFn: async () => {
@@ -49,7 +52,7 @@ export function useNotifications(unreadOnly: boolean = false) {
 
       const response = await fetch(`/api/notifications?${params.toString()}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch notifications');
+        throw new Error(t('fetch'));
       }
       return response.json() as Promise<NotificationsResponse>;
     },
@@ -60,6 +63,7 @@ export function useNotifications(unreadOnly: boolean = false) {
 // Mark single notification as read
 export function useMarkNotificationAsRead() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.notifications');
 
   return useMutation({
     mutationFn: async (notificationId: string) => {
@@ -67,7 +71,7 @@ export function useMarkNotificationAsRead() {
         method: 'PATCH',
       });
       if (!response.ok) {
-        throw new Error('Failed to mark notification as read');
+        throw new Error(t('markRead'));
       }
       return response.json();
     },
@@ -80,6 +84,7 @@ export function useMarkNotificationAsRead() {
 // Mark all notifications as read
 export function useMarkAllNotificationsAsRead() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.notifications');
 
   return useMutation({
     mutationFn: async () => {
@@ -87,7 +92,7 @@ export function useMarkAllNotificationsAsRead() {
         method: 'PATCH',
       });
       if (!response.ok) {
-        throw new Error('Failed to mark all notifications as read');
+        throw new Error(t('markAllRead'));
       }
       return response.json();
     },
@@ -100,6 +105,7 @@ export function useMarkAllNotificationsAsRead() {
 // Delete notification
 export function useDeleteNotification() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.notifications');
 
   return useMutation({
     mutationFn: async (notificationId: string) => {
@@ -107,7 +113,7 @@ export function useDeleteNotification() {
         method: 'DELETE',
       });
       if (!response.ok) {
-        throw new Error('Failed to delete notification');
+        throw new Error(t('delete'));
       }
       return response.json();
     },

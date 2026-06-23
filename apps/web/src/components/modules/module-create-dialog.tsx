@@ -112,8 +112,8 @@ export function ModuleCreateDialog({
 
       onCreated?.(created);
       onOpenChange(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('error_create_module'));
+    } catch {
+      setError(t('error_create_module'));
     }
   };
 

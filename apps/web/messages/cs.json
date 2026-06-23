@@ -501,14 +501,48 @@
         "no_update": "No newer Docker image is available.",
         "missing_docker_image": "Docker Hub did not return a semver image tag to install.",
         "invalid_target": "The selected target version is not valid for this install.",
-        "active_job": "Another update request is already active. Wait for it to finish before starting a new one."
+        "active_job": "Another update request is already active. Wait for it to finish before starting a new one.",
+        "missing_digest": "Docker Hub did not return an immutable image digest. Wait for tag metadata to settle, then check again.",
+        "backup_unavailable": "Backup preflight is not ready, so the app will not dispatch an update request."
       },
       "jobStatus": {
         "queued": "Queued",
         "requested": "Requested",
         "succeeded": "Succeeded",
-        "failed": "Failed"
+        "failed": "Failed",
+        "running": "Running"
+      },
+      "failedDescription": "The update request could not be sent. Check the updater webhook and backup preflight.",
+      "backup": {
+        "title": "Backup preflight",
+        "ready": "Ready",
+        "blocked": "Blocked",
+        "postgres": "Postgres dump",
+        "uploads": "Uploads archive",
+        "directory": "Backup directory",
+        "path": "Backups will be written to {path}.",
+        "blockedReason": {
+          "missing_pg_dump": "pg_dump is not available in the web runtime.",
+          "backup_dir_unwritable": "The backup directory is not writable.",
+          "uploads_unreadable": "The uploads directory is not readable.",
+          "database_url_missing": "DATABASE_URL is not configured for the web runtime."
+        }
       }
+    },
+    "preferences": {
+      "title": "Update alerts",
+      "description": "Control where super admins see TaskNebula update alerts.",
+      "saving": "Saving...",
+      "savedTitle": "Update alerts saved",
+      "savedDescription": "Update alert preferences were updated.",
+      "failedTitle": "Update alerts not saved",
+      "failedDescription": "Could not update update alert preferences.",
+      "bannerLabel": "Global banner",
+      "bannerDescription": "Show the update banner outside the Updates page.",
+      "availableNotificationsLabel": "New-version inbox alerts",
+      "availableNotificationsDescription": "Notify super admins when GitHub or Docker Hub publishes a newer version.",
+      "postUpdateNotificationsLabel": "Installed-version inbox alerts",
+      "postUpdateNotificationsDescription": "Notify super admins after this instance boots into a different version."
     }
   },
   "issueFields": {
@@ -539,7 +573,9 @@
     "placeholder": "Název podúkolu...",
     "creating": "Vytváření podúkolu...",
     "createFailed": "Podúkol se nepodařilo vytvořit. Zkuste to prosím znovu.",
-    "noSubtasks": "Zatím žádné dílčí úkoly"
+    "noSubtasks": "Zatím žádné dílčí úkoly",
+    "markComplete": "Označit jako dokončené",
+    "markIncomplete": "Označit jako nedokončené"
   },
   "issueRelations": {
     "dialogTitle": "Propojit úkol",
@@ -1334,6 +1370,11 @@
       "runnerStatus": "Stav běhu",
       "runnerStatusValue": "{status}",
       "runnerStatusSuffix": " · {status}",
+      "runnerStatuses": {
+        "running": "Běží",
+        "completed": "Dokončeno",
+        "failed": "Selhalo"
+      },
       "exitCode": "Návratový kód"
     },
     "vote": {
@@ -1614,7 +1655,8 @@
     "ts_slug_placeholder": "platforma",
     "org_name_placeholder": "Acme Inc.",
     "org_slug_placeholder": "acme-inc",
-    "settings_open_full_page": "Otevřít celou stránku"
+    "settings_open_full_page": "Otevřít celou stránku",
+    "field_avatar_url_placeholder": "https://cdn.example.com/icon.png"
   },
   "settingsProject": {
     "kicker": "Projekt",
@@ -1706,12 +1748,24 @@
     "estimate_kind_time": "Čas",
     "estimate_scales_group": "Stupnice odhadů typu {kind}",
     "estimate_custom_hint": "Definujte vlastní hodnoty.",
+    "estimate_default_small": "Malé",
+    "estimate_default_medium": "Střední",
+    "estimate_default_large": "Velké",
     "estimate_value_placeholder": "Hodnota {index}",
     "estimate_custom_value_aria": "Vlastní hodnota {kind} {index}",
     "estimate_remove_value": "Odebrat hodnotu {index}",
     "estimate_add_value": "Přidat hodnotu",
     "estimate_reset": "Obnovit",
-    "estimate_save_scale": "Uložit stupnici"
+    "estimate_save_scale": "Uložit stupnici",
+    "key_placeholder": "WEB",
+    "wit_default_story_name": "Story",
+    "wit_default_bug_name": "Chyba",
+    "wit_default_task_name": "Úkol",
+    "wit_default_epic_name": "Epic",
+    "wit_default_story_description": "Uživatelská schopnost nebo scénář.",
+    "wit_default_bug_description": "Vada, kterou je potřeba opravit.",
+    "wit_default_task_description": "Obecná pracovní položka.",
+    "wit_default_epic_description": "Velká iniciativa zahrnující více příběhů."
   },
   "settingsConfig": {
     "integrations": {
@@ -1846,7 +1900,8 @@
       "created_toast_title": "Webhook vytvořen",
       "updated_toast_desc": "Nastavení webhooku bylo úspěšně uloženo.",
       "created_toast_desc": "Webhook byl úspěšně vytvořen.",
-      "save_failed_title": "Uložení selhalo"
+      "save_failed_title": "Uložení selhalo",
+      "url_placeholder": "https://example.com/webhooks/tasknebula"
     },
     "sso": {
       "tab_saml": "SAML 2.0",
@@ -2004,7 +2059,14 @@
       "font_brand_desc": "Previous dashboard font. Clean, compact, and the default.",
       "font_ibm": "IBM Plex",
       "font_ibm_desc": "IBM-style technical interface font used by the landing page.",
-      "font_sample": "Aa"
+      "font_sample": "Aa",
+      "theme_default": "Modrá",
+      "theme_ocean": "Tyrkysová",
+      "theme_forest": "Zelená",
+      "theme_sunset": "Oranžová",
+      "theme_purple": "Fialová",
+      "theme_rose": "Růžová",
+      "save_failed": "Failed to save appearance settings"
     },
     "orgComms": {
       "toggle_enabled_label": "Povolit modul",
@@ -2238,7 +2300,9 @@
       "ops_notes": "Provozní poznámky",
       "ops_notes_placeholder": "Proč tento profil existuje, poznámky k zavedení nebo upozornění k poskytovateli.",
       "cancel": "Zrušit",
-      "save_profile": "Uložit profil"
+      "save_profile": "Uložit profil",
+      "model_catalog_summary": "Model: {model}",
+      "model_placeholder": "gpt-5.4"
     },
     "projectAi": {
       "cred_workspace_secret": "Tajný klíč pracovního prostoru",
@@ -2409,7 +2473,151 @@
       "behaviorDescription": "Safe defaults used when no explicit rule matches.",
       "unknownAgents": "Unknown agents",
       "destructiveActions": "Destructive actions",
-      "requireApprovalDefault": "Require approval by default"
+      "requireApprovalDefault": "Require approval by default",
+      "queueLoadFailed": "Failed to load approval queue",
+      "decisionFailed": "Failed to update approval decision"
+    },
+    "agentShared": {
+      "providerStatus": {
+        "nativeReady": "TaskNebula nativní",
+        "customUnavailable": "Vlastní adaptér · Zablokováno",
+        "adapterUnavailable": "{provider}: Zablokováno",
+        "openaiModelInvalid": "{provider}: Vyžaduje kontrolu",
+        "missingCredentialWithEnv": "Pro vybraného poskytovatele nejsou nakonfigurovány žádné spustitelné přihlašovací údaje. ({envVar})",
+        "missingCredential": "Pro vybraného poskytovatele nejsou nakonfigurovány žádné spustitelné přihlašovací údaje.",
+        "readyWorkspace": "Tento pracovní prostor má uložené přihlašovací údaje poskytovatele.",
+        "readyPlatform": "Výchozí platformy",
+        "readyServerEnv": "Tohoto poskytovatele dodává prostředí serveru.",
+        "ready": "Připraveno"
+      },
+      "credential": {
+        "builtInPlanner": "TaskNebula nativní",
+        "platformDefault": "Výchozí platformy · {preview}",
+        "serverEnv": "Prostředí serveru · {envVar}"
+      },
+      "configIssues": {
+        "titles": {
+          "global_paused": "Globální povolení",
+          "provider_model_invalid": "Model",
+          "provider_missing_credential": "Přihlašovací údaj",
+          "provider_adapter_unavailable": "Vlastní adaptér",
+          "workspace_disabled": "Agenti pracovního prostoru",
+          "project_disabled": "Povolit agenty projektu",
+          "writes_preview_only": "Pouze náhled",
+          "write_approval_required": "Schválení stále vyžadováno",
+          "auto_mode_supervised": "Autonomní"
+        },
+        "project": {
+          "detail": "Tyto kontroly rozhodují, zda může projektový běh právě teď začít a kde opravit zablokované předpoklady.",
+          "resolution": "Otevřít nastavení AI projektu"
+        },
+        "workspace": {
+          "detail": "Podívejte se, co blokuje běhy a co je stále omezeno, než projekty začnou používat agenty.",
+          "resolution": "Otevřít nastavení AI pracovního prostoru"
+        },
+        "provider": {
+          "detail": "Dostupnost poskytovatele se ověřuje vůči úložišti tajných klíčů pracovního prostoru a prostředí serveru.",
+          "resolution": "Zdroj přihlašovacích údajů"
+        },
+        "system": {
+          "detail": "Jedno místo pro pozastavení každého agenta nebo přepnutí systému do kontrolovaného režimu.",
+          "resolution": "Otevřít AI Ops"
+        },
+        "unknown": {
+          "title": "Vyžaduje pozornost",
+          "detail": "AI agenty projektu se nepodařilo načíst.",
+          "resolution": "Otevřít nastavení AI pracovního prostoru"
+        }
+      },
+      "services": {
+        "labels": {
+          "provider": "Poskytovatel",
+          "execution": "Režim vykonávání",
+          "writes": "Akce zápisu",
+          "monitoring": "Živý běh"
+        },
+        "project": {
+          "executionReady": "Tento projekt je plně nakonfigurován pro běhy AI. Začněte náhledem a poté podle potřeby přejděte na živé zápisy.",
+          "writesReady": "Živé zápisy k dispozici",
+          "monitoringReady": "Stav a protokoly v reálném čase pro běhy probíhající v tomto projektu právě teď."
+        },
+        "workspace": {
+          "executionReady": "AI pracovního prostoru je plně nakonfigurováno. Projekty mohou toto nastavení okamžitě zdědit.",
+          "writesReady": "Povolit agentům vytvářet nebo aktualizovat úkoly a sprinty.",
+          "monitoringReady": "Skutečné vykonávání, služba a telemetrie běhů pro toto nastavení AI pracovního prostoru."
+        },
+        "unknownDetail": "AI agenty projektu se nepodařilo načíst."
+      },
+      "runStatuses": {
+        "running": "Běží",
+        "completed": "Dokončeno",
+        "failed": "Selhalo",
+        "unknown": "{status}"
+      },
+      "capabilities": {
+        "project_tracking": {
+          "label": "Sledování projektu",
+          "description": "Sken jen pro čtení pro práci po termínu, zablokovanou a nepřiřazenou."
+        },
+        "backlog_triage": {
+          "label": "Třídění backlogu",
+          "description": "Obnovit prioritu úkolů a přidat štítky třídění napříč backlogem.",
+          "writes": {
+            "priority": "Priorita",
+            "labels": "Štítky"
+          }
+        },
+        "sprint_planning": {
+          "label": "Plánování sprintu",
+          "description": "Připravit dávku dalšího sprintu bez zápisu do projektu."
+        },
+        "bulk_sprint_creation": {
+          "label": "Hromadné vytváření sprintů",
+          "description": "Vytvořit plánované sprinty v posloupnosti a volitelně předpřiřadit úkoly z backlogu.",
+          "writes": {
+            "sprints": "Sprint",
+            "assignments": "Úkoly · Sprint"
+          }
+        }
+      },
+      "runMessages": {
+        "kinds": {
+          "project_tracking": "Project health scan",
+          "backlog_triage": "Backlog triage",
+          "sprint_planning": "Sprint planning preview",
+          "bulk_sprint_creation": "Bulk sprint creation",
+          "unknown": "{kind}"
+        },
+        "noActiveSprint": "No active sprint is running in this project.",
+        "backlogAlreadyTriaged": "Backlog already matches the current triage heuristics.",
+        "backlogNoChanges": "Backlog triage found no changes to apply.",
+        "writeActionsPreviewOnly": "Write actions are disabled, returning a preview only.",
+        "noEligibleBacklog": "No eligible backlog issues were found for sprint planning.",
+        "bulkPreviewOnly": "Bulk sprint creation is in preview mode only.",
+        "requestingProviderPlan": "Requesting a structured agent plan from the configured LLM provider.",
+        "providerPlanGenerated": "Structured provider plan generated successfully.",
+        "agentRunFailed": "Agent run failed",
+        "projectNotFound": "Project not found",
+        "unsupportedRunKind": "Unsupported agent run kind",
+        "sprintCreateFailed": "Failed to create sprint",
+        "started": "{kind} started for {project}.",
+        "startedPreview": "{kind} started for {project} in preview mode.",
+        "usingProvider": "Using {provider} provider with model {model}.",
+        "usingProviderProfile": "Using {provider} provider with model {model} via profile {profile}.",
+        "scannedIssues": "Scanned {count, plural, one {# issue} other {# issues}} across {project}.",
+        "activeSprintDetected": "Active sprint detected: {sprint}.",
+        "projectTrackingActiveSummary": "{project} has {open, plural, one {# open issue} other {# open issues}} and {blocked, plural, one {# blocker} other {# blockers}} in flight.",
+        "projectTrackingNoSprintSummary": "{project} has {open, plural, one {# open issue} other {# open issues}} with no active sprint.",
+        "foundBacklogIssues": "Found {count, plural, one {# backlog issue} other {# backlog issues}} to inspect.",
+        "triageRerank": "{count, plural, one {# issue} other {# issues}} will be re-ranked by the triage engine.",
+        "preparedTriageUpdates": "Prepared {count, plural, one {# backlog triage update} other {# backlog triage updates}}.",
+        "appliedTriageUpdates": "Applied {count, plural, one {# triage update} other {# triage updates}} to backlog issues.",
+        "updatedBacklogIssues": "Updated {count, plural, one {# backlog issue} other {# backlog issues}} with fresh priority and labels.",
+        "planningBacklogIssues": "Planning against {count, plural, one {# backlog issue} other {# backlog issues}}.",
+        "preparedSprintPlan": "Prepared {count, plural, one {# sprint plan block} other {# sprint plan blocks}} for {project}.",
+        "createdSprintLog": "Created {count, plural, one {# planned sprint} other {# planned sprints}} from backlog.",
+        "createdSprintSummary": "Created {count, plural, one {# planned sprint} other {# planned sprints}} for {project}."
+      }
     }
   },
   "collab": {
@@ -3290,7 +3498,10 @@
     "apm_invite_link_revoke_failed": "Failed to revoke project invite link",
     "pm_remove_success": "Člen odebrán z projektu",
     "pm_remove_failed": "Člena projektu se nepodařilo odebrat",
-    "pm_remove_member_aria": "Odebrat {name} z projektu"
+    "pm_remove_member_aria": "Odebrat {name} z projektu",
+    "we_default_status_todo": "To Do",
+    "we_default_status_in_progress": "In Progress",
+    "we_default_status_done": "Done"
   },
   "adminPanels": {
     "agentOps": {
@@ -3327,7 +3538,37 @@
       },
       "serviceStatus": {
         "title": "Stav služby",
-        "description": "Běhové brány pro řídicí rovinu agentů."
+        "description": "Běhové brány pro řídicí rovinu agentů.",
+        "states": {
+          "ready": "Připraveno",
+          "blocked": "Zablokováno",
+          "disabled": "Zakázáno",
+          "preview": "Náhled"
+        },
+        "items": {
+          "controlPlane": {
+            "label": "Ovládání agentů správcem",
+            "readyDetail": "Vypněte všechny běhy agentů pracovního prostoru a projektů jedním přepínačem.",
+            "disabledDetail": "Vypněte všechny běhy agentů pracovního prostoru a projektů jedním přepínačem."
+          },
+          "liveMonitoring": {
+            "label": "Živý kanál vykonávání",
+            "readyDetail": "Stav a protokoly v reálném čase z každého běhu agenta probíhajícího právě teď."
+          },
+          "writePipeline": {
+            "label": "Povolit akce zápisu globálně",
+            "readyDetail": "Pokud je zakázáno, vynutí každé vytvoření sprintu a úpravu backlogu do náhledu.",
+            "previewDetail": "Pokud je zakázáno, vynutí každé vytvoření sprintu a úpravu backlogu do náhledu."
+          },
+          "providerCoverage": {
+            "label": "Pokrytí poskytovatelem",
+            "detail": "Výběr poskytovatele pracovního prostoru a spustitelné pokrytí. ({ready}/{total})"
+          },
+          "unknown": {
+            "label": "Stav služby",
+            "detail": "Ovládání agentů se nepodařilo načíst."
+          }
+        }
       },
       "providerCoverage": {
         "title": "Pokrytí poskytovatelem",
@@ -3388,26 +3629,26 @@
         "writesChip": "{count} zápisů"
       },
       "localRunners": {
-        "title": "Local server runners",
-        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
-        "loading": "Loading local runners...",
-        "loadError": "Failed to load local runners.",
-        "updated": "Local runner updated",
-        "updatedDescription": "The workspace handoff mode was saved.",
-        "updateFailed": "Failed to update local runner",
-        "ready": "Ready",
-        "needsSetup": "Needs setup",
-        "defaultMode": "default",
-        "runtime": "{mode} · {timeout}s timeout",
-        "toggle": "Toggle {provider} local runner",
+        "title": "Claude Code / Codex",
+        "description": "Stav a protokoly v reálném čase z každého běhu agenta probíhajícího právě teď.",
+        "loading": "Načítání ovládání agentů...",
+        "loadError": "Ovládání agentů se nepodařilo načíst.",
+        "updated": "Ovládání agentů aktualizováno",
+        "updatedDescription": "Globální bezpečnostní a běhové ovládací prvky agentů byly uloženy.",
+        "updateFailed": "Ovládání agentů se nepodařilo aktualizovat",
+        "ready": "Připraveno",
+        "needsSetup": "Vyžaduje pozornost",
+        "defaultMode": "Výchozí",
+        "runtime": "{mode} · {timeout}s",
+        "toggle": "{provider}",
         "providers": {
           "claude": "Claude Code",
           "codex": "Codex CLI"
         },
         "reason": {
-          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
-          "cwd_missing": "Working directory does not exist: {value}",
-          "command_missing": "Command is not executable inside the web runtime: {value}"
+          "disabled": "Ovládání agentů se nepodařilo aktualizovat: TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true",
+          "cwd_missing": "Ovládání agentů se nepodařilo načíst: {value}",
+          "command_missing": "Ovládání agentů se nepodařilo načíst: {value}"
         }
       }
     },
@@ -3471,7 +3712,8 @@
         "anthropic": "Použito, když pracovní prostor nezadal vlastní klíč Anthropic. Začíná na sk-ant-…"
       },
       "saveFailedDescription": "Přihlašovací údaje se nepodařilo uložit. Zkuste to prosím znovu.",
-      "removeFailedDescription": "Přihlašovací údaje se nepodařilo odebrat. Zkuste to prosím znovu."
+      "removeFailedDescription": "Přihlašovací údaje se nepodařilo odebrat. Zkuste to prosím znovu.",
+      "loadFailedDescription": "Could not load platform credentials. Please try again."
     },
     "realtimeHealth": {
       "loading": "Načítání stavu reálného času...",
@@ -3521,7 +3763,11 @@
         "tls": "TLS (zabezpečené připojení)",
         "saveFirst": "Nejprve uložte konfiguraci SMTP",
         "sendTestTitle": "Odeslat testovací e-mail sami sobě",
-        "sendTest": "Odeslat testovací e-mail"
+        "sendTest": "Odeslat testovací e-mail",
+        "hostPlaceholder": "smtp.example.com",
+        "portPlaceholder": "587",
+        "usernamePlaceholder": "noreply@example.com",
+        "fromAddressPlaceholder": "TaskNebula <noreply@example.com>"
       },
       "livekit": {
         "title": "LiveKit",
@@ -3540,7 +3786,9 @@
         "apiSecretPlaceholder": "API tajný klíč LiveKit",
         "saveFirst": "Nejprve uložte konfiguraci LiveKit",
         "mintTitle": "Vytvořit přístupový token místnosti",
-        "mintTest": "Vytvořit testovací token"
+        "mintTest": "Vytvořit testovací token",
+        "serverUrlPlaceholder": "wss://livekit.example.com",
+        "apiKeyPlaceholder": "APIxxxxxxxxxxxxxxxx"
       },
       "storage": {
         "title": "Úložiště",
@@ -3555,7 +3803,11 @@
         "s3AccessKey": "S3 přístupový klíč",
         "s3SecretKey": "S3 tajný klíč",
         "s3SecretKeyStored": "S3 tajný klíč (uloženo: {preview})",
-        "s3SecretPlaceholder": "Tajný klíč S3"
+        "s3SecretPlaceholder": "Tajný klíč S3",
+        "uploadsDirPlaceholder": "/var/tasknebula/uploads",
+        "s3BucketPlaceholder": "tasknebula-prod",
+        "s3RegionPlaceholder": "us-east-1",
+        "s3AccessKeyPlaceholder": "AKIA…"
       },
       "registration": {
         "title": "Registrace",
@@ -3580,6 +3832,7 @@
       "openInNewTab": "Otevřít na nové kartě",
       "sendSmtpTest": "Odeslat test SMTP",
       "sendSmtpTestTitle": "Odeslat obecný testovací e-mail SMTP na vaši adresu správce (nikoli náhledovanou šablonu — koncový bod /smtp/test podporuje pouze pevně danou testovací zprávu).",
+      "loadFailed": "Nepodařilo se načíst náhled e-mailu",
       "smtpTestFailed": "Test SMTP selhal",
       "smtpTestSent": "Test SMTP odeslán",
       "smtpTestSentDescription": "Odesláno prostřednictvím {source} na {recipient}.",
@@ -3622,7 +3875,8 @@
       "evaluate": "Vyhodnotit",
       "evaluating": "Vyhodnocování...",
       "isEnabled": "isEnabled",
-      "rolloutPercent": "rollout%"
+      "rolloutPercent": "rollout%",
+      "keyPlaceholder": "advanced_analytics"
     }
   },
   "adminDialogs": {
@@ -3665,7 +3919,8 @@
       "targetOrganizations": "Cílové organizace",
       "targetOrganizationsHint": "Ponechte prázdné pro povolení pro všechny organizace odpovídající plánu + zavedení.",
       "rollout": "Zavedení: {percentage} %",
-      "namePlaceholder": "Pokročilá analytika"
+      "namePlaceholder": "Pokročilá analytika",
+      "keyPlaceholder": "advanced_analytics"
     },
     "createOrg": {
       "trigger": "Nová organizace",
@@ -3943,7 +4198,34 @@
     "close": "Zavřít",
     "commandMenu": "Příkazová nabídka",
     "commandMenuDescription": "Hledejte a spouštějte rychlou navigaci nebo příkazové akce.",
-    "avatarOverflow": "{count, plural, one {# další} few {# další} many {# dalšího} other {# dalších}}"
+    "avatarOverflow": "{count, plural, one {# další} few {# další} many {# dalšího} other {# dalších}}",
+    "slashCommands": {
+      "assign": {
+        "description": "Přiřadit kolegovi"
+      },
+      "label": {
+        "description": "Přidat štítek"
+      },
+      "track": {
+        "description": "Zapsat čas"
+      },
+      "status": {
+        "description": "Změnit stav"
+      },
+      "due": {
+        "description": "Nastavit termín"
+      },
+      "mention": {
+        "description": "Zmínit kolegu"
+      },
+      "arguments": {
+        "user": "@uživatel",
+        "label": "Štítek",
+        "duration": "Doba trvání",
+        "status": "Stav",
+        "date": "Datum"
+      }
+    }
   },
   "appShell": {
     "common": {
@@ -4193,7 +4475,8 @@
     "completeSprintTooltip": "Dokončit tento sprint. Nedokončené úkoly se přesunou do backlogu.",
     "sprintBurndown": "Burndown sprintu",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Požádejte správce, aby vás pozval do projektu nebo vám udělil oprávnění vytvářet projekty."
+    "projectInviteRequiredDescription": "Požádejte správce, aby vás pozval do projektu nebo vám udělil oprávnění vytvářet projekty.",
+    "projectKeyPlaceholder": "MAP"
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4590,7 +4873,13 @@
     },
     "failedToLoadContent": "Nepodařilo se načíst obsah",
     "failedToLoadSection": "Nepodařilo se načíst sekci",
-    "failedToLoadSectionNamed": "Nepodařilo se načíst {section}"
+    "failedToLoadSectionNamed": "Nepodařilo se načíst {section}",
+    "global": {
+      "title": "Application error",
+      "description": "A critical error prevented the app from loading. Please reload the page. If the problem persists, contact support.",
+      "reference": "Reference:",
+      "reload": "Reload"
+    }
   },
   "publicPages": {
     "loading": "Načítání",
@@ -4685,7 +4974,753 @@
     "trustStatusInProgress": "Probíhá",
     "trustStatusAchieved": "Dosaženo",
     "trustStatusPlanned": "Plánováno",
-    "trustExpected": "Očekáváno:"
+    "trustExpected": "Očekáváno:",
+    "setupEmailPlaceholder": "admin@company.com",
+    "offlineTitle": "Jste offline.",
+    "offlineRetry": "Zkusit znovu",
+    "landing": {
+      "nav": {
+        "primaryAria": "Primární",
+        "homeAria": "Domovská stránka TaskNebula",
+        "githubAria": "TaskNebula na GitHubu",
+        "github": "GitHub",
+        "signIn": "Přihlásit se",
+        "startFree": "Začít zdarma",
+        "openMenuAria": "Otevřít navigační menu",
+        "closeMenuAria": "Zavřít navigační menu",
+        "items": {
+          "features": "Funkce",
+          "compare": "Porovnat",
+          "selfHost": "Self-hosting",
+          "faq": "FAQ"
+        }
+      },
+      "hero": {
+        "kicker": "Open source · MIT · AI-native",
+        "title": "Projektový tracker pro týmy <accent>a jejich agenty.</accent>",
+        "description": "TaskNebula je open-source, keyboard-first alternativa k Jira a Linear. Boardy, sprinty a dokumenty běží na vašem Postgresu, s vestavěným MCP serverem, aby AI agenti pracovali na backlogu vedle týmu. Licence MIT, self-hosting jedním Docker Compose.",
+        "createWorkspace": "Vytvořit workspace",
+        "viewGithub": "Zobrazit na GitHubu",
+        "selfHostKicker": "Nebo self-hosting dvěma příkazy",
+        "quickstartAria": "Příkazy rychlého startu self-hostingu",
+        "copyQuickstart": "Kopírovat rychlý start self-hostingu",
+        "selfHostMeta": "Self-hosting navždy zdarma · Tři kontejnery: Postgres, Redis, jeden web image",
+        "demoPill": "Interaktivní demo níže",
+        "chips": {
+          "cmdk": "Cmd+K všude",
+          "mcp": "Vestavěný MCP server",
+          "import": "Import Jira a Linear",
+          "selfHost": "Self-hosting na vašem Postgresu"
+        }
+      },
+      "copy": {
+        "copied": "Zkopírováno",
+        "copyCommand": "Kopírovat příkaz",
+        "copiedToClipboard": "Zkopírováno do schránky"
+      },
+      "footer": {
+        "tagline": "Open-source projektové sledování pro týmy a agenty",
+        "description": "Budováno otevřeně. Vaše issues žijí ve vašem Postgresu a odejdou, kdykoli řeknete.",
+        "githubAria": "TaskNebula na GitHubu",
+        "starGithub": "Dát hvězdu na GitHubu",
+        "columns": {
+          "product": "Produkt",
+          "resources": "Zdroje",
+          "openSource": "Open source",
+          "legal": "Právní"
+        },
+        "links": {
+          "features": "Funkce",
+          "compare": "Porovnat",
+          "selfHost": "Self-hosting",
+          "faq": "FAQ",
+          "openapiSpec": "Specifikace OpenAPI",
+          "mcpServer": "MCP server",
+          "dockerHub": "Docker Hub",
+          "healthEndpoint": "Health endpoint",
+          "github": "GitHub",
+          "changelog": "Changelog",
+          "reportBug": "Nahlásit chybu",
+          "contributing": "Přispívání",
+          "mitLicense": "Licence MIT",
+          "signIn": "Přihlásit se",
+          "createWorkspace": "Vytvořit workspace"
+        },
+        "copyright": "© {year} TaskNebula. Vydáno pod licencí MIT.",
+        "trademarks": "Jira, Linear a Plane jsou ochranné známky svých vlastníků."
+      },
+      "finalCta": {
+        "kicker": "Začít",
+        "title": "Vlastněte svůj tracker. <accent>Přiveďte své agenty.</accent>",
+        "description": "Vytvořte workspace během minut nebo spusťte vše dnes večer na vlastním serveru; v každém případě je kód váš ke čtení.",
+        "createWorkspace": "Vytvořit workspace",
+        "selfHostQuickstart": "Rychlý start self-hostingu",
+        "readSource": "Číst zdrojový kód",
+        "copyDockerQuickstart": "Kopírovat příkaz rychlého startu Docker",
+        "meta": "Bez kreditní karty. Ve výchozím nastavení bez telemetrie. Exportujte pomocí <code>pg_dump</code>, kdykoli odejdete."
+      },
+      "proof": {
+        "aria": "Důvěryhodnost open source",
+        "headline": "Open source, self-hosting, vaše data zůstávají vaše.",
+        "subline": "Žádná stěna log — jen důkazy, které si můžete ověřit.",
+        "items": {
+          "sourceGithub": "Zdroj na GitHubu",
+          "mitLicensed": "Licence MIT",
+          "dockerImage": "Image na Docker Hubu",
+          "openapiSpec": "Specifikace OpenAPI",
+          "mcpServer": "MCP server"
+        }
+      },
+      "selfHost": {
+        "kicker": "Self-host",
+        "title": "Your work. Your server. Your data.",
+        "description": "Three containers and one command. Everything lives in your Postgres, exporting is a pg_dump away, and nothing phones home — no vendor lock-in by design.",
+        "cards": {
+          "postgres": {
+            "title": "One Postgres, one web image",
+            "body": "Postgres 16 with the pgvector extension powers search; Redis 7 is along for the ride. No Mongo, no Elastic, no sidecar zoo."
+          },
+          "migrations": {
+            "title": "Migrations run on boot",
+            "body": "The image applies every database migration at startup. Upgrading is pulling a newer tag and restarting — nothing manual."
+          },
+          "health": {
+            "title": "Health you can probe",
+            "body": "GET /api/health returns 200 when the app is ready — wire it to your load balancer, uptime checks, or compose healthcheck."
+          },
+          "pin": {
+            "title": "Pin the version you trust",
+            "body": "Set TASKNEBULA_IMAGE=neuraparse/tasknebula:0.4.0 to lock a release, or follow :latest for the bleeding edge."
+          }
+        },
+        "terminalTitle": "quickstart — Docker Desktop or any Docker host (~2 min)",
+        "copyQuickstart": "Copy quickstart commands",
+        "quickstartAria": "Self-host quickstart commands",
+        "terminalNote": "The web image waits for Postgres, runs migrations, then serves on <code>http://localhost:3000</code> — open it and finish the first-run admin wizard. Image: <imageLink>neuraparse/tasknebula</imageLink>."
+      },
+      "migrate": {
+        "kicker": "Migrate",
+        "title": "Move from Jira or Linear in an afternoon",
+        "description": "Switching tools shouldn't mean losing your history or your process. Import what you have, map it to TaskNebula, and keep working the way your team already does.",
+        "steps": {
+          "issues": {
+            "title": "Bring your issues over",
+            "body": "Import issues from Jira and Linear with their descriptions, comments, and history intact — not flattened into a CSV dump."
+          },
+          "labels": {
+            "title": "Labels and sprints come too",
+            "body": "Labels, components, and active sprints land as first-class records, so your boards and backlog look familiar on day one."
+          },
+          "fields": {
+            "title": "Map fields, not just names",
+            "body": "Match statuses, priorities, and custom fields to TaskNebula equivalents during import — review the mapping before anything writes."
+          },
+          "workflow": {
+            "title": "Keep your workflow",
+            "body": "Your statuses, swimlanes, and conventions move with you. Switch tools without retraining the team or rebuilding process from scratch."
+          }
+        },
+        "note": "Imports run against your own database and are fully reversible — nothing leaves your server, and you can re-run a mapping until it looks right."
+      },
+      "aiMcp": {
+        "kicker": "AI-native",
+        "title": "Agents work the backlog with you.",
+        "description": "TaskNebula was built for the agent era. Ask questions across your whole workspace, let AI triage and estimate new work, and give external agents real tools through a first-class MCP server.",
+        "capabilities": {
+          "ask": {
+            "title": "Ask your workspace",
+            "body": "The /api/ask RAG endpoint answers in natural language over your issues, docs, and comments — grounded in pgvector retrieval, with citations back to the source."
+          },
+          "triage": {
+            "title": "AI triage & estimates",
+            "body": "Suggested priority, labels, and effort land on new issues — backed by real OpenAI and Anthropic calls, a cost guard, and tracing. You stay in control: accept or dismiss."
+          },
+          "mcp": {
+            "title": "MCP tools for agents",
+            "body": "@tasknebula/mcp-server exposes the backlog over MCP — HTTP at /api/mcp or stdio — so external agents create, search, and move issues with revocable keys."
+          }
+        },
+        "mock": {
+          "session": "agent session — @tasknebula/mcp-server",
+          "connected": "connected",
+          "agent": "agent",
+          "planning": "planning the sprint cleanup",
+          "call": "call",
+          "result": "result",
+          "issueCount": "3 issues",
+          "applied": "applied",
+          "priorityHigh": "priority: high",
+          "labelFlaky": "label: flaky",
+          "resultLabels": {
+            "checkout": "checkout",
+            "flaky": "flaky",
+            "tests": "tests"
+          }
+        }
+      },
+      "workflow": {
+        "kicker": "The flow",
+        "title": "One thread from intake to shipped.",
+        "description": "No tool-hopping between a tracker, a planning doc, and an agent console. The work moves through a single surface — humans and agents on the same timeline.",
+        "stepLabel": "STEP {step}",
+        "steps": {
+          "intake": {
+            "title": "Intake without the noise",
+            "body": "Issues, requests, and inbound from your agents land in one queue. Triage suggests priority and labels so the backlog starts structured, not as a pile."
+          },
+          "plan": {
+            "title": "Plan the sprint in place",
+            "body": "Pull from the backlog into a sprint, set fix versions and components, and read scope at a glance. Planning lives next to the work, not in a separate doc."
+          },
+          "build": {
+            "title": "Build alongside agents",
+            "body": "Agents are first-class teammates over MCP — they pick up issues, comment, and open work the same way people do, with every action on the shared timeline."
+          },
+          "ship": {
+            "title": "Ship and track the outcome",
+            "body": "Close issues with a real resolution, cut the version, and watch velocity and cycle time update live. Done means done — not a column you forgot to clear."
+          }
+        },
+        "visuals": {
+          "intake": {
+            "title": "Triage queue",
+            "newCount": "3 new",
+            "sources": {
+              "inbound": "Inbound",
+              "agent": "Agent",
+              "support": "Support"
+            },
+            "chips": {
+              "high": "High",
+              "api": "api",
+              "bug": "bug"
+            }
+          },
+          "plan": {
+            "columns": {
+              "backlog": "Backlog",
+              "sprint5": "Sprint 5"
+            },
+            "checkout": "checkout"
+          },
+          "build": {
+            "title": "Live activity",
+            "events": {
+              "pickedUp": "Picked up WEB-204",
+              "openedPr": "Opened PR · 4 files",
+              "commented": "Commented on API-88"
+            }
+          },
+          "ship": {
+            "velocity": "Velocity",
+            "shipped": "Shipped",
+            "resolution": {
+              "fixed": "Fixed",
+              "wontDo": "Won't do"
+            }
+          }
+        }
+      },
+      "comparison": {
+        "kicker": "Compare",
+        "title": "TaskNebula vs Jira vs Linear vs Plane",
+        "description": "All four are capable tools. Here is exactly where TaskNebula differs — open by default, yours to host, AI-native. Nothing more, nothing less.",
+        "tableAria": "Feature comparison table",
+        "tableCaption": "Feature comparison between TaskNebula, Jira, Linear, and Plane. Each cell is marked Yes, Partial, or No, followed by a short detail.",
+        "featureHeader": "Feature",
+        "marks": {
+          "yes": "Yes",
+          "partial": "Partial",
+          "no": "No"
+        },
+        "rows": {
+          "openSource": {
+            "feature": "Open source (MIT)",
+            "notes": {
+              "tasknebula": "Entire codebase, MIT",
+              "jira": "Proprietary",
+              "linear": "Proprietary",
+              "plane": "AGPL-3.0 core"
+            }
+          },
+          "selfHost": {
+            "feature": "Self-host (one Docker Compose)",
+            "notes": {
+              "tasknebula": "Postgres + Redis + one web image",
+              "jira": "Cloud-first; DC phased out",
+              "linear": "Cloud only",
+              "plane": "Docker / Kubernetes"
+            }
+          },
+          "price": {
+            "feature": "Price",
+            "notes": {
+              "tasknebula": "Free, unlimited users, self-hosted",
+              "jira": "Free ≤10 users, then per-seat",
+              "linear": "Free tier, then per-seat",
+              "plane": "Free ≤12 users, then per-seat"
+            }
+          },
+          "aiAgents": {
+            "feature": "AI agents native + MCP server",
+            "notes": {
+              "tasknebula": "Built-in agents + MIT MCP server",
+              "jira": "Rovo + remote MCP, cloud-only",
+              "linear": "AI + remote MCP server",
+              "plane": "Plane AI (credits) + MCP"
+            }
+          },
+          "keyboard": {
+            "feature": "Keyboard-first",
+            "notes": {
+              "tasknebula": "Command palette + shortcuts",
+              "jira": "Limited shortcuts",
+              "linear": "Best-in-class",
+              "plane": "Command-K palette"
+            }
+          },
+          "realtime": {
+            "feature": "Realtime collab",
+            "notes": {
+              "tasknebula": "Live cursors via Yjs",
+              "jira": "Live sync, no co-editing",
+              "linear": "Live sync",
+              "plane": "Live sync"
+            }
+          },
+          "import": {
+            "feature": "Jira / Linear import",
+            "notes": {
+              "tasknebula": "CSV + API import",
+              "jira": "Imports to Jira",
+              "linear": "Jira import built-in",
+              "plane": "Jira / Linear importers"
+            }
+          },
+          "sprints": {
+            "feature": "Sprints / Cycles",
+            "notes": {
+              "tasknebula": "Sprints + backlog",
+              "jira": "Scrum + Kanban",
+              "linear": "Cycles",
+              "plane": "Cycles + modules"
+            }
+          },
+          "structure": {
+            "feature": "Labels / Components / Versions",
+            "notes": {
+              "tasknebula": "First-class, all three",
+              "jira": "All three",
+              "linear": "Labels + projects",
+              "plane": "Labels + modules"
+            }
+          },
+          "api": {
+            "feature": "API / Projects-as-code",
+            "notes": {
+              "tasknebula": "Open REST + OpenAPI spec",
+              "jira": "REST API, no IaC",
+              "linear": "GraphQL API",
+              "plane": "REST API"
+            }
+          }
+        },
+        "footnote": "Vendor details reflect public documentation and pricing pages as of June 2026 and may change. Jira is a trademark of Atlassian, Linear of Linear Orbit, and Plane of Plane Software — all are solid products, none affiliated with TaskNebula."
+      },
+      "faq": {
+        "kicker": "FAQ",
+        "title": "Fair questions, straight answers.",
+        "description": "No sales gate, no asterisks. If yours is missing, open a GitHub issue — public answers beat private threads.",
+        "statusPrompt": "Still unsure? <link>Ask on GitHub</link> or read the live status in the docs.",
+        "items": {
+          "freeMit": {
+            "question": "Is TaskNebula really free, and really MIT?",
+            "answer": "Yes — the whole app is MIT licensed: boards, sprints, docs, analytics, the AI surfaces, and the MCP server. No open-core split, no paywalled tier, no per-seat fee. Self-host it and run it forever for unlimited users; fork it if you want to."
+          },
+          "selfHost": {
+            "question": "Can I self-host it?",
+            "answer": "That is the default. Bring Docker and you get three containers — Postgres 16 with pgvector, Redis 7, and the neuraparse/tasknebula web image. Migrations run on boot, GET /api/health is your probe endpoint, and a one-line compose quickstart gets you to localhost:3000. There is no hosted-only feature you lose by running it yourself."
+          },
+          "aiKeys": {
+            "question": "Do I need the AI features? Can I bring my own keys?",
+            "answer": "AI is optional — every board, sprint, and doc works with no model keys configured. When you want it, you bring your own OpenAI or Anthropic key as environment variables, so spend and data residency stay yours. There is a cost guard so a runaway prompt cannot run up your bill."
+          },
+          "aiReality": {
+            "question": "How real are the AI features today?",
+            "answer": "We build them in the open. The data model and endpoints — triage suggestions, pgvector semantic search, and the /api/ask RAG endpoint — are live, and they make real OpenAI and Anthropic calls. Some surfaces are still labeled preview while we harden them; we would rather say that here than have you discover it after install."
+          },
+          "mcpServer": {
+            "question": "What is the MCP server?",
+            "answer": "An MCP (Model Context Protocol) server exposes TaskNebula as tools — create, search, move, and comment on issues — so agents like Claude Code and Cursor can drive your tracker. It ships with the repo, HTTP at /api/mcp or stdio via @tasknebula/mcp-server, and is MIT licensed. Heads up: end-to-end agent auth depends on the REST API accepting API keys, which is still being wired, so treat it as preview today."
+          },
+          "imports": {
+            "question": "Does it import from Jira or Linear?",
+            "answer": "Yes — there are importers for Jira, Linear, GitHub, and CSV. Each runs with a preview step so you can inspect the field mapping before anything is written, and you can keep your old tool read-only while you cut over."
+          },
+          "productionReady": {
+            "question": "Is it production-ready?",
+            "answer": "The core tracker — issues, boards, sprints, docs, search, permissions, REST API, and OpenAPI spec — is solid and self-hostable. Some edges are still maturing: OAuth login needs a DB adapter, so use credentials auth for now; realtime collab env vars are not yet plumbed into the Docker images; and parts of the AI/MCP surface are preview. We track all of it openly in docs/STATUS.md."
+          },
+          "dataVisibility": {
+            "question": "Who can see my data?",
+            "answer": "You decide. Self-hosted, everything lives in your Postgres on your infrastructure and exports with a plain pg_dump — no telemetry phones home. Inside the product, workspaces are isolated per organization with role-based access, permission schemes, and audit logs."
+          }
+        }
+      },
+      "features": {
+        "kicker": "The workflow",
+        "title": "From keystroke to ship — one open backlog.",
+        "description": "Plan, execute, and reason over the work in the same surface. Keyboard-first delivery, an AI layer you can audit, and agents that move tickets through a real MCP server — all MIT-licensed and self-hostable.",
+        "cards": {
+          "keyboard": {
+            "title": "Keyboard-first boards and sprints",
+            "body": "Drive the whole board from one Cmd+K palette — search, navigate, and run actions without leaving the keys. Drag across columns, plan sprints, and read burndown in the same view."
+          },
+          "import": {
+            "title": "Import from Jira and Linear",
+            "body": "Bring your backlog with you — Jira, Linear, and CSV importers map issues, statuses, and metadata so you start full, not empty."
+          },
+          "structure": {
+            "title": "Jira-parity structure",
+            "body": "First-class labels, components, fix versions, and a resolution model — backlog structure stored in real tables and REST APIs, not JSON strings."
+          },
+          "ai": {
+            "title": "AI-native, auditable",
+            "body": "Real OpenAI and Anthropic calls behind a cost guard and tracing — triage suggestions, AI estimates, and a /api/ask RAG endpoint over pgvector. No black boxes."
+          },
+          "agents": {
+            "title": "Agents work the backlog",
+            "body": "A real MCP server — HTTP at /api/mcp or stdio — lets coding agents create, search, and move issues. Backed by a REST API, OpenAPI spec, revocable keys, and webhooks."
+          },
+          "realtime": {
+            "title": "Realtime collaboration",
+            "body": "Specs and issue docs edit live — Tiptap on Yjs with presence and conflict-free merges, so two people on one doc just works."
+          },
+          "selfHost": {
+            "title": "Self-host in minutes",
+            "body": "One Docker image, Postgres, and you own the data. Multi-tenant from the schema up — every table is organization-scoped, no vendor lock-in."
+          },
+          "analytics": {
+            "title": "Analytics close to execution",
+            "body": "Velocity, cycle time, and priority mix per project — with a resolution model that separates Done from Won't Fix and Duplicate."
+          }
+        },
+        "visuals": {
+          "palette": {
+            "query": "move WEB-18 to review",
+            "moveAction": "Move WEB-18 → In Review",
+            "assignAction": "Assign WEB-18 to me",
+            "columns": {
+              "todo": "To Do",
+              "inProgress": "In Progress",
+              "done": "Done"
+            }
+          },
+          "import": {
+            "statusMapped": "Status mapped",
+            "labelsMapped": "Labels mapped"
+          },
+          "structure": {
+            "labels": {
+              "api": "api",
+              "design": "design",
+              "bug": "bug"
+            },
+            "fixVersion": "Fix version",
+            "component": "Component"
+          },
+          "ai": {
+            "triageHigh": "Triage: High",
+            "estimate": "Estimate: 5 pts",
+            "accept": "Accept",
+            "dismiss": "Dismiss"
+          },
+          "collab": {
+            "title": "Launch plan — Q3",
+            "liveCount": "2 live"
+          },
+          "deploy": {
+            "healthOk": "/api/health · ok",
+            "tenantIsolation": "Tenant isolation"
+          },
+          "analytics": {
+            "velocity": "Velocity",
+            "resolution": "Resolution",
+            "fixed": "Fixed",
+            "wontDo": "Won't do",
+            "duplicate": "Duplicate"
+          }
+        }
+      },
+      "showcase": {
+        "frame": {
+          "board": "Board",
+          "preview": "Workspace preview",
+          "live": "Live",
+          "boardUrl": "{board} / Current sprint"
+        },
+        "board": {
+          "kicker": "Board",
+          "title": "A board you can actually move through.",
+          "description": "Switch projects, drag issues between stages, and keep details close without fake motion or noisy chrome.",
+          "dragHint": "Drag cards between stages.",
+          "boards": {
+            "website": "Website",
+            "api": "API Platform",
+            "mobile": "Mobile"
+          },
+          "columns": {
+            "backlog": "Backlog",
+            "todo": "To Do",
+            "inProgress": "In Progress",
+            "inReview": "In Review",
+            "done": "Done"
+          },
+          "priorities": {
+            "critical": "critical",
+            "high": "high",
+            "medium": "medium",
+            "low": "low"
+          },
+          "meta": {
+            "stage": "Stage {stage}",
+            "owner": "Owner {owner}",
+            "comments": "{count, plural, one {# comment} other {# comments}}"
+          },
+          "unknownStage": "Unknown",
+          "moveBack": "Move back",
+          "moveForward": "Move forward",
+          "checklist": "Checklist",
+          "dropIssue": "Drop an issue here",
+          "issues": {
+            "web18": {
+              "title": "Refine launch page hierarchy",
+              "summary": "Tighten hero, simplify copy, and make the landing feel more premium.",
+              "checklist": {
+                "first": "Reduce copy density",
+                "second": "Improve visual rhythm",
+                "third": "Finalize CTA placement"
+              }
+            },
+            "web21": {
+              "title": "Docs intro for redesign project",
+              "summary": "Create a project note structure linked to the main redesign issue.",
+              "checklist": {
+                "first": "Outline launch notes",
+                "second": "Link blockers to docs",
+                "third": "Add revision checkpoints"
+              }
+            },
+            "web24": {
+              "title": "Fix mobile footer alignment",
+              "summary": "Resolve spacing drift and prevent CTA overlap on smaller screens.",
+              "checklist": {
+                "first": "Audit breakpoints",
+                "second": "Normalize spacing tokens",
+                "third": "QA Safari mobile"
+              }
+            },
+            "web09": {
+              "title": "Release marketing epic",
+              "summary": "Coordinate launch assets, copy, and release checklist for the redesign.",
+              "checklist": {
+                "first": "Finalize visuals",
+                "second": "Lock release notes",
+                "third": "Review analytics events"
+              }
+            },
+            "web05": {
+              "title": "Shipping checklist",
+              "summary": "Final deploy checklist for copy, assets, analytics, and docs.",
+              "checklist": {
+                "first": "Docs confirmed",
+                "second": "Analytics checked",
+                "third": "Post-launch owner assigned"
+              }
+            },
+            "api12": {
+              "title": "Partner auth hardening",
+              "summary": "Tighten token refresh paths and rollout sequence for partner access.",
+              "checklist": {
+                "first": "Review token lifecycle",
+                "second": "Lock scopes",
+                "third": "Publish rollout note"
+              }
+            },
+            "api09": {
+              "title": "Rate limiting policy",
+              "summary": "Define thresholds and recovery behavior for public endpoints.",
+              "checklist": {
+                "first": "Draft policy",
+                "second": "Add dashboard checks",
+                "third": "Review with support"
+              }
+            },
+            "api17": {
+              "title": "Webhook retry bug",
+              "summary": "Retry window is shorter than expected under queue pressure.",
+              "checklist": {
+                "first": "Reproduce in staging",
+                "second": "Patch retry timing",
+                "third": "Verify audit logging"
+              }
+            },
+            "api03": {
+              "title": "Versioning epic",
+              "summary": "Shape versioning and migration guidance for upcoming platform changes.",
+              "checklist": {
+                "first": "Define policy",
+                "second": "Write migration guide",
+                "third": "Add rollout checklist"
+              }
+            },
+            "api22": {
+              "title": "Observability cleanup",
+              "summary": "Bring endpoint health signals and alerts into a cleaner baseline.",
+              "checklist": {
+                "first": "Refine alert names",
+                "second": "Review dashboard cards",
+                "third": "Close migration notes"
+              }
+            },
+            "app14": {
+              "title": "Offline queue polish",
+              "summary": "Make offline sync state clearer and reduce ambiguous empty states.",
+              "checklist": {
+                "first": "Review queue states",
+                "second": "Refine copy",
+                "third": "Test reconnect flow"
+              }
+            },
+            "app11": {
+              "title": "Push preference setup",
+              "summary": "Add better first-run setup for notifications and reminders.",
+              "checklist": {
+                "first": "Refine toggles",
+                "second": "Clarify permission states",
+                "third": "Document fallback flow"
+              }
+            },
+            "app06": {
+              "title": "Board drag bug on tablets",
+              "summary": "Dragging cards feels sticky under split-screen tablet layouts.",
+              "checklist": {
+                "first": "Fix pointer capture",
+                "second": "QA iPad split view",
+                "third": "Verify velocity"
+              }
+            },
+            "app02": {
+              "title": "Release readiness epic",
+              "summary": "Coordinate release, QA, notes, and store assets for the mobile launch.",
+              "checklist": {
+                "first": "Store assets",
+                "second": "Release notes",
+                "third": "QA sign-off"
+              }
+            },
+            "app19": {
+              "title": "Checklist sync done",
+              "summary": "Checklist sync is stable across devices and background reconnects.",
+              "checklist": {
+                "first": "Android check",
+                "second": "iOS check",
+                "third": "Docs update"
+              }
+            }
+          }
+        },
+        "team": {
+          "frameTitle": "Team",
+          "frameUrl": "Workspace / Team",
+          "preview": "Workspace preview",
+          "live": "Live",
+          "members": "Members",
+          "activity": "Activity",
+          "roles": {
+            "product": "Product",
+            "techLead": "Tech Lead",
+            "engineer": "Engineer",
+            "design": "Design"
+          },
+          "activityItems": {
+            "moved": "moved WEB-18 to In Review",
+            "linked": "linked docs to API-12",
+            "closed": "closed APP-19"
+          },
+          "times": {
+            "now": "just now",
+            "fourMinutes": "4m ago",
+            "elevenMinutes": "11m ago"
+          }
+        },
+        "workflow": {
+          "frameTitle": "Workflow",
+          "frameUrl": "Project settings / Workflow",
+          "preview": "Workspace preview",
+          "live": "Live",
+          "steps": {
+            "backlog": "Backlog",
+            "todo": "To Do",
+            "inProgress": "In Progress",
+            "inReview": "In Review",
+            "done": "Done"
+          },
+          "transitionRules": "Transition rules",
+          "rules": {
+            "assigneeRequired": "Assignee required",
+            "subtasksComplete": "All subtasks complete",
+            "reviewApproved": "Review approved"
+          },
+          "auto": "Auto"
+        },
+        "sprint": {
+          "frameTitle": "Sprint",
+          "frameUrl": "Sprint 4 / Overview",
+          "preview": "Workspace preview",
+          "live": "Live",
+          "title": "Sprint 4 — Auth & Notifications",
+          "active": "Active",
+          "duration": "14 days · 18 issues",
+          "remaining": "5 days remaining",
+          "stats": {
+            "total": "Total",
+            "done": "Done",
+            "active": "Active",
+            "points": "Points"
+          },
+          "burndown": "Burndown"
+        },
+        "analytics": {
+          "frameTitle": "Analytics",
+          "frameUrl": "Project / Analytics",
+          "preview": "Workspace preview",
+          "live": "Live",
+          "stats": {
+            "velocity": "Velocity",
+            "cycle": "Cycle",
+            "flow": "Flow",
+            "bugs": "Bugs"
+          },
+          "velocity": "Velocity",
+          "priorityMix": "Priority mix",
+          "priorities": {
+            "critical": "Critical",
+            "high": "High",
+            "medium": "Medium",
+            "low": "Low"
+          }
+        }
+      },
+      "meta": {
+        "title": "TaskNebula — Open-source, AI-native Jira & Linear alternative",
+        "description": "Keyboard-first boards, sprints, and docs with an MCP server so AI agents work the backlog with you. MIT licensed — self-host with one Docker Compose file.",
+        "skipToContent": "Skip to content"
+      }
+    },
+    "intake": {
+      "submitMetaTitle": "Submit · TaskNebula"
+    }
   },
   "settingsClients": {
     "common": {
@@ -4823,7 +5858,8 @@
       "invitationResent": "Invitation resent",
       "adminCreatedOnlyInviteWarning": "Je zapnutý režim pouze účtů vytvořených administrátorem. Nové externí členy musí nejprve vytvořit super administrátor, teprve potom je můžete přidat sem.",
       "adminCreatedOnlyInviteBlockedTitle": "Pozvánky jsou vypnuté",
-      "adminCreatedOnlyInviteBlockedDescription": "Nejprve vytvořte uživatele v Admin > Users a potom přidejte aktivní účet do této organizace."
+      "adminCreatedOnlyInviteBlockedDescription": "Nejprve vytvořte uživatele v Admin > Users a potom přidejte aktivní účet do této organizace.",
+      "emailPlaceholder": "member@example.com"
     },
     "org": {
       "selectOrg": "Vyberte organizaci pro načtení nastavení.",
@@ -4885,7 +5921,9 @@
         "projects": "Projekty",
         "teamspaces": "Týmové prostory",
         "apiKeys": "API klíče"
-      }
+      },
+      "logoPlaceholder": "https://cdn.example.com/logo.png",
+      "domainPlaceholder": "company.com"
     },
     "audit": {
       "loadFailed": "Nepodařilo se načíst cíle",
@@ -5428,6 +6466,39 @@
           "micNotStarted": "Mikrofon se nepodařilo spustit. Možná jej používá jiná aplikace.",
           "audioEngineFailed": "Zvukový engine prohlížeče pro toto zařízení selhal. Ukončete ostatní zvukové aplikace nebo změňte mikrofon a zkuste to znovu.",
           "micNotFound": "Pro tuto relaci prohlížeče nebyl nalezen žádný mikrofon."
+        },
+        "noAudioTrackError": "No audio track was returned by the browser.",
+        "microphoneStartTimeout": "Timed out while starting the microphone.",
+        "microphoneRecoveryHint": {
+          "chromium": "Look for the microphone prompt in the address bar and choose Allow this time or Allow on every visit. If it was dismissed, open Chrome site settings for this site and allow the microphone.",
+          "edge": "Look for the microphone prompt in the address bar. If it was dismissed, open Edge Site permissions for this site and allow the microphone.",
+          "firefox": "Firefox usually shows microphone access near the left side of the address bar. If it disappeared, open the padlock or Page Info permissions and allow the microphone for this site.",
+          "safari": "Safari may keep microphone access under Safari > Settings > Websites > Microphone, or in the website controls in the address bar.",
+          "unknown": "Check the browser microphone prompt or this site's permissions and allow microphone access."
+        },
+        "pendingMicrophoneJoin": "Joined muted while the browser finishes microphone access. {hint} TaskNebula will turn your mic on automatically if access succeeds.",
+        "pendingMicrophoneRuntime": "Browser is still waiting for microphone access. {hint} TaskNebula will unmute automatically if access succeeds.",
+        "timedOutMicrophoneAccess": "Microphone access timed out while waiting for the browser prompt. {hint} Then try the mic button again.",
+        "timedOutPendingMicrophonePrompt": "Microphone access timed out while waiting for the browser prompt. {hint} If you approve it now, TaskNebula will still turn your mic on automatically. If no prompt appears, refresh this page or try the mic button again.",
+        "deniedMicrophoneAccess": "Microphone permission was denied. {hint}",
+        "microphoneCaptureUnsupported": "This browser does not support microphone capture.",
+        "microphoneNotFound": "No microphone was found. Check your audio input device and try again.",
+        "microphoneBusy": "Your microphone is busy in another app. Close other audio apps and try again.",
+        "microphoneAccessUnavailable": "Microphone access is unavailable. {hint}",
+        "permissionStateLabel": {
+          "allowed": "Allowed",
+          "blocked": "Blocked",
+          "waitingForBrowserDecision": "Waiting for browser decision",
+          "browserManaged": "Browser-managed"
+        },
+        "permissionHelp": {
+          "deviceLabelsHiddenUntilPermission": "Device names stay hidden until the browser grants microphone access.",
+          "grantedWithDevicesAndLabels": "Microphone access is already allowed. You can switch between available microphones here.",
+          "grantedLabelsHidden": "Microphone access is allowed, but this browser has not exposed device names yet. Use Refresh devices after returning from browser settings.",
+          "grantedNoDevices": "Microphone access is allowed, but no audio input devices are currently visible to the browser.",
+          "denied": "Microphone access is blocked for this site. {hint}",
+          "prompt": "This browser is still waiting for a microphone decision. {hint}{labelsHiddenNote}",
+          "unknown": "This browser does not expose a reliable microphone permission state before access. {hint}{labelsHiddenNote}"
         }
       }
     }
@@ -5556,7 +6627,11 @@
     "oversightDefault": "Výchozí dohled",
     "reviewRequired": "Vyžadována kontrola",
     "autoApplyAllowed": "Automatické použití povoleno",
-    "footerContact": "Máte dotazy ohledně transparentnosti AI, práv subjektů údajů nebo těchto karet modelů? Napište na <link></link>."
+    "footerContact": "Máte dotazy ohledně transparentnosti AI, práv subjektů údajů nebo těchto karet modelů? Napište na <link></link>.",
+    "meta": {
+      "title": "AI Model Cards — TaskNebula",
+      "description": "Public AI transparency disclosures for every AI feature TaskNebula deploys, as required by EU AI Act Article 50."
+    }
   },
   "presence": {
     "group_viewing": "{count, plural, one {# osoba sleduje} few {# osoby sledují} other {# osob sleduje}}",
@@ -5577,5 +6652,303 @@
     "sprint_planning": "Plánování sprintu",
     "bulk_sprint_creation": "Hromadné vytváření sprintů",
     "unknown": "{kind}"
+  },
+  "metadata": {
+    "root": {
+      "title": "TaskNebula - AI-Native Project Management",
+      "description": "Real-time, keyboard-first project management platform powered by AI"
+    }
+  },
+  "agentApiErrors": {
+    "fallback": {
+      "fetchWorkspaceAgents": "Failed to fetch workspace AI agents.",
+      "updateWorkspaceAgents": "Failed to update workspace AI agents.",
+      "createModelConfig": "Failed to create AI model config.",
+      "updateModelConfig": "Failed to update AI model config.",
+      "archiveModelConfig": "Failed to archive AI model config.",
+      "fetchProjectAgents": "Failed to fetch project AI agents.",
+      "updateProjectAgents": "Failed to update project AI agents.",
+      "runProjectAgent": "Failed to run project agent.",
+      "fetchAdminControl": "Failed to fetch admin agent control.",
+      "fetchAgentSessions": "Failed to fetch agent sessions.",
+      "dispatchAgent": "Failed to dispatch agent.",
+      "fetchLocalRunners": "Failed to fetch local agent runners.",
+      "updateLocalRunner": "Failed to update local agent runner.",
+      "updateAdminControl": "Failed to update admin agent control."
+    },
+    "server": {
+      "unauthorized": "You need to sign in before continuing.",
+      "forbidden": "You do not have permission to perform this action.",
+      "insufficientPermissions": "You do not have enough permission to perform this action.",
+      "superAdminRequired": "Super admin access is required.",
+      "validationFailed": "The request could not be validated. Check the fields and try again.",
+      "invalidBody": "The request body is invalid.",
+      "organizationRequired": "Select an organization first.",
+      "organizationNotFound": "Organization not found.",
+      "issueNotFound": "Issue not found.",
+      "issueViewDenied": "You do not have permission to view this issue.",
+      "issueDispatchDenied": "You do not have permission to dispatch agents on this issue.",
+      "createAgentSessionFailed": "Failed to create the agent session.",
+      "manageWorkspaceAgentsDenied": "Managing AI agents requires organization settings permission.",
+      "manageModelConfigsDenied": "Managing model configs requires organization settings permission.",
+      "modelConfigNotFound": "Model config not found.",
+      "updateWorkspaceAgentsFailed": "Failed to update workspace AI agents.",
+      "createModelConfigFailed": "Failed to create AI model config.",
+      "updateModelConfigFailed": "Failed to update AI model config.",
+      "projectAccessDenied": "Project not found or access denied.",
+      "projectContextUnavailable": "Project context could not be loaded.",
+      "projectNotFound": "Project not found.",
+      "manageProjectAgentsDenied": "You do not have permission to manage project agents.",
+      "runProjectAgentsDenied": "You do not have permission to run project agents.",
+      "updateProjectAgentsFailed": "Failed to update project AI agents.",
+      "agentsGloballyPaused": "Agents are paused globally by the admin team.",
+      "workspaceAgentsDisabled": "Workspace AI agents are disabled.",
+      "projectAgentsDisabled": "Project AI agents are disabled for this project.",
+      "capabilityDisabled": "This agent capability is disabled for the project.",
+      "tooManyRuns": "Too many agent runs are already in progress. Try again in a moment.",
+      "runProjectAgentFailed": "Failed to run project agent.",
+      "updateAdminControlFailed": "Failed to update admin agent control."
+    }
+  },
+  "hookErrors": {
+    "notifications": {
+      "fetch": "Nepodařilo se načíst oznámení",
+      "markRead": "Nepodařilo se označit oznámení jako přečtené",
+      "markAllRead": "Nepodařilo se označit všechna oznámení jako přečtená",
+      "delete": "Nepodařilo se odstranit oznámení"
+    },
+    "inbox": {
+      "fetch": "Nepodařilo se načíst doručenou poštu",
+      "snooze": "Nepodařilo se odložit položku v doručené poště",
+      "markRead": "Nepodařilo se označit položku jako přečtenou",
+      "markAllRead": "Nepodařilo se označit všechny položky jako přečtené",
+      "catchMeUp": "Nepodařilo se načíst souhrn pro dohnání"
+    },
+    "activities": {
+      "fetch": "Nepodařilo se načíst aktivity"
+    },
+    "members": {
+      "fetchOrganizationMembers": "Nepodařilo se načíst členy organizace"
+    },
+    "pushNotifications": {
+      "notConfigured": "Push oznámení nejsou nakonfigurována",
+      "permissionDenied": "Oprávnění k oznámením bylo zamítnuto",
+      "saveSubscription": "Nepodařilo se uložit odběr",
+      "device": {
+        "mobile": "Mobilní zařízení",
+        "tablet": "Tablet",
+        "desktop": "Počítač"
+      }
+    },
+    "presence": {
+      "fetch": "Nepodařilo se načíst přítomnost",
+      "update": "Nepodařilo se aktualizovat přítomnost",
+      "remove": "Nepodařilo se odebrat přítomnost"
+    },
+    "workflowStatuses": {
+      "load": "Nepodařilo se načíst stavy pracovního postupu"
+    },
+    "customFields": {
+      "fetch": "Failed to fetch custom fields",
+      "fetchValues": "Failed to fetch custom field values",
+      "create": "Failed to create custom field",
+      "update": "Failed to update custom field",
+      "delete": "Failed to delete custom field",
+      "setValue": "Failed to set custom field value"
+    },
+    "permissions": {
+      "fetchOrganization": "Failed to fetch organization permissions"
+    },
+    "analytics": {
+      "velocity": "Failed to fetch velocity data",
+      "projectHealth": "Failed to fetch project health data",
+      "burndown": "Failed to fetch burndown data"
+    },
+    "featureFlags": {
+      "fetchAll": "Failed to fetch feature flags",
+      "fetchOne": "Failed to fetch feature flag",
+      "create": "Failed to create feature flag",
+      "update": "Failed to update feature flag",
+      "delete": "Failed to delete feature flag"
+    },
+    "attachments": {
+      "fetch": "Failed to fetch attachments",
+      "upload": "Failed to upload file",
+      "delete": "Failed to delete attachment"
+    },
+    "comments": {
+      "fetch": "Failed to fetch comments",
+      "create": "Failed to create comment",
+      "update": "Failed to update comment",
+      "delete": "Failed to delete comment",
+      "toggleReaction": "Failed to toggle reaction"
+    },
+    "issueLinks": {
+      "fetch": "Failed to fetch issue links",
+      "create": "Failed to create issue link",
+      "delete": "Failed to delete issue link"
+    },
+    "issues": {
+      "fetch": "Failed to fetch issues",
+      "idRequired": "Issue ID is required",
+      "fetchOne": "Failed to fetch issue",
+      "create": "Failed to create issue",
+      "delete": "Failed to delete issue"
+    },
+    "projectPermissions": {
+      "fetchPermissions": "Failed to fetch permissions",
+      "fetchUserRole": "Failed to fetch user role",
+      "fetchMembers": "Failed to fetch members"
+    },
+    "sprints": {
+      "fetch": "Failed to fetch sprints",
+      "fetchOne": "Failed to fetch sprint",
+      "fetchIssues": "Failed to fetch sprint issues",
+      "create": "Failed to create sprint",
+      "update": "Failed to update sprint",
+      "delete": "Failed to delete sprint",
+      "assignIssue": "Failed to assign issue to sprint"
+    },
+    "version": {
+      "load": "Failed to load version information",
+      "startSelfUpdate": "Failed to start self-update",
+      "updatePreferences": "Failed to update update preferences"
+    },
+    "teamspaces": {
+      "fetch": "Failed to fetch teamspaces",
+      "organizationAndTeamspaceRequired": "Organization and teamspace are required",
+      "fetchMembers": "Failed to fetch teamspace members",
+      "noOrganizationSelected": "No organization selected",
+      "create": "Failed to create teamspace",
+      "update": "Failed to update teamspace",
+      "delete": "Failed to delete teamspace",
+      "noTeamspaceSelected": "No teamspace selected",
+      "addMember": "Failed to add teamspace member",
+      "updateMember": "Failed to update teamspace member",
+      "removeMember": "Failed to remove teamspace member"
+    },
+    "docs": {
+      "fetchSpaces": "Failed to fetch document spaces",
+      "fetchPages": "Failed to fetch document pages",
+      "fetchPage": "Failed to fetch document page",
+      "fetchTree": "Failed to fetch document tree",
+      "fetchRevisions": "Failed to fetch document revisions",
+      "search": "Failed to search docs",
+      "createPage": "Failed to create document page",
+      "updatePage": "Failed to update document page",
+      "restoreRevision": "Failed to restore document revision",
+      "openPageBeforeSharing": "Open a page before updating sharing",
+      "updateSharing": "Failed to update document sharing",
+      "fetchIssueDocs": "Failed to fetch issue docs",
+      "attachDoc": "Failed to attach doc",
+      "detachDoc": "Failed to detach doc",
+      "fetchAttachments": "Failed to fetch document attachments",
+      "uploadAttachment": "Failed to upload document attachment",
+      "deleteAttachment": "Failed to delete document attachment"
+    },
+    "chat": {
+      "loadBootstrap": "Failed to load chat bootstrap",
+      "loadLiveCalls": "Failed to load live calls",
+      "loadMessages": "Failed to load messages",
+      "loadOlderMessages": "Failed to load older messages",
+      "loadIssueConversation": "Failed to load issue conversation",
+      "loadDocumentConversation": "Failed to load document conversation",
+      "noRoomSelected": "No room selected",
+      "sendMessage": "Failed to send message",
+      "updateMessage": "Failed to update message",
+      "deleteMessage": "Failed to delete message",
+      "moderateMessages": "Failed to moderate conversation messages",
+      "markRead": "Failed to mark conversation as read",
+      "startCall": "Failed to start call",
+      "endCall": "Failed to end call",
+      "leaveCall": "Failed to leave call",
+      "createCallToken": "Failed to create call token",
+      "refreshMessages": "Failed to refresh messages",
+      "loadWorkspaceCommunications": "Failed to load workspace communications",
+      "updateWorkspaceCommunications": "Failed to update workspace communications",
+      "loadProjectCommunications": "Failed to load project communications",
+      "updateProjectCommunications": "Failed to update project communications",
+      "noOrganizationSelected": "No organization selected",
+      "noProjectSelected": "No project selected",
+      "loadRealtimeHealth": "Failed to load realtime health"
+    },
+    "drafts": {
+      "load": "Failed to load drafts",
+      "create": "Failed to create draft",
+      "update": "Failed to update draft",
+      "delete": "Failed to delete draft",
+      "saveToastTitle": "Could not save draft",
+      "updateToastTitle": "Could not update draft",
+      "deleteToastTitle": "Could not delete draft",
+      "promoteToastTitle": "Could not promote draft",
+      "unknownError": "Unknown error",
+      "notFoundTitle": "Draft not found",
+      "reloadAndTryAgain": "Reload the page and try again.",
+      "notSupportedTitle": "Not supported yet",
+      "pagePromotionUnsupported": "Promoting pages to docs is not available yet.",
+      "commentPromotionUnsupported": "Promoting comments is not available yet.",
+      "noProjectTitle": "No project available",
+      "noProjectDescription": "Join or create a project before promoting drafts to work items.",
+      "untitledDraft": "Untitled draft",
+      "createWorkItem": "Failed to create work item",
+      "draftKeptTitle": "Draft kept",
+      "draftKeptDescription": "Work item created, but the draft could not be removed.",
+      "promotedTitle": "Promoted to work item",
+      "promotedDescriptionWithKey": "Created {key}.",
+      "promotedDescription": "Work item created successfully."
+    },
+    "modules": {
+      "fetch": "Failed to fetch modules",
+      "create": "Failed to create module",
+      "update": "Failed to update module",
+      "delete": "Failed to delete module"
+    }
+  },
+  "componentErrors": {
+    "watchers": {
+      "fetch": "Failed to fetch watchers",
+      "add": "Failed to add watcher",
+      "remove": "Failed to remove watcher"
+    },
+    "pinnedItems": {
+      "fetch": "Failed to fetch pinned items",
+      "load": "Failed to load pinned items",
+      "pinIssue": "Failed to pin issue",
+      "unpinIssue": "Failed to unpin issue",
+      "unpin": "Failed to unpin item"
+    },
+    "audit": {
+      "fetch": "Failed to fetch audit logs"
+    },
+    "dashboard": {
+      "loadStandup": "Failed to load standup",
+      "fetchOrganizations": "Failed to fetch organizations",
+      "fetchIssues": "Failed to fetch issues"
+    },
+    "analytics": {
+      "velocity": "Failed to load velocity",
+      "throughput": "Failed to load throughput",
+      "forecast": "Failed to load forecast",
+      "dora": "Failed to fetch DORA metrics"
+    },
+    "initiatives": {
+      "loadRollup": "Failed to load roll-up",
+      "loadUpdates": "Failed to load updates",
+      "fetchList": "Failed to fetch initiatives"
+    },
+    "admin": {
+      "fetchStats": "Failed to fetch stats",
+      "fetchOrganizations": "Failed to fetch organizations",
+      "loadOrganizations": "Failed to load organizations",
+      "fetchOrganization": "Failed to fetch organization",
+      "deleteOrganization": "Failed to delete organization",
+      "fetchUsers": "Failed to fetch users",
+      "fetchUser": "Failed to fetch user",
+      "fetchAuditLogs": "Failed to fetch audit logs"
+    },
+    "projects": {
+      "fetchOrganizations": "Failed to fetch organizations",
+      "fetchEpics": "Failed to fetch epics"
+    }
   }
 }

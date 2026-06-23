@@ -21,12 +21,7 @@ type JoinMicrophoneResolution = {
 };
 
 export type MicrophonePermissionState = PermissionState | 'unknown';
-export type MicrophoneBrowserFamily =
-  | 'chromium'
-  | 'edge'
-  | 'firefox'
-  | 'safari'
-  | 'unknown';
+export type MicrophoneBrowserFamily = 'chromium' | 'edge' | 'firefox' | 'safari' | 'unknown';
 export type MicrophoneDeviceOption = Pick<
   MediaDeviceInfo,
   'deviceId' | 'groupId' | 'kind' | 'label' | 'toJSON'
@@ -40,6 +35,66 @@ type RequestRawMicrophoneStreamOptions = {
   userAgent?: string | null;
 };
 
+type MicrophoneHintMessage = (values: { hint: string }) => string;
+type MicrophoneHelpMessage = (values: { hint: string; labelsHiddenNote: string }) => string;
+
+export type MicrophoneMessageCatalog = {
+  recoveryHint: Record<MicrophoneBrowserFamily, string>;
+  pendingJoin: MicrophoneHintMessage;
+  pendingRuntime: MicrophoneHintMessage;
+  timedOutAccess: MicrophoneHintMessage;
+  timedOutPendingPrompt: MicrophoneHintMessage;
+  deniedAccess: MicrophoneHintMessage;
+  captureUnsupported: string;
+  audioEngineFailed: string;
+  microphoneNotFound: string;
+  microphoneBusy: string;
+  accessUnavailable: MicrophoneHintMessage;
+  permissionState: {
+    allowed: string;
+    blocked: string;
+    waitingForBrowserDecision: string;
+    browserManaged: string;
+  };
+  permissionHelp: {
+    deviceLabelsHiddenUntilPermission: string;
+    grantedWithDevicesAndLabels: string;
+    grantedLabelsHidden: string;
+    grantedNoDevices: string;
+    denied: MicrophoneHintMessage;
+    prompt: MicrophoneHelpMessage;
+    unknown: MicrophoneHelpMessage;
+  };
+};
+
+type MicrophoneErrorCode =
+  | 'MICROPHONE_CAPTURE_UNSUPPORTED'
+  | 'MICROPHONE_PERMISSION_DENIED'
+  | 'MICROPHONE_REQUEST_ATTEMPT_TIMEOUT'
+  | 'MICROPHONE_ACCESS_TIMEOUT'
+  | 'MICROPHONE_ACCESS_FAILED';
+
+class MicrophoneCaptureError extends Error {
+  code: MicrophoneErrorCode;
+
+  constructor(code: MicrophoneErrorCode) {
+    super(code);
+    this.name = 'MicrophoneCaptureError';
+    this.code = code;
+  }
+}
+
+function isMicrophoneCaptureError(
+  error: unknown,
+  code?: MicrophoneErrorCode
+): error is MicrophoneCaptureError {
+  return error instanceof MicrophoneCaptureError && (!code || error.code === code);
+}
+
+function missingMicrophoneMessage(code: string) {
+  return `MICROPHONE_MESSAGE_${code}`;
+}
+
 function stopMediaStream(stream?: MediaStream | null) {
   stream?.getTracks().forEach((track) => track.stop());
 }
@@ -48,15 +103,13 @@ export function normalizeAudioInputDeviceId(audioDeviceId?: string | null) {
   return audioDeviceId && audioDeviceId !== 'default' ? audioDeviceId : 'default';
 }
 
-export function detectMicrophoneBrowserFamily(
-  userAgent?: string | null
-): MicrophoneBrowserFamily {
-  const agent =
-    (userAgent ??
-      (typeof navigator !== 'undefined' && typeof navigator.userAgent === 'string'
-        ? navigator.userAgent
-        : ''))
-      .toLowerCase();
+export function detectMicrophoneBrowserFamily(userAgent?: string | null): MicrophoneBrowserFamily {
+  const agent = (
+    userAgent ??
+    (typeof navigator !== 'undefined' && typeof navigator.userAgent === 'string'
+      ? navigator.userAgent
+      : '')
+  ).toLowerCase();
 
   const isFirefox = agent.includes('firefox') || agent.includes('fxios');
   if (isFirefox) {
@@ -99,9 +152,7 @@ export function shouldForceDefaultMicrophoneForLiveJoin(
   userAgent?: string | null,
   permissionState: MicrophonePermissionState = 'unknown'
 ) {
-  return (
-    shouldPreferDefaultMicrophoneForLiveJoin(userAgent) && permissionState !== 'granted'
-  );
+  return shouldPreferDefaultMicrophoneForLiveJoin(userAgent) && permissionState !== 'granted';
 }
 
 export function isPendingMicrophonePermissionState(
@@ -161,7 +212,9 @@ export function buildMicrophoneCaptureOptions(audioDeviceId?: string | null) {
   });
 }
 
-export function buildRawMicrophoneConstraints(audioDeviceId?: string | null): MediaTrackConstraints {
+export function buildRawMicrophoneConstraints(
+  audioDeviceId?: string | null
+): MediaTrackConstraints {
   const normalizedDeviceId = normalizeAudioInputDeviceId(audioDeviceId);
   return filterSupportedAudioConstraints({
     ...DEFAULT_MIC_CAPTURE_OPTIONS,
@@ -190,6 +243,13 @@ export function resolvePreferredJoinAudioInputDeviceId(
 }
 
 export function isRecoverableMicrophoneDeviceError(error: unknown) {
+  if (
+    isMicrophoneCaptureError(error, 'MICROPHONE_REQUEST_ATTEMPT_TIMEOUT') ||
+    isMicrophoneCaptureError(error, 'MICROPHONE_ACCESS_TIMEOUT')
+  ) {
+    return true;
+  }
+
   if (!(error instanceof Error)) {
     return false;
   }
@@ -218,51 +278,66 @@ function getCurrentBrowserUserAgent() {
   return navigator.userAgent;
 }
 
-function getMicrophonePermissionRecoveryHint(userAgent?: string | null) {
-  switch (detectMicrophoneBrowserFamily(userAgent)) {
-    case 'edge':
-      return 'Look for the microphone prompt in the address bar. If it was dismissed, open Edge Site permissions for this site and allow the microphone.';
-    case 'firefox':
-      return 'Firefox usually shows microphone access near the left side of the address bar. If it disappeared, open the padlock or Page Info permissions and allow the microphone for this site.';
-    case 'safari':
-      return 'Safari may keep microphone access under Safari > Settings > Websites > Microphone, or in the website controls in the address bar.';
-    case 'chromium':
-      return 'Look for the microphone prompt in the address bar and choose Allow this time or Allow on every visit. If it was dismissed, open Chrome site settings for this site and allow the microphone.';
-    default:
-      return 'Check the browser microphone prompt or this site\'s permissions and allow microphone access.';
-  }
+function getMicrophonePermissionRecoveryHint(
+  userAgent?: string | null,
+  messages?: MicrophoneMessageCatalog
+) {
+  const browserFamily = detectMicrophoneBrowserFamily(userAgent);
+  return (
+    messages?.recoveryHint[browserFamily] ??
+    messages?.recoveryHint.unknown ??
+    missingMicrophoneMessage('RECOVERY_HINT')
+  );
 }
 
-export function getPendingMicrophoneJoinMessage(userAgent?: string | null) {
-  return `Joined muted while the browser finishes microphone access. ${getMicrophonePermissionRecoveryHint(
-    userAgent
-  )} TaskNebula will turn your mic on automatically if access succeeds.`;
+export function getPendingMicrophoneJoinMessage(
+  userAgent?: string | null,
+  messages?: MicrophoneMessageCatalog
+) {
+  const hint = getMicrophonePermissionRecoveryHint(userAgent, messages);
+  return messages?.pendingJoin({ hint }) ?? missingMicrophoneMessage('PENDING_JOIN');
 }
 
-export function getPendingMicrophoneRuntimeMessage(userAgent?: string | null) {
-  return `Browser is still waiting for microphone access. ${getMicrophonePermissionRecoveryHint(
-    userAgent
-  )} TaskNebula will unmute automatically if access succeeds.`;
+export function getPendingMicrophoneRuntimeMessage(
+  userAgent?: string | null,
+  messages?: MicrophoneMessageCatalog
+) {
+  const hint = getMicrophonePermissionRecoveryHint(userAgent, messages);
+  return messages?.pendingRuntime({ hint }) ?? missingMicrophoneMessage('PENDING_RUNTIME');
 }
 
-export function getTimedOutMicrophoneAccessMessage(userAgent?: string | null) {
-  return `Microphone access timed out while waiting for the browser prompt. ${getMicrophonePermissionRecoveryHint(
-    userAgent
-  )} Then try the mic button again.`;
+export function getTimedOutMicrophoneAccessMessage(
+  userAgent?: string | null,
+  messages?: MicrophoneMessageCatalog
+) {
+  const hint = getMicrophonePermissionRecoveryHint(userAgent, messages);
+  return messages?.timedOutAccess({ hint }) ?? missingMicrophoneMessage('ACCESS_TIMEOUT');
 }
 
-export function getTimedOutPendingMicrophonePromptMessage(userAgent?: string | null) {
-  return `Microphone access timed out while waiting for the browser prompt. ${getMicrophonePermissionRecoveryHint(
-    userAgent
-  )} If you approve it now, TaskNebula will still turn your mic on automatically. If no prompt appears, refresh this page or try the mic button again.`;
+export function getTimedOutPendingMicrophonePromptMessage(
+  userAgent?: string | null,
+  messages?: MicrophoneMessageCatalog
+) {
+  const hint = getMicrophonePermissionRecoveryHint(userAgent, messages);
+  return (
+    messages?.timedOutPendingPrompt({ hint }) ?? missingMicrophoneMessage('PENDING_PROMPT_TIMEOUT')
+  );
 }
 
-export function getDeniedMicrophoneAccessMessage(userAgent?: string | null) {
-  return `Microphone permission was denied. ${getMicrophonePermissionRecoveryHint(userAgent)}`;
+export function getDeniedMicrophoneAccessMessage(
+  userAgent?: string | null,
+  messages?: MicrophoneMessageCatalog
+) {
+  const hint = getMicrophonePermissionRecoveryHint(userAgent, messages);
+  return messages?.deniedAccess({ hint }) ?? missingMicrophoneMessage('PERMISSION_DENIED');
 }
 
 export function isMicrophoneAccessTimeoutError(error: unknown) {
-  return error instanceof Error && error.message.toLowerCase().includes('timed out');
+  return (
+    isMicrophoneCaptureError(error, 'MICROPHONE_ACCESS_TIMEOUT') ||
+    isMicrophoneCaptureError(error, 'MICROPHONE_REQUEST_ATTEMPT_TIMEOUT') ||
+    (error instanceof Error && error.message.toLowerCase().includes('timed out'))
+  );
 }
 
 export async function getMicrophonePermissionState(options?: {
@@ -293,23 +368,35 @@ export async function getMicrophonePermissionState(options?: {
       chatClientDebug('microphone.permission.state', {
         state: 'unknown',
         reason: 'permissions-query-failed',
-        error: error instanceof Error ? error : new Error('Failed to query microphone permission state.'),
+        error:
+          error instanceof Error
+            ? error
+            : new Error('Failed to query microphone permission state.'),
       });
     }
     return 'unknown';
   }
 }
 
-export function formatMicrophonePermissionStateLabel(state: MicrophonePermissionState) {
+export function formatMicrophonePermissionStateLabel(
+  state: MicrophonePermissionState,
+  messages?: MicrophoneMessageCatalog
+) {
   switch (state) {
     case 'granted':
-      return 'Allowed';
+      return messages?.permissionState.allowed ?? missingMicrophoneMessage('PERMISSION_ALLOWED');
     case 'denied':
-      return 'Blocked';
+      return messages?.permissionState.blocked ?? missingMicrophoneMessage('PERMISSION_BLOCKED');
     case 'prompt':
-      return 'Waiting for browser decision';
+      return (
+        messages?.permissionState.waitingForBrowserDecision ??
+        missingMicrophoneMessage('PERMISSION_WAITING')
+      );
     default:
-      return 'Browser-managed';
+      return (
+        messages?.permissionState.browserManaged ??
+        missingMicrophoneMessage('PERMISSION_BROWSER_MANAGED')
+      );
   }
 }
 
@@ -325,28 +412,47 @@ export function getMicrophonePermissionHelpMessage(
     userAgent?: string | null;
     hasDetectedDevices?: boolean;
     labelsVisible?: boolean;
+    messages?: MicrophoneMessageCatalog;
   }
 ) {
   const userAgent = options?.userAgent ?? getCurrentBrowserUserAgent();
-  const recoveryHint = getMicrophonePermissionRecoveryHint(userAgent);
+  const messages = options?.messages;
+  const recoveryHint = getMicrophonePermissionRecoveryHint(userAgent, messages);
   const labelsHiddenNote =
     options?.hasDetectedDevices && !options?.labelsVisible
-      ? ' Device names stay hidden until the browser grants microphone access.'
+      ? (messages?.permissionHelp.deviceLabelsHiddenUntilPermission ??
+        missingMicrophoneMessage('DEVICE_LABELS_HIDDEN'))
       : '';
 
   switch (state) {
     case 'granted':
       return options?.hasDetectedDevices
         ? options?.labelsVisible
-          ? 'Microphone access is already allowed. You can switch between available microphones here.'
-          : 'Microphone access is allowed, but this browser has not exposed device names yet. Use Refresh devices after returning from browser settings.'
-        : 'Microphone access is allowed, but no audio input devices are currently visible to the browser.';
+          ? (messages?.permissionHelp.grantedWithDevicesAndLabels ??
+            missingMicrophoneMessage('PERMISSION_GRANTED_WITH_DEVICES'))
+          : (messages?.permissionHelp.grantedLabelsHidden ??
+            missingMicrophoneMessage('PERMISSION_GRANTED_LABELS_HIDDEN'))
+        : (messages?.permissionHelp.grantedNoDevices ??
+            missingMicrophoneMessage('PERMISSION_GRANTED_NO_DEVICES'));
     case 'denied':
-      return `Microphone access is blocked for this site. ${recoveryHint}`;
+      return (
+        messages?.permissionHelp.denied({ hint: recoveryHint }) ??
+        missingMicrophoneMessage('PERMISSION_HELP_DENIED')
+      );
     case 'prompt':
-      return `This browser is still waiting for a microphone decision. ${recoveryHint}${labelsHiddenNote}`;
+      return (
+        messages?.permissionHelp.prompt({
+          hint: recoveryHint,
+          labelsHiddenNote,
+        }) ?? missingMicrophoneMessage('PERMISSION_HELP_PROMPT')
+      );
     default:
-      return `This browser does not expose a reliable microphone permission state before access. ${recoveryHint}${labelsHiddenNote}`;
+      return (
+        messages?.permissionHelp.unknown({
+          hint: recoveryHint,
+          labelsHiddenNote,
+        }) ?? missingMicrophoneMessage('PERMISSION_HELP_UNKNOWN')
+      );
   }
 }
 
@@ -365,11 +471,7 @@ export async function listAudioInputDevices(options?: {
       navigator.mediaDevices.enumerateDevices(),
       new Promise<MediaDeviceInfo[]>((_, reject) => {
         window.setTimeout(() => {
-          reject(
-            new Error(
-              `Timed out while listing audio input devices after ${timeoutMs}ms.`
-            )
-          );
+          reject(new Error(`Timed out while listing audio input devices after ${timeoutMs}ms.`));
         }, timeoutMs);
       }),
     ]);
@@ -391,9 +493,7 @@ export async function listAudioInputDevices(options?: {
       chatClientError('microphone.devices.error', {
         timeoutMs,
         error:
-          error instanceof Error
-            ? error
-            : new Error('Failed to enumerate microphone devices.'),
+          error instanceof Error ? error : new Error('Failed to enumerate microphone devices.'),
       });
     }
     throw error;
@@ -424,7 +524,9 @@ export function resolvePreferredAudioInputDevice(
   return (
     devices.find((device) => device.deviceId === normalizedDeviceId) ??
     (normalizedGroupId
-      ? devices.find((device) => trimMicrophonePreferenceValue(device.groupId) === normalizedGroupId)
+      ? devices.find(
+          (device) => trimMicrophonePreferenceValue(device.groupId) === normalizedGroupId
+        )
       : null) ??
     (normalizedLabel
       ? devices.find((device) => trimMicrophonePreferenceValue(device.label) === normalizedLabel)
@@ -487,23 +589,45 @@ export function formatMicrophoneError(
   error: unknown,
   options?: {
     userAgent?: string | null;
+    messages?: MicrophoneMessageCatalog;
   }
 ) {
   const userAgent = options?.userAgent ?? getCurrentBrowserUserAgent();
+  const messages = options?.messages;
 
   if (error instanceof Error) {
+    if (isMicrophoneCaptureError(error, 'MICROPHONE_CAPTURE_UNSUPPORTED')) {
+      return messages?.captureUnsupported ?? missingMicrophoneMessage('CAPTURE_UNSUPPORTED');
+    }
+    if (isMicrophoneCaptureError(error, 'MICROPHONE_PERMISSION_DENIED')) {
+      return getDeniedMicrophoneAccessMessage(userAgent, messages);
+    }
+    if (
+      isMicrophoneCaptureError(error, 'MICROPHONE_ACCESS_TIMEOUT') ||
+      isMicrophoneCaptureError(error, 'MICROPHONE_REQUEST_ATTEMPT_TIMEOUT')
+    ) {
+      return getTimedOutMicrophoneAccessMessage(userAgent, messages);
+    }
+    if (isMicrophoneCaptureError(error, 'MICROPHONE_ACCESS_FAILED')) {
+      const hint = getMicrophonePermissionRecoveryHint(userAgent, messages);
+      return messages?.accessUnavailable({ hint }) ?? missingMicrophoneMessage('ACCESS_FAILED');
+    }
+
     const message = error.message.toLowerCase();
     if (message.includes('permission denied') || message.includes('notallowederror')) {
-      return getDeniedMicrophoneAccessMessage(userAgent);
+      return getDeniedMicrophoneAccessMessage(userAgent, messages);
     }
-    if (message.includes('audiocontext encountered an error') || message.includes('webaudio renderer')) {
-      return 'The browser audio engine failed for this device. Stop other audio apps or switch microphones, then try again.';
+    if (
+      message.includes('audiocontext encountered an error') ||
+      message.includes('webaudio renderer')
+    ) {
+      return messages?.audioEngineFailed ?? missingMicrophoneMessage('AUDIO_ENGINE_FAILED');
     }
     if (message.includes('notfounderror') || message.includes('requested device not found')) {
-      return 'No microphone was found. Check your audio input device and try again.';
+      return messages?.microphoneNotFound ?? missingMicrophoneMessage('MICROPHONE_NOT_FOUND');
     }
     if (message.includes('notreadableerror') || message.includes('could not start audio source')) {
-      return 'Your microphone is busy in another app. Close other audio apps and try again.';
+      return messages?.microphoneBusy ?? missingMicrophoneMessage('MICROPHONE_BUSY');
     }
     if (
       message.includes('timed out while waiting for microphone access') ||
@@ -511,12 +635,14 @@ export function formatMicrophoneError(
       message.includes('microphone request attempt') ||
       message.includes('timed out while starting the microphone')
     ) {
-      return getTimedOutMicrophoneAccessMessage(userAgent);
+      return getTimedOutMicrophoneAccessMessage(userAgent, messages);
     }
-    return error.message;
+    const hint = getMicrophonePermissionRecoveryHint(userAgent, messages);
+    return messages?.accessUnavailable({ hint }) ?? missingMicrophoneMessage('ACCESS_UNAVAILABLE');
   }
 
-  return `Microphone access is unavailable. ${getMicrophonePermissionRecoveryHint(userAgent)}`;
+  const hint = getMicrophonePermissionRecoveryHint(userAgent, messages);
+  return messages?.accessUnavailable({ hint }) ?? missingMicrophoneMessage('ACCESS_UNAVAILABLE');
 }
 
 type MicrophoneAttempt = {
@@ -527,9 +653,7 @@ type MicrophoneAttempt = {
 function readCapturedAudioTrackIdentity(stream: MediaStream) {
   const audioTrack =
     stream.getAudioTracks?.()[0] ??
-    stream
-      .getTracks?.()
-      .find((track): track is MediaStreamTrack => track.kind === 'audio') ??
+    stream.getTracks?.().find((track): track is MediaStreamTrack => track.kind === 'audio') ??
     null;
 
   if (!audioTrack || typeof audioTrack.getSettings !== 'function') {
@@ -637,7 +761,10 @@ async function resolveConcreteDefaultAudioInputDeviceId(
         error instanceof Error && error.message.toLowerCase().includes('timed out')
           ? 'enumerate-devices-timeout'
           : 'enumerate-devices-failed',
-      error: error instanceof Error ? error : new Error('Failed to resolve the default microphone device.'),
+      error:
+        error instanceof Error
+          ? error
+          : new Error('Failed to resolve the default microphone device.'),
     });
     return null;
   }
@@ -723,7 +850,7 @@ async function requestMicrophoneWithAttempt(
   timeoutMs: number | null = MICROPHONE_ATTEMPT_TIMEOUT_MS
 ) {
   if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-    throw new Error('This browser does not support microphone capture.');
+    throw new MicrophoneCaptureError('MICROPHONE_CAPTURE_UNSUPPORTED');
   }
 
   chatClientDebug('microphone.request.attempt.start', {
@@ -754,9 +881,7 @@ async function requestMicrophoneWithAttempt(
       typeof timeoutMs === 'number'
         ? setTimeout(() => {
             settled = true;
-            const error = new Error(
-              `Microphone request attempt "${attempt.label}" timed out after ${timeoutMs}ms.`
-            );
+            const error = new MicrophoneCaptureError('MICROPHONE_REQUEST_ATTEMPT_TIMEOUT');
             chatClientError('microphone.request.attempt.timeout', {
               audioDeviceId,
               attempt: attempt.label,
@@ -831,13 +956,11 @@ export async function requestRawMicrophoneStream(
       : null;
 
   if (options?.interactive && permissionState === 'denied') {
-    throw new Error('Microphone permission was denied. Allow microphone access in your browser and try again.');
+    throw new MicrophoneCaptureError('MICROPHONE_PERMISSION_DENIED');
   }
 
   const shouldUnlockPermissionBeforeExactDevice =
-    options?.interactive &&
-    normalizedDeviceId !== 'default' &&
-    shouldTreatPermissionStateAsPending;
+    options?.interactive && normalizedDeviceId !== 'default' && shouldTreatPermissionStateAsPending;
   const resolvedRequestedAudioDeviceId =
     normalizedDeviceId !== 'default' && !shouldUnlockPermissionBeforeExactDevice
       ? await resolveRequestedAudioInputDeviceId(normalizedDeviceId, {
@@ -932,11 +1055,9 @@ export async function requestRawMicrophoneStream(
       }
 
       stopMediaStream(permissionUnlockStream);
-      throw (
-        lastExactError instanceof Error
-          ? lastExactError
-          : new Error('Failed to access the selected microphone after permission unlock.')
-      );
+      throw lastExactError instanceof Error
+        ? lastExactError
+        : new Error('Failed to access the selected microphone after permission unlock.');
     } catch (error) {
       stopMediaStream(permissionUnlockStream);
       throw error;
@@ -945,25 +1066,19 @@ export async function requestRawMicrophoneStream(
 
   for (const attempt of attempts) {
     try {
-      return await requestMicrophoneWithAttempt(
-        resolvedRequestedAudioDeviceId,
-        attempt,
-        timeoutMs
-      );
+      return await requestMicrophoneWithAttempt(resolvedRequestedAudioDeviceId, attempt, timeoutMs);
     } catch (error) {
       lastError = error;
     }
   }
 
   if (options?.interactive && isMicrophoneAccessTimeoutError(lastError)) {
-    throw new Error(getTimedOutMicrophoneAccessMessage());
+    throw new MicrophoneCaptureError('MICROPHONE_ACCESS_TIMEOUT');
   }
 
-  throw (
-    lastError instanceof Error
-      ? lastError
-      : new Error('Failed to access the microphone.')
-  );
+  throw lastError instanceof Error
+    ? lastError
+    : new MicrophoneCaptureError('MICROPHONE_ACCESS_FAILED');
 }
 
 export async function probeMicrophoneCapture(
@@ -974,9 +1089,7 @@ export async function probeMicrophoneCapture(
   stream.getTracks().forEach((track) => track.stop());
 }
 
-export async function requestMicrophonePermission(options?: {
-  timeoutMs?: number | null;
-}) {
+export async function requestMicrophonePermission(options?: { timeoutMs?: number | null }) {
   await probeMicrophoneCapture('default', {
     interactive: true,
     timeoutMs: options?.timeoutMs ?? INTERACTIVE_MICROPHONE_PROMPT_TIMEOUT_MS,

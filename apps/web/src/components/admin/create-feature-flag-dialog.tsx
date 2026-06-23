@@ -62,10 +62,10 @@ export function CreateFeatureFlagDialog() {
       setEnabledForOrganizations([]);
       setRolloutPercentage(0);
       setOpen(false);
-    } catch (error: any) {
+    } catch {
       toast({
         title: t('createFlag.toastFailedTitle'),
-        description: error.message || t('common.somethingWentWrong'),
+        description: t('common.somethingWentWrong'),
         variant: 'destructive',
       });
     }
@@ -99,7 +99,7 @@ export function CreateFeatureFlagDialog() {
                 id="key"
                 value={key}
                 onChange={(e) => setKey(e.target.value)}
-                placeholder="advanced_analytics"
+                placeholder={t('flagForm.keyPlaceholder')}
                 pattern="[a-z0-9_-]+"
                 required
               />

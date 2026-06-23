@@ -30,6 +30,27 @@ type FilterKey = 'all' | 'created' | 'updated' | 'deleted';
 
 const FILTER_KEYS: FilterKey[] = ['all', 'created', 'updated', 'deleted'];
 
+interface AuditLogChange {
+  from: unknown;
+  to: unknown;
+}
+
+interface AuditLogEntry {
+  id: string;
+  action: string;
+  createdAt: string;
+  changes: Record<string, AuditLogChange> | null;
+  user: {
+    name: string | null;
+    email: string | null;
+    image: string | null;
+  };
+}
+
+interface AuditLogResponse {
+  auditLogs?: AuditLogEntry[];
+}
+
 // Severity -> 2px left border token. Info is the default; trace is neutral.
 function severityBorder(action: string) {
   if (action.includes('deleted') || action.includes('revoked')) return 'border-l-accent-rose';
@@ -47,6 +68,7 @@ export function AuditLogViewer({
   limit = 50,
 }: AuditLogViewerProps) {
   const t = useTranslations('workspaceTools');
+  const errorT = useTranslations('componentErrors.audit');
   const formatter = useFormatter();
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -61,16 +83,16 @@ export function AuditLogViewer({
       if (issueId) params.append('issueId', issueId);
 
       const response = await fetch(`/api/audit-logs?${params.toString()}`);
-      const payload = await response.json().catch(() => ({ error: 'Failed to fetch audit logs' }));
+      const payload = await response.json().catch(() => ({ error: errorT('fetch') }));
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to fetch audit logs');
+        throw new Error(payload.error || errorT('fetch'));
       }
-      return payload;
+      return payload as AuditLogResponse;
     },
     enabled: !!organizationId,
   });
 
-  const allLogs: any[] = data?.auditLogs || [];
+  const allLogs = data?.auditLogs || [];
 
   const filteredLogs =
     activeFilter === 'all' ? allLogs : allLogs.filter((log) => log.action.includes(activeFilter));
@@ -115,9 +137,7 @@ export function AuditLogViewer({
           <span className="kicker">{t('audit.kicker')}</span>
           <h3 className="text-sm font-semibold tracking-tight">{t('audit.title')}</h3>
         </div>
-        <p className="text-muted-foreground text-sm">
-          {error instanceof Error ? error.message : t('audit.loadFailed')}
-        </p>
+        <p className="text-muted-foreground text-sm">{t('audit.loadFailed')}</p>
       </div>
     );
   }
@@ -161,7 +181,8 @@ export function AuditLogViewer({
           {filteredLogs.map((log) => {
             const Icon = getActionIcon(log.action);
             const isExpanded = expandedId === log.id;
-            const hasChanges = log.changes && Object.keys(log.changes).length > 0;
+            const changes = log.changes ?? {};
+            const hasChanges = Object.keys(changes).length > 0;
 
             return (
               <div
@@ -178,7 +199,7 @@ export function AuditLogViewer({
                   )}
                 >
                   <Avatar className="h-5 w-5 shrink-0">
-                    <AvatarImage src={log.user.image} />
+                    <AvatarImage src={log.user.image ?? undefined} />
                     <AvatarFallback className="text-[9px] font-semibold">
                       {log.user.name?.charAt(0) || log.user.email?.charAt(0)}
                     </AvatarFallback>
@@ -210,7 +231,7 @@ export function AuditLogViewer({
                 {/* Inline expansion */}
                 {isExpanded && hasChanges && (
                   <div className="animate-fade-in space-y-1 px-4 pb-3 pl-10 pt-1 text-xs">
-                    {Object.entries(log.changes).map(([field, change]: [string, any]) => (
+                    {Object.entries(changes).map(([field, change]) => (
                       <div key={field} className="text-muted-foreground">
                         <span className="text-foreground font-medium">{field}:</span>{' '}
                         <span className="line-through">{String(change.from)}</span>

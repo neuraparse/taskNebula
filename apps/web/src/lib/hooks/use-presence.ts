@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { useUser } from './use-user';
 
 interface PresenceUser {
@@ -11,6 +12,7 @@ interface PresenceUser {
 
 export function usePresence(issueId: string | null) {
   const { user } = useUser();
+  const t = useTranslations('hookErrors.presence');
   const [isActive, setIsActive] = useState(true);
 
   // Fetch active users
@@ -20,7 +22,7 @@ export function usePresence(issueId: string | null) {
       if (!issueId) return { users: [] };
       const response = await fetch(`/api/presence/${issueId}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch presence');
+        throw new Error(t('fetch'));
       }
       return response.json() as Promise<{ users: PresenceUser[] }>;
     },
@@ -35,7 +37,7 @@ export function usePresence(issueId: string | null) {
         method: 'POST',
       });
       if (!response.ok) {
-        throw new Error('Failed to update presence');
+        throw new Error(t('update'));
       }
       return response.json();
     },
@@ -48,7 +50,7 @@ export function usePresence(issueId: string | null) {
         method: 'DELETE',
       });
       if (!response.ok) {
-        throw new Error('Failed to remove presence');
+        throw new Error(t('remove'));
       }
       return response.json();
     },
@@ -86,7 +88,7 @@ export function usePresence(issueId: string | null) {
   useEffect(() => {
     const handleVisibilityChange = () => {
       setIsActive(!document.hidden);
-      
+
       if (!document.hidden && issueId && user) {
         // Update presence when tab becomes visible
         updatePresence.mutate(issueId);
@@ -107,4 +109,3 @@ export function usePresence(issueId: string | null) {
     count: otherUsers.length,
   };
 }
-

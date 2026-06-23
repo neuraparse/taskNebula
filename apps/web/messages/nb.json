@@ -501,14 +501,48 @@
         "no_update": "No newer Docker image is available.",
         "missing_docker_image": "Docker Hub did not return a semver image tag to install.",
         "invalid_target": "The selected target version is not valid for this install.",
-        "active_job": "Another update request is already active. Wait for it to finish before starting a new one."
+        "active_job": "Another update request is already active. Wait for it to finish before starting a new one.",
+        "missing_digest": "Docker Hub did not return an immutable image digest. Wait for tag metadata to settle, then check again.",
+        "backup_unavailable": "Backup preflight is not ready, so the app will not dispatch an update request."
       },
       "jobStatus": {
         "queued": "Queued",
         "requested": "Requested",
         "succeeded": "Succeeded",
-        "failed": "Failed"
+        "failed": "Failed",
+        "running": "Running"
+      },
+      "failedDescription": "The update request could not be sent. Check the updater webhook and backup preflight.",
+      "backup": {
+        "title": "Backup preflight",
+        "ready": "Ready",
+        "blocked": "Blocked",
+        "postgres": "Postgres dump",
+        "uploads": "Uploads archive",
+        "directory": "Backup directory",
+        "path": "Backups will be written to {path}.",
+        "blockedReason": {
+          "missing_pg_dump": "pg_dump is not available in the web runtime.",
+          "backup_dir_unwritable": "The backup directory is not writable.",
+          "uploads_unreadable": "The uploads directory is not readable.",
+          "database_url_missing": "DATABASE_URL is not configured for the web runtime."
+        }
       }
+    },
+    "preferences": {
+      "title": "Update alerts",
+      "description": "Control where super admins see TaskNebula update alerts.",
+      "saving": "Saving...",
+      "savedTitle": "Update alerts saved",
+      "savedDescription": "Update alert preferences were updated.",
+      "failedTitle": "Update alerts not saved",
+      "failedDescription": "Could not update update alert preferences.",
+      "bannerLabel": "Global banner",
+      "bannerDescription": "Show the update banner outside the Updates page.",
+      "availableNotificationsLabel": "New-version inbox alerts",
+      "availableNotificationsDescription": "Notify super admins when GitHub or Docker Hub publishes a newer version.",
+      "postUpdateNotificationsLabel": "Installed-version inbox alerts",
+      "postUpdateNotificationsDescription": "Notify super admins after this instance boots into a different version."
     }
   },
   "issueFields": {
@@ -539,7 +573,9 @@
     "placeholder": "Tittel på delsak …",
     "creating": "Oppretter delsak …",
     "createFailed": "Kunne ikke opprette delsak. Prøv igjen.",
-    "noSubtasks": "Ingen deloppgaver ennå"
+    "noSubtasks": "Ingen deloppgaver ennå",
+    "markComplete": "Merk som fullført",
+    "markIncomplete": "Merk som ikke fullført"
   },
   "issueRelations": {
     "dialogTitle": "Koble sak",
@@ -1334,6 +1370,11 @@
       "runnerStatus": "Kjøringsstatus",
       "runnerStatusValue": "{status}",
       "runnerStatusSuffix": " · {status}",
+      "runnerStatuses": {
+        "running": "Kjører",
+        "completed": "Fullført",
+        "failed": "Mislyktes"
+      },
       "exitCode": "Avslutningskode"
     },
     "vote": {
@@ -1614,7 +1655,8 @@
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
     "org_slug_placeholder": "acme-inc",
-    "settings_open_full_page": "Åpne hele siden"
+    "settings_open_full_page": "Åpne hele siden",
+    "field_avatar_url_placeholder": "https://cdn.example.com/icon.png"
   },
   "settingsProject": {
     "kicker": "Prosjekt",
@@ -1706,12 +1748,24 @@
     "estimate_kind_time": "Tid",
     "estimate_scales_group": "{kind}-estimatskalaer",
     "estimate_custom_hint": "Definer dine egne verdier.",
+    "estimate_default_small": "Liten",
+    "estimate_default_medium": "Middels",
+    "estimate_default_large": "Stor",
     "estimate_value_placeholder": "Verdi {index}",
     "estimate_custom_value_aria": "Egendefinert {kind}-verdi {index}",
     "estimate_remove_value": "Fjern verdi {index}",
     "estimate_add_value": "Legg til verdi",
     "estimate_reset": "Tilbakestill",
-    "estimate_save_scale": "Lagre skala"
+    "estimate_save_scale": "Lagre skala",
+    "key_placeholder": "WEB",
+    "wit_default_story_name": "Story",
+    "wit_default_bug_name": "Feil",
+    "wit_default_task_name": "Oppgave",
+    "wit_default_epic_name": "Epos",
+    "wit_default_story_description": "Brukervendt funksjon eller scenario.",
+    "wit_default_bug_description": "Feil som må rettes.",
+    "wit_default_task_description": "Generell arbeidsenhet.",
+    "wit_default_epic_description": "Større initiativ som spenner over flere historier."
   },
   "settingsConfig": {
     "integrations": {
@@ -1846,7 +1900,8 @@
       "created_toast_title": "Webhook opprettet",
       "updated_toast_desc": "Webhook-innstillingene ble lagret.",
       "created_toast_desc": "Webhook opprettet.",
-      "save_failed_title": "Lagring mislyktes"
+      "save_failed_title": "Lagring mislyktes",
+      "url_placeholder": "https://example.com/webhooks/tasknebula"
     },
     "sso": {
       "tab_saml": "SAML 2.0",
@@ -2004,7 +2059,14 @@
       "font_brand_desc": "Previous dashboard font. Clean, compact, and the default.",
       "font_ibm": "IBM Plex",
       "font_ibm_desc": "IBM-style technical interface font used by the landing page.",
-      "font_sample": "Aa"
+      "font_sample": "Aa",
+      "theme_default": "Blå",
+      "theme_ocean": "Turkis",
+      "theme_forest": "Grønn",
+      "theme_sunset": "Oransje",
+      "theme_purple": "Lilla",
+      "theme_rose": "Rosa",
+      "save_failed": "Failed to save appearance settings"
     },
     "orgComms": {
       "toggle_enabled_label": "Aktiver modul",
@@ -2238,7 +2300,9 @@
       "ops_notes": "Driftsmerknader",
       "ops_notes_placeholder": "Hvorfor denne profilen finnes, utrullingsmerknader eller leverandørforbehold.",
       "cancel": "Avbryt",
-      "save_profile": "Lagre profil"
+      "save_profile": "Lagre profil",
+      "model_catalog_summary": "Modell: {model}",
+      "model_placeholder": "gpt-5.4"
     },
     "projectAi": {
       "cred_workspace_secret": "Arbeidsområdehemmelighet",
@@ -2409,7 +2473,151 @@
       "behaviorDescription": "Safe defaults used when no explicit rule matches.",
       "unknownAgents": "Unknown agents",
       "destructiveActions": "Destructive actions",
-      "requireApprovalDefault": "Require approval by default"
+      "requireApprovalDefault": "Require approval by default",
+      "queueLoadFailed": "Failed to load approval queue",
+      "decisionFailed": "Failed to update approval decision"
+    },
+    "agentShared": {
+      "providerStatus": {
+        "nativeReady": "TaskNebula nativ",
+        "customUnavailable": "Egendefinert adapter · Blokkert",
+        "adapterUnavailable": "{provider}: Blokkert",
+        "openaiModelInvalid": "{provider}: Trenger gjennomgang",
+        "missingCredentialWithEnv": "Ingen kjørbar legitimasjon er konfigurert for den valgte leverandøren. ({envVar})",
+        "missingCredential": "Ingen kjørbar legitimasjon er konfigurert for den valgte leverandøren.",
+        "readyWorkspace": "Dette arbeidsområdet har en lagret leverandørlegitimasjon.",
+        "readyPlatform": "Plattformstandard",
+        "readyServerEnv": "Denne leverandøren leveres av servermiljøet.",
+        "ready": "Klar"
+      },
+      "credential": {
+        "builtInPlanner": "TaskNebula nativ",
+        "platformDefault": "Plattformstandard · {preview}",
+        "serverEnv": "Server-miljø · {envVar}"
+      },
+      "configIssues": {
+        "titles": {
+          "global_paused": "Global aktivering",
+          "provider_model_invalid": "Modell",
+          "provider_missing_credential": "Legitimasjon",
+          "provider_adapter_unavailable": "Egendefinert adapter",
+          "workspace_disabled": "Arbeidsområdeagenter",
+          "project_disabled": "Aktiver prosjektagenter",
+          "writes_preview_only": "Kun forhåndsvisning",
+          "write_approval_required": "Godkjenning kreves fortsatt",
+          "auto_mode_supervised": "Autonom"
+        },
+        "project": {
+          "detail": "Disse sjekkene avgjør om en prosjektkjøring kan starte akkurat nå og hvor du fikser blokkerte forutsetninger.",
+          "resolution": "Åpne AI-innstillinger for prosjektet"
+        },
+        "workspace": {
+          "detail": "Se hva som blokkerer kjøringer og hva som fortsatt er begrenset før prosjekter begynner å bruke agenter.",
+          "resolution": "Åpne AI-innstillinger for arbeidsområdet"
+        },
+        "provider": {
+          "detail": "Leverandørens tilgjengelighet sjekkes mot arbeidsområdets hemmelighetslager og servermiljø.",
+          "resolution": "Legitimasjonskilde"
+        },
+        "system": {
+          "detail": "Ett sted å sette alle agenter på pause eller tvinge systemet inn i overvåket modus.",
+          "resolution": "Åpne AI Ops"
+        },
+        "unknown": {
+          "title": "Trenger oppmerksomhet",
+          "detail": "Kunne ikke laste prosjekt-AI-agenter.",
+          "resolution": "Åpne AI-innstillinger for arbeidsområdet"
+        }
+      },
+      "services": {
+        "labels": {
+          "provider": "Leverandør",
+          "execution": "Kjøringsmodus",
+          "writes": "Skrivehandlinger",
+          "monitoring": "Direkte kjøretid"
+        },
+        "project": {
+          "executionReady": "Dette prosjektet er fullstendig konfigurert for AI-kjøringer. Start med en forhåndsvisning og gå deretter over til direkte skriving ved behov.",
+          "writesReady": "Direkte skriving tilgjengelig",
+          "monitoringReady": "Sanntidsstatus og logger for kjøringer som skjer i dette prosjektet akkurat nå."
+        },
+        "workspace": {
+          "executionReady": "AI for arbeidsområdet er fullstendig konfigurert. Prosjekter kan arve dette oppsettet umiddelbart.",
+          "writesReady": "La agenter opprette eller oppdatere saker og sprinter.",
+          "monitoringReady": "Faktisk kjøring, tjeneste og kjøringstelemetri for dette arbeidsområdets AI-oppsett."
+        },
+        "unknownDetail": "Kunne ikke laste prosjekt-AI-agenter."
+      },
+      "runStatuses": {
+        "running": "Kjører",
+        "completed": "Fullført",
+        "failed": "Mislyktes",
+        "unknown": "{status}"
+      },
+      "capabilities": {
+        "project_tracking": {
+          "label": "Prosjektsporing",
+          "description": "Skrivebeskyttet skanning for forfalt, blokkert og ikke-tilordnet arbeid."
+        },
+        "backlog_triage": {
+          "label": "Backlog-triage",
+          "description": "Oppdater sakers prioritet og legg til triage-etiketter på tvers av backloggen.",
+          "writes": {
+            "priority": "Prioritet",
+            "labels": "Etiketter"
+          }
+        },
+        "sprint_planning": {
+          "label": "Sprintplanlegging",
+          "description": "Forbered neste sprintbatch uten å skrive til prosjektet."
+        },
+        "bulk_sprint_creation": {
+          "label": "Masseoppretting av sprinter",
+          "description": "Opprett planlagte sprinter i rekkefølge og tilordne eventuelt backlog-saker på forhånd.",
+          "writes": {
+            "sprints": "Sprint",
+            "assignments": "Saker · Sprint"
+          }
+        }
+      },
+      "runMessages": {
+        "kinds": {
+          "project_tracking": "Project health scan",
+          "backlog_triage": "Backlog triage",
+          "sprint_planning": "Sprint planning preview",
+          "bulk_sprint_creation": "Bulk sprint creation",
+          "unknown": "{kind}"
+        },
+        "noActiveSprint": "No active sprint is running in this project.",
+        "backlogAlreadyTriaged": "Backlog already matches the current triage heuristics.",
+        "backlogNoChanges": "Backlog triage found no changes to apply.",
+        "writeActionsPreviewOnly": "Write actions are disabled, returning a preview only.",
+        "noEligibleBacklog": "No eligible backlog issues were found for sprint planning.",
+        "bulkPreviewOnly": "Bulk sprint creation is in preview mode only.",
+        "requestingProviderPlan": "Requesting a structured agent plan from the configured LLM provider.",
+        "providerPlanGenerated": "Structured provider plan generated successfully.",
+        "agentRunFailed": "Agent run failed",
+        "projectNotFound": "Project not found",
+        "unsupportedRunKind": "Unsupported agent run kind",
+        "sprintCreateFailed": "Failed to create sprint",
+        "started": "{kind} started for {project}.",
+        "startedPreview": "{kind} started for {project} in preview mode.",
+        "usingProvider": "Using {provider} provider with model {model}.",
+        "usingProviderProfile": "Using {provider} provider with model {model} via profile {profile}.",
+        "scannedIssues": "Scanned {count, plural, one {# issue} other {# issues}} across {project}.",
+        "activeSprintDetected": "Active sprint detected: {sprint}.",
+        "projectTrackingActiveSummary": "{project} has {open, plural, one {# open issue} other {# open issues}} and {blocked, plural, one {# blocker} other {# blockers}} in flight.",
+        "projectTrackingNoSprintSummary": "{project} has {open, plural, one {# open issue} other {# open issues}} with no active sprint.",
+        "foundBacklogIssues": "Found {count, plural, one {# backlog issue} other {# backlog issues}} to inspect.",
+        "triageRerank": "{count, plural, one {# issue} other {# issues}} will be re-ranked by the triage engine.",
+        "preparedTriageUpdates": "Prepared {count, plural, one {# backlog triage update} other {# backlog triage updates}}.",
+        "appliedTriageUpdates": "Applied {count, plural, one {# triage update} other {# triage updates}} to backlog issues.",
+        "updatedBacklogIssues": "Updated {count, plural, one {# backlog issue} other {# backlog issues}} with fresh priority and labels.",
+        "planningBacklogIssues": "Planning against {count, plural, one {# backlog issue} other {# backlog issues}}.",
+        "preparedSprintPlan": "Prepared {count, plural, one {# sprint plan block} other {# sprint plan blocks}} for {project}.",
+        "createdSprintLog": "Created {count, plural, one {# planned sprint} other {# planned sprints}} from backlog.",
+        "createdSprintSummary": "Created {count, plural, one {# planned sprint} other {# planned sprints}} for {project}."
+      }
     }
   },
   "collab": {
@@ -3290,7 +3498,10 @@
     "apm_invite_link_revoke_failed": "Failed to revoke project invite link",
     "pm_remove_success": "Medlem fjernet fra prosjektet",
     "pm_remove_failed": "Kunne ikke fjerne prosjektmedlem",
-    "pm_remove_member_aria": "Fjern {name} fra prosjektet"
+    "pm_remove_member_aria": "Fjern {name} fra prosjektet",
+    "we_default_status_todo": "To Do",
+    "we_default_status_in_progress": "In Progress",
+    "we_default_status_done": "Done"
   },
   "adminPanels": {
     "agentOps": {
@@ -3327,7 +3538,37 @@
       },
       "serviceStatus": {
         "title": "Tjenestestatus",
-        "description": "Kjøretidsporter for agentkontrollplanet."
+        "description": "Kjøretidsporter for agentkontrollplanet.",
+        "states": {
+          "ready": "Klar",
+          "blocked": "Blokkert",
+          "disabled": "Deaktivert",
+          "preview": "Forhåndsvisning"
+        },
+        "items": {
+          "controlPlane": {
+            "label": "Administratoragentkontroll",
+            "readyDetail": "Slå av alle agentkjøringer for arbeidsområder og prosjekter fra én bryter.",
+            "disabledDetail": "Slå av alle agentkjøringer for arbeidsområder og prosjekter fra én bryter."
+          },
+          "liveMonitoring": {
+            "label": "Direkte kjøringsfeed",
+            "readyDetail": "Sanntidsstatus og logger fra hver agentkjøring som skjer akkurat nå."
+          },
+          "writePipeline": {
+            "label": "Tillat skrivehandlinger globalt",
+            "readyDetail": "Tving hver sprintoppretting og backlog-redigering til forhåndsvisning hvis deaktivert.",
+            "previewDetail": "Tving hver sprintoppretting og backlog-redigering til forhåndsvisning hvis deaktivert."
+          },
+          "providerCoverage": {
+            "label": "Leverandørdekning",
+            "detail": "Arbeidsområdets leverandørvalg og kjørbar dekning. ({ready}/{total})"
+          },
+          "unknown": {
+            "label": "Tjenestestatus",
+            "detail": "Kunne ikke laste agentkontroll."
+          }
+        }
       },
       "providerCoverage": {
         "title": "Leverandørdekning",
@@ -3388,26 +3629,26 @@
         "writesChip": "{count} skrivinger"
       },
       "localRunners": {
-        "title": "Local server runners",
-        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
-        "loading": "Loading local runners...",
-        "loadError": "Failed to load local runners.",
-        "updated": "Local runner updated",
-        "updatedDescription": "The workspace handoff mode was saved.",
-        "updateFailed": "Failed to update local runner",
-        "ready": "Ready",
-        "needsSetup": "Needs setup",
-        "defaultMode": "default",
-        "runtime": "{mode} · {timeout}s timeout",
-        "toggle": "Toggle {provider} local runner",
+        "title": "Claude Code / Codex",
+        "description": "Sanntidsstatus og logger fra hver agentkjøring som skjer akkurat nå.",
+        "loading": "Laster agentkontroll …",
+        "loadError": "Kunne ikke laste agentkontroll.",
+        "updated": "Agentkontroll oppdatert",
+        "updatedDescription": "Globale kontroller for agentsikkerhet og kjøretid ble lagret.",
+        "updateFailed": "Kunne ikke oppdatere agentkontroll",
+        "ready": "Klar",
+        "needsSetup": "Trenger oppmerksomhet",
+        "defaultMode": "Standard",
+        "runtime": "{mode} · {timeout}s",
+        "toggle": "{provider}",
         "providers": {
           "claude": "Claude Code",
           "codex": "Codex CLI"
         },
         "reason": {
-          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
-          "cwd_missing": "Working directory does not exist: {value}",
-          "command_missing": "Command is not executable inside the web runtime: {value}"
+          "disabled": "Kunne ikke oppdatere agentkontroll: TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true",
+          "cwd_missing": "Kunne ikke laste agentkontroll: {value}",
+          "command_missing": "Kunne ikke laste agentkontroll: {value}"
         }
       }
     },
@@ -3471,7 +3712,8 @@
         "anthropic": "Brukes når et arbeidsområde ikke har lagt inn sin egen Anthropic-nøkkel. Starter med sk-ant-…"
       },
       "saveFailedDescription": "Kunne ikke lagre legitimasjonen. Prøv igjen.",
-      "removeFailedDescription": "Kunne ikke fjerne legitimasjonen. Prøv igjen."
+      "removeFailedDescription": "Kunne ikke fjerne legitimasjonen. Prøv igjen.",
+      "loadFailedDescription": "Could not load platform credentials. Please try again."
     },
     "realtimeHealth": {
       "loading": "Laster sanntidshelse …",
@@ -3521,7 +3763,11 @@
         "tls": "TLS (sikker tilkobling)",
         "saveFirst": "Lagre SMTP-konfigurasjon først",
         "sendTestTitle": "Send en test-e-post til deg selv",
-        "sendTest": "Send test-e-post"
+        "sendTest": "Send test-e-post",
+        "hostPlaceholder": "smtp.example.com",
+        "portPlaceholder": "587",
+        "usernamePlaceholder": "noreply@example.com",
+        "fromAddressPlaceholder": "TaskNebula <noreply@example.com>"
       },
       "livekit": {
         "title": "LiveKit",
@@ -3540,7 +3786,9 @@
         "apiSecretPlaceholder": "LiveKit API-hemmelighet",
         "saveFirst": "Lagre LiveKit-konfigurasjon først",
         "mintTitle": "Utsted et romtilgangstoken",
-        "mintTest": "Utsted test-token"
+        "mintTest": "Utsted test-token",
+        "serverUrlPlaceholder": "wss://livekit.example.com",
+        "apiKeyPlaceholder": "APIxxxxxxxxxxxxxxxx"
       },
       "storage": {
         "title": "Lagring",
@@ -3555,7 +3803,11 @@
         "s3AccessKey": "S3-tilgangsnøkkel",
         "s3SecretKey": "S3-hemmelig nøkkel",
         "s3SecretKeyStored": "S3-hemmelig nøkkel (lagret: {preview})",
-        "s3SecretPlaceholder": "S3-hemmelighet"
+        "s3SecretPlaceholder": "S3-hemmelighet",
+        "uploadsDirPlaceholder": "/var/tasknebula/uploads",
+        "s3BucketPlaceholder": "tasknebula-prod",
+        "s3RegionPlaceholder": "us-east-1",
+        "s3AccessKeyPlaceholder": "AKIA…"
       },
       "registration": {
         "title": "Registrering",
@@ -3580,6 +3832,7 @@
       "openInNewTab": "Åpne i ny fane",
       "sendSmtpTest": "Send SMTP-test",
       "sendSmtpTestTitle": "Send den generiske SMTP-test-e-posten til administratoradressen din (ikke den forhåndsviste malen — /smtp/test-endepunktet støtter bare en fast testmelding).",
+      "loadFailed": "Kunne ikke laste inn e-postforhåndsvisning",
       "smtpTestFailed": "SMTP-test mislyktes",
       "smtpTestSent": "SMTP-test sendt",
       "smtpTestSentDescription": "Sendt via {source} til {recipient}.",
@@ -3622,7 +3875,8 @@
       "evaluate": "Evaluer",
       "evaluating": "Evaluerer …",
       "isEnabled": "isEnabled",
-      "rolloutPercent": "rollout%"
+      "rolloutPercent": "rollout%",
+      "keyPlaceholder": "advanced_analytics"
     }
   },
   "adminDialogs": {
@@ -3665,7 +3919,8 @@
       "targetOrganizations": "Målrettede organisasjoner",
       "targetOrganizationsHint": "La feltet stå tomt for å aktivere for alle organisasjoner som samsvarer med planen + utrullingen.",
       "rollout": "Utrulling: {percentage} %",
-      "namePlaceholder": "Avansert analyse"
+      "namePlaceholder": "Avansert analyse",
+      "keyPlaceholder": "advanced_analytics"
     },
     "createOrg": {
       "trigger": "Ny organisasjon",
@@ -3808,7 +4063,34 @@
     "close": "Lukk",
     "commandMenu": "Kommandomeny",
     "commandMenuDescription": "Søk og kjør raske navigasjons- eller kommandohandlinger.",
-    "avatarOverflow": "{count, plural, one {# til} other {# til}}"
+    "avatarOverflow": "{count, plural, one {# til} other {# til}}",
+    "slashCommands": {
+      "assign": {
+        "description": "Tildel til en lagkamerat"
+      },
+      "label": {
+        "description": "Legg til etikett"
+      },
+      "track": {
+        "description": "Loggfør tid"
+      },
+      "status": {
+        "description": "Endre status"
+      },
+      "due": {
+        "description": "Sett forfallsdato"
+      },
+      "mention": {
+        "description": "Nevn en lagkamerat"
+      },
+      "arguments": {
+        "user": "@bruker",
+        "label": "Etikett",
+        "duration": "Varighet",
+        "status": "Status",
+        "date": "Dato"
+      }
+    }
   },
   "appShell": {
     "common": {
@@ -4193,7 +4475,8 @@
     "completeSprintTooltip": "Fullfør denne sprinten. Ufullstendige saker vil bli flyttet til backloggen.",
     "sprintBurndown": "Sprint-burndown",
     "projectInviteRequiredTitle": "Invitation required",
-    "projectInviteRequiredDescription": "Be en administrator invitere deg til et prosjekt eller gi deg tillatelse til å opprette prosjekter."
+    "projectInviteRequiredDescription": "Be en administrator invitere deg til et prosjekt eller gi deg tillatelse til å opprette prosjekter.",
+    "projectKeyPlaceholder": "MAP"
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4590,7 +4873,13 @@
     },
     "failedToLoadContent": "Kunne ikke laste innholdet",
     "failedToLoadSection": "Kunne ikke laste seksjonen",
-    "failedToLoadSectionNamed": "Kunne ikke laste {section}"
+    "failedToLoadSectionNamed": "Kunne ikke laste {section}",
+    "global": {
+      "title": "Application error",
+      "description": "A critical error prevented the app from loading. Please reload the page. If the problem persists, contact support.",
+      "reference": "Reference:",
+      "reload": "Reload"
+    }
   },
   "publicPages": {
     "loading": "Laster",
@@ -4685,7 +4974,753 @@
     "trustStatusInProgress": "Pågår",
     "trustStatusAchieved": "Oppnådd",
     "trustStatusPlanned": "Planlagt",
-    "trustExpected": "Forventet:"
+    "trustExpected": "Forventet:",
+    "setupEmailPlaceholder": "admin@company.com",
+    "offlineTitle": "Du er frakoblet.",
+    "offlineRetry": "Prøv igjen",
+    "landing": {
+      "nav": {
+        "primaryAria": "Primær",
+        "homeAria": "TaskNebula startsida",
+        "githubAria": "TaskNebula på GitHub",
+        "github": "GitHub",
+        "signIn": "Logg inn",
+        "startFree": "Start gratis",
+        "openMenuAria": "Öppna navigeringsmenyn",
+        "closeMenuAria": "Stäng navigeringsmenyn",
+        "items": {
+          "features": "Funksjoner",
+          "compare": "Sammenlign",
+          "selfHost": "Selvhost",
+          "faq": "FAQ"
+        }
+      },
+      "hero": {
+        "kicker": "Öppen källkod · MIT · AI-native",
+        "title": "Projekttrackern byggd för team <accent>och deras agenter.</accent>",
+        "description": "TaskNebula är det öppna, tangentbordsförsta alternativet till Jira och Linear. Tavlor, sprintar och dokument körs på din egen Postgres, med en inbyggd MCP-server så att AI-agenter arbetar med backloggen bredvid teamet. MIT-licens, självhostas med en Docker Compose.",
+        "createWorkspace": "Skapa workspace",
+        "viewGithub": "Visa på GitHub",
+        "selfHostKicker": "Eller självhosta med två kommandon",
+        "quickstartAria": "Snabbstartskommandon för självhosting",
+        "copyQuickstart": "Kopiera snabbstart för självhosting",
+        "selfHostMeta": "Gratis för alltid som självhostad · Tre containrar: Postgres, Redis, en webbimage",
+        "demoPill": "Interaktiv demo nedan",
+        "chips": {
+          "cmdk": "Cmd+K överallt",
+          "mcp": "MCP-server inbyggd",
+          "import": "Import från Jira och Linear",
+          "selfHost": "Självhosta på din Postgres"
+        }
+      },
+      "copy": {
+        "copied": "Kopierat",
+        "copyCommand": "Kopiera kommando",
+        "copiedToClipboard": "Kopierat till urklipp"
+      },
+      "footer": {
+        "tagline": "Öppen projektspårning för team och agenter",
+        "description": "Byggt öppet. Dina ärenden bor i din Postgres och lämnar när du säger det.",
+        "githubAria": "TaskNebula på GitHub",
+        "starGithub": "Stjärnmarkera på GitHub",
+        "columns": {
+          "product": "Produkt",
+          "resources": "Resurser",
+          "openSource": "Öppen källkod",
+          "legal": "Juridik"
+        },
+        "links": {
+          "features": "Funktioner",
+          "compare": "Jämför",
+          "selfHost": "Självhosta",
+          "faq": "FAQ",
+          "openapiSpec": "OpenAPI-specifikation",
+          "mcpServer": "MCP-server",
+          "dockerHub": "Docker Hub",
+          "healthEndpoint": "Health-endpoint",
+          "github": "GitHub",
+          "changelog": "Ändringslogg",
+          "reportBug": "Rapportera bugg",
+          "contributing": "Bidra",
+          "mitLicense": "MIT-licens",
+          "signIn": "Logga in",
+          "createWorkspace": "Skapa workspace"
+        },
+        "copyright": "© {year} TaskNebula. Släppt under MIT-licensen.",
+        "trademarks": "Jira, Linear och Plane är varumärken som tillhör sina respektive ägare."
+      },
+      "finalCta": {
+        "kicker": "Kom igång",
+        "title": "Äg din tracker. <accent>Ta med dina agenter.</accent>",
+        "description": "Skapa en workspace på minuter eller kör allt på din egen server ikväll; hur som helst är koden din att läsa.",
+        "createWorkspace": "Skapa workspace",
+        "selfHostQuickstart": "Snabbstart för självhosting",
+        "readSource": "Läs källkoden",
+        "copyDockerQuickstart": "Kopiera Docker-snabbstartskommando",
+        "meta": "Inget kreditkort. Ingen telemetri som standard. Exportera med <code>pg_dump</code> när du lämnar."
+      },
+      "proof": {
+        "aria": "Open source-trovärdighet",
+        "headline": "Öppen källkod, självhostad, din data förblir din.",
+        "subline": "Ingen logovägg — bara bevis du kan kontrollera.",
+        "items": {
+          "sourceGithub": "Källkod på GitHub",
+          "mitLicensed": "MIT-licens",
+          "dockerImage": "Image på Docker Hub",
+          "openapiSpec": "OpenAPI-specifikation",
+          "mcpServer": "MCP-server"
+        }
+      },
+      "selfHost": {
+        "kicker": "Self-host",
+        "title": "Your work. Your server. Your data.",
+        "description": "Three containers and one command. Everything lives in your Postgres, exporting is a pg_dump away, and nothing phones home — no vendor lock-in by design.",
+        "cards": {
+          "postgres": {
+            "title": "One Postgres, one web image",
+            "body": "Postgres 16 with the pgvector extension powers search; Redis 7 is along for the ride. No Mongo, no Elastic, no sidecar zoo."
+          },
+          "migrations": {
+            "title": "Migrations run on boot",
+            "body": "The image applies every database migration at startup. Upgrading is pulling a newer tag and restarting — nothing manual."
+          },
+          "health": {
+            "title": "Health you can probe",
+            "body": "GET /api/health returns 200 when the app is ready — wire it to your load balancer, uptime checks, or compose healthcheck."
+          },
+          "pin": {
+            "title": "Pin the version you trust",
+            "body": "Set TASKNEBULA_IMAGE=neuraparse/tasknebula:0.4.0 to lock a release, or follow :latest for the bleeding edge."
+          }
+        },
+        "terminalTitle": "quickstart — Docker Desktop or any Docker host (~2 min)",
+        "copyQuickstart": "Copy quickstart commands",
+        "quickstartAria": "Self-host quickstart commands",
+        "terminalNote": "The web image waits for Postgres, runs migrations, then serves on <code>http://localhost:3000</code> — open it and finish the first-run admin wizard. Image: <imageLink>neuraparse/tasknebula</imageLink>."
+      },
+      "migrate": {
+        "kicker": "Migrate",
+        "title": "Move from Jira or Linear in an afternoon",
+        "description": "Switching tools shouldn't mean losing your history or your process. Import what you have, map it to TaskNebula, and keep working the way your team already does.",
+        "steps": {
+          "issues": {
+            "title": "Bring your issues over",
+            "body": "Import issues from Jira and Linear with their descriptions, comments, and history intact — not flattened into a CSV dump."
+          },
+          "labels": {
+            "title": "Labels and sprints come too",
+            "body": "Labels, components, and active sprints land as first-class records, so your boards and backlog look familiar on day one."
+          },
+          "fields": {
+            "title": "Map fields, not just names",
+            "body": "Match statuses, priorities, and custom fields to TaskNebula equivalents during import — review the mapping before anything writes."
+          },
+          "workflow": {
+            "title": "Keep your workflow",
+            "body": "Your statuses, swimlanes, and conventions move with you. Switch tools without retraining the team or rebuilding process from scratch."
+          }
+        },
+        "note": "Imports run against your own database and are fully reversible — nothing leaves your server, and you can re-run a mapping until it looks right."
+      },
+      "aiMcp": {
+        "kicker": "AI-native",
+        "title": "Agents work the backlog with you.",
+        "description": "TaskNebula was built for the agent era. Ask questions across your whole workspace, let AI triage and estimate new work, and give external agents real tools through a first-class MCP server.",
+        "capabilities": {
+          "ask": {
+            "title": "Ask your workspace",
+            "body": "The /api/ask RAG endpoint answers in natural language over your issues, docs, and comments — grounded in pgvector retrieval, with citations back to the source."
+          },
+          "triage": {
+            "title": "AI triage & estimates",
+            "body": "Suggested priority, labels, and effort land on new issues — backed by real OpenAI and Anthropic calls, a cost guard, and tracing. You stay in control: accept or dismiss."
+          },
+          "mcp": {
+            "title": "MCP tools for agents",
+            "body": "@tasknebula/mcp-server exposes the backlog over MCP — HTTP at /api/mcp or stdio — so external agents create, search, and move issues with revocable keys."
+          }
+        },
+        "mock": {
+          "session": "agent session — @tasknebula/mcp-server",
+          "connected": "connected",
+          "agent": "agent",
+          "planning": "planning the sprint cleanup",
+          "call": "call",
+          "result": "result",
+          "issueCount": "3 issues",
+          "applied": "applied",
+          "priorityHigh": "priority: high",
+          "labelFlaky": "label: flaky",
+          "resultLabels": {
+            "checkout": "checkout",
+            "flaky": "flaky",
+            "tests": "tests"
+          }
+        }
+      },
+      "workflow": {
+        "kicker": "The flow",
+        "title": "One thread from intake to shipped.",
+        "description": "No tool-hopping between a tracker, a planning doc, and an agent console. The work moves through a single surface — humans and agents on the same timeline.",
+        "stepLabel": "STEP {step}",
+        "steps": {
+          "intake": {
+            "title": "Intake without the noise",
+            "body": "Issues, requests, and inbound from your agents land in one queue. Triage suggests priority and labels so the backlog starts structured, not as a pile."
+          },
+          "plan": {
+            "title": "Plan the sprint in place",
+            "body": "Pull from the backlog into a sprint, set fix versions and components, and read scope at a glance. Planning lives next to the work, not in a separate doc."
+          },
+          "build": {
+            "title": "Build alongside agents",
+            "body": "Agents are first-class teammates over MCP — they pick up issues, comment, and open work the same way people do, with every action on the shared timeline."
+          },
+          "ship": {
+            "title": "Ship and track the outcome",
+            "body": "Close issues with a real resolution, cut the version, and watch velocity and cycle time update live. Done means done — not a column you forgot to clear."
+          }
+        },
+        "visuals": {
+          "intake": {
+            "title": "Triage queue",
+            "newCount": "3 new",
+            "sources": {
+              "inbound": "Inbound",
+              "agent": "Agent",
+              "support": "Support"
+            },
+            "chips": {
+              "high": "High",
+              "api": "api",
+              "bug": "bug"
+            }
+          },
+          "plan": {
+            "columns": {
+              "backlog": "Backlog",
+              "sprint5": "Sprint 5"
+            },
+            "checkout": "checkout"
+          },
+          "build": {
+            "title": "Live activity",
+            "events": {
+              "pickedUp": "Picked up WEB-204",
+              "openedPr": "Opened PR · 4 files",
+              "commented": "Commented on API-88"
+            }
+          },
+          "ship": {
+            "velocity": "Velocity",
+            "shipped": "Shipped",
+            "resolution": {
+              "fixed": "Fixed",
+              "wontDo": "Won't do"
+            }
+          }
+        }
+      },
+      "comparison": {
+        "kicker": "Compare",
+        "title": "TaskNebula vs Jira vs Linear vs Plane",
+        "description": "All four are capable tools. Here is exactly where TaskNebula differs — open by default, yours to host, AI-native. Nothing more, nothing less.",
+        "tableAria": "Feature comparison table",
+        "tableCaption": "Feature comparison between TaskNebula, Jira, Linear, and Plane. Each cell is marked Yes, Partial, or No, followed by a short detail.",
+        "featureHeader": "Feature",
+        "marks": {
+          "yes": "Yes",
+          "partial": "Partial",
+          "no": "No"
+        },
+        "rows": {
+          "openSource": {
+            "feature": "Open source (MIT)",
+            "notes": {
+              "tasknebula": "Entire codebase, MIT",
+              "jira": "Proprietary",
+              "linear": "Proprietary",
+              "plane": "AGPL-3.0 core"
+            }
+          },
+          "selfHost": {
+            "feature": "Self-host (one Docker Compose)",
+            "notes": {
+              "tasknebula": "Postgres + Redis + one web image",
+              "jira": "Cloud-first; DC phased out",
+              "linear": "Cloud only",
+              "plane": "Docker / Kubernetes"
+            }
+          },
+          "price": {
+            "feature": "Price",
+            "notes": {
+              "tasknebula": "Free, unlimited users, self-hosted",
+              "jira": "Free ≤10 users, then per-seat",
+              "linear": "Free tier, then per-seat",
+              "plane": "Free ≤12 users, then per-seat"
+            }
+          },
+          "aiAgents": {
+            "feature": "AI agents native + MCP server",
+            "notes": {
+              "tasknebula": "Built-in agents + MIT MCP server",
+              "jira": "Rovo + remote MCP, cloud-only",
+              "linear": "AI + remote MCP server",
+              "plane": "Plane AI (credits) + MCP"
+            }
+          },
+          "keyboard": {
+            "feature": "Keyboard-first",
+            "notes": {
+              "tasknebula": "Command palette + shortcuts",
+              "jira": "Limited shortcuts",
+              "linear": "Best-in-class",
+              "plane": "Command-K palette"
+            }
+          },
+          "realtime": {
+            "feature": "Realtime collab",
+            "notes": {
+              "tasknebula": "Live cursors via Yjs",
+              "jira": "Live sync, no co-editing",
+              "linear": "Live sync",
+              "plane": "Live sync"
+            }
+          },
+          "import": {
+            "feature": "Jira / Linear import",
+            "notes": {
+              "tasknebula": "CSV + API import",
+              "jira": "Imports to Jira",
+              "linear": "Jira import built-in",
+              "plane": "Jira / Linear importers"
+            }
+          },
+          "sprints": {
+            "feature": "Sprints / Cycles",
+            "notes": {
+              "tasknebula": "Sprints + backlog",
+              "jira": "Scrum + Kanban",
+              "linear": "Cycles",
+              "plane": "Cycles + modules"
+            }
+          },
+          "structure": {
+            "feature": "Labels / Components / Versions",
+            "notes": {
+              "tasknebula": "First-class, all three",
+              "jira": "All three",
+              "linear": "Labels + projects",
+              "plane": "Labels + modules"
+            }
+          },
+          "api": {
+            "feature": "API / Projects-as-code",
+            "notes": {
+              "tasknebula": "Open REST + OpenAPI spec",
+              "jira": "REST API, no IaC",
+              "linear": "GraphQL API",
+              "plane": "REST API"
+            }
+          }
+        },
+        "footnote": "Vendor details reflect public documentation and pricing pages as of June 2026 and may change. Jira is a trademark of Atlassian, Linear of Linear Orbit, and Plane of Plane Software — all are solid products, none affiliated with TaskNebula."
+      },
+      "faq": {
+        "kicker": "FAQ",
+        "title": "Fair questions, straight answers.",
+        "description": "No sales gate, no asterisks. If yours is missing, open a GitHub issue — public answers beat private threads.",
+        "statusPrompt": "Still unsure? <link>Ask on GitHub</link> or read the live status in the docs.",
+        "items": {
+          "freeMit": {
+            "question": "Is TaskNebula really free, and really MIT?",
+            "answer": "Yes — the whole app is MIT licensed: boards, sprints, docs, analytics, the AI surfaces, and the MCP server. No open-core split, no paywalled tier, no per-seat fee. Self-host it and run it forever for unlimited users; fork it if you want to."
+          },
+          "selfHost": {
+            "question": "Can I self-host it?",
+            "answer": "That is the default. Bring Docker and you get three containers — Postgres 16 with pgvector, Redis 7, and the neuraparse/tasknebula web image. Migrations run on boot, GET /api/health is your probe endpoint, and a one-line compose quickstart gets you to localhost:3000. There is no hosted-only feature you lose by running it yourself."
+          },
+          "aiKeys": {
+            "question": "Do I need the AI features? Can I bring my own keys?",
+            "answer": "AI is optional — every board, sprint, and doc works with no model keys configured. When you want it, you bring your own OpenAI or Anthropic key as environment variables, so spend and data residency stay yours. There is a cost guard so a runaway prompt cannot run up your bill."
+          },
+          "aiReality": {
+            "question": "How real are the AI features today?",
+            "answer": "We build them in the open. The data model and endpoints — triage suggestions, pgvector semantic search, and the /api/ask RAG endpoint — are live, and they make real OpenAI and Anthropic calls. Some surfaces are still labeled preview while we harden them; we would rather say that here than have you discover it after install."
+          },
+          "mcpServer": {
+            "question": "What is the MCP server?",
+            "answer": "An MCP (Model Context Protocol) server exposes TaskNebula as tools — create, search, move, and comment on issues — so agents like Claude Code and Cursor can drive your tracker. It ships with the repo, HTTP at /api/mcp or stdio via @tasknebula/mcp-server, and is MIT licensed. Heads up: end-to-end agent auth depends on the REST API accepting API keys, which is still being wired, so treat it as preview today."
+          },
+          "imports": {
+            "question": "Does it import from Jira or Linear?",
+            "answer": "Yes — there are importers for Jira, Linear, GitHub, and CSV. Each runs with a preview step so you can inspect the field mapping before anything is written, and you can keep your old tool read-only while you cut over."
+          },
+          "productionReady": {
+            "question": "Is it production-ready?",
+            "answer": "The core tracker — issues, boards, sprints, docs, search, permissions, REST API, and OpenAPI spec — is solid and self-hostable. Some edges are still maturing: OAuth login needs a DB adapter, so use credentials auth for now; realtime collab env vars are not yet plumbed into the Docker images; and parts of the AI/MCP surface are preview. We track all of it openly in docs/STATUS.md."
+          },
+          "dataVisibility": {
+            "question": "Who can see my data?",
+            "answer": "You decide. Self-hosted, everything lives in your Postgres on your infrastructure and exports with a plain pg_dump — no telemetry phones home. Inside the product, workspaces are isolated per organization with role-based access, permission schemes, and audit logs."
+          }
+        }
+      },
+      "features": {
+        "kicker": "The workflow",
+        "title": "From keystroke to ship — one open backlog.",
+        "description": "Plan, execute, and reason over the work in the same surface. Keyboard-first delivery, an AI layer you can audit, and agents that move tickets through a real MCP server — all MIT-licensed and self-hostable.",
+        "cards": {
+          "keyboard": {
+            "title": "Keyboard-first boards and sprints",
+            "body": "Drive the whole board from one Cmd+K palette — search, navigate, and run actions without leaving the keys. Drag across columns, plan sprints, and read burndown in the same view."
+          },
+          "import": {
+            "title": "Import from Jira and Linear",
+            "body": "Bring your backlog with you — Jira, Linear, and CSV importers map issues, statuses, and metadata so you start full, not empty."
+          },
+          "structure": {
+            "title": "Jira-parity structure",
+            "body": "First-class labels, components, fix versions, and a resolution model — backlog structure stored in real tables and REST APIs, not JSON strings."
+          },
+          "ai": {
+            "title": "AI-native, auditable",
+            "body": "Real OpenAI and Anthropic calls behind a cost guard and tracing — triage suggestions, AI estimates, and a /api/ask RAG endpoint over pgvector. No black boxes."
+          },
+          "agents": {
+            "title": "Agents work the backlog",
+            "body": "A real MCP server — HTTP at /api/mcp or stdio — lets coding agents create, search, and move issues. Backed by a REST API, OpenAPI spec, revocable keys, and webhooks."
+          },
+          "realtime": {
+            "title": "Realtime collaboration",
+            "body": "Specs and issue docs edit live — Tiptap on Yjs with presence and conflict-free merges, so two people on one doc just works."
+          },
+          "selfHost": {
+            "title": "Self-host in minutes",
+            "body": "One Docker image, Postgres, and you own the data. Multi-tenant from the schema up — every table is organization-scoped, no vendor lock-in."
+          },
+          "analytics": {
+            "title": "Analytics close to execution",
+            "body": "Velocity, cycle time, and priority mix per project — with a resolution model that separates Done from Won't Fix and Duplicate."
+          }
+        },
+        "visuals": {
+          "palette": {
+            "query": "move WEB-18 to review",
+            "moveAction": "Move WEB-18 → In Review",
+            "assignAction": "Assign WEB-18 to me",
+            "columns": {
+              "todo": "To Do",
+              "inProgress": "In Progress",
+              "done": "Done"
+            }
+          },
+          "import": {
+            "statusMapped": "Status mapped",
+            "labelsMapped": "Labels mapped"
+          },
+          "structure": {
+            "labels": {
+              "api": "api",
+              "design": "design",
+              "bug": "bug"
+            },
+            "fixVersion": "Fix version",
+            "component": "Component"
+          },
+          "ai": {
+            "triageHigh": "Triage: High",
+            "estimate": "Estimate: 5 pts",
+            "accept": "Accept",
+            "dismiss": "Dismiss"
+          },
+          "collab": {
+            "title": "Launch plan — Q3",
+            "liveCount": "2 live"
+          },
+          "deploy": {
+            "healthOk": "/api/health · ok",
+            "tenantIsolation": "Tenant isolation"
+          },
+          "analytics": {
+            "velocity": "Velocity",
+            "resolution": "Resolution",
+            "fixed": "Fixed",
+            "wontDo": "Won't do",
+            "duplicate": "Duplicate"
+          }
+        }
+      },
+      "showcase": {
+        "frame": {
+          "board": "Board",
+          "preview": "Workspace preview",
+          "live": "Live",
+          "boardUrl": "{board} / Current sprint"
+        },
+        "board": {
+          "kicker": "Board",
+          "title": "A board you can actually move through.",
+          "description": "Switch projects, drag issues between stages, and keep details close without fake motion or noisy chrome.",
+          "dragHint": "Drag cards between stages.",
+          "boards": {
+            "website": "Website",
+            "api": "API Platform",
+            "mobile": "Mobile"
+          },
+          "columns": {
+            "backlog": "Backlog",
+            "todo": "To Do",
+            "inProgress": "In Progress",
+            "inReview": "In Review",
+            "done": "Done"
+          },
+          "priorities": {
+            "critical": "critical",
+            "high": "high",
+            "medium": "medium",
+            "low": "low"
+          },
+          "meta": {
+            "stage": "Stage {stage}",
+            "owner": "Owner {owner}",
+            "comments": "{count, plural, one {# comment} other {# comments}}"
+          },
+          "unknownStage": "Unknown",
+          "moveBack": "Move back",
+          "moveForward": "Move forward",
+          "checklist": "Checklist",
+          "dropIssue": "Drop an issue here",
+          "issues": {
+            "web18": {
+              "title": "Refine launch page hierarchy",
+              "summary": "Tighten hero, simplify copy, and make the landing feel more premium.",
+              "checklist": {
+                "first": "Reduce copy density",
+                "second": "Improve visual rhythm",
+                "third": "Finalize CTA placement"
+              }
+            },
+            "web21": {
+              "title": "Docs intro for redesign project",
+              "summary": "Create a project note structure linked to the main redesign issue.",
+              "checklist": {
+                "first": "Outline launch notes",
+                "second": "Link blockers to docs",
+                "third": "Add revision checkpoints"
+              }
+            },
+            "web24": {
+              "title": "Fix mobile footer alignment",
+              "summary": "Resolve spacing drift and prevent CTA overlap on smaller screens.",
+              "checklist": {
+                "first": "Audit breakpoints",
+                "second": "Normalize spacing tokens",
+                "third": "QA Safari mobile"
+              }
+            },
+            "web09": {
+              "title": "Release marketing epic",
+              "summary": "Coordinate launch assets, copy, and release checklist for the redesign.",
+              "checklist": {
+                "first": "Finalize visuals",
+                "second": "Lock release notes",
+                "third": "Review analytics events"
+              }
+            },
+            "web05": {
+              "title": "Shipping checklist",
+              "summary": "Final deploy checklist for copy, assets, analytics, and docs.",
+              "checklist": {
+                "first": "Docs confirmed",
+                "second": "Analytics checked",
+                "third": "Post-launch owner assigned"
+              }
+            },
+            "api12": {
+              "title": "Partner auth hardening",
+              "summary": "Tighten token refresh paths and rollout sequence for partner access.",
+              "checklist": {
+                "first": "Review token lifecycle",
+                "second": "Lock scopes",
+                "third": "Publish rollout note"
+              }
+            },
+            "api09": {
+              "title": "Rate limiting policy",
+              "summary": "Define thresholds and recovery behavior for public endpoints.",
+              "checklist": {
+                "first": "Draft policy",
+                "second": "Add dashboard checks",
+                "third": "Review with support"
+              }
+            },
+            "api17": {
+              "title": "Webhook retry bug",
+              "summary": "Retry window is shorter than expected under queue pressure.",
+              "checklist": {
+                "first": "Reproduce in staging",
+                "second": "Patch retry timing",
+                "third": "Verify audit logging"
+              }
+            },
+            "api03": {
+              "title": "Versioning epic",
+              "summary": "Shape versioning and migration guidance for upcoming platform changes.",
+              "checklist": {
+                "first": "Define policy",
+                "second": "Write migration guide",
+                "third": "Add rollout checklist"
+              }
+            },
+            "api22": {
+              "title": "Observability cleanup",
+              "summary": "Bring endpoint health signals and alerts into a cleaner baseline.",
+              "checklist": {
+                "first": "Refine alert names",
+                "second": "Review dashboard cards",
+                "third": "Close migration notes"
+              }
+            },
+            "app14": {
+              "title": "Offline queue polish",
+              "summary": "Make offline sync state clearer and reduce ambiguous empty states.",
+              "checklist": {
+                "first": "Review queue states",
+                "second": "Refine copy",
+                "third": "Test reconnect flow"
+              }
+            },
+            "app11": {
+              "title": "Push preference setup",
+              "summary": "Add better first-run setup for notifications and reminders.",
+              "checklist": {
+                "first": "Refine toggles",
+                "second": "Clarify permission states",
+                "third": "Document fallback flow"
+              }
+            },
+            "app06": {
+              "title": "Board drag bug on tablets",
+              "summary": "Dragging cards feels sticky under split-screen tablet layouts.",
+              "checklist": {
+                "first": "Fix pointer capture",
+                "second": "QA iPad split view",
+                "third": "Verify velocity"
+              }
+            },
+            "app02": {
+              "title": "Release readiness epic",
+              "summary": "Coordinate release, QA, notes, and store assets for the mobile launch.",
+              "checklist": {
+                "first": "Store assets",
+                "second": "Release notes",
+                "third": "QA sign-off"
+              }
+            },
+            "app19": {
+              "title": "Checklist sync done",
+              "summary": "Checklist sync is stable across devices and background reconnects.",
+              "checklist": {
+                "first": "Android check",
+                "second": "iOS check",
+                "third": "Docs update"
+              }
+            }
+          }
+        },
+        "team": {
+          "frameTitle": "Team",
+          "frameUrl": "Workspace / Team",
+          "preview": "Workspace preview",
+          "live": "Live",
+          "members": "Members",
+          "activity": "Activity",
+          "roles": {
+            "product": "Product",
+            "techLead": "Tech Lead",
+            "engineer": "Engineer",
+            "design": "Design"
+          },
+          "activityItems": {
+            "moved": "moved WEB-18 to In Review",
+            "linked": "linked docs to API-12",
+            "closed": "closed APP-19"
+          },
+          "times": {
+            "now": "just now",
+            "fourMinutes": "4m ago",
+            "elevenMinutes": "11m ago"
+          }
+        },
+        "workflow": {
+          "frameTitle": "Workflow",
+          "frameUrl": "Project settings / Workflow",
+          "preview": "Workspace preview",
+          "live": "Live",
+          "steps": {
+            "backlog": "Backlog",
+            "todo": "To Do",
+            "inProgress": "In Progress",
+            "inReview": "In Review",
+            "done": "Done"
+          },
+          "transitionRules": "Transition rules",
+          "rules": {
+            "assigneeRequired": "Assignee required",
+            "subtasksComplete": "All subtasks complete",
+            "reviewApproved": "Review approved"
+          },
+          "auto": "Auto"
+        },
+        "sprint": {
+          "frameTitle": "Sprint",
+          "frameUrl": "Sprint 4 / Overview",
+          "preview": "Workspace preview",
+          "live": "Live",
+          "title": "Sprint 4 — Auth & Notifications",
+          "active": "Active",
+          "duration": "14 days · 18 issues",
+          "remaining": "5 days remaining",
+          "stats": {
+            "total": "Total",
+            "done": "Done",
+            "active": "Active",
+            "points": "Points"
+          },
+          "burndown": "Burndown"
+        },
+        "analytics": {
+          "frameTitle": "Analytics",
+          "frameUrl": "Project / Analytics",
+          "preview": "Workspace preview",
+          "live": "Live",
+          "stats": {
+            "velocity": "Velocity",
+            "cycle": "Cycle",
+            "flow": "Flow",
+            "bugs": "Bugs"
+          },
+          "velocity": "Velocity",
+          "priorityMix": "Priority mix",
+          "priorities": {
+            "critical": "Critical",
+            "high": "High",
+            "medium": "Medium",
+            "low": "Low"
+          }
+        }
+      },
+      "meta": {
+        "title": "TaskNebula — Open-source, AI-native Jira & Linear alternative",
+        "description": "Keyboard-first boards, sprints, and docs with an MCP server so AI agents work the backlog with you. MIT licensed — self-host with one Docker Compose file.",
+        "skipToContent": "Skip to content"
+      }
+    },
+    "intake": {
+      "submitMetaTitle": "Submit · TaskNebula"
+    }
   },
   "settingsClients": {
     "common": {
@@ -4823,7 +5858,8 @@
       "invitationResent": "Invitation resent",
       "adminCreatedOnlyInviteWarning": "Kun kontoer opprettet av administrator er aktivert. Nye eksterne medlemmer må opprettes av en superadministrator før de kan legges til her.",
       "adminCreatedOnlyInviteBlockedTitle": "Invitasjon deaktivert",
-      "adminCreatedOnlyInviteBlockedDescription": "Opprett brukeren først i Admin > Users, og legg deretter den aktive kontoen til denne organisasjonen."
+      "adminCreatedOnlyInviteBlockedDescription": "Opprett brukeren først i Admin > Users, og legg deretter den aktive kontoen til denne organisasjonen.",
+      "emailPlaceholder": "member@example.com"
     },
     "org": {
       "selectOrg": "Velg en organisasjon for å laste inn innstillinger.",
@@ -4885,7 +5921,9 @@
         "projects": "Prosjekter",
         "teamspaces": "Teamområder",
         "apiKeys": "API-nøkler"
-      }
+      },
+      "logoPlaceholder": "https://cdn.example.com/logo.png",
+      "domainPlaceholder": "company.com"
     },
     "audit": {
       "loadFailed": "Kunne ikke laste mottakere",
@@ -5428,6 +6466,39 @@
           "micNotStarted": "Mikrofonen kunne ikke startes. En annen app bruker den kanskje.",
           "audioEngineFailed": "Nettleserens lydmotor mislyktes for denne enheten. Stopp andre lydapper eller bytt mikrofon, og prøv igjen.",
           "micNotFound": "Ingen mikrofon ble funnet for denne nettleserøkten."
+        },
+        "noAudioTrackError": "No audio track was returned by the browser.",
+        "microphoneStartTimeout": "Timed out while starting the microphone.",
+        "microphoneRecoveryHint": {
+          "chromium": "Look for the microphone prompt in the address bar and choose Allow this time or Allow on every visit. If it was dismissed, open Chrome site settings for this site and allow the microphone.",
+          "edge": "Look for the microphone prompt in the address bar. If it was dismissed, open Edge Site permissions for this site and allow the microphone.",
+          "firefox": "Firefox usually shows microphone access near the left side of the address bar. If it disappeared, open the padlock or Page Info permissions and allow the microphone for this site.",
+          "safari": "Safari may keep microphone access under Safari > Settings > Websites > Microphone, or in the website controls in the address bar.",
+          "unknown": "Check the browser microphone prompt or this site's permissions and allow microphone access."
+        },
+        "pendingMicrophoneJoin": "Joined muted while the browser finishes microphone access. {hint} TaskNebula will turn your mic on automatically if access succeeds.",
+        "pendingMicrophoneRuntime": "Browser is still waiting for microphone access. {hint} TaskNebula will unmute automatically if access succeeds.",
+        "timedOutMicrophoneAccess": "Microphone access timed out while waiting for the browser prompt. {hint} Then try the mic button again.",
+        "timedOutPendingMicrophonePrompt": "Microphone access timed out while waiting for the browser prompt. {hint} If you approve it now, TaskNebula will still turn your mic on automatically. If no prompt appears, refresh this page or try the mic button again.",
+        "deniedMicrophoneAccess": "Microphone permission was denied. {hint}",
+        "microphoneCaptureUnsupported": "This browser does not support microphone capture.",
+        "microphoneNotFound": "No microphone was found. Check your audio input device and try again.",
+        "microphoneBusy": "Your microphone is busy in another app. Close other audio apps and try again.",
+        "microphoneAccessUnavailable": "Microphone access is unavailable. {hint}",
+        "permissionStateLabel": {
+          "allowed": "Allowed",
+          "blocked": "Blocked",
+          "waitingForBrowserDecision": "Waiting for browser decision",
+          "browserManaged": "Browser-managed"
+        },
+        "permissionHelp": {
+          "deviceLabelsHiddenUntilPermission": "Device names stay hidden until the browser grants microphone access.",
+          "grantedWithDevicesAndLabels": "Microphone access is already allowed. You can switch between available microphones here.",
+          "grantedLabelsHidden": "Microphone access is allowed, but this browser has not exposed device names yet. Use Refresh devices after returning from browser settings.",
+          "grantedNoDevices": "Microphone access is allowed, but no audio input devices are currently visible to the browser.",
+          "denied": "Microphone access is blocked for this site. {hint}",
+          "prompt": "This browser is still waiting for a microphone decision. {hint}{labelsHiddenNote}",
+          "unknown": "This browser does not expose a reliable microphone permission state before access. {hint}{labelsHiddenNote}"
         }
       }
     }
@@ -5556,7 +6627,11 @@
     "oversightDefault": "Standard tilsyn",
     "reviewRequired": "Gjennomgang kreves",
     "autoApplyAllowed": "Automatisk bruk tillatt",
-    "footerContact": "Spørsmål om AI-åpenhet, registrertes rettigheter eller disse modellkortene? Send e-post til <link></link>."
+    "footerContact": "Spørsmål om AI-åpenhet, registrertes rettigheter eller disse modellkortene? Send e-post til <link></link>.",
+    "meta": {
+      "title": "AI Model Cards — TaskNebula",
+      "description": "Public AI transparency disclosures for every AI feature TaskNebula deploys, as required by EU AI Act Article 50."
+    }
   },
   "presence": {
     "group_viewing": "{count, plural, one {# person ser på} other {# personer ser på}}",
@@ -5577,5 +6652,303 @@
     "sprint_planning": "Sprintplanlegging",
     "bulk_sprint_creation": "Masseoppretting av sprinter",
     "unknown": "{kind}"
+  },
+  "metadata": {
+    "root": {
+      "title": "TaskNebula - AI-Native Project Management",
+      "description": "Real-time, keyboard-first project management platform powered by AI"
+    }
+  },
+  "agentApiErrors": {
+    "fallback": {
+      "fetchWorkspaceAgents": "Failed to fetch workspace AI agents.",
+      "updateWorkspaceAgents": "Failed to update workspace AI agents.",
+      "createModelConfig": "Failed to create AI model config.",
+      "updateModelConfig": "Failed to update AI model config.",
+      "archiveModelConfig": "Failed to archive AI model config.",
+      "fetchProjectAgents": "Failed to fetch project AI agents.",
+      "updateProjectAgents": "Failed to update project AI agents.",
+      "runProjectAgent": "Failed to run project agent.",
+      "fetchAdminControl": "Failed to fetch admin agent control.",
+      "fetchAgentSessions": "Failed to fetch agent sessions.",
+      "dispatchAgent": "Failed to dispatch agent.",
+      "fetchLocalRunners": "Failed to fetch local agent runners.",
+      "updateLocalRunner": "Failed to update local agent runner.",
+      "updateAdminControl": "Failed to update admin agent control."
+    },
+    "server": {
+      "unauthorized": "You need to sign in before continuing.",
+      "forbidden": "You do not have permission to perform this action.",
+      "insufficientPermissions": "You do not have enough permission to perform this action.",
+      "superAdminRequired": "Super admin access is required.",
+      "validationFailed": "The request could not be validated. Check the fields and try again.",
+      "invalidBody": "The request body is invalid.",
+      "organizationRequired": "Select an organization first.",
+      "organizationNotFound": "Organization not found.",
+      "issueNotFound": "Issue not found.",
+      "issueViewDenied": "You do not have permission to view this issue.",
+      "issueDispatchDenied": "You do not have permission to dispatch agents on this issue.",
+      "createAgentSessionFailed": "Failed to create the agent session.",
+      "manageWorkspaceAgentsDenied": "Managing AI agents requires organization settings permission.",
+      "manageModelConfigsDenied": "Managing model configs requires organization settings permission.",
+      "modelConfigNotFound": "Model config not found.",
+      "updateWorkspaceAgentsFailed": "Failed to update workspace AI agents.",
+      "createModelConfigFailed": "Failed to create AI model config.",
+      "updateModelConfigFailed": "Failed to update AI model config.",
+      "projectAccessDenied": "Project not found or access denied.",
+      "projectContextUnavailable": "Project context could not be loaded.",
+      "projectNotFound": "Project not found.",
+      "manageProjectAgentsDenied": "You do not have permission to manage project agents.",
+      "runProjectAgentsDenied": "You do not have permission to run project agents.",
+      "updateProjectAgentsFailed": "Failed to update project AI agents.",
+      "agentsGloballyPaused": "Agents are paused globally by the admin team.",
+      "workspaceAgentsDisabled": "Workspace AI agents are disabled.",
+      "projectAgentsDisabled": "Project AI agents are disabled for this project.",
+      "capabilityDisabled": "This agent capability is disabled for the project.",
+      "tooManyRuns": "Too many agent runs are already in progress. Try again in a moment.",
+      "runProjectAgentFailed": "Failed to run project agent.",
+      "updateAdminControlFailed": "Failed to update admin agent control."
+    }
+  },
+  "hookErrors": {
+    "notifications": {
+      "fetch": "Kunne ikke hente varsler",
+      "markRead": "Kunne ikke markere varselet som lest",
+      "markAllRead": "Kunne ikke markere alle varsler som lest",
+      "delete": "Kunne ikke slette varselet"
+    },
+    "inbox": {
+      "fetch": "Kunne ikke hente innboksen",
+      "snooze": "Kunne ikke utsette innbokselementet",
+      "markRead": "Kunne ikke markere innbokselementet som lest",
+      "markAllRead": "Kunne ikke markere alle innbokselementer som lest",
+      "catchMeUp": "Kunne ikke hente oppsummeringen"
+    },
+    "activities": {
+      "fetch": "Kunne ikke hente aktiviteter"
+    },
+    "members": {
+      "fetchOrganizationMembers": "Kunne ikke hente organisasjonsmedlemmer"
+    },
+    "pushNotifications": {
+      "notConfigured": "Push-varsler er ikke konfigurert",
+      "permissionDenied": "Varslingstillatelse avslått",
+      "saveSubscription": "Kunne ikke lagre abonnementet",
+      "device": {
+        "mobile": "Mobilenhet",
+        "tablet": "Nettbrett",
+        "desktop": "Skrivebord"
+      }
+    },
+    "presence": {
+      "fetch": "Kunne ikke hente tilstedeværelse",
+      "update": "Kunne ikke oppdatere tilstedeværelse",
+      "remove": "Kunne ikke fjerne tilstedeværelse"
+    },
+    "workflowStatuses": {
+      "load": "Kunne ikke laste arbeidsflytstatuser"
+    },
+    "customFields": {
+      "fetch": "Failed to fetch custom fields",
+      "fetchValues": "Failed to fetch custom field values",
+      "create": "Failed to create custom field",
+      "update": "Failed to update custom field",
+      "delete": "Failed to delete custom field",
+      "setValue": "Failed to set custom field value"
+    },
+    "permissions": {
+      "fetchOrganization": "Failed to fetch organization permissions"
+    },
+    "analytics": {
+      "velocity": "Failed to fetch velocity data",
+      "projectHealth": "Failed to fetch project health data",
+      "burndown": "Failed to fetch burndown data"
+    },
+    "featureFlags": {
+      "fetchAll": "Failed to fetch feature flags",
+      "fetchOne": "Failed to fetch feature flag",
+      "create": "Failed to create feature flag",
+      "update": "Failed to update feature flag",
+      "delete": "Failed to delete feature flag"
+    },
+    "attachments": {
+      "fetch": "Failed to fetch attachments",
+      "upload": "Failed to upload file",
+      "delete": "Failed to delete attachment"
+    },
+    "comments": {
+      "fetch": "Failed to fetch comments",
+      "create": "Failed to create comment",
+      "update": "Failed to update comment",
+      "delete": "Failed to delete comment",
+      "toggleReaction": "Failed to toggle reaction"
+    },
+    "issueLinks": {
+      "fetch": "Failed to fetch issue links",
+      "create": "Failed to create issue link",
+      "delete": "Failed to delete issue link"
+    },
+    "issues": {
+      "fetch": "Failed to fetch issues",
+      "idRequired": "Issue ID is required",
+      "fetchOne": "Failed to fetch issue",
+      "create": "Failed to create issue",
+      "delete": "Failed to delete issue"
+    },
+    "projectPermissions": {
+      "fetchPermissions": "Failed to fetch permissions",
+      "fetchUserRole": "Failed to fetch user role",
+      "fetchMembers": "Failed to fetch members"
+    },
+    "sprints": {
+      "fetch": "Failed to fetch sprints",
+      "fetchOne": "Failed to fetch sprint",
+      "fetchIssues": "Failed to fetch sprint issues",
+      "create": "Failed to create sprint",
+      "update": "Failed to update sprint",
+      "delete": "Failed to delete sprint",
+      "assignIssue": "Failed to assign issue to sprint"
+    },
+    "version": {
+      "load": "Failed to load version information",
+      "startSelfUpdate": "Failed to start self-update",
+      "updatePreferences": "Failed to update update preferences"
+    },
+    "teamspaces": {
+      "fetch": "Failed to fetch teamspaces",
+      "organizationAndTeamspaceRequired": "Organization and teamspace are required",
+      "fetchMembers": "Failed to fetch teamspace members",
+      "noOrganizationSelected": "No organization selected",
+      "create": "Failed to create teamspace",
+      "update": "Failed to update teamspace",
+      "delete": "Failed to delete teamspace",
+      "noTeamspaceSelected": "No teamspace selected",
+      "addMember": "Failed to add teamspace member",
+      "updateMember": "Failed to update teamspace member",
+      "removeMember": "Failed to remove teamspace member"
+    },
+    "docs": {
+      "fetchSpaces": "Failed to fetch document spaces",
+      "fetchPages": "Failed to fetch document pages",
+      "fetchPage": "Failed to fetch document page",
+      "fetchTree": "Failed to fetch document tree",
+      "fetchRevisions": "Failed to fetch document revisions",
+      "search": "Failed to search docs",
+      "createPage": "Failed to create document page",
+      "updatePage": "Failed to update document page",
+      "restoreRevision": "Failed to restore document revision",
+      "openPageBeforeSharing": "Open a page before updating sharing",
+      "updateSharing": "Failed to update document sharing",
+      "fetchIssueDocs": "Failed to fetch issue docs",
+      "attachDoc": "Failed to attach doc",
+      "detachDoc": "Failed to detach doc",
+      "fetchAttachments": "Failed to fetch document attachments",
+      "uploadAttachment": "Failed to upload document attachment",
+      "deleteAttachment": "Failed to delete document attachment"
+    },
+    "chat": {
+      "loadBootstrap": "Failed to load chat bootstrap",
+      "loadLiveCalls": "Failed to load live calls",
+      "loadMessages": "Failed to load messages",
+      "loadOlderMessages": "Failed to load older messages",
+      "loadIssueConversation": "Failed to load issue conversation",
+      "loadDocumentConversation": "Failed to load document conversation",
+      "noRoomSelected": "No room selected",
+      "sendMessage": "Failed to send message",
+      "updateMessage": "Failed to update message",
+      "deleteMessage": "Failed to delete message",
+      "moderateMessages": "Failed to moderate conversation messages",
+      "markRead": "Failed to mark conversation as read",
+      "startCall": "Failed to start call",
+      "endCall": "Failed to end call",
+      "leaveCall": "Failed to leave call",
+      "createCallToken": "Failed to create call token",
+      "refreshMessages": "Failed to refresh messages",
+      "loadWorkspaceCommunications": "Failed to load workspace communications",
+      "updateWorkspaceCommunications": "Failed to update workspace communications",
+      "loadProjectCommunications": "Failed to load project communications",
+      "updateProjectCommunications": "Failed to update project communications",
+      "noOrganizationSelected": "No organization selected",
+      "noProjectSelected": "No project selected",
+      "loadRealtimeHealth": "Failed to load realtime health"
+    },
+    "drafts": {
+      "load": "Failed to load drafts",
+      "create": "Failed to create draft",
+      "update": "Failed to update draft",
+      "delete": "Failed to delete draft",
+      "saveToastTitle": "Could not save draft",
+      "updateToastTitle": "Could not update draft",
+      "deleteToastTitle": "Could not delete draft",
+      "promoteToastTitle": "Could not promote draft",
+      "unknownError": "Unknown error",
+      "notFoundTitle": "Draft not found",
+      "reloadAndTryAgain": "Reload the page and try again.",
+      "notSupportedTitle": "Not supported yet",
+      "pagePromotionUnsupported": "Promoting pages to docs is not available yet.",
+      "commentPromotionUnsupported": "Promoting comments is not available yet.",
+      "noProjectTitle": "No project available",
+      "noProjectDescription": "Join or create a project before promoting drafts to work items.",
+      "untitledDraft": "Untitled draft",
+      "createWorkItem": "Failed to create work item",
+      "draftKeptTitle": "Draft kept",
+      "draftKeptDescription": "Work item created, but the draft could not be removed.",
+      "promotedTitle": "Promoted to work item",
+      "promotedDescriptionWithKey": "Created {key}.",
+      "promotedDescription": "Work item created successfully."
+    },
+    "modules": {
+      "fetch": "Failed to fetch modules",
+      "create": "Failed to create module",
+      "update": "Failed to update module",
+      "delete": "Failed to delete module"
+    }
+  },
+  "componentErrors": {
+    "watchers": {
+      "fetch": "Failed to fetch watchers",
+      "add": "Failed to add watcher",
+      "remove": "Failed to remove watcher"
+    },
+    "pinnedItems": {
+      "fetch": "Failed to fetch pinned items",
+      "load": "Failed to load pinned items",
+      "pinIssue": "Failed to pin issue",
+      "unpinIssue": "Failed to unpin issue",
+      "unpin": "Failed to unpin item"
+    },
+    "audit": {
+      "fetch": "Failed to fetch audit logs"
+    },
+    "dashboard": {
+      "loadStandup": "Failed to load standup",
+      "fetchOrganizations": "Failed to fetch organizations",
+      "fetchIssues": "Failed to fetch issues"
+    },
+    "analytics": {
+      "velocity": "Failed to load velocity",
+      "throughput": "Failed to load throughput",
+      "forecast": "Failed to load forecast",
+      "dora": "Failed to fetch DORA metrics"
+    },
+    "initiatives": {
+      "loadRollup": "Failed to load roll-up",
+      "loadUpdates": "Failed to load updates",
+      "fetchList": "Failed to fetch initiatives"
+    },
+    "admin": {
+      "fetchStats": "Failed to fetch stats",
+      "fetchOrganizations": "Failed to fetch organizations",
+      "loadOrganizations": "Failed to load organizations",
+      "fetchOrganization": "Failed to fetch organization",
+      "deleteOrganization": "Failed to delete organization",
+      "fetchUsers": "Failed to fetch users",
+      "fetchUser": "Failed to fetch user",
+      "fetchAuditLogs": "Failed to fetch audit logs"
+    },
+    "projects": {
+      "fetchOrganizations": "Failed to fetch organizations",
+      "fetchEpics": "Failed to fetch epics"
+    }
   }
 }

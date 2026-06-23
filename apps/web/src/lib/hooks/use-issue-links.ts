@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 
 export type IssueLinkType =
   | 'blocks'
@@ -35,12 +36,14 @@ export interface IssueLinksData {
 
 // Fetch issue links
 export function useIssueLinks(issueId: string | null) {
+  const t = useTranslations('hookErrors.issueLinks');
+
   return useQuery({
     queryKey: ['issue-links', issueId],
     queryFn: async () => {
       if (!issueId) return null;
       const response = await fetch(`/api/issues/${issueId}/links`);
-      if (!response.ok) throw new Error('Failed to fetch issue links');
+      if (!response.ok) throw new Error(t('fetch'));
       return response.json() as Promise<IssueLinksData>;
     },
     enabled: !!issueId,
@@ -50,6 +53,7 @@ export function useIssueLinks(issueId: string | null) {
 // Create issue link
 export function useCreateIssueLink() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.issueLinks');
 
   return useMutation({
     mutationFn: async ({
@@ -67,8 +71,8 @@ export function useCreateIssueLink() {
         body: JSON.stringify({ targetIssueId, type }),
       });
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create issue link');
+        const error = (await response.json().catch(() => ({}))) as { error?: string };
+        throw new Error(error.error || t('create'));
       }
       return response.json();
     },
@@ -83,13 +87,14 @@ export function useCreateIssueLink() {
 // Delete issue link
 export function useDeleteIssueLink() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.issueLinks');
 
   return useMutation({
     mutationFn: async ({ issueId, linkId }: { issueId: string; linkId: string }) => {
       const response = await fetch(`/api/issues/${issueId}/links?linkId=${linkId}`, {
         method: 'DELETE',
       });
-      if (!response.ok) throw new Error('Failed to delete issue link');
+      if (!response.ok) throw new Error(t('delete'));
       return response.json();
     },
     onSuccess: (_, variables) => {
@@ -163,4 +168,3 @@ export function getInverseLinkType(type: IssueLinkType): IssueLinkType {
       return type;
   }
 }
-

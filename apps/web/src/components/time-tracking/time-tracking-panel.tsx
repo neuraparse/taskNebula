@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { TimeLogDialog } from './time-log-dialog';
@@ -34,14 +34,10 @@ export function TimeTrackingPanel({ issueId, canLog, canDelete }: TimeTrackingPa
   const t = useTranslations('appShell');
   const formatter = useFormatter();
 
-  useEffect(() => {
-    fetchWorklogs();
-  }, [issueId]);
-
-  const fetchWorklogs = async () => {
+  const fetchWorklogs = useCallback(async () => {
     try {
       const response = await fetch(`/api/issues/${issueId}/worklogs`);
-      if (!response.ok) throw new Error('Failed to fetch worklogs');
+      if (!response.ok) throw new Error(t('timeTracking.loadFailed'));
       const data = await response.json();
       setWorklogs(data);
     } catch (error) {
@@ -53,7 +49,11 @@ export function TimeTrackingPanel({ issueId, canLog, canDelete }: TimeTrackingPa
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [issueId, t, toast]);
+
+  useEffect(() => {
+    void fetchWorklogs();
+  }, [fetchWorklogs]);
 
   const deleteWorklog = async (worklogId: string) => {
     if (!confirm(t('timeTracking.deleteConfirm'))) {
@@ -65,14 +65,14 @@ export function TimeTrackingPanel({ issueId, canLog, canDelete }: TimeTrackingPa
         method: 'DELETE',
       });
 
-      if (!response.ok) throw new Error('Failed to delete worklog');
+      if (!response.ok) throw new Error(t('timeTracking.deleteFailed'));
 
       toast({
         title: t('common.successTitle'),
         description: t('timeTracking.deleted'),
       });
 
-      fetchWorklogs();
+      void fetchWorklogs();
     } catch (error) {
       toast({
         title: t('common.errorTitle'),

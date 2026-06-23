@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import {
   DEFAULT_SLASH_COMMANDS,
+  createDefaultSlashCommands,
   detectSlashTrigger,
   matchSlashCommands,
   useSlashCommands,
@@ -49,6 +50,14 @@ describe('detectSlashTrigger', () => {
 describe('matchSlashCommands', () => {
   it('returns the full registry when query is empty', () => {
     expect(matchSlashCommands(DEFAULT_SLASH_COMMANDS, '').length).toBeGreaterThan(0);
+  });
+
+  it('builds the default registry from localized labels', () => {
+    const commands = createDefaultSlashCommands((key) => `translated:${key}`);
+    const assign = commands.find((command) => command.name === 'assign');
+
+    expect(assign?.description).toBe('translated:slashCommands.assign.description');
+    expect(assign?.arguments?.[0]?.label).toBe('translated:slashCommands.arguments.user');
   });
 
   it('matches by prefix on name', () => {

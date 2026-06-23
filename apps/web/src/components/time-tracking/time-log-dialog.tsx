@@ -75,10 +75,10 @@ export function TimeLogDialog({ issueId, open, onOpenChange, onSuccess }: TimeLo
 
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch {
       toast({
         title: t('common.errorTitle'),
-        description: error.message || t('timeLog.logFailed'),
+        description: t('timeLog.logFailed'),
         variant: 'destructive',
       });
     } finally {

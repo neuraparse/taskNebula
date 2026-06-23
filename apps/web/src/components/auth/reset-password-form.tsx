@@ -52,10 +52,8 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
         body: JSON.stringify({ token, newPassword }),
       });
 
-      const data = await response.json().catch(() => ({}));
-
       if (!response.ok) {
-        setError(data?.error || t('reset_failed'));
+        setError(t('reset_failed'));
         return;
       }
 

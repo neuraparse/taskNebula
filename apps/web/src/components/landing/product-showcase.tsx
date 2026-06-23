@@ -12,6 +12,7 @@ import {
   MessageSquare,
   Zap,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { TaskNebulaLogo } from '@/components/branding/tasknebula-logo';
 
 type IssueType = 'story' | 'task' | 'bug' | 'epic';
@@ -36,6 +37,17 @@ type BoardView = {
   issues: BoardIssue[];
 };
 
+type BoardIssueSeed = Omit<BoardIssue, 'title' | 'summary' | 'checklist'> & {
+  messageKey: string;
+};
+
+type BoardViewSeed = {
+  id: string;
+  issues: BoardIssueSeed[];
+};
+
+type ShowcaseTranslator = ReturnType<typeof useTranslations>;
+
 const typeIcon: Record<IssueType, { icon: typeof BookOpen; colorVar: string }> = {
   story: { icon: BookOpen, colorVar: 'var(--landing-accent-blue)' },
   task: { icon: CheckSquare, colorVar: 'var(--landing-accent-green)' },
@@ -51,264 +63,250 @@ const priorityColorVar: Record<Priority, string> = {
 };
 
 const columns = [
-  { name: 'Backlog', accentVar: 'var(--landing-text-muted)' },
-  { name: 'To Do', accentVar: 'var(--landing-text-body)' },
-  { name: 'In Progress', accentVar: 'var(--landing-accent-blue)' },
-  { name: 'In Review', accentVar: 'var(--landing-accent-violet)' },
-  { name: 'Done', accentVar: 'var(--landing-accent-green)' },
+  { key: 'backlog', accentVar: 'var(--landing-text-muted)' },
+  { key: 'todo', accentVar: 'var(--landing-text-body)' },
+  { key: 'inProgress', accentVar: 'var(--landing-accent-blue)' },
+  { key: 'inReview', accentVar: 'var(--landing-accent-violet)' },
+  { key: 'done', accentVar: 'var(--landing-accent-green)' },
 ] as const;
 
-const boardViews: BoardView[] = [
+const checklistKeys = ['first', 'second', 'third'] as const;
+
+const boardViewSeeds: BoardViewSeed[] = [
   {
     id: 'website',
-    label: 'Website',
     issues: [
       {
+        messageKey: 'web18',
         key: 'WEB-18',
-        title: 'Refine launch page hierarchy',
         type: 'story',
         priority: 'high',
         col: 2,
         assignee: 'SK',
         comments: 4,
         subtasks: '3/5',
-        summary: 'Tighten hero, simplify copy, and make the landing feel more premium.',
-        checklist: ['Reduce copy density', 'Improve visual rhythm', 'Finalize CTA placement'],
       },
       {
+        messageKey: 'web21',
         key: 'WEB-21',
-        title: 'Docs intro for redesign project',
         type: 'task',
         priority: 'medium',
         col: 1,
         assignee: 'TL',
-        summary: 'Create a project note structure linked to the main redesign issue.',
-        checklist: ['Outline launch notes', 'Link blockers to docs', 'Add revision checkpoints'],
       },
       {
+        messageKey: 'web24',
         key: 'WEB-24',
-        title: 'Fix mobile footer alignment',
         type: 'bug',
         priority: 'critical',
         col: 3,
         assignee: 'DW',
         comments: 2,
-        summary: 'Resolve spacing drift and prevent CTA overlap on smaller screens.',
-        checklist: ['Audit breakpoints', 'Normalize spacing tokens', 'QA Safari mobile'],
       },
       {
+        messageKey: 'web09',
         key: 'WEB-09',
-        title: 'Release marketing epic',
         type: 'epic',
         priority: 'high',
         col: 0,
         assignee: 'MC',
-        summary: 'Coordinate launch assets, copy, and release checklist for the redesign.',
-        checklist: ['Finalize visuals', 'Lock release notes', 'Review analytics events'],
       },
       {
+        messageKey: 'web05',
         key: 'WEB-05',
-        title: 'Shipping checklist',
         type: 'task',
         priority: 'low',
         col: 4,
         assignee: 'AK',
         subtasks: '4/4',
-        summary: 'Final deploy checklist for copy, assets, analytics, and docs.',
-        checklist: ['Docs confirmed', 'Analytics checked', 'Post-launch owner assigned'],
       },
     ],
   },
   {
     id: 'api',
-    label: 'API Platform',
     issues: [
       {
+        messageKey: 'api12',
         key: 'API-12',
-        title: 'Partner auth hardening',
         type: 'story',
         priority: 'high',
         col: 2,
         assignee: 'AK',
         comments: 5,
-        summary: 'Tighten token refresh paths and rollout sequence for partner access.',
-        checklist: ['Review token lifecycle', 'Lock scopes', 'Publish rollout note'],
       },
       {
+        messageKey: 'api09',
         key: 'API-09',
-        title: 'Rate limiting policy',
         type: 'task',
         priority: 'medium',
         col: 1,
         assignee: 'SC',
-        summary: 'Define thresholds and recovery behavior for public endpoints.',
-        checklist: ['Draft policy', 'Add dashboard checks', 'Review with support'],
       },
       {
+        messageKey: 'api17',
         key: 'API-17',
-        title: 'Webhook retry bug',
         type: 'bug',
         priority: 'critical',
         col: 3,
         assignee: 'DW',
         comments: 3,
-        summary: 'Retry window is shorter than expected under queue pressure.',
-        checklist: ['Reproduce in staging', 'Patch retry timing', 'Verify audit logging'],
       },
       {
+        messageKey: 'api03',
         key: 'API-03',
-        title: 'Versioning epic',
         type: 'epic',
         priority: 'high',
         col: 0,
         assignee: 'SK',
-        summary: 'Shape versioning and migration guidance for upcoming platform changes.',
-        checklist: ['Define policy', 'Write migration guide', 'Add rollout checklist'],
       },
       {
+        messageKey: 'api22',
         key: 'API-22',
-        title: 'Observability cleanup',
         type: 'task',
         priority: 'low',
         col: 4,
         assignee: 'TL',
         subtasks: '2/2',
-        summary: 'Bring endpoint health signals and alerts into a cleaner baseline.',
-        checklist: ['Refine alert names', 'Review dashboard cards', 'Close migration notes'],
       },
     ],
   },
   {
     id: 'mobile',
-    label: 'Mobile',
     issues: [
       {
+        messageKey: 'app14',
         key: 'APP-14',
-        title: 'Offline queue polish',
         type: 'story',
         priority: 'high',
         col: 2,
         assignee: 'MC',
         comments: 4,
-        summary: 'Make offline sync state clearer and reduce ambiguous empty states.',
-        checklist: ['Review queue states', 'Refine copy', 'Test reconnect flow'],
       },
       {
+        messageKey: 'app11',
         key: 'APP-11',
-        title: 'Push preference setup',
         type: 'task',
         priority: 'medium',
         col: 1,
         assignee: 'SC',
-        summary: 'Add better first-run setup for notifications and reminders.',
-        checklist: ['Refine toggles', 'Clarify permission states', 'Document fallback flow'],
       },
       {
+        messageKey: 'app06',
         key: 'APP-06',
-        title: 'Board drag bug on tablets',
         type: 'bug',
         priority: 'critical',
         col: 3,
         assignee: 'DW',
         comments: 2,
-        summary: 'Dragging cards feels sticky under split-screen tablet layouts.',
-        checklist: ['Fix pointer capture', 'QA iPad split view', 'Verify velocity'],
       },
       {
+        messageKey: 'app02',
         key: 'APP-02',
-        title: 'Release readiness epic',
         type: 'epic',
         priority: 'high',
         col: 0,
         assignee: 'SK',
-        summary: 'Coordinate release, QA, notes, and store assets for the mobile launch.',
-        checklist: ['Store assets', 'Release notes', 'QA sign-off'],
       },
       {
+        messageKey: 'app19',
         key: 'APP-19',
-        title: 'Checklist sync done',
         type: 'task',
         priority: 'low',
         col: 4,
         assignee: 'AK',
         subtasks: '3/3',
-        summary: 'Checklist sync is stable across devices and background reconnects.',
-        checklist: ['Android check', 'iOS check', 'Docs update'],
       },
     ],
   },
 ];
 
+function createBoardViews(t: ShowcaseTranslator): BoardView[] {
+  return boardViewSeeds.map((board) => ({
+    id: board.id,
+    label: t(`board.boards.${board.id}`),
+    issues: board.issues.map((issue) => ({
+      ...issue,
+      title: t(`board.issues.${issue.messageKey}.title`),
+      summary: t(`board.issues.${issue.messageKey}.summary`),
+      checklist: checklistKeys.map((key) => t(`board.issues.${issue.messageKey}.checklist.${key}`)),
+    })),
+  }));
+}
+
+function cloneBoardViews(views: BoardView[]): BoardView[] {
+  return views.map((board) => ({
+    ...board,
+    issues: board.issues.map((issue) => ({ ...issue, checklist: [...issue.checklist] })),
+  }));
+}
+
 const teamMembers = [
   {
     name: 'Sarah Kim',
-    role: 'Product',
+    roleKey: 'product',
     initials: 'SK',
     colorVar: 'var(--landing-accent-blue)',
-    status: 'Leading launch review',
   },
   {
     name: 'Abhay Kumar',
-    role: 'Tech Lead',
+    roleKey: 'techLead',
     initials: 'AK',
     colorVar: 'var(--landing-accent-green)',
-    status: 'Tracking API rollout',
   },
   {
     name: 'Danny Wong',
-    role: 'Engineer',
+    roleKey: 'engineer',
     initials: 'DW',
     colorVar: 'var(--landing-accent-amber)',
-    status: 'Finishing review fixes',
   },
   {
     name: 'Maria Chen',
-    role: 'Design',
+    roleKey: 'design',
     initials: 'MC',
     colorVar: 'var(--landing-accent-violet)',
-    status: 'Updating launch assets',
   },
 ] as const;
 
 const activityFeed = [
   {
     who: 'SK',
-    action: 'moved WEB-18 to In Review',
-    time: 'just now',
+    actionKey: 'moved',
+    timeKey: 'now',
     colorVar: 'var(--landing-accent-blue)',
   },
   {
     who: 'AK',
-    action: 'linked docs to API-12',
-    time: '4m ago',
+    actionKey: 'linked',
+    timeKey: 'fourMinutes',
     colorVar: 'var(--landing-accent-green)',
   },
-  { who: 'DW', action: 'closed APP-19', time: '11m ago', colorVar: 'var(--landing-accent-amber)' },
+  {
+    who: 'DW',
+    actionKey: 'closed',
+    timeKey: 'elevenMinutes',
+    colorVar: 'var(--landing-accent-amber)',
+  },
 ] as const;
 
 const workflowSteps = [
-  { name: 'Backlog', colorVar: 'var(--landing-text-muted)', count: 12 },
-  { name: 'To Do', colorVar: 'var(--landing-text-body)', count: 8 },
-  { name: 'In Progress', colorVar: 'var(--landing-accent-blue)', count: 5 },
-  { name: 'In Review', colorVar: 'var(--landing-accent-violet)', count: 3 },
-  { name: 'Done', colorVar: 'var(--landing-accent-green)', count: 24 },
+  { key: 'backlog', colorVar: 'var(--landing-text-muted)', count: 12 },
+  { key: 'todo', colorVar: 'var(--landing-text-body)', count: 8 },
+  { key: 'inProgress', colorVar: 'var(--landing-accent-blue)', count: 5 },
+  { key: 'inReview', colorVar: 'var(--landing-accent-violet)', count: 3 },
+  { key: 'done', colorVar: 'var(--landing-accent-green)', count: 24 },
 ] as const;
 
 const workflowRules = [
-  { from: 'To Do', to: 'In Progress', rule: 'Assignee required', auto: false },
-  { from: 'In Progress', to: 'In Review', rule: 'All subtasks complete', auto: true },
-  { from: 'In Review', to: 'Done', rule: 'Review approved', auto: false },
+  { from: 'todo', to: 'inProgress', ruleKey: 'assigneeRequired', auto: false },
+  { from: 'inProgress', to: 'inReview', ruleKey: 'subtasksComplete', auto: true },
+  { from: 'inReview', to: 'done', ruleKey: 'reviewApproved', auto: false },
 ] as const;
 
 export function HeroShowcase() {
-  const [boards, setBoards] = useState<BoardView[]>(() =>
-    boardViews.map((board) => ({
-      ...board,
-      issues: board.issues.map((issue) => ({ ...issue })),
-    }))
-  );
-  const [activeBoardId, setActiveBoardId] = useState(boardViews[0]?.id ?? '');
-  const [selectedIssueKey, setSelectedIssueKey] = useState(boardViews[0]?.issues[0]?.key ?? '');
+  const t = useTranslations('publicPages.landing.showcase');
+  const [boards, setBoards] = useState<BoardView[]>(() => cloneBoardViews(createBoardViews(t)));
+  const [activeBoardId, setActiveBoardId] = useState(boardViewSeeds[0]?.id ?? '');
+  const [selectedIssueKey, setSelectedIssueKey] = useState(boardViewSeeds[0]?.issues[0]?.key ?? '');
   const [draggingIssueKey, setDraggingIssueKey] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<number | null>(null);
 
@@ -327,6 +325,7 @@ export function HeroShowcase() {
 
   const selectedIssue =
     activeBoard?.issues.find((issue) => issue.key === selectedIssueKey) ?? activeBoard?.issues[0];
+  const selectedColumn = selectedIssue ? columns[selectedIssue.col] : undefined;
 
   const moveIssueToColumn = (issueKey: string, nextColumn: number) => {
     if (!activeBoard || nextColumn < 0 || nextColumn >= columns.length) {
@@ -369,19 +368,23 @@ export function HeroShowcase() {
               className="h-1.5 w-1.5 rounded-full"
               style={{ backgroundColor: 'var(--landing-accent-blue)' }}
             />
-            Board
+            {t('board.kicker')}
           </span>
           <h2 className="landing-title mt-4 text-balance text-[34px] text-[var(--landing-text-dark)] sm:text-[42px] lg:text-[52px]">
-            A board you can actually move through.
+            {t('board.title')}
           </h2>
           <p className="landing-body mt-4 text-[15px] text-[var(--landing-text-subtle)]">
-            Switch projects, drag issues between stages, and keep details close without fake motion
-            or noisy chrome.
+            {t('board.description')}
           </p>
         </div>
 
         <div className="animate-blur-in overflow-hidden rounded-lg border border-[var(--landing-border)] bg-[var(--landing-bg-card)]">
-          <ShowcaseHeader title="Board" url={`${activeBoard.label} / Current sprint`} />
+          <ShowcaseHeader
+            title={t('frame.board')}
+            previewLabel={t('frame.preview')}
+            liveLabel={t('frame.live')}
+            url={t('frame.boardUrl', { board: activeBoard.label })}
+          />
 
           <div className="border-b border-[var(--landing-border)] px-4 py-3">
             <div className="flex flex-wrap items-center gap-2">
@@ -400,7 +403,7 @@ export function HeroShowcase() {
                 </button>
               ))}
               <span className="ml-auto hidden text-[11px] text-[var(--landing-text-muted)] lg:block">
-                Drag cards between stages.
+                {t('board.dragHint')}
               </span>
             </div>
           </div>
@@ -415,7 +418,7 @@ export function HeroShowcase() {
 
                   return (
                     <div
-                      key={column.name}
+                      key={column.key}
                       onDragOver={(event) => {
                         event.preventDefault();
                         setDragOverColumn(columnIndex);
@@ -435,7 +438,7 @@ export function HeroShowcase() {
                     >
                       <div className="flex items-center justify-between gap-2 px-3 py-3">
                         <span className="text-[10px] font-[500] uppercase tracking-[0.16em] text-[var(--landing-text-body)]">
-                          {column.name}
+                          {t(`board.columns.${column.key}`)}
                         </span>
                         <span className="rounded-sm border border-[var(--landing-border)] bg-[var(--landing-bg)] px-2 py-0.5 text-[9px] font-bold tabular-nums text-[var(--landing-text-muted)]">
                           {columnCards.length}
@@ -485,7 +488,7 @@ export function HeroShowcase() {
                           color: priorityColorVar[selectedIssue.priority],
                         }}
                       >
-                        {selectedIssue.priority}
+                        {t(`board.priorities.${selectedIssue.priority}`)}
                       </span>
                     </div>
 
@@ -497,12 +500,22 @@ export function HeroShowcase() {
                     </p>
 
                     <div className="mt-5 flex flex-wrap gap-2">
-                      <MetaChip label={`Stage ${columns[selectedIssue.col]?.name ?? 'Unknown'}`} />
+                      <MetaChip
+                        label={t('board.meta.stage', {
+                          stage: selectedColumn
+                            ? t(`board.columns.${selectedColumn.key}`)
+                            : t('board.unknownStage'),
+                        })}
+                      />
                       {selectedIssue.assignee ? (
-                        <MetaChip label={`Owner ${selectedIssue.assignee}`} />
+                        <MetaChip
+                          label={t('board.meta.owner', { owner: selectedIssue.assignee })}
+                        />
                       ) : null}
                       {selectedIssue.comments ? (
-                        <MetaChip label={`${selectedIssue.comments} comments`} />
+                        <MetaChip
+                          label={t('board.meta.comments', { count: selectedIssue.comments })}
+                        />
                       ) : null}
                       {selectedIssue.subtasks ? <MetaChip label={selectedIssue.subtasks} /> : null}
                     </div>
@@ -514,7 +527,7 @@ export function HeroShowcase() {
                         disabled={selectedIssue.col === 0}
                         className="ease-snap inline-flex h-9 items-center rounded-sm border border-[var(--landing-border)] px-3 text-[12px] text-[var(--landing-text)] transition-all duration-150 hover:bg-[var(--landing-bg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] disabled:cursor-not-allowed disabled:opacity-40"
                       >
-                        Move back
+                        {t('board.moveBack')}
                       </button>
                       <button
                         type="button"
@@ -522,14 +535,14 @@ export function HeroShowcase() {
                         disabled={selectedIssue.col === columns.length - 1}
                         className="ease-snap inline-flex h-9 items-center rounded-sm border border-[var(--landing-border-strong)] bg-[var(--landing-bg)] px-3 text-[12px] text-[var(--landing-text-dark)] transition-all duration-150 hover:bg-[var(--landing-bg-elevated)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] disabled:cursor-not-allowed disabled:opacity-40"
                       >
-                        Move forward
+                        {t('board.moveForward')}
                       </button>
                     </div>
                   </div>
 
                   <div className="border-t border-[var(--landing-border)] pt-5 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                     <p className="text-[10px] font-[500] uppercase tracking-[0.16em] text-[var(--landing-text-muted)]">
-                      Checklist
+                      {t('board.checklist')}
                     </p>
                     <div className="mt-4 space-y-3">
                       {selectedIssue.checklist.map((item) => (
@@ -637,21 +650,30 @@ function MetaChip({ label }: { label: string }) {
 }
 
 function EmptyColumnState() {
+  const t = useTranslations('publicPages.landing.showcase.board');
+
   return (
     <div className="bg-[var(--landing-bg)]/35 flex min-h-[152px] items-center justify-center rounded-sm border border-dashed border-[var(--landing-border)] px-3 text-center text-[11px] text-[var(--landing-text-muted)]">
-      Drop an issue here
+      {t('dropIssue')}
     </div>
   );
 }
 
 export function TeamShowcase() {
+  const t = useTranslations('publicPages.landing.showcase.team');
+
   return (
-    <ShowcaseFrame title="Team" url="Workspace / Team">
+    <ShowcaseFrame
+      title={t('frameTitle')}
+      url={t('frameUrl')}
+      previewLabel={t('preview')}
+      liveLabel={t('live')}
+    >
       <div className="grid h-[340px] grid-cols-[220px_1fr]">
         <div className="overflow-hidden border-r border-[var(--landing-border)]">
           <div className="border-b border-[var(--landing-border)] px-3 py-2">
             <span className="text-[10px] font-[500] uppercase tracking-[0.16em] text-[var(--landing-text-muted)]">
-              Members
+              {t('members')}
             </span>
           </div>
           {teamMembers.map((member, index) => (
@@ -675,7 +697,7 @@ export function TeamShowcase() {
                   {member.name}
                 </p>
                 <p className="truncate text-[9px] text-[var(--landing-text-muted)]">
-                  {member.role}
+                  {t(`roles.${member.roleKey}`)}
                 </p>
               </div>
             </div>
@@ -684,11 +706,11 @@ export function TeamShowcase() {
 
         <div className="p-3">
           <span className="text-[10px] font-[500] uppercase tracking-[0.16em] text-[var(--landing-text-muted)]">
-            Activity
+            {t('activity')}
           </span>
           <div className="mt-3 space-y-3">
             {activityFeed.map((entry) => (
-              <div key={`${entry.who}-${entry.time}`} className="flex items-start gap-2.5">
+              <div key={`${entry.who}-${entry.timeKey}`} className="flex items-start gap-2.5">
                 <div
                   className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[7px] font-bold"
                   style={{
@@ -699,8 +721,12 @@ export function TeamShowcase() {
                   {entry.who}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[11px] text-[var(--landing-text)]">{entry.action}</p>
-                  <p className="text-[9px] text-[var(--landing-text-muted)]">{entry.time}</p>
+                  <p className="text-[11px] text-[var(--landing-text)]">
+                    {t(`activityItems.${entry.actionKey}`)}
+                  </p>
+                  <p className="text-[9px] text-[var(--landing-text-muted)]">
+                    {t(`times.${entry.timeKey}`)}
+                  </p>
                 </div>
               </div>
             ))}
@@ -712,14 +738,20 @@ export function TeamShowcase() {
 }
 
 export function WorkflowShowcase() {
+  const t = useTranslations('publicPages.landing.showcase.workflow');
   const activeStep = 2;
 
   return (
-    <ShowcaseFrame title="Workflow" url="Project settings / Workflow">
+    <ShowcaseFrame
+      title={t('frameTitle')}
+      url={t('frameUrl')}
+      previewLabel={t('preview')}
+      liveLabel={t('live')}
+    >
       <div className="h-[320px] p-5">
         <div className="mb-8 flex items-center justify-between">
           {workflowSteps.map((step, index) => (
-            <div key={step.name} className="flex items-center">
+            <div key={step.key} className="flex items-center">
               <div className="flex flex-col items-center">
                 <div
                   className="flex h-10 w-10 items-center justify-center rounded-sm border-2 text-[11px] font-bold"
@@ -734,7 +766,7 @@ export function WorkflowShowcase() {
                 <span
                   className={`mt-2 text-[9px] ${index === activeStep ? 'text-[var(--landing-text-dark)]' : 'text-[var(--landing-text-muted)]'}`}
                 >
-                  {step.name}
+                  {t(`steps.${step.key}`)}
                 </span>
               </div>
               {index < workflowSteps.length - 1 ? (
@@ -751,7 +783,7 @@ export function WorkflowShowcase() {
         <div className="overflow-hidden rounded-md border border-[var(--landing-border)]">
           <div className="border-b border-[var(--landing-border)] bg-[var(--landing-bg-surface)] px-3 py-2">
             <span className="text-[10px] font-[500] uppercase tracking-[0.16em] text-[var(--landing-text-muted)]">
-              Transition rules
+              {t('transitionRules')}
             </span>
           </div>
           {workflowRules.map((rule) => (
@@ -759,11 +791,15 @@ export function WorkflowShowcase() {
               key={`${rule.from}-${rule.to}`}
               className="flex items-center gap-3 border-b border-[var(--landing-border)] px-3 py-2 last:border-b-0"
             >
-              <span className="w-20 text-[10px] text-[var(--landing-text)]">{rule.from}</span>
+              <span className="w-20 text-[10px] text-[var(--landing-text)]">
+                {t(`steps.${rule.from}`)}
+              </span>
               <ArrowRight className="h-3 w-3 text-[var(--landing-text-muted)]" />
-              <span className="w-20 text-[10px] text-[var(--landing-text)]">{rule.to}</span>
+              <span className="w-20 text-[10px] text-[var(--landing-text)]">
+                {t(`steps.${rule.to}`)}
+              </span>
               <span className="flex-1 text-[10px] text-[var(--landing-text-muted)]">
-                {rule.rule}
+                {t(`rules.${rule.ruleKey}`)}
               </span>
               {rule.auto ? (
                 <span
@@ -775,7 +811,7 @@ export function WorkflowShowcase() {
                     color: 'var(--landing-accent-blue)',
                   }}
                 >
-                  Auto
+                  {t('auto')}
                 </span>
               ) : null}
             </div>
@@ -787,27 +823,33 @@ export function WorkflowShowcase() {
 }
 
 export function SprintShowcase() {
+  const t = useTranslations('publicPages.landing.showcase.sprint');
   const progress = 72;
   const burndown = [18, 17, 16, 15, 13, 11, 9, 7, 5, 5, 4, 3, 2, 0];
 
   return (
-    <ShowcaseFrame title="Sprint" url="Sprint 4 / Overview">
+    <ShowcaseFrame
+      title={t('frameTitle')}
+      url={t('frameUrl')}
+      previewLabel={t('preview')}
+      liveLabel={t('live')}
+    >
       <div className="h-[320px] p-5">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[14px] font-[500] text-[var(--landing-text-dark)]">
-                Sprint 4 — Auth &amp; Notifications
+                {t('title')}
               </span>
-              <span className="live-pill">Active</span>
+              <span className="live-pill">{t('active')}</span>
             </div>
-            <p className="mt-1 text-[11px] text-[var(--landing-text-muted)]">14 days · 18 issues</p>
+            <p className="mt-1 text-[11px] text-[var(--landing-text-muted)]">{t('duration')}</p>
           </div>
           <div className="text-right">
             <span className="text-[20px] font-[500] tabular-nums text-[var(--landing-text-dark)]">
               {progress}%
             </span>
-            <p className="text-[9px] text-[var(--landing-text-muted)]">5 days remaining</p>
+            <p className="text-[9px] text-[var(--landing-text-muted)]">{t('remaining')}</p>
           </div>
         </div>
 
@@ -824,10 +866,10 @@ export function SprintShowcase() {
 
         <div className="mb-5 grid grid-cols-4 gap-3">
           {[
-            { label: 'Total', value: '18' },
-            { label: 'Done', value: '13' },
-            { label: 'Active', value: '3' },
-            { label: 'Points', value: '42' },
+            { label: t('stats.total'), value: '18' },
+            { label: t('stats.done'), value: '13' },
+            { label: t('stats.active'), value: '3' },
+            { label: t('stats.points'), value: '42' },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -843,7 +885,7 @@ export function SprintShowcase() {
 
         <div className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] p-3">
           <span className="text-[9px] font-[500] uppercase tracking-[0.16em] text-[var(--landing-text-muted)]">
-            Burndown
+            {t('burndown')}
           </span>
           <div className="mt-2 flex h-[50px] items-end gap-1">
             {burndown.map((value, index) => (
@@ -868,15 +910,22 @@ export function SprintShowcase() {
 }
 
 export function AnalyticsShowcase() {
+  const t = useTranslations('publicPages.landing.showcase.analytics');
+
   return (
-    <ShowcaseFrame title="Analytics" url="Project / Analytics">
+    <ShowcaseFrame
+      title={t('frameTitle')}
+      url={t('frameUrl')}
+      previewLabel={t('preview')}
+      liveLabel={t('live')}
+    >
       <div className="h-[320px] p-5">
         <div className="mb-5 grid grid-cols-4 gap-3">
           {[
-            { label: 'Velocity', value: '23', change: '+12%' },
-            { label: 'Cycle', value: '2.4d', change: '-8%' },
-            { label: 'Flow', value: '18/wk', change: '+5%' },
-            { label: 'Bugs', value: '4.2%', change: '-15%' },
+            { label: t('stats.velocity'), value: '23', change: '+12%' },
+            { label: t('stats.cycle'), value: '2.4d', change: '-8%' },
+            { label: t('stats.flow'), value: '18/wk', change: '+5%' },
+            { label: t('stats.bugs'), value: '4.2%', change: '-15%' },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -894,7 +943,7 @@ export function AnalyticsShowcase() {
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] p-3">
             <span className="text-[9px] font-[500] uppercase tracking-[0.16em] text-[var(--landing-text-muted)]">
-              Velocity
+              {t('velocity')}
             </span>
             <div className="mt-3 flex h-[80px] items-end gap-2">
               {[14, 18, 16, 21, 19, 23].map((value, index) => (
@@ -917,14 +966,34 @@ export function AnalyticsShowcase() {
 
           <div className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] p-3">
             <span className="text-[9px] font-[500] uppercase tracking-[0.16em] text-[var(--landing-text-muted)]">
-              Priority mix
+              {t('priorityMix')}
             </span>
             <div className="mt-3 space-y-2">
               {[
-                { label: 'Critical', value: 3, total: 42, colorVar: 'var(--landing-accent-rose)' },
-                { label: 'High', value: 12, total: 42, colorVar: 'var(--landing-accent-amber)' },
-                { label: 'Medium', value: 18, total: 42, colorVar: 'var(--landing-accent-blue)' },
-                { label: 'Low', value: 9, total: 42, colorVar: 'var(--landing-text-muted)' },
+                {
+                  label: t('priorities.critical'),
+                  value: 3,
+                  total: 42,
+                  colorVar: 'var(--landing-accent-rose)',
+                },
+                {
+                  label: t('priorities.high'),
+                  value: 12,
+                  total: 42,
+                  colorVar: 'var(--landing-accent-amber)',
+                },
+                {
+                  label: t('priorities.medium'),
+                  value: 18,
+                  total: 42,
+                  colorVar: 'var(--landing-accent-blue)',
+                },
+                {
+                  label: t('priorities.low'),
+                  value: 9,
+                  total: 42,
+                  colorVar: 'var(--landing-text-muted)',
+                },
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-2">
                   <span className="w-12 text-[9px] text-[var(--landing-text-muted)]">
@@ -955,21 +1024,35 @@ export function AnalyticsShowcase() {
 function ShowcaseFrame({
   title,
   url,
+  previewLabel,
+  liveLabel,
   children,
 }: {
   title: string;
   url: string;
+  previewLabel: string;
+  liveLabel: string;
   children: ReactNode;
 }) {
   return (
     <div className="overflow-hidden rounded-lg border border-[var(--landing-border)] bg-[var(--landing-bg-card)]">
-      <ShowcaseHeader title={title} url={url} />
+      <ShowcaseHeader title={title} url={url} previewLabel={previewLabel} liveLabel={liveLabel} />
       {children}
     </div>
   );
 }
 
-function ShowcaseHeader({ title, url }: { title: string; url: string }) {
+function ShowcaseHeader({
+  title,
+  url,
+  previewLabel,
+  liveLabel,
+}: {
+  title: string;
+  url: string;
+  previewLabel: string;
+  liveLabel: string;
+}) {
   return (
     <div className="flex items-center justify-between gap-4 border-b border-[var(--landing-border)] px-4 py-3">
       <div className="flex items-center gap-3">
@@ -978,11 +1061,11 @@ function ShowcaseHeader({ title, url }: { title: string; url: string }) {
           <p className="text-[12px] font-medium text-[var(--landing-text-dark)]">
             TaskNebula {title}
           </p>
-          <p className="text-[10px] text-[var(--landing-text-muted)]">Workspace preview</p>
+          <p className="text-[10px] text-[var(--landing-text-muted)]">{previewLabel}</p>
         </div>
       </div>
       <div className="inline-flex items-center gap-2">
-        <span className="live-pill">Live</span>
+        <span className="live-pill">{liveLabel}</span>
         <span className="rounded-sm border border-[var(--landing-border)] bg-[var(--landing-bg)] px-3 py-1 text-[10px] text-[var(--landing-text-muted)]">
           {url}
         </span>

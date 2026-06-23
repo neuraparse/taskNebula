@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { Bot, GitBranch, Inbox, Send } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { SectionHeader, Shell } from './primitives';
 
 type Tone = 'blue' | 'violet' | 'amber' | 'emerald';
@@ -15,19 +16,21 @@ type Tone = 'blue' | 'violet' | 'amber' | 'emerald';
  * scoped by `.landing-dark`, matching the other landing sections.
  */
 export function WorkflowNarrative() {
+  const t = useTranslations('publicPages.landing.workflow');
+
   return (
     <section id="workflow" className="dot-grid relative border-t border-[var(--landing-border)]">
       <Shell className="py-20 sm:py-24">
         <SectionHeader
-          kicker="The flow"
+          kicker={t('kicker')}
           kickerAccentVar="var(--landing-accent-violet)"
-          title="One thread from intake to shipped."
-          description="No tool-hopping between a tracker, a planning doc, and an agent console. The work moves through a single surface — humans and agents on the same timeline."
+          title={t('title')}
+          description={t('description')}
         />
 
         <ol className="stagger mt-12 space-y-4">
           {STEPS.map((step, index) => (
-            <li key={step.title}>
+            <li key={step.key}>
               <StepRow step={step} reversed={index % 2 === 1} />
             </li>
           ))}
@@ -41,8 +44,7 @@ type Step = {
   step: string;
   icon: LucideIcon;
   tone: Tone;
-  title: string;
-  body: string;
+  key: string;
   visual: () => ReactNode;
 };
 
@@ -51,37 +53,34 @@ const STEPS: Step[] = [
     step: '01',
     icon: Inbox,
     tone: 'blue',
-    title: 'Intake without the noise',
-    body: 'Issues, requests, and inbound from your agents land in one queue. Triage suggests priority and labels so the backlog starts structured, not as a pile.',
+    key: 'intake',
     visual: IntakeVisual,
   },
   {
     step: '02',
     icon: GitBranch,
     tone: 'violet',
-    title: 'Plan the sprint in place',
-    body: 'Pull from the backlog into a sprint, set fix versions and components, and read scope at a glance. Planning lives next to the work, not in a separate doc.',
+    key: 'plan',
     visual: PlanVisual,
   },
   {
     step: '03',
     icon: Bot,
     tone: 'amber',
-    title: 'Build alongside agents',
-    body: 'Agents are first-class teammates over MCP — they pick up issues, comment, and open work the same way people do, with every action on the shared timeline.',
+    key: 'build',
     visual: BuildVisual,
   },
   {
     step: '04',
     icon: Send,
     tone: 'emerald',
-    title: 'Ship and track the outcome',
-    body: 'Close issues with a real resolution, cut the version, and watch velocity and cycle time update live. Done means done — not a column you forgot to clear.',
+    key: 'ship',
     visual: ShipVisual,
   },
 ];
 
 function StepRow({ step, reversed }: { step: Step; reversed: boolean }) {
+  const t = useTranslations('publicPages.landing.workflow');
   const Icon = step.icon;
   const Visual = step.visual;
   return (
@@ -96,14 +95,14 @@ function StepRow({ step, reversed }: { step: Step; reversed: boolean }) {
             <Icon className="h-5 w-5" aria-hidden="true" />
           </div>
           <span className="font-mono text-[12px] tracking-[0.18em] text-[var(--landing-text-muted)]">
-            STEP {step.step}
+            {t('stepLabel', { step: step.step })}
           </span>
         </div>
         <h3 className="landing-title mt-5 text-[22px] text-[var(--landing-text-dark)] sm:text-[26px]">
-          {step.title}
+          {t(`steps.${step.key}.title`)}
         </h3>
         <p className="landing-body mt-3 max-w-md text-[14px] text-[var(--landing-text-subtle)] sm:text-[15px]">
-          {step.body}
+          {t(`steps.${step.key}.body`)}
         </p>
       </div>
       <div aria-hidden="true">
@@ -118,18 +117,21 @@ function StepRow({ step, reversed }: { step: Step; reversed: boolean }) {
    ---------------------------------------------------------------------------- */
 
 function IntakeVisual() {
+  const t = useTranslations('publicPages.landing.workflow.visuals.intake');
   const rows = [
-    { id: 'WEB-204', from: 'Inbound', chip: 'High', hue: 'chip-amber' },
-    { id: 'API-88', from: 'Agent', chip: 'api', hue: 'chip-blue' },
-    { id: 'WEB-205', from: 'Support', chip: 'bug', hue: 'chip-rose' },
+    { id: 'WEB-204', fromKey: 'inbound', chipKey: 'high', hue: 'chip-amber' },
+    { id: 'API-88', fromKey: 'agent', chipKey: 'api', hue: 'chip-blue' },
+    { id: 'WEB-205', fromKey: 'support', chipKey: 'bug', hue: 'chip-rose' },
   ] as const;
   return (
     <div className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] p-3">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-[9px] uppercase tracking-[0.14em] text-[var(--landing-text-muted)]">
-          Triage queue
+          {t('title')}
         </span>
-        <span className="text-[10px] tabular-nums text-[var(--landing-text-muted)]">3 new</span>
+        <span className="text-[10px] tabular-nums text-[var(--landing-text-muted)]">
+          {t('newCount')}
+        </span>
       </div>
       <div className="space-y-1.5">
         {rows.map((row) => (
@@ -141,9 +143,11 @@ function IntakeVisual() {
               <span className="font-mono text-[10px] text-[var(--landing-text-body)]">
                 {row.id}
               </span>
-              <span className="text-[9px] text-[var(--landing-text-muted)]">{row.from}</span>
+              <span className="text-[9px] text-[var(--landing-text-muted)]">
+                {t(`sources.${row.fromKey}`)}
+              </span>
             </span>
-            <span className={row.hue}>{row.chip}</span>
+            <span className={row.hue}>{t(`chips.${row.chipKey}`)}</span>
           </div>
         ))}
       </div>
@@ -152,22 +156,23 @@ function IntakeVisual() {
 }
 
 const planColumns = [
-  { name: 'Backlog', accent: 'var(--landing-text-body)', cards: [70, 54] },
-  { name: 'Sprint 5', accent: 'var(--landing-accent-violet)', cards: [62, 80, 46] },
+  { key: 'backlog', accent: 'var(--landing-text-body)', cards: [70, 54] },
+  { key: 'sprint5', accent: 'var(--landing-accent-violet)', cards: [62, 80, 46] },
 ] as const;
 
 function PlanVisual() {
+  const t = useTranslations('publicPages.landing.workflow.visuals.plan');
   return (
     <div className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] p-3">
       <div className="grid grid-cols-2 gap-2">
         {planColumns.map((column) => (
           <div
-            key={column.name}
+            key={column.key}
             className="rounded-sm border border-[var(--landing-border)] bg-[var(--landing-bg)] p-2"
             style={{ borderTopColor: column.accent, borderTopWidth: 2 }}
           >
             <p className="mb-2 text-[9px] uppercase tracking-[0.14em] text-[var(--landing-text-muted)]">
-              {column.name}
+              {t(`columns.${column.key}`)}
             </p>
             <div className="space-y-1.5">
               {column.cards.map((width, index) => (
@@ -187,25 +192,26 @@ function PlanVisual() {
       </div>
       <div className="mt-3 flex flex-wrap gap-1.5">
         <span className="chip-violet">v1.4.0</span>
-        <span className="chip-blue">checkout</span>
+        <span className="chip-blue">{t('checkout')}</span>
       </div>
     </div>
   );
 }
 
 function BuildVisual() {
+  const t = useTranslations('publicPages.landing.workflow.visuals.build');
   const events = [
-    { who: 'Maya', kind: 'human', text: 'Picked up WEB-204', dot: 'var(--landing-accent-blue)' },
+    { who: 'Maya', kind: 'human', textKey: 'pickedUp', dot: 'var(--landing-accent-blue)' },
     {
       who: 'agent-rex',
       kind: 'agent',
-      text: 'Opened PR · 4 files',
+      textKey: 'openedPr',
       dot: 'var(--landing-accent-amber)',
     },
     {
       who: 'agent-rex',
       kind: 'agent',
-      text: 'Commented on API-88',
+      textKey: 'commented',
       dot: 'var(--landing-accent-amber)',
     },
   ] as const;
@@ -214,7 +220,7 @@ function BuildVisual() {
       <div className="mb-2 flex items-center gap-2">
         <span className="status-dot status-live" />
         <span className="text-[9px] uppercase tracking-[0.14em] text-[var(--landing-text-muted)]">
-          Live activity
+          {t('title')}
         </span>
       </div>
       <div className="space-y-1.5">
@@ -232,7 +238,7 @@ function BuildVisual() {
             </span>
             {event.kind === 'agent' ? <span className="chip-amber">MCP</span> : null}
             <span className="truncate text-[10px] text-[var(--landing-text-muted)]">
-              {event.text}
+              {t(`events.${event.textKey}`)}
             </span>
           </div>
         ))}
@@ -244,11 +250,13 @@ function BuildVisual() {
 const shipBars = [12, 16, 15, 19, 18, 24] as const;
 
 function ShipVisual() {
+  const t = useTranslations('publicPages.landing.workflow.visuals.ship');
+
   return (
     <div className="grid grid-cols-2 gap-3">
       <div className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] p-3">
         <p className="text-[9px] uppercase tracking-[0.14em] text-[var(--landing-text-muted)]">
-          Velocity
+          {t('velocity')}
         </p>
         <div className="mt-2 flex h-[52px] items-end gap-1.5">
           {shipBars.map((value, index) => (
@@ -269,15 +277,17 @@ function ShipVisual() {
       <div className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] p-3">
         <div className="flex items-center justify-between">
           <span className="font-mono text-[11px] text-[var(--landing-text-dark)]">v1.4.0</span>
-          <span className="chip-emerald">Shipped</span>
+          <span className="chip-emerald">{t('shipped')}</span>
         </div>
         <div className="mt-3 space-y-2">
           {[
-            { label: 'Fixed', width: 84, color: 'var(--landing-accent-emerald)' },
-            { label: "Won't do", width: 18, color: 'var(--landing-text-muted)' },
+            { labelKey: 'fixed', width: 84, color: 'var(--landing-accent-emerald)' },
+            { labelKey: 'wontDo', width: 18, color: 'var(--landing-text-muted)' },
           ].map((row) => (
-            <div key={row.label} className="flex items-center gap-2">
-              <span className="w-14 text-[9px] text-[var(--landing-text-muted)]">{row.label}</span>
+            <div key={row.labelKey} className="flex items-center gap-2">
+              <span className="w-14 text-[9px] text-[var(--landing-text-muted)]">
+                {t(`resolution.${row.labelKey}`)}
+              </span>
               <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--landing-bg)]">
                 <div
                   className="h-full rounded-full"

@@ -5,7 +5,62 @@ import {
   getTimedOutMicrophoneAccessMessage,
   requestRawMicrophoneStream,
   resolveJoinAudioInputDeviceId,
+  type MicrophoneMessageCatalog,
 } from '@/lib/chat/microphone';
+
+const microphoneMessages: MicrophoneMessageCatalog = {
+  recoveryHint: {
+    chromium:
+      'Look for the microphone prompt in the address bar and choose Allow this time or Allow on every visit. If it was dismissed, open Chrome site settings for this site and allow the microphone.',
+    edge: 'Look for the microphone prompt in the address bar. If it was dismissed, open Edge Site permissions for this site and allow the microphone.',
+    firefox:
+      'Firefox usually shows microphone access near the left side of the address bar. If it disappeared, open the padlock or Page Info permissions and allow the microphone for this site.',
+    safari:
+      'Safari may keep microphone access under Safari > Settings > Websites > Microphone, or in the website controls in the address bar.',
+    unknown:
+      "Check the browser microphone prompt or this site's permissions and allow microphone access.",
+  },
+  pendingJoin: ({ hint }) =>
+    `Joined muted while the browser finishes microphone access. ${hint} TaskNebula will turn your mic on automatically if access succeeds.`,
+  pendingRuntime: ({ hint }) =>
+    `Browser is still waiting for microphone access. ${hint} TaskNebula will unmute automatically if access succeeds.`,
+  timedOutAccess: ({ hint }) =>
+    `Microphone access timed out while waiting for the browser prompt. ${hint} Then try the mic button again.`,
+  timedOutPendingPrompt: ({ hint }) =>
+    `Microphone access timed out while waiting for the browser prompt. ${hint} If you approve it now, TaskNebula will still turn your mic on automatically. If no prompt appears, refresh this page or try the mic button again.`,
+  deniedAccess: ({ hint }) => `Microphone permission was denied. ${hint}`,
+  captureUnsupported: 'This browser does not support microphone capture.',
+  audioEngineFailed:
+    'The browser audio engine failed for this device. Stop other audio apps or change your microphone, then try again.',
+  microphoneNotFound: 'No microphone was found. Check your audio input device and try again.',
+  microphoneBusy: 'Your microphone is busy in another app. Close other audio apps and try again.',
+  accessUnavailable: ({ hint }) => `Microphone access is unavailable. ${hint}`,
+  permissionState: {
+    allowed: 'Allowed',
+    blocked: 'Blocked',
+    waitingForBrowserDecision: 'Waiting for browser decision',
+    browserManaged: 'Browser-managed',
+  },
+  permissionHelp: {
+    deviceLabelsHiddenUntilPermission:
+      'Device names stay hidden until the browser grants microphone access.',
+    grantedWithDevicesAndLabels:
+      'Microphone access is already allowed. You can switch between available microphones here.',
+    grantedLabelsHidden:
+      'Microphone access is allowed, but this browser has not exposed device names yet. Use Refresh devices after returning from browser settings.',
+    grantedNoDevices:
+      'Microphone access is allowed, but no audio input devices are currently visible to the browser.',
+    denied: ({ hint }) => `Microphone access is blocked for this site. ${hint}`,
+    prompt: ({ hint, labelsHiddenNote }) =>
+      `This browser is still waiting for a microphone decision. ${hint}${
+        labelsHiddenNote ? ` ${labelsHiddenNote}` : ''
+      }`,
+    unknown: ({ hint, labelsHiddenNote }) =>
+      `This browser does not expose a reliable microphone permission state before access. ${hint}${
+        labelsHiddenNote ? ` ${labelsHiddenNote}` : ''
+      }`,
+  },
+};
 
 describe('chat microphone helpers', () => {
   beforeEach(() => {
@@ -54,7 +109,11 @@ describe('chat microphone helpers', () => {
 
   it('falls back to the default microphone when a selected device fails to start', async () => {
     global.navigator.mediaDevices.getUserMedia
-      .mockRejectedValueOnce(new Error('The AudioContext encountered an error from the audio device or the WebAudio renderer.'))
+      .mockRejectedValueOnce(
+        new Error(
+          'The AudioContext encountered an error from the audio device or the WebAudio renderer.'
+        )
+      )
       .mockResolvedValueOnce({
         getTracks: () => [{ stop: jest.fn() }],
       });
@@ -298,9 +357,7 @@ describe('chat microphone helpers', () => {
     await Promise.resolve();
     expect(global.navigator.mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
 
-    const rejection = expect(requestPromise).rejects.toThrow(
-      'Microphone access timed out while waiting for the browser prompt.'
-    );
+    const rejection = expect(requestPromise).rejects.toThrow('MICROPHONE_ACCESS_TIMEOUT');
     await jest.advanceTimersByTimeAsync(1);
     await rejection;
     expect(global.navigator.mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
@@ -387,7 +444,7 @@ describe('chat microphone helpers', () => {
       requestRawMicrophoneStream('default', {
         interactive: true,
       })
-    ).rejects.toThrow('Microphone permission was denied.');
+    ).rejects.toThrow('MICROPHONE_PERMISSION_DENIED');
 
     expect(global.navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
   });
@@ -455,9 +512,7 @@ describe('chat microphone helpers', () => {
       audio: true,
     });
 
-    const rejection = expect(requestPromise).rejects.toThrow(
-      'Microphone access timed out while waiting for the browser prompt.'
-    );
+    const rejection = expect(requestPromise).rejects.toThrow('MICROPHONE_ACCESS_TIMEOUT');
     await jest.advanceTimersByTimeAsync(1);
     await rejection;
 
@@ -556,12 +611,14 @@ describe('chat microphone helpers', () => {
   it('builds Chromium-specific microphone recovery guidance', () => {
     expect(
       getPendingMicrophoneJoinMessage(
-        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+        microphoneMessages
       )
     ).toContain('address bar');
     expect(
       getTimedOutMicrophoneAccessMessage(
-        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+        microphoneMessages
       )
     ).toContain('Chrome site settings');
   });
@@ -569,7 +626,8 @@ describe('chat microphone helpers', () => {
   it('builds Firefox-specific microphone recovery guidance', () => {
     expect(
       getTimedOutMicrophoneAccessMessage(
-        'Mozilla/5.0 (X11; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0'
+        'Mozilla/5.0 (X11; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0',
+        microphoneMessages
       )
     ).toContain('left side of the address bar');
   });
@@ -577,18 +635,21 @@ describe('chat microphone helpers', () => {
   it('builds Safari-specific microphone recovery guidance', () => {
     expect(
       getTimedOutMicrophoneAccessMessage(
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15'
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15',
+        microphoneMessages
       )
     ).toContain('Safari > Settings > Websites > Microphone');
   });
 
   it('formats permission labels for the setup UI', () => {
-    expect(formatMicrophonePermissionStateLabel('granted')).toBe('Allowed');
-    expect(formatMicrophonePermissionStateLabel('denied')).toBe('Blocked');
-    expect(formatMicrophonePermissionStateLabel('prompt')).toBe(
+    expect(formatMicrophonePermissionStateLabel('granted', microphoneMessages)).toBe('Allowed');
+    expect(formatMicrophonePermissionStateLabel('denied', microphoneMessages)).toBe('Blocked');
+    expect(formatMicrophonePermissionStateLabel('prompt', microphoneMessages)).toBe(
       'Waiting for browser decision'
     );
-    expect(formatMicrophonePermissionStateLabel('unknown')).toBe('Browser-managed');
+    expect(formatMicrophonePermissionStateLabel('unknown', microphoneMessages)).toBe(
+      'Browser-managed'
+    );
   });
 
   it('builds prompt guidance that explains hidden device labels', () => {
@@ -598,6 +659,7 @@ describe('chat microphone helpers', () => {
           'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
         hasDetectedDevices: true,
         labelsVisible: false,
+        messages: microphoneMessages,
       })
     ).toContain('Device names stay hidden until the browser grants microphone access.');
   });

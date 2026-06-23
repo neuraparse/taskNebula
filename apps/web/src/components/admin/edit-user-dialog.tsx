@@ -30,12 +30,15 @@ type EditUserDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
+type UserStatus = 'active' | 'inactive' | 'invited';
+
 export function EditUserDialog({ userId, open, onOpenChange }: EditUserDialogProps) {
   const t = useTranslations('adminDialogs');
+  const errorT = useTranslations('componentErrors.admin');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
-    status: 'active' as 'active' | 'inactive' | 'invited',
+    status: 'active' as UserStatus,
     isSuperAdmin: false,
   });
 
@@ -43,7 +46,7 @@ export function EditUserDialog({ userId, open, onOpenChange }: EditUserDialogPro
     queryKey: ['admin-user', userId],
     queryFn: async () => {
       const response = await fetch(`/api/admin/users/${userId}`);
-      if (!response.ok) throw new Error('Failed to fetch user');
+      if (!response.ok) throw new Error(errorT('fetchUser'));
       return response.json();
     },
     enabled: !!userId && open,
@@ -81,10 +84,10 @@ export function EditUserDialog({ userId, open, onOpenChange }: EditUserDialogPro
       });
       onOpenChange(false);
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast({
         title: t('editUser.toastFailedTitle'),
-        description: error.message,
+        description: t('editUser.toastFailedTitle'),
         variant: 'destructive',
       });
     },
@@ -124,7 +127,7 @@ export function EditUserDialog({ userId, open, onOpenChange }: EditUserDialogPro
               <Label htmlFor="status">{t('editUser.status')}</Label>
               <Select
                 value={formData.status}
-                onValueChange={(value: any) => setFormData({ ...formData, status: value })}
+                onValueChange={(value: UserStatus) => setFormData({ ...formData, status: value })}
               >
                 <SelectTrigger>
                   <SelectValue />

@@ -54,10 +54,10 @@ export function CreateUserDialog() {
       setOpen(false);
       setFormData({ name: '', email: '', password: '', isSuperAdmin: false });
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast({
         title: t('createUser.toastFailedTitle'),
-        description: error.message,
+        description: t('createUser.toastFailedTitle'),
         variant: 'destructive',
       });
     },

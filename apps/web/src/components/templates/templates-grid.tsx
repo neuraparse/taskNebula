@@ -196,11 +196,10 @@ export function TemplatesGrid({
             title: t('toast_template_applied_title'),
             description: t('toast_template_applied_desc'),
           });
-        } catch (error) {
-          const message = error instanceof Error ? error.message : t('toast_use_failed_desc');
+        } catch {
           toast({
             title: t('toast_use_failed_title'),
-            description: message,
+            description: t('toast_use_failed_desc'),
             variant: 'destructive',
           });
         }
@@ -227,11 +226,10 @@ export function TemplatesGrid({
       try {
         await deleteMutation.mutateAsync(templateId);
         toast({ title: t('toast_template_deleted_title') });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : t('toast_delete_failed_desc');
+      } catch {
         toast({
           title: t('toast_delete_failed_title'),
-          description: message,
+          description: t('toast_delete_failed_desc'),
           variant: 'destructive',
         });
       }

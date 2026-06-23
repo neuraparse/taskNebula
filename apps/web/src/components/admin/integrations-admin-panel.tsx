@@ -137,10 +137,10 @@ export function IntegrationsAdminPanel() {
       queryClient.invalidateQueries({ queryKey: ['admin-audit-logs'] });
       toast({ title: t('integrations.credentialsRemoved') });
     },
-    onError: (err: Error) => {
+    onError: () => {
       toast({
         title: t('integrations.removeFailed'),
-        description: err.message,
+        description: t('integrations.removeFailed'),
         variant: 'destructive',
       });
     },
@@ -173,9 +173,7 @@ export function IntegrationsAdminPanel() {
             {t('integrations.loading')}
           </div>
         ) : error ? (
-          <div className="text-destructive px-6 py-6 text-sm">
-            {error instanceof Error ? error.message : t('integrations.loadError')}
-          </div>
+          <div className="text-destructive px-6 py-6 text-sm">{t('integrations.loadError')}</div>
         ) : (
           <ul className="divide-border/50 divide-y">
             {providers.map((provider) => (
@@ -309,10 +307,10 @@ function ConfigureDialog({
       });
       onOpenChange(false);
     },
-    onError: (err: Error) => {
+    onError: () => {
       toast({
         title: t('integrations.saveFailed'),
-        description: err.message,
+        description: t('integrations.saveFailed'),
         variant: 'destructive',
       });
     },

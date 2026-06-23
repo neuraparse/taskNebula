@@ -160,13 +160,14 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
         },
       ]);
     },
-    onError: (err: Error) => {
+    onError: () => {
       startedAtRef.current = null;
-      setChat((c) => [
-        ...c,
-        { role: 'assistant', content: t('draft.draftingFailedChat', { message: err.message }) },
-      ]);
-      toast({ title: t('draft.draftingFailed'), description: err.message, variant: 'destructive' });
+      setChat((c) => [...c, { role: 'assistant', content: t('draft.draftingFailed') }]);
+      toast({
+        title: t('draft.draftingFailed'),
+        description: t('draft.draftingFailed'),
+        variant: 'destructive',
+      });
     },
   });
 
@@ -205,9 +206,13 @@ export function AiDraftIssueDialog({ open, onOpenChange, projectId }: AiDraftIss
       reset();
       onOpenChange(false);
     },
-    onError: (err: Error) => {
+    onError: () => {
       setCreatingIndex(null);
-      toast({ title: t('draft.createFailed'), description: err.message, variant: 'destructive' });
+      toast({
+        title: t('draft.createFailed'),
+        description: t('draft.createFailed'),
+        variant: 'destructive',
+      });
     },
   });
 

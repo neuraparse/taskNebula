@@ -184,10 +184,14 @@ services:
       TASKNEBULA_SELF_UPDATE_ENABLED: ${TASKNEBULA_SELF_UPDATE_ENABLED:-false}
       TASKNEBULA_SELF_UPDATE_WEBHOOK_URL: ${TASKNEBULA_SELF_UPDATE_WEBHOOK_URL:-}
       TASKNEBULA_SELF_UPDATE_WEBHOOK_SECRET: ${TASKNEBULA_SELF_UPDATE_WEBHOOK_SECRET:-}
+      TASKNEBULA_SELF_UPDATE_REQUIRE_BACKUP: ${TASKNEBULA_SELF_UPDATE_REQUIRE_BACKUP:-true}
+      TASKNEBULA_SELF_UPDATE_ALLOW_INSECURE_HTTP: ${TASKNEBULA_SELF_UPDATE_ALLOW_INSECURE_HTTP:-false}
+      TASKNEBULA_UPDATE_BACKUP_DIR: ${TASKNEBULA_UPDATE_BACKUP_DIR:-/app/backups}
     ports:
       - '127.0.0.1:${PORT:-3000}:3000'
     volumes:
       - uploads_data:/app/uploads
+      - backups_data:/app/backups
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     healthcheck:
@@ -237,3 +241,4 @@ volumes:
   postgres_data:
   redis_data:
   uploads_data:
+  backups_data:

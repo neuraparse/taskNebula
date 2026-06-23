@@ -309,5 +309,5 @@ function getSignupErrorMessage(data: SignupResponse, t: (key: SignupErrorKey) =>
   if (code === 'INVALID_PROJECT_INVITE') {
     return t('project_invite_invalid');
   }
-  return data.error || t('signup_failed');
+  return t('signup_failed');
 }

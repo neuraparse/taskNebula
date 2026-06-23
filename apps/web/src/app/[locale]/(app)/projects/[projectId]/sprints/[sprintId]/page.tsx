@@ -45,9 +45,7 @@ export default function SprintDetailPage({
       });
     } catch (error: unknown) {
       console.error('Error starting sprint:', error);
-      // Show error message from API
-      const message = error instanceof Error ? error.message : t('startSprintFailed');
-      alert(message);
+      alert(t('startSprintFailed'));
     }
   };
 

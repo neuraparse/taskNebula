@@ -91,10 +91,10 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
         description: t('apiKeys.created_toast_desc'),
       });
     },
-    onError: (mutationError: Error) => {
+    onError: () => {
       toast({
         title: t('apiKeys.create_failed'),
-        description: mutationError.message,
+        description: t('apiKeys.create_failed'),
         variant: 'destructive',
       });
     },
@@ -116,10 +116,10 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
         description: t('apiKeys.revoked_toast_desc'),
       });
     },
-    onError: (mutationError: Error) => {
+    onError: () => {
       toast({
         title: t('apiKeys.revoke_failed'),
-        description: mutationError.message,
+        description: t('apiKeys.revoke_failed'),
         variant: 'destructive',
       });
     },
@@ -165,9 +165,7 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
         {isLoading ? (
           <p className="text-muted-foreground py-6 text-center text-sm">{t('apiKeys.loading')}</p>
         ) : error ? (
-          <div className="panel-warn text-sm">
-            {error instanceof Error ? error.message : t('apiKeys.load_error')}
-          </div>
+          <div className="panel-warn text-sm">{t('apiKeys.load_error')}</div>
         ) : apiKeys.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-12 text-center">
             <Key className="text-muted-foreground/50 h-8 w-8" />

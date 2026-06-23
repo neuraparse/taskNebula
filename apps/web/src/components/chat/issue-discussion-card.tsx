@@ -21,9 +21,7 @@ export function IssueDiscussionCard({
   const { data, isLoading, error } = useIssueConversation(issueId);
   const errorMessage = isApiPermissionError(error)
     ? tHome('toast_access_denied_description')
-    : error instanceof Error
-      ? error.message
-      : t('discussion.unavailable');
+    : t('discussion.unavailable');
 
   return (
     <div className="space-y-3">

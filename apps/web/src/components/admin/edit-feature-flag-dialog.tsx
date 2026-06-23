@@ -85,10 +85,10 @@ export function EditFeatureFlagDialog({ flag, open, onOpenChange }: EditFeatureF
         description: t('editFlag.toastUpdatedDescription', { name }),
       });
       onOpenChange(false);
-    } catch (error: any) {
+    } catch {
       toast({
         title: t('editFlag.toastFailedTitle'),
-        description: error.message || t('common.somethingWentWrong'),
+        description: t('common.somethingWentWrong'),
         variant: 'destructive',
       });
     }

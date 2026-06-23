@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { throwApiResponseError } from '@/lib/client-api-errors';
 import {
   invalidateIssueCaches,
@@ -70,6 +71,8 @@ interface IssueFilters {
 
 // Fetch issues with filters
 export function useIssues(filters?: IssueFilters, options: { enabled?: boolean } = {}) {
+  const t = useTranslations('hookErrors.issues');
+
   return useQuery({
     queryKey: ['issues', filters],
     queryFn: async () => {
@@ -82,7 +85,7 @@ export function useIssues(filters?: IssueFilters, options: { enabled?: boolean }
 
       const response = await fetch(`/api/issues?${params.toString()}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch issues');
+        throw new Error(t('fetch'));
       }
       const data: IssuesResponse = await response.json();
       return data.issues;
@@ -93,16 +96,18 @@ export function useIssues(filters?: IssueFilters, options: { enabled?: boolean }
 
 // Fetch single issue
 export function useIssue(issueId: string | null) {
+  const t = useTranslations('hookErrors.issues');
+
   return useQuery({
     queryKey: ['issue', issueId],
     queryFn: async (): Promise<Issue | null> => {
-      if (!issueId) throw new Error('Issue ID is required');
+      if (!issueId) throw new Error(t('idRequired'));
       const response = await fetch(`/api/issues/${issueId}`);
       if (response.status === 404) {
         return null;
       }
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to fetch issue');
+        await throwApiResponseError(response, t('fetchOne'));
       }
       const data = await response.json();
       return data as Issue;
@@ -129,6 +134,7 @@ interface CreateIssueContext {
 // is what makes "add a task" feel instant instead of requiring a page refresh.
 export function useCreateIssue() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.issues');
 
   return useMutation({
     mutationFn: async (data: CreateIssueInput) => {
@@ -138,9 +144,9 @@ export function useCreateIssue() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        const error = await response.json();
+        const error = (await response.json().catch(() => ({}))) as { error?: string };
         console.error('API Error:', error);
-        throw new Error(error.error || 'Failed to create issue');
+        throw new Error(error.error || t('create'));
       }
       return response.json();
     },
@@ -331,6 +337,7 @@ interface DeleteIssueContext {
 // rollback if the server rejects the delete.
 export function useDeleteIssue() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.issues');
 
   return useMutation({
     mutationFn: async (issueId: string) => {
@@ -340,7 +347,7 @@ export function useDeleteIssue() {
         method: 'DELETE',
       });
       if (!response.ok) {
-        throw new Error('Failed to delete issue');
+        throw new Error(t('delete'));
       }
       return { ...(await response.json()), projectId: cached?.projectId };
     },

@@ -29,6 +29,7 @@ const COLOR_MODES = [
 type ColorMode = (typeof COLOR_MODES)[number]['value'];
 
 const COLOR_MODE_STORAGE_KEY = 'tasknebula-color-mode';
+const PENDING_COLOR_MODE_STORAGE_KEY = 'tasknebula-color-mode-pending-sync';
 const LEGACY_COLOR_MODE_STORAGE_KEY = 'theme';
 
 function isColorMode(value: unknown): value is ColorMode {
@@ -51,15 +52,42 @@ function getStoredColorMode(): ColorMode | null {
   return null;
 }
 
-function storeColorMode(mode: ColorMode) {
+function getPendingColorMode(): ColorMode | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const pendingColorMode = window.localStorage.getItem(PENDING_COLOR_MODE_STORAGE_KEY);
+    return isColorMode(pendingColorMode) ? pendingColorMode : null;
+  } catch {
+    return null;
+  }
+}
+
+function storeColorMode(mode: ColorMode, options: { pendingSync?: boolean } = {}) {
   if (typeof window === 'undefined') return;
 
   try {
     window.localStorage.setItem(COLOR_MODE_STORAGE_KEY, mode);
+    if (options.pendingSync) {
+      window.localStorage.setItem(PENDING_COLOR_MODE_STORAGE_KEY, mode);
+    }
     window.localStorage.removeItem(LEGACY_COLOR_MODE_STORAGE_KEY);
   } catch {
     // Browsers can deny storage in private contexts. The server sync still
     // preserves the preference for authenticated users.
+  }
+}
+
+function clearPendingColorMode(mode?: ColorMode) {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const pendingColorMode = getPendingColorMode();
+    if (!pendingColorMode || (mode && pendingColorMode !== mode)) return;
+    window.localStorage.removeItem(PENDING_COLOR_MODE_STORAGE_KEY);
+  } catch {
+    // Ignore storage failures; a stale pending marker only makes the next
+    // Appearance mount re-assert the same local preference.
   }
 }
 
@@ -99,6 +127,14 @@ const INTERFACE_FONTS: {
 ];
 
 const COLOR_THEMES: ColorTheme[] = ['default', 'ocean', 'forest', 'sunset', 'purple', 'rose'];
+const COLOR_THEME_LABEL_KEYS: Record<ColorTheme, string> = {
+  default: 'appearance.theme_default',
+  ocean: 'appearance.theme_ocean',
+  forest: 'appearance.theme_forest',
+  sunset: 'appearance.theme_sunset',
+  purple: 'appearance.theme_purple',
+  rose: 'appearance.theme_rose',
+};
 
 interface ServerAppearanceResponse {
   settings: {
@@ -183,23 +219,29 @@ export function AppearanceSettings() {
     [selectedColorMode, colorTheme, visualStyle, interfaceFont, enableAnimations, enableGradients]
   );
 
-  const persistAppearance = useCallback(async (payload: Record<string, unknown>) => {
-    setSyncStatus('saving');
-    try {
-      const res = await fetch('/api/user/appearance', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error('PUT failed');
-      setSyncStatus('saved');
-      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-      savedTimerRef.current = setTimeout(() => setSyncStatus('idle'), 1500);
-    } catch (err) {
-      console.error('Failed to sync appearance settings', err);
-      setSyncStatus('error');
-    }
-  }, []);
+  const persistAppearance = useCallback(
+    async (payload: Record<string, unknown>) => {
+      setSyncStatus('saving');
+      try {
+        const res = await fetch('/api/user/appearance', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error(t('appearance.save_failed'));
+        if (isColorMode(payload.theme)) {
+          clearPendingColorMode(payload.theme);
+        }
+        setSyncStatus('saved');
+        if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+        savedTimerRef.current = setTimeout(() => setSyncStatus('idle'), 1500);
+      } catch (err) {
+        console.error('Failed to sync appearance settings', err);
+        setSyncStatus('error');
+      }
+    },
+    [t]
+  );
 
   useEffect(() => {
     const storedColorMode = getStoredColorMode();
@@ -221,6 +263,8 @@ export function AppearanceSettings() {
     const s = serverData.settings;
     const hasPersistedServerSettings = Boolean(s.updatedAt);
     const storedColorMode = getStoredColorMode();
+    const pendingColorMode = getPendingColorMode();
+    const localColorMode = pendingColorMode ?? storedColorMode;
     const serverColorMode = isColorMode(s.theme) ? s.theme : null;
 
     if (hasPersistedServerSettings) {
@@ -234,26 +278,31 @@ export function AppearanceSettings() {
     }
 
     if (
-      storedColorMode &&
+      localColorMode &&
       (!hasPersistedServerSettings ||
+        pendingColorMode === localColorMode ||
         localColorModeTouchedRef.current ||
-        shouldLocalColorModeWin(storedColorMode, serverColorMode))
+        shouldLocalColorModeWin(localColorMode, serverColorMode))
     ) {
-      storeColorMode(storedColorMode);
-      setSelectedColorMode(storedColorMode);
-      if (theme !== storedColorMode) {
-        setTheme(storedColorMode);
+      storeColorMode(localColorMode);
+      setSelectedColorMode(localColorMode);
+      if (theme !== localColorMode) {
+        setTheme(localColorMode);
       }
 
       if (
         !syncedStoredColorModeRef.current &&
-        (!hasPersistedServerSettings || serverColorMode !== storedColorMode) &&
-        (storedColorMode !== 'system' || localColorModeTouchedRef.current)
+        (!hasPersistedServerSettings ||
+          serverColorMode !== localColorMode ||
+          pendingColorMode === localColorMode) &&
+        (localColorMode !== 'system' ||
+          pendingColorMode === localColorMode ||
+          localColorModeTouchedRef.current)
       ) {
         const localAppearancePayload = hasPersistedServerSettings
-          ? { theme: storedColorMode }
+          ? { theme: localColorMode }
           : {
-              theme: storedColorMode,
+              theme: localColorMode,
               colorTheme,
               visualStyle,
               interfaceFont,
@@ -334,7 +383,7 @@ export function AppearanceSettings() {
   const handleColorModeChange = useCallback(
     (mode: ColorMode) => {
       localColorModeTouchedRef.current = true;
-      storeColorMode(mode);
+      storeColorMode(mode, { pendingSync: true });
       setSelectedColorMode(mode);
       setTheme(mode);
 
@@ -471,7 +520,7 @@ export function AppearanceSettings() {
             <div className="space-y-1">
               <Label className="text-sm font-medium">{t('appearance.accent_label')}</Label>
               <p className="text-muted-foreground mt-1 text-xs">
-                {themeInfo[colorTheme]?.name ?? colorTheme}
+                {t(COLOR_THEME_LABEL_KEYS[colorTheme] ?? 'appearance.theme_default')}
               </p>
             </div>
             <div
@@ -482,18 +531,19 @@ export function AppearanceSettings() {
               <span id="color-theme-heading" className="sr-only">
                 {t('appearance.color_theme_sr')}
               </span>
-              {COLOR_THEMES.map((t) => {
-                const info = themeInfo[t];
+              {COLOR_THEMES.map((themeKey) => {
+                const info = themeInfo[themeKey];
                 const [primary] = info.preview;
-                const isActive = colorTheme === t;
+                const label = t(COLOR_THEME_LABEL_KEYS[themeKey]);
+                const isActive = colorTheme === themeKey;
                 return (
                   <button
-                    key={t}
+                    key={themeKey}
                     type="button"
-                    aria-label={info.name}
+                    aria-label={label}
                     aria-pressed={isActive}
-                    data-theme={t}
-                    onClick={() => setColorTheme(t)}
+                    data-theme={themeKey}
+                    onClick={() => setColorTheme(themeKey)}
                     className={cn(
                       'border-border ease-snap relative h-10 w-10 rounded-md border transition-all duration-150',
                       'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',

@@ -44,6 +44,7 @@ interface IssueWatcher {
 function useIssueWatch(issueId: string) {
   const { user } = useUser();
   const queryClient = useQueryClient();
+  const errorT = useTranslations('componentErrors.watchers');
   // Key shape mirrors WatchersList (['watchers', issueId, projectId?]) so the
   // header toggle and the sidebar list can never disagree.
   const queryKey = ['watchers', issueId, undefined];
@@ -52,7 +53,7 @@ function useIssueWatch(issueId: string) {
     queryKey,
     queryFn: async (): Promise<{ watchers: IssueWatcher[] }> => {
       const response = await fetch(`/api/watchers?issueId=${issueId}`);
-      if (!response.ok) throw new Error('Failed to fetch watchers');
+      if (!response.ok) throw new Error(errorT('fetch'));
       return response.json();
     },
   });
@@ -69,7 +70,7 @@ function useIssueWatch(issueId: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ issueId }),
       });
-      if (!response.ok) throw new Error('Failed to add watcher');
+      if (!response.ok) throw new Error(errorT('add'));
       return response.json();
     },
     onSuccess: invalidate,
@@ -78,7 +79,7 @@ function useIssueWatch(issueId: string) {
   const removeWatcher = useMutation({
     mutationFn: async () => {
       const response = await fetch(`/api/watchers?issueId=${issueId}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to remove watcher');
+      if (!response.ok) throw new Error(errorT('remove'));
       return response.json();
     },
     onSuccess: invalidate,
@@ -95,13 +96,14 @@ function useIssueWatch(issueId: string) {
 /** Star = personal pin via /api/pinned-items (idempotent on href). */
 function useIssueStar(issue: { id: string; key: string; title: string }) {
   const queryClient = useQueryClient();
+  const errorT = useTranslations('componentErrors.pinnedItems');
   const issueHref = `/issues/${issue.id}`;
 
   const { data } = useQuery<PinnedItem[]>({
     queryKey: ['pinned-items'],
     queryFn: async () => {
       const response = await fetch('/api/pinned-items');
-      if (!response.ok) throw new Error('Failed to fetch pinned items');
+      if (!response.ok) throw new Error(errorT('fetch'));
       const json = (await response.json()) as { items: PinnedItem[] };
       return json.items ?? [];
     },
@@ -126,7 +128,7 @@ function useIssueStar(issue: { id: string; key: string; title: string }) {
           href: issueHref,
         }),
       });
-      if (!response.ok) throw new Error('Failed to pin issue');
+      if (!response.ok) throw new Error(errorT('pinIssue'));
       return response.json();
     },
     onSuccess: invalidate,
@@ -135,7 +137,7 @@ function useIssueStar(issue: { id: string; key: string; title: string }) {
   const unpin = useMutation({
     mutationFn: async (pinId: string) => {
       const response = await fetch(`/api/pinned-items/${pinId}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to unpin issue');
+      if (!response.ok) throw new Error(errorT('unpinIssue'));
       return response.json();
     },
     onSuccess: invalidate,

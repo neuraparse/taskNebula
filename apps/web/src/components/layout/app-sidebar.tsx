@@ -80,6 +80,7 @@ import { useOrganization } from '@/lib/hooks/use-organization';
 import { useLiveCalls } from '@/lib/hooks/use-chat';
 import { useOrganizationPermissions, type Permission } from '@/lib/hooks/use-permissions';
 import { useGlobalVoice } from '@/components/chat/global-voice-provider';
+import { useMicrophoneMessageCatalog } from '@/components/chat/use-microphone-message-catalog';
 import {
   areMicrophoneDeviceLabelsVisible,
   formatMicrophoneError,
@@ -95,85 +96,71 @@ import {
 } from '@/lib/chat/microphone';
 import { useStoredVoicePreferences } from '@/lib/chat/voice-preferences';
 
-// NOTE: high-traffic nav strings now come from next-intl. The `label`
-// fields below are kept as English fallback labels so this file still
-// compiles in isolation, but `i18nKey` is the source of truth at render
-// time (see `useTranslations('nav')` inside AppSidebar).
 const MY_ISSUES_VIEWS: Array<{
   value: string;
-  label: string;
   i18nKey: string;
   icon: typeof Inbox;
 }> = [
-  { value: 'assigned', label: 'Assigned to me', i18nKey: 'assigned_to_me', icon: Inbox },
-  { value: 'created', label: 'Created by me', i18nKey: 'created_by_me', icon: UserPlus },
-  { value: 'subscribed', label: 'Subscribed', i18nKey: 'subscribed', icon: Eye },
-  { value: 'mentioned', label: 'Mentioned', i18nKey: 'mentioned', icon: Sparkles },
+  { value: 'assigned', i18nKey: 'assigned_to_me', icon: Inbox },
+  { value: 'created', i18nKey: 'created_by_me', icon: UserPlus },
+  { value: 'subscribed', i18nKey: 'subscribed', icon: Eye },
+  { value: 'mentioned', i18nKey: 'mentioned', icon: Sparkles },
 ];
 
 const INBOX_LINKS: Array<{
   href: string;
-  label: string;
   pageHomeKey: string;
   icon: typeof Inbox;
   match?: { actor?: string; unread?: boolean; snoozed?: boolean };
 }> = [
-  { href: '/inbox', label: 'All', pageHomeKey: 'inbox_actor_all', icon: Inbox },
+  { href: '/inbox', pageHomeKey: 'inbox_actor_all', icon: Inbox },
   {
     href: '/inbox?unread=1',
-    label: 'Unread only',
     pageHomeKey: 'inbox_unread_only',
     icon: Bell,
     match: { unread: true },
   },
   {
     href: '/inbox?actor=user',
-    label: 'People',
     pageHomeKey: 'inbox_actor_people',
     icon: Users,
     match: { actor: 'user' },
   },
   {
     href: '/inbox?actor=agent',
-    label: 'Agents',
     pageHomeKey: 'inbox_actor_agents',
     icon: Bot,
     match: { actor: 'agent' },
   },
   {
     href: '/inbox?actor=webhook',
-    label: 'Webhooks',
     pageHomeKey: 'inbox_actor_webhooks',
     icon: Webhook,
     match: { actor: 'webhook' },
   },
   {
     href: '/inbox?actor=system',
-    label: 'System',
     pageHomeKey: 'inbox_actor_system',
     icon: Zap,
     match: { actor: 'system' },
   },
   {
     href: '/inbox?snoozed=1',
-    label: 'Snoozed',
     pageHomeKey: 'inbox_snoozed',
     icon: Clock,
     match: { snoozed: true },
   },
 ];
 
-const DASHBOARD_LINKS: Array<{ href: string; label: string; i18nKey: string; icon: typeof Home }> =
-  [
-    { href: '/dashboard', label: 'Overview', i18nKey: 'overview', icon: Home },
-    { href: '/drafts', label: 'Drafts', i18nKey: 'drafts', icon: FileText },
-    { href: '/templates', label: 'Templates', i18nKey: 'templates', icon: Pin },
-  ];
+const DASHBOARD_LINKS: Array<{ href: string; i18nKey: string; icon: typeof Home }> = [
+  { href: '/dashboard', i18nKey: 'overview', icon: Home },
+  { href: '/drafts', i18nKey: 'drafts', icon: FileText },
+  { href: '/templates', i18nKey: 'templates', icon: Pin },
+];
 
 const TEAM_LINKS: NavLink[] = [
   {
     href: '/team',
-    label: 'Members',
     i18nKey: 'members',
     icon: Users,
     match: { path: '/team', tab: 'members' },
@@ -181,7 +168,6 @@ const TEAM_LINKS: NavLink[] = [
   },
   {
     href: '/team?tab=teamspaces',
-    label: 'Teamspaces',
     i18nKey: 'teamspaces',
     icon: Building2,
     match: { path: '/team', tab: 'teamspaces' },
@@ -189,7 +175,6 @@ const TEAM_LINKS: NavLink[] = [
   },
   {
     href: '/team?tab=invites',
-    label: 'Pending invites',
     i18nKey: 'pending_invites',
     icon: UserPlus,
     match: { path: '/team', tab: 'invites' },
@@ -200,7 +185,6 @@ const TEAM_LINKS: NavLink[] = [
 const SETTINGS_LINKS: NavLink[] = [
   {
     href: '/settings?tab=organization',
-    label: 'Organization',
     i18nKey: 'organization',
     icon: Building2,
     match: { path: '/settings', tab: 'organization' },
@@ -208,7 +192,6 @@ const SETTINGS_LINKS: NavLink[] = [
   },
   {
     href: '/settings?tab=members',
-    label: 'Members',
     i18nKey: 'members',
     icon: Users,
     match: { path: '/settings', tab: 'members' },
@@ -216,7 +199,6 @@ const SETTINGS_LINKS: NavLink[] = [
   },
   {
     href: '/settings?tab=api-keys',
-    label: 'API Keys',
     i18nKey: 'api_keys',
     icon: KeyRound,
     match: { path: '/settings', tab: 'api-keys' },
@@ -224,7 +206,6 @@ const SETTINGS_LINKS: NavLink[] = [
   },
   {
     href: '/settings?tab=webhooks',
-    label: 'Webhooks',
     i18nKey: 'webhooks',
     icon: Webhook,
     match: { path: '/settings', tab: 'webhooks' },
@@ -234,14 +215,12 @@ const SETTINGS_LINKS: NavLink[] = [
     // Every active member may manage labels (the /api/labels routes only
     // require org membership), so no requiredPermission gate here.
     href: '/settings?tab=labels',
-    label: 'Labels',
     i18nKey: 'labels',
     icon: Tags,
     match: { path: '/settings', tab: 'labels' },
   },
   {
     href: '/settings/integrations',
-    label: 'Integrations',
     i18nKey: 'integrations',
     icon: Plug,
     match: { path: '/settings/integrations' },
@@ -249,7 +228,6 @@ const SETTINGS_LINKS: NavLink[] = [
   },
   {
     href: '/settings/security/audit-log-streaming',
-    label: 'Audit streaming',
     i18nKey: 'audit_streaming',
     icon: Radio,
     match: { path: '/settings/security/audit-log-streaming' },
@@ -257,7 +235,6 @@ const SETTINGS_LINKS: NavLink[] = [
   },
   {
     href: '/settings?tab=ai-agents',
-    label: 'AI & Agents',
     i18nKey: 'ai_agents',
     icon: Bot,
     match: { path: '/settings', tab: 'ai-agents' },
@@ -265,7 +242,6 @@ const SETTINGS_LINKS: NavLink[] = [
   },
   {
     href: '/settings?tab=ai-transparency',
-    label: 'AI Transparency',
     i18nKey: 'ai_transparency',
     icon: Sparkles,
     match: { path: '/settings', tab: 'ai-transparency' },
@@ -273,7 +249,6 @@ const SETTINGS_LINKS: NavLink[] = [
   },
   {
     href: '/settings?tab=communications',
-    label: 'Communications',
     i18nKey: 'communications',
     icon: MessageSquareText,
     match: { path: '/settings', tab: 'communications' },
@@ -281,21 +256,18 @@ const SETTINGS_LINKS: NavLink[] = [
   },
   {
     href: '/settings?tab=notifications',
-    label: 'Notifications',
     i18nKey: 'notifications',
     icon: Bell,
     match: { path: '/settings', tab: 'notifications' },
   },
   {
     href: '/settings?tab=appearance',
-    label: 'Appearance',
     i18nKey: 'appearance',
     icon: Palette,
     match: { path: '/settings', tab: 'appearance' },
   },
   {
     href: '/settings?tab=audit-log',
-    label: 'Activity',
     i18nKey: 'activity',
     icon: ScrollText,
     match: { path: '/settings', tab: 'audit-log' },
@@ -307,70 +279,60 @@ const PERSONAL_SETTINGS_KEYS = new Set(['appearance']);
 
 const ADMIN_LINKS: Array<{
   href: string;
-  label: string;
   i18nKey: string;
   icon: typeof Gauge;
   match: { path: string; tab?: string };
 }> = [
   {
     href: '/admin?tab=overview',
-    label: 'Overview',
     i18nKey: 'overview',
     icon: Gauge,
     match: { path: '/admin', tab: 'overview' },
   },
   {
     href: '/admin?tab=organizations',
-    label: 'Organizations',
     i18nKey: 'organizations',
     icon: Building2,
     match: { path: '/admin', tab: 'organizations' },
   },
   {
     href: '/admin?tab=users',
-    label: 'Users',
     i18nKey: 'users',
     icon: UserCog,
     match: { path: '/admin', tab: 'users' },
   },
   {
     href: '/admin?tab=feature-flags',
-    label: 'Feature flags',
     i18nKey: 'feature_flags',
     icon: Flag,
     match: { path: '/admin', tab: 'feature-flags' },
   },
   {
     href: '/admin?tab=agents',
-    label: 'Agent control',
     i18nKey: 'agent_control',
     icon: Bot,
     match: { path: '/admin', tab: 'agents' },
   },
   {
     href: '/admin?tab=system',
-    label: 'System',
     i18nKey: 'system',
     icon: Shield,
     match: { path: '/admin', tab: 'system' },
   },
   {
     href: '/admin?tab=updates',
-    label: 'Updates',
     i18nKey: 'updates',
     icon: RefreshCw,
     match: { path: '/admin', tab: 'updates' },
   },
   {
     href: '/admin?tab=realtime',
-    label: 'Realtime health',
     i18nKey: 'realtime_health',
     icon: Radio,
     match: { path: '/admin', tab: 'realtime' },
   },
   {
     href: '/admin?tab=audit',
-    label: 'Audit logs',
     i18nKey: 'audit_logs',
     icon: Scroll,
     match: { path: '/admin', tab: 'audit' },
@@ -379,10 +341,7 @@ const ADMIN_LINKS: Array<{
 
 type NavLink = {
   href: string;
-  label: string;
-  /** Key under the `nav` namespace in messages/{locale}.json. Optional so
-   *  partially-migrated lists still type-check. */
-  i18nKey?: string;
+  i18nKey: string;
   icon: typeof Settings;
   match?: { path: string; tab?: string };
   requiredPermission?: Permission;
@@ -671,9 +630,7 @@ export function AppSidebar({
                       className={SIDEBAR_NAV_LINK_CLASS}
                     >
                       <view.icon className="h-4 w-4 shrink-0" />
-                      <span className={SIDEBAR_NAV_LABEL_CLASS}>
-                        {view.i18nKey ? tNav(view.i18nKey) : view.label}
-                      </span>
+                      <span className={SIDEBAR_NAV_LABEL_CLASS}>{tNav(view.i18nKey)}</span>
                     </Link>
                   );
                 })}
@@ -713,9 +670,7 @@ export function AppSidebar({
                       className={SIDEBAR_NAV_LINK_CLASS}
                     >
                       <link.icon className="h-4 w-4 shrink-0" />
-                      <span className={SIDEBAR_NAV_LABEL_CLASS}>
-                        {link.i18nKey ? tNav(link.i18nKey) : link.label}
-                      </span>
+                      <span className={SIDEBAR_NAV_LABEL_CLASS}>{tNav(link.i18nKey)}</span>
                     </Link>
                   );
                 })}
@@ -734,9 +689,7 @@ export function AppSidebar({
                       className={SIDEBAR_NAV_LINK_CLASS}
                     >
                       <link.icon className="h-4 w-4 shrink-0" />
-                      <span className={SIDEBAR_NAV_LABEL_CLASS}>
-                        {link.i18nKey ? tNav(link.i18nKey) : link.label}
-                      </span>
+                      <span className={SIDEBAR_NAV_LABEL_CLASS}>{tNav(link.i18nKey)}</span>
                     </Link>
                   );
                 })}
@@ -762,9 +715,7 @@ export function AppSidebar({
                             className={SIDEBAR_NAV_LINK_CLASS}
                           >
                             <link.icon className="h-4 w-4 shrink-0" />
-                            <span className={SIDEBAR_NAV_LABEL_CLASS}>
-                              {link.i18nKey ? tNav(link.i18nKey) : link.label}
-                            </span>
+                            <span className={SIDEBAR_NAV_LABEL_CLASS}>{tNav(link.i18nKey)}</span>
                           </Link>
                         );
                       })}
@@ -1052,6 +1003,7 @@ function SidebarVoiceWorkspace({
   onToggleMicrophone: () => void;
 }) {
   const tLayout = useTranslations('layoutNav');
+  const microphoneMessages = useMicrophoneMessageCatalog();
   const room = useRoomContext();
   const liveConnectionState = useConnectionState();
   const { canPlayAudio, startAudio } = useAudioPlayback(room);
@@ -1116,15 +1068,25 @@ function SidebarVoiceWorkspace({
     storedAudioDeviceLabel,
     tLayout,
   ]);
-  const microphonePermissionLabel = formatMicrophonePermissionStateLabel(microphonePermissionState);
+  const microphonePermissionLabel = formatMicrophonePermissionStateLabel(
+    microphonePermissionState,
+    microphoneMessages
+  );
   const microphonePermissionHelp = useMemo(
     () =>
       getMicrophonePermissionHelpMessage(microphonePermissionState, {
         userAgent,
         hasDetectedDevices: microphoneDevices.length > 0,
         labelsVisible: deviceLabelsVisible,
+        messages: microphoneMessages,
       }),
-    [deviceLabelsVisible, microphoneDevices.length, microphonePermissionState, userAgent]
+    [
+      deviceLabelsVisible,
+      microphoneDevices.length,
+      microphoneMessages,
+      microphonePermissionState,
+      userAgent,
+    ]
   );
   const combinedRuntimeError = settingsError || runtimeError;
   const participantsPreview = allParticipants.slice(0, 5);
@@ -1171,6 +1133,7 @@ function SidebarVoiceWorkspace({
     } catch (error) {
       setSettingsError(
         formatMicrophoneError(error, {
+          messages: microphoneMessages,
           userAgent,
         })
       );
@@ -1183,6 +1146,7 @@ function SidebarVoiceWorkspace({
     selectedAudioDeviceId,
     storedAudioDeviceGroupId,
     storedAudioDeviceLabel,
+    microphoneMessages,
     userAgent,
   ]);
 
@@ -1238,13 +1202,14 @@ function SidebarVoiceWorkspace({
         await onChangeAudioDevice(nextAudioDeviceId);
         await refreshMicrophoneEnvironment();
       } catch (error) {
-        setSettingsError(formatMicrophoneError(error));
+        setSettingsError(formatMicrophoneError(error, { messages: microphoneMessages }));
       } finally {
         setIsChangingAudioDevice(false);
       }
     },
     [
       microphoneDevices,
+      microphoneMessages,
       onChangeAudioDevice,
       onStoreAudioDevicePreference,
       refreshMicrophoneEnvironment,
@@ -1262,21 +1227,19 @@ function SidebarVoiceWorkspace({
       await requestMicrophonePermission();
       await refreshMicrophoneEnvironment();
     } catch (error) {
-      setSettingsError(formatMicrophoneError(error));
+      setSettingsError(formatMicrophoneError(error, { messages: microphoneMessages }));
     } finally {
       setIsUnlockingMicrophoneAccess(false);
     }
-  }, [isUnlockingMicrophoneAccess, refreshMicrophoneEnvironment]);
+  }, [isUnlockingMicrophoneAccess, microphoneMessages, refreshMicrophoneEnvironment]);
 
   const handleEnableAudioPlayback = useCallback(async () => {
     try {
       setIsStartingAudioPlayback(true);
       setSettingsError(null);
       await startAudio();
-    } catch (error) {
-      setSettingsError(
-        error instanceof Error ? error.message : tLayout('voice.audioPlaybackError')
-      );
+    } catch {
+      setSettingsError(tLayout('voice.audioPlaybackError'));
     } finally {
       setIsStartingAudioPlayback(false);
     }

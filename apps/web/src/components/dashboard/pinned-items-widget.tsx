@@ -18,16 +18,16 @@ export interface PinnedItem {
   pinnedAt: string;
 }
 
-async function fetchPinnedItems(): Promise<PinnedItem[]> {
+async function fetchPinnedItems(loadError: string): Promise<PinnedItem[]> {
   const res = await fetch('/api/pinned-items');
-  if (!res.ok) throw new Error('Failed to load pinned items');
+  if (!res.ok) throw new Error(loadError);
   const json = (await res.json()) as { items: PinnedItem[] };
   return json.items ?? [];
 }
 
-async function deletePinnedItem(id: string): Promise<void> {
+async function deletePinnedItem(id: string, unpinError: string): Promise<void> {
   const res = await fetch(`/api/pinned-items/${id}`, { method: 'DELETE' });
-  if (!res.ok) throw new Error('Failed to unpin item');
+  if (!res.ok) throw new Error(unpinError);
 }
 
 const KIND_ICON: Record<string, LucideIcon> = {
@@ -42,15 +42,16 @@ const KIND_ICON: Record<string, LucideIcon> = {
 
 export function PinnedItemsWidget() {
   const t = useTranslations('dashboardExtra');
+  const errorT = useTranslations('componentErrors.pinnedItems');
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery<PinnedItem[]>({
     queryKey: ['pinned-items'],
-    queryFn: fetchPinnedItems,
+    queryFn: () => fetchPinnedItems(errorT('load')),
   });
 
   const unpinMutation = useMutation({
-    mutationFn: deletePinnedItem,
+    mutationFn: (id: string) => deletePinnedItem(id, errorT('unpin')),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pinned-items'] });
     },

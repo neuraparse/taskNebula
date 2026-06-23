@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { HeroShowcase } from '@/components/landing/product-showcase';
 import { AiMcpSection } from '@/components/marketing/ai-mcp-section';
 import { Comparison } from '@/components/marketing/comparison';
@@ -16,67 +17,69 @@ import { WorkflowNarrative } from '@/components/marketing/workflow-narrative';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
-const PAGE_TITLE = 'TaskNebula — Open-source, AI-native Jira & Linear alternative';
-const PAGE_DESCRIPTION =
-  'Keyboard-first boards, sprints, and docs with an MCP server so AI agents work the backlog with you. MIT licensed — self-host with one Docker Compose file.';
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('publicPages.landing.meta');
+  const title = t('title');
+  const description = t('description');
 
-export const metadata: Metadata = {
-  metadataBase: new URL(APP_URL),
-  title: PAGE_TITLE,
-  description: PAGE_DESCRIPTION,
-  alternates: { canonical: '/' },
-  keywords: [
-    'open source project management',
-    'Jira alternative',
-    'Linear alternative',
-    'self-hosted issue tracker',
-    'MCP server',
-    'kanban',
-    'sprints',
-  ],
-  openGraph: {
-    type: 'website',
-    url: '/',
-    siteName: 'TaskNebula',
-    title: PAGE_TITLE,
-    description: PAGE_DESCRIPTION,
-  },
-  twitter: {
-    card: 'summary',
-    title: PAGE_TITLE,
-    description: PAGE_DESCRIPTION,
-  },
-};
-
-const softwareApplicationJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  name: 'TaskNebula',
-  description: PAGE_DESCRIPTION,
-  url: APP_URL,
-  applicationCategory: 'BusinessApplication',
-  applicationSubCategory: 'Project Management',
-  operatingSystem: 'Linux, Docker',
-  softwareVersion: '0.4.0',
-  license: `${GITHUB_URL}/blob/main/LICENSE`,
-  isAccessibleForFree: true,
-  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-  sameAs: [GITHUB_URL, DOCKER_HUB_URL],
-} as const;
+  return {
+    metadataBase: new URL(APP_URL),
+    title,
+    description,
+    alternates: { canonical: '/' },
+    keywords: [
+      'open source project management',
+      'Jira alternative',
+      'Linear alternative',
+      'self-hosted issue tracker',
+      'MCP server',
+      'kanban',
+      'sprints',
+    ],
+    openGraph: {
+      type: 'website',
+      url: '/',
+      siteName: 'TaskNebula',
+      title,
+      description,
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description,
+    },
+  };
+}
 
 /**
- * Landing page — un-localized root route (see middleware.ts), English-only by
- * design. Thin composition: every section lives in src/components/marketing/,
+ * Landing page. Thin composition: every section lives in src/components/marketing/,
  * all server components except the copy buttons and the interactive board demo.
  */
-export default function HomePage() {
+export default async function HomePage() {
+  const t = await getTranslations('publicPages.landing.meta');
+  const softwareApplicationJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'TaskNebula',
+    description: t('description'),
+    url: APP_URL,
+    applicationCategory: 'BusinessApplication',
+    applicationSubCategory: 'Project Management',
+    operatingSystem: 'Linux, Docker',
+    softwareVersion: '0.4.0',
+    license: `${GITHUB_URL}/blob/main/LICENSE`,
+    isAccessibleForFree: true,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    sameAs: [GITHUB_URL, DOCKER_HUB_URL],
+  } as const;
+
   return (
     <div className="landing-dark min-h-screen overflow-x-hidden bg-[var(--landing-bg)] text-[var(--landing-text)] antialiased">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-[var(--landing-bg-elevated)] focus:px-3 focus:py-2 focus:text-sm focus:text-[var(--landing-text-dark)] focus:outline-2 focus:outline-offset-2 focus:outline-[var(--landing-accent-blue)]"
       >
-        Skip to content
+        {t('skipToContent')}
       </a>
 
       <MarketingNav />

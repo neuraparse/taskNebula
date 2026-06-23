@@ -15,10 +15,10 @@ interface StandupResponse {
   createdAt: string;
 }
 
-async function fetchTodayStandup(): Promise<StandupResponse | null> {
+async function fetchTodayStandup(loadError: string): Promise<StandupResponse | null> {
   const res = await fetch('/api/users/me/standup/today', { cache: 'no-store' });
   if (res.status === 204) return null;
-  if (!res.ok) throw new Error('Failed to load standup');
+  if (!res.ok) throw new Error(loadError);
   return (await res.json()) as StandupResponse;
 }
 
@@ -39,13 +39,14 @@ async function generatePreview(): Promise<StandupResponse> {
 
 export function StandupWidget() {
   const t = useTranslations('dashboardExtra');
+  const errorT = useTranslations('componentErrors.dashboard');
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
   const { data, isLoading } = useQuery<StandupResponse | null>({
     queryKey: ['standup', 'today'],
-    queryFn: fetchTodayStandup,
+    queryFn: () => fetchTodayStandup(errorT('loadStandup')),
     staleTime: 60_000,
   });
 
@@ -55,10 +56,10 @@ export function StandupWidget() {
       queryClient.setQueryData(['standup', 'today'], next);
       toast({ title: t('standup.generated_title'), description: t('standup.generated_desc') });
     },
-    onError: (err) => {
+    onError: () => {
       toast({
         title: t('standup.generate_error_title'),
-        description: err instanceof Error && err.message ? err.message : t('standup.unknown_error'),
+        description: t('standup.unknown_error'),
         variant: 'destructive',
       });
     },

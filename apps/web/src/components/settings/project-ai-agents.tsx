@@ -29,9 +29,21 @@ import {
 import {
   AGENT_CAPABILITY_DETAILS,
   normalizeProjectAgentSettings,
+  type AgentCapabilityKey,
   type ProjectAgentSettings,
 } from '@/lib/agents/config';
 import { formatAgentRunKind } from '@/lib/agents/run-kind-labels';
+import {
+  formatAgentCapabilityDescription,
+  formatAgentCapabilityLabel,
+  formatAgentCapabilityWrites,
+  formatAgentConfigIssueField,
+  formatAgentCredentialLabel,
+  formatAgentRunDisplayText,
+  formatAgentProviderStatus,
+  formatAgentRunStatus,
+  formatAgentServiceLabel,
+} from '@/lib/agents/i18n';
 import {
   Activity,
   ArrowRight,
@@ -160,11 +172,10 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
         title: t('projectAi.updated_toast_title'),
         description: t('projectAi.updated_toast_desc'),
       });
-    } catch (mutationError) {
+    } catch {
       toast({
         title: t('projectAi.save_failed_title'),
-        description:
-          mutationError instanceof Error ? mutationError.message : t('projectAi.save_failed_title'),
+        description: t('projectAi.load_error'),
         variant: 'destructive',
       });
     }
@@ -182,14 +193,13 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
             ? t('projectAi.preview_ready')
             : t('projectAi.run_completed'),
         description:
-          result.run.summary ||
+          formatAgentRunDisplayText(t, result.run.summary) ||
           t('projectAi.run_finished', { kind: formatAgentRunKind(kind, tRunKind) }),
       });
-    } catch (mutationError) {
+    } catch {
       toast({
         title: t('projectAi.run_failed_title'),
-        description:
-          mutationError instanceof Error ? mutationError.message : t('projectAi.run_failed_title'),
+        description: t('projectAi.run_failed_title'),
         variant: 'destructive',
       });
     }
@@ -203,19 +213,74 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
     return (
       <Card>
         <CardContent className="text-destructive py-8 text-sm">
-          {error instanceof Error ? error.message : t('projectAi.load_error')}
+          {t('projectAi.load_error')}
         </CardContent>
       </Card>
     );
   }
 
-  const canManage = data.access.canManage;
+  const agentData = data;
+  const canManage = agentData.access.canManage;
   const recentRunsById = new Map(data.recentRuns.map((run) => [run.id, run]));
+  const blockingIssues = agentData.configIssues.filter((issue) => issue.blocksRuns);
+  const nonBlockingIssues = agentData.configIssues.filter((issue) => !issue.blocksRuns);
+  const firstBlockingIssue = blockingIssues[0] ?? null;
+  const writeIssue =
+    nonBlockingIssues.find(
+      (issue) => issue.code === 'writes_preview_only' || issue.code === 'write_approval_required'
+    ) ?? null;
   const runBlockedReason = !canManage
     ? t('projectAi.need_manage_access')
-    : data.runAvailability.reason;
-  const blockingIssues = data.configIssues.filter((issue) => issue.blocksRuns);
-  const nonBlockingIssues = data.configIssues.filter((issue) => !issue.blocksRuns);
+    : firstBlockingIssue
+      ? formatAgentConfigIssueField(
+          t,
+          firstBlockingIssue,
+          'project',
+          'detail',
+          agentData.effectiveSettings.provider
+        )
+      : null;
+
+  function getProjectServiceDetail(serviceKey: string) {
+    if (serviceKey === 'provider') {
+      return formatAgentProviderStatus(
+        t,
+        agentData.effectiveSettings.provider,
+        agentData.effectiveSettings.model,
+        agentData.providerStatus
+      );
+    }
+
+    if (serviceKey === 'execution') {
+      return firstBlockingIssue
+        ? formatAgentConfigIssueField(
+            t,
+            firstBlockingIssue,
+            'project',
+            'detail',
+            agentData.effectiveSettings.provider
+          )
+        : t('agentShared.services.project.executionReady');
+    }
+
+    if (serviceKey === 'writes') {
+      return writeIssue
+        ? formatAgentConfigIssueField(
+            t,
+            writeIssue,
+            'project',
+            'detail',
+            agentData.effectiveSettings.provider
+          )
+        : t('agentShared.services.project.writesReady');
+    }
+
+    if (serviceKey === 'monitoring') {
+      return t('agentShared.services.project.monitoringReady');
+    }
+
+    return t('agentShared.services.unknownDetail');
+  }
 
   function getRunDisabledReason(
     capabilityKey: keyof NonNullable<typeof data>['effectiveSettings']['capabilities']
@@ -285,7 +350,15 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-medium">{issue.title}</span>
+                            <span className="font-medium">
+                              {formatAgentConfigIssueField(
+                                t,
+                                issue,
+                                'project',
+                                'title',
+                                data.effectiveSettings.provider
+                              )}
+                            </span>
                             <Badge variant={getIssueBadgeVariant(issue.severity)}>
                               {issue.blocksRuns
                                 ? t('projectAi.blocks_runs')
@@ -294,8 +367,24 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                                   : t('projectAi.policy_note')}
                             </Badge>
                           </div>
-                          <p className="text-muted-foreground text-sm">{issue.detail}</p>
-                          <p className="text-muted-foreground text-xs">{issue.resolution}</p>
+                          <p className="text-muted-foreground text-sm">
+                            {formatAgentConfigIssueField(
+                              t,
+                              issue,
+                              'project',
+                              'detail',
+                              data.effectiveSettings.provider
+                            )}
+                          </p>
+                          <p className="text-muted-foreground text-xs">
+                            {formatAgentConfigIssueField(
+                              t,
+                              issue,
+                              'project',
+                              'resolution',
+                              data.effectiveSettings.provider
+                            )}
+                          </p>
                         </div>
                         {action ? (
                           <Button asChild variant="outline" size="sm">
@@ -566,7 +655,12 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                 />
                 <MetricRow
                   label={t('projectAi.metric_credential')}
-                  value={data.providerStatus.label || t('projectAi.none')}
+                  value={formatAgentCredentialLabel(
+                    t,
+                    data.effectiveSettings.provider,
+                    data.providerStatus,
+                    t('projectAi.none')
+                  )}
                 />
                 <MetricRow
                   label={t('projectAi.metric_write_actions')}
@@ -615,7 +709,12 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                 ) : null}
                 {!data.providerStatus.ready ? (
                   <div className="border-accent-amber/30 bg-accent-amber/10 text-accent-amber rounded-lg border px-3 py-2 text-xs">
-                    {data.providerStatus.summary}
+                    {formatAgentProviderStatus(
+                      t,
+                      data.effectiveSettings.provider,
+                      data.effectiveSettings.model,
+                      data.providerStatus
+                    )}
                   </div>
                 ) : null}
                 {blockingIssues.length > 0 ? (
@@ -640,17 +739,21 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                 {data.serviceStatus.map((service) => (
                   <div key={service.key} className="border-border/60 rounded-lg border p-3">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="font-medium">{service.label}</span>
+                      <span className="font-medium">{formatAgentServiceLabel(t, service.key)}</span>
                       <Badge variant={getServiceBadgeVariant(service.state)}>
                         {t(serviceStateLabelKey(service.state))}
                       </Badge>
                     </div>
-                    <p className="text-muted-foreground mt-2 text-sm">{service.detail}</p>
+                    <p className="text-muted-foreground mt-2 text-sm">
+                      {getProjectServiceDetail(service.key)}
+                    </p>
                   </div>
                 ))}
                 {data.runtimeSummary.lastFailure ? (
                   <div className="border-accent-amber/30 bg-accent-amber/10 text-accent-amber rounded-lg border px-3 py-2 text-xs">
-                    {t('projectAi.last_failure', { error: data.runtimeSummary.lastFailure })}
+                    {t('projectAi.last_failure', {
+                      error: formatAgentRunDisplayText(t, data.runtimeSummary.lastFailure),
+                    })}
                   </div>
                 ) : null}
               </CardContent>
@@ -663,37 +766,46 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
               <CardDescription>{t('projectAi.capabilities_desc')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {Object.entries(AGENT_CAPABILITY_DETAILS).map(([key, details]) => (
-                <div
-                  key={key}
-                  className="border-border/60 flex flex-col gap-4 rounded-lg border p-4 lg:flex-row lg:items-center lg:justify-between"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{details.label}</span>
-                      {details.writes.length > 0 ? (
-                        <Badge variant="outline">{details.writes.join(' · ')}</Badge>
-                      ) : (
-                        <Badge variant="secondary">{t('projectAi.read_only')}</Badge>
-                      )}
+              {Object.keys(AGENT_CAPABILITY_DETAILS).map((key) => {
+                const capabilityKey = key as AgentCapabilityKey;
+                const writes = formatAgentCapabilityWrites(t, capabilityKey);
+
+                return (
+                  <div
+                    key={key}
+                    className="border-border/60 flex flex-col gap-4 rounded-lg border p-4 lg:flex-row lg:items-center lg:justify-between"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">
+                          {formatAgentCapabilityLabel(t, capabilityKey)}
+                        </span>
+                        {writes.length > 0 ? (
+                          <Badge variant="outline">{writes.join(' · ')}</Badge>
+                        ) : (
+                          <Badge variant="secondary">{t('projectAi.read_only')}</Badge>
+                        )}
+                      </div>
+                      <p className="text-muted-foreground text-sm">
+                        {formatAgentCapabilityDescription(t, capabilityKey)}
+                      </p>
                     </div>
-                    <p className="text-muted-foreground text-sm">{details.description}</p>
+                    <Switch
+                      checked={formState.capabilities[capabilityKey]}
+                      onCheckedChange={(checked) =>
+                        setFormState((current) => ({
+                          ...current,
+                          capabilities: {
+                            ...current.capabilities,
+                            [key]: checked,
+                          },
+                        }))
+                      }
+                      disabled={!canManage}
+                    />
                   </div>
-                  <Switch
-                    checked={formState.capabilities[key as keyof typeof formState.capabilities]}
-                    onCheckedChange={(checked) =>
-                      setFormState((current) => ({
-                        ...current,
-                        capabilities: {
-                          ...current.capabilities,
-                          [key]: checked,
-                        },
-                      }))
-                    }
-                    disabled={!canManage}
-                  />
-                </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
 
@@ -806,7 +918,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                                     : 'secondary'
                               }
                             >
-                              {run.status}
+                              {formatAgentRunStatus(t, run.status)}
                             </Badge>
                             {runMeta ? (
                               <Badge variant="outline">
@@ -815,7 +927,9 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                             ) : null}
                           </div>
                           <p className="text-muted-foreground text-sm">
-                            {runMeta?.summary || t('projectAi.run_active_logs')}
+                            {runMeta?.summary
+                              ? formatAgentRunDisplayText(t, runMeta.summary)
+                              : t('projectAi.run_active_logs')}
                           </p>
                         </div>
                         <div className="text-muted-foreground text-xs">
@@ -857,7 +971,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                                       : 'text-foreground/90 font-mono'
                                   }
                                 >
-                                  {log.content}
+                                  {formatAgentRunDisplayText(t, log.content)}
                                 </span>
                               </div>
                             ))}
@@ -866,7 +980,9 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                       </div>
 
                       {run.error ? (
-                        <p className="text-destructive mt-3 text-sm">{run.error}</p>
+                        <p className="text-destructive mt-3 text-sm">
+                          {formatAgentRunDisplayText(t, run.error)}
+                        </p>
                       ) : null}
                     </div>
                   );
@@ -934,7 +1050,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                                   : 'secondary'
                             }
                           >
-                            {run.status}
+                            {formatAgentRunStatus(t, run.status)}
                           </Badge>
                           <Badge variant="outline">
                             {run.dryRun ? t('projectAi.preview') : t('projectAi.live')}
@@ -946,7 +1062,9 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                           ) : null}
                         </div>
                         <p className="text-muted-foreground text-sm">
-                          {run.summary || t('projectAi.no_summary')}
+                          {run.summary
+                            ? formatAgentRunDisplayText(t, run.summary)
+                            : t('projectAi.no_summary')}
                         </p>
                       </div>
                       <div className="text-muted-foreground text-xs">
@@ -954,7 +1072,9 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                       </div>
                     </div>
                     {run.error ? (
-                      <p className="text-destructive mt-3 text-sm">{run.error}</p>
+                      <p className="text-destructive mt-3 text-sm">
+                        {formatAgentRunDisplayText(t, run.error)}
+                      </p>
                     ) : null}
                   </div>
                 ))
@@ -1018,7 +1138,7 @@ function RunCard({
                     : 'secondary'
               }
             >
-              {lastRun.status}
+              {formatAgentRunStatus(t, lastRun.status)}
             </Badge>
             <Badge variant="outline">
               {lastRun.dryRun ? t('projectAi.preview') : t('projectAi.live')}

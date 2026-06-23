@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { useSession } from 'next-auth/react';
 import { removeById, upsertById } from '@/lib/chat/message-state';
 import { chatClientDebug, chatClientError } from '@/lib/chat/debug';
@@ -340,11 +341,13 @@ type ConversationResponse = {
 };
 
 export function useProjectChatBootstrap(projectId: string | undefined) {
+  const t = useTranslations('hookErrors.chat');
+
   return useQuery({
     queryKey: ['project-chat-bootstrap', projectId],
     queryFn: async () => {
       const response = await fetch(`/api/projects/${projectId}/chat/bootstrap`);
-      return readChatResponse<ChatBootstrapResponse>(response, 'Failed to load chat bootstrap');
+      return readChatResponse<ChatBootstrapResponse>(response, t('loadBootstrap'));
     },
     enabled: Boolean(projectId),
     staleTime: 45_000,
@@ -356,13 +359,15 @@ export function useProjectChatBootstrap(projectId: string | undefined) {
 }
 
 export function useLiveCalls(options: { enabled?: boolean } = {}) {
+  const t = useTranslations('hookErrors.chat');
+
   return useQuery({
     queryKey: ['live-calls'],
     queryFn: async () => {
       const response = await fetch('/api/chat/live-calls');
       const payload = await readChatResponse<{ calls: GlobalLiveCall[] }>(
         response,
-        'Failed to load live calls'
+        t('loadLiveCalls')
       );
       return payload.calls as GlobalLiveCall[];
     },
@@ -377,11 +382,12 @@ export function useLiveCalls(options: { enabled?: boolean } = {}) {
 
 export function useConversationMessages(roomId: string | undefined) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.chat');
   const query = useQuery({
     queryKey: ['conversation-messages', roomId],
     queryFn: async () => {
       const response = await fetch(`/api/conversations/${roomId}/messages`);
-      return readChatResponse<ConversationMessagesPage>(response, 'Failed to load messages');
+      return readChatResponse<ConversationMessagesPage>(response, t('loadMessages'));
     },
     enabled: Boolean(roomId),
     staleTime: 10_000,
@@ -404,7 +410,7 @@ export function useConversationMessages(roomId: string | undefined) {
       );
       const nextPage = await readChatResponse<ConversationMessagesPage>(
         response,
-        'Failed to load older messages'
+        t('loadOlderMessages')
       );
       queryClient.setQueryData<ConversationMessagesPage>(
         ['conversation-messages', roomId],
@@ -429,25 +435,26 @@ export function useConversationMessages(roomId: string | undefined) {
 }
 
 export function useIssueConversation(issueId: string | undefined) {
+  const t = useTranslations('hookErrors.chat');
+
   return useQuery({
     queryKey: ['issue-conversation', issueId],
     queryFn: async () => {
       const response = await fetch(`/api/issues/${issueId}/conversation`);
-      return readChatResponse<ConversationResponse>(response, 'Failed to load issue conversation');
+      return readChatResponse<ConversationResponse>(response, t('loadIssueConversation'));
     },
     enabled: Boolean(issueId),
   });
 }
 
 export function useDocumentConversation(pageId: string | undefined) {
+  const t = useTranslations('hookErrors.chat');
+
   return useQuery({
     queryKey: ['document-conversation', pageId],
     queryFn: async () => {
       const response = await fetch(`/api/docs/pages/${pageId}/conversation`);
-      return readChatResponse<ConversationResponse>(
-        response,
-        'Failed to load document conversation'
-      );
+      return readChatResponse<ConversationResponse>(response, t('loadDocumentConversation'));
     },
     enabled: Boolean(pageId),
   });
@@ -456,6 +463,7 @@ export function useDocumentConversation(pageId: string | undefined) {
 export function useCreateConversationMessage(roomId: string | undefined) {
   const queryClient = useQueryClient();
   const { data: session } = useSession();
+  const t = useTranslations('hookErrors.chat');
 
   return useMutation({
     mutationFn: async (input: {
@@ -464,7 +472,7 @@ export function useCreateConversationMessage(roomId: string | undefined) {
       parentMessageId?: string | null;
     }) => {
       if (!roomId) {
-        throw new Error('No room selected');
+        throw new Error(t('noRoomSelected'));
       }
 
       const hasFiles = input.files && input.files.length > 0;
@@ -485,7 +493,7 @@ export function useCreateConversationMessage(roomId: string | undefined) {
       });
       const payload = await readChatResponse<{ message: ConversationMessage }>(
         response,
-        'Failed to send message'
+        t('sendMessage')
       );
 
       return payload.message as ConversationMessage;
@@ -573,11 +581,12 @@ export function useCreateConversationMessage(roomId: string | undefined) {
 
 export function useUpdateConversationMessage(roomId: string | undefined) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.chat');
 
   return useMutation({
     mutationFn: async (input: { messageId: string; body?: string; reactionEmoji?: string }) => {
       if (!roomId) {
-        throw new Error('No room selected');
+        throw new Error(t('noRoomSelected'));
       }
 
       const response = await fetch(`/api/conversations/${roomId}/messages/${input.messageId}`, {
@@ -587,7 +596,7 @@ export function useUpdateConversationMessage(roomId: string | undefined) {
       });
       const payload = await readChatResponse<{ message: ConversationMessage | null }>(
         response,
-        'Failed to update message'
+        t('updateMessage')
       );
       return payload.message as ConversationMessage | null;
     },
@@ -610,11 +619,12 @@ export function useUpdateConversationMessage(roomId: string | undefined) {
 
 export function useDeleteConversationMessage(roomId: string | undefined) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.chat');
 
   return useMutation({
     mutationFn: async (messageId: string) => {
       if (!roomId) {
-        throw new Error('No room selected');
+        throw new Error(t('noRoomSelected'));
       }
 
       const response = await fetch(`/api/conversations/${roomId}/messages/${messageId}`, {
@@ -622,7 +632,7 @@ export function useDeleteConversationMessage(roomId: string | undefined) {
       });
       const payload = await readChatResponse<{ message: ConversationMessage | null }>(
         response,
-        'Failed to delete message'
+        t('deleteMessage')
       );
 
       return payload.message as ConversationMessage | null;
@@ -646,6 +656,7 @@ export function useDeleteConversationMessage(roomId: string | undefined) {
 
 export function useModerateConversationMessages(roomId: string | undefined) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.chat');
 
   return useMutation({
     mutationFn: async (action: ConversationModerationAction) => {
@@ -654,12 +665,10 @@ export function useModerateConversationMessages(roomId: string | undefined) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
       });
-      const payload = await response
-        .json()
-        .catch(() => ({ error: 'Failed to moderate conversation messages' }));
+      const payload = await response.json().catch(() => ({ error: t('moderateMessages') }));
 
       if (!response.ok) {
-        await throwApiResponseError(response, 'Failed to moderate conversation messages');
+        await throwApiResponseError(response, t('moderateMessages'));
       }
 
       return payload as { action: ConversationModerationAction; affectedCount: number };
@@ -690,11 +699,12 @@ export function useModerateConversationMessages(roomId: string | undefined) {
 
 export function useMarkConversationRead(roomId: string | undefined) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.chat');
 
   return useMutation({
     mutationFn: async (lastReadMessageId?: string | null) => {
       if (!roomId) {
-        throw new Error('No room selected');
+        throw new Error(t('noRoomSelected'));
       }
 
       const response = await fetch(`/api/conversations/${roomId}/read`, {
@@ -702,7 +712,7 @@ export function useMarkConversationRead(roomId: string | undefined) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lastReadMessageId: lastReadMessageId || null }),
       });
-      return readChatResponse<unknown>(response, 'Failed to mark conversation as read');
+      return readChatResponse<unknown>(response, t('markRead'));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-chat-bootstrap'] });
@@ -712,16 +722,17 @@ export function useMarkConversationRead(roomId: string | undefined) {
 
 export function useStartConversationCall(roomId: string | undefined) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.chat');
   return useMutation({
     mutationFn: async () => {
       if (!roomId) {
-        throw new Error('No room selected');
+        throw new Error(t('noRoomSelected'));
       }
 
       const response = await fetch(`/api/conversations/${roomId}/call/start`, {
         method: 'POST',
       });
-      return readChatResponse<unknown>(response, 'Failed to start call');
+      return readChatResponse<unknown>(response, t('startCall'));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-chat-bootstrap'] });
@@ -733,16 +744,17 @@ export function useStartConversationCall(roomId: string | undefined) {
 
 export function useEndConversationCall(roomId: string | undefined) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.chat');
   return useMutation({
     mutationFn: async () => {
       if (!roomId) {
-        throw new Error('No room selected');
+        throw new Error(t('noRoomSelected'));
       }
 
       const response = await fetch(`/api/conversations/${roomId}/call/end`, {
         method: 'POST',
       });
-      return readChatResponse<unknown>(response, 'Failed to end call');
+      return readChatResponse<unknown>(response, t('endCall'));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-chat-bootstrap'] });
@@ -752,16 +764,17 @@ export function useEndConversationCall(roomId: string | undefined) {
 
 export function useLeaveConversationCall(roomId: string | undefined) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.chat');
   return useMutation({
     mutationFn: async () => {
       if (!roomId) {
-        throw new Error('No room selected');
+        throw new Error(t('noRoomSelected'));
       }
 
       const response = await fetch(`/api/conversations/${roomId}/call/leave`, {
         method: 'POST',
       });
-      return readChatResponse<unknown>(response, 'Failed to leave call');
+      return readChatResponse<unknown>(response, t('leaveCall'));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-chat-bootstrap'] });
@@ -772,10 +785,12 @@ export function useLeaveConversationCall(roomId: string | undefined) {
 }
 
 export function useCallToken(roomId: string | undefined) {
+  const t = useTranslations('hookErrors.chat');
+
   return useMutation({
     mutationFn: async (input?: { clientSessionId?: string }) => {
       if (!roomId) {
-        throw new Error('No room selected');
+        throw new Error(t('noRoomSelected'));
       }
 
       const response = await fetch(`/api/conversations/${roomId}/call/token`, {
@@ -793,13 +808,14 @@ export function useCallToken(roomId: string | undefined) {
         token: string;
         url: string;
         call: Record<string, unknown>;
-      }>(response, 'Failed to create call token');
+      }>(response, t('createCallToken'));
     },
   });
 }
 
 export function useConversationStream(roomId: string | undefined, enabled: boolean) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.chat');
   const [isConnected, setIsConnected] = useState(false);
   const [presence, setPresence] = useState<ConversationResponse['presence']>([]);
   const [activeCall, setActiveCall] = useState<Record<string, unknown> | null>(null);
@@ -919,7 +935,7 @@ export function useConversationStream(roomId: string | undefined, enabled: boole
             .then((response) =>
               response
                 .json()
-                .catch(() => ({ error: 'Failed to refresh messages' }))
+                .catch(() => ({ error: t('refreshMessages') }))
                 .then((json) => ({ ok: response.ok, json }))
             )
             .then(({ ok, json }) => {
@@ -966,7 +982,7 @@ export function useConversationStream(roomId: string | undefined, enabled: boole
             .then((response) =>
               response
                 .json()
-                .catch(() => ({ error: 'Failed to refresh messages' }))
+                .catch(() => ({ error: t('refreshMessages') }))
                 .then((json) => ({ ok: response.ok, json }))
             )
             .then(({ ok, json }) => {
@@ -1014,7 +1030,7 @@ export function useConversationStream(roomId: string | undefined, enabled: boole
       eventSource.close();
       setIsConnected(false);
     };
-  }, [enabled, queryClient, roomId]);
+  }, [enabled, queryClient, roomId, t]);
 
   return useMemo(
     () => ({
@@ -1065,6 +1081,8 @@ function isSameActiveCall(
 }
 
 export function useWorkspaceCommunicationsSettings(organizationId: string | undefined) {
+  const t = useTranslations('hookErrors.chat');
+
   return useQuery({
     queryKey: ['workspace-communications', organizationId],
     queryFn: async () => {
@@ -1081,7 +1099,7 @@ export function useWorkspaceCommunicationsSettings(organizationId: string | unde
             missing: string[];
           };
         };
-      }>(response, 'Failed to load workspace communications');
+      }>(response, t('loadWorkspaceCommunications'));
     },
     enabled: Boolean(organizationId),
   });
@@ -1089,17 +1107,19 @@ export function useWorkspaceCommunicationsSettings(organizationId: string | unde
 
 export function useUpdateWorkspaceCommunicationsSettings(organizationId: string | undefined) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.chat');
+
   return useMutation({
     mutationFn: async (input: Record<string, boolean>) => {
       if (!organizationId) {
-        throw new Error('No organization selected');
+        throw new Error(t('noOrganizationSelected'));
       }
       const response = await fetch(`/api/organizations/${organizationId}/communications`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
       });
-      return readChatResponse<unknown>(response, 'Failed to update workspace communications');
+      return readChatResponse<unknown>(response, t('updateWorkspaceCommunications'));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspace-communications', organizationId] });
@@ -1108,6 +1128,8 @@ export function useUpdateWorkspaceCommunicationsSettings(organizationId: string 
 }
 
 export function useProjectCommunicationsSettings(projectId: string | undefined) {
+  const t = useTranslations('hookErrors.chat');
+
   return useQuery({
     queryKey: ['project-communications', projectId],
     queryFn: async () => {
@@ -1118,7 +1140,7 @@ export function useProjectCommunicationsSettings(projectId: string | undefined) 
         workspaceSettings: Record<string, boolean>;
         projectSettings: Record<string, boolean>;
         effectiveSettings: Record<string, boolean>;
-      }>(response, 'Failed to load project communications');
+      }>(response, t('loadProjectCommunications'));
     },
     enabled: Boolean(projectId),
   });
@@ -1126,10 +1148,12 @@ export function useProjectCommunicationsSettings(projectId: string | undefined) 
 
 export function useUpdateProjectCommunicationsSettings(projectId: string | undefined) {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.chat');
+
   return useMutation({
     mutationFn: async (input: Record<string, boolean>) => {
       if (!projectId) {
-        throw new Error('No project selected');
+        throw new Error(t('noProjectSelected'));
       }
 
       const response = await fetch(`/api/projects/${projectId}/communications`, {
@@ -1137,7 +1161,7 @@ export function useUpdateProjectCommunicationsSettings(projectId: string | undef
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
       });
-      return readChatResponse<unknown>(response, 'Failed to update project communications');
+      return readChatResponse<unknown>(response, t('updateProjectCommunications'));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-communications', projectId] });
@@ -1147,6 +1171,8 @@ export function useUpdateProjectCommunicationsSettings(projectId: string | undef
 }
 
 export function useRealtimeHealth() {
+  const t = useTranslations('hookErrors.chat');
+
   return useQuery({
     queryKey: ['admin-realtime-health'],
     queryFn: async () => {
@@ -1162,7 +1188,7 @@ export function useRealtimeHealth() {
           activeCalls: number;
           readStates: number;
         };
-      }>(response, 'Failed to load realtime health');
+      }>(response, t('loadRealtimeHealth'));
     },
   });
 }

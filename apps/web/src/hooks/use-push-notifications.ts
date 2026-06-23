@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useOrganization } from '@/lib/hooks/use-organization';
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
@@ -18,6 +19,7 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export function usePushNotifications() {
+  const t = useTranslations('hookErrors.pushNotifications');
   const [isSupported, setIsSupported] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -58,7 +60,7 @@ export function usePushNotifications() {
 
     try {
       if (!HAS_VAPID_PUBLIC_KEY) {
-        throw new Error('Push notifications are not configured');
+        throw new Error(t('notConfigured'));
       }
 
       // Request notification permission
@@ -66,7 +68,7 @@ export function usePushNotifications() {
       setPermission(permissionResult);
 
       if (permissionResult !== 'granted') {
-        throw new Error('Notification permission denied');
+        throw new Error(t('permissionDenied'));
       }
 
       // Get service worker registration
@@ -92,12 +94,12 @@ export function usePushNotifications() {
             auth: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth')!))),
           },
           userAgent: navigator.userAgent,
-          deviceName: getDeviceName(),
+          deviceName: t(getDeviceNameKey()),
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save subscription');
+        throw new Error(t('saveSubscription'));
       }
 
       setIsSubscribed(true);
@@ -153,13 +155,13 @@ export function usePushNotifications() {
   };
 }
 
-function getDeviceName(): string {
+function getDeviceNameKey(): 'device.mobile' | 'device.tablet' | 'device.desktop' {
   const ua = navigator.userAgent;
   if (/mobile/i.test(ua)) {
-    return 'Mobile Device';
+    return 'device.mobile';
   } else if (/tablet/i.test(ua)) {
-    return 'Tablet';
+    return 'device.tablet';
   } else {
-    return 'Desktop';
+    return 'device.desktop';
   }
 }

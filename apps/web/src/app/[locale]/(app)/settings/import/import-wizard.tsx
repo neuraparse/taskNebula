@@ -128,8 +128,8 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
         // Merge: only fill in fields the user hasn't already chosen.
         setColumns((current) => ({ ...data.suggestedMapping, ...current }));
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+    } catch {
+      setError(t('import.previewFailed', { status: 500 }));
     } finally {
       setBusy(false);
     }
@@ -163,8 +163,8 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
       }
       const { jobId } = await res.json();
       pollJob(jobId);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+    } catch {
+      setError(t('import.importFailedStatus', { status: 500 }));
       setBusy(false);
     }
   }
@@ -181,8 +181,8 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
           return;
         }
         setTimeout(tick, 2000);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
+      } catch {
+        setError(t('import.jobStatusFailed'));
         setBusy(false);
       }
     };
@@ -421,7 +421,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
               <ul className="space-y-0.5">
                 {jobStatus.errors.slice(0, 5).map((e, i) => (
                   <li key={i}>
-                    <span className="font-mono">{e.key ?? '?'}</span>: {e.message}
+                    <span className="font-mono">{e.key ?? '?'}</span>: {t('import.jobStatusFailed')}
                   </li>
                 ))}
               </ul>

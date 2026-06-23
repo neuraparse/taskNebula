@@ -78,7 +78,9 @@ describe('/api/admin/version/self-update', () => {
   it('returns 401 without a session', async () => {
     authMock.mockResolvedValue(null);
 
-    const res = await POST(request({ targetVersion: '0.7.0', acknowledged: true }));
+    const res = await POST(
+      request({ targetVersion: '0.7.0', confirmedVersion: '0.7.0', acknowledged: true })
+    );
 
     expect(res.status).toBe(401);
     expect(startSelfUpdateMock).not.toHaveBeenCalled();
@@ -88,7 +90,9 @@ describe('/api/admin/version/self-update', () => {
     authMock.mockResolvedValue({ user: { id: 'user-1' } });
     isSuperAdminMock.mockResolvedValue(false);
 
-    const res = await POST(request({ targetVersion: '0.7.0', acknowledged: true }));
+    const res = await POST(
+      request({ targetVersion: '0.7.0', confirmedVersion: '0.7.0', acknowledged: true })
+    );
 
     expect(res.status).toBe(403);
     expect(startSelfUpdateMock).not.toHaveBeenCalled();
@@ -109,13 +113,16 @@ describe('/api/admin/version/self-update', () => {
     authMock.mockResolvedValue({ user: { id: 'admin-1' } });
     isSuperAdminMock.mockResolvedValue(true);
 
-    const res = await POST(request({ targetVersion: '0.7.0', acknowledged: true }));
+    const res = await POST(
+      request({ targetVersion: '0.7.0', confirmedVersion: '0.7.0', acknowledged: true })
+    );
 
     expect(res.status).toBe(202);
     expect(await res.json()).toEqual(selfUpdateStatus);
     expect(startSelfUpdateMock).toHaveBeenCalledWith(
       expect.objectContaining({
         targetVersion: '0.7.0',
+        confirmedVersion: '0.7.0',
         acknowledged: true,
         triggeredBy: 'admin-1',
         status: updateStatus,
@@ -127,7 +134,9 @@ describe('/api/admin/version/self-update', () => {
     authMock.mockResolvedValue({ user: { id: 'admin-1' } });
     isSuperAdminMock.mockResolvedValue(true);
 
-    const res = await POST(request({ targetVersion: '', acknowledged: true }));
+    const res = await POST(
+      request({ targetVersion: '', confirmedVersion: '', acknowledged: true })
+    );
 
     expect(res.status).toBe(400);
     expect(startSelfUpdateMock).not.toHaveBeenCalled();
@@ -140,7 +149,9 @@ describe('/api/admin/version/self-update', () => {
       new SelfUpdateError('Self-update is not available: disabled', 412, 'disabled')
     );
 
-    const res = await POST(request({ targetVersion: '0.7.0', acknowledged: true }));
+    const res = await POST(
+      request({ targetVersion: '0.7.0', confirmedVersion: '0.7.0', acknowledged: true })
+    );
 
     expect(res.status).toBe(412);
     expect(await res.json()).toEqual({

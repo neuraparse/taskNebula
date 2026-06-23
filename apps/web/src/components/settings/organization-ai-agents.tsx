@@ -40,10 +40,22 @@ import {
   AGENT_CAPABILITY_DETAILS,
   getSuggestedModelForProvider,
   normalizeWorkspaceAgentSettings,
+  type AgentCapabilityKey,
   type AgentProvider,
   type WorkspaceAgentSettings,
 } from '@/lib/agents/config';
 import { formatAgentRunKind } from '@/lib/agents/run-kind-labels';
+import {
+  formatAgentCapabilityDescription,
+  formatAgentCapabilityLabel,
+  formatAgentCapabilityWrites,
+  formatAgentConfigIssueField,
+  formatAgentCredentialLabel,
+  formatAgentRunDisplayText,
+  formatAgentProviderStatus,
+  formatAgentRunStatus,
+  formatAgentServiceLabel,
+} from '@/lib/agents/i18n';
 import {
   getModelCatalogEntry,
   getModelCatalogForProvider,
@@ -65,7 +77,6 @@ import {
   Loader2,
   PencilLine,
   Plus,
-  ShieldCheck,
   Sparkles,
 } from 'lucide-react';
 
@@ -338,11 +349,10 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
           ? t('orgAi.saved_toast_desc_credential')
           : t('orgAi.saved_toast_desc_policy'),
       });
-    } catch (mutationError) {
+    } catch {
       toast({
         title: t('orgAi.save_failed_title'),
-        description:
-          mutationError instanceof Error ? mutationError.message : t('orgAi.save_failed_title'),
+        description: t('orgAi.load_error'),
         variant: 'destructive',
       });
     }
@@ -434,15 +444,12 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
       setIsModelDialogOpen(false);
       setEditingModelConfig(null);
       setModelConfigForm(EMPTY_MODEL_CONFIG_FORM);
-    } catch (mutationError) {
+    } catch {
       toast({
         title: editingModelConfig
           ? t('orgAi.profile_update_failed')
           : t('orgAi.profile_create_failed'),
-        description:
-          mutationError instanceof Error
-            ? mutationError.message
-            : t('orgAi.profile_save_failed_desc'),
+        description: t('orgAi.profile_save_failed_desc'),
         variant: 'destructive',
       });
     }
@@ -455,13 +462,10 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
         title: t('orgAi.profile_archived_title'),
         description: t('orgAi.profile_archived_desc', { name: config.name }),
       });
-    } catch (mutationError) {
+    } catch {
       toast({
         title: t('orgAi.profile_archive_failed'),
-        description:
-          mutationError instanceof Error
-            ? mutationError.message
-            : t('orgAi.profile_archive_failed_desc'),
+        description: t('orgAi.profile_archive_failed_desc'),
         variant: 'destructive',
       });
     }
@@ -474,14 +478,55 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
   if (error || !data) {
     return (
       <Card>
-        <CardContent className="text-destructive py-8 text-sm">
-          {error instanceof Error ? error.message : t('orgAi.load_error')}
-        </CardContent>
+        <CardContent className="text-destructive py-8 text-sm">{t('orgAi.load_error')}</CardContent>
       </Card>
     );
   }
 
-  const canManage = data.access.canManage;
+  const agentData = data;
+  const canManage = agentData.access.canManage;
+  const blockingIssues = agentData.configIssues.filter((issue) => issue.blocksRuns);
+  const nonBlockingIssues = agentData.configIssues.filter((issue) => !issue.blocksRuns);
+  const firstBlockingIssue = blockingIssues[0] ?? null;
+  const writeIssue =
+    nonBlockingIssues.find(
+      (issue) => issue.code === 'writes_preview_only' || issue.code === 'write_approval_required'
+    ) ?? null;
+
+  function getWorkspaceServiceDetail(serviceKey: string) {
+    if (serviceKey === 'provider') {
+      return formatAgentProviderStatus(
+        t,
+        formState.provider,
+        formState.model,
+        agentData.providerStatus
+      );
+    }
+
+    if (serviceKey === 'execution') {
+      return firstBlockingIssue
+        ? formatAgentConfigIssueField(
+            t,
+            firstBlockingIssue,
+            'workspace',
+            'detail',
+            formState.provider
+          )
+        : t('agentShared.services.workspace.executionReady');
+    }
+
+    if (serviceKey === 'writes') {
+      return writeIssue
+        ? formatAgentConfigIssueField(t, writeIssue, 'workspace', 'detail', formState.provider)
+        : t('agentShared.services.workspace.writesReady');
+    }
+
+    if (serviceKey === 'monitoring') {
+      return t('agentShared.services.workspace.monitoringReady');
+    }
+
+    return t('agentShared.services.unknownDetail');
+  }
 
   return (
     <div className="animate-fade-up space-y-6">
@@ -545,7 +590,15 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-medium">{issue.title}</span>
+                            <span className="font-medium">
+                              {formatAgentConfigIssueField(
+                                t,
+                                issue,
+                                'workspace',
+                                'title',
+                                formState.provider
+                              )}
+                            </span>
                             <Badge variant={getIssueBadgeVariant(issue.severity)}>
                               {issue.blocksRuns
                                 ? t('orgAi.blocks_runs')
@@ -554,8 +607,24 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                                   : t('orgAi.policy_note')}
                             </Badge>
                           </div>
-                          <p className="text-muted-foreground text-sm">{issue.detail}</p>
-                          <p className="text-muted-foreground text-xs">{issue.resolution}</p>
+                          <p className="text-muted-foreground text-sm">
+                            {formatAgentConfigIssueField(
+                              t,
+                              issue,
+                              'workspace',
+                              'detail',
+                              formState.provider
+                            )}
+                          </p>
+                          <p className="text-muted-foreground text-xs">
+                            {formatAgentConfigIssueField(
+                              t,
+                              issue,
+                              'workspace',
+                              'resolution',
+                              formState.provider
+                            )}
+                          </p>
                         </div>
                         {action ? (
                           <Button asChild variant="outline" size="sm">
@@ -714,7 +783,14 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                           {data.providerStatus.ready ? t('orgAi.ready') : t('orgAi.blocked')}
                         </Badge>
                       </div>
-                      <p className="text-muted-foreground text-sm">{data.providerStatus.summary}</p>
+                      <p className="text-muted-foreground text-sm">
+                        {formatAgentProviderStatus(
+                          t,
+                          formState.provider,
+                          formState.model,
+                          data.providerStatus
+                        )}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -744,7 +820,12 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                     <div className="border-border/60 flex items-center justify-between gap-4 rounded-lg border px-3 py-2">
                       <span>{t('orgAi.credential')}</span>
                       <span className="text-foreground font-medium">
-                        {data.providerStatus.label || t('orgAi.none')}
+                        {formatAgentCredentialLabel(
+                          t,
+                          formState.provider,
+                          data.providerStatus,
+                          t('orgAi.none')
+                        )}
                       </span>
                     </div>
                     <div className="border-border/60 flex items-center justify-between gap-4 rounded-lg border px-3 py-2">
@@ -881,37 +962,46 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
               <CardDescription>{t('orgAi.default_capabilities_desc')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {Object.entries(AGENT_CAPABILITY_DETAILS).map(([key, details]) => (
-                <div
-                  key={key}
-                  className="border-border/60 flex flex-col gap-4 rounded-lg border p-4 lg:flex-row lg:items-center lg:justify-between"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{details.label}</span>
-                      {details.writes.length > 0 ? (
-                        <Badge variant="outline">{details.writes.join(' · ')}</Badge>
-                      ) : (
-                        <Badge variant="secondary">{t('orgAi.read_only')}</Badge>
-                      )}
+              {Object.keys(AGENT_CAPABILITY_DETAILS).map((key) => {
+                const capabilityKey = key as AgentCapabilityKey;
+                const writes = formatAgentCapabilityWrites(t, capabilityKey);
+
+                return (
+                  <div
+                    key={key}
+                    className="border-border/60 flex flex-col gap-4 rounded-lg border p-4 lg:flex-row lg:items-center lg:justify-between"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">
+                          {formatAgentCapabilityLabel(t, capabilityKey)}
+                        </span>
+                        {writes.length > 0 ? (
+                          <Badge variant="outline">{writes.join(' · ')}</Badge>
+                        ) : (
+                          <Badge variant="secondary">{t('orgAi.read_only')}</Badge>
+                        )}
+                      </div>
+                      <p className="text-muted-foreground text-sm">
+                        {formatAgentCapabilityDescription(t, capabilityKey)}
+                      </p>
                     </div>
-                    <p className="text-muted-foreground text-sm">{details.description}</p>
+                    <Switch
+                      checked={formState.capabilities[capabilityKey]}
+                      onCheckedChange={(checked) =>
+                        setFormState((current) => ({
+                          ...current,
+                          capabilities: {
+                            ...current.capabilities,
+                            [key]: checked,
+                          },
+                        }))
+                      }
+                      disabled={!canManage}
+                    />
                   </div>
-                  <Switch
-                    checked={formState.capabilities[key as keyof typeof formState.capabilities]}
-                    onCheckedChange={(checked) =>
-                      setFormState((current) => ({
-                        ...current,
-                        capabilities: {
-                          ...current.capabilities,
-                          [key]: checked,
-                        },
-                      }))
-                    }
-                    disabled={!canManage}
-                  />
-                </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
 
@@ -997,18 +1087,22 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                 {data.serviceStatus.map((service) => (
                   <div key={service.key} className="border-border/60 rounded-lg border p-3">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="font-medium">{service.label}</span>
+                      <span className="font-medium">{formatAgentServiceLabel(t, service.key)}</span>
                       <Badge variant={getServiceBadgeVariant(service.state)}>
                         {t(serviceStateLabelKey(service.state))}
                       </Badge>
                     </div>
-                    <p className="text-muted-foreground mt-2 text-sm">{service.detail}</p>
+                    <p className="text-muted-foreground mt-2 text-sm">
+                      {getWorkspaceServiceDetail(service.key)}
+                    </p>
                   </div>
                 ))}
 
                 {data.runtimeSummary.lastFailure ? (
                   <div className="border-accent-amber/30 bg-accent-amber/10 text-accent-amber rounded-lg border px-3 py-2 text-sm">
-                    {t('orgAi.last_failure', { error: data.runtimeSummary.lastFailure })}
+                    {t('orgAi.last_failure', {
+                      error: formatAgentRunDisplayText(t, data.runtimeSummary.lastFailure),
+                    })}
                   </div>
                 ) : null}
               </CardContent>
@@ -1042,7 +1136,7 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                                     : 'secondary'
                               }
                             >
-                              {run.status}
+                              {formatAgentRunStatus(t, run.status)}
                             </Badge>
                             <Badge variant="outline">
                               {run.dryRun ? t('orgAi.preview') : t('orgAi.live')}
@@ -1053,10 +1147,14 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                             {run.initiatedBy ? ` · ${run.initiatedBy}` : ''}
                           </div>
                           {run.summary ? (
-                            <p className="text-muted-foreground text-sm">{run.summary}</p>
+                            <p className="text-muted-foreground text-sm">
+                              {formatAgentRunDisplayText(t, run.summary)}
+                            </p>
                           ) : null}
                           {run.error ? (
-                            <p className="text-destructive text-sm">{run.error}</p>
+                            <p className="text-destructive text-sm">
+                              {formatAgentRunDisplayText(t, run.error)}
+                            </p>
                           ) : null}
                         </div>
                         <div className="text-muted-foreground text-xs">
@@ -1186,7 +1284,7 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                         model: event.target.value,
                       }))
                     }
-                    placeholder="gpt-5.4"
+                    placeholder={t('orgAi.model_placeholder')}
                   />
                 </div>
 
@@ -1211,7 +1309,9 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                       {selectedModelCatalogEntry.label}
                     </span>
                     {' · '}
-                    {selectedModelCatalogEntry.summary}
+                    {t('orgAi.model_catalog_summary', {
+                      model: selectedModelCatalogEntry.label,
+                    })}
                     {' · '}
                     {t('orgAi.max_output_up_to', {
                       tokens: formatter.number(selectedModelCatalogEntry.maxOutputTokensLimit),

@@ -23,7 +23,7 @@ export function RealtimeHealthPanel() {
   if (error || !data) {
     return (
       <div className="surface-card text-destructive p-6 text-sm">
-        {error instanceof Error ? error.message : t('realtimeHealth.loadError')}
+        {t('realtimeHealth.loadError')}
       </div>
     );
   }

@@ -68,6 +68,7 @@ export function DashboardClient() {
   const tActions = useTranslations('actions');
   const tNav = useTranslations('nav');
   const t = useTranslations('pagesHome');
+  const errorT = useTranslations('componentErrors.dashboard');
 
   // Surface server-side permission redirects (e.g. /settings/organization without perms)
   // and the post-verify success landing (/dashboard?verified=1).
@@ -107,7 +108,7 @@ export function DashboardClient() {
     queryKey: ['organizations'],
     queryFn: async () => {
       const response = await fetch('/api/organizations');
-      if (!response.ok) throw new Error('Failed to fetch organizations');
+      if (!response.ok) throw new Error(errorT('fetchOrganizations'));
       return response.json();
     },
     enabled: !!session?.user?.id,
@@ -131,7 +132,7 @@ export function DashboardClient() {
       const response = await fetch(
         `/api/issues/my-issues${params.size > 0 ? `?${params.toString()}` : ''}`
       );
-      if (!response.ok) throw new Error('Failed to fetch issues');
+      if (!response.ok) throw new Error(errorT('fetchIssues'));
       const data = await response.json();
       return data.issues || [];
     },

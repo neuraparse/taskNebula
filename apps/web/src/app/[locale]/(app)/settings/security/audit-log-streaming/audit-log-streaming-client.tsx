@@ -97,8 +97,8 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
       }
       const data = (await res.json()) as { sinks: Sink[] };
       setSinks(data.sinks);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('audit.loadFailed'));
+    } catch {
+      setError(t('audit.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -146,8 +146,8 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
           configJson: DEFAULT_CONFIG_FOR_TYPE.webhook,
         });
         await refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t('audit.createFailed'));
+      } catch {
+        setError(t('audit.createFailed'));
       } finally {
         setCreating(false);
       }
@@ -164,8 +164,8 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
           body: JSON.stringify({ enabled: !sink.enabled }),
         });
         await refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t('audit.toggleFailed'));
+      } catch {
+        setError(t('audit.toggleFailed'));
       }
     },
     [refresh, t]
@@ -179,8 +179,8 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
           method: 'DELETE',
         });
         await refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t('audit.deleteFailed'));
+      } catch {
+        setError(t('audit.deleteFailed'));
       }
     },
     [refresh, t]
@@ -208,23 +208,21 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
                 }
               : {
                   ok: false,
-                  message:
-                    data.result!.error ||
-                    t('audit.testHttp', { status: data.result!.statusCode ?? '?' }),
+                  message: t('audit.testHttp', { status: data.result!.statusCode ?? '?' }),
                 },
           }));
         } else {
           setTestResults((prev) => ({
             ...prev,
-            [sink.id]: { ok: false, message: data.error || t('audit.testFailed') },
+            [sink.id]: { ok: false, message: t('audit.testFailed') },
           }));
         }
-      } catch (err) {
+      } catch {
         setTestResults((prev) => ({
           ...prev,
           [sink.id]: {
             ok: false,
-            message: err instanceof Error ? err.message : t('audit.testFailed'),
+            message: t('audit.testFailed'),
           },
         }));
       }

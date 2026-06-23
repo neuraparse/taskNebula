@@ -69,6 +69,7 @@ function StatusBadge({ status }: { status: string }) {
 
 function InitiativeRow({ node, depth }: { node: InitiativeNode; depth: number }) {
   const t = useTranslations('pagesHome');
+  const errorT = useTranslations('componentErrors.initiatives');
   const [expanded, setExpanded] = useState(true);
   const hasChildren = node.children.length > 0;
 
@@ -77,7 +78,7 @@ function InitiativeRow({ node, depth }: { node: InitiativeNode; depth: number })
     queryKey: ['initiative-rollup', node.id],
     queryFn: async () => {
       const res = await fetch(`/api/initiatives/${node.id}/roll-up`);
-      if (!res.ok) throw new Error('roll-up failed');
+      if (!res.ok) throw new Error(errorT('loadRollup'));
       return res.json();
     },
     staleTime: 60_000,
@@ -133,6 +134,7 @@ function InitiativeRow({ node, depth }: { node: InitiativeNode; depth: number })
 
 export function InitiativesClient() {
   const t = useTranslations('pagesHome');
+  const errorT = useTranslations('componentErrors.initiatives');
   const queryClient = useQueryClient();
   const { currentOrganizationId } = useOrganization();
   const { toast } = useToast();
@@ -145,7 +147,7 @@ export function InitiativesClient() {
     queryKey: ['initiatives-list'],
     queryFn: async () => {
       const res = await fetch('/api/initiatives');
-      if (!res.ok) throw new Error('failed to fetch');
+      if (!res.ok) throw new Error(errorT('fetchList'));
       return res.json();
     },
   });
@@ -180,10 +182,10 @@ export function InitiativesClient() {
         description: t('initiatives_toast_created_description'),
       });
     },
-    onError: (error) => {
+    onError: () => {
       toast({
         title: t('initiatives_toast_error_title'),
-        description: error instanceof Error ? error.message : t('initiatives_error_generic'),
+        description: t('initiatives_error_generic'),
         variant: 'destructive',
       });
     },

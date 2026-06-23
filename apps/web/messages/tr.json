@@ -501,14 +501,48 @@
         "no_update": "Daha yeni Docker imajı yok.",
         "missing_docker_image": "Docker Hub kurulacak semver imaj tagi döndürmedi.",
         "invalid_target": "Seçilen hedef sürüm bu kurulum için geçerli değil.",
-        "active_job": "Başka bir güncelleme isteği zaten aktif. Yeni istek başlatmadan önce bitmesini bekleyin."
+        "active_job": "Başka bir güncelleme isteği zaten aktif. Yeni istek başlatmadan önce bitmesini bekleyin.",
+        "missing_digest": "Docker Hub değişmez imaj digest bilgisi döndürmedi. Etiket meta verisi oturduktan sonra tekrar denetleyin.",
+        "backup_unavailable": "Yedekleme ön kontrolü hazır değil; uygulama güncelleme isteği göndermeyecek."
       },
       "jobStatus": {
         "queued": "Sırada",
         "requested": "İstendi",
         "succeeded": "Başarılı",
-        "failed": "Başarısız"
+        "failed": "Başarısız",
+        "running": "Çalışıyor"
+      },
+      "failedDescription": "Güncelleme isteği gönderilemedi. Updater webhookunu ve yedekleme ön kontrolünü denetleyin.",
+      "backup": {
+        "title": "Yedekleme ön kontrolü",
+        "ready": "Hazır",
+        "blocked": "Engellendi",
+        "postgres": "Postgres dökümü",
+        "uploads": "Uploads arşivi",
+        "directory": "Yedek dizini",
+        "path": "Yedekler {path} konumuna yazılacak.",
+        "blockedReason": {
+          "missing_pg_dump": "pg_dump web runtime içinde mevcut değil.",
+          "backup_dir_unwritable": "Yedek dizini yazılabilir değil.",
+          "uploads_unreadable": "Uploads dizini okunabilir değil.",
+          "database_url_missing": "DATABASE_URL web runtime için yapılandırılmamış."
+        }
       }
+    },
+    "preferences": {
+      "title": "Güncelleme uyarıları",
+      "description": "Süper adminlerin TaskNebula güncelleme uyarılarını nerede göreceğini yönetin.",
+      "saving": "Kaydediliyor...",
+      "savedTitle": "Güncelleme uyarıları kaydedildi",
+      "savedDescription": "Güncelleme uyarısı tercihleri güncellendi.",
+      "failedTitle": "Güncelleme uyarıları kaydedilemedi",
+      "failedDescription": "Güncelleme uyarısı tercihleri güncellenemedi.",
+      "bannerLabel": "Genel banner",
+      "bannerDescription": "Güncellemeler sayfası dışında güncelleme bannerını göster.",
+      "availableNotificationsLabel": "Yeni sürüm gelen kutusu uyarıları",
+      "availableNotificationsDescription": "GitHub veya Docker Hub daha yeni sürüm yayımladığında süper adminleri bilgilendir.",
+      "postUpdateNotificationsLabel": "Kurulan sürüm gelen kutusu uyarıları",
+      "postUpdateNotificationsDescription": "Bu kurulum farklı bir sürümle açıldığında süper adminleri bilgilendir."
     }
   },
   "issueFields": {
@@ -539,7 +573,9 @@
     "placeholder": "Alt görev başlığı...",
     "creating": "Alt görev oluşturuluyor...",
     "createFailed": "Alt görev oluşturulamadı. Lütfen tekrar deneyin.",
-    "noSubtasks": "Henüz alt görev yok"
+    "noSubtasks": "Henüz alt görev yok",
+    "markComplete": "Tamamlandı olarak işaretle",
+    "markIncomplete": "Tamamlanmadı olarak işaretle"
   },
   "issueRelations": {
     "dialogTitle": "İş bağla",
@@ -1334,6 +1370,11 @@
       "runnerStatus": "Çalıştırma durumu",
       "runnerStatusValue": "{status}",
       "runnerStatusSuffix": " · {status}",
+      "runnerStatuses": {
+        "running": "Çalışıyor",
+        "completed": "Tamamlandı",
+        "failed": "Başarısız"
+      },
       "exitCode": "Çıkış kodu"
     },
     "vote": {
@@ -1614,7 +1655,8 @@
     "ts_slug_placeholder": "platform",
     "org_name_placeholder": "Acme Inc.",
     "org_slug_placeholder": "acme-inc",
-    "settings_open_full_page": "Tam sayfada aç"
+    "settings_open_full_page": "Tam sayfada aç",
+    "field_avatar_url_placeholder": "https://cdn.example.com/icon.png"
   },
   "settingsProject": {
     "kicker": "Proje",
@@ -1706,12 +1748,24 @@
     "estimate_kind_time": "Süre",
     "estimate_scales_group": "{kind} tahmin ölçekleri",
     "estimate_custom_hint": "Kendi değerlerinizi tanımlayın.",
+    "estimate_default_small": "Küçük",
+    "estimate_default_medium": "Orta",
+    "estimate_default_large": "Büyük",
     "estimate_value_placeholder": "Değer {index}",
     "estimate_custom_value_aria": "Özel {kind} değeri {index}",
     "estimate_remove_value": "{index} değerini kaldır",
     "estimate_add_value": "Değer ekle",
     "estimate_reset": "Sıfırla",
-    "estimate_save_scale": "Ölçeği kaydet"
+    "estimate_save_scale": "Ölçeği kaydet",
+    "key_placeholder": "WEB",
+    "wit_default_story_name": "Hikâye",
+    "wit_default_bug_name": "Hata",
+    "wit_default_task_name": "Görev",
+    "wit_default_epic_name": "Epik",
+    "wit_default_story_description": "Kullanıcıya yönelik yetenek veya senaryo.",
+    "wit_default_bug_description": "Düzeltilmesi gereken kusur.",
+    "wit_default_task_description": "Genel iş parçası.",
+    "wit_default_epic_description": "Birden çok hikâyeyi kapsayan büyük girişim."
   },
   "settingsConfig": {
     "integrations": {
@@ -1846,7 +1900,8 @@
       "created_toast_title": "Web kancası oluşturuldu",
       "updated_toast_desc": "Web kancası ayarları başarıyla kaydedildi.",
       "created_toast_desc": "Web kancası başarıyla oluşturuldu.",
-      "save_failed_title": "Kaydetme başarısız"
+      "save_failed_title": "Kaydetme başarısız",
+      "url_placeholder": "https://example.com/webhooks/tasknebula"
     },
     "sso": {
       "tab_saml": "SAML 2.0",
@@ -2004,7 +2059,14 @@
       "font_brand_desc": "Önceki dashboard yazı tipi. Temiz, kompakt ve varsayılan.",
       "font_ibm": "IBM Plex",
       "font_ibm_desc": "Ana sayfada kullanılan IBM tarzı teknik arayüz yazı tipi.",
-      "font_sample": "Aa"
+      "font_sample": "Aa",
+      "theme_default": "Mavi",
+      "theme_ocean": "Deniz mavisi",
+      "theme_forest": "Yeşil",
+      "theme_sunset": "Turuncu",
+      "theme_purple": "Mor",
+      "theme_rose": "Pembe",
+      "save_failed": "Görünüm ayarları kaydedilemedi"
     },
     "orgComms": {
       "toggle_enabled_label": "Modülü etkinleştir",
@@ -2238,7 +2300,9 @@
       "ops_notes": "Ops notları",
       "ops_notes_placeholder": "Bu profilin neden var olduğu, dağıtım notları veya sağlayıcı uyarıları.",
       "cancel": "İptal",
-      "save_profile": "Profili kaydet"
+      "save_profile": "Profili kaydet",
+      "model_catalog_summary": "Model: {model}",
+      "model_placeholder": "gpt-5.4"
     },
     "projectAi": {
       "cred_workspace_secret": "Çalışma alanı gizli anahtarı",
@@ -2409,7 +2473,151 @@
       "behaviorDescription": "Kural eşleşmediğinde kullanılan güvenli varsayılanlar.",
       "unknownAgents": "Bilinmeyen ajanlar",
       "destructiveActions": "Yıkıcı aksiyonlar",
-      "requireApprovalDefault": "Varsayılan olarak onay ister"
+      "requireApprovalDefault": "Varsayılan olarak onay ister",
+      "queueLoadFailed": "Onay kuyruğu yüklenemedi",
+      "decisionFailed": "Onay kararı güncellenemedi"
+    },
+    "agentShared": {
+      "providerStatus": {
+        "nativeReady": "TaskNebula yerel",
+        "customUnavailable": "Özel adaptör · Engellendi",
+        "adapterUnavailable": "{provider}: Engellendi",
+        "openaiModelInvalid": "{provider}: İnceleme gerektirir",
+        "missingCredentialWithEnv": "Seçili sağlayıcı için çalıştırılabilir bir kimlik bilgisi yapılandırılmadı. ({envVar})",
+        "missingCredential": "Seçili sağlayıcı için çalıştırılabilir bir kimlik bilgisi yapılandırılmadı.",
+        "readyWorkspace": "Bu çalışma alanının saklanmış bir sağlayıcı kimlik bilgisi var.",
+        "readyPlatform": "Platform varsayılanı",
+        "readyServerEnv": "Bu sağlayıcı sunucu ortamı tarafından sağlanıyor.",
+        "ready": "Hazır"
+      },
+      "credential": {
+        "builtInPlanner": "TaskNebula yerel",
+        "platformDefault": "Platform varsayılanı · {preview}",
+        "serverEnv": "Sunucu ortamı · {envVar}"
+      },
+      "configIssues": {
+        "titles": {
+          "global_paused": "Genel etkinleştirme",
+          "provider_model_invalid": "Model",
+          "provider_missing_credential": "Kimlik bilgisi",
+          "provider_adapter_unavailable": "Özel adaptör",
+          "workspace_disabled": "Çalışma alanı aracıları",
+          "project_disabled": "Proje aracılarını etkinleştir",
+          "writes_preview_only": "Yalnızca önizleme",
+          "write_approval_required": "Hâlâ onay gerekli",
+          "auto_mode_supervised": "Otonom"
+        },
+        "project": {
+          "detail": "Bu kontroller, bir proje çalıştırmasının şu anda başlatılıp başlatılamayacağına ve engellenmiş önkoşulların nerede düzeltileceğine karar verir.",
+          "resolution": "Proje AI ayarlarını aç"
+        },
+        "workspace": {
+          "detail": "Projeler aracıları kullanmaya başlamadan önce çalıştırmaları neyin engellediğini ve neyin hâlâ sınırlı olduğunu görün.",
+          "resolution": "Çalışma alanı AI ayarlarını aç"
+        },
+        "provider": {
+          "detail": "Sağlayıcı kullanılabilirliği, çalışma alanı gizli deposuna ve sunucu ortamına göre kontrol edilir.",
+          "resolution": "Kimlik bilgisi kaynağı"
+        },
+        "system": {
+          "detail": "Her aracıyı duraklatmak veya sistemi denetimli moda zorlamak için tek bir yer.",
+          "resolution": "AI Ops'u aç"
+        },
+        "unknown": {
+          "title": "Dikkat gerektiriyor",
+          "detail": "Proje AI aracıları yüklenemedi.",
+          "resolution": "Çalışma alanı AI ayarlarını aç"
+        }
+      },
+      "services": {
+        "labels": {
+          "provider": "Sağlayıcı",
+          "execution": "Yürütme modu",
+          "writes": "Yazma eylemleri",
+          "monitoring": "Canlı çalışma zamanı"
+        },
+        "project": {
+          "executionReady": "Bu proje AI çalıştırmaları için tamamen yapılandırıldı. Bir önizleme ile başlayın, ardından gerektiğinde canlı yazmalara geçin.",
+          "writesReady": "Canlı yazmalar kullanılabilir",
+          "monitoringReady": "Bu projede şu anda gerçekleşen çalıştırmalar için gerçek zamanlı durum ve günlükler."
+        },
+        "workspace": {
+          "executionReady": "Çalışma alanı AI'sı tamamen yapılandırıldı. Projeler bu kurulumu hemen devralabilir.",
+          "writesReady": "Aracıların işleri ve sprintleri oluşturmasına veya güncellemesine izin ver.",
+          "monitoringReady": "Bu çalışma alanı AI kurulumu için gerçek yürütme, hizmet ve çalıştırma telemetrisi."
+        },
+        "unknownDetail": "Proje AI aracıları yüklenemedi."
+      },
+      "runStatuses": {
+        "running": "Çalışıyor",
+        "completed": "Tamamlandı",
+        "failed": "Başarısız",
+        "unknown": "{status}"
+      },
+      "capabilities": {
+        "project_tracking": {
+          "label": "Proje takibi",
+          "description": "Gecikmiş, engellenmiş ve atanmamış işler için salt okunur tarama."
+        },
+        "backlog_triage": {
+          "label": "Backlog triyajı",
+          "description": "İş listesi genelinde iş önceliğini yenileyin ve önceliklendirme etiketleri ekleyin.",
+          "writes": {
+            "priority": "Priority",
+            "labels": "Etiketler"
+          }
+        },
+        "sprint_planning": {
+          "label": "Sprint planlama",
+          "description": "Projeye yazmadan bir sonraki sprint grubunu hazırlayın."
+        },
+        "bulk_sprint_creation": {
+          "label": "Toplu sprint oluşturma",
+          "description": "Planlanan sprintleri sırayla oluşturun ve isteğe bağlı olarak iş listesi işlerini önceden atayın.",
+          "writes": {
+            "sprints": "Sprint",
+            "assignments": "İş Öğeleri · Sprint"
+          }
+        }
+      },
+      "runMessages": {
+        "kinds": {
+          "project_tracking": "Proje sağlık taraması",
+          "backlog_triage": "Backlog triyajı",
+          "sprint_planning": "Sprint planlama önizlemesi",
+          "bulk_sprint_creation": "Toplu sprint oluşturma",
+          "unknown": "{kind}"
+        },
+        "noActiveSprint": "Bu projede çalışan aktif sprint yok.",
+        "backlogAlreadyTriaged": "Backlog mevcut triyaj kurallarıyla zaten uyumlu.",
+        "backlogNoChanges": "Backlog triyajı uygulanacak değişiklik bulamadı.",
+        "writeActionsPreviewOnly": "Yazma eylemleri kapalı; yalnızca önizleme döndürülüyor.",
+        "noEligibleBacklog": "Sprint planlaması için uygun backlog sorunu bulunamadı.",
+        "bulkPreviewOnly": "Toplu sprint oluşturma yalnızca önizleme modunda.",
+        "requestingProviderPlan": "Yapılandırılmış LLM sağlayıcısından yapılandırılmış agent planı isteniyor.",
+        "providerPlanGenerated": "Yapılandırılmış sağlayıcı planı başarıyla üretildi.",
+        "agentRunFailed": "Agent çalıştırması başarısız oldu",
+        "projectNotFound": "Proje bulunamadı",
+        "unsupportedRunKind": "Desteklenmeyen agent çalıştırma türü",
+        "sprintCreateFailed": "Sprint oluşturulamadı",
+        "started": "{kind}, {project} için başlatıldı.",
+        "startedPreview": "{kind}, {project} için önizleme modunda başlatıldı.",
+        "usingProvider": "{provider} sağlayıcısı {model} modeliyle kullanılıyor.",
+        "usingProviderProfile": "{provider} sağlayıcısı {profile} profili üzerinden {model} modeliyle kullanılıyor.",
+        "scannedIssues": "{project} genelinde {count} sorun tarandı.",
+        "activeSprintDetected": "Aktif sprint algılandı: {sprint}.",
+        "projectTrackingActiveSummary": "{project} içinde devam eden {open} açık sorun ve {blocked} engelleyici var.",
+        "projectTrackingNoSprintSummary": "{project} içinde aktif sprint olmadan {open} açık sorun var.",
+        "foundBacklogIssues": "İncelenecek {count} backlog sorunu bulundu.",
+        "triageRerank": "{count} sorun triyaj motoru tarafından yeniden sıralanacak.",
+        "preparedTriageUpdates": "{count} backlog triyaj güncellemesi hazırlandı.",
+        "appliedTriageUpdates": "Backlog sorunlarına {count} triyaj güncellemesi uygulandı.",
+        "updatedBacklogIssues": "{count} backlog sorunu yeni öncelik ve etiketlerle güncellendi.",
+        "planningBacklogIssues": "{count} backlog sorunu üzerinden planlama yapılıyor.",
+        "preparedSprintPlan": "{project} için {count} sprint plan bloğu hazırlandı.",
+        "createdSprintLog": "Backlog üzerinden {count} planlanmış sprint oluşturuldu.",
+        "createdSprintSummary": "{project} için {count} planlanmış sprint oluşturuldu."
+      }
     }
   },
   "collab": {
@@ -3290,7 +3498,10 @@
     "apm_invite_link_revoke_failed": "Proje davet linki iptal edilemedi",
     "pm_remove_success": "Üye projeden kaldırıldı",
     "pm_remove_failed": "Proje üyesi kaldırılamadı",
-    "pm_remove_member_aria": "{name} kullanıcısını projeden kaldır"
+    "pm_remove_member_aria": "{name} kullanıcısını projeden kaldır",
+    "we_default_status_todo": "Yapılacak",
+    "we_default_status_in_progress": "Devam ediyor",
+    "we_default_status_done": "Tamamlandı"
   },
   "adminPanels": {
     "agentOps": {
@@ -3327,7 +3538,37 @@
       },
       "serviceStatus": {
         "title": "Hizmet durumu",
-        "description": "Aracı denetim düzlemi için çalışma zamanı geçitleri."
+        "description": "Aracı denetim düzlemi için çalışma zamanı geçitleri.",
+        "states": {
+          "ready": "Hazır",
+          "blocked": "Engellendi",
+          "disabled": "Devre dışı",
+          "preview": "Önizleme"
+        },
+        "items": {
+          "controlPlane": {
+            "label": "Yönetici aracı denetimi",
+            "readyDetail": "Tüm çalışma alanı ve proje aracı çalıştırmalarını tek bir anahtardan kapatın.",
+            "disabledDetail": "Tüm çalışma alanı ve proje aracı çalıştırmalarını tek bir anahtardan kapatın."
+          },
+          "liveMonitoring": {
+            "label": "Canlı yürütme akışı",
+            "readyDetail": "Şu anda gerçekleşen her aracı çalıştırmasından gerçek zamanlı durum ve günlükler."
+          },
+          "writePipeline": {
+            "label": "Yazma eylemlerine genel olarak izin ver",
+            "readyDetail": "Devre dışıysa her sprint oluşturmayı ve iş listesi düzenlemesini önizlemeye zorla.",
+            "previewDetail": "Devre dışıysa her sprint oluşturmayı ve iş listesi düzenlemesini önizlemeye zorla."
+          },
+          "providerCoverage": {
+            "label": "Sağlayıcı kapsamı",
+            "detail": "Çalışma alanı sağlayıcı seçimi ve çalıştırılabilir kapsam. ({ready}/{total})"
+          },
+          "unknown": {
+            "label": "Hizmet durumu",
+            "detail": "Aracı denetimi yüklenemedi."
+          }
+        }
       },
       "providerCoverage": {
         "title": "Sağlayıcı kapsamı",
@@ -3388,26 +3629,26 @@
         "writesChip": "{count} yazma"
       },
       "localRunners": {
-        "title": "Local server runners",
-        "description": "Optional beta bridge for dispatching issues to Claude Code or Codex installed on this server.",
-        "loading": "Loading local runners...",
-        "loadError": "Failed to load local runners.",
-        "updated": "Local runner updated",
-        "updatedDescription": "The workspace handoff mode was saved.",
-        "updateFailed": "Failed to update local runner",
-        "ready": "Ready",
-        "needsSetup": "Needs setup",
-        "defaultMode": "default",
-        "runtime": "{mode} · {timeout}s timeout",
-        "toggle": "Toggle {provider} local runner",
+        "title": "Claude Code / Codex",
+        "description": "Şu anda gerçekleşen her aracı çalıştırmasından gerçek zamanlı durum ve günlükler.",
+        "loading": "Aracı denetimi yükleniyor...",
+        "loadError": "Aracı denetimi yüklenemedi.",
+        "updated": "Aracı denetimi güncellendi",
+        "updatedDescription": "Genel aracı güvenliği ve çalışma zamanı denetimleri kaydedildi.",
+        "updateFailed": "Aracı denetimi güncellenemedi",
+        "ready": "Hazır",
+        "needsSetup": "Dikkat gerektiriyor",
+        "defaultMode": "Varsayılan",
+        "runtime": "{mode} · {timeout}s",
+        "toggle": "{provider}",
         "providers": {
           "claude": "Claude Code",
           "codex": "Codex CLI"
         },
         "reason": {
-          "disabled": "Enable the workspace switch or set TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true on the server.",
-          "cwd_missing": "Working directory does not exist: {value}",
-          "command_missing": "Command is not executable inside the web runtime: {value}"
+          "disabled": "Aracı denetimi güncellenemedi: TASKNEBULA_LOCAL_AGENT_RUNNER_ENABLED=true",
+          "cwd_missing": "Aracı denetimi yüklenemedi: {value}",
+          "command_missing": "Aracı denetimi yüklenemedi: {value}"
         }
       }
     },
@@ -3471,7 +3712,8 @@
         "anthropic": "Bir çalışma alanı kendi Anthropic anahtarını girmediğinde kullanılır. sk-ant-… ile başlar"
       },
       "saveFailedDescription": "Kimlik bilgisi kaydedilemedi. Lütfen tekrar deneyin.",
-      "removeFailedDescription": "Kimlik bilgisi kaldırılamadı. Lütfen tekrar deneyin."
+      "removeFailedDescription": "Kimlik bilgisi kaldırılamadı. Lütfen tekrar deneyin.",
+      "loadFailedDescription": "Platform kimlik bilgileri yüklenemedi. Lütfen tekrar deneyin."
     },
     "realtimeHealth": {
       "loading": "Gerçek zamanlı durum yükleniyor...",
@@ -3521,7 +3763,11 @@
         "tls": "TLS (güvenli bağlantı)",
         "saveFirst": "Önce SMTP yapılandırmasını kaydedin",
         "sendTestTitle": "Kendinize bir test e-postası gönderin",
-        "sendTest": "Test e-postası gönder"
+        "sendTest": "Test e-postası gönder",
+        "hostPlaceholder": "smtp.example.com",
+        "portPlaceholder": "587",
+        "usernamePlaceholder": "noreply@example.com",
+        "fromAddressPlaceholder": "TaskNebula <noreply@example.com>"
       },
       "livekit": {
         "title": "LiveKit",
@@ -3540,7 +3786,9 @@
         "apiSecretPlaceholder": "LiveKit API gizli anahtarı",
         "saveFirst": "Önce LiveKit yapılandırmasını kaydedin",
         "mintTitle": "Bir oda erişim belirteci oluştur",
-        "mintTest": "Test belirteci oluştur"
+        "mintTest": "Test belirteci oluştur",
+        "serverUrlPlaceholder": "wss://livekit.example.com",
+        "apiKeyPlaceholder": "APIxxxxxxxxxxxxxxxx"
       },
       "storage": {
         "title": "Depolama",
@@ -3555,7 +3803,11 @@
         "s3AccessKey": "S3 erişim anahtarı",
         "s3SecretKey": "S3 gizli anahtarı",
         "s3SecretKeyStored": "S3 gizli anahtarı (saklanan: {preview})",
-        "s3SecretPlaceholder": "S3 gizli anahtarı"
+        "s3SecretPlaceholder": "S3 gizli anahtarı",
+        "uploadsDirPlaceholder": "/var/tasknebula/uploads",
+        "s3BucketPlaceholder": "tasknebula-prod",
+        "s3RegionPlaceholder": "us-east-1",
+        "s3AccessKeyPlaceholder": "AKIA…"
       },
       "registration": {
         "title": "Kayıt",
@@ -3580,6 +3832,7 @@
       "openInNewTab": "Yeni sekmede aç",
       "sendSmtpTest": "SMTP testi gönder",
       "sendSmtpTestTitle": "Genel SMTP test e-postasını yönetici adresinize gönderin (önizlenen şablonu değil — /smtp/test uç noktası yalnızca sabit bir test mesajını destekler).",
+      "loadFailed": "E-posta önizlemesi yüklenemedi",
       "smtpTestFailed": "SMTP testi başarısız",
       "smtpTestSent": "SMTP testi gönderildi",
       "smtpTestSentDescription": "{source} aracılığıyla {recipient} adresine gönderildi.",
@@ -3622,7 +3875,8 @@
       "evaluate": "Değerlendir",
       "evaluating": "Değerlendiriliyor...",
       "isEnabled": "isEnabled",
-      "rolloutPercent": "yayılım%"
+      "rolloutPercent": "yayılım%",
+      "keyPlaceholder": "advanced_analytics"
     }
   },
   "adminDialogs": {
@@ -3665,7 +3919,8 @@
       "targetOrganizations": "Hedef kuruluşlar",
       "targetOrganizationsHint": "Plan + dağıtımla eşleşen tüm kuruluşlar için etkinleştirmek üzere boş bırakın.",
       "rollout": "Dağıtım: %{percentage}",
-      "namePlaceholder": "Gelişmiş Analitik"
+      "namePlaceholder": "Gelişmiş Analitik",
+      "keyPlaceholder": "advanced_analytics"
     },
     "createOrg": {
       "trigger": "Yeni kuruluş",
@@ -3943,7 +4198,34 @@
     "close": "Kapat",
     "commandMenu": "Komut menüsü",
     "commandMenuDescription": "Hızlı gezinme veya komut eylemlerini arayın ve çalıştırın.",
-    "avatarOverflow": "{count, plural, one {# daha} other {# daha}}"
+    "avatarOverflow": "{count, plural, one {# daha} other {# daha}}",
+    "slashCommands": {
+      "assign": {
+        "description": "Bir ekip arkadaşına ata"
+      },
+      "label": {
+        "description": "Etiket ekle"
+      },
+      "track": {
+        "description": "Süre kaydet"
+      },
+      "status": {
+        "description": "Durumu değiştir"
+      },
+      "due": {
+        "description": "Bitiş tarihi belirle"
+      },
+      "mention": {
+        "description": "Bir ekip arkadaşından bahset"
+      },
+      "arguments": {
+        "user": "@kullanıcı",
+        "label": "Etiket",
+        "duration": "Süre",
+        "status": "Durum",
+        "date": "Tarih"
+      }
+    }
   },
   "appShell": {
     "common": {
@@ -4193,7 +4475,8 @@
     "completeSprintTooltip": "Bu sprinti tamamla. Tamamlanmayan işler iş listesine taşınacak.",
     "sprintBurndown": "Sprint Tükenme Grafiği",
     "projectInviteRequiredTitle": "Davet gerekli",
-    "projectInviteRequiredDescription": "Bir yöneticiden sizi projeye davet etmesini veya proje oluşturma yetkisi vermesini isteyin."
+    "projectInviteRequiredDescription": "Bir yöneticiden sizi projeye davet etmesini veya proje oluşturma yetkisi vermesini isteyin.",
+    "projectKeyPlaceholder": "MAP"
   },
   "pagesProjectTabs": {
     "modules": {
@@ -4590,7 +4873,13 @@
     },
     "failedToLoadContent": "İçerik yüklenemedi",
     "failedToLoadSection": "Bölüm yüklenemedi",
-    "failedToLoadSectionNamed": "{section} yüklenemedi"
+    "failedToLoadSectionNamed": "{section} yüklenemedi",
+    "global": {
+      "title": "Uygulama hatası",
+      "description": "Kritik bir hata uygulamanın yüklenmesini engelledi. Lütfen sayfayı yenileyin. Sorun devam ederse destek ekibiyle iletişime geçin.",
+      "reference": "Referans:",
+      "reload": "Yeniden yükle"
+    }
   },
   "publicPages": {
     "loading": "Yükleniyor",
@@ -4685,7 +4974,753 @@
     "trustStatusInProgress": "Devam ediyor",
     "trustStatusAchieved": "Tamamlandı",
     "trustStatusPlanned": "Planlandı",
-    "trustExpected": "Beklenen:"
+    "trustExpected": "Beklenen:",
+    "setupEmailPlaceholder": "admin@company.com",
+    "offlineTitle": "Çevrimdışısınız.",
+    "offlineRetry": "Yeniden dene",
+    "landing": {
+      "nav": {
+        "primaryAria": "Birincil",
+        "homeAria": "TaskNebula ana sayfası",
+        "githubAria": "GitHub’da TaskNebula",
+        "github": "GitHub",
+        "signIn": "Giriş yap",
+        "startFree": "Ücretsiz başla",
+        "openMenuAria": "Gezinme menüsünü aç",
+        "closeMenuAria": "Gezinme menüsünü kapat",
+        "items": {
+          "features": "Özellikler",
+          "compare": "Karşılaştır",
+          "selfHost": "Kendin barındır",
+          "faq": "SSS"
+        }
+      },
+      "hero": {
+        "kicker": "Açık kaynak · MIT · AI-native",
+        "title": "Ekipler <accent>ve ajanları için yapılmış proje takip aracı.</accent>",
+        "description": "TaskNebula, Jira ve Linear’a açık kaynaklı, klavye öncelikli bir alternatiftir. Kendi Postgres’inizde çalışan panolar, sprintler ve dokümanlar; yerleşik MCP sunucusuyla AI ajanları ekibinizin yanında backlog üzerinde çalışır. MIT lisanslıdır, tek Docker Compose ile kendiniz barındırabilirsiniz.",
+        "createWorkspace": "Çalışma alanı oluştur",
+        "viewGithub": "GitHub’da görüntüle",
+        "selfHostKicker": "Ya da iki komutla kendin barındır",
+        "quickstartAria": "Kendi barındırma hızlı başlangıç komutları",
+        "copyQuickstart": "Kendi barındırma hızlı başlangıcını kopyala",
+        "selfHostMeta": "Kendin barındırınca sonsuza kadar ücretsiz · Üç konteyner: Postgres, Redis, tek web imajı",
+        "demoPill": "Aşağıda etkileşimli demo",
+        "chips": {
+          "cmdk": "Her yerde Cmd+K",
+          "mcp": "Yerleşik MCP sunucusu",
+          "import": "Jira ve Linear içe aktarma",
+          "selfHost": "Kendi Postgres’inde barındır"
+        }
+      },
+      "copy": {
+        "copied": "Kopyalandı",
+        "copyCommand": "Komutu kopyala",
+        "copiedToClipboard": "Panoya kopyalandı"
+      },
+      "footer": {
+        "tagline": "Ekipler ve ajanlar için açık kaynak proje takibi",
+        "description": "Açıkta geliştirildi. İşleriniz kendi Postgres’inizde yaşar ve siz ne zaman isterseniz çıkar.",
+        "githubAria": "GitHub’da TaskNebula",
+        "starGithub": "GitHub’da yıldızla",
+        "columns": {
+          "product": "Ürün",
+          "resources": "Kaynaklar",
+          "openSource": "Açık kaynak",
+          "legal": "Yasal"
+        },
+        "links": {
+          "features": "Özellikler",
+          "compare": "Karşılaştır",
+          "selfHost": "Kendin barındır",
+          "faq": "SSS",
+          "openapiSpec": "OpenAPI tanımı",
+          "mcpServer": "MCP sunucusu",
+          "dockerHub": "Docker Hub",
+          "healthEndpoint": "Sağlık endpoint’i",
+          "github": "GitHub",
+          "changelog": "Değişiklik günlüğü",
+          "reportBug": "Hata bildir",
+          "contributing": "Katkıda bulunma",
+          "mitLicense": "MIT Lisansı",
+          "signIn": "Giriş yap",
+          "createWorkspace": "Çalışma alanı oluştur"
+        },
+        "copyright": "© {year} TaskNebula. MIT Lisansı altında yayımlandı.",
+        "trademarks": "Jira, Linear ve Plane kendi sahiplerinin ticari markalarıdır."
+      },
+      "finalCta": {
+        "kicker": "Başlayın",
+        "title": "Takip aracınız sizin olsun. <accent>Ajanlarınızı getirin.</accent>",
+        "description": "Dakikalar içinde çalışma alanı oluşturun ya da bu gece tamamını kendi sunucunuzda çalıştırın; her durumda kod okunmak için sizin.",
+        "createWorkspace": "Çalışma alanı oluştur",
+        "selfHostQuickstart": "Kendi barındırma hızlı başlangıcı",
+        "readSource": "Kaynak kodu oku",
+        "copyDockerQuickstart": "Docker hızlı başlangıç komutunu kopyala",
+        "meta": "Kredi kartı yok. Varsayılan telemetri yok. Ayrılırken istediğiniz zaman <code>pg_dump</code> ile dışa aktarın."
+      },
+      "proof": {
+        "aria": "Açık kaynak güven kanıtları",
+        "headline": "Açık kaynak, kendin barındır, verin sende kalsın.",
+        "subline": "Logo duvarı yok; sadece kontrol edebileceğin kanıtlar var.",
+        "items": {
+          "sourceGithub": "Kaynak GitHub’da",
+          "mitLicensed": "MIT lisanslı",
+          "dockerImage": "Docker Hub imajı",
+          "openapiSpec": "OpenAPI tanımı",
+          "mcpServer": "MCP sunucusu"
+        }
+      },
+      "selfHost": {
+        "kicker": "Kendin barındır",
+        "title": "İşiniz. Sunucunuz. Veriniz.",
+        "description": "Üç konteyner ve tek komut. Her şey Postgres’inizde yaşar, dışa aktarma bir pg_dump kadar yakındır ve hiçbir şey eve telefon etmez; tasarım gereği vendor lock-in yok.",
+        "cards": {
+          "postgres": {
+            "title": "Bir Postgres, bir web imajı",
+            "body": "pgvector eklentili Postgres 16 aramayı güçlendirir; Redis 7 de yanında gelir. Mongo yok, Elastic yok, yan servis kalabalığı yok."
+          },
+          "migrations": {
+            "title": "Migration’lar açılışta çalışır",
+            "body": "İmaj başlangıçta tüm veritabanı migration’larını uygular. Yükseltmek yeni etiketi çekip yeniden başlatmaktır; manuel iş yok."
+          },
+          "health": {
+            "title": "Yoklayabileceğiniz sağlık",
+            "body": "GET /api/health uygulama hazır olduğunda 200 döner; load balancer, uptime kontrolü ya da compose healthcheck’e bağlayın."
+          },
+          "pin": {
+            "title": "Güvendiğiniz sürümü sabitleyin",
+            "body": "Bir release’i kilitlemek için TASKNEBULA_IMAGE=neuraparse/tasknebula:0.4.0 ayarlayın ya da en yeni için :latest izleyin."
+          }
+        },
+        "terminalTitle": "hızlı başlangıç — Docker Desktop veya herhangi bir Docker host (~2 dk)",
+        "copyQuickstart": "Hızlı başlangıç komutlarını kopyala",
+        "quickstartAria": "Kendi barındırma hızlı başlangıç komutları",
+        "terminalNote": "Web imajı Postgres’i bekler, migration’ları çalıştırır, sonra <code>http://localhost:3000</code> üzerinde servis verir; açın ve ilk kurulum admin sihirbazını tamamlayın. İmaj: <imageLink>neuraparse/tasknebula</imageLink>."
+      },
+      "migrate": {
+        "kicker": "Taşıma",
+        "title": "Jira veya Linear’dan bir öğleden sonra içinde geçin",
+        "description": "Araç değiştirmek geçmişinizi ya da sürecinizi kaybetmek anlamına gelmemeli. Elinizdekileri içe aktarın, TaskNebula’ya eşleyin ve ekibinizin zaten çalıştığı şekilde devam edin.",
+        "steps": {
+          "issues": {
+            "title": "İşlerinizi yanınıza alın",
+            "body": "Jira ve Linear’daki işleri açıklamaları, yorumları ve geçmişleriyle içe aktarın; düz bir CSV dökümüne sıkıştırmayın."
+          },
+          "labels": {
+            "title": "Etiketler ve sprintler de gelir",
+            "body": "Etiketler, bileşenler ve aktif sprintler birinci sınıf kayıtlar olarak gelir; panolarınız ve backlog’unuz ilk günden tanıdık görünür."
+          },
+          "fields": {
+            "title": "Sadece adları değil alanları eşleyin",
+            "body": "Durumları, öncelikleri ve özel alanları içe aktarım sırasında TaskNebula karşılıklarıyla eşleyin; yazmadan önce eşlemeyi gözden geçirin."
+          },
+          "workflow": {
+            "title": "Workflow’unuzu koruyun",
+            "body": "Durumlarınız, swimlane’leriniz ve alışkanlıklarınız sizinle gelir. Ekibi yeniden eğitmeden ya da süreci sıfırdan kurmadan araç değiştirin."
+          }
+        },
+        "note": "İçe aktarımlar kendi veritabanınıza karşı çalışır ve tamamen geri alınabilir; hiçbir şey sunucunuzdan ayrılmaz, eşleme doğru görünene kadar yeniden çalıştırabilirsiniz."
+      },
+      "aiMcp": {
+        "kicker": "AI-native",
+        "title": "Ajanlar backlog üzerinde sizinle çalışır.",
+        "description": "TaskNebula ajan çağı için tasarlandı. Tüm çalışma alanınız hakkında soru sorun, AI’ın yeni işleri önceliklendirmesine ve tahmin etmesine izin verin, harici ajanlara birinci sınıf MCP sunucusu üzerinden gerçek araçlar verin.",
+        "capabilities": {
+          "ask": {
+            "title": "Çalışma alanınıza sorun",
+            "body": "/api/ask RAG endpoint’i işleriniz, dokümanlarınız ve yorumlarınız üzerinde doğal dille yanıt verir; pgvector ile geri getirmeye dayanır ve kaynaklara atıf verir."
+          },
+          "triage": {
+            "title": "AI triage ve tahminler",
+            "body": "Önerilen öncelik, etiketler ve efor yeni işlere düşer; gerçek OpenAI ve Anthropic çağrıları, maliyet koruması ve tracing ile desteklenir. Kontrol sizde kalır: kabul edin veya reddedin."
+          },
+          "mcp": {
+            "title": "Ajanlar için MCP araçları",
+            "body": "@tasknebula/mcp-server backlog’u MCP üzerinden açar; HTTP /api/mcp veya stdio ile harici ajanlar iptal edilebilir anahtarlarla iş oluşturur, arar ve taşır."
+          }
+        },
+        "mock": {
+          "session": "ajan oturumu — @tasknebula/mcp-server",
+          "connected": "bağlı",
+          "agent": "ajan",
+          "planning": "sprint temizliğini planlıyor",
+          "call": "çağrı",
+          "result": "sonuç",
+          "issueCount": "3 iş",
+          "applied": "uygulandı",
+          "priorityHigh": "öncelik: yüksek",
+          "labelFlaky": "etiket: flaky",
+          "resultLabels": {
+            "checkout": "checkout",
+            "flaky": "flaky",
+            "tests": "testler"
+          }
+        }
+      },
+      "workflow": {
+        "kicker": "Akış",
+        "title": "İçe alımdan yayına tek bir hat.",
+        "description": "Takip aracı, plan dokümanı ve ajan konsolu arasında zıplama yok. İş tek bir yüzeyde ilerler; insanlar ve ajanlar aynı zaman çizelgesindedir.",
+        "stepLabel": "ADIM {step}",
+        "steps": {
+          "intake": {
+            "title": "Gürültüsüz içe alım",
+            "body": "İşler, talepler ve ajanlardan gelen girdiler tek kuyruğa düşer. Triage öncelik ve etiket önerir; backlog bir yığın değil, yapılandırılmış başlar."
+          },
+          "plan": {
+            "title": "Sprint’i yerinde planlayın",
+            "body": "Backlog’dan sprint’e çekin, fix version ve component belirleyin, kapsamı tek bakışta okuyun. Planlama ayrı dokümanda değil, işin yanında yaşar."
+          },
+          "build": {
+            "title": "Ajanlarla birlikte geliştirin",
+            "body": "Ajanlar MCP üzerinden birinci sınıf ekip arkadaşlarıdır; işleri alır, yorum yapar ve insanlar gibi iş açar, her aksiyon ortak zaman çizelgesinde görünür."
+          },
+          "ship": {
+            "title": "Yayınlayın ve sonucu takip edin",
+            "body": "İşleri gerçek bir resolution ile kapatın, versiyonu kesin, velocity ve cycle time’ın canlı güncellendiğini izleyin. Done gerçekten done demektir; temizlemeyi unuttuğunuz bir kolon değil."
+          }
+        },
+        "visuals": {
+          "intake": {
+            "title": "Triage kuyruğu",
+            "newCount": "3 yeni",
+            "sources": {
+              "inbound": "Gelen",
+              "agent": "Ajan",
+              "support": "Destek"
+            },
+            "chips": {
+              "high": "Yüksek",
+              "api": "api",
+              "bug": "bug"
+            }
+          },
+          "plan": {
+            "columns": {
+              "backlog": "Backlog",
+              "sprint5": "Sprint 5"
+            },
+            "checkout": "checkout"
+          },
+          "build": {
+            "title": "Canlı aktivite",
+            "events": {
+              "pickedUp": "WEB-204 alındı",
+              "openedPr": "PR açıldı · 4 dosya",
+              "commented": "API-88 üzerinde yorum yaptı"
+            }
+          },
+          "ship": {
+            "velocity": "Velocity",
+            "shipped": "Yayınlandı",
+            "resolution": {
+              "fixed": "Düzeltildi",
+              "wontDo": "Yapılmayacak"
+            }
+          }
+        }
+      },
+      "comparison": {
+        "kicker": "Karşılaştır",
+        "title": "TaskNebula vs Jira vs Linear vs Plane",
+        "description": "Dördü de güçlü araçlar. TaskNebula’nın tam olarak nerede ayrıştığı burada: varsayılan olarak açık, sizin barındırmanıza uygun, AI-native. Ne eksik ne fazla.",
+        "tableAria": "Özellik karşılaştırma tablosu",
+        "tableCaption": "TaskNebula, Jira, Linear ve Plane arasında özellik karşılaştırması. Her hücre Evet, Kısmi veya Hayır olarak işaretlenir ve kısa bir detay içerir.",
+        "featureHeader": "Özellik",
+        "marks": {
+          "yes": "Evet",
+          "partial": "Kısmi",
+          "no": "Hayır"
+        },
+        "rows": {
+          "openSource": {
+            "feature": "Açık kaynak (MIT)",
+            "notes": {
+              "tasknebula": "Tüm kod tabanı, MIT",
+              "jira": "Kapalı kaynak",
+              "linear": "Kapalı kaynak",
+              "plane": "AGPL-3.0 çekirdek"
+            }
+          },
+          "selfHost": {
+            "feature": "Kendin barındırma (tek Docker Compose)",
+            "notes": {
+              "tasknebula": "Postgres + Redis + tek web imajı",
+              "jira": "Cloud-first; DC aşamalı kaldırılıyor",
+              "linear": "Sadece bulut",
+              "plane": "Docker / Kubernetes"
+            }
+          },
+          "price": {
+            "feature": "Fiyat",
+            "notes": {
+              "tasknebula": "Ücretsiz, sınırsız kullanıcı, kendin barındır",
+              "jira": "≤10 kullanıcı ücretsiz, sonra koltuk başı",
+              "linear": "Ücretsiz plan, sonra koltuk başı",
+              "plane": "≤12 kullanıcı ücretsiz, sonra koltuk başı"
+            }
+          },
+          "aiAgents": {
+            "feature": "AI ajanları native + MCP sunucusu",
+            "notes": {
+              "tasknebula": "Yerleşik ajanlar + MIT MCP sunucusu",
+              "jira": "Rovo + uzak MCP, yalnızca bulut",
+              "linear": "AI + uzak MCP sunucusu",
+              "plane": "Plane AI (kredi) + MCP"
+            }
+          },
+          "keyboard": {
+            "feature": "Klavye öncelikli",
+            "notes": {
+              "tasknebula": "Command palette + kısayollar",
+              "jira": "Sınırlı kısayollar",
+              "linear": "Sınıfının en iyisi",
+              "plane": "Command-K palette"
+            }
+          },
+          "realtime": {
+            "feature": "Gerçek zamanlı işbirliği",
+            "notes": {
+              "tasknebula": "Yjs ile canlı imleçler",
+              "jira": "Canlı sync, ortak düzenleme yok",
+              "linear": "Canlı sync",
+              "plane": "Canlı sync"
+            }
+          },
+          "import": {
+            "feature": "Jira / Linear içe aktarma",
+            "notes": {
+              "tasknebula": "CSV + API import",
+              "jira": "Jira’ya import",
+              "linear": "Yerleşik Jira import",
+              "plane": "Jira / Linear importer’ları"
+            }
+          },
+          "sprints": {
+            "feature": "Sprintler / Cycle’lar",
+            "notes": {
+              "tasknebula": "Sprintler + backlog",
+              "jira": "Scrum + Kanban",
+              "linear": "Cycle’lar",
+              "plane": "Cycle’lar + modüller"
+            }
+          },
+          "structure": {
+            "feature": "Etiketler / Bileşenler / Versiyonlar",
+            "notes": {
+              "tasknebula": "Birinci sınıf, üçü de",
+              "jira": "Üçü de",
+              "linear": "Etiketler + projeler",
+              "plane": "Etiketler + modüller"
+            }
+          },
+          "api": {
+            "feature": "API / Kod olarak projeler",
+            "notes": {
+              "tasknebula": "Açık REST + OpenAPI tanımı",
+              "jira": "REST API, IaC yok",
+              "linear": "GraphQL API",
+              "plane": "REST API"
+            }
+          }
+        },
+        "footnote": "Satıcı detayları Haziran 2026 itibarıyla herkese açık dokümantasyon ve fiyatlandırma sayfalarını yansıtır ve değişebilir. Jira Atlassian’ın, Linear Linear Orbit’in, Plane ise Plane Software’in ticari markasıdır; hepsi sağlam ürünlerdir ve hiçbiri TaskNebula ile bağlantılı değildir."
+      },
+      "faq": {
+        "kicker": "SSS",
+        "title": "Net sorular, dürüst cevaplar.",
+        "description": "Satış kapısı yok, yıldızlı dipnot yok. Sorunuz eksikse GitHub issue açın; herkese açık cevaplar özel mesajlardan daha değerlidir.",
+        "statusPrompt": "Hâlâ emin değil misiniz? <link>GitHub’da sorun</link> ya da dokümanlardaki canlı durumu okuyun.",
+        "items": {
+          "freeMit": {
+            "question": "TaskNebula gerçekten ücretsiz mi ve gerçekten MIT lisanslı mı?",
+            "answer": "Evet — tüm uygulama MIT lisanslıdır: panolar, sprintler, dokümanlar, analitikler, AI yüzeyleri ve MCP sunucusu. Open-core ayrımı, ücretli katman ya da kullanıcı başı ücret yok. Kendiniz barındırıp sınırsız kullanıcıyla sonsuza kadar çalıştırabilirsiniz; isterseniz fork edin."
+          },
+          "selfHost": {
+            "question": "Kendim barındırabilir miyim?",
+            "answer": "Varsayılan yol bu. Docker getirin; üç konteyner alırsınız: pgvector eklentili Postgres 16, Redis 7 ve neuraparse/tasknebula web imajı. Migration’lar açılışta çalışır, GET /api/health yoklama endpoint’inizdir ve tek satırlık compose hızlı başlangıcı sizi localhost:3000’a getirir. Kendiniz çalıştırınca kaybedeceğiniz hosted-only bir özellik yok."
+          },
+          "aiKeys": {
+            "question": "AI özelliklerine ihtiyacım var mı? Kendi anahtarlarımı getirebilir miyim?",
+            "answer": "AI isteğe bağlıdır; hiçbir model anahtarı yapılandırmadan her pano, sprint ve doküman çalışır. İstediğinizde OpenAI veya Anthropic anahtarınızı ortam değişkeni olarak siz getirirsiniz; harcama ve veri konumu sizde kalır. Kontrolden çıkan bir prompt’un faturayı şişirmemesi için maliyet koruması vardır."
+          },
+          "aiReality": {
+            "question": "AI özellikleri bugün ne kadar gerçek?",
+            "answer": "Bunları açıkta geliştiriyoruz. Veri modeli ve endpoint’ler — triage önerileri, pgvector semantik arama ve /api/ask RAG endpoint’i — canlıdır ve gerçek OpenAI ile Anthropic çağrıları yapar. Bazı yüzeyler sağlamlaştırılırken hâlâ preview olarak etiketlidir; bunu kurulumdan sonra keşfetmenizdense burada açık söylemeyi tercih ederiz."
+          },
+          "mcpServer": {
+            "question": "MCP sunucusu nedir?",
+            "answer": "MCP (Model Context Protocol) sunucusu TaskNebula’yı araçlar olarak açar: iş oluşturma, arama, taşıma ve yorumlama. Böylece Claude Code ve Cursor gibi ajanlar takip aracınızı kullanabilir. Repo ile birlikte gelir; HTTP /api/mcp ya da @tasknebula/mcp-server üzerinden stdio çalışır ve MIT lisanslıdır. Not: uçtan uca ajan kimlik doğrulaması REST API’nin API anahtarlarını kabul etmesine bağlıdır; bu hâlâ bağlandığı için bugün preview kabul edin."
+          },
+          "imports": {
+            "question": "Jira veya Linear’dan içe aktarır mı?",
+            "answer": "Evet — Jira, Linear, GitHub ve CSV için importer’lar var. Her biri yazmadan önce alan eşlemesini inceleyebilmeniz için önizleme adımıyla çalışır; geçiş yaparken eski aracınızı salt okunur tutabilirsiniz."
+          },
+          "productionReady": {
+            "question": "Production’a hazır mı?",
+            "answer": "Çekirdek takip aracı — işler, panolar, sprintler, dokümanlar, arama, izinler, REST API ve OpenAPI tanımı — sağlamdır ve kendiniz barındırabilirsiniz. Bazı kenarlar hâlâ olgunlaşıyor: OAuth login DB adapter’a ihtiyaç duyuyor, şimdilik credentials auth kullanın; realtime collab ortam değişkenleri Docker imajlarına henüz bağlanmadı; AI/MCP yüzeyinin bazı parçaları preview. Hepsini docs/STATUS.md içinde açıkça takip ediyoruz."
+          },
+          "dataVisibility": {
+            "question": "Verimi kim görebilir?",
+            "answer": "Siz karar verirsiniz. Kendiniz barındırdığınızda her şey altyapınızdaki Postgres’te yaşar ve düz bir pg_dump ile dışa aktarılır; eve telemetri gönderilmez. Ürün içinde çalışma alanları kuruluş bazında izole edilir; rol tabanlı erişim, izin şemaları ve audit log’ları vardır."
+          }
+        }
+      },
+      "features": {
+        "kicker": "Workflow",
+        "title": "Tuş vuruşundan yayına — tek açık backlog.",
+        "description": "Planlama, yürütme ve işi yorumlama aynı yüzeyde. Klavye öncelikli teslimat, denetlenebilir bir AI katmanı ve gerçek MCP sunucusu üzerinden ticket taşıyan ajanlar — tamamı MIT lisanslı ve kendin barındırmaya uygun.",
+        "cards": {
+          "keyboard": {
+            "title": "Klavye öncelikli panolar ve sprintler",
+            "body": "Tüm panoyu tek Cmd+K paletinden yönetin: arayın, gezin ve tuşlardan ayrılmadan aksiyon çalıştırın. Kolonlar arasında sürükleyin, sprint planlayın ve burndown’ı aynı görünümde okuyun."
+          },
+          "import": {
+            "title": "Jira ve Linear’dan içe aktarın",
+            "body": "Backlog’unuzu yanınızda getirin; Jira, Linear ve CSV importer’ları işleri, durumları ve meta verileri eşler, böylece boş değil dolu başlarsınız."
+          },
+          "structure": {
+            "title": "Jira düzeyinde yapı",
+            "body": "Birinci sınıf etiketler, bileşenler, fix version’lar ve resolution modeli — backlog yapısı JSON string’lerde değil gerçek tablolarda ve REST API’lerinde saklanır."
+          },
+          "ai": {
+            "title": "AI-native ve denetlenebilir",
+            "body": "Maliyet koruması ve tracing arkasında gerçek OpenAI ve Anthropic çağrıları; triage önerileri, AI tahminleri ve pgvector üzerinde /api/ask RAG endpoint’i. Kara kutu yok."
+          },
+          "agents": {
+            "title": "Ajanlar backlog üzerinde çalışır",
+            "body": "Gerçek MCP sunucusu — HTTP /api/mcp veya stdio — kod ajanlarının iş oluşturmasına, aramasına ve taşımasına izin verir. REST API, OpenAPI tanımı, iptal edilebilir anahtarlar ve webhooks ile desteklenir."
+          },
+          "realtime": {
+            "title": "Gerçek zamanlı işbirliği",
+            "body": "Spec’ler ve iş dokümanları canlı düzenlenir; Tiptap, Yjs presence ve çakışmasız birleşimler sayesinde iki kişi tek dokümanda sorunsuz çalışır."
+          },
+          "selfHost": {
+            "title": "Dakikalar içinde kendin barındır",
+            "body": "Tek Docker imajı, Postgres ve veri sizin. Şemadan itibaren multi-tenant; her tablo kuruluş kapsamlıdır, vendor lock-in yoktur."
+          },
+          "analytics": {
+            "title": "Yürütmeye yakın analitik",
+            "body": "Proje bazında velocity, cycle time ve öncelik dağılımı; Done’ı Won’t Fix ve Duplicate’ten ayıran resolution modeliyle."
+          }
+        },
+        "visuals": {
+          "palette": {
+            "query": "WEB-18’i incelemeye taşı",
+            "moveAction": "WEB-18’i İncelemede’ye taşı",
+            "assignAction": "WEB-18’i bana ata",
+            "columns": {
+              "todo": "Yapılacak",
+              "inProgress": "Devam ediyor",
+              "done": "Tamamlandı"
+            }
+          },
+          "import": {
+            "statusMapped": "Durum eşlendi",
+            "labelsMapped": "Etiketler eşlendi"
+          },
+          "structure": {
+            "labels": {
+              "api": "api",
+              "design": "tasarım",
+              "bug": "hata"
+            },
+            "fixVersion": "Fix version",
+            "component": "Bileşen"
+          },
+          "ai": {
+            "triageHigh": "Triage: Yüksek",
+            "estimate": "Tahmin: 5 puan",
+            "accept": "Kabul et",
+            "dismiss": "Reddet"
+          },
+          "collab": {
+            "title": "Yayın planı — Q3",
+            "liveCount": "2 canlı"
+          },
+          "deploy": {
+            "healthOk": "/api/health · tamam",
+            "tenantIsolation": "Tenant izolasyonu"
+          },
+          "analytics": {
+            "velocity": "Velocity",
+            "resolution": "Resolution",
+            "fixed": "Düzeltildi",
+            "wontDo": "Yapılmayacak",
+            "duplicate": "Yinelenen"
+          }
+        }
+      },
+      "showcase": {
+        "frame": {
+          "board": "Pano",
+          "preview": "Çalışma alanı önizlemesi",
+          "live": "Canlı",
+          "boardUrl": "{board} / Geçerli sprint"
+        },
+        "board": {
+          "kicker": "Pano",
+          "title": "Gerçekten içinde hareket edebileceğiniz bir pano.",
+          "description": "Projeler arasında geçin, işleri aşamalar arasında sürükleyin ve detayları sahte hareket ya da gürültülü arayüz olmadan yakında tutun.",
+          "dragHint": "Kartları aşamalar arasında sürükleyin.",
+          "boards": {
+            "website": "Web sitesi",
+            "api": "API Platformu",
+            "mobile": "Mobil"
+          },
+          "columns": {
+            "backlog": "Backlog",
+            "todo": "Yapılacak",
+            "inProgress": "Devam ediyor",
+            "inReview": "İncelemede",
+            "done": "Tamamlandı"
+          },
+          "priorities": {
+            "critical": "kritik",
+            "high": "yüksek",
+            "medium": "orta",
+            "low": "düşük"
+          },
+          "meta": {
+            "stage": "Aşama {stage}",
+            "owner": "Sahip {owner}",
+            "comments": "{count} yorum"
+          },
+          "unknownStage": "Bilinmeyen",
+          "moveBack": "Geri taşı",
+          "moveForward": "İleri taşı",
+          "checklist": "Checklist",
+          "dropIssue": "Buraya bir iş bırakın",
+          "issues": {
+            "web18": {
+              "title": "Lansman sayfası hiyerarşisini iyileştir",
+              "summary": "Hero alanını sıkılaştır, metni sadeleştir ve landing sayfasını daha premium hissettir.",
+              "checklist": {
+                "first": "Metin yoğunluğunu azalt",
+                "second": "Görsel ritmi iyileştir",
+                "third": "CTA yerleşimini kesinleştir"
+              }
+            },
+            "web21": {
+              "title": "Yeniden tasarım projesi için doküman girişi",
+              "summary": "Ana yeniden tasarım işiyle bağlantılı bir proje notu yapısı oluştur.",
+              "checklist": {
+                "first": "Lansman notlarını taslakla",
+                "second": "Engelleyicileri dokümanlara bağla",
+                "third": "Revizyon kontrol noktaları ekle"
+              }
+            },
+            "web24": {
+              "title": "Mobil footer hizalamasını düzelt",
+              "summary": "Boşluk kaymasını çöz ve küçük ekranlarda CTA çakışmasını önle.",
+              "checklist": {
+                "first": "Breakpoint’leri denetle",
+                "second": "Boşluk token’larını normalleştir",
+                "third": "Safari mobil QA yap"
+              }
+            },
+            "web09": {
+              "title": "Pazarlama release epic’i",
+              "summary": "Yeniden tasarım için lansman görsellerini, metni ve release checklist’ini koordine et.",
+              "checklist": {
+                "first": "Görselleri kesinleştir",
+                "second": "Release notlarını kilitle",
+                "third": "Analitik event’lerini gözden geçir"
+              }
+            },
+            "web05": {
+              "title": "Yayına çıkış checklist’i",
+              "summary": "Metin, varlıklar, analitik ve dokümanlar için son deploy checklist’i.",
+              "checklist": {
+                "first": "Dokümanlar onaylandı",
+                "second": "Analitik kontrol edildi",
+                "third": "Yayın sonrası sahip atandı"
+              }
+            },
+            "api12": {
+              "title": "Partner auth sertleştirme",
+              "summary": "Partner erişimi için token yenileme yollarını ve rollout sırasını sıkılaştır.",
+              "checklist": {
+                "first": "Token yaşam döngüsünü gözden geçir",
+                "second": "Scope’ları kilitle",
+                "third": "Rollout notunu yayımla"
+              }
+            },
+            "api09": {
+              "title": "Rate limiting politikası",
+              "summary": "Public endpoint’ler için eşikleri ve toparlanma davranışını tanımla.",
+              "checklist": {
+                "first": "Politikayı taslakla",
+                "second": "Dashboard kontrolleri ekle",
+                "third": "Support ile gözden geçir"
+              }
+            },
+            "api17": {
+              "title": "Webhook retry hatası",
+              "summary": "Kuyruk baskısı altında retry penceresi beklenenden kısa kalıyor.",
+              "checklist": {
+                "first": "Staging’de yeniden üret",
+                "second": "Retry zamanlamasını düzelt",
+                "third": "Audit logging’i doğrula"
+              }
+            },
+            "api03": {
+              "title": "Versioning epic’i",
+              "summary": "Yaklaşan platform değişiklikleri için versioning ve migration rehberini şekillendir.",
+              "checklist": {
+                "first": "Politikayı tanımla",
+                "second": "Migration rehberi yaz",
+                "third": "Rollout checklist’i ekle"
+              }
+            },
+            "api22": {
+              "title": "Observability temizliği",
+              "summary": "Endpoint sağlık sinyallerini ve alarmları daha temiz bir baseline’a getir.",
+              "checklist": {
+                "first": "Alarm adlarını iyileştir",
+                "second": "Dashboard kartlarını gözden geçir",
+                "third": "Migration notlarını kapat"
+              }
+            },
+            "app14": {
+              "title": "Offline kuyruk parlatma",
+              "summary": "Offline sync durumunu daha anlaşılır yap ve belirsiz boş durumları azalt.",
+              "checklist": {
+                "first": "Kuyruk durumlarını gözden geçir",
+                "second": "Metni iyileştir",
+                "third": "Yeniden bağlanma akışını test et"
+              }
+            },
+            "app11": {
+              "title": "Push tercih kurulumu",
+              "summary": "Bildirimler ve hatırlatıcılar için daha iyi ilk kurulum akışı ekle.",
+              "checklist": {
+                "first": "Toggle’ları iyileştir",
+                "second": "İzin durumlarını netleştir",
+                "third": "Fallback akışını belgele"
+              }
+            },
+            "app06": {
+              "title": "Tabletlerde pano sürükleme hatası",
+              "summary": "Kart sürükleme, split-screen tablet düzenlerinde yapışkan hissediyor.",
+              "checklist": {
+                "first": "Pointer capture’ı düzelt",
+                "second": "iPad split view QA yap",
+                "third": "Velocity’yi doğrula"
+              }
+            },
+            "app02": {
+              "title": "Release hazırlık epic’i",
+              "summary": "Mobil lansman için release, QA, notlar ve mağaza varlıklarını koordine et.",
+              "checklist": {
+                "first": "Mağaza varlıkları",
+                "second": "Release notları",
+                "third": "QA onayı"
+              }
+            },
+            "app19": {
+              "title": "Checklist sync tamamlandı",
+              "summary": "Checklist sync cihazlar ve arka plan yeniden bağlanmaları arasında stabil.",
+              "checklist": {
+                "first": "Android kontrolü",
+                "second": "iOS kontrolü",
+                "third": "Doküman güncellemesi"
+              }
+            }
+          }
+        },
+        "team": {
+          "frameTitle": "Ekip",
+          "frameUrl": "Çalışma alanı / Ekip",
+          "preview": "Çalışma alanı önizlemesi",
+          "live": "Canlı",
+          "members": "Üyeler",
+          "activity": "Aktivite",
+          "roles": {
+            "product": "Ürün",
+            "techLead": "Teknik lider",
+            "engineer": "Mühendis",
+            "design": "Tasarım"
+          },
+          "activityItems": {
+            "moved": "WEB-18’i İncelemede’ye taşıdı",
+            "linked": "dokümanları API-12’ye bağladı",
+            "closed": "APP-19’u kapattı"
+          },
+          "times": {
+            "now": "az önce",
+            "fourMinutes": "4 dk önce",
+            "elevenMinutes": "11 dk önce"
+          }
+        },
+        "workflow": {
+          "frameTitle": "Workflow",
+          "frameUrl": "Proje ayarları / Workflow",
+          "preview": "Çalışma alanı önizlemesi",
+          "live": "Canlı",
+          "steps": {
+            "backlog": "Backlog",
+            "todo": "Yapılacak",
+            "inProgress": "Devam ediyor",
+            "inReview": "İncelemede",
+            "done": "Tamamlandı"
+          },
+          "transitionRules": "Geçiş kuralları",
+          "rules": {
+            "assigneeRequired": "Atanan kişi gerekli",
+            "subtasksComplete": "Tüm alt işler tamamlanmalı",
+            "reviewApproved": "İnceleme onaylandı"
+          },
+          "auto": "Otomatik"
+        },
+        "sprint": {
+          "frameTitle": "Sprint",
+          "frameUrl": "Sprint 4 / Genel bakış",
+          "preview": "Çalışma alanı önizlemesi",
+          "live": "Canlı",
+          "title": "Sprint 4 — Auth ve Bildirimler",
+          "active": "Aktif",
+          "duration": "14 gün · 18 iş",
+          "remaining": "5 gün kaldı",
+          "stats": {
+            "total": "Toplam",
+            "done": "Tamamlandı",
+            "active": "Aktif",
+            "points": "Puan"
+          },
+          "burndown": "Burndown"
+        },
+        "analytics": {
+          "frameTitle": "Analitik",
+          "frameUrl": "Proje / Analitik",
+          "preview": "Çalışma alanı önizlemesi",
+          "live": "Canlı",
+          "stats": {
+            "velocity": "Velocity",
+            "cycle": "Cycle",
+            "flow": "Akış",
+            "bugs": "Hatalar"
+          },
+          "velocity": "Velocity",
+          "priorityMix": "Öncelik dağılımı",
+          "priorities": {
+            "critical": "Kritik",
+            "high": "Yüksek",
+            "medium": "Orta",
+            "low": "Düşük"
+          }
+        }
+      },
+      "meta": {
+        "title": "TaskNebula — Açık kaynak, AI-native Jira ve Linear alternatifi",
+        "description": "AI ajanlarının backlog üzerinde sizinle çalışması için MCP sunuculu, klavye öncelikli panolar, sprintler ve dokümanlar. MIT lisanslıdır — tek Docker Compose dosyasıyla kendiniz barındırabilirsiniz.",
+        "skipToContent": "İçeriğe geç"
+      }
+    },
+    "intake": {
+      "submitMetaTitle": "Gönder · TaskNebula"
+    }
   },
   "settingsClients": {
     "common": {
@@ -4823,7 +5858,8 @@
       "invitationResent": "Davet yeniden gönderildi",
       "adminCreatedOnlyInviteWarning": "Yalnızca yönetici tarafından oluşturulan hesaplar etkin. Yeni harici üyeler buraya eklenmeden önce bir süper yönetici tarafından oluşturulmalıdır.",
       "adminCreatedOnlyInviteBlockedTitle": "Davet devre dışı",
-      "adminCreatedOnlyInviteBlockedDescription": "Önce kullanıcıyı Admin > Users bölümünde oluşturun, ardından aktif hesabı bu organizasyona ekleyin."
+      "adminCreatedOnlyInviteBlockedDescription": "Önce kullanıcıyı Admin > Users bölümünde oluşturun, ardından aktif hesabı bu organizasyona ekleyin.",
+      "emailPlaceholder": "member@example.com"
     },
     "org": {
       "selectOrg": "Ayarları yüklemek için bir kuruluş seçin.",
@@ -4885,7 +5921,9 @@
         "projects": "Projeler",
         "teamspaces": "Ekip alanları",
         "apiKeys": "API anahtarları"
-      }
+      },
+      "logoPlaceholder": "https://cdn.example.com/logo.png",
+      "domainPlaceholder": "company.com"
     },
     "audit": {
       "loadFailed": "Hedefler yüklenemedi",
@@ -5428,6 +6466,39 @@
           "micNotStarted": "Mikrofonunuz başlatılamadı. Başka bir uygulama onu kullanıyor olabilir.",
           "audioEngineFailed": "Bu cihaz için tarayıcı ses motoru başarısız oldu. Diğer ses uygulamalarını durdurun veya mikrofonunuzu değiştirip tekrar deneyin.",
           "micNotFound": "Bu tarayıcı oturumu için mikrofon bulunamadı."
+        },
+        "noAudioTrackError": "Tarayıcıdan ses parçası dönmedi.",
+        "microphoneStartTimeout": "Mikrofon başlatılırken zaman aşımına uğradı.",
+        "microphoneRecoveryHint": {
+          "chromium": "Adres çubuğundaki mikrofon izni istemini kontrol edin ve Bu sefer izin ver veya Her ziyarette izin ver seçeneğini seçin. İstem kapatıldıysa, bu site için Chrome site ayarlarını açıp mikrofon izni verin.",
+          "edge": "Adres çubuğundaki mikrofon izni istemini kontrol edin. İstem kapatıldıysa, bu site için Edge Site izinlerini açıp mikrofon izni verin.",
+          "firefox": "Firefox genellikle mikrofon erişimini adres çubuğunun sol tarafında gösterir. Kaybolduysa kilit simgesini veya Sayfa Bilgisi izinlerini açıp bu site için mikrofon izni verin.",
+          "safari": "Safari mikrofon erişimini Safari > Ayarlar > Web Siteleri > Mikrofon altında veya adres çubuğundaki web sitesi kontrollerinde tutabilir.",
+          "unknown": "Tarayıcıdaki mikrofon istemini veya bu sitenin izinlerini kontrol edip mikrofon erişimine izin verin."
+        },
+        "pendingMicrophoneJoin": "Tarayıcı mikrofon erişimini tamamlarken sessiz olarak katıldınız. {hint} Erişim başarılı olursa TaskNebula mikrofonunuzu otomatik açacak.",
+        "pendingMicrophoneRuntime": "Tarayıcı hâlâ mikrofon erişimi bekliyor. {hint} Erişim başarılı olursa TaskNebula mikrofonunuzu otomatik açacak.",
+        "timedOutMicrophoneAccess": "Tarayıcı izni beklenirken mikrofon erişimi zaman aşımına uğradı. {hint} Ardından mikrofon düğmesini tekrar deneyin.",
+        "timedOutPendingMicrophonePrompt": "Tarayıcı izni beklenirken mikrofon erişimi zaman aşımına uğradı. {hint} Şimdi onaylarsanız TaskNebula mikrofonunuzu yine otomatik açacak. İstem görünmüyorsa bu sayfayı yenileyin veya mikrofon düğmesini tekrar deneyin.",
+        "deniedMicrophoneAccess": "Mikrofon izni reddedildi. {hint}",
+        "microphoneCaptureUnsupported": "Bu tarayıcı mikrofon kaydını desteklemiyor.",
+        "microphoneNotFound": "Mikrofon bulunamadı. Ses giriş cihazınızı kontrol edip tekrar deneyin.",
+        "microphoneBusy": "Mikrofonunuz başka bir uygulamada kullanılıyor. Diğer ses uygulamalarını kapatıp tekrar deneyin.",
+        "microphoneAccessUnavailable": "Mikrofon erişimi kullanılamıyor. {hint}",
+        "permissionStateLabel": {
+          "allowed": "İzinli",
+          "blocked": "Engellendi",
+          "waitingForBrowserDecision": "Tarayıcı kararı bekleniyor",
+          "browserManaged": "Tarayıcı tarafından yönetiliyor"
+        },
+        "permissionHelp": {
+          "deviceLabelsHiddenUntilPermission": "Tarayıcı mikrofon erişimi verene kadar cihaz adları gizli kalır.",
+          "grantedWithDevicesAndLabels": "Mikrofon erişimi zaten izinli. Buradan kullanılabilir mikrofonlar arasında geçiş yapabilirsiniz.",
+          "grantedLabelsHidden": "Mikrofon erişimi izinli, ancak bu tarayıcı henüz cihaz adlarını göstermedi. Tarayıcı ayarlarından döndükten sonra Cihazları yenile seçeneğini kullanın.",
+          "grantedNoDevices": "Mikrofon erişimi izinli, ancak tarayıcı şu anda hiç ses giriş cihazı görmüyor.",
+          "denied": "Bu site için mikrofon erişimi engellendi. {hint}",
+          "prompt": "Bu tarayıcı hâlâ mikrofon kararı bekliyor. {hint}{labelsHiddenNote}",
+          "unknown": "Bu tarayıcı erişimden önce güvenilir bir mikrofon izin durumu göstermiyor. {hint}{labelsHiddenNote}"
         }
       }
     }
@@ -5556,7 +6627,11 @@
     "oversightDefault": "Varsayılan gözetim",
     "reviewRequired": "İnceleme gerekli",
     "autoApplyAllowed": "Otomatik uygulamaya izin verilir",
-    "footerContact": "AI şeffaflığı, veri sahibi hakları veya bu model kartları hakkında sorularınız mı var? <link></link> adresine e-posta gönderin."
+    "footerContact": "AI şeffaflığı, veri sahibi hakları veya bu model kartları hakkında sorularınız mı var? <link></link> adresine e-posta gönderin.",
+    "meta": {
+      "title": "AI Model Kartları — TaskNebula",
+      "description": "TaskNebula’nın son kullanıcılara sunduğu her AI özelliği için, AB AI Act Madde 50 kapsamında gereken herkese açık AI şeffaflık açıklamaları."
+    }
   },
   "presence": {
     "group_viewing": "{count, plural, one {# kişi görüntülüyor} other {# kişi görüntülüyor}}",
@@ -5577,5 +6652,303 @@
     "sprint_planning": "Sprint planlama",
     "bulk_sprint_creation": "Toplu sprint oluşturma",
     "unknown": "{kind}"
+  },
+  "metadata": {
+    "root": {
+      "title": "TaskNebula - AI-native Proje Yönetimi",
+      "description": "AI destekli, gerçek zamanlı ve klavye öncelikli proje yönetimi platformu"
+    }
+  },
+  "agentApiErrors": {
+    "fallback": {
+      "fetchWorkspaceAgents": "Çalışma alanı AI ajanları getirilemedi.",
+      "updateWorkspaceAgents": "Çalışma alanı AI ajanları güncellenemedi.",
+      "createModelConfig": "AI model yapılandırması oluşturulamadı.",
+      "updateModelConfig": "AI model yapılandırması güncellenemedi.",
+      "archiveModelConfig": "AI model yapılandırması arşivlenemedi.",
+      "fetchProjectAgents": "Proje AI ajanları getirilemedi.",
+      "updateProjectAgents": "Proje AI ajanları güncellenemedi.",
+      "runProjectAgent": "Proje ajanı çalıştırılamadı.",
+      "fetchAdminControl": "Admin ajan kontrolü getirilemedi.",
+      "fetchAgentSessions": "Ajan oturumları getirilemedi.",
+      "dispatchAgent": "Ajan gönderilemedi.",
+      "fetchLocalRunners": "Yerel ajan runner’ları getirilemedi.",
+      "updateLocalRunner": "Yerel ajan runner’ı güncellenemedi.",
+      "updateAdminControl": "Admin ajan kontrolü güncellenemedi."
+    },
+    "server": {
+      "unauthorized": "Devam etmek için oturum açmanız gerekir.",
+      "forbidden": "Bu işlemi yapmak için izniniz yok.",
+      "insufficientPermissions": "Bu işlemi yapmak için yeterli izniniz yok.",
+      "superAdminRequired": "Super admin erişimi gerekir.",
+      "validationFailed": "İstek doğrulanamadı. Alanları kontrol edip tekrar deneyin.",
+      "invalidBody": "İstek gövdesi geçersiz.",
+      "organizationRequired": "Önce bir kuruluş seçin.",
+      "organizationNotFound": "Kuruluş bulunamadı.",
+      "issueNotFound": "İş bulunamadı.",
+      "issueViewDenied": "Bu işi görüntüleme izniniz yok.",
+      "issueDispatchDenied": "Bu iş üzerinde ajan gönderme izniniz yok.",
+      "createAgentSessionFailed": "Ajan oturumu oluşturulamadı.",
+      "manageWorkspaceAgentsDenied": "AI ajanlarını yönetmek için kuruluş ayarları izni gerekir.",
+      "manageModelConfigsDenied": "Model yapılandırmalarını yönetmek için kuruluş ayarları izni gerekir.",
+      "modelConfigNotFound": "Model yapılandırması bulunamadı.",
+      "updateWorkspaceAgentsFailed": "Çalışma alanı AI ajanları güncellenemedi.",
+      "createModelConfigFailed": "AI model yapılandırması oluşturulamadı.",
+      "updateModelConfigFailed": "AI model yapılandırması güncellenemedi.",
+      "projectAccessDenied": "Proje bulunamadı veya erişim reddedildi.",
+      "projectContextUnavailable": "Proje bağlamı yüklenemedi.",
+      "projectNotFound": "Proje bulunamadı.",
+      "manageProjectAgentsDenied": "Proje ajanlarını yönetme izniniz yok.",
+      "runProjectAgentsDenied": "Proje ajanlarını çalıştırma izniniz yok.",
+      "updateProjectAgentsFailed": "Proje AI ajanları güncellenemedi.",
+      "agentsGloballyPaused": "Ajanlar admin ekibi tarafından platform genelinde duraklatıldı.",
+      "workspaceAgentsDisabled": "Çalışma alanı AI ajanları devre dışı.",
+      "projectAgentsDisabled": "Bu proje için AI ajanları devre dışı.",
+      "capabilityDisabled": "Bu ajan yeteneği proje için devre dışı.",
+      "tooManyRuns": "Çok fazla ajan çalışması zaten devam ediyor. Biraz sonra tekrar deneyin.",
+      "runProjectAgentFailed": "Proje ajanı çalıştırılamadı.",
+      "updateAdminControlFailed": "Admin ajan kontrolü güncellenemedi."
+    }
+  },
+  "hookErrors": {
+    "notifications": {
+      "fetch": "Bildirimler alınamadı",
+      "markRead": "Bildirim okundu olarak işaretlenemedi",
+      "markAllRead": "Tüm bildirimler okundu olarak işaretlenemedi",
+      "delete": "Bildirim silinemedi"
+    },
+    "inbox": {
+      "fetch": "Gelen kutusu alınamadı",
+      "snooze": "Gelen kutusu öğesi ertelenemedi",
+      "markRead": "Gelen kutusu öğesi okundu olarak işaretlenemedi",
+      "markAllRead": "Tüm gelen kutusu öğeleri okundu olarak işaretlenemedi",
+      "catchMeUp": "Özet akışı alınamadı"
+    },
+    "activities": {
+      "fetch": "Etkinlikler alınamadı"
+    },
+    "members": {
+      "fetchOrganizationMembers": "Organizasyon üyeleri alınamadı"
+    },
+    "pushNotifications": {
+      "notConfigured": "Anlık bildirimler yapılandırılmamış",
+      "permissionDenied": "Bildirim izni reddedildi",
+      "saveSubscription": "Abonelik kaydedilemedi",
+      "device": {
+        "mobile": "Mobil cihaz",
+        "tablet": "Tablet",
+        "desktop": "Masaüstü"
+      }
+    },
+    "presence": {
+      "fetch": "Çevrim içi durum alınamadı",
+      "update": "Çevrim içi durum güncellenemedi",
+      "remove": "Çevrim içi durum kaldırılamadı"
+    },
+    "workflowStatuses": {
+      "load": "İş akışı durumları yüklenemedi"
+    },
+    "customFields": {
+      "fetch": "Özel alanlar alınamadı",
+      "fetchValues": "Özel alan değerleri alınamadı",
+      "create": "Özel alan oluşturulamadı",
+      "update": "Özel alan güncellenemedi",
+      "delete": "Özel alan silinemedi",
+      "setValue": "Özel alan değeri ayarlanamadı"
+    },
+    "permissions": {
+      "fetchOrganization": "Organizasyon izinleri alınamadı"
+    },
+    "analytics": {
+      "velocity": "Hız verileri alınamadı",
+      "projectHealth": "Proje sağlık verileri alınamadı",
+      "burndown": "Burndown verileri alınamadı"
+    },
+    "featureFlags": {
+      "fetchAll": "Özellik bayrakları alınamadı",
+      "fetchOne": "Özellik bayrağı alınamadı",
+      "create": "Özellik bayrağı oluşturulamadı",
+      "update": "Özellik bayrağı güncellenemedi",
+      "delete": "Özellik bayrağı silinemedi"
+    },
+    "attachments": {
+      "fetch": "Ekler alınamadı",
+      "upload": "Dosya yüklenemedi",
+      "delete": "Ek silinemedi"
+    },
+    "comments": {
+      "fetch": "Yorumlar alınamadı",
+      "create": "Yorum oluşturulamadı",
+      "update": "Yorum güncellenemedi",
+      "delete": "Yorum silinemedi",
+      "toggleReaction": "Tepki değiştirilemedi"
+    },
+    "issueLinks": {
+      "fetch": "İş bağlantıları alınamadı",
+      "create": "İş bağlantısı oluşturulamadı",
+      "delete": "İş bağlantısı silinemedi"
+    },
+    "issues": {
+      "fetch": "İşler alınamadı",
+      "idRequired": "İş kimliği gerekli",
+      "fetchOne": "İş alınamadı",
+      "create": "İş oluşturulamadı",
+      "delete": "İş silinemedi"
+    },
+    "projectPermissions": {
+      "fetchPermissions": "İzinler alınamadı",
+      "fetchUserRole": "Kullanıcı rolü alınamadı",
+      "fetchMembers": "Üyeler alınamadı"
+    },
+    "sprints": {
+      "fetch": "Sprintler alınamadı",
+      "fetchOne": "Sprint alınamadı",
+      "fetchIssues": "Sprint işleri alınamadı",
+      "create": "Sprint oluşturulamadı",
+      "update": "Sprint güncellenemedi",
+      "delete": "Sprint silinemedi",
+      "assignIssue": "İş sprinte atanamadı"
+    },
+    "version": {
+      "load": "Sürüm bilgisi yüklenemedi",
+      "startSelfUpdate": "Kendi kendine güncelleme başlatılamadı",
+      "updatePreferences": "Güncelleme tercihleri güncellenemedi"
+    },
+    "teamspaces": {
+      "fetch": "Takım alanları alınamadı",
+      "organizationAndTeamspaceRequired": "Organizasyon ve takım alanı gerekli",
+      "fetchMembers": "Takım alanı üyeleri alınamadı",
+      "noOrganizationSelected": "Organizasyon seçilmedi",
+      "create": "Takım alanı oluşturulamadı",
+      "update": "Takım alanı güncellenemedi",
+      "delete": "Takım alanı silinemedi",
+      "noTeamspaceSelected": "Takım alanı seçilmedi",
+      "addMember": "Takım alanına üye eklenemedi",
+      "updateMember": "Takım alanı üyesi güncellenemedi",
+      "removeMember": "Takım alanı üyesi kaldırılamadı"
+    },
+    "docs": {
+      "fetchSpaces": "Doküman alanları alınamadı",
+      "fetchPages": "Doküman sayfaları alınamadı",
+      "fetchPage": "Doküman sayfası alınamadı",
+      "fetchTree": "Doküman ağacı alınamadı",
+      "fetchRevisions": "Doküman revizyonları alınamadı",
+      "search": "Dokümanlarda arama yapılamadı",
+      "createPage": "Doküman sayfası oluşturulamadı",
+      "updatePage": "Doküman sayfası güncellenemedi",
+      "restoreRevision": "Doküman revizyonu geri yüklenemedi",
+      "openPageBeforeSharing": "Paylaşımı güncellemeden önce bir sayfa açın",
+      "updateSharing": "Doküman paylaşımı güncellenemedi",
+      "fetchIssueDocs": "İşe bağlı dokümanlar alınamadı",
+      "attachDoc": "Doküman bağlanamadı",
+      "detachDoc": "Doküman bağlantısı kaldırılamadı",
+      "fetchAttachments": "Doküman ekleri alınamadı",
+      "uploadAttachment": "Doküman eki yüklenemedi",
+      "deleteAttachment": "Doküman eki silinemedi"
+    },
+    "chat": {
+      "loadBootstrap": "Sohbet başlangıç verileri yüklenemedi",
+      "loadLiveCalls": "Canlı aramalar yüklenemedi",
+      "loadMessages": "Mesajlar yüklenemedi",
+      "loadOlderMessages": "Eski mesajlar yüklenemedi",
+      "loadIssueConversation": "İş konuşması yüklenemedi",
+      "loadDocumentConversation": "Doküman konuşması yüklenemedi",
+      "noRoomSelected": "Oda seçilmedi",
+      "sendMessage": "Mesaj gönderilemedi",
+      "updateMessage": "Mesaj güncellenemedi",
+      "deleteMessage": "Mesaj silinemedi",
+      "moderateMessages": "Konuşma mesajları denetlenemedi",
+      "markRead": "Konuşma okundu olarak işaretlenemedi",
+      "startCall": "Arama başlatılamadı",
+      "endCall": "Arama sonlandırılamadı",
+      "leaveCall": "Aramadan çıkılamadı",
+      "createCallToken": "Arama tokenı oluşturulamadı",
+      "refreshMessages": "Mesajlar yenilenemedi",
+      "loadWorkspaceCommunications": "Çalışma alanı iletişim ayarları yüklenemedi",
+      "updateWorkspaceCommunications": "Çalışma alanı iletişim ayarları güncellenemedi",
+      "loadProjectCommunications": "Proje iletişim ayarları yüklenemedi",
+      "updateProjectCommunications": "Proje iletişim ayarları güncellenemedi",
+      "noOrganizationSelected": "Organizasyon seçilmedi",
+      "noProjectSelected": "Proje seçilmedi",
+      "loadRealtimeHealth": "Gerçek zamanlı sistem sağlığı yüklenemedi"
+    },
+    "drafts": {
+      "load": "Taslaklar yüklenemedi",
+      "create": "Taslak oluşturulamadı",
+      "update": "Taslak güncellenemedi",
+      "delete": "Taslak silinemedi",
+      "saveToastTitle": "Taslak kaydedilemedi",
+      "updateToastTitle": "Taslak güncellenemedi",
+      "deleteToastTitle": "Taslak silinemedi",
+      "promoteToastTitle": "Taslak dönüştürülemedi",
+      "unknownError": "Bilinmeyen hata",
+      "notFoundTitle": "Taslak bulunamadı",
+      "reloadAndTryAgain": "Sayfayı yenileyip tekrar deneyin.",
+      "notSupportedTitle": "Henüz desteklenmiyor",
+      "pagePromotionUnsupported": "Sayfaları dokümanlara dönüştürme henüz kullanılamıyor.",
+      "commentPromotionUnsupported": "Yorumları dönüştürme henüz kullanılamıyor.",
+      "noProjectTitle": "Kullanılabilir proje yok",
+      "noProjectDescription": "Taslakları iş öğelerine dönüştürmeden önce bir projeye katılın veya proje oluşturun.",
+      "untitledDraft": "Başlıksız taslak",
+      "createWorkItem": "İş öğesi oluşturulamadı",
+      "draftKeptTitle": "Taslak korundu",
+      "draftKeptDescription": "İş öğesi oluşturuldu, ancak taslak kaldırılamadı.",
+      "promotedTitle": "İş öğesine dönüştürüldü",
+      "promotedDescriptionWithKey": "{key} oluşturuldu.",
+      "promotedDescription": "İş öğesi başarıyla oluşturuldu."
+    },
+    "modules": {
+      "fetch": "Modüller alınamadı",
+      "create": "Modül oluşturulamadı",
+      "update": "Modül güncellenemedi",
+      "delete": "Modül silinemedi"
+    }
+  },
+  "componentErrors": {
+    "watchers": {
+      "fetch": "İzleyenler alınamadı",
+      "add": "İzleyen eklenemedi",
+      "remove": "İzleyen kaldırılamadı"
+    },
+    "pinnedItems": {
+      "fetch": "Sabitlenen öğeler alınamadı",
+      "load": "Sabitlenen öğeler yüklenemedi",
+      "pinIssue": "İş sabitlenemedi",
+      "unpinIssue": "İş sabitten kaldırılamadı",
+      "unpin": "Öğe sabitten kaldırılamadı"
+    },
+    "audit": {
+      "fetch": "Denetim günlükleri alınamadı"
+    },
+    "dashboard": {
+      "loadStandup": "Standup yüklenemedi",
+      "fetchOrganizations": "Organizasyonlar alınamadı",
+      "fetchIssues": "İşler alınamadı"
+    },
+    "analytics": {
+      "velocity": "Hız verisi yüklenemedi",
+      "throughput": "Throughput verisi yüklenemedi",
+      "forecast": "Tahmin verisi yüklenemedi",
+      "dora": "DORA metrikleri alınamadı"
+    },
+    "initiatives": {
+      "loadRollup": "Toplam ilerleme yüklenemedi",
+      "loadUpdates": "Güncellemeler yüklenemedi",
+      "fetchList": "Girişimler alınamadı"
+    },
+    "admin": {
+      "fetchStats": "İstatistikler alınamadı",
+      "fetchOrganizations": "Organizasyonlar alınamadı",
+      "loadOrganizations": "Organizasyonlar yüklenemedi",
+      "fetchOrganization": "Organizasyon alınamadı",
+      "deleteOrganization": "Organizasyon silinemedi",
+      "fetchUsers": "Kullanıcılar alınamadı",
+      "fetchUser": "Kullanıcı alınamadı",
+      "fetchAuditLogs": "Denetim günlükleri alınamadı"
+    },
+    "projects": {
+      "fetchOrganizations": "Organizasyonlar alınamadı",
+      "fetchEpics": "Epicler alınamadı"
+    }
   }
 }

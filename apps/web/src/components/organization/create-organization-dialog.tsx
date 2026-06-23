@@ -67,10 +67,10 @@ export function CreateOrganizationDialog({ trigger }: CreateOrganizationDialogPr
       setSlug('');
       router.refresh();
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast({
         title: t('org_create_error_title'),
-        description: error.message,
+        description: t('org_create_error_title'),
         variant: 'destructive',
       });
     },

@@ -56,8 +56,8 @@ export function FeatureFlagRuntimeTest({ defaultKey = '' }: FeatureFlagRuntimeTe
         throw new Error(payload.error || t('flagTest.evaluateFailed'));
       }
       setResult(payload as TestResult);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('flagTest.evaluateFailed'));
+    } catch {
+      setError(t('flagTest.evaluateFailed'));
     } finally {
       setLoading(false);
     }
@@ -93,7 +93,7 @@ export function FeatureFlagRuntimeTest({ defaultKey = '' }: FeatureFlagRuntimeTe
               id="test-key"
               value={key}
               onChange={(e) => setKey(e.target.value)}
-              placeholder="advanced_analytics"
+              placeholder={t('flagTest.keyPlaceholder')}
             />
           </div>
           <div className="space-y-1.5">

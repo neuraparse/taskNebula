@@ -472,7 +472,7 @@ export function MembersPageClient() {
                     <Input
                       id="email"
                       type="email"
-                      placeholder="member@example.com"
+                      placeholder={t('members.emailPlaceholder')}
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
                     />

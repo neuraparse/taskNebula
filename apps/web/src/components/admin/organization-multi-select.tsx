@@ -34,6 +34,7 @@ export function OrganizationMultiSelect({
   placeholder,
 }: OrganizationMultiSelectProps) {
   const t = useTranslations('adminDialogs');
+  const errorT = useTranslations('componentErrors.admin');
   const [open, setOpen] = useState(false);
   const resolvedPlaceholder = placeholder ?? t('orgMultiSelect.allOrganizations');
 
@@ -41,7 +42,7 @@ export function OrganizationMultiSelect({
     queryKey: ['admin-organizations-options'],
     queryFn: async () => {
       const response = await fetch('/api/admin/organizations?limit=200');
-      if (!response.ok) throw new Error('Failed to load organizations');
+      if (!response.ok) throw new Error(errorT('loadOrganizations'));
       const payload = (await response.json()) as {
         organizations: Array<{ id: string; name: string; slug: string }>;
       };

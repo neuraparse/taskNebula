@@ -7,16 +7,18 @@ import * as React from 'react';
 /* -------------------------------------------------------------------------- */
 
 export type SlashArgumentKind =
-  | 'user'       // @mention picker
-  | 'label'      // free-text label
-  | 'duration'   // 30m, 1h30m, etc.
+  | 'user' // @mention picker
+  | 'label' // free-text label
+  | 'duration' // 30m, 1h30m, etc.
   | 'project'
   | 'status'
-  | 'free';      // any string
+  | 'free'; // any string
 
 export interface SlashArgumentSpec {
   /** Human label shown in the inline hint. */
   label: string;
+  /** next-intl key used when rendering the default registry. */
+  labelKey?: string;
   kind: SlashArgumentKind;
   /** Whether the argument is required to fire the command. */
   required: boolean;
@@ -27,6 +29,8 @@ export interface SlashCommand {
   name: string;
   /** Human description shown in the picker. */
   description: string;
+  /** next-intl key used when rendering the default registry. */
+  descriptionKey?: string;
   /** Optional aliases that also trigger this command. */
   aliases?: ReadonlyArray<string>;
   /** Ordered list of arguments parsed from the rest of the line. */
@@ -61,46 +65,104 @@ function dispatchSlash(event: string, detail: unknown) {
   window.dispatchEvent(new CustomEvent(`tasknebula:slash:${event}`, { detail }));
 }
 
-export const DEFAULT_SLASH_COMMANDS: ReadonlyArray<SlashCommand> = [
-  {
-    name: 'assign',
-    description: 'Assign this work item to a teammate',
-    aliases: ['a'],
-    arguments: [{ label: '@user', kind: 'user', required: true }],
-    run: (invocation) => dispatchSlash('assign', invocation),
-  },
-  {
-    name: 'label',
-    description: 'Add a label',
-    aliases: ['tag'],
-    arguments: [{ label: 'name', kind: 'label', required: true }],
-    run: (invocation) => dispatchSlash('label', invocation),
-  },
-  {
-    name: 'track',
-    description: 'Log time against this item',
-    arguments: [{ label: 'duration', kind: 'duration', required: true }],
-    run: (invocation) => dispatchSlash('track', invocation),
-  },
-  {
-    name: 'status',
-    description: 'Change status',
-    arguments: [{ label: 'status', kind: 'status', required: true }],
-    run: (invocation) => dispatchSlash('status', invocation),
-  },
-  {
-    name: 'due',
-    description: 'Set a due date',
-    arguments: [{ label: 'date', kind: 'free', required: true }],
-    run: (invocation) => dispatchSlash('due', invocation),
-  },
-  {
-    name: 'mention',
-    description: 'Mention a teammate',
-    arguments: [{ label: '@user', kind: 'user', required: true }],
-    run: (invocation) => dispatchSlash('mention', invocation),
-  },
-];
+type SlashTranslator = (key: string) => string;
+
+function slashText(t: SlashTranslator | undefined, key: string) {
+  return t ? t(key) : key;
+}
+
+export function createDefaultSlashCommands(t?: SlashTranslator): ReadonlyArray<SlashCommand> {
+  return [
+    {
+      name: 'assign',
+      descriptionKey: 'slashCommands.assign.description',
+      description: slashText(t, 'slashCommands.assign.description'),
+      aliases: ['a'],
+      arguments: [
+        {
+          labelKey: 'slashCommands.arguments.user',
+          label: slashText(t, 'slashCommands.arguments.user'),
+          kind: 'user',
+          required: true,
+        },
+      ],
+      run: (invocation) => dispatchSlash('assign', invocation),
+    },
+    {
+      name: 'label',
+      descriptionKey: 'slashCommands.label.description',
+      description: slashText(t, 'slashCommands.label.description'),
+      aliases: ['tag'],
+      arguments: [
+        {
+          labelKey: 'slashCommands.arguments.label',
+          label: slashText(t, 'slashCommands.arguments.label'),
+          kind: 'label',
+          required: true,
+        },
+      ],
+      run: (invocation) => dispatchSlash('label', invocation),
+    },
+    {
+      name: 'track',
+      descriptionKey: 'slashCommands.track.description',
+      description: slashText(t, 'slashCommands.track.description'),
+      arguments: [
+        {
+          labelKey: 'slashCommands.arguments.duration',
+          label: slashText(t, 'slashCommands.arguments.duration'),
+          kind: 'duration',
+          required: true,
+        },
+      ],
+      run: (invocation) => dispatchSlash('track', invocation),
+    },
+    {
+      name: 'status',
+      descriptionKey: 'slashCommands.status.description',
+      description: slashText(t, 'slashCommands.status.description'),
+      arguments: [
+        {
+          labelKey: 'slashCommands.arguments.status',
+          label: slashText(t, 'slashCommands.arguments.status'),
+          kind: 'status',
+          required: true,
+        },
+      ],
+      run: (invocation) => dispatchSlash('status', invocation),
+    },
+    {
+      name: 'due',
+      descriptionKey: 'slashCommands.due.description',
+      description: slashText(t, 'slashCommands.due.description'),
+      arguments: [
+        {
+          labelKey: 'slashCommands.arguments.date',
+          label: slashText(t, 'slashCommands.arguments.date'),
+          kind: 'free',
+          required: true,
+        },
+      ],
+      run: (invocation) => dispatchSlash('due', invocation),
+    },
+    {
+      name: 'mention',
+      descriptionKey: 'slashCommands.mention.description',
+      description: slashText(t, 'slashCommands.mention.description'),
+      arguments: [
+        {
+          labelKey: 'slashCommands.arguments.user',
+          label: slashText(t, 'slashCommands.arguments.user'),
+          kind: 'user',
+          required: true,
+        },
+      ],
+      run: (invocation) => dispatchSlash('mention', invocation),
+    },
+  ];
+}
+
+export const DEFAULT_SLASH_COMMANDS: ReadonlyArray<SlashCommand> = createDefaultSlashCommands();
 
 /* -------------------------------------------------------------------------- */
 /* Parsing                                                                     */
@@ -201,13 +263,10 @@ export function useSlashCommands(options: UseSlashCommandsOptions = {}): UseSlas
   const registry = options.commands ?? DEFAULT_SLASH_COMMANDS;
   const [trigger, setTrigger] = React.useState<UseSlashCommandsResult['trigger']>(null);
 
-  const update = React.useCallback(
-    (text: string, caret: number) => {
-      const next = detectSlashTrigger(text, caret);
-      setTrigger(next);
-    },
-    []
-  );
+  const update = React.useCallback((text: string, caret: number) => {
+    const next = detectSlashTrigger(text, caret);
+    setTrigger(next);
+  }, []);
 
   const reset = React.useCallback(() => setTrigger(null), []);
 

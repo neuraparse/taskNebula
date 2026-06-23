@@ -7,6 +7,7 @@ import { getSelfUpdateStatus, SelfUpdateError, startSelfUpdate } from '@/lib/ver
 
 const startSchema = z.object({
   targetVersion: z.string().min(1).max(32),
+  confirmedVersion: z.string().min(1).max(32),
   acknowledged: z.boolean(),
 });
 
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
   try {
     const selfUpdate = await startSelfUpdate({
       targetVersion: parsed.data.targetVersion,
+      confirmedVersion: parsed.data.confirmedVersion,
       acknowledged: parsed.data.acknowledged,
       triggeredBy: authz.userId,
       ipAddress: getIpAddress(request),

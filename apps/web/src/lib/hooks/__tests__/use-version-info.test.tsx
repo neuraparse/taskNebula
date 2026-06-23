@@ -213,7 +213,11 @@ describe('use-version-info hooks', () => {
       expect(fetchMock).toHaveBeenCalledWith('/api/admin/version/self-update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetVersion: '0.5.0', acknowledged: true }),
+        body: JSON.stringify({
+          targetVersion: '0.5.0',
+          confirmedVersion: '0.5.0',
+          acknowledged: true,
+        }),
       });
       expect(queryClient.getQueryData(SELF_UPDATE_QUERY_KEY)).toEqual(selfUpdate);
       expect(queryClient.getQueryState(VERSION_INFO_QUERY_KEY)?.isInvalidated).toBe(true);

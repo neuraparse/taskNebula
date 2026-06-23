@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 
 export type AgentModelConfig = {
   id: string;
@@ -374,6 +375,90 @@ export type AgentLiveRun = {
   }>;
 };
 
+type AgentApiFallbackKey =
+  | 'fetchWorkspaceAgents'
+  | 'updateWorkspaceAgents'
+  | 'createModelConfig'
+  | 'updateModelConfig'
+  | 'archiveModelConfig'
+  | 'fetchProjectAgents'
+  | 'updateProjectAgents'
+  | 'runProjectAgent'
+  | 'fetchAdminControl'
+  | 'fetchAgentSessions'
+  | 'dispatchAgent'
+  | 'fetchLocalRunners'
+  | 'updateLocalRunner'
+  | 'updateAdminControl';
+
+const AGENT_API_SERVER_ERROR_KEYS = {
+  Unauthorized: 'unauthorized',
+  Forbidden: 'forbidden',
+  'Insufficient permissions': 'insufficientPermissions',
+  'Super admin access required': 'superAdminRequired',
+  'Validation failed': 'validationFailed',
+  'Invalid body': 'invalidBody',
+  'organizationId is required': 'organizationRequired',
+  'Organization not found': 'organizationNotFound',
+  'Issue not found': 'issueNotFound',
+  'No permission to view this issue': 'issueViewDenied',
+  'No permission to dispatch agents on this issue': 'issueDispatchDenied',
+  'Failed to create agent session': 'createAgentSessionFailed',
+  'Managing AI agents requires organization settings permission.': 'manageWorkspaceAgentsDenied',
+  'Managing model configs requires organization settings permission.': 'manageModelConfigsDenied',
+  'Model config not found.': 'modelConfigNotFound',
+  'Failed to update workspace AI agents': 'updateWorkspaceAgentsFailed',
+  'Failed to create AI model config': 'createModelConfigFailed',
+  'Failed to update AI model config': 'updateModelConfigFailed',
+  'Project not found or access denied': 'projectAccessDenied',
+  'Project context could not be loaded': 'projectContextUnavailable',
+  'Project not found': 'projectNotFound',
+  'You do not have permission to manage project agents.': 'manageProjectAgentsDenied',
+  'You do not have permission to run project agents.': 'runProjectAgentsDenied',
+  'Failed to update project AI agents': 'updateProjectAgentsFailed',
+  'Agents are paused globally by the admin team.': 'agentsGloballyPaused',
+  'Workspace AI agents are disabled.': 'workspaceAgentsDisabled',
+  'Project AI agents are disabled for this project.': 'projectAgentsDisabled',
+  'This agent capability is disabled for the project.': 'capabilityDisabled',
+  'Too many agent runs are already in progress. Try again in a moment.': 'tooManyRuns',
+  'Failed to run project agent': 'runProjectAgentFailed',
+  'Failed to update admin agent control': 'updateAdminControlFailed',
+} as const;
+
+async function readJsonPayload(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+function readPayloadError(payload: unknown): string | null {
+  if (!payload || typeof payload !== 'object' || !('error' in payload)) {
+    return null;
+  }
+
+  const error = (payload as { error?: unknown }).error;
+  return typeof error === 'string' ? error : null;
+}
+
+function useAgentApiErrorText() {
+  const t = useTranslations('agentApiErrors');
+
+  return (payload: unknown, fallbackKey: AgentApiFallbackKey) => {
+    const rawError = readPayloadError(payload);
+    const serverKey = rawError
+      ? AGENT_API_SERVER_ERROR_KEYS[rawError as keyof typeof AGENT_API_SERVER_ERROR_KEYS]
+      : null;
+
+    if (serverKey) {
+      return t(`server.${serverKey}`);
+    }
+
+    return t(`fallback.${fallbackKey}`);
+  };
+}
+
 function reduceAgentStreamEvent(current: Record<string, AgentLiveRun>, event: AgentStreamEvent) {
   const next = { ...current };
   const runId = event.data.executionId;
@@ -502,17 +587,17 @@ function useAgentStream(params: {
 }
 
 export function useOrganizationAgentSettings(organizationId: string | null) {
+  const apiErrorText = useAgentApiErrorText();
+
   return useQuery<WorkspaceAgentResponse>({
     queryKey: ['organization-ai-agents', organizationId],
     queryFn: async () => {
       const response = await fetch(`/api/organizations/${organizationId}/ai-agents`);
-      const payload = await response
-        .json()
-        .catch(() => ({ error: 'Failed to fetch workspace AI agents' }));
+      const payload = await readJsonPayload(response);
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to fetch workspace AI agents');
+        throw new Error(apiErrorText(payload, 'fetchWorkspaceAgents'));
       }
-      return payload;
+      return payload as WorkspaceAgentResponse;
     },
     enabled: !!organizationId,
   });
@@ -520,6 +605,7 @@ export function useOrganizationAgentSettings(organizationId: string | null) {
 
 export function useUpdateOrganizationAgentSettings(organizationId: string) {
   const queryClient = useQueryClient();
+  const apiErrorText = useAgentApiErrorText();
 
   return useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
@@ -528,11 +614,9 @@ export function useUpdateOrganizationAgentSettings(organizationId: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      const payload = await response
-        .json()
-        .catch(() => ({ error: 'Failed to update workspace AI agents' }));
+      const payload = await readJsonPayload(response);
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to update workspace AI agents');
+        throw new Error(apiErrorText(payload, 'updateWorkspaceAgents'));
       }
       return payload;
     },
@@ -548,6 +632,7 @@ export function useUpdateOrganizationAgentSettings(organizationId: string) {
 
 export function useCreateOrganizationAgentModelConfig(organizationId: string) {
   const queryClient = useQueryClient();
+  const apiErrorText = useAgentApiErrorText();
 
   return useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
@@ -556,11 +641,9 @@ export function useCreateOrganizationAgentModelConfig(organizationId: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      const payload = await response
-        .json()
-        .catch(() => ({ error: 'Failed to create AI model config' }));
+      const payload = await readJsonPayload(response);
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to create AI model config');
+        throw new Error(apiErrorText(payload, 'createModelConfig'));
       }
       return payload as { config: AgentModelConfig | null };
     },
@@ -573,6 +656,7 @@ export function useCreateOrganizationAgentModelConfig(organizationId: string) {
 
 export function useUpdateOrganizationAgentModelConfig(organizationId: string) {
   const queryClient = useQueryClient();
+  const apiErrorText = useAgentApiErrorText();
 
   return useMutation({
     mutationFn: async (params: { configId: string; data: Record<string, unknown> }) => {
@@ -584,11 +668,9 @@ export function useUpdateOrganizationAgentModelConfig(organizationId: string) {
           body: JSON.stringify(params.data),
         }
       );
-      const payload = await response
-        .json()
-        .catch(() => ({ error: 'Failed to update AI model config' }));
+      const payload = await readJsonPayload(response);
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to update AI model config');
+        throw new Error(apiErrorText(payload, 'updateModelConfig'));
       }
       return payload as { config: AgentModelConfig | null };
     },
@@ -604,6 +686,7 @@ export function useUpdateOrganizationAgentModelConfig(organizationId: string) {
 
 export function useArchiveOrganizationAgentModelConfig(organizationId: string) {
   const queryClient = useQueryClient();
+  const apiErrorText = useAgentApiErrorText();
 
   return useMutation({
     mutationFn: async (configId: string) => {
@@ -613,11 +696,9 @@ export function useArchiveOrganizationAgentModelConfig(organizationId: string) {
           method: 'DELETE',
         }
       );
-      const payload = await response
-        .json()
-        .catch(() => ({ error: 'Failed to archive AI model config' }));
+      const payload = await readJsonPayload(response);
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to archive AI model config');
+        throw new Error(apiErrorText(payload, 'archiveModelConfig'));
       }
       return payload as { config: AgentModelConfig | null };
     },
@@ -632,17 +713,17 @@ export function useArchiveOrganizationAgentModelConfig(organizationId: string) {
 }
 
 export function useProjectAgents(projectId: string | null) {
+  const apiErrorText = useAgentApiErrorText();
+
   return useQuery<ProjectAgentsResponse>({
     queryKey: ['project-ai-agents', projectId],
     queryFn: async () => {
       const response = await fetch(`/api/projects/${projectId}/agents`);
-      const payload = await response
-        .json()
-        .catch(() => ({ error: 'Failed to fetch project AI agents' }));
+      const payload = await readJsonPayload(response);
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to fetch project AI agents');
+        throw new Error(apiErrorText(payload, 'fetchProjectAgents'));
       }
-      return payload;
+      return payload as ProjectAgentsResponse;
     },
     enabled: !!projectId,
   });
@@ -650,6 +731,7 @@ export function useProjectAgents(projectId: string | null) {
 
 export function useUpdateProjectAgents(projectId: string) {
   const queryClient = useQueryClient();
+  const apiErrorText = useAgentApiErrorText();
 
   return useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
@@ -658,11 +740,9 @@ export function useUpdateProjectAgents(projectId: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      const payload = await response
-        .json()
-        .catch(() => ({ error: 'Failed to update project AI agents' }));
+      const payload = await readJsonPayload(response);
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to update project AI agents');
+        throw new Error(apiErrorText(payload, 'updateProjectAgents'));
       }
       return payload;
     },
@@ -675,6 +755,7 @@ export function useUpdateProjectAgents(projectId: string) {
 
 export function useRunProjectAgent(projectId: string) {
   const queryClient = useQueryClient();
+  const apiErrorText = useAgentApiErrorText();
 
   return useMutation({
     mutationFn: async (data: { kind: string; dryRun?: boolean }) => {
@@ -683,9 +764,9 @@ export function useRunProjectAgent(projectId: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      const payload = await response.json().catch(() => ({ error: 'Failed to run project agent' }));
+      const payload = await readJsonPayload(response);
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to run project agent');
+        throw new Error(apiErrorText(payload, 'runProjectAgent'));
       }
       return payload as ProjectAgentRunResponse;
     },
@@ -698,33 +779,33 @@ export function useRunProjectAgent(projectId: string) {
 }
 
 export function useAdminAgentControl() {
+  const apiErrorText = useAgentApiErrorText();
+
   return useQuery<AdminAgentControlResponse>({
     queryKey: ['admin-agent-control'],
     queryFn: async () => {
       const response = await fetch('/api/admin/agent-control');
-      const payload = await response
-        .json()
-        .catch(() => ({ error: 'Failed to fetch admin agent control' }));
+      const payload = await readJsonPayload(response);
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to fetch admin agent control');
+        throw new Error(apiErrorText(payload, 'fetchAdminControl'));
       }
-      return payload;
+      return payload as AdminAgentControlResponse;
     },
   });
 }
 
 export function useIssueAgentSessions(issueId: string | null, enabled = true) {
+  const apiErrorText = useAgentApiErrorText();
+
   return useQuery<IssueAgentSessionsResponse>({
     queryKey: ['issue-agent-sessions', issueId],
     queryFn: async () => {
       const response = await fetch(`/api/issues/${issueId}/agent-sessions`);
-      const payload = await response
-        .json()
-        .catch(() => ({ error: 'Failed to fetch agent sessions' }));
+      const payload = await readJsonPayload(response);
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to fetch agent sessions');
+        throw new Error(apiErrorText(payload, 'fetchAgentSessions'));
       }
-      return payload;
+      return payload as IssueAgentSessionsResponse;
     },
     enabled: enabled && !!issueId,
     refetchInterval: (query) => {
@@ -738,6 +819,7 @@ export function useIssueAgentSessions(issueId: string | null, enabled = true) {
 
 export function useDispatchIssueAgent(issueId: string) {
   const queryClient = useQueryClient();
+  const apiErrorText = useAgentApiErrorText();
 
   return useMutation({
     mutationFn: async (data: { provider: AgentSessionProvider; promptOverride?: string }) => {
@@ -749,9 +831,9 @@ export function useDispatchIssueAgent(issueId: string) {
           prompt_override: data.promptOverride || undefined,
         }),
       });
-      const payload = await response.json().catch(() => ({ error: 'Failed to dispatch agent' }));
+      const payload = await readJsonPayload(response);
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to dispatch agent');
+        throw new Error(apiErrorText(payload, 'dispatchAgent'));
       }
       return payload as {
         sessionId: string;
@@ -770,19 +852,19 @@ export function useDispatchIssueAgent(issueId: string) {
 }
 
 export function useAdminLocalAgentRunners(organizationId: string | null) {
+  const apiErrorText = useAgentApiErrorText();
+
   return useQuery<AdminLocalAgentRunnersResponse>({
     queryKey: ['admin-local-agent-runners', organizationId],
     queryFn: async () => {
       const response = await fetch(
         `/api/admin/agent-control/local-runners?organizationId=${organizationId}`
       );
-      const payload = await response
-        .json()
-        .catch(() => ({ error: 'Failed to fetch local agent runners' }));
+      const payload = await readJsonPayload(response);
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to fetch local agent runners');
+        throw new Error(apiErrorText(payload, 'fetchLocalRunners'));
       }
-      return payload;
+      return payload as AdminLocalAgentRunnersResponse;
     },
     enabled: !!organizationId,
   });
@@ -790,6 +872,7 @@ export function useAdminLocalAgentRunners(organizationId: string | null) {
 
 export function useUpdateAdminLocalAgentRunner(organizationId: string) {
   const queryClient = useQueryClient();
+  const apiErrorText = useAgentApiErrorText();
 
   return useMutation({
     mutationFn: async (data: { provider: LocalAgentRunnerProvider; enabled: boolean }) => {
@@ -798,11 +881,9 @@ export function useUpdateAdminLocalAgentRunner(organizationId: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ organizationId, ...data }),
       });
-      const payload = await response
-        .json()
-        .catch(() => ({ error: 'Failed to update local agent runner' }));
+      const payload = await readJsonPayload(response);
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to update local agent runner');
+        throw new Error(apiErrorText(payload, 'updateLocalRunner'));
       }
       return payload as AdminLocalAgentRunnersResponse;
     },
@@ -815,6 +896,7 @@ export function useUpdateAdminLocalAgentRunner(organizationId: string) {
 
 export function useUpdateAdminAgentControl() {
   const queryClient = useQueryClient();
+  const apiErrorText = useAgentApiErrorText();
 
   return useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
@@ -823,11 +905,9 @@ export function useUpdateAdminAgentControl() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      const payload = await response
-        .json()
-        .catch(() => ({ error: 'Failed to update admin agent control' }));
+      const payload = await readJsonPayload(response);
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to update admin agent control');
+        throw new Error(apiErrorText(payload, 'updateAdminControl'));
       }
       return payload;
     },

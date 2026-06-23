@@ -4,19 +4,27 @@ import { useState } from 'react';
 import { useFormatter, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import {
   useRefreshVersionInfo,
   useStartSelfUpdate,
+  useUpdateVersionPreferences,
   useVersionInfo,
+  type SelfUpdateBackupPreflight,
   type SelfUpdateStatus,
+  type VersionUpdatePreferences,
   type VersionInfo,
 } from '@/lib/hooks/use-version-info';
 import {
   AlertTriangle,
   ArrowUpCircle,
+  Bell,
   Check,
+  Database,
   ExternalLink,
+  FolderArchive,
   Loader2,
   RefreshCw,
   Rocket,
@@ -56,6 +64,7 @@ export function VersionPanel() {
   const { data, isLoading, error } = useVersionInfo();
   const refresh = useRefreshVersionInfo();
   const startUpdate = useStartSelfUpdate();
+  const updatePreferences = useUpdateVersionPreferences();
   const [acknowledged, setAcknowledged] = useState(false);
 
   function handleCheckNow() {
@@ -72,8 +81,12 @@ export function VersionPanel() {
           toast({ title: t('checkFailedTitle'), description: t('checkFailedDescription') });
         }
       },
-      onError: (err: Error) => {
-        toast({ title: t('checkFailedTitle'), description: err.message, variant: 'destructive' });
+      onError: () => {
+        toast({
+          title: t('checkFailedTitle'),
+          description: t('checkFailedDescription'),
+          variant: 'destructive',
+        });
       },
     });
   }
@@ -87,10 +100,35 @@ export function VersionPanel() {
           description: t('selfUpdate.startedDescription'),
         });
       },
-      onError: (err: Error) => {
+      onError: () => {
         toast({
           title: t('selfUpdate.failedTitle'),
-          description: err.message,
+          description: t('selfUpdate.failedDescription'),
+          variant: 'destructive',
+        });
+      },
+    });
+  }
+
+  function handlePreferenceChange(
+    patch: Partial<
+      Pick<
+        VersionUpdatePreferences,
+        'bannerEnabled' | 'availableUpdateNotificationsEnabled' | 'postUpdateNotificationsEnabled'
+      >
+    >
+  ) {
+    updatePreferences.mutate(patch, {
+      onSuccess: () => {
+        toast({
+          title: t('preferences.savedTitle'),
+          description: t('preferences.savedDescription'),
+        });
+      },
+      onError: () => {
+        toast({
+          title: t('preferences.failedTitle'),
+          description: t('preferences.failedDescription'),
           variant: 'destructive',
         });
       },
@@ -117,9 +155,7 @@ export function VersionPanel() {
           {t('loading')}
         </div>
       ) : error ? (
-        <p className="text-destructive text-sm">
-          {error instanceof Error ? error.message : t('loadError')}
-        </p>
+        <p className="text-destructive text-sm">{t('loadError')}</p>
       ) : data ? (
         <>
           {/* Version summary */}
@@ -207,6 +243,12 @@ export function VersionPanel() {
               </dl>
             </div>
           ) : null}
+
+          <UpdatePreferencesCard
+            preferences={data.updatePreferences}
+            pending={updatePreferences.isPending}
+            onChange={handlePreferenceChange}
+          />
 
           {data.checkDisabled ? (
             <p className="text-muted-foreground max-w-prose text-xs">{t('checksDisabledHint')}</p>
@@ -300,12 +342,123 @@ export function VersionPanel() {
 function manualUpdateCommands(info: VersionInfo) {
   const repository = info.image.repository;
   const tag = info.image.latestTag ?? info.latest ?? '<version>';
+  const imageRef = info.image.latestDigest
+    ? `${repository}@${info.image.latestDigest}`
+    : `${repository}:${tag}`;
   return [
-    `# Set TASKNEBULA_IMAGE=${repository}:${tag} in .env for pinned installs.`,
-    `TASKNEBULA_IMAGE=${repository}:${tag} docker compose pull web`,
-    `TASKNEBULA_IMAGE=${repository}:${tag} docker compose up -d web`,
+    `BACKUP_DIR=/var/backups/tasknebula ./scripts/tasknebula-backup.sh`,
+    `TASKNEBULA_IMAGE=${imageRef} docker compose pull web`,
+    `TASKNEBULA_IMAGE=${imageRef} docker compose up -d web`,
     'docker compose ps web',
   ].join('\n');
+}
+
+function UpdatePreferencesCard({
+  preferences,
+  pending,
+  onChange,
+}: {
+  preferences: VersionUpdatePreferences | undefined;
+  pending: boolean;
+  onChange: (
+    patch: Partial<
+      Pick<
+        VersionUpdatePreferences,
+        'bannerEnabled' | 'availableUpdateNotificationsEnabled' | 'postUpdateNotificationsEnabled'
+      >
+    >
+  ) => void;
+}) {
+  const t = useTranslations('adminUpdates');
+  const resolved: VersionUpdatePreferences = preferences ?? {
+    bannerEnabled: true,
+    availableUpdateNotificationsEnabled: true,
+    postUpdateNotificationsEnabled: true,
+    updatedAt: null,
+    updatedBy: null,
+  };
+
+  return (
+    <div className="border-border bg-muted/30 space-y-3 rounded-md border p-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <Bell className="text-muted-foreground h-4 w-4" />
+            <h4 className="text-xs font-medium">{t('preferences.title')}</h4>
+          </div>
+          <p className="text-muted-foreground max-w-prose text-xs">
+            {t('preferences.description')}
+          </p>
+        </div>
+        {pending ? (
+          <span className="text-muted-foreground inline-flex items-center gap-1 text-[11px]">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            {t('preferences.saving')}
+          </span>
+        ) : null}
+      </div>
+      <div className="grid gap-3 md:grid-cols-3">
+        <PreferenceSwitch
+          id="updates-banner-enabled"
+          label={t('preferences.bannerLabel')}
+          description={t('preferences.bannerDescription')}
+          checked={resolved.bannerEnabled}
+          disabled={pending}
+          onCheckedChange={(checked) => onChange({ bannerEnabled: checked })}
+        />
+        <PreferenceSwitch
+          id="updates-available-notifications-enabled"
+          label={t('preferences.availableNotificationsLabel')}
+          description={t('preferences.availableNotificationsDescription')}
+          checked={resolved.availableUpdateNotificationsEnabled}
+          disabled={pending}
+          onCheckedChange={(checked) => onChange({ availableUpdateNotificationsEnabled: checked })}
+        />
+        <PreferenceSwitch
+          id="updates-post-notifications-enabled"
+          label={t('preferences.postUpdateNotificationsLabel')}
+          description={t('preferences.postUpdateNotificationsDescription')}
+          checked={resolved.postUpdateNotificationsEnabled}
+          disabled={pending}
+          onCheckedChange={(checked) => onChange({ postUpdateNotificationsEnabled: checked })}
+        />
+      </div>
+    </div>
+  );
+}
+
+function PreferenceSwitch({
+  id,
+  label,
+  description,
+  checked,
+  disabled,
+  onCheckedChange,
+}: {
+  id: string;
+  label: string;
+  description: string;
+  checked: boolean;
+  disabled: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="border-border/70 bg-background/50 flex items-start justify-between gap-3 rounded-md border p-3">
+      <div className="space-y-1">
+        <Label htmlFor={id} className="text-xs font-medium">
+          {label}
+        </Label>
+        <p className="text-muted-foreground text-xs">{description}</p>
+      </div>
+      <Switch
+        id={id}
+        checked={checked}
+        disabled={disabled}
+        onCheckedChange={onCheckedChange}
+        aria-label={label}
+      />
+    </div>
+  );
 }
 
 function SelfUpdateCard({
@@ -357,6 +510,10 @@ function SelfUpdateCard({
         <p className="text-muted-foreground text-xs">{t(`selfUpdate.blocked.${blockedReason}`)}</p>
       ) : null}
 
+      {selfUpdate?.backupPreflight ? (
+        <BackupPreflight preflight={selfUpdate.backupPreflight} />
+      ) : null}
+
       {job ? (
         <div className="border-border bg-background/50 space-y-1 rounded-md border p-2 text-xs">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -406,6 +563,67 @@ function SelfUpdateCard({
           <Terminal className="h-3.5 w-3.5" />
           {t('selfUpdate.manualOption')}
         </div>
+      )}
+    </div>
+  );
+}
+
+function BackupPreflight({ preflight }: { preflight: SelfUpdateBackupPreflight }) {
+  const t = useTranslations('adminUpdates');
+  const items = [
+    {
+      key: 'postgres',
+      ok: preflight.postgresDumpAvailable,
+      icon: Database,
+      label: t('selfUpdate.backup.postgres'),
+    },
+    {
+      key: 'uploads',
+      ok: preflight.uploadsReadable,
+      icon: FolderArchive,
+      label: t('selfUpdate.backup.uploads'),
+    },
+    {
+      key: 'directory',
+      ok: preflight.backupDirWritable,
+      icon: ShieldCheck,
+      label: t('selfUpdate.backup.directory'),
+    },
+  ];
+
+  return (
+    <div className="border-border bg-background/50 space-y-2 rounded-md border p-2 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="font-medium">{t('selfUpdate.backup.title')}</span>
+        <span
+          className={preflight.available ? 'chip-emerald text-[11px]' : 'chip-amber text-[11px]'}
+        >
+          {preflight.available ? t('selfUpdate.backup.ready') : t('selfUpdate.backup.blocked')}
+        </span>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-3">
+        {items.map((item) => {
+          const Icon = item.icon;
+          return (
+            <div key={item.key} className="flex min-w-0 items-center gap-2">
+              <Icon
+                className={
+                  item.ok ? 'h-3.5 w-3.5 text-emerald-500' : 'text-accent-amber h-3.5 w-3.5'
+                }
+              />
+              <span className="truncate">{item.label}</span>
+            </div>
+          );
+        })}
+      </div>
+      {preflight.blockedReason ? (
+        <p className="text-muted-foreground">
+          {t(`selfUpdate.backup.blockedReason.${preflight.blockedReason}`)}
+        </p>
+      ) : (
+        <p className="text-muted-foreground">
+          {t('selfUpdate.backup.path', { path: preflight.directory })}
+        </p>
       )}
     </div>
   );

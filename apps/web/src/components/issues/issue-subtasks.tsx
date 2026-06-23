@@ -124,7 +124,9 @@ export function IssueSubtasks({ issueId, projectId }: IssueSubtasksProps) {
                 onClick={() => handleToggleComplete(subtask)}
                 className="shrink-0"
                 disabled={updateIssue.isPending}
-                aria-label={subtask.statusCategory === 'done' ? 'Mark incomplete' : 'Mark complete'}
+                aria-label={
+                  subtask.statusCategory === 'done' ? t('markIncomplete') : t('markComplete')
+                }
               >
                 {subtask.statusCategory === 'done' ? (
                   <CheckCircle2 className="text-accent-emerald h-4 w-4" />

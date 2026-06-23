@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 
 export interface OrganizationMember {
   id: string;
@@ -31,6 +32,8 @@ export interface OrganizationMembersResponse {
 }
 
 export function useOrganizationMembers(organizationId: string | null) {
+  const t = useTranslations('hookErrors.members');
+
   return useQuery({
     queryKey: ['organization-members', organizationId],
     queryFn: async () => {
@@ -41,7 +44,7 @@ export function useOrganizationMembers(organizationId: string | null) {
       const response = await fetch(`/api/organizations/${organizationId}/members`);
 
       if (!response.ok) {
-        throw new Error('Failed to fetch organization members');
+        throw new Error(t('fetchOrganizationMembers'));
       }
 
       return response.json() as Promise<OrganizationMembersResponse>;

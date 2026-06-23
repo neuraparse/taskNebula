@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 import type { Permission } from '@tasknebula/db';
 
@@ -32,9 +33,9 @@ export interface UseOrganizationPermissionsResult {
  * Super admins always pass `has`/`hasAny`/`hasAll` checks, regardless of the
  * permissions array returned by the server.
  */
-export function useOrganizationPermissions(
-  orgId?: string
-): UseOrganizationPermissionsResult {
+export function useOrganizationPermissions(orgId?: string): UseOrganizationPermissionsResult {
+  const t = useTranslations('hookErrors.permissions');
+
   const { data, isLoading } = useQuery<OrganizationPermissionsResponse>({
     queryKey: ['user-permissions', orgId],
     queryFn: async () => {
@@ -42,7 +43,7 @@ export function useOrganizationPermissions(
         `/api/user/me/permissions?organizationId=${encodeURIComponent(orgId as string)}`
       );
       if (!res.ok) {
-        throw new Error('Failed to fetch organization permissions');
+        throw new Error(t('fetchOrganization'));
       }
       return res.json();
     },
@@ -50,10 +51,7 @@ export function useOrganizationPermissions(
     staleTime: 5 * 60 * 1000,
   });
 
-  const permissions = useMemo<Permission[]>(
-    () => data?.permissions ?? [],
-    [data?.permissions]
-  );
+  const permissions = useMemo<Permission[]>(() => data?.permissions ?? [], [data?.permissions]);
   const isSuperAdmin = data?.isSuperAdmin ?? false;
   const role = data?.role ?? null;
 

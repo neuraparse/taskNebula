@@ -57,11 +57,12 @@ export function AnalyticsBento({
   projectId: string | null;
 }) {
   const t = useTranslations('dashboardExtra');
+  const errorT = useTranslations('componentErrors.analytics');
   const { data: velocity } = useQuery<VelocityResponse>({
     queryKey: ['analytics', 'velocity', projectId],
     queryFn: async () => {
       const res = await fetch(`/api/analytics/velocity?projectId=${projectId}`);
-      if (!res.ok) throw new Error('Failed to load velocity');
+      if (!res.ok) throw new Error(errorT('velocity'));
       return res.json();
     },
     enabled: !!projectId,
@@ -73,7 +74,7 @@ export function AnalyticsBento({
       const res = await fetch(
         `/api/analytics/throughput?projectId=${projectId}&bucket=week&days=60`
       );
-      if (!res.ok) throw new Error('Failed to load throughput');
+      if (!res.ok) throw new Error(errorT('throughput'));
       return res.json();
     },
     enabled: !!projectId,
@@ -83,7 +84,7 @@ export function AnalyticsBento({
     queryKey: ['analytics', 'forecast', projectId],
     queryFn: async () => {
       const res = await fetch(`/api/analytics/forecast?projectId=${projectId}`);
-      if (!res.ok) throw new Error('Failed to load forecast');
+      if (!res.ok) throw new Error(errorT('forecast'));
       return res.json();
     },
     enabled: !!projectId,

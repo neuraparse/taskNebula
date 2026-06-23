@@ -45,8 +45,7 @@ export function EmailVerificationBannerClient({ email: _email }: { email: string
     try {
       const res = await fetch('/api/auth/send-verification', { method: 'POST' });
       if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { error?: string };
-        const message = data?.error || t('send_verification_failed');
+        const message = t('send_verification_failed');
         if (typeof toast.error === 'function') {
           toast.error(t('toast_send_failed_title'), message);
         } else {
@@ -62,8 +61,8 @@ export function EmailVerificationBannerClient({ email: _email }: { email: string
           description: t('toast_sent_description'),
         });
       }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : t('network_error');
+    } catch {
+      const message = t('network_error');
       if (typeof toast.error === 'function') {
         toast.error(t('toast_send_failed_title'), message);
       } else {
@@ -96,8 +95,8 @@ export function EmailVerificationBannerClient({ email: _email }: { email: string
       } else {
         toast({ title: t('toast_not_verified_title'), description: message });
       }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : t('network_error');
+    } catch {
+      const message = t('network_error');
       if (typeof toast.error === 'function') {
         toast.error(t('toast_refresh_failed_title'), message);
       } else {

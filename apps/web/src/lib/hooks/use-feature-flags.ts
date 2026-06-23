@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 
 interface FeatureFlag {
   id: string;
@@ -18,12 +19,14 @@ interface FeatureFlag {
 
 // Get all feature flags (super admin only)
 export function useFeatureFlags() {
+  const t = useTranslations('hookErrors.featureFlags');
+
   return useQuery({
     queryKey: ['feature-flags'],
     queryFn: async () => {
       const response = await fetch('/api/admin/feature-flags');
       if (!response.ok) {
-        throw new Error('Failed to fetch feature flags');
+        throw new Error(t('fetchAll'));
       }
       const data = await response.json();
       return data.featureFlags as FeatureFlag[];
@@ -33,13 +36,15 @@ export function useFeatureFlags() {
 
 // Get single feature flag
 export function useFeatureFlag(flagId: string | null) {
+  const t = useTranslations('hookErrors.featureFlags');
+
   return useQuery({
     queryKey: ['feature-flag', flagId],
     queryFn: async () => {
       if (!flagId) return null;
       const response = await fetch(`/api/admin/feature-flags/${flagId}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch feature flag');
+        throw new Error(t('fetchOne'));
       }
       return response.json() as Promise<FeatureFlag>;
     },
@@ -50,6 +55,7 @@ export function useFeatureFlag(flagId: string | null) {
 // Create feature flag
 export function useCreateFeatureFlag() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.featureFlags');
 
   return useMutation({
     mutationFn: async (data: {
@@ -69,8 +75,8 @@ export function useCreateFeatureFlag() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create feature flag');
+        const error = (await response.json().catch(() => ({}))) as { error?: string };
+        throw new Error(error.error || t('create'));
       }
 
       return response.json() as Promise<FeatureFlag>;
@@ -84,6 +90,7 @@ export function useCreateFeatureFlag() {
 // Update feature flag
 export function useUpdateFeatureFlag() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.featureFlags');
 
   return useMutation({
     mutationFn: async ({
@@ -109,8 +116,8 @@ export function useUpdateFeatureFlag() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update feature flag');
+        const error = (await response.json().catch(() => ({}))) as { error?: string };
+        throw new Error(error.error || t('update'));
       }
 
       return response.json() as Promise<FeatureFlag>;
@@ -125,6 +132,7 @@ export function useUpdateFeatureFlag() {
 // Delete feature flag
 export function useDeleteFeatureFlag() {
   const queryClient = useQueryClient();
+  const t = useTranslations('hookErrors.featureFlags');
 
   return useMutation({
     mutationFn: async (flagId: string) => {
@@ -133,8 +141,8 @@ export function useDeleteFeatureFlag() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete feature flag');
+        const error = (await response.json().catch(() => ({}))) as { error?: string };
+        throw new Error(error.error || t('delete'));
       }
 
       return response.json();
@@ -144,4 +152,3 @@ export function useDeleteFeatureFlag() {
     },
   });
 }
-

@@ -108,6 +108,7 @@ import {
   X,
 } from 'lucide-react';
 import { useGlobalVoice } from '@/components/chat/global-voice-provider';
+import { useMicrophoneMessageCatalog } from '@/components/chat/use-microphone-message-catalog';
 
 const QUICK_REACTIONS = ['👍', '👀', '🚀'];
 const VOICE_CLIENT_SESSION_STORAGE_KEY = 'tasknebula.voice-client-session';
@@ -172,6 +173,7 @@ function getOrCreateVoiceClientSessionId() {
 export function ChatShell({ projectId }: { projectId: string }) {
   const t = useTranslations('workspaceTools');
   const tHome = useTranslations('pagesHome');
+  const microphoneMessages = useMicrophoneMessageCatalog();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -545,8 +547,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
       setComposerValue('');
       setQueuedFiles([]);
     } catch (mutationError) {
-      const description =
-        mutationError instanceof Error ? mutationError.message : t('chat.message.sendFailed');
+      const description = t('chat.message.sendFailed');
       chatClientError('chat-shell.message.send.error', {
         roomId: selectedRoomId,
         bodyLength: trimmedComposerValue.length,
@@ -576,8 +577,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
     } catch (mutationError) {
       toast({
         title: t('chat.message.reactionFailed'),
-        description:
-          mutationError instanceof Error ? mutationError.message : t('chat.message.reactionFailed'),
+        description: t('chat.message.reactionFailed'),
         variant: 'destructive',
       });
     }
@@ -589,8 +589,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
     } catch (mutationError) {
       toast({
         title: t('chat.message.deleteFailed'),
-        description:
-          mutationError instanceof Error ? mutationError.message : t('chat.message.deleteFailed'),
+        description: t('chat.message.deleteFailed'),
         variant: 'destructive',
       });
     }
@@ -617,10 +616,7 @@ export function ChatShell({ projectId }: { projectId: string }) {
     } catch (mutationError) {
       toast({
         title: t('chat.moderation.actionFailed'),
-        description:
-          mutationError instanceof Error
-            ? mutationError.message
-            : t('chat.moderation.actionFailedDescription'),
+        description: t('chat.moderation.actionFailedDescription'),
         variant: 'destructive',
       });
     }
@@ -772,10 +768,8 @@ export function ChatShell({ projectId }: { projectId: string }) {
 
     setIsPreparingVoiceSetup(true);
     void prepareVoiceSession(selectedRoomId)
-      .catch((mutationError) => {
-        const description =
-          mutationError instanceof Error ? mutationError.message : t('chat.voice.prepareFailed');
-        setCallError(description);
+      .catch(() => {
+        setCallError(t('chat.voice.prepareFailed'));
       })
       .finally(() => {
         setIsPreparingVoiceSetup(false);
@@ -831,7 +825,8 @@ export function ChatShell({ projectId }: { projectId: string }) {
       if (options.pendingMicrophoneStreamPromise) {
         setCallError(
           getPendingMicrophoneJoinMessage(
-            typeof navigator !== 'undefined' ? navigator.userAgent : ''
+            typeof navigator !== 'undefined' ? navigator.userAgent : '',
+            microphoneMessages
           )
         );
       }
@@ -846,13 +841,19 @@ export function ChatShell({ projectId }: { projectId: string }) {
         audioDeviceId: options.audioDeviceId,
       });
     } catch (mutationError) {
+      const genericJoinFailed = t('chat.voice.joinFailed');
+      const genericAudioUnavailable = t('chat.voice.audioCaptureUnavailable');
+      const runtimeDescription =
+        mutationError instanceof Error ? formatLivekitRuntimeError(mutationError, t) : '';
       const description =
-        mutationError instanceof Error ? mutationError.message : t('chat.voice.joinFailed');
+        runtimeDescription && runtimeDescription !== genericAudioUnavailable
+          ? runtimeDescription
+          : genericJoinFailed;
       stopMediaStream(options.preflightMicrophoneStream);
       chatClientError('chat-shell.voice.join.error', {
         roomId: selectedRoomId,
         options,
-        error: mutationError instanceof Error ? mutationError : new Error(description),
+        error: mutationError instanceof Error ? mutationError : new Error(genericJoinFailed),
       });
       setCallError(description);
       toast({
@@ -1664,6 +1665,7 @@ function ChatVoiceDock({
   onRuntimeError: (message: string) => void;
 }) {
   const t = useTranslations('workspaceTools');
+  const microphoneMessages = useMicrophoneMessageCatalog();
   const disconnectHandledRef = useRef(false);
   const disconnectModeRef = useRef<'leave' | 'end' | null>(null);
   const latestOnDisconnectedRef = useRef(onDisconnected);
@@ -1705,9 +1707,14 @@ function ChatVoiceDock({
     [t]
   );
 
-  const handleMediaDeviceFailure = useCallback((error?: Error) => {
-    latestOnRuntimeErrorRef.current(formatMicrophoneError(error));
-  }, []);
+  const handleMediaDeviceFailure = useCallback(
+    (error?: Error) => {
+      latestOnRuntimeErrorRef.current(
+        formatMicrophoneError(error, { messages: microphoneMessages })
+      );
+    },
+    [microphoneMessages]
+  );
 
   const handleRoomDisconnected = useCallback(() => {
     void handleDisconnected();
@@ -1791,6 +1798,7 @@ function useMicrophoneEnvironment({
   storeAudioDeviceId: (deviceId: string) => void;
 }) {
   const t = useTranslations('workspaceTools');
+  const microphoneMessages = useMicrophoneMessageCatalog();
   const [microphoneDevices, setMicrophoneDevices] = useState<MicrophoneDeviceOption[]>([]);
   const [microphonePermissionState, setMicrophonePermissionState] =
     useState<MicrophonePermissionState>('unknown');
@@ -1840,6 +1848,7 @@ function useMicrophoneEnvironment({
     } catch (error) {
       onError(
         formatMicrophoneError(error, {
+          messages: microphoneMessages,
           userAgent,
         })
       );
@@ -1848,6 +1857,7 @@ function useMicrophoneEnvironment({
     }
   }, [
     onError,
+    microphoneMessages,
     storeAudioDeviceId,
     storeAudioDevicePreference,
     storedAudioDeviceGroupId,
@@ -1905,11 +1915,15 @@ function useMicrophoneEnvironment({
       ? t('chat.voice.systemDefaultMic')
       : t('chat.voice.selectedMic'));
 
-  const microphonePermissionLabel = formatMicrophonePermissionStateLabel(microphonePermissionState);
+  const microphonePermissionLabel = formatMicrophonePermissionStateLabel(
+    microphonePermissionState,
+    microphoneMessages
+  );
   const microphonePermissionHelp = getMicrophonePermissionHelpMessage(microphonePermissionState, {
-    userAgent,
     hasDetectedDevices: microphoneDevices.length > 0,
     labelsVisible: deviceLabelsVisible,
+    messages: microphoneMessages,
+    userAgent,
   });
 
   return {
@@ -1946,6 +1960,7 @@ export function VoiceJoinSetupPanel({
   }) => Promise<void>;
 }) {
   const t = useTranslations('workspaceTools');
+  const microphoneMessages = useMicrophoneMessageCatalog();
   const {
     storedAudioDeviceGroupId,
     storedAudioDeviceId,
@@ -2170,7 +2185,7 @@ export function VoiceJoinSetupPanel({
         selectedDeviceId: storedAudioDeviceId,
         error: error instanceof Error ? error : new Error('Microphone test failed'),
       });
-      setSetupError(formatMicrophoneError(error));
+      setSetupError(formatMicrophoneError(error, { messages: microphoneMessages }));
     } finally {
       setIsPreparingMicrophoneTest(false);
     }
@@ -2200,6 +2215,7 @@ export function VoiceJoinSetupPanel({
       });
       setSetupError(
         formatMicrophoneError(error, {
+          messages: microphoneMessages,
           userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
         })
       );
@@ -2289,7 +2305,10 @@ export function VoiceJoinSetupPanel({
         const backgroundRequestTimeoutMs = shouldUseExtendedPromptWait
           ? EXTENDED_CHROMIUM_MICROPHONE_PROMPT_TIMEOUT_MS
           : JOIN_PENDING_MICROPHONE_REQUEST_TIMEOUT_MS;
-        const pendingMicrophoneJoinMessage = getPendingMicrophoneJoinMessage(userAgent);
+        const pendingMicrophoneJoinMessage = getPendingMicrophoneJoinMessage(
+          userAgent,
+          microphoneMessages
+        );
         try {
           chatClientDebug('voice-setup.join.prefetch-mic.start', {
             selectedDeviceId: storedAudioDeviceId,
@@ -2364,7 +2383,7 @@ export function VoiceJoinSetupPanel({
           });
           setSetupError(
             t('chat.voice.joinedMutedFallback', {
-              error: formatMicrophoneError(error, { userAgent }),
+              error: formatMicrophoneError(error, { messages: microphoneMessages, userAgent }),
             })
           );
         }
@@ -2396,6 +2415,7 @@ export function VoiceJoinSetupPanel({
       });
       setSetupError(
         formatMicrophoneError(error, {
+          messages: microphoneMessages,
           userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
         })
       );
@@ -2749,6 +2769,7 @@ function InlineVoiceRoom({
   onPrepareDisconnect: (mode: 'leave' | 'end') => void;
 }) {
   const t = useTranslations('workspaceTools');
+  const microphoneMessages = useMicrophoneMessageCatalog();
   const room = useRoomContext();
   const connectionState = useConnectionState();
   const { canPlayAudio, startAudio } = useAudioPlayback(room);
@@ -2784,7 +2805,7 @@ function InlineVoiceRoom({
     source: Track.Source.Microphone,
     captureOptions: DEFAULT_MIC_CAPTURE_OPTIONS,
     onDeviceError: (error) => {
-      setVoiceError(formatMicrophoneError(error));
+      setVoiceError(formatMicrophoneError(error, { messages: microphoneMessages }));
     },
     room,
   });
@@ -2808,12 +2829,8 @@ function InlineVoiceRoom({
       setIsStartingAudioPlayback(true);
       setVoiceError(null);
       await startAudio();
-    } catch (error) {
-      setVoiceError(
-        error instanceof Error
-          ? t('chat.voice.speakerStartFailedWith', { error: error.message })
-          : t('chat.voice.speakerStartFailed')
-      );
+    } catch {
+      setVoiceError(t('chat.voice.speakerStartFailed'));
     } finally {
       setIsStartingAudioPlayback(false);
     }
@@ -2835,7 +2852,7 @@ function InlineVoiceRoom({
 
       await toggleMicrophone(targetEnabled);
     } catch (error) {
-      setVoiceError(formatMicrophoneError(error));
+      setVoiceError(formatMicrophoneError(error, { messages: microphoneMessages }));
     }
   }
 
@@ -2845,8 +2862,8 @@ function InlineVoiceRoom({
       setVoiceError(null);
       onPrepareDisconnect('leave');
       await room.disconnect();
-    } catch (error) {
-      setVoiceError(error instanceof Error ? error.message : t('chat.voice.leaveFailed'));
+    } catch {
+      setVoiceError(t('chat.voice.leaveFailed'));
     } finally {
       setIsLeaving(false);
     }
@@ -2858,8 +2875,8 @@ function InlineVoiceRoom({
       setVoiceError(null);
       onPrepareDisconnect('end');
       await room.disconnect();
-    } catch (error) {
-      setVoiceError(error instanceof Error ? error.message : t('chat.voice.endFailed'));
+    } catch {
+      setVoiceError(t('chat.voice.endFailed'));
     } finally {
       setIsEnding(false);
     }
@@ -2946,7 +2963,7 @@ function InlineVoiceRoom({
         <div className="border-destructive/30 bg-destructive/5 text-destructive mt-3 rounded-md border px-3 py-2 text-xs">
           {t('chat.voice.audioErrorPrefix')}{' '}
           {voiceError ||
-            formatMicrophoneError(lastMicrophoneError) ||
+            formatMicrophoneError(lastMicrophoneError, { messages: microphoneMessages }) ||
             t('chat.voice.audioCaptureUnavailable')}
         </div>
       ) : null}
@@ -3137,6 +3154,7 @@ function VoiceAudioSettingsPanel({
   storeAudioDeviceId: (deviceId: string) => void;
 }) {
   const t = useTranslations('workspaceTools');
+  const microphoneMessages = useMicrophoneMessageCatalog();
   const room = useRoomContext();
   const [isUnlockingMicrophoneAccess, setIsUnlockingMicrophoneAccess] = useState(false);
   const {
@@ -3173,7 +3191,7 @@ function VoiceAudioSettingsPanel({
       }
       await refreshMicrophoneEnvironment();
     } catch (error) {
-      onError(formatMicrophoneError(error));
+      onError(formatMicrophoneError(error, { messages: microphoneMessages }));
     }
   }
 
@@ -3199,7 +3217,7 @@ function VoiceAudioSettingsPanel({
         selectedDeviceId: storedAudioDeviceId,
         error: error instanceof Error ? error : new Error('Failed to unlock microphone access'),
       });
-      onError(formatMicrophoneError(error));
+      onError(formatMicrophoneError(error, { messages: microphoneMessages }));
     } finally {
       setIsUnlockingMicrophoneAccess(false);
     }
@@ -3371,5 +3389,5 @@ function formatLivekitRuntimeError(
   if (message.includes('device not found') || message.includes('notfounderror')) {
     return t('chat.voice.runtimeError.micNotFound');
   }
-  return error.message;
+  return t('chat.voice.audioCaptureUnavailable');
 }

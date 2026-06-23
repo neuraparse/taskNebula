@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 
 export type StateGroup = 'backlog' | 'unstarted' | 'started' | 'completed' | 'cancelled';
 
@@ -128,6 +129,7 @@ async function saveTransitions(projectId: string, transitions: TransitionRule[])
 }
 
 export function useWorkflowBuilder(projectId: string): UseWorkflowBuilderResult {
+  const t = useTranslations('projectConfig');
   const queryClient = useQueryClient();
   const { data, isLoading, error } = useQuery({
     queryKey: ['workflow-transitions', projectId],
@@ -178,14 +180,11 @@ export function useWorkflowBuilder(projectId: string): UseWorkflowBuilderResult 
     return resultId;
   }, []);
 
-  const updateTransition = useCallback(
-    (id: string, patch: Partial<Omit<TransitionRule, 'id'>>) => {
-      setTransitions((current) =>
-        current.map((rule) => (rule.id === id ? { ...rule, ...patch } : rule))
-      );
-    },
-    []
-  );
+  const updateTransition = useCallback((id: string, patch: Partial<Omit<TransitionRule, 'id'>>) => {
+    setTransitions((current) =>
+      current.map((rule) => (rule.id === id ? { ...rule, ...patch } : rule))
+    );
+  }, []);
 
   const removeTransition = useCallback((id: string) => {
     setTransitions((current) => current.filter((rule) => rule.id !== id));
@@ -210,8 +209,8 @@ export function useWorkflowBuilder(projectId: string): UseWorkflowBuilderResult 
       transitions,
       isLoading,
       isSaving: mutation.isPending,
-      loadError: error instanceof Error ? error.message : null,
-      saveError: mutation.error instanceof Error ? mutation.error.message : null,
+      loadError: error ? t('we_load_details_failed') : null,
+      saveError: mutation.error ? t('wf_save_failed_description') : null,
       findTransition,
       addTransition,
       updateTransition,
@@ -226,6 +225,7 @@ export function useWorkflowBuilder(projectId: string): UseWorkflowBuilderResult 
       mutation.isPending,
       mutation.error,
       error,
+      t,
       findTransition,
       addTransition,
       updateTransition,

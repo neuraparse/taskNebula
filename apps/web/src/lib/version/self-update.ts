@@ -1,15 +1,22 @@
 import crypto from 'node:crypto';
 import { db, eq, sql, systemAuditLogs, systemSettings } from '@tasknebula/db';
 import { compareSemver, type UpdateStatus } from './index';
+import {
+  createSelfUpdateBackup,
+  getSelfUpdateBackupPreflight,
+  SelfUpdateBackupError,
+  type SelfUpdateBackupPreflight,
+  type SelfUpdateBackupSnapshot,
+} from './backup';
 
 export const SELF_UPDATE_JOB_KEY = 'version_self_update_job';
 
 const SEMVERISH = /^v?\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 const DOCKER_DIGEST = /^sha256:[0-9a-f]{64}$/i;
 const WEBHOOK_TIMEOUT_MS = 15_000;
-const ACTIVE_JOB_TTL_MS = 60 * 60 * 1000;
+const ACTIVE_JOB_TTL_MS = 2 * 60 * 60 * 1000;
 
-export type SelfUpdateJobStatus = 'queued' | 'requested' | 'succeeded' | 'failed';
+export type SelfUpdateJobStatus = 'queued' | 'requested' | 'running' | 'succeeded' | 'failed';
 
 export type SelfUpdateJob = {
   id: string;
@@ -19,6 +26,8 @@ export type SelfUpdateJob = {
   repository: string;
   imageTag: string;
   digest: string | null;
+  imageRef: string | null;
+  backup: SelfUpdateBackupSnapshot | null;
   releaseUrl: string | null;
   triggeredBy: string;
   createdAt: string;
@@ -36,6 +45,8 @@ export type SelfUpdateBlockedReason =
   | 'checks_disabled'
   | 'no_update'
   | 'missing_docker_image'
+  | 'missing_digest'
+  | 'backup_unavailable'
   | 'invalid_target'
   | 'active_job';
 
@@ -47,6 +58,8 @@ export type SelfUpdateStatus = {
   targetVersion: string | null;
   repository: string;
   digest: string | null;
+  imageRef: string | null;
+  backupPreflight: SelfUpdateBackupPreflight;
   webhookConfigured: boolean;
   manualCommands: string;
   job: SelfUpdateJob | null;
@@ -54,11 +67,20 @@ export type SelfUpdateStatus = {
 
 export type SelfUpdateStartInput = {
   targetVersion: string;
+  confirmedVersion: string;
   acknowledged: boolean;
   triggeredBy: string;
   ipAddress?: string | null;
   userAgent?: string | null;
   status: UpdateStatus;
+};
+
+export type SelfUpdateCallbackInput = {
+  jobId: string;
+  status: 'running' | 'succeeded' | 'failed';
+  message?: string | null;
+  webhookStatus?: number | null;
+  backup?: SelfUpdateBackupSnapshot | null;
 };
 
 export class SelfUpdateError extends Error {
@@ -86,8 +108,19 @@ function cleanUrl(value: string | undefined): string | null {
   if (!value) return null;
   try {
     const url = new URL(value);
-    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
-    return url.toString();
+    if (url.protocol === 'https:') return url.toString();
+    if (url.protocol === 'http:' && boolEnv('TASKNEBULA_SELF_UPDATE_ALLOW_INSECURE_HTTP')) {
+      const hostname = url.hostname.toLowerCase();
+      const isLocal =
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname === '::1' ||
+        hostname.startsWith('10.') ||
+        hostname.startsWith('192.168.') ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(hostname);
+      if (isLocal) return url.toString();
+    }
+    return null;
   } catch {
     return null;
   }
@@ -104,7 +137,9 @@ function normalizeTargetVersion(version: string): string | null {
 }
 
 function isActiveJob(job: SelfUpdateJob | null): boolean {
-  if (!job || (job.status !== 'queued' && job.status !== 'requested')) return false;
+  if (!job || (job.status !== 'queued' && job.status !== 'requested' && job.status !== 'running')) {
+    return false;
+  }
   const updatedAt = Date.parse(job.updatedAt);
   if (!Number.isFinite(updatedAt)) return false;
   return Date.now() - updatedAt < ACTIVE_JOB_TTL_MS;
@@ -117,6 +152,7 @@ function normalizeJob(value: unknown): SelfUpdateJob | null {
   if (
     status !== 'queued' &&
     status !== 'requested' &&
+    status !== 'running' &&
     status !== 'succeeded' &&
     status !== 'failed'
   ) {
@@ -155,6 +191,12 @@ function normalizeJob(value: unknown): SelfUpdateJob | null {
     repository,
     imageTag,
     digest,
+    imageRef:
+      typeof raw.imageRef === 'string' ? raw.imageRef : digest ? `${repository}@${digest}` : null,
+    backup:
+      raw.backup && typeof raw.backup === 'object'
+        ? (raw.backup as SelfUpdateBackupSnapshot)
+        : null,
     releaseUrl:
       typeof raw.releaseUrl === 'string' && raw.releaseUrl.startsWith('https://')
         ? raw.releaseUrl
@@ -270,15 +312,27 @@ async function auditSelfUpdate(input: {
 function manualCommands(status: UpdateStatus): string {
   const tag = status.image.latestTag ?? status.latest ?? '<version>';
   const repository = status.image.repository;
+  const imageRef = status.image.latestDigest
+    ? `${repository}@${status.image.latestDigest}`
+    : `${repository}:${tag}`;
   return [
-    `# Set TASKNEBULA_IMAGE=${repository}:${tag} in .env for pinned installs.`,
-    `TASKNEBULA_IMAGE=${repository}:${tag} docker compose pull web`,
-    `TASKNEBULA_IMAGE=${repository}:${tag} docker compose up -d web`,
+    `BACKUP_DIR=/var/backups/tasknebula ./scripts/tasknebula-backup.sh`,
+    `TASKNEBULA_IMAGE=${imageRef} docker compose pull web`,
+    `TASKNEBULA_IMAGE=${imageRef} docker compose up -d web`,
     'docker compose ps web',
   ].join('\n');
 }
 
-function baseStatus(status: UpdateStatus, job: SelfUpdateJob | null): SelfUpdateStatus {
+function imageRef(status: UpdateStatus): string | null {
+  if (!status.image.latestDigest) return null;
+  return `${status.image.repository}@${status.image.latestDigest}`;
+}
+
+function baseStatus(
+  status: UpdateStatus,
+  job: SelfUpdateJob | null,
+  backupPreflight: SelfUpdateBackupPreflight
+): SelfUpdateStatus {
   const enabled = boolEnv('TASKNEBULA_SELF_UPDATE_ENABLED');
   const webhookUrl = cleanUrl(process.env.TASKNEBULA_SELF_UPDATE_WEBHOOK_URL);
   const webhookSecret = process.env.TASKNEBULA_SELF_UPDATE_WEBHOOK_SECRET?.trim() ?? '';
@@ -291,7 +345,9 @@ function baseStatus(status: UpdateStatus, job: SelfUpdateJob | null): SelfUpdate
   else if (!webhookSecret) blockedReason = 'missing_secret';
   else if (status.checkDisabled) blockedReason = 'checks_disabled';
   else if (!status.image.latestTag) blockedReason = 'missing_docker_image';
+  else if (!status.image.latestDigest) blockedReason = 'missing_digest';
   else if (!status.image.updateAvailable) blockedReason = 'no_update';
+  else if (!backupPreflight.available) blockedReason = 'backup_unavailable';
   else if (activeJob) blockedReason = 'active_job';
 
   return {
@@ -302,6 +358,8 @@ function baseStatus(status: UpdateStatus, job: SelfUpdateJob | null): SelfUpdate
     targetVersion,
     repository: status.image.repository,
     digest: status.image.latestDigest,
+    imageRef: imageRef(status),
+    backupPreflight,
     webhookConfigured: Boolean(webhookUrl && webhookSecret),
     manualCommands: manualCommands(status),
     job,
@@ -309,7 +367,9 @@ function baseStatus(status: UpdateStatus, job: SelfUpdateJob | null): SelfUpdate
 }
 
 async function settleCompletedJob(status: UpdateStatus, job: SelfUpdateJob | null) {
-  if (!job || (job.status !== 'queued' && job.status !== 'requested')) return job;
+  if (!job || (job.status !== 'queued' && job.status !== 'requested' && job.status !== 'running')) {
+    return job;
+  }
   if (compareSemver(status.current, job.targetVersion) < 0) return job;
 
   const now = new Date().toISOString();
@@ -331,10 +391,12 @@ async function settleCompletedJob(status: UpdateStatus, job: SelfUpdateJob | nul
 
 export async function getSelfUpdateStatus(status: UpdateStatus): Promise<SelfUpdateStatus> {
   const job = await settleCompletedJob(status, await readSelfUpdateJob());
-  return baseStatus(status, job);
+  const backupPreflight = await getSelfUpdateBackupPreflight();
+  return baseStatus(status, job, backupPreflight);
 }
 
 function buildWebhookPayload(input: { job: SelfUpdateJob; status: UpdateStatus }) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || process.env.AUTH_URL?.trim() || null;
   return {
     event: 'tasknebula.self_update.requested',
     jobId: input.job.id,
@@ -345,13 +407,25 @@ function buildWebhookPayload(input: { job: SelfUpdateJob; status: UpdateStatus }
       repository: input.job.repository,
       tag: input.job.imageTag,
       digest: input.job.digest,
+      ref: input.job.imageRef,
       tagUrl: input.status.image.latestTagUrl,
       pushedAt: input.status.image.latestPushedAt,
       sizeBytes: input.status.image.latestSizeBytes,
     },
+    backup: {
+      required: input.job.backup?.required ?? true,
+      snapshot: input.job.backup,
+    },
     release: {
       url: input.status.releaseUrl,
       publishedAt: input.status.publishedAt,
+    },
+    updater: {
+      composeService: 'web',
+      healthPath: '/api/health',
+      callbackUrl: appUrl ? `${appUrl.replace(/\/$/, '')}/api/webhooks/self-update` : null,
+      requireDigest: true,
+      preserveVolumes: true,
     },
     triggeredBy: input.job.triggeredBy,
   };
@@ -389,9 +463,23 @@ async function sendWebhook(job: SelfUpdateJob, status: UpdateStatus) {
       signal: controller.signal,
     });
 
-    if (!response.ok) {
+    if (response.status !== 202) {
       throw new SelfUpdateError(
-        `Self-update webhook rejected the request with HTTP ${response.status}`,
+        `Self-update webhook must accept with HTTP 202, received HTTP ${response.status}`,
+        502,
+        'webhook_failed'
+      );
+    }
+
+    const acknowledgement = await response.json().catch(() => null);
+    if (
+      !acknowledgement ||
+      typeof acknowledgement !== 'object' ||
+      (acknowledgement as Record<string, unknown>).jobId !== job.id ||
+      (acknowledgement as Record<string, unknown>).accepted !== true
+    ) {
+      throw new SelfUpdateError(
+        'Self-update webhook returned an invalid acknowledgement',
         502,
         'webhook_failed'
       );
@@ -409,7 +497,8 @@ export async function startSelfUpdate(input: SelfUpdateStartInput): Promise<Self
   }
 
   const targetVersion = normalizeTargetVersion(input.targetVersion);
-  if (!targetVersion) {
+  const confirmedVersion = normalizeTargetVersion(input.confirmedVersion);
+  if (!targetVersion || confirmedVersion !== targetVersion) {
     throw new SelfUpdateError('Invalid target version', 400, 'invalid_target');
   }
 
@@ -426,20 +515,36 @@ export async function startSelfUpdate(input: SelfUpdateStartInput): Promise<Self
   if (
     !input.status.image.latestTag ||
     targetVersion !== stripV(input.status.image.latestTag) ||
-    compareSemver(targetVersion, input.status.current) <= 0
+    compareSemver(targetVersion, input.status.current) <= 0 ||
+    !input.status.image.latestDigest
   ) {
     throw new SelfUpdateError('Invalid target version', 400, 'invalid_target');
   }
 
   const now = new Date().toISOString();
+  const jobId = crypto.randomUUID();
+  const immutableImageRef = `${input.status.image.repository}@${input.status.image.latestDigest}`;
   let job: SelfUpdateJob = {
-    id: crypto.randomUUID(),
+    id: jobId,
     status: 'queued',
     currentVersion: stripV(input.status.current),
     targetVersion,
     repository: input.status.image.repository,
     imageTag: stripV(input.status.image.latestTag),
     digest: input.status.image.latestDigest,
+    imageRef: immutableImageRef,
+    backup: {
+      id: jobId,
+      status: 'pending',
+      required: true,
+      directory: '',
+      startedAt: now,
+      completedAt: null,
+      database: null,
+      uploads: null,
+      manifest: null,
+      failureReason: null,
+    },
     releaseUrl: input.status.releaseUrl,
     triggeredBy: input.triggeredBy,
     createdAt: now,
@@ -460,6 +565,30 @@ export async function startSelfUpdate(input: SelfUpdateStartInput): Promise<Self
   });
 
   try {
+    const backup = await createSelfUpdateBackup({
+      id: job.id,
+      currentVersion: job.currentVersion,
+      targetVersion: job.targetVersion,
+      repository: job.repository,
+      imageRef: immutableImageRef,
+      digest: job.digest,
+      triggeredBy: job.triggeredBy,
+    });
+    job = {
+      ...job,
+      backup,
+      updatedAt: backup.completedAt ?? new Date().toISOString(),
+    };
+    await writeSelfUpdateJob(job);
+    await auditSelfUpdate({
+      userId: input.triggeredBy,
+      action: 'self_update.backup_completed',
+      job,
+      ipAddress: input.ipAddress,
+      userAgent: input.userAgent,
+      metadata: { backup },
+    });
+
     const webhookStatus = await sendWebhook(job, input.status);
     const requestedAt = new Date().toISOString();
     job = {
@@ -477,14 +606,21 @@ export async function startSelfUpdate(input: SelfUpdateStartInput): Promise<Self
       ipAddress: input.ipAddress,
       userAgent: input.userAgent,
     });
-    return baseStatus(input.status, job);
+    return baseStatus(input.status, job, existing.backupPreflight);
   } catch (err) {
     const failedAt = new Date().toISOString();
+    const backup =
+      err instanceof SelfUpdateBackupError
+        ? err.snapshot
+        : job.backup && job.backup.status === 'pending'
+          ? { ...job.backup, status: 'failed' as const, completedAt: failedAt }
+          : job.backup;
     job = {
       ...job,
       status: 'failed',
       updatedAt: failedAt,
       completedAt: failedAt,
+      backup,
       failureReason: err instanceof Error ? err.message.slice(0, 500) : 'Unknown error',
     };
     await writeSelfUpdateJob(job);
@@ -497,10 +633,46 @@ export async function startSelfUpdate(input: SelfUpdateStartInput): Promise<Self
       metadata: { error: job.failureReason },
     });
     if (err instanceof SelfUpdateError) throw err;
+    if (err instanceof SelfUpdateBackupError) {
+      throw new SelfUpdateError(
+        job.failureReason ?? 'Self-update backup failed',
+        412,
+        'backup_unavailable'
+      );
+    }
     throw new SelfUpdateError(
       job.failureReason ?? 'Self-update webhook failed',
       502,
       'webhook_failed'
     );
   }
+}
+
+export async function handleSelfUpdateCallback(
+  input: SelfUpdateCallbackInput
+): Promise<SelfUpdateJob> {
+  const job = await readSelfUpdateJob();
+  if (!job || job.id !== input.jobId) {
+    throw new SelfUpdateError('Self-update job was not found', 404, 'invalid_target');
+  }
+
+  const now = new Date().toISOString();
+  const next: SelfUpdateJob = {
+    ...job,
+    status: input.status,
+    updatedAt: now,
+    completedAt: input.status === 'succeeded' || input.status === 'failed' ? now : job.completedAt,
+    failureReason:
+      input.status === 'failed'
+        ? (input.message ?? 'External updater reported failure').slice(0, 500)
+        : null,
+    webhookStatus:
+      typeof input.webhookStatus === 'number' && Number.isFinite(input.webhookStatus)
+        ? input.webhookStatus
+        : job.webhookStatus,
+    backup: input.backup ?? job.backup,
+  };
+
+  await writeSelfUpdateJob(next);
+  return next;
 }

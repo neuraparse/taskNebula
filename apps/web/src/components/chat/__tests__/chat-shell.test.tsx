@@ -973,7 +973,7 @@ describe('ChatShell', () => {
     expect(screen.queryByText(/failed to join call/i)).not.toBeInTheDocument();
   });
 
-  it('shows a clear audio error if microphone access fails while joining', async () => {
+  it('shows a clear localized audio error if microphone access fails while joining', async () => {
     startSessionError = new Error('Permission denied');
 
     render(<ChatShell projectId="project-1" />);
@@ -988,7 +988,7 @@ describe('ChatShell', () => {
     fireEvent.click(joinWithMicButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/permission denied/i)).toBeInTheDocument();
+      expect(screen.getByText(/microphone permission was denied/i)).toBeInTheDocument();
     });
   });
 });

@@ -56,6 +56,7 @@ function iconTileFor(id: string): string {
 
 export function ProjectsClient() {
   const t = useTranslations('pagesProjects');
+  const errorT = useTranslations('componentErrors.projects');
   const [showDialog, setShowDialog] = useState(false);
   const { currentOrganizationId, currentTeamId, setCurrentOrganization } = useOrganization();
 
@@ -63,7 +64,7 @@ export function ProjectsClient() {
     queryKey: ['organizations'],
     queryFn: async () => {
       const response = await fetch('/api/organizations');
-      if (!response.ok) throw new Error('Failed to fetch organizations');
+      if (!response.ok) throw new Error(errorT('fetchOrganizations'));
       return response.json();
     },
   });
@@ -361,7 +362,7 @@ function CreateProjectDialog({
             </label>
             <Input
               id="project-key"
-              placeholder="MAP"
+              placeholder={t('projectKeyPlaceholder')}
               value={key}
               onChange={(event) => handleKeyChange(event.target.value)}
               required

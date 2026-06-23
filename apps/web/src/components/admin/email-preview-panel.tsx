@@ -88,7 +88,7 @@ export function EmailPreviewPanel() {
       } catch (err) {
         if (controller.signal.aborted) return;
         setPreviewHtml('');
-        setPreviewError(err instanceof Error ? err.message : String(err));
+        setPreviewError(t('emailPreview.loadFailed'));
       } finally {
         if (!controller.signal.aborted) {
           setPreviewLoading(false);
@@ -99,7 +99,7 @@ export function EmailPreviewPanel() {
     void loadPreview();
 
     return () => controller.abort();
-  }, [previewUrl]);
+  }, [previewUrl, t]);
 
   async function handleSendTest() {
     setSending(true);
@@ -119,7 +119,7 @@ export function EmailPreviewPanel() {
       if (!res.ok || !data.success) {
         toast({
           title: t('emailPreview.smtpTestFailed'),
-          description: data.error || `HTTP ${res.status}`,
+          description: t('emailPreview.smtpTestFailed'),
           variant: 'destructive',
         });
         return;
@@ -134,7 +134,7 @@ export function EmailPreviewPanel() {
     } catch (err) {
       toast({
         title: t('emailPreview.smtpTestFailed'),
-        description: err instanceof Error ? err.message : String(err),
+        description: t('emailPreview.smtpTestFailed'),
         variant: 'destructive',
       });
     } finally {

@@ -300,12 +300,12 @@ export function NotificationPreferences() {
         description: t('notifications.saved_toast_desc'),
       });
     },
-    onError: (mutationError: Error) => {
-      setSaveError(mutationError.message);
+    onError: () => {
+      setSaveError(t('notifications.update_failed'));
       setSavedFlash(false);
       toast({
         title: t('notifications.save_failed_title'),
-        description: mutationError.message,
+        description: t('notifications.update_failed'),
         variant: 'destructive',
       });
     },
@@ -379,9 +379,7 @@ export function NotificationPreferences() {
 
   if (error) {
     return (
-      <div className="panel-danger animate-alert-in text-sm">
-        {error instanceof Error ? error.message : t('notifications.load_error')}
-      </div>
+      <div className="panel-danger animate-alert-in text-sm">{t('notifications.load_error')}</div>
     );
   }
 

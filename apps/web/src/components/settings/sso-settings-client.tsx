@@ -150,10 +150,10 @@ function SamlSection({ organizationId }: { organizationId: string }) {
       toast({ title: t('sso.config_saved') });
       queryClient.invalidateQueries({ queryKey: ['sso-config', organizationId] });
     },
-    onError: (err: Error) =>
+    onError: () =>
       toast({
         title: t('sso.config_save_failed'),
-        description: err.message,
+        description: t('sso.save_failed'),
         variant: 'destructive',
       }),
   });
@@ -309,10 +309,10 @@ function ScimSection({ organizationId }: { organizationId: string }) {
         queryKey: ['scim-tokens', organizationId],
       });
     },
-    onError: (err: Error) =>
+    onError: () =>
       toast({
         title: tr('sso.token_create_failed'),
-        description: err.message,
+        description: tr('sso.token_create_failed'),
         variant: 'destructive',
       }),
   });
