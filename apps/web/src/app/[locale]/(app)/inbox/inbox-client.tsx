@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import {
   Bell,
   Bot,
@@ -15,7 +15,6 @@ import {
   Webhook,
   Zap,
 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -95,6 +94,7 @@ function InboxRow({
   isPending: boolean;
 }) {
   const t = useTranslations('pagesHome');
+  const formatter = useFormatter();
   const [snoozeOpen, setSnoozeOpen] = useState(false);
   const actorTypeLabel = (actorType: InboxActorType): string => {
     switch (actorType) {
@@ -176,7 +176,7 @@ function InboxRow({
             </Link>
           )}
           <span className="text-muted-foreground ml-auto text-[11px]">
-            {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
+            {formatter.relativeTime(new Date(item.createdAt))}
           </span>
         </div>
         <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">{item.title}</p>
@@ -186,7 +186,12 @@ function InboxRow({
         {isSnoozed && (
           <p className="bg-muted/60 text-muted-foreground mt-1 inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[10px]">
             <Clock className="h-3 w-3" />
-            {t('inbox_snoozed_until', { date: new Date(item.snoozedUntil!).toLocaleString() })}
+            {t('inbox_snoozed_until', {
+              date: formatter.dateTime(new Date(item.snoozedUntil!), {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+              }),
+            })}
           </p>
         )}
       </div>

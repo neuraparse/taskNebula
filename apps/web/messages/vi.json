@@ -686,7 +686,22 @@
       "ago_seconds": "{count} giây trước",
       "ago_minutes": "{count} phút trước",
       "ago_hours": "{count} giờ trước",
-      "ago_days": "{count} ngày trước"
+      "ago_days": "{count} ngày trước",
+      "verbs": {
+        "commented_on": "đã bình luận trên",
+        "closed": "đã đóng",
+        "opened": "đã mở",
+        "assigned": "đã giao",
+        "merged": "đã hợp nhất",
+        "deployed": "đã triển khai",
+        "updated_status_on": "đã cập nhật trạng thái của"
+      },
+      "suffixes": {
+        "to_you": "cho bạn"
+      },
+      "targets": {
+        "production": "production"
+      }
     },
     "catchup": {
       "welcome_back": "Chào mừng trở lại",
@@ -1276,7 +1291,8 @@
       "agent_badge": "TÁC NHÂN",
       "connected_with": "Đã kết nối với",
       "awaiting_response": "• Đang chờ phản hồi",
-      "open_sidecar": "Mở Sidecar"
+      "open_sidecar": "Mở Sidecar",
+      "agent_fallback": "Tác nhân"
     },
     "agent": {
       "title": "Hoạt động của tác nhân",
@@ -5062,7 +5078,33 @@
       "empty": "Không có hoạt động gần đây",
       "today": "Hôm nay",
       "yesterday": "Hôm qua",
-      "someone": "Ai đó"
+      "someone": "Ai đó",
+      "loadFailed": "Không tải được hoạt động.",
+      "messages": {
+        "createdIssue": "đã tạo công việc",
+        "updatedIssue": "đã cập nhật công việc",
+        "movedTo": "đã chuyển sang {status}",
+        "changedStatus": "đã đổi trạng thái",
+        "assignedIssue": "đã giao công việc",
+        "unassignedIssue": "đã bỏ giao việc",
+        "changedPriorityTo": "đã đổi mức ưu tiên thành {priority}",
+        "changedPriority": "đã đổi mức ưu tiên",
+        "commentedOn": "đã bình luận trên",
+        "linkedIssue": "đã liên kết công việc",
+        "startedSprint": "đã bắt đầu sprint",
+        "completedSprint": "đã hoàn tất sprint",
+        "createdProject": "đã tạo dự án",
+        "addedMemberToProject": "đã thêm thành viên vào dự án",
+        "unknownAction": "đã thực hiện {action}"
+      },
+      "priorities": {
+        "critical": "Nghiêm trọng",
+        "urgent": "Khẩn cấp",
+        "high": "Cao",
+        "medium": "Trung bình",
+        "low": "Thấp",
+        "none": "Không có"
+      }
     },
     "audit": {
       "kicker": "Bảo mật",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "Không có kết quả. Hãy thử tên hoặc email của thành viên workspace hoặc người dùng đã đăng ký.",
   "apm_everyone_member": "Mọi người có sẵn cho bạn đều đã là thành viên của dự án này.",
   "apm_registered_user": "Người dùng đã đăng ký",
-  "apm_workspace_member": "Thành viên workspace"
+  "apm_workspace_member": "Thành viên workspace",
+  "agentRunKinds": {
+    "project_tracking": "Theo dõi dự án",
+    "backlog_triage": "Phân loại backlog",
+    "sprint_planning": "Lập kế hoạch sprint",
+    "bulk_sprint_creation": "Tạo sprint hàng loạt",
+    "unknown": "{kind}"
+  }
 }

@@ -686,7 +686,22 @@
       "ago_seconds": "{count} mp",
       "ago_minutes": "{count} p",
       "ago_hours": "{count} ó",
-      "ago_days": "{count} n"
+      "ago_days": "{count} n",
+      "verbs": {
+        "commented_on": "hozzászólt",
+        "closed": "lezárta",
+        "opened": "megnyitotta",
+        "assigned": "hozzárendelte",
+        "merged": "egyesítette",
+        "deployed": "élesítette",
+        "updated_status_on": "állapotot frissített ezen:"
+      },
+      "suffixes": {
+        "to_you": "neked"
+      },
+      "targets": {
+        "production": "éles környezet"
+      }
     },
     "catchup": {
       "welcome_back": "Üdv újra",
@@ -1276,7 +1291,8 @@
       "agent_badge": "ÜGYNÖK",
       "connected_with": "Kapcsolódva ezzel:",
       "awaiting_response": "• Válaszra vár",
-      "open_sidecar": "Oldalpanel megnyitása"
+      "open_sidecar": "Oldalpanel megnyitása",
+      "agent_fallback": "Ügynök"
     },
     "agent": {
       "title": "Ügynökaktivitás",
@@ -5062,7 +5078,33 @@
       "empty": "Nincs legutóbbi tevékenység",
       "today": "Ma",
       "yesterday": "Tegnap",
-      "someone": "Valaki"
+      "someone": "Valaki",
+      "loadFailed": "Nem sikerült betölteni az aktivitást.",
+      "messages": {
+        "createdIssue": "létrehozott egy feladatot",
+        "updatedIssue": "frissített egy feladatot",
+        "movedTo": "áthelyezte ide: {status}",
+        "changedStatus": "módosította az állapotot",
+        "assignedIssue": "hozzárendelt egy feladatot",
+        "unassignedIssue": "eltávolította a hozzárendelést",
+        "changedPriorityTo": "módosította a prioritást erre: {priority}",
+        "changedPriority": "módosította a prioritást",
+        "commentedOn": "hozzászólt",
+        "linkedIssue": "összekapcsolt egy feladatot",
+        "startedSprint": "elindított egy sprintet",
+        "completedSprint": "lezárt egy sprintet",
+        "createdProject": "létrehozott egy projektet",
+        "addedMemberToProject": "tagot adott a projekthez",
+        "unknownAction": "végrehajtotta: {action}"
+      },
+      "priorities": {
+        "critical": "Kritikus",
+        "urgent": "Sürgős",
+        "high": "Magas",
+        "medium": "Közepes",
+        "low": "Alacsony",
+        "none": "Nincs"
+      }
     },
     "audit": {
       "kicker": "Biztonság",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "Nincs találat. Próbálj workspace-tag vagy regisztrált felhasználó nevére vagy e-mail-címére keresni.",
   "apm_everyone_member": "Minden számodra elérhető személy már tagja ennek a projektnek.",
   "apm_registered_user": "Regisztrált felhasználó",
-  "apm_workspace_member": "Workspace-tag"
+  "apm_workspace_member": "Workspace-tag",
+  "agentRunKinds": {
+    "project_tracking": "Projektkövetés",
+    "backlog_triage": "Backlog-triage",
+    "sprint_planning": "Sprinttervezés",
+    "bulk_sprint_creation": "Tömeges sprintlétrehozás",
+    "unknown": "{kind}"
+  }
 }

@@ -4,8 +4,7 @@
 // under `exactOptionalPropertyTypes`. See docs/TS_STRICT_MIGRATION.md.
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { formatDistanceToNow } from 'date-fns';
+import { useFormatter, useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,6 +31,7 @@ import {
   normalizeProjectAgentSettings,
   type ProjectAgentSettings,
 } from '@/lib/agents/config';
+import { formatAgentRunKind } from '@/lib/agents/run-kind-labels';
 import {
   Activity,
   ArrowRight,
@@ -64,10 +64,6 @@ const EMPTY_SETTINGS: ProjectAgentSettings = {
     bulk_sprint_creation: true,
   },
 };
-
-function formatRunKind(kind: string) {
-  return kind.replaceAll('_', ' ').replace(/\b\w/g, (char) => char.toUpperCase());
-}
 
 function credentialSourceKey(source: 'workspace' | 'platform' | 'server_env' | null) {
   if (source === 'workspace') {
@@ -137,6 +133,8 @@ function getProjectIssueAction(
 
 export function ProjectAiAgents({ projectId }: { projectId: string }) {
   const t = useTranslations('settingsConfig');
+  const tRunKind = useTranslations('agentRunKinds');
+  const formatter = useFormatter();
   const { data, isLoading, error } = useProjectAgents(projectId);
   const stream = useProjectAgentStream(projectId, Boolean(data?.access.canView));
   const updateAgents = useUpdateProjectAgents(projectId);
@@ -184,7 +182,8 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
             ? t('projectAi.preview_ready')
             : t('projectAi.run_completed'),
         description:
-          result.run.summary || t('projectAi.run_finished', { kind: formatRunKind(kind) }),
+          result.run.summary ||
+          t('projectAi.run_finished', { kind: formatAgentRunKind(kind, tRunKind) }),
       });
     } catch (mutationError) {
       toast({
@@ -340,9 +339,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
               label={t('projectAi.stat_last_completed')}
               value={
                 data.runtimeSummary.lastCompletedAt
-                  ? formatDistanceToNow(new Date(data.runtimeSummary.lastCompletedAt), {
-                      addSuffix: true,
-                    })
+                  ? formatter.relativeTime(new Date(data.runtimeSummary.lastCompletedAt))
                   : t('projectAi.none_yet')
               }
               detail={t('projectAi.stat_last_completed_detail')}
@@ -711,6 +708,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                 previewLabel={t('projectAi.run_scan')}
                 reason={getRunDisabledReason('project_tracking')}
                 lastRun={data.lastRunByKind.project_tracking}
+                formatter={formatter}
                 t={t}
               />
               <RunCard
@@ -721,6 +719,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                 onLive={() => handleRun('backlog_triage', false)}
                 reason={getRunDisabledReason('backlog_triage')}
                 lastRun={data.lastRunByKind.backlog_triage}
+                formatter={formatter}
                 t={t}
               />
               <RunCard
@@ -731,6 +730,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                 previewLabel={t('projectAi.preview_plan')}
                 reason={getRunDisabledReason('sprint_planning')}
                 lastRun={data.lastRunByKind.sprint_planning}
+                formatter={formatter}
                 t={t}
               />
               <RunCard
@@ -741,6 +741,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                 onLive={() => handleRun('bulk_sprint_creation', false)}
                 reason={getRunDisabledReason('bulk_sprint_creation')}
                 lastRun={data.lastRunByKind.bulk_sprint_creation}
+                formatter={formatter}
                 t={t}
               />
             </CardContent>
@@ -767,7 +768,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                   {stream.lastEventAt ? (
                     <Badge variant="outline">
                       {t('projectAi.last_event', {
-                        ago: formatDistanceToNow(new Date(stream.lastEventAt), { addSuffix: true }),
+                        ago: formatter.relativeTime(new Date(stream.lastEventAt)),
                       })}
                     </Badge>
                   ) : null}
@@ -790,7 +791,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="font-medium">
                               {runMeta
-                                ? formatRunKind(runMeta.kind)
+                                ? formatAgentRunKind(runMeta.kind, tRunKind)
                                 : t('projectAi.run_label', { id: run.executionId.slice(0, 8) })}
                             </span>
                             <Badge
@@ -816,7 +817,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                         </div>
                         <div className="text-muted-foreground text-xs">
                           {t('projectAi.updated_ago', {
-                            ago: formatDistanceToNow(new Date(run.updatedAt), { addSuffix: true }),
+                            ago: formatter.relativeTime(new Date(run.updatedAt)),
                           })}
                         </div>
                       </div>
@@ -916,7 +917,9 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                     <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-medium">{formatRunKind(run.kind)}</span>
+                          <span className="font-medium">
+                            {formatAgentRunKind(run.kind, tRunKind)}
+                          </span>
                           <Badge
                             variant={
                               run.status === 'completed'
@@ -942,7 +945,7 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                         </p>
                       </div>
                       <div className="text-muted-foreground text-xs">
-                        {formatDistanceToNow(new Date(run.createdAt), { addSuffix: true })}
+                        {formatter.relativeTime(new Date(run.createdAt))}
                       </div>
                     </div>
                     {run.error ? (
@@ -968,6 +971,7 @@ function RunCard({
   previewLabel,
   reason,
   lastRun,
+  formatter,
   t,
 }: {
   title: string;
@@ -984,6 +988,7 @@ function RunCard({
     createdAt: string;
     error: string | null;
   };
+  formatter: ReturnType<typeof useFormatter>;
   t: (key: string, values?: Record<string, string | number>) => string;
 }) {
   const disabled = Boolean(reason);
@@ -1014,7 +1019,7 @@ function RunCard({
               {lastRun.dryRun ? t('projectAi.preview') : t('projectAi.live')}
             </Badge>
             <span className="text-muted-foreground text-xs">
-              {formatDistanceToNow(new Date(lastRun.createdAt), { addSuffix: true })}
+              {formatter.relativeTime(new Date(lastRun.createdAt))}
             </span>
           </div>
           {lastRun.summary ? (

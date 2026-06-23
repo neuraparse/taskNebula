@@ -686,7 +686,22 @@
       "ago_seconds": "{count}sn önce",
       "ago_minutes": "{count}dk önce",
       "ago_hours": "{count}sa önce",
-      "ago_days": "{count}g önce"
+      "ago_days": "{count}g önce",
+      "verbs": {
+        "commented_on": "yorum yaptı",
+        "closed": "kapattı",
+        "opened": "açtı",
+        "assigned": "atadı",
+        "merged": "birleştirdi",
+        "deployed": "yayına aldı",
+        "updated_status_on": "durumunu güncelledi"
+      },
+      "suffixes": {
+        "to_you": "sana"
+      },
+      "targets": {
+        "production": "prodüksiyon"
+      }
     },
     "catchup": {
       "welcome_back": "Tekrar hoş geldin",
@@ -1276,7 +1291,8 @@
       "agent_badge": "ARACI",
       "connected_with": "Şununla bağlandı",
       "awaiting_response": "• Yanıt bekleniyor",
-      "open_sidecar": "Sidecar'ı aç"
+      "open_sidecar": "Sidecar'ı aç",
+      "agent_fallback": "Ajan"
     },
     "agent": {
       "title": "Aracı etkinliği",
@@ -5062,7 +5078,33 @@
       "empty": "Son etkinlik yok",
       "today": "Bugün",
       "yesterday": "Dün",
-      "someone": "Biri"
+      "someone": "Biri",
+      "loadFailed": "Aktivite yüklenemedi.",
+      "messages": {
+        "createdIssue": "iş oluşturdu",
+        "updatedIssue": "işi güncelledi",
+        "movedTo": "{status} durumuna taşıdı",
+        "changedStatus": "durumu değiştirdi",
+        "assignedIssue": "işi atadı",
+        "unassignedIssue": "atamayı kaldırdı",
+        "changedPriorityTo": "önceliği {priority} olarak değiştirdi",
+        "changedPriority": "önceliği değiştirdi",
+        "commentedOn": "yorum yaptı",
+        "linkedIssue": "iş bağladı",
+        "startedSprint": "sprint başlattı",
+        "completedSprint": "sprinti tamamladı",
+        "createdProject": "proje oluşturdu",
+        "addedMemberToProject": "projeye üye ekledi",
+        "unknownAction": "{action} işlemini yaptı"
+      },
+      "priorities": {
+        "critical": "Kritik",
+        "urgent": "Acil",
+        "high": "Yüksek",
+        "medium": "Orta",
+        "low": "Düşük",
+        "none": "Yok"
+      }
     },
     "audit": {
       "kicker": "Güvenlik",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "Eşleşme yok. Mevcut workspace üyelerinden veya kayıtlı kullanıcılardan ad ya da e-posta deneyin.",
   "apm_everyone_member": "Size açık olan herkes zaten bu projenin üyesi.",
   "apm_registered_user": "Kayıtlı kullanıcı",
-  "apm_workspace_member": "Workspace üyesi"
+  "apm_workspace_member": "Workspace üyesi",
+  "agentRunKinds": {
+    "project_tracking": "Proje takibi",
+    "backlog_triage": "Backlog triyajı",
+    "sprint_planning": "Sprint planlama",
+    "bulk_sprint_creation": "Toplu sprint oluşturma",
+    "unknown": "{kind}"
+  }
 }

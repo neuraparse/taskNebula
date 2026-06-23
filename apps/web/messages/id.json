@@ -686,7 +686,22 @@
       "ago_seconds": "{count} dtk lalu",
       "ago_minutes": "{count} mnt lalu",
       "ago_hours": "{count} jam lalu",
-      "ago_days": "{count} hr lalu"
+      "ago_days": "{count} hr lalu",
+      "verbs": {
+        "commented_on": "mengomentari",
+        "closed": "menutup",
+        "opened": "membuka",
+        "assigned": "menetapkan",
+        "merged": "menggabungkan",
+        "deployed": "mendeploy",
+        "updated_status_on": "memperbarui status pada"
+      },
+      "suffixes": {
+        "to_you": "kepada Anda"
+      },
+      "targets": {
+        "production": "produksi"
+      }
     },
     "catchup": {
       "welcome_back": "Selamat datang kembali",
@@ -1276,7 +1291,8 @@
       "agent_badge": "AGEN",
       "connected_with": "Terhubung dengan",
       "awaiting_response": "• Menunggu respons",
-      "open_sidecar": "Buka sidecar"
+      "open_sidecar": "Buka sidecar",
+      "agent_fallback": "Agen"
     },
     "agent": {
       "title": "Aktivitas agen",
@@ -5062,7 +5078,33 @@
       "empty": "Tidak ada aktivitas terbaru",
       "today": "Hari ini",
       "yesterday": "Kemarin",
-      "someone": "Seseorang"
+      "someone": "Seseorang",
+      "loadFailed": "Gagal memuat aktivitas.",
+      "messages": {
+        "createdIssue": "membuat tugas",
+        "updatedIssue": "memperbarui tugas",
+        "movedTo": "memindahkan ke {status}",
+        "changedStatus": "mengubah status",
+        "assignedIssue": "menetapkan tugas",
+        "unassignedIssue": "menghapus penetapan",
+        "changedPriorityTo": "mengubah prioritas ke {priority}",
+        "changedPriority": "mengubah prioritas",
+        "commentedOn": "mengomentari",
+        "linkedIssue": "menautkan tugas",
+        "startedSprint": "memulai sprint",
+        "completedSprint": "menyelesaikan sprint",
+        "createdProject": "membuat proyek",
+        "addedMemberToProject": "menambahkan anggota ke proyek",
+        "unknownAction": "menjalankan {action}"
+      },
+      "priorities": {
+        "critical": "Kritis",
+        "urgent": "Mendesak",
+        "high": "Tinggi",
+        "medium": "Sedang",
+        "low": "Rendah",
+        "none": "Tidak ada"
+      }
     },
     "audit": {
       "kicker": "Keamanan",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "Tidak ada hasil. Coba nama atau email dari anggota workspace atau pengguna terdaftar.",
   "apm_everyone_member": "Semua orang yang tersedia untuk Anda sudah menjadi anggota proyek ini.",
   "apm_registered_user": "Pengguna terdaftar",
-  "apm_workspace_member": "Anggota workspace"
+  "apm_workspace_member": "Anggota workspace",
+  "agentRunKinds": {
+    "project_tracking": "Pelacakan proyek",
+    "backlog_triage": "Triase backlog",
+    "sprint_planning": "Perencanaan sprint",
+    "bulk_sprint_creation": "Pembuatan sprint massal",
+    "unknown": "{kind}"
+  }
 }

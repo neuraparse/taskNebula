@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, type KeyboardEvent } from 'react';
-import { useTranslations } from 'next-intl';
-import { formatDistanceToNow } from 'date-fns';
+import { useFormatter, useTranslations } from 'next-intl';
 import { Bot, Loader2, Pencil, SmilePlus, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -57,6 +56,7 @@ interface CommentItemProps {
 
 export function CommentItem({ comment, issueId, currentUserId, isAgent }: CommentItemProps) {
   const t = useTranslations('issueDetail.comments');
+  const formatter = useFormatter();
   const { toast } = useToast();
   const updateComment = useUpdateComment(issueId);
   const deleteComment = useDeleteComment(issueId);
@@ -74,7 +74,7 @@ export function CommentItem({ comment, issueId, currentUserId, isAgent }: Commen
     .join('')
     .toUpperCase()
     .slice(0, 2);
-  const timeAgo = formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true });
+  const timeAgo = formatter.relativeTime(new Date(comment.createdAt));
   const isOwn = !!currentUserId && (comment.createdBy ?? comment.author.id) === currentUserId;
   const isEdited =
     comment.updatedAt != null &&

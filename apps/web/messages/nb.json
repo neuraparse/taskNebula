@@ -686,7 +686,22 @@
       "ago_seconds": "for {count}s siden",
       "ago_minutes": "for {count}m siden",
       "ago_hours": "for {count}t siden",
-      "ago_days": "for {count}d siden"
+      "ago_days": "for {count}d siden",
+      "verbs": {
+        "commented_on": "kommenterte på",
+        "closed": "lukket",
+        "opened": "åpnet",
+        "assigned": "tildelte",
+        "merged": "merget",
+        "deployed": "distribuerte",
+        "updated_status_on": "oppdaterte status på"
+      },
+      "suffixes": {
+        "to_you": "til deg"
+      },
+      "targets": {
+        "production": "produksjon"
+      }
     },
     "catchup": {
       "welcome_back": "Velkommen tilbake",
@@ -1276,7 +1291,8 @@
       "agent_badge": "AGENT",
       "connected_with": "Koblet til",
       "awaiting_response": "• Venter på svar",
-      "open_sidecar": "Åpne sidecar"
+      "open_sidecar": "Åpne sidecar",
+      "agent_fallback": "Agent"
     },
     "agent": {
       "title": "Agentaktivitet",
@@ -5062,7 +5078,33 @@
       "empty": "Ingen nylig aktivitet",
       "today": "I dag",
       "yesterday": "I går",
-      "someone": "Noen"
+      "someone": "Noen",
+      "loadFailed": "Kunne ikke laste aktivitet.",
+      "messages": {
+        "createdIssue": "opprettet sak",
+        "updatedIssue": "oppdaterte sak",
+        "movedTo": "flyttet til {status}",
+        "changedStatus": "endret status",
+        "assignedIssue": "tildelte sak",
+        "unassignedIssue": "fjernet tildeling",
+        "changedPriorityTo": "endret prioritet til {priority}",
+        "changedPriority": "endret prioritet",
+        "commentedOn": "kommenterte på",
+        "linkedIssue": "koblet sak",
+        "startedSprint": "startet sprint",
+        "completedSprint": "fullførte sprint",
+        "createdProject": "opprettet prosjekt",
+        "addedMemberToProject": "la til medlem i prosjektet",
+        "unknownAction": "utførte {action}"
+      },
+      "priorities": {
+        "critical": "Kritisk",
+        "urgent": "Haster",
+        "high": "Høy",
+        "medium": "Middels",
+        "low": "Lav",
+        "none": "Ingen"
+      }
     },
     "audit": {
       "kicker": "Sikkerhet",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "Ingen treff. Prøv et navn eller en e-post fra workspace-medlemmer eller registrerte brukere.",
   "apm_everyone_member": "Alle som er tilgjengelige for deg er allerede medlem av dette prosjektet.",
   "apm_registered_user": "Registrert bruker",
-  "apm_workspace_member": "Workspace-medlem"
+  "apm_workspace_member": "Workspace-medlem",
+  "agentRunKinds": {
+    "project_tracking": "Prosjektsporing",
+    "backlog_triage": "Backlog-triage",
+    "sprint_planning": "Sprintplanlegging",
+    "bulk_sprint_creation": "Masseoppretting av sprinter",
+    "unknown": "{kind}"
+  }
 }

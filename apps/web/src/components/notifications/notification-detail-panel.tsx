@@ -1,8 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
-import { format, formatDistanceToNow } from 'date-fns';
+import { useFormatter, useTranslations } from 'next-intl';
 import { Archive, Check, Clock, ExternalLink, Inbox, MoreHorizontal, Quote } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -191,6 +190,7 @@ export function NotificationDetailPanel({
   onSnooze,
 }: NotificationDetailPanelProps) {
   const t = useTranslations('notifications');
+  const formatter = useFormatter();
   if (!notification) {
     return <EmptyState />;
   }
@@ -206,8 +206,8 @@ export function NotificationDetailPanel({
   const typeLabel = typeLabelKey ? t(`detail.type_label.${typeLabelKey}`) : notification.type;
   const typeChip = typeChipClass(notification.type);
   const createdAt = new Date(notification.createdAt);
-  const relative = formatDistanceToNow(createdAt, { addSuffix: true });
-  const absolute = format(createdAt, 'PP p');
+  const relative = formatter.relativeTime(createdAt);
+  const absolute = formatter.dateTime(createdAt, { dateStyle: 'medium', timeStyle: 'short' });
   const quote = extractQuote(notification);
   const meta = buildMeta(notification, t);
 
@@ -408,9 +408,7 @@ export function NotificationDetailPanel({
                         className="text-muted-foreground/70 shrink-0 text-[10px] uppercase tracking-wide"
                         dateTime={new Date(entry.createdAt).toISOString()}
                       >
-                        {formatDistanceToNow(new Date(entry.createdAt), {
-                          addSuffix: true,
-                        })}
+                        {formatter.relativeTime(new Date(entry.createdAt))}
                       </time>
                     </div>
                     <p className="text-muted-foreground mt-1 text-xs">

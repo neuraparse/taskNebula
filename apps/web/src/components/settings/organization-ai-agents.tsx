@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { formatDistanceToNow } from 'date-fns';
+import { useFormatter, useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,6 +43,7 @@ import {
   type AgentProvider,
   type WorkspaceAgentSettings,
 } from '@/lib/agents/config';
+import { formatAgentRunKind } from '@/lib/agents/run-kind-labels';
 import {
   getModelCatalogEntry,
   getModelCatalogForProvider,
@@ -218,6 +218,8 @@ function getPresetModelValue(form: ModelConfigFormState) {
 
 export function OrganizationAiAgentsSettings({ organizationId }: { organizationId: string }) {
   const t = useTranslations('settingsConfig');
+  const tRunKind = useTranslations('agentRunKinds');
+  const formatter = useFormatter();
   const { data, isLoading, error } = useOrganizationAgentSettings(organizationId);
   const updateSettings = useUpdateOrganizationAgentSettings(organizationId);
   const createModelConfig = useCreateOrganizationAgentModelConfig(organizationId);
@@ -823,9 +825,7 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                             <span>{'·'}</span>
                             <span>
                               {t('orgAi.updated_ago', {
-                                ago: formatDistanceToNow(new Date(config.updatedAt), {
-                                  addSuffix: true,
-                                }),
+                                ago: formatter.relativeTime(new Date(config.updatedAt)),
                               })}
                             </span>
                           </div>
@@ -977,9 +977,7 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
               label={t('orgAi.stat_last_completed')}
               value={
                 data.runtimeSummary.lastCompletedAt
-                  ? formatDistanceToNow(new Date(data.runtimeSummary.lastCompletedAt), {
-                      addSuffix: true,
-                    })
+                  ? formatter.relativeTime(new Date(data.runtimeSummary.lastCompletedAt))
                   : t('orgAi.none_yet')
               }
               detail={t('orgAi.stat_last_completed_detail')}
@@ -1029,7 +1027,9 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                       <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
                         <div className="space-y-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-medium">{run.kind.replaceAll('_', ' ')}</span>
+                            <span className="font-medium">
+                              {formatAgentRunKind(run.kind, tRunKind)}
+                            </span>
                             <Badge
                               variant={
                                 run.status === 'completed'
@@ -1057,7 +1057,7 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                           ) : null}
                         </div>
                         <div className="text-muted-foreground text-xs">
-                          {formatDistanceToNow(new Date(run.createdAt), { addSuffix: true })}
+                          {formatter.relativeTime(new Date(run.createdAt))}
                         </div>
                       </div>
                     </div>

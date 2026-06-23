@@ -686,7 +686,22 @@
       "ago_seconds": "hace {count} s",
       "ago_minutes": "hace {count} min",
       "ago_hours": "hace {count} h",
-      "ago_days": "hace {count} d"
+      "ago_days": "hace {count} d",
+      "verbs": {
+        "commented_on": "comentó en",
+        "closed": "cerró",
+        "opened": "abrió",
+        "assigned": "asignó",
+        "merged": "fusionó",
+        "deployed": "desplegó",
+        "updated_status_on": "actualizó el estado de"
+      },
+      "suffixes": {
+        "to_you": "a ti"
+      },
+      "targets": {
+        "production": "producción"
+      }
     },
     "catchup": {
       "welcome_back": "Bienvenido de nuevo",
@@ -1276,7 +1291,8 @@
       "agent_badge": "AGENTE",
       "connected_with": "Conectado con",
       "awaiting_response": "• A la espera de respuesta",
-      "open_sidecar": "Abrir panel lateral"
+      "open_sidecar": "Abrir panel lateral",
+      "agent_fallback": "Agente"
     },
     "agent": {
       "title": "Actividad del agente",
@@ -5062,7 +5078,33 @@
       "empty": "No hay actividad reciente",
       "today": "Hoy",
       "yesterday": "Ayer",
-      "someone": "Alguien"
+      "someone": "Alguien",
+      "loadFailed": "No se pudo cargar la actividad.",
+      "messages": {
+        "createdIssue": "creó una tarea",
+        "updatedIssue": "actualizó una tarea",
+        "movedTo": "movió a {status}",
+        "changedStatus": "cambió el estado",
+        "assignedIssue": "asignó una tarea",
+        "unassignedIssue": "quitó la asignación",
+        "changedPriorityTo": "cambió la prioridad a {priority}",
+        "changedPriority": "cambió la prioridad",
+        "commentedOn": "comentó en",
+        "linkedIssue": "vinculó una tarea",
+        "startedSprint": "inició el sprint",
+        "completedSprint": "completó el sprint",
+        "createdProject": "creó un proyecto",
+        "addedMemberToProject": "agregó un miembro al proyecto",
+        "unknownAction": "realizó {action}"
+      },
+      "priorities": {
+        "critical": "Crítica",
+        "urgent": "Urgente",
+        "high": "Alta",
+        "medium": "Media",
+        "low": "Baja",
+        "none": "Ninguna"
+      }
     },
     "audit": {
       "kicker": "Seguridad",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "No hay coincidencias. Prueba con un nombre o correo de miembros del espacio de trabajo o usuarios registrados.",
   "apm_everyone_member": "Todas las personas disponibles para ti ya son miembros de este proyecto.",
   "apm_registered_user": "Usuario registrado",
-  "apm_workspace_member": "Miembro del espacio de trabajo"
+  "apm_workspace_member": "Miembro del espacio de trabajo",
+  "agentRunKinds": {
+    "project_tracking": "Seguimiento del proyecto",
+    "backlog_triage": "Priorización del backlog",
+    "sprint_planning": "Planificación de sprint",
+    "bulk_sprint_creation": "Creación masiva de sprints",
+    "unknown": "{kind}"
+  }
 }

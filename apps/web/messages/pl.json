@@ -686,7 +686,22 @@
       "ago_seconds": "{count} s temu",
       "ago_minutes": "{count} min temu",
       "ago_hours": "{count} godz. temu",
-      "ago_days": "{count} dni temu"
+      "ago_days": "{count} dni temu",
+      "verbs": {
+        "commented_on": "skomentował(a)",
+        "closed": "zamknął/zamknęła",
+        "opened": "otworzył(a)",
+        "assigned": "przypisał(a)",
+        "merged": "scalił(a)",
+        "deployed": "wdrożył(a)",
+        "updated_status_on": "zaktualizował(a) status dla"
+      },
+      "suffixes": {
+        "to_you": "do ciebie"
+      },
+      "targets": {
+        "production": "produkcja"
+      }
     },
     "catchup": {
       "welcome_back": "Witaj ponownie",
@@ -1276,7 +1291,8 @@
       "agent_badge": "AGENT",
       "connected_with": "Połączono z",
       "awaiting_response": "• Oczekiwanie na odpowiedź",
-      "open_sidecar": "Otwórz panel boczny"
+      "open_sidecar": "Otwórz panel boczny",
+      "agent_fallback": "Agent"
     },
     "agent": {
       "title": "Aktywność agenta",
@@ -5062,7 +5078,33 @@
       "empty": "Brak ostatniej aktywności",
       "today": "Dzisiaj",
       "yesterday": "Wczoraj",
-      "someone": "Ktoś"
+      "someone": "Ktoś",
+      "loadFailed": "Nie udało się załadować aktywności.",
+      "messages": {
+        "createdIssue": "utworzył(a) zadanie",
+        "updatedIssue": "zaktualizował(a) zadanie",
+        "movedTo": "przeniósł/przeniosła do {status}",
+        "changedStatus": "zmienił(a) status",
+        "assignedIssue": "przypisał(a) zadanie",
+        "unassignedIssue": "usunął/usunęła przypisanie",
+        "changedPriorityTo": "zmienił(a) priorytet na {priority}",
+        "changedPriority": "zmienił(a) priorytet",
+        "commentedOn": "skomentował(a)",
+        "linkedIssue": "połączył(a) zadanie",
+        "startedSprint": "rozpoczął/rozpoczęła sprint",
+        "completedSprint": "zakończył(a) sprint",
+        "createdProject": "utworzył(a) projekt",
+        "addedMemberToProject": "dodał(a) członka do projektu",
+        "unknownAction": "wykonał(a) {action}"
+      },
+      "priorities": {
+        "critical": "Krytyczny",
+        "urgent": "Pilny",
+        "high": "Wysoki",
+        "medium": "Średni",
+        "low": "Niski",
+        "none": "Brak"
+      }
     },
     "audit": {
       "kicker": "Bezpieczeństwo",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "Brak wyników. Spróbuj nazwy lub e-maila istniejącego członka workspace albo zarejestrowanego użytkownika.",
   "apm_everyone_member": "Wszyscy dostępni dla Ciebie użytkownicy są już członkami tego projektu.",
   "apm_registered_user": "Zarejestrowany użytkownik",
-  "apm_workspace_member": "Członek workspace"
+  "apm_workspace_member": "Członek workspace",
+  "agentRunKinds": {
+    "project_tracking": "Śledzenie projektu",
+    "backlog_triage": "Triage backlogu",
+    "sprint_planning": "Planowanie sprintu",
+    "bulk_sprint_creation": "Masowe tworzenie sprintów",
+    "unknown": "{kind}"
+  }
 }

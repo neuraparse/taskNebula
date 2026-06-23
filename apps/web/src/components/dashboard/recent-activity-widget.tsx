@@ -8,8 +8,17 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 interface ActivityItem {
   id: string;
   actor: string;
-  verb: string;
-  target: string;
+  verbKey:
+    | 'commented_on'
+    | 'closed'
+    | 'opened'
+    | 'assigned'
+    | 'merged'
+    | 'deployed'
+    | 'updated_status_on';
+  target?: string;
+  targetKey?: 'production';
+  suffixKey?: 'to_you';
   href?: string;
   at: Date;
 }
@@ -44,7 +53,7 @@ const STUB: ActivityItem[] = [
   {
     id: 'a1',
     actor: 'Sarah Chen',
-    verb: 'commented on',
+    verbKey: 'commented_on',
     target: 'TN-43',
     href: '/issues/TN-43',
     at: new Date(Date.now() - 7 * 60 * 1000),
@@ -52,7 +61,7 @@ const STUB: ActivityItem[] = [
   {
     id: 'a2',
     actor: 'Marcus Hill',
-    verb: 'closed',
+    verbKey: 'closed',
     target: 'TN-51',
     href: '/issues/TN-51',
     at: new Date(Date.now() - 35 * 60 * 1000),
@@ -60,7 +69,7 @@ const STUB: ActivityItem[] = [
   {
     id: 'a3',
     actor: 'Priya Patel',
-    verb: 'opened',
+    verbKey: 'opened',
     target: 'TN-66',
     href: '/issues/TN-66',
     at: new Date(Date.now() - 2 * 60 * 60 * 1000),
@@ -68,15 +77,16 @@ const STUB: ActivityItem[] = [
   {
     id: 'a4',
     actor: 'Lee Nguyen',
-    verb: 'assigned',
-    target: 'TN-22 to you',
+    verbKey: 'assigned',
+    target: 'TN-22',
+    suffixKey: 'to_you',
     href: '/issues/TN-22',
     at: new Date(Date.now() - 5 * 60 * 60 * 1000),
   },
   {
     id: 'a5',
     actor: 'Ana Sousa',
-    verb: 'merged',
+    verbKey: 'merged',
     target: 'PR #128',
     href: '#',
     at: new Date(Date.now() - 9 * 60 * 60 * 1000),
@@ -84,14 +94,14 @@ const STUB: ActivityItem[] = [
   {
     id: 'a6',
     actor: 'Dev Bot',
-    verb: 'deployed',
-    target: 'production',
+    verbKey: 'deployed',
+    targetKey: 'production',
     at: new Date(Date.now() - 14 * 60 * 60 * 1000),
   },
   {
     id: 'a7',
     actor: 'Helen Reyes',
-    verb: 'updated status on',
+    verbKey: 'updated_status_on',
     target: 'TN-07',
     href: '/issues/TN-07',
     at: new Date(Date.now() - 26 * 60 * 60 * 1000),
@@ -134,15 +144,35 @@ export function RecentActivityWidget() {
               </Avatar>
               <div className="min-w-0 flex-1">
                 <p className="text-foreground truncate text-sm leading-tight">
-                  <span className="font-medium">{item.actor}</span>{' '}
-                  <span className="text-muted-foreground">{item.verb}</span>{' '}
-                  {item.href ? (
-                    <Link href={item.href} className="font-mono text-xs hover:underline">
-                      {item.target}
-                    </Link>
-                  ) : (
-                    <span className="font-mono text-xs">{item.target}</span>
-                  )}
+                  {(() => {
+                    const target = item.targetKey
+                      ? t(`activity.targets.${item.targetKey}`)
+                      : (item.target ?? '');
+
+                    return (
+                      <>
+                        <span className="font-medium">{item.actor}</span>{' '}
+                        <span className="text-muted-foreground">
+                          {t(`activity.verbs.${item.verbKey}`)}
+                        </span>{' '}
+                        {item.href ? (
+                          <Link href={item.href} className="font-mono text-xs hover:underline">
+                            {target}
+                          </Link>
+                        ) : (
+                          <span className="font-mono text-xs">{target}</span>
+                        )}
+                      </>
+                    );
+                  })()}
+                  {item.suffixKey ? (
+                    <>
+                      {' '}
+                      <span className="text-muted-foreground">
+                        {t(`activity.suffixes.${item.suffixKey}`)}
+                      </span>
+                    </>
+                  ) : null}
                 </p>
                 <p className="text-muted-foreground text-[11px]">{relative(now, item.at, t)}</p>
               </div>

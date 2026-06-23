@@ -686,7 +686,22 @@
       "ago_seconds": "{count}s fa",
       "ago_minutes": "{count}m fa",
       "ago_hours": "{count}h fa",
-      "ago_days": "{count}g fa"
+      "ago_days": "{count}g fa",
+      "verbs": {
+        "commented_on": "ha commentato",
+        "closed": "ha chiuso",
+        "opened": "ha aperto",
+        "assigned": "ha assegnato",
+        "merged": "ha unito",
+        "deployed": "ha distribuito",
+        "updated_status_on": "ha aggiornato lo stato di"
+      },
+      "suffixes": {
+        "to_you": "a te"
+      },
+      "targets": {
+        "production": "produzione"
+      }
     },
     "catchup": {
       "welcome_back": "Bentornato",
@@ -1276,7 +1291,8 @@
       "agent_badge": "AGENTE",
       "connected_with": "Connesso con",
       "awaiting_response": "• In attesa di risposta",
-      "open_sidecar": "Apri sidecar"
+      "open_sidecar": "Apri sidecar",
+      "agent_fallback": "Agente"
     },
     "agent": {
       "title": "Attività agente",
@@ -5062,7 +5078,33 @@
       "empty": "Nessuna attività recente",
       "today": "Oggi",
       "yesterday": "Ieri",
-      "someone": "Qualcuno"
+      "someone": "Qualcuno",
+      "loadFailed": "Impossibile caricare l'attività.",
+      "messages": {
+        "createdIssue": "ha creato un’attività",
+        "updatedIssue": "ha aggiornato un’attività",
+        "movedTo": "ha spostato in {status}",
+        "changedStatus": "ha cambiato lo stato",
+        "assignedIssue": "ha assegnato un’attività",
+        "unassignedIssue": "ha rimosso l’assegnazione",
+        "changedPriorityTo": "ha cambiato la priorità in {priority}",
+        "changedPriority": "ha cambiato la priorità",
+        "commentedOn": "ha commentato",
+        "linkedIssue": "ha collegato un’attività",
+        "startedSprint": "ha avviato lo sprint",
+        "completedSprint": "ha completato lo sprint",
+        "createdProject": "ha creato un progetto",
+        "addedMemberToProject": "ha aggiunto un membro al progetto",
+        "unknownAction": "ha eseguito {action}"
+      },
+      "priorities": {
+        "critical": "Critica",
+        "urgent": "Urgente",
+        "high": "Alta",
+        "medium": "Media",
+        "low": "Bassa",
+        "none": "Nessuna"
+      }
     },
     "audit": {
       "kicker": "Sicurezza",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "Nessuna corrispondenza. Prova con un nome o un’e-mail tra membri dello workspace o utenti registrati.",
   "apm_everyone_member": "Tutte le persone disponibili per te sono già membri di questo progetto.",
   "apm_registered_user": "Utente registrato",
-  "apm_workspace_member": "Membro dello workspace"
+  "apm_workspace_member": "Membro dello workspace",
+  "agentRunKinds": {
+    "project_tracking": "Monitoraggio progetto",
+    "backlog_triage": "Triage del backlog",
+    "sprint_planning": "Pianificazione sprint",
+    "bulk_sprint_creation": "Creazione sprint in blocco",
+    "unknown": "{kind}"
+  }
 }

@@ -686,7 +686,22 @@
       "ago_seconds": "{count} 秒前",
       "ago_minutes": "{count} 分鐘前",
       "ago_hours": "{count} 小時前",
-      "ago_days": "{count} 天前"
+      "ago_days": "{count} 天前",
+      "verbs": {
+        "commented_on": "評論了",
+        "closed": "關閉了",
+        "opened": "開啟了",
+        "assigned": "指派了",
+        "merged": "合併了",
+        "deployed": "部署了",
+        "updated_status_on": "更新了狀態"
+      },
+      "suffixes": {
+        "to_you": "給你"
+      },
+      "targets": {
+        "production": "正式環境"
+      }
     },
     "catchup": {
       "welcome_back": "歡迎回來",
@@ -1276,7 +1291,8 @@
       "agent_badge": "代理程式",
       "connected_with": "已連接",
       "awaiting_response": "• 等待回應中",
-      "open_sidecar": "開啟側欄助手"
+      "open_sidecar": "開啟側欄助手",
+      "agent_fallback": "代理"
     },
     "agent": {
       "title": "代理活動",
@@ -5062,7 +5078,33 @@
       "empty": "沒有近期動態",
       "today": "今天",
       "yesterday": "昨天",
-      "someone": "某人"
+      "someone": "某人",
+      "loadFailed": "載入活動失敗。",
+      "messages": {
+        "createdIssue": "建立了任務",
+        "updatedIssue": "更新了任務",
+        "movedTo": "移動到 {status}",
+        "changedStatus": "變更了狀態",
+        "assignedIssue": "指派了任務",
+        "unassignedIssue": "取消了指派",
+        "changedPriorityTo": "將優先級改為 {priority}",
+        "changedPriority": "變更了優先級",
+        "commentedOn": "評論了",
+        "linkedIssue": "連結了任務",
+        "startedSprint": "啟動了衝刺",
+        "completedSprint": "完成了衝刺",
+        "createdProject": "建立了專案",
+        "addedMemberToProject": "將成員加入專案",
+        "unknownAction": "執行了 {action}"
+      },
+      "priorities": {
+        "critical": "嚴重",
+        "urgent": "緊急",
+        "high": "高",
+        "medium": "中",
+        "low": "低",
+        "none": "無"
+      }
     },
     "audit": {
       "kicker": "安全性",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "沒有符合結果。請嘗試輸入現有工作區成員或已註冊使用者的姓名或電子郵件。",
   "apm_everyone_member": "你可選擇的所有人都已經是此專案成員。",
   "apm_registered_user": "已註冊使用者",
-  "apm_workspace_member": "工作區成員"
+  "apm_workspace_member": "工作區成員",
+  "agentRunKinds": {
+    "project_tracking": "專案追蹤",
+    "backlog_triage": "待辦分診",
+    "sprint_planning": "衝刺規劃",
+    "bulk_sprint_creation": "批次建立衝刺",
+    "unknown": "{kind}"
+  }
 }

@@ -686,7 +686,22 @@
       "ago_seconds": "vor {count} Sek.",
       "ago_minutes": "vor {count} Min.",
       "ago_hours": "vor {count} Std.",
-      "ago_days": "vor {count} T."
+      "ago_days": "vor {count} T.",
+      "verbs": {
+        "commented_on": "hat kommentiert",
+        "closed": "hat geschlossen",
+        "opened": "hat geöffnet",
+        "assigned": "hat zugewiesen",
+        "merged": "hat gemergt",
+        "deployed": "hat bereitgestellt",
+        "updated_status_on": "hat den Status aktualisiert für"
+      },
+      "suffixes": {
+        "to_you": "an dich"
+      },
+      "targets": {
+        "production": "Produktion"
+      }
     },
     "catchup": {
       "welcome_back": "Willkommen zurück",
@@ -1276,7 +1291,8 @@
       "agent_badge": "AGENT",
       "connected_with": "Verbunden mit",
       "awaiting_response": "• Wartet auf Antwort",
-      "open_sidecar": "Sidecar öffnen"
+      "open_sidecar": "Sidecar öffnen",
+      "agent_fallback": "Agent"
     },
     "agent": {
       "title": "Agentenaktivität",
@@ -5062,7 +5078,33 @@
       "empty": "Keine aktuelle Aktivität",
       "today": "Heute",
       "yesterday": "Gestern",
-      "someone": "Jemand"
+      "someone": "Jemand",
+      "loadFailed": "Aktivität konnte nicht geladen werden.",
+      "messages": {
+        "createdIssue": "hat einen Vorgang erstellt",
+        "updatedIssue": "hat den Vorgang aktualisiert",
+        "movedTo": "hat nach {status} verschoben",
+        "changedStatus": "hat den Status geändert",
+        "assignedIssue": "hat den Vorgang zugewiesen",
+        "unassignedIssue": "hat die Zuweisung entfernt",
+        "changedPriorityTo": "hat die Priorität auf {priority} geändert",
+        "changedPriority": "hat die Priorität geändert",
+        "commentedOn": "hat kommentiert",
+        "linkedIssue": "hat einen Vorgang verknüpft",
+        "startedSprint": "hat den Sprint gestartet",
+        "completedSprint": "hat den Sprint abgeschlossen",
+        "createdProject": "hat ein Projekt erstellt",
+        "addedMemberToProject": "hat ein Mitglied zum Projekt hinzugefügt",
+        "unknownAction": "hat {action} ausgeführt"
+      },
+      "priorities": {
+        "critical": "Kritisch",
+        "urgent": "Dringend",
+        "high": "Hoch",
+        "medium": "Mittel",
+        "low": "Niedrig",
+        "none": "Keine"
+      }
     },
     "audit": {
       "kicker": "Sicherheit",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "Keine Treffer. Suche nach Name oder E-Mail bei bestehenden Workspace-Mitgliedern oder registrierten Benutzern.",
   "apm_everyone_member": "Alle für dich verfügbaren Personen sind bereits Mitglied dieses Projekts.",
   "apm_registered_user": "Registrierter Benutzer",
-  "apm_workspace_member": "Workspace-Mitglied"
+  "apm_workspace_member": "Workspace-Mitglied",
+  "agentRunKinds": {
+    "project_tracking": "Projektverfolgung",
+    "backlog_triage": "Backlog-Triage",
+    "sprint_planning": "Sprintplanung",
+    "bulk_sprint_creation": "Sprint-Massenerstellung",
+    "unknown": "{kind}"
+  }
 }

@@ -686,7 +686,22 @@
       "ago_seconds": "לפני {count} שניות",
       "ago_minutes": "לפני {count} דקות",
       "ago_hours": "לפני {count} שעות",
-      "ago_days": "לפני {count} ימים"
+      "ago_days": "לפני {count} ימים",
+      "verbs": {
+        "commented_on": "הגיב על",
+        "closed": "סגר",
+        "opened": "פתח",
+        "assigned": "הקצה",
+        "merged": "מיזג",
+        "deployed": "פרס",
+        "updated_status_on": "עדכן סטטוס של"
+      },
+      "suffixes": {
+        "to_you": "אליך"
+      },
+      "targets": {
+        "production": "ייצור"
+      }
     },
     "catchup": {
       "welcome_back": "ברוכים השבים",
@@ -1383,7 +1398,8 @@
       "agent_badge": "סוכן",
       "connected_with": "מחובר עם",
       "awaiting_response": "• ממתין לתגובה",
-      "open_sidecar": "פתיחת הסיידקאר"
+      "open_sidecar": "פתיחת הסיידקאר",
+      "agent_fallback": "סוכן"
     },
     "agent": {
       "title": "פעילות הסוכן",
@@ -5062,7 +5078,33 @@
       "empty": "אין פעילות אחרונה",
       "today": "היום",
       "yesterday": "אתמול",
-      "someone": "מישהו"
+      "someone": "מישהו",
+      "loadFailed": "טעינת הפעילות נכשלה.",
+      "messages": {
+        "createdIssue": "יצר משימה",
+        "updatedIssue": "עדכן משימה",
+        "movedTo": "העביר אל {status}",
+        "changedStatus": "שינה סטטוס",
+        "assignedIssue": "הקצה משימה",
+        "unassignedIssue": "הסיר הקצאה",
+        "changedPriorityTo": "שינה עדיפות ל-{priority}",
+        "changedPriority": "שינה עדיפות",
+        "commentedOn": "הגיב על",
+        "linkedIssue": "קישר משימה",
+        "startedSprint": "התחיל ספרינט",
+        "completedSprint": "השלים ספרינט",
+        "createdProject": "יצר פרויקט",
+        "addedMemberToProject": "הוסיף חבר לפרויקט",
+        "unknownAction": "ביצע {action}"
+      },
+      "priorities": {
+        "critical": "קריטית",
+        "urgent": "דחופה",
+        "high": "גבוהה",
+        "medium": "בינונית",
+        "low": "נמוכה",
+        "none": "ללא"
+      }
     },
     "audit": {
       "kicker": "אבטחה",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "אין התאמות. נסו שם או אימייל של חברי workspace או משתמשים רשומים.",
   "apm_everyone_member": "כל מי שזמין לכם כבר חבר בפרויקט הזה.",
   "apm_registered_user": "משתמש רשום",
-  "apm_workspace_member": "חבר workspace"
+  "apm_workspace_member": "חבר workspace",
+  "agentRunKinds": {
+    "project_tracking": "מעקב פרויקט",
+    "backlog_triage": "מיון backlog",
+    "sprint_planning": "תכנון ספרינט",
+    "bulk_sprint_creation": "יצירת ספרינטים בכמות",
+    "unknown": "{kind}"
+  }
 }

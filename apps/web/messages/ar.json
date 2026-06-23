@@ -686,7 +686,22 @@
       "ago_seconds": "منذ {count} ثانية",
       "ago_minutes": "منذ {count} دقيقة",
       "ago_hours": "منذ {count} ساعة",
-      "ago_days": "منذ {count} يوم"
+      "ago_days": "منذ {count} يوم",
+      "verbs": {
+        "commented_on": "علّق على",
+        "closed": "أغلق",
+        "opened": "فتح",
+        "assigned": "أسند",
+        "merged": "دمج",
+        "deployed": "نشر",
+        "updated_status_on": "حدّث حالة"
+      },
+      "suffixes": {
+        "to_you": "إليك"
+      },
+      "targets": {
+        "production": "الإنتاج"
+      }
     },
     "catchup": {
       "welcome_back": "مرحبًا بعودتك",
@@ -1276,7 +1291,8 @@
       "agent_badge": "وكيل",
       "connected_with": "متصل بـ",
       "awaiting_response": "• في انتظار الرد",
-      "open_sidecar": "فتح اللوحة الجانبية"
+      "open_sidecar": "فتح اللوحة الجانبية",
+      "agent_fallback": "وكيل"
     },
     "agent": {
       "title": "نشاط الوكيل",
@@ -5062,7 +5078,33 @@
       "empty": "لا يوجد نشاط حديث",
       "today": "اليوم",
       "yesterday": "أمس",
-      "someone": "شخص ما"
+      "someone": "شخص ما",
+      "loadFailed": "فشل تحميل النشاط.",
+      "messages": {
+        "createdIssue": "أنشأ مهمة",
+        "updatedIssue": "حدّث المهمة",
+        "movedTo": "نقلها إلى {status}",
+        "changedStatus": "غيّر الحالة",
+        "assignedIssue": "أسند المهمة",
+        "unassignedIssue": "أزال الإسناد",
+        "changedPriorityTo": "غيّر الأولوية إلى {priority}",
+        "changedPriority": "غيّر الأولوية",
+        "commentedOn": "علّق على",
+        "linkedIssue": "ربط مهمة",
+        "startedSprint": "بدأ السبرنت",
+        "completedSprint": "أكمل السبرنت",
+        "createdProject": "أنشأ مشروعًا",
+        "addedMemberToProject": "أضاف عضوًا إلى المشروع",
+        "unknownAction": "نفّذ {action}"
+      },
+      "priorities": {
+        "critical": "حرجة",
+        "urgent": "عاجلة",
+        "high": "عالية",
+        "medium": "متوسطة",
+        "low": "منخفضة",
+        "none": "بلا أولوية"
+      }
     },
     "audit": {
       "kicker": "الأمان",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "لا توجد نتائج. جرّب اسمًا أو بريدًا إلكترونيًا من أعضاء مساحة العمل أو المستخدمين المسجلين.",
   "apm_everyone_member": "كل الأشخاص المتاحين لك هم بالفعل أعضاء في هذا المشروع.",
   "apm_registered_user": "مستخدم مسجل",
-  "apm_workspace_member": "عضو مساحة العمل"
+  "apm_workspace_member": "عضو مساحة العمل",
+  "agentRunKinds": {
+    "project_tracking": "تتبّع المشروع",
+    "backlog_triage": "فرز قائمة الأعمال",
+    "sprint_planning": "تخطيط السبرنت",
+    "bulk_sprint_creation": "إنشاء السبرنتات دفعة واحدة",
+    "unknown": "{kind}"
+  }
 }

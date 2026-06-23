@@ -686,7 +686,22 @@
       "ago_seconds": "{count} s sitten",
       "ago_minutes": "{count} min sitten",
       "ago_hours": "{count} h sitten",
-      "ago_days": "{count} pv sitten"
+      "ago_days": "{count} pv sitten",
+      "verbs": {
+        "commented_on": "kommentoi",
+        "closed": "sulki",
+        "opened": "avasi",
+        "assigned": "osoitti",
+        "merged": "yhdisti",
+        "deployed": "julkaisi",
+        "updated_status_on": "päivitti tilan kohteelle"
+      },
+      "suffixes": {
+        "to_you": "sinulle"
+      },
+      "targets": {
+        "production": "tuotanto"
+      }
     },
     "catchup": {
       "welcome_back": "Tervetuloa takaisin",
@@ -1276,7 +1291,8 @@
       "agent_badge": "AGENTTI",
       "connected_with": "Yhdistetty kohteeseen",
       "awaiting_response": "• Odottaa vastausta",
-      "open_sidecar": "Avaa sivupaneeli"
+      "open_sidecar": "Avaa sivupaneeli",
+      "agent_fallback": "Agentti"
     },
     "agent": {
       "title": "Agentin toiminta",
@@ -5062,7 +5078,33 @@
       "empty": "Ei viimeaikaista toimintaa",
       "today": "Tänään",
       "yesterday": "Eilen",
-      "someone": "Joku"
+      "someone": "Joku",
+      "loadFailed": "Aktiviteetin lataaminen epäonnistui.",
+      "messages": {
+        "createdIssue": "loi tehtävän",
+        "updatedIssue": "päivitti tehtävän",
+        "movedTo": "siirsi tilaan {status}",
+        "changedStatus": "muutti tilaa",
+        "assignedIssue": "osoitti tehtävän",
+        "unassignedIssue": "poisti osoituksen",
+        "changedPriorityTo": "muutti prioriteetiksi {priority}",
+        "changedPriority": "muutti prioriteettia",
+        "commentedOn": "kommentoi",
+        "linkedIssue": "linkitti tehtävän",
+        "startedSprint": "aloitti sprintin",
+        "completedSprint": "sai sprintin valmiiksi",
+        "createdProject": "loi projektin",
+        "addedMemberToProject": "lisäsi jäsenen projektiin",
+        "unknownAction": "suoritti {action}"
+      },
+      "priorities": {
+        "critical": "Kriittinen",
+        "urgent": "Kiireellinen",
+        "high": "Korkea",
+        "medium": "Keskitaso",
+        "low": "Matala",
+        "none": "Ei prioriteettia"
+      }
     },
     "audit": {
       "kicker": "Tietoturva",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "Ei osumia. Kokeile workspacen jäsenten tai rekisteröityjen käyttäjien nimeä tai sähköpostia.",
   "apm_everyone_member": "Kaikki käytettävissäsi olevat henkilöt ovat jo tämän projektin jäseniä.",
   "apm_registered_user": "Rekisteröity käyttäjä",
-  "apm_workspace_member": "Workspacen jäsen"
+  "apm_workspace_member": "Workspacen jäsen",
+  "agentRunKinds": {
+    "project_tracking": "Projektin seuranta",
+    "backlog_triage": "Backlogin triage",
+    "sprint_planning": "Sprintin suunnittelu",
+    "bulk_sprint_creation": "Sprinttien massaluonti",
+    "unknown": "{kind}"
+  }
 }

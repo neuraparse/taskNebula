@@ -2,16 +2,56 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, Activity } from 'lucide-react';
-import { format, formatDistanceToNow, isToday, isYesterday, startOfDay } from 'date-fns';
+import { isToday, isYesterday, startOfDay } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
+
+const ACTIVITY_MESSAGE_KEYS = {
+  createdIssue: 'activity.messages.createdIssue',
+  updatedIssue: 'activity.messages.updatedIssue',
+  movedTo: 'activity.messages.movedTo',
+  changedStatus: 'activity.messages.changedStatus',
+  assignedIssue: 'activity.messages.assignedIssue',
+  unassignedIssue: 'activity.messages.unassignedIssue',
+  changedPriorityTo: 'activity.messages.changedPriorityTo',
+  changedPriority: 'activity.messages.changedPriority',
+  commentedOn: 'activity.messages.commentedOn',
+  linkedIssue: 'activity.messages.linkedIssue',
+  startedSprint: 'activity.messages.startedSprint',
+  completedSprint: 'activity.messages.completedSprint',
+  createdProject: 'activity.messages.createdProject',
+  addedMemberToProject: 'activity.messages.addedMemberToProject',
+  unknownAction: 'activity.messages.unknownAction',
+} as const;
+
+const ACTIVITY_PRIORITY_KEYS = {
+  critical: 'activity.priorities.critical',
+  urgent: 'activity.priorities.urgent',
+  high: 'activity.priorities.high',
+  medium: 'activity.priorities.medium',
+  low: 'activity.priorities.low',
+  none: 'activity.priorities.none',
+} as const;
+
+type ActivityMessageKey = keyof typeof ACTIVITY_MESSAGE_KEYS;
+type ActivityPriorityKey = keyof typeof ACTIVITY_PRIORITY_KEYS;
+type ActivityTranslationKey =
+  | (typeof ACTIVITY_MESSAGE_KEYS)[ActivityMessageKey]
+  | (typeof ACTIVITY_PRIORITY_KEYS)[ActivityPriorityKey];
+type ActivityTranslator = (
+  key: ActivityTranslationKey,
+  values?: Record<string, string | number>
+) => string;
+type IntlFormatter = ReturnType<typeof useFormatter>;
 
 interface ActivityItem {
   id: string;
   action: string;
   type: string;
-  message: string;
+  message?: string;
+  messageKey?: string;
+  messageValues?: Record<string, string | number | null | undefined>;
   user: {
     id: string;
     name: string | null;
@@ -32,20 +72,66 @@ interface ActivityFeedProps {
   limit?: number;
 }
 
-function groupLabel(d: Date, labels: { today: string; yesterday: string }): string {
-  if (isToday(d)) return labels.today;
-  if (isYesterday(d)) return labels.yesterday;
-  return format(d, 'MMM d, yyyy');
+function isActivityMessageKey(value: string | undefined): value is ActivityMessageKey {
+  return !!value && value in ACTIVITY_MESSAGE_KEYS;
 }
 
-function groupByDay(activities: ActivityItem[], labels: { today: string; yesterday: string }) {
+function isActivityPriorityKey(value: unknown): value is ActivityPriorityKey {
+  return typeof value === 'string' && value in ACTIVITY_PRIORITY_KEYS;
+}
+
+function normalizeMessageValues(
+  values: ActivityItem['messageValues'],
+  t: ActivityTranslator
+): Record<string, string | number> {
+  const normalized: Record<string, string | number> = {};
+  if (!values) return normalized;
+
+  for (const [key, value] of Object.entries(values)) {
+    if (value === null || value === undefined) continue;
+    if (key === 'priority' && isActivityPriorityKey(value)) {
+      normalized[key] = t(ACTIVITY_PRIORITY_KEYS[value]);
+    } else {
+      normalized[key] = value;
+    }
+  }
+
+  return normalized;
+}
+
+function activityMessage(activity: ActivityItem, t: ActivityTranslator): string {
+  if (isActivityMessageKey(activity.messageKey)) {
+    return t(
+      ACTIVITY_MESSAGE_KEYS[activity.messageKey],
+      normalizeMessageValues(activity.messageValues, t)
+    );
+  }
+
+  return activity.message ?? t(ACTIVITY_MESSAGE_KEYS.unknownAction, { action: activity.action });
+}
+
+function groupLabel(
+  d: Date,
+  labels: { today: string; yesterday: string },
+  formatter: IntlFormatter
+): string {
+  if (isToday(d)) return labels.today;
+  if (isYesterday(d)) return labels.yesterday;
+  return formatter.dateTime(d, { dateStyle: 'medium' });
+}
+
+function groupByDay(
+  activities: ActivityItem[],
+  labels: { today: string; yesterday: string },
+  formatter: IntlFormatter
+) {
   const groups: { key: string; label: string; items: ActivityItem[] }[] = [];
   for (const a of activities) {
     const d = new Date(a.createdAt);
     const key = startOfDay(d).toISOString();
     let group = groups.find((g) => g.key === key);
     if (!group) {
-      group = { key, label: groupLabel(d, labels), items: [] };
+      group = { key, label: groupLabel(d, labels, formatter), items: [] };
       groups.push(group);
     }
     group.items.push(a);
@@ -55,13 +141,14 @@ function groupByDay(activities: ActivityItem[], labels: { today: string; yesterd
 
 export function ActivityFeed({ organizationId, limit = 20 }: ActivityFeedProps) {
   const t = useTranslations('workspaceTools');
+  const formatter = useFormatter();
   const { data, isLoading } = useQuery<{ activities: ActivityItem[] }>({
     queryKey: ['recent-activities', organizationId, limit],
     queryFn: async () => {
       const response = await fetch(
         `/api/activities/recent?organizationId=${organizationId}&limit=${limit}`
       );
-      if (!response.ok) throw new Error('Failed to fetch activities');
+      if (!response.ok) throw new Error(t('activity.loadFailed'));
       return response.json();
     },
     staleTime: 5 * 60 * 1000,
@@ -72,7 +159,10 @@ export function ActivityFeed({ organizationId, limit = 20 }: ActivityFeedProps) 
     () => ({ today: t('activity.today'), yesterday: t('activity.yesterday') }),
     [t]
   );
-  const groups = useMemo(() => groupByDay(activities, dayLabels), [activities, dayLabels]);
+  const groups = useMemo(
+    () => groupByDay(activities, dayLabels, formatter),
+    [activities, dayLabels, formatter]
+  );
 
   if (isLoading) {
     return (
@@ -117,12 +207,16 @@ export function ActivityFeed({ organizationId, limit = 20 }: ActivityFeedProps) 
                     activity.user.name ||
                     activity.user.email.split('@')[0] ||
                     t('activity.someone');
+                  const message = activityMessage(activity, t);
                   const initial =
                     (activity.user.name || activity.user.email)[0]?.toUpperCase() || '?';
                   const timestamp = new Date(activity.createdAt);
-                  const tooltip = `${actor} ${activity.message}${
+                  const tooltip = `${actor} ${message}${
                     activity.issue ? ` — ${activity.issue.key} ${activity.issue.title}` : ''
-                  } · ${format(timestamp, 'MMM d, yyyy h:mm a')}`;
+                  } · ${formatter.dateTime(timestamp, {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                  })}`;
 
                   return (
                     <li
@@ -138,7 +232,7 @@ export function ActivityFeed({ organizationId, limit = 20 }: ActivityFeedProps) 
                       </Avatar>
                       <p className="min-w-0 flex-1 truncate text-sm leading-snug">
                         <span className="text-foreground font-medium">{actor}</span>{' '}
-                        <span className="text-muted-foreground">{activity.message}</span>
+                        <span className="text-muted-foreground">{message}</span>
                         {activity.issue && (
                           <>
                             {' '}
@@ -152,7 +246,7 @@ export function ActivityFeed({ organizationId, limit = 20 }: ActivityFeedProps) 
                         className="text-muted-foreground shrink-0 text-xs tabular-nums"
                         dateTime={timestamp.toISOString()}
                       >
-                        {formatDistanceToNow(timestamp, { addSuffix: true })}
+                        {formatter.relativeTime(timestamp)}
                       </time>
                     </li>
                   );

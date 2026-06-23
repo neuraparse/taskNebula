@@ -686,7 +686,22 @@
       "ago_seconds": "{count} с назад",
       "ago_minutes": "{count} мин назад",
       "ago_hours": "{count} ч назад",
-      "ago_days": "{count} дн назад"
+      "ago_days": "{count} дн назад",
+      "verbs": {
+        "commented_on": "прокомментировал(а)",
+        "closed": "закрыл(а)",
+        "opened": "открыл(а)",
+        "assigned": "назначил(а)",
+        "merged": "смёржил(а)",
+        "deployed": "развернул(а)",
+        "updated_status_on": "обновил(а) статус у"
+      },
+      "suffixes": {
+        "to_you": "вам"
+      },
+      "targets": {
+        "production": "продакшен"
+      }
     },
     "catchup": {
       "welcome_back": "С возвращением",
@@ -1276,7 +1291,8 @@
       "agent_badge": "АГЕНТ",
       "connected_with": "Подключено к",
       "awaiting_response": "• Ожидание ответа",
-      "open_sidecar": "Открыть Sidecar"
+      "open_sidecar": "Открыть Sidecar",
+      "agent_fallback": "Агент"
     },
     "agent": {
       "title": "Активность агента",
@@ -5062,7 +5078,33 @@
       "empty": "Нет недавней активности",
       "today": "Сегодня",
       "yesterday": "Вчера",
-      "someone": "Кто-то"
+      "someone": "Кто-то",
+      "loadFailed": "Не удалось загрузить активность.",
+      "messages": {
+        "createdIssue": "создал(а) задачу",
+        "updatedIssue": "обновил(а) задачу",
+        "movedTo": "переместил(а) в {status}",
+        "changedStatus": "изменил(а) статус",
+        "assignedIssue": "назначил(а) задачу",
+        "unassignedIssue": "снял(а) назначение",
+        "changedPriorityTo": "изменил(а) приоритет на {priority}",
+        "changedPriority": "изменил(а) приоритет",
+        "commentedOn": "прокомментировал(а)",
+        "linkedIssue": "связал(а) задачу",
+        "startedSprint": "запустил(а) спринт",
+        "completedSprint": "завершил(а) спринт",
+        "createdProject": "создал(а) проект",
+        "addedMemberToProject": "добавил(а) участника в проект",
+        "unknownAction": "выполнил(а) {action}"
+      },
+      "priorities": {
+        "critical": "Критический",
+        "urgent": "Срочный",
+        "high": "Высокий",
+        "medium": "Средний",
+        "low": "Низкий",
+        "none": "Нет"
+      }
     },
     "audit": {
       "kicker": "Безопасность",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "Совпадений нет. Попробуйте имя или email участника workspace либо зарегистрированного пользователя.",
   "apm_everyone_member": "Все доступные вам пользователи уже являются участниками этого проекта.",
   "apm_registered_user": "Зарегистрированный пользователь",
-  "apm_workspace_member": "Участник workspace"
+  "apm_workspace_member": "Участник workspace",
+  "agentRunKinds": {
+    "project_tracking": "Отслеживание проекта",
+    "backlog_triage": "Триаж бэклога",
+    "sprint_planning": "Планирование спринта",
+    "bulk_sprint_creation": "Массовое создание спринтов",
+    "unknown": "{kind}"
+  }
 }

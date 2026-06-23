@@ -686,7 +686,22 @@
       "ago_seconds": "{count} с тому",
       "ago_minutes": "{count} хв тому",
       "ago_hours": "{count} год тому",
-      "ago_days": "{count} дн тому"
+      "ago_days": "{count} дн тому",
+      "verbs": {
+        "commented_on": "прокоментував(ла)",
+        "closed": "закрив(ла)",
+        "opened": "відкрив(ла)",
+        "assigned": "призначив(ла)",
+        "merged": "об’єднав(ла)",
+        "deployed": "розгорнув(ла)",
+        "updated_status_on": "оновив(ла) статус для"
+      },
+      "suffixes": {
+        "to_you": "вам"
+      },
+      "targets": {
+        "production": "продакшен"
+      }
     },
     "catchup": {
       "welcome_back": "З поверненням",
@@ -1276,7 +1291,8 @@
       "agent_badge": "АГЕНТ",
       "connected_with": "Підключено через",
       "awaiting_response": "• Очікування відповіді",
-      "open_sidecar": "Відкрити Sidecar"
+      "open_sidecar": "Відкрити Sidecar",
+      "agent_fallback": "Агент"
     },
     "agent": {
       "title": "Активність агента",
@@ -5062,7 +5078,33 @@
       "empty": "Немає нещодавньої активності",
       "today": "Сьогодні",
       "yesterday": "Учора",
-      "someone": "Хтось"
+      "someone": "Хтось",
+      "loadFailed": "Не вдалося завантажити активність.",
+      "messages": {
+        "createdIssue": "створив(ла) завдання",
+        "updatedIssue": "оновив(ла) завдання",
+        "movedTo": "перемістив(ла) до {status}",
+        "changedStatus": "змінив(ла) статус",
+        "assignedIssue": "призначив(ла) завдання",
+        "unassignedIssue": "зняв(ла) призначення",
+        "changedPriorityTo": "змінив(ла) пріоритет на {priority}",
+        "changedPriority": "змінив(ла) пріоритет",
+        "commentedOn": "прокоментував(ла)",
+        "linkedIssue": "пов’язав(ла) завдання",
+        "startedSprint": "запустив(ла) спринт",
+        "completedSprint": "завершив(ла) спринт",
+        "createdProject": "створив(ла) проєкт",
+        "addedMemberToProject": "додав(ла) учасника до проєкту",
+        "unknownAction": "виконав(ла) {action}"
+      },
+      "priorities": {
+        "critical": "Критичний",
+        "urgent": "Терміновий",
+        "high": "Високий",
+        "medium": "Середній",
+        "low": "Низький",
+        "none": "Немає"
+      }
     },
     "audit": {
       "kicker": "Безпека",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "Збігів немає. Спробуйте ім’я або email учасника workspace чи зареєстрованого користувача.",
   "apm_everyone_member": "Усі доступні вам користувачі вже є учасниками цього проєкту.",
   "apm_registered_user": "Зареєстрований користувач",
-  "apm_workspace_member": "Учасник workspace"
+  "apm_workspace_member": "Учасник workspace",
+  "agentRunKinds": {
+    "project_tracking": "Відстеження проєкту",
+    "backlog_triage": "Тріаж backlog",
+    "sprint_planning": "Планування спринту",
+    "bulk_sprint_creation": "Масове створення спринтів",
+    "unknown": "{kind}"
+  }
 }

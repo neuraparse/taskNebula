@@ -686,7 +686,22 @@
       "ago_seconds": "před {count} s",
       "ago_minutes": "před {count} min",
       "ago_hours": "před {count} h",
-      "ago_days": "před {count} dny"
+      "ago_days": "před {count} dny",
+      "verbs": {
+        "commented_on": "okomentoval(a)",
+        "closed": "uzavřel(a)",
+        "opened": "otevřel(a)",
+        "assigned": "přiřadil(a)",
+        "merged": "sloučil(a)",
+        "deployed": "nasadil(a)",
+        "updated_status_on": "aktualizoval(a) stav u"
+      },
+      "suffixes": {
+        "to_you": "vám"
+      },
+      "targets": {
+        "production": "produkce"
+      }
     },
     "catchup": {
       "welcome_back": "Vítejte zpět",
@@ -1276,7 +1291,8 @@
       "agent_badge": "AGENT",
       "connected_with": "Propojeno s",
       "awaiting_response": "• Čeká na odpověď",
-      "open_sidecar": "Otevřít postranní panel"
+      "open_sidecar": "Otevřít postranní panel",
+      "agent_fallback": "Agent"
     },
     "agent": {
       "title": "Aktivita agenta",
@@ -5062,7 +5078,33 @@
       "empty": "Žádná nedávná aktivita",
       "today": "Dnes",
       "yesterday": "Včera",
-      "someone": "Někdo"
+      "someone": "Někdo",
+      "loadFailed": "Nepodařilo se načíst aktivitu.",
+      "messages": {
+        "createdIssue": "vytvořil(a) úkol",
+        "updatedIssue": "aktualizoval(a) úkol",
+        "movedTo": "přesunul(a) do {status}",
+        "changedStatus": "změnil(a) stav",
+        "assignedIssue": "přiřadil(a) úkol",
+        "unassignedIssue": "odebral(a) přiřazení",
+        "changedPriorityTo": "změnil(a) prioritu na {priority}",
+        "changedPriority": "změnil(a) prioritu",
+        "commentedOn": "okomentoval(a)",
+        "linkedIssue": "propojil(a) úkol",
+        "startedSprint": "spustil(a) sprint",
+        "completedSprint": "dokončil(a) sprint",
+        "createdProject": "vytvořil(a) projekt",
+        "addedMemberToProject": "přidal(a) člena do projektu",
+        "unknownAction": "provedl(a) {action}"
+      },
+      "priorities": {
+        "critical": "Kritická",
+        "urgent": "Naléhavá",
+        "high": "Vysoká",
+        "medium": "Střední",
+        "low": "Nízká",
+        "none": "Žádná"
+      }
     },
     "audit": {
       "kicker": "Zabezpečení",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "Žádné shody. Zkuste jméno nebo e-mail člena workspace nebo registrovaného uživatele.",
   "apm_everyone_member": "Všichni dostupní uživatelé už jsou členy tohoto projektu.",
   "apm_registered_user": "Registrovaný uživatel",
-  "apm_workspace_member": "Člen workspace"
+  "apm_workspace_member": "Člen workspace",
+  "agentRunKinds": {
+    "project_tracking": "Sledování projektu",
+    "backlog_triage": "Třídění backlogu",
+    "sprint_planning": "Plánování sprintu",
+    "bulk_sprint_creation": "Hromadné vytváření sprintů",
+    "unknown": "{kind}"
+  }
 }

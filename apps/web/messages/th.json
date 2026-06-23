@@ -686,7 +686,22 @@
       "ago_seconds": "{count} วินาทีที่แล้ว",
       "ago_minutes": "{count} นาทีที่แล้ว",
       "ago_hours": "{count} ชม.ที่แล้ว",
-      "ago_days": "{count} วันที่แล้ว"
+      "ago_days": "{count} วันที่แล้ว",
+      "verbs": {
+        "commented_on": "แสดงความคิดเห็นใน",
+        "closed": "ปิด",
+        "opened": "เปิด",
+        "assigned": "มอบหมาย",
+        "merged": "รวม",
+        "deployed": "ดีพลอย",
+        "updated_status_on": "อัปเดตสถานะของ"
+      },
+      "suffixes": {
+        "to_you": "ให้คุณ"
+      },
+      "targets": {
+        "production": "โปรดักชัน"
+      }
     },
     "catchup": {
       "welcome_back": "ยินดีต้อนรับกลับมา",
@@ -1383,7 +1398,8 @@
       "agent_badge": "เอเจนต์",
       "connected_with": "เชื่อมต่อกับ",
       "awaiting_response": "• กำลังรอการตอบกลับ",
-      "open_sidecar": "เปิด Sidecar"
+      "open_sidecar": "เปิด Sidecar",
+      "agent_fallback": "เอเจนต์"
     },
     "agent": {
       "title": "กิจกรรมของเอเจนต์",
@@ -5062,7 +5078,33 @@
       "empty": "ไม่มีกิจกรรมล่าสุด",
       "today": "วันนี้",
       "yesterday": "เมื่อวาน",
-      "someone": "ใครบางคน"
+      "someone": "ใครบางคน",
+      "loadFailed": "โหลดกิจกรรมไม่สำเร็จ",
+      "messages": {
+        "createdIssue": "สร้างงาน",
+        "updatedIssue": "อัปเดตงาน",
+        "movedTo": "ย้ายไปที่ {status}",
+        "changedStatus": "เปลี่ยนสถานะ",
+        "assignedIssue": "มอบหมายงาน",
+        "unassignedIssue": "ยกเลิกการมอบหมาย",
+        "changedPriorityTo": "เปลี่ยนลำดับความสำคัญเป็น {priority}",
+        "changedPriority": "เปลี่ยนลำดับความสำคัญ",
+        "commentedOn": "แสดงความคิดเห็นใน",
+        "linkedIssue": "เชื่อมโยงงาน",
+        "startedSprint": "เริ่มสปรินต์",
+        "completedSprint": "เสร็จสิ้นสปรินต์",
+        "createdProject": "สร้างโปรเจกต์",
+        "addedMemberToProject": "เพิ่มสมาชิกในโปรเจกต์",
+        "unknownAction": "ดำเนินการ {action}"
+      },
+      "priorities": {
+        "critical": "วิกฤต",
+        "urgent": "เร่งด่วน",
+        "high": "สูง",
+        "medium": "ปานกลาง",
+        "low": "ต่ำ",
+        "none": "ไม่มี"
+      }
     },
     "audit": {
       "kicker": "ความปลอดภัย",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "ไม่พบรายการที่ตรงกัน ลองค้นหาชื่อหรืออีเมลของสมาชิก workspace หรือผู้ใช้ที่ลงทะเบียนแล้ว",
   "apm_everyone_member": "ทุกคนที่คุณสามารถเลือกได้เป็นสมาชิกของโปรเจกต์นี้แล้ว",
   "apm_registered_user": "ผู้ใช้ที่ลงทะเบียนแล้ว",
-  "apm_workspace_member": "สมาชิก workspace"
+  "apm_workspace_member": "สมาชิก workspace",
+  "agentRunKinds": {
+    "project_tracking": "ติดตามโปรเจกต์",
+    "backlog_triage": "คัดกรอง backlog",
+    "sprint_planning": "วางแผนสปรินต์",
+    "bulk_sprint_creation": "สร้างสปรินต์เป็นชุด",
+    "unknown": "{kind}"
+  }
 }

@@ -686,7 +686,22 @@
       "ago_seconds": "{count} सेकंड पहले",
       "ago_minutes": "{count} मिनट पहले",
       "ago_hours": "{count} घंटे पहले",
-      "ago_days": "{count} दिन पहले"
+      "ago_days": "{count} दिन पहले",
+      "verbs": {
+        "commented_on": "ने टिप्पणी की",
+        "closed": "ने बंद किया",
+        "opened": "ने खोला",
+        "assigned": "ने असाइन किया",
+        "merged": "ने मर्ज किया",
+        "deployed": "ने डिप्लॉय किया",
+        "updated_status_on": "ने स्थिति अपडेट की"
+      },
+      "suffixes": {
+        "to_you": "आपको"
+      },
+      "targets": {
+        "production": "प्रोडक्शन"
+      }
     },
     "catchup": {
       "welcome_back": "वापसी पर स्वागत है",
@@ -1276,7 +1291,8 @@
       "agent_badge": "एजेंट",
       "connected_with": "इससे कनेक्टेड",
       "awaiting_response": "• प्रतिक्रिया की प्रतीक्षा में",
-      "open_sidecar": "साइडकार खोलें"
+      "open_sidecar": "साइडकार खोलें",
+      "agent_fallback": "एजेंट"
     },
     "agent": {
       "title": "एजेंट गतिविधि",
@@ -5062,7 +5078,33 @@
       "empty": "कोई हाल की गतिविधि नहीं",
       "today": "आज",
       "yesterday": "कल",
-      "someone": "कोई"
+      "someone": "कोई",
+      "loadFailed": "गतिविधि लोड नहीं हो सकी.",
+      "messages": {
+        "createdIssue": "ने कार्य बनाया",
+        "updatedIssue": "ने कार्य अपडेट किया",
+        "movedTo": "ने {status} में भेजा",
+        "changedStatus": "ने स्थिति बदली",
+        "assignedIssue": "ने कार्य असाइन किया",
+        "unassignedIssue": "ने असाइनमेंट हटाया",
+        "changedPriorityTo": "ने प्राथमिकता {priority} की",
+        "changedPriority": "ने प्राथमिकता बदली",
+        "commentedOn": "ने टिप्पणी की",
+        "linkedIssue": "ने कार्य लिंक किया",
+        "startedSprint": "ने स्प्रिंट शुरू किया",
+        "completedSprint": "ने स्प्रिंट पूरा किया",
+        "createdProject": "ने प्रोजेक्ट बनाया",
+        "addedMemberToProject": "ने प्रोजेक्ट में सदस्य जोड़ा",
+        "unknownAction": "ने {action} किया"
+      },
+      "priorities": {
+        "critical": "गंभीर",
+        "urgent": "अत्यावश्यक",
+        "high": "उच्च",
+        "medium": "मध्यम",
+        "low": "निम्न",
+        "none": "कोई नहीं"
+      }
     },
     "audit": {
       "kicker": "सुरक्षा",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "कोई मिलान नहीं। मौजूदा workspace सदस्यों या पंजीकृत उपयोगकर्ताओं का नाम या ईमेल आज़माएँ।",
   "apm_everyone_member": "आपके लिए उपलब्ध सभी लोग पहले से इस प्रोजेक्ट के सदस्य हैं।",
   "apm_registered_user": "पंजीकृत उपयोगकर्ता",
-  "apm_workspace_member": "Workspace सदस्य"
+  "apm_workspace_member": "Workspace सदस्य",
+  "agentRunKinds": {
+    "project_tracking": "प्रोजेक्ट ट्रैकिंग",
+    "backlog_triage": "बैकलॉग ट्रायाज",
+    "sprint_planning": "स्प्रिंट योजना",
+    "bulk_sprint_creation": "बल्क स्प्रिंट निर्माण",
+    "unknown": "{kind}"
+  }
 }

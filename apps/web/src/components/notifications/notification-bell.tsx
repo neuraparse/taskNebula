@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import {
   Bell,
   BellOff,
@@ -23,7 +23,7 @@ import {
   useMarkAllNotificationsAsRead,
   type Notification,
 } from '@/lib/hooks/use-notifications';
-import { formatDistanceToNow, isToday, isYesterday } from 'date-fns';
+import { isToday, isYesterday } from 'date-fns';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
@@ -52,6 +52,7 @@ function NotificationRow({
   onMarkRead: (id: string) => void;
 }) {
   const t = useTranslations('notifications');
+  const formatter = useFormatter();
   const actorName =
     notification.type === 'ai_draft_failed'
       ? t('actor.ai_draft')
@@ -118,7 +119,7 @@ function NotificationRow({
           className="text-muted-foreground text-[11px] tabular-nums"
           dateTime={new Date(notification.createdAt).toISOString()}
         >
-          {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: false })}
+          {formatter.relativeTime(new Date(notification.createdAt), { style: 'narrow' })}
         </time>
         {!notification.isRead && (
           <button

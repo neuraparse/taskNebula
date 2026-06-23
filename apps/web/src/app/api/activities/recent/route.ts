@@ -94,16 +94,20 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Map logs to activity format
+    // Map logs to activity format. The client localizes messageKey/messageValues
+    // with the active next-intl locale instead of rendering English API copy.
     const activities = logs.map((log) => {
       const statusTargetId = getStatusTargetId(log.changes);
+      const message = getActivityMessageDescriptor(log.action, log.changes, {
+        toStatusName: statusTargetId ? statusNameMap.get(statusTargetId) : undefined,
+      });
+
       return {
         id: log.id,
         action: log.action,
         type: getActivityType(log.action),
-        message: getActivityMessage(log.action, log.changes, {
-          toStatusName: statusTargetId ? statusNameMap.get(statusTargetId) : undefined,
-        }),
+        messageKey: message.key,
+        messageValues: message.values,
         user: log.user,
         issue: log.issueId ? issuesMap[log.issueId] : null,
         createdAt: log.createdAt,
@@ -151,44 +155,65 @@ function getChangeTarget(changes: unknown, key: string): string | null {
   return isNonEmptyString(target) ? target : null;
 }
 
-function getActivityMessage(
+type ActivityMessageDescriptor = {
+  key:
+    | 'createdIssue'
+    | 'updatedIssue'
+    | 'movedTo'
+    | 'changedStatus'
+    | 'assignedIssue'
+    | 'unassignedIssue'
+    | 'changedPriorityTo'
+    | 'changedPriority'
+    | 'commentedOn'
+    | 'linkedIssue'
+    | 'startedSprint'
+    | 'completedSprint'
+    | 'createdProject'
+    | 'addedMemberToProject'
+    | 'unknownAction';
+  values?: Record<string, string>;
+};
+
+function getActivityMessageDescriptor(
   action: string,
   changes: unknown,
   labels: { toStatusName?: string } = {}
-): string {
+): ActivityMessageDescriptor {
   switch (action) {
     case 'issue.created':
-      return 'created issue';
+      return { key: 'createdIssue' };
     case 'issue.updated':
-      return 'updated issue';
+      return { key: 'updatedIssue' };
     case 'issue.status_changed':
       if (labels.toStatusName) {
-        return `moved to ${labels.toStatusName}`;
+        return { key: 'movedTo', values: { status: labels.toStatusName } };
       }
-      return 'changed status';
+      return { key: 'changedStatus' };
     case 'issue.assigned':
-      return 'assigned issue';
+      return { key: 'assignedIssue' };
     case 'issue.unassigned':
-      return 'unassigned issue';
+      return { key: 'unassignedIssue' };
     case 'issue.priority_changed':
       {
         const priorityTarget = getChangeTarget(changes, 'priority');
-        if (priorityTarget) return `changed priority to ${priorityTarget}`;
+        if (priorityTarget)
+          return { key: 'changedPriorityTo', values: { priority: priorityTarget } };
       }
-      return 'changed priority';
+      return { key: 'changedPriority' };
     case 'issue.commented':
-      return 'commented on';
+      return { key: 'commentedOn' };
     case 'issue.linked':
-      return 'linked issue';
+      return { key: 'linkedIssue' };
     case 'sprint.started':
-      return 'started sprint';
+      return { key: 'startedSprint' };
     case 'sprint.completed':
-      return 'completed sprint';
+      return { key: 'completedSprint' };
     case 'project.created':
-      return 'created project';
+      return { key: 'createdProject' };
     case 'project.member_added':
-      return 'added member to project';
+      return { key: 'addedMemberToProject' };
     default:
-      return action.replace(/\./g, ' ').replace(/_/g, ' ');
+      return { key: 'unknownAction', values: { action } };
   }
 }

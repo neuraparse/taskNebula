@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,7 +11,6 @@ import { useActivities } from '@/lib/hooks/use-activities';
 import { useIssue } from '@/lib/hooks/use-issues';
 import { CommentItem } from './comment-item';
 import { MentionTextarea } from './mention-textarea';
-import { formatDistanceToNow } from 'date-fns';
 
 const COMMENT_LIMIT = 5;
 const ACTIVITY_LIMIT = 7;
@@ -65,14 +64,15 @@ function isAgentEvent(item: MaybeAgentRecord): boolean {
   return false;
 }
 
-function getAgentName(item: MaybeAgentRecord): string {
+function getAgentName(item: MaybeAgentRecord, fallback: string): string {
   return (
-    item.metadata?.agentName || item.newValue || item.author?.name || item.user?.name || 'Agent'
+    item.metadata?.agentName || item.newValue || item.author?.name || item.user?.name || fallback
   );
 }
 
 export function IssueActivity({ issueId }: { issueId: string }) {
   const t = useTranslations('issuePanels');
+  const formatter = useFormatter();
   const [newComment, setNewComment] = useState('');
   const [mentionedUsers, setMentionedUsers] = useState<string[]>([]);
   const [showAllComments, setShowAllComments] = useState(false);
@@ -214,7 +214,7 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                     });
                     if (!hasFollowup) {
                       connectedStripIndex = i;
-                      connectedAgentName = getAgentName(a);
+                      connectedAgentName = getAgentName(a, t('activity.agent_fallback'));
                     }
                     break;
                   }
@@ -224,9 +224,7 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                   const userName =
                     activity.user?.name || activity.user?.email || t('activity.unknown_user');
                   const actorIsAgent = isAgentActor(activity.user as MaybeAgentActor);
-                  const timeAgo = formatDistanceToNow(new Date(activity.createdAt), {
-                    addSuffix: true,
-                  });
+                  const timeAgo = formatter.relativeTime(new Date(activity.createdAt));
 
                   const isAssignment =
                     (activity.type || '').toLowerCase() === 'updated' &&

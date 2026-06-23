@@ -686,7 +686,22 @@
       "ago_seconds": "{count}초 전",
       "ago_minutes": "{count}분 전",
       "ago_hours": "{count}시간 전",
-      "ago_days": "{count}일 전"
+      "ago_days": "{count}일 전",
+      "verbs": {
+        "commented_on": "님이 댓글을 남겼습니다",
+        "closed": "님이 닫았습니다",
+        "opened": "님이 열었습니다",
+        "assigned": "님이 할당했습니다",
+        "merged": "님이 병합했습니다",
+        "deployed": "님이 배포했습니다",
+        "updated_status_on": "님이 상태를 업데이트했습니다"
+      },
+      "suffixes": {
+        "to_you": "나에게"
+      },
+      "targets": {
+        "production": "프로덕션"
+      }
     },
     "catchup": {
       "welcome_back": "다시 오신 것을 환영합니다",
@@ -1276,7 +1291,8 @@
       "agent_badge": "에이전트",
       "connected_with": "연결됨",
       "awaiting_response": "• 응답 대기 중",
-      "open_sidecar": "사이드카 열기"
+      "open_sidecar": "사이드카 열기",
+      "agent_fallback": "에이전트"
     },
     "agent": {
       "title": "에이전트 활동",
@@ -5062,7 +5078,33 @@
       "empty": "최근 활동이 없습니다",
       "today": "오늘",
       "yesterday": "어제",
-      "someone": "누군가"
+      "someone": "누군가",
+      "loadFailed": "활동을 불러오지 못했습니다.",
+      "messages": {
+        "createdIssue": "님이 이슈를 만들었습니다",
+        "updatedIssue": "님이 이슈를 업데이트했습니다",
+        "movedTo": "님이 {status}(으)로 이동했습니다",
+        "changedStatus": "님이 상태를 변경했습니다",
+        "assignedIssue": "님이 이슈를 할당했습니다",
+        "unassignedIssue": "님이 할당을 해제했습니다",
+        "changedPriorityTo": "님이 우선순위를 {priority}(으)로 변경했습니다",
+        "changedPriority": "님이 우선순위를 변경했습니다",
+        "commentedOn": "님이 댓글을 남겼습니다",
+        "linkedIssue": "님이 이슈를 연결했습니다",
+        "startedSprint": "님이 스프린트를 시작했습니다",
+        "completedSprint": "님이 스프린트를 완료했습니다",
+        "createdProject": "님이 프로젝트를 만들었습니다",
+        "addedMemberToProject": "님이 프로젝트에 멤버를 추가했습니다",
+        "unknownAction": "님이 {action}을(를) 수행했습니다"
+      },
+      "priorities": {
+        "critical": "심각",
+        "urgent": "긴급",
+        "high": "높음",
+        "medium": "보통",
+        "low": "낮음",
+        "none": "없음"
+      }
     },
     "audit": {
       "kicker": "보안",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "일치하는 사용자가 없습니다. 기존 워크스페이스 멤버나 등록된 사용자의 이름 또는 이메일을 입력해 보세요.",
   "apm_everyone_member": "사용 가능한 모든 사용자가 이미 이 프로젝트의 멤버입니다.",
   "apm_registered_user": "등록된 사용자",
-  "apm_workspace_member": "워크스페이스 멤버"
+  "apm_workspace_member": "워크스페이스 멤버",
+  "agentRunKinds": {
+    "project_tracking": "프로젝트 추적",
+    "backlog_triage": "백로그 분류",
+    "sprint_planning": "스프린트 계획",
+    "bulk_sprint_creation": "스프린트 일괄 생성",
+    "unknown": "{kind}"
+  }
 }

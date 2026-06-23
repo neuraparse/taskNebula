@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.7.8] - 2026-06-23
+
+### Changed
+
+- **Localized activity and notification timelines.** Recent activity, inbox,
+  notification panels, issue comments, issue activity, and AI-agent run
+  summaries now render relative/absolute dates through `next-intl` so the UI
+  follows the selected locale instead of English-only date-fns strings.
+- **Server activity payloads are translation-ready.** The recent activity API
+  now returns message descriptors instead of hardcoded English messages, and
+  all 30 shipped locale catalogs include the matching activity, priority, and
+  agent run-kind copy.
+
+### Fixed
+
+- **Dashboard activity stubs avoid hardcoded English labels.** The dashboard
+  activity widget now reads localized verb/suffix/target labels from the
+  message catalogs, keeping the IBM-modern dashboard consistent across all
+  supported languages.
+
 ## [0.7.7] - 2026-06-23
 
 ### Fixed
@@ -582,7 +602,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Internal alpha release. [See git log] for details.
 
-[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.7...HEAD
+[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.8...HEAD
+[0.7.8]: https://github.com/neuraparse/tasknebula/compare/v0.7.7...v0.7.8
 [0.7.7]: https://github.com/neuraparse/tasknebula/compare/v0.7.6...v0.7.7
 [0.7.6]: https://github.com/neuraparse/tasknebula/compare/v0.7.5...v0.7.6
 [0.7.5]: https://github.com/neuraparse/tasknebula/compare/v0.7.4...v0.7.5

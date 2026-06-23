@@ -686,7 +686,22 @@
       "ago_seconds": "för {count} s sedan",
       "ago_minutes": "för {count} min sedan",
       "ago_hours": "för {count} tim sedan",
-      "ago_days": "för {count} d sedan"
+      "ago_days": "för {count} d sedan",
+      "verbs": {
+        "commented_on": "kommenterade på",
+        "closed": "stängde",
+        "opened": "öppnade",
+        "assigned": "tilldelade",
+        "merged": "slog ihop",
+        "deployed": "driftsatte",
+        "updated_status_on": "uppdaterade status på"
+      },
+      "suffixes": {
+        "to_you": "till dig"
+      },
+      "targets": {
+        "production": "produktion"
+      }
     },
     "catchup": {
       "welcome_back": "Välkommen tillbaka",
@@ -1315,7 +1330,8 @@
       "agent_badge": "AGENT",
       "connected_with": "Ansluten med",
       "awaiting_response": "• Väntar på svar",
-      "open_sidecar": "Öppna sidopanel"
+      "open_sidecar": "Öppna sidopanel",
+      "agent_fallback": "Agent"
     },
     "agent": {
       "title": "Agentaktivitet",
@@ -5062,7 +5078,33 @@
       "empty": "Ingen senaste aktivitet",
       "today": "Idag",
       "yesterday": "Igår",
-      "someone": "Någon"
+      "someone": "Någon",
+      "loadFailed": "Det gick inte att läsa in aktivitet.",
+      "messages": {
+        "createdIssue": "skapade ärende",
+        "updatedIssue": "uppdaterade ärende",
+        "movedTo": "flyttade till {status}",
+        "changedStatus": "ändrade status",
+        "assignedIssue": "tilldelade ärende",
+        "unassignedIssue": "tog bort tilldelning",
+        "changedPriorityTo": "ändrade prioritet till {priority}",
+        "changedPriority": "ändrade prioritet",
+        "commentedOn": "kommenterade på",
+        "linkedIssue": "länkade ärende",
+        "startedSprint": "startade sprint",
+        "completedSprint": "slutförde sprint",
+        "createdProject": "skapade projekt",
+        "addedMemberToProject": "lade till medlem i projektet",
+        "unknownAction": "utförde {action}"
+      },
+      "priorities": {
+        "critical": "Kritisk",
+        "urgent": "Brådskande",
+        "high": "Hög",
+        "medium": "Medel",
+        "low": "Låg",
+        "none": "Ingen"
+      }
     },
     "audit": {
       "kicker": "Säkerhet",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "Inga träffar. Prova ett namn eller en e-postadress från workspace-medlemmar eller registrerade användare.",
   "apm_everyone_member": "Alla som är tillgängliga för dig är redan medlem i det här projektet.",
   "apm_registered_user": "Registrerad användare",
-  "apm_workspace_member": "Workspace-medlem"
+  "apm_workspace_member": "Workspace-medlem",
+  "agentRunKinds": {
+    "project_tracking": "Projektspårning",
+    "backlog_triage": "Backlog-triage",
+    "sprint_planning": "Sprintplanering",
+    "bulk_sprint_creation": "Masskapande av sprintar",
+    "unknown": "{kind}"
+  }
 }

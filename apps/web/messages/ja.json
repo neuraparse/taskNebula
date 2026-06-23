@@ -686,7 +686,22 @@
       "ago_seconds": "{count} 秒前",
       "ago_minutes": "{count} 分前",
       "ago_hours": "{count} 時間前",
-      "ago_days": "{count} 日前"
+      "ago_days": "{count} 日前",
+      "verbs": {
+        "commented_on": "がコメントしました",
+        "closed": "がクローズしました",
+        "opened": "がオープンしました",
+        "assigned": "が割り当てました",
+        "merged": "がマージしました",
+        "deployed": "がデプロイしました",
+        "updated_status_on": "がステータスを更新しました"
+      },
+      "suffixes": {
+        "to_you": "あなたに"
+      },
+      "targets": {
+        "production": "本番環境"
+      }
     },
     "catchup": {
       "welcome_back": "おかえりなさい",
@@ -1276,7 +1291,8 @@
       "agent_badge": "エージェント",
       "connected_with": "接続先",
       "awaiting_response": "• 応答待ち",
-      "open_sidecar": "サイドカーを開く"
+      "open_sidecar": "サイドカーを開く",
+      "agent_fallback": "エージェント"
     },
     "agent": {
       "title": "エージェントアクティビティ",
@@ -5062,7 +5078,33 @@
       "empty": "最近のアクティビティはありません",
       "today": "今日",
       "yesterday": "昨日",
-      "someone": "誰か"
+      "someone": "誰か",
+      "loadFailed": "アクティビティを読み込めませんでした。",
+      "messages": {
+        "createdIssue": "が課題を作成しました",
+        "updatedIssue": "が課題を更新しました",
+        "movedTo": "が{status}へ移動しました",
+        "changedStatus": "がステータスを変更しました",
+        "assignedIssue": "が課題を割り当てました",
+        "unassignedIssue": "が割り当てを解除しました",
+        "changedPriorityTo": "が優先度を{priority}に変更しました",
+        "changedPriority": "が優先度を変更しました",
+        "commentedOn": "がコメントしました",
+        "linkedIssue": "が課題をリンクしました",
+        "startedSprint": "がスプリントを開始しました",
+        "completedSprint": "がスプリントを完了しました",
+        "createdProject": "がプロジェクトを作成しました",
+        "addedMemberToProject": "がプロジェクトにメンバーを追加しました",
+        "unknownAction": "が{action}を実行しました"
+      },
+      "priorities": {
+        "critical": "重大",
+        "urgent": "緊急",
+        "high": "高",
+        "medium": "中",
+        "low": "低",
+        "none": "なし"
+      }
     },
     "audit": {
       "kicker": "セキュリティ",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "一致するユーザーがいません。既存のワークスペースメンバーまたは登録済みユーザーの名前やメールで検索してください。",
   "apm_everyone_member": "利用可能なユーザーはすでにこのプロジェクトのメンバーです。",
   "apm_registered_user": "登録済みユーザー",
-  "apm_workspace_member": "ワークスペースメンバー"
+  "apm_workspace_member": "ワークスペースメンバー",
+  "agentRunKinds": {
+    "project_tracking": "プロジェクト追跡",
+    "backlog_triage": "バックログのトリアージ",
+    "sprint_planning": "スプリント計画",
+    "bulk_sprint_creation": "スプリント一括作成",
+    "unknown": "{kind}"
+  }
 }

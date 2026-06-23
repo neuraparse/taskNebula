@@ -686,7 +686,22 @@
       "ago_seconds": "πριν από {count}δ",
       "ago_minutes": "πριν από {count}λ",
       "ago_hours": "πριν από {count}ώ",
-      "ago_days": "πριν από {count}η"
+      "ago_days": "πριν από {count}η",
+      "verbs": {
+        "commented_on": "σχολίασε σε",
+        "closed": "έκλεισε",
+        "opened": "άνοιξε",
+        "assigned": "ανέθεσε",
+        "merged": "συγχώνευσε",
+        "deployed": "ανέπτυξε",
+        "updated_status_on": "ενημέρωσε την κατάσταση σε"
+      },
+      "suffixes": {
+        "to_you": "σε εσάς"
+      },
+      "targets": {
+        "production": "παραγωγή"
+      }
     },
     "catchup": {
       "welcome_back": "Καλώς ήρθατε ξανά",
@@ -1276,7 +1291,8 @@
       "agent_badge": "ΠΡΑΚΤΟΡΑΣ",
       "connected_with": "Συνδέθηκε με",
       "awaiting_response": "• Αναμονή απάντησης",
-      "open_sidecar": "Άνοιγμα sidecar"
+      "open_sidecar": "Άνοιγμα sidecar",
+      "agent_fallback": "Πράκτορας"
     },
     "agent": {
       "title": "Δραστηριότητα agent",
@@ -5062,7 +5078,33 @@
       "empty": "Καμία πρόσφατη δραστηριότητα",
       "today": "Σήμερα",
       "yesterday": "Χθες",
-      "someone": "Κάποιος"
+      "someone": "Κάποιος",
+      "loadFailed": "Αποτυχία φόρτωσης δραστηριότητας.",
+      "messages": {
+        "createdIssue": "δημιούργησε εργασία",
+        "updatedIssue": "ενημέρωσε εργασία",
+        "movedTo": "μετέφερε σε {status}",
+        "changedStatus": "άλλαξε την κατάσταση",
+        "assignedIssue": "ανέθεσε εργασία",
+        "unassignedIssue": "αφαίρεσε την ανάθεση",
+        "changedPriorityTo": "άλλαξε την προτεραιότητα σε {priority}",
+        "changedPriority": "άλλαξε την προτεραιότητα",
+        "commentedOn": "σχολίασε σε",
+        "linkedIssue": "σύνδεσε εργασία",
+        "startedSprint": "ξεκίνησε sprint",
+        "completedSprint": "ολοκλήρωσε sprint",
+        "createdProject": "δημιούργησε έργο",
+        "addedMemberToProject": "πρόσθεσε μέλος στο έργο",
+        "unknownAction": "εκτέλεσε {action}"
+      },
+      "priorities": {
+        "critical": "Κρίσιμη",
+        "urgent": "Επείγουσα",
+        "high": "Υψηλή",
+        "medium": "Μεσαία",
+        "low": "Χαμηλή",
+        "none": "Καμία"
+      }
     },
     "audit": {
       "kicker": "Ασφάλεια",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "Δεν υπάρχουν αποτελέσματα. Δοκιμάστε όνομα ή email από μέλη workspace ή εγγεγραμμένους χρήστες.",
   "apm_everyone_member": "Όλα τα διαθέσιμα άτομα είναι ήδη μέλη αυτού του έργου.",
   "apm_registered_user": "Εγγεγραμμένος χρήστης",
-  "apm_workspace_member": "Μέλος workspace"
+  "apm_workspace_member": "Μέλος workspace",
+  "agentRunKinds": {
+    "project_tracking": "Παρακολούθηση έργου",
+    "backlog_triage": "Διαλογή backlog",
+    "sprint_planning": "Σχεδιασμός sprint",
+    "bulk_sprint_creation": "Μαζική δημιουργία sprint",
+    "unknown": "{kind}"
+  }
 }

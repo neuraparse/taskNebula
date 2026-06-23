@@ -686,7 +686,22 @@
       "ago_seconds": "{count}s geleden",
       "ago_minutes": "{count}m geleden",
       "ago_hours": "{count}u geleden",
-      "ago_days": "{count}d geleden"
+      "ago_days": "{count}d geleden",
+      "verbs": {
+        "commented_on": "heeft gereageerd op",
+        "closed": "heeft gesloten",
+        "opened": "heeft geopend",
+        "assigned": "heeft toegewezen",
+        "merged": "heeft samengevoegd",
+        "deployed": "heeft gedeployed",
+        "updated_status_on": "heeft de status bijgewerkt van"
+      },
+      "suffixes": {
+        "to_you": "aan jou"
+      },
+      "targets": {
+        "production": "productie"
+      }
     },
     "catchup": {
       "welcome_back": "Welkom terug",
@@ -1276,7 +1291,8 @@
       "agent_badge": "AGENT",
       "connected_with": "Verbonden met",
       "awaiting_response": "• Wacht op reactie",
-      "open_sidecar": "Sidecar openen"
+      "open_sidecar": "Sidecar openen",
+      "agent_fallback": "Agent"
     },
     "agent": {
       "title": "Agentactiviteit",
@@ -5062,7 +5078,33 @@
       "empty": "Geen recente activiteit",
       "today": "Vandaag",
       "yesterday": "Gisteren",
-      "someone": "Iemand"
+      "someone": "Iemand",
+      "loadFailed": "Kan activiteit niet laden.",
+      "messages": {
+        "createdIssue": "heeft een taak gemaakt",
+        "updatedIssue": "heeft een taak bijgewerkt",
+        "movedTo": "heeft verplaatst naar {status}",
+        "changedStatus": "heeft de status gewijzigd",
+        "assignedIssue": "heeft een taak toegewezen",
+        "unassignedIssue": "heeft de toewijzing verwijderd",
+        "changedPriorityTo": "heeft de prioriteit gewijzigd naar {priority}",
+        "changedPriority": "heeft de prioriteit gewijzigd",
+        "commentedOn": "heeft gereageerd op",
+        "linkedIssue": "heeft een taak gekoppeld",
+        "startedSprint": "heeft de sprint gestart",
+        "completedSprint": "heeft de sprint voltooid",
+        "createdProject": "heeft een project gemaakt",
+        "addedMemberToProject": "heeft een lid aan het project toegevoegd",
+        "unknownAction": "heeft {action} uitgevoerd"
+      },
+      "priorities": {
+        "critical": "Kritiek",
+        "urgent": "Urgent",
+        "high": "Hoog",
+        "medium": "Gemiddeld",
+        "low": "Laag",
+        "none": "Geen"
+      }
     },
     "audit": {
       "kicker": "Beveiliging",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "Geen resultaten. Probeer een naam of e-mailadres van bestaande workspaceleden of geregistreerde gebruikers.",
   "apm_everyone_member": "Iedereen die voor jou beschikbaar is, is al lid van dit project.",
   "apm_registered_user": "Geregistreerde gebruiker",
-  "apm_workspace_member": "Workspacelid"
+  "apm_workspace_member": "Workspacelid",
+  "agentRunKinds": {
+    "project_tracking": "Projecttracking",
+    "backlog_triage": "Backlogtriage",
+    "sprint_planning": "Sprintplanning",
+    "bulk_sprint_creation": "Sprints in bulk maken",
+    "unknown": "{kind}"
+  }
 }

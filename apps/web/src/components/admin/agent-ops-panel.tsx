@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { formatDistanceToNow } from 'date-fns';
+import { useFormatter, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,6 +20,7 @@ import { PlatformAiCredentials } from './platform-ai-credentials';
 import { AgentGovernancePanel } from '@/components/settings/agent-governance-panel';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { cn } from '@/lib/utils';
+import { formatAgentRunKind } from '@/lib/agents/run-kind-labels';
 import type { ComponentType } from 'react';
 import {
   Bot,
@@ -49,10 +49,6 @@ const EMPTY_FORM: AgentControlForm = {
   maxConcurrentRuns: 6,
 };
 
-function formatRunKind(kind: string) {
-  return kind.replaceAll('_', ' ').replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
 function serviceStatusDot(state: 'ready' | 'blocked' | 'disabled' | 'preview') {
   if (state === 'ready') return 'status-live';
   if (state === 'blocked') return 'status-danger';
@@ -69,6 +65,8 @@ function credentialSourceKey(source: 'workspace' | 'platform' | 'server_env' | n
 
 export function AgentOpsPanel() {
   const t = useTranslations('adminPanels');
+  const tRunKind = useTranslations('agentRunKinds');
+  const formatter = useFormatter();
   const { data, isLoading, error } = useAdminAgentControl();
   const stream = useAdminAgentStream();
   const updateControl = useUpdateAdminAgentControl();
@@ -515,9 +513,7 @@ export function AgentOpsPanel() {
                       <p>
                         {workspace.lastRunAt
                           ? t('agentOps.workspaceCoverage.lastRun', {
-                              time: formatDistanceToNow(new Date(workspace.lastRunAt), {
-                                addSuffix: true,
-                              }),
+                              time: formatter.relativeTime(new Date(workspace.lastRunAt)),
                             })
                           : t('agentOps.workspaceCoverage.noRuns')}
                       </p>
@@ -615,7 +611,7 @@ export function AgentOpsPanel() {
             </span>
             {stream.lastEventAt && (
               <span className="chip text-[11px]">
-                {formatDistanceToNow(new Date(stream.lastEventAt), { addSuffix: true })}
+                {formatter.relativeTime(new Date(stream.lastEventAt))}
               </span>
             )}
           </div>
@@ -637,7 +633,7 @@ export function AgentOpsPanel() {
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="truncate text-sm font-medium">
                             {runMeta
-                              ? formatRunKind(runMeta.kind)
+                              ? formatAgentRunKind(runMeta.kind, tRunKind)
                               : t('agentOps.runFallback', { id: run.executionId.slice(0, 8) })}
                           </span>
                           <RunStatusChip status={run.status} />
@@ -655,7 +651,7 @@ export function AgentOpsPanel() {
                       </div>
                       <p className="text-muted-foreground shrink-0 text-xs">
                         {t('agentOps.updatedAgo', {
-                          time: formatDistanceToNow(new Date(run.updatedAt), { addSuffix: true }),
+                          time: formatter.relativeTime(new Date(run.updatedAt)),
                         })}
                       </p>
                     </div>
@@ -727,7 +723,9 @@ export function AgentOpsPanel() {
                 >
                   <div className="min-w-0 space-y-0.5">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-medium">{formatRunKind(run.kind)}</span>
+                      <span className="text-sm font-medium">
+                        {formatAgentRunKind(run.kind, tRunKind)}
+                      </span>
                       <RunStatusChip status={run.status} />
                       <span className="chip">
                         {run.dryRun ? t('agentOps.preview') : t('agentOps.live')}
@@ -745,7 +743,7 @@ export function AgentOpsPanel() {
                     </p>
                   </div>
                   <p className="text-muted-foreground shrink-0 font-mono text-xs">
-                    {formatDistanceToNow(new Date(run.createdAt), { addSuffix: true })}
+                    {formatter.relativeTime(new Date(run.createdAt))}
                   </p>
                 </li>
               ))}

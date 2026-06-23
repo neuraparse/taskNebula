@@ -686,7 +686,22 @@
       "ago_seconds": "acum {count}s",
       "ago_minutes": "acum {count}m",
       "ago_hours": "acum {count}h",
-      "ago_days": "acum {count}z"
+      "ago_days": "acum {count}z",
+      "verbs": {
+        "commented_on": "a comentat la",
+        "closed": "a închis",
+        "opened": "a deschis",
+        "assigned": "a atribuit",
+        "merged": "a îmbinat",
+        "deployed": "a publicat",
+        "updated_status_on": "a actualizat starea pentru"
+      },
+      "suffixes": {
+        "to_you": "ție"
+      },
+      "targets": {
+        "production": "producție"
+      }
     },
     "catchup": {
       "welcome_back": "Bine ai revenit",
@@ -1346,7 +1361,8 @@
       "agent_badge": "AGENT",
       "connected_with": "Conectat cu",
       "awaiting_response": "• Se așteaptă răspuns",
-      "open_sidecar": "Deschide sidecar"
+      "open_sidecar": "Deschide sidecar",
+      "agent_fallback": "Agent"
     },
     "agent": {
       "title": "Activitatea agentului",
@@ -5062,7 +5078,33 @@
       "empty": "Nicio activitate recentă",
       "today": "Astăzi",
       "yesterday": "Ieri",
-      "someone": "Cineva"
+      "someone": "Cineva",
+      "loadFailed": "Nu s-a putut încărca activitatea.",
+      "messages": {
+        "createdIssue": "a creat o sarcină",
+        "updatedIssue": "a actualizat o sarcină",
+        "movedTo": "a mutat în {status}",
+        "changedStatus": "a schimbat starea",
+        "assignedIssue": "a atribuit o sarcină",
+        "unassignedIssue": "a eliminat atribuirea",
+        "changedPriorityTo": "a schimbat prioritatea la {priority}",
+        "changedPriority": "a schimbat prioritatea",
+        "commentedOn": "a comentat la",
+        "linkedIssue": "a legat o sarcină",
+        "startedSprint": "a început sprintul",
+        "completedSprint": "a finalizat sprintul",
+        "createdProject": "a creat un proiect",
+        "addedMemberToProject": "a adăugat un membru la proiect",
+        "unknownAction": "a executat {action}"
+      },
+      "priorities": {
+        "critical": "Critică",
+        "urgent": "Urgentă",
+        "high": "Ridicată",
+        "medium": "Medie",
+        "low": "Scăzută",
+        "none": "Niciuna"
+      }
     },
     "audit": {
       "kicker": "Securitate",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "Nicio potrivire. Încearcă un nume sau e-mail de la membrii workspace-ului ori utilizatori înregistrați.",
   "apm_everyone_member": "Toate persoanele disponibile pentru tine sunt deja membre ale acestui proiect.",
   "apm_registered_user": "Utilizator înregistrat",
-  "apm_workspace_member": "Membru workspace"
+  "apm_workspace_member": "Membru workspace",
+  "agentRunKinds": {
+    "project_tracking": "Urmărire proiect",
+    "backlog_triage": "Triage backlog",
+    "sprint_planning": "Planificare sprint",
+    "bulk_sprint_creation": "Creare sprinturi în masă",
+    "unknown": "{kind}"
+  }
 }

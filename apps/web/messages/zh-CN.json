@@ -686,7 +686,22 @@
       "ago_seconds": "{count} 秒前",
       "ago_minutes": "{count} 分钟前",
       "ago_hours": "{count} 小时前",
-      "ago_days": "{count} 天前"
+      "ago_days": "{count} 天前",
+      "verbs": {
+        "commented_on": "评论了",
+        "closed": "关闭了",
+        "opened": "打开了",
+        "assigned": "分配了",
+        "merged": "合并了",
+        "deployed": "部署了",
+        "updated_status_on": "更新了状态"
+      },
+      "suffixes": {
+        "to_you": "给你"
+      },
+      "targets": {
+        "production": "生产环境"
+      }
     },
     "catchup": {
       "welcome_back": "欢迎回来",
@@ -1276,7 +1291,8 @@
       "agent_badge": "智能体",
       "connected_with": "已连接",
       "awaiting_response": "• 等待响应",
-      "open_sidecar": "打开 Sidecar"
+      "open_sidecar": "打开 Sidecar",
+      "agent_fallback": "代理"
     },
     "agent": {
       "title": "代理活动",
@@ -5062,7 +5078,33 @@
       "empty": "暂无最近动态",
       "today": "今天",
       "yesterday": "昨天",
-      "someone": "某人"
+      "someone": "某人",
+      "loadFailed": "加载活动失败。",
+      "messages": {
+        "createdIssue": "创建了任务",
+        "updatedIssue": "更新了任务",
+        "movedTo": "移动到 {status}",
+        "changedStatus": "更改了状态",
+        "assignedIssue": "分配了任务",
+        "unassignedIssue": "取消了分配",
+        "changedPriorityTo": "将优先级改为 {priority}",
+        "changedPriority": "更改了优先级",
+        "commentedOn": "评论了",
+        "linkedIssue": "关联了任务",
+        "startedSprint": "启动了冲刺",
+        "completedSprint": "完成了冲刺",
+        "createdProject": "创建了项目",
+        "addedMemberToProject": "向项目添加了成员",
+        "unknownAction": "执行了 {action}"
+      },
+      "priorities": {
+        "critical": "严重",
+        "urgent": "紧急",
+        "high": "高",
+        "medium": "中",
+        "low": "低",
+        "none": "无"
+      }
     },
     "audit": {
       "kicker": "安全",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "没有匹配结果。请尝试输入现有工作区成员或已注册用户的姓名或邮箱。",
   "apm_everyone_member": "你可选择的所有人都已经是此项目成员。",
   "apm_registered_user": "已注册用户",
-  "apm_workspace_member": "工作区成员"
+  "apm_workspace_member": "工作区成员",
+  "agentRunKinds": {
+    "project_tracking": "项目跟踪",
+    "backlog_triage": "待办分诊",
+    "sprint_planning": "冲刺规划",
+    "bulk_sprint_creation": "批量创建冲刺",
+    "unknown": "{kind}"
+  }
 }

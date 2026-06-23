@@ -686,7 +686,22 @@
       "ago_seconds": "преди {count}с",
       "ago_minutes": "преди {count}мин",
       "ago_hours": "преди {count}ч",
-      "ago_days": "преди {count}д"
+      "ago_days": "преди {count}д",
+      "verbs": {
+        "commented_on": "коментира",
+        "closed": "затвори",
+        "opened": "отвори",
+        "assigned": "назначи",
+        "merged": "слeя",
+        "deployed": "разположи",
+        "updated_status_on": "актуализира статуса на"
+      },
+      "suffixes": {
+        "to_you": "на вас"
+      },
+      "targets": {
+        "production": "продукция"
+      }
     },
     "catchup": {
       "welcome_back": "Добре дошли отново",
@@ -1276,7 +1291,8 @@
       "agent_badge": "АГЕНТ",
       "connected_with": "Свързан с",
       "awaiting_response": "• Изчаква отговор",
-      "open_sidecar": "Отвори страничния панел"
+      "open_sidecar": "Отвори страничния панел",
+      "agent_fallback": "Агент"
     },
     "agent": {
       "title": "Активност на агента",
@@ -5062,7 +5078,33 @@
       "empty": "Няма скорошна активност",
       "today": "Днес",
       "yesterday": "Вчера",
-      "someone": "Някой"
+      "someone": "Някой",
+      "loadFailed": "Неуспешно зареждане на активността.",
+      "messages": {
+        "createdIssue": "създаде задача",
+        "updatedIssue": "актуализира задача",
+        "movedTo": "премести към {status}",
+        "changedStatus": "промени статуса",
+        "assignedIssue": "назначи задача",
+        "unassignedIssue": "премахна назначението",
+        "changedPriorityTo": "промени приоритета на {priority}",
+        "changedPriority": "промени приоритета",
+        "commentedOn": "коментира",
+        "linkedIssue": "свърза задача",
+        "startedSprint": "стартира спринт",
+        "completedSprint": "завърши спринт",
+        "createdProject": "създаде проект",
+        "addedMemberToProject": "добави член към проекта",
+        "unknownAction": "извърши {action}"
+      },
+      "priorities": {
+        "critical": "Критичен",
+        "urgent": "Спешен",
+        "high": "Висок",
+        "medium": "Среден",
+        "low": "Нисък",
+        "none": "Без приоритет"
+      }
     },
     "audit": {
       "kicker": "Сигурност",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "Няма съвпадения. Опитайте име или имейл от членове на workspace или регистрирани потребители.",
   "apm_everyone_member": "Всички достъпни за вас хора вече са членове на този проект.",
   "apm_registered_user": "Регистриран потребител",
-  "apm_workspace_member": "Член на workspace"
+  "apm_workspace_member": "Член на workspace",
+  "agentRunKinds": {
+    "project_tracking": "Проследяване на проекта",
+    "backlog_triage": "Триаж на backlog",
+    "sprint_planning": "Планиране на спринт",
+    "bulk_sprint_creation": "Масово създаване на спринтове",
+    "unknown": "{kind}"
+  }
 }

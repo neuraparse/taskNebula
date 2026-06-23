@@ -686,7 +686,22 @@
       "ago_seconds": "{count}s ago",
       "ago_minutes": "{count}m ago",
       "ago_hours": "{count}h ago",
-      "ago_days": "{count}d ago"
+      "ago_days": "{count}d ago",
+      "verbs": {
+        "commented_on": "commented on",
+        "closed": "closed",
+        "opened": "opened",
+        "assigned": "assigned",
+        "merged": "merged",
+        "deployed": "deployed",
+        "updated_status_on": "updated status on"
+      },
+      "suffixes": {
+        "to_you": "to you"
+      },
+      "targets": {
+        "production": "production"
+      }
     },
     "catchup": {
       "welcome_back": "Welcome back",
@@ -1276,7 +1291,8 @@
       "agent_badge": "AGENT",
       "connected_with": "Connected with",
       "awaiting_response": "• Awaiting response",
-      "open_sidecar": "Open sidecar"
+      "open_sidecar": "Open sidecar",
+      "agent_fallback": "Agent"
     },
     "agent": {
       "title": "Agent activity",
@@ -5062,7 +5078,33 @@
       "empty": "No recent activity",
       "today": "Today",
       "yesterday": "Yesterday",
-      "someone": "Someone"
+      "someone": "Someone",
+      "loadFailed": "Failed to load activity.",
+      "messages": {
+        "createdIssue": "created issue",
+        "updatedIssue": "updated issue",
+        "movedTo": "moved to {status}",
+        "changedStatus": "changed status",
+        "assignedIssue": "assigned issue",
+        "unassignedIssue": "unassigned issue",
+        "changedPriorityTo": "changed priority to {priority}",
+        "changedPriority": "changed priority",
+        "commentedOn": "commented on",
+        "linkedIssue": "linked issue",
+        "startedSprint": "started sprint",
+        "completedSprint": "completed sprint",
+        "createdProject": "created project",
+        "addedMemberToProject": "added member to project",
+        "unknownAction": "performed {action}"
+      },
+      "priorities": {
+        "critical": "Critical",
+        "urgent": "Urgent",
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low",
+        "none": "None"
+      }
     },
     "audit": {
       "kicker": "Security",
@@ -5528,5 +5570,12 @@
   "apm_no_matches": "No matches. Try a name or email from existing workspace members or registered users.",
   "apm_everyone_member": "Everyone available to you is already a member of this project.",
   "apm_registered_user": "Registered user",
-  "apm_workspace_member": "Workspace member"
+  "apm_workspace_member": "Workspace member",
+  "agentRunKinds": {
+    "project_tracking": "Project tracking",
+    "backlog_triage": "Backlog triage",
+    "sprint_planning": "Sprint planning",
+    "bulk_sprint_creation": "Bulk sprint creation",
+    "unknown": "{kind}"
+  }
 }
