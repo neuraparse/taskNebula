@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +52,7 @@ const FIELD_TYPES: IntakeFieldType[] = ['text', 'textarea', 'email', 'select', '
 export function IntakeFormEditor({ form, recentSubmissions }: Props) {
   const router = useRouter();
   const t = useTranslations('planning');
+  const formatter = useFormatter();
   const [title, setTitle] = useState(form.title);
   const [slug, setSlug] = useState(form.slug);
   const [description, setDescription] = useState(form.description ?? '');
@@ -136,7 +137,9 @@ export function IntakeFormEditor({ form, recentSubmissions }: Props) {
           <h1 className="text-2xl font-semibold tracking-tight">{t('edit_intake_form')}</h1>
           {savedAt ? (
             <span className="text-muted-foreground text-xs">
-              {t('saved_at', { time: savedAt.toLocaleTimeString() })}
+              {t('saved_at', {
+                time: formatter.dateTime(savedAt, { timeStyle: 'short' }),
+              })}
             </span>
           ) : null}
         </div>
@@ -339,7 +342,10 @@ export function IntakeFormEditor({ form, recentSubmissions }: Props) {
                 <div>
                   <span className="text-foreground">{s.submittedByEmail ?? t('anonymous')}</span>
                   <span className="text-muted-foreground ml-2 text-xs">
-                    {new Date(s.createdAt).toLocaleString()}
+                    {formatter.dateTime(new Date(s.createdAt), {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    })}
                   </span>
                 </div>
                 <span className="text-muted-foreground text-xs">{s.status}</span>

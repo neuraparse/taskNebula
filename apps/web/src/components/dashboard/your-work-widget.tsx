@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
@@ -36,17 +36,20 @@ const STATUS_COLOR: Record<string, string> = {
   done: 'text-accent-emerald',
 };
 
-function formatDue(due: string | null | undefined): string | null {
+type WorkFormatter = ReturnType<typeof useFormatter>;
+
+function formatDue(due: string | null | undefined, formatter: WorkFormatter): string | null {
   if (!due) return null;
   const d = new Date(due);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return formatter.dateTime(d, { month: 'short', day: 'numeric' });
 }
 
 function IssueLine({ issue }: { issue: MyIssue }) {
+  const formatter = useFormatter();
   const statusCat = (issue.status?.category ?? '').toString().toLowerCase();
   const color = STATUS_COLOR[statusCat] ?? 'text-muted-foreground';
-  const due = formatDue(issue.dueDate);
+  const due = formatDue(issue.dueDate, formatter);
   return (
     <Link
       href={`/issues/${issue.id}`}

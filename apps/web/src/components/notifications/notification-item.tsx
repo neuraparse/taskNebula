@@ -1,7 +1,7 @@
 'use client';
 
 import { forwardRef, type MouseEvent, type ReactNode } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import {
   Activity,
@@ -22,7 +22,6 @@ import {
   Sparkles,
   UserCheck,
 } from 'lucide-react';
-import { formatDistanceToNowStrict } from 'date-fns';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -68,6 +67,7 @@ export function resolveHref(notification: Notification): string | null {
 
 /** Translator shape compatible with next-intl's `useTranslations` return. */
 type NotificationTranslator = (key: string) => string;
+type NotificationFormatter = ReturnType<typeof useFormatter>;
 
 export function getActorName(notification: Notification, t: NotificationTranslator): string {
   if (notification.type === 'ai_draft_failed') return t('actor.ai_draft');
@@ -222,24 +222,15 @@ export function NotificationAvatar({ notification }: { notification: Notificatio
 /* Timestamp formatting                                                        */
 /* -------------------------------------------------------------------------- */
 
-function formatRelative(date: Date, t: NotificationTranslator): string {
+function formatRelative(
+  date: Date,
+  t: NotificationTranslator,
+  formatter: NotificationFormatter
+): string {
   const diffMs = Date.now() - date.getTime();
   if (diffMs < 60_000) return t('item.now');
   try {
-    // "2h", "3d", "5m" — strict form keeps the row compact.
-    return formatDistanceToNowStrict(date, { addSuffix: false })
-      .replace(' seconds', 's')
-      .replace(' second', 's')
-      .replace(' minutes', 'm')
-      .replace(' minute', 'm')
-      .replace(' hours', 'h')
-      .replace(' hour', 'h')
-      .replace(' days', 'd')
-      .replace(' day', 'd')
-      .replace(' months', 'mo')
-      .replace(' month', 'mo')
-      .replace(' years', 'y')
-      .replace(' year', 'y');
+    return formatter.relativeTime(date, { style: 'narrow' });
   } catch {
     return '';
   }
@@ -290,13 +281,15 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
     ref
   ) {
     const t = useTranslations('notifications');
+    const formatter = useFormatter();
     const actorName = getActorName(notification, t);
     const href = resolveHref(notification);
     const visual = getTypeVisual(notification.type);
     const typeLabel = t(`type_label.${visual.labelKey}`);
     const referenceChip = getReferenceChip(notification);
     const isUnread = !notification.isRead;
-    const relative = formatRelative(new Date(notification.createdAt), t);
+    const createdAt = new Date(notification.createdAt);
+    const relative = formatRelative(createdAt, t, formatter);
 
     const handleRowClick = () => {
       if (isUnread && onMarkRead) onMarkRead(notification.id);
@@ -420,8 +413,8 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
                 'text-[11px] tabular-nums transition-opacity duration-150',
                 'text-muted-foreground group-hover:opacity-0'
               )}
-              dateTime={new Date(notification.createdAt).toISOString()}
-              title={new Date(notification.createdAt).toLocaleString()}
+              dateTime={createdAt.toISOString()}
+              title={formatter.dateTime(createdAt, { dateStyle: 'medium', timeStyle: 'short' })}
             >
               {relative}
             </time>

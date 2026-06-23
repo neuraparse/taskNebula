@@ -1,6 +1,5 @@
 'use client';
 
-import { formatDistanceToNow } from 'date-fns';
 import {
   AlertCircle,
   ArrowUpRight,
@@ -13,7 +12,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { useMemo, useState, type ComponentType } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -53,6 +52,7 @@ function truncate(text: string | undefined, max: number): string {
 
 export function DraftsList() {
   const t = useTranslations('workspaceTools');
+  const formatter = useFormatter();
   const { drafts, updateDraft, removeDraft, promoteDraft, isLoading, isError, error } = useDrafts();
   const [filter, setFilter] = useState<DraftFilter>('all');
   const [query, setQuery] = useState('');
@@ -223,7 +223,7 @@ export function DraftsList() {
                   ) : null}
                   <p className="text-muted-foreground mt-1 text-[11px]">
                     {t('drafts.updatedAt', {
-                      time: formatDistanceToNow(draft.updatedAt, { addSuffix: true }),
+                      time: formatter.relativeTime(new Date(draft.updatedAt)),
                     })}
                   </p>
                 </div>

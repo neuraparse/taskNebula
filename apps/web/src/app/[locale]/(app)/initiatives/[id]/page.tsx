@@ -1,13 +1,18 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { auth } from '@/auth';
 import { notFound, redirect } from 'next/navigation';
 import { WorkspaceRequiredNotice } from '@/components/layout/workspace-required-notice';
 import { resolveInitiativeAccess } from '@/lib/initiatives/access';
 import { InitiativeDetailClient } from './initiative-detail-client';
 
-export const metadata: Metadata = {
-  title: 'Initiative | TaskNebula',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('pagesHome');
+
+  return {
+    title: `${t('initiatives_title')} | TaskNebula`,
+  };
+}
 
 export const dynamic = 'force-dynamic';
 

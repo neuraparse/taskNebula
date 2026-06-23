@@ -1,14 +1,20 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 import { WorkspaceRequiredNotice } from '@/components/layout/workspace-required-notice';
 import { currentUserHasWorkspaceAccess } from '@/lib/auth/workspace-access';
 import { DashboardClient } from './dashboard-client';
 import { DashboardLoadingShell } from './dashboard-loading-shell';
 
-export const metadata: Metadata = {
-  title: 'Dashboard | TaskNebula',
-  description: 'Your project management dashboard',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const tNav = await getTranslations('nav');
+  const tDashboard = await getTranslations('dashboard');
+
+  return {
+    title: `${tNav('dashboard')} | TaskNebula`,
+    description: tDashboard('subtitle_personal'),
+  };
+}
 
 // PPR opt-in stub — re-enable once Next ships PPR on stable.
 // The Suspense + skeleton shell below already gives an instant-paint

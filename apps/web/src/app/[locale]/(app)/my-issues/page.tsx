@@ -1,4 +1,5 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
@@ -7,10 +8,13 @@ import { userHasWorkspaceAccess } from '@/lib/auth/workspace-access';
 import { MyIssuesClient } from './my-issues-client';
 import { MyIssuesLoadingShell } from './my-issues-loading-shell';
 
-export const metadata: Metadata = {
-  title: 'My Issues | TaskNebula',
-  description: 'View and manage your assigned issues',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const tNav = await getTranslations('nav');
+
+  return {
+    title: `${tNav('my_issues')} | TaskNebula`,
+  };
+}
 
 // PPR opt-in stub — re-enable once Next ships PPR on stable.
 // export const experimental_ppr = true;

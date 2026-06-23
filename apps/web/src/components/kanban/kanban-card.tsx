@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { AlertCircle, CalendarDays, MessageCircle, Paperclip, GitBranch } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 
 interface KanbanCardProps {
   issue: {
@@ -126,7 +126,12 @@ type DueDescriptor =
   | { kind: 'days'; days: number; tone: 'default' }
   | { kind: 'date'; label: string; tone: 'default' };
 
-function describeDue(due?: string | null): DueDescriptor | null {
+type KanbanFormatter = ReturnType<typeof useFormatter>;
+
+function describeDue(
+  due: string | null | undefined,
+  formatter: KanbanFormatter
+): DueDescriptor | null {
   if (!due) return null;
   const target = new Date(due);
   if (Number.isNaN(target.getTime())) return null;
@@ -144,13 +149,14 @@ function describeDue(due?: string | null): DueDescriptor | null {
   if (deltaDays < 7) return { kind: 'days', days: deltaDays, tone: 'default' };
   return {
     kind: 'date',
-    label: target.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+    label: formatter.dateTime(target, { month: 'short', day: 'numeric' }),
     tone: 'default',
   };
 }
 
 export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: KanbanCardProps) {
   const t = useTranslations('kanban');
+  const formatter = useFormatter();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: draggableId || issue.id,
     data: {
@@ -183,7 +189,7 @@ export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: K
   const visibleLabels = (issue.labels ?? []).slice(0, 3);
   const extraLabels = Math.max(0, (issue.labels ?? []).length - visibleLabels.length);
 
-  const due = describeDue(issue.dueDate);
+  const due = describeDue(issue.dueDate, formatter);
   const dueLabel = (() => {
     if (!due) return null;
     switch (due.kind) {

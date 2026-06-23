@@ -1,10 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Pencil, Loader2, Clock } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
 import { useUpdateIssue } from '@/lib/hooks/use-issues';
 import { IssueAttachments } from './issue-attachments';
 import { IssueDocs } from './issue-docs';
@@ -36,19 +35,10 @@ interface IssueContentProps {
   };
 }
 
-function formatRelativeTime(value: string | Date): string {
-  const date = typeof value === 'string' ? new Date(value) : value;
-  if (Number.isNaN(date.getTime())) return '';
-  try {
-    return formatDistanceToNow(date, { addSuffix: true });
-  } catch {
-    return '';
-  }
-}
-
 export function IssueContent({ issue }: IssueContentProps) {
   const t = useTranslations('issuePanels');
   const tActions = useTranslations('actions');
+  const formatter = useFormatter();
   const [isEditing, setIsEditing] = useState(false);
   const [description, setDescription] = useState(issue.description || '');
   const updateIssue = useUpdateIssue();
@@ -166,7 +156,11 @@ export function IssueContent({ issue }: IssueContentProps) {
           const editor = issue.updatedBy ?? issue.updater ?? issue.reporter ?? null;
           const editorName = editor?.name ?? editor?.email ?? null;
           if (!issue.updatedAt || !editorName) return null;
-          const relative = formatRelativeTime(issue.updatedAt);
+          const updatedAt =
+            typeof issue.updatedAt === 'string' ? new Date(issue.updatedAt) : issue.updatedAt;
+          const relative = Number.isNaN(updatedAt.getTime())
+            ? ''
+            : formatter.relativeTime(updatedAt);
           if (!relative) return null;
           return (
             <div className="text-muted-foreground mt-3 flex items-center gap-1.5 text-[11.5px]">

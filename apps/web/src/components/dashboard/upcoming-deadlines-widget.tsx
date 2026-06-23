@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { ArrowUpRight, CalendarClock } from 'lucide-react';
@@ -18,8 +18,10 @@ function dueClass(dueAt: number, now: number): string {
   return 'text-muted-foreground';
 }
 
-function shortDate(d: Date): string {
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+type DeadlineFormatter = ReturnType<typeof useFormatter>;
+
+function shortDate(d: Date, formatter: DeadlineFormatter): string {
+  return formatter.dateTime(d, { month: 'short', day: 'numeric' });
 }
 
 function initials(name: string | null | undefined, email?: string): string {
@@ -39,6 +41,7 @@ function initials(name: string | null | undefined, email?: string): string {
 export function UpcomingDeadlinesWidget() {
   const t = useTranslations('dashboardExtra');
   const tActions = useTranslations('actions');
+  const formatter = useFormatter();
   const { data: session } = useSession();
   const { data: issues, isLoading } = useIssues({
     assigneeId: session?.user?.id,
@@ -102,7 +105,7 @@ export function UpcomingDeadlinesWidget() {
                 className="row-interactive ease-snap flex min-h-[40px] items-center gap-3 rounded-md px-2 py-2 text-left transition-all duration-150"
               >
                 <span className={cn('w-14 shrink-0 text-[11px] font-medium tabular-nums', dueCls)}>
-                  {shortDate(due)}
+                  {shortDate(due, formatter)}
                 </span>
                 <span className="text-muted-foreground w-16 shrink-0 truncate font-mono text-xs">
                   {issue.key}

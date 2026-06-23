@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import {
   Dialog,
@@ -99,6 +99,7 @@ export function AddProjectMemberDialog({
 }: AddProjectMemberDialogProps) {
   const t = useTranslations('projectConfig');
   const tActions = useTranslations('actions');
+  const formatter = useFormatter();
   const { toast } = useToast();
   const { currentOrganizationId } = useOrganization();
   const [search, setSearch] = useState('');
@@ -505,7 +506,7 @@ export function AddProjectMemberDialog({
                             {t('apm_invite_link_meta', {
                               used: link.usedCount,
                               max: link.maxUses,
-                              date: formatInviteDate(link.expiresAt),
+                              date: formatInviteDate(link.expiresAt, formatter),
                             })}
                           </p>
                         </div>
@@ -553,9 +554,11 @@ function getInviteLinkStatus(link: ProjectInviteLink) {
   return 'active';
 }
 
-function formatInviteDate(value: string) {
-  return new Intl.DateTimeFormat(undefined, {
+type InviteDateFormatter = ReturnType<typeof useFormatter>;
+
+function formatInviteDate(value: string, formatter: InviteDateFormatter) {
+  return formatter.dateTime(new Date(value), {
     dateStyle: 'medium',
     timeStyle: 'short',
-  }).format(new Date(value));
+  });
 }

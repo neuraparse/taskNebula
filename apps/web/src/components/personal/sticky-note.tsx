@@ -1,7 +1,7 @@
 'use client';
 
 import { Palette, X } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import {
   type ChangeEvent,
   type ReactElement,
@@ -42,8 +42,14 @@ const COLOR_DOT: Record<StickyColor, string> = {
 const AUTOSAVE_DEBOUNCE_MS = 600;
 
 type RelativeTranslator = (key: string, values?: Record<string, string | number>) => string;
+type StickyFormatter = ReturnType<typeof useFormatter>;
 
-function formatRelative(timestamp: number, now: number, t: RelativeTranslator): string {
+function formatRelative(
+  timestamp: number,
+  now: number,
+  t: RelativeTranslator,
+  formatter: StickyFormatter
+): string {
   const diff = Math.max(0, now - timestamp);
   const sec = Math.floor(diff / 1000);
   if (sec < 5) return t('justNow');
@@ -54,7 +60,7 @@ function formatRelative(timestamp: number, now: number, t: RelativeTranslator): 
   if (hr < 24) return t('editedHoursAgo', { count: hr });
   const day = Math.floor(hr / 24);
   if (day < 7) return t('editedDaysAgo', { count: day });
-  return new Date(timestamp).toLocaleDateString();
+  return formatter.dateTime(new Date(timestamp), { dateStyle: 'medium' });
 }
 
 function nextColor(current: StickyColor): StickyColor {
@@ -70,6 +76,7 @@ export function StickyNote({
   className,
 }: StickyNoteProps): ReactElement {
   const t = useTranslations('personalHelp');
+  const formatter = useFormatter();
   const [draft, setDraft] = useState<string>(sticky.content);
   const [now, setNow] = useState<number>(() => Date.now());
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -154,8 +161,8 @@ export function StickyNote({
   }, [onRemove, sticky.id]);
 
   const relative = useMemo(
-    () => formatRelative(sticky.updatedAt, now, t),
-    [sticky.updatedAt, now, t]
+    () => formatRelative(sticky.updatedAt, now, t, formatter),
+    [formatter, sticky.updatedAt, now, t]
   );
 
   return (

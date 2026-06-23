@@ -3,7 +3,14 @@ import { WorkspaceRequiredNotice } from '@/components/layout/workspace-required-
 import { DraftsList } from '@/components/drafts/drafts-list';
 import { currentUserHasWorkspaceAccess } from '@/lib/auth/workspace-access';
 
-export const metadata = { title: 'Drafts · TaskNebula' };
+export async function generateMetadata() {
+  const t = await getTranslations('pagesHome');
+
+  return {
+    title: `${t('drafts_title')} · TaskNebula`,
+    description: t('drafts_subtitle'),
+  };
+}
 
 export default async function DraftsPage() {
   const hasWorkspaceAccess = await currentUserHasWorkspaceAccess();

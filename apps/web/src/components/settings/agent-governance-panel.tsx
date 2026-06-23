@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { AlertTriangle, Check, Loader2, ShieldCheck, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -55,6 +55,7 @@ function effectBadgeClass(effect: PolicyRule['effect']) {
 
 export function AgentGovernancePanel({ organizationId }: { organizationId: string }) {
   const t = useTranslations('settingsConfig');
+  const formatter = useFormatter();
   const queryClient = useQueryClient();
 
   const policyQuery = useQuery({
@@ -131,7 +132,10 @@ export function AgentGovernancePanel({ organizationId }: { organizationId: strin
               />
               <StatusTile
                 label={t('agentGovernance.lastParsedAt')}
-                value={new Date(policy.parsedAt).toLocaleString()}
+                value={formatter.dateTime(new Date(policy.parsedAt), {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                })}
               />
               <StatusTile
                 label={t('agentGovernance.validationErrors')}

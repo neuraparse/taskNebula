@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -167,6 +167,7 @@ function CredentialRow({
   onDelete: () => void;
 }) {
   const t = useTranslations('adminPanels');
+  const formatter = useFormatter();
   const { label } = PROVIDER_LABELS[provider];
   const hint = t(`platformAi.hint.${provider}`);
   const [value, setValue] = useState('');
@@ -230,7 +231,9 @@ function CredentialRow({
         )}
         {stored?.updatedAt && (
           <span className="text-muted-foreground ml-auto text-[11px]">
-            {t('platformAi.updated', { date: new Date(stored.updatedAt).toLocaleDateString() })}
+            {t('platformAi.updated', {
+              date: formatter.dateTime(new Date(stored.updatedAt), { dateStyle: 'medium' }),
+            })}
           </span>
         )}
       </div>

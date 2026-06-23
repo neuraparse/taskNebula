@@ -1,7 +1,7 @@
 'use client';
 
 import { CalendarClock, Users, ListChecks } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { ProjectModule, ModuleStatus } from '@/lib/modules/use-modules';
@@ -54,11 +54,16 @@ export function getModuleStatusPalette(status: ModuleStatus): StatusPalette {
   return STATUS_PALETTE[status];
 }
 
-function formatTargetDate(iso?: string | null): string | null {
+type ModuleFormatter = ReturnType<typeof useFormatter>;
+
+function formatTargetDate(
+  iso: string | null | undefined,
+  formatter: ModuleFormatter
+): string | null {
   if (!iso) return null;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return formatter.dateTime(d, { month: 'short', day: 'numeric' });
 }
 
 function initials(name?: string): string {
@@ -69,11 +74,12 @@ function initials(name?: string): string {
 
 export function ModuleCard({ module, onClick }: ModuleCardProps) {
   const t = useTranslations('planning');
+  const formatter = useFormatter();
   const palette = STATUS_PALETTE[module.status];
   const total = module.totalIssues ?? 0;
   const completed = module.completedIssues ?? 0;
   const progress = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
-  const targetLabel = formatTargetDate(module.targetDate);
+  const targetLabel = formatTargetDate(module.targetDate, formatter);
 
   const handleClick = () => {
     if (onClick) {

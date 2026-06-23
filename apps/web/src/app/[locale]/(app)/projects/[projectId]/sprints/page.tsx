@@ -1,7 +1,7 @@
 'use client';
 
 import { use } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import {
   Plus,
   Calendar,
@@ -18,13 +18,13 @@ import { useSprints, useDeleteSprint } from '@/lib/hooks/use-sprints';
 import { useProjectPermissions } from '@/lib/hooks/use-project-permissions';
 import { CreateSprintModal } from '@/components/sprints/create-sprint-modal';
 import { useState } from 'react';
-import { format } from 'date-fns';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 export default function SprintsPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params);
   const t = useTranslations('pagesProjects');
+  const formatter = useFormatter();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { data: sprints, isLoading } = useSprints(projectId);
   const deleteSprint = useDeleteSprint();
@@ -173,7 +173,16 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
                         <div className="text-muted-foreground flex items-center gap-4 text-xs">
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')}
+                            {formatter.dateTime(startDate, {
+                              month: 'short',
+                              day: 'numeric',
+                            })}{' '}
+                            -{' '}
+                            {formatter.dateTime(endDate, {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
                           </span>
                           <span>{t('daysCount', { count: totalDays })}</span>
                           <span>{t('issuesCount', { count: sprint.issueCount || 0 })}</span>

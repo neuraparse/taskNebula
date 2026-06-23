@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getTranslations } from 'next-intl/server';
+import { getFormatter, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -48,6 +48,7 @@ export default async function PublicDocumentPage({
 }) {
   const { token } = await params;
   const t = await getTranslations('publicPages');
+  const formatter = await getFormatter();
   const page = await getPublicDocumentByToken(token);
 
   if (!page) {
@@ -82,7 +83,12 @@ export default async function PublicDocumentPage({
             )}
 
             <p className="text-muted-foreground text-xs">
-              {t('shareUpdated', { date: new Date(page.updatedAt).toLocaleString() })}
+              {t('shareUpdated', {
+                date: formatter.dateTime(new Date(page.updatedAt), {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                }),
+              })}
             </p>
           </header>
 

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import {
@@ -29,6 +29,7 @@ interface IssueDocsProps {
 export function IssueDocs({ issueId, issueKey, projectId }: IssueDocsProps) {
   const t = useTranslations('issuePanels');
   const tHome = useTranslations('pagesHome');
+  const formatter = useFormatter();
   const router = useRouter();
   const { toast } = useToast();
   const { currentOrganizationId } = useOrganization();
@@ -193,7 +194,9 @@ export function IssueDocs({ issueId, issueKey, projectId }: IssueDocsProps) {
                   <span className="text-muted-foreground text-[11px]">
                     {doc.projectId ? t('docs.kind_project') : t('docs.kind_wiki')}
                     {' · '}
-                    {t('docs.updated', { date: new Date(doc.updatedAt).toLocaleDateString() })}
+                    {t('docs.updated', {
+                      date: formatter.dateTime(new Date(doc.updatedAt), { dateStyle: 'medium' }),
+                    })}
                   </span>
                 </div>
               </div>

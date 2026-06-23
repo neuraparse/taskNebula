@@ -751,7 +751,10 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                       <span>{t('orgAi.updated')}</span>
                       <span className="text-foreground font-medium">
                         {data.providerStatus.updatedAt
-                          ? new Date(data.providerStatus.updatedAt).toLocaleString()
+                          ? formatter.dateTime(new Date(data.providerStatus.updatedAt), {
+                              dateStyle: 'medium',
+                              timeStyle: 'short',
+                            })
                           : t('orgAi.server_managed')}
                       </span>
                     </div>
@@ -1211,7 +1214,7 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                     {selectedModelCatalogEntry.summary}
                     {' · '}
                     {t('orgAi.max_output_up_to', {
-                      tokens: selectedModelCatalogEntry.maxOutputTokensLimit.toLocaleString(),
+                      tokens: formatter.number(selectedModelCatalogEntry.maxOutputTokensLimit),
                     })}
                   </div>
                 ) : null}
@@ -1268,7 +1271,7 @@ export function OrganizationAiAgentsSettings({ organizationId }: { organizationI
                           }))
                         }
                         placeholder={t('orgAi.up_to', {
-                          tokens: maxOutputTokensLimit.toLocaleString(),
+                          tokens: formatter.number(maxOutputTokensLimit),
                         })}
                       />
                     </div>

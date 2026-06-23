@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { Layers, Plus, LayoutGrid, List, CalendarClock, Users, ListChecks } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,11 +35,16 @@ function matchesFilter(status: ModuleStatus, filter: FilterChip): boolean {
   return status === filter;
 }
 
-function formatTargetDate(iso?: string | null): string | null {
+type ModulesGridFormatter = ReturnType<typeof useFormatter>;
+
+function formatTargetDate(
+  iso: string | null | undefined,
+  formatter: ModulesGridFormatter
+): string | null {
   if (!iso) return null;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return formatter.dateTime(d, { month: 'short', day: 'numeric' });
 }
 
 export function ModulesGrid({ projectId, canManageModules = false }: ModulesGridProps) {
@@ -183,6 +188,7 @@ function ModulesList({
   modules: ReturnType<typeof useModules>['modules'];
 }) {
   const t = useTranslations('planning');
+  const formatter = useFormatter();
   return (
     <div className="divide-border border-border bg-card divide-y rounded-xl border">
       {modules.map((m) => {
@@ -190,7 +196,7 @@ function ModulesList({
         const total = m.totalIssues ?? 0;
         const completed = m.completedIssues ?? 0;
         const progress = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
-        const targetLabel = formatTargetDate(m.targetDate);
+        const targetLabel = formatTargetDate(m.targetDate, formatter);
 
         return (
           <button

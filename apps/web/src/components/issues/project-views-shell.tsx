@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   addMonths,
@@ -185,6 +185,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
   const t = useTranslations('issuesViews');
   const tActions = useTranslations('actions');
   const tHome = useTranslations('pagesHome');
+  const formatter = useFormatter();
   const queryClient = useQueryClient();
   const { currentOrganizationId, currentTeamId } = useOrganization();
   const { toast } = useToast();
@@ -775,7 +776,10 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                                     : 'low';
                                   const dotColor = issue.statusColor || groupColor;
                                   const dueLabel = issue.dueDate
-                                    ? format(parseISO(issue.dueDate), 'MMM d')
+                                    ? formatter.dateTime(parseISO(issue.dueDate), {
+                                        month: 'short',
+                                        day: 'numeric',
+                                      })
                                     : null;
                                   const assignees = issue.assignee ? [issue.assignee] : [];
                                   const labels = Array.isArray(issue.labels) ? issue.labels : [];
@@ -929,7 +933,12 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                                   </p>
                                 </div>
                                 <span className="text-muted-foreground shrink-0 text-xs font-medium">
-                                  {issue.dueDate ? format(parseISO(issue.dueDate), 'MMM d') : '—'}
+                                  {issue.dueDate
+                                    ? formatter.dateTime(parseISO(issue.dueDate), {
+                                        month: 'short',
+                                        day: 'numeric',
+                                      })
+                                    : '—'}
                                 </span>
                               </button>
                             </li>
@@ -976,7 +985,12 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
             <div className="h-full overflow-auto px-5 py-4">
               <div className="border-border bg-card animate-fade-up overflow-hidden rounded-lg border">
                 <div className="border-border flex items-center justify-between border-b px-4 py-3">
-                  <h2 className="text-sm font-semibold">{format(calendarMonth, 'MMMM yyyy')}</h2>
+                  <h2 className="text-sm font-semibold">
+                    {formatter.dateTime(calendarMonth, {
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                  </h2>
                   <div className="flex items-center gap-1">
                     <Button
                       variant="ghost"
@@ -1031,7 +1045,7 @@ export function ProjectViewsShell({ projectId }: { projectId: string }) {
                                 'bg-primary text-primary-foreground rounded-sm px-1.5 py-0.5'
                             )}
                           >
-                            {format(day, 'd')}
+                            {formatter.dateTime(day, { day: 'numeric' })}
                           </span>
                           {dayIssues.length > 1 ? (
                             <span className="chip text-[9px]">{dayIssues.length}</span>

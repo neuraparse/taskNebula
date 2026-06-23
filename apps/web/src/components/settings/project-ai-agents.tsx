@@ -595,7 +595,10 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                 {data.providerStatus.updatedAt ? (
                   <MetricRow
                     label={t('projectAi.metric_credential_updated')}
-                    value={new Date(data.providerStatus.updatedAt).toLocaleString()}
+                    value={formatter.dateTime(new Date(data.providerStatus.updatedAt), {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    })}
                   />
                 ) : null}
                 {data.selectedModelConfig ? (
@@ -843,7 +846,9 @@ export function ProjectAiAgents({ projectId }: { projectId: string }) {
                                 className="flex gap-3 px-3 py-2 text-xs"
                               >
                                 <span className="text-muted-foreground w-16 shrink-0">
-                                  {new Date(log.timestamp).toLocaleTimeString()}
+                                  {formatter.dateTime(new Date(log.timestamp), {
+                                    timeStyle: 'short',
+                                  })}
                                 </span>
                                 <span
                                   className={

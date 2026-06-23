@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db, sprints, issues, workflowStatuses, projects } from '@tasknebula/db';
 import { eq } from 'drizzle-orm';
-import { differenceInDays, addDays, format } from 'date-fns';
+import { differenceInDays, addDays } from 'date-fns';
 import { canReadProject } from '@/lib/auth/access-control';
 
 // GET /api/analytics/burndown?sprintId=xxx[&unit=points|hours]
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
       const date = addDays(startDate, i);
       const remaining = totalPoints - (totalPoints / safeTotalDays) * i;
       idealBurndown.push({
-        date: format(date, 'MMM dd'),
+        date: date.toISOString(),
         ideal: Math.max(0, Math.round(remaining)),
       });
     }

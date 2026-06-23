@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -42,6 +41,7 @@ type ApiKeyItem = {
 
 export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
   const t = useTranslations('settingsConfig');
+  const formatter = useFormatter();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newKeyName, setNewKeyName] = useState('');
   const [expiryPreset, setExpiryPreset] = useState('never');
@@ -194,7 +194,9 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
                     {key.expiresAt ? (
                       <span className="chip">
                         {t('apiKeys.expires', {
-                          date: new Date(key.expiresAt).toLocaleDateString(),
+                          date: formatter.dateTime(new Date(key.expiresAt), {
+                            dateStyle: 'medium',
+                          }),
                         })}
                       </span>
                     ) : null}
@@ -203,13 +205,13 @@ export function ApiKeysManager({ organizationId }: ApiKeysManagerProps) {
                     <code className="bg-muted rounded px-1.5 py-0.5">{key.keyPrefix}...</code>
                     <span>
                       {t('apiKeys.created', {
-                        ago: formatDistanceToNow(new Date(key.createdAt), { addSuffix: true }),
+                        ago: formatter.relativeTime(new Date(key.createdAt)),
                       })}
                     </span>
                     {key.lastUsedAt ? (
                       <span>
                         {t('apiKeys.last_used', {
-                          ago: formatDistanceToNow(new Date(key.lastUsedAt), { addSuffix: true }),
+                          ago: formatter.relativeTime(new Date(key.lastUsedAt)),
                         })}
                       </span>
                     ) : null}

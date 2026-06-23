@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { formatDistanceToNow } from 'date-fns';
 import {
   FileText,
   GitBranch,
@@ -48,6 +47,7 @@ export function AuditLogViewer({
   limit = 50,
 }: AuditLogViewerProps) {
   const t = useTranslations('workspaceTools');
+  const formatter = useFormatter();
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -194,7 +194,7 @@ export function AuditLogViewer({
                   </span>
 
                   <span className="text-muted-foreground ml-auto shrink-0 font-mono text-[11px]">
-                    {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
+                    {formatter.relativeTime(new Date(log.createdAt))}
                   </span>
 
                   {hasChanges && (

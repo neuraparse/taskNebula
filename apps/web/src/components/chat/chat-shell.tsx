@@ -4,8 +4,7 @@ import type { FormEvent, KeyboardEvent, ReactNode } from 'react';
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
-import { formatDistanceToNow } from 'date-fns';
+import { useFormatter, useTranslations } from 'next-intl';
 import {
   RoomContext,
   RoomAudioRenderer,
@@ -1513,6 +1512,7 @@ function ChatMessageRow({
   onToggleReaction: (messageId: string, emoji: string) => Promise<void>;
 }) {
   const t = useTranslations('workspaceTools');
+  const formatter = useFormatter();
   const authorName = message.author.name || message.author.email || t('chat.message.unknownUser');
   const moderationLabel = message.moderation?.deletedByName
     ? t('chat.message.deletedBy', { name: message.moderation.deletedByName })
@@ -1540,7 +1540,7 @@ function ChatMessageRow({
           <span className="text-muted-foreground text-xs">
             {message.optimistic
               ? t('chat.message.sending')
-              : formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+              : formatter.relativeTime(new Date(message.createdAt))}
             {message.editedAt ? ` · ${t('chat.message.edited')}` : ''}
           </span>
           {message.canDelete ? (

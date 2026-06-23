@@ -3,7 +3,7 @@
 // under `exactOptionalPropertyTypes`. See docs/TS_STRICT_MIGRATION.md.
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useOrganization } from '@/lib/hooks/use-organization';
@@ -112,6 +112,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
   const { toast } = useToast();
   const t = useTranslations('collab');
   const tHome = useTranslations('pagesHome');
+  const formatter = useFormatter();
 
   const [pageSearch, setPageSearch] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -792,7 +793,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
             />
             <DetailRow
               label={t('shell.row.updated')}
-              value={new Date(currentPage.updatedAt).toLocaleDateString()}
+              value={formatter.dateTime(new Date(currentPage.updatedAt), { dateStyle: 'medium' })}
             />
             <DetailRow label={t('shell.row.words')} value={currentPageWordCount} />
             <DetailRow
@@ -974,7 +975,8 @@ export function DocsShell({ projectId }: DocsShellProps) {
                     }
                     primary={childPage.title}
                     secondary={
-                      childPage.excerpt || new Date(childPage.updatedAt).toLocaleDateString()
+                      childPage.excerpt ||
+                      formatter.dateTime(new Date(childPage.updatedAt), { dateStyle: 'medium' })
                     }
                     action={<ChevronRight className="text-muted-foreground h-4 w-4" />}
                   />
@@ -1020,7 +1022,12 @@ export function DocsShell({ projectId }: DocsShellProps) {
                             </div>
                             <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-[11px]">
                               <span>{revision.author?.name || t('shell.unknown')}</span>
-                              <span>{new Date(revision.createdAt).toLocaleString()}</span>
+                              <span>
+                                {formatter.dateTime(new Date(revision.createdAt), {
+                                  dateStyle: 'medium',
+                                  timeStyle: 'short',
+                                })}
+                              </span>
                               <span>
                                 {'r'}
                                 {revision.revision}

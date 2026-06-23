@@ -4,8 +4,7 @@ import type { ComponentType } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useTranslations } from 'next-intl';
-import { formatDistanceToNow } from 'date-fns';
+import { useFormatter, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -1030,6 +1029,7 @@ function UsersSection({
 }) {
   const t = useTranslations('pagesAdmin');
   const tProject = useTranslations('projectConfig');
+  const formatter = useFormatter();
   const users = usersData?.users || [];
 
   function renderUserIdentity(user: UserItem) {
@@ -1039,7 +1039,12 @@ function UsersSection({
         <p className="text-muted-foreground truncate text-xs">{user.email}</p>
         {user.createdAt ? (
           <p className="text-muted-foreground mt-0.5 truncate text-[11px]">
-            {t('users.createdAt', { date: formatShortDate(user.createdAt) })}
+            {t('users.createdAt', {
+              date: formatter.dateTime(new Date(user.createdAt), {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+              }),
+            })}
           </p>
         ) : null}
       </div>
@@ -1129,8 +1134,13 @@ function UsersSection({
 
     return (
       <div className="space-y-0.5">
-        <p className="tabular-nums">{formatRelativeTime(user.lastSeenAt)}</p>
-        <p className="text-muted-foreground text-[11px]">{formatShortDate(user.lastSeenAt)}</p>
+        <p className="tabular-nums">{formatter.relativeTime(new Date(user.lastSeenAt))}</p>
+        <p className="text-muted-foreground text-[11px]">
+          {formatter.dateTime(new Date(user.lastSeenAt), {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+          })}
+        </p>
       </div>
     );
   }
@@ -1147,7 +1157,7 @@ function UsersSection({
         </p>
         <p className="text-muted-foreground truncate text-xs">
           {formatAdminAction(user.lastActivity.resourceType)} ·{' '}
-          {formatRelativeTime(user.lastActivity.createdAt)}
+          {formatter.relativeTime(new Date(user.lastActivity.createdAt))}
         </p>
       </div>
     );
@@ -1426,6 +1436,7 @@ function AuditSection({
   setResourceType: (v: string) => void;
 }) {
   const t = useTranslations('pagesAdmin');
+  const formatter = useFormatter();
   return (
     <div className="space-y-4">
       <p className="text-muted-foreground text-xs">
@@ -1509,7 +1520,7 @@ function AuditSection({
                     </div>
                   </div>
                   <span className="text-muted-foreground shrink-0 text-xs tabular-nums sm:pt-0.5">
-                    {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
+                    {formatter.relativeTime(new Date(log.createdAt))}
                   </span>
                 </li>
               );
@@ -1660,15 +1671,4 @@ function formatAdminAction(action: string) {
     .replaceAll('.', ' ')
     .replaceAll('_', ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function formatRelativeTime(value: string) {
-  return formatDistanceToNow(new Date(value), { addSuffix: true });
-}
-
-function formatShortDate(value: string) {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value));
 }

@@ -19,7 +19,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 
 type SinkType = 'webhook' | 'splunk_hec' | 'datadog' | 's3';
 
@@ -62,6 +62,7 @@ const SINK_TYPES: SinkType[] = ['webhook', 'splunk_hec', 'datadog', 's3'];
 
 export function AuditLogStreamingClient({ organizationId }: { organizationId: string }) {
   const t = useTranslations('settingsClients');
+  const formatter = useFormatter();
   const [sinks, setSinks] = useState<Sink[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -368,14 +369,19 @@ export function AuditLogStreamingClient({ organizationId }: { organizationId: st
                   </span>
                 </div>
                 <p className="text-muted-foreground mt-1 text-xs">
-                  {t('audit.created', { date: new Date(sink.createdAt).toLocaleDateString() })}
+                  {t('audit.created', {
+                    date: formatter.dateTime(new Date(sink.createdAt), { dateStyle: 'medium' }),
+                  })}
                   {' · ✓ '}
                   {sink.successCount}
                   {' · ✗ '}
                   {sink.failureCount}
                   {sink.lastDeliveryAt
                     ? ` · ${t('audit.lastDelivery', {
-                        date: new Date(sink.lastDeliveryAt).toLocaleString(),
+                        date: formatter.dateTime(new Date(sink.lastDeliveryAt), {
+                          dateStyle: 'medium',
+                          timeStyle: 'short',
+                        }),
                       })}`
                     : ''}
                 </p>

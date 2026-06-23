@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import {
   type ComponentType,
   type KeyboardEvent,
@@ -100,6 +100,7 @@ export function DocumentEditor({
 }: DocumentEditorProps) {
   const t = useTranslations('collab');
   const tHome = useTranslations('pagesHome');
+  const formatter = useFormatter();
   const { toast } = useToast();
   const [title, setTitle] = useState(page.title);
   const [isDirty, setIsDirty] = useState(false);
@@ -465,7 +466,10 @@ export function DocumentEditor({
           ? t('editor.status.waiting')
           : lastSavedAt
             ? t('editor.status.savedAt', {
-                time: lastSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                time: formatter.dateTime(lastSavedAt, {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }),
               })
             : t('editor.status.allSaved');
   const internalSharePath =
@@ -1607,7 +1611,9 @@ export function DocumentEditor({
                           <div className="text-muted-foreground mt-1 line-clamp-2 text-xs leading-5">
                             {childPage.excerpt ||
                               t('editor.updatedOn', {
-                                date: new Date(childPage.updatedAt).toLocaleDateString(),
+                                date: formatter.dateTime(new Date(childPage.updatedAt), {
+                                  dateStyle: 'medium',
+                                }),
                               })}
                           </div>
                         </div>

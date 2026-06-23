@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -66,6 +66,7 @@ const statusChipClass: Record<string, string> = {
 
 export function OrganizationSettingsClient() {
   const t = useTranslations('settingsClients');
+  const formatter = useFormatter();
   const { currentOrganizationId, clearContext } = useOrganization();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -422,7 +423,12 @@ export function OrganizationSettingsClient() {
 
                 <div className="border-border flex items-center justify-between border-t pt-4">
                   <p className="text-muted-foreground text-xs">
-                    {t('org.updatedAt', { date: new Date(org.updatedAt).toLocaleString() })}
+                    {t('org.updatedAt', {
+                      date: formatter.dateTime(new Date(org.updatedAt), {
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                      }),
+                    })}
                   </p>
                   <Button
                     onClick={() => updateOrgMutation.mutate()}

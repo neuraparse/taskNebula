@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -85,10 +85,12 @@ function formatDuration(durationMs: number | null): string {
   return `${(durationMs / 1000).toFixed(2)}s`;
 }
 
-function formatTimestamp(iso: string): string {
+type AutomationFormatter = ReturnType<typeof useFormatter>;
+
+function formatTimestamp(iso: string, formatter: AutomationFormatter): string {
   try {
     const date = new Date(iso);
-    return date.toLocaleString();
+    return formatter.dateTime(date, { dateStyle: 'medium', timeStyle: 'short' });
   } catch {
     return iso;
   }
@@ -171,6 +173,7 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
   const [expandedExecutionId, setExpandedExecutionId] = useState<string | null>(null);
   const { toast } = useToast();
   const t = useTranslations('workspaceTools');
+  const formatter = useFormatter();
 
   useEffect(() => {
     void fetchRules();
@@ -690,7 +693,7 @@ export function AutomationManager({ organizationId, projectId }: AutomationManag
                         />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">
-                            {formatTimestamp(execution.triggeredAt)}
+                            {formatTimestamp(execution.triggeredAt, formatter)}
                           </p>
                           {execution.error ? (
                             <p className="text-destructive truncate text-xs">{execution.error}</p>

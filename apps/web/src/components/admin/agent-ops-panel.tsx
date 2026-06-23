@@ -679,7 +679,9 @@ export function AgentOpsPanel() {
                               className="flex gap-3 px-3 py-1.5 text-xs"
                             >
                               <span className="text-muted-foreground w-16 shrink-0 font-mono">
-                                {new Date(log.timestamp).toLocaleTimeString()}
+                                {formatter.dateTime(new Date(log.timestamp), {
+                                  timeStyle: 'short',
+                                })}
                               </span>
                               <span
                                 className={cn(

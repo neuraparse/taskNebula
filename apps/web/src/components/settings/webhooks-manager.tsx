@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,7 +18,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Trash2, Webhook as WebhookIcon, Pencil, Send } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
 
 interface WebhooksManagerProps {
   organizationId: string;
@@ -64,6 +63,7 @@ interface LastTestResult {
 
 export function WebhooksManager({ organizationId, projectId }: WebhooksManagerProps) {
   const t = useTranslations('settingsConfig');
+  const formatter = useFormatter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -399,9 +399,7 @@ export function WebhooksManager({ organizationId, projectId }: WebhooksManagerPr
                     <>
                       {' · '}
                       {t('webhooks.last_triggered', {
-                        ago: formatDistanceToNow(new Date(webhook.lastTriggeredAt), {
-                          addSuffix: true,
-                        }),
+                        ago: formatter.relativeTime(new Date(webhook.lastTriggeredAt)),
                       })}
                     </>
                   ) : null}

@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.7.9] - 2026-06-23
+
+### Changed
+
+- **Locale-safe dates across product surfaces.** Dashboard widgets, docs,
+  issue detail panels, project views, sprint screens, settings panels, admin
+  tools, notification rows, and share pages now render timestamps through
+  `next-intl` so all 30 shipped languages keep localized relative and absolute
+  date output.
+- **Localized app metadata.** Locale app pages now generate dashboard, drafts,
+  inbox, my issues, and initiatives metadata from translation catalogs instead
+  of static English strings.
+
+### Fixed
+
+- **Burndown charts no longer receive English date labels from the API.** The
+  burndown endpoint now returns ISO dates, and the chart axis, tooltip, and
+  story-points label render through localized UI formatters.
+
 ## [0.7.8] - 2026-06-23
 
 ### Changed
@@ -602,7 +621,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Internal alpha release. [See git log] for details.
 
-[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.8...HEAD
+[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.9...HEAD
+[0.7.9]: https://github.com/neuraparse/tasknebula/compare/v0.7.8...v0.7.9
 [0.7.8]: https://github.com/neuraparse/tasknebula/compare/v0.7.7...v0.7.8
 [0.7.7]: https://github.com/neuraparse/tasknebula/compare/v0.7.6...v0.7.7
 [0.7.6]: https://github.com/neuraparse/tasknebula/compare/v0.7.5...v0.7.6

@@ -1,14 +1,19 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { WorkspaceRequiredNotice } from '@/components/layout/workspace-required-notice';
 import { userHasWorkspaceAccess } from '@/lib/auth/workspace-access';
 import { InitiativesClient } from './initiatives-client';
 
-export const metadata: Metadata = {
-  title: 'Initiatives | TaskNebula',
-  description: 'Plan multi-project workstreams and roll up progress',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('pagesHome');
+
+  return {
+    title: `${t('initiatives_title')} | TaskNebula`,
+    description: t('initiatives_subtitle'),
+  };
+}
 
 export const dynamic = 'force-dynamic';
 

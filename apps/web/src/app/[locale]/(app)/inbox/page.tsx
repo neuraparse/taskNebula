@@ -1,14 +1,19 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { WorkspaceRequiredNotice } from '@/components/layout/workspace-required-notice';
 import { userHasWorkspaceAccess } from '@/lib/auth/workspace-access';
 import { InboxPageClient } from './inbox-client';
 
-export const metadata: Metadata = {
-  title: 'Inbox | TaskNebula',
-  description: 'Unified Smart Inbox: mentions, agent runs, webhooks, and system events.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('pagesHome');
+
+  return {
+    title: `${t('inbox_title')} | TaskNebula`,
+    description: t('inbox_subtitle'),
+  };
+}
 
 export const dynamic = 'force-dynamic';
 

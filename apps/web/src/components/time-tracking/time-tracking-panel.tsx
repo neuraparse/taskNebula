@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { TimeLogDialog } from './time-log-dialog';
 import { Clock, Plus, Trash2 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 
 interface Worklog {
   id: string;
@@ -32,6 +32,7 @@ export function TimeTrackingPanel({ issueId, canLog, canDelete }: TimeTrackingPa
   const [showLogDialog, setShowLogDialog] = useState(false);
   const { toast } = useToast();
   const t = useTranslations('appShell');
+  const formatter = useFormatter();
 
   useEffect(() => {
     fetchWorklogs();
@@ -145,7 +146,7 @@ export function TimeTrackingPanel({ issueId, canLog, canDelete }: TimeTrackingPa
                   </p>
                 </div>
                 <span className="text-muted-foreground shrink-0 font-mono text-[11px]">
-                  {new Date(log.startedAt).toLocaleDateString([], {
+                  {formatter.dateTime(new Date(log.startedAt), {
                     month: 'short',
                     day: 'numeric',
                   })}

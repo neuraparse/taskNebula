@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { formatDistanceToNow } from 'date-fns';
+import { useFormatter, useTranslations } from 'next-intl';
 import { Check, Edit3, Trash2, X } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -32,16 +31,9 @@ function avatarSrc(name: string): string {
   return `https://avatar.vercel.sh/${slug}`;
 }
 
-function relativeTime(ms: number): string {
-  try {
-    return formatDistanceToNow(new Date(ms), { addSuffix: true });
-  } catch {
-    return '';
-  }
-}
-
 export function TimeEntryRow({ entry, canEdit = false, onUpdate, onRemove }: TimeEntryRowProps) {
   const t = useTranslations('issueMisc');
+  const formatter = useFormatter();
   const [isEditing, setIsEditing] = useState(false);
   const [hours, setHours] = useState<string>(String(entry.hours));
   const [minutes, setMinutes] = useState<string>(String(entry.minutes));
@@ -143,7 +135,9 @@ export function TimeEntryRow({ entry, canEdit = false, onUpdate, onRemove }: Tim
           <span className="text-foreground truncate font-medium">{entry.userName}</span>
           <span className="text-muted-foreground">{t('logged')}</span>
           <span className="chip text-[11px] font-medium">{durationLabel}</span>
-          <span className="text-muted-foreground text-[11px]">{relativeTime(entry.loggedAt)}</span>
+          <span className="text-muted-foreground text-[11px]">
+            {formatter.relativeTime(new Date(entry.loggedAt))}
+          </span>
         </div>
         {entry.description ? (
           <p className="text-muted-foreground mt-1 whitespace-pre-wrap break-words text-sm">

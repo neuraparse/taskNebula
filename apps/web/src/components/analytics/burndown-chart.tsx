@@ -1,7 +1,7 @@
 'use client';
 
 import { BurndownData } from '@/lib/hooks/use-analytics';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { CheckCircle2, Clock, Hash, Target } from 'lucide-react';
 import {
   LineChart,
@@ -19,11 +19,24 @@ interface BurndownChartProps {
   data: BurndownData;
 }
 
-const formatMonthDay = (v: string): string => {
+type BurndownFormatter = ReturnType<typeof useFormatter>;
+type BurndownTooltipEntry = {
+  name?: string;
+  value?: number | string | null;
+  color?: string;
+};
+type BurndownTooltipProps = {
+  active?: boolean;
+  payload?: BurndownTooltipEntry[];
+  label?: string | number;
+  formatter: BurndownFormatter;
+};
+
+const formatMonthDay = (v: string, formatter: BurndownFormatter): string => {
   try {
     const d = new Date(v);
     if (Number.isNaN(d.getTime())) return v;
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return formatter.dateTime(d, { month: 'short', day: 'numeric' });
   } catch {
     return v;
   }
@@ -47,16 +60,21 @@ const findTodayKey = (points: BurndownData['burndown']): string | null => {
   return bestDelta <= 1000 * 60 * 60 * 24 ? bestKey : null;
 };
 
-function BurndownTooltip({ active, payload, label }: any) {
+function BurndownTooltip({ active, payload, label, formatter }: BurndownTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
     <div className="surface-card space-y-1 px-3 py-2 text-xs">
-      <p className="text-muted-foreground font-medium">{label}</p>
-      {payload.map((entry: any) => (
-        <div key={entry.name} className="flex items-center gap-2">
+      <p className="text-muted-foreground font-medium">
+        {formatMonthDay(String(label), formatter)}
+      </p>
+      {payload.map((entry) => (
+        <div
+          key={`${entry.name ?? 'series'}-${entry.value ?? 'empty'}`}
+          className="flex items-center gap-2"
+        >
           <span
             className="inline-block h-1.5 w-1.5 rounded-full"
-            style={{ backgroundColor: entry.color }}
+            style={{ backgroundColor: entry.color ?? 'currentColor' }}
           />
           <span className="text-muted-foreground">{entry.name}:</span>
           <span className="text-foreground font-semibold tabular-nums">{entry.value}</span>
@@ -108,6 +126,7 @@ function LegendChip({ color, label }: { color: string; label: string }) {
 
 export function BurndownChart({ data }: BurndownChartProps) {
   const t = useTranslations('charts');
+  const formatter = useFormatter();
   const todayKey = findTodayKey(data.burndown);
   return (
     <div className="surface-card animate-fade-up space-y-3 p-5">
@@ -158,14 +177,14 @@ export function BurndownChart({ data }: BurndownChartProps) {
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
             dataKey="date"
-            tickFormatter={(value) => formatMonthDay(value)}
+            tickFormatter={(value) => formatMonthDay(value, formatter)}
             tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
             label={{
-              value: 'Story Points',
+              value: t('storyPoints'),
               angle: -90,
               position: 'insideLeft',
               fill: 'hsl(var(--muted-foreground))',
@@ -175,7 +194,7 @@ export function BurndownChart({ data }: BurndownChartProps) {
             axisLine={false}
             tickLine={false}
           />
-          <Tooltip content={<BurndownTooltip />} />
+          <Tooltip content={<BurndownTooltip formatter={formatter} />} />
           <Legend wrapperStyle={{ display: 'none' }} />
           {todayKey ? (
             <ReferenceLine

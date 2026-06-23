@@ -6,8 +6,7 @@ import { SwipeableItem, swipeActions } from './swipeable-item';
 import { PullToRefresh } from './pull-to-refresh';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 
 interface MobileIssueListProps {
   issues: Issue[];
@@ -35,6 +34,7 @@ const statusDotClass: Record<string, string> = {
 
 export function MobileIssueList({ issues, onRefresh, onDelete, onComplete }: MobileIssueListProps) {
   const t = useTranslations('mobileNav');
+  const formatter = useFormatter();
   return (
     <PullToRefresh onRefresh={onRefresh} className="h-full">
       <div className="stagger divide-border divide-y">
@@ -86,7 +86,7 @@ export function MobileIssueList({ issues, onRefresh, onDelete, onComplete }: Mob
                   )}
                   <span className="text-muted-foreground font-mono text-[11px]">{issue.key}</span>
                   <span className="text-muted-foreground ml-auto text-[10px]">
-                    {formatDistanceToNow(new Date(issue.updatedAt), { addSuffix: true })}
+                    {formatter.relativeTime(new Date(issue.updatedAt))}
                   </span>
                 </div>
 

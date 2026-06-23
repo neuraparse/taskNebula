@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
@@ -51,6 +51,7 @@ function isHttpsUrl(url: string | null): url is string {
 
 export function VersionPanel() {
   const t = useTranslations('adminUpdates');
+  const formatter = useFormatter();
   const { toast } = useToast();
   const { data, isLoading, error } = useVersionInfo();
   const refresh = useRefreshVersionInfo();
@@ -139,7 +140,11 @@ export function VersionPanel() {
                 )}
                 {data.publishedAt ? (
                   <span className="text-muted-foreground text-[11px]">
-                    {t('published', { date: new Date(data.publishedAt).toLocaleDateString() })}
+                    {t('published', {
+                      date: formatter.dateTime(new Date(data.publishedAt), {
+                        dateStyle: 'medium',
+                      }),
+                    })}
                   </span>
                 ) : null}
               </dd>
@@ -157,7 +162,9 @@ export function VersionPanel() {
                 {data.image.latestPushedAt ? (
                   <span className="text-muted-foreground text-[11px]">
                     {t('imagePushed', {
-                      date: new Date(data.image.latestPushedAt).toLocaleDateString(),
+                      date: formatter.dateTime(new Date(data.image.latestPushedAt), {
+                        dateStyle: 'medium',
+                      }),
                     })}
                   </span>
                 ) : null}
@@ -275,7 +282,12 @@ export function VersionPanel() {
             ) : null}
             {data.checkedAt ? (
               <span className="text-muted-foreground text-[11px]">
-                {t('lastChecked', { time: new Date(data.checkedAt).toLocaleString() })}
+                {t('lastChecked', {
+                  time: formatter.dateTime(new Date(data.checkedAt), {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                  }),
+                })}
               </span>
             ) : null}
           </div>
@@ -312,6 +324,7 @@ function SelfUpdateCard({
   onStart: (targetVersion: string) => void;
 }) {
   const t = useTranslations('adminUpdates');
+  const formatter = useFormatter();
   const targetVersion = selfUpdate?.targetVersion ?? info.image.latestTag ?? info.latest;
   const canStart = Boolean(selfUpdate?.available && targetVersion && acknowledged && !pending);
   const blockedReason = selfUpdate?.blockedReason;
@@ -357,7 +370,10 @@ function SelfUpdateCard({
           ) : (
             <p className="text-muted-foreground">
               {t('selfUpdate.jobUpdated', {
-                time: new Date(job.updatedAt).toLocaleString(),
+                time: formatter.dateTime(new Date(job.updatedAt), {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                }),
               })}
             </p>
           )}

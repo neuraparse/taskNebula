@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -810,6 +810,7 @@ function SectionHeader({
   updatedAt: string | null;
 }) {
   const t = useTranslations('adminPanels');
+  const formatter = useFormatter();
   return (
     <div className="flex items-start justify-between gap-3">
       <div className="space-y-1">
@@ -832,7 +833,9 @@ function SectionHeader({
         )}
         {updatedAt && (
           <span className="text-muted-foreground text-[11px]">
-            {t('systemCredentials.updated', { date: new Date(updatedAt).toLocaleDateString() })}
+            {t('systemCredentials.updated', {
+              date: formatter.dateTime(new Date(updatedAt), { dateStyle: 'medium' }),
+            })}
           </span>
         )}
       </div>

@@ -5,9 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ArrowLeft, MoreVertical, User, Calendar, Tag, MessageSquare } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 
 interface MobileIssueDetailProps {
   issue: Issue;
@@ -16,6 +15,7 @@ interface MobileIssueDetailProps {
 
 export function MobileIssueDetail({ issue, onBack }: MobileIssueDetailProps) {
   const t = useTranslations('mobileNav');
+  const formatter = useFormatter();
   return (
     <div className="bg-background flex h-full flex-col">
       {/* Compact header */}
@@ -133,7 +133,7 @@ export function MobileIssueDetail({ issue, onBack }: MobileIssueDetailProps) {
               <Calendar className="text-muted-foreground h-4 w-4 shrink-0" />
               <span className="text-muted-foreground text-sm">{t('created')}</span>
               <span className="ml-auto text-sm">
-                {formatDistanceToNow(new Date(issue.createdAt), { addSuffix: true })}
+                {formatter.relativeTime(new Date(issue.createdAt))}
               </span>
             </div>
 

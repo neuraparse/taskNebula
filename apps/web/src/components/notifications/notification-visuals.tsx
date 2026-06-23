@@ -18,7 +18,6 @@ import {
   differenceInHours,
   differenceInMinutes,
   differenceInSeconds,
-  format,
   isValid,
 } from 'date-fns';
 import {
@@ -41,13 +40,7 @@ import { cn } from '@/lib/utils';
 /*  Types                                                                     */
 /* -------------------------------------------------------------------------- */
 
-export type NotificationTone =
-  | 'brand'
-  | 'info'
-  | 'success'
-  | 'warning'
-  | 'danger'
-  | 'neutral';
+export type NotificationTone = 'brand' | 'info' | 'success' | 'warning' | 'danger' | 'neutral';
 
 export type NotificationIconSize = 'sm' | 'md';
 
@@ -120,15 +113,11 @@ export const NOTIFICATION_TONES: Readonly<Record<NotificationType, NotificationT
 /* -------------------------------------------------------------------------- */
 
 export function getNotificationIcon(type: string): LucideIcon {
-  return (
-    NOTIFICATION_ICONS[type as NotificationType] ?? NOTIFICATION_ICONS.default
-  );
+  return NOTIFICATION_ICONS[type as NotificationType] ?? NOTIFICATION_ICONS.default;
 }
 
 export function getNotificationTone(type: string): NotificationTone {
-  return (
-    NOTIFICATION_TONES[type as NotificationType] ?? NOTIFICATION_TONES.default
-  );
+  return NOTIFICATION_TONES[type as NotificationType] ?? NOTIFICATION_TONES.default;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -225,20 +214,6 @@ export function NotificationIconBadge({
 /*  <NotificationTypeChip />                                                  */
 /* -------------------------------------------------------------------------- */
 
-const DEFAULT_TYPE_LABELS: Record<NotificationType, string> = {
-  assignment: 'assigned',
-  mention: '@mention',
-  comment: 'comment',
-  status_change: 'status',
-  issue_created: 'new issue',
-  sprint_started: 'sprint started',
-  sprint_completed: 'sprint done',
-  project_created: 'new project',
-  project_archived: 'archived',
-  digest: 'digest',
-  default: 'update',
-};
-
 export interface NotificationTypeChipProps {
   type: string;
   label?: string;
@@ -250,17 +225,10 @@ export interface NotificationTypeChipProps {
  * existing `chip-*` utilities from `globals.css` so it auto-inherits
  * light/dark theming and border tokens.
  */
-export function NotificationTypeChip({
-  type,
-  label,
-  className,
-}: NotificationTypeChipProps) {
+export function NotificationTypeChip({ type, label, className }: NotificationTypeChipProps) {
   const Icon = getNotificationIcon(type);
   const tone = getNotificationTone(type);
-  const resolvedLabel =
-    label ??
-    DEFAULT_TYPE_LABELS[type as NotificationType] ??
-    DEFAULT_TYPE_LABELS.default;
+  const resolvedLabel = label ?? type;
 
   return (
     <span className={cn(TONE_CHIP[tone], 'rounded-sm', className)}>
@@ -276,33 +244,54 @@ export function NotificationTypeChip({
 
 /**
  * Relative time for notification lists.
- *   < 60s    → "now"
- *   < 60m    → "Xm"
- *   < 24h    → "Xh"
- *   1 day    → "yesterday"
- *   < 7d     → "Xd"
- *   same yr  → "Apr 12"
- *   older    → "Apr 12, 2024"
+ * Pass the app's next-intl formatter/labels from the caller so this helper
+ * never emits hardcoded English.
  */
-export function formatNotificationTime(date: Date | string): string {
+export interface NotificationTimeFormatter {
+  relativeTime?: (date: Date, options?: { style?: 'long' | 'short' | 'narrow' }) => string;
+  dateTime?: (
+    date: Date,
+    options?: {
+      month?: 'numeric' | '2-digit' | 'long' | 'short' | 'narrow';
+      day?: 'numeric' | '2-digit';
+      year?: 'numeric' | '2-digit';
+    }
+  ) => string;
+}
+
+export function formatNotificationTime(
+  date: Date | string,
+  options: {
+    formatter?: NotificationTimeFormatter;
+    labels?: { now?: string; yesterday?: string };
+  } = {}
+): string {
   const target = typeof date === 'string' ? new Date(date) : date;
   if (!isValid(target)) return '';
 
+  const { formatter, labels } = options;
   const now = new Date();
   const seconds = differenceInSeconds(now, target);
 
-  if (seconds < 60) return 'now';
+  if (seconds < 60)
+    return labels?.now ?? formatter?.relativeTime?.(target, { style: 'narrow' }) ?? '';
 
   const minutes = differenceInMinutes(now, target);
-  if (minutes < 60) return `${minutes}m`;
+  if (minutes < 60) return formatter?.relativeTime?.(target, { style: 'narrow' }) ?? '';
 
   const hours = differenceInHours(now, target);
-  if (hours < 24) return `${hours}h`;
+  if (hours < 24) return formatter?.relativeTime?.(target, { style: 'narrow' }) ?? '';
 
   const days = differenceInCalendarDays(now, target);
-  if (days === 1) return 'yesterday';
-  if (days < 7) return `${days}d`;
+  if (days === 1 && labels?.yesterday) return labels.yesterday;
+  if (days < 7) return formatter?.relativeTime?.(target, { style: 'narrow' }) ?? '';
 
   const sameYear = target.getFullYear() === now.getFullYear();
-  return format(target, sameYear ? 'MMM d' : 'MMM d, yyyy');
+  return (
+    formatter?.dateTime?.(target, {
+      month: 'short',
+      day: 'numeric',
+      ...(sameYear ? {} : { year: 'numeric' }),
+    }) ?? ''
+  );
 }

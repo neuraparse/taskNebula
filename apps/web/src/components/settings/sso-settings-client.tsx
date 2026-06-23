@@ -13,7 +13,7 @@
  * IdP descriptor.
  */
 import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -275,6 +275,7 @@ function SamlSection({ organizationId }: { organizationId: string }) {
 
 function ScimSection({ organizationId }: { organizationId: string }) {
   const tr = useTranslations('settingsConfig');
+  const formatter = useFormatter();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data } = useQuery({
@@ -378,9 +379,19 @@ function ScimSection({ organizationId }: { organizationId: string }) {
             <div>
               <div className="font-medium">{t.name}</div>
               <div className="text-muted-foreground text-xs">
-                {tr('sso.token_created', { date: new Date(t.createdAt).toLocaleString() })}
+                {tr('sso.token_created', {
+                  date: formatter.dateTime(new Date(t.createdAt), {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                  }),
+                })}
                 {t.lastUsedAt
-                  ? ` · ${tr('sso.token_last_used', { date: new Date(t.lastUsedAt).toLocaleString() })}`
+                  ? ` · ${tr('sso.token_last_used', {
+                      date: formatter.dateTime(new Date(t.lastUsedAt), {
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                      }),
+                    })}`
                   : ''}
                 {t.revokedAt ? ` · ${tr('sso.token_revoked')}` : ''}
               </div>

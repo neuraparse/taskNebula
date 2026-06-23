@@ -1,7 +1,7 @@
 'use client';
 
 import { use } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { ArrowLeft, Calendar, Target, PlayCircle, CheckCircle2, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,7 @@ import { useProjectPermissions } from '@/lib/hooks/use-project-permissions';
 import { KanbanBoard } from '@/components/kanban/kanban-board';
 import { SprintStats } from '@/components/sprints/sprint-stats';
 import { BurndownChart } from '@/components/analytics/burndown-chart';
-import { format, differenceInDays } from 'date-fns';
+import { differenceInDays } from 'date-fns';
 import Link from 'next/link';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -22,6 +22,7 @@ export default function SprintDetailPage({
 }) {
   const { projectId, sprintId } = use(params);
   const t = useTranslations('pagesProjects');
+  const formatter = useFormatter();
   const { data: sprint, isLoading: sprintLoading } = useSprint(sprintId);
   const { data: issues, isLoading: issuesLoading } = useSprintIssues(sprintId);
   const { data: burndownData } = useBurndown(sprintId);
@@ -169,8 +170,16 @@ export default function SprintDetailPage({
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   <span>
-                    {format(new Date(sprint.startDate), 'MMM d')} -{' '}
-                    {format(new Date(sprint.endDate), 'MMM d, yyyy')}
+                    {formatter.dateTime(new Date(sprint.startDate), {
+                      month: 'short',
+                      day: 'numeric',
+                    })}{' '}
+                    -{' '}
+                    {formatter.dateTime(new Date(sprint.endDate), {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
                   </span>
                 </div>
                 {sprint.status === 'active' && (
