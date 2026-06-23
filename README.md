@@ -38,27 +38,37 @@ disabled by default, or run fully offline with the native planner.
 
 <br/>
 
-<img src="images/readme-home-2026-06-21.png" alt="TaskNebula home" width="100%"/>
+<img src="images/readme-home-2026-06-23.png" alt="TaskNebula home" width="100%"/>
+
+<br/>
+
+<img src="images/readme-product-collage-2026-06-23.png" alt="TaskNebula product collage" width="100%"/>
 
 <table>
 <tr>
 <td width="50%">
-<img src="images/readme-ai-draft-2026-06-21.png" alt="Draft issues from a prompt" width="100%"/>
+<img src="images/readme-ai-draft-2026-06-23.png" alt="Draft issues from a prompt" width="100%"/>
 <p align="center"><b>Draft issues from a prompt</b></p>
 </td>
 <td width="50%">
-<img src="images/readme-ai-assist-2026-06-21.png" alt="Rich issue detail" width="100%"/>
-<p align="center"><b>Rich issue detail — labels, versions, components, sub-issues</b></p>
+<img src="images/readme-ai-assist-2026-06-23.png" alt="AI-assisted issue triage" width="100%"/>
+<p align="center"><b>AI-assisted issue triage</b></p>
 </td>
 </tr>
 <tr>
 <td width="50%">
-<img src="images/readme-board-2026-06-21.png" alt="Kanban board" width="100%"/>
+<img src="images/readme-board-2026-06-23.png" alt="Kanban board" width="100%"/>
 <p align="center"><b>Real-time Kanban board</b></p>
 </td>
 <td width="50%">
-<img src="images/readme-dashboard-2026-06-21.png" alt="Dashboard" width="100%"/>
+<img src="images/readme-dashboard-2026-06-23.png" alt="Dashboard" width="100%"/>
 <p align="center"><b>Workspace dashboard</b></p>
+</td>
+</tr>
+<tr>
+<td colspan="2">
+<img src="images/readme-admin-updates-2026-06-23.png" alt="Self-hosted update controls" width="100%"/>
+<p align="center"><b>Self-hosted update controls with Docker Hub metadata</b></p>
 </td>
 </tr>
 </table>
