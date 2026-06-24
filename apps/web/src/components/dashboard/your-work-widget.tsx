@@ -53,17 +53,17 @@ function IssueLine({ issue }: { issue: MyIssue }) {
   return (
     <Link
       href={`/issues/${issue.id}`}
-      className="row-interactive ease-snap flex min-h-[40px] items-center gap-3 rounded-md px-2 py-2 text-left transition-all duration-150"
+      className="row-interactive ease-snap flex min-h-[40px] min-w-0 items-center gap-2 rounded-md px-2 py-2 text-left transition-all duration-150 sm:gap-3"
     >
       <Circle className={cn('h-3 w-3 shrink-0', color)} fill="currentColor" />
-      <span className="text-muted-foreground w-16 shrink-0 truncate font-mono text-xs">
+      <span className="text-muted-foreground w-14 shrink-0 truncate font-mono text-xs sm:w-16">
         {issue.key}
       </span>
-      <p className="text-foreground flex-1 truncate text-sm">{issue.title}</p>
+      <p className="text-foreground min-w-0 flex-1 truncate text-sm">{issue.title}</p>
       {due && (
         <span className="text-muted-foreground hidden shrink-0 text-[11px] sm:inline">{due}</span>
       )}
-      <Badge variant="outline" className="shrink-0 text-[10px]">
+      <Badge variant="outline" className="max-w-[4rem] shrink-0 truncate text-[10px]">
         {issue.project?.key ?? 'PRJ'}
       </Badge>
     </Link>
@@ -101,8 +101,8 @@ export function YourWorkWidget() {
     : null;
 
   return (
-    <div className="surface-card p-4">
-      <div className="mb-4 flex items-center justify-between">
+    <div className="surface-card min-w-0 p-4">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <span className="text-foreground text-sm font-semibold tracking-tight">
           {t('your_work.heading')}
         </span>
@@ -116,10 +116,16 @@ export function YourWorkWidget() {
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-        <TabsList className="mb-3 h-8">
-          <TabsTrigger value="assigned">{t('your_work.tab_assigned')}</TabsTrigger>
-          <TabsTrigger value="created">{t('your_work.tab_created')}</TabsTrigger>
-          <TabsTrigger value="subscribed">{t('your_work.tab_subscribed')}</TabsTrigger>
+        <TabsList className="mb-3 grid h-auto w-full grid-cols-3">
+          <TabsTrigger value="assigned" className="min-w-0 truncate px-2 text-[11px] sm:text-xs">
+            {t('your_work.tab_assigned')}
+          </TabsTrigger>
+          <TabsTrigger value="created" className="min-w-0 truncate px-2 text-[11px] sm:text-xs">
+            {t('your_work.tab_created')}
+          </TabsTrigger>
+          <TabsTrigger value="subscribed" className="min-w-0 truncate px-2 text-[11px] sm:text-xs">
+            {t('your_work.tab_subscribed')}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value={tab} className="mt-0">

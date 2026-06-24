@@ -27,6 +27,10 @@ async function loadTemplate(id: string) {
   return row ?? null;
 }
 
+function isPubliclyReadable(template: typeof projectTemplates.$inferSelect) {
+  return template.isPublic && template.isVerified;
+}
+
 // GET /api/templates/[id]
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -41,7 +45,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   }
 
   const authz = await getTemplateAuthz(session.user.id, template.organizationId);
-  if (!authz.isMember && !template.isPublic) {
+  if (!authz.isMember && !isPubliclyReadable(template)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

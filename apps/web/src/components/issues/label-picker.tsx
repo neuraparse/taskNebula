@@ -192,7 +192,7 @@ export function LabelPicker({
             {t('add')}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0">
+        <PopoverContent className="w-[300px] max-w-[calc(100vw-2rem)] p-0">
           {/* Server-side ?q= filtering — disable cmdk's client filter. */}
           <Command shouldFilter={false}>
             <CommandInput

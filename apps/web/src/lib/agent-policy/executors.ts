@@ -322,6 +322,9 @@ async function executeCommentCreate(approval: AgentApprovalRequest, data: Record
   const issue = await getIssueById(input.issueId);
   if (!issue) throw new Error('issue_not_found');
   if (issue.organizationId !== approval.workspaceId) throw new Error('issue_not_found');
+  if (approval.projectId && issue.projectId !== approval.projectId) {
+    throw new Error('issue_not_found');
+  }
 
   const comment = await createComment({
     id: createId(),

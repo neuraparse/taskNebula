@@ -2,11 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { TemplatesGrid } from '../templates-grid';
 import type { WorkItemTemplate } from '@/lib/templates/registry';
-import {
-  useTemplatesList,
-  useInstantiateTemplate,
-  useDeleteTemplate,
-} from '../use-templates';
+import { useTemplatesList, useInstantiateTemplate, useDeleteTemplate } from '../use-templates';
 
 // Mock the react-query hooks so we control what `TemplatesGrid` sees.
 jest.mock('../use-templates', () => ({
@@ -23,14 +19,11 @@ jest.mock('@/hooks/use-toast', () => ({
   useToast: () => ({ toast: jest.fn() }),
 }));
 
-const mockUseTemplatesList = useTemplatesList as jest.MockedFunction<
-  typeof useTemplatesList
+const mockUseTemplatesList = useTemplatesList as jest.MockedFunction<typeof useTemplatesList>;
+const mockUseInstantiateTemplate = useInstantiateTemplate as jest.MockedFunction<
+  typeof useInstantiateTemplate
 >;
-const mockUseInstantiateTemplate =
-  useInstantiateTemplate as jest.MockedFunction<typeof useInstantiateTemplate>;
-const mockUseDeleteTemplate = useDeleteTemplate as jest.MockedFunction<
-  typeof useDeleteTemplate
->;
+const mockUseDeleteTemplate = useDeleteTemplate as jest.MockedFunction<typeof useDeleteTemplate>;
 
 function emptyMutation() {
   return {
@@ -75,6 +68,7 @@ describe('TemplatesGrid', () => {
             payload: {},
             usageCount: 0,
             isPublic: false,
+            isVerified: false,
             createdBy: 'user-1',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -89,9 +83,7 @@ describe('TemplatesGrid', () => {
 
     render(<TemplatesGrid templates={[]} />);
 
-    expect(
-      screen.getByText('Quarterly planning workspace')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Quarterly planning workspace')).toBeInTheDocument();
   });
 
   it('shows the empty state when no templates match the current filter', () => {

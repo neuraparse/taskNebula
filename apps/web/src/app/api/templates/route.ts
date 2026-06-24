@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import type { SQL } from 'drizzle-orm';
 import {
   and,
   db,
@@ -8,6 +9,7 @@ import {
   hasPermission as roleHasPermission,
   inArray,
   organizationMembers,
+  or,
   projectTemplates,
   users,
 } from '@tasknebula/db';
@@ -67,12 +69,23 @@ export async function GET(request: NextRequest) {
       orgIds = [organizationIdParam];
     }
 
-    const whereClauses = [] as any[];
+    const whereClauses: SQL[] = [];
+    const includePublicVerified = !organizationIdParam;
     if (!user?.isSuperAdmin) {
       if (orgIds.length === 0) {
         return NextResponse.json({ templates: [] });
       }
-      whereClauses.push(inArray(projectTemplates.organizationId, orgIds));
+      const memberOrgClause = inArray(projectTemplates.organizationId, orgIds);
+      const publicVerifiedClause = and(
+        eq(projectTemplates.isPublic, true),
+        eq(projectTemplates.isVerified, true)
+      );
+      const visibleTemplateClause = includePublicVerified
+        ? or(memberOrgClause, publicVerifiedClause)
+        : memberOrgClause;
+      if (visibleTemplateClause) {
+        whereClauses.push(visibleTemplateClause);
+      }
     } else if (organizationIdParam) {
       whereClauses.push(eq(projectTemplates.organizationId, organizationIdParam));
     }
@@ -95,19 +108,22 @@ export async function GET(request: NextRequest) {
         payload: projectTemplates.payload,
         usageCount: projectTemplates.usageCount,
         isPublic: projectTemplates.isPublic,
+        isVerified: projectTemplates.isVerified,
         createdBy: projectTemplates.createdBy,
         createdAt: projectTemplates.createdAt,
         updatedAt: projectTemplates.updatedAt,
       })
       .from(projectTemplates)
-      .where(where as any)
+      .where(where)
       .orderBy(desc(projectTemplates.updatedAt));
 
     // Tell the caller, for each org, whether they can administer so the UI
     // can show/hide the "+ New template" / edit / delete affordances.
     const adminOrgIds = new Set(
       user?.isSuperAdmin
-        ? orgIds
+        ? rows
+            .map((row) => row.organizationId)
+            .filter((organizationId): organizationId is string => Boolean(organizationId))
         : orgMemberships
             .filter((m) => roleHasPermission(m.role || '', 'org:settings'))
             .map((m) => m.organizationId)

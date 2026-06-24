@@ -221,7 +221,7 @@ export function ActivityFeed({ organizationId, limit = 20 }: ActivityFeedProps) 
                   return (
                     <li
                       key={activity.id}
-                      className="row-interactive animate-fade-down flex items-center gap-2.5 rounded-md px-2 py-1.5"
+                      className="row-interactive animate-fade-down flex min-w-0 items-center gap-2.5 rounded-md px-2 py-1.5"
                       title={tooltip}
                     >
                       <Avatar className="ring-border h-5 w-5 shrink-0 ring-1">
@@ -243,7 +243,7 @@ export function ActivityFeed({ organizationId, limit = 20 }: ActivityFeedProps) 
                         )}
                       </p>
                       <time
-                        className="text-muted-foreground shrink-0 text-xs tabular-nums"
+                        className="text-muted-foreground hidden shrink-0 text-xs tabular-nums sm:inline"
                         dateTime={timestamp.toISOString()}
                       >
                         {formatter.relativeTime(timestamp)}

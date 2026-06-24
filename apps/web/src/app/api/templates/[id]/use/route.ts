@@ -45,6 +45,10 @@ const useTemplateSchema = z.object({
 
 type UsePayload = Record<string, any>;
 
+function isPubliclyReadable(template: typeof projectTemplates.$inferSelect) {
+  return template.isPublic && template.isVerified;
+}
+
 // POST /api/templates/[id]/use — instantiate a template.
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -66,7 +70,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const authz = await getTemplateAuthz(userId, template.organizationId);
-  if (!authz.isMember && !template.isPublic) {
+  if (!authz.isMember && !isPubliclyReadable(template)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

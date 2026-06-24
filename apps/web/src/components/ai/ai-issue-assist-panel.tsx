@@ -113,7 +113,7 @@ export function AiIssueAssistPanel({
         <span className="text-xs font-semibold uppercase tracking-wide">{t('assist.title')}</span>
       </div>
 
-      <div className="grid grid-cols-2 gap-1.5">
+      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
         {ACTIONS.map(({ key, icon: Icon }) => {
           const loading = activeAction === key && mutation.isPending;
           return (
@@ -122,9 +122,9 @@ export function AiIssueAssistPanel({
               type="button"
               onClick={() => mutation.mutate(key)}
               disabled={mutation.isPending}
-              className="border-border bg-background hover:border-primary/40 hover:bg-primary/5 group flex flex-col items-start gap-0.5 rounded-md border px-2.5 py-2 text-left text-xs transition-colors disabled:pointer-events-none disabled:opacity-50"
+              className="border-border bg-background hover:border-primary/40 hover:bg-primary/5 group flex min-w-0 flex-col items-start gap-0.5 rounded-md border px-2.5 py-2 text-left text-xs transition-colors disabled:pointer-events-none disabled:opacity-50"
             >
-              <span className="text-foreground flex items-center gap-1.5 font-medium">
+              <span className="text-foreground flex min-w-0 items-center gap-1.5 font-medium">
                 {loading ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
                 ) : (
@@ -149,7 +149,7 @@ export function AiIssueAssistPanel({
 
       {result && (
         <div className="border-border bg-background space-y-2 rounded-md border p-2.5">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-center gap-1.5">
               <AiBadge
                 feature={t('assist.featureName', { action: actionLabel(result.action) })}
@@ -160,7 +160,7 @@ export function AiIssueAssistPanel({
                 {actionLabel(result.action)}
               </span>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1">
               {canApplyDescription && (
                 <Button
                   type="button"

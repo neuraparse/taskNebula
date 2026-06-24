@@ -114,6 +114,23 @@ describe('SignInForm', () => {
     });
   });
 
+  it('uses a safe callbackUrl after credentials sign-in', async () => {
+    searchParamsValue = new URLSearchParams(
+      'callbackUrl=/settings/import%3Fsource%3Dplane%26projectId%3Dproject-1'
+    );
+    signInMock.mockResolvedValue({ ok: true, error: null });
+    const user = userEvent.setup();
+    render(<SignInForm />);
+
+    await user.type(await screen.findByLabelText(/email address/i), 'alice@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'hunter2hunter2');
+    await user.click(screen.getByRole('button', { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith('/settings/import?source=plane&projectId=project-1');
+    });
+  });
+
   it('renders the verified success banner when ?verified=1 is present', async () => {
     searchParamsValue = new URLSearchParams('verified=1');
     render(<SignInForm />);

@@ -17,6 +17,7 @@ export interface ApiTemplate {
   payload: Record<string, unknown>;
   usageCount: number;
   isPublic: boolean;
+  isVerified: boolean;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -42,8 +43,7 @@ async function fetchJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> 
   const text = await res.text();
   const parsed = text ? JSON.parse(text) : {};
   if (!res.ok) {
-    const message =
-      (parsed as { error?: string })?.error ?? `Request failed (${res.status})`;
+    const message = (parsed as { error?: string })?.error ?? `Request failed (${res.status})`;
     throw new Error(message);
   }
   return parsed as T;
@@ -130,20 +130,11 @@ export interface UseTemplateResult {
 export function useInstantiateTemplate() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      id,
-      overrides,
-    }: {
-      id: string;
-      overrides?: UseTemplateOverrides;
-    }) =>
-      fetchJson<UseTemplateResult>(
-        `/api/templates/${encodeURIComponent(id)}/use`,
-        {
-          method: 'POST',
-          body: JSON.stringify({ overrides: overrides ?? {} }),
-        }
-      ),
+    mutationFn: ({ id, overrides }: { id: string; overrides?: UseTemplateOverrides }) =>
+      fetchJson<UseTemplateResult>(`/api/templates/${encodeURIComponent(id)}/use`, {
+        method: 'POST',
+        body: JSON.stringify({ overrides: overrides ?? {} }),
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: TEMPLATES_QUERY_KEY });
     },

@@ -47,9 +47,16 @@ jest.mock('@tasknebula/db', () => ({
   users: {},
   organizations: {},
   organizationMembers: {},
+  projects: {},
+  projectMembers: {},
   workflows: {},
   workflowStatuses: {},
   workflowTransitions: {},
+  ROLE_DEFAULT_PERMISSIONS: {
+    product_owner: {
+      canBrowseProject: true,
+    },
+  },
 }));
 
 jest.mock('drizzle-orm', () => ({
@@ -64,9 +71,10 @@ function fromBuilder(result: unknown) {
 
 describe('GET /api/setup', () => {
   let GET: typeof import('./route').GET;
+  let POST: typeof import('./route').POST;
 
   beforeAll(async () => {
-    ({ GET } = await import('./route'));
+    ({ GET, POST } = await import('./route'));
   });
 
   beforeEach(() => {
@@ -80,5 +88,22 @@ describe('GET /api/setup', () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ setupRequired: false });
+  });
+
+  it('requires an import source and target project when starting from import', async () => {
+    const response = await POST({
+      json: async () => ({
+        name: 'Ada Lovelace',
+        email: 'ada@example.com',
+        password: 'password1',
+        startMode: 'import',
+        importSource: 'jira',
+      }),
+    } as unknown as Request);
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: 'Import source, project name, and project key are required',
+    });
   });
 });

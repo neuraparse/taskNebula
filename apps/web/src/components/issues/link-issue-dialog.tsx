@@ -104,7 +104,7 @@ export function LinkIssueDialog({ issueId, projectId, open, onOpenChange }: Link
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto rounded-lg sm:max-w-[500px]">
+      <DialogContent className="max-h-[85vh] w-[calc(100vw-1rem)] overflow-y-auto rounded-lg sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{t('dialogTitle')}</DialogTitle>
           <DialogDescription>{t('dialogDescription')}</DialogDescription>
@@ -139,10 +139,10 @@ export function LinkIssueDialog({ issueId, projectId, open, onOpenChange }: Link
                   variant="outline"
                   role="combobox"
                   aria-expanded={issuePickerOpen}
-                  className="justify-between rounded-md font-normal"
+                  className="w-full min-w-0 justify-between rounded-md font-normal"
                 >
                   {selectedIssue ? (
-                    <span className="flex min-w-0 items-center gap-1.5">
+                    <span className="flex min-w-0 flex-1 items-center gap-1.5">
                       <span className="chip shrink-0 rounded-sm font-mono text-[11px]">
                         {selectedIssue.key}
                       </span>
@@ -154,7 +154,10 @@ export function LinkIssueDialog({ issueId, projectId, open, onOpenChange }: Link
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="z-[60] w-[400px] rounded-md p-0" align="start">
+              <PopoverContent
+                className="z-[60] w-[400px] max-w-[calc(100vw-2rem)] rounded-md p-0"
+                align="start"
+              >
                 <Command
                   filter={(value, search) =>
                     value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0
@@ -186,7 +189,7 @@ export function LinkIssueDialog({ issueId, projectId, open, onOpenChange }: Link
                               setTargetIssueId(issue.id);
                               setIssuePickerOpen(false);
                             }}
-                            className="gap-2"
+                            className="min-w-0 gap-2"
                           >
                             <Check
                               className={cn(

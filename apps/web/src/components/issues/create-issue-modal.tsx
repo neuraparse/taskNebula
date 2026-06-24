@@ -125,7 +125,7 @@ export function CreateIssueModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto rounded-lg sm:max-w-[600px]">
+      <DialogContent className="max-h-[85vh] w-[calc(100vw-1rem)] overflow-y-auto rounded-lg sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>{t('create.heading')}</DialogTitle>
           <DialogDescription>{t('create.description')}</DialogDescription>
@@ -176,7 +176,7 @@ export function CreateIssueModal({
             </div>
 
             {/* Type and Priority Row */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {/* Type */}
               <div className="space-y-2">
                 <Label htmlFor="type">{t('create.type_label')}</Label>

@@ -27,10 +27,13 @@ import {
 
 type FilterValue = 'all' | TemplateCategory;
 
-const FILTERS: ReadonlyArray<{ value: FilterValue; label: string | null }> = [
-  { value: 'all', label: null },
-  ...TEMPLATE_CATEGORIES.map((c) => ({ value: c.value, label: c.label })),
+const FILTERS: ReadonlyArray<{ value: FilterValue }> = [
+  { value: 'all' },
+  ...TEMPLATE_CATEGORIES.map((c) => ({ value: c.value })),
 ];
+
+const EMPTY_API_TEMPLATES: ApiTemplate[] = [];
+const EMPTY_ADMIN_ORGANIZATION_IDS: string[] = [];
 
 export interface TemplatesGridProps {
   templates?: WorkItemTemplate[];
@@ -45,28 +48,33 @@ export interface TemplatesGridProps {
  */
 const DB_PREFIX = 'db:';
 
-function apiTemplateToCard(row: ApiTemplate): WorkItemTemplate {
+type PlanningTranslator = ReturnType<typeof useTranslations>;
+
+function translateRaw(t: PlanningTranslator, key: string) {
+  const raw = 'raw' in t && typeof t.raw === 'function' ? t.raw(key) : t(key);
+  return typeof raw === 'string' ? raw : String(raw ?? '');
+}
+
+function apiTemplateToCard(row: ApiTemplate, t: PlanningTranslator): WorkItemTemplate {
   const category = resolveCategory(row);
   const type = resolveType(row);
-  const labels = Array.isArray((row.payload as any)?.labels)
-    ? ((row.payload as any).labels as string[])
+  const labels = Array.isArray(row.payload.labels)
+    ? row.payload.labels.filter((label): label is string => typeof label === 'string')
     : [];
+  const description = typeof row.payload.description === 'string' ? row.payload.description : '';
+  const estimate = typeof row.payload.estimate === 'number' ? row.payload.estimate : undefined;
+
   return {
     id: `${DB_PREFIX}${row.id}`,
     name: row.name,
-    description: row.description ?? `${capitalize(row.kind)} template`,
+    description:
+      row.description ?? t('template_fallback_description', { kind: t(`kind_${row.kind}`) }),
     category,
     type,
     icon: row.icon ?? defaultIconForKind(row.kind),
-    body:
-      typeof (row.payload as any)?.description === 'string'
-        ? ((row.payload as any).description as string)
-        : '',
+    body: description,
     labels,
-    estimatePoints:
-      typeof (row.payload as any)?.estimate === 'number'
-        ? ((row.payload as any).estimate as number)
-        : undefined,
+    estimatePoints: estimate,
   };
 }
 
@@ -79,7 +87,7 @@ function resolveCategory(row: ApiTemplate): TemplateCategory {
 
 function resolveType(row: ApiTemplate): WorkItemTemplate['type'] {
   if (row.kind === 'issue') {
-    const raw = String((row.payload as any)?.type ?? 'task').toLowerCase();
+    const raw = String(row.payload.type ?? 'task').toLowerCase();
     if (['story', 'task', 'bug', 'epic'].includes(raw)) {
       return raw as WorkItemTemplate['type'];
     }
@@ -90,16 +98,30 @@ function resolveType(row: ApiTemplate): WorkItemTemplate['type'] {
   return 'task';
 }
 
-function capitalize(value: string): string {
-  if (value.length === 0) return value;
-  return (value[0] ?? '').toUpperCase() + value.slice(1);
-}
-
 function defaultIconForKind(kind: ApiTemplate['kind']): string {
   if (kind === 'project') return '📁';
   if (kind === 'issue') return '🧩';
   if (kind === 'doc') return '📄';
   return '✨';
+}
+
+function localizeBuiltInTemplate(
+  template: WorkItemTemplate,
+  t: PlanningTranslator
+): WorkItemTemplate {
+  if (!template.i18nKey) return template;
+
+  const baseKey = `starterTemplates.${template.i18nKey}` as const;
+  return {
+    ...template,
+    name: t(`${baseKey}.name`),
+    description: t(`${baseKey}.description`),
+    body: translateRaw(t, `${baseKey}.body`),
+    subItems: template.subItems?.map((item) => ({
+      ...item,
+      title: item.i18nKey ? t(`${baseKey}.subItems.${item.i18nKey}`) : item.title,
+    })),
+  };
 }
 
 export function TemplatesGrid({
@@ -117,11 +139,12 @@ export function TemplatesGrid({
   const instantiate = useInstantiateTemplate();
   const deleteMutation = useDeleteTemplate();
 
-  const apiTemplates = listQuery.data?.templates ?? [];
+  const apiTemplates = listQuery.data?.templates ?? EMPTY_API_TEMPLATES;
   const canAdminister = listQuery.data?.canAdminister ?? false;
+  const adminOrganizationIds = listQuery.data?.adminOrganizationIds ?? EMPTY_ADMIN_ORGANIZATION_IDS;
 
   const adminById = React.useMemo(() => {
-    const admins = new Set(listQuery.data?.adminOrganizationIds ?? []);
+    const admins = new Set(adminOrganizationIds);
     const byId = new Map<string, boolean>();
     for (const row of apiTemplates) {
       byId.set(
@@ -130,11 +153,19 @@ export function TemplatesGrid({
       );
     }
     return byId;
-  }, [apiTemplates, canAdminister, listQuery.data?.adminOrganizationIds]);
+  }, [adminOrganizationIds, apiTemplates, canAdminister]);
 
-  const dbCards = React.useMemo(() => apiTemplates.map(apiTemplateToCard), [apiTemplates]);
+  const dbCards = React.useMemo(
+    () => apiTemplates.map((row) => apiTemplateToCard(row, t)),
+    [apiTemplates, t]
+  );
 
-  const registryCards = registryOverride ?? WORK_ITEM_TEMPLATES;
+  const registryCards = React.useMemo(
+    () =>
+      registryOverride ??
+      WORK_ITEM_TEMPLATES.map((template) => localizeBuiltInTemplate(template, t)),
+    [registryOverride, t]
+  );
   const allCards = React.useMemo(() => [...dbCards, ...registryCards], [dbCards, registryCards]);
 
   const filtered = React.useMemo(() => {
@@ -278,7 +309,7 @@ export function TemplatesGrid({
                       : 'border-border bg-card text-muted-foreground hover:bg-accent/60 hover:text-accent-foreground'
                   )}
                 >
-                  {filter.label ?? t('filter_all')}
+                  {filter.value === 'all' ? t('filter_all') : t(`category_${filter.value}`)}
                 </button>
               );
             })}

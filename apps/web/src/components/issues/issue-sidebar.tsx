@@ -534,10 +534,10 @@ interface PropertyRowProps {
 
 function PropertyRow({ icon, label, children }: PropertyRowProps) {
   return (
-    <div className="flex items-center gap-3 py-1.5 text-[12.5px]">
-      <div className="text-muted-foreground flex w-24 shrink-0 items-center gap-2">
+    <div className="grid gap-1.5 py-2 text-[12.5px] sm:grid-cols-[6rem_minmax(0,1fr)] sm:items-center sm:gap-3 sm:py-1.5">
+      <div className="text-muted-foreground flex min-w-0 items-center gap-2">
         {icon}
-        <span>{label}</span>
+        <span className="min-w-0 truncate">{label}</span>
       </div>
       <div className="min-w-0 flex-1">{children}</div>
     </div>

@@ -125,7 +125,7 @@ export function IssueLinks({ issueId, projectId }: IssueLinksProps) {
   if (allLinks.length === 0) {
     return (
       <>
-        <div className="animate-fade-in text-muted-foreground flex items-center gap-2 text-sm">
+        <div className="animate-fade-in text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
           <Link2 className="h-3.5 w-3.5 shrink-0" />
           <span>{t('emptyPrefix')}</span>
           <button
@@ -148,7 +148,7 @@ export function IssueLinks({ issueId, projectId }: IssueLinksProps) {
   return (
     <>
       <div className="animate-fade-in space-y-2">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-1.5">
             <Link2 className="text-muted-foreground h-3.5 w-3.5" />
             <span className="chip text-[11px]">{allLinks.length}</span>
@@ -173,7 +173,7 @@ export function IssueLinks({ issueId, projectId }: IssueLinksProps) {
         <div className="space-y-3">
           {groups.map((group) => (
             <div key={group.relationship} className="space-y-1">
-              <div className="flex items-center gap-1.5 px-0.5">
+              <div className="flex flex-wrap items-center gap-1.5 px-0.5">
                 <span
                   className={cn(group.chip, 'capitalize')}
                   title={group.blocked ? t('blockedHint') : undefined}
@@ -198,15 +198,15 @@ export function IssueLinks({ issueId, projectId }: IssueLinksProps) {
                   <div
                     key={link.id}
                     className={cn(
-                      'row-interactive group flex items-center justify-between gap-2 rounded-md px-2 py-1.5',
+                      'row-interactive group flex flex-col items-stretch gap-2 rounded-md px-2 py-1.5 sm:flex-row sm:items-center sm:justify-between',
                       group.blocked &&
                         'border-l-2 border-[hsl(var(--accent-rose))] bg-[hsl(var(--accent-rose)/0.04)]'
                     )}
                   >
-                    <div className="flex min-w-0 items-center gap-2">
+                    <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:flex-1">
                       <Link
                         href={`/issues/${link.issue.id}`}
-                        className="hover:text-primary ease-snap flex min-w-0 items-center gap-1.5 text-sm transition-colors duration-150"
+                        className="hover:text-primary ease-snap flex min-w-0 flex-1 items-center gap-1.5 text-sm transition-colors duration-150"
                       >
                         <span className="chip shrink-0 rounded-sm font-mono text-[11px]">
                           {link.issue.key}
@@ -221,7 +221,7 @@ export function IssueLinks({ issueId, projectId }: IssueLinksProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 w-6 p-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+                      className="h-6 w-6 self-end p-0 opacity-100 transition-opacity duration-150 sm:self-auto sm:opacity-0 sm:group-hover:opacity-100"
                       onClick={() => handleDeleteLink(link.id)}
                       disabled={deleteLink.isPending}
                       aria-label={t('removeLink')}

@@ -88,14 +88,14 @@ export function StandupWidget() {
       className="surface-card animate-fade-up flex flex-col gap-3 p-4"
       data-testid="standup-widget"
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-2">
           <span className="icon-tile icon-tile-accent-violet h-7 w-7">
             <Sparkles className="h-3.5 w-3.5" />
           </span>
-          <h3 className="text-sm font-semibold">{t('standup.heading')}</h3>
+          <h3 className="min-w-0 truncate text-sm font-semibold">{t('standup.heading')}</h3>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {data && (
             <Button
               size="sm"

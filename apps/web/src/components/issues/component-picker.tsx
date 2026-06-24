@@ -174,7 +174,7 @@ export function ComponentPicker({
             <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-40" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0">
+        <PopoverContent className="w-[300px] max-w-[calc(100vw-2rem)] p-0">
           {/* Own filtering above keeps the create row in sync — disable cmdk's. */}
           <Command shouldFilter={false}>
             <CommandInput placeholder={t('search')} value={search} onValueChange={setSearch} />

@@ -61,8 +61,8 @@ export function PinnedItemsWidget() {
   const visible = items.slice(0, 7);
 
   return (
-    <div className="surface-card p-4">
-      <div className="mb-4 flex items-center justify-between">
+    <div className="surface-card min-w-0 p-4">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <span className="text-foreground text-sm font-semibold tracking-tight">
           {t('pinned.heading')}
         </span>
@@ -95,12 +95,12 @@ export function PinnedItemsWidget() {
             return (
               <li
                 key={item.id}
-                className="row-interactive ease-snap group flex min-h-[40px] items-center gap-3 rounded-md px-2 py-2 transition-all duration-150"
+                className="row-interactive ease-snap group flex min-h-[40px] min-w-0 items-center gap-3 rounded-md px-2 py-2 transition-all duration-150"
               >
                 <Icon className="text-muted-foreground h-4 w-4 shrink-0" />
                 <Link
                   href={item.href}
-                  className="text-foreground flex-1 truncate text-sm hover:underline"
+                  className="text-foreground min-w-0 flex-1 truncate text-sm hover:underline"
                 >
                   {item.title}
                 </Link>
@@ -109,10 +109,10 @@ export function PinnedItemsWidget() {
                   aria-label={t('pinned.unpin_aria', { title: item.title })}
                   onClick={() => unpinMutation.mutate(item.id)}
                   disabled={unpinMutation.isPending}
-                  className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-[11px] opacity-0 transition-opacity duration-150 focus-visible:opacity-100 disabled:opacity-50 group-hover:opacity-100"
+                  className="text-muted-foreground hover:text-foreground inline-flex shrink-0 items-center gap-1 text-[11px] opacity-100 transition-opacity duration-150 focus-visible:opacity-100 disabled:opacity-50 sm:opacity-0 sm:group-hover:opacity-100"
                 >
                   <PinOff className="h-3.5 w-3.5" />
-                  {t('pinned.unpin')}
+                  <span className="hidden sm:inline">{t('pinned.unpin')}</span>
                 </button>
               </li>
             );

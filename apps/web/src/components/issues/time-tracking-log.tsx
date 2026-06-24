@@ -93,8 +93,8 @@ export function TimeTrackingLog({
 
   return (
     <div className={cn('animate-fade-in space-y-3', className)}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Clock className="text-muted-foreground h-3.5 w-3.5" />
           <span className="kicker">{t('time_tracking_title')}</span>
           {totalMinutes > 0 ? (
@@ -152,7 +152,7 @@ export function TimeTrackingLog({
             rows={2}
             className="text-sm"
           />
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={handleCancel}>
               {tActions('cancel')}
             </Button>

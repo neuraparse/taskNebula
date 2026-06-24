@@ -3128,7 +3128,81 @@
     "anonymous": "匿名",
     "error_save": "保存失败",
     "saving": "正在保存…",
-    "save_changes": "保存更改"
+    "save_changes": "保存更改",
+    "category_engineering": "Engineering",
+    "category_design": "Design",
+    "category_product": "Product",
+    "category_qa": "QA",
+    "category_ops": "Ops",
+    "category_general": "General",
+    "template_fallback_description": "{kind} template",
+    "payload_hint_project": "Payload shape: { \"name\"?: string, \"key\"?: string, \"description\"?: string, \"settings\"?: object }",
+    "payload_hint_issue": "Payload shape: { \"title\"?: string, \"description\"?: string, \"type\"?: \"task\"|\"bug\"|\"story\"|\"epic\", \"priority\"?: \"critical\"|\"high\"|\"medium\"|\"low\"|\"none\", \"labels\"?: string[], \"estimate\"?: number }",
+    "payload_hint_doc": "Payload shape: { \"title\"?: string, \"contentJson\"?: object, \"icon\"?: string }",
+    "starterTemplates": {
+      "bug_report": {
+        "name": "Bug report",
+        "description": "Capture a defect with reproduction steps, expected vs. actual behavior, and environment.",
+        "body": "## Summary\n{{summary}}\n\n## Steps to reproduce\n1. \n2. \n3. \n\n## Expected behavior\n{{expected}}\n\n## Actual behavior\n{{actual}}\n\n## Environment\n- App version: {{version}}\n- Browser / OS: {{environment}}\n\n## Additional context\n{{notes}}"
+      },
+      "feature_request": {
+        "name": "Feature request",
+        "description": "Frame a new capability as a user story with measurable acceptance criteria.",
+        "body": "## User story\nAs a **{{persona}}**, I want **{{capability}}**, so that **{{outcome}}**.\n\n## Acceptance criteria\n- [ ] \n- [ ] \n- [ ] \n\n## Out of scope\n- \n\n## Notes\n{{notes}}"
+      },
+      "tech_debt": {
+        "name": "Tech debt",
+        "description": "Track and justify a refactor or hardening task with risk and approach.",
+        "body": "## Context\n{{context}}\n\n## Risk if untouched\n{{risk}}\n\n## Proposed approach\n{{approach}}\n\n## Definition of done\n- [ ] Code change merged\n- [ ] Tests updated\n- [ ] No regression in metrics"
+      },
+      "spike": {
+        "name": "Spike",
+        "description": "Time-boxed investigation to reduce uncertainty before committing to delivery.",
+        "body": "## Question to answer\n{{question}}\n\n## Time-box\n{{timebox}}\n\n## Approach\n- \n\n## Deliverable\nA short write-up + recommendation posted to this ticket."
+      },
+      "design_review": {
+        "name": "Design review",
+        "description": "Schedule a critique of a flow, screen, or component with reviewers and goals.",
+        "body": "## Artifact\n{{figma_link}}\n\n## Reviewers\n- \n\n## Goals\n- \n\n## Open questions\n- "
+      },
+      "qa_test_plan": {
+        "name": "QA test plan",
+        "description": "Outline coverage for happy path, edge cases, and regression for a release.",
+        "subItems": {
+          "happy_path": "Happy path",
+          "edge_cases": "Edge cases",
+          "regression": "Regression"
+        },
+        "body": "## Scope\n{{scope}}\n\n## Environments\n- \n\n## Exit criteria\n- All sub-items pass\n- No P0/P1 defects open"
+      },
+      "incident_postmortem": {
+        "name": "Incident postmortem",
+        "description": "Blameless write-up covering timeline, impact, root cause, and follow-up actions.",
+        "body": "## Summary\n{{summary}}\n\n## Timeline\n- {{time}} - \n\n## Impact\n{{impact}}\n\n## Root cause\n{{root_cause}}\n\n## What went well\n- \n\n## What went poorly\n- \n\n## Action items\n- [ ] \n- [ ] "
+      },
+      "product_launch_checklist": {
+        "name": "Product launch checklist",
+        "description": "Coordinate cross-functional readiness across marketing, docs, support, pricing, and sales.",
+        "subItems": {
+          "marketing": "Marketing",
+          "docs": "Docs",
+          "support_enablement": "Support enablement",
+          "pricing": "Pricing",
+          "sales_kickoff": "Sales kickoff"
+        },
+        "body": "## Launch overview\n{{summary}}\n\n## Target date\n{{date}}\n\n## DRI\n{{owner}}\n\n## Workstreams\nSee sub-items below. Each owner adds status notes here."
+      },
+      "customer_interview": {
+        "name": "Customer interview",
+        "description": "Discovery call template with goals, script prompts, and a place for notes.",
+        "body": "## Customer\n{{customer}}\n\n## Interview goals\n- \n\n## Script\n1. Tell me about your current workflow.\n2. Where does it break down?\n3. What would \"great\" look like?\n\n## Notes\n{{notes}}\n\n## Follow-ups\n- [ ] "
+      },
+      "refactor_proposal": {
+        "name": "Refactor proposal",
+        "description": "Pitch a structural change with motivation, alternatives, and a migration plan.",
+        "body": "## Motivation\n{{motivation}}\n\n## Current state\n{{current}}\n\n## Proposed state\n{{proposed}}\n\n## Alternatives considered\n- \n\n## Migration plan\n1. \n2. \n3. \n\n## Rollback plan\n- "
+      }
+    }
   },
   "projectConfig": {
     "loading": "加载中…",
@@ -5720,6 +5794,67 @@
     },
     "intake": {
       "submitMetaTitle": "Submit · TaskNebula"
+    },
+    "stepStart": "开始",
+    "setupImportRedirecting": "重定向到登录，然后{source}进口…",
+    "setupProductName": "TaskNebula 设置",
+    "setupProductSubtitle": "首次运行工作区引导程序",
+    "setupInstanceEmpty": "空实例",
+    "setupKicker": "第一次运行",
+    "setupIntro": "创建第一个管理员，选择工作区的开始方式，并在写入任何团队数据之前保持设置路径清晰。",
+    "setupSecurityTitle": "本地控制",
+    "setupSecurityBody": "安装程序仅在数据库没有用户时打开。创建第一个管理员后，此页面将关闭并开始正常登录。",
+    "setupAdminKicker": "行政人员",
+    "setupAdminTitle": "创建所有者帐户",
+    "setupContinue": "继续",
+    "setupStartKicker": "起点",
+    "setupStartTitle": "选择 TaskNebula 应如何启动",
+    "setupStartSubtitle": "从干净的工作区开始，或者创建导入目标并在登录后继续使用 Jira、Linear、Plane、CSV 或 GitHub。",
+    "setupBlankTitle": "开始空白",
+    "setupBlankDescription": "仅创建管理员和组织。从 TaskNebula 内部添加项目、团队和问题。",
+    "setupImportTitle": "导入现有工作",
+    "setupImportDescription": "现在创建一个目标项目，然后继续选择正确的源导入器。",
+    "setupImportProjectName": "目标项目名称",
+    "setupImportProjectNamePlaceholder": "进口积压",
+    "setupImportProjectKey": "项目重点",
+    "setupImportProjectKeyPlaceholder": "MIG",
+    "setupImportCredentialTitle": "{source}凭证留在下一步",
+    "setupBlankNote": "空白启动使实例保持最少：一个管理员、一个组织和默认工作流程。您可以在登录后手动创建项目。",
+    "setupBack": "后退",
+    "setupCreateAndImport": "创建并继续{source}",
+    "setupImportProjectRequired": "输入导入的目标项目名称。",
+    "setupImportProjectKeyInvalid": "项目密钥必须以字母开头，并使用 2-10 个大写字母或数字。",
+    "setupImportSource": {
+      "jira": {
+        "label": "Jira",
+        "description": "使用 Atlassian 网站、电子邮件和 API 令牌来拉取当前的 Jira Cloud 问题。",
+        "nextStep": "登录后，导入程序会要求您提供 Atlassian 站点、帐户电子邮件和 API 令牌，然后在写入任何内容之前预览最近的 Jira 问题。"
+      },
+      "linear": {
+        "label": "Linear",
+        "description": "使用 Linear 个人 API 密钥和可选的团队密钥进行问题导入。",
+        "nextStep": "登录后，输入 Linear 个人 API 密钥，并可以选择按团队密钥确定导入范围。 TaskNebula 首先预览问题和基本元数据。"
+      },
+      "plane": {
+        "label": "Plane",
+        "description": "从 Plane CSV 导出开始，并将列映射到 TaskNebula 字段。",
+        "nextStep": "Plane 目前通过 CSV 导入程序进行处理。从 Plane 导出问题，上传 CSV，然后在运行导入之前映射字段。"
+      },
+      "csv": {
+        "label": "CSV",
+        "description": "从任何跟踪器上传 CSV 并在导入之前映射其列。",
+        "nextStep": "登录后，上传 CSV 并确认建议的列映射。对于没有本机适配器的工具来说，这是最安全的路径。"
+      },
+      "github": {
+        "label": "GitHub Issues",
+        "description": "使用 GitHub 访问令牌从存储库中提取问题。",
+        "nextStep": "登录后，提供 GitHub 访问令牌、所有者和存储库。拉取请求将被跳过，问题将首先预览。"
+      }
+    },
+    "setupSourceEvidence": {
+      "jira": "Jira Cloud 支持 CSV 迁移和基于 API 令牌的问题读取。",
+      "linear": "Linear 提供专用导入程序和 CSV/CLI 迁移路径。",
+      "plane": "Plane 记录 Jira 和 Linear 导入； TaskNebula 目前从 Plane 到 CSV 开始。"
     }
   },
   "settingsClients": {
@@ -5753,7 +5888,7 @@
       "importing": "正在导入…",
       "recordsFailed": "{count, plural, other {# 条记录失败：}}",
       "previewFailed": "预览失败（{status}）",
-      "projectIdRequired": "必须提供目标项目 ID。",
+      "projectIdRequired": "在运行导入之前选择目标项目。",
       "importFailedStatus": "导入失败（{status}）",
       "jobStatusFailed": "获取任务状态失败",
       "source": {
@@ -5771,7 +5906,11 @@
         },
         "github": {
           "label": "GitHub Issues",
-          "description": "使用已连接的 GitHub OAuth 令牌从仓库导入。"
+          "description": "使用 GitHub 访问令牌从存储库导入。"
+        },
+        "plane": {
+          "label": "Plane",
+          "description": "通过 CSV 导入器上传 Plane CSV 导出并映射列。"
         }
       },
       "field": {
@@ -5794,7 +5933,14 @@
       },
       "projectIdPlaceholder": "prj_xxx",
       "linearTeamPlaceholder": "ENG",
-      "jiraSitePlaceholder": "acme.atlassian.net"
+      "jiraSitePlaceholder": "acme.atlassian.net",
+      "planeCsvFile": "Plane CSV 导出",
+      "planeCsvHint": "将问题从 Plane 导出为 CSV，然后使用下面的 CSV 映射步骤。",
+      "targetProject": "目标项目",
+      "selectProjectPlaceholder": "选择一个项目",
+      "noProjectsAvailable": "在运行导入之前创建一个项目。",
+      "noPreviewRows": "在此来源中未找到可导入的记录。",
+      "networkError": "网络错误。请再试一次。"
     },
     "members": {
       "kicker": "访问",

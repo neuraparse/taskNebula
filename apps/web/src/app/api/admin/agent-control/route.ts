@@ -2,12 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/auth';
 import { isSuperAdmin } from '@/lib/auth/permissions';
-import { getSystemAgentControlSettingsFromDb, upsertSystemAgentControlSettings } from '@/lib/agents/system';
-import { getAgentProviderReadiness, normalizeProjectAgentSettings, normalizeWorkspaceAgentSettings } from '@/lib/agents/config';
+import {
+  getSystemAgentControlSettingsFromDb,
+  upsertSystemAgentControlSettings,
+} from '@/lib/agents/system';
+import {
+  getAgentProviderReadiness,
+  normalizeProjectAgentSettings,
+  normalizeWorkspaceAgentSettings,
+} from '@/lib/agents/config';
 import { getProviderCredentialStatusFromSettings } from '@/lib/agents/credentials';
-import { extractWorkspaceModelConfigId, listAgentModelConfigsByIds } from '@/lib/agents/model-configs';
+import {
+  extractWorkspaceModelConfigId,
+  listAgentModelConfigsByIds,
+} from '@/lib/agents/model-configs';
 import { db, agentRuns, organizations, projects, systemAuditLogs, users } from '@tasknebula/db';
-import { and, desc, eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { invalidateAiFeatureCache } from '@/lib/ai/feature-gate';
 
@@ -33,8 +43,17 @@ export async function GET() {
 
   const [settings, allOrganizations, allProjects, recentRuns] = await Promise.all([
     getSystemAgentControlSettingsFromDb(),
-    db.select({ id: organizations.id, settings: organizations.settings, name: organizations.name }).from(organizations),
-    db.select({ id: projects.id, settings: projects.settings, name: projects.name, organizationId: projects.organizationId }).from(projects),
+    db
+      .select({ id: organizations.id, settings: organizations.settings, name: organizations.name })
+      .from(organizations),
+    db
+      .select({
+        id: projects.id,
+        settings: projects.settings,
+        name: projects.name,
+        organizationId: projects.organizationId,
+      })
+      .from(projects),
     db
       .select({
         id: agentRuns.id,
@@ -59,18 +78,25 @@ export async function GET() {
       .limit(20),
   ]);
 
-  const enabledWorkspaceCount = allOrganizations.filter((organization) =>
-    normalizeWorkspaceAgentSettings((organization.settings as Record<string, unknown> | null)?.aiAgents).enabled
+  const enabledWorkspaceCount = allOrganizations.filter(
+    (organization) =>
+      normalizeWorkspaceAgentSettings(
+        (organization.settings as Record<string, unknown> | null)?.aiAgents
+      ).enabled
   ).length;
-  const enabledProjectCount = allProjects.filter((project) =>
-    normalizeProjectAgentSettings((project.settings as Record<string, unknown> | null)?.aiAgents).enabled
+  const enabledProjectCount = allProjects.filter(
+    (project) =>
+      normalizeProjectAgentSettings((project.settings as Record<string, unknown> | null)?.aiAgents)
+        .enabled
   ).length;
   const runningRuns = recentRuns.filter((run) => run.status === 'running').length;
   const failedRuns = recentRuns.filter((run) => run.status === 'failed').length;
   const selectedModelConfigIds = Array.from(
     new Set(
       allOrganizations
-        .map((organization) => extractWorkspaceModelConfigId(organization.settings as Record<string, unknown> | null))
+        .map((organization) =>
+          extractWorkspaceModelConfigId(organization.settings as Record<string, unknown> | null)
+        )
         .filter((configId): configId is string => Boolean(configId))
     )
   );
@@ -96,11 +122,17 @@ export async function GET() {
       const providerStatus = getAgentProviderReadiness(
         provider,
         workspaceSettings.model,
-        getProviderCredentialStatusFromSettings(organization.settings as Record<string, unknown> | null, provider)
+        getProviderCredentialStatusFromSettings(
+          organization.settings as Record<string, unknown> | null,
+          provider
+        )
       );
-      const enabledProjects = allProjects.filter((project) =>
-        project.organizationId === organization.id
-        && normalizeProjectAgentSettings((project.settings as Record<string, unknown> | null)?.aiAgents).enabled
+      const enabledProjects = allProjects.filter(
+        (project) =>
+          project.organizationId === organization.id &&
+          normalizeProjectAgentSettings(
+            (project.settings as Record<string, unknown> | null)?.aiAgents
+          ).enabled
       ).length;
       const orgRuns = recentRuns.filter((run) => run.organizationId === organization.id);
       const lastRun = orgRuns[0] ?? null;
@@ -132,49 +164,57 @@ export async function GET() {
 
       return left.organizationName.localeCompare(right.organizationName);
     });
-  const providerBreakdown = allOrganizations.reduce<Record<string, { total: number; enabled: number; ready: number; blocked: number }>>(
-    (accumulator, organization) => {
-      const rawWorkspaceSettings = normalizeWorkspaceAgentSettings(
-        (organization.settings as Record<string, unknown> | null)?.aiAgents
-      );
-      const selectedModelConfig = rawWorkspaceSettings.modelConfigId
-        ? modelConfigById.get(rawWorkspaceSettings.modelConfigId) || null
-        : null;
-      const workspaceSettings = selectedModelConfig
-        ? normalizeWorkspaceAgentSettings({
-            ...rawWorkspaceSettings,
-            provider: selectedModelConfig.provider,
-            model: selectedModelConfig.model,
-            modelConfigId: selectedModelConfig.id,
-          })
-        : rawWorkspaceSettings;
-      const provider = workspaceSettings.provider;
-      const readiness = getAgentProviderReadiness(
-        provider,
-        workspaceSettings.model,
-        getProviderCredentialStatusFromSettings(organization.settings as Record<string, unknown> | null, provider)
-      );
+  const providerBreakdown = allOrganizations.reduce<
+    Record<string, { total: number; enabled: number; ready: number; blocked: number }>
+  >((accumulator, organization) => {
+    const rawWorkspaceSettings = normalizeWorkspaceAgentSettings(
+      (organization.settings as Record<string, unknown> | null)?.aiAgents
+    );
+    const selectedModelConfig = rawWorkspaceSettings.modelConfigId
+      ? modelConfigById.get(rawWorkspaceSettings.modelConfigId) || null
+      : null;
+    const workspaceSettings = selectedModelConfig
+      ? normalizeWorkspaceAgentSettings({
+          ...rawWorkspaceSettings,
+          provider: selectedModelConfig.provider,
+          model: selectedModelConfig.model,
+          modelConfigId: selectedModelConfig.id,
+        })
+      : rawWorkspaceSettings;
+    const provider = workspaceSettings.provider;
+    const readiness = getAgentProviderReadiness(
+      provider,
+      workspaceSettings.model,
+      getProviderCredentialStatusFromSettings(
+        organization.settings as Record<string, unknown> | null,
+        provider
+      )
+    );
 
-      if (!accumulator[provider]) {
-        accumulator[provider] = { total: 0, enabled: 0, ready: 0, blocked: 0 };
+    if (!accumulator[provider]) {
+      accumulator[provider] = { total: 0, enabled: 0, ready: 0, blocked: 0 };
+    }
+
+    accumulator[provider].total += 1;
+    if (workspaceSettings.enabled) {
+      accumulator[provider].enabled += 1;
+      if (readiness.ready) {
+        accumulator[provider].ready += 1;
+      } else {
+        accumulator[provider].blocked += 1;
       }
+    }
 
-      accumulator[provider].total += 1;
-      if (workspaceSettings.enabled) {
-        accumulator[provider].enabled += 1;
-        if (readiness.ready) {
-          accumulator[provider].ready += 1;
-        } else {
-          accumulator[provider].blocked += 1;
-        }
-      }
-
-      return accumulator;
-    },
-    {}
+    return accumulator;
+  }, {});
+  const readyWorkspaceCount = Object.values(providerBreakdown).reduce(
+    (sum, item) => sum + item.ready,
+    0
   );
-  const readyWorkspaceCount = Object.values(providerBreakdown).reduce((sum, item) => sum + item.ready, 0);
-  const blockedWorkspaceCount = Object.values(providerBreakdown).reduce((sum, item) => sum + item.blocked, 0);
+  const blockedWorkspaceCount = Object.values(providerBreakdown).reduce(
+    (sum, item) => sum + item.blocked,
+    0
+  );
   const serviceStatus = [
     {
       key: 'control-plane',
@@ -261,14 +301,18 @@ export async function PATCH(request: NextRequest) {
       metadata: {
         updatedFields: Object.keys(updates),
       },
-      ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
+      ipAddress:
+        request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
       userAgent: request.headers.get('user-agent') || undefined,
     });
 
     return NextResponse.json({ settings: nextSettings });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Validation failed', details: error.errors }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.errors },
+        { status: 400 }
+      );
     }
 
     console.error('Failed to update admin agent control:', error);

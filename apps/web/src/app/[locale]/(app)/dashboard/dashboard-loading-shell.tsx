@@ -7,8 +7,8 @@ import {
 
 export function DashboardLoadingShell() {
   return (
-    <div className="dashboard-carbon custom-scrollbar bg-background flex h-full flex-col overflow-y-auto">
-      <div className="mx-auto w-full max-w-[1680px] space-y-3 p-3 sm:p-4 lg:p-5">
+    <div className="dashboard-carbon custom-scrollbar bg-background flex h-full min-w-0 flex-col overflow-y-auto overflow-x-hidden">
+      <div className="mx-auto w-full min-w-0 max-w-[1680px] space-y-3 p-3 sm:p-4 lg:p-5">
         <div className="surface-card p-5">
           <SkeletonPageHeader />
         </div>

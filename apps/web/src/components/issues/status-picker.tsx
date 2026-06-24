@@ -77,7 +77,7 @@ export function StatusPicker({ projectId, value, onChange, disabled }: StatusPic
           <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-40" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0">
+      <PopoverContent className="w-[300px] max-w-[calc(100vw-2rem)] p-0">
         <Command>
           <CommandInput placeholder={t('search_status_placeholder')} />
           <CommandEmpty>{t('no_status_found')}</CommandEmpty>

@@ -198,7 +198,7 @@ export function IssueQuickActions({
     <TooltipProvider delayDuration={150}>
       <div
         className={cn(
-          'border-border/60 bg-background/40 inline-flex items-center gap-0.5 rounded-md border p-0.5',
+          'border-border/60 bg-background/40 inline-flex max-w-full flex-wrap items-center gap-0.5 rounded-md border p-0.5',
           className
         )}
         role="toolbar"

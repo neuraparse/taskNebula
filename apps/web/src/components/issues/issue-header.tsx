@@ -200,15 +200,15 @@ export function IssueHeader({ issue }: IssueHeaderProps) {
       : derivedSuffix || issue.key;
 
   return (
-    <div className="flex items-start justify-between gap-4">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
       <div className="min-w-0 flex-1 space-y-1">
-        <nav className="text-muted-foreground mb-2 flex items-center gap-1.5 text-[12px]">
-          <Inbox className="h-3.5 w-3.5" />
-          <Link href="/issues" className="hover:text-foreground">
+        <nav className="text-muted-foreground mb-2 flex min-w-0 flex-wrap items-center gap-1.5 text-[12px]">
+          <Inbox className="h-3.5 w-3.5 shrink-0" />
+          <Link href="/issues" className="hover:text-foreground min-w-0 truncate">
             {t('breadcrumb')}
           </Link>
-          <ChevronRight className="h-3 w-3 opacity-60" />
-          <span className="text-foreground font-medium">{projectPrefix}</span>
+          <ChevronRight className="h-3 w-3 shrink-0 opacity-60" />
+          <span className="text-foreground min-w-0 truncate font-medium">{projectPrefix}</span>
         </nav>
         <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
           <span className="inline-flex items-center gap-1.5">
@@ -245,13 +245,13 @@ export function IssueHeader({ issue }: IssueHeaderProps) {
               }
             }}
             onBlur={commitTitle}
-            className="text-foreground focus-visible:ring-ring -mx-1 w-full rounded-md border border-transparent bg-transparent px-1 text-2xl font-semibold tracking-tight outline-none focus-visible:ring-2"
+            className="text-foreground focus-visible:ring-ring -mx-1 w-full rounded-md border border-transparent bg-transparent px-1 text-xl font-semibold tracking-tight outline-none focus-visible:ring-2 sm:text-2xl"
           />
         ) : (
-          <div className="group/title flex items-start gap-1.5">
+          <div className="group/title flex min-w-0 items-start gap-1.5">
             <h1
               onClick={startEditingTitle}
-              className="text-foreground cursor-text text-balance text-2xl font-semibold tracking-tight"
+              className="text-foreground min-w-0 cursor-text text-balance break-words text-xl font-semibold tracking-tight sm:text-2xl"
             >
               {issue.title}
             </h1>
@@ -268,7 +268,7 @@ export function IssueHeader({ issue }: IssueHeaderProps) {
         )}
       </div>
 
-      <div className="flex shrink-0 items-center gap-1">
+      <div className="flex w-full flex-wrap items-center justify-start gap-1 sm:w-auto sm:shrink-0 sm:justify-end">
         <PresenceAvatars issueId={issue.id} />
 
         <Button

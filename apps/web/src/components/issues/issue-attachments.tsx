@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import { Paperclip, Upload, X, File, Loader2, Download } from 'lucide-react';
+import { Upload, X, File, Loader2, Download } from 'lucide-react';
 import {
   useAttachments,
   useUploadAttachment,
@@ -74,12 +74,12 @@ export function IssueAttachments({ issueId }: IssueAttachmentsProps) {
         />
 
         {uploadAttachment.isPending ? (
-          <div className="flex items-center justify-center gap-2 py-1">
+          <div className="flex flex-wrap items-center justify-center gap-2 py-1">
             <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
             <p className="text-muted-foreground text-sm">{t('attachments.uploading')}</p>
           </div>
         ) : (
-          <div className="flex items-center justify-center gap-2 py-1">
+          <div className="flex flex-wrap items-center justify-center gap-2 py-1">
             <Upload className="text-muted-foreground h-4 w-4" />
             <p className="text-muted-foreground text-sm">
               {t('attachments.drop_prefix')}{' '}
@@ -107,7 +107,7 @@ export function IssueAttachments({ issueId }: IssueAttachmentsProps) {
           {attachments.map((attachment) => (
             <div
               key={attachment.id}
-              className="row-interactive group flex items-center gap-2.5 rounded-md px-2 py-1.5"
+              className="row-interactive group flex min-w-0 items-center gap-2.5 rounded-md px-2 py-1.5"
             >
               <File className="text-muted-foreground h-4 w-4 shrink-0" />
               <div className="min-w-0 flex-1">
@@ -116,7 +116,7 @@ export function IssueAttachments({ issueId }: IssueAttachmentsProps) {
                   {formatFileSize(attachment.fileSize)}
                 </p>
               </div>
-              <div className="flex items-center gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              <div className="flex shrink-0 items-center gap-1 opacity-100 transition-opacity duration-200 sm:opacity-0 sm:group-hover:opacity-100">
                 <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
                   <a
                     href={`/api/uploads/${attachment.filePath.split('/').pop()}`}

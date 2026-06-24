@@ -11,15 +11,21 @@
  * from server components, route handlers, and tests alike.
  */
 
-export type TemplateCategory =
-  | 'engineering'
-  | 'design'
-  | 'product'
-  | 'qa'
-  | 'ops'
-  | 'general';
+export type TemplateCategory = 'engineering' | 'design' | 'product' | 'qa' | 'ops' | 'general';
 
 export type TemplateWorkItemType = 'story' | 'bug' | 'task' | 'epic';
+
+export type BuiltInTemplateKey =
+  | 'bug_report'
+  | 'feature_request'
+  | 'tech_debt'
+  | 'spike'
+  | 'design_review'
+  | 'qa_test_plan'
+  | 'incident_postmortem'
+  | 'product_launch_checklist'
+  | 'customer_interview'
+  | 'refactor_proposal';
 
 export interface WorkItemTemplate {
   id: string;
@@ -27,313 +33,183 @@ export interface WorkItemTemplate {
   description: string;
   category: TemplateCategory;
   type: TemplateWorkItemType;
+  i18nKey?: BuiltInTemplateKey;
   /** Single emoji used as the visual tile in the catalog. */
   icon: string;
   /** Markdown body template. May contain `{{placeholder}}` tokens. */
   body: string;
   labels: string[];
   estimatePoints?: number;
-  subItems?: { title: string }[];
+  subItems?: { title: string; i18nKey?: string }[];
 }
 
 export const TEMPLATE_CATEGORIES: ReadonlyArray<{
   value: TemplateCategory;
-  label: string;
 }> = [
-  { value: 'engineering', label: 'Engineering' },
-  { value: 'design', label: 'Design' },
-  { value: 'product', label: 'Product' },
-  { value: 'qa', label: 'QA' },
-  { value: 'ops', label: 'Ops' },
-  { value: 'general', label: 'General' },
+  { value: 'engineering' },
+  { value: 'design' },
+  { value: 'product' },
+  { value: 'qa' },
+  { value: 'ops' },
+  { value: 'general' },
 ];
 
 export const WORK_ITEM_TEMPLATES: WorkItemTemplate[] = [
   {
     id: 'bug-report',
-    name: 'Bug report',
-    description:
-      'Capture a defect with reproduction steps, expected vs. actual behavior, and environment.',
+    i18nKey: 'bug_report',
+    name: 'planning.starterTemplates.bug_report.name',
+    description: 'planning.starterTemplates.bug_report.description',
     category: 'engineering',
     type: 'bug',
     icon: '🐛',
     labels: ['bug', 'triage'],
     estimatePoints: 2,
-    body: [
-      '## Summary',
-      '{{summary}}',
-      '',
-      '## Steps to reproduce',
-      '1. ',
-      '2. ',
-      '3. ',
-      '',
-      '## Expected behavior',
-      '{{expected}}',
-      '',
-      '## Actual behavior',
-      '{{actual}}',
-      '',
-      '## Environment',
-      '- App version: {{version}}',
-      '- Browser / OS: {{environment}}',
-      '',
-      '## Additional context',
-      '{{notes}}',
-    ].join('\n'),
+    body: 'planning.starterTemplates.bug_report.body',
   },
   {
     id: 'feature-request',
-    name: 'Feature request',
-    description:
-      'Frame a new capability as a user story with measurable acceptance criteria.',
+    i18nKey: 'feature_request',
+    name: 'planning.starterTemplates.feature_request.name',
+    description: 'planning.starterTemplates.feature_request.description',
     category: 'product',
     type: 'story',
     icon: '✨',
     labels: ['feature', 'discovery'],
     estimatePoints: 5,
-    body: [
-      '## User story',
-      'As a **{{persona}}**, I want **{{capability}}**, so that **{{outcome}}**.',
-      '',
-      '## Acceptance criteria',
-      '- [ ] ',
-      '- [ ] ',
-      '- [ ] ',
-      '',
-      '## Out of scope',
-      '- ',
-      '',
-      '## Notes',
-      '{{notes}}',
-    ].join('\n'),
+    body: 'planning.starterTemplates.feature_request.body',
   },
   {
     id: 'tech-debt',
-    name: 'Tech debt',
-    description:
-      'Track and justify a refactor or hardening task with risk and approach.',
+    i18nKey: 'tech_debt',
+    name: 'planning.starterTemplates.tech_debt.name',
+    description: 'planning.starterTemplates.tech_debt.description',
     category: 'engineering',
     type: 'task',
     icon: '🛠',
     labels: ['tech-debt', 'maintenance'],
     estimatePoints: 3,
-    body: [
-      '## Context',
-      '{{context}}',
-      '',
-      '## Risk if untouched',
-      '{{risk}}',
-      '',
-      '## Proposed approach',
-      '{{approach}}',
-      '',
-      '## Definition of done',
-      '- [ ] Code change merged',
-      '- [ ] Tests updated',
-      '- [ ] No regression in metrics',
-    ].join('\n'),
+    body: 'planning.starterTemplates.tech_debt.body',
   },
   {
     id: 'spike',
-    name: 'Spike',
-    description:
-      'Time-boxed investigation to reduce uncertainty before committing to delivery.',
+    i18nKey: 'spike',
+    name: 'planning.starterTemplates.spike.name',
+    description: 'planning.starterTemplates.spike.description',
     category: 'engineering',
     type: 'task',
     icon: '🔍',
     labels: ['spike', 'research'],
     estimatePoints: 2,
-    body: [
-      '## Question to answer',
-      '{{question}}',
-      '',
-      '## Time-box',
-      '{{timebox}}',
-      '',
-      '## Approach',
-      '- ',
-      '',
-      '## Deliverable',
-      'A short write-up + recommendation posted to this ticket.',
-    ].join('\n'),
+    body: 'planning.starterTemplates.spike.body',
   },
   {
     id: 'design-review',
-    name: 'Design review',
-    description:
-      'Schedule a critique of a flow, screen, or component with reviewers and goals.',
+    i18nKey: 'design_review',
+    name: 'planning.starterTemplates.design_review.name',
+    description: 'planning.starterTemplates.design_review.description',
     category: 'design',
     type: 'task',
     icon: '🎨',
     labels: ['design', 'review'],
     estimatePoints: 1,
-    body: [
-      '## Artifact',
-      '{{figma_link}}',
-      '',
-      '## Reviewers',
-      '- ',
-      '',
-      '## Goals',
-      '- ',
-      '',
-      '## Open questions',
-      '- ',
-    ].join('\n'),
+    body: 'planning.starterTemplates.design_review.body',
   },
   {
     id: 'qa-test-plan',
-    name: 'QA test plan',
-    description:
-      'Outline coverage for happy path, edge cases, and regression for a release.',
+    i18nKey: 'qa_test_plan',
+    name: 'planning.starterTemplates.qa_test_plan.name',
+    description: 'planning.starterTemplates.qa_test_plan.description',
     category: 'qa',
     type: 'task',
     icon: '✅',
     labels: ['qa', 'test-plan'],
     estimatePoints: 3,
     subItems: [
-      { title: 'Happy path' },
-      { title: 'Edge cases' },
-      { title: 'Regression' },
+      {
+        title: 'planning.starterTemplates.qa_test_plan.subItems.happy_path',
+        i18nKey: 'happy_path',
+      },
+      {
+        title: 'planning.starterTemplates.qa_test_plan.subItems.edge_cases',
+        i18nKey: 'edge_cases',
+      },
+      {
+        title: 'planning.starterTemplates.qa_test_plan.subItems.regression',
+        i18nKey: 'regression',
+      },
     ],
-    body: [
-      '## Scope',
-      '{{scope}}',
-      '',
-      '## Environments',
-      '- ',
-      '',
-      '## Exit criteria',
-      '- All sub-items pass',
-      '- No P0/P1 defects open',
-    ].join('\n'),
+    body: 'planning.starterTemplates.qa_test_plan.body',
   },
   {
     id: 'incident-postmortem',
-    name: 'Incident postmortem',
-    description:
-      'Blameless write-up covering timeline, impact, root cause, and follow-up actions.',
+    i18nKey: 'incident_postmortem',
+    name: 'planning.starterTemplates.incident_postmortem.name',
+    description: 'planning.starterTemplates.incident_postmortem.description',
     category: 'ops',
     type: 'task',
     icon: '🔥',
     labels: ['incident', 'postmortem'],
     estimatePoints: 5,
-    body: [
-      '## Summary',
-      '{{summary}}',
-      '',
-      '## Timeline',
-      '- {{time}} — ',
-      '',
-      '## Impact',
-      '{{impact}}',
-      '',
-      '## Root cause',
-      '{{root_cause}}',
-      '',
-      '## What went well',
-      '- ',
-      '',
-      '## What went poorly',
-      '- ',
-      '',
-      '## Action items',
-      '- [ ] ',
-      '- [ ] ',
-    ].join('\n'),
+    body: 'planning.starterTemplates.incident_postmortem.body',
   },
   {
     id: 'product-launch-checklist',
-    name: 'Product launch checklist',
-    description:
-      'Coordinate cross-functional readiness across marketing, docs, support, pricing, and sales.',
+    i18nKey: 'product_launch_checklist',
+    name: 'planning.starterTemplates.product_launch_checklist.name',
+    description: 'planning.starterTemplates.product_launch_checklist.description',
     category: 'product',
     type: 'epic',
     icon: '🚀',
     labels: ['launch', 'cross-functional'],
     estimatePoints: 13,
     subItems: [
-      { title: 'Marketing' },
-      { title: 'Docs' },
-      { title: 'Support enablement' },
-      { title: 'Pricing' },
-      { title: 'Sales kickoff' },
+      {
+        title: 'planning.starterTemplates.product_launch_checklist.subItems.marketing',
+        i18nKey: 'marketing',
+      },
+      {
+        title: 'planning.starterTemplates.product_launch_checklist.subItems.docs',
+        i18nKey: 'docs',
+      },
+      {
+        title: 'planning.starterTemplates.product_launch_checklist.subItems.support_enablement',
+        i18nKey: 'support_enablement',
+      },
+      {
+        title: 'planning.starterTemplates.product_launch_checklist.subItems.pricing',
+        i18nKey: 'pricing',
+      },
+      {
+        title: 'planning.starterTemplates.product_launch_checklist.subItems.sales_kickoff',
+        i18nKey: 'sales_kickoff',
+      },
     ],
-    body: [
-      '## Launch overview',
-      '{{summary}}',
-      '',
-      '## Target date',
-      '{{date}}',
-      '',
-      '## DRI',
-      '{{owner}}',
-      '',
-      '## Workstreams',
-      'See sub-items below. Each owner adds status notes here.',
-    ].join('\n'),
+    body: 'planning.starterTemplates.product_launch_checklist.body',
   },
   {
     id: 'customer-interview',
-    name: 'Customer interview',
-    description:
-      'Discovery call template with goals, script prompts, and a place for notes.',
+    i18nKey: 'customer_interview',
+    name: 'planning.starterTemplates.customer_interview.name',
+    description: 'planning.starterTemplates.customer_interview.description',
     category: 'product',
     type: 'task',
     icon: '💬',
     labels: ['discovery', 'research'],
     estimatePoints: 1,
-    body: [
-      '## Customer',
-      '{{customer}}',
-      '',
-      '## Interview goals',
-      '- ',
-      '',
-      '## Script',
-      '1. Tell me about your current workflow.',
-      '2. Where does it break down?',
-      '3. What would "great" look like?',
-      '',
-      '## Notes',
-      '{{notes}}',
-      '',
-      '## Follow-ups',
-      '- [ ] ',
-    ].join('\n'),
+    body: 'planning.starterTemplates.customer_interview.body',
   },
   {
     id: 'refactor-proposal',
-    name: 'Refactor proposal',
-    description:
-      'Pitch a structural change with motivation, alternatives, and a migration plan.',
+    i18nKey: 'refactor_proposal',
+    name: 'planning.starterTemplates.refactor_proposal.name',
+    description: 'planning.starterTemplates.refactor_proposal.description',
     category: 'engineering',
     type: 'story',
     icon: '🧹',
     labels: ['refactor', 'proposal'],
     estimatePoints: 8,
-    body: [
-      '## Motivation',
-      '{{motivation}}',
-      '',
-      '## Current state',
-      '{{current}}',
-      '',
-      '## Proposed state',
-      '{{proposed}}',
-      '',
-      '## Alternatives considered',
-      '- ',
-      '',
-      '## Migration plan',
-      '1. ',
-      '2. ',
-      '3. ',
-      '',
-      '## Rollback plan',
-      '- ',
-    ].join('\n'),
+    body: 'planning.starterTemplates.refactor_proposal.body',
   },
 ];
 

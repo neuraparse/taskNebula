@@ -88,7 +88,7 @@ export function PriorityPicker({ value, onChange, disabled = false }: PriorityPi
           <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-40" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
+      <PopoverContent className="w-[200px] max-w-[calc(100vw-2rem)] p-0">
         <Command>
           <CommandList>
             <CommandEmpty>{t('no_priority_found')}</CommandEmpty>

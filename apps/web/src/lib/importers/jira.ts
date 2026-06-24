@@ -5,8 +5,8 @@
  * user's email, and an API token created at
  *   https://id.atlassian.com/manage-profile/security/api-tokens
  *
- * Calls `GET /rest/api/3/search` with HTTP Basic auth (email + api-token),
- * which is the supported way to read Jira Cloud REST as a user.
+ * Calls `POST /rest/api/3/search/jql` with HTTP Basic auth (email + api-token),
+ * which is the current enhanced-search API for Jira Cloud issue reads.
  *
  * Why a stub: a full Jira migration also needs sprints, attachments, link
  * graph, custom fields, and JQL pagination. We bring back the bare issue
@@ -15,7 +15,7 @@
  * preferred path when an org has the connector set up — this stub is for
  * one-shot personal imports via API token.
  *
- *   https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-get
+ *   https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-jql-post
  */
 
 import { fetchWithBackoff } from './fetch-with-backoff';
@@ -58,6 +58,12 @@ type JiraIssueRaw = {
   };
 };
 
+type JiraSearchResponse = {
+  issues?: JiraIssueRaw[];
+  isLast?: boolean;
+  nextPageToken?: string | null;
+};
+
 /**
  * Jira REST returns description as Atlassian Document Format (ADF). For
  * import purposes we collapse to a best-effort plain text — full ADF →
@@ -90,29 +96,57 @@ export const jiraImporter: Importer<JiraInput> = {
     }
 
     const base = input.site.replace(/^https?:\/\//, '').replace(/\/$/, '');
-    const url = new URL(`https://${base}/rest/api/3/search`);
-    url.searchParams.set('jql', input.jql ?? 'updated >= -90d ORDER BY updated DESC');
-    url.searchParams.set('maxResults', String(input.maxResults ?? 50));
-    url.searchParams.set(
-      'fields',
-      'summary,description,issuetype,status,priority,labels,assignee,parent,created'
-    );
+    const url = new URL(`https://${base}/rest/api/3/search/jql`);
+    const pageSize = Math.max(1, Math.min(input.maxResults ?? 50, 100));
+    const fields = [
+      'summary',
+      'description',
+      'issuetype',
+      'status',
+      'priority',
+      'labels',
+      'assignee',
+      'parent',
+      'created',
+    ];
 
     const auth = Buffer.from(`${input.email}:${input.apiToken}`).toString('base64');
-    const response = await fetchWithBackoff(url, {
-      headers: {
-        Authorization: `Basic ${auth}`,
-        Accept: 'application/json',
-      },
-    });
 
-    if (!response.ok) {
-      const text = await response.text().catch(() => '');
-      throw new Error(`Jira API error (${response.status}): ${text}`);
+    const issues: JiraIssueRaw[] = [];
+    let nextPageToken: string | undefined;
+    let pages = 0;
+    do {
+      const response = await fetchWithBackoff(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${auth}`,
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fields,
+          jql: input.jql ?? 'updated >= -90d ORDER BY updated DESC',
+          maxResults: pageSize,
+          nextPageToken,
+        }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => '');
+        throw new Error(`Jira API error (${response.status}): ${text}`);
+      }
+
+      const payload = (await response.json()) as JiraSearchResponse;
+      issues.push(...(payload.issues ?? []));
+      nextPageToken = payload.nextPageToken ?? undefined;
+      pages += 1;
+      if (payload.isLast !== false || !nextPageToken) break;
+      // Defensive cap: pageSize 100 × 200 pages = 20k issues.
+    } while (pages < 200);
+
+    if (pages >= 200 && nextPageToken) {
+      throw new Error('Jira import exceeded the 20,000 issue safety limit.');
     }
-
-    const payload = (await response.json()) as { issues?: JiraIssueRaw[] };
-    const issues = payload.issues ?? [];
 
     return issues.map(
       (j): NormalizedRecord => ({

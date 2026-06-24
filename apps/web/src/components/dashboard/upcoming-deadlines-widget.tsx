@@ -62,8 +62,8 @@ export function UpcomingDeadlinesWidget() {
   const now = Date.now();
 
   return (
-    <div className="surface-card p-4">
-      <div className="mb-4 flex items-center justify-between">
+    <div className="surface-card min-w-0 p-4">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <span className="text-foreground text-sm font-semibold tracking-tight">
           {t('deadlines.heading')}
         </span>
@@ -102,15 +102,20 @@ export function UpcomingDeadlinesWidget() {
               <Link
                 key={issue.id}
                 href={`/issues/${issue.id}`}
-                className="row-interactive ease-snap flex min-h-[40px] items-center gap-3 rounded-md px-2 py-2 text-left transition-all duration-150"
+                className="row-interactive ease-snap flex min-h-[40px] min-w-0 items-center gap-2 rounded-md px-2 py-2 text-left transition-all duration-150 sm:gap-3"
               >
-                <span className={cn('w-14 shrink-0 text-[11px] font-medium tabular-nums', dueCls)}>
+                <span
+                  className={cn(
+                    'w-12 shrink-0 text-[11px] font-medium tabular-nums sm:w-14',
+                    dueCls
+                  )}
+                >
                   {shortDate(due, formatter)}
                 </span>
-                <span className="text-muted-foreground w-16 shrink-0 truncate font-mono text-xs">
+                <span className="text-muted-foreground w-14 shrink-0 truncate font-mono text-xs sm:w-16">
                   {issue.key}
                 </span>
-                <p className="text-foreground flex-1 truncate text-sm">{issue.title}</p>
+                <p className="text-foreground min-w-0 flex-1 truncate text-sm">{issue.title}</p>
                 <Avatar className="h-6 w-6 shrink-0">
                   {issue.assignee?.image ? (
                     <AvatarImage

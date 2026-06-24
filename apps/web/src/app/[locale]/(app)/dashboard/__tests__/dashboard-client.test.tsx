@@ -120,7 +120,8 @@ describe('DashboardClient', () => {
 
     expect(await screen.findByText(/Welcome back, Ada/i)).toBeInTheDocument();
     expect(await screen.findByText('Ship dashboard refresh')).toBeInTheDocument();
-    expect(document.querySelector('.dashboard-carbon')).toBeInTheDocument();
+    expect(document.querySelector('.dashboard-carbon')).toHaveClass('min-w-0', 'overflow-hidden');
+    expect(screen.getByText('Ship dashboard refresh').closest('button')).toHaveClass('min-w-0');
     expect(screen.getByRole('button', { name: /my issues/i })).toHaveClass('rounded-none');
   });
 

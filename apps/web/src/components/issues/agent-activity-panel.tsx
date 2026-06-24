@@ -137,7 +137,7 @@ export function AgentActivityPanel({
 
   return (
     <section className="surface-card space-y-4 rounded-lg p-4 shadow-none">
-      <header className="flex items-start justify-between gap-3">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 gap-3">
           <span className="icon-tile icon-tile-accent-blue shrink-0">
             <Bot className="h-3.5 w-3.5" />
@@ -177,7 +177,7 @@ export function AgentActivityPanel({
         ) : null}
       </header>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         {[
           { key: 'issueContext', icon: Workflow },
           { key: 'descriptionContext', icon: FileText },
@@ -200,26 +200,26 @@ export function AgentActivityPanel({
 
       {latestSession ? (
         <div className="bg-muted/30 grid gap-2 rounded-md border border-dashed p-3 text-xs">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
             <span className="text-muted-foreground">{t('agent.sessionStatus')}</span>
             <span className="font-medium">{t(`agent.providers.${latestSession.provider}`)}</span>
           </div>
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
             <span className="text-muted-foreground">{t('agent.runner')}</span>
-            <span className="max-w-[60%] truncate font-mono text-[11px]">
+            <span className="max-w-full truncate font-mono text-[11px] sm:max-w-[60%] sm:text-right">
               {latestLocalRun?.command
                 ? t('agent.localRunner', { command: latestLocalRun.command })
                 : t('agent.webhookRunner')}
             </span>
           </div>
           {latestLocalRun?.status ? (
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
               <span className="text-muted-foreground">{t('agent.runnerStatus')}</span>
               <span className="font-medium">{formatRunnerStatus(latestLocalRun.status)}</span>
             </div>
           ) : null}
           {latestLocalRun?.exitCode !== null && latestLocalRun?.exitCode !== undefined ? (
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
               <span className="text-muted-foreground">{t('agent.exitCode')}</span>
               <span className="font-mono text-[11px]">{latestLocalRun.exitCode}</span>
             </div>
@@ -289,7 +289,7 @@ export function AgentActivityPanel({
               return (
                 <li
                   key={session.id}
-                  className="bg-background/70 border-border/50 flex items-start justify-between gap-2 rounded-md border px-2 py-2"
+                  className="bg-background/70 border-border/50 flex flex-col gap-2 rounded-md border px-2 py-2 sm:flex-row sm:items-start sm:justify-between"
                 >
                   <div className="min-w-0 space-y-0.5">
                     <div className="flex items-center gap-1.5">

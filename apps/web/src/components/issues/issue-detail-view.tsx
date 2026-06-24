@@ -119,9 +119,9 @@ export function IssueDetailView({
 
   if (isLoading) {
     return (
-      <div className="bg-background flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="bg-background flex h-full min-h-0 flex-col overflow-y-auto lg:overflow-hidden">
         {/* Header skeleton */}
-        <div className="border-border bg-background shrink-0 border-b px-6 py-4">
+        <div className="border-border bg-background shrink-0 border-b px-4 py-3 sm:px-6 sm:py-4">
           <div className="space-y-2">
             <div className="shimmer h-3 w-24 rounded-sm" />
             <div className="shimmer h-6 w-2/3 rounded-md" />
@@ -133,11 +133,11 @@ export function IssueDetailView({
           </div>
         </div>
 
-        <div className="flex-1 overflow-hidden">
-          <div className="grid h-full grid-cols-1 lg:grid-cols-[1fr_320px]">
+        <div className="flex-none overflow-visible lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+          <div className="grid min-h-full grid-cols-1 lg:h-full lg:grid-cols-[minmax(0,1fr)_320px]">
             {/* Main content skeleton */}
-            <div className="custom-scrollbar overflow-y-auto">
-              <div className="space-y-6 px-5 py-6 lg:px-8">
+            <div className="custom-scrollbar min-w-0 overflow-visible lg:overflow-y-auto">
+              <div className="space-y-6 px-4 py-5 sm:px-5 sm:py-6 lg:px-8">
                 <div className="space-y-3">
                   <div className="shimmer h-4 w-full rounded-sm" />
                   <div className="shimmer h-4 w-11/12 rounded-sm" />
@@ -207,13 +207,13 @@ export function IssueDetailView({
   const extras = issue as IssueDetailExtras;
 
   return (
-    <div className="bg-background animate-fade-up flex h-full min-h-0 flex-col overflow-hidden">
+    <div className="bg-background animate-fade-up flex h-full min-h-0 flex-col overflow-y-auto lg:overflow-hidden">
       {/* FEAT-31: morph target — pairs with `issue-${id}` on the source card
           (kanban / dashboard list) so navigation feels continuous. */}
       <ViewTransition name={`issue-${issue.id}`}>
         <div
           className={cn(
-            'border-border bg-background shrink-0 border-b px-6 py-4',
+            'border-border bg-background shrink-0 border-b px-4 py-3 sm:px-6 sm:py-4',
             // In modal mode the Dialog's absolute close (X) sits at top-right;
             // pad the header so the title row / action buttons never slip
             // underneath it. Full-page view (no onClose) keeps the normal inset.
@@ -235,17 +235,17 @@ export function IssueDetailView({
         </div>
       </ViewTransition>
 
-      <div className="flex-1 overflow-hidden">
-        <div className="grid h-full grid-cols-1 lg:grid-cols-[1fr_320px]">
-          <div className="custom-scrollbar overflow-y-auto">
-            <div className="space-y-8 px-5 py-6 lg:px-8">
+      <div className="flex-none overflow-visible lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+        <div className="grid min-h-full grid-cols-1 lg:h-full lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="custom-scrollbar min-w-0 overflow-visible lg:overflow-y-auto">
+            <div className="space-y-8 px-4 py-5 sm:px-5 sm:py-6 lg:px-8">
               <IssueContent issue={issue} />
               <IssueActivity issueId={issue.id} />
             </div>
           </div>
 
-          <div className="border-border custom-scrollbar overflow-y-auto border-l">
-            <div className="px-5 py-5">
+          <div className="border-border custom-scrollbar min-w-0 border-t lg:overflow-y-auto lg:border-l lg:border-t-0">
+            <div className="px-4 py-4 sm:px-5 sm:py-5">
               {canRunAgents && (
                 <CollapsibleSection
                   title={t('sections.triage')}

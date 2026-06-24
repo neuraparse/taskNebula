@@ -85,7 +85,7 @@ export function AiSidecar() {
       aria-label={t('sidecar.ariaLabel')}
       role="complementary"
       className={cn(
-        'bg-background border-border fixed bottom-0 right-0 top-0 z-40 flex w-[380px] flex-col border-l shadow-2xl',
+        'bg-background border-border fixed bottom-0 right-0 top-0 z-40 flex w-[380px] max-w-full flex-col border-l shadow-2xl',
         'ease-snap transition-transform duration-200',
         open ? 'translate-x-0' : 'pointer-events-none translate-x-full'
       )}

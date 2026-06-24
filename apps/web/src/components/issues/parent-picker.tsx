@@ -69,7 +69,7 @@ export function ParentPicker({
           <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-40" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[320px] p-0">
+      <PopoverContent className="w-[320px] max-w-[calc(100vw-2rem)] p-0">
         <Command>
           <CommandInput placeholder={t('search')} />
           <CommandList>

@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.7.11] - 2026-06-24
+
+### Added
+
+- **Guided first-run setup choices.** The initial setup flow now keeps account
+  creation and workspace start mode in one responsive onboarding surface, with
+  blank-start and importer-backed paths plus project key validation.
+- **Importer, template, and agent policy regression coverage.** Import wizard
+  behavior, import run authorization, template APIs, importer API helpers, and
+  local agent executor selection now have focused tests around the new flows.
+
+### Changed
+
+- **Mobile dashboard and issue detail layouts.** Dashboard widgets, issue rows,
+  issue detail panels, sidebars, activity sections, and AI sidecars now use
+  tighter responsive overflow handling so small screens scroll vertically
+  instead of clipping or widening the page.
+- **Template and import surfaces are more compact and predictable.** Template
+  cards/grid behavior, import wizard copy, and setup completion routing were
+  tightened around the existing design system and translated catalogs.
+
+### Fixed
+
+- **Import jobs no longer persist runtime secrets in job mappings.** Import run
+  creation sanitizes saved config, keeps credential-like inputs in memory for
+  the immediate runner call, and enforces project-level issue creation
+  permissions before starting a job.
+- **Setup, sign-in, and agent webhook edge cases handle failures more
+  defensively.** The setup API, OAuth provider buttons, sign-in form, and agent
+  session webhook route now cover additional validation/error paths.
+
 ## [0.7.10] - 2026-06-23
 
 ### Added
@@ -642,7 +673,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Internal alpha release. [See git log] for details.
 
-[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.10...HEAD
+[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.11...HEAD
+[0.7.11]: https://github.com/neuraparse/tasknebula/compare/v0.7.10...v0.7.11
 [0.7.10]: https://github.com/neuraparse/tasknebula/compare/v0.7.9...v0.7.10
 [0.7.9]: https://github.com/neuraparse/tasknebula/compare/v0.7.8...v0.7.9
 [0.7.8]: https://github.com/neuraparse/tasknebula/compare/v0.7.7...v0.7.8

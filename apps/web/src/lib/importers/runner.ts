@@ -11,7 +11,8 @@
  *
  * When a real queue lands, swap the call site in
  * `app/api/import/[source]/run/route.ts` to enqueue a job that calls
- * `executeImportJob(jobId)` — the function signature is stable.
+ * `executeImportJob(jobId, runtimeSourceInput)` — the function signature is
+ * stable enough for an enqueue adapter once secret handoff is formalized.
  *
  * Concurrency: not safe for distributed deployments today (no row lock).
  * That's tracked under the same follow-up as the queue integration.
@@ -21,19 +22,17 @@ import {
   db,
   importJobs,
   issues,
+  workflows,
   workflowStatuses,
   users,
   projects,
   eq,
   and,
+  asc,
 } from '@tasknebula/db';
 import type { ImportJobError } from '@tasknebula/db';
 import { getImporter } from './index';
-import type {
-  ImportMapping,
-  NormalizedRecord,
-  TaskNebulaIssue,
-} from './types';
+import type { ImportMapping, NormalizedRecord, TaskNebulaIssue } from './types';
 
 type StoredMapping = ImportMapping & {
   /** Project to import into. Required for the runner. */
@@ -60,16 +59,40 @@ async function insertIssueRow(args: {
 }): Promise<void> {
   const { workspaceId, projectId, reporterId, issue } = args;
 
-  // Resolve a workflow status: prefer one whose name matches the source
-  // status (case-insensitive); fall back to the project's first status.
+  const [project] = await db
+    .select({
+      key: projects.key,
+      defaultWorkflowId: projects.defaultWorkflowId,
+    })
+    .from(projects)
+    .where(and(eq(projects.id, projectId), eq(projects.organizationId, workspaceId)))
+    .limit(1);
+  if (!project) {
+    throw new Error('Target project was not found in this workspace.');
+  }
+
+  let workflowId: string | null = project.defaultWorkflowId ?? null;
+  if (!workflowId) {
+    const [defaultWorkflow] = await db
+      .select({ id: workflows.id })
+      .from(workflows)
+      .where(and(eq(workflows.organizationId, workspaceId), eq(workflows.isDefault, true)))
+      .limit(1);
+    workflowId = defaultWorkflow?.id ?? null;
+  }
+  if (!workflowId) {
+    throw new Error('No workflow found for this workspace.');
+  }
+
+  // Resolve a workflow status inside the target project's workflow only.
   const projectStatuses = await db
     .select({ id: workflowStatuses.id, name: workflowStatuses.name })
-    .from(workflowStatuses);
+    .from(workflowStatuses)
+    .where(eq(workflowStatuses.workflowId, workflowId))
+    .orderBy(asc(workflowStatuses.position));
 
   const statusMatch = issue.status
-    ? projectStatuses.find(
-        (s) => s.name.toLowerCase() === String(issue.status).toLowerCase()
-      )
+    ? projectStatuses.find((s) => s.name.toLowerCase() === String(issue.status).toLowerCase())
     : undefined;
   const statusId = statusMatch?.id ?? projectStatuses[0]?.id;
   if (!statusId) {
@@ -83,14 +106,6 @@ async function insertIssueRow(args: {
     .where(eq(issues.projectId, projectId));
   const nextNumber =
     existing.reduce((m: number, r: { number: number }) => Math.max(m, r.number), 0) + 1;
-
-  // Project key prefix from the project row.
-  const [project] = await db
-    .select({ key: projects.key })
-    .from(projects)
-    .where(eq(projects.id, projectId))
-    .limit(1);
-  const keyPrefix = project?.key ?? 'TN';
 
   // Best-effort assignee lookup via email.
   let assigneeId: string | null = null;
@@ -106,7 +121,7 @@ async function insertIssueRow(args: {
   await db.insert(issues).values({
     organizationId: workspaceId,
     projectId,
-    key: `${keyPrefix}-${nextNumber}`,
+    key: `${project.key}-${nextNumber}`,
     number: nextNumber,
     type: issue.type,
     title: issue.title.slice(0, 500),
@@ -125,12 +140,8 @@ async function insertIssueRow(args: {
   });
 }
 
-export async function executeImportJob(jobId: string): Promise<void> {
-  const [job] = await db
-    .select()
-    .from(importJobs)
-    .where(eq(importJobs.id, jobId))
-    .limit(1);
+export async function executeImportJob(jobId: string, runtimeSourceInput?: unknown): Promise<void> {
+  const [job] = await db.select().from(importJobs).where(eq(importJobs.id, jobId)).limit(1);
   if (!job) {
     console.warn('[import] job not found, skipping', jobId);
     return;
@@ -149,10 +160,7 @@ export async function executeImportJob(jobId: string): Promise<void> {
     return;
   }
 
-  await db
-    .update(importJobs)
-    .set({ status: 'running' })
-    .where(eq(importJobs.id, jobId));
+  await db.update(importJobs).set({ status: 'running' }).where(eq(importJobs.id, jobId));
 
   const mapping = (job.mapping ?? {}) as StoredMapping;
   const errors: ImportJobError[] = [];
@@ -161,6 +169,8 @@ export async function executeImportJob(jobId: string): Promise<void> {
   try {
     if (mapping.preview && mapping.preview.length > 0) {
       records = mapping.preview;
+    } else if (runtimeSourceInput !== undefined) {
+      records = await adapter.parseSource(runtimeSourceInput);
     } else if (job.source === 'csv' && typeof mapping.csvText === 'string') {
       records = await adapter.parseSource({
         text: mapping.csvText,
@@ -175,19 +185,14 @@ export async function executeImportJob(jobId: string): Promise<void> {
       .update(importJobs)
       .set({
         status: 'failed',
-        errors: [
-          { message: err instanceof Error ? err.message : String(err) },
-        ],
+        errors: [{ message: err instanceof Error ? err.message : String(err) }],
         finishedAt: new Date(),
       })
       .where(eq(importJobs.id, jobId));
     return;
   }
 
-  await db
-    .update(importJobs)
-    .set({ total: records.length })
-    .where(eq(importJobs.id, jobId));
+  await db.update(importJobs).set({ total: records.length }).where(eq(importJobs.id, jobId));
 
   if (!mapping.projectId) {
     await db
@@ -237,10 +242,7 @@ export async function executeImportJob(jobId: string): Promise<void> {
     processed++;
     // Update progress every 10 rows to keep DB chatter low.
     if (processed % 10 === 0) {
-      await db
-        .update(importJobs)
-        .set({ processed, errors })
-        .where(eq(importJobs.id, jobId));
+      await db.update(importJobs).set({ processed, errors }).where(eq(importJobs.id, jobId));
     }
   }
 
@@ -254,6 +256,3 @@ export async function executeImportJob(jobId: string): Promise<void> {
     })
     .where(eq(importJobs.id, jobId));
 }
-
-// Silence unused-import warning — `and` is exported for future filter use.
-void and;

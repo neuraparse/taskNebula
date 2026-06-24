@@ -65,7 +65,8 @@ interface VerificationResult {
 }
 
 async function loadSessionFromHeaders(
-  request: NextRequest
+  request: NextRequest,
+  provider: AgentProviderKind
 ): Promise<typeof agentSessions.$inferSelect | null> {
   const sessionId = request.headers.get('x-tasknebula-session-id');
   if (!sessionId) return null;
@@ -74,7 +75,7 @@ async function loadSessionFromHeaders(
     .from(agentSessions)
     .where(eq(agentSessions.id, sessionId))
     .limit(1);
-  return row ?? null;
+  return row && row.provider === provider ? row : null;
 }
 
 async function loadSessionFromEvent(
@@ -94,10 +95,7 @@ async function loadSessionFromEvent(
       .select()
       .from(agentSessions)
       .where(
-        and(
-          eq(agentSessions.externalId, event.externalId),
-          eq(agentSessions.provider, provider)
-        )
+        and(eq(agentSessions.externalId, event.externalId), eq(agentSessions.provider, provider))
       )
       .limit(1);
     if (row) return row;
@@ -130,16 +128,10 @@ async function verifySignature(
       .select()
       .from(agentProviders)
       .where(
-        and(
-          eq(agentProviders.workspaceId, workspaceId),
-          eq(agentProviders.provider, provider)
-        )
+        and(eq(agentProviders.workspaceId, workspaceId), eq(agentProviders.provider, provider))
       )
       .limit(1);
-    if (
-      providerRow &&
-      verifyAgentSignature(rawBody, signatureHeader, providerRow.hmacSecret)
-    ) {
+    if (providerRow && verifyAgentSignature(rawBody, signatureHeader, providerRow.hmacSecret)) {
       return { ok: true, session };
     }
   }
@@ -165,12 +157,7 @@ async function maybeTransitionIssueOnComplete(
   const [workflow] = await db
     .select()
     .from(workflows)
-    .where(
-      and(
-        eq(workflows.organizationId, organizationId),
-        eq(workflows.isDefault, true)
-      )
-    )
+    .where(and(eq(workflows.organizationId, organizationId), eq(workflows.isDefault, true)))
     .limit(1);
   if (!workflow) return;
 
@@ -180,9 +167,7 @@ async function maybeTransitionIssueOnComplete(
     .where(eq(workflowStatuses.workflowId, workflow.id));
 
   // If the agent attached a PR, move to in_review; otherwise mark done.
-  const targetCategory: 'in_review' | 'done' = event.pullRequest?.url
-    ? 'in_review'
-    : 'done';
+  const targetCategory: 'in_review' | 'done' = event.pullRequest?.url ? 'in_review' : 'done';
 
   const candidates = statuses
     .filter((s) => s.category === targetCategory)
@@ -232,7 +217,7 @@ export async function POST(
 
   // Locate the session first so we can use its workspace for fallback HMAC.
   const session =
-    (await loadSessionFromHeaders(request)) ??
+    (await loadSessionFromHeaders(request, provider)) ??
     (await loadSessionFromEvent(event, provider));
 
   // We need an issue to derive workspace; if no session is known yet we treat
@@ -252,13 +237,7 @@ export async function POST(
     request.headers.get('x-agent-signature') ||
     request.headers.get('linear-signature');
 
-  const verdict = await verifySignature(
-    rawBody,
-    signatureHeader,
-    session,
-    workspaceId,
-    provider
-  );
+  const verdict = await verifySignature(rawBody, signatureHeader, session, workspaceId, provider);
   if (!verdict.ok || !session) {
     return NextResponse.json(
       { error: verdict.reason ?? 'Unable to locate session' },
@@ -308,8 +287,7 @@ export async function POST(
   try {
     const issue = await getIssueById(session.issueId);
     if (issue) {
-      const agentUserId =
-        (await findAgentUser(provider)) ?? issue.reporterId;
+      const agentUserId = (await findAgentUser(provider)) ?? issue.reporterId;
       // The createdBy/updatedBy columns are NOT NULL — fall back to the issue
       // reporter when no virtual agent user has been seeded yet.
       const comment = renderAgentComment(provider, newState, event);
@@ -321,11 +299,7 @@ export async function POST(
       } as typeof issueComments.$inferInsert);
 
       if (newState === 'complete') {
-        await maybeTransitionIssueOnComplete(
-          session.issueId,
-          issue.organizationId,
-          event
-        );
+        await maybeTransitionIssueOnComplete(session.issueId, issue.organizationId, event);
       }
     }
   } catch (err) {

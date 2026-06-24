@@ -30,22 +30,24 @@ export function normalizeOAuthProviderAvailability(value: unknown): OAuthProvide
 export function OAuthProviderButtons({
   providers,
   projectInviteToken,
+  callbackUrl,
   githubLabel,
   googleLabel,
 }: {
   providers: OAuthProviderAvailability;
   projectInviteToken: string | null;
+  callbackUrl?: string | null;
   githubLabel: string;
   googleLabel: string;
 }) {
-  const callbackUrl = getPostAuthUrl(projectInviteToken);
+  const postAuthUrl = getPostAuthUrl(projectInviteToken, callbackUrl ?? null);
 
   return (
     <div className="space-y-2">
       {providers.github ? (
         <Button
           variant="outline"
-          onClick={() => signIn('github', { callbackUrl })}
+          onClick={() => signIn('github', { callbackUrl: postAuthUrl })}
           type="button"
           className="auth-carbon-secondary w-full"
           size="lg"
@@ -57,7 +59,7 @@ export function OAuthProviderButtons({
       {providers.google ? (
         <Button
           variant="outline"
-          onClick={() => signIn('google', { callbackUrl })}
+          onClick={() => signIn('google', { callbackUrl: postAuthUrl })}
           type="button"
           className="auth-carbon-secondary w-full"
           size="lg"
@@ -93,8 +95,8 @@ function GoogleIcon({ className }: { className?: string }) {
   );
 }
 
-function getPostAuthUrl(projectInviteToken: string | null) {
+function getPostAuthUrl(projectInviteToken: string | null, callbackUrl: string | null) {
   return projectInviteToken
     ? `/join/project/${encodeURIComponent(projectInviteToken)}`
-    : '/dashboard';
+    : (callbackUrl ?? '/dashboard');
 }

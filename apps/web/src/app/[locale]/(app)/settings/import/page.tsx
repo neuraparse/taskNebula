@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { db, organizationMembers } from '@tasknebula/db';
-import { and, eq } from 'drizzle-orm';
+import { db, organizationMembers, projects } from '@tasknebula/db';
+import { and, asc, eq } from 'drizzle-orm';
 import { getTranslations } from 'next-intl/server';
 import { requirePermission } from '@/lib/auth/permissions';
 import { ImportWizard } from './import-wizard';
@@ -38,6 +38,16 @@ export default async function ImportSettingsPage() {
 
   await requirePermission(primaryOrg.organizationId, 'org:settings');
 
+  const targetProjects = await db
+    .select({
+      id: projects.id,
+      key: projects.key,
+      name: projects.name,
+    })
+    .from(projects)
+    .where(eq(projects.organizationId, primaryOrg.organizationId))
+    .orderBy(asc(projects.name));
+
   const t = await getTranslations('pagesSettings');
 
   return (
@@ -46,7 +56,7 @@ export default async function ImportSettingsPage() {
         <h1 className="text-2xl font-semibold tracking-tight">{t('import.title')}</h1>
         <p className="text-muted-foreground mt-1.5 text-sm">{t('import.subtitle')}</p>
       </header>
-      <ImportWizard workspaceId={primaryOrg.organizationId} />
+      <ImportWizard workspaceId={primaryOrg.organizationId} projects={targetProjects} />
     </div>
   );
 }

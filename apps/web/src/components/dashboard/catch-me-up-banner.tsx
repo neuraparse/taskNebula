@@ -88,8 +88,10 @@ export function CatchMeUpBanner() {
           <Sparkles className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h2 className="text-foreground text-sm font-semibold">{t('catchup.welcome_back')}</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-foreground min-w-0 text-sm font-semibold">
+              {t('catchup.welcome_back')}
+            </h2>
             <span className="chip rounded-sm px-2 py-0.5 text-[10px]">
               <Clock className="h-2.5 w-2.5" />
               {t('catchup.away', { gap: formatGap(lastSeenDate, t) })}
@@ -98,13 +100,13 @@ export function CatchMeUpBanner() {
           <p className="text-muted-foreground mt-1 text-xs">{t('catchup.prompt')}</p>
 
           {!expanded ? (
-            <div className="mt-3 flex items-center gap-2">
-              <Button size="sm" onClick={() => setExpanded(true)}>
+            <div className="mt-3 flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+              <Button size="sm" onClick={() => setExpanded(true)} className="w-full sm:w-auto">
                 <Sparkles className="mr-1.5 h-3.5 w-3.5" />
                 {t('catchup.catch_me_up')}
               </Button>
-              <Link href="/inbox">
-                <Button size="sm" variant="ghost">
+              <Link href="/inbox" className="w-full sm:w-auto">
+                <Button size="sm" variant="ghost" className="w-full sm:w-auto">
                   {t('catchup.open_inbox')}
                   <ArrowRight className="ml-1 h-3 w-3" />
                 </Button>

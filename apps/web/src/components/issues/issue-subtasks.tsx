@@ -118,7 +118,7 @@ export function IssueSubtasks({ issueId, projectId }: IssueSubtasksProps) {
           {subtasks.map((subtask) => (
             <li
               key={subtask.id}
-              className="row-interactive group flex items-center gap-2 rounded-md px-2 py-1.5"
+              className="row-interactive group flex min-w-0 items-center gap-2 rounded-md px-2 py-1.5"
             >
               <button
                 onClick={() => handleToggleComplete(subtask)}
@@ -136,7 +136,7 @@ export function IssueSubtasks({ issueId, projectId }: IssueSubtasksProps) {
               </button>
               <Link
                 href={`/issues/${subtask.id}`}
-                className={`hover:text-primary ease-snap flex flex-1 items-center gap-1.5 text-sm transition-colors duration-150 ${
+                className={`hover:text-primary ease-snap flex min-w-0 flex-1 items-center gap-1.5 text-sm transition-colors duration-150 ${
                   subtask.statusCategory === 'done' ? 'text-muted-foreground line-through' : ''
                 }`}
               >
@@ -155,7 +155,7 @@ export function IssueSubtasks({ issueId, projectId }: IssueSubtasksProps) {
       {/* Add subtask form */}
       {isAdding ? (
         <form onSubmit={handleCreateSubtask} className="space-y-1.5">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <Input
               value={newTitle}
               onChange={(e) => {
@@ -164,7 +164,7 @@ export function IssueSubtasks({ issueId, projectId }: IssueSubtasksProps) {
               }}
               placeholder={t('placeholder')}
               autoFocus
-              className="flex-1"
+              className="min-w-0 flex-1"
               aria-invalid={!!createError}
             />
             <Button type="submit" size="sm" disabled={createSubIssue.isPending || !newTitle.trim()}>

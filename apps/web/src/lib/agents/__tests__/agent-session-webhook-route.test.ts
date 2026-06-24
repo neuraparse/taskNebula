@@ -47,10 +47,8 @@ jest.mock('@tasknebula/db', () => {
             where(_c: unknown) {
               const rows = fake.rows[t.__name] ?? [];
               return {
-                limit: (_n: number) =>
-                  Promise.resolve(rows.slice(0, _n)),
-                then: (resolve: (rows: Row[]) => unknown) =>
-                  Promise.resolve(rows).then(resolve),
+                limit: (_n: number) => Promise.resolve(rows.slice(0, _n)),
+                then: (resolve: (rows: Row[]) => unknown) => Promise.resolve(rows).then(resolve),
               };
             },
           };
@@ -106,7 +104,10 @@ jest.mock('@tasknebula/db', () => {
 import { POST as receiveHandler } from '@/app/api/webhooks/agent-session/[provider]/route';
 import { signAgentPayload } from '../sessions';
 
-function reqWith(body: unknown, headers: Record<string, string> = {}): {
+function reqWith(
+  body: unknown,
+  headers: Record<string, string> = {}
+): {
   text: () => Promise<string>;
   json: () => Promise<unknown>;
   headers: Headers;
@@ -165,19 +166,21 @@ function seed(
 
 describe('POST /api/webhooks/agent-session/[provider]', () => {
   it('rejects unknown providers with 404', async () => {
-    const res = await receiveHandler(
-      reqWith({ state: 'active' }) as never,
-      { params: Promise.resolve({ provider: 'bogus' }) }
-    );
+    const res = await receiveHandler(reqWith({ state: 'active' }) as never, {
+      params: Promise.resolve({ provider: 'bogus' }),
+    });
     expect(res.status).toBe(404);
   });
 
   it('rejects missing signature with 401', async () => {
     seed();
     const res = await receiveHandler(
-      reqWith({ state: 'active', sessionId: 'sess_1' }, {
-        'x-tasknebula-session-id': 'sess_1',
-      }) as never,
+      reqWith(
+        { state: 'active', sessionId: 'sess_1' },
+        {
+          'x-tasknebula-session-id': 'sess_1',
+        }
+      ) as never,
       { params: Promise.resolve({ provider: 'cursor' }) }
     );
     expect(res.status).toBe(401);
@@ -283,5 +286,28 @@ describe('POST /api/webhooks/agent-session/[provider]', () => {
     );
 
     expect(res.status).toBe(200);
+  });
+
+  it('rejects a signed session event sent to a different provider endpoint', async () => {
+    seed({ sessionState: 'pending', signedSecret: 'top-secret' });
+    const body = {
+      state: 'active',
+      sessionId: 'sess_1',
+      message: 'Wrong endpoint',
+    };
+    const raw = JSON.stringify(body);
+    const sig = signAgentPayload(raw, 'top-secret');
+
+    const res = await receiveHandler(
+      reqWith(body, {
+        'x-tasknebula-session-id': 'sess_1',
+        'x-tasknebula-signature': `sha256=${sig}`,
+      }) as never,
+      { params: Promise.resolve({ provider: 'devin' }) }
+    );
+
+    expect(res.status).toBe(401);
+    expect(fake.updated.find((u) => u.table === 'agent_sessions')).toBeUndefined();
+    expect(fake.inserted.find((i) => i.table === 'issue_comments')).toBeUndefined();
   });
 });

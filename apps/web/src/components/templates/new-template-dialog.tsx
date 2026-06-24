@@ -27,17 +27,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { TEMPLATE_KINDS, useCreateTemplate, type TemplateKind } from './use-templates';
 
-const KIND_HINTS: Record<TemplateKind, string> = {
-  project:
-    'Payload shape: { "name"?: string, "key"?: string, "description"?: string, "settings"?: object }',
-  issue:
-    'Payload shape: { "title"?: string, "description"?: string, "type"?: "task"|"bug"|"story"|"epic", "priority"?: "critical"|"high"|"medium"|"low"|"none", "labels"?: string[], "estimate"?: number }',
-  doc: 'Payload shape: { "title"?: string, "contentJson"?: object, "icon"?: string }',
-};
-
 interface NewTemplateDialogProps {
   /** Optional trigger override (defaults to a "+ New template" primary button). */
   trigger?: React.ReactNode;
+}
+
+type PlanningTranslator = ReturnType<typeof useTranslations>;
+
+function translateRaw(t: PlanningTranslator, key: string) {
+  const raw = 'raw' in t && typeof t.raw === 'function' ? t.raw(key) : t(key);
+  return typeof raw === 'string' ? raw : String(raw ?? '');
 }
 
 export function NewTemplateDialog({ trigger }: NewTemplateDialogProps) {
@@ -226,7 +225,9 @@ export function NewTemplateDialog({ trigger }: NewTemplateDialogProps) {
                 className="font-mono text-xs"
                 aria-invalid={payloadError ? true : undefined}
               />
-              <p className="text-muted-foreground text-[11px]">{KIND_HINTS[kind]}</p>
+              <p className="text-muted-foreground text-[11px]">
+                {translateRaw(t, `payload_hint_${kind}`)}
+              </p>
               {payloadError ? <p className="text-destructive text-[11px]">{payloadError}</p> : null}
             </div>
           </div>

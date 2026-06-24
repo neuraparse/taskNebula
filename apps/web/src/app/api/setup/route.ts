@@ -4,13 +4,41 @@ import {
   users,
   organizations,
   organizationMembers,
+  projects,
+  projectMembers,
   workflows,
   workflowStatuses,
   workflowTransitions,
+  ROLE_DEFAULT_PERMISSIONS,
+  type ProjectRole,
 } from '@tasknebula/db';
 import { sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { createId } from '@paralleldrive/cuid2';
+
+const IMPORT_SOURCES = ['csv', 'jira', 'linear', 'plane', 'github'] as const;
+type ImportSource = (typeof IMPORT_SOURCES)[number];
+
+function isImportSource(value: unknown): value is ImportSource {
+  return typeof value === 'string' && IMPORT_SOURCES.includes(value as ImportSource);
+}
+
+function normalizeProjectKey(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const key = value
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 10);
+  if (!/^[A-Z][A-Z0-9]{1,9}$/.test(key)) return null;
+  return key;
+}
+
+function normalizeProjectName(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const name = value.trim();
+  return name.length >= 1 && name.length <= 120 ? name : null;
+}
 
 // GET /api/setup - Check if setup is needed
 export async function GET() {
@@ -39,6 +67,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { name, email, password, organizationName } = body;
+    const startMode = body.startMode === 'import' ? 'import' : 'blank';
+    const importSource = isImportSource(body.importSource) ? body.importSource : null;
+    const importProjectName = normalizeProjectName(body.importProjectName);
+    const importProjectKey = normalizeProjectKey(body.importProjectKey);
 
     // Validate input
     if (!name || !email || !password) {
@@ -55,10 +87,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (startMode === 'import' && (!importSource || !importProjectName || !importProjectKey)) {
+      return NextResponse.json(
+        { error: 'Import source, project name, and project key are required' },
+        { status: 400 }
+      );
+    }
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const newUser = await db.transaction(async (tx) => {
+    const setupResult = await db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtext('tasknebula.initial_setup'))`);
 
       const [result] = await tx.select({ count: sql<number>`count(*)` }).from(users);
@@ -181,17 +220,80 @@ export async function POST(request: NextRequest) {
         { id: createId(), workflowId, name: 'Reopen', fromStatusId: doneId, toStatusId: todoId },
       ]);
 
-      return createdUser;
+      let importProject: { id: string; key: string } | null = null;
+      if (startMode === 'import' && importSource && importProjectName && importProjectKey) {
+        const projectId = createId();
+        const [createdProject] = await tx
+          .insert(projects)
+          .values({
+            id: projectId,
+            organizationId: orgId,
+            key: importProjectKey,
+            name: importProjectName,
+            description: null,
+            leadId: userId,
+            defaultWorkflowId: workflowId,
+            visibility: 'internal',
+            status: 'active',
+            settings: {
+              setup: {
+                startMode,
+                importSource,
+              },
+            },
+            createdBy: userId,
+            updatedBy: userId,
+          })
+          .returning({ id: projects.id, key: projects.key });
+
+        if (!createdProject) {
+          throw new Error('Failed to create import target project');
+        }
+
+        const role: ProjectRole = 'product_owner';
+        const defaults = ROLE_DEFAULT_PERMISSIONS[role];
+        const permissionValues: Record<string, string> = {};
+        for (const [key, val] of Object.entries(defaults)) {
+          permissionValues[key] = val ? 'true' : 'false';
+        }
+
+        await tx.insert(projectMembers).values({
+          id: createId(),
+          projectId,
+          userId,
+          role,
+          ...permissionValues,
+          invitedBy: userId,
+        });
+
+        importProject = createdProject;
+      }
+
+      return { user: createdUser, importProject, importSource };
     });
+
+    const importCallback =
+      setupResult.importProject && setupResult.importSource
+        ? `/settings/import?source=${encodeURIComponent(setupResult.importSource)}&projectId=${encodeURIComponent(setupResult.importProject.id)}`
+        : '/dashboard';
 
     return NextResponse.json(
       {
         success: true,
         message: 'Setup completed! You can now sign in.',
+        nextPath: importCallback,
+        startMode,
+        import: setupResult.importProject
+          ? {
+              source: setupResult.importSource,
+              projectId: setupResult.importProject.id,
+              projectKey: setupResult.importProject.key,
+            }
+          : null,
         user: {
-          id: newUser.id,
-          name: newUser.name,
-          email: newUser.email,
+          id: setupResult.user.id,
+          name: setupResult.user.name,
+          email: setupResult.user.email,
         },
       },
       { status: 201 }

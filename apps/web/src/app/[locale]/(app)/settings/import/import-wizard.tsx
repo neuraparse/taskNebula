@@ -1,10 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 /**
  * Source picker → adapter form → preview / mapping → run import flow.
@@ -19,7 +27,7 @@ import { Label } from '@/components/ui/label';
  * channel TaskNebula already runs.
  */
 
-type SourceKey = 'csv' | 'linear' | 'jira' | 'github';
+type SourceKey = 'csv' | 'linear' | 'jira' | 'plane' | 'github';
 
 type PreviewRecord = {
   key: string;
@@ -39,10 +47,17 @@ type JobStatusResponse = {
   errors: Array<{ key?: string; message: string }>;
 };
 
+type TargetProject = {
+  id: string;
+  key: string;
+  name: string;
+};
+
 const SOURCES: Array<{ key: SourceKey; ready: boolean }> = [
   { key: 'csv', ready: true },
   { key: 'linear', ready: false },
   { key: 'jira', ready: false },
+  { key: 'plane', ready: true },
   { key: 'github', ready: false },
 ];
 
@@ -58,10 +73,31 @@ const MAPPABLE_FIELDS: string[] = [
   'key',
 ];
 
-export function ImportWizard({ workspaceId }: { workspaceId: string }) {
+function parseSource(value: string | null): SourceKey | null {
+  return SOURCES.some((source) => source.key === value) ? (value as SourceKey) : null;
+}
+
+function apiSourceFor(source: SourceKey): Exclude<SourceKey, 'plane'> {
+  return source === 'plane' ? 'csv' : source;
+}
+
+export function ImportWizard({
+  workspaceId,
+  projects = [],
+}: {
+  workspaceId: string;
+  projects?: TargetProject[];
+}) {
   const t = useTranslations('settingsClients');
-  const [source, setSource] = useState<SourceKey | null>(null);
-  const [projectId, setProjectId] = useState('');
+  const searchParams = useSearchParams();
+  const [source, setSource] = useState<SourceKey | null>(() =>
+    parseSource(searchParams?.get('source') ?? null)
+  );
+  const [projectId, setProjectId] = useState(() => {
+    const requestedProjectId = searchParams?.get('projectId') ?? '';
+    if (requestedProjectId) return requestedProjectId;
+    return projects.length === 1 ? (projects[0]?.id ?? '') : '';
+  });
   const [csvText, setCsvText] = useState('');
   const [columns, setColumns] = useState<Record<string, string>>({});
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -95,6 +131,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
     const base: Record<string, unknown> = { workspaceId };
     switch (source) {
       case 'csv':
+      case 'plane':
         return { ...base, csvText, columns };
       case 'linear':
         return { ...base, apiKey: linearKey, teamKey: linearTeam || undefined };
@@ -109,27 +146,30 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
 
   async function runPreview() {
     if (!source) return;
+    const apiSource = apiSourceFor(source);
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch(`/api/import/${source}/preview`, {
+      const res = await fetch(`/api/import/${apiSource}/preview`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(buildPreviewBody()),
       });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? t('import.previewFailed', { status: res.status }));
+        throw new Error(t('import.previewFailed', { status: res.status }));
       }
       const data = await res.json();
       setPreview(data.sample ?? []);
       setPreviewTotal(data.total ?? 0);
-      if (source === 'csv' && data.suggestedMapping) {
+      if ((source === 'csv' || source === 'plane') && data.suggestedMapping) {
         // Merge: only fill in fields the user hasn't already chosen.
         setColumns((current) => ({ ...data.suggestedMapping, ...current }));
       }
-    } catch {
-      setError(t('import.previewFailed', { status: 500 }));
+      if ((data.sample ?? []).length === 0) {
+        setError(t('import.noPreviewRows'));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('import.networkError'));
     } finally {
       setBusy(false);
     }
@@ -140,6 +180,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
       setError(t('import.projectIdRequired'));
       return;
     }
+    const apiSource = apiSourceFor(source);
     setBusy(true);
     setError(null);
     try {
@@ -150,21 +191,20 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
           columns,
           config: buildPreviewBody(),
         },
-        csvText: source === 'csv' ? csvText : undefined,
+        csvText: source === 'csv' || source === 'plane' ? csvText : undefined,
       };
-      const res = await fetch(`/api/import/${source}/run`, {
+      const res = await fetch(`/api/import/${apiSource}/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.error ?? t('import.importFailedStatus', { status: res.status }));
+        throw new Error(t('import.importFailedStatus', { status: res.status }));
       }
       const { jobId } = await res.json();
       pollJob(jobId);
-    } catch {
-      setError(t('import.importFailedStatus', { status: 500 }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('import.networkError'));
       setBusy(false);
     }
   }
@@ -229,17 +269,33 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
 
       {/* Source-specific form */}
       <div className="surface-card space-y-3 p-4">
-        <Label htmlFor="projectId">{t('import.targetProjectId')}</Label>
-        <Input
-          id="projectId"
-          value={projectId}
-          onChange={(e) => setProjectId(e.target.value)}
-          placeholder={t('import.projectIdPlaceholder')}
-        />
+        <div className="space-y-2">
+          <Label htmlFor="projectId">{t('import.targetProject')}</Label>
+          <Select value={projectId} onValueChange={setProjectId} disabled={projects.length === 0}>
+            <SelectTrigger id="projectId">
+              <SelectValue placeholder={t('import.selectProjectPlaceholder')} />
+            </SelectTrigger>
+            <SelectContent>
+              {projects.map((project) => (
+                <SelectItem key={project.id} value={project.id}>
+                  {project.key} · {project.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {projects.length === 0 ? (
+            <p className="text-muted-foreground text-xs">{t('import.noProjectsAvailable')}</p>
+          ) : null}
+        </div>
 
-        {source === 'csv' && (
+        {(source === 'csv' || source === 'plane') && (
           <div className="space-y-2">
-            <Label htmlFor="csvFile">{t('import.csvFile')}</Label>
+            <Label htmlFor="csvFile">
+              {source === 'plane' ? t('import.planeCsvFile') : t('import.csvFile')}
+            </Label>
+            {source === 'plane' ? (
+              <p className="text-muted-foreground text-xs">{t('import.planeCsvHint')}</p>
+            ) : null}
             <input
               id="csvFile"
               type="file"
@@ -320,7 +376,7 @@ export function ImportWizard({ workspaceId }: { workspaceId: string }) {
       </div>
 
       {/* Column mapping (CSV only) */}
-      {source === 'csv' && csvHeaders.length > 0 && (
+      {(source === 'csv' || source === 'plane') && csvHeaders.length > 0 && (
         <div className="surface-card space-y-2 p-4">
           <div className="text-sm font-medium">{t('import.columnMapping')}</div>
           <p className="text-muted-foreground text-xs">{t('import.columnMappingHint')}</p>

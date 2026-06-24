@@ -165,9 +165,9 @@ export function DashboardClient() {
 
   return (
     <>
-      <div className="dashboard-carbon bg-background flex h-full min-h-0 flex-col">
-        <div className="custom-scrollbar flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-[1680px] space-y-3 p-3 sm:p-4 lg:p-5">
+      <div className="dashboard-carbon bg-background flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
+        <div className="custom-scrollbar min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="mx-auto w-full min-w-0 max-w-[1680px] space-y-3 p-3 sm:p-4 lg:p-5">
             <CatchMeUpBanner />
 
             {/* Greeting */}
@@ -177,7 +177,7 @@ export function DashboardClient() {
                   <span className="kicker">{tDash('kicker')}</span>
                   <span className="live-pill">{tDash('live')}</span>
                 </div>
-                <h1 className="text-foreground text-balance text-[28px] font-[400] leading-tight tracking-normal">
+                <h1 className="text-foreground text-balance text-2xl font-[400] leading-tight tracking-normal sm:text-[28px]">
                   {tDash('welcome_back', { name: firstName })}
                 </h1>
                 <p className="text-muted-foreground max-w-2xl text-sm">
@@ -226,10 +226,10 @@ export function DashboardClient() {
             <div className="stagger grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
               {/* My Issues */}
               <div className="surface-card animate-fade-up border-t-primary overflow-hidden border-t-2 shadow-none">
-                <div className="border-border flex items-center justify-between border-b px-4 py-3">
-                  <div className="flex items-center gap-2">
+                <div className="border-border flex items-center justify-between gap-3 border-b px-4 py-3">
+                  <div className="flex min-w-0 items-center gap-2">
                     <Inbox className="text-muted-foreground h-4 w-4" />
-                    <span className="text-foreground text-sm font-medium">
+                    <span className="text-foreground truncate text-sm font-medium">
                       {tDash('my_issues_heading')}
                     </span>
                   </div>
@@ -362,13 +362,15 @@ function IssueRow({ issue, onClick }: { issue: Issue; onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="row-interactive ease-snap hover:border-border-strong flex min-h-[42px] w-full cursor-pointer items-center gap-3 rounded-none border border-transparent py-2.5 pl-2 pr-3 text-left transition-all duration-150"
+      className="row-interactive ease-snap hover:border-border-strong flex min-h-[42px] w-full min-w-0 cursor-pointer items-center gap-2 rounded-none border border-transparent py-2.5 pl-2 pr-3 text-left transition-all duration-150 sm:gap-3"
     >
       <span className={cn('priority-indicator h-6 shrink-0', priorityCls)} />
 
-      <span className="text-muted-foreground w-20 shrink-0 font-mono text-xs">{issue.key}</span>
+      <span className="text-muted-foreground w-16 shrink-0 truncate font-mono text-xs sm:w-20">
+        {issue.key}
+      </span>
 
-      <p className="text-foreground flex-1 truncate text-sm">{issue.title}</p>
+      <p className="text-foreground min-w-0 flex-1 truncate text-sm">{issue.title}</p>
 
       <span className="text-muted-foreground hidden shrink-0 items-center gap-1.5 text-xs sm:inline-flex">
         <span className={cn('status-dot', statusCls)} />

@@ -3128,7 +3128,81 @@
     "anonymous": "Névtelen",
     "error_save": "Nem sikerült menteni",
     "saving": "Mentés…",
-    "save_changes": "Módosítások mentése"
+    "save_changes": "Módosítások mentése",
+    "category_engineering": "Engineering",
+    "category_design": "Design",
+    "category_product": "Product",
+    "category_qa": "QA",
+    "category_ops": "Ops",
+    "category_general": "General",
+    "template_fallback_description": "{kind} template",
+    "payload_hint_project": "Payload shape: { \"name\"?: string, \"key\"?: string, \"description\"?: string, \"settings\"?: object }",
+    "payload_hint_issue": "Payload shape: { \"title\"?: string, \"description\"?: string, \"type\"?: \"task\"|\"bug\"|\"story\"|\"epic\", \"priority\"?: \"critical\"|\"high\"|\"medium\"|\"low\"|\"none\", \"labels\"?: string[], \"estimate\"?: number }",
+    "payload_hint_doc": "Payload shape: { \"title\"?: string, \"contentJson\"?: object, \"icon\"?: string }",
+    "starterTemplates": {
+      "bug_report": {
+        "name": "Bug report",
+        "description": "Capture a defect with reproduction steps, expected vs. actual behavior, and environment.",
+        "body": "## Summary\n{{summary}}\n\n## Steps to reproduce\n1. \n2. \n3. \n\n## Expected behavior\n{{expected}}\n\n## Actual behavior\n{{actual}}\n\n## Environment\n- App version: {{version}}\n- Browser / OS: {{environment}}\n\n## Additional context\n{{notes}}"
+      },
+      "feature_request": {
+        "name": "Feature request",
+        "description": "Frame a new capability as a user story with measurable acceptance criteria.",
+        "body": "## User story\nAs a **{{persona}}**, I want **{{capability}}**, so that **{{outcome}}**.\n\n## Acceptance criteria\n- [ ] \n- [ ] \n- [ ] \n\n## Out of scope\n- \n\n## Notes\n{{notes}}"
+      },
+      "tech_debt": {
+        "name": "Tech debt",
+        "description": "Track and justify a refactor or hardening task with risk and approach.",
+        "body": "## Context\n{{context}}\n\n## Risk if untouched\n{{risk}}\n\n## Proposed approach\n{{approach}}\n\n## Definition of done\n- [ ] Code change merged\n- [ ] Tests updated\n- [ ] No regression in metrics"
+      },
+      "spike": {
+        "name": "Spike",
+        "description": "Time-boxed investigation to reduce uncertainty before committing to delivery.",
+        "body": "## Question to answer\n{{question}}\n\n## Time-box\n{{timebox}}\n\n## Approach\n- \n\n## Deliverable\nA short write-up + recommendation posted to this ticket."
+      },
+      "design_review": {
+        "name": "Design review",
+        "description": "Schedule a critique of a flow, screen, or component with reviewers and goals.",
+        "body": "## Artifact\n{{figma_link}}\n\n## Reviewers\n- \n\n## Goals\n- \n\n## Open questions\n- "
+      },
+      "qa_test_plan": {
+        "name": "QA test plan",
+        "description": "Outline coverage for happy path, edge cases, and regression for a release.",
+        "subItems": {
+          "happy_path": "Happy path",
+          "edge_cases": "Edge cases",
+          "regression": "Regression"
+        },
+        "body": "## Scope\n{{scope}}\n\n## Environments\n- \n\n## Exit criteria\n- All sub-items pass\n- No P0/P1 defects open"
+      },
+      "incident_postmortem": {
+        "name": "Incident postmortem",
+        "description": "Blameless write-up covering timeline, impact, root cause, and follow-up actions.",
+        "body": "## Summary\n{{summary}}\n\n## Timeline\n- {{time}} - \n\n## Impact\n{{impact}}\n\n## Root cause\n{{root_cause}}\n\n## What went well\n- \n\n## What went poorly\n- \n\n## Action items\n- [ ] \n- [ ] "
+      },
+      "product_launch_checklist": {
+        "name": "Product launch checklist",
+        "description": "Coordinate cross-functional readiness across marketing, docs, support, pricing, and sales.",
+        "subItems": {
+          "marketing": "Marketing",
+          "docs": "Docs",
+          "support_enablement": "Support enablement",
+          "pricing": "Pricing",
+          "sales_kickoff": "Sales kickoff"
+        },
+        "body": "## Launch overview\n{{summary}}\n\n## Target date\n{{date}}\n\n## DRI\n{{owner}}\n\n## Workstreams\nSee sub-items below. Each owner adds status notes here."
+      },
+      "customer_interview": {
+        "name": "Customer interview",
+        "description": "Discovery call template with goals, script prompts, and a place for notes.",
+        "body": "## Customer\n{{customer}}\n\n## Interview goals\n- \n\n## Script\n1. Tell me about your current workflow.\n2. Where does it break down?\n3. What would \"great\" look like?\n\n## Notes\n{{notes}}\n\n## Follow-ups\n- [ ] "
+      },
+      "refactor_proposal": {
+        "name": "Refactor proposal",
+        "description": "Pitch a structural change with motivation, alternatives, and a migration plan.",
+        "body": "## Motivation\n{{motivation}}\n\n## Current state\n{{current}}\n\n## Proposed state\n{{proposed}}\n\n## Alternatives considered\n- \n\n## Migration plan\n1. \n2. \n3. \n\n## Rollback plan\n- "
+      }
+    }
   },
   "projectConfig": {
     "loading": "Betöltés…",
@@ -5720,6 +5794,67 @@
     },
     "intake": {
       "submitMetaTitle": "Submit · TaskNebula"
+    },
+    "stepStart": "Indul",
+    "setupImportRedirecting": "Akkor átirányítás a bejelentkezéshez{source}importálni…",
+    "setupProductName": "TaskNebula beállítása",
+    "setupProductSubtitle": "Első futtatású munkaterület rendszerindító",
+    "setupInstanceEmpty": "Üres példány",
+    "setupKicker": "Első futás",
+    "setupIntro": "Hozza létre az első adminisztrátort, válassza ki, hogyan kezdje el a munkaterületet, és tartsa tisztán a telepítési útvonalat, mielőtt bármilyen csapatadatot írna.",
+    "setupSecurityTitle": "Helyi vezérlés",
+    "setupSecurityBody": "A telepítés csak akkor nyílik meg, ha az adatbázisnak nincsenek felhasználók. Az első adminisztrátor létrehozása után ez az oldal bezárul, és a normál bejelentkezés veszi át az irányítást.",
+    "setupAdminKicker": "Adminisztrátor",
+    "setupAdminTitle": "Hozzon létre tulajdonosi fiókot",
+    "setupContinue": "Folytatás",
+    "setupStartKicker": "Kiindulópont",
+    "setupStartTitle": "Válassza ki, hogyan induljon el az TaskNebula",
+    "setupStartSubtitle": "Kezdje egy tiszta munkaterülettel, vagy hozzon létre egy importálási célt, és a bejelentkezés után folytassa az Jira, Linear, Plane, CSV vagy GitHub használatával.",
+    "setupBlankTitle": "Kezdje üresen",
+    "setupBlankDescription": "Csak a rendszergazda és a szervezet létrehozása. Adjon hozzá projekteket, csapatokat és problémákat az TaskNebula belsejéből.",
+    "setupImportTitle": "Meglévő munka importálása",
+    "setupImportDescription": "Hozzon létre egy célprojektet most, majd folytassa az importőrrel a megfelelő forrás kiválasztásával.",
+    "setupImportProjectName": "Célprojekt neve",
+    "setupImportProjectNamePlaceholder": "Importált lemaradás",
+    "setupImportProjectKey": "Projekt kulcs",
+    "setupImportProjectKeyPlaceholder": "MIG",
+    "setupImportCredentialTitle": "{source}a hitelesítő adatok a következő lépésnél maradnak",
+    "setupBlankNote": "Az üres indítás minimálisra csökkenti a példányszámot: egy rendszergazda, egy szervezet és az alapértelmezett munkafolyamat. A bejelentkezés után manuálisan is létrehozhat projekteket.",
+    "setupBack": "Vissza",
+    "setupCreateAndImport": "Hozzon létre és folytassa{source}",
+    "setupImportProjectRequired": "Adja meg az importálás célprojektjének nevét.",
+    "setupImportProjectKeyInvalid": "A projektkulcsnak betűvel kell kezdődnie, és 2–10 nagybetűt vagy számot kell tartalmaznia.",
+    "setupImportSource": {
+      "jira": {
+        "label": "Jira",
+        "description": "Használja a Atlassian webhelyet, e-mailt és API tokent az aktuális Jira Cloud probléma lekéréséhez.",
+        "nextStep": "A bejelentkezés után az importőr bekéri az Ön Atlassian webhelyét, fiókjának e-mail-címét és API-tokenjét, majd megtekinti a legutóbbi Jira-problémák előnézetét, mielőtt bármit is írna."
+      },
+      "linear": {
+        "label": "Linear",
+        "description": "Használjon Linear személyes API-kulcsot és opcionális csapatkulcsot a problémák importálásához.",
+        "nextStep": "A bejelentkezés után adjon meg egy Linear személyes API-kulcsot, és opcionálisan terjedjen ki az importálásra csapatkulccsal. Az TaskNebula először megtekinti a problémákat és az alapvető metaadatokat."
+      },
+      "plane": {
+        "label": "Plane",
+        "description": "Kezdje az Plane CSV exportból, és képezze le az oszlopokat TaskNebula mezőkbe.",
+        "nextStep": "Az Plane kezelése ma az CSV importőrön keresztül történik. Exportálja a problémákat az Plane-ből, töltse fel az CSV-t, majd az importálás futtatása előtt térképezze fel a mezőket."
+      },
+      "csv": {
+        "label": "CSV",
+        "description": "Töltse fel az CSV-t bármelyik nyomkövetőből, és az importálás előtt térképezze fel az oszlopait.",
+        "nextStep": "A bejelentkezés után töltse fel az CSV-t, és erősítse meg a javasolt oszlopleképezést. Ez a legbiztonságosabb út a natív adapter nélküli szerszámokhoz."
+      },
+      "github": {
+        "label": "GitHub Issues",
+        "description": "Húzza ki a problémákat egy GitHub hozzáférési tokennel rendelkező lerakatból.",
+        "nextStep": "A bejelentkezés után adjon meg egy GitHub hozzáférési tokent, tulajdonost és tárhelyet. A lehívási kérelmek kimaradnak, és először a problémák előnézete jelenik meg."
+      }
+    },
+    "setupSourceEvidence": {
+      "jira": "Az Jira Cloud támogatja az CSV migrációt és az API-token alapú problémaolvasást.",
+      "linear": "Az Linear dedikált importőröket és CSV/CLI migrációs útvonalakat kínál.",
+      "plane": "Plane dokumentumok Jira és Linear import; Az TaskNebula jelenleg Plane-től CSV-ig indul."
     }
   },
   "settingsClients": {
@@ -5753,7 +5888,7 @@
       "importing": "Importálás…",
       "recordsFailed": "{count, plural, one {# rekord sikertelen:} other {# rekord sikertelen:}}",
       "previewFailed": "Az előnézet sikertelen ({status})",
-      "projectIdRequired": "Cél projektazonosító szükséges.",
+      "projectIdRequired": "Válassza ki a célprojektet az importálás futtatása előtt.",
       "importFailedStatus": "Az importálás sikertelen ({status})",
       "jobStatusFailed": "A feladat állapotának lekérése sikertelen",
       "source": {
@@ -5771,7 +5906,11 @@
         },
         "github": {
           "label": "GitHub Issues",
-          "description": "Importálás egy tárolóból a csatlakoztatott GitHub OAuth-token használatával."
+          "description": "Importálás lerakatból GitHub hozzáférési token használatával."
+        },
+        "plane": {
+          "label": "Plane",
+          "description": "Töltsön fel egy Plane CSV exportálást és térképezze fel az oszlopokat az CSV importőrön keresztül."
         }
       },
       "field": {
@@ -5794,7 +5933,14 @@
       },
       "projectIdPlaceholder": "prj_xxx",
       "linearTeamPlaceholder": "ENG",
-      "jiraSitePlaceholder": "acme.atlassian.net"
+      "jiraSitePlaceholder": "acme.atlassian.net",
+      "planeCsvFile": "Plane CSV export",
+      "planeCsvHint": "Exportálja a problémákat az Plane-ből CSV-ként, majd használja az alábbi CSV-leképezési lépést.",
+      "targetProject": "Célprojekt",
+      "selectProjectPlaceholder": "Válasszon ki egy projektet",
+      "noProjectsAvailable": "Importálás futtatása előtt hozzon létre egy projektet.",
+      "noPreviewRows": "Ebben a forrásban nem található importálható rekord.",
+      "networkError": "Hálózati hiba. Kérjük, próbálja újra."
     },
     "members": {
       "kicker": "Hozzáférés",

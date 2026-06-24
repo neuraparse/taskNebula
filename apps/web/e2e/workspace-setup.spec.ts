@@ -34,6 +34,10 @@ test.describe('first-run workspace setup', () => {
     await page.getByLabel(/confirm password/i).fill('Pa55word!2026');
     await page.getByLabel(/organization name/i).fill('Acme Inc');
 
+    await page.getByRole('button', { name: /continue/i }).click();
+    await expect(
+      page.getByRole('heading', { name: /choose how tasknebula should start/i })
+    ).toBeVisible();
     await page.getByRole('button', { name: /create admin account/i }).click();
 
     await expect(page.getByRole('heading', { name: /setup complete/i })).toBeVisible({

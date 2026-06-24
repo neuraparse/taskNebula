@@ -35,6 +35,8 @@ export type GithubInput = {
   repo: string;
   /** Max issues per page. GitHub caps at 100. */
   perPage?: number;
+  /** Safety cap for very large repositories. */
+  maxPages?: number;
 };
 
 type GithubIssueRaw = {
@@ -50,6 +52,15 @@ type GithubIssueRaw = {
   user?: { login?: string } | null;
 };
 
+function nextLink(linkHeader: string | null): string | null {
+  if (!linkHeader) return null;
+  for (const part of linkHeader.split(',')) {
+    const match = part.match(/<([^>]+)>;\s*rel="next"/);
+    if (match?.[1]) return match[1];
+  }
+  return null;
+}
+
 export const githubImporter: Importer<GithubInput> = {
   name: 'github',
   label: 'GitHub Issues',
@@ -64,29 +75,41 @@ export const githubImporter: Importer<GithubInput> = {
       throw new Error('owner and repo are required.');
     }
 
-    const url = new URL(
+    let url: URL | null = new URL(
       `https://api.github.com/repos/${encodeURIComponent(
         input.owner
       )}/${encodeURIComponent(input.repo)}/issues`
     );
     url.searchParams.set('state', 'all');
-    url.searchParams.set('per_page', String(input.perPage ?? 50));
+    url.searchParams.set('per_page', String(Math.max(1, Math.min(input.perPage ?? 50, 100))));
 
-    const response = await fetchWithBackoff(url, {
-      headers: {
-        Authorization: `Bearer ${input.accessToken}`,
-        Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-        'User-Agent': 'TaskNebula-Importer',
-      },
-    });
+    const issues: GithubIssueRaw[] = [];
+    const maxPages = Math.max(1, Math.min(input.maxPages ?? 100, 100));
+    let pages = 0;
+    while (url && pages < maxPages) {
+      const response = await fetchWithBackoff(url, {
+        headers: {
+          Authorization: `Bearer ${input.accessToken}`,
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2026-03-10',
+          'User-Agent': 'TaskNebula-Importer',
+        },
+      });
 
-    if (!response.ok) {
-      const text = await response.text().catch(() => '');
-      throw new Error(`GitHub API error (${response.status}): ${text}`);
+      if (!response.ok) {
+        const text = await response.text().catch(() => '');
+        throw new Error(`GitHub API error (${response.status}): ${text}`);
+      }
+
+      issues.push(...((await response.json()) as GithubIssueRaw[]));
+      pages += 1;
+      const next = nextLink(response.headers.get('link'));
+      url = next ? new URL(next) : null;
     }
 
-    const issues = (await response.json()) as GithubIssueRaw[];
+    if (url) {
+      throw new Error('GitHub import exceeded the 10,000 issue safety limit.');
+    }
 
     return (
       issues

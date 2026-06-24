@@ -66,7 +66,7 @@ export function TimeEntryRow({ entry, canEdit = false, onUpdate, onRemove }: Tim
   if (isEditing) {
     return (
       <div className="border-border/70 bg-card/60 space-y-2 rounded-md border p-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5">
             <Input
               type="number"
@@ -131,7 +131,7 @@ export function TimeEntryRow({ entry, canEdit = false, onUpdate, onRemove }: Tim
         </AvatarFallback>
       </Avatar>
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-1.5 text-[12.5px]">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-[12.5px]">
           <span className="text-foreground truncate font-medium">{entry.userName}</span>
           <span className="text-muted-foreground">{t('logged')}</span>
           <span className="chip text-[11px] font-medium">{durationLabel}</span>
@@ -146,7 +146,7 @@ export function TimeEntryRow({ entry, canEdit = false, onUpdate, onRemove }: Tim
         ) : null}
       </div>
       {canEdit ? (
-        <div className="flex items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+        <div className="flex shrink-0 items-center gap-1 opacity-100 transition-opacity duration-150 sm:opacity-0 sm:group-hover:opacity-100">
           <Button
             variant="ghost"
             size="icon-sm"

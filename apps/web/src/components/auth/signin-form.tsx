@@ -106,6 +106,7 @@ export function SignInForm() {
 
   const statusBanner = useMemo(() => resolveStatusBanner(searchParams), [searchParams]);
   const projectInviteToken = searchParams?.get('projectInviteToken') || null;
+  const callbackUrl = normalizeCallbackUrl(searchParams?.get('callbackUrl'));
   const activeBanner =
     statusBanner && statusBanner.key !== dismissedBannerKey ? statusBanner : null;
 
@@ -164,7 +165,7 @@ export function SignInForm() {
       if (result?.error) {
         setError(tAuth('invalid_credentials'));
       } else {
-        const redirectTo = await acceptProjectInviteAfterSignIn(projectInviteToken);
+        const redirectTo = await acceptProjectInviteAfterSignIn(projectInviteToken, callbackUrl);
         router.push(redirectTo);
         router.refresh();
       }
@@ -218,6 +219,7 @@ export function SignInForm() {
         <OAuthProviderButtons
           providers={oauthProviders}
           projectInviteToken={projectInviteToken}
+          callbackUrl={callbackUrl}
           githubLabel={tAuth('continue_with_github')}
           googleLabel={tAuth('continue_with_google')}
         />
@@ -308,8 +310,17 @@ export function SignInForm() {
   );
 }
 
-async function acceptProjectInviteAfterSignIn(projectInviteToken: string | null) {
-  if (!projectInviteToken) return '/dashboard';
+function normalizeCallbackUrl(value: string | null | undefined) {
+  if (!value || !value.startsWith('/') || value.startsWith('//')) return null;
+  if (value.startsWith('/auth/') || value === '/auth') return null;
+  return value;
+}
+
+async function acceptProjectInviteAfterSignIn(
+  projectInviteToken: string | null,
+  callbackUrl: string | null
+) {
+  if (!projectInviteToken) return callbackUrl || '/dashboard';
 
   const response = await fetch('/api/project-invite-links/accept', {
     method: 'POST',

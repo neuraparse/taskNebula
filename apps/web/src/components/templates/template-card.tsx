@@ -7,15 +7,7 @@ import { Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { TEMPLATE_CATEGORIES, type WorkItemTemplate } from '@/lib/templates/registry';
-
-const CATEGORY_LABEL: Record<WorkItemTemplate['category'], string> = TEMPLATE_CATEGORIES.reduce(
-  (acc, c) => {
-    acc[c.value] = c.label;
-    return acc;
-  },
-  {} as Record<WorkItemTemplate['category'], string>
-);
+import type { WorkItemTemplate } from '@/lib/templates/registry';
 
 const TYPE_VARIANT: Record<WorkItemTemplate['type'], 'info' | 'destructive' | 'muted' | 'success'> =
   {
@@ -82,7 +74,7 @@ export function TemplateCard({ template, onUse, className }: TemplateCardProps) 
       <div className="mt-auto flex items-center justify-between gap-2 pt-2">
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           <Badge variant="outline" size="sm">
-            {CATEGORY_LABEL[template.category]}
+            {t(`category_${template.category}`)}
           </Badge>
           <Badge variant={TYPE_VARIANT[template.type]} size="sm">
             {t(`type_${template.type}`)}

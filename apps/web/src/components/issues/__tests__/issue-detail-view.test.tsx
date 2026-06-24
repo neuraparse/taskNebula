@@ -109,6 +109,16 @@ describe('IssueDetailView', () => {
     expect(screen.getByTestId('issue-quick-actions')).toBeInTheDocument();
     // Time tracking section is open by default, so the panel mounts immediately.
     expect(screen.getByTestId('time-tracking-panel')).toBeInTheDocument();
+
+    const sidebarColumn = screen.getByTestId('issue-sidebar').parentElement?.parentElement;
+    expect(sidebarColumn).toHaveClass('min-w-0', 'border-t', 'lg:border-l', 'lg:border-t-0');
+    const detailGrid = sidebarColumn?.parentElement;
+    expect(detailGrid).toHaveClass('lg:grid-cols-[minmax(0,1fr)_320px]');
+    expect(detailGrid?.parentElement).toHaveClass('overflow-visible', 'lg:overflow-hidden');
+    expect(detailGrid?.parentElement?.parentElement).toHaveClass(
+      'overflow-y-auto',
+      'lg:overflow-hidden'
+    );
   });
 
   it('hides the AI triage section when the AI capability is disabled', () => {

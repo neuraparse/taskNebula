@@ -3128,7 +3128,81 @@
     "anonymous": "Anonym",
     "error_save": "Kunne ikke lagre",
     "saving": "Lagrer …",
-    "save_changes": "Lagre endringer"
+    "save_changes": "Lagre endringer",
+    "category_engineering": "Engineering",
+    "category_design": "Design",
+    "category_product": "Product",
+    "category_qa": "QA",
+    "category_ops": "Ops",
+    "category_general": "General",
+    "template_fallback_description": "{kind} template",
+    "payload_hint_project": "Payload shape: { \"name\"?: string, \"key\"?: string, \"description\"?: string, \"settings\"?: object }",
+    "payload_hint_issue": "Payload shape: { \"title\"?: string, \"description\"?: string, \"type\"?: \"task\"|\"bug\"|\"story\"|\"epic\", \"priority\"?: \"critical\"|\"high\"|\"medium\"|\"low\"|\"none\", \"labels\"?: string[], \"estimate\"?: number }",
+    "payload_hint_doc": "Payload shape: { \"title\"?: string, \"contentJson\"?: object, \"icon\"?: string }",
+    "starterTemplates": {
+      "bug_report": {
+        "name": "Bug report",
+        "description": "Capture a defect with reproduction steps, expected vs. actual behavior, and environment.",
+        "body": "## Summary\n{{summary}}\n\n## Steps to reproduce\n1. \n2. \n3. \n\n## Expected behavior\n{{expected}}\n\n## Actual behavior\n{{actual}}\n\n## Environment\n- App version: {{version}}\n- Browser / OS: {{environment}}\n\n## Additional context\n{{notes}}"
+      },
+      "feature_request": {
+        "name": "Feature request",
+        "description": "Frame a new capability as a user story with measurable acceptance criteria.",
+        "body": "## User story\nAs a **{{persona}}**, I want **{{capability}}**, so that **{{outcome}}**.\n\n## Acceptance criteria\n- [ ] \n- [ ] \n- [ ] \n\n## Out of scope\n- \n\n## Notes\n{{notes}}"
+      },
+      "tech_debt": {
+        "name": "Tech debt",
+        "description": "Track and justify a refactor or hardening task with risk and approach.",
+        "body": "## Context\n{{context}}\n\n## Risk if untouched\n{{risk}}\n\n## Proposed approach\n{{approach}}\n\n## Definition of done\n- [ ] Code change merged\n- [ ] Tests updated\n- [ ] No regression in metrics"
+      },
+      "spike": {
+        "name": "Spike",
+        "description": "Time-boxed investigation to reduce uncertainty before committing to delivery.",
+        "body": "## Question to answer\n{{question}}\n\n## Time-box\n{{timebox}}\n\n## Approach\n- \n\n## Deliverable\nA short write-up + recommendation posted to this ticket."
+      },
+      "design_review": {
+        "name": "Design review",
+        "description": "Schedule a critique of a flow, screen, or component with reviewers and goals.",
+        "body": "## Artifact\n{{figma_link}}\n\n## Reviewers\n- \n\n## Goals\n- \n\n## Open questions\n- "
+      },
+      "qa_test_plan": {
+        "name": "QA test plan",
+        "description": "Outline coverage for happy path, edge cases, and regression for a release.",
+        "subItems": {
+          "happy_path": "Happy path",
+          "edge_cases": "Edge cases",
+          "regression": "Regression"
+        },
+        "body": "## Scope\n{{scope}}\n\n## Environments\n- \n\n## Exit criteria\n- All sub-items pass\n- No P0/P1 defects open"
+      },
+      "incident_postmortem": {
+        "name": "Incident postmortem",
+        "description": "Blameless write-up covering timeline, impact, root cause, and follow-up actions.",
+        "body": "## Summary\n{{summary}}\n\n## Timeline\n- {{time}} - \n\n## Impact\n{{impact}}\n\n## Root cause\n{{root_cause}}\n\n## What went well\n- \n\n## What went poorly\n- \n\n## Action items\n- [ ] \n- [ ] "
+      },
+      "product_launch_checklist": {
+        "name": "Product launch checklist",
+        "description": "Coordinate cross-functional readiness across marketing, docs, support, pricing, and sales.",
+        "subItems": {
+          "marketing": "Marketing",
+          "docs": "Docs",
+          "support_enablement": "Support enablement",
+          "pricing": "Pricing",
+          "sales_kickoff": "Sales kickoff"
+        },
+        "body": "## Launch overview\n{{summary}}\n\n## Target date\n{{date}}\n\n## DRI\n{{owner}}\n\n## Workstreams\nSee sub-items below. Each owner adds status notes here."
+      },
+      "customer_interview": {
+        "name": "Customer interview",
+        "description": "Discovery call template with goals, script prompts, and a place for notes.",
+        "body": "## Customer\n{{customer}}\n\n## Interview goals\n- \n\n## Script\n1. Tell me about your current workflow.\n2. Where does it break down?\n3. What would \"great\" look like?\n\n## Notes\n{{notes}}\n\n## Follow-ups\n- [ ] "
+      },
+      "refactor_proposal": {
+        "name": "Refactor proposal",
+        "description": "Pitch a structural change with motivation, alternatives, and a migration plan.",
+        "body": "## Motivation\n{{motivation}}\n\n## Current state\n{{current}}\n\n## Proposed state\n{{proposed}}\n\n## Alternatives considered\n- \n\n## Migration plan\n1. \n2. \n3. \n\n## Rollback plan\n- "
+      }
+    }
   },
   "projectConfig": {
     "loading": "Laster …",
@@ -5720,6 +5794,67 @@
     },
     "intake": {
       "submitMetaTitle": "Submit · TaskNebula"
+    },
+    "stepStart": "Start",
+    "setupImportRedirecting": "Omdirigerer for å logge på, da{source}importere…",
+    "setupProductName": "TaskNebula oppsett",
+    "setupProductSubtitle": "Førstegangs bootstrap for arbeidsområde",
+    "setupInstanceEmpty": "Tom forekomst",
+    "setupKicker": "Første løp",
+    "setupIntro": "Opprett den første administratoren, velg hvordan arbeidsområdet skal begynne, og hold oppsettbanen klar før teamdata skrives.",
+    "setupSecurityTitle": "Lokal kontroll",
+    "setupSecurityBody": "Oppsett åpnes bare mens databasen ikke har noen brukere. Etter at den første administratoren er opprettet, lukkes denne siden og normal pålogging overtar.",
+    "setupAdminKicker": "Administrator",
+    "setupAdminTitle": "Opprett eierkontoen",
+    "setupContinue": "Fortsette",
+    "setupStartKicker": "Utgangspunkt",
+    "setupStartTitle": "Velg hvordan TaskNebula skal starte",
+    "setupStartSubtitle": "Begynn med et rent arbeidsområde, eller lag et importmål og fortsett med Jira, Linear, Plane, CSV eller GitHub etter pålogging.",
+    "setupBlankTitle": "Start tomt",
+    "setupBlankDescription": "Opprett kun administratoren og organisasjonen. Legg til prosjekter, team og problemer fra TaskNebula.",
+    "setupImportTitle": "Importer eksisterende arbeid",
+    "setupImportDescription": "Opprett et målprosjekt nå, fortsett deretter til importøren med riktig kilde valgt.",
+    "setupImportProjectName": "Navn på målprosjekt",
+    "setupImportProjectNamePlaceholder": "Importert etterslep",
+    "setupImportProjectKey": "Prosjektnøkkel",
+    "setupImportProjectKeyPlaceholder": "MIG",
+    "setupImportCredentialTitle": "{source}legitimasjon forblir på neste trinn",
+    "setupBlankNote": "Blank start holder forekomsten minimal: én administrator, én organisasjon og standard arbeidsflyt. Du kan opprette prosjekter manuelt etter pålogging.",
+    "setupBack": "Tilbake",
+    "setupCreateAndImport": "Opprett og fortsett til{source}",
+    "setupImportProjectRequired": "Angi et målprosjektnavn for importen.",
+    "setupImportProjectKeyInvalid": "Prosjektnøkkelen må starte med en bokstav og bruke 2-10 store bokstaver eller tall.",
+    "setupImportSource": {
+      "jira": {
+        "label": "Jira",
+        "description": "Bruk Atlassian-nettstedet, e-post og API-token for en aktuell Jira Cloud-problemtrekk.",
+        "nextStep": "Etter pålogging ber importøren om Atlassian-nettstedet, kontoens e-postadresse og API-token, og forhåndsviser deretter nylige Jira-problemer før noe skrives."
+      },
+      "linear": {
+        "label": "Linear",
+        "description": "Bruk en Linear personlig API-nøkkel og valgfri teamnøkkel for problemimport.",
+        "nextStep": "Etter pålogging, skriv inn en Linear personlig API-nøkkel og valgfritt omfang importen etter teamnøkkel. TaskNebula forhåndsviser problemer og grunnleggende metadata først."
+      },
+      "plane": {
+        "label": "Plane",
+        "description": "Start fra en Plane CSV-eksport og kart kolonner til TaskNebula-felt.",
+        "nextStep": "Plane håndteres gjennom CSV-importøren i dag. Eksporter problemer fra Plane, last opp CSV, og kart deretter felt før du kjører importen."
+      },
+      "csv": {
+        "label": "CSV",
+        "description": "Last opp en CSV fra en hvilken som helst sporer og kartlegg kolonnene før import.",
+        "nextStep": "Etter pålogging laster du opp CSV og bekrefter den foreslåtte kolonnetilordningen. Dette er den sikreste veien for verktøy uten en innebygd adapter."
+      },
+      "github": {
+        "label": "GitHub Issues",
+        "description": "Trekk problemer fra et depot med et GitHub-tilgangstoken.",
+        "nextStep": "Etter pålogging, oppgi et GitHub-tilgangstoken, eier og depot. Pull-forespørsler hoppes over og problemer forhåndsvises først."
+      }
+    },
+    "setupSourceEvidence": {
+      "jira": "Jira Cloud støtter CSV-migrering og API-tokenbasert problemlesing.",
+      "linear": "Linear tilbyr dedikerte importører og CSV/CLI-migrasjonsveier.",
+      "plane": "Plane-dokumenter Jira og Linear import; TaskNebula starter for øyeblikket fra Plane til CSV."
     }
   },
   "settingsClients": {
@@ -5753,7 +5888,7 @@
       "importing": "Importerer …",
       "recordsFailed": "{count, plural, one {# post mislyktes:} other {# poster mislyktes:}}",
       "previewFailed": "Forhåndsvisning mislyktes ({status})",
-      "projectIdRequired": "En ID for målprosjekt er påkrevd.",
+      "projectIdRequired": "Velg et målprosjekt før du kjører en import.",
       "importFailedStatus": "Import mislyktes ({status})",
       "jobStatusFailed": "Kunne ikke hente jobbstatus",
       "source": {
@@ -5771,7 +5906,11 @@
         },
         "github": {
           "label": "GitHub Issues",
-          "description": "Importerer fra et repo ved hjelp av det tilkoblede GitHub OAuth-tokenet."
+          "description": "Importer fra et depot med et GitHub-tilgangstoken."
+        },
+        "plane": {
+          "label": "Plane",
+          "description": "Last opp en Plane CSV-eksport og kartkolonner gjennom CSV-importøren."
         }
       },
       "field": {
@@ -5794,7 +5933,14 @@
       },
       "projectIdPlaceholder": "prj_xxx",
       "linearTeamPlaceholder": "ENG",
-      "jiraSitePlaceholder": "acme.atlassian.net"
+      "jiraSitePlaceholder": "acme.atlassian.net",
+      "planeCsvFile": "Plane CSV eksport",
+      "planeCsvHint": "Eksporter problemer fra Plane som CSV, og bruk deretter CSV-tilordningstrinnet nedenfor.",
+      "targetProject": "Målprosjekt",
+      "selectProjectPlaceholder": "Velg et prosjekt",
+      "noProjectsAvailable": "Opprett et prosjekt før du kjører en import.",
+      "noPreviewRows": "Ingen importerbare poster ble funnet i denne kilden.",
+      "networkError": "Nettverksfeil. Vennligst prøv igjen."
     },
     "members": {
       "kicker": "Tilgang",

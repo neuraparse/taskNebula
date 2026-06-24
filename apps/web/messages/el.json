@@ -3128,7 +3128,81 @@
     "anonymous": "Ανώνυμος",
     "error_save": "Αποτυχία αποθήκευσης",
     "saving": "Αποθήκευση…",
-    "save_changes": "Αποθήκευση αλλαγών"
+    "save_changes": "Αποθήκευση αλλαγών",
+    "category_engineering": "Engineering",
+    "category_design": "Design",
+    "category_product": "Product",
+    "category_qa": "QA",
+    "category_ops": "Ops",
+    "category_general": "General",
+    "template_fallback_description": "{kind} template",
+    "payload_hint_project": "Payload shape: { \"name\"?: string, \"key\"?: string, \"description\"?: string, \"settings\"?: object }",
+    "payload_hint_issue": "Payload shape: { \"title\"?: string, \"description\"?: string, \"type\"?: \"task\"|\"bug\"|\"story\"|\"epic\", \"priority\"?: \"critical\"|\"high\"|\"medium\"|\"low\"|\"none\", \"labels\"?: string[], \"estimate\"?: number }",
+    "payload_hint_doc": "Payload shape: { \"title\"?: string, \"contentJson\"?: object, \"icon\"?: string }",
+    "starterTemplates": {
+      "bug_report": {
+        "name": "Bug report",
+        "description": "Capture a defect with reproduction steps, expected vs. actual behavior, and environment.",
+        "body": "## Summary\n{{summary}}\n\n## Steps to reproduce\n1. \n2. \n3. \n\n## Expected behavior\n{{expected}}\n\n## Actual behavior\n{{actual}}\n\n## Environment\n- App version: {{version}}\n- Browser / OS: {{environment}}\n\n## Additional context\n{{notes}}"
+      },
+      "feature_request": {
+        "name": "Feature request",
+        "description": "Frame a new capability as a user story with measurable acceptance criteria.",
+        "body": "## User story\nAs a **{{persona}}**, I want **{{capability}}**, so that **{{outcome}}**.\n\n## Acceptance criteria\n- [ ] \n- [ ] \n- [ ] \n\n## Out of scope\n- \n\n## Notes\n{{notes}}"
+      },
+      "tech_debt": {
+        "name": "Tech debt",
+        "description": "Track and justify a refactor or hardening task with risk and approach.",
+        "body": "## Context\n{{context}}\n\n## Risk if untouched\n{{risk}}\n\n## Proposed approach\n{{approach}}\n\n## Definition of done\n- [ ] Code change merged\n- [ ] Tests updated\n- [ ] No regression in metrics"
+      },
+      "spike": {
+        "name": "Spike",
+        "description": "Time-boxed investigation to reduce uncertainty before committing to delivery.",
+        "body": "## Question to answer\n{{question}}\n\n## Time-box\n{{timebox}}\n\n## Approach\n- \n\n## Deliverable\nA short write-up + recommendation posted to this ticket."
+      },
+      "design_review": {
+        "name": "Design review",
+        "description": "Schedule a critique of a flow, screen, or component with reviewers and goals.",
+        "body": "## Artifact\n{{figma_link}}\n\n## Reviewers\n- \n\n## Goals\n- \n\n## Open questions\n- "
+      },
+      "qa_test_plan": {
+        "name": "QA test plan",
+        "description": "Outline coverage for happy path, edge cases, and regression for a release.",
+        "subItems": {
+          "happy_path": "Happy path",
+          "edge_cases": "Edge cases",
+          "regression": "Regression"
+        },
+        "body": "## Scope\n{{scope}}\n\n## Environments\n- \n\n## Exit criteria\n- All sub-items pass\n- No P0/P1 defects open"
+      },
+      "incident_postmortem": {
+        "name": "Incident postmortem",
+        "description": "Blameless write-up covering timeline, impact, root cause, and follow-up actions.",
+        "body": "## Summary\n{{summary}}\n\n## Timeline\n- {{time}} - \n\n## Impact\n{{impact}}\n\n## Root cause\n{{root_cause}}\n\n## What went well\n- \n\n## What went poorly\n- \n\n## Action items\n- [ ] \n- [ ] "
+      },
+      "product_launch_checklist": {
+        "name": "Product launch checklist",
+        "description": "Coordinate cross-functional readiness across marketing, docs, support, pricing, and sales.",
+        "subItems": {
+          "marketing": "Marketing",
+          "docs": "Docs",
+          "support_enablement": "Support enablement",
+          "pricing": "Pricing",
+          "sales_kickoff": "Sales kickoff"
+        },
+        "body": "## Launch overview\n{{summary}}\n\n## Target date\n{{date}}\n\n## DRI\n{{owner}}\n\n## Workstreams\nSee sub-items below. Each owner adds status notes here."
+      },
+      "customer_interview": {
+        "name": "Customer interview",
+        "description": "Discovery call template with goals, script prompts, and a place for notes.",
+        "body": "## Customer\n{{customer}}\n\n## Interview goals\n- \n\n## Script\n1. Tell me about your current workflow.\n2. Where does it break down?\n3. What would \"great\" look like?\n\n## Notes\n{{notes}}\n\n## Follow-ups\n- [ ] "
+      },
+      "refactor_proposal": {
+        "name": "Refactor proposal",
+        "description": "Pitch a structural change with motivation, alternatives, and a migration plan.",
+        "body": "## Motivation\n{{motivation}}\n\n## Current state\n{{current}}\n\n## Proposed state\n{{proposed}}\n\n## Alternatives considered\n- \n\n## Migration plan\n1. \n2. \n3. \n\n## Rollback plan\n- "
+      }
+    }
   },
   "projectConfig": {
     "loading": "Φόρτωση…",
@@ -5720,6 +5794,67 @@
     },
     "intake": {
       "submitMetaTitle": "Submit · TaskNebula"
+    },
+    "stepStart": "Αρχή",
+    "setupImportRedirecting": "Ανακατεύθυνση για να συνδεθείτε, λοιπόν{source}εισαγωγή…",
+    "setupProductName": "Ρύθμιση TaskNebula",
+    "setupProductSubtitle": "Πρώτη εκτέλεση bootstrap χώρου εργασίας",
+    "setupInstanceEmpty": "Άδειο παράδειγμα",
+    "setupKicker": "Πρώτο τρέξιμο",
+    "setupIntro": "Δημιουργήστε τον πρώτο διαχειριστή, επιλέξτε πώς θα ξεκινήσει ο χώρος εργασίας και διατηρήστε τη διαδρομή εγκατάστασης καθαρή πριν εγγραφούν δεδομένα ομάδας.",
+    "setupSecurityTitle": "Τοπικός έλεγχος",
+    "setupSecurityBody": "Το πρόγραμμα εγκατάστασης ανοίγει μόνο όταν η βάση δεδομένων δεν έχει χρήστες. Αφού δημιουργηθεί ο πρώτος διαχειριστής, αυτή η σελίδα κλείνει και αναλαμβάνει η κανονική είσοδος.",
+    "setupAdminKicker": "Διαχειριστής",
+    "setupAdminTitle": "Δημιουργήστε τον λογαριασμό κατόχου",
+    "setupContinue": "Συνεχίζω",
+    "setupStartKicker": "Αφετηρία",
+    "setupStartTitle": "Επιλέξτε πώς θα ξεκινήσει το TaskNebula",
+    "setupStartSubtitle": "Ξεκινήστε με έναν καθαρό χώρο εργασίας ή δημιουργήστε έναν στόχο εισαγωγής και συνεχίστε με Jira, Linear, Plane, CSV ή GitHub μετά τη σύνδεση.",
+    "setupBlankTitle": "Ξεκινήστε κενό",
+    "setupBlankDescription": "Δημιουργήστε μόνο τον διαχειριστή και τον οργανισμό. Προσθέστε έργα, ομάδες και ζητήματα μέσα από το TaskNebula.",
+    "setupImportTitle": "Εισαγάγετε υπάρχουσες εργασίες",
+    "setupImportDescription": "Δημιουργήστε ένα έργο-στόχο τώρα και, στη συνέχεια, συνεχίστε στον εισαγωγέα με επιλεγμένη τη σωστή πηγή.",
+    "setupImportProjectName": "Όνομα έργου στόχου",
+    "setupImportProjectNamePlaceholder": "Εισαγόμενο ανεκτέλεστο",
+    "setupImportProjectKey": "Κλειδί έργου",
+    "setupImportProjectKeyPlaceholder": "MIG",
+    "setupImportCredentialTitle": "{source}τα διαπιστευτήρια παραμένουν στο επόμενο βήμα",
+    "setupBlankNote": "Η κενή εκκίνηση διατηρεί την παρουσία ελάχιστη: έναν διαχειριστή, έναν οργανισμό και την προεπιλεγμένη ροή εργασίας. Μπορείτε να δημιουργήσετε έργα με μη αυτόματο τρόπο μετά τη σύνδεση.",
+    "setupBack": "Πίσω",
+    "setupCreateAndImport": "Δημιουργήστε και συνεχίστε{source}",
+    "setupImportProjectRequired": "Εισαγάγετε ένα όνομα έργου στόχου για την εισαγωγή.",
+    "setupImportProjectKeyInvalid": "Το κλειδί έργου πρέπει να ξεκινά με ένα γράμμα και να χρησιμοποιεί 2-10 κεφαλαία γράμματα ή αριθμούς.",
+    "setupImportSource": {
+      "jira": {
+        "label": "Jira",
+        "description": "Χρησιμοποιήστε τον ιστότοπο Atlassian, το ηλεκτρονικό ταχυδρομείο και το διακριτικό API για ένα τρέχον πρόβλημα με το Jira Cloud.",
+        "nextStep": "Μετά τη σύνδεση, ο εισαγωγέας ζητά τον ιστότοπο Atlassian, τη διεύθυνση ηλεκτρονικού ταχυδρομείου του λογαριασμού και το διακριτικό API και, στη συνέχεια, προβαίνει σε προεπισκόπηση των πρόσφατων προβλημάτων Jira πριν γραφτεί οτιδήποτε."
+      },
+      "linear": {
+        "label": "Linear",
+        "description": "Χρησιμοποιήστε ένα προσωπικό κλειδί API Linear και ένα προαιρετικό κλειδί ομάδας για την εισαγωγή προβλημάτων.",
+        "nextStep": "Μετά τη σύνδεση, εισαγάγετε ένα προσωπικό κλειδί API Linear και προαιρετικά πληκτρολογήστε την εισαγωγή κατά κλειδί ομάδας. Το TaskNebula κάνει προεπισκόπηση ζητημάτων και βασικών μεταδεδομένων πρώτα."
+      },
+      "plane": {
+        "label": "Plane",
+        "description": "Ξεκινήστε από μια εξαγωγή Plane CSV και αντιστοιχίστε στήλες στα πεδία TaskNebula.",
+        "nextStep": "Ο χειρισμός του Plane γίνεται σήμερα μέσω του εισαγωγέα CSV. Εξαγάγετε ζητήματα από το Plane, ανεβάστε το CSV και, στη συνέχεια, αντιστοιχίστε τα πεδία πριν εκτελέσετε την εισαγωγή."
+      },
+      "csv": {
+        "label": "CSV",
+        "description": "Ανεβάστε ένα CSV από οποιοδήποτε πρόγραμμα παρακολούθησης και αντιστοιχίστε τις στήλες του πριν από την εισαγωγή.",
+        "nextStep": "Μετά τη σύνδεση, ανεβάστε το CSV και επιβεβαιώστε την προτεινόμενη αντιστοίχιση στηλών. Αυτή είναι η ασφαλέστερη διαδρομή για εργαλεία χωρίς εγγενή προσαρμογέα."
+      },
+      "github": {
+        "label": "GitHub Issues",
+        "description": "Τραβήξτε ζητήματα από ένα αποθετήριο με ένα διακριτικό πρόσβασης GitHub.",
+        "nextStep": "Μετά τη σύνδεση, παρέχετε ένα διακριτικό πρόσβασης GitHub, έναν κάτοχο και ένα αποθετήριο. Τα αιτήματα έλξης παραλείπονται και τα ζητήματα ελέγχονται πρώτα."
+      }
+    },
+    "setupSourceEvidence": {
+      "jira": "Το Jira Cloud υποστηρίζει τη μετεγκατάσταση CSV και τις αναγνώσεις ζητημάτων που βασίζονται σε διακριτικά API.",
+      "linear": "Η Linear προσφέρει αποκλειστικούς εισαγωγείς και διαδρομές μετάβασης CSV/CLI.",
+      "plane": "Plane έγγραφα Jira και Linear εισαγωγές. Το TaskNebula ξεκινά αυτήν τη στιγμή από το Plane έως το CSV."
     }
   },
   "settingsClients": {
@@ -5753,7 +5888,7 @@
       "importing": "Εισαγωγή…",
       "recordsFailed": "{count, plural, one {# εγγραφή απέτυχε:} other {# εγγραφές απέτυχαν:}}",
       "previewFailed": "Η προεπισκόπηση απέτυχε ({status})",
-      "projectIdRequired": "Απαιτείται αναγνωριστικό έργου προορισμού.",
+      "projectIdRequired": "Επιλέξτε ένα έργο-στόχο πριν εκτελέσετε μια εισαγωγή.",
       "importFailedStatus": "Η εισαγωγή απέτυχε ({status})",
       "jobStatusFailed": "Αποτυχία λήψης κατάστασης εργασίας",
       "source": {
@@ -5771,7 +5906,11 @@
         },
         "github": {
           "label": "Ζητήματα GitHub",
-          "description": "Εισάγει από ένα αποθετήριο χρησιμοποιώντας το συνδεδεμένο διακριτικό OAuth του GitHub."
+          "description": "Εισαγωγή από ένα αποθετήριο χρησιμοποιώντας ένα διακριτικό πρόσβασης GitHub."
+        },
+        "plane": {
+          "label": "Plane",
+          "description": "Ανεβάστε στήλες εξαγωγής και χάρτη Plane CSV μέσω του εισαγωγέα CSV."
         }
       },
       "field": {
@@ -5794,7 +5933,14 @@
       },
       "projectIdPlaceholder": "prj_xxx",
       "linearTeamPlaceholder": "ENG",
-      "jiraSitePlaceholder": "acme.atlassian.net"
+      "jiraSitePlaceholder": "acme.atlassian.net",
+      "planeCsvFile": "Εξαγωγή Plane CSV",
+      "planeCsvHint": "Εξαγάγετε ζητήματα από το Plane ως CSV και, στη συνέχεια, χρησιμοποιήστε το παρακάτω βήμα αντιστοίχισης CSV.",
+      "targetProject": "Στόχο έργο",
+      "selectProjectPlaceholder": "Επιλέξτε ένα έργο",
+      "noProjectsAvailable": "Δημιουργήστε ένα έργο πριν εκτελέσετε μια εισαγωγή.",
+      "noPreviewRows": "Δεν βρέθηκαν εισαγόμενες εγγραφές σε αυτήν την πηγή.",
+      "networkError": "Σφάλμα δικτύου. Δοκιμάστε ξανά."
     },
     "members": {
       "kicker": "Πρόσβαση",

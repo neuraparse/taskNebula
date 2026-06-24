@@ -194,8 +194,8 @@ export function AnalyticsBento({
       {/* Forecast */}
       {forecast && forecast.histogram.length > 0 ? (
         <section className="surface-card space-y-3 p-4">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
               <p className="kicker">{t('analytics.kicker_forecast')}</p>
               <h3 className="text-foreground mt-1 text-base font-semibold tracking-tight">
                 {t('analytics.heading_forecast')}
@@ -204,18 +204,24 @@ export function AnalyticsBento({
                 {t('analytics.forecast_description')}
               </p>
             </div>
-            <div className="grid grid-cols-3 gap-2 text-right text-xs">
+            <div className="grid w-full grid-cols-3 gap-2 text-left text-xs sm:w-auto sm:text-right">
               <div>
                 <p className="text-muted-foreground">{'p50'}</p>
-                <p className="text-foreground font-semibold tabular-nums">{forecast.p50Date}</p>
+                <p className="text-foreground truncate font-semibold tabular-nums">
+                  {forecast.p50Date}
+                </p>
               </div>
               <div>
                 <p className="text-muted-foreground">{'p80'}</p>
-                <p className="text-foreground font-semibold tabular-nums">{forecast.p80Date}</p>
+                <p className="text-foreground truncate font-semibold tabular-nums">
+                  {forecast.p80Date}
+                </p>
               </div>
               <div>
                 <p className="text-muted-foreground">{'p95'}</p>
-                <p className="text-foreground font-semibold tabular-nums">{forecast.p95Date}</p>
+                <p className="text-foreground truncate font-semibold tabular-nums">
+                  {forecast.p95Date}
+                </p>
               </div>
             </div>
           </div>
